@@ -10,9 +10,6 @@ import (
 	"net"
 	"net/netip"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
 	"time"
 	"unsafe"
 
@@ -86,74 +83,6 @@ func main() {
 				},
 				Action: func(c *cli.Context) error {
 					return unix.Mount("none", c.String("target"), "", unix.MS_SHARED, "")
-				},
-			},
-			{
-				Name:  "mount-fusefs-mark",
-				Usage: "mounts a fusefs mark",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "source",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "merged",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "upper",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "work",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "uidmapping",
-						Required: false,
-					},
-					&cli.StringFlag{
-						Name:     "gidmapping",
-						Required: false,
-					},
-				},
-				Action: func(c *cli.Context) error {
-					target := filepath.Clean(c.String("merged"))
-					upper := filepath.Clean(c.String("upper"))
-					work := filepath.Clean(c.String("work"))
-					source := filepath.Clean(c.String("source"))
-
-					args := []string{
-						fmt.Sprintf("lowerdir=%s,upperdir=%v,workdir=%v", source, upper, work),
-					}
-
-					if len(c.String("uidmapping")) > 0 {
-						args = append(args, fmt.Sprintf("uidmapping=%v", c.String("uidmapping")))
-					}
-
-					if len(c.String("gidmapping")) > 0 {
-						args = append(args, fmt.Sprintf("gidmapping=%v", c.String("gidmapping")))
-					}
-
-					cmd := exec.Command(
-						fmt.Sprintf("%v/.supervisor/fuse-overlayfs", source),
-						"-o",
-						strings.Join(args, ","),
-						"none",
-						target,
-					)
-					cmd.Dir = source
-
-					out, err := cmd.CombinedOutput()
-					if err != nil {
-						return xerrors.Errorf("fuse-overlayfs (%v) failed: %q\n%v",
-							cmd.Args,
-							string(out),
-							err,
-						)
-					}
-
-					return nil
 				},
 			},
 			{
@@ -457,7 +386,7 @@ func main() {
 						Gw:    vethIp,
 					}
 					if err := netlink.RouteReplace(&defaultGw); err != nil {
-						return xerrors.Errorf("failed to set up deafult gw: %v", err)
+						return xerrors.Errorf("failed to set up default gw (%v): %v", vethIp.String(), err)
 					}
 
 					return nil
@@ -468,6 +397,50 @@ func main() {
 				Usage: "enable IPv4 forwarding",
 				Action: func(c *cli.Context) error {
 					return os.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1"), 0644)
+				},
+			},
+			{
+				Name:  "dump-network-info",
+				Usage: "dump network info",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name: "tag",
+					},
+				},
+				Action: func(c *cli.Context) error {
+					links, err := netlink.LinkList()
+					if err != nil {
+						return xerrors.Errorf("cannot list network links: %v", err)
+					}
+
+					tag := c.String("tag")
+
+					for _, link := range links {
+						attrs := link.Attrs()
+
+						ip4, _ := netlink.AddrList(link, netlink.FAMILY_V4)
+						ip6, _ := netlink.AddrList(link, netlink.FAMILY_V6)
+
+						log.Infof("%v", struct {
+							Tag   string
+							Name  string
+							Type  string
+							Ip4   []netlink.Addr
+							Ip6   []netlink.Addr
+							Flags net.Flags
+							MTU   int
+						}{
+							Tag:   tag,
+							Name:  attrs.Name,
+							Type:  link.Type(),
+							Ip4:   ip4,
+							Ip6:   ip6,
+							Flags: attrs.Flags,
+							MTU:   attrs.MTU,
+						})
+					}
+
+					return nil
 				},
 			},
 			{

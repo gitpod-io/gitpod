@@ -25,6 +25,7 @@ export class GitpodHostUrl {
     readonly url: URL;
 
     constructor(url: string) {
+        //HACK - we don't want clients to pass in a URL object, but we need to use it internally
         const urlParam = url as any;
         if (typeof urlParam === "string") {
             // public constructor
@@ -68,6 +69,7 @@ export class GitpodHostUrl {
             update.pathname = "/" + update.pathname;
         }
         const result = Object.assign(new URL(this.toString()), update);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return new GitpodHostUrl(result);
     }
 
@@ -120,7 +122,7 @@ export class GitpodHostUrl {
     }
 
     asStart(workspaceId = this.workspaceId): GitpodHostUrl {
-        return this.withoutWorkspacePrefix().with({
+        return this.with({
             pathname: "/start/",
             hash: "#" + workspaceId,
         });
@@ -196,6 +198,14 @@ export class GitpodHostUrl {
             return this;
         }
         return this.with((url) => ({ host: "ide." + url.host }));
+    }
+
+    asPublicServices(): GitpodHostUrl {
+        const hostSegments = this.url.host.split(".");
+        if (hostSegments[0] === "services") {
+            return this;
+        }
+        return this.with((url) => ({ host: "services." + url.host }));
     }
 
     asIDEMetrics(): GitpodHostUrl {

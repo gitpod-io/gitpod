@@ -157,6 +157,20 @@ spec:
                   type: object
                 minItems: 0
                 type: array
+              ssh:
+                description: SSHKey temporal generated SSH key required to access
+                  the workspace
+                properties:
+                  privateKey:
+                    type: string
+                  publicKey:
+                    type: string
+                required:
+                - privateKey
+                - publicKey
+                type: object
+              sshGatewayCAPublicKey:
+                type: string
               sshPublicKeys:
                 items:
                   type: string
@@ -522,6 +536,9 @@ spec:
                       type: string
                     type: array
                 type: object
+              lastActivity:
+                format: date-time
+                type: string
               ownerToken:
                 type: string
               phase:
@@ -554,6 +571,19 @@ spec:
                   prior to shutting the workspace down. This condition is only used
                   for headless workspaces.
                 type: string
+              storage:
+                properties:
+                  attachedDevice:
+                    type: string
+                  mountPath:
+                    type: string
+                  volumeName:
+                    type: string
+                required:
+                - attachedDevice
+                - mountPath
+                - volumeName
+                type: object
               url:
                 type: string
             required:

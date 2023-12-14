@@ -20,6 +20,7 @@ const (
 	teamNameAttribute       = "team_name"
 	vscodeClientIDAttribute = "vscode_client_id"
 	gitpodHost              = "gitpod_host"
+	component               = "component"
 )
 
 func newConfigCatClient(config configcat.Config) *configCatClient {
@@ -85,6 +86,10 @@ func attributesToUser(attributes Attributes) *configcat.UserData {
 		custom[gitpodHost] = attributes.GitpodHost
 	}
 
+	if attributes.Component != "" {
+		custom[component] = attributes.Component
+	}
+
 	return &configcat.UserData{
 		Identifier: attributes.UserID,
 		Email:      attributes.UserEmail,
@@ -100,6 +105,10 @@ type configCatLogger struct {
 func (l *configCatLogger) GetLevel() configcat.LogLevel {
 	return configcat.LogLevelError
 }
+
+func (l *configCatLogger) Debugf(format string, args ...interface{}) {}
+func (l *configCatLogger) Infof(format string, args ...interface{})  {}
+func (l *configCatLogger) Warnf(format string, args ...interface{})  {}
 
 func logField(experimentName, value interface{}) logrus.Fields {
 	return logrus.Fields{

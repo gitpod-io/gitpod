@@ -5,7 +5,7 @@
  */
 
 import { FC, useCallback, useState } from "react";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import { Heading1, Subheading } from "../components/typography/headings";
 import Tooltip from "../components/Tooltip";
 import copy from "../images/copy.svg";
@@ -44,7 +44,7 @@ export const SetupCompleteStep: FC<Props> = ({ onComplete }) => {
             </div>
 
             <div className="mt-6 max-w-md">
-                <Button size="block" onClick={onComplete}>
+                <Button className="w-full" onClick={onComplete}>
                     Add a Git Integration
                 </Button>
             </div>

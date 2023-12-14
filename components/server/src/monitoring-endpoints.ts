@@ -4,10 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
+import express from "express";
 import { injectable } from "inversify";
 import * as prometheusClient from "prom-client";
-import { registerDBMetrics } from "@gitpod/gitpod-db/lib";
+import { redisMetricsRegistry, registerDBMetrics } from "@gitpod/gitpod-db/lib";
 import { registerServerMetrics } from "./prometheus-metrics";
 
 @injectable()
@@ -18,6 +18,12 @@ export class MonitoringEndpointsApp {
         prometheusClient.collectDefaultMetrics({ register: registry });
         registerDBMetrics(registry);
         registerServerMetrics(registry);
+
+        // Append redis metrics to default registry
+        redisMetricsRegistry()
+            .getMetricsAsArray()
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            .forEach((metric) => registry.registerMetric(metric as any));
 
         const monApp = express();
         monApp.get("/metrics", async (req, res) => {

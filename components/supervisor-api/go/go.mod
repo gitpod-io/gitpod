@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/supervisor/api
 
-go 1.19
+go 1.21
 
 require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3

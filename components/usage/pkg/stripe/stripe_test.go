@@ -29,9 +29,9 @@ func TestQueriesForCustomersWithAttributionID_Single(t *testing.T) {
 			Name: "1 team id, 1 user id",
 			AttributionIDs: map[db.AttributionID]int64{
 				db.NewTeamAttributionID("abcd-123"): 1,
-				db.NewUserAttributionID("abcd-456"): 1,
+				db.NewTeamAttributionID("abcd-456"): 1,
 			},
-			ExpectedQueries: []string{"metadata['attributionId']:'team:abcd-123' OR metadata['attributionId']:'user:abcd-456'"},
+			ExpectedQueries: []string{"metadata['attributionId']:'team:abcd-123' OR metadata['attributionId']:'team:abcd-456'"},
 		},
 	}
 

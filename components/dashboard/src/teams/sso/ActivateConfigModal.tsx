@@ -49,7 +49,7 @@ export const ActivateConfigModal: FC<Props> = ({ configId, hasActiveConfig, onCl
                 description: config.oauth2Config?.clientId ?? "",
             }}
             buttonText="Activate"
-            buttonType="primary"
+            buttonType="default"
             warningText={
                 hasActiveConfig
                     ? "Activating this SSO configuration will also deactivate the currently active configuration."

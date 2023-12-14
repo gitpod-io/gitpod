@@ -1,0 +1,26 @@
+{
+  "name": "@gitpod/spicedb-impl",
+  "version": "0.1.5",
+  "license": "UNLICENSED",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "mkdir -p lib; tsc",
+    "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
+  },
+  "overrides": {
+    "long": "4.0.0"
+  },
+  "dependencies": {
+    "long": "4.0.0",
+    "nice-grpc": "^2.0.0",
+    "ts-proto": "^1.153.0"
+  },
+  "devDependencies": {
+    "@types/long": "4.0.0",
+    "grpc-tools": "^1.12.4",
+    "typescript": "~4.4.2",
+    "typescript-formatter": "^7.2.2"
+  }
+}

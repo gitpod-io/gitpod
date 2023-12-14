@@ -6,98 +6,40 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { inject, injectable, postConstruct } from "inversify";
+import { inject, injectable } from "inversify";
 import { Config } from "../config";
 import { Twilio } from "twilio";
 import { ServiceContext } from "twilio/lib/rest/verify/v2/service";
-import { TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { ResponseError } from "vscode-ws-jsonrpc";
-import { VerificationInstance } from "twilio/lib/rest/verify/v2/service/verification";
+import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { UserService } from "../user/user-service";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
-@injectable()
-export class VerificationService {
-    @inject(Config) protected config: Config;
-    @inject(WorkspaceDB) protected workspaceDB: WorkspaceDB;
-    @inject(UserDB) protected userDB: UserDB;
-    @inject(TeamDB) protected teamDB: TeamDB;
-    @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
+interface VerificationEndpoint {
+    sendToken(phoneNumber: string, channel: "sms" | "call"): Promise<string>;
+    verifyToken(phoneNumber: string, oneTimePassword: string, verificationId: string): Promise<boolean>;
+}
 
-    protected verifyService: ServiceContext;
+class TwilioVerificationEndpoint implements VerificationEndpoint {
+    constructor(private readonly config: Config) {}
 
-    @postConstruct()
-    protected initialize(): void {
-        if (this.config.twilioConfig) {
+    private _twilioService: ServiceContext;
+    private get twilioService(): ServiceContext {
+        if (!this._twilioService && this.config.twilioConfig) {
             const client = new Twilio(this.config.twilioConfig.accountSID, this.config.twilioConfig.authToken);
-            this.verifyService = client.verify.v2.services(this.config.twilioConfig.serviceID);
+            this._twilioService = client.verify.v2.services(this.config.twilioConfig.serviceID);
         }
+        return this._twilioService;
     }
 
-    public async needsVerification(user: User): Promise<boolean> {
-        if (!this.config.twilioConfig) {
-            return false;
-        }
-        if (!!user.lastVerificationTime) {
-            return false;
-        }
-        // we treat existing users (created before we introduced phone vwerification) as verified
-        if (user.creationDate < "2022-08-22") {
-            return false;
-        }
-        const isPhoneVerificationEnabled = await this.configCatClientFactory().getValueAsync(
-            "isPhoneVerificationEnabled",
-            false,
-            {
-                user,
-            },
-        );
-        return isPhoneVerificationEnabled;
-    }
-
-    public markVerified(user: User): User {
-        user.lastVerificationTime = new Date().toISOString();
-        return user;
-    }
-
-    public async verifyOrgMembers(organizationId: string): Promise<void> {
-        const members = await this.teamDB.findMembersByTeam(organizationId);
-        for (const member of members) {
-            const user = await this.userDB.findUserById(member.userId);
-            if (user) {
-                await this.verifyUser(user);
-            }
-        }
-    }
-
-    public async verifyUser(user: User): Promise<User> {
-        if (await this.needsVerification(user)) {
-            user = await this.userDB.storeUser(this.markVerified(user));
-            log.info("User verified", { userId: user.id });
-        }
-        return user;
-    }
-
-    public async sendVerificationToken(
-        phoneNumber: string,
-        channel: "sms" | "call" = "sms",
-    ): Promise<{ verification: VerificationInstance; verificationId: string }> {
-        if (!this.verifyService) {
+    public async sendToken(phoneNumber: string, channel: "sms" | "call"): Promise<string> {
+        if (!this.twilioService) {
             throw new Error("No verification service configured.");
         }
-        const isBlockedNumber = this.userDB.isBlockedPhoneNumber(phoneNumber);
-        const usages = await this.userDB.countUsagesOfPhoneNumber(phoneNumber);
-        if (usages > 3) {
-            throw new ResponseError(
-                ErrorCodes.INVALID_VALUE,
-                "The given phone number has been used more than three times.",
-            );
-        }
-        if (await isBlockedNumber) {
-            throw new ResponseError(ErrorCodes.INVALID_VALUE, "The given phone number is blocked due to abuse.");
-        }
-        const verification = await this.verifyService.verifications.create({ to: phoneNumber, channel });
+        const verification = await this.twilioService.verifications.create({ to: phoneNumber, channel });
 
         // Create a unique id to correlate starting/completing of verification flow
         // Clients receive this and send it back when they call send the verification code
@@ -125,23 +67,10 @@ export class VerificationService {
                 requestedChannel: channel,
             });
         }
-
-        return { verification, verificationId };
+        return verificationId;
     }
-
-    public async verifyVerificationToken(
-        phoneNumber: string,
-        oneTimePassword: string,
-        verificationId: string,
-    ): Promise<{ verified: boolean; channel: string }> {
-        if (!this.verifyService) {
-            throw new Error("No verification service configured.");
-        }
-        if (!uuidValidate(verificationId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Verification ID must be a valid UUID");
-        }
-
-        const verification_check = await this.verifyService.verificationChecks.create({
+    public async verifyToken(phoneNumber: string, oneTimePassword: string, verificationId: string): Promise<boolean> {
+        const verification_check = await this.twilioService.verificationChecks.create({
             to: phoneNumber,
             code: oneTimePassword,
         });
@@ -153,9 +82,143 @@ export class VerificationService {
             channel: verification_check.channel,
         });
 
-        return {
-            verified: verification_check.status === "approved",
-            channel: verification_check.channel,
-        };
+        return verification_check.status === "approved";
+    }
+}
+
+class MockVerificationEndpoint implements VerificationEndpoint {
+    private verificationId = uuidv4();
+
+    public async sendToken(phoneNumber: string, channel: "sms" | "call"): Promise<string> {
+        return this.verificationId;
+    }
+
+    public async verifyToken(phoneNumber: string, oneTimePassword: string, verificationId: string): Promise<boolean> {
+        if (verificationId !== this.verificationId) {
+            return false;
+        }
+        return oneTimePassword === "123456";
+    }
+}
+
+@injectable()
+export class VerificationService {
+    constructor(
+        @inject(Config) private config: Config,
+        @inject(UserDB) private userDB: UserDB,
+        @inject(TeamDB) private teamDB: TeamDB,
+        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(UserService) private readonly userService: UserService,
+    ) {
+        if (this.config.twilioConfig) {
+            this.verifyService = new TwilioVerificationEndpoint(this.config);
+        } else if (this.config.devBranch && !this.config.isSingleOrgInstallation) {
+            // preview environments get the mock verification endpoint
+            this.verifyService = new MockVerificationEndpoint();
+        }
+    }
+
+    private verifyService?: VerificationEndpoint;
+
+    public async needsVerification(user: User): Promise<boolean> {
+        if (!this.verifyService) {
+            return false;
+        }
+        if (!!user.lastVerificationTime) {
+            return false;
+        }
+        // we treat existing users (created before we introduced phone vwerification) as verified
+        if (user.creationDate < "2022-08-22") {
+            return false;
+        }
+        const isPhoneVerificationEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "isPhoneVerificationEnabled",
+            false,
+            {
+                user: {
+                    id: user.id,
+                    email: getPrimaryEmail(user),
+                },
+            },
+        );
+        return isPhoneVerificationEnabled;
+    }
+
+    public async verifyOrgMembers(organizationId: string): Promise<void> {
+        const members = await this.teamDB.findMembersByTeam(organizationId);
+        for (const member of members) {
+            const user = await this.userDB.findUserById(member.userId);
+            if (user && (await this.needsVerification(user))) {
+                await this.userService.markUserAsVerified(user, undefined);
+            }
+        }
+    }
+
+    public async sendVerificationToken(
+        userId: string,
+        phoneNumber: string,
+        channel: "sms" | "call" = "sms",
+    ): Promise<string> {
+        if (!this.verifyService) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "No verification service configured.");
+        }
+        const isBlockedNumber = this.userDB.isBlockedPhoneNumber(phoneNumber);
+        const usages = await this.userDB.countUsagesOfPhoneNumber(phoneNumber);
+        if (usages > 3) {
+            throw new ApplicationError(
+                ErrorCodes.INVALID_VALUE,
+                "The given phone number has been used more than three times.",
+            );
+        }
+        if (await isBlockedNumber) {
+            throw new ApplicationError(ErrorCodes.INVALID_VALUE, "The given phone number is blocked due to abuse.");
+        }
+        const verificationId = this.verifyService.sendToken(phoneNumber, channel);
+        this.analytics.track({
+            event: "phone_verification_sent",
+            userId,
+            properties: {
+                verification_id: verificationId,
+                requested_channel: channel,
+            },
+        });
+
+        return verificationId;
+    }
+
+    public async verifyVerificationToken(
+        user: User,
+        phoneNumber: string,
+        oneTimePassword: string,
+        verificationId: string,
+    ): Promise<boolean> {
+        if (!this.verifyService) {
+            throw new Error("No verification service configured.");
+        }
+        if (!uuidValidate(verificationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Verification ID must be a valid UUID");
+        }
+
+        const verified = await this.verifyService.verifyToken(phoneNumber, oneTimePassword, verificationId);
+
+        if (verified) {
+            await this.userService.markUserAsVerified(user, phoneNumber);
+            this.analytics.track({
+                event: "phone_verification_completed",
+                userId: user.id,
+                properties: {
+                    verification_id: verificationId,
+                },
+            });
+        } else {
+            this.analytics.track({
+                event: "phone_verification_failed",
+                userId: user.id,
+                properties: {
+                    verification_id: verificationId,
+                },
+            });
+        }
+        return verified;
     }
 }

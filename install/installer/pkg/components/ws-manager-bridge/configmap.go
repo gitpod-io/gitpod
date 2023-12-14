@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,6 +35,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		EmulatePreparingIntervalSeconds: 10,
 		StaticBridges:                   WSManagerList(ctx),
 		ClusterSyncIntervalSeconds:      60,
+		Redis:                           redis.GetConfiguration(ctx),
 	}
 
 	fc, err := common.ToJSONString(wsmbcfg)

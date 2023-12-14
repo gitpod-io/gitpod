@@ -5,7 +5,6 @@
  */
 
 import { inject, injectable } from "inversify";
-import fetch from "node-fetch";
 import * as path from "path";
 import * as crypto from "crypto";
 
@@ -26,7 +25,6 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 
-import { MaybeContent } from "../repohost/file-provider";
 import { ConfigurationService } from "../config/configuration-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { AuthorizationService } from "../user/authorization-service";
@@ -34,18 +32,12 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 import { EntitlementService } from "../billing/entitlement-service";
 import { TeamDB } from "@gitpod/gitpod-db/lib";
+import { InvalidGitpodYMLError } from "@gitpod/public-api-common/lib/public-api-errors";
 
 const POD_PATH_WORKSPACE_BASE = "/workspace";
 
 @injectable()
 export class ConfigProvider {
-    static readonly DEFINITELY_GP_REPO: Repository = {
-        host: "github.com",
-        owner: "gitpod-io",
-        name: "definitely-gp",
-        cloneUrl: "https://github.com/gitpod-io/definitely-gp",
-    };
-
     @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
@@ -58,6 +50,7 @@ export class ConfigProvider {
         ctx: TraceContext,
         user: User,
         commit: CommitContext,
+        organizationId?: string,
     ): Promise<{ config: WorkspaceConfig; literalConfig?: ProjectConfig }> {
         const span = TraceContext.startSpan("fetchConfig", ctx);
         span.addTags({
@@ -83,7 +76,7 @@ export class ConfigProvider {
                     repoCloneUrl: commit.repository.cloneUrl,
                     revision: commit.revision,
                 });
-                const config = this.defaultConfig();
+                const config = await this.defaultConfig(organizationId);
                 if (!ImageConfigString.is(config.image)) {
                     throw new Error(`Default config must contain a base image!`);
                 }
@@ -93,18 +86,13 @@ export class ConfigProvider {
 
             const config = customConfig;
             if (!config.image) {
-                config.image = this.config.workspaceDefaults.workspaceImage;
+                config.image = await this.getDefaultImage(organizationId);
             } else if (ImageConfigFile.is(config.image)) {
-                let dockerfilePath = [configBasePath, config.image.file].filter((s) => !!s).join("/");
-                let repo = commit.repository;
-                let rev = commit.revision;
-                let image = config.image!;
+                const dockerfilePath = [configBasePath, config.image.file].filter((s) => !!s).join("/");
+                const repo = commit.repository;
+                const rev = commit.revision;
+                const image = config.image!;
 
-                if (config._origin === "definitely-gp") {
-                    repo = ConfigProvider.DEFINITELY_GP_REPO;
-                    rev = "master";
-                    image.file = dockerfilePath;
-                }
                 if (!(AdditionalContentContext.is(commit) && commit.additionalFiles[dockerfilePath])) {
                     config.image = <ExternalImageConfigFile>{
                         ...image,
@@ -143,7 +131,8 @@ export class ConfigProvider {
         }
     }
 
-    protected async fetchCustomConfig(
+    // fetchCustomConfig entry is only used for unit tests data mocking
+    public async fetchCustomConfig(
         ctx: TraceContext,
         user: User,
         commit: CommitContext,
@@ -154,14 +143,16 @@ export class ConfigProvider {
 
         try {
             let customConfig: WorkspaceConfig | undefined;
-            let configBasePath = "";
+            const configBasePath = "";
             if (AdditionalContentContext.is(commit) && commit.additionalFiles[".gitpod.yml"]) {
                 customConfigString = commit.additionalFiles[".gitpod.yml"];
                 const parseResult = this.gitpodParser.parse(customConfigString);
                 customConfig = parseResult.config;
                 customConfig._origin = "additional-content";
                 if (parseResult.validationErrors) {
-                    const err = new InvalidGitpodYMLError(parseResult.validationErrors);
+                    const err = new InvalidGitpodYMLError({
+                        violations: parseResult.validationErrors,
+                    });
                     // this is not a system error but a user misconfiguration
                     log.info(logContext, err.message, {
                         repoCloneUrl: commit.repository.cloneUrl,
@@ -184,21 +175,6 @@ export class ConfigProvider {
                 let origin: WorkspaceConfig["_origin"] = "repo";
 
                 if (!customConfigString) {
-                    /* We haven't found a Gitpod configuration file in the context repo - check definitely-gp.
-                     *
-                     * In case we had found a config file here, we'd still be checking the definitely GP repo, just to save some time.
-                     * While all those checks will be in vain, they should not leak memory either as they'll simply
-                     * be resolved and garbage collected.
-                     */
-                    const definitelyGpConfig = this.fetchExternalGitpodFileContent({ span }, commit.repository);
-                    const { content, basePath } = await definitelyGpConfig;
-                    customConfigString = content;
-                    // We do not only care about the config itself but also where we got it from
-                    configBasePath = basePath;
-                    origin = "definitely-gp";
-                }
-
-                if (!customConfigString) {
                     const inferredConfig = this.configurationService.guessRepositoryConfiguration(
                         { span },
                         user,
@@ -213,7 +189,9 @@ export class ConfigProvider {
                     const parseResult = this.gitpodParser.parse(customConfigString);
                     customConfig = parseResult.config;
                     if (parseResult.validationErrors) {
-                        const err = new InvalidGitpodYMLError(parseResult.validationErrors);
+                        const err = new InvalidGitpodYMLError({
+                            violations: parseResult.validationErrors,
+                        });
                         // this is not a system error but a user misconfiguration
                         log.info(logContext, err.message, {
                             repoCloneUrl: commit.repository.cloneUrl,
@@ -239,16 +217,27 @@ export class ConfigProvider {
         }
     }
 
-    public defaultConfig(): WorkspaceConfig {
+    public async defaultConfig(organizationId?: string): Promise<WorkspaceConfig> {
         return {
             ports: [],
             tasks: [],
-            image: this.config.workspaceDefaults.workspaceImage,
+            image: await this.getDefaultImage(organizationId),
             ideCredentials: crypto.randomBytes(32).toString("base64"),
         };
     }
 
-    protected async fetchWorkspaceImageSourceDocker(
+    public async getDefaultImage(organizationId?: string) {
+        let defaultImage = this.config.workspaceDefaults.workspaceImage;
+        if (organizationId) {
+            const settings = await this.teamDB.findOrgSettings(organizationId);
+            if (settings?.defaultWorkspaceImage) {
+                defaultImage = settings.defaultWorkspaceImage;
+            }
+        }
+        return defaultImage;
+    }
+
+    private async fetchWorkspaceImageSourceDocker(
         ctx: TraceContext,
         repository: Repository,
         revisionOrTagOrBranch: string,
@@ -287,101 +276,7 @@ export class ConfigProvider {
         }
     }
 
-    protected async fillInDefaultLocations(
-        cfg: WorkspaceConfig | undefined,
-        inferredConfig: Promise<WorkspaceConfig | undefined>,
-    ): Promise<void> {
-        if (!cfg) {
-            // there is no config - return
-            return;
-        }
-
-        if (!cfg.checkoutLocation) {
-            let inferredCfg = await inferredConfig;
-            if (inferredCfg) {
-                cfg.checkoutLocation = inferredCfg.checkoutLocation;
-            }
-        }
-        if (!cfg.workspaceLocation) {
-            let inferredCfg = await inferredConfig;
-            if (inferredCfg) {
-                cfg.workspaceLocation = inferredCfg.workspaceLocation;
-            }
-        }
-    }
-
-    protected async fetchExternalGitpodFileContent(
-        ctx: TraceContext,
-        repository: Repository,
-    ): Promise<{ content: MaybeContent; basePath: string }> {
-        const span = TraceContext.startSpan("fetchExternalGitpodFileContent", ctx);
-        span.setTag("repo", `${repository.owner}/${repository.name}`);
-
-        if (this.config.definitelyGpDisabled) {
-            span.finish();
-            return {
-                content: undefined,
-                basePath: `${repository.name}`,
-            };
-        }
-
-        try {
-            const ownerConfigBasePath = `${repository.name}/${repository.owner}`;
-            const baseConfigBasePath = `${repository.name}`;
-
-            const possibleConfigs = [
-                [this.fetchDefinitelyGpContent({ span }, `${ownerConfigBasePath}/.gitpod.yml`), ownerConfigBasePath],
-                [this.fetchDefinitelyGpContent({ span }, `${ownerConfigBasePath}/.gitpod`), ownerConfigBasePath],
-                [this.fetchDefinitelyGpContent({ span }, `${baseConfigBasePath}/.gitpod.yml`), baseConfigBasePath],
-                [this.fetchDefinitelyGpContent({ span }, `${baseConfigBasePath}/.gitpod`), baseConfigBasePath],
-            ];
-            for (const [configPromise, basePath] of possibleConfigs) {
-                const ownerConfig = await configPromise;
-                if (ownerConfig !== undefined) {
-                    return {
-                        content: ownerConfig,
-                        basePath: basePath as string,
-                    };
-                }
-            }
-            return {
-                content: undefined,
-                basePath: baseConfigBasePath,
-            };
-        } catch (e) {
-            TraceContext.setError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
-        }
-    }
-
-    protected async fetchDefinitelyGpContent(ctx: TraceContext, filePath: string) {
-        const span = TraceContext.startSpan("fetchDefinitelyGpContent", ctx);
-        span.setTag("filePath", filePath);
-
-        try {
-            const url = `https://raw.githubusercontent.com/gitpod-io/definitely-gp/master/${filePath}`;
-            const response = await fetch(url, {
-                timeout: 10000,
-                method: "GET",
-            });
-            let content;
-            if (response.ok) {
-                try {
-                    content = await response.text();
-                } catch {}
-            }
-            return content;
-        } catch (e) {
-            TraceContext.setError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
-        }
-    }
-
-    protected async validateConfig(config: WorkspaceConfig, user: User): Promise<void> {
+    private async validateConfig(config: WorkspaceConfig, user: User): Promise<void> {
         // Make sure the projectRoot does not leave POD_PATH_WORKSPACE_BASE as that's a common
         // assumption throughout the code (e.g. ws-daemon)
         const checkoutLocation = config.checkoutLocation;
@@ -407,22 +302,8 @@ export class ConfigProvider {
         }
     }
 
-    protected leavesWorkspaceBase(normalizedPath: string) {
+    private leavesWorkspaceBase(normalizedPath: string) {
         const pathSegments = normalizedPath.split(path.sep);
         return normalizedPath.includes("..") || pathSegments.slice(0, 2).join("/") != POD_PATH_WORKSPACE_BASE;
-    }
-}
-
-export class InvalidGitpodYMLError extends Error {
-    public readonly errorType = "invalidGitpodYML";
-
-    constructor(public readonly validationErrors: string[]) {
-        super("Invalid gitpod.yml: " + validationErrors.join(","));
-    }
-}
-
-export namespace InvalidGitpodYMLError {
-    export function is(obj: object): obj is InvalidGitpodYMLError {
-        return "errorType" in obj && (obj as any).errorType === "invalidGitpodYML" && "validationErrors" in obj;
     }
 }

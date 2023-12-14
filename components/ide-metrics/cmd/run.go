@@ -28,11 +28,12 @@ var runCommand = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("cannot read configuration")
 		}
-		registry := prometheus.NewRegistry()
-		s := server.NewMetricsServer(cfg, registry)
+		serviceRegistry := prometheus.NewRegistry()
+		metricsRegistry := prometheus.NewRegistry()
+		s := server.NewMetricsServer(cfg, serviceRegistry, metricsRegistry)
 
 		handler := http.NewServeMux()
-		handler.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+		handler.Handle("/metrics", promhttp.HandlerFor(prometheus.Gatherers{metricsRegistry, serviceRegistry}, promhttp.HandlerOpts{}))
 
 		go func() {
 			err := http.ListenAndServe(cfg.Prometheus.Addr, handler)

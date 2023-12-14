@@ -6,7 +6,7 @@
 
 import * as chai from "chai";
 const expect = chai.expect;
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 
 import { GitpodTokenType, Identity, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { testContainer } from "./test-container";
@@ -14,10 +14,7 @@ import { DBIdentity } from "./typeorm/entity/db-identity";
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
 import { TypeORMWorkspaceDBImpl } from "./typeorm/workspace-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
-import { DBUser } from "./typeorm/entity/db-user";
-import { DBWorkspace } from "./typeorm/entity/db-workspace";
-import { DBWorkspaceInstance } from "./typeorm/entity/db-workspace-instance";
-import { DBGitpodToken } from "./typeorm/entity/db-gitpod-token";
+import { resetDB } from "./test/reset-db";
 
 const _IDENTITY1: Identity = {
     authProviderId: "GitHub",
@@ -55,12 +52,7 @@ class UserDBSpec {
 
     async wipeRepos() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const mnr = await typeorm.getConnection();
-        await mnr.getRepository(DBUser).delete({});
-        await mnr.getRepository(DBIdentity).delete({});
-        await mnr.getRepository(DBWorkspace).delete({});
-        await mnr.getRepository(DBWorkspaceInstance).delete({});
-        await mnr.getRepository(DBGitpodToken).delete({});
+        await resetDB(typeorm);
     }
 
     // Copy to avoid pollution
@@ -103,6 +95,36 @@ class UserDBSpec {
         // @ts-ignore
         user.identities.forEach((i) => delete (i as DBIdentity).user);
         expect(dbResult).to.deep.include(user);
+    }
+
+    @test(timeout(10000))
+    public async findUserById() {
+        const user = await this.db.newUser();
+        user.identities.push(this.IDENTITY1);
+        await this.db.storeUser(user);
+
+        const foundUser = await this.db.findUserById(user.id);
+        expect(foundUser!.id).to.eq(user.id);
+    }
+
+    @test(timeout(10000))
+    public async findUserById_undefined() {
+        const user = await this.db.newUser();
+        user.identities.push(this.IDENTITY1);
+        await this.db.storeUser(user);
+
+        try {
+            await this.db.findUserById(undefined!);
+            expect.fail("Should have failed");
+        } catch (error) {
+            expect(error.code).to.eq(400);
+        }
+        try {
+            await this.db.findUserById("");
+            expect.fail("Should have failed");
+        } catch (error) {
+            expect(error.code).to.eq(400);
+        }
     }
 
     @test(timeout(10000))
@@ -275,6 +297,39 @@ class UserDBSpec {
         expect(result.some((t) => t.tokenHash === token.tokenHash)).to.be.true;
         expect(result.some((t) => t.tokenHash === token2.tokenHash)).to.be.true;
     }
+
+    @test(timeout(10000))
+    public async findUserIdsNotYetMigratedToFgaVersion() {
+        let user1 = await this.db.newUser();
+        user1.name = "ABC";
+        user1.fgaRelationshipsVersion = 0;
+        user1 = await this.db.storeUser(user1);
+
+        let user2 = await this.db.newUser();
+        user2.name = "ABC2";
+        user2.fgaRelationshipsVersion = 1;
+        user2 = await this.db.storeUser(user2);
+
+        let user3 = await this.db.newUser();
+        user3.name = "ABC3";
+        user3.fgaRelationshipsVersion = 0;
+        user3 = await this.db.storeUser(user3);
+
+        const result = await this.db.findUserIdsNotYetMigratedToFgaVersion(1, 10);
+        expect(result).to.not.be.undefined;
+        expect(result.length).to.eq(2);
+        expect(result.some((id) => id === user1.id)).to.be.true;
+        expect(result.some((id) => id === user2.id)).to.be.false;
+        expect(result.some((id) => id === user3.id)).to.be.true;
+
+        const result2 = await this.db.findUserIdsNotYetMigratedToFgaVersion(1, 1);
+        expect(result2).to.not.be.undefined;
+        expect(result2.length).to.eq(1);
+
+        const result3 = await this.db.findUserIdsNotYetMigratedToFgaVersion(2, 10);
+        expect(result3).to.not.be.undefined;
+        expect(result3.length).to.eq(3);
+    }
 }
 
 namespace TestData {
@@ -287,6 +342,7 @@ namespace TestData {
         deleted: false,
         readonly: false,
     };
+    export const organizationId: string = "org1";
     export const ID1: Identity = { ...DEFAULT, authId: "2345" };
     export const ID2: Identity = { ...DEFAULT, authId: "3456", authProviderId: "Public-GitLab" };
     export const ID3: Identity = { ...DEFAULT, authId: "4567", authProviderId: "ACME" };
@@ -301,6 +357,7 @@ namespace TestData {
             image: "",
             tasks: [],
         },
+        organizationId,
         context: { title: "example" },
         contextURL: "example.org",
         description: "blabla",

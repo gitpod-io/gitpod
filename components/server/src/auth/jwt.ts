@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as jsonwebtoken from "jsonwebtoken";
+import jsonwebtoken from "jsonwebtoken";
 import { Config } from "../config";
 import { inject, injectable, postConstruct } from "inversify";
 import { AuthFlow } from "./auth-provider";
@@ -130,7 +130,7 @@ export async function verify(
             if (err || !decoded) {
                 return reject(err);
             }
-            resolve(decoded);
+            resolve(decoded as jsonwebtoken.JwtPayload);
         });
     });
 }

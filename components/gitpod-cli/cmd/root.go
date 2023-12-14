@@ -59,6 +59,8 @@ func GetCommandName(path string) []string {
 	return strings.Fields(strings.TrimSpace(strings.TrimPrefix(path, rootCmdName)))
 }
 
+var lastSignal os.Signal
+
 var rootCmd = &cobra.Command{
 	Use:           rootCmdName,
 	SilenceErrors: true,
@@ -82,7 +84,7 @@ var rootCmd = &cobra.Command{
 		go func() {
 			signals := make(chan os.Signal, 1)
 			signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-			<-signals
+			lastSignal = <-signals
 			cancel()
 		}()
 	},
@@ -148,6 +150,9 @@ func Execute() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(exitCode)
+	}
+	if sig, ok := lastSignal.(syscall.Signal); ok {
+		os.Exit(128 + int(sig))
 	}
 }
 

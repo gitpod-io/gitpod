@@ -4,15 +4,18 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { useQuery } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
+import { workspaceClient } from "../../service/public-api";
+import { WorkspaceClass } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+
+export const DEFAULT_WS_CLASS = "g1-standard";
 
 export const useWorkspaceClasses = () => {
-    return useQuery<SupportedWorkspaceClass[]>({
+    return useQuery<WorkspaceClass[]>({
         queryKey: ["workspace-classes"],
         queryFn: async () => {
-            return getGitpodService().server.getSupportedWorkspaceClasses();
+            const response = await workspaceClient.listWorkspaceClasses({});
+            return response.workspaceClasses;
         },
         cacheTime: 1000 * 60 * 60, // 1h
         staleTime: 1000 * 60 * 60, // 1h

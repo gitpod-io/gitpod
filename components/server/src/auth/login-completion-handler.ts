@@ -5,13 +5,13 @@
  */
 
 import { inject, injectable } from "inversify";
-import * as express from "express";
+import express from "express";
 import { User } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
 import { HostContextProvider } from "./host-context-provider";
 import { AuthProviderService } from "./auth-provider-service";
-import { increaseLoginCounter, reportJWTCookieIssued } from "../prometheus-metrics";
+import { reportJWTCookieIssued, reportLoginCompleted } from "../prometheus-metrics";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
 import { SessionHandler } from "../session-handler";
@@ -47,10 +47,8 @@ export class LoginCompletionHandler {
                 });
             });
         } catch (err) {
-            if (authHost) {
-                increaseLoginCounter("failed", authHost);
-            }
-            log.error(logContext, `Redirect to /sorry on login`, err, { err });
+            reportLoginCompleted("failed", "git");
+            log.error(logContext, `Failed to login user. Redirecting to /sorry on login.`, err);
             response.redirect(this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
             return;
         }
@@ -75,8 +73,6 @@ export class LoginCompletionHandler {
         }
 
         if (authHost) {
-            increaseLoginCounter("succeeded", authHost);
-
             /** no await */ trackLogin(user, request, authHost, this.analytics).catch((err) =>
                 log.error({ userId: user.id }, "Failed to track Login.", err),
             );
@@ -87,6 +83,7 @@ export class LoginCompletionHandler {
         reportJWTCookieIssued();
 
         log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`);
+        reportLoginCompleted("succeeded", "git");
         response.redirect(returnTo);
     }
 

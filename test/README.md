@@ -38,6 +38,9 @@ werft job run github -a with-preview=true -a with-integration-tests=webapp -f
 
 You may want to run tests to assert whether a Gitpod installation is successfully integrated.
 
+> Use a preview environment with a large VM to run the tests. The tests run in parallel and can consume a large amount of recources. Create one as follows:
+> `TF_VAR_with_large_vm=true leeway run dev:preview`
+
 ### Go test
 
 This is best for when you're actively developing Gitpod.
@@ -74,7 +77,6 @@ If your integration tests depends on having having a user token available, then 
 cd test
 go test -v ./... \
     -run <test> \
-    -kubeconfig=/home/gitpod/.kube/config \
     -namespace=default \
     -username=<gitpod_user_with_oauth_setup> \
     -enterprise=<true|false> \
@@ -86,7 +88,6 @@ A concrete example would be
 ```console
 cd test
 go test -v ./... \
-    -kubeconfig=/home/gitpod/.kube/config \
     -namespace=default \
     -run TestWorkspaceInstrumentation
 ```

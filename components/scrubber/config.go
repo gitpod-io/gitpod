@@ -12,7 +12,8 @@ var (
 		"auth_",
 		"password",
 		"token",
-		"key",
+		"ssh",
+		"private",
 		"jwt",
 		"secret",
 		"email",
@@ -21,6 +22,7 @@ var (
 	// HashedFieldNames name fields whose values we'll hash
 	HashedFieldNames = []string{
 		"contextURL",
+		"metaID",
 		"workspaceID",
 		"username",
 	}

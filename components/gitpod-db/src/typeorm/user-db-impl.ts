@@ -15,6 +15,7 @@ import {
     TokenEntry,
     User,
     UserEnvVar,
+    UserEnvVarValue,
     UserSSHPublicKey,
 } from "@gitpod/gitpod-protocol";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
@@ -27,8 +28,8 @@ import {
     OAuthToken,
     OAuthUser,
 } from "@jmondi/oauth2-server";
-import { inject, injectable, postConstruct } from "inversify";
-import { EntityManager, Repository } from "typeorm";
+import { inject, injectable, optional } from "inversify";
+import { EntityManager, Equal, FindOperator, Not, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import {
     BUILTIN_WORKSPACE_PROBE_USER_ID,
@@ -37,23 +38,23 @@ import {
     MaybeUser,
     PartialUserUpdate,
     UserDB,
+    isBuiltinUser,
 } from "../user-db";
 import { DBGitpodToken } from "./entity/db-gitpod-token";
 import { DBIdentity } from "./entity/db-identity";
 import { DBTokenEntry } from "./entity/db-token-entry";
 import { DBUser } from "./entity/db-user";
 import { DBUserEnvVar } from "./entity/db-user-env-vars";
-import { DBWorkspace } from "./entity/db-workspace";
 import { DBUserSshPublicKey } from "./entity/db-user-ssh-public-key";
-import { TypeORM } from "./typeorm";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { DataCache } from "../data-cache";
+import { TransactionalDBImpl } from "./transactional-db-impl";
+import { TypeORM } from "./typeorm";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { filter } from "../utils";
 
 // OAuth token expiry
 const tokenExpiryInFuture = new DateInterval("7d");
-
-/** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
-export let encryptionService: EncryptionService;
 
 const userCacheKeyPrefix = "user:";
 function getUserCacheKey(id: string): string {
@@ -61,52 +62,37 @@ function getUserCacheKey(id: string): string {
 }
 
 @injectable()
-export class TypeORMUserDBImpl implements UserDB {
-    @inject(TypeORM) protected readonly typeorm: TypeORM;
-    @inject(EncryptionService) protected readonly encryptionService: EncryptionService;
-    @inject(DataCache) protected readonly cache: DataCache;
-
-    @postConstruct()
-    init() {
-        /** Publish the instance of EncryptionService our entities should use */
-        encryptionService = this.encryptionService;
+export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements UserDB {
+    constructor(
+        @inject(TypeORM) typeorm: TypeORM,
+        @inject(EncryptionService) private readonly encryptionService: EncryptionService,
+        @inject(DataCache) private readonly cache: DataCache,
+        @optional() transactionalEM?: EntityManager,
+    ) {
+        super(typeorm, transactionalEM);
     }
 
-    protected async getEntityManager(): Promise<EntityManager> {
-        return (await this.typeorm.getConnection()).manager;
+    protected createTransactionalDB(transactionalEM: EntityManager): UserDB {
+        return new TypeORMUserDBImpl(this.typeorm, this.encryptionService, this.cache, transactionalEM);
     }
 
     async getUserRepo(): Promise<Repository<DBUser>> {
         return (await this.getEntityManager()).getRepository<DBUser>(DBUser);
     }
-    protected async getWorkspaceRepo(): Promise<Repository<DBWorkspace>> {
-        return (await this.getEntityManager()).getRepository<DBWorkspace>(DBWorkspace);
-    }
 
-    async transaction<T>(code: (db: UserDB) => Promise<T>): Promise<T> {
-        const manager = await this.getEntityManager();
-        return await manager.transaction(async (manager) => {
-            return await code(new TransactionalUserDBImpl(manager, this.cache, this.encryptionService));
-        });
-    }
-
-    protected async getTokenRepo(): Promise<Repository<DBTokenEntry>> {
+    private async getTokenRepo(): Promise<Repository<DBTokenEntry>> {
         return (await this.getEntityManager()).getRepository<DBTokenEntry>(DBTokenEntry);
     }
 
-    protected async getIdentitiesRepo(): Promise<Repository<DBIdentity>> {
-        return (await this.getEntityManager()).getRepository<DBIdentity>(DBIdentity);
-    }
-
-    protected async getGitpodTokenRepo(): Promise<Repository<DBGitpodToken>> {
+    private async getGitpodTokenRepo(): Promise<Repository<DBGitpodToken>> {
         return (await this.getEntityManager()).getRepository<DBGitpodToken>(DBGitpodToken);
     }
 
-    protected async getUserEnvVarRepo(): Promise<Repository<DBUserEnvVar>> {
+    private async getUserEnvVarRepo(): Promise<Repository<DBUserEnvVar>> {
         return (await this.getEntityManager()).getRepository<DBUserEnvVar>(DBUserEnvVar);
     }
 
-    protected async getSSHPublicKeyRepo(): Promise<Repository<DBUserSshPublicKey>> {
+    private async getSSHPublicKeyRepo(): Promise<Repository<DBUserSshPublicKey>> {
         return (await this.getEntityManager()).getRepository<DBUserSshPublicKey>(DBUserSshPublicKey);
     }
 
@@ -149,6 +135,9 @@ export class TypeORMUserDBImpl implements UserDB {
     }
 
     public async findUserById(id: string): Promise<MaybeUser> {
+        if (!id || id.trim() === "") {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Cannot find user without id");
+        }
         return this.cache.get(getUserCacheKey(id), async () => {
             const userRepo = await this.getUserRepo();
             const result = await userRepo.findOne(id);
@@ -238,7 +227,6 @@ export class TypeORMUserDBImpl implements UserDB {
         } else {
             qBuilder.where("gitpodToken.tokenHash = :tokenHash", { tokenHash });
         }
-        qBuilder.andWhere("gitpodToken.deleted <> TRUE");
         const token = await qBuilder.getOne();
         if (!token) {
             return;
@@ -273,27 +261,12 @@ export class TypeORMUserDBImpl implements UserDB {
 
     public async deleteGitpodToken(tokenHash: string): Promise<void> {
         const repo = await this.getGitpodTokenRepo();
-        await repo.query(
-            `
-                UPDATE d_b_gitpod_token AS gt
-                SET gt.deleted = TRUE
-                WHERE tokenHash = ?;
-            `,
-            [tokenHash],
-        );
+        await repo.delete({ tokenHash });
     }
 
     public async deleteGitpodTokensNamedLike(userId: string, namePattern: string): Promise<void> {
         const repo = await this.getGitpodTokenRepo();
-        await repo.query(
-            `
-            UPDATE d_b_gitpod_token AS gt
-            SET gt.deleted = TRUE
-            WHERE userId = ?
-              AND name LIKE ?
-        `,
-            [userId, namePattern],
-        );
+        await repo.delete({ userId, name: new FindOperator("like", namePattern) });
     }
 
     public async storeSingleToken(identity: Identity, token: Token): Promise<TokenEntry> {
@@ -326,16 +299,14 @@ export class TypeORMUserDBImpl implements UserDB {
 
     public async deleteExpiredTokenEntries(date: string): Promise<void> {
         const repo = await this.getTokenRepo();
-        await repo.query(
-            `
-            UPDATE d_b_token_entry AS te
-                SET te.deleted = TRUE
-                WHERE te.expiryDate != ''
-                    AND te.refreshable != 1
-                    AND te.expiryDate <= ?;
-            `,
-            [date],
-        );
+        await repo
+            .createQueryBuilder()
+            .delete()
+            .from(DBTokenEntry)
+            .where("expiryDate != ''")
+            .andWhere("refreshable != 1")
+            .andWhere("expiryDate <= :date", { date })
+            .execute();
     }
 
     public async updateTokenEntry(tokenEntry: Partial<TokenEntry> & Pick<TokenEntry, "uid">): Promise<void> {
@@ -348,8 +319,7 @@ export class TypeORMUserDBImpl implements UserDB {
         const repo = await this.getTokenRepo();
         for (const existing of existingTokens) {
             if (!shouldDelete || shouldDelete(existing)) {
-                existing.deleted = true;
-                await repo.save(existing);
+                await repo.delete(existing.uid);
             }
         }
     }
@@ -375,10 +345,10 @@ export class TypeORMUserDBImpl implements UserDB {
         }
     }
 
-    public async findTokensForIdentity(identity: Identity, includeDeleted?: boolean): Promise<TokenEntry[]> {
+    public async findTokensForIdentity(identity: Identity): Promise<TokenEntry[]> {
         const repo = await this.getTokenRepo();
         const entry = await repo.find({ authProviderId: identity.authProviderId, authId: identity.authId });
-        return entry.filter((te) => includeDeleted || !te.deleted);
+        return entry;
     }
 
     private mapUserToDBUser(user: User): DBUser {
@@ -411,12 +381,49 @@ export class TypeORMUserDBImpl implements UserDB {
         }
         const res = await userRepo.query(query);
         const count = res[0].cnt;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return Number.parseInt(count);
     }
 
-    public async setEnvVar(envVar: UserEnvVar): Promise<void> {
+    public async findEnvVar(userId: string, envVar: UserEnvVarValue): Promise<UserEnvVar | undefined> {
         const repo = await this.getUserEnvVarRepo();
-        await repo.save(envVar);
+        return repo.findOne({
+            where: {
+                userId,
+                name: envVar.name,
+                repositoryPattern: envVar.repositoryPattern,
+                deleted: Not(Equal(true)),
+            },
+        });
+    }
+
+    public async addEnvVar(userId: string, envVar: UserEnvVarValue): Promise<UserEnvVar> {
+        const repo = await this.getUserEnvVarRepo();
+        return await repo.save({
+            id: uuidv4(),
+            userId,
+            name: envVar.name,
+            repositoryPattern: envVar.repositoryPattern,
+            value: envVar.value,
+        });
+    }
+
+    public async updateEnvVar(userId: string, envVar: Partial<UserEnvVarValue>): Promise<UserEnvVar | undefined> {
+        if (!envVar.id) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "An environment variable with this ID could not be found");
+        }
+
+        return await this.transaction(async (_, ctx) => {
+            const envVarRepo = ctx.entityManager.getRepository<DBUserEnvVar>(DBUserEnvVar);
+
+            await envVarRepo.update(
+                { id: envVar.id, userId, deleted: false },
+                filter(envVar, (_, v) => v !== null && v !== undefined),
+            );
+
+            const found = await envVarRepo.findOne({ id: envVar.id, userId, deleted: false });
+            return found;
+        });
     }
 
     public async getEnvVars(userId: string): Promise<UserEnvVar[]> {
@@ -426,25 +433,24 @@ export class TypeORMUserDBImpl implements UserDB {
     }
 
     public async deleteEnvVar(envVar: UserEnvVar): Promise<void> {
-        envVar.deleted = true;
         const repo = await this.getUserEnvVarRepo();
-        await repo.save(envVar);
+        await repo.update({ userId: envVar.userId, id: envVar.id }, { deleted: true });
     }
 
     public async hasSSHPublicKey(userId: string): Promise<boolean> {
         const repo = await this.getSSHPublicKeyRepo();
-        return !!(await repo.findOne({ where: { userId, deleted: false } }));
+        return !!(await repo.findOne({ where: { userId } }));
     }
 
     public async getSSHPublicKeys(userId: string): Promise<UserSSHPublicKey[]> {
         const repo = await this.getSSHPublicKeyRepo();
-        return repo.find({ where: { userId, deleted: false }, order: { creationTime: "ASC" } });
+        return repo.find({ where: { userId }, order: { creationTime: "ASC" } });
     }
 
     public async addSSHPublicKey(userId: string, value: SSHPublicKeyValue): Promise<UserSSHPublicKey> {
         const repo = await this.getSSHPublicKeyRepo();
         const fingerprint = SSHPublicKeyValue.getFingerprint(value);
-        const allKeys = await repo.find({ where: { userId, deleted: false } });
+        const allKeys = await repo.find({ where: { userId } });
         const prevOne = allKeys.find((e) => e.fingerprint === fingerprint);
         if (!!prevOne) {
             throw new Error(`Key already in use`);
@@ -470,7 +476,7 @@ export class TypeORMUserDBImpl implements UserDB {
 
     public async deleteSSHPublicKey(userId: string, id: string): Promise<void> {
         const repo = await this.getSSHPublicKeyRepo();
-        await repo.update({ userId, id }, { deleted: true });
+        await repo.delete({ userId, id });
     }
 
     public async findAllUsers(
@@ -572,7 +578,7 @@ export class TypeORMUserDBImpl implements UserDB {
         const scopes = accessToken.scopes.map((s) => s.name);
 
         // Does the token already exist?
-        var dbToken: GitpodToken;
+        let dbToken: GitpodToken;
         const tokenHash = crypto.createHash("sha256").update(accessToken.accessToken, "utf8").digest("hex");
         const userAndToken = await this.findUserByGitpodToken(tokenHash);
         if (userAndToken) {
@@ -602,7 +608,7 @@ export class TypeORMUserDBImpl implements UserDB {
     }
     async revoke(accessTokenToken: OAuthToken): Promise<void> {
         const tokenHash = crypto.createHash("sha256").update(accessTokenToken.accessToken, "utf8").digest("hex");
-        this.deleteGitpodToken(tokenHash);
+        await this.deleteGitpodToken(tokenHash);
     }
     async isRefreshTokenRevoked(refreshToken: OAuthToken): Promise<boolean> {
         return Date.now() > (refreshToken.refreshTokenExpiresAt?.getTime() ?? 0);
@@ -654,18 +660,16 @@ export class TypeORMUserDBImpl implements UserDB {
         }
         return this.mapDBUserToUser(result);
     }
-}
 
-export class TransactionalUserDBImpl extends TypeORMUserDBImpl {
-    constructor(
-        protected readonly manager: EntityManager,
-        protected readonly cache: DataCache,
-        protected readonly encryptionService: EncryptionService,
-    ) {
-        super();
-    }
-
-    async getEntityManager(): Promise<EntityManager> {
-        return this.manager;
+    async findUserIdsNotYetMigratedToFgaVersion(fgaRelationshipsVersion: number, limit: number): Promise<string[]> {
+        const userRepo = await this.getUserRepo();
+        const users = await userRepo
+            .createQueryBuilder("user")
+            .where("fgaRelationshipsVersion != :fgaRelationshipsVersion", { fgaRelationshipsVersion })
+            .andWhere("markedDeleted != true")
+            .orderBy("_lastModified", "DESC")
+            .limit(limit)
+            .getMany();
+        return users.map((user) => user.id).filter((id) => !isBuiltinUser(id));
     }
 }

@@ -2,6 +2,7 @@ dist/
 components/*/lib/
 components/ee/*/lib/
 components/*/typescript/lib/
+components/*/typescript-*/lib/
 components/local-app-api/*/lib/
 components/supervisor/frontend/lib/
 src-gen/

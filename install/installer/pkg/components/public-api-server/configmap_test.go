@@ -41,7 +41,7 @@ func TestConfigMap(t *testing.T) {
 	})
 
 	expectedConfiguration := config.Configuration{
-		PublicURL:                         fmt.Sprintf("https://api.%s", ctx.Config.Domain),
+		PublicURL:                         fmt.Sprintf("https://services.%s", ctx.Config.Domain),
 		GitpodServiceURL:                  fmt.Sprintf("ws://server.%s.svc.cluster.local:3000", ctx.Namespace),
 		BillingServiceAddress:             fmt.Sprintf("usage.%s.svc.cluster.local:9001", ctx.Namespace),
 		SessionServiceAddress:             fmt.Sprintf("server.%s.svc.cluster.local:9876", ctx.Namespace),
@@ -63,7 +63,7 @@ func TestConfigMap(t *testing.T) {
 				LifetimeSeconds: int64((24 * 7 * time.Hour).Seconds()),
 				Issuer:          "https://test.domain.everything.awesome.is",
 				Cookie: config.CookieConfig{
-					Name:     "_test_domain_everything_awesome_is_jwt_",
+					Name:     "_test_domain_everything_awesome_is_jwt2_",
 					MaxAge:   int64((24 * 7 * time.Hour).Seconds()),
 					SameSite: "lax",
 					Secure:   true,

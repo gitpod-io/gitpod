@@ -154,8 +154,7 @@ func ImagePullSecrets(key string, ctx *common.RenderContext) string {
 			pullSecrets = append(pullSecrets, i.Name)
 		}
 
-		// Helm array nomenclature
-		return KeyValue(key, fmt.Sprintf("{%s}", strings.Join(pullSecrets, ",")))
+		return KeyValueArray(key, pullSecrets)
 	}
 
 	// Nothing to be set

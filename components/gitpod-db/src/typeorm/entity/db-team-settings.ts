@@ -18,6 +18,9 @@ export class DBOrgSettings implements OrganizationSettings {
     })
     workspaceSharingDisabled?: boolean;
 
+    @Column("varchar", { nullable: true })
+    defaultWorkspaceImage?: string | null;
+
     @Column()
     deleted: boolean;
 }

@@ -7,7 +7,6 @@
 import { Attributes, Client } from "./types";
 import { User as ConfigCatUser } from "configcat-common/lib/RolloutEvaluator";
 import { IConfigCatClient } from "configcat-common/lib/ConfigCatClient";
-import { User } from "../protocol";
 
 export const USER_ID_ATTRIBUTE = "user_id";
 export const PROJECT_ID_ATTRIBUTE = "project_id";
@@ -17,14 +16,17 @@ export const BILLING_TIER_ATTRIBUTE = "billing_tier";
 export const GITPOD_HOST = "gitpod_host";
 
 export class ConfigCatClient implements Client {
-    private client: IConfigCatClient;
-
-    constructor(cc: IConfigCatClient) {
-        this.client = cc;
-    }
+    constructor(private readonly client: IConfigCatClient, private readonly gitpodHost?: string) {}
 
     getValueAsync<T>(experimentName: string, defaultValue: T, attributes: Attributes): Promise<T> {
-        return this.client.getValueAsync(experimentName, defaultValue, attributesToUser(attributes));
+        return this.client.getValueAsync(
+            experimentName,
+            defaultValue,
+            attributesToUser({
+                gitpodHost: this.gitpodHost,
+                ...attributes,
+            }),
+        );
     }
 
     dispose(): void {
@@ -34,7 +36,7 @@ export class ConfigCatClient implements Client {
 
 export function attributesToUser(attributes: Attributes): ConfigCatUser {
     const userId = attributes.user?.id || "";
-    const email = User.is(attributes.user) ? User.getPrimaryEmail(attributes.user) : attributes.user?.email || "";
+    const email = attributes.user?.email || "";
 
     const custom: { [key: string]: string } = {};
     if (userId) {

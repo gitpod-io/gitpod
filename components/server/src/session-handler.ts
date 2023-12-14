@@ -4,22 +4,26 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
-import * as websocket from "ws";
-import { injectable, inject } from "inversify";
+import express from "express";
+import { inject, injectable } from "inversify";
+import websocket from "ws";
 
+import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Config } from "./config";
-import { reportJWTCookieIssued } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
-import { UserDB } from "@gitpod/gitpod-db/lib";
+import { Config } from "./config";
 import { WsNextFunction, WsRequestHandler } from "./express/ws-handler";
+import { reportJWTCookieIssued } from "./prometheus-metrics";
+import { UserService } from "./user/user-service";
+import { JwtPayload } from "jsonwebtoken";
 
 @injectable()
 export class SessionHandler {
+    static JWT_REFRESH_THRESHOLD = 60 * 60 * 1000; // 1 hour
+
     @inject(Config) protected readonly config: Config;
     @inject(AuthJWT) protected readonly authJWT: AuthJWT;
-    @inject(UserDB) protected userDb: UserDB;
+    @inject(UserService) protected userService: UserService;
 
     public jwtSessionConvertor(): express.Handler {
         return async (req, res) => {
@@ -47,10 +51,9 @@ export class SessionHandler {
 
                     const issuedAtMs = (decoded.iat || 0) * 1000;
                     const now = new Date();
-                    const thresholdMs = 60 * 60 * 1000; // 1 hour
 
                     // Was the token issued more than threshold ago?
-                    if (issuedAtMs + thresholdMs < now.getTime()) {
+                    if (issuedAtMs + SessionHandler.JWT_REFRESH_THRESHOLD < now.getTime()) {
                         // issue a new one, to refresh it
                         const cookie = await this.createJWTSessionCookie(user.id);
                         res.cookie(cookie.name, cookie.value, cookie.opts);
@@ -90,48 +93,62 @@ export class SessionHandler {
     // On failure, the next handler is called and the `req.user` is not set. Some APIs/Websocket RPCs do
     // not require authentication, and as such we cannot fail the request at this stage.
     protected async handler(req: express.Request, next: express.NextFunction): Promise<void> {
-        const cookies = parseCookieHeader(req.headers.cookie || "");
-        const jwtToken = cookies[this.getJWTCookieName(this.config)];
-        if (!jwtToken) {
-            log.debug("No JWT session present on request");
-            next();
-            return;
+        const user = await this.verify(req.headers.cookie || "");
+        if (user) {
+            // We set the user object on the request to signal the user is authenticated.
+            // Passport uses the `user` property on the request to determine if the session
+            // is authenticated.
+            req.user = user;
         }
 
+        next();
+    }
+
+    async verify(cookie: string): Promise<User | undefined> {
         try {
-            const claims = await this.authJWT.verify(jwtToken);
-            log.debug("JWT Session token verified", {
-                claims,
-            });
+            const claims = await this.verifyJWTCookie(cookie);
+            if (!claims) {
+                return undefined;
+            }
 
             const subject = claims.sub;
             if (!subject) {
                 throw new Error("Subject is missing from JWT session claims");
             }
 
-            const user = await this.userDb.findUserById(subject);
-            if (!user) {
-                throw new Error("No user exists.");
-            }
-
-            // We set the user object on the request to signal the user is authenticated.
-            // Passport uses the `user` property on the request to determine if the session
-            // is authenticated.
-            req.user = user;
-
-            // Trigger the next middleware in the chain.
-            next();
+            return await this.userService.findUserById(subject, subject);
         } catch (err) {
             log.warn("Failed to authenticate user with JWT Session", err);
             // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
-            next();
+            return undefined;
         }
+    }
+
+    async verifyJWTCookie(cookie: string): Promise<JwtPayload | undefined> {
+        const cookies = parseCookieHeader(cookie);
+        const jwtToken = cookies[this.getJWTCookieName(this.config)];
+        if (!jwtToken) {
+            log.debug("No JWT session present on request");
+            return undefined;
+        }
+        const claims = await this.authJWT.verify(jwtToken);
+        log.debug("JWT Session token verified", { claims });
+        return claims;
     }
 
     public async createJWTSessionCookie(
         userID: string,
+        // only for testing
+        options?: {
+            issuedAtMs?: number;
+            expirySeconds?: number;
+        },
     ): Promise<{ name: string; value: string; opts: express.CookieOptions }> {
-        const token = await this.authJWT.sign(userID, {});
+        const payload = {};
+        if (options?.issuedAtMs) {
+            Object.assign(payload, { iat: Math.floor(options.issuedAtMs / 1000) });
+        }
+        const token = await this.authJWT.sign(userID, payload, options?.expirySeconds);
 
         return {
             name: this.getJWTCookieName(this.config),

@@ -91,7 +91,7 @@ func hookSetupWorkspaceLocation(ctx context.Context, ws *session.Workspace) (err
 		// in the very unlikely event that the workspace Pod did not mount (and thus create) the workspace directory, create it
 		err = os.Mkdir(location, 0755)
 		if os.IsExist(err) {
-			log.WithError(err).WithField("location", location).Debug("ran into non-atomic workspace location existence check")
+			log.WithError(err).WithFields(ws.OWI()).WithField("location", location).Debug("ran into non-atomic workspace location existence check")
 		} else if err != nil {
 			return xerrors.Errorf("cannot create workspace: %w", err)
 		}

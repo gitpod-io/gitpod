@@ -1,0 +1,15 @@
+{
+    "result": {
+        "id": "123",
+        "settings": {
+            "prebuilds": {
+                "enable": true,
+                "prebuildInterval": 5
+            },
+            "workspaceClasses": {
+                "regular": "huge"
+            }
+        }
+    },
+    "err": ""
+}

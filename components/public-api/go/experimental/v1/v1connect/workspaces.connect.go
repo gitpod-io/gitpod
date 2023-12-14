@@ -54,6 +54,10 @@ type WorkspacesServiceClient interface {
 	// Deleted workspaces cannot be started again.
 	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
 	UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error)
+	// ListWorkspaceClasses enumerates all available workspace classes.
+	ListWorkspaceClasses(context.Context, *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error)
+	// GetDefaultWorkspaceImage returns the default workspace image from different sources.
+	GetDefaultWorkspaceImage(context.Context, *connect_go.Request[v1.GetDefaultWorkspaceImageRequest]) (*connect_go.Response[v1.GetDefaultWorkspaceImageResponse], error)
 }
 
 // NewWorkspacesServiceClient constructs a client for the gitpod.experimental.v1.WorkspacesService
@@ -111,20 +115,32 @@ func NewWorkspacesServiceClient(httpClient connect_go.HTTPClient, baseURL string
 			baseURL+"/gitpod.experimental.v1.WorkspacesService/UpdatePort",
 			opts...,
 		),
+		listWorkspaceClasses: connect_go.NewClient[v1.ListWorkspaceClassesRequest, v1.ListWorkspaceClassesResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.WorkspacesService/ListWorkspaceClasses",
+			opts...,
+		),
+		getDefaultWorkspaceImage: connect_go.NewClient[v1.GetDefaultWorkspaceImageRequest, v1.GetDefaultWorkspaceImageResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.WorkspacesService/GetDefaultWorkspaceImage",
+			opts...,
+		),
 	}
 }
 
 // workspacesServiceClient implements WorkspacesServiceClient.
 type workspacesServiceClient struct {
-	listWorkspaces          *connect_go.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
-	getWorkspace            *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
-	streamWorkspaceStatus   *connect_go.Client[v1.StreamWorkspaceStatusRequest, v1.StreamWorkspaceStatusResponse]
-	getOwnerToken           *connect_go.Client[v1.GetOwnerTokenRequest, v1.GetOwnerTokenResponse]
-	createAndStartWorkspace *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
-	startWorkspace          *connect_go.Client[v1.StartWorkspaceRequest, v1.StartWorkspaceResponse]
-	stopWorkspace           *connect_go.Client[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse]
-	deleteWorkspace         *connect_go.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
-	updatePort              *connect_go.Client[v1.UpdatePortRequest, v1.UpdatePortResponse]
+	listWorkspaces           *connect_go.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
+	getWorkspace             *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
+	streamWorkspaceStatus    *connect_go.Client[v1.StreamWorkspaceStatusRequest, v1.StreamWorkspaceStatusResponse]
+	getOwnerToken            *connect_go.Client[v1.GetOwnerTokenRequest, v1.GetOwnerTokenResponse]
+	createAndStartWorkspace  *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
+	startWorkspace           *connect_go.Client[v1.StartWorkspaceRequest, v1.StartWorkspaceResponse]
+	stopWorkspace            *connect_go.Client[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse]
+	deleteWorkspace          *connect_go.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
+	updatePort               *connect_go.Client[v1.UpdatePortRequest, v1.UpdatePortResponse]
+	listWorkspaceClasses     *connect_go.Client[v1.ListWorkspaceClassesRequest, v1.ListWorkspaceClassesResponse]
+	getDefaultWorkspaceImage *connect_go.Client[v1.GetDefaultWorkspaceImageRequest, v1.GetDefaultWorkspaceImageResponse]
 }
 
 // ListWorkspaces calls gitpod.experimental.v1.WorkspacesService.ListWorkspaces.
@@ -172,6 +188,16 @@ func (c *workspacesServiceClient) UpdatePort(ctx context.Context, req *connect_g
 	return c.updatePort.CallUnary(ctx, req)
 }
 
+// ListWorkspaceClasses calls gitpod.experimental.v1.WorkspacesService.ListWorkspaceClasses.
+func (c *workspacesServiceClient) ListWorkspaceClasses(ctx context.Context, req *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error) {
+	return c.listWorkspaceClasses.CallUnary(ctx, req)
+}
+
+// GetDefaultWorkspaceImage calls gitpod.experimental.v1.WorkspacesService.GetDefaultWorkspaceImage.
+func (c *workspacesServiceClient) GetDefaultWorkspaceImage(ctx context.Context, req *connect_go.Request[v1.GetDefaultWorkspaceImageRequest]) (*connect_go.Response[v1.GetDefaultWorkspaceImageResponse], error) {
+	return c.getDefaultWorkspaceImage.CallUnary(ctx, req)
+}
+
 // WorkspacesServiceHandler is an implementation of the gitpod.experimental.v1.WorkspacesService
 // service.
 type WorkspacesServiceHandler interface {
@@ -198,6 +224,10 @@ type WorkspacesServiceHandler interface {
 	// Deleted workspaces cannot be started again.
 	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
 	UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error)
+	// ListWorkspaceClasses enumerates all available workspace classes.
+	ListWorkspaceClasses(context.Context, *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error)
+	// GetDefaultWorkspaceImage returns the default workspace image from different sources.
+	GetDefaultWorkspaceImage(context.Context, *connect_go.Request[v1.GetDefaultWorkspaceImageRequest]) (*connect_go.Response[v1.GetDefaultWorkspaceImageResponse], error)
 }
 
 // NewWorkspacesServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -252,6 +282,16 @@ func NewWorkspacesServiceHandler(svc WorkspacesServiceHandler, opts ...connect_g
 		svc.UpdatePort,
 		opts...,
 	))
+	mux.Handle("/gitpod.experimental.v1.WorkspacesService/ListWorkspaceClasses", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.WorkspacesService/ListWorkspaceClasses",
+		svc.ListWorkspaceClasses,
+		opts...,
+	))
+	mux.Handle("/gitpod.experimental.v1.WorkspacesService/GetDefaultWorkspaceImage", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.WorkspacesService/GetDefaultWorkspaceImage",
+		svc.GetDefaultWorkspaceImage,
+		opts...,
+	))
 	return "/gitpod.experimental.v1.WorkspacesService/", mux
 }
 
@@ -292,4 +332,12 @@ func (UnimplementedWorkspacesServiceHandler) DeleteWorkspace(context.Context, *c
 
 func (UnimplementedWorkspacesServiceHandler) UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.UpdatePort is not implemented"))
+}
+
+func (UnimplementedWorkspacesServiceHandler) ListWorkspaceClasses(context.Context, *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.ListWorkspaceClasses is not implemented"))
+}
+
+func (UnimplementedWorkspacesServiceHandler) GetDefaultWorkspaceImage(context.Context, *connect_go.Request[v1.GetDefaultWorkspaceImageRequest]) (*connect_go.Response[v1.GetDefaultWorkspaceImageResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.GetDefaultWorkspaceImage is not implemented"))
 }

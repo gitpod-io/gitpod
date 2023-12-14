@@ -4,10 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
+import express from "express";
 import { postConstruct, injectable, inject } from "inversify";
-import { ProjectDB, TeamDB, UserDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
-import { Project, User, StartPrebuildResult, CommitContext, CommitInfo, WebhookEvent } from "@gitpod/gitpod-protocol";
+import { TeamDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
+import { Project, User, CommitContext, CommitInfo, WebhookEvent } from "@gitpod/gitpod-protocol";
 import { PrebuildManager } from "./prebuild-manager";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TokenService } from "../user/token-service";
@@ -16,19 +16,26 @@ import { GitlabService } from "./gitlab-service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { ContextParser } from "../workspace/context-parser-service";
 import { RepoURL } from "../repohost";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { UserService } from "../user/user-service";
+import { ProjectsService } from "../projects/projects-service";
+import { runWithSubjectId } from "../util/request-context";
+import { SubjectId } from "../auth/subject-id";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 
 @injectable()
 export class GitLabApp {
-    @inject(UserDB) protected readonly userDB: UserDB;
-    @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
-    @inject(TokenService) protected readonly tokenService: TokenService;
-    @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
-    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
-    @inject(TeamDB) protected readonly teamDB: TeamDB;
-    @inject(ContextParser) protected readonly contextParser: ContextParser;
-    @inject(WebhookEventDB) protected readonly webhookEvents: WebhookEventDB;
+    constructor(
+        @inject(UserService) private readonly userService: UserService,
+        @inject(PrebuildManager) private readonly prebuildManager: PrebuildManager,
+        @inject(HostContextProvider) private readonly hostCtxProvider: HostContextProvider,
+        @inject(TeamDB) private readonly teamDB: TeamDB,
+        @inject(ContextParser) private readonly contextParser: ContextParser,
+        @inject(WebhookEventDB) private readonly webhookEvents: WebhookEventDB,
+        @inject(ProjectsService) private readonly projectService: ProjectsService,
+    ) {}
 
-    protected _router = express.Router();
+    private _router = express.Router();
     public static path = "/apps/gitlab/";
 
     @postConstruct()
@@ -95,11 +102,11 @@ export class GitLabApp {
         });
     }
 
-    protected async findUser(ctx: TraceContext, context: GitLabPushHook, secretToken: string): Promise<User> {
+    private async findUser(ctx: TraceContext, context: GitLabPushHook, secretToken: string): Promise<User> {
         const span = TraceContext.startSpan("GitLapApp.findUser", ctx);
         try {
             const [userid, tokenValue] = secretToken.split("|");
-            const user = await this.userDB.findUserById(userid);
+            const user = await this.userService.findUserById(userid, userid);
             if (!user) {
                 throw new Error("No user found for " + secretToken + " found.");
             } else if (!!user.blocked) {
@@ -109,7 +116,7 @@ export class GitLabApp {
             if (!identity) {
                 throw new Error(`User ${user.id} has no identity for '${TokenService.GITPOD_AUTH_PROVIDER_ID}'.`);
             }
-            const tokens = await this.userDB.findTokensForIdentity(identity);
+            const tokens = await this.userService.findTokensForIdentity(userid, identity);
             const token = tokens.find((t) => t.token.value === tokenValue);
             if (!token) {
                 throw new Error(`User ${user.id} has no token with given value.`);
@@ -128,66 +135,75 @@ export class GitLabApp {
         }
     }
 
-    protected async handlePushHook(
+    private async handlePushHook(
         ctx: TraceContext,
         body: GitLabPushHook,
         user: User,
         event: WebhookEvent,
-    ): Promise<StartPrebuildResult | undefined> {
+    ): Promise<void> {
         const span = TraceContext.startSpan("GitLapApp.handlePushHook", ctx);
         try {
-            const contextURL = this.createContextUrl(body);
-            log.debug({ userId: user.id }, "GitLab push hook: Context URL", { context: body, contextURL });
-            span.setTag("contextURL", contextURL);
-            const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
-            const projectAndOwner = await this.findProjectAndOwner(context.repository.cloneUrl, user);
-            if (projectAndOwner.project) {
-                /* tslint:disable-next-line */
-                /** no await */ this.projectDB
-                    .updateProjectUsage(projectAndOwner.project.id, {
-                        lastWebhookReceived: new Date().toISOString(),
-                    })
-                    .catch((e) => log.error(e));
-            }
-            await this.webhookEvents.updateEvent(event.id, {
-                authorizedUserId: user.id,
-                projectId: projectAndOwner?.project?.id,
-                cloneUrl: context.repository.cloneUrl,
-                branch: context.ref,
-                commit: context.revision,
-            });
-
-            const config = await this.prebuildManager.fetchConfig({ span }, user, context);
-            if (!this.prebuildManager.shouldPrebuild(config)) {
-                log.debug({ userId: user.id }, "GitLab push hook: There is no prebuild config.", {
-                    context: body,
-                    contextURL,
-                });
-                await this.webhookEvents.updateEvent(event.id, {
-                    prebuildStatus: "ignored_unconfigured",
-                    status: "processed",
-                });
-                return undefined;
-            }
-
-            log.debug({ userId: user.id }, "GitLab push hook: Starting prebuild", { body, contextURL });
-
-            const commitInfo = await this.getCommitInfo(user, body.repository.git_http_url, body.after);
-            const ws = await this.prebuildManager.startPrebuild(
-                { span },
-                {
-                    user: projectAndOwner.user || user,
-                    project: projectAndOwner.project,
-                    context,
-                    commitInfo,
-                },
+            const cloneUrl = this.getCloneUrl(body);
+            const projects = await runWithSubjectId(SYSTEM_USER, () =>
+                this.projectService.findProjectsByCloneUrl(SYSTEM_USER_ID, cloneUrl),
             );
-            await this.webhookEvents.updateEvent(event.id, {
-                prebuildStatus: "prebuild_triggered",
-                status: "processed",
-                prebuildId: ws.prebuildId,
-            });
-            return ws;
+            for (const project of projects) {
+                try {
+                    const projectOwner = await this.findProjectOwner(project, user);
+
+                    const contextURL = this.createBranchContextUrl(body);
+                    log.debug({ userId: user.id }, "GitLab push hook: Context URL", { context: body, contextURL });
+                    span.setTag("contextURL", contextURL);
+                    const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
+
+                    await this.webhookEvents.updateEvent(event.id, {
+                        authorizedUserId: user.id,
+                        projectId: project?.id,
+                        cloneUrl: context.repository.cloneUrl,
+                        branch: context.ref,
+                        commit: context.revision,
+                    });
+
+                    const config = await this.prebuildManager.fetchConfig({ span }, user, context, project?.teamId);
+                    const prebuildPrecondition = this.prebuildManager.checkPrebuildPrecondition({
+                        config,
+                        project,
+                        context,
+                    });
+                    if (!prebuildPrecondition.shouldRun) {
+                        log.info("GitLab push event: No prebuild.", { config, context });
+                        await this.webhookEvents.updateEvent(event.id, {
+                            prebuildStatus: "ignored_unconfigured",
+                            status: "processed",
+                            message: prebuildPrecondition.reason,
+                        });
+                        continue;
+                    }
+
+                    log.debug({ userId: user.id }, "GitLab push event: Starting prebuild", { body, contextURL });
+
+                    const workspaceUser = projectOwner || user;
+                    await runWithSubjectId(SubjectId.fromUserId(workspaceUser.id), async () => {
+                        const commitInfo = await this.getCommitInfo(user, body.repository.git_http_url, body.after);
+                        const ws = await this.prebuildManager.startPrebuild(
+                            { span },
+                            {
+                                user: workspaceUser,
+                                project: project,
+                                context,
+                                commitInfo,
+                            },
+                        );
+                        await this.webhookEvents.updateEvent(event.id, {
+                            prebuildStatus: "prebuild_triggered",
+                            status: "processed",
+                            prebuildId: ws.prebuildId,
+                        });
+                    });
+                } catch (error) {
+                    log.error("Error processing GitLab webhook event", error);
+                }
+            }
         } catch (e) {
             log.error("Error processing GitLab webhook event", e, body);
             await this.webhookEvents.updateEvent(event.id, {
@@ -225,50 +241,41 @@ export class GitLabApp {
      * @param webhookInstaller the user account known from the webhook installation
      * @returns a promise which resolves to a user account and an optional project.
      */
-    protected async findProjectAndOwner(
-        cloneURL: string,
-        webhookInstaller: User,
-    ): Promise<{ user: User; project?: Project }> {
-        const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
-        if (project) {
-            if (project.userId) {
-                const user = await this.userDB.findUserById(project.userId);
-                if (user) {
-                    return { user, project };
-                }
-            } else if (project.teamId) {
-                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || "");
-                if (teamMembers.some((t) => t.userId === webhookInstaller.id)) {
-                    return { user: webhookInstaller, project };
-                }
-                for (const teamMember of teamMembers) {
-                    const user = await this.userDB.findUserById(teamMember.userId);
-                    if (user && user.identities.some((i) => i.authProviderId === "Public-GitLab")) {
-                        return { user, project };
-                    }
+    private async findProjectOwner(project: Project, webhookInstaller: User): Promise<User> {
+        try {
+            if (!project.teamId) {
+                throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Project has no teamId.");
+            }
+            const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || "");
+            if (teamMembers.some((t) => t.userId === webhookInstaller.id)) {
+                return webhookInstaller;
+            }
+            for (const teamMember of teamMembers) {
+                const user = await runWithSubjectId(SubjectId.fromUserId(teamMember.userId), () =>
+                    this.userService.findUserById(teamMember.userId, teamMember.userId),
+                );
+                if (user && user.identities.some((i) => i.authProviderId === "Public-GitLab")) {
+                    return user;
                 }
             }
+        } catch (err) {
+            log.info({ userId: webhookInstaller.id }, "Failed to find project and owner", err);
         }
-        return { user: webhookInstaller };
+        return webhookInstaller;
     }
 
-    protected createContextUrl(body: GitLabPushHook) {
+    private createBranchContextUrl(body: GitLabPushHook) {
         const repoUrl = body.repository.git_http_url;
         const contextURL = `${repoUrl.substr(0, repoUrl.length - 4)}/-/tree${body.ref.substr("refs/head/".length)}`;
         return contextURL;
     }
 
-    get router(): express.Router {
-        return this._router;
+    private getCloneUrl(body: GitLabPushHook) {
+        return body.repository.git_http_url;
     }
 
-    protected getBranchFromRef(ref: string): string | undefined {
-        const headsPrefix = "refs/heads/";
-        if (ref.startsWith(headsPrefix)) {
-            return ref.substring(headsPrefix.length);
-        }
-
-        return undefined;
+    get router(): express.Router {
+        return this._router;
     }
 }
 

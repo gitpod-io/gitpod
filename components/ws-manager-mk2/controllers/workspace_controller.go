@@ -8,10 +8,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,9 +27,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/source"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -72,7 +74,6 @@ type WorkspaceReconciler struct {
 	metrics     *controllerMetrics
 	maintenance maintenance.Maintenance
 	Recorder    record.EventRecorder
-	OnReconcile func(ctx context.Context, ws *workspacev1.Workspace)
 }
 
 //+kubebuilder:rbac:groups=workspace.gitpod.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
@@ -95,7 +96,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	var workspace workspacev1.Workspace
 	if err := r.Get(ctx, req.NamespacedName, &workspace); err != nil {
-		if !errors.IsNotFound(err) {
+		if !apierrors.IsNotFound(err) {
 			log.Error(err, "unable to fetch workspace")
 		}
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
@@ -108,18 +109,9 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		workspace.Status.Conditions = []metav1.Condition{}
 	}
 
-	if r.OnReconcile != nil {
-		// Publish to subscribers in a goroutine, to prevent blocking the main reconcile loop.
-		ws := workspace.DeepCopy()
-		go func() {
-			r.OnReconcile(ctx, ws)
-		}()
-	}
+	log.V(2).Info("reconciling workspace", "workspace", req.NamespacedName, "phase", workspace.Status.Phase)
 
-	log.Info("reconciling workspace", "workspace", req.NamespacedName, "phase", workspace.Status.Phase)
-
-	var workspacePods corev1.PodList
-	err := r.List(ctx, &workspacePods, client.InNamespace(req.Namespace), client.MatchingFields{wsOwnerKey: req.Name})
+	workspacePods, err := r.listWorkspacePods(ctx, &workspace)
 	if err != nil {
 		log.Error(err, "unable to list workspace pods")
 		return ctrl.Result{}, fmt.Errorf("failed to list workspace pods: %w", err)
@@ -138,7 +130,11 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if len(workspacePods.Items) > 0 {
 		podStatus = &workspacePods.Items[0].Status
 	}
-	log.Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus)
+
+	if !equality.Semantic.DeepDerivative(oldStatus, workspace.Status) {
+		log.Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus)
+	}
+
 	err = r.Status().Update(ctx, &workspace)
 	if err != nil {
 		return errorResultLogConflict(log, fmt.Errorf("failed to update workspace status: %w", err))
@@ -152,7 +148,17 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	return result, nil
 }
 
-func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods corev1.PodList) (ctrl.Result, error) {
+func (r *WorkspaceReconciler) listWorkspacePods(ctx context.Context, ws *workspacev1.Workspace) (*corev1.PodList, error) {
+	var workspacePods corev1.PodList
+	err := r.List(ctx, &workspacePods, client.InNamespace(ws.Namespace), client.MatchingFields{wsOwnerKey: ws.Name})
+	if err != nil {
+		return nil, err
+	}
+
+	return &workspacePods, nil
+}
+
+func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods *corev1.PodList) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
 	if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped && !r.metrics.containsWorkspace(workspace) {
@@ -180,11 +186,9 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				return ctrl.Result{}, err
 			}
 
-			log.Info("creating workspace Pod for Workspace")
 			err = r.Create(ctx, pod)
-			if errors.IsAlreadyExists(err) {
+			if apierrors.IsAlreadyExists(err) {
 				// pod exists, we're good
-				log.Info("Workspace Pod already exists")
 			} else if err != nil {
 				log.Error(err, "unable to create Pod for Workspace", "pod", pod)
 				return ctrl.Result{Requeue: true}, err
@@ -256,7 +260,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		err := r.Client.Delete(ctx, pod, &client.DeleteOptions{
 			GracePeriodSeconds: gracePeriodSeconds,
 		})
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			// pod is gone - nothing to do here
 		} else {
 			return ctrl.Result{Requeue: true}, err
@@ -281,7 +285,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		// Workspace was requested to be deleted, propagate by deleting the Pod.
 		// The Pod deletion will then trigger workspace disposal steps.
 		err := r.Client.Delete(ctx, pod)
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			// pod is gone - nothing to do here
 		} else {
 			return ctrl.Result{Requeue: true}, err
@@ -326,6 +330,20 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	if !lastState.recordedFailure && workspace.IsConditionTrue(workspacev1.WorkspaceConditionFailed) {
 		r.metrics.countWorkspaceFailure(&log, workspace)
 		lastState.recordedFailure = true
+	}
+
+	if lastState.pendingStartTime.IsZero() && workspace.Status.Phase == workspacev1.WorkspacePhasePending {
+		lastState.pendingStartTime = time.Now()
+	} else if !lastState.pendingStartTime.IsZero() && workspace.Status.Phase != workspacev1.WorkspacePhasePending {
+		r.metrics.recordWorkspacePendingTime(&log, workspace, lastState.pendingStartTime)
+		lastState.pendingStartTime = time.Time{}
+	}
+
+	if lastState.creatingStartTime.IsZero() && workspace.Status.Phase == workspacev1.WorkspacePhaseCreating {
+		lastState.creatingStartTime = time.Now()
+	} else if !lastState.creatingStartTime.IsZero() && workspace.Status.Phase != workspacev1.WorkspacePhaseCreating {
+		r.metrics.recordWorkspaceCreatingTime(&log, workspace, lastState.creatingStartTime)
+		lastState.creatingStartTime = time.Time{}
 	}
 
 	if !lastState.recordedContentReady && workspace.IsConditionTrue(workspacev1.WorkspaceConditionContentReady) {
@@ -392,13 +410,10 @@ func (r *WorkspaceReconciler) emitPhaseEvents(ctx context.Context, ws *workspace
 }
 
 func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev1.Pod, reason string) (ctrl.Result, error) {
-	log := log.FromContext(ctx).WithValues("pod", pod.Name, "reason", reason)
-	log.Info("deleting workspace pod")
-
 	// Workspace was requested to be deleted, propagate by deleting the Pod.
 	// The Pod deletion will then trigger workspace disposal steps.
 	err := r.Client.Delete(ctx, pod)
-	if errors.IsNotFound(err) {
+	if apierrors.IsNotFound(err) {
 		// pod is gone - nothing to do here
 	} else {
 		return ctrl.Result{Requeue: true}, err
@@ -440,10 +455,10 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 		Factor:   1.5,
 		Jitter:   0.2,
 		Steps:    3,
-	}, func() (bool, error) {
+	}, func(ctx context.Context) (bool, error) {
 		var secret corev1.Secret
 		err := r.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret)
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			// nothing to delete
 			return true, nil
 		}
@@ -454,7 +469,7 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 		}
 
 		err = r.Client.Delete(ctx, &secret)
-		if err != nil && !errors.IsNotFound(err) {
+		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error(err, "cannot delete secret", "secret", name)
 			return false, nil
 		}
@@ -470,8 +485,7 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 // For conflicts, instead a result with `Requeue: true` is returned, which has the same requeuing
 // behaviour as returning an error.
 func errorResultLogConflict(log logr.Logger, err error) (ctrl.Result, error) {
-	if errors.IsConflict(err) {
-		log.Info("conflict error, requeuing", "error", err.Error())
+	if apierrors.IsConflict(err) {
 		return ctrl.Result{RequeueAfter: 100 * time.Millisecond}, nil
 	} else {
 		return ctrl.Result{}, err
@@ -485,47 +499,46 @@ var (
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	idx := func(rawObj client.Object) []string {
-		// grab the job object, extract the owner...
-		job := rawObj.(*corev1.Pod)
-		owner := metav1.GetControllerOf(job)
-		if owner == nil {
-			return nil
-		}
-		// ...make sure it's a workspace...
-		if owner.APIVersion != apiGVStr || owner.Kind != "Workspace" {
-			return nil
-		}
-
-		// ...and if so, return it
-		return []string{owner.Name}
-	}
-	err := mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.Pod{}, wsOwnerKey, idx)
-	if err != nil {
-		return err
-	}
-
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("workspace").
 		WithOptions(controller.Options{
 			MaxConcurrentReconciles: r.Config.WorkspaceMaxConcurrentReconciles,
 		}).
 		For(&workspacev1.Workspace{}).
+		WithEventFilter(predicate.NewPredicateFuncs(func(object client.Object) bool {
+			_, ok := object.(*corev1.Node)
+			if ok {
+				return true
+			}
+
+			for k, v := range object.GetLabels() {
+				if k == wsk8s.WorkspaceManagedByLabel {
+					switch v {
+					case constants.ManagedBy:
+						return true
+					default:
+						return false
+					}
+				}
+			}
+
+			return true
+		})).
 		Owns(&corev1.Pod{}).
 		// Add a watch for Nodes, so that they're cached in memory and don't require calling the k8s API
 		// when reconciling workspaces.
-		Watches(&source.Kind{Type: &corev1.Node{}}, &handler.Funcs{
+		Watches(&corev1.Node{}, &handler.Funcs{
 			// Only enqueue events for workspaces when the node gets deleted,
 			// such that we can trigger their cleanup.
-			DeleteFunc: func(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
+			DeleteFunc: func(ctx context.Context, e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
 				if e.Object == nil {
 					return
 				}
 
 				var wsList workspacev1.WorkspaceList
-				err := r.List(context.Background(), &wsList)
+				err := r.List(ctx, &wsList)
 				if err != nil {
-					log.FromContext(context.Background()).Error(err, "cannot list workspaces")
+					log.FromContext(ctx).Error(err, "cannot list workspaces")
 					return
 				}
 				for _, ws := range wsList.Items {
@@ -540,4 +553,30 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			},
 		}).
 		Complete(r)
+}
+
+func SetupIndexer(mgr ctrl.Manager) error {
+	var err error
+	var once sync.Once
+	once.Do(func() {
+		idx := func(rawObj client.Object) []string {
+			// grab the job object, extract the owner...
+			job := rawObj.(*corev1.Pod)
+			owner := metav1.GetControllerOf(job)
+			if owner == nil {
+				return nil
+			}
+			// ...make sure it's a workspace...
+			if owner.APIVersion != apiGVStr || owner.Kind != "Workspace" {
+				return nil
+			}
+
+			// ...and if so, return it
+			return []string{owner.Name}
+		}
+
+		err = mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.Pod{}, wsOwnerKey, idx)
+	})
+
+	return err
 }

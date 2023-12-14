@@ -4,51 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-//#region heapdump
-/**
- * Make V8 heap snapshot by sending the server process a SIGUSR2 signal:
- * kill -s SIGUSR2 <pid>
- *
- * ***IMPORTANT***: making the dump requires memory twice the size of the heap
- * and can be a subject to OOM Killer.
- *
- * Snapshots are written to tmp folder and have `.heapsnapshot` extension.
- * Check server logs for the concrete filename.
- */
-
-interface GCService {
-    gc(full: boolean): void;
-}
-export function isGCService(arg: any): arg is GCService {
-    return !!arg && typeof arg === "object" && "gc" in arg;
-}
-
-import * as os from "os";
-import * as path from "path";
-import heapdump = require("heapdump");
-process.on("SIGUSR2", () => {
-    const service: any = global;
-    if (isGCService(service)) {
-        console.log("running full gc for heapdump");
-        try {
-            service.gc(true);
-        } catch (e) {
-            console.error("failed to run full gc for the heapdump", e);
-        }
-    } else {
-        console.warn("gc is not exposed, run node with --expose-gc");
-    }
-    const filename = path.join(os.tmpdir(), Date.now() + ".heapsnapshot");
-    console.log("preparing heapdump: " + filename);
-    heapdump.writeSnapshot(filename, (e) => {
-        if (e) {
-            console.error("failed to heapdump: ", e);
-        }
-        console.log("heapdump is written to ", filename);
-    });
-});
-//#endregion
-
 //#region cpu profile
 /**
  * Make cpu profile by sending the server process a SIGINFO signal:
@@ -62,6 +17,8 @@ process.on("SIGUSR2", () => {
 
 import { Session } from "inspector";
 import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 
 process.on("SIGUSR1", () => {
     const session = new Session();
@@ -94,18 +51,95 @@ if (typeof (Symbol as any).asyncIterator === "undefined") {
     (Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol("asyncIterator");
 }
 
-import * as express from "express";
+import express from "express";
 import { Container } from "inversify";
 import { Server } from "./server";
 import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { installLogCountMetric } from "@gitpod/gitpod-protocol/lib/util/logging-node";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { TypeORM } from "@gitpod/gitpod-db/lib";
+import { dbConnectionsEnqueued, dbConnectionsFree, dbConnectionsTotal } from "./prometheus-metrics";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { installCtxLogAugmenter } from "./util/log-context";
 if (process.env.NODE_ENV === "development") {
     require("longjohn");
 }
 
 log.enableJSONLogging("server", process.env.VERSION, LogrusLogLevel.getFromEnv());
+installCtxLogAugmenter();
+installLogCountMetric();
+
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+(async () => {
+    let isEnabled = await getExperimentsClientForBackend().getValueAsync("google_cloud_profiler", false, {});
+    while (!isEnabled) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        isEnabled = await getExperimentsClientForBackend().getValueAsync("google_cloud_profiler", false, {});
+    }
+    try {
+        const profiler = await import("@google-cloud/profiler");
+        // there is no way to stop it: https://github.com/googleapis/cloud-profiler-nodejs/issues/876
+        // disable google_cloud_profiler and cycle servers
+        await profiler.start({
+            serviceContext: {
+                service: "server",
+                version: process.env.VERSION,
+            },
+        });
+    } catch (err) {
+        console.error("failed to start cloud profiler", err);
+    }
+})();
 
 export async function start(container: Container) {
+    const server = container.get(Server);
+    const port = 3000;
+    const app = express();
+
+    process.on("uncaughtException", function (err) {
+        // fix for https://github.com/grpc/grpc-node/blob/master/packages/grpc-js/src/load-balancer-pick-first.ts#L309
+        if (err && err.message && err.message.includes("reading 'startConnecting'")) {
+            log.error("uncaughtException", err);
+        } else {
+            throw err;
+        }
+    });
+
+    let interval: NodeJS.Timeout;
+
+    try {
+        const connection = await container.get(TypeORM).getConnection();
+        const pool: any = (connection.driver as any).pool;
+        interval = setInterval(async () => {
+            try {
+                const activeConnections = pool._allConnections.length as number;
+                const freeConnections = pool._freeConnections.length as number;
+
+                dbConnectionsTotal.set(activeConnections);
+                dbConnectionsFree.set(freeConnections);
+            } catch (error) {
+                log.error("Error updating TypeORM metrics", error);
+            }
+        }, 5000);
+
+        pool.on("enqueue", function () {
+            try {
+                dbConnectionsEnqueued.inc();
+            } catch (error) {
+                log.error("Error updating TypeOrm metrics", error);
+            }
+        });
+    } catch (error) {
+        log.error("Error registering pool listener", error);
+    }
+
+    process.on("SIGTERM", async () => {
+        log.info("SIGTERM received, stopping");
+        clearInterval(interval);
+        await server.stop();
+        process.exit(0);
+    });
+
     const tracing = container.get(TracingManager);
     tracing.setup(process.env.JAEGER_SERVICE_NAME ?? "server", {
         perOpSampling: {
@@ -115,15 +149,6 @@ export async function start(container: Container) {
         },
     });
 
-    const server = container.get(Server);
-    const port = 3000;
-    const app = express();
-
     await server.init(app);
     await server.start(port);
-
-    process.on("SIGTERM", async () => {
-        log.info("SIGTERM received, stopping");
-        await server.stop();
-    });
 }

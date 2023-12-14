@@ -7,13 +7,15 @@
 import { useState } from "react";
 import Alert, { AlertType } from "../components/Alert";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
-import { getGitpodService } from "../service/service";
 import PhoneInput from "react-intl-tel-input";
 import "react-intl-tel-input/dist/main.css";
 import "./phone-input.css";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import { LinkButton } from "../components/LinkButton";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { verificationClient } from "../service/public-api";
+import { InputField } from "../components/forms/InputField";
+import { TextInputField } from "../components/forms/TextInputField";
 
 interface VerifyModalState {
     phoneNumber?: string;
@@ -41,7 +43,9 @@ export function VerifyModal() {
                     message: undefined,
                     sending: true,
                 });
-                const resp = await getGitpodService().server.sendPhoneNumberVerificationToken(state.phoneNumber || "");
+                const resp = await verificationClient.sendPhoneNumberVerificationToken({
+                    phoneNumber: state.phoneNumber || "",
+                });
                 setVerificationId(resp.verificationId);
                 setState({
                     ...state,
@@ -67,7 +71,7 @@ export function VerifyModal() {
                 title="User Validation Required"
                 buttons={
                     <div>
-                        <Button htmlType="submit" disabled={!state.phoneNumberValid || state.sending}>
+                        <Button type="submit" disabled={!state.phoneNumberValid || state.sending}>
                             {phoneVerificationByCall ? "Send Code via Voice call" : "Send Code via SMS"}
                         </Button>
                     </div>
@@ -91,8 +95,8 @@ export function VerifyModal() {
                 ) : (
                     <></>
                 )}
-                <div className="mt-4">
-                    <h4>Mobile Phone Number</h4>
+
+                <InputField label="Mobile Phone Number">
                     {/* HACK: Below we are adding a dummy dom element that is not visible, to reference the classes so they are not removed by purgeCSS. */}
                     <input type="tel" className="hidden intl-tel-input country-list" />
                     <PhoneInput
@@ -114,7 +118,7 @@ export function VerifyModal() {
                             });
                         }}
                     />
-                </div>
+                </InputField>
             </Modal>
         );
     } else if (!state.verified) {
@@ -123,11 +127,12 @@ export function VerifyModal() {
         };
         const verifyToken = async () => {
             try {
-                const verified = await getGitpodService().server.verifyPhoneNumberVerificationToken(
-                    state.phoneNumber!,
-                    state.token!,
+                const resp = await verificationClient.verifyPhoneNumberVerificationToken({
                     verificationId,
-                );
+                    token: state.token,
+                    phoneNumber: state.phoneNumber,
+                });
+                const verified = resp.verified;
                 if (verified) {
                     setState({
                         ...state,
@@ -171,7 +176,7 @@ export function VerifyModal() {
                 title="User Validation Required"
                 buttons={
                     <div>
-                        <Button htmlType="submit" disabled={!isTokenFilled()}>
+                        <Button type="submit" disabled={!isTokenFilled()}>
                             Validate Account
                         </Button>
                     </div>
@@ -199,23 +204,19 @@ export function VerifyModal() {
                 ) : (
                     <></>
                 )}
-                <div className="mt-4">
-                    <h4>Verification Code</h4>
-                    <input
-                        autoFocus={true}
-                        className="w-full"
-                        type="text"
-                        placeholder={
-                            phoneVerificationByCall ? "Enter code sent via phone call" : "Enter code sent via SMS"
-                        }
-                        onChange={(v) => {
-                            setState({
-                                ...state,
-                                token: v.currentTarget.value,
-                            });
-                        }}
-                    />
-                </div>
+                <TextInputField
+                    label="Verification Code"
+                    placeholder={phoneVerificationByCall ? "Enter code sent via phone call" : "Enter code sent via SMS"}
+                    type="text"
+                    value={state.token}
+                    autoFocus
+                    onChange={(val) => {
+                        setState({
+                            ...state,
+                            token: val,
+                        });
+                    }}
+                />
             </Modal>
         );
     } else {
@@ -231,7 +232,7 @@ export function VerifyModal() {
                     </Alert>
                 </ModalBody>
                 <ModalFooter>
-                    <Button htmlType="submit">Continue</Button>
+                    <Button type="submit">Continue</Button>
                 </ModalFooter>
             </Modal>
         );

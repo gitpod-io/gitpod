@@ -32,19 +32,5 @@ export function getAdminTabs(): TabEntry[] {
             title: "Blocked Email Domains",
             link: "/admin/blocked-email-domains",
         },
-        {
-            title: "Settings",
-            link: "/admin/settings",
-            alternatives: getAdminSettingsMenu().flatMap((e) => e.link),
-        },
-    ];
-}
-
-export function getAdminSettingsMenu() {
-    return [
-        {
-            title: "General",
-            link: ["/admin/settings"],
-        },
     ];
 }

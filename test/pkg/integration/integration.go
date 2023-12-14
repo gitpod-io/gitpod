@@ -20,6 +20,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -41,6 +42,7 @@ import (
 	"k8s.io/kubectl/pkg/cmd/util"
 	"sigs.k8s.io/e2e-framework/klient"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	ide "github.com/gitpod-io/gitpod/ide-service-api/config"
 	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
@@ -48,6 +50,10 @@ import (
 const (
 	connectFailureMaxTries = 5
 	errorDialingBackendEOF = "error dialing backend: EOF"
+)
+
+var (
+	errorNoPods = fmt.Errorf("no pods found")
 )
 
 type PodExec struct {
@@ -93,7 +99,7 @@ func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*by
 		err = copyOptions.Run()
 		if err != nil {
 			if !shouldRetry(count, err) {
-				return nil, nil, nil, fmt.Errorf("could not run copy operation: %v", err)
+				return nil, nil, nil, fmt.Errorf("could not run copy operation: %v. Stdout: %v, Stderr: %v", err, out.String(), errOut.String())
 			}
 			time.Sleep(10 * time.Second)
 			continue
@@ -200,27 +206,30 @@ type RpcClient struct {
 
 func (r *RpcClient) Call(serviceMethod string, args any, reply any) error {
 	var err error
-	var new *RpcClient
+	cl := r
 	for i := 0; i < connectFailureMaxTries; i++ {
-		if r != nil {
-			if err = r.client.Call(serviceMethod, args, reply); err != nil {
-				time.Sleep(10 * time.Second)
-				r.Close()
-				new, _, err = Instrument(r.component, r.agentName, r.namespace, r.kubeconfig, r.kclient, r.opts...)
-				if err != nil {
-					time.Sleep(10 * time.Second)
-					continue
-				}
-				r = new
-			}
-		} else {
-			new, _, err = Instrument(r.component, r.agentName, r.namespace, r.kubeconfig, r.kclient, r.opts...)
+		if cl == nil {
+			cl, _, err = Instrument(r.component, r.agentName, r.namespace, r.kubeconfig, r.kclient, r.opts...)
 			if err != nil {
+				log.Warnf("failed to re-instrument (attempt %d): %v", i, err)
 				time.Sleep(10 * time.Second)
 				continue
 			}
-			r = new
 		}
+
+		err = cl.client.Call(serviceMethod, args, reply)
+		if err == nil {
+			return nil
+		}
+
+		log.Warnf("rpc call %s failed (attempt %d): %v", serviceMethod, i, err)
+		if i == connectFailureMaxTries-1 {
+			return err
+		}
+
+		time.Sleep(10 * time.Second)
+		cl.Close()
+		cl = nil // Try to Instrument again next attempt
 	}
 	return err
 }
@@ -262,13 +271,17 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 			var err error
 			agentLoc, err = buildAgent(agentName)
 			if err != nil {
-				return nil, closer, err
+				return nil, closer, fmt.Errorf("failed to build agent: %w", err)
 			}
-			defer os.Remove(agentLoc)
 		}
 
 		podName, containerName, err = selectPod(component, options.SPO, namespace, client)
 		if err != nil {
+			if errors.Is(err, errorNoPods) {
+				// When there are no pods, assume that the component has already
+				// stopped, so return the error and don't retry.
+				return nil, closer, err
+			}
 			time.Sleep(10 * time.Second)
 			continue
 		}
@@ -282,7 +295,9 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		tgtFN := filepath.Base(agentLoc)
 		_, _, _, err = podExec.PodCopyFile(agentLoc, fmt.Sprintf("%s/%s:/home/gitpod/%s", namespace, podName, tgtFN), containerName)
 		if err != nil {
-			return nil, closer, err
+			log.WithError(err).Warnf("failed to copy agent to pod (attempt %d)", i)
+			time.Sleep(10 * time.Second)
+			continue
 		}
 
 		res, cl, err = portfw(podExec, kubeconfig, podName, namespace, containerName, tgtFN, options)
@@ -429,7 +444,10 @@ L:
 func shutdownAgent(podExec *PodExec, kubeconfig string, podName string, namespace string, containerName string) error {
 	cmd := []string{"curl", "localhost:8080/shutdown"}
 	_, _, _, err := podExec.ExecCmd(cmd, podName, namespace, containerName)
-	return err
+	if err != nil {
+		return fmt.Errorf("curl failed: %v", err)
+	}
+	return nil
 }
 
 func getFreePort() (int, error) {
@@ -447,7 +465,43 @@ func getFreePort() (int, error) {
 	return result.Port, nil
 }
 
+type agentBuildResult struct {
+	agentLoc string
+	err      error
+}
+
+var (
+	buildOnce   = make(map[string]*sync.Once)
+	buildMu     sync.Mutex
+	builtAgents = make(map[string]agentBuildResult)
+)
+
 func buildAgent(name string) (loc string, err error) {
+	buildMu.Lock()
+	once, ok := buildOnce[name]
+	if !ok {
+		once = &sync.Once{}
+		buildOnce[name] = once
+	}
+	buildMu.Unlock()
+
+	once.Do(func() {
+		loc, err = doBuildAgent(name)
+		builtAgents[name] = agentBuildResult{
+			agentLoc: loc,
+			err:      err,
+		}
+	})
+
+	res, ok := builtAgents[name]
+	if !ok {
+		return "", xerrors.Errorf("expected agent build result but got none: %w", err)
+	}
+	return res.agentLoc, res.err
+}
+
+func doBuildAgent(name string) (loc string, err error) {
+	log.Infof("building agent %s", name)
 	defer func() {
 		if err != nil {
 			err = xerrors.Errorf("cannot build agent: %w", err)
@@ -460,7 +514,7 @@ func buildAgent(name string) (loc string, err error) {
 		return "", err
 	}
 
-	f, err := os.CreateTemp("", "gitpod-integration-test-*")
+	f, err := os.CreateTemp("", fmt.Sprintf("gitpod-integration-test-%s-*", name))
 	if err != nil {
 		return "", err
 	}
@@ -513,7 +567,7 @@ func selectPod(component ComponentType, options selectPodOptions, namespace stri
 	}
 
 	if len(pods.Items) == 0 {
-		return "", "", xerrors.Errorf("no pods for %s", component)
+		return "", "", xerrors.Errorf("no pods for %s: %w", component, errorNoPods)
 	}
 
 	p := pods.Items[0]

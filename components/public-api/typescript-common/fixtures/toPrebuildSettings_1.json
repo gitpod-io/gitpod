@@ -1,0 +1,7 @@
+{
+  "enable": true,
+  "branchMatchingPattern": "main",
+  "branchStrategy": "default-branch",
+  "prebuildInterval": 42,
+  "workspaceClass": "dev"
+}

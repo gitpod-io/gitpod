@@ -256,7 +256,7 @@ LoadingFrame.load().then(async (loading) => {
         }
         if (!isWorkspaceInstancePhase("running")) {
             if (debugWorkspace && frontendDashboardServiceClient.latestInfo) {
-                window.open('', '_self')?.close()
+                window.open("", "_self")?.close();
             }
             await new Promise<void>((resolve) => {
                 frontendDashboardServiceClient.onInfoUpdate((status) => {
@@ -269,8 +269,8 @@ LoadingFrame.load().then(async (loading) => {
         const supervisorServiceClient = SupervisorServiceClient.get();
         if (debugWorkspace) {
             supervisorServiceClient.supervisorWillShutdown.then(() => {
-                window.open('', '_self')?.close()
-            })
+                window.open("", "_self")?.close();
+            });
         }
         const [ideStatus] = await Promise.all([
             supervisorServiceClient.ideReady,

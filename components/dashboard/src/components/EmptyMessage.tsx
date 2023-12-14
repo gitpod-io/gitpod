@@ -6,7 +6,7 @@
 
 import classNames from "classnames";
 import { FC, ReactNode, useCallback } from "react";
-import { Button } from "./Button";
+import { Button } from "@podkit/buttons/Button";
 import { Heading2, Subheading } from "./typography/headings";
 
 type Props = {
@@ -23,7 +23,7 @@ export const EmptyMessage: FC<Props> = ({ title, subtitle, buttonText, onClick, 
     return (
         <div
             className={classNames(
-                "w-full flex justify-center mt-2 rounded-xl bg-gray-100 dark:bg-gray-900 px-4 py-14",
+                "w-full flex justify-center mt-2 rounded-xl bg-gray-100 dark:bg-gray-800 px-4 py-14",
                 className,
             )}
         >

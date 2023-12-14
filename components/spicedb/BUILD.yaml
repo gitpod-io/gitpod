@@ -1,0 +1,62 @@
+packages:
+  - name: schema
+    type: generic
+    srcs:
+      - "schema/*.yaml"
+    config:
+      test:
+      - ["zed", "validate", "./schema/schema.yaml"]
+
+  - name: lib
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "*.go"
+      - "schema/*.yaml"
+    deps:
+      - components/spicedb:schema
+    env:
+      - CGO_ENABLED=0
+    config:
+      packaging: library
+scripts:
+  - name: start-spicedb
+    description: "Starts spicedb if not already running."
+    shell: bash
+    script: |
+      set -e
+
+      leeway run components/spicedb:stop-spicedb || true
+
+      spicedb serve-testing  --log-level debug --load-configs schema/schema.yaml &
+
+      for i in {1..50}; do
+          if nc -z 0.0.0.0 50051; then
+              echo "Started spicedb."
+              exit 0
+          fi
+          sleep 0.2
+      done
+
+      echo "Failed to start spicedb."
+      docker logs test-spicedb
+
+      sleep 300
+      exit 1
+  - name: stop-spicedb
+    description: "Stops spicedb if running."
+    deps: []
+    script: |
+      # stop the service on 50051 if it runs
+      if nc -z 0.0.0.0 50051; then
+          # kill
+          kill $(lsof -t -i:50051)
+          echo "Stopped spicedb."
+      fi
+
+  - name: generate-ts
+    description: "Generate definition in typescript."
+    deps: []
+    script: |
+      (cd codegen && go run .)

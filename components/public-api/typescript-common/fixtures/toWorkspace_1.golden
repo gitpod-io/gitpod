@@ -1,0 +1,53 @@
+{
+    "result": {
+        "id": "akosyakov-parceldemo-4crqn25qlwi",
+        "metadata": {
+            "ownerId": "827df1c8-d42d-4a69-bc38-64089af1f711",
+            "organizationId": "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
+            "name": "akosyakov/parcel-demo - master",
+            "originalContextUrl": "https://github.com/akosyakov/parcel-demo"
+        },
+        "spec": {
+            "initializer": {
+                "specs": [
+                    {
+                        "git": {
+                            "remoteUri": "https://github.com/akosyakov/parcel-demo.git",
+                            "targetMode": "CLONE_TARGET_MODE_REMOTE_COMMIT",
+                            "cloneTarget": "60dbf818194082ef1a368bacd49cfd25a34c9256",
+                            "checkoutLocation": "parcel-demo",
+                            "config": {}
+                        }
+                    }
+                ]
+            },
+            "type": "WORKSPACE_TYPE_REGULAR",
+            "git": {},
+            "timeout": {
+                "disconnected": "1800s"
+            },
+            "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+            "class": "g1-standard",
+            "editor": {
+                "name": "code",
+                "version": "stable"
+            }
+        },
+        "status": {
+            "statusVersion": "1697487504",
+            "phase": {
+                "name": "PHASE_CREATING",
+                "lastTransitionTime": "2023-10-16T20:18:24.923Z"
+            },
+            "workspaceUrl": "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+            "conditions": {},
+            "gitStatus": {
+                "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",
+                "branch": "master",
+                "latestCommit": "60dbf818194082ef1a368bacd49cfd25a34c9256"
+            },
+            "instanceId": "226695b4-f10a-471a-a219-9b657645bf78"
+        }
+    },
+    "err": ""
+}

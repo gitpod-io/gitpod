@@ -4,26 +4,34 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { GitpodServer } from "@gitpod/gitpod-protocol";
 import { useMutation } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
 import { useState } from "react";
+import { workspaceClient } from "../../service/public-api";
+import {
+    CreateAndStartWorkspaceRequest,
+    CreateAndStartWorkspaceResponse,
+} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { PartialMessage } from "@bufbuild/protobuf";
+import { ConnectError } from "@connectrpc/connect";
 
 export const useCreateWorkspaceMutation = () => {
     const [isStarting, setIsStarting] = useState(false);
-    const mutation = useMutation({
-        mutationFn: async (options: GitpodServer.CreateWorkspaceOptions) => {
-            return await getGitpodService().server.createWorkspace(options);
+    const mutation = useMutation<
+        CreateAndStartWorkspaceResponse,
+        ConnectError,
+        PartialMessage<CreateAndStartWorkspaceRequest>
+    >({
+        mutationFn: async (options) => {
+            return await workspaceClient.createAndStartWorkspace(options);
         },
-        onMutate: async (options: GitpodServer.CreateWorkspaceOptions) => {
+        onMutate: async (options: PartialMessage<CreateAndStartWorkspaceRequest>) => {
             setIsStarting(true);
         },
         onError: (error) => {
-            console.error(error);
             setIsStarting(false);
         },
         onSuccess: (result) => {
-            if (result && result.createdWorkspaceId) {
+            if (result.workspace?.id) {
                 // successfully started a workspace, wait a bit before we allow to start another one
                 setTimeout(() => {
                     setIsStarting(false);
@@ -34,9 +42,10 @@ export const useCreateWorkspaceMutation = () => {
         },
     });
     return {
-        createWorkspace: (options: GitpodServer.CreateWorkspaceOptions) => {
+        createWorkspace: (options: PartialMessage<CreateAndStartWorkspaceRequest>) => {
             return mutation.mutateAsync(options);
         },
+        // Can we use mutation.isLoading here instead?
         isStarting,
         error: mutation.error,
         reset: mutation.reset,

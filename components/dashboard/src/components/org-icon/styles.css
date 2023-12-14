@@ -4,6 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer components {
     .bg-gradient-1 {

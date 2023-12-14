@@ -1,0 +1,13 @@
+#!/usr/bin/env -S buf generate https://github.com/authzed/spicedb.git#tag=v1.25.0 --path=proto/internal/impl/v1/impl.proto --template
+# The version refers to the version of the SpiceDB image/binary that we are running
+version: v1
+plugins:
+  - name: ts_proto
+    out: typescript/src
+    path: typescript/node_modules/.bin/protoc-gen-ts_proto
+    opt:
+     - context=true
+     - lowerCaseServiceMethods=true
+     - stringEnums=true
+     - fileSuffix=.pb
+     - outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false

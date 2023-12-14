@@ -5,22 +5,22 @@
  */
 
 import { inject, injectable } from "inversify";
-import Redlock, { RedlockAbortSignal } from "redlock";
-import { RedisClient } from "./client";
+import { Redis } from "ioredis";
+import Redlock, { RedlockAbortSignal, ResourceLockedError, ExecutionError, Settings } from "redlock";
 
 @injectable()
 export class RedisMutex {
-    @inject(RedisClient) protected redis: RedisClient;
+    @inject(Redis) protected redis: Redis;
 
     private client(): Redlock {
-        return new Redlock([this.redis.get()], {
+        return new Redlock([this.redis], {
             // The expected clock drift; for more details see:
             // http://redis.io/topics/distlock
             driftFactor: 0.01, // multiplied by lock ttl to determine drift time
 
             // The max number of times Redlock will attempt to lock a resource
             // before erroring.
-            retryCount: 3,
+            retryCount: 20,
 
             // the time in ms between attempts
             retryDelay: 200, // time in ms
@@ -40,7 +40,17 @@ export class RedisMutex {
         resources: string[],
         duration: number,
         routine: (signal: RedlockAbortSignal) => Promise<T>,
+        settings: Partial<Settings> = {},
     ): Promise<T> {
-        return this.client().using(resources, duration, routine);
+        return this.client().using(resources, duration, settings, routine);
+    }
+
+    public static isLockedError(err: any): boolean {
+        return (
+            err instanceof ResourceLockedError ||
+            // Should be a ResourceLockedError as well, but is ExecutionError in v5.x: https://github.com/mike-marcacci/node-redlock/issues/168
+            (err instanceof ExecutionError &&
+                err.message.includes("unable to achieve a quorum during its retry window"))
+        );
     }
 }

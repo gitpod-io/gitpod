@@ -5,9 +5,9 @@
  */
 
 import { Repository, User } from "@gitpod/gitpod-protocol";
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { Container, ContainerModule } from "inversify";
-import { retries, suite, test, timeout } from "mocha-typescript";
+import { retries, skip, suite, test, timeout } from "@testdeck/mocha";
 import { expect } from "chai";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { BitbucketServerFileProvider } from "./bitbucket-server-file-provider";
@@ -20,7 +20,7 @@ import { TokenProvider } from "../user/token-provider";
 import { BitbucketServerApi } from "./bitbucket-server-api";
 import { HostContextProvider } from "../auth/host-context-provider";
 
-@suite(timeout(10000), retries(1), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER"))
+@suite(timeout(10000), retries(1), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER")))
 class TestBitbucketServerFileProvider {
     protected service: BitbucketServerFileProvider;
     protected user: User;
@@ -50,6 +50,7 @@ class TestBitbucketServerFileProvider {
                 bind(BitbucketServerContextParser).toSelf().inSingletonScope();
                 bind(AuthProviderParams).toConstantValue(TestBitbucketServerFileProvider.AUTH_HOST_CONFIG);
                 bind(BitbucketServerTokenHelper).toSelf().inSingletonScope();
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 bind(TokenService).toConstantValue({
                     createGitpodToken: async () => ({ token: { value: "foobar123-token" } }),
                 } as any);
@@ -90,6 +91,7 @@ class TestBitbucketServerFileProvider {
 
     @test async test_getGitpodFileContent_ok() {
         const result = await this.service.getGitpodFileContent(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             {
                 revision: "master",
                 repository: <Repository>{

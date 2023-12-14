@@ -4,15 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
+import { getScopesForAuthProviderType } from "@gitpod/public-api-common/lib/auth-providers";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import Alert from "../components/Alert";
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { ContextMenuEntry } from "../components/ContextMenu";
-import { Delayed } from "../components/Delayed";
 import InfoBox from "../components/InfoBox";
 import { ItemsList } from "../components/ItemsList";
 import { SpinnerLoader } from "../components/Loader";
@@ -20,16 +19,28 @@ import Modal, { ModalBody, ModalHeader, ModalFooter } from "../components/Modal"
 import { Heading2, Subheading } from "../components/typography/headings";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
-import { openAuthorizeWindow } from "../provider-utils";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { openAuthorizeWindow, toAuthProviderLabel } from "../provider-utils";
+import { gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { AuthEntryItem } from "./AuthEntryItem";
 import { IntegrationEntryItem } from "./IntegrationItemEntry";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { SelectAccountModal } from "./SelectAccountModal";
-import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { EmptyMessage } from "../components/EmptyMessage";
+import { Delayed } from "@podkit/loading/Delayed";
+import {
+    AuthProvider,
+    AuthProviderDescription,
+    AuthProviderType,
+} from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { authProviderClient, scmClient, userClient } from "../service/public-api";
+import { useCreateUserAuthProviderMutation } from "../data/auth-providers/create-user-auth-provider-mutation";
+import { useUpdateUserAuthProviderMutation } from "../data/auth-providers/update-user-auth-provider-mutation";
+import { useDeleteUserAuthProviderMutation } from "../data/auth-providers/delete-user-auth-provider-mutation";
+import { Button } from "@podkit/buttons/Button";
+import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 
 export default function Integrations() {
     return (
@@ -46,11 +57,13 @@ export default function Integrations() {
 function GitProviders() {
     const { user, setUser } = useContext(UserContext);
 
-    const authProviders = useAuthProviders();
+    const authProviders = useAuthProviderDescriptions();
     const [allScopes, setAllScopes] = useState<Map<string, string[]>>(new Map());
-    const [disconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderInfo } | undefined>(undefined);
+    const [disconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderDescription } | undefined>(
+        undefined,
+    );
     const [editModal, setEditModal] = useState<
-        { provider: AuthProviderInfo; prevScopes: Set<string>; nextScopes: Set<string> } | undefined
+        { provider: AuthProviderDescription; prevScopes: Set<string>; nextScopes: Set<string> } | undefined
     >(undefined);
     const [selectAccountModal, setSelectAccountModal] = useState<SelectAccountPayload | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -59,14 +72,14 @@ function GitProviders() {
         if (user) {
             const scopesByProvider = new Map<string, string[]>();
             const connectedProviders = user.identities.map((i) =>
-                authProviders.data?.find((ap) => ap.authProviderId === i.authProviderId),
+                authProviders.data?.find((ap) => ap.id === i.authProviderId),
             );
             for (let provider of connectedProviders) {
                 if (!provider) {
                     continue;
                 }
-                const token = await getGitpodService().server.getToken({ host: provider.host });
-                scopesByProvider.set(provider.authProviderId, token?.scopes?.slice() || []);
+                const token = (await scmClient.searchSCMTokens({ host: provider.host })).tokens[0];
+                scopesByProvider.set(provider.id, token?.scopes?.slice() || []);
             }
             setAllScopes(scopesByProvider);
         }
@@ -80,28 +93,44 @@ function GitProviders() {
         return !!user?.identities?.find((i) => i.authProviderId === authProviderId);
     };
 
-    const gitProviderMenu = (provider: AuthProviderInfo) => {
+    const getSettingsUrl = (ap: AuthProviderDescription) => {
+        const url = new URL(`https://${ap.host}`);
+        switch (ap.type) {
+            case AuthProviderType.GITHUB:
+                url.pathname = "settings/developers";
+                break;
+            case AuthProviderType.GITLAB:
+                url.pathname = "-/profile/applications";
+                break;
+            default:
+                return undefined;
+        }
+        return url;
+    };
+
+    const gitProviderMenu = (provider: AuthProviderDescription) => {
         const result: ContextMenuEntry[] = [];
-        const connected = isConnected(provider.authProviderId);
+        const connected = isConnected(provider.id);
         if (connected) {
+            const settingsUrl = getSettingsUrl(provider);
             result.push({
                 title: "Edit Permissions",
                 onClick: () => startEditPermissions(provider),
-                separator: !provider.settingsUrl,
+                separator: !settingsUrl,
             });
-            if (provider.settingsUrl) {
+            if (settingsUrl) {
                 result.push({
                     title: `Manage on ${provider.host}`,
                     onClick: () => {
-                        window.open(provider.settingsUrl, "_blank", "noopener,noreferrer");
+                        window.open(settingsUrl, "_blank", "noopener,noreferrer");
                     },
                     separator: true,
                 });
             }
-            const connectedWithSecondProvider = authProviders.data?.some(
-                (p) => p.authProviderId !== provider.authProviderId && isConnected(p.authProviderId),
-            );
-            if (connectedWithSecondProvider) {
+            const canDisconnect =
+                (user && isOrganizationOwned(user)) ||
+                authProviders.data?.some((p) => p.id !== provider.id && isConnected(p.id));
+            if (canDisconnect) {
                 result.push({
                     title: "Disconnect",
                     customFontStyle: "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
@@ -126,11 +155,11 @@ function GitProviders() {
         return allScopes.get(authProviderId);
     };
 
-    const connect = async (ap: AuthProviderInfo) => {
-        await doAuthorize(ap.host, ap.requirements?.default);
+    const connect = async (ap: AuthProviderDescription) => {
+        await doAuthorize(ap.host);
     };
 
-    const disconnect = async (ap: AuthProviderInfo) => {
+    const disconnect = async (ap: AuthProviderDescription) => {
         setDisconnectModal(undefined);
         const returnTo = gitpodHostUrl.with({ pathname: "complete-auth", search: "message=success" }).toString();
         const deauthorizeUrl = gitpodHostUrl
@@ -155,18 +184,20 @@ function GitProviders() {
             );
     };
 
-    const startEditPermissions = async (provider: AuthProviderInfo) => {
+    const startEditPermissions = async (provider: AuthProviderDescription) => {
         // todo: add spinner
 
-        const token = await getGitpodService().server.getToken({ host: provider.host });
+        const token = (await scmClient.searchSCMTokens({ host: provider.host })).tokens[0];
         if (token) {
             setEditModal({ provider, prevScopes: new Set(token.scopes), nextScopes: new Set(token.scopes) });
         }
     };
 
     const updateUser = async () => {
-        const user = await getGitpodService().server.getLoggedInUser();
-        setUser(user);
+        const { user } = await userClient.getAuthenticatedUser({});
+        if (user) {
+            setUser(user);
+        }
     };
 
     const doAuthorize = async (host: string, scopes?: string[]) => {
@@ -269,7 +300,7 @@ function GitProviders() {
                     title="Disconnect Provider"
                     areYouSureText="Are you sure you want to disconnect the following provider?"
                     children={{
-                        name: disconnectModal.provider.authProviderType,
+                        name: toAuthProviderLabel(disconnectModal.provider.type),
                         description: disconnectModal.provider.host,
                     }}
                     buttonText="Disconnect Provider"
@@ -294,14 +325,14 @@ function GitProviders() {
                     <ModalHeader>Edit Permissions</ModalHeader>
                     <ModalBody>
                         <CheckboxListField label="Configure provider permissions.">
-                            {(editModal.provider.scopes || []).map((scope) => (
+                            {(getScopesForAuthProviderType(editModal.provider.type) || []).map((scope) => (
                                 <CheckboxInputField
                                     key={scope}
                                     value={scope}
                                     label={scope}
                                     hint={getDescriptionForScope(scope)}
                                     checked={editModal.nextScopes.has(scope)}
-                                    disabled={editModal.provider.requirements?.default.includes(scope)}
+                                    // disabled={editModal.provider.requirements?.default.includes(scope)} // what?!
                                     topMargin={false}
                                     onChange={(checked) => onChangeScopeHandler(checked, scope)}
                                 />
@@ -309,12 +340,12 @@ function GitProviders() {
                         </CheckboxListField>
                     </ModalBody>
                     <ModalFooter>
-                        <button
+                        <Button
                             onClick={() => updatePermissions()}
                             disabled={equals(editModal.nextScopes, editModal.prevScopes)}
                         >
                             Update Permissions
-                        </button>
+                        </Button>
                     </ModalFooter>
                 </Modal>
             )}
@@ -338,7 +369,7 @@ function GitProviders() {
                     ) : (
                         authProviders.data.map((ap) => (
                             <AuthEntryItem
-                                key={ap.authProviderId}
+                                key={ap.id}
                                 isConnected={isConnected}
                                 gitProviderMenu={gitProviderMenu}
                                 getUsername={getUsername}
@@ -356,10 +387,12 @@ function GitIntegrations() {
     const { user } = useContext(UserContext);
     const userGitAuthProviders = useFeatureFlag("userGitAuthProviders");
 
+    const deleteUserAuthProvider = useDeleteUserAuthProviderMutation();
+
     const [modal, setModal] = useState<
         | { mode: "new" }
-        | { mode: "edit"; provider: AuthProviderEntry }
-        | { mode: "delete"; provider: AuthProviderEntry }
+        | { mode: "edit"; provider: AuthProvider }
+        | { mode: "delete"; provider: AuthProvider }
         | undefined
     >(undefined);
 
@@ -369,13 +402,20 @@ function GitIntegrations() {
         refetch,
     } = useQuery(
         ["own-auth-providers", { userId: user?.id ?? "" }],
-        async () => await getGitpodService().server.getOwnAuthProviders(),
+        async () => {
+            const { authProviders } = await authProviderClient.listAuthProviders({
+                id: { case: "userId", value: user?.id || "" },
+            });
+            return authProviders;
+        },
         { enabled: !!user },
     );
 
-    const deleteProvider = async (provider: AuthProviderEntry) => {
+    const deleteProvider = async (provider: AuthProvider) => {
         try {
-            await getGitpodService().server.deleteOwnAuthProvider(provider);
+            await deleteUserAuthProvider.mutateAsync({
+                providerId: provider.id,
+            });
         } catch (error) {
             console.log(error);
         }
@@ -383,10 +423,10 @@ function GitIntegrations() {
         refetch();
     };
 
-    const gitProviderMenu = (provider: AuthProviderEntry) => {
+    const gitProviderMenu = (provider: AuthProvider) => {
         const result: ContextMenuEntry[] = [];
         result.push({
-            title: provider.status === "verified" ? "Edit Configuration" : "Activate Integration",
+            title: provider.verified ? "Edit Configuration" : "Activate Integration",
             onClick: () => setModal({ mode: "edit", provider }),
             separator: true,
         });
@@ -436,7 +476,7 @@ function GitIntegrations() {
                     title="Remove Integration"
                     areYouSureText="Are you sure you want to remove the following Git integration?"
                     children={{
-                        name: modal.provider.type,
+                        name: toAuthProviderLabel(modal.provider.type),
                         description: modal.provider.host,
                     }}
                     buttonText="Remove Integration"
@@ -454,16 +494,16 @@ function GitIntegrations() {
                 </div>
                 {/* Hide create button if ff is disabled */}
                 {userGitAuthProviders && (providers || []).length !== 0 ? (
-                    <div className="mt-3 flex mt-0">
-                        <button onClick={() => setModal({ mode: "new" })} className="ml-2">
+                    <div className="flex mt-0">
+                        <Button onClick={() => setModal({ mode: "new" })} className="ml-2">
                             New Integration
-                        </button>
+                        </Button>
                     </div>
                 ) : null}
             </div>
 
             {providers && providers.length === 0 && (
-                <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
+                <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-800">
                     <div className="m-auto text-center">
                         <Heading2 color="light" className="self-center mb-4">
                             No Git Integrations
@@ -472,9 +512,7 @@ function GitIntegrations() {
                             In addition to the default Git Providers you can authorize
                             <br /> with a self-hosted instance of a provider.
                         </Subheading>
-                        <button className="self-center" onClick={() => setModal({ mode: "new" })}>
-                            New Integration
-                        </button>
+                        <Button onClick={() => setModal({ mode: "new" })}>New Integration</Button>
                     </div>
                 </div>
             )}
@@ -492,7 +530,7 @@ export function GitIntegrationModal(
           }
         | {
               mode: "edit";
-              provider: AuthProviderEntry;
+              provider: AuthProvider;
           }
     ) & {
         login?: boolean;
@@ -504,27 +542,21 @@ export function GitIntegrationModal(
         onAuthorize?: (payload?: string) => void;
     },
 ) {
-    const callbackUrl = (host: string) => {
-        // Negative Lookahead (?!\/)
-        // `\/` matches the character `/`
-        // "https://foobar:80".replace(/:(?!\/)/, "_")
-        // => 'https://foobar_80'
-        host = host.replace(/:(?!\/)/, "_");
-        const pathname = `/auth/${host}/callback`;
-        return gitpodHostUrl.with({ pathname }).toString();
-    };
+    const callbackUrl = useMemo(() => gitpodHostUrl.with({ pathname: `/auth/callback` }).toString(), []);
 
     const [mode, setMode] = useState<"new" | "edit">("new");
-    const [providerEntry, setProviderEntry] = useState<AuthProviderEntry | undefined>(undefined);
+    const [providerEntry, setProviderEntry] = useState<AuthProvider | undefined>(undefined);
 
-    const [type, setType] = useState<string>("GitLab");
+    const [type, setType] = useState<AuthProviderType>(AuthProviderType.GITLAB);
     const [host, setHost] = useState<string>("");
-    const [redirectURI, setRedirectURI] = useState<string>(callbackUrl("gitlab.example.com"));
     const [clientId, setClientId] = useState<string>("");
     const [clientSecret, setClientSecret] = useState<string>("");
     const [busy, setBusy] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
     const [validationError, setValidationError] = useState<string | undefined>();
+
+    const createProvider = useCreateUserAuthProviderMutation();
+    const updateProvider = useUpdateUserAuthProviderMutation();
 
     useEffect(() => {
         setMode(props.mode);
@@ -532,9 +564,8 @@ export function GitIntegrationModal(
             setProviderEntry(props.provider);
             setType(props.provider.type);
             setHost(props.provider.host);
-            setClientId(props.provider.oauth.clientId);
-            setClientSecret(props.provider.oauth.clientSecret);
-            setRedirectURI(props.provider.oauth.callBackUrl);
+            setClientId(props.provider.oauth2Config?.clientId || "");
+            setClientSecret(props.provider.oauth2Config?.clientSecret || "");
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -549,26 +580,30 @@ export function GitIntegrationModal(
     const onUpdate = () => props.onUpdate && props.onUpdate();
 
     const activate = async () => {
-        let entry =
-            mode === "new"
-                ? ({
-                      host,
-                      type,
-                      clientId,
-                      clientSecret,
-                      ownerId: props.userId,
-                  } as AuthProviderEntry.NewEntry)
-                : ({
-                      id: providerEntry?.id,
-                      ownerId: props.userId,
-                      clientId,
-                      clientSecret: clientSecret === "redacted" ? undefined : clientSecret,
-                  } as AuthProviderEntry.UpdateEntry);
-
         setBusy(true);
         setErrorMessage(undefined);
         try {
-            const newProvider = await getGitpodService().server.updateOwnAuthProvider({ entry });
+            let newProvider: AuthProvider;
+
+            if (mode === "new") {
+                newProvider = await createProvider.mutateAsync({
+                    provider: {
+                        clientId,
+                        clientSecret,
+                        type,
+                        host,
+                        userId: props.userId,
+                    },
+                });
+            } else {
+                newProvider = await updateProvider.mutateAsync({
+                    provider: {
+                        id: providerEntry?.id || "",
+                        clientId,
+                        clientSecret: clientSecret === "redacted" ? "" : clientSecret,
+                    },
+                });
+            }
 
             // the server is checking periodically for updates of dynamic providers, thus we need to
             // wait at least 2 seconds for the changes to be propagated before we try to use this provider.
@@ -577,11 +612,11 @@ export function GitIntegrationModal(
             onUpdate();
 
             const updateProviderEntry = async () => {
-                const provider = (await getGitpodService().server.getOwnAuthProviders()).find(
-                    (ap) => ap.id === newProvider.id,
-                );
-                if (provider) {
-                    setProviderEntry(provider);
+                const { authProvider } = await authProviderClient.getAuthProvider({
+                    authProviderId: newProvider.id,
+                });
+                if (authProvider) {
+                    setProviderEntry(authProvider);
                 }
             };
 
@@ -632,7 +667,6 @@ export function GitIntegrationModal(
             }
 
             setHost(newHostValue);
-            setRedirectURI(callbackUrl(newHostValue));
             setErrorMessage(undefined);
         }
     };
@@ -647,10 +681,10 @@ export function GitIntegrationModal(
     const validate = () => {
         const errors: string[] = [];
         if (clientId.trim().length === 0) {
-            errors.push(`${type === "GitLab" ? "Application ID" : "Client ID"} is missing.`);
+            errors.push(`${type === AuthProviderType.GITLAB ? "Application ID" : "Client ID"} is missing.`);
         }
         if (clientSecret.trim().length === 0) {
-            errors.push(`${type === "GitLab" ? "Secret" : "Client Secret"} is missing.`);
+            errors.push(`${type === AuthProviderType.GITLAB ? "Secret" : "Client Secret"} is missing.`);
         }
         if (errors.length === 0) {
             setValidationError(undefined);
@@ -661,13 +695,13 @@ export function GitIntegrationModal(
         }
     };
 
-    const getRedirectUrlDescription = (type: string, host: string) => {
+    const getRedirectUrlDescription = (type: AuthProviderType, host: string) => {
         let settingsUrl = ``;
         switch (type) {
-            case "GitHub":
+            case AuthProviderType.GITHUB:
                 settingsUrl = `${host}/settings/developers`;
                 break;
-            case "GitLab":
+            case AuthProviderType.GITLAB:
                 settingsUrl = `${host}/-/profile/applications`;
                 break;
             default:
@@ -675,10 +709,10 @@ export function GitIntegrationModal(
         }
         let docsUrl = ``;
         switch (type) {
-            case "GitHub":
+            case AuthProviderType.GITHUB:
                 docsUrl = `https://www.gitpod.io/docs/github-integration/#oauth-application`;
                 break;
-            case "GitLab":
+            case AuthProviderType.GITLAB:
                 docsUrl = `https://www.gitpod.io/docs/gitlab-integration/#oauth-application`;
                 break;
             default:
@@ -700,13 +734,15 @@ export function GitIntegrationModal(
         );
     };
 
-    const getPlaceholderForIntegrationType = (type: string) => {
+    const getPlaceholderForIntegrationType = (type: AuthProviderType) => {
         switch (type) {
-            case "GitHub":
+            case AuthProviderType.GITHUB:
                 return "github.example.com";
-            case "GitLab":
+            case AuthProviderType.GITLAB:
                 return "gitlab.example.com";
-            case "BitbucketServer":
+            case AuthProviderType.BITBUCKET:
+                return "bitbucket.org";
+            case AuthProviderType.BITBUCKET_SERVER:
                 return "bitbucket.example.com";
             default:
                 return "";
@@ -715,7 +751,7 @@ export function GitIntegrationModal(
 
     const copyRedirectURI = () => {
         const el = document.createElement("textarea");
-        el.value = redirectURI;
+        el.value = callbackUrl;
         document.body.appendChild(el);
         el.select();
         try {
@@ -725,12 +761,29 @@ export function GitIntegrationModal(
         }
     };
 
+    const getNumber = (paramValue: string | null) => {
+        if (!paramValue) {
+            return 0;
+        }
+
+        try {
+            const number = Number.parseInt(paramValue, 10);
+            if (Number.isNaN(number)) {
+                return 0;
+            }
+
+            return number;
+        } catch (e) {
+            return 0;
+        }
+    };
+
     return (
         // TODO: Use title and buttons props
         <Modal visible={!!props} onClose={onClose} closeable={props.closeable}>
             <Heading2 className="pb-2">{mode === "new" ? "New Git Integration" : "Git Integration"}</Heading2>
             <div className="space-y-4 border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
-                {mode === "edit" && providerEntry?.status !== "verified" && (
+                {mode === "edit" && !providerEntry?.verified && (
                     <Alert type="warning">You need to activate this integration.</Alert>
                 )}
                 <div className="flex flex-col">
@@ -751,15 +804,15 @@ export function GitIntegrationModal(
                                 value={type}
                                 disabled={mode !== "new"}
                                 className="w-full"
-                                onChange={(e) => setType(e.target.value)}
+                                onChange={(e) => setType(getNumber(e.target.value))}
                             >
-                                <option value="GitHub">GitHub</option>
-                                <option value="GitLab">GitLab</option>
-                                <option value="BitbucketServer">Bitbucket Server</option>
+                                <option value={AuthProviderType.GITHUB}>GitHub</option>
+                                <option value={AuthProviderType.GITLAB}>GitLab</option>
+                                <option value={AuthProviderType.BITBUCKET_SERVER}>Bitbucket Server</option>
                             </select>
                         </div>
                     )}
-                    {mode === "new" && type === "BitbucketServer" && (
+                    {mode === "new" && type === AuthProviderType.BITBUCKET_SERVER && (
                         <InfoBox className="my-4 mx-auto">
                             OAuth 2.0 support in Bitbucket Server was added in version 7.20.{" "}
                             <a
@@ -796,7 +849,7 @@ export function GitIntegrationModal(
                                 disabled={true}
                                 readOnly={true}
                                 type="text"
-                                value={redirectURI}
+                                value={callbackUrl}
                                 className="w-full pr-8"
                             />
                             <div className="cursor-pointer" onClick={() => copyRedirectURI()}>
@@ -812,7 +865,7 @@ export function GitIntegrationModal(
                     </div>
                     <div className="flex flex-col space-y-2">
                         <label htmlFor="clientId" className="font-medium">{`${
-                            type === "GitLab" ? "Application ID" : "Client ID"
+                            type === AuthProviderType.GITLAB ? "Application ID" : "Client ID"
                         }`}</label>
                         <input
                             name="clientId"
@@ -824,7 +877,7 @@ export function GitIntegrationModal(
                     </div>
                     <div className="flex flex-col space-y-2">
                         <label htmlFor="clientSecret" className="font-medium">{`${
-                            type === "GitLab" ? "Secret" : "Client Secret"
+                            type === AuthProviderType.GITLAB ? "Secret" : "Client Secret"
                         }`}</label>
                         <input
                             name="clientSecret"
@@ -848,9 +901,9 @@ export function GitIntegrationModal(
                 )}
             </div>
             <div className="flex justify-end mt-6">
-                <button onClick={() => validate() && activate()} disabled={!!validationError || busy}>
+                <Button onClick={() => validate() && activate()} disabled={!!validationError || busy}>
                     Activate Integration
-                </button>
+                </Button>
             </div>
         </Modal>
     );

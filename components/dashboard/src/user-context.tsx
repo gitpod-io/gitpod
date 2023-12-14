@@ -4,9 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { createContext, useState, useContext, useMemo, useCallback } from "react";
+import { updateCommonErrorDetails } from "./service/metrics";
+import { updateUserForExperiments } from "./service/public-api";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 const UserContext = createContext<{
     user?: User;
@@ -18,11 +21,20 @@ const UserContext = createContext<{
 const UserContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User>();
 
+    const updateServiceUser = (user?: User) => {
+        updateCommonErrorDetails({ userId: user?.id });
+        updateUserForExperiments(!!user ? { id: user.id, email: getPrimaryEmail(user) } : undefined);
+    };
+    updateServiceUser(user);
+
     const client = useQueryClient();
 
     const doSetUser = useCallback(
         (updatedUser: User) => {
-            if (user?.id !== updatedUser.id) {
+            updateServiceUser(updatedUser);
+            // If user has changed clear cache
+            // Ignore the case where user hasn't been set yet - initial load
+            if (user && user?.id !== updatedUser.id) {
                 client.clear();
             }
             setUser(updatedUser);
@@ -46,7 +58,7 @@ const UserContextProvider: React.FC = ({ children }) => {
                 }, frequencyMs);
             }
         },
-        [user?.id, setUser, client],
+        [user, client],
     );
 
     // Wrap value in useMemo to avoid unnecessary re-renders

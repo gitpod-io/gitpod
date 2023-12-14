@@ -7,10 +7,10 @@
 import { Project } from "@gitpod/gitpod-protocol";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
-import { validate as uuidValidate } from "uuid";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { listAllProjects } from "../service/public-api";
 import { useCurrentUser } from "../user-context";
+import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 
 export const ProjectContext = createContext<{
     project?: Project;
@@ -27,36 +27,16 @@ export const ProjectContextProvider: React.FC = ({ children }) => {
     return <ProjectContext.Provider value={ctx}>{children}</ProjectContext.Provider>;
 };
 
-export function useProjectSlugs(): { projectSlug?: string; prebuildId?: string } {
-    const projectsRouteMatch = useRouteMatch<{ projectSlug?: string; prebuildId?: string }>(
-        "/projects/:projectSlug?/:prebuildId?",
-    );
-
-    return useMemo(() => {
-        const projectSlug = projectsRouteMatch?.params.projectSlug;
-        const result: { projectSlug?: string; prebuildId?: string } = {};
-        const reservedProjectSlugs = ["new"];
-        if (!projectSlug || reservedProjectSlugs.includes(projectSlug)) {
-            return result;
-        }
-        result.projectSlug = projectSlug;
-        const prebuildId = projectsRouteMatch?.params.prebuildId;
-        if (prebuildId && uuidValidate(prebuildId)) {
-            result.prebuildId = projectsRouteMatch?.params.prebuildId;
-        }
-        return result;
-    }, [projectsRouteMatch?.params.projectSlug, projectsRouteMatch?.params.prebuildId]);
-}
-
 export function useCurrentProject(): { project: Project | undefined; loading: boolean } {
     const { project, setProject } = useContext(ProjectContext);
     const [loading, setLoading] = useState(true);
     const user = useCurrentUser();
     const org = useCurrentOrg();
     const orgs = useOrganizations();
-    const slugs = useProjectSlugs();
+    const projectIdFromRoute = useRouteMatch<{ projectId?: string }>("/projects/:projectId")?.params?.projectId;
     const location = useLocation();
     const history = useHistory();
+    const listProjects = useListAllProjectsQuery();
 
     useEffect(() => {
         setLoading(true);
@@ -65,47 +45,40 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
             // without a user we are still consider this loading
             return;
         }
-        if (!slugs.projectSlug) {
+        if (!projectIdFromRoute) {
             setProject(undefined);
             setLoading(false);
             return;
         }
         (async () => {
-            let projects: Project[];
-            if (!!org.data) {
-                projects = await listAllProjects({ teamId: org.data?.id });
-            } else {
-                projects = await listAllProjects({ userId: user?.id });
+            if (!org.data) {
+                return;
             }
+            if (!listProjects.data) {
+                return;
+            }
+            const projects = listProjects.data?.projects || [];
 
             // Find project matching with slug, otherwise with name
-            const project = projects.find((p) => Project.slug(p) === slugs.projectSlug);
+            const project = projects.find((p) => p.id === projectIdFromRoute);
             if (!project && orgs.data) {
                 // check other orgs
                 for (const t of orgs.data || []) {
                     if (t.id === org.data?.id) {
                         continue;
                     }
-                    const projects = await listAllProjects({ teamId: t.id });
-                    const project = projects.find((p) => Project.slug(p) === slugs.projectSlug);
+                    const projects = await listAllProjects({ orgId: t.id });
+                    const project = projects.find((p) => p.id === projectIdFromRoute);
                     if (project) {
                         // redirect to the other org
                         history.push(location.pathname + "?org=" + t.id);
                     }
                 }
-
-                // check personal projects
-                const projects = await listAllProjects({ userId: user.id });
-                const project = projects.find((p) => Project.slug(p) === slugs.projectSlug);
-                if (project) {
-                    // redirect to the other org
-                    history.push(location.pathname + "?org=0");
-                }
             }
             setProject(project);
             setLoading(false);
         })();
-    }, [slugs.projectSlug, setProject, org.data, user, orgs.data, location, history]);
+    }, [setProject, org.data, user, orgs.data, location, history, listProjects.data, projectIdFromRoute]);
 
     return { project, loading };
 }

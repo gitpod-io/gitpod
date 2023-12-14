@@ -4,10 +4,12 @@
 
 package ide_proxy
 
+import "github.com/gitpod-io/gitpod/installer/pkg/common"
+
 const (
-	Component     = "ide-proxy"
-	ContainerPort = 80
+	Component     = common.IDEProxyComponent
+	ContainerPort = common.IDEProxyPort
 	PortName      = "http"
-	ServicePort   = 80
+	ServicePort   = common.IDEProxyPort
 	ReadinessPort = 8080
 )

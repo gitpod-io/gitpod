@@ -1,0 +1,9 @@
+{
+  "title": "title",
+  "envvars": [
+    {
+      "name": "FOO",
+      "value": "bar"
+    }
+  ]
+}

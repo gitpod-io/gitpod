@@ -4,12 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
-import { useQuery } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
+import { workspaceClient } from "../../service/public-api";
+import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
-export type ListWorkspacesQueryResult = WorkspaceInfo[];
+export type ListWorkspacesQueryResult = Workspace[];
 
 type UseListWorkspacesQueryArgs = {
     limit: number;
@@ -22,24 +22,27 @@ export const useListWorkspacesQuery = ({ limit }: UseListWorkspacesQueryArgs) =>
         queryFn: async () => {
             // TODO: Can we update the backend api to sort & rank pinned over non-pinned for us?
             const [infos, pinned] = await Promise.all([
-                getGitpodService().server.getWorkspaces({
-                    limit,
-                    includeWithoutProject: true,
+                workspaceClient.listWorkspaces({
+                    pagination: {
+                        pageSize: limit,
+                    },
+                    pinned: false,
                     organizationId: currentOrg.data?.id,
                 }),
                 // Additional fetch for pinned workspaces
                 // see also: https://github.com/gitpod-io/gitpod/issues/4488
-                getGitpodService().server.getWorkspaces({
-                    limit,
-                    pinnedOnly: true,
-                    includeWithoutProject: true,
+                workspaceClient.listWorkspaces({
+                    pagination: {
+                        pageSize: limit,
+                    },
+                    pinned: true,
                     organizationId: currentOrg.data?.id,
                 }),
             ]);
 
             // Merge both data sets into one unique (by ws id) array
-            const workspacesMap = new Map(infos.map((ws) => [ws.workspace.id, ws]));
-            const pinnedWorkspacesMap = new Map(pinned.map((ws) => [ws.workspace.id, ws]));
+            const workspacesMap = new Map(infos.workspaces.map((ws) => [ws.id, ws]));
+            const pinnedWorkspacesMap = new Map(pinned.workspaces.map((ws) => [ws.id, ws]));
             const workspaces = Array.from(new Map([...workspacesMap, ...pinnedWorkspacesMap]).values());
 
             return workspaces;
@@ -54,3 +57,19 @@ export function getListWorkspacesQueryKey(orgId?: string) {
     }
     return ["workspaces", "list", orgId];
 }
+
+export const useUpdateWorkspaceInCache = () => {
+    const queryClient = useQueryClient();
+    const org = useCurrentOrg();
+    return (newWorkspace: Workspace) => {
+        const queryKey = getListWorkspacesQueryKey(org.data?.id);
+        queryClient.setQueryData<ListWorkspacesQueryResult>(queryKey, (oldWorkspacesData) => {
+            return oldWorkspacesData?.map((info) => {
+                if (info.id !== newWorkspace.id) {
+                    return info;
+                }
+                return newWorkspace;
+            });
+        });
+    };
+};

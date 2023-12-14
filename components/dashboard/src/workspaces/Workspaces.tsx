@@ -8,7 +8,6 @@ import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import Header from "../components/Header";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { ItemsList } from "../components/ItemsList";
-import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import Arrow from "../components/Arrow";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
@@ -17,6 +16,8 @@ import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-inactive-workspaces-mutation";
 import { useToast } from "../components/toasts/Toasts";
+import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { Button } from "@podkit/buttons/Button";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -46,14 +47,18 @@ const WorkspacesPage: FunctionComponent = () => {
     const { filteredActiveWorkspaces, filteredInactiveWorkspaces } = useMemo(() => {
         const filteredActiveWorkspaces = activeWorkspaces.filter(
             (info) =>
-                `${info.workspace.description}${info.workspace.id}${info.workspace.contextURL}${info.workspace.context}`
+                `${info.metadata!.name}${info.id}${info.metadata!.originalContextUrl}${
+                    info.status?.gitStatus?.cloneUrl
+                }${info.status?.gitStatus?.branch}`
                     .toLowerCase()
                     .indexOf(searchTerm.toLowerCase()) !== -1,
         );
 
         const filteredInactiveWorkspaces = inactiveWorkspaces.filter(
             (info) =>
-                `${info.workspace.description}${info.workspace.id}${info.workspace.contextURL}${info.workspace.context}`
+                `${info.metadata!.name}${info.id}${info.metadata!.originalContextUrl}${
+                    info.status?.gitStatus?.cloneUrl
+                }${info.status?.gitStatus?.branch}`
                     .toLowerCase()
                     .indexOf(searchTerm.toLowerCase()) !== -1,
         );
@@ -67,7 +72,7 @@ const WorkspacesPage: FunctionComponent = () => {
     const handleDeleteInactiveWorkspacesConfirmation = useCallback(async () => {
         try {
             await deleteInactiveWorkspaces.mutateAsync({
-                workspaceIds: inactiveWorkspaces.map((info) => info.workspace.id),
+                workspaceIds: inactiveWorkspaces.map((info) => info.id),
             });
 
             setDeleteModalVisible(false);
@@ -102,7 +107,7 @@ const WorkspacesPage: FunctionComponent = () => {
                         <ItemsList className="app-container pb-40">
                             <div className="border-t border-gray-200 dark:border-gray-800"></div>
                             {filteredActiveWorkspaces.map((info) => {
-                                return <WorkspaceEntry key={info.workspace.id} info={info} />;
+                                return <WorkspaceEntry key={info.id} info={info} />;
                             })}
                             {filteredActiveWorkspaces.length > 0 && <div className="py-6"></div>}
                             {filteredInactiveWorkspaces.length > 0 && (
@@ -112,7 +117,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                         className="flex cursor-pointer py-6 px-6 flex-row text-gray-400 bg-gray-50  hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl mb-2"
                                     >
                                         <div className="pr-2">
-                                            <Arrow direction={showInactive ? "up" : "down"} />
+                                            <Arrow direction={showInactive ? "down" : "right"} />
                                         </div>
                                         <div className="flex flex-grow flex-col ">
                                             <div className="font-medium text-gray-500 dark:text-gray-200 truncate">
@@ -137,22 +142,25 @@ const WorkspacesPage: FunctionComponent = () => {
                                         </div>
                                         <div className="self-center">
                                             {showInactive ? (
-                                                <button
+                                                <Button
+                                                    variant="ghost"
+                                                    // TODO: Remove these classes once we decide on the new button style
+                                                    // Leaving these to emulate the old button's danger.secondary style until we decide if we want that style or not
+                                                    className="bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200 text-red-600 hover:text-red-700 hover:opacity-100"
                                                     onClick={(evt) => {
                                                         setDeleteModalVisible(true);
                                                         evt.stopPropagation();
                                                     }}
-                                                    className="secondary danger"
                                                 >
                                                     Delete Inactive Workspaces
-                                                </button>
+                                                </Button>
                                             ) : null}
                                         </div>
                                     </div>
                                     {showInactive ? (
                                         <>
                                             {filteredInactiveWorkspaces.map((info) => {
-                                                return <WorkspaceEntry key={info.workspace.id} info={info} />;
+                                                return <WorkspaceEntry key={info.id} info={info} />;
                                             })}
                                         </>
                                     ) : null}
@@ -169,31 +177,20 @@ const WorkspacesPage: FunctionComponent = () => {
 
 export default WorkspacesPage;
 
-const sortWorkspaces = (a: WorkspaceInfo, b: WorkspaceInfo) => {
+const sortWorkspaces = (a: Workspace, b: Workspace) => {
     const result = workspaceActiveDate(b).localeCompare(workspaceActiveDate(a));
     if (result === 0) {
-        // both active now? order by creationtime
-        return WorkspaceInfo.lastActiveISODate(b).localeCompare(WorkspaceInfo.lastActiveISODate(a));
+        // both active now? order by workspace id
+        return b.id.localeCompare(a.id);
     }
     return result;
 };
 
 /**
- * Given a WorkspaceInfo, return a timestamp of the last related activitiy
- *
- * @param info WorkspaceInfo
- * @returns string timestamp
+ * Given a WorkspaceInfo, return a ISO string of the last related activitiy
  */
-function workspaceActiveDate(info: WorkspaceInfo): string {
-    if (!info.latestInstance) {
-        return info.workspace.creationTime;
-    }
-    if (info.latestInstance.status.phase === "stopped" || info.latestInstance.status.phase === "unknown") {
-        return WorkspaceInfo.lastActiveISODate(info);
-    }
-
-    const now = new Date().toISOString();
-    return info.latestInstance.stoppedTime || info.latestInstance.stoppingTime || now;
+function workspaceActiveDate(info: Workspace): string {
+    return info.status!.phase!.lastTransitionTime!.toDate().toISOString();
 }
 
 /**
@@ -203,14 +200,10 @@ function workspaceActiveDate(info: WorkspaceInfo): string {
  * @param info WorkspaceInfo
  * @returns boolean If workspace is considered active
  */
-function isWorkspaceActive(info: WorkspaceInfo): boolean {
-    const lastSessionStart = WorkspaceInfo.lastActiveISODate(info);
+function isWorkspaceActive(info: Workspace): boolean {
+    const lastSessionStart = info.status!.phase!.lastTransitionTime!.toDate().toISOString();
     const twentyfourHoursAgo = hoursBefore(new Date().toISOString(), 24);
 
-    return (
-        (info.workspace.pinned ||
-            (!!info.latestInstance && info.latestInstance.status?.phase !== "stopped") ||
-            isDateSmallerOrEqual(twentyfourHoursAgo, lastSessionStart)) &&
-        !info.workspace.softDeleted
-    );
+    const isStopped = info.status?.phase?.name === WorkspacePhase_Phase.STOPPED;
+    return info.metadata!.pinned || !isStopped || isDateSmallerOrEqual(twentyfourHoursAgo, lastSessionStart);
 }

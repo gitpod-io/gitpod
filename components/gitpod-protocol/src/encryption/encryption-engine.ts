@@ -3,6 +3,7 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
+import "reflect-metadata";
 
 import * as crypto from "crypto";
 import { injectable } from "inversify";
@@ -56,7 +57,7 @@ export class EncryptionEngineImpl {
             key,
             Buffer.from(encryptedData.keyParams.iv, this.enc),
         );
-        let decrypted = decipher.update(Buffer.from(encryptedData.data, this.enc));
+        const decrypted = decipher.update(Buffer.from(encryptedData.data, this.enc));
         const finalDecrypted = Buffer.concat([decrypted, decipher.final()]);
         return finalDecrypted.toString("utf8");
     }

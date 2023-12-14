@@ -11,32 +11,30 @@ export const projectsPathMain = "/projects";
 export const projectsPathMainWithParams = [projectsPathMain, ":projectName", ":resourceOrPrebuild?"].join("/");
 
 export const projectsPathInstallGitHubApp = "/install-github-app";
-export const projectsPathNew = "/projects/new";
 
 export function getProjectTabs(project: Project | undefined): TabEntry[] {
     if (!project) {
         return [];
     }
-    const projectSlug = Project.slug(project);
     return [
         {
             title: "Branches",
-            link: `/projects/${projectSlug}`,
+            link: `/projects/${project.id}`,
         },
         {
             title: "Prebuilds",
-            link: `/projects/${projectSlug}/prebuilds`,
+            link: `/projects/${project.id}/prebuilds`,
         },
         {
             title: "Settings",
-            link: `/projects/${projectSlug}/settings`,
+            link: `/projects/${project.id}/settings`,
             alternatives: getProjectSettingsMenu(project).flatMap((e) => e.link),
         },
     ];
 }
 
 export function getProjectSettingsMenu(project?: Project) {
-    const slug = project ? Project.slug(project) : "unknown";
+    const slug = project?.id ?? "unknown";
     return [
         {
             title: "General",

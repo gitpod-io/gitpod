@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { useContext, useEffect, useState, useMemo, useCallback, FC } from "react";
 import { UserContext } from "./user-context";
@@ -18,9 +17,13 @@ import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
 import { SSOLoginForm } from "./login/SSOLoginForm";
-import { useAuthProviders } from "./data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "./data/auth-providers/auth-provider-descriptions-query";
 import { SetupPending } from "./login/SetupPending";
 import { useNeedsSetup } from "./dedicated-setup/use-needs-setup";
+import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { Button, ButtonProps } from "@podkit/buttons/Button";
+import { cn } from "@podkit/lib/cn";
+import { userClient } from "./service/public-api";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -28,10 +31,6 @@ export function markLoggedIn() {
 
 export function hasLoggedInBefore() {
     return GitpodCookie.isPresent(document.cookie);
-}
-
-export function hasVisitedMarketingWebsiteBefore() {
-    return document.cookie.match("gitpod-marketing-website-visited=true");
 }
 
 type LoginProps = {
@@ -42,7 +41,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
     const urlHash = useMemo(() => getURLHash(), []);
 
-    const authProviders = useAuthProviders();
+    const authProviders = useAuthProviderDescriptions();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [hostFromContext, setHostFromContext] = useState<string | undefined>();
     const [repoPathname, setRepoPathname] = useState<string | undefined>();
@@ -62,18 +61,18 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
         }
     }, [urlHash]);
 
-    let providerFromContext: AuthProviderInfo | undefined;
+    let providerFromContext: AuthProviderDescription | undefined;
     if (hostFromContext && authProviders.data) {
         providerFromContext = authProviders.data.find((provider) => provider.host === hostFromContext);
     }
 
-    const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore() && !urlHash.startsWith("https://");
-
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
-        const [user] = await Promise.all([getGitpodService().server.getLoggedInUser()]);
-        setUser(user);
-        markLoggedIn();
+        const { user } = await userClient.getAuthenticatedUser({});
+        if (user) {
+            setUser(user);
+            markLoggedIn();
+        }
     }, [setUser]);
 
     const authorizeSuccessful = useCallback(async () => {
@@ -123,16 +122,13 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
     return (
         <div id="login-container" className="z-50 flex w-screen h-screen">
-            <div id="login-section" className={"flex-grow flex w-full" + (showWelcome ? " lg:w-1/2" : "")}>
-                <div
-                    id="login-section-column"
-                    className={"flex-grow max-w-2xl flex flex-col h-100 mx-auto" + (showWelcome ? " lg:my-0" : "")}
-                >
+            <div id="login-section" className={"flex-grow flex w-full"}>
+                <div id="login-section-column" className={"flex-grow max-w-2xl flex flex-col h-100 mx-auto"}>
                     {needsSetupCheckLoading ? (
                         // empty filler container to keep the layout stable
                         <div className="flex-grow" />
                     ) : needsSetup ? (
-                        <SetupPending alwaysShowHeader={!showWelcome} />
+                        <SetupPending alwaysShowHeader />
                     ) : (
                         <div className="flex-grow h-100 flex flex-row items-center justify-center">
                             <div className="rounded-xl px-10 py-10 mx-auto">
@@ -162,28 +158,23 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
                                 <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
                                     {providerFromContext ? (
-                                        <button
+                                        <LoginButton
                                             key={"button" + providerFromContext.host}
-                                            className="btn-login flex-none w-56 h-10 p-0 inline-flex"
                                             onClick={() => openLogin(providerFromContext!.host)}
                                         >
-                                            {iconForAuthProvider(providerFromContext.authProviderType)}
+                                            {iconForAuthProvider(providerFromContext.type)}
                                             <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                                 Continue with {simplifyProviderName(providerFromContext.host)}
                                             </span>
-                                        </button>
+                                        </LoginButton>
                                     ) : (
                                         authProviders.data?.map((ap) => (
-                                            <button
-                                                key={"button" + ap.host}
-                                                className="btn-login flex-none w-56 h-10 p-0 inline-flex"
-                                                onClick={() => openLogin(ap.host)}
-                                            >
-                                                {iconForAuthProvider(ap.authProviderType)}
+                                            <LoginButton key={"button" + ap.host} onClick={() => openLogin(ap.host)}>
+                                                {iconForAuthProvider(ap.type)}
                                                 <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                                     Continue with {simplifyProviderName(ap.host)}
                                                 </span>
-                                            </button>
+                                            </LoginButton>
                                         ))
                                     )}
                                     <SSOLoginForm
@@ -222,5 +213,26 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                 </div>
             </div>
         </div>
+    );
+};
+
+// TODO: Do we really want a different style button for the login page, or could we use our normal secondary variant?
+type LoginButtonProps = {
+    onClick: ButtonProps["onClick"];
+};
+const LoginButton: FC<LoginButtonProps> = ({ children, onClick }) => {
+    return (
+        <Button
+            // Using ghost here to avoid the default button styles
+            variant="ghost"
+            // TODO: Determine if we want this one-off style of button
+            className={cn(
+                "border-none bg-gray-100 hover:bg-gray-200 text-gray-500 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-600 hover:opacity-100",
+                "flex-none w-56 h-10 p-0 inline-flex rounded-xl",
+            )}
+            onClick={onClick}
+        >
+            {children}
+        </Button>
     );
 };

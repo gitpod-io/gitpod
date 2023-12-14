@@ -39,6 +39,9 @@ func main() {
 				"setdomainname",
 				"sethostname",
 				"unshare",
+				"keyctl",
+				"add_key",
+				"request_key",
 			},
 			Action: specs.ActAllow,
 		},
@@ -53,14 +56,6 @@ func main() {
 		specs.LinuxSyscall{
 			Names:  []string{"setns"},
 			Action: specs.ActAllow,
-		},
-		specs.LinuxSyscall{
-			Names: []string{
-				"keyctl",
-			},
-			// prevent call and return ENOSYS to make runc happy
-			// (see https://github.com/opencontainers/runc/issues/1889)
-			Action: specs.ActTrace,
 		},
 	)
 

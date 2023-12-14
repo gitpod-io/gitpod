@@ -10,7 +10,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { OAuthRequest, OAuthResponse } from "@jmondi/oauth2-server";
 import { handleExpressResponse, handleExpressError } from "@jmondi/oauth2-server/dist/adapters/express";
-import * as express from "express";
+import express from "express";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { Config } from "../config";
@@ -142,7 +142,7 @@ export class OAuthController {
             }
 
             // Check for approval of this client
-            if (!this.hasApproval(user, clientID.toString(), req, res)) {
+            if (!(await this.hasApproval(user, clientID.toString(), req, res))) {
                 res.sendStatus(400);
                 return;
             }

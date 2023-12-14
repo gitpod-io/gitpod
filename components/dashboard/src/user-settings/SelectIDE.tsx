@@ -4,13 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import { UserContext } from "../user-context";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
-import { User } from "@gitpod/gitpod-protocol";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import PillLabel from "../components/PillLabel";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+import { converter } from "../service/public-api";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -21,37 +21,35 @@ export default function SelectIDE(props: SelectIDEProps) {
     const { user, setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
 
-    // Only exec once when we access this component
-    useEffect(() => {
-        user && User.migrationIDESettings(user);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || "code");
-    const [useLatestVersion, setUseLatestVersion] = useState<boolean>(
-        user?.additionalData?.ideSettings?.useLatestVersion ?? false,
-    );
+    const [defaultIde, setDefaultIde] = useState<string>(user?.editorSettings?.name || "code");
+    const [useLatestVersion, setUseLatestVersion] = useState<boolean>(user?.editorSettings?.version === "latest");
 
     const actualUpdateUserIDEInfo = useCallback(
         async (selectedIde: string, useLatestVersion: boolean) => {
-            const additionalData = user?.additionalData || {};
-            const ideSettings = additionalData.ideSettings || {};
+            // update stored autostart options to match useLatestVersion value set here
+            const workspaceAutostartOptions = user?.workspaceAutostartOptions?.map((o) => {
+                const option = converter.fromWorkspaceAutostartOption(o);
 
-            const updates = {
+                if (option.ideSettings) {
+                    option.ideSettings.useLatestVersion = useLatestVersion;
+                }
+
+                return option;
+            });
+
+            const updatedUser = await updateUser.mutateAsync({
                 additionalData: {
-                    ...additionalData,
+                    workspaceAutostartOptions,
                     ideSettings: {
-                        ...ideSettings,
                         settingVersion: "2.0",
                         defaultIde: selectedIde,
                         useLatestVersion: useLatestVersion,
                     },
                 },
-            };
-            const newUserData = await updateUser.mutateAsync(updates);
-            setUser(newUserData);
+            });
+            setUser(updatedUser);
         },
-        [setUser, updateUser, user?.additionalData],
+        [setUser, updateUser, user?.workspaceAutostartOptions],
     );
 
     const actuallySetDefaultIde = useCallback(

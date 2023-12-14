@@ -10,15 +10,16 @@ import { DisposableCollection, RunningWorkspaceInfo, WorkspaceInstance } from "@
 import { inject, injectable } from "inversify";
 import { Configuration } from "./config";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
+import { Metrics } from "./metrics";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { DBWithTracing, TracedUserDB, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
-import { MessageBusIntegration } from "./messagebus-integration";
-import { PrebuildUpdater } from "./prebuild-updater";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ClientProvider } from "./wsman-subscriber";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { PrebuildUpdater } from "./prebuild-updater";
+import { RedisPublisher } from "@gitpod/gitpod-db/lib";
+import { durationLongerThanSeconds } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 export const WorkspaceInstanceController = Symbol("WorkspaceInstanceController");
 
@@ -47,25 +48,15 @@ export interface WorkspaceInstanceController {
  */
 @injectable()
 export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceController {
-    @inject(Configuration) protected readonly config: Configuration;
-
-    @inject(PrometheusMetricsExporter)
-    protected readonly prometheusExporter: PrometheusMetricsExporter;
-
-    @inject(TracedWorkspaceDB)
-    protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-
-    @inject(TracedUserDB)
-    protected readonly userDB: DBWithTracing<UserDB>;
-
-    @inject(MessageBusIntegration)
-    protected readonly messagebus: MessageBusIntegration;
-
-    @inject(PrebuildUpdater)
-    protected readonly prebuildUpdater: PrebuildUpdater;
-
-    @inject(IAnalyticsWriter)
-    protected readonly analytics: IAnalyticsWriter;
+    constructor(
+        @inject(Configuration) private readonly config: Configuration,
+        @inject(Metrics) private readonly prometheusExporter: Metrics,
+        @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
+        @inject(TracedUserDB) private readonly userDB: DBWithTracing<UserDB>,
+        @inject(PrebuildUpdater) private readonly prebuildUpdater: PrebuildUpdater,
+        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(RedisPublisher) private readonly publisher: RedisPublisher,
+    ) {}
 
     protected readonly disposables = new DisposableCollection();
 
@@ -281,7 +272,12 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
         // important: call this after the DB update
         await this.onStopped(ctx, info.workspace.ownerId, info.latestInstance);
 
-        await this.messagebus.notifyOnInstanceUpdate(ctx, info.workspace.ownerId, info.latestInstance);
+        await this.publisher.publishInstanceUpdate({
+            ownerID: info.workspace.ownerId,
+            instanceID: info.latestInstance.id,
+            workspaceID: info.workspace.id,
+        });
+
         await this.prebuildUpdater.stopPrebuildInstance(ctx, info.latestInstance);
     }
 
@@ -311,7 +307,3 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
         }
     }
 }
-
-const durationLongerThanSeconds = (time: number, durationSeconds: number, now: number = Date.now()) => {
-    return (now - time) / 1000 > durationSeconds;
-};

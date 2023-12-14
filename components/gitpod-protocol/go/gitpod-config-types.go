@@ -31,10 +31,10 @@ type CoreDump struct {
 type Env struct {
 }
 
-// Github Configures Gitpod's GitHub app
+// Github Configures Gitpod's GitHub app (deprecated)
 type Github struct {
 
-	// Set to true to enable workspace prebuilds, false to disable them. Defaults to true.
+	// Set to true to enable workspace prebuilds, false to disable them. Defaults to true. (deprecated)
 	Prebuilds interface{} `yaml:"prebuilds,omitempty" json:"prebuilds,omitempty"`
 }
 
@@ -56,7 +56,7 @@ type GitpodConfig struct {
 	// Git config values should be provided in pairs. E.g. `core.autocrlf: input`. See https://git-scm.com/docs/git-config#_values.
 	GitConfig map[string]string `yaml:"gitConfig,omitempty" json:"gitConfig,omitempty"`
 
-	// Configures Gitpod's GitHub app
+	// Configures Gitpod's GitHub app (deprecated)
 	Github *Github `yaml:"github,omitempty" json:"github,omitempty"`
 
 	// The Docker image to run your workspace in.
@@ -164,7 +164,7 @@ type Prebuilds struct {
 	Version string `yaml:"version,omitempty" json:"version,omitempty"`
 }
 
-// Prebuilds_object Set to true to enable workspace prebuilds, false to disable them. Defaults to true.
+// Prebuilds_object Set to true to enable workspace prebuilds, false to disable them. Defaults to true. (deprecated)
 type Prebuilds_object struct {
 
 	// Add a Review in Gitpod badge to pull requests. Defaults to true.

@@ -5,10 +5,9 @@
  */
 
 import { RepositoryService } from "../repohost/repo-service";
-import { ProviderRepository, User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { BitbucketServerApi } from "../bitbucket-server/bitbucket-server-api";
-import { AuthProviderParams } from "../auth/auth-provider";
 import { BitbucketServerContextParser } from "../bitbucket-server/bitbucket-server-context-parser";
 import { Config } from "../config";
 import { TokenService } from "../user/token-service";
@@ -18,70 +17,13 @@ import { BitbucketServerApp } from "./bitbucket-server-app";
 export class BitbucketServerService extends RepositoryService {
     static PREBUILD_TOKEN_SCOPE = "prebuilds";
 
-    @inject(BitbucketServerApi) protected api: BitbucketServerApi;
-    @inject(Config) protected readonly config: Config;
-    @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
-    @inject(TokenService) protected tokenService: TokenService;
-    @inject(BitbucketServerContextParser) protected contextParser: BitbucketServerContextParser;
-
-    async getRepositoriesForAutomatedPrebuilds(user: User): Promise<ProviderRepository[]> {
-        const repos = await this.api.getRepos(user, { limit: 100, permission: "REPO_ADMIN" });
-        return (repos.values || []).map((r) => {
-            const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href!;
-            // const webUrl = r.links?.self[0]?.href?.replace("/browse", "");
-            const accountAvatarUrl = this.api.getAvatarUrl(r.project.key);
-            return <ProviderRepository>{
-                name: r.name,
-                cloneUrl,
-                account: r.project.key,
-                accountAvatarUrl,
-                // updatedAt: TODO(at): this isn't provided directly
-            };
-        });
-    }
-
-    async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
-        const { host, repoKind, owner, repoName } = await this.contextParser.parseURL(user, cloneUrl);
-        if (host !== this.authProviderConfig.host) {
-            return false;
-        }
-
-        const identity = user.identities.find((i) => i.authProviderId === this.authProviderConfig.id);
-        if (!identity) {
-            console.error(`BBS: no identity found.`, { host: this.authProviderConfig.host, userId: user.id, cloneUrl });
-            return false;
-        }
-
-        try {
-            await this.api.getWebhooks(user, { repoKind, repositorySlug: repoName, owner });
-            // reading webhooks to check if admin scope is provided
-        } catch (error) {
-            console.log(`BBS: could not read webhooks.`, error, { error, cloneUrl });
-            return false;
-        }
-
-        if (repoKind === "users") {
-            const ownProfile = await this.api.getUserProfile(user, identity.authName);
-            if (owner === ownProfile.slug) {
-                return true;
-            }
-        }
-
-        let permission = await this.api.getPermission(user, { username: identity.authName, repoKind, owner, repoName });
-        if (!permission && repoKind === "projects") {
-            permission = await this.api.getPermission(user, { username: identity.authName, repoKind, owner });
-        }
-
-        if (this.hasPermissionToCreateWebhooks(permission)) {
-            return true;
-        }
-
-        console.log(`BBS: Not allowed to install webhooks.`, { permission });
-        return false;
-    }
-
-    protected hasPermissionToCreateWebhooks(permission: string | undefined) {
-        return permission && ["REPO_ADMIN", "PROJECT_ADMIN"].indexOf(permission) !== -1;
+    constructor(
+        @inject(BitbucketServerApi) private readonly api: BitbucketServerApi,
+        @inject(Config) private readonly config: Config,
+        @inject(TokenService) private readonly tokenService: TokenService,
+        @inject(BitbucketServerContextParser) private readonly contextParser: BitbucketServerContextParser,
+    ) {
+        super();
     }
 
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
@@ -124,6 +66,7 @@ export class BitbucketServerService extends RepositoryService {
 
     protected getHookUrl() {
         return this.config.hostUrl
+            .asPublicServices()
             .with({
                 pathname: BitbucketServerApp.path,
             })

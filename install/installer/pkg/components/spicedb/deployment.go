@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
 
@@ -34,7 +35,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, errors.New("missing configuration for spicedb.secretRef")
 	}
 
-	bootstrapVolume, bootstrapVolumeMount, bootstrapFiles, err := getBootstrapConfig(ctx)
+	bootstrapVolume, bootstrapVolumeMount, bootstrapFiles, contentHash, err := getBootstrapConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bootstrap config: %w", err)
 	}
@@ -56,10 +57,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        Component,
-						Namespace:   ctx.Namespace,
-						Labels:      labels,
-						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
+						Name:      Component,
+						Namespace: ctx.Namespace,
+						Labels:    labels,
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+							return map[string]string{
+								common.AnnotationConfigChecksum: contentHash,
+							}
+						}),
 					},
 					Spec: corev1.PodSpec{
 						Affinity:                      cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelMeta),
@@ -144,17 +149,39 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									RunAsNonRoot: pointer.Bool(true),
 									RunAsUser:    pointer.Int64(65532),
 								},
+								// Compare issue https://linear.app/gitpod/issue/EXP-906/spicedb-deployment-fails-in-gitpod-dedicated:
+								//  - this should be a single grpc_health_probe-based readiness probe
+								//  - but it started failing (with k8s 1.27.7 ?)
+								//  - to unblock container startup, we split into readiness and liveness probes
 								ReadinessProbe: &corev1.Probe{
+									ProbeHandler: corev1.ProbeHandler{
+										// Exec: &v1.ExecAction{
+										// 	Command: []string{"grpc_health_probe", "-v", fmt.Sprintf("-addr=localhost:%d", ContainerGRPCPort)},
+										// },
+										TCPSocket: &v1.TCPSocketAction{
+											Port: intstr.FromInt(ContainerGRPCPort),
+										},
+									},
+									InitialDelaySeconds: 1,
+									// try again every 2 seconds
+									PeriodSeconds: 2,
+									// fail after 30 * 2 + 1 = 61
+									FailureThreshold: 30,
+									SuccessThreshold: 1,
+									TimeoutSeconds:   1,
+								},
+								// Because we can't test readiness properly to not block startup, we use a liveness probe to test whether the cluster has come up
+								LivenessProbe: &corev1.Probe{
 									ProbeHandler: corev1.ProbeHandler{
 										Exec: &v1.ExecAction{
 											Command: []string{"grpc_health_probe", "-v", fmt.Sprintf("-addr=localhost:%d", ContainerGRPCPort)},
 										},
 									},
-									InitialDelaySeconds: 5,
-									PeriodSeconds:       30,
-									FailureThreshold:    5,
+									InitialDelaySeconds: 10,
+									PeriodSeconds:       10,
+									FailureThreshold:    3,
 									SuccessThreshold:    1,
-									TimeoutSeconds:      3,
+									TimeoutSeconds:      1,
 								},
 								VolumeMounts: []v1.VolumeMount{
 									bootstrapVolumeMount,
@@ -177,7 +204,7 @@ func dbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
 }
 
 func dbWaiter(ctx *common.RenderContext) v1.Container {
-	databaseWaiter := common.DatabaseWaiterContainer(ctx)
+	databaseWaiter := common.DatabaseMigrationWaiterContainer(ctx)
 	// Use updated env-vars, which in the case cloud-sql-proxy override default db conf
 
 	databaseWaiter.Env = dbEnvVars(ctx)

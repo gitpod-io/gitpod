@@ -5,60 +5,37 @@
  */
 
 import { injectable, inject } from "inversify";
-import { UserDB, WorkspaceDB, UserStorageResourcesDB, TeamDB, ProjectDB } from "@gitpod/gitpod-db/lib";
+import { WorkspaceDB, TeamDB, ProjectDB } from "@gitpod/gitpod-db/lib";
 import { User, Workspace } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
-import { WorkspaceDeletionService } from "../workspace/workspace-deletion-service";
 import { AuthProviderService } from "../auth/auth-provider-service";
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import { Config } from "../config";
-import { WorkspaceStarter } from "../workspace/workspace-starter";
-import { StripeService } from "./stripe-service";
-import { BillingModes } from "../billing/billing-mode";
+import { WorkspaceService } from "../workspace/workspace-service";
+import { UserService } from "./user-service";
+import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 
 @injectable()
 export class UserDeletionService {
-    @inject(Config) protected readonly config: Config;
-    @inject(UserDB) protected readonly db: UserDB;
-    @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
-    @inject(UserStorageResourcesDB) protected readonly userStorageResourcesDb: UserStorageResourcesDB;
-    @inject(TeamDB) protected readonly teamDb: TeamDB;
-    @inject(ProjectDB) protected readonly projectDb: ProjectDB;
-    @inject(StorageClient) protected readonly storageClient: StorageClient;
-    @inject(WorkspaceDeletionService) protected readonly workspaceDeletionService: WorkspaceDeletionService;
-    @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
-    @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
-    @inject(StripeService) protected readonly stripeService: StripeService;
-    @inject(BillingModes) protected readonly billingMode: BillingModes;
+    constructor(
+        @inject(UserService) private readonly userService: UserService,
+        @inject(WorkspaceDB) private readonly workspaceDb: WorkspaceDB,
+        @inject(TeamDB) private readonly teamDb: TeamDB,
+        @inject(ProjectDB) private readonly projectDb: ProjectDB,
+        @inject(StorageClient) private readonly storageClient: StorageClient,
+        @inject(WorkspaceService) private readonly workspaceService: WorkspaceService,
+        @inject(AuthProviderService) private readonly authProviderService: AuthProviderService,
+    ) {
+        this.userService.onDeleteUser(async (subjectId, user, ctx) => {
+            await this.contributeToDeleteUser(subjectId, user, ctx);
+        });
+    }
 
-    /**
-     * This method deletes a User logically. The contract here is that after running this method without receiving an
-     * error, the system does not contain any data that is relatable to the actual person in the sense of the GDPR.
-     * To guarantee that, but also maintain traceability
-     * we anonymize data that might contain user related/relatable data and keep the entities itself (incl. ids).
-     */
-    async deleteUser(id: string): Promise<void> {
-        const user = await this.db.findUserById(id);
-        if (!user) {
-            throw new Error(`No user with id ${id} found!`);
-        }
-
-        if (user.markedDeleted === true) {
-            log.debug({ userId: id }, "Is deleted but markDeleted already set. Continuing.");
-        }
-
-        const billingMode = await this.billingMode.getBillingModeForUser(user, new Date());
-        if (billingMode.mode === "usage-based") {
-            // Also cancel any usage-based (Stripe) subscription
-            await this.stripeService.cancelSubscriptionForUser(user.id);
-        }
-
+    private async contributeToDeleteUser(userId: string, user: User, ctx: TransactionalContext): Promise<void> {
         // Stop all workspaces
-        await this.workspaceStarter.stopRunningWorkspacesForUser(
+        await this.workspaceService.stopRunningWorkspacesForUser(
             {},
+            userId,
             user.id,
             "user deleted",
             StopWorkspacePolicy.IMMEDIATELY,
@@ -68,79 +45,25 @@ export class UserDeletionService {
         const authProviders = await this.authProviderService.getAuthProvidersOfUser(user);
         for (const provider of authProviders) {
             try {
-                await this.authProviderService.deleteAuthProvider(provider);
+                await this.authProviderService.deleteAuthProviderOfUser(user.id, provider.id);
             } catch (error) {
-                log.error({ userId: id }, "Failed to delete user's auth provider.", error);
+                log.error({ userId: user.id }, "Failed to delete user's auth provider.", error);
             }
         }
 
-        // User
-        await this.db.transaction(async (db) => {
-            this.anonymizeUser(user);
-            this.deleteIdentities(user);
-            await this.deleteTokens(db, user);
-            user.lastVerificationTime = undefined;
-            user.markedDeleted = true;
-            await db.storeUser(user);
-        });
-
         await Promise.all([
             // Workspace
-            this.anonymizeAllWorkspaces(id),
-            // UserStorageResourcesDB
-            this.userStorageResourcesDb.deleteAllForUser(user.id),
+            this.anonymizeAllWorkspaces(user.id),
             // Bucket
-            this.deleteUserBucket(id),
+            this.deleteUserBucket(user.id),
             // Teams owned only by this user
-            this.deleteSoleOwnedTeams(id),
+            this.deleteSoleOwnedTeams(user.id),
             // Team memberships
-            this.deleteTeamMemberships(id),
-            // User projects
-            this.deleteUserProjects(id),
+            this.deleteTeamMemberships(user.id),
         ]);
-
-        // Track the deletion Event for Analytics Purposes
-        this.analytics.track({
-            userId: user.id,
-            event: "deletion",
-            properties: {
-                deleted_at: new Date().toISOString(),
-            },
-        });
-        this.analytics.identify({
-            userId: user.id,
-            traits: {
-                github_slug: "deleted-user",
-                gitlab_slug: "deleted-user",
-                bitbucket_slug: "deleted-user",
-                email: "deleted-user",
-                full_name: "deleted-user",
-                name: "deleted-user",
-            },
-        });
     }
 
-    protected anonymizeUser(user: User) {
-        user.avatarUrl = "deleted-avatarUrl";
-        user.fullName = "deleted-fullName";
-        user.name = "deleted-Name";
-        if (user.verificationPhoneNumber) {
-            user.verificationPhoneNumber = "deleted-phoneNumber";
-        }
-    }
-
-    protected deleteIdentities(user: User) {
-        for (const identity of user.identities) {
-            identity.deleted = true; // This triggers the HARD DELETION of the identity
-        }
-    }
-
-    protected async deleteTokens(db: UserDB, user: User) {
-        const tokenDeletions = user.identities.map((identity) => db.deleteTokens(identity));
-        await Promise.all(tokenDeletions);
-    }
-
-    protected async anonymizeAllWorkspaces(userId: string) {
+    private async anonymizeAllWorkspaces(userId: string) {
         const workspaces = await this.workspaceDb.findWorkspacesByUser(userId);
 
         await Promise.all(
@@ -151,7 +74,7 @@ export class UserDeletionService {
         );
     }
 
-    protected async deleteUserBucket(userId: string) {
+    private async deleteUserBucket(userId: string) {
         try {
             await this.storageClient.deleteUserContent(userId);
         } catch (error) {
@@ -159,29 +82,23 @@ export class UserDeletionService {
         }
     }
 
-    protected async deleteTeamMemberships(userId: string) {
+    private async deleteTeamMemberships(userId: string) {
         const teams = await this.teamDb.findTeamsByUser(userId);
         await Promise.all(teams.map((t) => this.teamDb.removeMemberFromTeam(userId, t.id)));
     }
 
-    protected async deleteSoleOwnedTeams(userId: string) {
+    private async deleteSoleOwnedTeams(userId: string) {
         const ownedTeams = await this.teamDb.findTeamsByUserAsSoleOwner(userId);
 
         for (const team of ownedTeams) {
-            const teamProjects = await this.projectDb.findTeamProjects(team.id);
+            const teamProjects = await this.projectDb.findProjects(team.id);
             await Promise.all(teamProjects.map((project) => this.projectDb.markDeleted(project.id)));
         }
 
         await Promise.all(ownedTeams.map((t) => this.teamDb.deleteTeam(t.id)));
     }
 
-    protected async deleteUserProjects(id: string) {
-        const userProjects = await this.projectDb.findUserProjects(id);
-
-        await Promise.all(userProjects.map((project) => this.projectDb.markDeleted(project.id)));
-    }
-
-    anonymizeWorkspace(ws: Workspace) {
+    private anonymizeWorkspace(ws: Workspace) {
         ws.context.title = "deleted-title";
         ws.context.normalizedContextURL = "deleted-normalizedContextURL";
         ws.contextURL = "deleted-contextURL";

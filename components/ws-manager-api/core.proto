@@ -328,11 +328,11 @@ message IDEImage {
     // web_ref is a reference to an OCI image used for serving the web-based IDE
     string web_ref = 1;
     // DEPRECATED desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
-    string desktop_ref = 2;
+    reserved 2;
     // supervisor_ref is a reference to an OCI image used as supervisor
     string supervisor_ref = 3;
     // DEPRECATED desktop_plugin_ref is an optional reference to an OCI image used for serving desktop IDE plugin
-    string desktop_plugin_ref = 4;
+    reserved 4;
 }
 
 // WorkspaceSpec is the specification of a workspace at runtime
@@ -342,7 +342,7 @@ message WorkspaceSpec {
 
     // deprecated_ide_image is a field present for backwards compatibility and the same
     // as IDEImage.web_ref. If both fields are present, IDEImage.web_ref takes precedence.
-    string deprecated_ide_image = 2;
+    reserved 2;
 
     // headless marks this workspace a headless one - headless workspaces are not intended for users but for automation
     bool headless = 3;
@@ -559,7 +559,7 @@ message StartWorkspaceSpec {
 
     // deprecated_ide_image is a field present for backwards compatibility and the same
     // as IDEImage.web_ref. If both fields are present, IDEImage.web_ref takes precedence.
-    string deprecated_ide_image = 2;
+    reserved 2;
 
     // feature_flags provide a means for starting variants of workspaces (e.g. a privileged one)
     repeated WorkspaceFeatureFlag feature_flags = 3;
@@ -657,6 +657,9 @@ enum WorkspaceFeatureFlag {
 
     // WORKSPACE_PSI feature flag for enabling pressure stall information for workspaces
     WORKSPACE_PSI = 11;
+
+    // SSH_CA feature flag for enabling SSH CA for workspaces
+    SSH_CA = 12;
 }
 
 // GitSpec configures the Git available within the workspace
@@ -720,11 +723,23 @@ message DescribeClusterRequest {}
 // DescribeClusterResponse is the answer to a DescribeClusterRequest
 message DescribeClusterResponse {
     // workspace classes that are supported by the cluster
-    repeated WorkspaceClass WorkspaceClasses = 1;
+    repeated WorkspaceClass workspace_classes = 1;
+
+    // preferred_workspace_class is the workspace class that is preferred by the cluster (consider this the "default" workspace class)
+    string preferred_workspace_class = 2;
 }
 
 // WorkspaceClass describes a workspace class that is supported by the cluster
 message WorkspaceClass {
-    string Id = 1;
-    string DisplayName = 2;
+    // ID is a unique identifier (within the cluster) of this workspace class
+    string id = 1;
+
+    // The string we display to users in the UI
+    string display_name = 2;
+
+    // The description of this workspace class
+    string description = 3;
+
+    // The cost of running a workspace of this class per minute expressed in credits
+    float credits_per_minute = 4;
 }

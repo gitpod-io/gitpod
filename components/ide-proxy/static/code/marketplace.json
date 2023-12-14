@@ -106,10 +106,16 @@
             }
         },
         "CoenraadS.bracket-pair-colorizer-2": {
-            "settings": ["editor.bracketPairColorization.enabled", "editor.guides.bracketPairs"]
+            "settings": [
+                "editor.bracketPairColorization.enabled",
+                "editor.guides.bracketPairs"
+            ]
         },
         "CoenraadS.bracket-pair-colorizer": {
-            "settings": ["editor.bracketPairColorization.enabled", "editor.guides.bracketPairs"]
+            "settings": [
+                "editor.bracketPairColorization.enabled",
+                "editor.guides.bracketPairs"
+            ]
         },
         "idleberg.innosetup": {
             "disallowInstall": true,
@@ -153,6 +159,37 @@
                 "displayName": "uni-ui-snippets"
             }
         },
+        "redhat.vscode-extension-serverless-workflow-editor": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "kie-group.swf-vscode-extension",
+                "displayName": "KIE Serverless Workflow Editor"
+            }
+        },
+        "errata-ai.vale-server": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "chrischinchilla.vale-vscode",
+                "displayName": "Vale VSCode"
+            }
+        },
+        "bungcip.better-toml": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "tamasfe.even-better-toml",
+                "displayName": "Even Better TOML"
+            }
+        },
+        "snyk-security.vscode-vuln-cost": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "snyk-security.snyk-vulnerability-scanner",
+                "displayName": "Snyk Security - Code, Open Source Dependencies, IaC Configurations"
+            }
+        },
+        "iocave.customize-ui": true,
+        "iocave.monkey-patch": true,
+        "pranaygp.vscode-css-peek": true,
         "redhat.vscode-wsdl2rest": true,
         "ms-vscode.node-debug2": true,
         "ms-vscode.node-debug": true,
@@ -162,6 +199,7 @@
         "ikappas.phpcs": true,
         "heptio.jsonnet": true,
         "eg2.vscode-npm-script": true,
+        "virgilsisoe.python-auto-import": true,
         "ethan-reesor.vscode-go-test-adapter": true
     },
     "migrateToPreRelease": {

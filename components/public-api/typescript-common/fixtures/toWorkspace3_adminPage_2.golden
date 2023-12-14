@@ -1,0 +1,105 @@
+{
+    "result": {
+        "id": "longlong-650a-413a-b5ed-aaaaa",
+        "metadata": {
+            "ownerId": "ownerId",
+            "organizationId": "organizationId",
+            "configurationId": "",
+            "annotations": {},
+            "name": "empty",
+            "pinned": true,
+            "originalContextUrl": "https://github.com/gitpod-io/empty"
+        },
+        "spec": {
+            "initializer": {
+                "specs": [
+                    {
+                        "git": {
+                            "remoteUri": "https://github.com/gitpod-io/empty.git",
+                            "upstreamRemoteUri": "",
+                            "targetMode": "CLONE_TARGET_MODE_REMOTE_COMMIT",
+                            "cloneTarget": "revision",
+                            "checkoutLocation": "",
+                            "config": {
+                                "customConfig": {},
+                                "authentication": "AUTH_METHOD_UNSPECIFIED",
+                                "authUser": "",
+                                "authPassword": "",
+                                "authOts": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "type": "WORKSPACE_TYPE_REGULAR",
+            "ports": [
+                {
+                    "port": "8080",
+                    "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+                    "url": "",
+                    "protocol": "PROTOCOL_HTTP"
+                },
+                {
+                    "port": "8081",
+                    "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+                    "url": "",
+                    "protocol": "PROTOCOL_HTTP"
+                },
+                {
+                    "port": "8082",
+                    "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+                    "url": "",
+                    "protocol": "PROTOCOL_HTTP"
+                },
+                {
+                    "port": "8083",
+                    "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+                    "url": "",
+                    "protocol": "PROTOCOL_HTTP"
+                },
+                {
+                    "port": "3306",
+                    "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+                    "url": "",
+                    "protocol": "PROTOCOL_HTTP"
+                }
+            ],
+            "environmentVariables": [],
+            "git": {
+                "username": "",
+                "email": ""
+            },
+            "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+            "class": "",
+            "sshPublicKeys": [],
+            "subassemblyReferences": [],
+            "logUrl": ""
+        },
+        "status": {
+            "statusVersion": "1576178411",
+            "phase": {
+                "name": "PHASE_STOPPED",
+                "lastTransitionTime": "2019-12-12T19:20:11.821Z"
+            },
+            "workspaceUrl": "https://longlong-650a-413a-b5ed-aaaaa.ws-us02.gitpod.io",
+            "conditions": {
+                "failed": "",
+                "failedReason": "FAILED_REASON_UNSPECIFIED",
+                "timeout": "workspace timed out after period of inactivity took longer than 00h30m"
+            },
+            "gitStatus": {
+                "cloneUrl": "https://github.com/gitpod-io/empty.git",
+                "branch": "master",
+                "latestCommit": "revision",
+                "uncommitedFiles": [],
+                "totalUncommitedFiles": 0,
+                "untrackedFiles": [],
+                "totalUntrackedFiles": 0,
+                "unpushedCommits": [],
+                "totalUnpushedCommits": 0
+            },
+            "instanceId": "instanceId"
+        }
+    },
+    "err": ""
+}

@@ -192,6 +192,15 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	_, _, authCfg := auth.GetConfig(ctx)
 
+	redisConfig := redis.GetConfiguration(ctx)
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Redis != nil {
+			redisConfig.Address = cfg.WebApp.Redis.Address
+		}
+
+		return nil
+	})
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -289,7 +298,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		ShowSetupModal:          showSetupModal,
 		Auth:                    authCfg,
-		Redis:                   redis.GetConfiguration(ctx),
+		Redis:                   redisConfig,
 		IsSingleOrgInstallation: isSingleOrgInstallation,
 	}
 

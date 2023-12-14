@@ -45,7 +45,11 @@ export class BitbucketServerFileProvider implements FileProvider {
         const { owner, name, repoKind } = commit.repository;
 
         try {
-            const result = await this.api.fetchContent(user, `/${repoKind}/${owner}/repos/${name}/raw/${path}`);
+            // @see https://developer.atlassian.com/server/bitbucket/rest/v811/api-group-repository/#api-api-latest-projects-projectkey-repos-repositoryslug-raw-path-get
+            const result = await this.api.fetchContent(
+                user,
+                `/${repoKind}/${owner}/repos/${name}/raw/${path}?at=${commit.revision}`,
+            );
             return result;
         } catch (err) {
             console.debug({ userId: user.id }, err);

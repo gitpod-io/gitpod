@@ -138,7 +138,7 @@ export function TeamsSearch() {
                 to={"/admin/orgs/" + props.team.id}
                 data-analytics='{"button_type":"sidebar_menu"}'
             >
-                <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
+                <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">
                     <div className="flex flex-col w-7/12 truncate">
                         <div className="font-medium text-gray-800 dark:text-gray-100 truncate max-w-sm">
                             {props.team.name}

@@ -4,17 +4,20 @@
 
 package wsmanagerbridge
 
+import "github.com/gitpod-io/gitpod/installer/pkg/components/redis"
+
 // Configuration from components/ws-manager-bridge/src/config.ts
 type Configuration struct {
-	Installation                        string             `json:"installation"`
-	StaticBridges                       []WorkspaceCluster `json:"staticBridges"`
-	ClusterService                      ClusterService     `json:"clusterService"`
-	WSClusterDBReconcileIntervalSeconds int32              `json:"wsClusterDBReconcileIntervalSeconds"`
-	ControllerIntervalSeconds           int32              `json:"controllerIntervalSeconds"`
-	ControllerMaxDisconnectSeconds      int32              `json:"controllerMaxDisconnectSeconds"`
-	EmulatePreparingIntervalSeconds     int32              `json:"emulatePreparingIntervalSeconds"`
-	Timeouts                            Timeouts           `json:"timeouts"`
-	ClusterSyncIntervalSeconds          int32              `json:"clusterSyncIntervalSeconds"`
+	Installation                        string              `json:"installation"`
+	StaticBridges                       []WorkspaceCluster  `json:"staticBridges"`
+	ClusterService                      ClusterService      `json:"clusterService"`
+	WSClusterDBReconcileIntervalSeconds int32               `json:"wsClusterDBReconcileIntervalSeconds"`
+	ControllerIntervalSeconds           int32               `json:"controllerIntervalSeconds"`
+	ControllerMaxDisconnectSeconds      int32               `json:"controllerMaxDisconnectSeconds"`
+	EmulatePreparingIntervalSeconds     int32               `json:"emulatePreparingIntervalSeconds"`
+	Timeouts                            Timeouts            `json:"timeouts"`
+	ClusterSyncIntervalSeconds          int32               `json:"clusterSyncIntervalSeconds"`
+	Redis                               redis.Configuration `json:"redis"`
 }
 
 type ClusterService struct {

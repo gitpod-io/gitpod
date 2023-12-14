@@ -85,9 +85,18 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	}
 	var offset = perPage * (page - 1)
 
+	var userID uuid.UUID
+	if in.UserId != "" {
+		userID, err = uuid.Parse(in.UserId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "UserID '%s' couldn't be parsed (error: %s).", in.UserId, err)
+		}
+	}
+
 	excludeDrafts := false
 	listUsageResult, err := db.FindUsage(ctx, s.conn, &db.FindUsageParams{
 		AttributionId: db.AttributionID(in.GetAttributionId()),
+		UserID:        userID,
 		From:          from,
 		To:            to,
 		Order:         order,
@@ -97,6 +106,7 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	})
 	logger := log.Log.
 		WithField("attribution_id", in.AttributionId).
+		WithField("userID", userID).
 		WithField("perPage", perPage).
 		WithField("page", page).
 		WithField("from", from).
@@ -136,6 +146,7 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	usageSummary, err := db.GetUsageSummary(ctx, s.conn,
 		db.GetUsageSummaryParams{
 			AttributionId: attributionId,
+			UserID:        userID,
 			From:          from,
 			To:            to,
 			ExcludeDrafts: excludeDrafts,
@@ -344,13 +355,13 @@ func reconcileUsage(instances []db.WorkspaceInstanceForUsage, drafts []db.Usage,
 
 	instancesByID := dedupeWorkspaceInstancesForUsage(instances)
 
-	draftsByWorkspaceID := map[uuid.UUID]db.Usage{}
+	draftsByInstanceID := map[uuid.UUID]db.Usage{}
 	for _, draft := range drafts {
-		draftsByWorkspaceID[*draft.WorkspaceInstanceID] = draft
+		draftsByInstanceID[*draft.WorkspaceInstanceID] = draft
 	}
 
 	for instanceID, instance := range instancesByID {
-		if usage, exists := draftsByWorkspaceID[instanceID]; exists {
+		if usage, exists := draftsByInstanceID[instanceID]; exists {
 			updatedUsage, err := updateUsageFromInstance(instance, usage, pricer, now)
 			if err != nil {
 				return nil, nil, fmt.Errorf("failed to construct updated usage record: %w", err)
@@ -378,7 +389,7 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 	}
 
 	draft := true
-	if stopTime.IsSet() {
+	if instance.StoppedTime.IsSet() {
 		draft = false
 	}
 
@@ -398,21 +409,31 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 		Draft:               draft,
 	}
 
+	creationTime := ""
+	if instance.CreationTime.IsSet() {
+		creationTime = db.TimeToISO8601(instance.CreationTime.Time())
+	}
 	startedTime := ""
 	if instance.StartedTime.IsSet() {
 		startedTime = db.TimeToISO8601(instance.StartedTime.Time())
 	}
 	endTime := ""
-	if instance.StoppingTime.IsSet() {
-		endTime = db.TimeToISO8601(instance.StoppingTime.Time())
+	if stopTime.IsSet() {
+		endTime = db.TimeToISO8601(stopTime.Time())
+	}
+	stoppedTime := ""
+	if instance.StoppedTime.IsSet() {
+		stoppedTime = db.TimeToISO8601(instance.StoppedTime.Time())
 	}
 	err := usage.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
 		WorkspaceId:    instance.WorkspaceID,
 		WorkspaceType:  instance.Type,
 		WorkspaceClass: instance.WorkspaceClass,
 		ContextURL:     instance.ContextURL,
+		CreationTime:   creationTime,
 		StartTime:      startedTime,
 		EndTime:        endTime,
+		StoppedTime:    stoppedTime,
 		UserID:         instance.UserID,
 		UserName:       instance.UserName,
 		UserAvatarURL:  instance.UserAvatarURL,
@@ -496,7 +517,7 @@ func (s *UsageService) AddUsageCreditNote(ctx context.Context, req *v1.AddUsageC
 		if err != nil {
 			return nil, fmt.Errorf("The user id is not a valid UUID. %w", err)
 		}
-		err = usage.SetCreditNoteMetaData(db.CreditNoteMetaData{UserId: userId.String()})
+		err = usage.SetCreditNoteMetaData(db.CreditNoteMetaData{UserID: userId.String()})
 		if err != nil {
 			return nil, err
 		}

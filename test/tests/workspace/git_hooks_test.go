@@ -42,7 +42,7 @@ func TestGitHooks(t *testing.T) {
 
 	f := features.New("git hooks").
 		WithLabel("component", "server").
-		Assess("should run git hooks tests", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("should run git hooks tests", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ffs := []struct {
 				Name string
 				FF   string
@@ -52,7 +52,7 @@ func TestGitHooks(t *testing.T) {
 
 			for _, ff := range ffs {
 				func() {
-					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+					ctx, cancel := context.WithTimeout(testCtx, 10*time.Minute)
 					defer cancel()
 
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -122,7 +122,7 @@ func TestGitHooks(t *testing.T) {
 					})
 				}
 			}
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

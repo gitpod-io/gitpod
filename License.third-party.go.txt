@@ -194,7 +194,6 @@ github.com/prometheus/procfs                                                 Apa
 github.com/prometheus/pushgateway                                            Apache License 2.0
 github.com/PuerkitoBio/purell                                                BSD 3-Clause "New" or "Revised" License
 github.com/PuerkitoBio/urlesc                                                BSD 3-Clause "New" or "Revised" License
-github.com/rabbitmq/amqp091-go                                               BSD 2-Clause "Simplified" License
 github.com/ramr/go-reaper                                                    MIT License
 github.com/redis/go-redis                                                    BSD 2-Clause "Simplified" License
 github.com/relvacode/iso8601                                                 MIT License

@@ -10,15 +10,21 @@ import (
 	"time"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/go-logr/logr"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/prometheus/client_golang/prometheus"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
+	maintenanceEnabled            string = "maintenance_enabled"
 	workspaceStartupSeconds       string = "workspace_startup_seconds"
+	workspacePendingSeconds       string = "workspace_pending_seconds"
+	workspaceCreatingSeconds      string = "workspace_creating_seconds"
 	workspaceStartFailuresTotal   string = "workspace_starts_failure_total"
 	workspaceFailuresTotal        string = "workspace_failure_total"
 	workspaceStopsTotal           string = "workspace_stops_total"
@@ -26,6 +32,7 @@ const (
 	workspaceBackupFailuresTotal  string = "workspace_backups_failure_total"
 	workspaceRestoresTotal        string = "workspace_restores_total"
 	workspaceRestoresFailureTotal string = "workspace_restores_failure_total"
+	workspaceNodeUtilization      string = "workspace_node_utilization"
 )
 
 type StopReason string
@@ -42,6 +49,8 @@ const (
 
 type controllerMetrics struct {
 	startupTimeHistVec           *prometheus.HistogramVec
+	pendingTimeHistVec           *prometheus.HistogramVec
+	creatingTimeHistVec          *prometheus.HistogramVec
 	totalStartsFailureCounterVec *prometheus.CounterVec
 	totalFailuresCounterVec      *prometheus.CounterVec
 	totalStopsCounterVec         *prometheus.CounterVec
@@ -53,6 +62,8 @@ type controllerMetrics struct {
 
 	workspacePhases *phaseTotalVec
 	timeoutSettings *timeoutSettingsVec
+
+	workspaceNodeUtilization *nodeUtilizationVec
 
 	// used to prevent recording metrics multiple times
 	cache *lru.Cache
@@ -70,6 +81,20 @@ func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      workspaceStartupSeconds,
 			Help:      "time it took for workspace pods to reach the running phase",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"type", "class"}),
+		pendingTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      workspacePendingSeconds,
+			Help:      "time the workspace spent in pending",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"type", "class"}),
+		creatingTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      workspaceCreatingSeconds,
+			Help:      "time the workspace spent in creation",
 			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
 		}, []string{"type", "class"}),
 		totalStartsFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -116,9 +141,10 @@ func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
 			Help:      "total number of workspace restore failures",
 		}, []string{"type", "class"}),
 
-		workspacePhases: newPhaseTotalVec(r),
-		timeoutSettings: newTimeoutSettingsVec(r),
-		cache:           cache,
+		workspacePhases:          newPhaseTotalVec(r),
+		timeoutSettings:          newTimeoutSettingsVec(r),
+		workspaceNodeUtilization: newNodeUtilizationVec(r),
+		cache:                    cache,
 	}, nil
 }
 
@@ -132,32 +158,45 @@ func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *wor
 	}
 
 	duration := time.Since(ws.CreationTimestamp.Time)
-	log.Info("workspace startup time", "ws", ws.Name, "duration", duration)
 	hist.Observe(float64(duration.Seconds()))
+}
+
+func (m *controllerMetrics) recordWorkspacePendingTime(log *logr.Logger, ws *workspacev1.Workspace, pendingTs time.Time) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	hist, err := m.pendingTimeHistVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not record workspace pending time", "type", tpe, "class", class)
+	}
+
+	hist.Observe(time.Since(pendingTs).Seconds())
+}
+
+func (m *controllerMetrics) recordWorkspaceCreatingTime(log *logr.Logger, ws *workspacev1.Workspace, creatingTs time.Time) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	hist, err := m.creatingTimeHistVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not record workspace creating time", "type", tpe, "class", class)
+	}
+
+	hist.Observe(time.Since(creatingTs).Seconds())
 }
 
 func (m *controllerMetrics) countWorkspaceStartFailures(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalStartsFailureCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace startup failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalStartsFailureCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countWorkspaceFailure(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalFailuresCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalFailuresCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1.Workspace) {
@@ -183,60 +222,35 @@ func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(reason, tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace stop", "reason", "unknown", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalStopsCounterVec.WithLabelValues(reason, tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalBackups(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalBackupCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace backup", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalBackupCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalBackupFailures(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalBackupFailureCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace backup failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalBackupFailureCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalRestores(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalRestoreCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace restore", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalRestoreCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalRestoreFailures(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalRestoreFailureCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace restore failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalRestoreFailureCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) containsWorkspace(ws *workspacev1.Workspace) bool {
@@ -260,6 +274,8 @@ func (m *controllerMetrics) forgetWorkspace(ws *workspacev1.Workspace) {
 // metricState is used to track which metrics have been recorded for a workspace.
 type metricState struct {
 	phase                   workspacev1.WorkspacePhase
+	pendingStartTime        time.Time
+	creatingStartTime       time.Time
 	recordedStartTime       bool
 	recordedInitFailure     bool
 	recordedStartFailure    bool
@@ -298,6 +314,8 @@ func (m *controllerMetrics) getWorkspace(log *logr.Logger, ws *workspacev1.Works
 // Describe implements Collector. It will send exactly one Desc to the provided channel.
 func (m *controllerMetrics) Describe(ch chan<- *prometheus.Desc) {
 	m.startupTimeHistVec.Describe(ch)
+	m.pendingTimeHistVec.Describe(ch)
+	m.creatingTimeHistVec.Describe(ch)
 	m.totalStopsCounterVec.Describe(ch)
 	m.totalStartsFailureCounterVec.Describe(ch)
 	m.totalFailuresCounterVec.Describe(ch)
@@ -309,11 +327,14 @@ func (m *controllerMetrics) Describe(ch chan<- *prometheus.Desc) {
 
 	m.workspacePhases.Describe(ch)
 	m.timeoutSettings.Describe(ch)
+	m.workspaceNodeUtilization.Describe(ch)
 }
 
 // Collect implements Collector.
 func (m *controllerMetrics) Collect(ch chan<- prometheus.Metric) {
 	m.startupTimeHistVec.Collect(ch)
+	m.pendingTimeHistVec.Collect(ch)
+	m.creatingTimeHistVec.Collect(ch)
 	m.totalStopsCounterVec.Collect(ch)
 	m.totalStartsFailureCounterVec.Collect(ch)
 	m.totalFailuresCounterVec.Collect(ch)
@@ -325,6 +346,7 @@ func (m *controllerMetrics) Collect(ch chan<- prometheus.Metric) {
 
 	m.workspacePhases.Collect(ch)
 	m.timeoutSettings.Collect(ch)
+	m.workspaceNodeUtilization.Collect(ch)
 }
 
 // phaseTotalVec returns a gauge vector counting the workspaces per phase
@@ -433,5 +455,160 @@ func (tsv *timeoutSettingsVec) Collect(ch chan<- prometheus.Metric) {
 		}
 
 		ch <- metric
+	}
+}
+
+type maintenanceEnabledGauge struct {
+	name        string
+	desc        *prometheus.Desc
+	maintenance maintenance.Maintenance
+}
+
+func newMaintenanceEnabledGauge(m maintenance.Maintenance) *maintenanceEnabledGauge {
+	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, maintenanceEnabled)
+	return &maintenanceEnabledGauge{
+		name:        name,
+		desc:        prometheus.NewDesc(name, "Whether the cluster is in maintenance mode", nil, prometheus.Labels(map[string]string{})),
+		maintenance: m,
+	}
+}
+
+func (m *maintenanceEnabledGauge) Describe(ch chan<- *prometheus.Desc) {
+	ch <- m.desc
+}
+
+func (m *maintenanceEnabledGauge) Collect(ch chan<- prometheus.Metric) {
+	var value float64
+	if m.maintenance.IsEnabled(context.Background()) {
+		value = 1
+	}
+
+	metric, err := prometheus.NewConstMetric(m.desc, prometheus.GaugeValue, value)
+	if err != nil {
+		return
+	}
+
+	ch <- metric
+}
+
+// nodeUtilizationVec provides metrics per workspace node on:
+// - the amount of cpu/memory requested by workspaces on the node (size of the workspace class)
+// CPU is measured in cores, memory in bytes.
+// Differentiates between headless and regular workspace nodes using the type label.
+// Useful to determine node utilization and capacity.
+type nodeUtilizationVec struct {
+	name       string
+	desc       *prometheus.Desc
+	reconciler *WorkspaceReconciler
+}
+
+func newNodeUtilizationVec(r *WorkspaceReconciler) *nodeUtilizationVec {
+	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, workspaceNodeUtilization)
+	desc := prometheus.NewDesc(
+		name,
+		"Amount of resources requested by workspaces on the node (cpu/memory, workspace type)",
+		[]string{"node", "resource", "type"},
+		prometheus.Labels(map[string]string{}),
+	)
+	return &nodeUtilizationVec{
+		name:       name,
+		reconciler: r,
+		desc:       desc,
+	}
+}
+
+// Describe implements Collector. It will send exactly one Desc to the provided channel.
+func (n *nodeUtilizationVec) Describe(ch chan<- *prometheus.Desc) {
+	ch <- n.desc
+}
+
+// Collect implements Collector.
+func (n *nodeUtilizationVec) Collect(ch chan<- prometheus.Metric) {
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	var nodes corev1.NodeList
+	err := n.reconciler.List(ctx, &nodes)
+	if err != nil {
+		log.FromContext(ctx).Error(err, "cannot list nodes for node utilization metric")
+		return
+	}
+
+	var (
+		nodeUtilization = make(map[string]map[corev1.ResourceName]float64)
+		nodeTypes       = make(map[string]string)
+	)
+	for _, node := range nodes.Items {
+		isRegular := node.Labels["gitpod.io/workload_workspace_regular"] == "true"
+		isHeadless := node.Labels["gitpod.io/workload_workspace_headless"] == "true"
+		if !isRegular && !isHeadless {
+			// Ignore non-workspace nodes.
+			continue
+		}
+
+		nodeUtilization[node.Name] = map[corev1.ResourceName]float64{
+			corev1.ResourceCPU:    0,
+			corev1.ResourceMemory: 0,
+		}
+		nodeTypes[node.Name] = "regular"
+		if !isRegular && isHeadless {
+			// In case a node is both regular and headless (e.g. a preview env), mark it as regular.
+			nodeTypes[node.Name] = "headless"
+		}
+	}
+
+	var workspaces workspacev1.WorkspaceList
+	if err = n.reconciler.List(ctx, &workspaces, client.InNamespace(n.reconciler.Config.Namespace)); err != nil {
+		log.FromContext(ctx).Error(err, "cannot list workspaces for node utilization metric")
+		return
+	}
+
+	// Aggregate workspace pod resource requests per node.
+	for _, ws := range workspaces.Items {
+		// This list is indexed and reads from memory, so it's not that expensive to do this for every workspace.
+		pods, err := n.reconciler.listWorkspacePods(ctx, &ws)
+		if err != nil {
+			log.FromContext(ctx).Error(err, "cannot list workspace pods for node utilization metric", "workspace", ws.Name)
+			continue
+		}
+
+		if len(pods.Items) == 0 {
+			// No pods (yet), not consuming resources on the node.
+			continue
+		}
+
+		for _, pod := range pods.Items {
+			nodeName := pod.Spec.NodeName
+			if nodeName == "" {
+				// Not yet scheduled.
+				continue
+			}
+
+			if _, ok := nodeUtilization[nodeName]; !ok {
+				nodeUtilization[nodeName] = map[corev1.ResourceName]float64{
+					corev1.ResourceCPU:    0,
+					corev1.ResourceMemory: 0,
+				}
+			}
+
+			for _, container := range pod.Spec.Containers {
+				requests := container.Resources.Requests
+				nodeUtilization[nodeName][corev1.ResourceCPU] += float64(requests.Cpu().MilliValue()) / 1000.0
+				nodeUtilization[nodeName][corev1.ResourceMemory] += float64(requests.Memory().Value())
+			}
+		}
+	}
+
+	for nodeName, metrics := range nodeUtilization {
+		for resource, value := range metrics {
+			nodeType := nodeTypes[nodeName]
+			metric, err := prometheus.NewConstMetric(n.desc, prometheus.GaugeValue, value, nodeName, resource.String(), nodeType)
+			if err != nil {
+				log.FromContext(ctx).Error(err, "cannot create node utilization metric", "node", nodeName, "resource", resource.String(), "type", nodeType)
+				continue
+			}
+
+			ch <- metric
+		}
 	}
 }

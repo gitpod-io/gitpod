@@ -78,15 +78,11 @@ func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributi
 	if err != nil {
 		if errors.Is(err, CostCenterNotFound) {
 			logger.Info("No existing cost center. Creating one.")
-			defaultSpendingLimit := c.cfg.ForUsers
-			if attributionID.IsEntity(AttributionEntity_Team) {
-				defaultSpendingLimit = c.cfg.ForTeams
-			}
 			result = CostCenter{
 				ID:                attributionID,
 				CreationTime:      NewVarCharTime(now),
 				BillingStrategy:   CostCenter_Other,
-				SpendingLimit:     defaultSpendingLimit,
+				SpendingLimit:     c.getSpendingLimitForNewCostCenter(attributionID),
 				BillingCycleStart: NewVarCharTime(now),
 				NextBillingTime:   NewVarCharTime(now.AddDate(0, 1, 0)),
 			}
@@ -122,6 +118,72 @@ func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributi
 	return result, nil
 }
 
+// computeDefaultSpendingLimit computes the spending limit for a new Organization.
+// If the first joined member has not already granted credits to another org, we grant them the the free credits allowance.
+func (c *CostCenterManager) getSpendingLimitForNewCostCenter(attributionID AttributionID) int32 {
+	_, orgId := attributionID.Values()
+	orgUUID, err := uuid.Parse(orgId)
+	if err != nil {
+		log.WithError(err).WithField("attributionId", attributionID).Error("Failed to parse orgId.")
+		return c.cfg.ForTeams
+	}
+
+	// fetch the first user that joined the org
+	var userId string
+	db := c.conn.Raw(`
+		SELECT userid
+		FROM d_b_team_membership
+		WHERE
+			teamId = ?
+		ORDER BY creationTime
+		LIMIT 1
+	`, orgId).Scan(&userId)
+	if db.Error != nil {
+		log.WithError(db.Error).WithField("attributionId", attributionID).Error("Failed to get userId for org.")
+		return c.cfg.ForTeams
+	}
+
+	if userId == "" {
+		log.WithField("attributionId", attributionID).Error("Failed to get userId for org.")
+		return c.cfg.ForTeams
+	}
+
+	userUUID, err := uuid.Parse(userId)
+	if err != nil {
+		log.WithError(err).WithField("attributionId", attributionID).Error("Failed to parse userId for org.")
+		return c.cfg.ForTeams
+	}
+
+	// check if the user has already granted free credits to another org
+	type FreeCredit struct {
+		UserID         uuid.UUID `gorm:"primary_key;column:userId;type:char(36)"`
+		OrganizationID uuid.UUID `gorm:"column:organizationId;type:char(36)"`
+	}
+
+	var freeCredit FreeCredit
+
+	// check if the user has already granted free credits to another org
+	db = c.conn.Table("d_b_free_credits").Where(&FreeCredit{UserID: userUUID}).First(&freeCredit)
+	if db.Error != nil {
+		if errors.Is(db.Error, gorm.ErrRecordNotFound) {
+			// no record was found, so let's insert a new one
+			freeCredit = FreeCredit{UserID: userUUID, OrganizationID: orgUUID}
+			db = c.conn.Table("d_b_free_credits").Save(&freeCredit)
+			if db.Error != nil {
+				log.WithError(db.Error).WithField("attributionId", attributionID).Error("Failed to insert free credits.")
+				return c.cfg.ForTeams
+			}
+			return c.cfg.ForUsers
+		} else {
+			// some other database error occurred
+			log.WithError(db.Error).WithField("attributionId", attributionID).Error("Failed to get first org for user.")
+			return c.cfg.ForTeams
+		}
+	}
+	// a record was found, so we already granted free credits to another org
+	return c.cfg.ForTeams
+}
+
 func getCostCenter(ctx context.Context, conn *gorm.DB, attributionId AttributionID) (CostCenter, error) {
 	db := conn.WithContext(ctx)
 
@@ -147,17 +209,23 @@ func (c *CostCenterManager) IncrementBillingCycle(ctx context.Context, attributi
 		log.Infof("Cost center %s is not yet expired. Skipping increment.", attributionId)
 		return cc, nil
 	}
-	billingCycleStart := NewVarCharTime(now)
+	billingCycleStart := now
 	if cc.NextBillingTime.IsSet() {
-		billingCycleStart = cc.NextBillingTime
+		billingCycleStart = cc.NextBillingTime.Time()
+	}
+	nextBillingTime := billingCycleStart.AddDate(0, 1, 0)
+	for nextBillingTime.Before(now) {
+		log.Warnf("Billing cycle for %s is lagging behind. Incrementing by one month.", attributionId)
+		billingCycleStart = billingCycleStart.AddDate(0, 1, 0)
+		nextBillingTime = billingCycleStart.AddDate(0, 1, 0)
 	}
 	// All fields on the new cost center remain the same, except for BillingCycleStart, NextBillingTime, and CreationTime
 	newCostCenter := CostCenter{
 		ID:                cc.ID,
 		SpendingLimit:     cc.SpendingLimit,
 		BillingStrategy:   cc.BillingStrategy,
-		BillingCycleStart: billingCycleStart,
-		NextBillingTime:   NewVarCharTime(billingCycleStart.Time().AddDate(0, 1, 0)),
+		BillingCycleStart: NewVarCharTime(billingCycleStart),
+		NextBillingTime:   NewVarCharTime(nextBillingTime),
 		CreationTime:      NewVarCharTime(now),
 	}
 	err = c.conn.Save(&newCostCenter).Error

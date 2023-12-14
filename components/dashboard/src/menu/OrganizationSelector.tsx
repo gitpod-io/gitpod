@@ -10,18 +10,26 @@ import { OrgIcon, OrgIconProps } from "../components/org-icon/OrgIcon";
 import { useCurrentUser } from "../user-context";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useLocation } from "react-router";
-import { User } from "@gitpod/gitpod-protocol";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
+import { useFeatureFlag } from "../data/featureflag-query";
+import { useIsOwner, useListOrganizationMembers } from "../data/organizations/members-query";
+import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 
 export default function OrganizationSelector() {
     const user = useCurrentUser();
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
+    const members = useListOrganizationMembers().data || [];
+    const owner = useIsOwner();
+    const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
+    const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
+    const showRepoConfigMenuItem = useFeatureFlag("showRepoConfigMenuItem");
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
-    const canCreateOrgs = user && !User.isOrganizationOwned(user);
+    const canCreateOrgs = user && !isOrganizationOwned(user);
 
-    const userFullName = user?.fullName || user?.name || "...";
+    const userFullName = user?.name || "...";
 
     let activeOrgEntry = !currentOrg.data
         ? {
@@ -36,13 +44,7 @@ export default function OrganizationSelector() {
               customContent: (
                   <CurrentOrgEntry
                       title={currentOrg.data.name}
-                      subtitle={
-                          !!currentOrg.data.members
-                              ? `${currentOrg.data.members.length} member${
-                                    currentOrg.data.members.length === 1 ? "" : "s"
-                                }`
-                              : "..."
-                      }
+                      subtitle={`${members.length} member${members.length === 1 ? "" : "s"}`}
                   />
               ),
               active: false,
@@ -54,6 +56,16 @@ export default function OrganizationSelector() {
 
     // Show members if we have an org selected
     if (currentOrg.data) {
+        // Check both flags as one just controls if the menu item is present, the other if the page is accessible
+        if (repoConfigListAndDetail && showRepoConfigMenuItem) {
+            linkEntries.push({
+                title: "Repositories",
+                customContent: <LinkEntry>Repositories</LinkEntry>,
+                active: false,
+                separator: false,
+                link: "/repositories",
+            });
+        }
         linkEntries.push({
             title: "Members",
             customContent: <LinkEntry>Members</LinkEntry>,
@@ -68,17 +80,19 @@ export default function OrganizationSelector() {
             separator: false,
             link: "/usage",
         });
-    }
-
-    // Show billing & settings if user is an owner of current org
-    if (currentOrg.data && currentOrg.data.isOwner) {
-        linkEntries.push({
-            title: "Billing",
-            customContent: <LinkEntry>Billing</LinkEntry>,
-            active: false,
-            separator: false,
-            link: "/billing",
-        });
+        // Show billing if user is an owner of current org
+        if (owner) {
+            if (billingMode?.mode === "usage-based") {
+                linkEntries.push({
+                    title: "Billing",
+                    customContent: <LinkEntry>Billing</LinkEntry>,
+                    active: false,
+                    separator: false,
+                    link: "/billing",
+                });
+            }
+        }
+        // Org settings is available for all members, but only owner can change them
         linkEntries.push({
             title: "Settings",
             customContent: <LinkEntry>Settings</LinkEntry>,
@@ -98,15 +112,7 @@ export default function OrganizationSelector() {
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((org) => ({
             title: org.name,
-            customContent: (
-                <OrgEntry
-                    id={org.id}
-                    title={org.name}
-                    subtitle={
-                        !!org.members ? `${org.members.length} member${org.members.length === 1 ? "" : "s"}` : "..."
-                    }
-                />
-            ),
+            customContent: <OrgEntry id={org.id} title={org.name} subtitle={""} />,
             // marking as active for styles
             active: true,
             separator: true,
@@ -144,11 +150,11 @@ export default function OrganizationSelector() {
 
     const selectedTitle = currentOrg?.data ? currentOrg.data.name : userFullName;
     const classes =
-        "flex h-full text-base py-0 text-gray-500 bg-gray-50  dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-700";
+        "flex h-full text-base py-0 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700";
     return (
         <ContextMenu customClasses="w-64 left-0" menuEntries={entries}>
             <div className={`${classes} rounded-2xl pl-1`}>
-                <div className="py-1 pr-1 flex font-semibold whitespace-nowrap max-w-xs overflow-hidden">
+                <div className="py-1 pr-1 flex font-medium max-w-xs truncate">
                     <OrgIcon
                         id={currentOrg?.data?.id || user?.id || "empty"}
                         name={selectedTitle}
@@ -192,7 +198,7 @@ export const OrgEntry: FunctionComponent<OrgEntryProps> = ({ id, title, subtitle
         <div className="w-full text-gray-400 flex items-center">
             <OrgIcon id={id} name={title} className="mr-4" size={iconSize} />
             <div className="flex flex-col">
-                <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{title}</span>
+                <span className="text-gray-800 dark:text-gray-300 text-base font-semibold truncate w-40">{title}</span>
                 <span>{subtitle}</span>
             </div>
         </div>
@@ -207,7 +213,7 @@ const CurrentOrgEntry: FunctionComponent<CurrentOrgEntryProps> = ({ title, subti
     return (
         <div className="w-full text-gray-400 flex items-center justify-between">
             <div className="flex flex-col">
-                <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{title}</span>
+                <span className="text-gray-800 dark:text-gray-300 text-base font-semibold truncate w-40">{title}</span>
                 <span>{subtitle}</span>
             </div>
 
@@ -254,14 +260,17 @@ const useGetOrgURL = () => {
             // Default to root path when switching orgs
             let path = "/";
             let hash = "";
+            const search = new URLSearchParams();
+            search.append("org", orgID);
 
             // If we're on the new workspace page, try to maintain the location and context url
             if (/^\/new(\/$)?$/.test(location.pathname)) {
                 path = `/new`;
                 hash = location.hash;
+                search.append("autostart", "false");
             }
 
-            return `${path}?org=${encodeURIComponent(orgID)}${hash}`;
+            return `${path}?${search.toString()}${hash}`;
         },
         [location.hash, location.pathname],
     );

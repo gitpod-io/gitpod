@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
+import express from "express";
 import { injectable } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
@@ -66,7 +66,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
             host: this.baseURL,
         });
         const getCurrentUser = async () => {
-            const response = await api.Users.current();
+            const response = await api.Users.showCurrentUser();
             return response as unknown as GitLab.User;
         };
         const unconfirmedUserMessage = "Please confirm your GitLab account and try again.";
@@ -95,7 +95,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
             if (error && typeof error.description === "string" && error.description.includes("403 Forbidden")) {
                 // If GitLab is configured to disallow OAuth-token based API access for unconfirmed users, we need to reject this attempt
                 // 403 Forbidden  - You (@...) must accept the Terms of Service in order to perform this action. Please access GitLab from a web browser to accept these terms.
-                throw UnconfirmedUserException.create(error.description, error);
+                throw UnconfirmedUserException.create(error.description as string, error);
             } else {
                 log.error(`(${this.strategyName}) Reading current user info failed`, error, { accessToken, error });
                 throw error;
@@ -105,7 +105,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
 
     protected readScopesFromVerifyParams(params: any) {
         if (params && typeof params.scope === "string") {
-            return this.normalizeScopes(params.scope.split(" "));
+            return this.normalizeScopes((params.scope as string).split(" "));
         }
         return [];
     }

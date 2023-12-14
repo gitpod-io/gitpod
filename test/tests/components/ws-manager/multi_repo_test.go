@@ -39,10 +39,10 @@ var repos = []struct {
 		CheckoutLocation: "gitpod",
 	},
 	{
-		RemoteUri:        "https://github.com/gitpod-io/website",
+		RemoteUri:        "https://github.com/gitpod-io/workspace-images",
 		CloneTarget:      "main",
 		ExpectedBranch:   "main",
-		CheckoutLocation: "website",
+		CheckoutLocation: "workspace-images",
 	},
 	{
 		RemoteUri:        "https://github.com/gitpod-io/dazzle",
@@ -65,10 +65,10 @@ var repos = []struct {
 }
 
 func TestMultiRepoWorkspaceSuccess(t *testing.T) {
-	f := features.New("multi-repo").WithLabel("component", "ws-manager").Assess("can create multi repo workspace", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+	f := features.New("multi-repo").WithLabel("component", "ws-manager").Assess("can create multi repo workspace", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Parallel()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 		defer cancel()
 
 		api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -140,7 +140,7 @@ func TestMultiRepoWorkspaceSuccess(t *testing.T) {
 
 		assertRepositories(t, rsa)
 
-		return ctx
+		return testCtx
 	}).Feature()
 
 	testEnv.Test(t, f)

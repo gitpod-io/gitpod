@@ -1,4 +1,7 @@
 {
+  "name": "phpstorm",
+  "displayName": "PhpStorm",
+  "version": "latest",
   "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
@@ -20,5 +23,14 @@
     "GIT_EDITOR": "$EDITOR --wait",
     "GP_PREVIEW_BROWSER": "/ide-desktop/phpstorm-latest/bin/idea-cli preview",
     "GP_EXTERNAL_BROWSER": "/ide-desktop/phpstorm-latest/bin/idea-cli preview"
+  },
+  "prebuild": {
+    "args": [
+      "warmup",
+      "phpstorm"
+    ],
+    "env": {
+      "JETBRAINS_BACKEND_QUALIFIER": "latest"
+    }
   }
 }

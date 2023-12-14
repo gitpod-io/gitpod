@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { suite, test, timeout, retries } from "mocha-typescript";
+import { suite, test, timeout, retries, skip } from "@testdeck/mocha";
 import * as chai from "chai";
 const expect = chai.expect;
 
@@ -18,9 +18,9 @@ import { NotFoundError } from "../errors";
 import { GitLabTokenHelper } from "./gitlab-token-helper";
 import { TokenProvider } from "../user/token-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 
-@suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_GITLAB"))
+@suite(timeout(10000), retries(2), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_GITLAB")))
 class TestGitlabContextParser {
     protected parser: GitlabContextParser;
     protected user: User;
@@ -245,7 +245,7 @@ class TestGitlabContextParser {
             chai.assert.fail();
         } catch (e) {
             if (GitLab.ApiError.is(e)) {
-                expect(e.httpError?.description).equals("404 Commit Not Found");
+                expect(e.code).equals(404);
             } else {
                 chai.assert.fail("Unknown Error: " + JSON.stringify(e));
             }

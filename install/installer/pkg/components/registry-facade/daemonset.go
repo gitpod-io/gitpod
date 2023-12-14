@@ -303,7 +303,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 						common.CAVolume(),
 					}, volumes...),
-					Tolerations: common.GPUToleration(),
 				},
 			},
 			UpdateStrategy: common.DaemonSetRolloutStrategy(),

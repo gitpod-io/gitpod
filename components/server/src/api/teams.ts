@@ -4,9 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError, ServiceImpl } from "@bufbuild/connect";
+import { Code, ConnectError, ServiceImpl } from "@connectrpc/connect";
 import { inject, injectable } from "inversify";
-import { TeamsService as TeamServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
+import { TeamsService as TeamServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connect";
 import {
     CreateTeamRequest,
     CreateTeamResponse,
@@ -14,10 +14,14 @@ import {
     DeleteTeamMemberResponse,
     DeleteTeamRequest,
     DeleteTeamResponse,
+    GetTeamInvitationRequest,
+    GetTeamInvitationResponse,
     GetTeamRequest,
     GetTeamResponse,
     JoinTeamRequest,
     JoinTeamResponse,
+    ListTeamMembersRequest,
+    ListTeamMembersResponse,
     ListTeamsRequest,
     ListTeamsResponse,
     ResetTeamInvitationRequest,
@@ -79,6 +83,12 @@ export class APITeamsService implements ServiceImpl<typeof TeamServiceInterface>
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
     public async deleteTeamMember(req: DeleteTeamMemberRequest): Promise<DeleteTeamMemberResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+    public async getTeamInvitation(req: GetTeamInvitationRequest): Promise<GetTeamInvitationResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+    public async listTeamMembers(req: ListTeamMembersRequest): Promise<ListTeamMembersResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
 }

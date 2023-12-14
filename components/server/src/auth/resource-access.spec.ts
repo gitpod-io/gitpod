@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import * as chai from "chai";
 const expect = chai.expect;
 import {
@@ -21,13 +21,11 @@ import {
     GuardedResourceKind,
     RepositoryResourceGuard,
     SharedWorkspaceAccessGuard,
-    GuardedCostCenter,
 } from "./resource-access";
 import { PrebuiltWorkspace, User, UserEnvVar, Workspace, WorkspaceType } from "@gitpod/gitpod-protocol/lib/protocol";
 import {
     OrgMemberInfo,
     Organization,
-    Team,
     TeamMemberInfo,
     TeamMemberRole,
     WorkspaceInstance,
@@ -240,145 +238,6 @@ class TestResourceAccess {
             expect(await res.canAccess(t.resource, "get")).to.be.eq(
                 t.isAllowed,
                 `"${t.name}" expected canAccess(resource, "get") === ${t.isAllowed}, but was ${res}`,
-            );
-        }
-    }
-
-    @test public async costCenterResourceGuard() {
-        const createUser = (): User => {
-            return {
-                id: "123",
-                name: "testuser",
-                creationDate: new Date(2000, 1, 1).toISOString(),
-                identities: [
-                    {
-                        authId: "123",
-                        authName: "testuser",
-                        authProviderId: "github.com",
-                    },
-                ],
-            };
-        };
-
-        const tests: {
-            name: string;
-            isOwner?: boolean;
-            teamRole?: TeamMemberRole;
-            operation: ResourceAccessOp;
-            expectation: boolean;
-        }[] = [
-            // member
-            {
-                name: "member - get",
-                teamRole: "member",
-                operation: "get",
-                expectation: true,
-            },
-            {
-                name: "member - update",
-                teamRole: "member",
-                operation: "update",
-                expectation: false,
-            },
-            {
-                name: "member - update",
-                teamRole: "member",
-                operation: "create",
-                expectation: false,
-            },
-            {
-                name: "member - delete",
-                teamRole: "member",
-                operation: "delete",
-                expectation: false,
-            },
-            // team owner
-            {
-                name: "team owner - get",
-                teamRole: "owner",
-                operation: "get",
-                expectation: true,
-            },
-            {
-                name: "team owner - update",
-                teamRole: "owner",
-                operation: "update",
-                expectation: true,
-            },
-            {
-                name: "team owner - update",
-                teamRole: "owner",
-                operation: "create",
-                expectation: true,
-            },
-            {
-                name: "team owner - delete",
-                teamRole: "owner",
-                operation: "delete",
-                expectation: true,
-            },
-            // owner
-            {
-                name: "owner - get",
-                isOwner: true,
-                operation: "get",
-                expectation: true,
-            },
-            {
-                name: "owner - update",
-                isOwner: true,
-                operation: "update",
-                expectation: true,
-            },
-            {
-                name: "owner - update",
-                isOwner: true,
-                operation: "create",
-                expectation: true,
-            },
-            {
-                name: "owner - delete",
-                isOwner: true,
-                operation: "delete",
-                expectation: true,
-            },
-        ];
-
-        for (const t of tests) {
-            const user = createUser();
-            const team: Team = {
-                id: "team-123",
-                name: "test-team",
-                creationTime: user.creationDate,
-            };
-            const resourceGuard = new CompositeResourceAccessGuard([
-                new OwnerResourceGuard(user.id),
-                new TeamMemberResourceGuard(user.id),
-                new SharedWorkspaceAccessGuard(),
-                new MockedRepositoryResourceGuard(true),
-            ]);
-
-            let owner: GuardedCostCenter["owner"] | undefined = undefined;
-            if (t.isOwner) {
-                owner = { kind: "user", userId: user.id };
-            } else if (!!t.teamRole) {
-                const teamMembers: TeamMemberInfo[] = [
-                    {
-                        userId: user.id,
-                        role: t.teamRole,
-                        memberSince: user.creationDate,
-                        ownedByOrganization: false,
-                    },
-                ];
-                owner = { kind: "team", team, members: teamMembers };
-            }
-            if (!owner) {
-                throw new Error("Bad test data: expected isOwner OR teamRole to be configured!");
-            }
-            const actual = await resourceGuard.canAccess({ kind: "costCenter", owner }, t.operation);
-            expect(actual).to.be.eq(
-                t.expectation,
-                `"${t.name}" expected canAccess(resource, "${t.operation}") === ${t.expectation}, but was ${actual}`,
             );
         }
     }
@@ -822,12 +681,14 @@ class TestResourceAccess {
             };
         };
         const otherUserId = "456";
+        const organizationId = "org-123";
 
         const workspaceId = "ws-123";
         const createWorkspace = (ownerId: string, type: WorkspaceType): Workspace => {
             return {
                 id: workspaceId,
                 ownerId,
+                organizationId,
                 type,
                 config: {},
                 creationTime: new Date(2000, 1, 2).toISOString(),
@@ -845,6 +706,9 @@ class TestResourceAccess {
                 workspaceId,
                 creationTime: new Date(2000, 1, 2).toISOString(),
                 region: "local",
+                configuration: {
+                    ideImage: "gitpod/workspace-full:latest",
+                },
                 status: {
                     version: 1,
                     conditions: {},

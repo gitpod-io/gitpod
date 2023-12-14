@@ -7,5 +7,7 @@ packages:
     type: go
     srcs:
       - "**"
+    deps:
+      - components/scrubber:lib
     config:
       packaging: library

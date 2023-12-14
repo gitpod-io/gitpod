@@ -1,239 +1,192 @@
 name: "Workspace integration tests"
 on:
-    workflow_dispatch:
-        inputs:
-            name:
-                required: false
-                description: "The name of the preview environment, or leave empty to use a default name"
-            version:
-                required: false
-                description: "The version of Gitpod to install (leave empty to target the latest build on main)"
-            skip_deploy:
-                required: false
-                type: boolean
-                description: "Skip deploy preview environment (debug only)"
-            skip_delete:
-                required: false
-                type: boolean
-                description: "Skip delete preview environment (debug only)"
-    schedule:
-        - cron: "0 3,12 * * *"
+  workflow_dispatch:
+    inputs:
+      name:
+        required: false
+        type: string
+        description: "The name of the preview environment, or leave empty to use a default name"
+      version:
+        required: false
+        type: string
+        description: "The version of Gitpod to install (leave empty to target the latest successful build on main)"
+      skip_deploy:
+        required: false
+        type: boolean
+        description: "Skip deploy preview environment (debug only)"
+      skip_delete:
+        required: false
+        type: boolean
+        description: "Skip delete preview environment (debug only)"
+  workflow_call:
+    inputs:
+      name:
+        required: false
+        type: string
+        description: "The name of the preview environment, or leave empty to use a default name"
+      version:
+        required: false
+        type: string
+        description: "The version of Gitpod to install (leave empty to target the latest successful build on main)"
+  schedule:
+    - cron: "0 3,12 * * *"
+
 jobs:
-    configuration:
-        name: Configuration
-        runs-on: [self-hosted]
-        container:
-            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
-            volumes:
-                - /var/tmp:/var/tmp
-                - /tmp:/tmp
-        outputs:
-            name: ${{ steps.configuration.outputs.name }}
-            version: ${{ steps.configuration.outputs.version }}
-        steps:
-            - id: auth
-              uses: google-github-actions/auth@v1
-              continue-on-error: true
-              with:
-                  token_format: access_token
-                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            # do this step as early as possible, so that Slack Notify failure has the secret
-            - name: Get Secrets from GCP
-              id: "secrets"
-              uses: "google-github-actions/get-secretmanager-secrets@v1"
-              with:
-                  secrets: |-
-                      WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
-            - name: "Set outputs"
-              id: configuration
-              shell: bash
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: |
-                  if [[ '${{ github.event.inputs.name }}' != '' ]]; then
-                      {
-                          echo "name=${{ github.event.inputs.name }}"
-                      } >> $GITHUB_OUTPUT
-                  else
-                      {
-                          echo "name=workspace-integration-test-${{ github.run_id }}-${{ github.run_attempt }}"
-                      } >> $GITHUB_OUTPUT
-                  fi
+  create-runner:
+    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@main
+    secrets:
+      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+    with:
+      task: workspace-integration-tests
 
-                  if [[ '${{ github.event.inputs.version }}' != '' ]]; then
-                      {
-                          echo "version=${{ github.event.inputs.version }}"
-                      } >> $GITHUB_OUTPUT
-                  else
-                      # others
-                      RUNID=$(gh run list -R gitpod-io/gitpod -b main -w Build --limit 1 --json databaseId --jq .[0].databaseId)
-                      if ! gh run watch "$RUNID" --exit-status -R gitpod-io/gitpod >/dev/null 2>&1; then
-                        echo main branch build is failed, see https://github.com/gitpod-io/gitpod/actions/runs/"$RUNID" for detail | tee -a $GITHUB_STEP_SUMMARY
-                        exit 1
-                      fi
+  configuration:
+    name: Configuration
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    needs: [create-runner]
+    container:
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
+    outputs:
+      name: ${{ steps.configuration.outputs.name }}
+      version: ${{ steps.configuration.outputs.version }}
+    steps:
+      - id: auth
+        uses: google-github-actions/auth@v1
+        continue-on-error: true
+        with:
+          token_format: access_token
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+      # do this step as early as possible, so that Slack Notify failure has the secret
+      - name: Get Secrets from GCP
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v1"
+        with:
+          secrets: |-
+            WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
+      - name: "Set outputs"
+        id: configuration
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ '${{ inputs.name }}' != '' ]]; then
+              {
+                  echo "name=${{ inputs.name }}"
+              } >> $GITHUB_OUTPUT
+          else
+              {
+                  echo "name=workspace-integration-test-${{ github.run_id }}-${{ github.run_attempt }}"
+              } >> $GITHUB_OUTPUT
+          fi
 
-                      {
-                          echo "version=$(gh run view "$RUNID" --log -R gitpod-io/gitpod | grep 'main-gha.[0-9]*' -o | head -n 1)"
-                      } >> $GITHUB_OUTPUT
-                  fi
-            - name: Slack Notification
-              uses: rtCamp/action-slack-notify@v2
-              if: failure()
-              env:
-                  SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
-                  SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: "Workspace Integration Tests failed"
+          if [[ '${{ inputs.version }}' != '' ]]; then
+              {
+                  echo "version=${{ inputs.version }}"
+              } >> $GITHUB_OUTPUT
+          else
+              # Find the most recent successful build on main. Look back up to 10 builds.
+              RUNID=$(gh run list --repo gitpod-io/gitpod --branch main --workflow Build --limit 10 --json createdAt,conclusion,databaseId --jq 'map(select(.conclusion == "success")) | sort_by(.createdAt) | .[-1] | .databaseId')
+              if [ "$RUNID" == "" ]; then
+                echo no successful build found on main branch in the last 10 commits, see https://github.com/gitpod-io/gitpod/actions/workflows/build.yml for details | tee -a $GITHUB_STEP_SUMMARY
+                exit 1
+              fi
 
-    infrastructure:
-      needs: [ configuration ]
-      runs-on: [ self-hosted ]
-      concurrency:
-        group: ${{ github.head_ref || github.ref_name }}-infrastructure
-      steps:
-        - uses: actions/checkout@v3
-        - name: Create preview environment infrastructure
-          id: create
-          uses: ./.github/actions/preview-create
-          with:
-            name: ${{ needs.configuration.outputs.name }}
-            sa_key: ${{ secrets.GCP_CREDENTIALS }}
-            infrastructure_provider: gce
-            large_vm: true
-        - name: Deploy Gitpod to the preview environment
-          if: github.event.inputs.skip_deploy != 'true'
-          id: deploy-gitpod
-          uses: ./.github/actions/deploy-gitpod
-          with:
-            name: ${{ needs.configuration.outputs.name }}
-            sa_key: ${{ secrets.GCP_CREDENTIALS }}
-            version: ${{ needs.configuration.outputs.version}}
+              {
+                  echo "version=$(gh run view "$RUNID" --log -R gitpod-io/gitpod | grep 'main-gha.[0-9]*' -o | head -n 1)"
+              } >> $GITHUB_OUTPUT
+          fi
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        if: failure()
+        env:
+          SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
+          SLACK_ICON_EMOJI: ":test_tube:"
+          SLACK_USERNAME: "Integration Tests: workspace"
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_MESSAGE: "Workspace Integration Tests failed during configuration, is main build green?"
+          SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
 
-    check:
-        name: Check for regressions
-        needs: [configuration, infrastructure]
-        runs-on: [self-hosted]
-        container:
-            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
-            volumes:
-                - /var/tmp:/var/tmp
-                - /tmp:/tmp
-        steps:
-            - uses: actions/checkout@v3
-            - id: auth
-              uses: google-github-actions/auth@v1
-              with:
-                  token_format: access_token
-                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            # do this step as early as possible, so that Slack Notify failure has the secret
-            # any earlier, and it conflicts with create previ
-            - name: Get Secrets from GCP
-              id: "secrets"
-              uses: "google-github-actions/get-secretmanager-secrets@v1"
-              with:
-                  secrets: |-
-                      WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
-                      WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
-                      WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
-            - name: Integration Test
-              shell: bash
-              env:
-                  ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  USERNAME: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USERNAME }}
-                  USER_TOKEN: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
-                  PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
-                  PREVIEW_NAME: ${{ needs.configuration.outputs.name }}
-              run: |
-                  set -euo pipefail
+  infrastructure:
+    needs: [configuration, create-runner]
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    concurrency:
+      group: ${{ needs.configuration.outputs.name }}-infrastructure
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create preview environment infrastructure
+        id: create
+        uses: ./.github/actions/preview-create
+        with:
+          name: ${{ needs.configuration.outputs.name }}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          infrastructure_provider: gce
+          large_vm: true
+          preemptible: true
+      - name: Deploy Gitpod to the preview environment
+        if: inputs.skip_deploy != 'true'
+        id: deploy-gitpod
+        uses: ./.github/actions/deploy-gitpod
+        with:
+          name: ${{ needs.configuration.outputs.name }}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          version: ${{ needs.configuration.outputs.version}}
 
-                  export LEEWAY_WORKSPACE_ROOT="$(pwd)"
-                  export HOME="/home/gitpod"
-                  export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
+  check:
+    name: Check for regressions
+    needs: [configuration, infrastructure, create-runner]
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    container:
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
+    steps:
+      - uses: actions/checkout@v4
+      - id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          token_format: access_token
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+      - name: Get Secrets from GCP
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v1"
+        with:
+          secrets: |-
+            WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
 
-                  echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-                  gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+      - name: Integration Test
+        id: integration-test
+        uses: ./.github/actions/integration-tests
+        with:
+          preview_name: ${{ needs.configuration.outputs.name }}
+          test_suite: workspace
+          notify_slack_webhook: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
-                  leeway run dev/preview/previewctl:install
+  delete:
+    name: Delete preview environment
+    needs: [configuration, infrastructure, check, create-runner]
+    if: inputs.skip_delete != 'true' && always()
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    container:
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete preview environment
+        uses: ./.github/actions/delete-preview
+        with:
+          name: ${{ needs.configuration.outputs.name }}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
 
-                  echo "Setting up access to core-dev and harvester"
-                  previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-                  previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-                  # start integration test
-                  args=()
-                  args+=( "-kubeconfig=/home/gitpod/.kube/config" )
-                  args+=( "-namespace=default" )
-                  [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
-                  args+=( "-timeout=180m" )
-
-                  BASE_TESTS_DIR="$GITHUB_WORKSPACE/test/tests"
-                  CONTENT_SERVICE_TESTS="$BASE_TESTS_DIR/components/content-service"
-                  IMAGE_BUILDER_TESTS="$BASE_TESTS_DIR/components/image-builder"
-                  WS_DAEMON_TESTS="$BASE_TESTS_DIR/components/ws-daemon"
-                  WS_MANAGER_TESTS="$BASE_TESTS_DIR/components/ws-manager"
-                  WORKSPACE_TESTS="$BASE_TESTS_DIR/workspace"
-
-                  go install github.com/jstemmer/go-junit-report/v2@latest
-
-                  FAILURE_COUNT=0
-
-                  WORKSPACE_TEST_LIST=("$CONTENT_SERVICE_TESTS" "$IMAGE_BUILDER_TESTS" "$WS_DAEMON_TESTS" "$WS_MANAGER_TESTS" "$WORKSPACE_TESTS")
-                  for TEST_PATH in "${WORKSPACE_TEST_LIST[@]}"
-                  do
-                      TEST_NAME=$(basename "${TEST_PATH}")
-                      echo "running integration for ${TEST_NAME}"
-
-                      cd "${TEST_PATH}"
-                      set +e
-                      go test -p 1 -v ./... "${args[@]}" -run '.*SerialOnly$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-SERIAL.xml" -iocopy
-                      RC=${PIPESTATUS[0]}
-                      set -e
-
-                      if [ "${RC}" -ne "0" ]; then
-                        FAILURE_COUNT=$((FAILURE_COUNT+1))
-                      fi
-
-                      set +e
-                      # running tests in parallel saves time, but is flakey.
-                      go test -p 1 --parallel 1 -v ./... "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
-                      RC=${PIPESTATUS[0]}
-                      set -e
-
-                      if [ "${RC}" -ne "0" ]; then
-                        FAILURE_COUNT=$((FAILURE_COUNT+1))
-                      fi
-                  done
-
-                  exit $FAILURE_COUNT
-            - name: Test Summary
-              id: test_summary
-              uses: test-summary/action@v2
-              with:
-                  paths: "test/tests/**/TEST-*.xml"
-                  show: "all"
-              if: always()
-            - name: Slack Notification
-              uses: rtCamp/action-slack-notify@v2
-              if: success() || failure()
-              env:
-                  SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
-                  SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: "${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed"
-
-    delete:
-      name: Delete preview environment
-      needs: [ configuration, infrastructure, check ]
-      if: github.event.inputs.skip_delete != 'true' && always()
-      runs-on: [ self-hosted ]
-      container:
-        image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
-        volumes:
-          - /var/tmp:/var/tmp
-          - /tmp:/tmp
-      steps:
-        - uses: actions/checkout@v3
-        - name: Delete preview environment
-          uses: ./.github/actions/delete-preview
-          with:
-              name: ${{ needs.configuration.outputs.name }}
-              sa_key: ${{ secrets.GCP_CREDENTIALS }}
+  delete-runner:
+    if: always()
+    needs:
+      - create-runner
+      - configuration
+      - infrastructure
+      - check
+      - delete
+    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@main
+    secrets:
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+    with:
+      runner-label: ${{ needs.create-runner.outputs.label }}
+      machine-zone: ${{ needs.create-runner.outputs.machine-zone }}

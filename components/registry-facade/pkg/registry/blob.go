@@ -20,8 +20,8 @@ import (
 	"github.com/containerd/containerd/remotes"
 	distv2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/gorilla/handlers"
-	files "github.com/ipfs/go-ipfs-files"
-	icorepath "github.com/ipfs/interface-go-ipfs-core/path"
+	icorepath "github.com/ipfs/boxo/coreiface/path"
+	files "github.com/ipfs/boxo/files"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
@@ -232,7 +232,7 @@ func (bh *blobHandler) retrieveFromSource(ctx context.Context, src BlobSource, w
 
 	var n int64
 	t0 := time.Now()
-	err = wait.ExponentialBackoffWithContext(ctx, backoffParams, func() (done bool, err error) {
+	err = wait.ExponentialBackoffWithContext(ctx, backoffParams, func(ctx context.Context) (done bool, err error) {
 		n, err = io.CopyBuffer(w, rc, *bp)
 		if err == nil {
 			return true, nil

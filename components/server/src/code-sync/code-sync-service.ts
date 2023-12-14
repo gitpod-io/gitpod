@@ -7,19 +7,12 @@
 import { status } from "@grpc/grpc-js";
 import fetch from "node-fetch";
 import { User } from "@gitpod/gitpod-protocol/lib/protocol";
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import * as util from "util";
-import * as express from "express";
+import express from "express";
 import { inject, injectable } from "inversify";
 import { BearerAuth } from "../auth/bearer-authenticator";
-import { isWithFunctionAccessGuard } from "../auth/function-access";
-import {
-    CodeSyncResourceDB,
-    UserStorageResourcesDB,
-    ALL_SERVER_RESOURCES,
-    ServerResource,
-    SyncResource,
-} from "@gitpod/gitpod-db/lib";
+import { WithFunctionAccessGuard } from "../auth/function-access";
+import { CodeSyncResourceDB, ALL_SERVER_RESOURCES, ServerResource, SyncResource } from "@gitpod/gitpod-db/lib";
 import {
     DeleteRequest,
     DeleteResponse,
@@ -33,6 +26,10 @@ import { v4 as uuidv4 } from "uuid";
 import { accessCodeSyncStorage, UserRateLimiter } from "../auth/rate-limiter";
 import { Config } from "../config";
 import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
+import { Authorizer } from "../authorization/authorizer";
+import { FGAFunctionAccessGuard } from "../auth/resource-access";
+import { runWithSubjectId } from "../util/request-context";
+import { SubjectId } from "../auth/subject-id";
 
 // By default: 5 kind of resources * 20 revs * 1Mb = 100Mb max in the content service for user data.
 const defaultRevLimit = 20;
@@ -76,37 +73,24 @@ function toObjectName(resource: ServerResource, rev: string, collection: string 
     return name;
 }
 
-const fromTheiaRev = "from-theia";
-interface ISyncData {
-    version: number;
-    machineId?: string;
-    content: string;
-}
-interface ISettingsSyncContent {
-    settings: string;
-}
-const userSettingsUri = "user_storage:settings.json";
-const userPluginsUri = "user-plugins://";
-
 @injectable()
 export class CodeSyncService {
-    @inject(Config)
-    private readonly config: Config;
+    constructor(
+        @inject(Config)
+        private readonly config: Config,
 
-    @inject(BearerAuth)
-    private readonly auth: BearerAuth;
+        @inject(BearerAuth)
+        private readonly auth: BearerAuth,
 
-    @inject(CachingBlobServiceClientProvider)
-    private readonly blobsProvider: CachingBlobServiceClientProvider;
+        @inject(CachingBlobServiceClientProvider)
+        private readonly blobsProvider: CachingBlobServiceClientProvider,
 
-    @inject(CodeSyncResourceDB)
-    private readonly db: CodeSyncResourceDB;
+        @inject(CodeSyncResourceDB)
+        private readonly db: CodeSyncResourceDB,
 
-    @inject(UserStorageResourcesDB)
-    private readonly userStorageResourcesDB: UserStorageResourcesDB;
-
-    @inject(IAnalyticsWriter)
-    private readonly analytics: IAnalyticsWriter;
+        @inject(Authorizer)
+        private readonly authorizer: Authorizer,
+    ) {}
 
     get apiRouter(): express.Router {
         const config = this.config.codeSync;
@@ -116,45 +100,50 @@ export class CodeSyncService {
             res.setHeader("x-operation-id", uuidv4());
             return next();
         });
-        router.use(this.auth.restHandler);
+        router.use(this.auth.restHandler); // expects Bearer token and authenticates req.user, throws otherwise
         router.use(async (req, res, next) => {
             if (!User.is(req.user)) {
                 res.sendStatus(400);
                 return;
             }
 
-            const id = req.user.id;
-            try {
-                await UserRateLimiter.instance(this.config.rateLimiter).consume(id, accessCodeSyncStorage);
-            } catch (e) {
-                if (e instanceof Error) {
-                    throw e;
+            const userId = req.user.id;
+            await runWithSubjectId(SubjectId.fromUserId(userId), async () => {
+                try {
+                    await UserRateLimiter.instance(this.config.rateLimiter).consume(userId, accessCodeSyncStorage);
+                } catch (e) {
+                    if (e instanceof Error) {
+                        throw e;
+                    }
+                    res.setHeader("Retry-After", String(Math.round(e.msBeforeNext / 1000)) || 1);
+                    res.status(429).send("Too Many Requests");
+                    return;
                 }
-                res.setHeader("Retry-After", String(Math.round(e.msBeforeNext / 1000)) || 1);
-                res.status(429).send("Too Many Requests");
-                return;
-            }
 
-            if (!isWithFunctionAccessGuard(req) || !req.functionGuard?.canAccess(accessCodeSyncStorage)) {
-                res.sendStatus(403);
-                return;
-            }
+                const functionGuard = (req.user as WithFunctionAccessGuard).functionGuard;
+                if (!!functionGuard) {
+                    // If we authorize with scopes, there is a FunctionGuard
+                    const guard = new FGAFunctionAccessGuard(userId, functionGuard);
+                    if (!(await guard.canAccess(accessCodeSyncStorage))) {
+                        res.sendStatus(403);
+                        return;
+                    }
+                }
+
+                if (!(await this.authorizer.hasPermissionOnUser(userId, "code_sync", userId))) {
+                    res.sendStatus(403);
+                    return;
+                }
+            });
+
             return next();
         });
 
         router.get("/v1/manifest", async (req, res) => {
-            if (!User.is(req.user)) {
-                res.sendStatus(400);
-                return;
-            }
-
-            let manifest = await this.db.getManifest(req.user.id);
+            const manifest = await this.db.getManifest(req.user!.id);
             if (!manifest) {
-                // Uncoment this after theia code is removed, check it also sends etag
-                // res.sendStatus(204);
-                // return;
-
-                manifest = { session: req.user.id, latest: { extensions: fromTheiaRev, settings: fromTheiaRev } };
+                res.sendStatus(204);
+                return;
             }
             res.json(manifest);
             return;
@@ -177,13 +166,8 @@ export class CodeSyncService {
         router.delete("/v1/collection/:collection/resource/:resource/:ref?", this.deleteResource.bind(this));
         router.delete("/v1/resource/:resource/:ref?", this.deleteResource.bind(this));
         router.delete("/v1/resource", async (req, res) => {
-            if (!User.is(req.user)) {
-                res.sendStatus(400);
-                return;
-            }
-
             // This endpoint is used to delete settings-sync data only
-            const userId = req.user.id;
+            const userId = req.user!.id;
             await this.db.deleteSettingsSyncResources(userId, async () => {
                 const request = new DeleteRequest();
                 request.setOwnerId(userId);
@@ -201,36 +185,21 @@ export class CodeSyncService {
         });
 
         router.get("/v1/collection", async (req, res) => {
-            if (!User.is(req.user)) {
-                res.sendStatus(400);
-                return;
-            }
-
-            const collections = await this.db.getCollections(req.user.id);
+            const collections = await this.db.getCollections(req.user!.id);
 
             res.json(collections);
             return;
         });
         router.post("/v1/collection", async (req, res) => {
-            if (!User.is(req.user)) {
-                res.sendStatus(400);
-                return;
-            }
-
-            const collection = await this.db.createCollection(req.user.id);
+            const collection = await this.db.createCollection(req.user!.id);
 
             res.type("text/plain");
             res.send(collection);
             return;
         });
         router.delete("/v1/collection/:collection?", async (req, res) => {
-            if (!User.is(req.user)) {
-                res.sendStatus(400);
-                return;
-            }
-
             const { collection } = req.params;
-            await this.deleteCollection(req.user.id, collection);
+            await this.deleteCollection(req.user!.id, collection);
 
             res.sendStatus(200);
         });
@@ -238,58 +207,7 @@ export class CodeSyncService {
         return router;
     }
 
-    private parseFullPluginName(fullPluginName: string): { name: string; version?: string } {
-        const idx = fullPluginName.lastIndexOf("@");
-        if (idx === -1) {
-            return {
-                name: fullPluginName.toLowerCase(),
-            };
-        }
-        const name = fullPluginName.substring(0, idx).toLowerCase();
-        const version = fullPluginName.substr(idx + 1);
-        return { name, version };
-    }
-
-    protected async getTheiaCodeSyncResource(userId: string) {
-        interface ISyncExtension {
-            identifier: {
-                id: string;
-            };
-            version?: string;
-            installed?: boolean;
-        }
-        const extensions: ISyncExtension[] = [];
-        const content = await this.userStorageResourcesDB.get(userId, userPluginsUri);
-        const json = content && JSON.parse(content);
-        const userPlugins = new Set<string>(json);
-        for (const userPlugin of userPlugins) {
-            const fullPluginName = (userPlugin.substring(0, userPlugin.lastIndexOf(":")) || userPlugin).toLowerCase(); // drop hash
-            const { name, version } = this.parseFullPluginName(fullPluginName);
-            extensions.push({
-                identifier: { id: name },
-                version,
-                installed: true,
-            });
-        }
-        if (extensions.length) {
-            this.analytics.track({
-                userId,
-                event: "vscode_sync_theia_migration",
-                properties: {
-                    resource: "extensions",
-                    totalExtensions: extensions.length,
-                },
-            });
-        }
-        return JSON.stringify(extensions);
-    }
-
     private async getResources(req: express.Request<{ resource: string; collection?: string }>, res: express.Response) {
-        if (!User.is(req.user)) {
-            res.sendStatus(400);
-            return;
-        }
-
         const { resource, collection } = req.params;
         const resourceKey = ALL_SERVER_RESOURCES.find((key) => key === resource);
         if (!resourceKey) {
@@ -298,14 +216,14 @@ export class CodeSyncService {
         }
 
         if (collection) {
-            const valid = await this.db.isCollection(req.user.id, collection);
+            const valid = await this.db.isCollection(req.user!.id, collection);
             if (!valid) {
                 res.sendStatus(405);
                 return;
             }
         }
 
-        const revs = await this.db.getResources(req.user.id, resourceKey, collection);
+        const revs = await this.db.getResources(req.user!.id, resourceKey, collection);
         if (!revs.length) {
             res.sendStatus(204);
             return;
@@ -323,11 +241,6 @@ export class CodeSyncService {
         req: express.Request<{ resource: string; ref: string; collection?: string }>,
         res: express.Response,
     ) {
-        if (!User.is(req.user)) {
-            res.sendStatus(400);
-            return;
-        }
-
         const { resource, ref, collection } = req.params;
         const resourceKey = ALL_SERVER_RESOURCES.find((key) => key === resource);
         if (!resourceKey) {
@@ -336,24 +249,14 @@ export class CodeSyncService {
         }
 
         if (collection) {
-            const valid = await this.db.isCollection(req.user.id, collection);
+            const valid = await this.db.isCollection(req.user!.id, collection);
             if (!valid) {
                 res.sendStatus(405);
                 return;
             }
         }
 
-        let resourceRev: string | undefined = ref;
-        if (resourceRev !== fromTheiaRev) {
-            resourceRev = (await this.db.getResource(req.user.id, resourceKey, resourceRev, collection))?.rev;
-        }
-        if (
-            !resourceRev &&
-            !collection &&
-            (resourceKey === SyncResource.Extensions || resourceKey === SyncResource.Settings)
-        ) {
-            resourceRev = fromTheiaRev;
-        }
+        const resourceRev = (await this.db.getResource(req.user!.id, resourceKey, ref, collection))?.rev;
         if (!resourceRev) {
             res.setHeader("etag", "0");
             res.sendStatus(204);
@@ -365,58 +268,34 @@ export class CodeSyncService {
         }
 
         let content: string;
-        if (resourceRev === fromTheiaRev) {
-            let version = 1;
-            let value = "";
-            if (resourceKey === SyncResource.Extensions) {
-                value = await this.getTheiaCodeSyncResource(req.user.id);
-                version = 5;
-            } else if (resourceKey === SyncResource.Settings) {
-                let settings = await this.userStorageResourcesDB.get(req.user.id, userSettingsUri);
-                if (settings) {
-                    this.analytics.track({
-                        userId: req.user.id,
-                        event: "vscode_sync_theia_migration",
-                        properties: {
-                            resource: "settings",
-                        },
-                    });
-                }
-                settings = settings === "" ? "{}" : settings;
-                value = JSON.stringify(<ISettingsSyncContent>{ settings });
-                version = 2;
+        const contentType = req.headers["content-type"] || "*/*";
+        const request = new DownloadUrlRequest();
+        request.setOwnerId(req.user!.id);
+        request.setName(toObjectName(resourceKey, resourceRev, collection));
+        request.setContentType(contentType);
+        try {
+            const blobsClient = this.blobsProvider.getDefault();
+            const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(
+                blobsClient.downloadUrl.bind(blobsClient),
+            )(request);
+            const response = await fetch(urlResponse.getUrl(), {
+                timeout: 10000,
+                headers: {
+                    "content-type": contentType,
+                },
+            });
+            if (response.status !== 200) {
+                throw new Error(
+                    `code sync: blob service: download failed with ${response.status} ${response.statusText}`,
+                );
             }
-            content = JSON.stringify(<ISyncData>{ version, content: value });
-        } else {
-            const contentType = req.headers["content-type"] || "*/*";
-            const request = new DownloadUrlRequest();
-            request.setOwnerId(req.user.id);
-            request.setName(toObjectName(resourceKey, resourceRev, collection));
-            request.setContentType(contentType);
-            try {
-                const blobsClient = this.blobsProvider.getDefault();
-                const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(
-                    blobsClient.downloadUrl.bind(blobsClient),
-                )(request);
-                const response = await fetch(urlResponse.getUrl(), {
-                    timeout: 10000,
-                    headers: {
-                        "content-type": contentType,
-                    },
-                });
-                if (response.status !== 200) {
-                    throw new Error(
-                        `code sync: blob service: download failed with ${response.status} ${response.statusText}`,
-                    );
-                }
-                content = await response.text();
-            } catch (e) {
-                if (e.code === status.NOT_FOUND) {
-                    res.sendStatus(204);
-                    return;
-                }
-                throw e;
+            content = await response.text();
+        } catch (e) {
+            if (e.code === status.NOT_FOUND) {
+                res.sendStatus(204);
+                return;
             }
+            throw e;
         }
 
         res.setHeader("etag", resourceRev);
@@ -425,11 +304,6 @@ export class CodeSyncService {
     }
 
     private async postResource(req: express.Request<{ resource: string; collection?: string }>, res: express.Response) {
-        if (!User.is(req.user)) {
-            res.sendStatus(400);
-            return;
-        }
-
         const { resource, collection } = req.params;
         const resourceKey = ALL_SERVER_RESOURCES.find((key) => key === resource);
         if (!resourceKey) {
@@ -438,17 +312,14 @@ export class CodeSyncService {
         }
 
         if (collection) {
-            const valid = await this.db.isCollection(req.user.id, collection);
+            const valid = await this.db.isCollection(req.user!.id, collection);
             if (!valid) {
                 res.sendStatus(405);
                 return;
             }
         }
 
-        let latestRev: string | undefined = req.headers["if-match"];
-        if (latestRev === fromTheiaRev) {
-            latestRev = undefined;
-        }
+        const latestRev: string | undefined = req.headers["if-match"];
 
         const revLimit =
             resourceKey === "machines"
@@ -457,7 +328,7 @@ export class CodeSyncService {
                   this.config.codeSync?.revLimit ||
                   defaultRevLimit;
         const isEditSessionsResource = resourceKey === "editSessions";
-        const userId = req.user.id;
+        const userId = req.user!.id;
         const contentType = req.headers["content-type"] || "*/*";
         const newRev = await this.db.insert(
             userId,
@@ -514,11 +385,6 @@ export class CodeSyncService {
         req: express.Request<{ resource: string; ref?: string; collection?: string }>,
         res: express.Response,
     ) {
-        if (!User.is(req.user)) {
-            res.sendStatus(400);
-            return;
-        }
-
         // This endpoint is used to delete edit sessions data for now
 
         const { resource, ref, collection } = req.params;
@@ -529,14 +395,14 @@ export class CodeSyncService {
         }
 
         if (collection) {
-            const valid = await this.db.isCollection(req.user.id, collection);
+            const valid = await this.db.isCollection(req.user!.id, collection);
             if (!valid) {
                 res.sendStatus(405);
                 return;
             }
         }
 
-        await this.doDeleteResource(req.user.id, resourceKey, ref, collection);
+        await this.doDeleteResource(req.user!.id, resourceKey, ref, collection);
         res.sendStatus(200);
         return;
     }

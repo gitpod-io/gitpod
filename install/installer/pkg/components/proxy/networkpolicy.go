@@ -71,6 +71,40 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"component": common.WSProxyComponent,
 					}},
 				}},
+			}, {
+				Ports: []networkingv1.NetworkPolicyPort{{
+					Protocol: common.TCPProtocol,
+					Port:     &intstr.IntOrString{IntVal: ContainerConfigcatPort},
+				}},
+				From: []networkingv1.NetworkPolicyPeer{{
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.ServerComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.WSManagerBridgeComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.IDEServiceComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.PublicApiComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.UsageComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.OpenVSXProxyComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.DashboardComponent,
+					}},
+				}},
 			}},
 		},
 	}}, nil

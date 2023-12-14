@@ -61,6 +61,25 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		})
 	}
 
+	if ctx.Config.SSHGatewayCAKey != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: "ca-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.SSHGatewayCAKey.Name,
+					Optional:   pointer.Bool(true),
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "ca-key",
+			MountPath: "/mnt/ca-key/ca.key",
+			SubPath:   "ca.key",
+			ReadOnly:  true,
+		})
+	}
+
 	podSpec := corev1.PodSpec{
 		PriorityClassName:         common.SystemNodeCritical,
 		Affinity:                  cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelServices),
@@ -70,6 +89,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		SecurityContext: &corev1.PodSecurityContext{
 			RunAsUser: pointer.Int64(31002),
 		},
+		TerminationGracePeriodSeconds: pointer.Int64(360),
 		Volumes: append([]corev1.Volume{
 			{
 				Name: "config",

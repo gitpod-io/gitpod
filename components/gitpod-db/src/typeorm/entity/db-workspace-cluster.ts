@@ -8,6 +8,7 @@ import { PrimaryColumn, Column, Entity, Index } from "typeorm";
 import {
     AdmissionConstraint,
     TLSConfig,
+    WorkspaceClass,
     WorkspaceCluster,
     WorkspaceClusterState,
 } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
@@ -97,4 +98,16 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     // This column triggers the periodic deleter deletion mechanism. It's not intended for public consumption.
     @Column()
     deleted: boolean;
+
+    @Column({
+        type: "json",
+    })
+    availableWorkspaceClasses?: WorkspaceClass[];
+
+    @Column({
+        type: "varchar",
+        length: 100,
+        nullable: true,
+    })
+    preferredWorkspaceClass?: string;
 }

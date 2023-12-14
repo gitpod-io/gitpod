@@ -5,7 +5,7 @@
  */
 
 import { injectable } from "inversify";
-import * as express from "express";
+import express from "express";
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitHubScope } from "./scopes";
@@ -103,6 +103,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
             // https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
             // e.g. X-OAuth-Scopes: repo, user
             const currentScopes = this.normalizeScopes(
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 (headers as any)["x-oauth-scopes"].split(this.oauthConfig.scopeSeparator!).map((s: string) => s.trim()),
             );
 

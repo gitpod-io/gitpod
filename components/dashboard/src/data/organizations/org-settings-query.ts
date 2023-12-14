@@ -4,29 +4,38 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { OrganizationSettings } from "@gitpod/gitpod-protocol";
-import { useQuery } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { organizationClient } from "../../service/public-api";
+import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { useCallback } from "react";
 import { useCurrentOrg } from "./orgs-query";
 
-export type OrgSettingsResult = OrganizationSettings;
+export function useOrgSettingsQueryInvalidator() {
+    const organizationId = useCurrentOrg().data?.id;
+    const queryClient = useQueryClient();
+    return useCallback(() => {
+        queryClient.invalidateQueries(getQueryKey(organizationId));
+    }, [organizationId, queryClient]);
+}
 
-export const useOrgSettingsQuery = () => {
-    const org = useCurrentOrg().data;
-
-    return useQuery<OrgSettingsResult>({
-        queryKey: getOrgSettingsQueryKey(org?.id ?? ""),
-        staleTime: 1000 * 60 * 1, // 1 minute
-        queryFn: async () => {
-            if (!org) {
+export function useOrgSettingsQuery() {
+    const organizationId = useCurrentOrg().data?.id;
+    return useQuery<OrganizationSettings, Error>(
+        getQueryKey(organizationId),
+        async () => {
+            if (!organizationId) {
                 throw new Error("No org selected.");
             }
 
-            const settings = await getGitpodService().server.getOrgSettings(org.id);
-            return settings || null;
+            const settings = await organizationClient.getOrganizationSettings({ organizationId });
+            return settings.settings || new OrganizationSettings();
         },
-        enabled: !!org,
-    });
-};
+        {
+            enabled: !!organizationId,
+        },
+    );
+}
 
-export const getOrgSettingsQueryKey = (teamId: string) => ["org-settings", { teamId }];
+function getQueryKey(organizationId?: string) {
+    return ["getOrganizationSettings", organizationId || "undefined"];
+}

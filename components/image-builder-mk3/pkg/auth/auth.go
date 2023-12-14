@@ -11,9 +11,13 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
@@ -27,7 +31,7 @@ import (
 // RegistryAuthenticator can provide authentication for some registries
 type RegistryAuthenticator interface {
 	// Authenticate attempts to provide authentication for Docker registry access
-	Authenticate(registry string) (auth *Authentication, err error)
+	Authenticate(ctx context.Context, registry string) (auth *Authentication, err error)
 }
 
 // NewDockerConfigFileAuth reads a docker config file to provide authentication
@@ -42,6 +46,7 @@ func NewDockerConfigFileAuth(fn string) (*DockerConfigFileAuth, error) {
 		res.loadFromFile(fn)
 	})
 	if err != nil {
+		log.WithError(err).WithField("path", fn).Error("error watching file")
 		return nil, err
 	}
 
@@ -60,6 +65,7 @@ func (a *DockerConfigFileAuth) loadFromFile(fn string) (err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("error loading Docker config from %s: %w", fn, err)
+			log.WithError(err).WithField("path", fn).Error("failed loading from file")
 		}
 	}()
 
@@ -71,6 +77,7 @@ func (a *DockerConfigFileAuth) loadFromFile(fn string) (err error) {
 	_, _ = hash.Write(cntnt)
 	newHash := fmt.Sprintf("%x", hash.Sum(nil))
 	if a.hash == newHash {
+		log.Infof("nothing has changed: %s", fn)
 		return nil
 	}
 
@@ -87,13 +94,15 @@ func (a *DockerConfigFileAuth) loadFromFile(fn string) (err error) {
 	a.C = cfg
 	a.hash = newHash
 
+	log.Infof("file has changed: %s", fn)
 	return nil
 }
 
 // Authenticate attempts to provide an encoded authentication string for Docker registry access
-func (a *DockerConfigFileAuth) Authenticate(registry string) (auth *Authentication, err error) {
+func (a *DockerConfigFileAuth) Authenticate(ctx context.Context, registry string) (auth *Authentication, err error) {
 	ac, err := a.C.GetAuthConfig(registry)
 	if err != nil {
+		log.WithError(err).WithField("registry", registry).Error("failed DockerConfigFileAuth Authenticate")
 		return nil, err
 	}
 
@@ -108,8 +117,115 @@ func (a *DockerConfigFileAuth) Authenticate(registry string) (auth *Authenticati
 	}, nil
 }
 
+// CompositeAuth returns the first non-empty authentication of any of its consitutents
+type CompositeAuth []RegistryAuthenticator
+
+func (ca CompositeAuth) Authenticate(ctx context.Context, registry string) (auth *Authentication, err error) {
+	for _, ath := range ca {
+		res, err := ath.Authenticate(ctx, registry)
+		if err != nil {
+			log.WithError(err).WithField("registry", registry).Errorf("failed CompositeAuth Authenticate")
+			return nil, err
+		}
+		if !res.Empty() {
+			return res, nil
+		} else {
+			log.WithField("registry", registry).Warn("response was empty for CompositeAuth authenticate")
+		}
+	}
+	return &Authentication{}, nil
+}
+
+func NewECRAuthenticator(ecrc *ecr.Client) *ECRAuthenticator {
+	return &ECRAuthenticator{
+		ecrc: ecrc,
+	}
+}
+
+type ECRAuthenticator struct {
+	ecrc *ecr.Client
+
+	ecrAuth                string
+	ecrAuthLastRefreshTime time.Time
+	ecrAuthLock            sync.Mutex
+}
+
+const (
+	// ECR tokens are valid for 12h [1], and we want to ensure we refresh at least twice a day before full expiry.
+	//
+	// [1] https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html
+	ecrTokenRefreshTime = 4 * time.Hour
+)
+
+func (ath *ECRAuthenticator) Authenticate(ctx context.Context, registry string) (auth *Authentication, err error) {
+	if !isECRRegistry(registry) {
+		return nil, nil
+	}
+
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("error with ECR authenticate: %w", err)
+			log.WithError(err).WithField("registry", registry).Error("failed ECR authenticate")
+		}
+	}()
+
+	ath.ecrAuthLock.Lock()
+	defer ath.ecrAuthLock.Unlock()
+	if time.Since(ath.ecrAuthLastRefreshTime) > ecrTokenRefreshTime {
+		tknout, err := ath.ecrc.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
+		if err != nil {
+			return nil, err
+		}
+		if len(tknout.AuthorizationData) == 0 {
+			err = fmt.Errorf("no ECR authorization data received")
+			return nil, err
+		}
+
+		pwd, err := base64.StdEncoding.DecodeString(aws.ToString(tknout.AuthorizationData[0].AuthorizationToken))
+		if err != nil {
+			return nil, err
+		}
+
+		ath.ecrAuth = string(pwd)
+		ath.ecrAuthLastRefreshTime = time.Now()
+		log.Info("refreshed ECR token")
+	} else {
+		log.Info("no ECR token refresh necessary")
+	}
+
+	segs := strings.Split(ath.ecrAuth, ":")
+	if len(segs) != 2 {
+		err = fmt.Errorf("cannot understand ECR token. Expected 2 segments, got %d", len(segs))
+		return nil, err
+	}
+	return &Authentication{
+		Username: segs[0],
+		Password: segs[1],
+		Auth:     base64.StdEncoding.EncodeToString([]byte(ath.ecrAuth)),
+	}, nil
+}
+
 // Authentication represents docker usable authentication
 type Authentication types.AuthConfig
+
+func (a *Authentication) Empty() bool {
+	if a == nil {
+		return true
+	}
+	if a.Auth == "" && a.Password == "" {
+		return true
+	}
+	return false
+}
+
+var ecrRegistryRegexp = regexp.MustCompile(`\d{12}.dkr.ecr.\w+-\w+-\w+.amazonaws.com`)
+
+const DummyECRRegistryDomain = "000000000000.dkr.ecr.dummy-host-zone.amazonaws.com"
+
+// isECRRegistry returns true if the registry domain is an ECR registry
+func isECRRegistry(domain string) bool {
+	return ecrRegistryRegexp.MatchString(domain)
+}
 
 // AllowedAuthFor describes for which repositories authentication may be provided for
 type AllowedAuthFor struct {
@@ -197,13 +313,14 @@ func (r Resolver) ResolveRequestAuth(auth *api.BuildRegistryAuth) (authFor Allow
 }
 
 // GetAuthFor computes the base64 encoded auth format for a Docker image pull/push
-func (a AllowedAuthFor) GetAuthFor(auth RegistryAuthenticator, refstr string) (res *Authentication, err error) {
+func (a AllowedAuthFor) GetAuthFor(ctx context.Context, auth RegistryAuthenticator, refstr string) (res *Authentication, err error) {
 	if auth == nil {
 		return
 	}
 
 	ref, err := reference.ParseNormalizedNamed(refstr)
 	if err != nil {
+		log.WithError(err).Errorf("failed parsing normalized name")
 		return nil, xerrors.Errorf("cannot parse image ref: %v", err)
 	}
 	reg := reference.Domain(ref)
@@ -211,20 +328,28 @@ func (a AllowedAuthFor) GetAuthFor(auth RegistryAuthenticator, refstr string) (r
 	// If we haven't found authentication using the built-in way, we'll resort to additional auth
 	// the user sent us.
 	defer func() {
-		if err == nil && res == nil {
-			res = a.additionalAuth(reg)
+		if err != nil || !res.Empty() {
+			return
+		}
 
-			if res != nil {
-				log.WithField("reg", reg).Debug("found additional auth")
-			}
+		log.WithField("reg", reg).Debug("checking for additional auth")
+		res = a.additionalAuth(reg)
+
+		if res != nil {
+			log.WithField("reg", reg).Debug("found additional auth")
 		}
 	}()
 
 	var regAllowed bool
-	if a.IsAllowAll() {
+	switch {
+	case a.IsAllowAll():
 		// free for all
 		regAllowed = true
-	} else {
+	case isECRRegistry(reg):
+		// We allow ECR registries by default to support private ECR registries OOTB.
+		// The AWS IAM permissions dictate what users actually have access to.
+		regAllowed = true
+	default:
 		for _, a := range a.Explicit {
 			if a == reg {
 				regAllowed = true
@@ -237,7 +362,7 @@ func (a AllowedAuthFor) GetAuthFor(auth RegistryAuthenticator, refstr string) (r
 		return nil, nil
 	}
 
-	return auth.Authenticate(reg)
+	return auth.Authenticate(ctx, reg)
 }
 
 func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
@@ -256,6 +381,8 @@ func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
 			res.Username = segs[0]
 			res.Password = strings.Join(segs[1:], ":")
 		}
+	} else {
+		log.Errorf("failed getting additional auth")
 	}
 	return res
 }
@@ -264,7 +391,7 @@ func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
 type ImageBuildAuth map[string]types.AuthConfig
 
 // GetImageBuildAuthFor produces authentication in the format an image builds needs
-func (a AllowedAuthFor) GetImageBuildAuthFor(blocklist []string) (res ImageBuildAuth) {
+func (a AllowedAuthFor) GetImageBuildAuthFor(ctx context.Context, auth RegistryAuthenticator, additionalRegistries []string, blocklist []string) (res ImageBuildAuth) {
 	res = make(ImageBuildAuth)
 	for reg := range a.Additional {
 		var blocked bool
@@ -278,6 +405,17 @@ func (a AllowedAuthFor) GetImageBuildAuthFor(blocklist []string) (res ImageBuild
 			continue
 		}
 		ath := a.additionalAuth(reg)
+		res[reg] = types.AuthConfig(*ath)
+	}
+	for _, reg := range additionalRegistries {
+		ath, err := auth.Authenticate(ctx, reg)
+		if err != nil {
+			log.WithError(err).WithField("registry", reg).Warn("cannot get authentication for additional registry for image build")
+			continue
+		}
+		if ath.Empty() {
+			continue
+		}
 		res[reg] = types.AuthConfig(*ath)
 	}
 

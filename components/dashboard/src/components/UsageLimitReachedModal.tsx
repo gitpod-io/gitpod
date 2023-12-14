@@ -4,12 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { Button } from "@podkit/buttons/Button";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import Alert from "./Alert";
 import Modal from "./Modal";
 import { Heading2 } from "./typography/headings";
 
-export function UsageLimitReachedModal(p: { hints: any; onClose?: () => void }) {
+export function UsageLimitReachedModal(p: { onClose?: () => void }) {
     const currentOrg = useCurrentOrg();
 
     const orgName = currentOrg.data?.name;
@@ -35,7 +36,7 @@ export function UsageLimitReachedModal(p: { hints: any; onClose?: () => void }) 
             </div>
             <div className="flex justify-end mt-6 space-x-2">
                 <a href={billingLink}>
-                    <button className="secondary">Go to Billing</button>
+                    <Button variant="secondary">Go to Billing</Button>
                 </a>
             </div>
         </Modal>

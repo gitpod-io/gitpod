@@ -490,9 +490,9 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 		resp.IdeSettings = ideSettingsEncoded.String()
 	}
 
+	// TODO figure out how to make it configurable on IDE level, not hardcoded here
 	jbGW, ok := ideConfig.IdeOptions.Clients["jetbrains-gateway"]
 	if req.Type == api.WorkspaceType_PREBUILD && ok {
-		warmUpTask := ""
 		imageLayers := make(map[string]struct{})
 		for _, alias := range jbGW.DesktopIDEs {
 			prebuilds := getPrebuilds(wsConfig, alias)
@@ -506,12 +506,6 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 							}
 						}
 						resp.IdeImageLayers = append(resp.IdeImageLayers, ide.Image)
-						template := `
-echo 'warming up stable release of ${key}...'
-JETBRAINS_BACKEND_QUALIFIER=stable /ide-desktop/jb-launcher warmup ${key}
-`
-						template = strings.ReplaceAll(template, "${key}", alias)
-						warmUpTask += template
 					}
 				}
 
@@ -524,31 +518,9 @@ JETBRAINS_BACKEND_QUALIFIER=stable /ide-desktop/jb-launcher warmup ${key}
 							}
 						}
 						resp.IdeImageLayers = append(resp.IdeImageLayers, ide.LatestImage)
-						template := `
-echo 'warming up latest release of ${key}...'
-JETBRAINS_BACKEND_QUALIFIER=latest /ide-desktop/jb-launcher warmup ${key}
-`
-						template = strings.ReplaceAll(template, "${key}", alias)
-						warmUpTask += template
 					}
 				}
 			}
-		}
-
-		if warmUpTask != "" {
-			warmUpEncoded := new(bytes.Buffer)
-			enc := json.NewEncoder(warmUpEncoded)
-			enc.SetEscapeHTML(false)
-
-			err := enc.Encode(&[]gitpodapi.TaskConfig{{
-				Init: strings.TrimSpace(warmUpTask),
-				Name: "GITPOD_JB_WARMUP_TASK",
-			}})
-			if err != nil {
-				log.WithError(err).Error("cannot marshal warm up task")
-			}
-
-			resp.Tasks = warmUpEncoded.String()
 		}
 	}
 

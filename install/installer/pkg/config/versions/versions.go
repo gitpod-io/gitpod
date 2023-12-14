@@ -16,7 +16,6 @@ type Versioned struct {
 type Components struct {
 	AgentSmith      Versioned `json:"agentSmith"`
 	Blobserve       Versioned `json:"blobserve"`
-	CAUpdater       Versioned `json:"caUpdater"`
 	ContentService  Versioned `json:"contentService"`
 	Dashboard       Versioned `json:"dashboard"`
 	DBMigrations    Versioned `json:"dbMigrations"`
@@ -25,22 +24,19 @@ type Components struct {
 	IDEProxy        Versioned `json:"ideProxy"`
 	IDEMetrics      Versioned `json:"ideMetrics"`
 	IDEService      Versioned `json:"ideService"`
-	ImageBuilder    Versioned `json:"imageBuilder"`
 	ImageBuilderMk3 struct {
 		Versioned
 		BuilderImage Versioned `json:"builderImage"`
 	} `json:"imageBuilderMk3"`
-	InstallationTelemetry Versioned `json:"installationTelemetry"`
-	IntegrationTests      Versioned `json:"integrationTests"`
-	OpenVSXProxy          Versioned `json:"openVSXProxy"`
-	Proxy                 Versioned `json:"proxy"`
-	PublicAPIServer       Versioned `json:"public-api-server"`
-	RefreshCredential     Versioned `json:"refreshCredential"`
-	RegistryFacade        Versioned `json:"registryFacade"`
-	Server                Versioned `json:"server"`
-	ServiceWaiter         Versioned `json:"serviceWaiter"`
-	Usage                 Versioned `json:"usage"`
-	Workspace             struct {
+	OpenVSXProxy      Versioned `json:"openVSXProxy"`
+	Proxy             Versioned `json:"proxy"`
+	PublicAPIServer   Versioned `json:"public-api-server"`
+	RefreshCredential Versioned `json:"refreshCredential"`
+	RegistryFacade    Versioned `json:"registryFacade"`
+	Server            Versioned `json:"server"`
+	ServiceWaiter     Versioned `json:"serviceWaiter"`
+	Usage             Versioned `json:"usage"`
+	Workspace         struct {
 		CodeImage        Versioned `json:"codeImage"`
 		CodeHelperImage  Versioned `json:"codeHelperImage"`
 		DockerUp         Versioned `json:"dockerUp"`
@@ -82,9 +78,11 @@ type Components struct {
 	WSManagerBridge Versioned `json:"wsManagerBridge"`
 	WSProxy         Versioned `json:"wsProxy"`
 	NodeLabeler     Versioned `json:"node-labeler"`
-}
 
-// var embedded embed.FS
+	ImageBuilderNG Versioned `json:"imageBuilderNG"`
+	WSManagerNG    Versioned `json:"wsManagerNG"`
+	WorkspacekitNG Versioned `json:"workspacekitNG"`
+}
 
 func Embedded() (*Manifest, error) {
 	return loadEmbedded()

@@ -51,6 +51,7 @@ export class AsyncCachingIteratorImpl<T> implements AsyncIterableIterator<T>, As
         }
         this.cacheRead = true;
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const result = await this.iterable.next(value);
         if (!result.done) {
             this.cache.push(result.value);

@@ -83,6 +83,16 @@ export class ConfigInferrer {
             this.addExtension(ctx, "vscjava.vscode-java-debug");
             return;
         }
+        // Gradle Kotlin DSL
+        if (await ctx.exists("build.gradle.kts")) {
+            let cmd = "gradle";
+            if (await ctx.exists("gradlew")) {
+                cmd = "./gradlew";
+            }
+            this.addCommand(ctx.config, cmd + " build", "init");
+            this.addExtension(ctx, "fwcd.kotlin");
+            return;
+        }
         if (await ctx.exists("pom.xml")) {
             let cmd = "mvn";
             if (await ctx.exists("mvnw")) {

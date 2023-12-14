@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useMemo, useState } from "react";
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
@@ -16,6 +15,9 @@ import { getJobRoleOptions, JOB_ROLE_OTHER } from "./job-roles";
 import { OnboardingStep } from "./OnboardingStep";
 import { getSignupGoalsOptions, SIGNUP_GOALS_OTHER } from "./signup-goals";
 import { getCompanySizeOptions } from "./company-size";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { useCreateOrgMutation } from "../data/organizations/create-org-mutation";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 type Props = {
     user: User;
@@ -27,15 +29,15 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     const explorationReasonsOptions = useMemo(getExplorationReasons, []);
     const signupGoalsOptions = useMemo(getSignupGoalsOptions, []);
     const companySizeOptions = useMemo(getCompanySizeOptions, []);
+    const currentOrg = useCurrentOrg();
+    const createOrg = useCreateOrgMutation();
 
-    const [jobRole, setJobRole] = useState(user.additionalData?.profile?.jobRole ?? "");
-    const [jobRoleOther, setJobRoleOther] = useState(user.additionalData?.profile?.jobRoleOther ?? "");
-    const [explorationReasons, setExplorationReasons] = useState<string[]>(
-        user.additionalData?.profile?.explorationReasons ?? [],
-    );
-    const [signupGoals, setSignupGoals] = useState<string[]>(user.additionalData?.profile?.signupGoals ?? []);
-    const [signupGoalsOther, setSignupGoalsOther] = useState(user.additionalData?.profile?.signupGoalsOther ?? "");
-    const [companySize, setCompanySize] = useState(user.additionalData?.profile?.companySize ?? "");
+    const [jobRole, setJobRole] = useState(user.profile?.jobRole ?? "");
+    const [jobRoleOther, setJobRoleOther] = useState(user.profile?.jobRoleOther ?? "");
+    const [explorationReasons, setExplorationReasons] = useState<string[]>(user.profile?.explorationReasons ?? []);
+    const [signupGoals, setSignupGoals] = useState<string[]>(user.profile?.signupGoals ?? []);
+    const [signupGoalsOther, setSignupGoalsOther] = useState(user.profile?.signupGoalsOther ?? "");
+    const [companySize, setCompanySize] = useState(user.profile?.companySize ?? "");
 
     const addSignupGoal = useCallback(
         (goal: string) => {
@@ -87,8 +89,23 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     );
 
     const handleSubmit = useCallback(async () => {
-        const additionalData = user.additionalData || {};
-        const profile = additionalData.profile || {};
+        // create an org if the user is not a member of one already
+        if (!currentOrg.data) {
+            let orgName = "My Org";
+            function orgify(name: string) {
+                let result = name.split(" ")[0];
+                if (result.endsWith("s")) {
+                    return result + `' Org`;
+                }
+                return result + `'s Org`;
+            }
+            if (user.name) {
+                orgName = orgify(user.name);
+            }
+            await createOrg.mutateAsync({
+                name: orgName,
+            });
+        }
 
         // Filter out any values not present in options
         const filteredReasons = explorationReasons.filter((val) =>
@@ -98,9 +115,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
 
         const updates = {
             additionalData: {
-                ...additionalData,
                 profile: {
-                    ...profile,
                     jobRole,
                     jobRoleOther,
                     explorationReasons: filteredReasons,
@@ -119,6 +134,8 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         }
     }, [
         companySize,
+        createOrg,
+        currentOrg.data,
         explorationReasons,
         explorationReasonsOptions,
         jobRole,
@@ -128,7 +145,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         signupGoalsOptions,
         signupGoalsOther,
         updateUser,
-        user.additionalData,
+        user.name,
     ]);
 
     const jobRoleError = useOnBlurError("Please select one", !!jobRole);

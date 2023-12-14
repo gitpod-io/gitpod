@@ -12,7 +12,7 @@ plugins {
     // Java support
     id("java")
     // Kotlin support - check the latest version at https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
-    id("org.jetbrains.kotlin.jvm") version "1.7.20"
+    id("org.jetbrains.kotlin.jvm") version "1.9.10"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
     id("org.jetbrains.intellij") version "1.11.0"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
@@ -60,6 +60,7 @@ dependencies {
     compileOnly("org.eclipse.jetty.websocket:websocket-api:9.4.44.v20210927")
     testImplementation(kotlin("test"))
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
+    implementation("org.eclipse.jetty.websocket:javax-websocket-client-impl:9.4.44.v20210927")
 }
 
 // Configure gradle-intellij-plugin plugin.
@@ -105,7 +106,7 @@ tasks {
     }
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "17"
-        kotlinOptions.freeCompilerArgs = listOf("-Xjvm-default=enable")
+        kotlinOptions.freeCompilerArgs = listOf("-Xjvm-default=all")
     }
 
     withType<Detekt> {

@@ -7,6 +7,7 @@
 import { TypeORM } from "./typeorm/typeorm";
 import { Config } from "./config";
 import { MigrateMigrations0_2_0 } from "./typeorm/migrate-migrations-0_2_0";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 async function migrateMigrationsTable() {
     const config = new Config();
@@ -17,7 +18,7 @@ async function migrateMigrationsTable() {
     const migration_0_2_0 = new MigrateMigrations0_2_0();
     await migration_0_2_0.up(runner);
 
-    conn.close();
+    conn.close().catch((err) => log.error("cannot close connection", err));
     console.log("successfully migrated 'migrations' table.");
 }
 

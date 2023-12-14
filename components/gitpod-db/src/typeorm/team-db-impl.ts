@@ -5,53 +5,54 @@
  */
 
 import {
+    OrganizationSettings,
     Team,
     TeamMemberInfo,
     TeamMemberRole,
     TeamMembershipInvite,
-    OrganizationSettings,
-    User,
 } from "@gitpod/gitpod-protocol";
-import { inject, injectable } from "inversify";
-import { TypeORM } from "./typeorm";
-import { Repository } from "typeorm";
-import { v4 as uuidv4 } from "uuid";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { randomBytes } from "crypto";
+import { inject, injectable, optional } from "inversify";
+import slugify from "slugify";
+import { EntityManager, Repository } from "typeorm";
+import { v4 as uuidv4 } from "uuid";
 import { TeamDB } from "../team-db";
 import { DBTeam } from "./entity/db-team";
 import { DBTeamMembership } from "./entity/db-team-membership";
-import { DBUser } from "./entity/db-user";
 import { DBTeamMembershipInvite } from "./entity/db-team-membership-invite";
-import { ResponseError } from "vscode-jsonrpc";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import slugify from "slugify";
 import { DBOrgSettings } from "./entity/db-team-settings";
+import { DBUser } from "./entity/db-user";
+import { TransactionalDBImpl } from "./transactional-db-impl";
+import { TypeORM } from "./typeorm";
 
 @injectable()
-export class TeamDBImpl implements TeamDB {
-    @inject(TypeORM) typeORM: TypeORM;
-
-    protected async getEntityManager() {
-        return (await this.typeORM.getConnection()).manager;
+export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
+    constructor(@inject(TypeORM) typeorm: TypeORM, @optional() transactionalEM?: EntityManager) {
+        super(typeorm, transactionalEM);
     }
 
-    protected async getTeamRepo(): Promise<Repository<DBTeam>> {
+    protected createTransactionalDB(transactionalEM: EntityManager): TeamDB {
+        return new TeamDBImpl(this.typeorm, transactionalEM);
+    }
+
+    private async getTeamRepo(): Promise<Repository<DBTeam>> {
         return (await this.getEntityManager()).getRepository<DBTeam>(DBTeam);
     }
 
-    protected async getMembershipRepo(): Promise<Repository<DBTeamMembership>> {
+    private async getMembershipRepo(): Promise<Repository<DBTeamMembership>> {
         return (await this.getEntityManager()).getRepository<DBTeamMembership>(DBTeamMembership);
     }
 
-    protected async getMembershipInviteRepo(): Promise<Repository<DBTeamMembershipInvite>> {
+    private async getMembershipInviteRepo(): Promise<Repository<DBTeamMembershipInvite>> {
         return (await this.getEntityManager()).getRepository<DBTeamMembershipInvite>(DBTeamMembershipInvite);
     }
 
-    protected async getOrgSettingsRepo(): Promise<Repository<DBOrgSettings>> {
+    private async getOrgSettingsRepo(): Promise<Repository<DBOrgSettings>> {
         return (await this.getEntityManager()).getRepository<DBOrgSettings>(DBOrgSettings);
     }
 
-    protected async getUserRepo(): Promise<Repository<DBUser>> {
+    private async getUserRepo(): Promise<Repository<DBUser>> {
         return (await this.getEntityManager()).getRepository<DBUser>(DBUser);
     }
 
@@ -63,14 +64,13 @@ export class TeamDBImpl implements TeamDB {
         searchTerm?: string,
     ): Promise<{ total: number; rows: Team[] }> {
         const teamRepo = await this.getTeamRepo();
-        const queryBuilder = teamRepo
-            .createQueryBuilder("team")
-            .where("LOWER(team.name) LIKE LOWER(:searchTerm)", { searchTerm: `%${searchTerm}%` })
-            .andWhere("deleted = 0")
-            .andWhere("markedDeleted = 0")
-            .skip(offset)
-            .take(limit)
-            .orderBy(orderBy, orderDir);
+        let queryBuilder = teamRepo.createQueryBuilder("team");
+        if (searchTerm) {
+            queryBuilder = queryBuilder.where("LOWER(team.name) LIKE LOWER(:searchTerm)", {
+                searchTerm: `%${searchTerm}%`,
+            });
+        }
+        queryBuilder = queryBuilder.andWhere("markedDeleted = 0").skip(offset).take(limit).orderBy(orderBy, orderDir);
 
         const [rows, total] = await queryBuilder.getManyAndCount();
         return { total, rows };
@@ -78,12 +78,12 @@ export class TeamDBImpl implements TeamDB {
 
     public async findTeamById(teamId: string): Promise<Team | undefined> {
         const teamRepo = await this.getTeamRepo();
-        return teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
+        return teamRepo.findOne({ id: teamId, markedDeleted: false });
     }
 
     public async findTeamByMembershipId(membershipId: string): Promise<Team | undefined> {
         const membershipRepo = await this.getMembershipRepo();
-        const membership = await membershipRepo.findOne({ id: membershipId, deleted: false });
+        const membership = await membershipRepo.findOne({ id: membershipId });
         if (!membership) {
             return;
         }
@@ -93,14 +93,13 @@ export class TeamDBImpl implements TeamDB {
     public async findMembersByTeam(teamId: string): Promise<TeamMemberInfo[]> {
         const membershipRepo = await this.getMembershipRepo();
         const userRepo = await this.getUserRepo();
-        const memberships = await membershipRepo.find({ teamId, deleted: false });
+        const memberships = await membershipRepo.find({ teamId });
         const users = await userRepo.findByIds(memberships.map((m) => m.userId));
         const infos = users.map((u) => {
             const m = memberships.find((m) => m.userId === u.id)!;
             return {
                 userId: u.id,
                 fullName: u.fullName || u.name,
-                primaryEmail: User.getPrimaryEmail(u),
                 avatarUrl: u.avatarUrl,
                 role: m.role,
                 memberSince: m.creationTime,
@@ -112,13 +111,13 @@ export class TeamDBImpl implements TeamDB {
 
     public async findTeamMembership(userId: string, teamId: string): Promise<DBTeamMembership | undefined> {
         const membershipRepo = await this.getMembershipRepo();
-        return membershipRepo.findOne({ userId, teamId, deleted: false });
+        return membershipRepo.findOne({ userId, teamId });
     }
 
     public async findTeamsByUser(userId: string): Promise<Team[]> {
         const teamRepo = await this.getTeamRepo();
         const membershipRepo = await this.getMembershipRepo();
-        const memberships = await membershipRepo.find({ userId, deleted: false });
+        const memberships = await membershipRepo.find({ userId });
         const teams = await teamRepo.findByIds(memberships.map((m) => m.teamId));
         return teams.filter((t) => !t.markedDeleted);
     }
@@ -141,17 +140,16 @@ export class TeamDBImpl implements TeamDB {
     public async updateTeam(teamId: string, team: Pick<Team, "name">): Promise<Team> {
         const name = team.name && team.name.trim();
         if (!name) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "No update provided");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "No update provided");
         }
 
         // Storing entry in a TX to avoid potential slug dupes caused by racing requests.
-        const em = await this.getEntityManager();
-        return await em.transaction<DBTeam>(async (em) => {
-            const teamRepo = em.getRepository<DBTeam>(DBTeam);
+        return await this.transaction<DBTeam>(async (_, ctx) => {
+            const teamRepo = ctx.entityManager.getRepository<DBTeam>(DBTeam);
 
-            const existingTeam = await teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
+            const existingTeam = await teamRepo.findOne({ id: teamId, markedDeleted: false });
             if (!existingTeam) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "Organization not found");
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "Organization not found");
             }
 
             // no changes
@@ -160,7 +158,10 @@ export class TeamDBImpl implements TeamDB {
             }
 
             if (name.length > 32) {
-                throw new ResponseError(ErrorCodes.INVALID_VALUE, "The name must be between 1 and 32 characters long");
+                throw new ApplicationError(
+                    ErrorCodes.INVALID_VALUE,
+                    "The name must be between 1 and 32 characters long",
+                );
             }
             existingTeam.name = name;
             existingTeam.slug = await this.createUniqueSlug(teamRepo, name);
@@ -171,23 +172,25 @@ export class TeamDBImpl implements TeamDB {
 
     public async createTeam(userId: string, name: string): Promise<Team> {
         if (!name) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Name cannot be empty");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Name cannot be empty");
         }
         name = name.trim();
         if (name.length < 3) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "Please choose a name that is at least three characters long.",
             );
         }
         if (name.length > 64) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Please choose a name that is at most 64 characters long.");
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "Please choose a name that is at most 64 characters long.",
+            );
         }
 
         // Storing new entry in a TX to avoid potential dupes caused by racing requests.
-        const em = await this.getEntityManager();
-        const team = await em.transaction<DBTeam>(async (em) => {
-            const teamRepo = em.getRepository<DBTeam>(DBTeam);
+        const team = await this.transaction<DBTeam>(async (_, ctx) => {
+            const teamRepo = ctx.entityManager.getRepository<DBTeam>(DBTeam);
 
             const slug = await this.createUniqueSlug(teamRepo, name);
 
@@ -220,14 +223,13 @@ export class TeamDBImpl implements TeamDB {
             tries++ < 5 &&
             (await teamRepo.findOne({
                 slug,
-                deleted: false,
                 markedDeleted: false,
             }))
         ) {
             slug = slug + "-" + randomBytes(4).toString("hex");
         }
         if (tries >= 5) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 `Failed to create a unique slug for the '${name}'`,
             );
@@ -247,21 +249,21 @@ export class TeamDBImpl implements TeamDB {
 
     private async deleteOrgSettings(orgId: string): Promise<void> {
         const orgSettingsRepo = await this.getOrgSettingsRepo();
-        const orgSettings = await orgSettingsRepo.findOne({ where: { orgId, deleted: false } });
+        const orgSettings = await orgSettingsRepo.findOne({ where: { orgId } });
         if (orgSettings) {
             orgSettings.deleted = true;
-            orgSettingsRepo.save(orgSettings);
+            await orgSettingsRepo.save(orgSettings);
         }
     }
 
     public async addMemberToTeam(userId: string, teamId: string): Promise<"added" | "already_member"> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
-        if (!team || !!team.deleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
+        if (!team) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
-        const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
+        const membership = await membershipRepo.findOne({ teamId, userId });
         if (!!membership) {
             // already a member, this is the desired outcome
             return "already_member";
@@ -279,25 +281,25 @@ export class TeamDBImpl implements TeamDB {
     public async setTeamMemberRole(userId: string, teamId: string, role: TeamMemberRole): Promise<void> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
-        if (!team || !!team.deleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
+        if (!team) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
 
         if (role != "owner") {
-            const ownerCount = await membershipRepo.count({
+            const allOwners = await membershipRepo.find({
                 teamId,
                 role: "owner",
-                deleted: false,
             });
-            if (ownerCount <= 1) {
-                throw new ResponseError(ErrorCodes.CONFLICT, "An organization must retain at least one owner");
+            const otherOwnerCount = allOwners.filter((m) => m.userId != userId).length;
+            if (otherOwnerCount === 0) {
+                throw new ApplicationError(ErrorCodes.CONFLICT, "An organization must retain at least one owner");
             }
         }
 
-        const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
+        const membership = await membershipRepo.findOne({ teamId, userId });
         if (!membership) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this organization");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this organization");
         }
         membership.role = role;
         await membershipRepo.save(membership);
@@ -306,26 +308,25 @@ export class TeamDBImpl implements TeamDB {
     public async removeMemberFromTeam(userId: string, teamId: string): Promise<void> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
-        if (!team || !!team.deleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
+        if (!team) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
-        const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
+        const membership = await membershipRepo.findOne({ teamId, userId });
         if (!membership) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "The given user is not currently a member of this organization or does not exist.",
             );
         }
-        membership.deleted = true;
-        await membershipRepo.save(membership);
+        await membershipRepo.delete(membership);
     }
 
     public async findTeamMembershipInviteById(inviteId: string): Promise<TeamMembershipInvite> {
         const inviteRepo = await this.getMembershipInviteRepo();
         const invite = await inviteRepo.findOne(inviteId);
         if (!invite) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "No invite found for the given ID.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "No invite found for the given ID.");
         }
         return invite;
     }
@@ -357,21 +358,25 @@ export class TeamDBImpl implements TeamDB {
 
     public async findOrgSettings(orgId: string): Promise<OrganizationSettings | undefined> {
         const repo = await this.getOrgSettingsRepo();
-        return repo.findOne({ where: { orgId, deleted: false }, select: ["orgId", "workspaceSharingDisabled"] });
+        return repo.findOne({
+            where: { orgId, deleted: false },
+            select: ["orgId", "workspaceSharingDisabled", "defaultWorkspaceImage"],
+        });
     }
 
-    public async setOrgSettings(orgId: string, settings: Partial<OrganizationSettings>): Promise<void> {
+    public async setOrgSettings(orgId: string, settings: Partial<OrganizationSettings>): Promise<OrganizationSettings> {
         const repo = await this.getOrgSettingsRepo();
         const team = await repo.findOne({ where: { orgId, deleted: false } });
         if (!team) {
-            await repo.insert({
+            return await repo.save({
                 ...settings,
                 orgId,
             });
-        } else {
-            team.workspaceSharingDisabled = settings.workspaceSharingDisabled;
-            repo.save(team);
         }
+        return await repo.save({
+            ...team,
+            ...settings,
+        });
     }
 
     public async hasActiveSSO(organizationId: string): Promise<boolean> {
@@ -380,7 +385,6 @@ export class TeamDBImpl implements TeamDB {
             `select org.id from d_b_team as org inner join d_b_oidc_client_config as oidc on org.id = oidc.organizationId
                 where oidc.active = 1
                 and oidc.deleted = 0
-                and org.deleted = 0
                 and org.markedDeleted = 0
                 and org.id = ?
                 limit 1;`,

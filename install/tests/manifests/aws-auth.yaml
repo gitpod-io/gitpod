@@ -1,6 +1,0 @@
-data:
-  mapUsers: |
-    - userarn: ${USERARN}
-      username: ${NAME}
-      groups:
-        - system:masters

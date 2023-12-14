@@ -9,36 +9,46 @@ import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
-import Alert from "../components/Alert";
 import { Link } from "react-router-dom";
 import { Heading2, Heading3, Subheading } from "../components/typography/headings";
-import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import SelectIDE from "./SelectIDE";
 import { InputField } from "../components/forms/InputField";
 import { TextInput } from "../components/forms/TextInputField";
 import { useToast } from "../components/toasts/Toasts";
-import { useUpdateCurrentUserDotfileRepoMutation } from "../data/current-user/update-mutation";
-import { AdditionalUserData } from "@gitpod/gitpod-protocol";
+import {
+    useUpdateCurrentUserDotfileRepoMutation,
+    useUpdateCurrentUserMutation,
+} from "../data/current-user/update-mutation";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
+import { converter, userClient } from "../service/public-api";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
 export default function Preferences() {
     const { toast } = useToast();
     const { user, setUser } = useContext(UserContext);
-    const maySetTimeout = useUserMaySetTimeout();
+    const updateUser = useUpdateCurrentUserMutation();
+    const billingMode = useOrgBillingMode();
     const updateDotfileRepo = useUpdateCurrentUserDotfileRepoMutation();
 
-    const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
-    const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(user?.additionalData?.workspaceTimeout ?? "");
+    const [dotfileRepo, setDotfileRepo] = useState<string>(user?.dotfileRepo || "");
+
+    const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(
+        converter.toDurationString(user?.workspaceTimeoutSettings?.inactivity),
+    );
     const [timeoutUpdating, setTimeoutUpdating] = useState(false);
+    const [creationError, setCreationError] = useState<Error>();
 
     const saveDotfileRepo = useCallback(
         async (e) => {
             e.preventDefault();
 
-            const updatedUser = await updateDotfileRepo.mutateAsync(dotfileRepo);
-            setUser(updatedUser);
+            const user = await updateDotfileRepo.mutateAsync(dotfileRepo);
+            if (user) {
+                setUser(user);
+            }
             toast("Your dotfiles repository was updated.");
         },
         [updateDotfileRepo, dotfileRepo, setUser, toast],
@@ -54,29 +64,49 @@ export default function Preferences() {
                 await getGitpodService().server.updateWorkspaceTimeoutSetting({ workspaceTimeout: workspaceTimeout });
 
                 // TODO: Once current user is in react-query, we can instead invalidate the query vs. refetching here
-                const updatedUser = await getGitpodService().server.getLoggedInUser();
-                setUser(updatedUser);
+                const { user } = await userClient.getAuthenticatedUser({});
+                if (user) {
+                    setUser(user);
+                }
 
-                toast("Your default workspace timeout was updated.");
+                let toastMessage = <>Default workspace timeout was updated.</>;
+                if (billingMode.data?.mode === "usage-based") {
+                    if (!billingMode.data.paid) {
+                        toastMessage = (
+                            <>
+                                {toastMessage} Changes will only affect workspaces in paid organizations. Go to{" "}
+                                <Link to="/billing" className="gp-link">
+                                    billing
+                                </Link>{" "}
+                                to upgrade your organization.
+                            </>
+                        );
+                    }
+                }
+                // Reset creationError to avoid displaying the error message and toast the success message
+                setCreationError(undefined);
+                toast(toastMessage);
             } catch (e) {
-                // TODO: Convert this to an error style toast
-                alert("Cannot set custom workspace timeout: " + e.message);
+                setCreationError(new Error(e.message));
             } finally {
                 setTimeoutUpdating(false);
             }
         },
-        [toast, setUser, workspaceTimeout],
+        [toast, setUser, workspaceTimeout, billingMode],
     );
 
-    const clearAutostartWorkspaceOptions = useCallback(async () => {
+    const clearCreateWorkspaceOptions = useCallback(async () => {
         if (!user) {
             return;
         }
-        AdditionalUserData.set(user, { workspaceAutostartOptions: [] });
-        setUser(user);
-        await getGitpodService().server.updateLoggedInUser(user);
-        toast("Your autostart options were cleared.");
-    }, [setUser, toast, user]);
+        const updatedUser = await updateUser.mutateAsync({
+            additionalData: {
+                workspaceAutostartOptions: [],
+            },
+        });
+        setUser(updatedUser);
+        toast("Workspace options have been cleared.");
+    }, [updateUser, setUser, toast, user]);
 
     return (
         <div>
@@ -94,9 +124,9 @@ export default function Preferences() {
                     </a>
                 </Subheading>
                 <SelectIDE location="preferences" />
-                <Heading3 className="mt-12">Autostart Options</Heading3>
-                <Subheading>Forget any saved autostart options for all repositories.</Subheading>
-                <Button className="mt-4" type="secondary" onClick={clearAutostartWorkspaceOptions}>
+                <Heading3 className="mt-12">Workspace Options</Heading3>
+                <Subheading>Clear last used options for creating workspaces.</Subheading>
+                <Button className="mt-4" variant="secondary" onClick={clearCreateWorkspaceOptions}>
                     Reset Options
                 </Button>
 
@@ -118,16 +148,13 @@ export default function Preferences() {
                                     onChange={setDotfileRepo}
                                 />
                             </div>
-                            <Button
-                                htmlType="submit"
+                            <LoadingButton
+                                type="submit"
                                 loading={updateDotfileRepo.isLoading}
-                                disabled={
-                                    updateDotfileRepo.isLoading ||
-                                    (dotfileRepo === user?.additionalData?.dotfileRepo ?? "")
-                                }
+                                disabled={updateDotfileRepo.isLoading || (dotfileRepo === user?.dotfileRepo ?? "")}
                             >
                                 Save
-                            </Button>
+                            </LoadingButton>
                         </div>
                     </InputField>
                 </form>
@@ -136,28 +163,18 @@ export default function Preferences() {
                 <Subheading>Workspaces will stop after a period of inactivity without any user input.</Subheading>
 
                 <div className="mt-4 max-w-xl">
-                    {!maySetTimeout.isLoading && maySetTimeout.data === false && (
-                        <Alert type="message">
-                            Upgrade organization{" "}
-                            <Link to="/billing" className="gp-link">
-                                billing
-                            </Link>{" "}
-                            plan to use a custom inactivity timeout.
-                        </Alert>
-                    )}
-
-                    {maySetTimeout.data === true && (
-                        <form onSubmit={saveWorkspaceTimeout}>
-                            <InputField
-                                label="Default Workspace Timeout"
-                                hint={
-                                    <span>
-                                        Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
-                                        <span className="font-semibold">2h</span>
-                                    </span>
-                                }
-                            >
-                                <div className="flex space-x-2">
+                    <form onSubmit={saveWorkspaceTimeout}>
+                        <InputField
+                            label="Default Workspace Timeout"
+                            hint={
+                                <span>
+                                    Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
+                                    <span className="font-semibold">2h</span>
+                                </span>
+                            }
+                        >
+                            <div className="flex flex-col">
+                                <div className="flex items-center space-x-2 mb-2">
                                     <div className="flex-grow">
                                         <TextInput
                                             value={workspaceTimeout}
@@ -165,17 +182,27 @@ export default function Preferences() {
                                             onChange={setWorkspaceTimeout}
                                         />
                                     </div>
-                                    <Button
-                                        htmlType="submit"
+                                    <LoadingButton
+                                        type="submit"
                                         loading={timeoutUpdating}
-                                        disabled={workspaceTimeout === user?.additionalData?.workspaceTimeout ?? ""}
+                                        disabled={
+                                            workspaceTimeout ===
+                                                converter.toDurationString(
+                                                    user?.workspaceTimeoutSettings?.inactivity,
+                                                ) ?? ""
+                                        }
                                     >
                                         Save
-                                    </Button>
+                                    </LoadingButton>
                                 </div>
-                            </InputField>
-                        </form>
-                    )}
+                                {!!creationError && (
+                                    <p className="text-gitpod-red w-full max-w-lg">
+                                        Cannot set custom workspace timeout: {creationError.message}
+                                    </p>
+                                )}
+                            </div>
+                        </InputField>
+                    </form>
                 </div>
             </PageWithSettingsSubMenu>
         </div>

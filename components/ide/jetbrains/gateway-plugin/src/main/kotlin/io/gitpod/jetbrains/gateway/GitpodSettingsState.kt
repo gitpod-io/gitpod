@@ -36,6 +36,15 @@ class GitpodSettingsState : PersistentStateComponent<GitpodSettingsState> {
             dispatcher.multicaster.didChange()
         }
 
+    var forceHttpTunnel: Boolean = false
+        set(value) {
+            if (value == field) {
+                return
+            }
+            field = value
+            dispatcher.multicaster.didChange()
+        }
+
     private interface Listener : EventListener {
         fun didChange()
     }

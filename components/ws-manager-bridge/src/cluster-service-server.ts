@@ -15,6 +15,7 @@ import {
     AdmissionConstraint,
     AdmissionConstraintHasPermission,
     WorkspaceClusterWoTLS,
+    WorkspaceClass,
 } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import {
     ClusterServiceService,
@@ -43,7 +44,7 @@ import { BridgeController } from "./bridge-controller";
 import { Configuration } from "./config";
 import { GRPCError } from "./rpc";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
-import { GetWorkspacesRequest, WorkspaceManagerClient } from "@gitpod/ws-manager/lib";
+import { DescribeClusterRequest, DescribeClusterResponse, WorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 
 export interface ClusterServiceServerOptions {
     port: number;
@@ -55,23 +56,17 @@ export class ClusterService implements IClusterServiceServer {
     // Satisfy the grpc.UntypedServiceImplementation interface.
     [name: string]: any;
 
-    @inject(WorkspaceClusterDB)
-    protected readonly clusterDB: WorkspaceClusterDB;
-
-    @inject(WorkspaceDB)
-    protected readonly workspaceDB: WorkspaceDB;
-
-    @inject(BridgeController)
-    protected readonly bridgeController: BridgeController;
-
-    @inject(WorkspaceManagerClientProvider)
-    protected readonly clientProvider: WorkspaceManagerClientProvider;
-
-    @inject(WorkspaceManagerClientProviderCompositeSource)
-    protected readonly allClientProvider: WorkspaceManagerClientProviderSource;
+    constructor(
+        @inject(WorkspaceClusterDB) private readonly clusterDB: WorkspaceClusterDB,
+        @inject(WorkspaceDB) private readonly workspaceDB: WorkspaceDB,
+        @inject(BridgeController) private readonly bridgeController: BridgeController,
+        @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
+        @inject(WorkspaceManagerClientProviderCompositeSource)
+        private readonly allClientProvider: WorkspaceManagerClientProviderSource,
+    ) {}
 
     // using a queue to make sure we do concurrency right
-    protected readonly queue: Queue = new Queue();
+    private readonly queue: Queue = new Queue();
 
     public register(
         call: grpc.ServerUnaryCall<RegisterRequest, RegisterResponse>,
@@ -111,13 +106,13 @@ export class ClusterService implements IClusterServiceServer {
 
                 // store the ws-manager into the database
                 let perfereability = Preferability.NONE;
-                let govern = true;
+                const govern = true;
                 let state: WorkspaceClusterState = "available";
                 if (req.hints) {
                     perfereability = req.hints.perfereability;
                     state = mapCordoned(req.hints.cordoned);
                 }
-                let score = mapPreferabilityToScore(perfereability);
+                const score = mapPreferabilityToScore(perfereability);
                 if (score === undefined) {
                     throw new GRPCError(grpc.status.INVALID_ARGUMENT, `unknown preferability ${perfereability}`);
                 }
@@ -150,9 +145,9 @@ export class ClusterService implements IClusterServiceServer {
                 };
 
                 // try to connect to validate the config. Throws an exception if it fails.
-                await new Promise<void>((resolve, reject) => {
+                const clusterDesc = await new Promise<DescribeClusterResponse>((resolve, reject) => {
                     const c = this.clientProvider.createConnection(WorkspaceManagerClient, newCluster);
-                    c.getWorkspaces(new GetWorkspacesRequest(), (err: any) => {
+                    c.describeCluster(new DescribeClusterRequest(), (err: any, resp: DescribeClusterResponse) => {
                         if (err) {
                             reject(
                                 new GRPCError(
@@ -161,9 +156,21 @@ export class ClusterService implements IClusterServiceServer {
                                 ),
                             );
                         } else {
-                            resolve();
+                            resolve(resp);
                         }
                     });
+                });
+
+                // Make a test call to the cluster to validate the TLS config.
+                // We use this test call to gather the available workspace classes.
+                newCluster.preferredWorkspaceClass = clusterDesc.getPreferredWorkspaceClass();
+                newCluster.availableWorkspaceClasses = clusterDesc.getWorkspaceClassesList().map((c) => {
+                    return <WorkspaceClass>{
+                        creditsPerMinute: c.getCreditsPerMinute(),
+                        description: c.getDescription(),
+                        displayName: c.getDisplayName(),
+                        id: c.getId(),
+                    };
                 });
 
                 await this.clusterDB.save(newCluster);
@@ -305,7 +312,7 @@ export class ClusterService implements IClusterServiceServer {
         });
     }
 
-    protected triggerReconcile(action: string, name: string) {
+    private triggerReconcile(action: string, name: string) {
         const payload = { action, name };
         log.info("reconcile: on request", payload);
         this.bridgeController
@@ -415,13 +422,12 @@ function getClientInfo(call: grpc.ServerUnaryCall<any, any>) {
 // "grpc" does not allow additional methods on it's "ServiceServer"s so we have an additional wrapper here
 @injectable()
 export class ClusterServiceServer {
-    @inject(Configuration)
-    protected readonly config: Configuration;
+    constructor(
+        @inject(Configuration) private readonly config: Configuration,
+        @inject(ClusterService) private readonly service: ClusterService,
+    ) {}
 
-    @inject(ClusterService)
-    protected readonly service: ClusterService;
-
-    protected server: grpc.Server | undefined = undefined;
+    private server: grpc.Server | undefined = undefined;
 
     public async start() {
         // Default value for maxSessionMemory is 10 which is low for this gRPC server

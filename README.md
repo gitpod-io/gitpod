@@ -21,7 +21,9 @@ for each task, in the cloud, in seconds. It enables you to describe your dev env
 
 Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and continuously prebuilds dev environments for all your branches. As a result, team members can instantly start coding with fresh, ephemeral, and fully-compiled dev environments - no matter if you are building a new feature, want to fix a bug, or do a code review.
 
-![browser-vscode](https://user-images.githubusercontent.com/22498066/135150975-23bba3a6-f099-48c5-83ed-a1a6627ff0e9.png)
+<a href="https://www.gitpod.io">
+  <img src="https://user-images.githubusercontent.com/22498066/135150975-23bba3a6-f099-48c5-83ed-a1a6627ff0e9.png" alt="browser-vscode" />
+</a>
 
 ## Features
 

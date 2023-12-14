@@ -24,4 +24,6 @@ const (
 	RegistryTLSCertSecret  = common.RegistryTLSCertSecret
 	ContainerAnalyticsPort = 9546
 	ContainerAnalyticsName = "analytics"
+	ContainerConfigcatPort = common.ProxyConfigcatPort
+	ContainerConfigcatName = "configcat"
 )

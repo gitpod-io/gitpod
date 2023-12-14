@@ -5,7 +5,7 @@ data "google_compute_default_service_account" "default" {
 resource "google_compute_instance" "default" {
   provider = google
 
-  name                      = var.preview_name
+  name                      = local.vm_name
   machine_type              = local.machine_type
   zone                      = "us-central1-a"
   allow_stopping_for_update = true
@@ -14,6 +14,18 @@ resource "google_compute_instance" "default" {
     initialize_params {
       image = "projects/workspace-clusters/global/images/${var.vm_image}"
       type  = "pd-ssd"
+      size  = 256
+    }
+  }
+
+  # Attach two local SSDs when large VM is enabled.
+  # These increase the containerd and workspace lvm volume sizes,
+  # allowing us to e.g. run more e2e tests in parallel without
+  # running into node disk pressure.
+  dynamic "scratch_disk" {
+    for_each = var.with_large_vm == true ? [1, 2] : []
+    content {
+      interface = "NVME"
     }
   }
 
@@ -69,8 +81,9 @@ data "kubernetes_secret" "harvester-k3s-dockerhub-pull-account" {
 }
 
 locals {
+  vm_name = "preview-${var.preview_name}"
   bootstrap_script = templatefile("${path.module}/../../scripts/bootstrap-k3s.sh", {
-    vm_name = var.preview_name
+    vm_name = local.vm_name
   })
 
   trustmanager_script = file("${path.module}/../../scripts/install-trustmanager.sh")
@@ -83,7 +96,7 @@ locals {
   cloudinit_user_data = templatefile("${path.module}/cloudinit.yaml", {
     dockerhub_user      = data.kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["username"]
     dockerhub_passwd    = data.kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["password"]
-    vm_name             = var.preview_name
+    vm_name             = local.vm_name
     ssh_authorized_keys = var.ssh_key
   })
 

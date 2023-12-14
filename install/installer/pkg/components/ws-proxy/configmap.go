@@ -122,7 +122,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PrometheusAddr:     common.LocalhostPrometheusAddr(),
 		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 		WorkspaceManager:   wsManagerConfig,
-		EnableWorkspaceCRD: true,
+	}
+
+	if ctx.Config.SSHGatewayCAKey != nil {
+		wspcfg.Proxy.SSHGatewayCAKeyFile = "/mnt/ca-key/ca.key"
 	}
 
 	fc, err := common.ToJSONString(wspcfg)

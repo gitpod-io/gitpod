@@ -5,7 +5,7 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { workspacesService } from "../../service/public-api";
+import { workspaceClient } from "../../service/public-api";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 
@@ -22,7 +22,7 @@ export const useDeleteInactiveWorkspacesMutation = () => {
 
             for (const workspaceId of workspaceIds) {
                 try {
-                    await workspacesService.deleteWorkspace({ workspaceId });
+                    await workspaceClient.deleteWorkspace({ workspaceId });
 
                     deletedWorkspaceIds.push(workspaceId);
                 } catch (e) {
@@ -40,7 +40,7 @@ export const useDeleteInactiveWorkspacesMutation = () => {
             // Using the result of the mutationFn so we only remove workspaces that were delete
             queryClient.setQueryData<ListWorkspacesQueryResult>(queryKey, (oldWorkspacesData) => {
                 return oldWorkspacesData?.filter((info) => {
-                    return !deletedWorkspaceIds.includes(info.workspace.id);
+                    return !deletedWorkspaceIds.includes(info.id);
                 });
             });
 

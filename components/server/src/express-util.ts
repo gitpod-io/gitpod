@@ -5,8 +5,9 @@
  */
 
 import { URL } from "url";
-import * as express from "express";
+import express from "express";
 import * as crypto from "crypto";
+import { IncomingHttpHeaders } from "http";
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
@@ -73,7 +74,15 @@ export function unhandledToError(req: express.Request, res: express.Response, ne
     if (isAnsweredRequest(req, res)) {
         return next();
     }
-    return next(new Error("unhandled request: " + req.method + " " + req.originalUrl));
+    /* Handle unknown routes gracefully to improve user experience and security.
+     * - Use a 404 status to indicate a "Not Found" error.
+     * - Provide a clear and informative message to guide the user.
+     * - Avoid exposing stack traces to prevent potential security vulnerabilities.
+     * Note: Detailed error logging is delegated to the `bottomErrorHandler()` function.
+     */
+    res.status(404).send(
+        "Resource Not Accessible: The content you're attempting to access may have been removed, renamed, or is temporarily unavailable. Kindly verify the URL and retry.",
+    );
 }
 
 /**
@@ -125,4 +134,28 @@ export function clientIp(req: express.Request): string | undefined {
         return undefined;
     }
     return clientIp.split(",")[0];
+}
+
+export function toHeaders(headers: IncomingHttpHeaders): Headers {
+    const result = new Headers();
+    for (const [key, value] of Object.entries(headers)) {
+        result.set(key, value as string);
+    }
+    return result;
+}
+
+export interface ClientHeaderFields {
+    ip?: string;
+    userAgent?: string;
+    dnt?: string;
+    clientRegion?: string;
+}
+
+export function toClientHeaderFields(expressReq: express.Request): ClientHeaderFields {
+    return {
+        ip: clientIp(expressReq),
+        userAgent: expressReq.headers["user-agent"],
+        dnt: takeFirst(expressReq.headers.dnt),
+        clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
+    };
 }

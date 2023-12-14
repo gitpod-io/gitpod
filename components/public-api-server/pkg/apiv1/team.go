@@ -161,6 +161,27 @@ func (s *TeamService) DeleteTeam(ctx context.Context, req *connect.Request[v1.De
 	return connect.NewResponse(&v1.DeleteTeamResponse{}), nil
 }
 
+func (s *TeamService) GetTeamInvitation(ctx context.Context, req *connect.Request[v1.GetTeamInvitationRequest]) (*connect.Response[v1.GetTeamInvitationResponse], error) {
+	teamID, err := validateTeamID(ctx, req.Msg.GetTeamId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	invite, err := conn.GetGenericInvite(ctx, teamID.String())
+	if err != nil {
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(&v1.GetTeamInvitationResponse{
+		TeamInvitation: teamInviteToAPIResponse(invite),
+	}), nil
+}
+
 func (s *TeamService) JoinTeam(ctx context.Context, req *connect.Request[v1.JoinTeamRequest]) (*connect.Response[v1.JoinTeamResponse], error) {
 	if req.Msg.GetInvitationId() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invitation id is a required argument to join a team"))
@@ -205,6 +226,27 @@ func (s *TeamService) ResetTeamInvitation(ctx context.Context, req *connect.Requ
 
 	return connect.NewResponse(&v1.ResetTeamInvitationResponse{
 		TeamInvitation: teamInviteToAPIResponse(invite),
+	}), nil
+}
+
+func (s *TeamService) ListTeamMembers(ctx context.Context, req *connect.Request[v1.ListTeamMembersRequest]) (*connect.Response[v1.ListTeamMembersResponse], error) {
+	teamID, err := validateTeamID(ctx, req.Msg.GetTeamId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := conn.GetTeamMembers(ctx, teamID.String())
+	if err != nil {
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(&v1.ListTeamMembersResponse{
+		Members: teamMembersToAPIResponse(members),
 	}), nil
 }
 
@@ -282,7 +324,7 @@ func (s *TeamService) toTeamAPIResponse(ctx context.Context, conn protocol.APIIn
 	if err != nil {
 		convertedError := proxy.ConvertError(err)
 		// code not found is expected if the organization is SSO-enabled
-		if connectError, ok := convertedError.(*connect.Error); !ok || connectError.Code() != connect.CodeNotFound {
+		if connectError, ok := convertedError.(*connect.Error); !ok || !(connectError.Code() == connect.CodeNotFound || connectError.Code() == connect.CodePermissionDenied) {
 			logger.WithError(err).Error("Failed to get generic invite")
 			return nil, convertedError
 		}
@@ -295,7 +337,6 @@ func teamToAPIResponse(team *protocol.Team, members []*protocol.TeamMemberInfo, 
 	return &v1.Team{
 		Id:             team.ID,
 		Name:           team.Name,
-		Slug:           team.Slug,
 		Members:        teamMembersToAPIResponse(members),
 		TeamInvitation: teamInviteToAPIResponse(invite),
 	}

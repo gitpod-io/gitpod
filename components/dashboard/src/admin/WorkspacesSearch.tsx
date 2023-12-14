@@ -30,6 +30,7 @@ import { SpinnerLoader } from "../components/Loader";
 import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator";
 import searchIcon from "../icons/search.svg";
 import Tooltip from "../components/Tooltip";
+import { converter } from "../service/public-api";
 
 interface Props {
     user?: User;
@@ -166,22 +167,26 @@ export function WorkspaceSearch(props: Props) {
 }
 
 function WorkspaceEntry(p: { ws: WorkspaceAndInstance }) {
+    const workspace = converter.toWorkspace({
+        workspace: WorkspaceAndInstance.toWorkspace(p.ws),
+        latestInstance: WorkspaceAndInstance.toInstance(p.ws),
+    });
     return (
         <Link
             key={"ws-" + p.ws.workspaceId}
             to={"/admin/workspaces/" + p.ws.workspaceId}
             data-analytics='{"button_type":"sidebar_menu"}'
         >
-            <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
+            <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">
                 <div className="pr-3 self-center w-8">
-                    <WorkspaceStatusIndicator instance={WorkspaceAndInstance.toInstance(p.ws)} />
+                    <WorkspaceStatusIndicator status={workspace.status} />
                 </div>
                 <div className="flex flex-col w-5/12 truncate">
                     <div className="font-medium text-gray-800 dark:text-gray-100 truncate hover:text-blue-600 dark:hover:text-blue-400 truncate">
                         {p.ws.workspaceId}
                     </div>
                     <div className="text-sm overflow-ellipsis truncate text-gray-400 truncate">
-                        {getProjectPath(WorkspaceAndInstance.toWorkspace(p.ws))}
+                        {getProjectPath(workspace)}
                     </div>
                 </div>
                 <div className="flex flex-col w-5/12 self-center truncate">

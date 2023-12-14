@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
@@ -5,9 +6,9 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { Container, ContainerModule } from "inversify";
-import { retries, suite, test, timeout } from "mocha-typescript";
+import { retries, skip, suite, test, timeout } from "@testdeck/mocha";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { BitbucketServerApi } from "../bitbucket-server/bitbucket-server-api";
@@ -20,7 +21,7 @@ import { Config } from "../config";
 import { TokenService } from "../user/token-service";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
-@suite(timeout(10000), retries(1), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER"))
+@suite(timeout(10000), retries(1), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER")))
 class TestBitbucketServerService {
     protected service: BitbucketServerService;
     protected user: User;
@@ -86,38 +87,6 @@ class TestBitbucketServerService {
                 },
             ],
         };
-    }
-
-    @test async test_canInstallAutomatedPrebuilds_unauthorized() {
-        const result = await this.service.canInstallAutomatedPrebuilds(
-            this.user,
-            "https://bitbucket.gitpod-self-hosted.com/users/jldec/repos/test-repo",
-        );
-        expect(result).to.be.false;
-    }
-
-    @test async test_canInstallAutomatedPrebuilds_in_project_ok() {
-        const result = await this.service.canInstallAutomatedPrebuilds(
-            this.user,
-            "https://bitbucket.gitpod-self-hosted.com/projects/jldec/repos/jldec-repo-march-30",
-        );
-        expect(result).to.be.true;
-    }
-
-    @test async test_canInstallAutomatedPrebuilds_ok() {
-        const result = await this.service.canInstallAutomatedPrebuilds(
-            this.user,
-            "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123",
-        );
-        expect(result).to.be.true;
-    }
-
-    @test async test_canInstallAutomatedPrebuilds_users_project_ok() {
-        const result = await this.service.canInstallAutomatedPrebuilds(
-            this.user,
-            "https://bitbucket.gitpod-self-hosted.com/scm/~alextugarev/yolo.git",
-        );
-        expect(result).to.be.true;
     }
 
     @test async test_installAutomatedPrebuilds_ok() {

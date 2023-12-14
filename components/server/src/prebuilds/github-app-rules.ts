@@ -6,7 +6,7 @@
 
 import { injectable } from "inversify";
 import { WorkspaceConfig, GithubAppConfig } from "@gitpod/gitpod-protocol";
-import * as deepmerge from "deepmerge";
+import deepmerge from "deepmerge";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 const defaultConfig: GithubAppConfig = {
@@ -25,7 +25,7 @@ const defaultConfig: GithubAppConfig = {
 @injectable()
 export class GithubAppRules {
     protected mergeWithDefaultConfig(cfg: WorkspaceConfig | undefined): GithubAppConfig {
-        let result: GithubAppConfig = defaultConfig;
+        const result: GithubAppConfig = defaultConfig;
 
         if (!cfg || !cfg.github) {
             return result;
@@ -34,13 +34,23 @@ export class GithubAppRules {
         return deepmerge(defaultConfig, cfg.github);
     }
 
+    /**
+     *
+     * @deprecated
+     */
     public shouldRunPrebuild(
         config: WorkspaceConfig | undefined,
         isDefaultBranch: boolean,
         isPR: boolean,
         isFork: boolean,
     ): boolean {
-        if (!config) {
+        if (!config || !config._origin || config._origin !== "repo") {
+            // we demand an explicit gitpod config
+            return false;
+        }
+
+        const hasPrebuildTask = !!config.tasks && config.tasks.find((t) => !!t.before || !!t.init || !!t.prebuild);
+        if (!hasPrebuildTask) {
             return false;
         }
 

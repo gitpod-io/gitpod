@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import * as express from "express";
+import express from "express";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { OneTimeSecretDB, DBWithTracing, TracedOneTimeSecretDB } from "@gitpod/gitpod-db/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";
@@ -38,10 +38,9 @@ export class OneTimeSecretServer {
                     return;
                 }
 
-                log.info(`provided secret ${key}`);
                 res.status(200).send(secret);
             } catch (err) {
-                log.error("cannot provide one-time secret", err);
+                log.error("Cannot provide one-time secret", err);
                 res.sendStatus(500);
                 TraceContext.setError({ span }, err);
             } finally {

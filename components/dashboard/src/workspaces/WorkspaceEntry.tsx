@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { CommitContext, Workspace, WorkspaceInfo, ContextURL } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { FunctionComponent, useMemo, useState } from "react";
 import { Item, ItemField, ItemFieldIcon } from "../components/ItemsList";
@@ -13,21 +12,23 @@ import Tooltip from "../components/Tooltip";
 import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
 import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
+import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 type Props = {
-    info: WorkspaceInfo;
+    info: Workspace;
     shortVersion?: boolean;
 };
 
 export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion }) => {
     const [menuActive, setMenuActive] = useState(false);
 
-    const workspace = info.workspace;
-    const currentBranch =
-        info.latestInstance?.status.repo?.branch || Workspace.getBranchName(info.workspace) || "<unknown>";
+    const gitStatus = info.status?.gitStatus;
+
+    const workspace = info;
+    const currentBranch = gitStatus?.branch || "<unknown>";
     const project = getProjectPath(workspace);
-    const normalizedContextUrl = ContextURL.getNormalizedURL(workspace)?.toString();
-    const normalizedContextUrlDescription = normalizedContextUrl || workspace.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
+    const normalizedContextUrl = workspace.metadata!.originalContextUrl;
+    const normalizedContextUrlDescription = workspace.metadata!.originalContextUrl; // Instead of showing nothing, we prefer to show the raw content instead
 
     const changeMenuState = (state: boolean) => {
         setMenuActive(state);
@@ -48,12 +49,12 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
     return (
         <Item className="whitespace-nowrap py-6 px-6" solid={menuActive}>
             <ItemFieldIcon>
-                <WorkspaceStatusIndicator instance={info?.latestInstance} />
+                <WorkspaceStatusIndicator status={workspace?.status} />
             </ItemFieldIcon>
             <ItemField className="w-3/12 flex flex-col my-auto">
                 <a href={startUrl}>
                     <div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">
-                        {workspace.id}
+                        {info.id}
                     </div>
                 </a>
                 <Tooltip content={project ? "https://" + project : ""} allowWrap={true}>
@@ -68,7 +69,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                 <>
                     <ItemField className="w-4/12 flex flex-col my-auto">
                         <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">
-                            {workspace.description}
+                            {workspace.metadata!.name}
                         </div>
                         <a href={normalizedContextUrl}>
                             <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">
@@ -81,13 +82,17 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                             <Tooltip content={currentBranch}>{currentBranch}</Tooltip>
                         </div>
                         <div className="mr-auto">
-                            <PendingChangesDropdown workspaceInstance={info.latestInstance} />
+                            <PendingChangesDropdown gitStatus={gitStatus} />
                         </div>
                     </ItemField>
                     <ItemField className="w-2/12 flex my-auto">
-                        <Tooltip content={`Created ${dayjs(info.workspace.creationTime).fromNow()}`}>
+                        <Tooltip
+                            content={`Last Activate ${dayjs(
+                                info.status!.phase!.lastTransitionTime!.toDate(),
+                            ).fromNow()}`}
+                        >
                             <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">
-                                {dayjs(WorkspaceInfo.lastActiveISODate(info)).fromNow()}
+                                {dayjs(info.status?.phase?.lastTransitionTime?.toDate() ?? new Date()).fromNow()}
                             </div>
                         </Tooltip>
                     </ItemField>
@@ -99,9 +104,6 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
 };
 
 export function getProjectPath(ws: Workspace) {
-    if (CommitContext.is(ws.context)) {
-        return `${ws.context.repository.host}/${ws.context.repository.owner}/${ws.context.repository.name}`;
-    } else {
-        return undefined;
-    }
+    // TODO: Remove and call papi ContextService
+    return ws.metadata!.originalContextUrl.replace("https://", "");
 }

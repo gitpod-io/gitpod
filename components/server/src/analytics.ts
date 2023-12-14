@@ -5,9 +5,11 @@
  */
 import { User } from "@gitpod/gitpod-protocol";
 import { Request } from "express";
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { IAnalyticsWriter, IdentifyMessage, PageMessage, TrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import * as crypto from "crypto";
 import { clientIp } from "./express-util";
+import { ctxTrySubjectId } from "./util/request-context";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 export async function trackLogin(user: User, request: Request, authHost: string, analytics: IAnalyticsWriter) {
     // make new complete identify call for each login
@@ -49,11 +51,9 @@ export function createCookielessId(ip?: string, ua?: string): string | number | 
     if (!ip || !ua) {
         return "unidentified-user"; //use placeholder if we cannot resolve IP and user agent
     }
-    const date = new Date();
-    const today = `${date.getDate()}/${date.getMonth()}/${date.getFullYear()}`;
     return crypto
         .createHash("sha512")
-        .update(ip + ua + today)
+        .update(ip + ua)
         .digest("hex");
 }
 
@@ -86,7 +86,7 @@ async function fullIdentify(user: User, request: Request, analytics: IAnalyticsW
         },
         traits: {
             ...resolveIdentities(user),
-            email: User.getPrimaryEmail(user) || "",
+            email: getPrimaryEmail(user) || "",
             full_name: user.fullName,
             created_at: user.creationDate,
             unsubscribed_onboarding: user.additionalData?.emailNotificationSettings?.allowsOnboardingMail === false,
@@ -100,11 +100,11 @@ function getAnonymousId(request: Request) {
     if (!(request.cookies["gp-analytical"] === "true")) {
         return;
     }
-    return stripCookie(request.cookies.ajs_anonymous_id);
+    return stripCookie(request.cookies.ajs_anonymous_id as string);
 }
 
 function resolveIdentities(user: User) {
-    let identities: { github_slug?: String; gitlab_slug?: String; bitbucket_slug?: String } = {};
+    const identities: { github_slug?: String; gitlab_slug?: String; bitbucket_slug?: String } = {};
     user.identities.forEach((value) => {
         switch (value.authProviderId) {
             case "Public-GitHub": {
@@ -129,5 +129,37 @@ function stripCookie(cookie: string) {
         return cookie.substring(1, cookie.length - 1);
     } else {
         return cookie;
+    }
+}
+
+export class ContextAwareAnalyticsWriter implements IAnalyticsWriter {
+    constructor(readonly writer: IAnalyticsWriter) {}
+
+    identify(msg: IdentifyMessage): void {
+        this.writer.identify(msg);
+    }
+
+    track(msg: TrackMessage): void {
+        this.writer.track(msg);
+    }
+
+    page(msg: PageMessage): void {
+        const traceIds = this.getAnalyticsIds();
+        this.writer.page({
+            ...msg,
+            userId: msg.userId || traceIds.userId,
+            subjectId: msg.subjectId || traceIds.subjectId,
+        });
+    }
+
+    private getAnalyticsIds(): { userId?: string; subjectId?: string } {
+        const subjectId = ctxTrySubjectId();
+        if (!subjectId) {
+            return {};
+        }
+        return {
+            userId: subjectId.userId(),
+            subjectId: subjectId.toString(),
+        };
     }
 }

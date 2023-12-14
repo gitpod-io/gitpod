@@ -33,7 +33,7 @@ variable "ssh_key" {
 variable "vm_image" {
   type        = string
   description = "The VM image"
-  default     = "gitpod-k3s-202306061841"
+  default     = "gitpod-k3s-202312131438"
 }
 
 variable "harvester_ingress_ip" {

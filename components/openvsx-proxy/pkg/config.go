@@ -19,7 +19,6 @@ type Config struct {
 	CacheDurationRegular util.Duration `json:"cache_duration_regular"`
 	CacheDurationBackup  util.Duration `json:"cache_duration_backup"`
 	URLUpstream          string        `json:"url_upstream"`
-	URLLocal             string        `json:"url_local"`
 	MaxIdleConns         int           `json:"max_idle_conns"`
 	MaxIdleConnsPerHost  int           `json:"max_idle_conns_per_host"`
 	RedisAddr            string        `json:"redis_addr"`
@@ -37,7 +36,6 @@ func (c *Config) Validate() error {
 		validation.Field(&c.CacheDurationRegular, validation.Required),
 		validation.Field(&c.CacheDurationBackup, validation.Required),
 		validation.Field(&c.URLUpstream, validation.Required, is.URL),
-		validation.Field(&c.URLLocal, validation.Required, is.URL),
 	)
 }
 

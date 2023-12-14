@@ -7,7 +7,6 @@
 import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
 import { useCallback, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
-import { Link } from "react-router-dom";
 import { personalAccessTokensService } from "../service/public-api";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { settingsPathPersonalAccessTokenCreate, settingsPathPersonalAccessTokenEdit } from "./settings.routes";
@@ -23,6 +22,8 @@ import ShowTokenModal from "./ShowTokenModal";
 import Pagination from "../Pagination/Pagination";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { Button } from "@podkit/buttons/Button";
+import { LinkButton } from "@podkit/buttons/LinkButton";
 
 export default function PersonalAccessTokens() {
     const enablePersonalAccessTokens = useFeatureFlag("personalAccessTokensEnabled");
@@ -179,9 +180,7 @@ function ListAccessTokensView() {
                     </Subheading>
                 </div>
                 {tokens.length > 0 && (
-                    <Link to={settingsPathPersonalAccessTokenCreate}>
-                        <button>New Access Token</button>
-                    </Link>
+                    <LinkButton href={settingsPathPersonalAccessTokenCreate}>New Access Token</LinkButton>
                 )}
             </div>
             {errorMsg.length > 0 && (
@@ -215,9 +214,9 @@ function ListAccessTokensView() {
                         <div className="mb-2 font-medium text-sm text-gray-500 dark:text-gray-300">
                             Make sure to copy your access token — you won't be able to access it again.
                         </div>
-                        <button className="secondary" onClick={handleCopyToken}>
+                        <Button variant="secondary" onClick={handleCopyToken}>
                             Copy Token to Clipboard
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
@@ -233,9 +232,7 @@ function ListAccessTokensView() {
                             <Subheading className="text-center pb-6 w-96">
                                 Generate an access token for applications that need access to the Gitpod API.{" "}
                             </Subheading>
-                            <Link to={settingsPathPersonalAccessTokenCreate}>
-                                <button>New Access Token</button>
-                            </Link>
+                            <LinkButton href={settingsPathPersonalAccessTokenCreate}>New Access Token</LinkButton>
                         </div>
                     ) : (
                         <>

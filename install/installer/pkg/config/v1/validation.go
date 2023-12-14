@@ -42,7 +42,6 @@ var ObjectRefKindList = map[ObjectRefKind]struct{}{
 }
 
 var FSShiftMethodList = map[FSShiftMethod]struct{}{
-	FSShiftFuseFS:  {},
 	FSShiftShiftFS: {},
 }
 
@@ -229,10 +228,6 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 			}
 			return errors, nil
 		})))
-	}
-
-	if cfg.MessageBus != nil && cfg.MessageBus.Credentials != nil {
-		res = append(res, cluster.CheckSecret(cfg.MessageBus.Credentials.Name, cluster.CheckSecretRequiredData("rabbitmq-password")))
 	}
 
 	res = append(res, experimental.ClusterValidation(cfg.Experimental)...)

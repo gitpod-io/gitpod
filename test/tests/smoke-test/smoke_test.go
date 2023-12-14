@@ -22,8 +22,8 @@ func TestStartWorkspaceWithImageBuild(t *testing.T) {
 	integration.SkipWithoutUserToken(t, userToken)
 
 	f := features.New("Start regular workspace").
-		Assess("it can start a regular workspace with image build", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("it can start a regular workspace with image build", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -49,7 +49,7 @@ func TestStartWorkspaceWithImageBuild(t *testing.T) {
 
 				_, _ = stopWs(true, sapi)
 			}()
-			return ctx
+			return testCtx
 		}).
 		Feature()
 	testEnv.Test(t, f)

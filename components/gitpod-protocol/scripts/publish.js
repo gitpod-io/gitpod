@@ -36,6 +36,18 @@ fs.writeFileSync(path.join(pckDir, "package.json"), JSON.stringify(pck, undefine
 const tag = qualifier.substr(0, qualifier.lastIndexOf("."));
 
 child_process.execSync(
-    ["yarn", "--cwd", pckDir, "publish", "--tag", tag, "--access", "public", "--ignore-scripts", "--network-timeout", "100000"].join(" "),
+    [
+        "yarn",
+        "--cwd",
+        pckDir,
+        "publish",
+        "--tag",
+        tag,
+        "--access",
+        "public",
+        "--ignore-scripts",
+        "--network-timeout",
+        "300000",
+    ].join(" "),
     { stdio: "inherit" },
 );

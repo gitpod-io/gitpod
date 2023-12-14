@@ -10,7 +10,7 @@ import { useState } from "react";
 import DateSelector from "../components/DateSelector";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { TokenExpirationDays } from "./PersonalAccessTokens";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 
 interface TokenModalProps {
     token: PersonalAccessToken;
@@ -67,10 +67,10 @@ function ShowTokenModal(props: TokenModalProps) {
                 </div>
             </ModalBody>
             <ModalFooter>
-                <Button type="secondary" onClick={props.onClose}>
+                <Button variant="secondary" onClick={props.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit" type="danger">
+                <Button type="submit" variant="destructive">
                     {props.actionDescription}
                 </Button>
             </ModalFooter>

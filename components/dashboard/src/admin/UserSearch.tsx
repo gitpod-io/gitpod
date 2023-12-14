@@ -16,6 +16,7 @@ import { AdminPageHeader } from "./AdminPageHeader";
 import UserDetail from "./UserDetail";
 import searchIcon from "../icons/search.svg";
 import Tooltip from "../components/Tooltip";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 export default function UserSearch() {
     const location = useLocation();
@@ -129,10 +130,10 @@ function UserEntry(p: { user: User }) {
     if (!p) {
         return <></>;
     }
-    const email = User.getPrimaryEmail(p.user) || "---";
+    const email = getPrimaryEmail(p.user) || "---";
     return (
         <Link key={p.user.id} to={"/admin/users/" + p.user.id} data-analytics='{"button_type":"sidebar_menu"}'>
-            <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
+            <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">
                 <div className="pr-3 self-center w-1/12">
                     <img className="rounded-full" src={p.user.avatarUrl} alt={p.user.fullName || p.user.name} />
                 </div>

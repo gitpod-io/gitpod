@@ -5,10 +5,11 @@
  */
 
 import { FC, useCallback } from "react";
-import { ErrorBoundary, FallbackProps, ErrorBoundaryProps } from "react-error-boundary";
+import { ErrorBoundary, ErrorBoundaryProps, FallbackProps } from "react-error-boundary";
 import gitpodIcon from "../../icons/gitpod.svg";
-import { getGitpodService } from "../../service/service";
 import { Heading1, Subheading } from "../typography/headings";
+import { reportError } from "../../service/metrics";
+import { Button } from "@podkit/buttons/Button";
 
 export type CaughtError = Error & { code?: number };
 
@@ -48,7 +49,7 @@ export const ReloadPageErrorFallback: FC<Pick<FallbackProps, "error">> = ({ erro
                 .
             </Subheading>
             <div>
-                <button onClick={handleReset}>Reload</button>
+                <Button onClick={handleReset}>Reload</Button>
             </div>
             <div className="flex flex-col items-center space-y-2">
                 {caughtError.code && (
@@ -64,11 +65,4 @@ export const ReloadPageErrorFallback: FC<Pick<FallbackProps, "error">> = ({ erro
     );
 };
 
-export const handleError: ErrorBoundaryProps["onError"] = async (error, info) => {
-    const url = window.location.toString();
-    try {
-        await getGitpodService().server.reportErrorBoundary(url, error.message || "Unknown Error");
-    } catch (e) {
-        console.error(e);
-    }
-};
+export const handleError: ErrorBoundaryProps["onError"] = (error, info) => reportError("Error boundary", error, info);

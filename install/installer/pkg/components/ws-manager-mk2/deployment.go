@@ -5,10 +5,6 @@
 package wsmanagermk2
 
 import (
-	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -16,6 +12,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -44,6 +45,24 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ReadOnly:  true,
 		})
 	}
+	if ctx.Config.SSHGatewayCAKey != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: "ca-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.SSHGatewayCAKey.Name,
+					Optional:   pointer.Bool(true),
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "ca-key",
+			MountPath: "/mnt/ca-key/ca.pem",
+			SubPath:   "ca.pem",
+			ReadOnly:  true,
+		})
+	}
 
 	podSpec := corev1.PodSpec{
 		PriorityClassName:         common.SystemNodeCritical,
@@ -58,7 +77,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name: Component,
 			Args: []string{
 				"--config", "/config/config.json",
-				"--leader-elect",
 			},
 			Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSManagerMk2.Version),
 			ImagePullPolicy: corev1.PullIfNotPresent,
@@ -176,7 +194,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
-				Replicas: common.Replicas(ctx, Component),
+				Replicas: pointer.Int32(2),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{

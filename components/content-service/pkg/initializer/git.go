@@ -110,9 +110,21 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 			return err
 		}
 
+		// we can only do `git config` stuffs after having a directory that is also git init'd
+		// https://github.blog/2019-11-03-highlights-from-git-2-24/
+		err = ws.Git(ctx, "config", "feature.manyFiles", "true")
+		if err != nil {
+			log.WithError(err).WithField("location", ws.Location).Error("cannot configure feature.manyFiles")
+		}
+		// commit-graph after every git fetch command that downloads a pack-file from a remote
+		err = ws.Git(ctx, "config", "fetch.writeCommitGraph", "true")
+		if err != nil {
+			log.WithError(err).WithField("location", ws.Location).Error("cannot configure fetch.writeCommitGraph")
+		}
+
 		err = ws.Git(ctx, "config", "--replace-all", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
 		if err != nil {
-			log.WithError(err).WithField("location", ws.Location).Error("cannot configure fecth behavior")
+			log.WithError(err).WithField("location", ws.Location).Error("cannot configure fetch behavior")
 		}
 
 		err = ws.Git(ctx, "config", "--replace-all", "checkout.defaultRemote", "origin")

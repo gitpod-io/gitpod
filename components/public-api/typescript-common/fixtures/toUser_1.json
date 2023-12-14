@@ -1,0 +1,84 @@
+{
+  "id": "007a807f-f2a7-436b-a77f-66ed11ee7828",
+  "creationDate": "2023-12-04T08:54:31.686Z",
+  "avatarUrl": "https://avatars.githubusercontent.com/u/37021919?v=4",
+  "name": "GitpodTester",
+  "fullName": "Gitpod Tester",
+  "organizationId": "6f5b2707-c83f-4e04-a37c-23d1b1d385ae",
+  "verificationPhoneNumber": "+49150-111111111",
+  "blocked": false,
+  "featureFlags": {
+    "permanentWSFeatureFlags": [
+      "full_workspace_backup"
+    ]
+  },
+  "rolesOrPermissions": [
+    "admin",
+    "developer"
+  ],
+  "markedDeleted": false,
+  "noReleasePeriod": false,
+  "additionalData": {
+    "emailNotificationSettings": {
+      "allowsChangelogMail": true,
+      "allowsDevXMail": true,
+      "allowsOnboardingMail": true
+    },
+    "profile": {
+      "acceptedPrivacyPolicyDate": "2023-12-04T08:54:31.700Z",
+      "emailAddress": "tester@gitpod.io",
+      "lastUpdatedDetailsNudge": "2023-12-04T08:54:34.831Z",
+      "jobRole": "other",
+      "jobRoleOther": "",
+      "explorationReasons": [
+        "replace-remote-dev",
+        "replace-remote-dev"
+      ],
+      "signupGoals": [
+        "other",
+        "other"
+      ],
+      "signupGoalsOther": "",
+      "companySize": "",
+      "onboardedTimestamp": "2023-12-04T08:54:41.326Z",
+      "name": "Gitpod Tester",
+      "email": "tester@gitpod.io",
+      "company": "",
+      "avatarURL": "https://avatars.githubusercontent.com/u/37021919?v=4"
+    },
+    "shouldSeeMigrationMessage": false,
+    "ideSettings": {
+      "settingVersion": "2.0",
+      "defaultIde": "code",
+      "useLatestVersion": true
+    },
+    "workspaceAutostartOptions": [
+      {
+          "cloneURL": "https://github.com/gitpod-io/gitpod",
+          "organizationId": "6f5b2707-c83f-4e04-a37c-23d1b1d385ae",
+          "ideSettings": {
+              "defaultIde": "code"
+          },
+          "workspaceClass": "XXXL"
+      }
+    ],
+    "disabledClosedTimeout": true,
+    "workspaceTimeout": "1h",
+    "dotfileRepo": "https://github.com/gitpod-samples/demo-dotfiles-with-gitpod",
+    "workspaceClasses": {
+      "regular": "XXXL"
+    }
+  },
+  "lastVerificationTime": "2023-12-04T08:54:31.700Z",
+  "fgaRelationshipsVersion": 5,
+  "identities": [
+    {
+      "authProviderId": "Public-GitHub",
+      "authId": "37021919",
+      "authName": "GitpodTester",
+      "primaryEmail": "tester@gitpod.io",
+      "deleted": false,
+      "readonly": false
+    }
+  ]
+}

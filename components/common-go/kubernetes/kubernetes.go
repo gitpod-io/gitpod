@@ -42,6 +42,9 @@ const (
 	// ServiceTypeLabel help differentiate between port service and IDE service
 	ServiceTypeLabel = "serviceType"
 
+	// WorkspaceManaged indicates which component is responsible for managing the workspace
+	WorkspaceManagedByLabel = "gitpod.io/managed-by"
+
 	// CPULimitAnnotation enforces a strict CPU limit on a workspace by virtue of ws-daemon
 	CPULimitAnnotation = "gitpod.io/cpuLimit"
 

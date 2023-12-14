@@ -5,7 +5,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -49,10 +48,6 @@ func main() {
 	log.Info("codehelper started")
 	startTime := time.Now()
 
-	if err := replaceOpenVSXUrl(); err != nil {
-		log.WithError(err).Error("failed to replace OpenVSX URL")
-	}
-
 	phaseDone := phaseLogging("ResolveWsInfo")
 	cstate, wsInfo, err := resolveWorkspaceInfo(context.Background())
 	if err != nil || wsInfo == nil {
@@ -61,17 +56,12 @@ func main() {
 	}
 	phaseDone()
 
-	if wsInfo.DebugWorkspaceType != supervisor.DebugWorkspaceType_noDebug {
-		// TODO actually should be performed always
-		// the better way would be to apply replacements during a workspace start
-		// to aling with content in blobserve
-		if err := prepareWebWorkbenchMain(wsInfo); err != nil {
-			log.WithError(err).Error("failed to prepare web workbench")
-		}
-		if err := prepareServerMain(wsInfo); err != nil {
-			log.WithError(err).Error("failed to prepare server")
-		}
+	url, err := url.Parse(wsInfo.GitpodHost)
+	if err != nil {
+		log.WithError(err).Errorf("failed to parse GitpodHost %s", wsInfo.GitpodHost)
+		return
 	}
+	domain := url.Hostname()
 
 	// code server args install extension with id
 	args := []string{}
@@ -132,8 +122,9 @@ func main() {
 	args = append(args, os.Args[1:]...)
 	args = append(args, "--do-not-sync")
 	args = append(args, "--start-server")
+	cmdEnv := append(os.Environ(), fmt.Sprintf("GITPOD_CODE_HOST=%s", domain))
 	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("starting server")
-	if err := syscall.Exec(Code, append([]string{"gitpod-code"}, args...), os.Environ()); err != nil {
+	if err := syscall.Exec(Code, append([]string{"gitpod-code"}, args...), cmdEnv); err != nil {
 		log.WithError(err).Error("install ext and start code server failed")
 	}
 }
@@ -228,71 +219,4 @@ func phaseLogging(phase string) context.CancelFunc {
 		log.WithField("phase", phase).WithField("duration", duration).Info("phase end")
 	}()
 	return cancel
-}
-
-func replaceOpenVSXUrl() error {
-	phase := phaseLogging("ReplaceOpenVSXUrl")
-	defer phase()
-	b, err := os.ReadFile(ProductJsonLocation)
-	if err != nil {
-		return errors.New("failed to read product.json: " + err.Error())
-	}
-	b = replaceOpenVSX(b)
-	if err := os.WriteFile(ProductJsonLocation, b, 0644); err != nil {
-		return errors.New("failed to write product.json: " + err.Error())
-	}
-	return nil
-}
-
-// TODO it is be applied as well by blobserve if served for regular workspace location
-// reconsider how to configure in all modes, i.e. regular, debug, dev
-func prepareWebWorkbenchMain(wsInfo *supervisor.WorkspaceInfoResponse) error {
-	phase := phaseLogging("prepareWebWorkbenchMain")
-	defer phase()
-	b, err := os.ReadFile(WebWorkbenchMainLocation)
-	if err != nil {
-		return errors.New("failed to read " + WebWorkbenchMainLocation + ": " + err.Error())
-	}
-	url, err := url.Parse(wsInfo.GitpodHost)
-	if err != nil {
-		return errors.New("failed to parse " + wsInfo.GitpodHost + ": " + err.Error())
-	}
-	domain := url.Hostname()
-	b = bytes.ReplaceAll(b, []byte("vscode-cdn.net"), []byte(domain))
-	b = bytes.ReplaceAll(b, []byte("ide.gitpod.io/code/markeplace.json"), []byte(fmt.Sprintf("ide.%s/code/marketplace.json", domain)))
-
-	b = replaceOpenVSX(b)
-
-	if err := os.WriteFile(WebWorkbenchMainLocation, b, 0644); err != nil {
-		return errors.New("failed to write " + WebWorkbenchMainLocation + ": " + err.Error())
-	}
-	return nil
-}
-
-func prepareServerMain(wsInfo *supervisor.WorkspaceInfoResponse) error {
-	phase := phaseLogging("prepareServerMain")
-	defer phase()
-	b, err := os.ReadFile(ServerMainLocation)
-	if err != nil {
-		return errors.New("failed to read " + ServerMainLocation + ": " + err.Error())
-	}
-	url, err := url.Parse(wsInfo.GitpodHost)
-	if err != nil {
-		return errors.New("failed to parse " + wsInfo.GitpodHost + ": " + err.Error())
-	}
-	domain := url.Hostname()
-	b = bytes.ReplaceAll(b, []byte("https://*.vscode-cdn.net"), []byte(fmt.Sprintf("https://%s https://*.%s", domain, domain)))
-	if err := os.WriteFile(ServerMainLocation, b, 0644); err != nil {
-		return errors.New("failed to write " + ServerMainLocation + ": " + err.Error())
-	}
-	return nil
-}
-
-func replaceOpenVSX(b []byte) []byte {
-	registryUrl := os.Getenv("VSX_REGISTRY_URL")
-	if registryUrl != "" {
-		b = bytes.ReplaceAll(b, []byte("https://open-vsx.org"), []byte(registryUrl))
-	}
-	b = bytes.ReplaceAll(b, []byte("{{extensionsGalleryItemUrl}}"), []byte("https://open-vsx.org/vscode/item"))
-	return bytes.ReplaceAll(b, []byte("{{trustedDomain}}"), []byte("https://open-vsx.org"))
 }

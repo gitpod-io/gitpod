@@ -1,139 +1,9 @@
 packages:
-  - name: app
-    type: generic
-    config:
-      commands: [["echo"]]
-    deps:
-      - :app-linux-amd64
-      - :app-linux-arm64
-      - :app-darwin-amd64
-      - :app-darwin-arm64
-      - :app-windows-386
-      - :app-windows-amd64
-      - :app-windows-arm64
-  - name: app-linux-amd64
-    type: go
-    srcs:
-      - go.mod
-      - go.sum
-      - "**/*.go"
-    deps:
-      - components/supervisor-api/go:lib
-      - components/gitpod-protocol/go:lib
-      - components/local-app-api/go:lib
-    env:
-      - CGO_ENABLED=0
-      - GOOS=linux
-      - GOARCH=amd64
-    config:
-      packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-linux-arm64
-    type: go
-    srcs:
-      - go.mod
-      - go.sum
-      - "**/*.go"
-    deps:
-      - components/supervisor-api/go:lib
-      - components/gitpod-protocol/go:lib
-      - components/local-app-api/go:lib
-    env:
-      - CGO_ENABLED=0
-      - GOOS=linux
-      - GOARCH=arm64
-    config:
-      packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-darwin-amd64
-    type: go
-    srcs:
-      - go.mod
-      - go.sum
-      - "**/*.go"
-    deps:
-      - components/supervisor-api/go:lib
-      - components/gitpod-protocol/go:lib
-      - components/local-app-api/go:lib
-    env:
-      - CGO_ENABLED=0
-      - GOOS=darwin
-      - GOARCH=amd64
-    config:
-      packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-darwin-arm64
-    type: go
-    srcs:
-      - go.mod
-      - go.sum
-      - "**/*.go"
-    deps:
-      - components/supervisor-api/go:lib
-      - components/gitpod-protocol/go:lib
-      - components/local-app-api/go:lib
-    env:
-      - CGO_ENABLED=0
-      - GOOS=darwin
-      - GOARCH=arm64
-    config:
-      packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-windows-amd64
-    type: go
-    srcs:
-      - go.mod
-      - go.sum
-      - "**/*.go"
-    deps:
-      - components/supervisor-api/go:lib
-      - components/gitpod-protocol/go:lib
-      - components/local-app-api/go:lib
-    env:
-      - CGO_ENABLED=0
-      - GOOS=windows
-      - GOARCH=amd64
-    config:
-      packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-windows-386
-    type: go
-    srcs:
-      - go.mod
-      - go.sum
-      - "**/*.go"
-    deps:
-      - components/supervisor-api/go:lib
-      - components/gitpod-protocol/go:lib
-      - components/local-app-api/go:lib
-    env:
-      - CGO_ENABLED=0
-      - GOOS=windows
-      - GOARCH=386
-    config:
-      packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-windows-arm64
-    type: go
-    srcs:
-      - go.mod
-      - go.sum
-      - "**/*.go"
-    deps:
-      - components/supervisor-api/go:lib
-      - components/gitpod-protocol/go:lib
-      - components/local-app-api/go:lib
-    env:
-      - CGO_ENABLED=0
-      - GOOS=windows
-      - GOARCH=arm64
-    config:
-      packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
+  # remaining packages are added by the BUILD.js generator
   - name: docker
     type: docker
     deps:
-      - :app
+      - :app-with-manifest
     argdeps:
       - imageRepoBase
     config:
@@ -143,3 +13,40 @@ packages:
       image:
         - ${imageRepoBase}/local-app:${version}
         - ${imageRepoBase}/local-app:commit-${__git_commit}
+  - name: update-manifest
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+      - version.txt
+    deps:
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+      - components/public-api/go:lib
+    config:
+      packaging: app
+      dontTest: true
+      buildCommand: ["go", "build", "-o", "update-manifest", "./main/update-manifest/main.go"]
+  - name: app-with-manifest
+    type: generic
+    deps:
+      - :app
+      - :update-manifest
+    config:
+      commands:
+        - ["sh", "-c", "mkdir -p bin && mv components-local-app--app/bin/* bin/"]
+        - ["sh", "-c", "components-local-app--update-manifest/update-manifest --cwd bin | tee bin/manifest.json"]
+        - ["rm", "-rf", "components-local-app--update-manifest", "components-local-app--app"]
+scripts:
+  - name: install-cli
+    description: "Install gitpod-cli as `gitpod` command and add auto-completion. Usage: '. $(leeway run components/local-app:install-cli)'"
+    script: |
+      go build -o gitpod ./main/gitpod-cli
+      sudo mv gitpod /usr/bin/gitpod
+      sudo chmod +x /usr/bin/gitpod
+  - name: cli-completion
+    description: "Add completion of gitpod-cli to bash-completion. Usage: '. $(leeway run components/local-app:cli-completion)'"
+    script: |
+      sudo /usr/bin/gitpod completion bash | sudo tee /usr/share/bash-completion/completions/gitpod > /dev/null

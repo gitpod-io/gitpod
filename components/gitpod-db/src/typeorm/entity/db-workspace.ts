@@ -36,7 +36,7 @@ export class DBWorkspace implements Workspace {
         transformer: Transformer.MAP_NULL_TO_UNDEFINED,
     })
     @Index()
-    organizationId?: string;
+    organizationId: string;
 
     @Column(TypeORM.UUID_COLUMN_TYPE)
     @Index()
@@ -85,11 +85,15 @@ export class DBWorkspace implements Workspace {
 
     @Index("ind_type")
     @Column({
+        type: "varchar",
         default: "regular",
     })
     type: WorkspaceType;
 
-    @Column()
+    @Column({
+        type: "varchar",
+        default: "",
+    })
     softDeleted?: WorkspaceSoftDeletion;
 
     @Column({

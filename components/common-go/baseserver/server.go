@@ -16,6 +16,7 @@ import (
 	"syscall"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
@@ -346,6 +347,10 @@ func (s *Server) initializeMetrics() error {
 	err = registerMetrics(s.MetricsRegistry())
 	if err != nil {
 		return fmt.Errorf("failed to register baseserver metrics: %w", err)
+	}
+
+	if err := s.MetricsRegistry().Register(log.DefaultMetrics); err != nil {
+		return fmt.Errorf("failed to register log metrics: %w", err)
 	}
 
 	reportServerVersion(s.options.version)

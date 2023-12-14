@@ -5,7 +5,7 @@
  */
 
 import * as chai from "chai";
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import { formatPhoneNumber } from "./phone-numbers";
 const expect = chai.expect;
 

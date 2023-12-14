@@ -31,3 +31,8 @@ func (io *IO) PSI() (cgroups.PSI, error) {
 	path := filepath.Join(io.path, "io.pressure")
 	return cgroups.ReadPSIValue(path)
 }
+
+func (io *IO) Max() ([]cgroups.DeviceIOMax, error) {
+	path := filepath.Join(io.path, "io.max")
+	return cgroups.ReadIOMax(path)
+}

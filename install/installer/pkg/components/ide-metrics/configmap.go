@@ -86,7 +86,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		{
 			Name: "grpc_server_started_total",
-			Help: "Total number of RPCs started on the server",
+			Help: "Total number of RPCs started on the server.",
 			Labels: []config.LabelAllowList{
 				{
 					Name:        "grpc_method",
@@ -202,7 +202,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Client: &config.ClientAllowList{
 				Name:         "metric_client",
-				AllowValues:  []string{"vscode-desktop-extension", "supervisor", "unknown"},
+				AllowValues:  []string{"dashboard", "vscode-desktop-extension", "supervisor", "unknown"},
 				DefaultValue: "unknown",
 			},
 		}, {
@@ -228,7 +228,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Client: &config.ClientAllowList{
 				Name:         "metric_client",
-				AllowValues:  []string{"vscode-desktop-extension", "supervisor", "unknown"},
+				AllowValues:  []string{"dashboard", "vscode-desktop-extension", "supervisor", "unknown"},
 				DefaultValue: "unknown",
 			},
 		},
@@ -303,6 +303,70 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:         "metric_client",
 				AllowValues:  []string{"vscode-desktop-extension"},
 				DefaultValue: "unknown",
+			},
+		},
+		{
+			Name: "websocket_client_total",
+			Help: "Total number of WebSocket connections by the client",
+			Labels: []config.LabelAllowList{
+				{
+					Name:         "origin",
+					AllowValues:  []string{"unknown", "workspace", "gitpod", "localhost"},
+					DefaultValue: "unknown",
+				},
+				{
+					Name:         "instance_phase",
+					AllowValues:  []string{"undefined", "unknown", "preparing", "building", "pending", "creating", "initializing", "running", "interrupted", "stopping", "stopped"},
+					DefaultValue: "undefined",
+				},
+				{
+					Name:         "status",
+					AllowValues:  []string{"unknown", "new", "open", "error", "close"},
+					DefaultValue: "unknown",
+				},
+				{
+					Name:         "code",
+					AllowValues:  []string{"*"},
+					DefaultValue: "unknown",
+				},
+				{
+					Name:         "was_clean",
+					AllowValues:  []string{"unknown", "0", "1"},
+					DefaultValue: "unknown",
+				},
+			},
+		},
+		{
+			Name:   "supervisor_ssh_tunnel_opened_total",
+			Help:   "Total number of SSH tunnels opened by the supervisor",
+			Labels: []config.LabelAllowList{},
+		},
+		{
+			Name: "supervisor_ssh_tunnel_closed_total",
+			Help: "Total number of SSH tunnels closed by the supervisor",
+			Labels: []config.LabelAllowList{
+				{
+					Name:         "code",
+					AllowValues:  []string{"*"},
+					DefaultValue: "unknown",
+				},
+			},
+		},
+		{
+			Name: "service_waiter_skip_components_result_total",
+			Help: "Total number of wait result of service_waiter/component service_waiter_skip_components flag",
+			Labels: []config.LabelAllowList{
+				{
+					Name: "value",
+					// possible values "true", "false"
+					AllowValues:  []string{"*"},
+					DefaultValue: "NONE",
+				},
+				{
+					Name:         "ok",
+					AllowValues:  []string{"true", "false"},
+					DefaultValue: "false",
+				},
 			},
 		},
 	}
@@ -398,7 +462,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Buckets: []float64{0.1, 0.2, 0.5, 1, 2, 5, 10},
 			Client: &config.ClientAllowList{
 				Name:         "metric_client",
-				AllowValues:  []string{"vscode-desktop-extension", "supervisor", "unknown"},
+				AllowValues:  []string{"dashboard", "vscode-desktop-extension", "supervisor", "unknown"},
 				DefaultValue: "unknown",
 			},
 		}, {
@@ -425,11 +489,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	errorReporting := config.ErrorReportingConfiguration{
 		AllowComponents: []string{
 			"supervisor-frontend",
-			"vscode-workbench",
-			"vscode-server",
-			"vscode-web",
+			// "vscode-workbench",
+			// "vscode-server",
+			// "vscode-web",
 			"gitpod-cli",
+			"gitpod-web",
+			"gitpod-remote-ssh",
 			"vscode-desktop-extension",
+			"dashboard",
 		},
 	}
 

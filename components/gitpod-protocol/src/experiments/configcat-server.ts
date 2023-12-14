@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Client } from "./types";
+import { Attributes, Client } from "./types";
 import * as configcat from "configcat-node";
 import { LogLevel } from "configcat-common";
 import { ConfigCatClient } from "./configcat";
@@ -12,8 +12,22 @@ import { newAlwaysReturningDefaultValueClient } from "./always-default";
 
 let client: Client | undefined;
 
-export type ConfigCatClientFactory = () => Client;
-export const ConfigCatClientFactory = Symbol("ConfigCatClientFactory");
+export namespace Experiments {
+    export function configureTestingClient(config: Record<string, any>): void {
+        client = {
+            getValueAsync<T>(experimentName: string, defaultValue: T, attributes: Attributes): Promise<T> {
+                if (config.hasOwnProperty(experimentName)) {
+                    return Promise.resolve(config[experimentName] as T);
+                }
+                return Promise.resolve(defaultValue);
+            },
+
+            dispose(): void {
+                // there is nothing to dispose, no-op.
+            },
+        };
+    }
+}
 
 export function getExperimentsClientForBackend(): Client {
     // We have already instantiated a client, we can just re-use it.
@@ -38,6 +52,6 @@ export function getExperimentsClientForBackend(): Client {
         baseUrl: process.env.CONFIGCAT_BASE_URL,
     });
 
-    client = new ConfigCatClient(configCatClient);
+    client = new ConfigCatClient(configCatClient, process.env.HOST_URL);
     return client;
 }

@@ -126,6 +126,14 @@
 	}
 }
 
+(server_public_api) {
+	import compression
+
+	reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001 {
+		import upstream_connection
+	}
+}
+
 # Kubernetes health-check
 :8003 {
 	respond /live 200
@@ -146,6 +154,13 @@
 	}
 }
 
+# Internal configcat endpoint
+:9547 {
+	handle /configcat* {
+		gitpod.configcat
+	}
+}
+
 # public-api
 api.{$GITPOD_DOMAIN} {
 	log {
@@ -157,6 +172,10 @@ api.{$GITPOD_DOMAIN} {
 		allowed_origins https://{$GITPOD_DOMAIN}
 	}
 
+	handle /gitpod.v1.* {
+		import server_public_api
+	}
+
 	reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
 }
 
@@ -165,11 +184,47 @@ http:// {
 	redir https://{host}{uri} permanent
 }
 
+# The services directly correlate to Public Services exposed by Dedicated
+# When adding new endpoints, please notify Team Engine
+https://services.{$GITPOD_DOMAIN} {
+	import enable_log
+	import remove_server_header
+	import ssl_configuration
+	import security_headers
+
+	handle /idp/* {
+		reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
+	}
+
+	handle /apps/* {
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
+	}
+}
+
 https://{$GITPOD_DOMAIN} {
 	import enable_log
 	import remove_server_header
 	import ssl_configuration
 	import security_headers
+
+	# Make it possible to get an exposed healthcheck, for example for HTTP(s) NLBs
+	handle /api/health {
+		respond 200
+	}
+
+	@proxy_server_public_api path /public-api/gitpod.experimental.v1.HelloService*
+	handle @proxy_server_public_api {
+		uri strip_prefix /public-api
+
+		import server_public_api
+	}
+
+	@proxy_server_public_api_2 path /public-api/gitpod.v1.*
+	handle @proxy_server_public_api_2 {
+		uri strip_prefix /public-api
+
+		import server_public_api
+	}
 
 	@proxy_public_api path /public-api*
 	handle @proxy_public_api {
@@ -222,6 +277,15 @@ https://{$GITPOD_DOMAIN} {
 			any_domain true
 		}
 		gitpod.analytics
+	}
+
+	@browser_analytics path /_analytics*
+	handle @browser_analytics {
+		import compression
+
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_connection
+		}
 	}
 
 	@backend_wss {
@@ -286,10 +350,10 @@ https://{$GITPOD_DOMAIN} {
 		}
 	}
 
-	@local_app {
-		path /static/bin/gitpod-local-companion-*
+	@ide_bin {
+		path /static/bin/*
 	}
-	handle @local_app {
+	handle @ide_bin {
 		import compression
 
 		reverse_proxy ide-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:80 {
@@ -321,7 +385,9 @@ https://{$GITPOD_DOMAIN} {
 				header_up -Upgrade
 			}
 			# Then handle it with our plugin!
-			gitpod.frontend_dev
+			gitpod.frontend_dev {
+				upstream http://dashboard.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001
+			}
 		}
 
 		reverse_proxy dashboard.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001 {

@@ -38,10 +38,10 @@ done
 
 previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 10m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 leeway run dev/preview:deploy-gitpod
-previewctl report >> "${GITHUB_STEP_SUMMARY}"
+previewctl report --branch "${PREVIEW_NAME}" >> "${GITHUB_STEP_SUMMARY}"
 
 EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-report=$(previewctl report | base64)
+report=$(previewctl report --branch "${PREVIEW_NAME}" | base64)
 {
   echo "report<<$EOF"
   echo "$report"

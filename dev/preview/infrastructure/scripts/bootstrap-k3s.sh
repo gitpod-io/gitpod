@@ -18,9 +18,7 @@ export INSTALL_K3S_SKIP_DOWNLOAD=true
   --flannel-backend=none \
   --kubelet-arg config=/etc/kubernetes/kubelet-config.json \
   --kubelet-arg cgroup-driver=systemd \
-  --kubelet-arg feature-gates=LocalStorageCapacityIsolation=true \
   --kubelet-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \
-  --kube-apiserver-arg feature-gates=LocalStorageCapacityIsolation=true \
   --kube-apiserver-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \
   --cluster-init
 

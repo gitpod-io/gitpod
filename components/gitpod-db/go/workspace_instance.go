@@ -74,16 +74,18 @@ func FindStoppedWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, fr
 	return instances, nil
 }
 
-// FindRunningWorkspaceInstances finds WorkspaceInstanceForUsage that are running at the point in time the querty is executed.
+// FindRunningWorkspaceInstances finds WorkspaceInstanceForUsage that are running at the point in time the query is executed.
 func FindRunningWorkspaceInstances(ctx context.Context, conn *gorm.DB) ([]WorkspaceInstanceForUsage, error) {
 	var instances []WorkspaceInstanceForUsage
 	var instancesInBatch []WorkspaceInstanceForUsage
 
 	tx := queryWorkspaceInstanceForUsage(ctx, conn).
+		Where("wsi.phasePersisted = ?", "running").
+		// We are only interested in instances that have been started within the last 10 days.
+		Where("wsi.startedTime > ?", TimeToISO8601(time.Now().Add(-10*24*time.Hour))).
+		// All other selectors are there to ensure data quality
 		Where("wsi.stoppingTime = ?", "").
 		Where("wsi.usageAttributionId != ?", "").
-		// We cannot guarantee data quality before this date
-		Where("wsi.startedTime > ?", TimeToISO8601(time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC))).
 		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
 			instances = append(instances, instancesInBatch...)
 			return nil
@@ -133,6 +135,7 @@ func queryWorkspaceInstanceForUsage(ctx context.Context, conn *gorm.DB) *gorm.DB
 			"ws.type as workspaceType, "+
 			"wsi.workspaceClass as workspaceClass, "+
 			"wsi.usageAttributionId as usageAttributionId, "+
+			"wsi.creationTime as creationTime, "+
 			"wsi.startedTime as startedTime, "+
 			"wsi.stoppingTime as stoppingTime, "+
 			"wsi.stoppedTime as stoppedTime, "+
@@ -149,20 +152,11 @@ func queryWorkspaceInstanceForUsage(ctx context.Context, conn *gorm.DB) *gorm.DB
 }
 
 const (
-	AttributionEntity_User = "user"
-	AttributionEntity_Team = "team"
+	attributionEntity_Team = "team"
 )
 
-func newAttributionID(entity, identifier string) AttributionID {
-	return AttributionID(fmt.Sprintf("%s:%s", entity, identifier))
-}
-
-func NewUserAttributionID(userID string) AttributionID {
-	return newAttributionID(AttributionEntity_User, userID)
-}
-
 func NewTeamAttributionID(teamID string) AttributionID {
-	return newAttributionID(AttributionEntity_Team, teamID)
+	return AttributionID(fmt.Sprintf("%s:%s", attributionEntity_Team, teamID))
 }
 
 // AttributionID consists of an entity, and an identifier in the form:
@@ -171,16 +165,11 @@ type AttributionID string
 
 func (a AttributionID) Values() (entity string, identifier string) {
 	tokens := strings.Split(string(a), ":")
-	if len(tokens) != 2 {
+	if len(tokens) != 2 || tokens[0] != attributionEntity_Team || tokens[1] == "" {
 		return "", ""
 	}
 
 	return tokens[0], tokens[1]
-}
-
-func (a AttributionID) IsEntity(entity string) bool {
-	e, _ := a.Values()
-	return e == entity
 }
 
 func ParseAttributionID(s string) (AttributionID, error) {
@@ -194,10 +183,8 @@ func ParseAttributionID(s string) (AttributionID, error) {
 	}
 
 	switch tokens[0] {
-	case AttributionEntity_Team:
+	case attributionEntity_Team:
 		return NewTeamAttributionID(tokens[1]), nil
-	case AttributionEntity_User:
-		return NewUserAttributionID(tokens[1]), nil
 	default:
 		return "", fmt.Errorf("unknown attribution ID type: %s", s)
 	}
@@ -220,6 +207,7 @@ type WorkspaceInstanceForUsage struct {
 	UserName           string         `gorm:"column:userName;type:varchar;size:255;" json:"userName"`
 	UserAvatarURL      string         `gorm:"column:userAvatarURL;type:varchar;size:255;" json:"userAvatarURL"`
 
+	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
 	StartedTime  VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
 	StoppingTime VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`
 	StoppedTime  VarcharTime `gorm:"column:stoppedTime;type:varchar;size:255;" json:"stoppedTime"`

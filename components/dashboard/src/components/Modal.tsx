@@ -12,7 +12,8 @@ import { Heading2 } from "./typography/headings";
 import Alert, { AlertProps } from "./Alert";
 import "./modal.css";
 import classNames from "classnames";
-import { useTrackEvent } from "../data/tracking/track-event-mutation";
+import { Button } from "@podkit/buttons/Button";
+import { trackEvent } from "../Analytics";
 
 type CloseModalManner = "esc" | "enter" | "x" | "click_outside";
 
@@ -25,8 +26,10 @@ type Props = {
     children: ReactNode;
     visible: boolean;
     closeable?: boolean;
+    autoFocus?: boolean;
     disableFocusLock?: boolean;
     className?: string;
+    disabled?: boolean;
     onClose: () => void;
     onSubmit?: () => void | Promise<void>;
 };
@@ -38,28 +41,25 @@ export const Modal: FC<Props> = ({
     visible,
     children,
     closeable = true,
+    autoFocus = false,
     disableFocusLock = false,
     className,
+    disabled = false,
     onClose,
     onSubmit,
 }) => {
-    const trackEvent = useTrackEvent();
-
     const closeModal = useCallback(
         (manner: CloseModalManner) => {
             onClose();
 
-            trackEvent.mutate({
-                event: "modal_dismiss",
-                properties: {
-                    manner,
-                    title: title,
-                    specify: specify,
-                    path: window.location.pathname,
-                },
+            trackEvent("modal_dismiss", {
+                manner,
+                title: title,
+                specify: specify,
+                path: window.location.pathname,
             });
         },
-        [onClose, specify, title, trackEvent],
+        [onClose, specify, title],
     );
 
     const handleClickOutside = useCallback(() => {
@@ -81,7 +81,7 @@ export const Modal: FC<Props> = ({
                 {/* Modal outer-container for positioning */}
                 <div className="flex justify-center items-center w-screen h-screen">
                     <FocusOn
-                        autoFocus
+                        autoFocus={autoFocus}
                         onClickOutside={handleClickOutside}
                         onEscapeKey={handleEscape}
                         focusLock={!disableFocusLock}
@@ -101,7 +101,7 @@ export const Modal: FC<Props> = ({
                             aria-labelledby="modal-header"
                             tabIndex={-1}
                         >
-                            <MaybeWithForm onSubmit={onSubmit}>
+                            <MaybeWithForm onSubmit={onSubmit} disabled={disabled}>
                                 {closeable && <ModalCloseIcon onClose={() => closeModal("x")} />}
                                 {title ? (
                                     <>
@@ -125,8 +125,9 @@ export default Modal;
 
 type MaybeWithFormProps = {
     onSubmit: Props["onSubmit"];
+    disabled: Props["disabled"];
 };
-const MaybeWithForm: FC<MaybeWithFormProps> = ({ onSubmit, children }) => {
+const MaybeWithForm: FC<MaybeWithFormProps> = ({ onSubmit, disabled, children }) => {
     const handleSubmit = useCallback(
         (e: FormEvent) => {
             e.preventDefault();
@@ -145,7 +146,7 @@ const MaybeWithForm: FC<MaybeWithFormProps> = ({ onSubmit, children }) => {
     return (
         <form onSubmit={handleSubmit}>
             {/* including a hidden submit button ensures submit on enter works despite a button w/ type="submit" existing or not */}
-            <input type="submit" className="hidden" hidden />
+            <input type="submit" className="hidden" hidden disabled={disabled} />
             {children}
         </form>
     );
@@ -173,7 +174,7 @@ export const ModalBody: FC<ModalBodyProps> = ({ children, hideDivider = false, n
     return (
         // Allows the first tabbable element in the body to receive focus on mount
         <AutoFocusInside
-            className={cn("flex-grow relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-6", {
+            className={cn("md:flex-grow relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-6", {
                 "border-t border-b mt-2 py-4": !hideDivider,
                 "overflow-y-auto": !noScroll,
             })}
@@ -234,17 +235,17 @@ type ModalCloseIconProps = {
 };
 const ModalCloseIcon: FC<ModalCloseIconProps> = ({ onClose }) => {
     return (
-        // TODO: Create an IconButton component
-        <button
+        <Button
+            variant="ghost"
             type="button"
             aria-label="Close modal"
-            className="bg-transparent absolute right-7 top-6 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md p-2"
+            className="absolute right-7 top-6"
             onClick={onClose}
         >
             <svg version="1.1" width="14px" height="14px" viewBox="0 0 100 100">
                 <line x1="0" y1="0" x2="100" y2="100" stroke="currentColor" strokeWidth="10px" />
                 <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="10px" />
             </svg>
-        </button>
+        </Button>
     );
 };

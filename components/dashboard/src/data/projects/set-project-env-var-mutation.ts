@@ -5,16 +5,22 @@
  */
 
 import { useMutation } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
+import { envVarClient } from "../../service/public-api";
+import { EnvironmentVariableAdmission } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 
 type SetProjectEnvVarArgs = {
-    projectId: string;
+    configurationId: string;
     name: string;
     value: string;
-    censored: boolean;
+    admission: EnvironmentVariableAdmission;
 };
 export const useSetProjectEnvVar = () => {
-    return useMutation<void, Error, SetProjectEnvVarArgs>(async ({ projectId, name, value, censored }) => {
-        return getGitpodService().server.setProjectEnvironmentVariable(projectId, name, value, censored);
+    return useMutation<void, Error, SetProjectEnvVarArgs>(async ({ configurationId, name, value, admission }) => {
+        await envVarClient.createConfigurationEnvironmentVariable({
+            name,
+            value,
+            configurationId,
+            admission,
+        });
     });
 };

@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
@@ -17,13 +16,6 @@ import (
 )
 
 func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
-	// Only enable TLS in workspace clusters. This check can be removed
-	// once image-builder-mk3 has been removed from application clusters
-	// (https://github.com/gitpod-io/gitpod/issues/7845).
-	if ctx.Config.Kind != config.InstallationWorkspace {
-		return nil, nil
-	}
-
 	serverAltNames := []string{
 		fmt.Sprintf("%s.%s.svc", Component, ctx.Namespace),
 		fmt.Sprintf("%s.%s.svc.cluster.local", Component, ctx.Namespace),

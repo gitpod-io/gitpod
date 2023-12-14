@@ -6,6 +6,8 @@ package v1
 
 import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -60,6 +62,10 @@ type WorkspaceSpec struct {
 
 	// the XFS quota to enforce on the workspace's /workspace folder
 	StorageQuota int `json:"storageQuota,omitempty"`
+
+	SSHGatewayCAPublicKey string `json:"sshGatewayCAPublicKey,omitempty"`
+
+	SSHKey *SSHKey `json:"ssh,omitempty"`
 }
 
 type Ownership struct {
@@ -114,6 +120,14 @@ type TimeoutSpec struct {
 	MaximumLifetime *metav1.Duration `json:"maximumLifetime,omitempty"`
 }
 
+// SSHKey temporal generated SSH key required to access the workspace
+type SSHKey struct {
+	// +kubebuilder:validation:Required
+	Public string `json:"publicKey"`
+	// +kubebuilder:validation:Required
+	Private string `json:"privateKey"`
+}
+
 type AdmissionSpec struct {
 	// +kubebuilder:default=Owner
 	Level AdmissionLevel `json:"level"`
@@ -148,11 +162,27 @@ type PortSpec struct {
 	Protocol PortProtocol `json:"protocol"`
 }
 
+func (ps PortSpec) Equal(other PortSpec) bool {
+	if ps.Port != other.Port {
+		return false
+	}
+
+	if ps.Visibility != other.Visibility {
+		return false
+	}
+
+	if ps.Protocol != other.Protocol {
+		return false
+	}
+
+	return true
+}
+
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	PodStarts  int    `json:"podStarts"`
-	URL        string `json:"url,omitempty"`
-	OwnerToken string `json:"ownerToken,omitempty"`
+	URL        string `json:"url,omitempty" scrub:"redact"`
+	OwnerToken string `json:"ownerToken,omitempty" scrub:"redact"`
 
 	// +kubebuilder:default=Unknown
 	Phase WorkspacePhase `json:"phase,omitempty"`
@@ -169,13 +199,23 @@ type WorkspaceStatus struct {
 
 	// +kubebuilder:validation:Optional
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
+
+	Storage StorageStatus `json:"storage,omitempty"`
+
+	LastActivity *metav1.Time `json:"lastActivity,omitempty"`
 }
 
 func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {
 	s.Conditions = wsk8s.AddUniqueCondition(s.Conditions, cond)
 }
 
-// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;EverReady;BackupComplete;BackupFailure;Refresh;NodeDisappeared
+type StorageStatus struct {
+	VolumeName     string `json:"volumeName"`
+	AttachedDevice string `json:"attachedDevice"`
+	MountPath      string `json:"mountPath"`
+}
+
+// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;EverReady;BackupComplete;BackupFailure;Refresh;NodeDisappeared;ThroughputAdjusted
 type WorkspaceCondition string
 
 const (
@@ -223,6 +263,14 @@ const (
 
 	// NodeDisappeared is true if the workspace's node disappeared before the workspace was stopped
 	WorkspaceConditionNodeDisappeared WorkspaceCondition = "NodeDisappeared"
+
+	VolumeAttachRequest WorkspaceCondition = "VolumeAttachRequest"
+	// VolumeAttached is true if the workspace's volume has been attached to the node
+	VolumeAttached WorkspaceCondition = "VolumeAttached"
+	// VolumeMounted is true if the workspace's volume has been mounted on the node
+	VolumeMounted WorkspaceCondition = "VolumeMounted"
+	// ThroughputAdjusted is true if the throughput of the workspace volume has been adjusted
+	WorkspaceConditionThroughputAdjusted WorkspaceCondition = "ThroughputAdjusted"
 )
 
 func NewWorkspaceConditionDeployed() metav1.Condition {
@@ -351,6 +399,14 @@ func NewWorkspaceConditionNodeDisappeared() metav1.Condition {
 	}
 }
 
+func NewWorkspaceConditionThroughputAdjusted() metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionThroughputAdjusted),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+	}
+}
+
 // +kubebuilder:validation:Enum:=Unknown;Pending;Imagebuild;Creating;Initializing;Running;Stopping;Stopped
 type WorkspacePhase string
 
@@ -435,6 +491,12 @@ func (w *Workspace) IsHeadless() bool {
 
 func (w *Workspace) IsConditionTrue(condition WorkspaceCondition) bool {
 	return wsk8s.ConditionPresentAndTrue(w.Status.Conditions, string(condition))
+}
+
+// OWI produces the owner, workspace, instance log metadata from the information
+// of this workspace.
+func (w *Workspace) OWI() logrus.Fields {
+	return log.OWI(w.Spec.Ownership.Owner, w.Spec.Ownership.WorkspaceID, w.Name)
 }
 
 func init() {

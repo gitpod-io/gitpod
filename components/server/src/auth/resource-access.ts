@@ -22,8 +22,11 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { UnauthorizedError } from "../errors";
 import { RepoURL } from "../repohost";
 import { HostContextProvider } from "./host-context-provider";
+import { isFgaChecksEnabled } from "../authorization/authorizer";
+import { reportGuardAccessCheck } from "../prometheus-metrics";
+import { FunctionAccessGuard } from "./function-access";
 
-declare var resourceInstance: GuardedResource;
+declare let resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
 
 export type GuardedResource =
@@ -37,7 +40,6 @@ export type GuardedResource =
     | GuardedContentBlob
     | GuardEnvVar
     | GuardedTeam
-    | GuardedCostCenter
     | GuardedWorkspaceLog
     | GuardedPrebuild;
 
@@ -52,7 +54,6 @@ const ALL_GUARDED_RESOURCE_KINDS = new Set<GuardedResourceKind>([
     "contentBlob",
     "envVar",
     "team",
-    "costCenter",
     "workspaceLog",
 ]);
 export function isGuardedResourceKind(kind: any): kind is GuardedResourceKind {
@@ -106,24 +107,6 @@ export interface GuardedTeam {
     members: TeamMemberInfo[];
 }
 
-export interface GuardedCostCenter {
-    kind: "costCenter";
-    //subject: CostCenter;
-    owner: CostCenterOwner;
-    // team: Team;
-    // members: TeamMemberInfo[];
-}
-type CostCenterOwner =
-    | {
-          kind: "user";
-          userId: string;
-      }
-    | {
-          kind: "team";
-          team: Team;
-          members: TeamMemberInfo[];
-      };
-
 export interface GuardedGitpodToken {
     kind: "gitpodToken";
     subject: GitpodToken;
@@ -172,6 +155,46 @@ export class CompositeResourceAccessGuard implements ResourceAccessGuard {
     }
 }
 
+/**
+ * FGAResourceAccessGuard can disable the delegate if FGA is enabled.
+ */
+export class FGAResourceAccessGuard implements ResourceAccessGuard {
+    constructor(private readonly userId: string, private readonly delegate: ResourceAccessGuard) {}
+
+    async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
+        const authorizerEnabled = await isFgaChecksEnabled(this.userId);
+        if (authorizerEnabled) {
+            // Authorizer takes over, so we should not check.
+            reportGuardAccessCheck("fga");
+            return true;
+        }
+        reportGuardAccessCheck("resource-access");
+
+        // FGA can't take over yet, so we delegate
+        return await this.delegate.canAccess(resource, operation);
+    }
+}
+
+/**
+ * FGAFunctionAccessGuard can disable the delegate if FGA is enabled.
+ */
+export class FGAFunctionAccessGuard {
+    constructor(private readonly userId: string, private readonly delegate: FunctionAccessGuard) {}
+
+    async canAccess(name: string): Promise<boolean> {
+        const authorizerEnabled = await isFgaChecksEnabled(this.userId);
+        if (authorizerEnabled) {
+            // Authorizer takes over, so we should not check.
+            reportGuardAccessCheck("fga");
+            return true;
+        }
+        reportGuardAccessCheck("function-access");
+
+        // FGA can't take over yet, so we delegate
+        return this.delegate.canAccess(name);
+    }
+}
+
 export class TeamMemberResourceGuard implements ResourceAccessGuard {
     constructor(readonly userId: string) {}
 
@@ -185,18 +208,6 @@ export class TeamMemberResourceGuard implements ResourceAccessGuard {
                 return await this.hasAccessToWorkspace(resource.subject, resource.teamMembers);
             case "prebuild":
                 return !!resource.teamMembers?.some((m) => m.userId === this.userId);
-            case "costCenter":
-                const owner = resource.owner;
-                if (owner.kind === "user") {
-                    // This is handled in the "OwnerResourceGuard"
-                    return false;
-                }
-                if (operation === "get") {
-                    return owner.members.some((m) => m.userId === this.userId);
-                }
-                // TODO(gpl) We should check whether we're looking at the right team for the right CostCenter here!
-                // Only team "owners" are allowed to write CostCenters
-                return owner.members.filter((m) => m.role === "owner").some((m) => m.userId === this.userId);
         }
         return false;
     }
@@ -254,13 +265,6 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
                             (m) => m.userId === this.userId && m.role === "owner" && !m.ownedByOrganization,
                         );
                 }
-            case "costCenter":
-                const owner = resource.owner;
-                if (owner.kind === "team") {
-                    // This is handled in the "TeamMemberResourceGuard"
-                    return false;
-                }
-                return owner.userId === this.userId;
             case "workspaceLog":
                 return resource.subject.ownerId === this.userId;
             case "prebuild":

@@ -205,8 +205,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
-	tolerations = append(tolerations, common.GPUToleration()...)
-
 	podSpec := corev1.PodSpec{
 		Volumes:        volumes,
 		InitContainers: initContainers,

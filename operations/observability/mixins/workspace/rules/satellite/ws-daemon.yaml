@@ -22,4 +22,4 @@ spec:
         description: Ws-daemon is restarting {{ printf "%.2f" $value }} times / 10 minutes.
         dashboard_url: https://grafana.gitpod.io/d/ws-daemon/gitpod-component-ws-daemon
       expr: |
-        sum(increase(kube_pod_container_status_restarts_total{container="ws-daemon"}[10m])) by(cluster) > 0 AND sum(increase(gitpod_ws_manager_mk2_workspace_backups_failure_total{type="REGULAR"}[10m])) by(cluster) > 0
+        sum(increase(kube_pod_container_status_restarts_total{container="ws-daemon"}[10m])) by(cluster) > 0 AND sum(increase(gitpod_ws_manager_mk2_workspace_backups_failure_total{type="Regular"}[10m])) by(cluster) > 0

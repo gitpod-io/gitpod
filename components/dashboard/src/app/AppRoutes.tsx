@@ -4,11 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { useState } from "react";
+import React from "react";
 import { Redirect, Route, Switch, useLocation } from "react-router";
 import OAuthClientApproval from "../OauthClientApproval";
 import Menu from "../menu/Menu";
-import { projectsPathInstallGitHubApp, projectsPathNew } from "../projects/projects.routes";
 import { parseProps } from "../start/StartWorkspace";
 import {
     settingsPathAccount,
@@ -26,21 +25,20 @@ import {
     usagePathMain,
 } from "../user-settings/settings.routes";
 import { getURLHash, isGitpodIo } from "../utils";
-import { WhatsNew, shouldSeeWhatsNew } from "../whatsnew/WhatsNew";
 import { workspacesPathMain } from "../workspaces/workspaces.routes";
 import { AdminRoute } from "./AdminRoute";
 import { Blocked } from "./Blocked";
 
 // TODO: Can we bundle-split/lazy load these like other pages?
 import { BlockedRepositories } from "../admin/BlockedRepositories";
-import { Heading1, Subheading } from "../components/typography/headings";
-import { useQueryParams } from "../hooks/use-query-params";
-import { useCurrentUser } from "../user-context";
 import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokensCreateView";
 import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { WebsocketClients } from "./WebsocketClients";
-import { LinkedInCallback } from "react-linkedin-login-oauth2";
 import { BlockedEmailDomains } from "../admin/BlockedEmailDomains";
+import { AppNotifications } from "../AppNotifications";
+import { useFeatureFlag } from "../data/featureflag-query";
+import { projectsPathInstallGitHubApp } from "../projects/projects.routes";
+import { Heading1, Subheading } from "@podkit/typography/Headings";
 
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
@@ -62,10 +60,8 @@ const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../tea
 const TeamUsageBasedBilling = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamUsageBasedBilling"));
 const SSO = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/SSO"));
 const TeamGitIntegrations = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/GitIntegrationsPage"));
-const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/NewProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Projects"));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Project"));
-const Events = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Events"));
 const ProjectSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/ProjectSettings"));
 const ProjectVariables = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/ProjectVariables"));
 const Prebuilds = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Prebuilds"));
@@ -77,13 +73,17 @@ const WorkspacesSearch = React.lazy(() => import(/* webpackPrefetch: true */ "..
 const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/ProjectsSearch"));
 const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/TeamsSearch"));
 const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
+const ConfigurationListPage = React.lazy(
+    () => import(/* webpackPrefetch: true */ "../repositories/list/RepositoryList"),
+);
+const ConfigurationDetailPage = React.lazy(
+    () => import(/* webpackPrefetch: true */ "../repositories/detail/ConfigurationDetailPage"),
+);
 
 export const AppRoutes = () => {
     const hash = getURLHash();
-    const user = useCurrentUser();
-    const [isWhatsNewShown, setWhatsNewShown] = useState(user && shouldSeeWhatsNew(user));
     const location = useLocation();
-    const search = useQueryParams();
+    const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
 
     // TODO: Add a Route for this instead of inspecting location manually
     if (location.pathname.startsWith("/blocked")) {
@@ -93,14 +93,6 @@ export const AppRoutes = () => {
     // TODO: Add a Route for this instead of inspecting location manually
     if (location.pathname.startsWith("/oauth-approval")) {
         return <OAuthClientApproval />;
-    }
-
-    if (isWhatsNewShown) {
-        return <WhatsNew onClose={() => setWhatsNewShown(false)} />;
-    }
-
-    if (location.pathname === "/linkedin" && search.get("code") && search.get("state")) {
-        return <LinkedInCallback />;
     }
 
     // TODO: Try and encapsulate this in a route for "/" (check for hash in route component, render or redirect accordingly)
@@ -128,9 +120,9 @@ export const AppRoutes = () => {
         <Route>
             <div className="container">
                 <Menu />
+                <AppNotifications />
                 <Switch>
                     <Route path="/new" exact component={CreateWorkspacePage} />
-                    <Route path={projectsPathNew} exact component={NewProject} />
                     <Route path="/open">
                         <Redirect to="/new" />
                     </Route>
@@ -192,7 +184,7 @@ export const AppRoutes = () => {
                     </Route>
                     <Route path="/sorry" exact>
                         <div className="mt-48 text-center">
-                            <Heading1 color="light">Oh, no! Something went wrong!</Heading1>
+                            <Heading1>Oh, no! Something went wrong!</Heading1>
                             <Subheading className="mt-4 text-gitpod-red">{decodeURIComponent(getURLHash())}</Subheading>
                         </div>
                     </Route>
@@ -209,11 +201,14 @@ export const AppRoutes = () => {
                     <Route exact path="/sso" component={SSO} />
 
                     <Route exact path={`/projects/:projectSlug`} component={Project} />
-                    <Route exact path={`/projects/:projectSlug/events`} component={Events} />
                     <Route exact path={`/projects/:projectSlug/prebuilds`} component={Prebuilds} />
                     <Route exact path={`/projects/:projectSlug/settings`} component={ProjectSettings} />
                     <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />
                     <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
+
+                    {repoConfigListAndDetail && <Route exact path="/repositories" component={ConfigurationListPage} />}
+                    {/* Handles all /repositories/:id/* routes in a nested router */}
+                    {repoConfigListAndDetail && <Route path="/repositories/:id" component={ConfigurationDetailPage} />}
                     {/* basic redirect for old team slugs */}
                     <Route path={["/t/"]} exact>
                         <Redirect to="/projects" />
@@ -252,7 +247,6 @@ export const AppRoutes = () => {
                             // delegate to our website to handle the request
                             if (isGitpodIo()) {
                                 window.location.host = "www.gitpod.io";
-                                return;
                             }
 
                             return (
@@ -262,7 +256,7 @@ export const AppRoutes = () => {
                                 </div>
                             );
                         }}
-                    ></Route>
+                    />
                 </Switch>
             </div>
             <WebsocketClients />

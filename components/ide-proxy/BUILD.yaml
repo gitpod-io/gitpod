@@ -5,7 +5,7 @@ packages:
       - "conf/**"
       - "static/**"
     deps:
-      - components/local-app:app
+      - components/local-app:app-with-manifest
     argdeps:
       - imageRepoBase
     config:

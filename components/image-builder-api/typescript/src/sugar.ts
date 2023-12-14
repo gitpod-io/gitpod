@@ -33,7 +33,7 @@ export const ImageBuilderClientProvider = Symbol("ImageBuilderClientProvider");
 export interface ImageBuilderClientProvider {
     getClient(
         user: User,
-        workspace: Workspace,
+        workspace?: Workspace,
         instance?: WorkspaceInstance,
         region?: string,
     ): Promise<PromisifiedImageBuilderClient>;
@@ -96,7 +96,7 @@ export class CachingImageBuilderClientProvider implements ImageBuilderClientProv
         return connection;
     }
 
-    async getClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
+    async getClient(user: User, workspace?: Workspace, instance?: WorkspaceInstance) {
         return this.getDefault();
     }
 
@@ -124,7 +124,10 @@ export interface StagedBuildResponse {
 }
 
 export class PromisifiedImageBuilderClient {
-    constructor(public readonly client: ImageBuilderClient, protected readonly interceptor: grpc.Interceptor[]) {}
+    constructor(
+        public readonly client: ImageBuilderClient,
+        protected readonly interceptor: grpc.Interceptor[],
+    ) {}
 
     public isConnectionAlive() {
         const cs = this.client.getChannel().getConnectivityState(false);
@@ -235,6 +238,11 @@ export class PromisifiedImageBuilderClient {
                     }
                 }
 
+                log.info("Needs image build?", {
+                    status: resp.getStatus(),
+                    forceRebuild: request.getForceRebuild(),
+                    triggeredBy: request.getTriggeredBy(),
+                });
                 if (resp.getStatus() == BuildStatus.RUNNING) {
                     resultResp.actuallyNeedsBuild = true;
                     result.resolve(resultResp);

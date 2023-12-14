@@ -4,27 +4,30 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { OrganizationSettings } from "@gitpod/gitpod-protocol";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
-import { getOrgSettingsQueryKey, OrgSettingsResult } from "./org-settings-query";
+import { useMutation } from "@tanstack/react-query";
+import { useOrgSettingsQueryInvalidator } from "./org-settings-query";
 import { useCurrentOrg } from "./orgs-query";
+import { organizationClient } from "../../service/public-api";
+import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
-type UpdateOrganizationSettingsArgs = Pick<OrganizationSettings, "workspaceSharingDisabled">;
+type UpdateOrganizationSettingsArgs = Partial<
+    Pick<OrganizationSettings, "workspaceSharingDisabled" | "defaultWorkspaceImage">
+>;
 
 export const useUpdateOrgSettingsMutation = () => {
-    const queryClient = useQueryClient();
-    const team = useCurrentOrg().data;
-    const teamId = team?.id || "";
+    const org = useCurrentOrg().data;
+    const invalidator = useOrgSettingsQueryInvalidator();
+    const teamId = org?.id || "";
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
-        mutationFn: async ({ workspaceSharingDisabled }) => {
-            return await getGitpodService().server.updateOrgSettings(teamId, { workspaceSharingDisabled });
+        mutationFn: async ({ workspaceSharingDisabled, defaultWorkspaceImage }) => {
+            const settings = await organizationClient.updateOrganizationSettings({
+                organizationId: teamId,
+                workspaceSharingDisabled: workspaceSharingDisabled || false,
+                defaultWorkspaceImage,
+            });
+            return settings.settings!;
         },
-        onSuccess: (newData, _) => {
-            const queryKey = getOrgSettingsQueryKey(teamId);
-            queryClient.setQueryData<OrgSettingsResult>(queryKey, newData);
-            queryClient.invalidateQueries({ queryKey });
-        },
+        onSuccess: invalidator,
     });
 };

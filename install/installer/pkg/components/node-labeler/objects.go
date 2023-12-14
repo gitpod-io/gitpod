@@ -15,6 +15,7 @@ var Objects = common.CompositeRenderFunc(
 	deployment,
 	role,
 	rolebinding,
+	pdb,
 	common.DefaultServiceAccount(Component),
 	func(cfg *common.RenderContext) ([]runtime.Object, error) {
 		ports := []common.ServicePort{

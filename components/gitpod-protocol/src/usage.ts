@@ -6,9 +6,10 @@
 
 import { WorkspaceType } from "./protocol";
 
-// types below are copied over from components/usage-api/typescript/src/usage/v1/usage_pb.d.ts
+// types below are manually kept in sycn with components/usage-api/typescript/src/usage/v1/usage_pb.d.ts
 export interface ListUsageRequest {
     attributionId: string;
+    userId?: string;
     from?: number;
     to?: number;
     order: Ordering;
@@ -57,8 +58,10 @@ export interface WorkspaceInstanceUsageData {
     workspaceType: WorkspaceType;
     workspaceClass: string;
     contextURL: string;
+    creationTime?: string;
     startTime: string;
     endTime?: string;
+    stoppedTime?: string;
     userId: string;
     userName: string;
     userAvatarURL: string;

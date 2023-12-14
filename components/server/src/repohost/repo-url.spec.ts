@@ -5,7 +5,7 @@
  */
 
 import * as chai from "chai";
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import { RepoURL } from "./repo-url";
 
 const expect = chai.expect;

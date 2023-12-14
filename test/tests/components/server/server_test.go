@@ -19,8 +19,8 @@ import (
 func TestServerAccess(t *testing.T) {
 	f := features.New("GetLoggedInUser").
 		WithLabel("component", "server").
-		Assess("it can get a not built-in logged user", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("it can get a not built-in logged user", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -40,7 +40,7 @@ func TestServerAccess(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
@@ -52,8 +52,8 @@ func TestStartWorkspace(t *testing.T) {
 
 	f := features.New("CreateWorkspace").
 		WithLabel("component", "server").
-		Assess("it can run workspace tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("it can run workspace tasks", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -68,7 +68,6 @@ func TestStartWorkspace(t *testing.T) {
 
 			resp, err := server.CreateWorkspace(ctx, &protocol.CreateWorkspaceOptions{
 				ContextURL:                         "github.com/gitpod-io/gitpod",
-				IgnoreRunningPrebuild:              true,
 				IgnoreRunningWorkspaceOnSameCommit: true,
 			})
 			if err != nil {
@@ -100,7 +99,7 @@ func TestStartWorkspace(t *testing.T) {
 			}
 
 			t.Logf("workspace is running: instanceID=%s", nfo.LatestInstance.ID)
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

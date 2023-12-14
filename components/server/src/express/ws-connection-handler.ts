@@ -4,8 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
-import * as websocket from "ws";
+import express from "express";
+import websocket from "ws";
 import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";

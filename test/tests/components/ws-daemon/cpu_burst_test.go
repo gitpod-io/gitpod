@@ -14,13 +14,13 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	daemon "github.com/gitpod-io/gitpod/test/pkg/agent/daemon/api"
 	wsapi "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 type DaemonConfig struct {
@@ -29,13 +29,19 @@ type DaemonConfig struct {
 		Limit      int64 `json:"limit,string"`
 		BurstLimit int64 `json:"burstLimit,string"`
 	} `json:"cpuLimit"`
+	IOLimitConfig struct {
+		WriteBandwidthPerSecond resource.Quantity `json:"writeBandwidthPerSecond"`
+		ReadBandwidthPerSecond  resource.Quantity `json:"readBandwidthPerSecond"`
+		WriteIOPS               int64             `json:"writeIOPS"`
+		ReadIOPS                int64             `json:"readIOPS"`
+	} `json:"ioLimit"`
 }
 
 func TestCpuBurst(t *testing.T) {
-	f := features.New("cpulimiting").WithLabel("component", "ws-daemon").Assess("check cpu limiting", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+	f := features.New("cpulimiting").WithLabel("component", "ws-daemon").Assess("check cpu limiting", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Parallel()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Minute)
+		ctx, cancel := context.WithTimeout(testCtx, 8*time.Minute)
 		defer cancel()
 
 		api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -45,9 +51,15 @@ func TestCpuBurst(t *testing.T) {
 
 		daemonConfig := getDaemonConfig(ctx, t, cfg)
 		if !daemonConfig.CpuLimitConfig.Enabled {
-			return ctx
+			t.Fatal("cpu limiting is not enabled")
 		}
 
+		if daemonConfig.CpuLimitConfig.Limit == 0 {
+			t.Fatal("cpu limit is not set")
+		}
+		if daemonConfig.CpuLimitConfig.BurstLimit == 0 {
+			t.Fatal("cpu burst limit is not set")
+		}
 		daemonConfig.CpuLimitConfig.Limit = daemonConfig.CpuLimitConfig.Limit * 100_000
 		daemonConfig.CpuLimitConfig.BurstLimit = daemonConfig.CpuLimitConfig.BurstLimit * 100_000
 
@@ -67,11 +79,21 @@ func TestCpuBurst(t *testing.T) {
 		}
 
 		ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(swr))
-		defer stopWs(true, api)
-
 		if err != nil {
 			t.Fatal(err)
 		}
+		defer func() {
+			sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer scancel()
+
+			sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			defer sapi.Done(t)
+
+			_, err = stopWs(true, sapi)
+			if err != nil {
+				t.Errorf("cannot stop workspace: %q", err)
+			}
+		}()
 
 		daemonClient, daemonCloser, err := integration.Instrument(integration.ComponentWorkspaceDaemon, "daemon", cfg.Namespace(), kubeconfig, cfg.Client(),
 			integration.WithWorkspacekitLift(false),
@@ -127,7 +149,7 @@ func TestCpuBurst(t *testing.T) {
 			}, &cpuResp)
 
 			if err != nil && err.Error() != "unexpected EOF" {
-				log.WithError(err).Error("could not perform cpu burn")
+				t.Logf("error performing cpu burn: %q", err)
 			}
 		}()
 
@@ -149,7 +171,7 @@ func TestCpuBurst(t *testing.T) {
 		if resp.CpuQuota != daemonConfig.CpuLimitConfig.BurstLimit {
 			t.Fatalf("expected cpu burst limit quota of %v, but was %v", daemonConfig.CpuLimitConfig.BurstLimit, resp.CpuQuota)
 		}
-		return ctx
+		return testCtx
 	}).Feature()
 
 	testEnv.Test(t, f)

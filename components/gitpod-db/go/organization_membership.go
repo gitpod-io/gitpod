@@ -24,9 +24,6 @@ type OrganizationMembership struct {
 	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
 	// Read-only (-> property).
 	LastModified time.Time `gorm:"->:column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
-
-	// deleted column is reserved for use by periodic deleter
-	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -54,7 +51,6 @@ func GetOrganizationMembership(ctx context.Context, conn *gorm.DB, userID, orgID
 	tx := conn.WithContext(ctx).
 		Where("userId = ?", userID.String()).
 		Where("teamId = ?", orgID.String()).
-		Where("deleted = ?", false).
 		First(&membership)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
@@ -79,8 +75,7 @@ func DeleteOrganizationMembership(ctx context.Context, conn *gorm.DB, userID uui
 		Model(&OrganizationMembership{}).
 		Where("userId = ?", userID.String()).
 		Where("teamId = ?", orgID.String()).
-		Where("deleted = ?", 0).
-		Update("deleted", 1)
+		Delete(&OrganizationMembership{})
 	if tx.Error != nil {
 		return fmt.Errorf("failed to retrieve organization membership for user %s, organization %s: %w", userID.String(), orgID.String(), tx.Error)
 	}

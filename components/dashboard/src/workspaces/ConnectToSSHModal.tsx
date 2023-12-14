@@ -9,9 +9,10 @@ import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal"
 import Alert from "../components/Alert";
 import TabMenuItem from "../components/TabMenuItem";
 import { settingsPathSSHKeys } from "../user-settings/settings.routes";
-import { getGitpodService } from "../service/service";
 import { InputWithCopy } from "../components/InputWithCopy";
 import { Link } from "react-router-dom";
+import { Button } from "@podkit/buttons/Button";
+import { sshClient } from "../service/public-api";
 
 interface SSHProps {
     workspaceId: string;
@@ -24,10 +25,10 @@ function SSHView(props: SSHProps) {
     const [selectSSHKey, setSelectSSHKey] = useState(true);
 
     useEffect(() => {
-        getGitpodService()
-            .server.hasSSHPublicKey()
-            .then((d) => {
-                setHasSSHKey(d);
+        sshClient
+            .listSSHPublicKeys({})
+            .then((r) => {
+                setHasSSHKey(r.sshKeys.length > 0);
             })
             .catch(console.error);
     }, []);
@@ -110,9 +111,9 @@ export default function ConnectToSSHModal(props: {
                 <SSHView workspaceId={props.workspaceId} ownerToken={props.ownerToken} ideUrl={props.ideUrl} />
             </ModalBody>
             <ModalFooter>
-                <button className={"ml-2 secondary"} onClick={() => props.onClose()}>
+                <Button variant="secondary" onClick={() => props.onClose()}>
                     Close
-                </button>
+                </Button>
             </ModalFooter>
         </Modal>
     );

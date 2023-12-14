@@ -13,6 +13,8 @@ import (
 type SupervisorMetrics struct {
 	IDEReadyDurationTotal *prometheus.HistogramVec
 	InitializerHistogram  *prometheus.HistogramVec
+	SSHTunnelOpenedTotal  *prometheus.CounterVec
+	SSHTunnelClosedTotal  *prometheus.CounterVec
 }
 
 func NewMetrics() *SupervisorMetrics {
@@ -27,6 +29,14 @@ func NewMetrics() *SupervisorMetrics {
 			Help:    "initializer speed in bytes per second",
 			Buckets: prometheus.ExponentialBuckets(1024*1024, 2, 12),
 		}, []string{"kind"}),
+		SSHTunnelOpenedTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "supervisor_ssh_tunnel_opened_total",
+			Help: "Total number of SSH tunnels opened by the supervisor",
+		}, []string{}),
+		SSHTunnelClosedTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "supervisor_ssh_tunnel_closed_total",
+			Help: "Total number of SSH tunnels closed by the supervisor",
+		}, []string{"code"}),
 	}
 }
 
@@ -34,6 +44,8 @@ func (m *SupervisorMetrics) Register(registry *prometheus.Registry) error {
 	metrics := []prometheus.Collector{
 		m.IDEReadyDurationTotal,
 		m.InitializerHistogram,
+		m.SSHTunnelOpenedTotal,
+		m.SSHTunnelClosedTotal,
 	}
 
 	for _, metric := range metrics {

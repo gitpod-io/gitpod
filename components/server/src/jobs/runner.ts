@@ -9,7 +9,6 @@ import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { inject, injectable } from "inversify";
 import { RedisMutex } from "../redis/mutex";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { ExecutionError, ResourceLockedError } from "redlock";
 import { jobsDurationSeconds, reportJobCompleted, reportJobStarted } from "../prometheus-metrics";
 import { DatabaseGarbageCollector } from "./database-gc";
 import { OTSGarbageCollector } from "./ots-gc";
@@ -17,8 +16,10 @@ import { TokenGarbageCollector } from "./token-gc";
 import { WebhookEventGarbageCollector } from "./webhook-gc";
 import { WorkspaceGarbageCollector } from "./workspace-gc";
 import { SnapshotsJob } from "./snapshots";
-import { OrgOnlyMigrationJob } from "./org-only-migration-job";
-import { FixStripeJob } from "./fix-stripe-job";
+import { RelationshipUpdateJob } from "../authorization/relationship-updater-job";
+import { WorkspaceStartController } from "../workspace/workspace-start-controller";
+import { runWithRequestContext } from "../util/request-context";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 export const Job = Symbol("Job");
 
@@ -31,16 +32,17 @@ export interface Job {
 
 @injectable()
 export class JobRunner {
-    @inject(RedisMutex) protected mutex: RedisMutex;
-
-    @inject(DatabaseGarbageCollector) protected databaseGC: DatabaseGarbageCollector;
-    @inject(OTSGarbageCollector) protected otsGC: OTSGarbageCollector;
-    @inject(TokenGarbageCollector) protected tokenGC: TokenGarbageCollector;
-    @inject(WebhookEventGarbageCollector) protected webhookGC: WebhookEventGarbageCollector;
-    @inject(WorkspaceGarbageCollector) protected workspaceGC: WorkspaceGarbageCollector;
-    @inject(SnapshotsJob) protected snapshotsJob: SnapshotsJob;
-    @inject(OrgOnlyMigrationJob) protected orgOnlyMigrationJob: OrgOnlyMigrationJob;
-    @inject(FixStripeJob) protected fixStripeJob: FixStripeJob;
+    constructor(
+        @inject(RedisMutex) private readonly mutex: RedisMutex,
+        @inject(DatabaseGarbageCollector) private readonly databaseGC: DatabaseGarbageCollector,
+        @inject(OTSGarbageCollector) private readonly otsGC: OTSGarbageCollector,
+        @inject(TokenGarbageCollector) private readonly tokenGC: TokenGarbageCollector,
+        @inject(WebhookEventGarbageCollector) private readonly webhookGC: WebhookEventGarbageCollector,
+        @inject(WorkspaceGarbageCollector) private readonly workspaceGC: WorkspaceGarbageCollector,
+        @inject(SnapshotsJob) private readonly snapshotsJob: SnapshotsJob,
+        @inject(RelationshipUpdateJob) private readonly relationshipUpdateJob: RelationshipUpdateJob,
+        @inject(WorkspaceStartController) private readonly workspaceStartController: WorkspaceStartController,
+    ) {}
 
     public start(): DisposableCollection {
         const disposables = new DisposableCollection();
@@ -52,11 +54,11 @@ export class JobRunner {
             this.webhookGC,
             this.workspaceGC,
             this.snapshotsJob,
-            this.orgOnlyMigrationJob,
-            this.fixStripeJob,
+            this.relationshipUpdateJob,
+            this.workspaceStartController,
         ];
 
-        for (let job of jobs) {
+        for (const job of jobs) {
             log.info(`Registered job ${job.name} in job runner.`, {
                 jobName: job.name,
                 frequencyMs: job.frequencyMs,
@@ -80,32 +82,40 @@ export class JobRunner {
 
         try {
             await this.mutex.using([job.name, ...(job.lockedResources || [])], job.frequencyMs, async (signal) => {
-                log.info(`Acquired lock for job ${job.name}.`, logCtx);
-                // we want to hold the lock for the entire duration of the job, so we return earliest after frequencyMs
-                const timeout = new Promise<void>((resolve) => setTimeout(resolve, job.frequencyMs));
-                const timer = jobsDurationSeconds.startTimer({ name: job.name });
-                reportJobStarted(job.name);
-                const now = new Date().getTime();
-                try {
-                    await job.run();
-                    log.info(`Successfully finished job ${job.name}`, {
-                        ...logCtx,
-                        jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
-                    });
-                    reportJobCompleted(job.name, true);
-                } catch (err) {
-                    log.error(`Error while running job ${job.name}`, err, {
-                        ...logCtx,
-                        jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
-                    });
-                    reportJobCompleted(job.name, false);
-                } finally {
-                    jobsDurationSeconds.observe(timer());
-                    await timeout;
-                }
+                const ctx = {
+                    signal,
+                    requestKind: "job",
+                    requestMethod: job.name,
+                    subjectId: SYSTEM_USER,
+                };
+                await runWithRequestContext(ctx, async () => {
+                    log.debug(`Acquired lock for job ${job.name}.`, logCtx);
+                    // we want to hold the lock for the entire duration of the job, so we return earliest after frequencyMs
+                    const timeout = new Promise<void>((resolve) => setTimeout(resolve, job.frequencyMs));
+                    const timer = jobsDurationSeconds.startTimer({ name: job.name });
+                    reportJobStarted(job.name);
+                    const now = new Date().getTime();
+                    try {
+                        await job.run();
+                        log.debug(`Successfully finished job ${job.name}`, {
+                            ...logCtx,
+                            jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
+                        });
+                        reportJobCompleted(job.name, true);
+                    } catch (err) {
+                        log.error(`Error while running job ${job.name}`, err, {
+                            ...logCtx,
+                            jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
+                        });
+                        reportJobCompleted(job.name, false);
+                    } finally {
+                        jobsDurationSeconds.observe(timer());
+                        await timeout;
+                    }
+                });
             });
         } catch (err) {
-            if (err instanceof ResourceLockedError || err instanceof ExecutionError) {
+            if (RedisMutex.isLockedError(err)) {
                 log.debug(
                     `Failed to acquire lock for job ${job.name}. Likely another instance already holds the lock.`,
                     err,

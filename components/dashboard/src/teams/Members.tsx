@@ -4,8 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamMemberRole } from "@gitpod/gitpod-protocol";
-import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 import { trackEvent } from "../Analytics";
@@ -14,22 +12,32 @@ import Header from "../components/Header";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import Tooltip from "../components/Tooltip";
-import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
 import searchIcon from "../icons/search.svg";
-import { teamsService } from "../service/public-api";
+import { organizationClient } from "../service/public-api";
 import { useCurrentUser } from "../user-context";
 import { SpinnerLoader } from "../components/Loader";
 import { InputField } from "../components/forms/InputField";
 import { InputWithCopy } from "../components/InputWithCopy";
+import { OrganizationMember, OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { useListOrganizationMembers, useOrganizationMembersInvalidator } from "../data/organizations/members-query";
+import { useInvitationId, useInviteInvalidator } from "../data/organizations/invite-query";
+import { Delayed } from "@podkit/loading/Delayed";
+import { Button } from "@podkit/buttons/Button";
 
 export default function MembersPage() {
     const user = useCurrentUser();
     const org = useCurrentOrg();
-    const invalidateOrgs = useOrganizationsInvalidator();
+    const membersQuery = useListOrganizationMembers();
+    const members: OrganizationMember[] = useMemo(() => membersQuery.data || [], [membersQuery.data]);
+    const invalidateInviteQuery = useInviteInvalidator();
+    const invalidateMembers = useOrganizationMembersInvalidator();
 
     const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
     const [searchText, setSearchText] = useState<string>("");
-    const [roleFilter, setRoleFilter] = useState<TeamMemberRole | undefined>();
+    const [roleFilter, setRoleFilter] = useState<OrganizationRole | undefined>();
+    const [memberToRemove, setMemberToRemove] = useState<OrganizationMember | undefined>(undefined);
+    const inviteId = useInvitationId().data;
 
     const inviteUrl = useMemo(() => {
         if (!org.data) {
@@ -37,44 +45,54 @@ export default function MembersPage() {
         }
         // orgs without an invitation id invite members through their own login page
         const link = new URL(window.location.href);
-        if (!org.data.invitationId) {
+        if (!inviteId) {
             link.pathname = "/login/" + org.data.slug;
         } else {
             link.pathname = "/orgs/join";
-            link.search = "?inviteId=" + org.data.invitationId;
+            link.search = "?inviteId=" + inviteId;
         }
         return link.href;
-    }, [org.data]);
+    }, [org.data, inviteId]);
 
     const resetInviteLink = async () => {
-        await teamsService.resetTeamInvitation({ teamId: org.data?.id });
-        invalidateOrgs();
+        await organizationClient.resetOrganizationInvitation({ organizationId: org.data?.id });
+        invalidateInviteQuery();
     };
 
-    const setTeamMemberRole = async (userId: string, role: TeamMemberRole) => {
-        await teamsService.updateTeamMember({
-            teamId: org.data?.id,
-            teamMember: { userId, role: role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER },
+    const setTeamMemberRole = async (userId: string, role: OrganizationRole) => {
+        await organizationClient.updateOrganizationMember({
+            organizationId: org.data?.id,
+            userId,
+            role,
         });
-        invalidateOrgs();
-    };
-
-    const removeTeamMember = async (userId: string) => {
-        await teamsService.deleteTeamMember({ teamId: org.data?.id, teamMemberId: userId });
-        invalidateOrgs();
+        invalidateMembers();
     };
 
     const isRemainingOwner = useMemo(() => {
-        const owners = org.data?.members.filter((m) => m.role === "owner");
+        const owners = members.filter((m) => m.role === OrganizationRole.OWNER);
         return owners?.length === 1 && owners[0].userId === user?.id;
-    }, [org.data?.members, user?.id]);
+    }, [members, user?.id]);
+
+    const isOwner = useMemo(() => {
+        const owners = members.filter((m) => m.role === OrganizationRole.OWNER);
+        return !!owners?.some((o) => o.userId === user?.id);
+    }, [members, user?.id]);
+
+    // Note: We would hardly get here, but just in case. We should show a loader instead of blank section.
+    if (org.isLoading) {
+        return (
+            <Delayed>
+                <SpinnerLoader />
+            </Delayed>
+        );
+    }
 
     const filteredMembers =
-        org.data?.members.filter((m) => {
+        members.filter((m) => {
             if (!!roleFilter && m.role !== roleFilter) {
                 return false;
             }
-            const memberSearchText = `${m.fullName || ""}${m.primaryEmail || ""}`.toLocaleLowerCase();
+            const memberSearchText = `${m.fullName || ""}${m.email || ""}`.toLocaleLowerCase();
             if (!memberSearchText.includes(searchText.toLocaleLowerCase())) {
                 return false;
             }
@@ -83,7 +101,7 @@ export default function MembersPage() {
 
     return (
         <>
-            <Header title="Members" subtitle="Manage organization members." />
+            <Header title="Members" subtitle="Manage organization members and their permissions." />
             <div className="app-container">
                 <div className="flex mb-3 mt-3">
                     <div className="flex relative h-10 my-auto">
@@ -100,39 +118,46 @@ export default function MembersPage() {
                             onChange={(e) => setSearchText(e.target.value)}
                         />
                     </div>
-                    <div className="flex-1" />
-                    <div className="py-2 pl-3">
+                    <div className="py-2 pl-3 pr-1 border border-gray-100 dark:border-gray-800 ml-2 rounded-md">
                         <DropDown
-                            prefix="Role: "
                             customClasses="w-32"
-                            activeEntry={roleFilter === "owner" ? "Owner" : roleFilter === "member" ? "Member" : "All"}
+                            activeEntry={
+                                roleFilter === OrganizationRole.OWNER
+                                    ? "Owners"
+                                    : roleFilter === OrganizationRole.MEMBER
+                                    ? "Members"
+                                    : "All"
+                            }
                             entries={[
                                 {
                                     title: "All",
                                     onClick: () => setRoleFilter(undefined),
                                 },
                                 {
-                                    title: "Owner",
-                                    onClick: () => setRoleFilter("owner"),
+                                    title: "Owners",
+                                    onClick: () => setRoleFilter(OrganizationRole.OWNER),
                                 },
                                 {
-                                    title: "Member",
-                                    onClick: () => setRoleFilter("member"),
+                                    title: "Members",
+                                    onClick: () => setRoleFilter(OrganizationRole.OWNER),
                                 },
                             ]}
                         />
                     </div>
-                    <button
-                        onClick={() => {
-                            trackEvent("invite_url_requested", {
-                                invite_url: inviteUrl || "",
-                            });
-                            setShowInviteModal(true);
-                        }}
-                        className="ml-2"
-                    >
-                        Invite Members
-                    </button>
+                    <div className="flex-1" />
+                    {isOwner && (
+                        <Button
+                            onClick={() => {
+                                trackEvent("invite_url_requested", {
+                                    invite_url: inviteUrl || "",
+                                });
+                                setShowInviteModal(true);
+                            }}
+                            className="ml-2"
+                        >
+                            Invite Members
+                        </Button>
+                    )}
                 </div>
                 <ItemsList className="mt-2">
                     <Item header={true} className="grid grid-cols-3">
@@ -155,7 +180,7 @@ export default function MembersPage() {
                         </ItemField>
                     </Item>
                     {filteredMembers.length === 0 ? (
-                        <SpinnerLoader />
+                        <p className="pt-16 text-center">No members found</p>
                     ) : (
                         filteredMembers.map((m) => (
                             <Item className="grid grid-cols-3" key={m.userId}>
@@ -176,33 +201,39 @@ export default function MembersPage() {
                                         >
                                             {m.fullName}
                                         </div>
-                                        <p title={m.primaryEmail}>{m.primaryEmail}</p>
+                                        <p title={m.email}>{m.email}</p>
                                     </div>
                                 </ItemField>
                                 <ItemField className="my-auto">
-                                    <Tooltip content={dayjs(m.memberSince).format("MMM D, YYYY")}>
-                                        <span className="text-gray-400">{dayjs(m.memberSince).fromNow()}</span>
+                                    <Tooltip content={dayjs(m.memberSince?.toDate()).format("MMM D, YYYY")}>
+                                        <span className="text-gray-400">
+                                            {dayjs(m.memberSince?.toDate()).fromNow()}
+                                        </span>
                                     </Tooltip>
                                 </ItemField>
                                 <ItemField className="flex items-center my-auto">
                                     <span className="text-gray-400 capitalize">
-                                        {org.data?.isOwner ? (
+                                        {isOwner ? (
                                             <DropDown
                                                 customClasses="w-32"
-                                                activeEntry={m.role}
+                                                activeEntry={m.role === OrganizationRole.OWNER ? "owner" : "member"}
                                                 entries={[
                                                     {
                                                         title: "owner",
-                                                        onClick: () => setTeamMemberRole(m.userId, "owner"),
+                                                        onClick: () =>
+                                                            setTeamMemberRole(m.userId, OrganizationRole.OWNER),
                                                     },
                                                     {
                                                         title: "member",
-                                                        onClick: () => setTeamMemberRole(m.userId, "member"),
+                                                        onClick: () =>
+                                                            setTeamMemberRole(m.userId, OrganizationRole.MEMBER),
                                                     },
                                                 ]}
                                             />
+                                        ) : m.role === OrganizationRole.OWNER ? (
+                                            "owner"
                                         ) : (
-                                            m.role
+                                            "member"
                                         )}
                                     </span>
                                     <span className="flex-grow" />
@@ -217,17 +248,16 @@ export default function MembersPage() {
                                                           customFontStyle: !isRemainingOwner
                                                               ? "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                                                               : "text-gray-400 dark:text-gray-200",
-                                                          onClick: () =>
-                                                              !isRemainingOwner && removeTeamMember(m.userId),
+                                                          onClick: () => !isRemainingOwner && setMemberToRemove(m),
                                                       },
                                                   ]
-                                                : org.data?.isOwner
+                                                : isOwner
                                                 ? [
                                                       {
                                                           title: "Remove",
                                                           customFontStyle:
                                                               "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                                          onClick: () => removeTeamMember(m.userId),
+                                                          onClick: () => setMemberToRemove(m),
                                                       },
                                                   ]
                                                 : []
@@ -249,14 +279,46 @@ export default function MembersPage() {
                         </InputField>
                     </ModalBody>
                     <ModalFooter>
-                        {!!org?.data?.invitationId && (
-                            <button className="secondary" onClick={() => resetInviteLink()}>
+                        {!!inviteId && (
+                            <Button variant="secondary" onClick={() => resetInviteLink()}>
                                 Reset Invite Link
-                            </button>
+                            </Button>
                         )}
-                        <button className="secondary" onClick={() => setShowInviteModal(false)}>
+                        <Button variant="secondary" onClick={() => setShowInviteModal(false)}>
                             Close
-                        </button>
+                        </Button>
+                    </ModalFooter>
+                </Modal>
+            )}
+            {memberToRemove && (
+                // TODO: Use title and buttons props
+                <Modal visible={true} onClose={() => setMemberToRemove(undefined)}>
+                    <ModalHeader>Remove Members</ModalHeader>
+                    <ModalBody>
+                        You are about to remove <b>{memberToRemove.fullName}</b> from this organization.
+                        <br />
+                        <br />
+                        {memberToRemove.ownedByOrganization ? (
+                            <>This will delete the user account and all associated data.</>
+                        ) : null}
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant="secondary" onClick={() => setMemberToRemove(undefined)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="default"
+                            onClick={async () => {
+                                await organizationClient.deleteOrganizationMember({
+                                    organizationId: org.data?.id,
+                                    userId: memberToRemove.userId,
+                                });
+                                invalidateMembers();
+                                setMemberToRemove(undefined);
+                            }}
+                        >
+                            Remove
+                        </Button>
                     </ModalFooter>
                 </Modal>
             )}

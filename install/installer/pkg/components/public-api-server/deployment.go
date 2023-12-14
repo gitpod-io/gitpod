@@ -118,7 +118,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						DNSPolicy:                     corev1.DNSClusterFirst,
 						RestartPolicy:                 corev1.RestartPolicyAlways,
 						TerminationGracePeriodSeconds: pointer.Int64(30),
-						InitContainers:                []corev1.Container{*common.DatabaseWaiterContainer(ctx)},
+						InitContainers: []corev1.Container{
+							*common.DatabaseMigrationWaiterContainer(ctx),
+							*common.RedisWaiterContainer(ctx),
+						},
 						Containers: []corev1.Container{
 							{
 								Name:  Component,

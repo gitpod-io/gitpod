@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { FunctionComponent, useCallback, useContext, useState } from "react";
 import gitpodIcon from "../icons/gitpod.svg";
 import { Separator } from "../components/Separator";
@@ -16,7 +16,7 @@ import { StepPersonalize } from "./StepPersonalize";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import Alert from "../components/Alert";
 import { useConfetti } from "../contexts/ConfettiContext";
-import { getGitpodService } from "../service/service";
+import { trackEvent } from "../Analytics";
 
 // This param is optionally present to force an onboarding flow
 // Can be used if other conditions aren't true, i.e. if user has already onboarded, but we want to force the flow again
@@ -54,19 +54,12 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
     const onboardingComplete = useCallback(
         async (updatedUser: User) => {
             try {
-                const additionalData = updatedUser.additionalData || {};
-                const profile = additionalData.profile || {};
-                const ideSettings = additionalData.ideSettings || {};
-
                 const updates = {
                     additionalData: {
-                        ...additionalData,
                         profile: {
-                            ...profile,
                             onboardedTimestamp: new Date().toISOString(),
                         },
                         ideSettings: {
-                            ...ideSettings,
                             settingVersion: "2.0",
                             defaultIde: ideOptions.ide,
                             useLatestVersion: ideOptions.useLatest,
@@ -80,12 +73,10 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                     const onboardedUser = await updateUser.mutateAsync(updates);
 
                     // TODO: move this into a mutation side effect once we have a specific mutation for updating the IDE (see above TODO)
-                    getGitpodService().server.trackEvent({
-                        event: "ide_configuration_changed",
-                        properties: {
-                            ...(onboardedUser.additionalData?.ideSettings ?? {}),
-                            location: "onboarding",
-                        },
+                    trackEvent("ide_configuration_changed", {
+                        name: onboardedUser.editorSettings?.name,
+                        version: onboardedUser.editorSettings?.version,
+                        location: "onboarding",
                     });
 
                     dropConfetti();

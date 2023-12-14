@@ -8,9 +8,6 @@ import (
 	"fmt"
 
 	"github.com/aws/smithy-go/ptr"
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -18,17 +15,18 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
 	"google.golang.org/protobuf/proto"
-
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	// . "github.com/onsi/ginkgo/extensions/table"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
 var _ = Describe("WorkspaceController", func() {
@@ -67,6 +65,22 @@ var _ = Describe("WorkspaceController", func() {
 				g.Expect(ws.Status.URL).ToNot(BeEmpty())
 			}, timeout, interval).Should(Succeed())
 
+			// Transition Pod to pending, and expect workspace to reach Creating  phase.
+			// This should also cause create time metrics to be recorded.
+			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
+				pod.Status.Phase = corev1.PodPending
+				pod.Status.ContainerStatuses = []corev1.ContainerStatus{{
+					State: corev1.ContainerState{
+						Waiting: &corev1.ContainerStateWaiting{
+							Reason: "ContainerCreating",
+						},
+					},
+					Name: "workspace",
+				}}
+			})
+
+			expectPhaseEventually(ws, workspacev1.WorkspacePhaseCreating)
+
 			// Transition Pod to running, and expect workspace to reach Running phase.
 			// This should also cause e.g. startup time metrics to be recorded.
 			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
@@ -99,10 +113,11 @@ var _ = Describe("WorkspaceController", func() {
 			}, duration, interval).Should(Succeed(), "pod came back")
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
-				starts:   1,
-				restores: 1,
-				stops:    map[StopReason]int{StopReasonRegular: 1},
-				backups:  1,
+				starts:         1,
+				creatingCounts: 1,
+				restores:       1,
+				stops:          map[StopReason]int{StopReasonRegular: 1},
+				backups:        1,
 			})
 		})
 
@@ -295,6 +310,9 @@ var _ = Describe("WorkspaceController", func() {
 					Name:       fmt.Sprintf("ws-%s", ws.Name),
 					Namespace:  ws.Namespace,
 					Finalizers: []string{workspacev1.GitpodFinalizerName},
+					Labels: map[string]string{
+						wsk8s.WorkspaceManagedByLabel: constants.ManagedBy,
+					},
 				},
 				Spec: corev1.PodSpec{
 					NodeName: node.Name,
@@ -316,6 +334,7 @@ var _ = Describe("WorkspaceController", func() {
 			// restore.
 			// This is only necessary because we manually created the pod, normally the Pod creation is the controller's
 			// first reconciliation which ensures the metrics are recorded from the workspace's initial state.
+
 			Eventually(func(g Gomega) {
 				g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
 				g.Expect(ws.Status.Runtime).ToNot(BeNil())
@@ -514,18 +533,22 @@ func createHeadlessWorkspace(typ workspacev1.WorkspaceType) (ws *workspacev1.Wor
 func updateObjWithRetries[O client.Object](c client.Client, obj O, updateStatus bool, update func(obj O)) {
 	GinkgoHelper()
 	Eventually(func() error {
-		var err error
-		if err = c.Get(ctx, types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, obj); err != nil {
+		err := c.Get(ctx, types.NamespacedName{
+			Name:      obj.GetName(),
+			Namespace: obj.GetNamespace(),
+		}, obj)
+		if err != nil {
 			return err
 		}
+
 		// Apply update.
 		update(obj)
+
 		if updateStatus {
-			err = c.Status().Update(ctx, obj)
-		} else {
-			err = c.Update(ctx, obj)
+			return c.Status().Update(ctx, obj)
 		}
-		return err
+
+		return c.Update(ctx, obj)
 	}, timeout, interval).Should(Succeed())
 }
 
@@ -749,6 +772,9 @@ func newWorkspace(name, namespace string) *workspacev1.Workspace {
 			Name:       name,
 			Namespace:  namespace,
 			Finalizers: []string{workspacev1.GitpodFinalizerName},
+			Labels: map[string]string{
+				wsk8s.WorkspaceManagedByLabel: constants.ManagedBy,
+			},
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			Ownership: workspacev1.Ownership{
@@ -798,6 +824,7 @@ func createSecret(name, namespace string) *corev1.Secret {
 
 type metricCounts struct {
 	starts          int
+	creatingCounts  int
 	startFailures   int
 	failures        int
 	stops           map[StopReason]int
@@ -822,12 +849,14 @@ func collectMetricCounts(wsMetrics *controllerMetrics, ws *workspacev1.Workspace
 	tpe := string(ws.Spec.Type)
 	cls := ws.Spec.Class
 	startHist := wsMetrics.startupTimeHistVec.WithLabelValues(tpe, cls).(prometheus.Histogram)
+	creatingHist := wsMetrics.creatingTimeHistVec.WithLabelValues(tpe, cls).(prometheus.Histogram)
 	stopCounts := make(map[StopReason]int)
 	for _, reason := range stopReasons {
 		stopCounts[reason] = int(testutil.ToFloat64(wsMetrics.totalStopsCounterVec.WithLabelValues(string(reason), tpe, cls)))
 	}
 	return metricCounts{
 		starts:          int(collectHistCount(startHist)),
+		creatingCounts:  int(collectHistCount(creatingHist)),
 		startFailures:   int(testutil.ToFloat64(wsMetrics.totalStartsFailureCounterVec.WithLabelValues(tpe, cls))),
 		failures:        int(testutil.ToFloat64(wsMetrics.totalFailuresCounterVec.WithLabelValues(tpe, cls))),
 		stops:           stopCounts,
@@ -842,6 +871,7 @@ func expectMetricsDelta(initial metricCounts, cur metricCounts, expectedDelta me
 	GinkgoHelper()
 	By("checking metrics have been recorded")
 	Expect(cur.starts-initial.starts).To(Equal(expectedDelta.starts), "expected metric count delta for starts")
+	Expect(cur.creatingCounts-initial.creatingCounts).To(Equal(expectedDelta.creatingCounts), "expected metric count delta for creating count")
 	Expect(cur.startFailures-initial.startFailures).To(Equal(expectedDelta.startFailures), "expected metric count delta for startFailures")
 	Expect(cur.failures-initial.failures).To(Equal(expectedDelta.failures), "expected metric count delta for failures")
 	for _, reason := range stopReasons {

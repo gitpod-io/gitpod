@@ -8,7 +8,7 @@ import { PrimaryColumn, Column, Entity, Index } from "typeorm";
 import { TypeORM } from "../typeorm";
 import { UserSSHPublicKey } from "@gitpod/gitpod-protocol";
 import { Transformer } from "../transformer";
-import { encryptionService } from "../user-db-impl";
+import { getGlobalEncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 
 @Entity("d_b_user_ssh_public_key")
 export class DBUserSshPublicKey implements UserSSHPublicKey {
@@ -27,7 +27,7 @@ export class DBUserSshPublicKey implements UserSSHPublicKey {
         // Relies on the initialization of the var in UserDbImpl
         transformer: Transformer.compose(
             Transformer.SIMPLE_JSON([]),
-            Transformer.encrypted(() => encryptionService),
+            Transformer.encrypted(getGlobalEncryptionService),
         ),
     })
     key: string;
@@ -49,8 +49,4 @@ export class DBUserSshPublicKey implements UserSSHPublicKey {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     lastUsedTime?: string;
-
-    // This column triggers the periodic deleter deletion mechanism. It's not intended for public consumption.
-    @Column()
-    deleted: boolean;
 }

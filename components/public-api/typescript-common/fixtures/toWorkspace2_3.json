@@ -1,0 +1,111 @@
+{
+  "workspace": {
+    "id": "gitpodio-empty-bs8378oes6b",
+    "creationTime": "2023-11-29T18:55:49.279Z",
+    "organizationId": "ce36c2f8-5d43-4b1d-92f2-08cb6f0e0869",
+    "ownerId": "b49148ed-6e1f-4eae-927f-1e62a3c9dab9",
+    "contextURL": "https://github.com/gitpod-io/empty",
+    "description": "gitpod-io/empty ",
+    "context": {
+      "isFile": false,
+      "path": "",
+      "title": "gitpod-io/empty ",
+      "revision": "",
+      "repository": {
+        "cloneUrl": "https://github.com/gitpod-io/empty.git",
+        "host": "github.com",
+        "name": "empty",
+        "owner": "gitpod-io",
+        "private": false
+      },
+      "normalizedContextURL": "https://github.com/gitpod-io/empty",
+      "checkoutLocation": "empty"
+    },
+    "cloneUrl": "https://github.com/gitpod-io/empty.git",
+    "config": {
+      "ports": [],
+      "tasks": [],
+      "image": "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/gitpod/workspace-full:latest",
+      "ideCredentials": "ideCredentials",
+      "_origin": "default"
+    },
+    "imageSource": {
+      "baseImageResolved": "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/gitpod/workspace-full:latest"
+    },
+    "imageNameResolved": "877922613839.dkr.ecr.eu-central-1.amazonaws.com/image-build/workspace-images:cdbae29656d3033ebc3dbc45e5a7ee6e1907ad513af9d41014e2ae113f5dba7b",
+    "baseImageNameResolved": "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/gitpod/workspace-full@sha256:03a37dc96bc134ed650e5202a062994c09e1f812fbe16a5b0aef96968107ea94",
+    "shareable": false,
+    "type": "regular",
+    "softDeleted": null,
+    "deleted": false,
+    "pinned": false
+  },
+  "latestInstance": {
+    "id": "2192e1a4-dbb0-4db3-90e1-5b54176bbce6",
+    "workspaceId": "gitpodio-empty-bs8378oes6b",
+    "region": "workspace",
+    "creationTime": "2023-11-29T18:55:49.333Z",
+    "startedTime": "2023-11-29T18:55:55.461Z",
+    "stoppingTime": "2023-11-29T18:56:12.005Z",
+    "stoppedTime": "2023-11-29T18:56:12.986Z",
+    "ideUrl": "https://gitpodio-empty-bs8378oes6b.ws.gitpod.io",
+    "workspaceImage": "877922613839.dkr.ecr.eu-central-1.amazonaws.com/image-build/workspace-images:cdbae29656d3033ebc3dbc45e5a7ee6e1907ad513af9d41014e2ae113f5dba7b",
+    "status": {
+      "phase": "stopped",
+      "nodeIp": "100.64.144.159",
+      "message": "",
+      "podName": "ws-2192e1a4-dbb0-4db3-90e1-5b54176bbce6",
+      "timeout": "1h0m0s",
+      "version": 112147232,
+      "nodeName": "ip-100-64-144-159.eu-central-1.compute.internal",
+      "conditions": {
+        "failed": "",
+        "timeout": "",
+        "deployed": true,
+        "pullingImages": false,
+        "stoppedByRequest": true,
+        "firstUserActivity": "2023-11-29T18:56:01.000Z",
+        "headlessTaskFailed": ""
+      },
+      "ownerToken": "ownerToken",
+      "exposedPorts": []
+    },
+    "gitStatus": {
+      "branch": "main"
+    },
+    "phasePersisted": "stopped",
+    "deleted": false,
+    "configuration": {
+      "ideImage": "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/ide/code:commit-3bb09152fc5248f5b99b33b4d8a7f101aa082441",
+      "ideImageLayers": [
+        "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/ide/gitpod-code-web:commit-49bb715b599dce2356dd02a6ede7ae8cf10d8d12",
+        "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/ide/code-codehelper:commit-57315b07fdc8632b22c1befbc8cf2aec69fe9406"
+      ],
+      "supervisorImage": "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/supervisor:commit-da0c5901b4af15a3584d5c5d6b80380f0c093855",
+      "ideConfig": {
+        "useLatest": false,
+        "ide": "code"
+      },
+      "ideSetup": {
+        "envvars": [
+          {
+            "name": "GITPOD_CONFIGCAT_ENABLED",
+            "value": "true"
+          },
+          {
+            "name": "GITPOD_IDE_ALIAS",
+            "value": "code"
+          }
+        ],
+        "tasks": []
+      },
+      "regionPreference": "",
+      "fromBackup": false,
+      "featureFlags": [
+      ]
+    },
+    "imageBuildInfo": null,
+    "workspaceClass": "g1-standard",
+    "usageAttributionId": "team:ce36c2f8-5d43-4b1d-92f2-08cb6f0e0869"
+  }
+}

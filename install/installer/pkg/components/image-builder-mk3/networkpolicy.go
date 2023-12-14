@@ -31,13 +31,6 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 			{
 				PodSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
-						"component": common.WSManagerComponent,
-					},
-				},
-			},
-			{
-				PodSelector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
 						"component": common.WSManagerMk2Component,
 					},
 				},

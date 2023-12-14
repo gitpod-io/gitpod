@@ -22,8 +22,8 @@ func TestAdminBlockUser(t *testing.T) {
 	integration.SkipWithoutEnterpriseLicense(t, enterprise)
 	f := features.New("block user").
 		WithLabel("component", "server").
-		Assess("it should block new created user", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("it should block new created user", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -81,7 +81,7 @@ func TestAdminBlockUser(t *testing.T) {
 				t.Fatalf("expected user '%s' with ID %s is blocked, but is not", username, userId)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

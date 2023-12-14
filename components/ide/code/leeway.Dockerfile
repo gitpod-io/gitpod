@@ -2,36 +2,20 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM gitpod/openvscode-server-linux-build-agent:centos7-devtoolset8-x64 as dependencies_builder
-
-ARG CODE_COMMIT
-
-RUN mkdir /gp-code \
-    && cd /gp-code \
-    && git init \
-    && git remote add origin https://github.com/gitpod-io/openvscode-server \
-    && git fetch origin $CODE_COMMIT --depth=1 \
-    && git reset --hard FETCH_HEAD
-WORKDIR /gp-code
-RUN yarn --cwd remote --frozen-lockfile --network-timeout 180000
-
-
-FROM gitpod/openvscode-server-linux-build-agent:bionic-x64 as code_builder
-
-ARG NODE_VERSION=16.19.0
-ARG NVM_DIR="/root/.nvm"
-RUN mkdir -p $NVM_DIR \
-    && curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | sh \
-    && . $NVM_DIR/nvm.sh \
-    && nvm alias default $NODE_VERSION
-ENV PATH=$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+FROM gitpod/openvscode-server-linux-build-agent:focal-x64 as code_builder
 
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
+ENV VSCODE_ARCH=x64
 
 ARG CODE_COMMIT
 ARG CODE_QUALITY
 ARG CODE_VERSION
+
+RUN sudo mkdir -m 0755 -p /etc/apt/keyrings
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+RUN apt-get update && apt-get install -y nodejs
 
 RUN mkdir /gp-code \
     && cd /gp-code \
@@ -41,11 +25,9 @@ RUN mkdir /gp-code \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
 ENV npm_config_arch=x64
-RUN yarn --frozen-lockfile --network-timeout 180000
-
-# copy remote dependencies build in dependencies_builder image
-RUN rm -rf remote/node_modules/
-COPY --from=dependencies_builder /gp-code/remote/node_modules/ /gp-code/remote/node_modules/
+RUN mkdir -p .build \
+    && yarn --cwd build --frozen-lockfile --network-timeout 180000 \
+    && ./build/azure-pipelines/linux/install.sh
 
 # check that the provided codeVersion is the correct one for the given codeCommit
 RUN commitVersion=$(cat package.json | jq -r .version) \
@@ -61,9 +43,8 @@ RUN nameShort=$(jq --raw-output '.nameShort' product.json) && \
     setQuality="setpath([\"quality\"]; \"$CODE_QUALITY\")" && \
     setNameShort="setpath([\"nameShort\"]; \"$nameShort\")" && \
     setNameLong="setpath([\"nameLong\"]; \"$nameLong\")" && \
-    setExtensionsGalleryItemUrl="setpath([\"extensionsGallery\", \"itemUrl\"]; \"{{extensionsGalleryItemUrl}}\")" && \
-    addTrustedDomain=".linkProtectionTrustedDomains += [\"{{trustedDomain}}\"]" && \
-    jqCommands="${setQuality} | ${setNameShort} | ${setNameLong} | ${setExtensionsGalleryItemUrl} | ${addTrustedDomain}" && \
+    setSegmentKey="setpath([\"segmentKey\"]; \"untrusted-dummy-key\")" && \
+    jqCommands="${setQuality} | ${setNameShort} | ${setNameLong} | ${setSegmentKey}" && \
     cat product.json | jq "${jqCommands}" > product.json.tmp && \
     mv product.json.tmp product.json && \
     jq '{quality,nameLong,nameShort}' product.json
@@ -75,15 +56,10 @@ RUN yarn gulp compile-build \
     && yarn gulp vscode-reh-linux-x64-min-ci
 
 # config for first layer needed by blobserve
-# we also remove `static/` from resource urls as that's needed by blobserve,
 # this custom urls will be then replaced by blobserve.
 # Check pkg/blobserve/blobserve.go, `inlineVars` method
 RUN cp /vscode-web/out/vs/gitpod/browser/workbench/workbench.html /vscode-web/index.html \
     && cp /vscode-web/out/vs/gitpod/browser/workbench/callback.html /vscode-web/callback.html \
-    # TODO: remove next line when workbench.html changes are merged to gp-code/main
-    && sed -i -e 's#static/##g' /vscode-web/index.html \
-    && sed -i -e 's#baseUrl =.*;#baseUrl = window.location.origin;#g' /vscode-web/index.html \
-    && sed -i -e 's#{{WORKBENCH_WEB_BASE_URL}}#.#g' /vscode-web/index.html \
     && sed -i -e "s/{{VERSION}}/$CODE_QUALITY-$CODE_COMMIT/g" /vscode-web/index.html
 
 # cli config: alises to gitpod-code

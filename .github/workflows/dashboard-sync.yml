@@ -11,6 +11,7 @@ on:
     branches:
       - main
   workflow_dispatch:
+
 jobs:
   sync:
     runs-on: ubuntu-latest

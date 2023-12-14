@@ -4,19 +4,20 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInstance, WorkspaceInstanceConditions, WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
+import { WorkspaceInstanceConditions } from "@gitpod/gitpod-protocol";
 import Tooltip from "../components/Tooltip";
+import { WorkspacePhase_Phase, WorkspaceStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
-export function WorkspaceStatusIndicator({ instance }: { instance?: WorkspaceInstance }) {
-    const state: WorkspaceInstancePhase = instance?.status?.phase || "stopped";
-    const conditions = instance?.status?.conditions;
+export function WorkspaceStatusIndicator({ status }: { status?: WorkspaceStatus }) {
+    const state: WorkspacePhase_Phase = status?.phase?.name ?? WorkspacePhase_Phase.STOPPED;
+    const conditions = status?.conditions;
     let stateClassName = "rounded-full w-3 h-3 text-sm align-middle";
     switch (state) {
-        case "running": {
+        case WorkspacePhase_Phase.RUNNING: {
             stateClassName += " bg-green-500";
             break;
         }
-        case "stopped": {
+        case WorkspacePhase_Phase.STOPPED: {
             if (conditions?.failed) {
                 stateClassName += " bg-red-400";
             } else {
@@ -24,16 +25,16 @@ export function WorkspaceStatusIndicator({ instance }: { instance?: WorkspaceIns
             }
             break;
         }
-        case "interrupted": {
+        case WorkspacePhase_Phase.INTERRUPTED: {
             stateClassName += " bg-red-400";
             break;
         }
-        case "unknown": {
+        case WorkspacePhase_Phase.UNSPECIFIED: {
             stateClassName += " bg-red-400";
             break;
         }
         default: {
-            stateClassName += " bg-gitpod-kumquat animate-pulse";
+            stateClassName += " bg-kumquat-ripe animate-pulse";
             break;
         }
     }
@@ -46,9 +47,10 @@ export function WorkspaceStatusIndicator({ instance }: { instance?: WorkspaceIns
     );
 }
 
-export function getLabel(state: WorkspaceInstancePhase, conditions?: WorkspaceInstanceConditions) {
+export function getLabel(state: WorkspacePhase_Phase, conditions?: WorkspaceInstanceConditions) {
     if (conditions?.failed) {
         return "Failed";
     }
-    return state.substr(0, 1).toLocaleUpperCase() + state.substr(1);
+    const phaseStr = WorkspacePhase_Phase[state];
+    return phaseStr.substring(0, 1) + phaseStr.substring(1).toLocaleLowerCase();
 }

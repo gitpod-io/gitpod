@@ -4,8 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { IDESettings, TaskConfig, User, Workspace } from "@gitpod/gitpod-protocol";
-import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { IDESettings, User, Workspace } from "@gitpod/gitpod-protocol";
 import { IDEClient, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import * as IdeServiceApi from "@gitpod/ide-service-api/lib/ide.pb";
 import {
@@ -13,6 +12,7 @@ import {
     IDEServiceDefinition,
     ResolveWorkspaceConfigResponse,
 } from "@gitpod/ide-service-api/lib/ide.pb";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { inject, injectable } from "inversify";
 import { AuthorizationService } from "./user/authorization-service";
 
@@ -28,9 +28,6 @@ export class IDEService {
 
     @inject(AuthorizationService)
     protected readonly authService: AuthorizationService;
-
-    @inject(ConfigCatClientFactory)
-    protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     private cacheConfig?: IDEConfig;
 
@@ -91,7 +88,7 @@ export class IDEService {
             workspaceConfig: JSON.stringify(workspace.config),
             user: {
                 id: user.id,
-                email: User.getPrimaryEmail(user),
+                email: getPrimaryEmail(user),
             },
         };
         for (let attempt = 0; attempt < 15; attempt++) {
@@ -105,21 +102,5 @@ export class IDEService {
             }
         }
         throw new Error("failed to resolve workspace IDE configuration");
-    }
-
-    resolveGitpodTasks(ws: Workspace, ideConfig: ResolveWorkspaceConfigResponse): TaskConfig[] {
-        const tasks: TaskConfig[] = [];
-        if (ws.config.tasks) {
-            tasks.push(...ws.config.tasks);
-        }
-        if (ideConfig.tasks) {
-            try {
-                let ideTasks: TaskConfig[] = JSON.parse(ideConfig.tasks);
-                tasks.push(...ideTasks);
-            } catch (e) {
-                console.error("failed get tasks from ide config:", e);
-            }
-        }
-        return tasks;
     }
 }

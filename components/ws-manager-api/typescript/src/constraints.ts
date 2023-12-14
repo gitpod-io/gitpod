@@ -39,12 +39,17 @@ export const workspaceClusterSetsAuthorized = workspaceClusterSets.map((set) => 
     constraint: intersect(set.constraint, constraintUserIsAuthorized),
 }));
 
+export const workspaceClusterSetsAuthorizedAndSupportsWorkspaceClass = workspaceClusterSetsAuthorized.map((set) => ({
+    ...set,
+    constraint: intersect(set.constraint, constraintClusterSupportsWorkspaceClass),
+}));
+
 export type Constraint = (all: WorkspaceClusterWoTLS[], args: ConstraintArgs) => WorkspaceClusterWoTLS[];
 
 export type ConstraintArgs = {
     user: User;
-    workspace: Workspace;
-    instance: WorkspaceInstance;
+    workspace?: Workspace;
+    instance?: WorkspaceInstance;
     region?: string;
 };
 
@@ -124,4 +129,15 @@ function userMayAccessCluster(cluster: WorkspaceClusterWoTLS, user: User): boole
                 return true; // no reason to exclude user
         }
     });
+}
+
+export function constraintClusterSupportsWorkspaceClass(
+    all: WorkspaceClusterWoTLS[],
+    args: ConstraintArgs,
+): WorkspaceClusterWoTLS[] {
+    const workspaceClass = args.instance?.workspaceClass;
+    if (!workspaceClass) {
+        return all;
+    }
+    return all.filter((cluster) => (cluster.availableWorkspaceClasses || []).map((c) => c.id).includes(workspaceClass));
 }

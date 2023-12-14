@@ -35,6 +35,8 @@ type IDEClientServiceClient interface {
 	SendHeartbeat(context.Context, *connect_go.Request[v1.SendHeartbeatRequest]) (*connect_go.Response[v1.SendHeartbeatResponse], error)
 	// SendDidClose sends a client close signal for a running workspace.
 	SendDidClose(context.Context, *connect_go.Request[v1.SendDidCloseRequest]) (*connect_go.Response[v1.SendDidCloseResponse], error)
+	// UpdateGitStatus updates the status of a repository in a workspace.
+	UpdateGitStatus(context.Context, *connect_go.Request[v1.UpdateGitStatusRequest]) (*connect_go.Response[v1.UpdateGitStatusResponse], error)
 }
 
 // NewIDEClientServiceClient constructs a client for the gitpod.experimental.v1.IDEClientService
@@ -57,13 +59,19 @@ func NewIDEClientServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+"/gitpod.experimental.v1.IDEClientService/SendDidClose",
 			opts...,
 		),
+		updateGitStatus: connect_go.NewClient[v1.UpdateGitStatusRequest, v1.UpdateGitStatusResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.IDEClientService/UpdateGitStatus",
+			opts...,
+		),
 	}
 }
 
 // iDEClientServiceClient implements IDEClientServiceClient.
 type iDEClientServiceClient struct {
-	sendHeartbeat *connect_go.Client[v1.SendHeartbeatRequest, v1.SendHeartbeatResponse]
-	sendDidClose  *connect_go.Client[v1.SendDidCloseRequest, v1.SendDidCloseResponse]
+	sendHeartbeat   *connect_go.Client[v1.SendHeartbeatRequest, v1.SendHeartbeatResponse]
+	sendDidClose    *connect_go.Client[v1.SendDidCloseRequest, v1.SendDidCloseResponse]
+	updateGitStatus *connect_go.Client[v1.UpdateGitStatusRequest, v1.UpdateGitStatusResponse]
 }
 
 // SendHeartbeat calls gitpod.experimental.v1.IDEClientService.SendHeartbeat.
@@ -76,6 +84,11 @@ func (c *iDEClientServiceClient) SendDidClose(ctx context.Context, req *connect_
 	return c.sendDidClose.CallUnary(ctx, req)
 }
 
+// UpdateGitStatus calls gitpod.experimental.v1.IDEClientService.UpdateGitStatus.
+func (c *iDEClientServiceClient) UpdateGitStatus(ctx context.Context, req *connect_go.Request[v1.UpdateGitStatusRequest]) (*connect_go.Response[v1.UpdateGitStatusResponse], error) {
+	return c.updateGitStatus.CallUnary(ctx, req)
+}
+
 // IDEClientServiceHandler is an implementation of the gitpod.experimental.v1.IDEClientService
 // service.
 type IDEClientServiceHandler interface {
@@ -83,6 +96,8 @@ type IDEClientServiceHandler interface {
 	SendHeartbeat(context.Context, *connect_go.Request[v1.SendHeartbeatRequest]) (*connect_go.Response[v1.SendHeartbeatResponse], error)
 	// SendDidClose sends a client close signal for a running workspace.
 	SendDidClose(context.Context, *connect_go.Request[v1.SendDidCloseRequest]) (*connect_go.Response[v1.SendDidCloseResponse], error)
+	// UpdateGitStatus updates the status of a repository in a workspace.
+	UpdateGitStatus(context.Context, *connect_go.Request[v1.UpdateGitStatusRequest]) (*connect_go.Response[v1.UpdateGitStatusResponse], error)
 }
 
 // NewIDEClientServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -102,6 +117,11 @@ func NewIDEClientServiceHandler(svc IDEClientServiceHandler, opts ...connect_go.
 		svc.SendDidClose,
 		opts...,
 	))
+	mux.Handle("/gitpod.experimental.v1.IDEClientService/UpdateGitStatus", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.IDEClientService/UpdateGitStatus",
+		svc.UpdateGitStatus,
+		opts...,
+	))
 	return "/gitpod.experimental.v1.IDEClientService/", mux
 }
 
@@ -114,4 +134,8 @@ func (UnimplementedIDEClientServiceHandler) SendHeartbeat(context.Context, *conn
 
 func (UnimplementedIDEClientServiceHandler) SendDidClose(context.Context, *connect_go.Request[v1.SendDidCloseRequest]) (*connect_go.Response[v1.SendDidCloseResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.IDEClientService.SendDidClose is not implemented"))
+}
+
+func (UnimplementedIDEClientServiceHandler) UpdateGitStatus(context.Context, *connect_go.Request[v1.UpdateGitStatusRequest]) (*connect_go.Response[v1.UpdateGitStatusResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.IDEClientService.UpdateGitStatus is not implemented"))
 }

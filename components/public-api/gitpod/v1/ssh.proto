@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "gitpod/v1/pagination.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+service SSHService {
+  // ListSSHPublicKeys returns all the ssh public keys for the
+  // authenticated user.
+  rpc ListSSHPublicKeys(ListSSHPublicKeysRequest) returns (ListSSHPublicKeysResponse) {}
+
+  // CreateSSHPublicKeys creates an ssh public key for the
+  // authenticated user.
+  rpc CreateSSHPublicKey(CreateSSHPublicKeyRequest) returns (CreateSSHPublicKeyResponse) {}
+
+  // DeleteSSHPublicKeys deletes an ssh public key for the
+  // authenticated user.
+  rpc DeleteSSHPublicKey(DeleteSSHPublicKeyRequest) returns (DeleteSSHPublicKeyResponse) {}
+}
+
+message SSHPublicKey {
+  string id = 1;
+  string name = 2;
+  string key = 3;
+  string fingerprint = 4;
+  google.protobuf.Timestamp creation_time = 5;
+  google.protobuf.Timestamp last_used_time = 6;
+}
+
+message ListSSHPublicKeysRequest {
+  PaginationRequest pagination = 1;
+}
+
+message ListSSHPublicKeysResponse {
+  repeated SSHPublicKey ssh_keys = 1;
+  PaginationRequest pagination = 2;
+}
+
+message CreateSSHPublicKeyRequest {
+  string name = 1;
+  string key = 2;
+}
+
+message CreateSSHPublicKeyResponse {
+  SSHPublicKey ssh_key = 1;
+}
+
+message DeleteSSHPublicKeyRequest {
+  string ssh_key_id = 1;
+}
+
+message DeleteSSHPublicKeyResponse {}

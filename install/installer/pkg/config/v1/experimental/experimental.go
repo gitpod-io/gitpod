@@ -29,22 +29,12 @@ type Config struct {
 	IDE        *IDEConfig         `json:"ide,omitempty"`    // @deprecated
 	Common     *CommonConfig      `json:"common,omitempty"` // @deprecated
 	Overrides  *[]Overrides       `json:"overrides,omitempty"`
-	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`  // @deprecated
 	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"` // @deprecated
 }
 
-// @deprecated
-type TelemetryConfig struct {
-	Data struct {
-		Platform string `json:"platform"`
-	} `json:"data"`
-}
-
 type CommonConfig struct {
-	// @deprecated
+	// Deprecated.
 	PodConfig map[string]*PodConfig `json:"podConfig,omitempty"`
-	// @deprecated use a secret instead in messageBus.credentials
-	StaticMessagebusPassword string `json:"staticMessagebusPassword"`
 }
 
 type PodConfig struct {
@@ -117,7 +107,8 @@ type WorkspaceConfig struct {
 		} `json:"runtime"`
 	} `json:"wsDaemon"`
 
-	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
+	WorkspaceClasses        map[string]WorkspaceClass `json:"classes,omitempty"`
+	PreferredWorkspaceClass string                    `json:"preferredWorkspaceClass,omitempty"`
 
 	WSProxy struct {
 		IngressHeader                              string `json:"ingressHeader"`
@@ -133,13 +124,13 @@ type WorkspaceConfig struct {
 	} `json:"contentService"`
 
 	EnableProtectedSecrets *bool `json:"enableProtectedSecrets"`
-	UseMk2ExperimentalMode bool  `json:"useMk2ExperimentalMode,omitempty"`
 }
 
 type WorkspaceClass struct {
-	Name      string             `json:"name" validate:"required"`
-	Resources WorkspaceResources `json:"resources" validate:"required"`
-	Templates WorkspaceTemplates `json:"templates,omitempty"`
+	Name        string             `json:"name" validate:"required"`
+	Description string             `json:"description"`
+	Resources   WorkspaceResources `json:"resources" validate:"required"`
+	Templates   WorkspaceTemplates `json:"templates,omitempty"`
 }
 
 type WorkspaceResources struct {
@@ -191,8 +182,19 @@ type SpiceDBConfig struct {
 	SecretRef string `json:"secretRef"`
 }
 
+type RedisConfig struct {
+	Address   string `json:"address,omitempty"`
+	Username  string `json:"username,omitempty"`
+	SecretRef string `json:"secretRef,omitempty"`
+}
+
 type WebAppConfig struct {
-	PublicAPI                    *PublicAPIConfig       `json:"publicApi,omitempty"`
+	PublicAPI *PublicAPIConfig `json:"publicApi,omitempty"`
+
+	// PublicURL lets you override the publically reachable endpoints of gitpod (currently only public api endpoint)
+	// If not set, default will be api.${Domain}
+	PublicURL string `json:"publicUrl,omitempty"`
+
 	Server                       *ServerConfig          `json:"server,omitempty"`
 	ProxyConfig                  *ProxyConfig           `json:"proxy,omitempty"`
 	WorkspaceManagerBridge       *WsManagerBridgeConfig `json:"wsManagerBridge,omitempty"`
@@ -206,6 +208,7 @@ type WebAppConfig struct {
 	IAM                          *IAMConfig             `json:"iam,omitempty"`
 	SpiceDB                      *SpiceDBConfig         `json:"spicedb,omitempty"`
 	CertmanagerNamespaceOverride string                 `json:"certmanagerNamespaceOverride,omitempty"`
+	Redis                        *RedisConfig           `json:"redis"`
 }
 
 type WorkspaceDefaults struct {

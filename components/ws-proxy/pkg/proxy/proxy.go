@@ -6,17 +6,21 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
+	"errors"
 	stdlog "log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/klauspost/cpuid/v2"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/golang-crypto/ssh"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
 )
 
 // WorkspaceProxy is the entity which forwards all inbound requests to the relevant workspace pods.
@@ -24,18 +28,18 @@ type WorkspaceProxy struct {
 	Ingress               HostBasedIngressConfig
 	Config                Config
 	WorkspaceRouter       WorkspaceRouter
-	WorkspaceInfoProvider WorkspaceInfoProvider
-	SSHHostSigners        []ssh.Signer
+	WorkspaceInfoProvider common.WorkspaceInfoProvider
+	SSHGatewayServer      *sshproxy.Server
 }
 
 // NewWorkspaceProxy creates a new workspace proxy.
-func NewWorkspaceProxy(ingress HostBasedIngressConfig, config Config, workspaceRouter WorkspaceRouter, workspaceInfoProvider WorkspaceInfoProvider, signers []ssh.Signer) *WorkspaceProxy {
+func NewWorkspaceProxy(ingress HostBasedIngressConfig, config Config, workspaceRouter WorkspaceRouter, workspaceInfoProvider common.WorkspaceInfoProvider, sshGatewayServer *sshproxy.Server) *WorkspaceProxy {
 	return &WorkspaceProxy{
 		Ingress:               ingress,
 		Config:                config,
 		WorkspaceRouter:       workspaceRouter,
 		WorkspaceInfoProvider: workspaceInfoProvider,
-		SSHHostSigners:        signers,
+		SSHGatewayServer:      sshGatewayServer,
 	}
 }
 
@@ -49,13 +53,26 @@ func redirectToHTTPS(w http.ResponseWriter, r *http.Request) {
 }
 
 // MustServe starts the proxy and ends the process if doing so fails.
-func (p *WorkspaceProxy) MustServe() {
+func (p *WorkspaceProxy) MustServe(ctx context.Context) {
 	handler, err := p.Handler()
 	if err != nil {
 		log.WithError(err).Fatal("cannot initialize proxy - this is likely a configuration issue")
 		return
 	}
-	srv := &http.Server{
+
+	httpServer := &http.Server{
+		Addr:              p.Ingress.HTTPAddress,
+		Handler:           http.HandlerFunc(redirectToHTTPS),
+		ErrorLog:          stdlog.New(logrusErrorWriter{}, "", 0),
+		ReadTimeout:       1 * time.Second,
+		WriteTimeout:      1 * time.Second,
+		IdleTimeout:       0,
+		ReadHeaderTimeout: 2 * time.Second,
+	}
+
+	httpServer.SetKeepAlivesEnabled(false)
+
+	httpsServer := &http.Server{
 		Addr:    p.Ingress.HTTPSAddress,
 		Handler: handler,
 		TLSConfig: &tls.Config{
@@ -77,17 +94,35 @@ func (p *WorkspaceProxy) MustServe() {
 		crt = filepath.Join(tproot, crt)
 		key = filepath.Join(tproot, key)
 	}
+
 	go func() {
-		err := http.ListenAndServe(p.Ingress.HTTPAddress, http.HandlerFunc(redirectToHTTPS))
-		if err != nil {
+		err := httpServer.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.WithError(err).Fatal("cannot start http proxy")
 		}
 	}()
 
-	err = srv.ListenAndServeTLS(crt, key)
+	go func() {
+		err = httpsServer.ListenAndServeTLS(crt, key)
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.WithError(err).Fatal("cannot start proxy")
+			return
+		}
+	}()
+
+	<-ctx.Done()
+
+	shutDownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	err = httpServer.Shutdown(shutDownCtx)
 	if err != nil {
-		log.WithError(err).Fatal("cannot start proxy")
-		return
+		log.WithError(err).Fatal("cannot stop HTTP server")
+	}
+
+	err = httpsServer.Shutdown(shutDownCtx)
+	if err != nil {
+		log.WithError(err).Fatal("cannot stop HTTPS server")
 	}
 }
 
@@ -95,13 +130,17 @@ func (p *WorkspaceProxy) MustServe() {
 func (p *WorkspaceProxy) Handler() (http.Handler, error) {
 	r := mux.NewRouter()
 
+	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
 	// install routes
 	handlerConfig, err := NewRouteHandlerConfig(&p.Config, WithDefaultAuth(p.WorkspaceInfoProvider))
 	if err != nil {
 		return nil, err
 	}
 	ideRouter, portRouter, foreignRouter := p.WorkspaceRouter(r, p.WorkspaceInfoProvider)
-	err = installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider, p.SSHHostSigners)
+	err = installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider, p.SSHGatewayServer)
 	if err != nil {
 		return nil, err
 	}

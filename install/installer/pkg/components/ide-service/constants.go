@@ -4,8 +4,10 @@
 
 package ide_service
 
+import "github.com/gitpod-io/gitpod/installer/pkg/common"
+
 const (
-	Component    = "ide-service"
+	Component    = common.IDEServiceComponent
 	VolumeConfig = "config"
 
 	GRPCPortName    = "grpc"

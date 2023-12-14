@@ -3,21 +3,33 @@
   "license": "AGPL-3.0",
   "version": "0.1.5",
   "scripts": {
-    "prepare": "yarn clean && yarn build",
     "build": "npx tsc",
-    "build:clean": "yarn clean && yarn build",
+    "build:clean": "yarn clean && yarn lint && yarn build",
+    "lint": "yarn eslint src/*.ts src/**/*.ts",
+    "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
     "rebuild": "yarn build:clean",
     "build:watch": "watch 'yarn build' .",
     "test": "yarn db-test",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
     "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env); yarn db-test-run; };r",
-    "db-test-run": "mocha --opts mocha.opts '**/*.spec.db.ts' --exclude './node_modules/**'",
+    "db-test-run": "mocha '**/*.spec.db.ts' --exclude './node_modules/**' --exit",
     "wait-for-db": "node ./lib/wait-for-db.js",
     "typeorm": "typeorm -f lib/typeorm/ormconfig",
     "migrate-migrations": "node ./lib/migrate-migrations.js",
     "clean": "yarn run rimraf lib",
     "clean:node": "yarn run rimraf node_modules",
     "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock"
+  },
+  "mocha": {
+    "require": [
+      "ts-node/register",
+      "reflect-metadata/Reflect",
+      "source-map-support/register"
+    ],
+    "extensions": [
+      "ts"
+    ],
+    "exit": true
   },
   "files": [
     "/lib"
@@ -29,17 +41,24 @@
     "reflect-metadata": "^0.1.13",
     "slugify": "^1.6.5",
     "the-big-username-blacklist": "^1.5.2",
-    "typeorm": "0.2.38"
+    "typeorm": "0.2.38",
+    "ioredis": "^5.3.2",
+    "ioredis-mock": "^8.7.0",
+    "prom-client": "^14.2.0"
   },
   "devDependencies": {
+    "@testdeck/mocha": "^0.3.3",
     "@types/chai": "^4.2.2",
+    "@types/mocha": "^10.0.1",
     "@types/mysql": "^2.15.0",
     "@types/uuid": "^8.3.1",
+    "@typescript-eslint/eslint-plugin": "^5.5.0",
+    "@typescript-eslint/parser": "^5.5.0",
     "chai": "^4.2.0",
-    "mocha": "^4.1.0",
-    "mocha-typescript": "^1.1.17",
+    "eslint": "^8.47.0",
+    "mocha": "^10.2.0",
     "rimraf": "^2.6.1",
-    "ts-node": "<7.0.0",
+    "ts-node": "^10.4.0",
     "typescript": "~4.4.2"
   }
 }

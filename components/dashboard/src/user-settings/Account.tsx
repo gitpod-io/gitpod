@@ -4,32 +4,46 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
 import { useCallback, useContext, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import { Heading2, Subheading } from "../components/typography/headings";
 import Alert from "../components/Alert";
 import { TextInputField } from "../components/forms/TextInputField";
 import isEmail from "validator/lib/isEmail";
 import { useToast } from "../components/toasts/Toasts";
 import { InputWithCopy } from "../components/InputWithCopy";
+import { InputField } from "../components/forms/InputField";
+import { getPrimaryEmail, isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { User as UserProtocol, ProfileDetails } from "@gitpod/gitpod-protocol";
+import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+
+type UserProfile = Pick<ProfileDetails, "emailAddress"> & Required<Pick<UserProtocol, "name" | "avatarUrl">>;
+function getProfile(user: User): UserProfile {
+    return {
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        emailAddress: getPrimaryEmail(user),
+    };
+}
 
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
     const [modal, setModal] = useState(false);
     const [typedEmail, setTypedEmail] = useState("");
-    const original = User.getProfile(user!);
+    const original = getProfile(user!);
     const [profileState, setProfileState] = useState(original);
     const [errorMessage, setErrorMessage] = useState("");
-    const canUpdateEmail = user && !User.isOrganizationOwned(user);
+    const canUpdateEmail = user && !isOrganizationOwned(user);
     const { toast } = useToast();
+    const updateUser = useUpdateCurrentUserMutation();
 
-    const saveProfileState = useCallback(() => {
-        if (!user) {
+    const saveProfileState = useCallback(async () => {
+        if (!user || !profileState) {
             return;
         }
 
@@ -38,24 +52,28 @@ export default function Account() {
             return;
         }
         if (canUpdateEmail) {
-            if (profileState.email.trim() === "") {
+            if (!profileState.emailAddress?.trim()) {
                 setErrorMessage("Email must not be empty.");
                 return;
             }
             // check valid email
-            if (!isEmail(profileState.email.trim())) {
+            if (!isEmail(profileState.emailAddress?.trim() || "")) {
                 setErrorMessage("Please enter a valid email.");
                 return;
             }
         } else {
-            profileState.email = User.getPrimaryEmail(user) || "";
+            profileState.emailAddress = getPrimaryEmail(user) || "";
         }
 
-        const updatedUser = User.setProfile(user, profileState);
+        const updatedUser = await updateUser.mutateAsync({
+            fullName: profileState.name,
+            additionalData: {
+                profile: profileState,
+            },
+        });
         setUser(updatedUser);
-        getGitpodService().server.updateLoggedInUser(updatedUser);
         toast("Your profile information has been updated.");
-    }, [canUpdateEmail, profileState, setUser, toast, user]);
+    }, [updateUser, canUpdateEmail, profileState, setUser, toast, user]);
 
     const deleteAccount = useCallback(async () => {
         await getGitpodService().server.deleteAccount();
@@ -69,7 +87,7 @@ export default function Account() {
                 title="Delete Account"
                 areYouSureText="You are about to permanently delete your account."
                 buttonText="Delete Account"
-                buttonDisabled={typedEmail !== original.email}
+                buttonDisabled={typedEmail !== (original.emailAddress || "")}
                 visible={modal}
                 onClose={close}
                 onConfirm={deleteAccount}
@@ -107,7 +125,7 @@ export default function Account() {
                         user={user}
                     >
                         <div className="flex flex-row mt-8">
-                            <Button htmlType="submit">Update Profile</Button>
+                            <Button type="submit">Update Profile</Button>
                         </div>
                     </ProfileInformation>
                 </form>
@@ -115,7 +133,7 @@ export default function Account() {
                 <Subheading className="mb-3">
                     This action will remove all the data associated with your account in Gitpod.
                 </Subheading>
-                <Button type="danger.secondary" onClick={() => setModal(true)}>
+                <Button variant="destructive" onClick={() => setModal(true)}>
                     Delete Account
                 </Button>
             </PageWithSettingsSubMenu>
@@ -124,8 +142,8 @@ export default function Account() {
 }
 
 function ProfileInformation(props: {
-    profileState: User.Profile;
-    setProfileState: (newState: User.Profile) => void;
+    profileState: UserProfile;
+    setProfileState: (newState: UserProfile) => void;
     errorMessage: string;
     emailIsReadonly?: boolean;
     user?: User;
@@ -152,19 +170,16 @@ function ProfileInformation(props: {
                     />
                     <TextInputField
                         label="Email"
-                        value={props.profileState.email}
+                        value={props.profileState.emailAddress || ""}
                         disabled={props.emailIsReadonly}
                         onChange={(val) => {
-                            props.setProfileState({ ...props.profileState, email: val });
+                            props.setProfileState({ ...props.profileState, emailAddress: val });
                         }}
                     />
                     {props.user && (
-                        <div className="flex flex-col space-y-2 mt-4">
-                            <label className={"text-md font-semibold dark:text-gray-400 text-gray-600"}>User ID</label>
-                            <p className={"text-sm text-gray-500 dark:text-gray-500"}>
-                                <InputWithCopy className="max-w-md w-32" value={props.user.id} tip="Copy Token" />
-                            </p>
-                        </div>
+                        <InputField label="User ID">
+                            <InputWithCopy value={props.user.id} tip="Copy User ID" />
+                        </InputField>
                     )}
                 </fieldset>
                 <div className="lg:pl-14">
@@ -172,7 +187,7 @@ function ProfileInformation(props: {
                         <Subheading>Avatar</Subheading>
                         <img
                             className="rounded-full w-24 h-24"
-                            src={props.profileState.avatarURL}
+                            src={props.profileState.avatarUrl}
                             alt={props.profileState.name}
                         />
                     </div>
