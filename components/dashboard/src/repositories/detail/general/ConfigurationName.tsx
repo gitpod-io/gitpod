@@ -76,7 +76,7 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                 />
 
                 <InputField label="Repository ID">
-                    <InputWithCopy value={configuration.id} tip="Click to copy configuration ID" className="" />
+                    <InputWithCopy value={configuration.id} tip="Click to copy configuration ID" />
                 </InputField>
 
                 <div className="flex flex-row items-center justify-start gap-2 mt-4 w-full">
