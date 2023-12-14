@@ -138,7 +138,7 @@ export default function ProjectSettingsView() {
                     toast(
                         <>
                             <p>There was a problem enabling prebuilds on "{repoName}"</p>
-                            <p>Grant these permissions {JSON.stringify(requiredScopes)} and try again! 🙏🏻</p>
+                            <p>Grant the {JSON.stringify(requiredScopes)} permissions and try again! 🙏🏻</p>
                             <div>
                                 <LinkButton
                                     inverted
