@@ -97,6 +97,20 @@ spec:
         description: Server is consumming too much CPU. Please investigate.
         dashboard_url: https://grafana.gitpod.io/d/6581e46e4e5c7ba40a07646395ef7b23/kubernetes-compute-resources-pod?var-cluster={{ $labels.cluster }}&var-namespace=default
 
+    - alert: DashboardStuckInPodInitState
+      # Reasoning: alert if dashboard is stuck in init more than 5 minute.
+      expr: sum(increase(kube_pod_container_status_waiting_reason{container="dashboard", reason="PodInitializing"}[5m])) by (container) > 0
+      # Five minutes sound high, but that's the only value that's higher than recent history
+      for: 5m
+      labels:
+        severity: critical
+        team: webapp
+        dedicated: included
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/DashboardStuckInPodInitState.md
+        summary: Dashboard stuck in PodInitializing state {{ $labels.cluster }}.
+        description: Dashboard is stuck in PodInitializing for at least 5 minutes
+
     - alert: WebAppServicesCrashlooping
       # Reasoning: alert if any pod is stuck in crashlooping more than 5 minute.
       expr: sum(increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (cluster, pod) > 0
