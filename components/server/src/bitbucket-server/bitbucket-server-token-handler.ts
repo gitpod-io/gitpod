@@ -41,7 +41,7 @@ export class BitbucketServerTokenHelper {
         }
         throw UnauthorizedError.create({
             host,
-            providerType: "GitHub",
+            providerType: "BitbucketServer",
             requiredScopes: BitbucketServerOAuthScopes.Requirements.DEFAULT,
             providerIsConnected: false,
             isMissingScopes: true,
