@@ -8,6 +8,7 @@ option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
 service EditorService {
   rpc ListEditors(ListEditorsRequest) returns (ListEditorsResponse) {}
+  rpc GetEditorInstallationSteps(GetEditorInstallationStepsRequest) returns (GetEditorInstallationStepsResponse) {}
 }
 
 message ListEditorsRequest {
@@ -20,6 +21,15 @@ message ListEditorsResponse {
   PaginationResponse pagination = 1;
 
   repeated Editor editors = 2;
+}
+
+message GetEditorInstallationStepsRequest {
+  // editor is the editor to get installation steps
+  EditorReference editor = 1;
+}
+
+message GetEditorInstallationStepsResponse {
+  repeated string steps = 1;
 }
 
 message Editor {

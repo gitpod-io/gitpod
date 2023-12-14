@@ -8,11 +8,17 @@ import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { EditorService as EditorServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/editor_connect";
 import { inject, injectable } from "inversify";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
-import { ListEditorsRequest, ListEditorsResponse } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
+import {
+    GetEditorInstallationStepsRequest,
+    GetEditorInstallationStepsResponse,
+    ListEditorsRequest,
+    ListEditorsResponse,
+} from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
 import { IDEService } from "../ide-service";
 import { UserService } from "../user/user-service";
 import { ctxUserId } from "../util/request-context";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class EditorServiceAPI implements ServiceImpl<typeof EditorServiceInterface> {
@@ -28,6 +34,21 @@ export class EditorServiceAPI implements ServiceImpl<typeof EditorServiceInterfa
             editors: Object.entries(ideConfig.ideOptions.options).map(([id, editor]) =>
                 this.apiConverter.toEditor(id, editor),
             ),
+        });
+    }
+
+    async getEditorInstallationSteps(
+        req: GetEditorInstallationStepsRequest,
+        _: HandlerContext,
+    ): Promise<GetEditorInstallationStepsResponse> {
+        if (!req.editor || !req.editor.name) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "editor is required");
+        }
+        const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
+        const email = getPrimaryEmail(user);
+        const ideConfig = await this.ideService.getIDEConfig({ user: { id: user.id, email } });
+        return new GetEditorInstallationStepsResponse({
+            steps: this.apiConverter.toEditorInstallationSteps(req.editor.name, req.editor.version, ideConfig.clients),
         });
     }
 }

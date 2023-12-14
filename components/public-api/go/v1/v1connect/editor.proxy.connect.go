@@ -28,3 +28,13 @@ func (s *ProxyEditorServiceHandler) ListEditors(ctx context.Context, req *connec
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyEditorServiceHandler) GetEditorInstallationSteps(ctx context.Context, req *connect_go.Request[v1.GetEditorInstallationStepsRequest]) (*connect_go.Response[v1.GetEditorInstallationStepsResponse], error) {
+	resp, err := s.Client.GetEditorInstallationSteps(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

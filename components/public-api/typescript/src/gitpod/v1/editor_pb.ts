@@ -98,6 +98,82 @@ export class ListEditorsResponse extends Message<ListEditorsResponse> {
 }
 
 /**
+ * @generated from message gitpod.v1.GetEditorInstallationStepsRequest
+ */
+export class GetEditorInstallationStepsRequest extends Message<GetEditorInstallationStepsRequest> {
+  /**
+   * editor is the editor to get installation steps
+   *
+   * @generated from field: gitpod.v1.EditorReference editor = 1;
+   */
+  editor?: EditorReference;
+
+  constructor(data?: PartialMessage<GetEditorInstallationStepsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetEditorInstallationStepsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "editor", kind: "message", T: EditorReference },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetEditorInstallationStepsRequest {
+    return new GetEditorInstallationStepsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetEditorInstallationStepsRequest {
+    return new GetEditorInstallationStepsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetEditorInstallationStepsRequest {
+    return new GetEditorInstallationStepsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetEditorInstallationStepsRequest | PlainMessage<GetEditorInstallationStepsRequest> | undefined, b: GetEditorInstallationStepsRequest | PlainMessage<GetEditorInstallationStepsRequest> | undefined): boolean {
+    return proto3.util.equals(GetEditorInstallationStepsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetEditorInstallationStepsResponse
+ */
+export class GetEditorInstallationStepsResponse extends Message<GetEditorInstallationStepsResponse> {
+  /**
+   * @generated from field: repeated string steps = 1;
+   */
+  steps: string[] = [];
+
+  constructor(data?: PartialMessage<GetEditorInstallationStepsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetEditorInstallationStepsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "steps", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetEditorInstallationStepsResponse {
+    return new GetEditorInstallationStepsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetEditorInstallationStepsResponse {
+    return new GetEditorInstallationStepsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetEditorInstallationStepsResponse {
+    return new GetEditorInstallationStepsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetEditorInstallationStepsResponse | PlainMessage<GetEditorInstallationStepsResponse> | undefined, b: GetEditorInstallationStepsResponse | PlainMessage<GetEditorInstallationStepsResponse> | undefined): boolean {
+    return proto3.util.equals(GetEditorInstallationStepsResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.Editor
  */
 export class Editor extends Message<Editor> {

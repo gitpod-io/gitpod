@@ -27,6 +27,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EditorServiceClient interface {
 	ListEditors(ctx context.Context, in *ListEditorsRequest, opts ...grpc.CallOption) (*ListEditorsResponse, error)
+	GetEditorInstallationSteps(ctx context.Context, in *GetEditorInstallationStepsRequest, opts ...grpc.CallOption) (*GetEditorInstallationStepsResponse, error)
 }
 
 type editorServiceClient struct {
@@ -46,11 +47,21 @@ func (c *editorServiceClient) ListEditors(ctx context.Context, in *ListEditorsRe
 	return out, nil
 }
 
+func (c *editorServiceClient) GetEditorInstallationSteps(ctx context.Context, in *GetEditorInstallationStepsRequest, opts ...grpc.CallOption) (*GetEditorInstallationStepsResponse, error) {
+	out := new(GetEditorInstallationStepsResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.EditorService/GetEditorInstallationSteps", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EditorServiceServer is the server API for EditorService service.
 // All implementations must embed UnimplementedEditorServiceServer
 // for forward compatibility
 type EditorServiceServer interface {
 	ListEditors(context.Context, *ListEditorsRequest) (*ListEditorsResponse, error)
+	GetEditorInstallationSteps(context.Context, *GetEditorInstallationStepsRequest) (*GetEditorInstallationStepsResponse, error)
 	mustEmbedUnimplementedEditorServiceServer()
 }
 
@@ -60,6 +71,9 @@ type UnimplementedEditorServiceServer struct {
 
 func (UnimplementedEditorServiceServer) ListEditors(context.Context, *ListEditorsRequest) (*ListEditorsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListEditors not implemented")
+}
+func (UnimplementedEditorServiceServer) GetEditorInstallationSteps(context.Context, *GetEditorInstallationStepsRequest) (*GetEditorInstallationStepsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEditorInstallationSteps not implemented")
 }
 func (UnimplementedEditorServiceServer) mustEmbedUnimplementedEditorServiceServer() {}
 
@@ -92,6 +106,24 @@ func _EditorService_ListEditors_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EditorService_GetEditorInstallationSteps_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetEditorInstallationStepsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EditorServiceServer).GetEditorInstallationSteps(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.EditorService/GetEditorInstallationSteps",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EditorServiceServer).GetEditorInstallationSteps(ctx, req.(*GetEditorInstallationStepsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EditorService_ServiceDesc is the grpc.ServiceDesc for EditorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -102,6 +134,10 @@ var EditorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListEditors",
 			Handler:    _EditorService_ListEditors_Handler,
+		},
+		{
+			MethodName: "GetEditorInstallationSteps",
+			Handler:    _EditorService_GetEditorInstallationSteps_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -32,6 +32,7 @@ const (
 // EditorServiceClient is a client for the gitpod.v1.EditorService service.
 type EditorServiceClient interface {
 	ListEditors(context.Context, *connect_go.Request[v1.ListEditorsRequest]) (*connect_go.Response[v1.ListEditorsResponse], error)
+	GetEditorInstallationSteps(context.Context, *connect_go.Request[v1.GetEditorInstallationStepsRequest]) (*connect_go.Response[v1.GetEditorInstallationStepsResponse], error)
 }
 
 // NewEditorServiceClient constructs a client for the gitpod.v1.EditorService service. By default,
@@ -49,12 +50,18 @@ func NewEditorServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 			baseURL+"/gitpod.v1.EditorService/ListEditors",
 			opts...,
 		),
+		getEditorInstallationSteps: connect_go.NewClient[v1.GetEditorInstallationStepsRequest, v1.GetEditorInstallationStepsResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.EditorService/GetEditorInstallationSteps",
+			opts...,
+		),
 	}
 }
 
 // editorServiceClient implements EditorServiceClient.
 type editorServiceClient struct {
-	listEditors *connect_go.Client[v1.ListEditorsRequest, v1.ListEditorsResponse]
+	listEditors                *connect_go.Client[v1.ListEditorsRequest, v1.ListEditorsResponse]
+	getEditorInstallationSteps *connect_go.Client[v1.GetEditorInstallationStepsRequest, v1.GetEditorInstallationStepsResponse]
 }
 
 // ListEditors calls gitpod.v1.EditorService.ListEditors.
@@ -62,9 +69,15 @@ func (c *editorServiceClient) ListEditors(ctx context.Context, req *connect_go.R
 	return c.listEditors.CallUnary(ctx, req)
 }
 
+// GetEditorInstallationSteps calls gitpod.v1.EditorService.GetEditorInstallationSteps.
+func (c *editorServiceClient) GetEditorInstallationSteps(ctx context.Context, req *connect_go.Request[v1.GetEditorInstallationStepsRequest]) (*connect_go.Response[v1.GetEditorInstallationStepsResponse], error) {
+	return c.getEditorInstallationSteps.CallUnary(ctx, req)
+}
+
 // EditorServiceHandler is an implementation of the gitpod.v1.EditorService service.
 type EditorServiceHandler interface {
 	ListEditors(context.Context, *connect_go.Request[v1.ListEditorsRequest]) (*connect_go.Response[v1.ListEditorsResponse], error)
+	GetEditorInstallationSteps(context.Context, *connect_go.Request[v1.GetEditorInstallationStepsRequest]) (*connect_go.Response[v1.GetEditorInstallationStepsResponse], error)
 }
 
 // NewEditorServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -79,6 +92,11 @@ func NewEditorServiceHandler(svc EditorServiceHandler, opts ...connect_go.Handle
 		svc.ListEditors,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.EditorService/GetEditorInstallationSteps", connect_go.NewUnaryHandler(
+		"/gitpod.v1.EditorService/GetEditorInstallationSteps",
+		svc.GetEditorInstallationSteps,
+		opts...,
+	))
 	return "/gitpod.v1.EditorService/", mux
 }
 
@@ -87,4 +105,8 @@ type UnimplementedEditorServiceHandler struct{}
 
 func (UnimplementedEditorServiceHandler) ListEditors(context.Context, *connect_go.Request[v1.ListEditorsRequest]) (*connect_go.Response[v1.ListEditorsResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.EditorService.ListEditors is not implemented"))
+}
+
+func (UnimplementedEditorServiceHandler) GetEditorInstallationSteps(context.Context, *connect_go.Request[v1.GetEditorInstallationStepsRequest]) (*connect_go.Response[v1.GetEditorInstallationStepsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.EditorService.GetEditorInstallationSteps is not implemented"))
 }

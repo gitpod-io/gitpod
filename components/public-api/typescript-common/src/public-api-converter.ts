@@ -152,7 +152,7 @@ import { RoleOrPermission as ProtocolRoleOrPermission } from "@gitpod/gitpod-pro
 import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { GitpodServer } from "@gitpod/gitpod-protocol";
-import { IDEOption } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -423,6 +423,45 @@ export class PublicAPIConverter {
             imageVersion: ide.imageVersion,
             latestImageVersion: ide.latestImageVersion,
         });
+    }
+
+    toEditorInstallationStepsMap(clientsInfo: IDEOptions["clients"]): Record<string, string[]> {
+        if (!clientsInfo) {
+            return {}
+        }
+        return Object.entries(clientsInfo).reduce(
+            (acc, [client, e]) => {
+                if (!e.installationSteps || !e.desktopIDEs) {
+                    return acc;
+                }
+                for (const ide of e.desktopIDEs) {
+                    let name = ide;
+                    if (ide === "code-desktop") {
+                        name = client + "#" + ide;
+                    }
+                    acc[name] = e.installationSteps;
+                }
+                return acc;
+            },
+            {} as Record<string, string[]>,
+        );
+    }
+
+    toEditorInstallationSteps(
+        editor: string,
+        version: string | undefined,
+        clientsInfo: IDEOptions["clients"],
+    ): string[] | undefined {
+        let key = editor;
+        if (editor === "code") {
+            if (version === "latest") {
+                key = "vscode-insiders#" + key;
+            } else {
+                key = "vscode#" + key;
+            }
+        }
+        const map = this.toEditorInstallationStepsMap(clientsInfo);
+        return map[key];
     }
 
     toWorkspaceEditor(ideConfig: ConfigurationIdeConfig | undefined): EditorReference | undefined {

@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ListEditorsRequest, ListEditorsResponse } from "./editor_pb.js";
+import { GetEditorInstallationStepsRequest, GetEditorInstallationStepsResponse, ListEditorsRequest, ListEditorsResponse } from "./editor_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -25,6 +25,15 @@ export const EditorService = {
       name: "ListEditors",
       I: ListEditorsRequest,
       O: ListEditorsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc gitpod.v1.EditorService.GetEditorInstallationSteps
+     */
+    getEditorInstallationSteps: {
+      name: "GetEditorInstallationSteps",
+      I: GetEditorInstallationStepsRequest,
+      O: GetEditorInstallationStepsResponse,
       kind: MethodKind.Unary,
     },
   }
