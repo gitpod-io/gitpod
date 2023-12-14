@@ -36,6 +36,7 @@ export default function MembersPage() {
     const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
     const [searchText, setSearchText] = useState<string>("");
     const [roleFilter, setRoleFilter] = useState<OrganizationRole | undefined>();
+    const [memberToRemove, setMemberToRemove] = useState<OrganizationMember | undefined>(undefined);
     const inviteId = useInvitationId().data;
 
     const inviteUrl = useMemo(() => {
@@ -64,11 +65,6 @@ export default function MembersPage() {
             userId,
             role,
         });
-        invalidateMembers();
-    };
-
-    const removeTeamMember = async (userId: string) => {
-        await organizationClient.deleteOrganizationMember({ organizationId: org.data?.id, userId });
         invalidateMembers();
     };
 
@@ -252,8 +248,7 @@ export default function MembersPage() {
                                                           customFontStyle: !isRemainingOwner
                                                               ? "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                                                               : "text-gray-400 dark:text-gray-200",
-                                                          onClick: () =>
-                                                              !isRemainingOwner && removeTeamMember(m.userId),
+                                                          onClick: () => !isRemainingOwner && setMemberToRemove(m),
                                                       },
                                                   ]
                                                 : isOwner
@@ -262,7 +257,7 @@ export default function MembersPage() {
                                                           title: "Remove",
                                                           customFontStyle:
                                                               "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                                          onClick: () => removeTeamMember(m.userId),
+                                                          onClick: () => setMemberToRemove(m),
                                                       },
                                                   ]
                                                 : []
@@ -291,6 +286,38 @@ export default function MembersPage() {
                         )}
                         <Button variant="secondary" onClick={() => setShowInviteModal(false)}>
                             Close
+                        </Button>
+                    </ModalFooter>
+                </Modal>
+            )}
+            {memberToRemove && (
+                // TODO: Use title and buttons props
+                <Modal visible={true} onClose={() => setMemberToRemove(undefined)}>
+                    <ModalHeader>Remove Members</ModalHeader>
+                    <ModalBody>
+                        You are about to remove <b>{memberToRemove.fullName}</b> from this organization.
+                        <br />
+                        <br />
+                        {memberToRemove.ownedByOrganization ? (
+                            <>This will delete the user account and all associated data.</>
+                        ) : null}
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant="secondary" onClick={() => setMemberToRemove(undefined)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="default"
+                            onClick={async () => {
+                                await organizationClient.deleteOrganizationMember({
+                                    organizationId: org.data?.id,
+                                    userId: memberToRemove.userId,
+                                });
+                                invalidateMembers();
+                                setMemberToRemove(undefined);
+                            }}
+                        >
+                            Remove
                         </Button>
                     </ModalFooter>
                 </Modal>
