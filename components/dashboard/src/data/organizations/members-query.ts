@@ -33,7 +33,6 @@ export function useListOrganizationMembers() {
             return response.members;
         },
         {
-            staleTime: 1000 * 60 * 5, // 5 minutes
             enabled: !!organizationId,
         },
     );

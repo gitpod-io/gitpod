@@ -21,12 +21,14 @@ import { ProjectsService } from "../projects/projects-service";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
+import { UserService } from "../user/user-service";
 
 @injectable()
 export class OrganizationService {
     constructor(
         @inject(TeamDB) private readonly teamDB: TeamDB,
         @inject(UserDB) private readonly userDB: UserDB,
+        @inject(UserService) private readonly userService: UserService,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
@@ -344,12 +346,8 @@ export class OrganizationService {
                 }
                 // Only invited members can be removed from the Org, but organizational accounts cannot.
                 if (userToBeRemoved.organizationId && orgId === userToBeRemoved.organizationId) {
-                    throw new ApplicationError(
-                        ErrorCodes.PERMISSION_DENIED,
-                        `User's account '${memberId}' belongs to the organization '${orgId}'`,
-                    );
+                    await this.userService.deleteUser(userId, memberId);
                 }
-
                 await db.removeMemberFromTeam(userToBeRemoved.id, orgId);
                 await this.auth.removeOrganizationRole(orgId, memberId, "member");
             });
