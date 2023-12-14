@@ -132,6 +132,15 @@ module.exports = {
                 "monospace",
             ],
         },
+        fontSize: {
+            sm: ".75rem",
+            base: ".875rem",
+            lg: "1rem",
+            xl: "1.125rem",
+            "2xl": "1.25rem",
+            "3xl": "1.5rem",
+            "4xl": "2rem",
+        },
         underlineThickness: {
             thin: "2px",
             thick: "5px",

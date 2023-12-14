@@ -52,6 +52,19 @@ export const Heading3: FC<HeadingProps> = ({ id, tracking, className, children, 
     return (
         <Comp
             id={id}
+            className={cn("text-pk-content-primary", getTracking(tracking), "font-semibold text-xl", className)}
+        >
+            {children}
+        </Comp>
+    );
+};
+
+export const Heading4: FC<HeadingProps> = ({ id, tracking, className, children, asChild }) => {
+    const Comp = asChild ? Slot : "h4";
+
+    return (
+        <Comp
+            id={id}
             className={cn("text-pk-content-primary", getTracking(tracking), "font-semibold text-lg", className)}
         >
             {children}
