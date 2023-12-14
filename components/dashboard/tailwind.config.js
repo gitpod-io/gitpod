@@ -48,7 +48,6 @@ module.exports = {
                 "kumquat-base": "#FFAE33",
                 "kumquat-ripe": "#FFB45B",
                 "kumquat-light": "#FFE4BC",
-                "kumquat-gradient": "linear-gradient(137.41deg, #FFAD33 14.37%, #FF8A00 91.32%)",
                 gray: podkitColors.gray,
                 // Podkit colors - eventually we'll only use these colors
                 // Once migrated, we can remove the colors above and shift this up under theme directly instead of extend
@@ -70,6 +69,9 @@ module.exports = {
                 "pk-border": {
                     base: "rgb(var(--border-base) / <alpha-value>)",
                 },
+            },
+            backgroundImage: {
+                "kumquat-gradient": "linear-gradient(137.41deg, #FFAD33 14.37%, #FF8A00 91.32%)",
             },
             container: {
                 center: true,
