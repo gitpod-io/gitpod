@@ -22,7 +22,6 @@ export const Switch = React.forwardRef<
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 "focus-visible:outline-kumquat-ripe",
                 "disabled:cursor-default disabled:bg-pk-surface-labels",
-                // TODO: try and make kumquat-gradient work here for the bg
                 // checked state colors
                 "data-[state=checked]:bg-kumquat-gradient",
                 // unchecked state colors
