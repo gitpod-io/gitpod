@@ -63,7 +63,6 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                 <div className="flex gap-4 mt-6">
                     {/* TODO: wrap this in a SwitchInputField that handles the switch, label and description and htmlFor/id automatically */}
                     <Switch checked={enabled} onCheckedChange={updateEnabled} id="prebuilds-enabled" />
-                    <Switch checked={enabled} disabled />
                     <div className="flex flex-col">
                         <label className="font-semibold" htmlFor="prebuilds-enabled">
                             {enabled ? "Prebuilds are enabled" : "Prebuilds are disabled"}
