@@ -108,9 +108,7 @@ export default function RepositoryFinder({
                 result.push({
                     id: "more",
                     element: (
-                        <div className="text-sm text-gray-400 dark:text-gray-500">
-                            Repo missing? Try refining your search.
-                        </div>
+                        <div className="text-sm text-pk-content-tertiary">Repo missing? Try refining your search.</div>
                     ),
                     isSelectable: false,
                 } as ComboboxElement);
@@ -123,7 +121,7 @@ export default function RepositoryFinder({
                 result.push({
                     id: "bitbucket-server",
                     element: (
-                        <div className="text-sm text-gray-400 dark:text-gray-500">
+                        <div className="text-sm text-pk-content-tertiary">
                             <div className="flex items-center">
                                 <Exclamation2 className="w-4 h-4"></Exclamation2>
                                 <span className="ml-2">Bitbucket Server only supports searching by prefix.</span>
@@ -138,7 +136,7 @@ export default function RepositoryFinder({
                 result.push({
                     id: "not-searched",
                     element: (
-                        <div className="text-sm text-gray-400 dark:text-gray-500">
+                        <div className="text-sm text-pk-content-tertiary">
                             Please type at least 3 characters to search.
                         </div>
                     ),
@@ -199,18 +197,18 @@ const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo })
             aria-label={`${repo.configurationId ? "Project" : "Repo"}: ${repo.url}`}
         >
             <span className={"pr-2"}>
-                <RepositoryIcon className={`w-5 h-5 text-gray-400`} />
+                <RepositoryIcon className={`w-5 h-5 text-pk-content-tertiary`} />
             </span>
 
             {name && (
                 <>
                     <span className="text-sm whitespace-nowrap font-semibold">{name}</span>
-                    <MiddleDot className="px-0.5 text-gray-300 dark:text-gray-500" />
+                    <MiddleDot className="px-0.5 text-pk-content-tertiary" />
                 </>
             )}
 
             <span
-                className="text-sm whitespace-nowrap truncate overflow-ellipsis text-gray-500 dark:text-gray-400"
+                className="text-sm whitespace-nowrap truncate overflow-ellipsis text-pk-content-secondary"
                 title={repoPath}
             >
                 {repoPath}

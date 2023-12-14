@@ -9,6 +9,7 @@ import { FC, useCallback, useEffect, useMemo } from "react";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import Editor from "../icons/Editor.svg";
 import { useIDEOptions } from "../data/ide-options/ide-options-query";
+import { MiddleDot } from "./typography/MiddleDot";
 
 interface SelectIDEComponentProps {
     selectedIdeOption?: string;
@@ -147,21 +148,21 @@ const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest
             htmlTitle={title}
             title={
                 <div>
-                    {title} <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
-                    <span className="text-gray-400 dark:text-gray-500 font-normal">{version}</span>{" "}
+                    {title} <MiddleDot className="text-pk-content-tertiary" />{" "}
+                    <span className="font-normal">{version}</span>{" "}
                     {useLatest && (
-                        <div className="ml-1 rounded-xl bg-gray-200 dark:bg-gray-600 px-2 inline text-sm text-gray-500 dark:text-gray-400 font-normal">
+                        <div className="ml-1 rounded-xl bg-pk-content-tertiary/10 px-2 py-1 inline text-sm font-normal">
                             Latest
                         </div>
                     )}
                 </div>
             }
             subtitle={
-                <div className="flex">
+                <div className="flex gap-0.5">
                     <div className="font-semibold">Editor</div>
                     {label && (
                         <>
-                            <div className="mx-1">&middot;</div>
+                            <MiddleDot />
                             <div>{capitalize(label)}</div>
                         </>
                     )}
