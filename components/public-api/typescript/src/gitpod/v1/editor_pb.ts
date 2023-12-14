@@ -11,6 +11,198 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
+import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
+
+/**
+ * @generated from message gitpod.v1.ListEditorsRequest
+ */
+export class ListEditorsRequest extends Message<ListEditorsRequest> {
+  /**
+   * pagination contains the pagination options for resources
+   *
+   * @generated from field: gitpod.v1.PaginationRequest pagination = 1;
+   */
+  pagination?: PaginationRequest;
+
+  constructor(data?: PartialMessage<ListEditorsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListEditorsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListEditorsRequest {
+    return new ListEditorsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListEditorsRequest {
+    return new ListEditorsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListEditorsRequest {
+    return new ListEditorsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListEditorsRequest | PlainMessage<ListEditorsRequest> | undefined, b: ListEditorsRequest | PlainMessage<ListEditorsRequest> | undefined): boolean {
+    return proto3.util.equals(ListEditorsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListEditorsResponse
+ */
+export class ListEditorsResponse extends Message<ListEditorsResponse> {
+  /**
+   * pagination contains the pagination options for resources
+   *
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 1;
+   */
+  pagination?: PaginationResponse;
+
+  /**
+   * @generated from field: repeated gitpod.v1.Editor editors = 2;
+   */
+  editors: Editor[] = [];
+
+  constructor(data?: PartialMessage<ListEditorsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListEditorsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationResponse },
+    { no: 2, name: "editors", kind: "message", T: Editor, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListEditorsResponse {
+    return new ListEditorsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListEditorsResponse {
+    return new ListEditorsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListEditorsResponse {
+    return new ListEditorsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListEditorsResponse | PlainMessage<ListEditorsResponse> | undefined, b: ListEditorsResponse | PlainMessage<ListEditorsResponse> | undefined): boolean {
+    return proto3.util.equals(ListEditorsResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.Editor
+ */
+export class Editor extends Message<Editor> {
+  /**
+   * name is the name of the editor.
+   * It refers to the editor key which can be used in CreateAndStartWorkspace
+   * method.
+   *
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  /**
+   * title is the display name of the editor
+   *
+   * @generated from field: string title = 2;
+   */
+  title = "";
+
+  /**
+   * type is the type of the editor
+   *
+   * @generated from field: gitpod.v1.Editor.Type type = 3;
+   */
+  type = Editor_Type.UNSPECIFIED;
+
+  /**
+   * logo is the logo url of the editor
+   *
+   * @generated from field: string logo = 4;
+   */
+  logo = "";
+
+  /**
+   * image_version is the version of the stable editor image
+   *
+   * @generated from field: string image_version = 5;
+   */
+  imageVersion = "";
+
+  /**
+   * latest_image_version is the version of the latest editor image
+   *
+   * @generated from field: string latest_image_version = 6;
+   */
+  latestImageVersion = "";
+
+  constructor(data?: PartialMessage<Editor>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.Editor";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "type", kind: "enum", T: proto3.getEnumType(Editor_Type) },
+    { no: 4, name: "logo", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "image_version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "latest_image_version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Editor {
+    return new Editor().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Editor {
+    return new Editor().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Editor {
+    return new Editor().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Editor | PlainMessage<Editor> | undefined, b: Editor | PlainMessage<Editor> | undefined): boolean {
+    return proto3.util.equals(Editor, a, b);
+  }
+}
+
+/**
+ * @generated from enum gitpod.v1.Editor.Type
+ */
+export enum Editor_Type {
+  /**
+   * @generated from enum value: TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: TYPE_BROWSER = 1;
+   */
+  BROWSER = 1,
+
+  /**
+   * @generated from enum value: TYPE_DESKTOP = 2;
+   */
+  DESKTOP = 2,
+}
+// Retrieve enum metadata with: proto3.getEnumType(Editor_Type)
+proto3.util.setEnumType(Editor_Type, "gitpod.v1.Editor.Type", [
+  { no: 0, name: "TYPE_UNSPECIFIED" },
+  { no: 1, name: "TYPE_BROWSER" },
+  { no: 2, name: "TYPE_DESKTOP" },
+]);
 
 /**
  * @generated from message gitpod.v1.EditorReference

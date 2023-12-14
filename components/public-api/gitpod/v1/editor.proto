@@ -2,7 +2,53 @@ syntax = "proto3";
 
 package gitpod.v1;
 
+import "gitpod/v1/pagination.proto";
+
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+service EditorService {
+  rpc ListEditors(ListEditorsRequest) returns (ListEditorsResponse) {}
+}
+
+message ListEditorsRequest {
+  // pagination contains the pagination options for resources
+  PaginationRequest pagination = 1;
+}
+
+message ListEditorsResponse {
+  // pagination contains the pagination options for resources
+  PaginationResponse pagination = 1;
+
+  repeated Editor editors = 2;
+}
+
+message Editor {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    TYPE_BROWSER = 1;
+    TYPE_DESKTOP = 2;
+  }
+
+  // name is the name of the editor.
+  // It refers to the editor key which can be used in CreateAndStartWorkspace
+  // method.
+  string name = 1;
+
+  // title is the display name of the editor
+  string title = 2;
+
+  // type is the type of the editor
+  Type type = 3;
+
+  // logo is the logo url of the editor
+  string logo = 4;
+
+  // image_version is the version of the stable editor image
+  string image_version = 5;
+
+  // latest_image_version is the version of the latest editor image
+  string latest_image_version = 6;
+}
 
 message EditorReference {
   string name = 1;

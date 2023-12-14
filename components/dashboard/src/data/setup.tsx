@@ -23,6 +23,7 @@ import * as PaginationClasses from "@gitpod/public-api/lib/gitpod/v1/pagination_
 import * as ConfigurationClasses from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import * as AuthProviderClasses from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import * as EnvVarClasses from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
+import * as EditorClasses from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
 import * as PrebuildClasses from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import * as VerificationClasses from "@gitpod/public-api/lib/gitpod/v1/verification_pb";
 import * as InstallationClasses from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
@@ -154,6 +155,7 @@ function initializeMessages() {
         ...Object.values(ConfigurationClasses),
         ...Object.values(AuthProviderClasses),
         ...Object.values(EnvVarClasses),
+        ...Object.values(EditorClasses),
         ...Object.values(PrebuildClasses),
         ...Object.values(VerificationClasses),
         ...Object.values(InstallationClasses),

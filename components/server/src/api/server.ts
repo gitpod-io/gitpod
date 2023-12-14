@@ -61,6 +61,8 @@ import { UserService as UserServiceInternal } from "../user/user-service";
 import { InstallationServiceAPI } from "./installation-service-api";
 import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
 import { RateLimitter } from "../rate-limitter";
+import { EditorServiceAPI } from "./editor-service-api";
+import { EditorService } from "@gitpod/public-api/lib/gitpod/v1/editor_connect";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -77,6 +79,7 @@ export class API {
     @inject(ConfigurationServiceAPI) private readonly configurationServiceApi: ConfigurationServiceAPI;
     @inject(AuthProviderServiceAPI) private readonly authProviderServiceApi: AuthProviderServiceAPI;
     @inject(EnvironmentVariableServiceAPI) private readonly envvarServiceApi: EnvironmentVariableServiceAPI;
+    @inject(EditorServiceAPI) private readonly editorServiceApi: EditorServiceAPI;
     @inject(ScmServiceAPI) private readonly scmServiceAPI: ScmServiceAPI;
     @inject(SSHServiceAPI) private readonly sshServiceApi: SSHServiceAPI;
     @inject(StatsServiceAPI) private readonly tatsServiceApi: StatsServiceAPI;
@@ -136,6 +139,7 @@ export class API {
                         service(ConfigurationService, this.configurationServiceApi),
                         service(AuthProviderService, this.authProviderServiceApi),
                         service(EnvironmentVariableService, this.envvarServiceApi),
+                        service(EditorService, this.editorServiceApi),
                         service(SCMService, this.scmServiceAPI),
                         service(SSHService, this.sshServiceApi),
                         service(PrebuildService, this.prebuildServiceApi),
@@ -370,6 +374,7 @@ export class API {
         bind(ConfigurationServiceAPI).toSelf().inSingletonScope();
         bind(AuthProviderServiceAPI).toSelf().inSingletonScope();
         bind(EnvironmentVariableServiceAPI).toSelf().inSingletonScope();
+        bind(EditorServiceAPI).toSelf().inSingletonScope();
         bind(ScmServiceAPI).toSelf().inSingletonScope();
         bind(SSHServiceAPI).toSelf().inSingletonScope();
         bind(StatsServiceAPI).toSelf().inSingletonScope();

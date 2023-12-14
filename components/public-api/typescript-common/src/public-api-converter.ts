@@ -77,7 +77,7 @@ import {
     WorkspaceStatus_PrebuildResult,
     WorkspaceStatus_WorkspaceConditions,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
+import { Editor, EditorReference, Editor_Type } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
 import {
     BlockedEmailDomain,
     BlockedRepository,
@@ -152,6 +152,7 @@ import { RoleOrPermission as ProtocolRoleOrPermission } from "@gitpod/gitpod-pro
 import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { GitpodServer } from "@gitpod/gitpod-protocol";
+import { IDEOption } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -202,7 +203,7 @@ export class PublicAPIConverter {
             }
             return spec;
         }
-        spec.editor = this.toEditor(arg.configuration?.ideConfig);
+        spec.editor = this.toWorkspaceEditor(arg.configuration?.ideConfig);
         spec.ports = this.toPorts(arg.status.exposedPorts);
         if (arg.status.timeout) {
             spec.timeout = new UpdateWorkspaceRequest_UpdateTimeout({
@@ -413,7 +414,18 @@ export class PublicAPIConverter {
         return result;
     }
 
-    toEditor(ideConfig: ConfigurationIdeConfig | undefined): EditorReference | undefined {
+    toEditor(name: string, ide: IDEOption): Editor {
+        return new Editor({
+            name,
+            title: ide.title,
+            type: ide.type === "browser" ? Editor_Type.BROWSER : Editor_Type.DESKTOP,
+            logo: ide.logo,
+            imageVersion: ide.imageVersion,
+            latestImageVersion: ide.latestImageVersion,
+        });
+    }
+
+    toWorkspaceEditor(ideConfig: ConfigurationIdeConfig | undefined): EditorReference | undefined {
         if (!ideConfig?.ide) {
             return undefined;
         }

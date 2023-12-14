@@ -41,6 +41,8 @@ import { VerificationService } from "@gitpod/public-api/lib/gitpod/v1/verificati
 import { JsonRpcInstallationClient } from "./json-rpc-installation-client";
 import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
 import { JsonRpcUserClient } from "./json-rpc-user-client";
+import { EditorService } from "@gitpod/public-api/lib/gitpod/v1/editor_connect";
+import { JsonRpcEditorClient } from "./json-rpc-editor-client";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -87,6 +89,11 @@ export const scmClient = createServiceClient(SCMService, {
 export const envVarClient = createServiceClient(EnvironmentVariableService, {
     client: new JsonRpcEnvvarClient(),
     featureFlagSuffix: "envvar",
+});
+
+export const editorClient = createServiceClient(EditorService, {
+    client: new JsonRpcEditorClient(),
+    featureFlagSuffix: "editor",
 });
 
 export const userClient = createServiceClient(UserService, {
