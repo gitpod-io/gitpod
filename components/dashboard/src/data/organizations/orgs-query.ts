@@ -14,12 +14,14 @@ import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 export function useOrganizationsInvalidator() {
     const user = useCurrentUser();
+    const orgs = useOrganizations();
 
     const queryClient = useQueryClient();
     return useCallback(() => {
         console.log("Invalidating orgs... " + JSON.stringify(getQueryKey(user?.id)));
         queryClient.invalidateQueries(getQueryKey(user?.id));
-    }, [user?.id, queryClient]);
+        orgs.refetch();
+    }, [user?.id, queryClient, orgs]);
 }
 
 export function useOrganizations() {
