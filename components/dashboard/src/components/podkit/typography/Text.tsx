@@ -10,5 +10,5 @@ import { PropsWithClassName, cn } from "@podkit/lib/cn";
 type TextProps = PropsWithChildren<PropsWithClassName>;
 
 export const Text: FC<TextProps> = ({ className, children }) => {
-    return <span className={cn("text-black dark:text-white", className)}>{children}</span>;
+    return <span className={cn("text-pk-content-primary text-base", className)}>{children}</span>;
 };
