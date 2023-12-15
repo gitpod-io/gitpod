@@ -82,6 +82,7 @@ type Components struct {
 	ImageBuilderNG Versioned `json:"imageBuilderNG"`
 	WSManagerNG    Versioned `json:"wsManagerNG"`
 	WorkspacekitNG Versioned `json:"workspacekitNG"`
+	WSDaemonNg     Versioned `json:"wsDaemonNg"`
 }
 
 func Embedded() (*Manifest, error) {
