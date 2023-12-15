@@ -5,7 +5,7 @@ A curated list of notable changes to the Gitpod CLI.
 ## v1.0.4
 
 -  When opening / sshing into a stopped workspace, it will now be started automatically
--  `--open`ing a workspace now writes the opened URL to the output
+-  Opening a workspace now writes the opened URL to the output
 
 ## v1.0.3
 
