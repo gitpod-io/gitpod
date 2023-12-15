@@ -65,7 +65,7 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                     checked={enabled}
                     onCheckedChange={updateEnabled}
                     label={
-                        enabled && !updateConfiguration.isLoading ? "Prebuilds are enabled" : "Prebuilds are disabled"
+                        !!configuration.prebuildSettings?.enabled ? "Prebuilds are enabled" : "Prebuilds are disabled"
                     }
                     description={
                         <TextMuted>
