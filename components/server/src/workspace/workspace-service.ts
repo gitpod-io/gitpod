@@ -51,8 +51,8 @@ import {
 import {
     WorkspaceStarter,
     StartWorkspaceOptions as StarterStartWorkspaceOptions,
-    isWorkspaceClassDiscoveryEnabled,
     isClusterMaintenanceError,
+    getWorkspaceClassForInstance,
 } from "./workspace-starter";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
@@ -71,6 +71,7 @@ import { OrganizationService } from "../orgs/organization-service";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { SnapshotService } from "./snapshot-service";
+import { InstallationService } from "../auth/installation-service";
 
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
@@ -93,12 +94,53 @@ export class WorkspaceService {
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(OrganizationService) private readonly orgService: OrganizationService,
         @inject(SnapshotService) private readonly snapshotService: SnapshotService,
+        @inject(InstallationService) private readonly installationService: InstallationService,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
         @inject(Authorizer) private readonly auth: Authorizer,
 
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
     ) {}
+
+    /**
+     * workspaceClassChecking checks if user can create workspace with specified class
+     */
+    private async workspaceClassChecking(
+        ctx: TraceContext,
+        userId: string,
+        organizationId: string,
+        previousInstance: Pick<WorkspaceInstance, "workspaceClass"> | undefined,
+        project: Project | undefined,
+        workspaceClassOverride: string | undefined,
+    ) {
+        const workspaceClass = await getWorkspaceClassForInstance(
+            ctx,
+            { type: "regular" },
+            previousInstance,
+            project,
+            workspaceClassOverride,
+            this.config.workspaceClasses,
+        );
+        const settings = await this.orgService.getSettings(userId, organizationId);
+        if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
+            if (!settings.allowedWorkspaceClasses.includes(workspaceClass)) {
+                const hasOtherOptions = await this.orgService.hasAllowedWorkspaceClassesInInstallation(
+                    userId,
+                    organizationId,
+                );
+                if (!hasOtherOptions) {
+                    throw new ApplicationError(
+                        ErrorCodes.PRECONDITION_FAILED,
+                        "No allowed workspace classes available. Please contact an admin to update organization settings.",
+                    );
+                }
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    "Selected workspace class is not allowed in current organization.",
+                );
+            }
+        }
+    }
 
     async createWorkspace(
         ctx: TraceContext,
@@ -107,10 +149,13 @@ export class WorkspaceService {
         project: Project | undefined,
         context: WorkspaceContext,
         normalizedContextURL: string,
+        workspaceClass: string | undefined,
     ): Promise<Workspace> {
         await this.mayStartWorkspace(ctx, user, organizationId, this.db.findRegularRunningInstances(user.id));
 
         await this.auth.checkPermissionOnOrganization(user.id, "create_workspace", organizationId);
+
+        await this.workspaceClassChecking(ctx, user.id, organizationId, undefined, project, workspaceClass);
 
         // We don't want to be doing this in a transaction, because it calls out to external systems.
         // TODO(gpl) Would be great to sepearate workspace creation from external calls
@@ -633,33 +678,7 @@ export class WorkspaceService {
     }
 
     public async getSupportedWorkspaceClasses(user: { id: string }): Promise<SupportedWorkspaceClass[]> {
-        if (await isWorkspaceClassDiscoveryEnabled(user)) {
-            const allClasses = (await this.clientProvider.getAllWorkspaceClusters()).flatMap((cluster) => {
-                return (cluster.availableWorkspaceClasses || [])?.map((cls) => {
-                    return <SupportedWorkspaceClass>{
-                        description: cls.description,
-                        displayName: cls.displayName,
-                        id: cls.id,
-                        isDefault: cls.id === cluster.preferredWorkspaceClass,
-                    };
-                });
-            });
-            allClasses.sort((a, b) => a.displayName.localeCompare(b.displayName));
-            const uniqueClasses = allClasses.filter((v, i, a) => a.map((c) => c.id).indexOf(v.id) == i);
-
-            return uniqueClasses;
-        }
-
-        // No access check required, valid session/user is enough
-        const classes = this.config.workspaceClasses.map((c) => ({
-            id: c.id,
-            category: c.category,
-            displayName: c.displayName,
-            description: c.description,
-            powerups: c.powerups,
-            isDefault: c.isDefault,
-        }));
-        return classes;
+        return this.installationService.getInstallationWorkspaceClasses(user.id);
     }
 
     /**
