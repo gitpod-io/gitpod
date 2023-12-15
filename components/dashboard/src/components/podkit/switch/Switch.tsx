@@ -4,10 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { ReactNode } from "react";
+import React from "react";
 import * as SwitchPrimitives from "@radix-ui/react-switch";
 import { cn } from "@podkit/lib/cn";
-import { TextMuted } from "@podkit/typography/TextMuted";
 
 export const Switch = React.forwardRef<
     React.ElementRef<typeof SwitchPrimitives.Root>,
@@ -46,29 +45,3 @@ export const Switch = React.forwardRef<
     );
 });
 Switch.displayName = SwitchPrimitives.Root.displayName;
-
-export interface SwitchInputFieldProps extends React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root> {
-    id?: string;
-    label: ReactNode;
-    description?: ReactNode;
-}
-
-export const SwitchInputField = React.forwardRef<React.ElementRef<typeof SwitchPrimitives.Root>, SwitchInputFieldProps>(
-    ({ className, checked, onCheckedChange, label, id, description, ...props }, ref) => {
-        const switchProps = {
-            ...props,
-            className: "",
-        };
-        return (
-            <div className={cn("flex gap-4", className)}>
-                <Switch checked={checked} onCheckedChange={onCheckedChange} id={id} {...switchProps} ref={ref} />
-                <div className="flex flex-col">
-                    <label className="font-semibold cursor-pointer" htmlFor={id}>
-                        {label}
-                    </label>
-                    <TextMuted>{description}</TextMuted>
-                </div>
-            </div>
-        );
-    },
-);

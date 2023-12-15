@@ -320,7 +320,6 @@ async function createTestWorkspace(svc: WorkspaceService, org: Organization, own
         project,
         gitpodEmptyContext as any as CommitContext,
         "github.com/gitpod-io/empty",
-        undefined,
     );
     return ws;
 }

@@ -300,26 +300,6 @@ describe("OrganizationService", async () => {
             },
         );
 
-        await assertUpdateSettings(
-            "should update allowed workspace classes",
-            { allowedWorkspaceClasses: ["foo"] },
-            {
-                workspaceSharingDisabled: true,
-                defaultWorkspaceImage: "ubuntu",
-                allowedWorkspaceClasses: ["foo"],
-            },
-        );
-
-        await assertUpdateSettings(
-            "should update empty allowed workspace classes",
-            { allowedWorkspaceClasses: [] },
-            {
-                workspaceSharingDisabled: true,
-                defaultWorkspaceImage: "ubuntu",
-                allowedWorkspaceClasses: [],
-            },
-        );
-
         validateDefaultWorkspaceImage = () => {
             throw new Error("invalid image");
         };

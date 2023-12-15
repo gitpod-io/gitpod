@@ -35,8 +35,6 @@ import {
     UpdateOrganizationSettingsRequest,
     UpdateOrganizationSettingsResponse,
     ListOrganizationsRequest_Scope,
-    ListOrganizationWorkspaceClassesRequest,
-    ListOrganizationWorkspaceClassesResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { OrganizationService } from "../orgs/organization-service";
@@ -54,19 +52,6 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         @inject(PublicAPIConverter)
         private readonly apiConverter: PublicAPIConverter,
     ) {}
-
-    async listOrganizationWorkspaceClasses(
-        req: ListOrganizationWorkspaceClassesRequest,
-        _: HandlerContext,
-    ): Promise<ListOrganizationWorkspaceClassesResponse> {
-        if (!uuidValidate(req.organizationId)) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
-        }
-        const list = await this.orgService.listWorkspaceClasses(ctxUserId(), req.organizationId);
-        return new ListOrganizationWorkspaceClassesResponse({
-            workspaceClasses: list.map((e) => this.apiConverter.toWorkspaceClass(e)),
-        });
-    }
 
     async createOrganization(req: CreateOrganizationRequest, _: HandlerContext): Promise<CreateOrganizationResponse> {
         // TODO(gpl) This mimicks the current behavior of adding the subjectId as owner
@@ -260,7 +245,6 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         if (typeof req.defaultWorkspaceImage === "string") {
             update.defaultWorkspaceImage = req.defaultWorkspaceImage;
         }
-        update.allowedWorkspaceClasses = req.allowedWorkspaceClasses;
 
         if (Object.keys(update).length === 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");

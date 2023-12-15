@@ -21,9 +21,6 @@ export class DBOrgSettings implements OrganizationSettings {
     @Column("varchar", { nullable: true })
     defaultWorkspaceImage?: string | null;
 
-    @Column("json", { nullable: true })
-    allowedWorkspaceClasses?: string[] | null;
-
     @Column()
     deleted: boolean;
 }

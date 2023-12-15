@@ -360,7 +360,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         const repo = await this.getOrgSettingsRepo();
         return repo.findOne({
             where: { orgId, deleted: false },
-            select: ["orgId", "workspaceSharingDisabled", "defaultWorkspaceImage", "allowedWorkspaceClasses"],
+            select: ["orgId", "workspaceSharingDisabled", "defaultWorkspaceImage"],
         });
     }
 
