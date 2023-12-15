@@ -897,6 +897,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 project,
                 context,
                 normalizedContextUrl,
+                options.workspaceClass,
             );
             try {
                 await this.guardAccess({ kind: "workspace", subject: workspace }, "create");
@@ -1587,6 +1588,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { orgId, userId: user.id });
         await this.guardTeamOperation(orgId, "update");
         return this.organizationService.updateSettings(user.id, orgId, settings);
+    }
+
+    async getOrgWorkspaceClasses(ctx: TraceContextWithSpan, orgId: string): Promise<SupportedWorkspaceClass[]> {
+        const user = await this.checkAndBlockUser("getOrgWorkspaceClasses");
+        traceAPIParams(ctx, { orgId, userId: user.id });
+        await this.guardTeamOperation(orgId, "get");
+        return this.organizationService.listWorkspaceClasses(user.id, orgId);
     }
 
     async getDefaultWorkspaceImage(

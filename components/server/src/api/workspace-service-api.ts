@@ -154,6 +154,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
             project,
             context,
             normalizedContextUrl,
+            contextUrl.workspaceClass,
         );
 
         await this.workspaceService.startWorkspace({}, user, workspace.id, {

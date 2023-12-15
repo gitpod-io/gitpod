@@ -3,6 +3,7 @@ syntax = "proto3";
 package gitpod.v1;
 
 import "gitpod/v1/pagination.proto";
+import "gitpod/v1/workspace.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
@@ -33,6 +34,7 @@ enum OrganizationRole {
 message OrganizationSettings {
   bool workspace_sharing_disabled = 1;
   string default_workspace_image = 2;
+  repeated string allowed_workspace_classes = 3;
 }
 
 service OrganizationService {
@@ -75,6 +77,23 @@ service OrganizationService {
 
   // UpdateOrganizationSettings updates the settings of a Organization.
   rpc UpdateOrganizationSettings(UpdateOrganizationSettingsRequest) returns (UpdateOrganizationSettingsResponse) {}
+
+  // ListOrganizationWorkspaceClasses lists workspace classes of a
+  // Organization.
+  rpc ListOrganizationWorkspaceClasses(ListOrganizationWorkspaceClassesRequest) returns (ListOrganizationWorkspaceClassesResponse) {}
+}
+
+message ListOrganizationWorkspaceClassesRequest {
+  PaginationRequest pagination = 1;
+
+  // organization_id is the ID of the organization.
+  string organization_id = 2;
+}
+
+message ListOrganizationWorkspaceClassesResponse {
+  PaginationResponse pagination = 1;
+
+  repeated WorkspaceClass workspace_classes = 2;
 }
 
 message UpdateOrganizationRequest {
@@ -98,6 +117,10 @@ message UpdateOrganizationSettingsRequest {
 
   // pass empty string to reset to the installation default workspace image
   optional string default_workspace_image = 4;
+
+  // allowed_workspace_classes are the IDs of classes, which can be used by workspaces in an organization.
+  // Pass an empty array to allow all workspace classes
+  repeated string allowed_workspace_classes = 5;
 }
 
 message UpdateOrganizationSettingsResponse {
