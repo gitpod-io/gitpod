@@ -22,6 +22,8 @@ import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactiona
 import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { UserService } from "../user/user-service";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
+import { InstallationService } from "../auth/installation-service";
 
 @injectable()
 export class OrganizationService {
@@ -32,6 +34,7 @@ export class OrganizationService {
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(InstallationService) private readonly installationService: InstallationService,
         @inject(DefaultWorkspaceImageValidator)
         private readonly validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator,
     ) {}
@@ -391,10 +394,23 @@ export class OrganizationService {
                 settings = { ...settings, defaultWorkspaceImage: null };
             }
         }
+        if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
+            const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
+            const availableClasses = allClasses.filter((e) => settings.allowedWorkspaceClasses!.includes(e.id));
+            if (availableClasses.length !== settings.allowedWorkspaceClasses.length) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    "items in allowedWorkspaceClasses are not all allowed",
+                );
+            }
+            if (availableClasses.length === 0) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "at least one workspace class has to be selected.");
+            }
+        }
         return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
     }
 
-    private toSettings(settings: OrganizationSettings = {}): OrganizationSettings {
+    private async toSettings(settings: OrganizationSettings = {}): Promise<OrganizationSettings> {
         const result: OrganizationSettings = {};
         if (settings.workspaceSharingDisabled) {
             result.workspaceSharingDisabled = settings.workspaceSharingDisabled;
@@ -402,6 +418,42 @@ export class OrganizationService {
         if (typeof settings.defaultWorkspaceImage === "string") {
             result.defaultWorkspaceImage = settings.defaultWorkspaceImage;
         }
+        result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
         return result;
+    }
+
+    public async hasAllowedWorkspaceClassesInInstallation(userId: string, orgId: string): Promise<boolean> {
+        const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
+        const settings = await this.getSettings(userId, orgId);
+        if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
+            return (
+                settings.allowedWorkspaceClasses.filter((e) => allClasses.findIndex((cls) => cls.id === e) !== -1)
+                    .length > 0
+            );
+        }
+        return allClasses.length > 0;
+    }
+
+    public async listWorkspaceClasses(userId: string, orgId: string): Promise<SupportedWorkspaceClass[]> {
+        const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
+        const settings = await this.getSettings(userId, orgId);
+        if (settings && !!settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
+            const availableClasses = allClasses.filter((e) => settings.allowedWorkspaceClasses!.includes(e.id));
+            const defaultIndexInScope = availableClasses.findIndex((e) => e.isDefault);
+            if (defaultIndexInScope !== -1) {
+                return availableClasses;
+            }
+            const defaultIndexInAll = allClasses.findIndex((e) => e.isDefault);
+            const sortedClasses = [
+                ...allClasses.slice(0, defaultIndexInAll).reverse(),
+                ...allClasses.slice(defaultIndexInAll, allClasses.length),
+            ];
+            const nextDefault = sortedClasses.find((e) => settings.allowedWorkspaceClasses!.includes(e.id));
+            if (nextDefault) {
+                nextDefault.isDefault = true;
+            }
+            return availableClasses;
+        }
+        return allClasses;
     }
 }
