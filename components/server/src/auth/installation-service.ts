@@ -11,9 +11,6 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositor
 import { Authorizer } from "../authorization/authorizer";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import { Config } from "../config";
-import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
-import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class InstallationService {
@@ -22,7 +19,6 @@ export class InstallationService {
     @inject(BlockedRepositoryDB) private readonly blockedRepositoryDB: BlockedRepositoryDB;
     @inject(EmailDomainFilterDB) private readonly emailDomainFilterDB: EmailDomainFilterDB;
     @inject(TeamDB) private readonly teamDB: TeamDB;
-    @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider;
 
     public async adminGetBlockedRepositories(
         userId: string,
@@ -91,40 +87,4 @@ export class InstallationService {
             hasAnyOrg,
         };
     }
-
-    async getInstallationWorkspaceClasses(userId: string): Promise<SupportedWorkspaceClass[]> {
-        if (await isWorkspaceClassDiscoveryEnabled({ id: userId })) {
-            const allClasses = (await this.clientProvider.getAllWorkspaceClusters()).flatMap((cluster) => {
-                return (cluster.availableWorkspaceClasses || [])?.map((cls) => {
-                    return <SupportedWorkspaceClass>{
-                        description: cls.description,
-                        displayName: cls.displayName,
-                        id: cls.id,
-                        isDefault: cls.id === cluster.preferredWorkspaceClass,
-                    };
-                });
-            });
-            allClasses.sort((a, b) => a.displayName.localeCompare(b.displayName));
-            const uniqueClasses = allClasses.filter((v, i, a) => a.map((c) => c.id).indexOf(v.id) == i);
-
-            return uniqueClasses;
-        }
-
-        // No access check required, valid session/user is enough
-        const classes = this.config.workspaceClasses.map((c) => ({
-            id: c.id,
-            category: c.category,
-            displayName: c.displayName,
-            description: c.description,
-            powerups: c.powerups,
-            isDefault: c.isDefault,
-        }));
-        return classes;
-    }
-}
-
-export async function isWorkspaceClassDiscoveryEnabled(user: { id: string }): Promise<boolean> {
-    return getExperimentsClientForBackend().getValueAsync("workspace_class_discovery_enabled", false, {
-        user: user,
-    });
 }

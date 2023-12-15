@@ -143,7 +143,6 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 revision: "asdf",
             },
             "github.com/gitpod-io/gitpod",
-            undefined,
         );
         return ws;
     }
