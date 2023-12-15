@@ -169,9 +169,9 @@ function PersonalAccessTokenCreateView() {
                     </Alert>
                 )}
                 {!editToken && (
-                    <Alert type={"warning"} closable={false} showIcon={true} className="my-4">
+                    <Alert type={"warning"} closable={false} showIcon={true} className="my-4 max-w-lg">
                         This token will have complete read / write access to the API. Use it responsibly and revoke it
-                        when necessary.
+                        if necessary.
                     </Alert>
                 )}
                 {modalData && (
