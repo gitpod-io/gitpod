@@ -64,7 +64,9 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                     id="prebuilds-enabled"
                     checked={enabled}
                     onCheckedChange={updateEnabled}
-                    label={enabled && !updateConfiguration.isLoading ? "Prebuilds are enabled" : "Prebuilds are disabled"}
+                    label={
+                        enabled && !updateConfiguration.isLoading ? "Prebuilds are enabled" : "Prebuilds are disabled"
+                    }
                     description={
                         <TextMuted>
                             Enabling requires permissions to configure repository webhooks.{" "}
