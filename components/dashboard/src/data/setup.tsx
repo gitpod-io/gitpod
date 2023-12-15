@@ -33,7 +33,7 @@ import * as UserClasses from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 // This is used to version the cache
 // If data we cache changes in a non-backwards compatible way, increment this version
 // That will bust any previous cache versions a client may have stored
-const CACHE_VERSION = "20";
+const CACHE_VERSION = "22";
 
 export function noPersistence(queryKey: QueryKey): QueryKey {
     return [...queryKey, "no-persistence"];
@@ -205,7 +205,13 @@ export function hydrate(value: any): any {
             console.error("unsupported message type", messageName);
             return value;
         }
-        return (constructor as any).fromJsonString(json);
+        // Ensure an error w/ a single message doesn't prevent the entire cache from loading, as it will never get pruned
+        try {
+            return (constructor as any).fromJsonString(json);
+        } catch (e) {
+            console.error("unable to hydrate message", messageName, e, json);
+            return undefined;
+        }
     }
     if (value instanceof Object) {
         for (const key in value) {

@@ -8,12 +8,12 @@ import { FC, useCallback, useState } from "react";
 import { SetupLayout } from "./SetupLayout";
 import { Heading1, Subheading } from "../components/typography/headings";
 import { TextInputField } from "../components/forms/TextInputField";
-import { Button } from "../components/Button";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { useCreateOrgMutation } from "../data/organizations/create-org-mutation";
 import Alert from "../components/Alert";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 type Props = {
     onComplete: () => void;
@@ -72,14 +72,14 @@ export const OrgNamingStep: FC<Props> = ({ onComplete, progressCurrent, progress
                     onBlur={nameError.onBlur}
                 />
                 <div className="mt-6">
-                    <Button
-                        htmlType="submit"
-                        size="block"
+                    <LoadingButton
+                        type="submit"
+                        className="w-full"
                         disabled={!nameError.isValid}
                         loading={createOrg.isLoading || updateOrg.isLoading}
                     >
                         Continue
-                    </Button>
+                    </LoadingButton>
                 </div>
             </form>
         </SetupLayout>

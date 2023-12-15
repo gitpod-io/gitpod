@@ -9,6 +9,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/subtle"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -284,6 +285,9 @@ func (s *Server) HandleConn(c net.Conn) {
 	clientConn, clientChans, clientReqs, err := ssh.NewServerConn(c, s.sshConfig)
 	if err != nil {
 		c.Close()
+		if errors.Is(err, io.EOF) {
+			return
+		}
 		ReportSSHAttemptMetrics(err)
 		log.WithError(err).Error("failed to create new server connection")
 		return

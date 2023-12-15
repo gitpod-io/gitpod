@@ -23,6 +23,7 @@ const expect = chai.expect;
 describe("OrganizationService", async () => {
     let container: Container;
     let os: OrganizationService;
+    let userService: UserService;
 
     let owner: User;
     let member: User;
@@ -45,7 +46,7 @@ describe("OrganizationService", async () => {
                 }
             });
         os = container.get(OrganizationService);
-        const userService = container.get<UserService>(UserService);
+        userService = container.get<UserService>(UserService);
         owner = await userService.createUser({
             identity: {
                 authId: "github|1234",
@@ -156,6 +157,30 @@ describe("OrganizationService", async () => {
 
         // try remove the member again
         await expectError(ErrorCodes.NOT_FOUND, os.removeOrganizationMember(member.id, org.id, member.id));
+    });
+
+    it("should delete owned user when removing it", async () => {
+        const ownedMember = await userService.createUser({
+            organizationId: org.id,
+            identity: {
+                authId: "github|1234",
+                authName: "github",
+                authProviderId: "github",
+            },
+        });
+        await os.addOrUpdateMember(owner.id, org.id, ownedMember.id, "member");
+
+        const members = await os.listMembers(owner.id, org.id);
+        expect(members.some((m) => m.userId === ownedMember.id)).to.be.true;
+
+        // remove it and assert it's gone
+        await os.removeOrganizationMember(owner.id, org.id, ownedMember.id);
+        const members2 = await os.listMembers(owner.id, org.id);
+        expect(members2.some((m) => m.userId === ownedMember.id)).to.be.false;
+        // also assert that the user is gone
+        const deleted = await userService.findUserById(ownedMember.id, ownedMember.id);
+        // await expectError(ErrorCodes.NOT_FOUND, () => deleted);
+        expect(deleted.markedDeleted).to.be.true;
     });
 
     it("should listOrganizationsByMember", async () => {
@@ -272,6 +297,26 @@ describe("OrganizationService", async () => {
             {
                 workspaceSharingDisabled: true,
                 defaultWorkspaceImage: "ubuntu",
+            },
+        );
+
+        await assertUpdateSettings(
+            "should update allowed workspace classes",
+            { allowedWorkspaceClasses: ["foo"] },
+            {
+                workspaceSharingDisabled: true,
+                defaultWorkspaceImage: "ubuntu",
+                allowedWorkspaceClasses: ["foo"],
+            },
+        );
+
+        await assertUpdateSettings(
+            "should update empty allowed workspace classes",
+            { allowedWorkspaceClasses: [] },
+            {
+                workspaceSharingDisabled: true,
+                defaultWorkspaceImage: "ubuntu",
+                allowedWorkspaceClasses: [],
             },
         );
 

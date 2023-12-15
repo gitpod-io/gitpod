@@ -4,9 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React from "react";
+import React, { ReactNode } from "react";
 import * as SwitchPrimitives from "@radix-ui/react-switch";
 import { cn } from "@podkit/lib/cn";
+import { TextMuted } from "@podkit/typography/TextMuted";
 
 export const Switch = React.forwardRef<
     React.ElementRef<typeof SwitchPrimitives.Root>,
@@ -17,14 +18,14 @@ export const Switch = React.forwardRef<
             className={cn(
                 // this gives the switch a line-height of 24px that matches the height of our base font size
                 "my-0.5",
-                "peer inline-flex h-[20px] w-[36px] shrink-0 cursor-pointer items-center",
+                "peer group inline-flex h-[20px] w-[36px] shrink-0 cursor-pointer items-center",
                 "rounded-2xl transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                // TODO: do proper disabled state that match designs
-                "disabled:cursor-default disabled:opacity-50",
-                // TODO: try and make kumquat-gradient work here for the bg
+                "focus-visible:outline-kumquat-ripe",
+                "disabled:cursor-default disabled:bg-pk-surface-labels",
+                "data-[state=checked]:disabled:bg-none",
                 // checked state colors
-                "data-[state=checked]:bg-kumquat-dark",
+                "data-[state=checked]:bg-kumquat-gradient",
                 // unchecked state colors
                 "data-[state=unchecked]:bg-pk-surface-labels",
                 className,
@@ -36,6 +37,7 @@ export const Switch = React.forwardRef<
                 className={cn(
                     "pointer-events-none block h-[16px] w-[16px] rounded-full",
                     "bg-pk-surface-primary drop-shadow ring-0",
+                    "group-disabled:bg-pk-surface-tertiary",
                     // Positioning
                     "transition-transform data-[state=checked]:translate-x-[17px] data-[state=unchecked]:translate-x-[3px]",
                 )}
@@ -44,3 +46,29 @@ export const Switch = React.forwardRef<
     );
 });
 Switch.displayName = SwitchPrimitives.Root.displayName;
+
+export interface SwitchInputFieldProps extends React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root> {
+    id?: string;
+    label: ReactNode;
+    description?: ReactNode;
+}
+
+export const SwitchInputField = React.forwardRef<React.ElementRef<typeof SwitchPrimitives.Root>, SwitchInputFieldProps>(
+    ({ className, checked, onCheckedChange, label, id, description, ...props }, ref) => {
+        const switchProps = {
+            ...props,
+            className: "",
+        };
+        return (
+            <div className={cn("flex gap-4", className)}>
+                <Switch checked={checked} onCheckedChange={onCheckedChange} id={id} {...switchProps} ref={ref} />
+                <div className="flex flex-col">
+                    <label className="font-semibold cursor-pointer" htmlFor={id}>
+                        {label}
+                    </label>
+                    <TextMuted>{description}</TextMuted>
+                </div>
+            </div>
+        );
+    },
+);

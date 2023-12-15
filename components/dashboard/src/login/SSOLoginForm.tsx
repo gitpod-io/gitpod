@@ -6,7 +6,7 @@
 
 import { FC, useCallback, useState } from "react";
 import Alert from "../components/Alert";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import { TextInputField } from "../components/forms/TextInputField";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { openOIDCStartWindow } from "../provider-utils";
@@ -85,9 +85,9 @@ export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
                     />
                 )}
                 <Button
-                    htmlType="submit"
+                    type="submit"
                     className="w-full"
-                    type="secondary"
+                    variant="secondary"
                     disabled={!singleOrgMode && (!orgSlug.trim() || !slugError.isValid)}
                 >
                     Continue {singleOrgMode ? "" : "with SSO"}

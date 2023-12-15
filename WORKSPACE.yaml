@@ -7,21 +7,21 @@ defaultArgs:
   publishToNPM: true
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: 0b0a4855c19d3a9014a650db6cf9080c7655ad73
-  codeVersion: 1.85.0
+  codeCommit: 58bb230c0b29056eacd49010e91cd71567d667fd
+  codeVersion: 1.86.0
   codeQuality: stable
   noVerifyJBPlugin: false
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2023.3.tar.gz"
-  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2023.3.tar.gz"
-  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2023.3.tar.gz"
-  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2023.3.tar.gz"
-  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2023.3.tar.gz"
-  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2023.3.tar.gz"
-  riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2023.3.tar.gz"
-  clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2023.3.tar.gz"
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2023.3.1.tar.gz"
+  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2023.3.1.tar.gz"
+  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2023.3.1.tar.gz"
+  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2023.3.1.tar.gz"
+  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2023.3.1.tar.gz"
+  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2023.3.1.tar.gz"
+  riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2023.3.1.tar.gz"
+  clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2023.3.1.tar.gz"
   jbBackendVersion: "latest"
   dockerVersion: "20.10.24"
-  dockerComposeVersion: "2.23.0-gitpod.0"
+  dockerComposeVersion: "2.23.3-gitpod.1"
 provenance:
   enabled: true
   slsa: true

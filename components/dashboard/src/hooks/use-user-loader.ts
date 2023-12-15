@@ -33,7 +33,7 @@ export const useUserLoader = () => {
             if (!doRetryUserLoader) {
                 return false;
             }
-            return error.code !== ErrorCodes.NOT_AUTHENTICATED;
+            return error.code !== ErrorCodes.NOT_AUTHENTICATED && error.code !== ErrorCodes.USER_DELETED;
         },
         // docs: https://tanstack.com/query/v4/docs/react/guides/query-retries
         // backoff by doubling, max. 10s

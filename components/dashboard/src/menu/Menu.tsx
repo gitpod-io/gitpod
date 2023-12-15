@@ -19,7 +19,7 @@ import { isGitpodIo } from "../utils";
 import OrganizationSelector from "./OrganizationSelector";
 import { getAdminTabs } from "../admin/admin.routes";
 import classNames from "classnames";
-import { User, User_RoleOrPermission } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { User, RoleOrPermission } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 interface Entry {
@@ -83,7 +83,7 @@ export default function Menu() {
                         <nav className="hidden md:block flex-1">
                             <ul className="flex flex-1 items-center justify-between text-base text-gray-500 dark:text-gray-400 space-x-2">
                                 <li className="flex-1"></li>
-                                {user?.rolesOrPermissions?.includes(User_RoleOrPermission.ADMIN) && (
+                                {user?.rolesOrPermissions?.includes(RoleOrPermission.ADMIN) && (
                                     <li className="cursor-pointer">
                                         <PillMenuItem
                                             name="Admin"
@@ -171,7 +171,7 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedb
     const extraSection = useMemo(() => {
         const items: ContextMenuEntry[] = [];
 
-        if (withAdminLink && user?.rolesOrPermissions?.includes(User_RoleOrPermission.ADMIN)) {
+        if (withAdminLink && user?.rolesOrPermissions?.includes(RoleOrPermission.ADMIN)) {
             items.push({
                 title: "Admin",
                 link: "/admin",

@@ -10,7 +10,7 @@ import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provide
 import { openAuthorizeWindow } from "../provider-utils";
 import { userClient } from "../service/public-api";
 import { UserContext, useCurrentUser } from "../user-context";
-import { Button } from "./Button";
+import { Button } from "@podkit/buttons/Button";
 import { Heading2, Heading3, Subheading } from "./typography/headings";
 import classNames from "classnames";
 import { iconForAuthProvider, simplifyProviderName } from "../provider-utils";
@@ -86,7 +86,7 @@ export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
                             return (
                                 <Button
                                     onClick={() => connect(ap)}
-                                    type="secondary"
+                                    variant="secondary"
                                     key={"button" + ap.host}
                                     className="mt-3 btn-login flex-none w-56 px-0 py-0.5 inline-flex"
                                 >
