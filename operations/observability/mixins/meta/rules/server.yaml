@@ -99,7 +99,7 @@ spec:
 
     - alert: DashboardStuckInPodInitState
       # Reasoning: alert if dashboard is stuck in init more than 5 minute.
-      expr: sum(increase(kube_pod_container_status_waiting_reason{container="dashboard", reason="PodInitializing"}[5m])) by (container) > 0
+      expr: sum(kube_pod_container_status_waiting_reason{container="dashboard", reason="PodInitializing"}) by (container) > 0
       # Five minutes sound high, but that's the only value that's higher than recent history
       for: 5m
       labels:
