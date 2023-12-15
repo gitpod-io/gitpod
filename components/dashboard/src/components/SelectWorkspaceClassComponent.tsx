@@ -64,12 +64,8 @@ export default function SelectWorkspaceClassComponent({
             return undefined;
         }
         const defaultClassId = workspaceClasses.find((ws) => ws.isDefault)?.id;
-        const selectedOne = workspaceClasses.find((ws) => ws.id === (selectedWorkspaceClass || defaultClassId));
-        if (selectedOne) {
-            internalOnSelectionChange(selectedOne.id);
-        }
-        return selectedOne;
-    }, [selectedWorkspaceClass, workspaceClasses, internalOnSelectionChange]);
+        return workspaceClasses.find((ws) => ws.id === (selectedWorkspaceClass || defaultClassId));
+    }, [selectedWorkspaceClass, workspaceClasses]);
     return (
         <Combobox
             getElements={getElements}
