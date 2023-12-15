@@ -7,8 +7,8 @@
 import { FC, useCallback, useEffect, useMemo } from "react";
 import WorkspaceClassIcon from "../icons/WorkspaceClass.svg";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
-import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
 import { WorkspaceClass } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { useOrgWorkspaceClassesQuery } from "../data/organizations/org-workspace-classes-query";
 
 interface SelectWorkspaceClassProps {
     selectedWorkspaceClass?: string;
@@ -25,7 +25,7 @@ export default function SelectWorkspaceClassComponent({
     setError,
     onSelectionChange,
 }: SelectWorkspaceClassProps) {
-    const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useWorkspaceClasses();
+    const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useOrgWorkspaceClassesQuery();
 
     const getElements = useCallback((): ComboboxElement[] => {
         return (workspaceClasses || [])?.map((c) => ({
@@ -37,6 +37,12 @@ export default function SelectWorkspaceClassComponent({
 
     useEffect(() => {
         if (!workspaceClasses) {
+            return;
+        }
+        if (workspaceClasses.length === 0) {
+            setError?.(
+                "No allowed workspace classes available. Please contact an admin to update organization settings.",
+            );
             return;
         }
         // if the selected workspace class is not supported, we set an error and ask the user to pick one

@@ -632,6 +632,7 @@ async function createTestWorkspace(svc: WorkspaceService, org: Organization, own
             revision: "asdf",
         },
         "github.com/gitpod-io/gitpod",
+        undefined,
     );
     return ws;
 }

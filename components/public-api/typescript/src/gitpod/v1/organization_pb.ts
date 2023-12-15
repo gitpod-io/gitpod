@@ -12,6 +12,7 @@
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
 import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
+import { WorkspaceClass } from "./workspace_pb.js";
 
 /**
  * @generated from enum gitpod.v1.OrganizationRole
@@ -181,6 +182,11 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
    */
   defaultWorkspaceImage = "";
 
+  /**
+   * @generated from field: repeated string allowed_workspace_classes = 3;
+   */
+  allowedWorkspaceClasses: string[] = [];
+
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -191,6 +197,7 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 2, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {
@@ -207,6 +214,94 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
 
   static equals(a: OrganizationSettings | PlainMessage<OrganizationSettings> | undefined, b: OrganizationSettings | PlainMessage<OrganizationSettings> | undefined): boolean {
     return proto3.util.equals(OrganizationSettings, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListOrganizationWorkspaceClassesRequest
+ */
+export class ListOrganizationWorkspaceClassesRequest extends Message<ListOrganizationWorkspaceClassesRequest> {
+  /**
+   * @generated from field: gitpod.v1.PaginationRequest pagination = 1;
+   */
+  pagination?: PaginationRequest;
+
+  /**
+   * organization_id is the ID of the organization.
+   *
+   * @generated from field: string organization_id = 2;
+   */
+  organizationId = "";
+
+  constructor(data?: PartialMessage<ListOrganizationWorkspaceClassesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListOrganizationWorkspaceClassesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
+    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationWorkspaceClassesRequest {
+    return new ListOrganizationWorkspaceClassesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListOrganizationWorkspaceClassesRequest {
+    return new ListOrganizationWorkspaceClassesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListOrganizationWorkspaceClassesRequest {
+    return new ListOrganizationWorkspaceClassesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListOrganizationWorkspaceClassesRequest | PlainMessage<ListOrganizationWorkspaceClassesRequest> | undefined, b: ListOrganizationWorkspaceClassesRequest | PlainMessage<ListOrganizationWorkspaceClassesRequest> | undefined): boolean {
+    return proto3.util.equals(ListOrganizationWorkspaceClassesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListOrganizationWorkspaceClassesResponse
+ */
+export class ListOrganizationWorkspaceClassesResponse extends Message<ListOrganizationWorkspaceClassesResponse> {
+  /**
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 1;
+   */
+  pagination?: PaginationResponse;
+
+  /**
+   * @generated from field: repeated gitpod.v1.WorkspaceClass workspace_classes = 2;
+   */
+  workspaceClasses: WorkspaceClass[] = [];
+
+  constructor(data?: PartialMessage<ListOrganizationWorkspaceClassesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListOrganizationWorkspaceClassesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationResponse },
+    { no: 2, name: "workspace_classes", kind: "message", T: WorkspaceClass, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationWorkspaceClassesResponse {
+    return new ListOrganizationWorkspaceClassesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListOrganizationWorkspaceClassesResponse {
+    return new ListOrganizationWorkspaceClassesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListOrganizationWorkspaceClassesResponse {
+    return new ListOrganizationWorkspaceClassesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListOrganizationWorkspaceClassesResponse | PlainMessage<ListOrganizationWorkspaceClassesResponse> | undefined, b: ListOrganizationWorkspaceClassesResponse | PlainMessage<ListOrganizationWorkspaceClassesResponse> | undefined): boolean {
+    return proto3.util.equals(ListOrganizationWorkspaceClassesResponse, a, b);
   }
 }
 
@@ -319,6 +414,14 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
    */
   defaultWorkspaceImage?: string;
 
+  /**
+   * allowed_workspace_classes are the IDs of classes, which can be used by workspaces in an organization.
+   * Pass an empty array to allow all workspace classes
+   *
+   * @generated from field: repeated string allowed_workspace_classes = 5;
+   */
+  allowedWorkspaceClasses: string[] = [];
+
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -330,6 +433,7 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
     { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 4, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 5, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {

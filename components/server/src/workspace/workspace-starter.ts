@@ -144,8 +144,8 @@ const INSTANCE_START_RETRY_INTERVAL_SECONDS = 2;
 
 export async function getWorkspaceClassForInstance(
     ctx: TraceContext,
-    workspace: Workspace,
-    previousInstance: WorkspaceInstance | undefined,
+    workspace: Pick<Workspace, "type">,
+    previousInstance: Pick<WorkspaceInstance, "workspaceClass"> | undefined,
     project: Project | undefined,
     workspaceClassOverride: string | undefined,
     config: WorkspaceClassesConfig,
