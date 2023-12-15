@@ -38,5 +38,8 @@ export function useOrgWorkspaceClassesQuery() {
 }
 
 function getQueryKey(organizationId?: string) {
+    // We don't persistence listOrganizationWorkspaceClasses because org settings updated by owner will not notify members to invalidate listOrganizationWorkspaceClasses
+    // TODO: Or we need to handle special ErrorCodes from server somewhere
+    // i.e. CreateAndStartWorkspace respond selected workspace class is not allowed
     return noPersistence(["listOrganizationWorkspaceClasses", organizationId || "undefined"]);
 }
