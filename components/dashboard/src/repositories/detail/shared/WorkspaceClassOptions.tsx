@@ -5,7 +5,7 @@
  */
 
 import { FC } from "react";
-import { useWorkspaceClasses } from "../../../data/workspaces/workspace-classes-query";
+import { useOrgWorkspaceClassesQuery } from "../../../data/organizations/org-workspace-classes-query";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { cn } from "@podkit/lib/cn";
 import Alert from "../../../components/Alert";
@@ -18,7 +18,7 @@ type Props = {
     onChange: (newValue: string) => void;
 };
 export const WorkspaceClassOptions: FC<Props> = ({ value, className, onChange }) => {
-    const { data: classes, isLoading } = useWorkspaceClasses();
+    const { data: classes, isLoading } = useOrgWorkspaceClassesQuery();
 
     if (isLoading) {
         return <LoadingState />;
