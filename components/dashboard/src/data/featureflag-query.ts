@@ -29,6 +29,10 @@ const featureFlags = {
     createProjectModal: false,
     repoConfigListAndDetail: false,
     showRepoConfigMenuItem: false,
+    /**
+     * Whether to enable org-level workspace class restrictions
+     */
+    org_workspace_class_restrictions: false,
 };
 
 type FeatureFlags = typeof featureFlags;
