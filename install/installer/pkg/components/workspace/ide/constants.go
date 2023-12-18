@@ -6,7 +6,7 @@ package ide
 
 const (
 	CodeIDEImage                = "ide/code"
-	CodeIDEImageStableVersion   = "commit-dcabd3a05822f5d07c649f5e57bf0a3e9cbd3353" // stable version that will be updated manually on demand
+	CodeIDEImageStableVersion   = "commit-1fc02691286b404b664249d7c840cf8c84343741" // stable version that will be updated manually on demand
 	CodeHelperIDEImage          = "ide/code-codehelper"
 	CodeWebExtensionImage       = "ide/gitpod-code-web"
 	CodeWebExtensionVersion     = "commit-49bb715b599dce2356dd02a6ede7ae8cf10d8d12" // gitpod-web extension version comes from https://github.com/gitpod-io/gitpod-code
