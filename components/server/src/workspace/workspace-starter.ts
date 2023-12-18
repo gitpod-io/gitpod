@@ -269,20 +269,6 @@ export class WorkspaceStarter {
                 await this.workspaceDb.trace({ span }).store(workspace);
             }
 
-            if (options.forceDefaultImage) {
-                const res = await this.resolveBaseImage(
-                    { span },
-                    user,
-                    this.config.workspaceDefaults.workspaceImage,
-                    workspace,
-                    undefined,
-                    options.region,
-                );
-                workspace.imageSource = <WorkspaceImageSourceReference>{
-                    baseImageResolved: res.getRef(),
-                };
-            }
-
             // check if there has been an instance before, i.e. if this is a restart
             const pastInstances = await this.workspaceDb.trace({ span }).findInstances(workspace.id);
             let lastValidWorkspaceInstance: WorkspaceInstance | undefined;
@@ -293,6 +279,20 @@ export class WorkspaceStarter {
                     lastValidWorkspaceInstance = i;
                     break;
                 }
+            }
+
+            if (options.forceDefaultImage) {
+                const res = await this.resolveBaseImage(
+                    { span },
+                    user,
+                    this.config.workspaceDefaults.workspaceImage,
+                    workspace,
+                    lastValidWorkspaceInstance,
+                    options.region,
+                );
+                workspace.imageSource = <WorkspaceImageSourceReference>{
+                    baseImageResolved: res.getRef(),
+                };
             }
 
             let ideSettings = options.ideSettings;
@@ -519,6 +519,7 @@ export class WorkspaceStarter {
         user: User,
         envVars: ResolvedEnvVars,
     ): Promise<void> {
+        const constrainWorkspaceClassSupport = await isWorkspaceClassDiscoveryEnabled(user);
         const span = TraceContext.startSpan("actuallyStartWorkspace", ctx);
         const region = instance.configuration.regionPreference;
         span.setTag("region_preference", region);
@@ -545,6 +546,7 @@ export class WorkspaceStarter {
                 forceRebuild,
                 forceRebuild,
                 region,
+                constrainWorkspaceClassSupport,
             );
 
             let type: WorkspaceType = WorkspaceType.REGULAR;
@@ -585,7 +587,15 @@ export class WorkspaceStarter {
                     if (ctxIsAborted()) {
                         return;
                     }
-                    resp = await this.tryStartOnCluster({ span }, startRequest, user, workspace, instance, region);
+                    resp = await this.tryStartOnCluster(
+                        { span },
+                        startRequest,
+                        user,
+                        workspace,
+                        instance,
+                        region,
+                        constrainWorkspaceClassSupport,
+                    );
                     if (resp) {
                         break;
                     }
@@ -687,9 +697,8 @@ export class WorkspaceStarter {
         workspace: Workspace,
         instance: WorkspaceInstance,
         region?: WorkspaceRegion,
+        constrainOnWorkspaceClassSupport?: boolean,
     ): Promise<StartWorkspaceResponse.AsObject | undefined> {
-        const constrainOnWorkspaceClassSupport = await isWorkspaceClassDiscoveryEnabled(user);
-
         let lastInstallation = "";
         const clusters = await this.clientProvider.getStartClusterSets(
             user,
@@ -1146,12 +1155,19 @@ export class WorkspaceStarter {
         ignoreBaseImageresolvedAndRebuildBase: boolean = false,
         forceRebuild: boolean = false,
         region?: WorkspaceRegion,
+        constrainWorkspaceClassSupport?: boolean,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
 
         try {
             // Start build...
-            const client = await this.getImageBuilderClient(user, workspace, instance, region);
+            const client = await this.getImageBuilderClient(
+                user,
+                workspace,
+                instance,
+                region,
+                constrainWorkspaceClassSupport,
+            );
             const { src, auth, disposable } = await this.prepareBuildRequest(
                 { span },
                 workspace,
@@ -1252,6 +1268,7 @@ export class WorkspaceStarter {
                         true,
                         forceRebuild,
                         region,
+                        constrainWorkspaceClassSupport,
                     );
                 } else {
                     throw err;
@@ -1886,8 +1903,15 @@ export class WorkspaceStarter {
         workspace?: Workspace,
         instance?: WorkspaceInstance,
         region?: WorkspaceRegion,
+        constrainWorkspaceClassSupport?: boolean,
     ) {
-        return this.imagebuilderClientProvider.getClient(user, workspace, instance, region);
+        return this.imagebuilderClientProvider.getClient(
+            user,
+            workspace,
+            instance,
+            region,
+            constrainWorkspaceClassSupport,
+        );
     }
 
     public async resolveBaseImage(

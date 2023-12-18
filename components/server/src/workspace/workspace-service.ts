@@ -514,6 +514,7 @@ export class WorkspaceService {
                     workspaceURL: latestInstance.ideUrl,
                 };
             }
+            options.workspaceClass = latestInstance.workspaceClass;
         }
 
         const mayStartPromise = this.mayStartWorkspace(

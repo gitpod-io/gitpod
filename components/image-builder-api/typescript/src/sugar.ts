@@ -36,6 +36,7 @@ export interface ImageBuilderClientProvider {
         workspace?: Workspace,
         instance?: WorkspaceInstance,
         region?: string,
+        constrainWorkspaceClassSupport?: boolean,
     ): Promise<PromisifiedImageBuilderClient>;
 }
 

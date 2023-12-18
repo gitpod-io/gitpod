@@ -34,8 +34,15 @@ export class WorkspaceClusterImagebuilderClientProvider implements ImageBuilderC
         workspace?: Workspace,
         instance?: WorkspaceInstance,
         region?: WorkspaceRegion,
+        constrainWorkspaceClassSupport?: boolean,
     ): Promise<PromisifiedImageBuilderClient> {
-        const clusters = await this.clientProvider.getStartClusterSets(user, workspace, instance, region);
+        const clusters = await this.clientProvider.getStartClusterSets(
+            user,
+            workspace,
+            instance,
+            region,
+            constrainWorkspaceClassSupport,
+        );
         for await (const cluster of clusters) {
             const info = await this.source.getWorkspaceCluster(cluster.installation);
             if (!info) {
