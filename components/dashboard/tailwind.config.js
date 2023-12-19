@@ -58,6 +58,7 @@ module.exports = {
                     disabled: "rgb(var(--content-disabled) / <alpha-value>)",
                     "invert-primary": "rgb(var(--content-invert-primary) / <alpha-value>)",
                     "invert-secondary": "rgb(var(--content-invert-secondary) / <alpha-value>)",
+                    danger: "rgb(var(--content-danger) / <alpha-value>)",
                 },
                 "pk-surface": {
                     primary: "rgb(var(--surface-primary) / <alpha-value>)",

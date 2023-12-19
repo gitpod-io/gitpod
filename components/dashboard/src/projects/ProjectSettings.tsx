@@ -23,6 +23,11 @@ import { InputField } from "../components/forms/InputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
 import debounce from "lodash.debounce";
 import { Button } from "@podkit/buttons/Button";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { PartialMessage } from "@bufbuild/protobuf";
+import { RepositoryUnauthorizedError } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
+import { openAuthorizeWindow } from "../provider-utils";
+import { LinkButton } from "../components/LinkButton";
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
@@ -57,7 +62,7 @@ export default function ProjectSettingsView() {
     }
     const history = useHistory();
     const refreshProjects = useRefreshAllProjects();
-    const { toast } = useToast();
+    const { toast, dismissToast } = useToast();
     const [prebuildBranchPattern, setPrebuildBranchPattern] = useState("");
 
     useEffect(() => {
@@ -88,6 +93,30 @@ export default function ProjectSettingsView() {
         [project, badProjectName, projectName, setProject, refreshProjects, toast],
     );
 
+    const authorizeWithProvider = useCallback(
+        async (host: string, scopes: string[], toastId: string) => {
+            await openAuthorizeWindow({
+                host,
+                scopes,
+                onSuccess: async () => {
+                    dismissToast(toastId);
+                    toast("Authorization successful. Please try enabling prebuilds again.");
+                },
+                onError: (payload) => {
+                    let errorMessage: string;
+                    if (typeof payload === "string") {
+                        errorMessage = payload;
+                    } else {
+                        errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
+                    }
+
+                    toast(errorMessage || `Oh no, there was a problem with ${host}.`);
+                },
+            });
+        },
+        [dismissToast, toast],
+    );
+
     const updateProjectSettings = useCallback(
         async (settings: ProjectSettings) => {
             if (!project) return;
@@ -100,10 +129,36 @@ export default function ProjectSettingsView() {
                 toast(`Project ${projectName} updated.`);
             } catch (error) {
                 setProject({ ...project, settings: oldSettings });
-                toast(error?.message || "Oh no, there was a problem with updating project settings.");
+
+                if (newSettings.prebuilds?.enable && error?.code === ErrorCodes.NOT_AUTHENTICATED) {
+                    const { host, /*providerIsConnected, providerType,*/ repoName, requiredScopes } =
+                        error?.data as PartialMessage<RepositoryUnauthorizedError>;
+
+                    const toastId = `toast--host-authorized--${host}`;
+                    toast(
+                        <>
+                            <p>There was a problem enabling prebuilds on "{repoName}"</p>
+                            <p>Grant the {JSON.stringify(requiredScopes)} permissions and try again! 🙏🏻</p>
+                            <div>
+                                <LinkButton
+                                    inverted
+                                    onClick={() => authorizeWithProvider(host || "", requiredScopes || [], toastId)}
+                                >
+                                    Grant access
+                                </LinkButton>
+                            </div>
+                        </>,
+                        {
+                            autoHide: false,
+                            id: toastId,
+                        },
+                    );
+                } else {
+                    toast(error?.message || "Oh no, there was a problem with updating project settings.");
+                }
             }
         },
-        [project, setProject, toast, projectName],
+        [project, setProject, toast, projectName, authorizeWithProvider],
     );
 
     const setPrebuildsEnabled = useCallback(

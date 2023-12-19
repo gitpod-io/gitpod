@@ -132,9 +132,13 @@ export const useConfigurationMutation = () => {
             }
 
             queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
-            queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configuration.configurationId) });
 
             return updated.configuration;
+        },
+        onSuccess: (configuration) => {
+            if (configuration) {
+                queryClient.setQueryData(getConfigurationQueryKey(configuration.id), configuration);
+            }
         },
     });
 };

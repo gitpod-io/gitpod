@@ -376,7 +376,11 @@ describe("PublicAPIConverter", () => {
             const connectError = converter.toError(
                 new UnauthorizedRepositoryAccessError({
                     host: "github.com",
-                    scopes: ["repo"],
+                    requiredScopes: ["repo"],
+                    providerIsConnected: false,
+                    providerType: "GitHub",
+                    repoName: "rocket",
+                    isMissingScopes: true,
                 }),
             );
             expect(connectError.code).to.equal(Code.FailedPrecondition);
@@ -387,18 +391,22 @@ describe("PublicAPIConverter", () => {
             expect(details?.reason?.case).to.equal("repositoryUnauthorized");
             expect(details?.reason?.value).to.be.instanceOf(RepositoryUnauthorizedErrorData);
 
-            let data = toPlainMessage(details?.reason?.value as RepositoryUnauthorizedErrorData);
+            const data = toPlainMessage(details?.reason?.value as RepositoryUnauthorizedErrorData);
             expect(data.host).to.equal("github.com");
-            expect(data.scopes).to.deep.equal(["repo"]);
+            expect(data.requiredScopes).to.deep.equal(["repo"]);
 
             const appError = converter.fromError(connectError);
             expect(appError).to.be.instanceOf(UnauthorizedRepositoryAccessError);
             expect(appError.code).to.equal(ErrorCodes.NOT_AUTHENTICATED);
             expect(appError.message).to.equal("Repository unauthorized.");
 
-            data = (appError as UnauthorizedRepositoryAccessError).info;
-            expect(data.host).to.equal("github.com");
-            expect(data.scopes).to.deep.equal(["repo"]);
+            const info = (appError as UnauthorizedRepositoryAccessError).info;
+            expect(info.host).to.equal("github.com");
+            expect(info.requiredScopes).to.deep.equal(["repo"]);
+            expect(info.providerIsConnected).to.equal(false);
+            expect(info.providerType).to.equal("GitHub");
+            expect(info.repoName).to.equal("rocket");
+            expect(info.isMissingScopes).to.equal(true);
         });
 
         it("PAYMENT_SPENDING_LIMIT_REACHED", () => {
