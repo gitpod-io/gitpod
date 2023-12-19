@@ -78,6 +78,8 @@ describe("OrganizationService", async () => {
     afterEach(async () => {
         // Clean-up database
         await resetDB(container.get(TypeORM));
+        // Deactivate all services
+        await container.unbindAllAsync();
     });
 
     it("should deleteOrganization", async () => {
@@ -302,21 +304,27 @@ describe("OrganizationService", async () => {
 
         await assertUpdateSettings(
             "should update allowed workspace classes",
-            { allowedWorkspaceClasses: ["foo"] },
+            { allowedWorkspaceClasses: ["default"] },
             {
                 workspaceSharingDisabled: true,
                 defaultWorkspaceImage: "ubuntu",
-                allowedWorkspaceClasses: ["foo"],
+                allowedWorkspaceClasses: ["default"],
             },
         );
 
+        try {
+            await os.updateSettings(adminId, myOrg.id, { allowedWorkspaceClasses: ["foo"] });
+            expect.fail("should have failed");
+        } catch (err) {
+            expect(err.message).to.equal("items in allowedWorkspaceClasses are not all allowed", "invalid classes");
+        }
+
         await assertUpdateSettings(
-            "should update empty allowed workspace classes",
+            "empty allowed workspace classes should allow all (null)",
             { allowedWorkspaceClasses: [] },
             {
                 workspaceSharingDisabled: true,
                 defaultWorkspaceImage: "ubuntu",
-                allowedWorkspaceClasses: [],
             },
         );
 
