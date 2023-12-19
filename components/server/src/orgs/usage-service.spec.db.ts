@@ -98,6 +98,8 @@ describe("UsageService", async () => {
         // Clean-up database
         const typeorm = container.get(TypeORM);
         await resetDB(typeorm);
+        // Deactivate all services
+        await container.unbindAllAsync();
     });
 
     it("getCostCenter permissions", async () => {

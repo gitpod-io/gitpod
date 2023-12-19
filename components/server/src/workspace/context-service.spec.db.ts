@@ -256,7 +256,7 @@ describe("ContextService", async () => {
 
     afterEach(async () => {
         await resetDB(container.get(TypeORM));
-        container.unbindAll();
+        await container.unbindAllAsync();
     });
 
     it("should parse normal context", async () => {
