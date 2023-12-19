@@ -14,6 +14,8 @@ import { ProjectsService } from "../projects/projects-service";
 import { Authorizer } from "../authorization/authorizer";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
+import { UserService } from "../user/user-service";
+import { Config } from "../config";
 
 const expect = chai.expect;
 
@@ -33,6 +35,8 @@ describe("OrganizationService", async () => {
         ];
         beforeEach(async () => {
             container = testContainer.createChild();
+            container.bind(Config).toConstantValue({} as any as Config);
+            container.bind(UserService).toConstantValue({} as any as UserService);
             container.bind(OrganizationService).toSelf().inSingletonScope();
             container.bind(ProjectsService).toConstantValue({} as any as ProjectsService);
             container.bind(Authorizer).toConstantValue({

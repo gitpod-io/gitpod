@@ -394,17 +394,25 @@ export class OrganizationService {
                 settings = { ...settings, defaultWorkspaceImage: null };
             }
         }
-        if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
-            const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
-            const availableClasses = allClasses.filter((e) => settings.allowedWorkspaceClasses!.includes(e.id));
-            if (availableClasses.length !== settings.allowedWorkspaceClasses.length) {
-                throw new ApplicationError(
-                    ErrorCodes.BAD_REQUEST,
-                    "items in allowedWorkspaceClasses are not all allowed",
-                );
-            }
-            if (availableClasses.length === 0) {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "at least one workspace class has to be selected.");
+        if (settings.allowedWorkspaceClasses) {
+            if (settings.allowedWorkspaceClasses.length === 0) {
+                // Pass an empty array to allow all workspace classes
+                settings.allowedWorkspaceClasses = null;
+            } else {
+                const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
+                const availableClasses = allClasses.filter((e) => settings.allowedWorkspaceClasses!.includes(e.id));
+                if (availableClasses.length !== settings.allowedWorkspaceClasses.length) {
+                    throw new ApplicationError(
+                        ErrorCodes.BAD_REQUEST,
+                        `items in allowedWorkspaceClasses are not all allowed`,
+                    );
+                }
+                if (availableClasses.length === 0) {
+                    throw new ApplicationError(
+                        ErrorCodes.BAD_REQUEST,
+                        "at least one workspace class has to be selected.",
+                    );
+                }
             }
         }
         return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
@@ -418,7 +426,9 @@ export class OrganizationService {
         if (typeof settings.defaultWorkspaceImage === "string") {
             result.defaultWorkspaceImage = settings.defaultWorkspaceImage;
         }
-        result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
+        if (settings.allowedWorkspaceClasses) {
+            result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
+        }
         return result;
     }
 
