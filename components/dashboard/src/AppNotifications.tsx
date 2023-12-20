@@ -15,7 +15,7 @@ import { User as UserProtocol } from "@gitpod/gitpod-protocol";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
-const PRIVACY_POLICY_LAST_UPDATED = "2023-12-11";
+const PRIVACY_POLICY_LAST_UPDATED = "2023-12-20";
 
 interface Notification {
     id: string;
