@@ -212,7 +212,10 @@ func Run(options ...RunOption) {
 	}
 	exps := experiments.NewClient(experimentsClientOpts...)
 
-	tokenService := NewInMemoryTokenService(exps, cfg.OwnerId)
+	useApiTokenV0 := experiments.SupervisorUseApiTokenV0(context.Background(), exps, experiments.Attributes{
+		UserID: cfg.OwnerId,
+	})
+	tokenService := NewInMemoryTokenService(useApiTokenV0)
 
 	if !opts.RunGP {
 		tkns, err := cfg.GetTokens(true)

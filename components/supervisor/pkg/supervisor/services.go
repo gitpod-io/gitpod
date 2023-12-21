@@ -23,7 +23,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
-	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/api"
@@ -310,8 +309,8 @@ func (s RegistrableTokenService) RegisterREST(mux *runtime.ServeMux, grpcEndpoin
 }
 
 // NewInMemoryTokenService produces a new InMemoryTokenService.
-func NewInMemoryTokenService(exps experiments.Client, ownerID string) *InMemoryTokenService {
-	useApiTokenV0 := true
+func NewInMemoryTokenService(useApiTokenV0 bool) *InMemoryTokenService {
+	// useApiTokenV0 := true
 	// if exps != nil && ownerID != "" {
 	// 	useApiTokenV0 = experiments.SupervisorUseApiTokenV0(context.Background(), exps, experiments.Attributes{
 	// 		UserID: ownerID,
