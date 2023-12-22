@@ -310,7 +310,6 @@ func (s *Workspace) UpdateGitStatus(ctx context.Context, persistentVolumeClaim b
 	err = s.persist()
 	if err != nil {
 		log.WithError(err).WithFields(s.OWI()).Warn("cannot persist latest Git status")
-		err = nil
 	}
 
 	return s.LastGitStatus, nil
