@@ -44,6 +44,8 @@ packages:
       buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/installer/cmd.Version=commit-${__git_commit}'"]
   - name: app
     type: generic
+    srcs:
+      - versions.yaml
     deps:
       - :raw-app
       - components:all-docker
@@ -51,7 +53,14 @@ packages:
       - version
     config:
       commands:
-        - ["objcopy", "--add-section", "versionManifest=components--all-docker/versions.yaml", "install-installer--raw-app/installer", "installer"]
+        #- ["objcopy", "--add-section", "versionManifest=components--all-docker/versions.yaml", "install-installer--raw-app/installer", "installer"]
+
+        # Use hard-coded versions.yaml (which is from release-2022.11.3) and replace version, commit and server version with new values.
+        # That means we are re-using 2022.11.3 binaries except for server.
+        - ["sh", "-c", 'yq w -i versions.yaml version "$(yq r components--all-docker/versions.yaml version)"']
+        - ["sh", "-c", 'yq w -i versions.yaml commit "$(yq r components--all-docker/versions.yaml commit)"']
+        - ["sh", "-c", 'yq w -i versions.yaml components.server.version "$(yq r components--all-docker/versions.yaml components.server.version)"']
+        - ["objcopy", "--add-section", "versionManifest=versions.yaml", "install-installer--raw-app/installer", "installer"]
         # Remove the deps component folders now that we have copied over (and modified) the installer to reduce
         # the size of the build cache of this component.
         - ["rm", "-rf", "install-installer--raw-app", "components--all-docker"]

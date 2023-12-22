@@ -10,7 +10,7 @@ packages:
     deps:
       - :all-docker
       - :docker-versions
-      - :publish-api
+      # - :publish-api
       - dev:all-app
       - install/installer:docker
       #- install/kots:lint
@@ -29,63 +29,63 @@ packages:
       - version
       - imageRepoBase
     deps:
-      - components/blobserve:docker
-      - components/content-service:docker
-      - components/dashboard:docker
-      - components/docker-up:docker
-      - components/ee/agent-smith:docker
-      - components/ee/db-sync:docker
-      - components/ee/payment-endpoint:docker
-      - components/gitpod-db:docker
-      - components/ide/code-desktop:docker
-      - components/ide/code-desktop:docker-insiders
-      - components/ide/code:docker
-      - components/ide/jetbrains/backend-plugin:stable
-      - components/ide/jetbrains/backend-plugin:latest
-      - components/ide/jetbrains/image:goland
-      - components/ide/jetbrains/image:goland-latest
-      - components/ide/jetbrains/image:intellij
-      - components/ide/jetbrains/image:intellij-latest
-      - components/ide/jetbrains/image:phpstorm
-      - components/ide/jetbrains/image:phpstorm-latest
-      - components/ide/jetbrains/image:pycharm
-      - components/ide/jetbrains/image:pycharm-latest
-      - components/ide/jetbrains/image:rubymine
-      - components/ide/jetbrains/image:rubymine-latest
-      - components/ide/jetbrains/image:webstorm
-      - components/ide/jetbrains/image:webstorm-latest
-      - components/ide/jetbrains/image:rider
-      - components/ide/jetbrains/image:rider-latest
-      - components/ide/jetbrains/image:clion
-      - components/ide/jetbrains/image:clion-latest
-      - components/image-builder-bob:docker
-      - components/image-builder-mk3:docker
-      - components/local-app:docker
-      - components/public-api-server:docker
-      - components/usage:docker
-      - components/openvsx-proxy:docker
-      - components/proxy:docker
-      - components/registry-facade:docker
-      - components/registry-facade/ca-updater:docker
+      # - components/blobserve:docker
+      # - components/content-service:docker
+      # - components/dashboard:docker
+      # - components/docker-up:docker
+      # - components/ee/agent-smith:docker
+      # - components/ee/db-sync:docker
+      # - components/ee/payment-endpoint:docker
+      # - components/gitpod-db:docker
+      #- components/ide/code-desktop:docker
+      #- components/ide/code-desktop:docker-insiders
+      #- components/ide/code:docker
+      #- components/ide/jetbrains/backend-plugin:stable
+      #- components/ide/jetbrains/backend-plugin:latest
+      #- components/ide/jetbrains/image:goland
+      #- components/ide/jetbrains/image:goland-latest
+      #- components/ide/jetbrains/image:intellij
+      #- components/ide/jetbrains/image:intellij-latest
+      #- components/ide/jetbrains/image:phpstorm
+      #- components/ide/jetbrains/image:phpstorm-latest
+      #- components/ide/jetbrains/image:pycharm
+      #- components/ide/jetbrains/image:pycharm-latest
+      #- components/ide/jetbrains/image:rubymine
+      #- components/ide/jetbrains/image:rubymine-latest
+      #- components/ide/jetbrains/image:webstorm
+      #- components/ide/jetbrains/image:webstorm-latest
+      #- components/ide/jetbrains/image:rider
+      #- components/ide/jetbrains/image:rider-latest
+      #- components/ide/jetbrains/image:clion
+      #- components/ide/jetbrains/image:clion-latest
+      # - components/image-builder-bob:docker
+      # - components/image-builder-mk3:docker
+      # - components/local-app:docker
+      # - components/public-api-server:docker
+      # - components/usage:docker
+      # - components/openvsx-proxy:docker
+      # - components/proxy:docker
+      # - components/registry-facade:docker
+      # - components/registry-facade/ca-updater:docker
       - components/server:docker
-      - components/service-waiter:docker
-      - components/supervisor:docker
-      - components/toxic-config:docker
-      - components/installation-telemetry:docker
-      - components/workspacekit:docker
-      - components/ws-daemon:docker
-      - components/ws-daemon/seccomp-profile-installer:docker
-      - components/ws-daemon/shiftfs-module-loader:docker
-      - components/ws-manager-bridge:docker
-      - components/ws-manager:docker
-      - components/ws-proxy:docker
-      - components/ide-proxy:docker
-      - components/ide-metrics:docker
-      - components/ide-service:docker
-      - components/kots-config-check/certificate:docker
-      - components/kots-config-check/database:docker
-      - components/kots-config-check/registry:docker
-      - components/kots-config-check/storage:docker
+      # - components/service-waiter:docker
+      # - components/supervisor:docker
+      # - components/toxic-config:docker
+      # - components/installation-telemetry:docker
+      # - components/workspacekit:docker
+      # - components/ws-daemon:docker
+      # - components/ws-daemon/seccomp-profile-installer:docker
+      # - components/ws-daemon/shiftfs-module-loader:docker
+      # - components/ws-manager-bridge:docker
+      # - components/ws-manager:docker
+      # - components/ws-proxy:docker
+      # - components/ide-proxy:docker
+      # - components/ide-metrics:docker
+      # - components/ide-service:docker
+      # - components/kots-config-check/certificate:docker
+      # - components/kots-config-check/database:docker
+      # - components/kots-config-check/registry:docker
+      # - components/kots-config-check/storage:docker
       - test:docker
       - dev/version-manifest:app
     config:

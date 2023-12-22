@@ -1,0 +1,180 @@
+# Copyright (c) 2024 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+commit: 6771283c3406586e352337675b79ff2ca50f191b
+version: release-2022.11.3
+components:
+  agentSmith:
+    version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+  blobserve:
+    version: commit-6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+  caUpdater:
+    version: commit-313e75e99d5db6f5ac4eb71ecc25b8807fdd8366
+
+  contentService:
+    version: commit-6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+  dashboard:
+    version: commit-6771283c3406586e352337675b79ff2ca50f191b
+
+  dbMigrations:
+    version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+  dbSync:
+    version: commit-6771283c3406586e352337675b79ff2ca50f191b
+
+  ideMetrics:
+    version: commit-6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+  ideProxy:
+    version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+  ideService:
+    version: commit-6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+  imageBuilderMk3:
+    builderImage:
+      version: 6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+    version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+  installationTelemetry:
+    version: commit-6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+  integrationTest:
+    version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+  kots-config-check:
+    certificate:
+      version: commit-313e75e99d5db6f5ac4eb71ecc25b8807fdd8366
+
+    database:
+      version: commit-313e75e99d5db6f5ac4eb71ecc25b8807fdd8366
+
+    registry:
+      version: commit-313e75e99d5db6f5ac4eb71ecc25b8807fdd8366
+
+    storage:
+      version: commit-313e75e99d5db6f5ac4eb71ecc25b8807fdd8366
+
+  openVsxProxy:
+    version: commit-8aeb5e189120bd0c8a9dce3159f3f960f875b646
+
+  paymentEndpoint:
+    version: commit-6771283c3406586e352337675b79ff2ca50f191b
+
+  proxy:
+    version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+  public-api-server:
+    version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+  registryFacade:
+    version: commit-6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+  server:
+    version: commit-6771283c3406586e352337675b79ff2ca50f191b
+
+  serviceWaiter:
+    version: commit-3c79f0c68c9e480f0e8daf65c44a484296161786
+
+  toxic-config:
+    version: commit-6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+  usage:
+    version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+  workspace:
+    codeImage:
+      version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+    desktopIdeImages:
+      clion:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+      clionLatest:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e-latest
+
+      codeDesktop:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+      codeDesktopInsiders:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+      goland:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+      golandLatest:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e-latest
+
+      intellij:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+      intellijLatest:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e-latest
+
+      jbBackendPlugin:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+      jbBackendPluginLatest:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e-latest
+
+      phpstorm:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+      phpstormLatest:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e-latest
+
+      pycharm:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+      pycharmLatest:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e-latest
+
+      rider:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+      riderLatest:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e-latest
+
+      rubymine:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+      rubymineLatest:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e-latest
+
+      webstorm:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+      webstormLatest:
+        version: commit-adff3328ae5722956535c4164c2f5d0946a9664e-latest
+
+    dockerUp:
+      version: commit-6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+    supervisor:
+      version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
+
+    workspacekit:
+      version: commit-6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+  wsDaemon:
+    userNamespaces:
+      seccompProfileInstaller:
+        version: commit-5d7b9b6cd6b0dd95445ef5f3eef1bc7e8d27845a
+
+      shiftfsModuleLoader:
+        version: commit-313e75e99d5db6f5ac4eb71ecc25b8807fdd8366
+
+    version: commit-6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+  wsManager:
+    version: commit-6c883c70ab109a6d259e331e0d72a411b10cfa01
+
+  wsManagerBridge:
+    version: commit-6771283c3406586e352337675b79ff2ca50f191b
+
+  wsProxy:
+    version: commit-adff3328ae5722956535c4164c2f5d0946a9664e
