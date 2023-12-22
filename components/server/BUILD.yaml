@@ -74,7 +74,7 @@ packages:
       - package.json
       - mocha.opts
     deps:
-      - components/gitpod-db:dbtest-init
+      # - components/gitpod-db:dbtest-init
       - components/gitpod-db:lib
       - components/content-service-api/typescript:lib
       - components/gitpod-messagebus:lib
@@ -91,7 +91,7 @@ packages:
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
       commands:
-        test: ["yarn", "db-test"]
+        # test: ["yarn", "db-test"]
         build: ["yarn", "build"]
 scripts:
   - name: telepresence

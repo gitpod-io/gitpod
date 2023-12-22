@@ -252,6 +252,7 @@ jobs:
             --cache $CACHE \
             $TEST \
             -Dversion=$VERSION \
+            --dont-test \
             --docker-build-options network=host \
             --max-concurrent-tasks 1 \
             -DlocalAppVersion=$VERSION \

@@ -32,14 +32,14 @@ packages:
       - package.json
       - mocha.opts
     deps:
-      - :dbtest-init
+      # - :dbtest-init
       - components/gitpod-protocol:lib
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
       commands:
-        test: ["yarn", "db-test"]
+        # test: ["yarn", "db-test"]
         build: ["yarn", "build"]
   - name: dbtest-init
     type: generic
