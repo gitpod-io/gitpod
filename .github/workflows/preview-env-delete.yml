@@ -1,0 +1,39 @@
+name: "Preview environment delete"
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        required: true
+        description: "The name of the preview environment to delete"
+  delete:
+
+jobs:
+  create-runner:
+    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@main
+    secrets:
+      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+
+  delete:
+    if: github.event.ref_type == 'branch' || github.event.inputs.name != ''
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    needs: [create-runner]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete preview environment
+        uses: ./.github/actions/delete-preview
+        with:
+          name: ${{ github.event.inputs.name || github.event.ref}}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+
+  delete-runner:
+    if: always()
+    needs:
+      - create-runner
+      - delete
+    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@main
+    secrets:
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+    with:
+      runner-label: ${{ needs.create-runner.outputs.label }}
+      machine-zone: ${{ needs.create-runner.outputs.machine-zone }}

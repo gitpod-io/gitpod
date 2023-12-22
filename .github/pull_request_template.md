@@ -8,17 +8,6 @@ Fixes #
 ## How to test
 <!-- Provide steps to test this PR -->
 
-## Release Notes
-<!--
-  Add entries for the CHANGELOG.md or "NONE" if there aren't any user facing changes.
-  Each line becomes a separate entry.
-  Format: [!<optional for breaking>] <description>
-  Example: !basic auth is no longer supported
-  See https://www.notion.so/gitpod/Release-Notes-513a74fdd23b4cb1b3b3aefb1d34a3e0
--->
-```release-note
-```
-
 ## Documentation
 <!--
 Does this PR require updates to the documentation at www.gitpod.io/docs?
@@ -29,11 +18,52 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
   * Are you sure? If so, nothing to do here.
 -->
 
-## Werft options:
+#### Preview status
+
+gitpod:summary
+
+## Build Options
+
+<details>
+<summary>Build</summary>
+
+- [ ] /werft with-werft
+      Run the build with werft instead of GHA
+- [ ] leeway-no-cache
+- [ ] /werft no-test
+      Run Leeway with `--dont-test`
+</details>
+
+<details>
+<summary>Publish</summary>
+
+- [ ] /werft publish-to-npm
+- [ ] /werft publish-to-jb-marketplace
+</details>
+
+<details>
+<summary>Installer</summary>
+
+- [ ] analytics=segment
+- [ ] with-dedicated-emulation
+- [ ] workspace-feature-flags
+  Add desired feature flags to the end of the line above, space separated
+</details>
+
+<details>
+<summary>Preview Environment / Integration Tests</summary>
 
 - [ ] /werft with-local-preview
       If enabled this will build `install/preview`
 - [ ] /werft with-preview
 - [ ] /werft with-large-vm
-- [ ] /werft with-integration-tests=all
-      Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`
+- [x] /werft with-gce-vm
+      If enabled this will create the environment on GCE infra
+- [x] /werft preemptible
+      Saves cost. Untick this only if you're really sure you need a non-preemtible machine.
+- [ ] with-integration-tests=all
+      Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`. If enabled, `with-preview` and `with-large-vm` will be enabled.
+- [ ] with-monitoring
+</details>
+
+/hold

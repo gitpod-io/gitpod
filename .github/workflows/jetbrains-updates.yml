@@ -9,7 +9,7 @@ jobs:
     update-jetbrains:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Check for updates
               run: |
                   cd ./components/ide/jetbrains/image/gha-update-image
@@ -32,18 +32,27 @@ jobs:
                       This PR updates the JetBrains IDE images to the most recent `stable` version.
 
                       ## How to test
+
+                      Merge if:
+                      - [ ] Tests are green, if something breaks then add tests for regressions.
+                      - [ ] Warmup is working properly using IntelliJ and spring-petclinic project sample
+
+                      <details>
+                      <summary>if you want to test manually for some reasons</summary>
+
                       1. For each IDE changed on this PR, follow these steps:
-                      1. Open the preview environment generated for this branch
-                      1. Choose the stable version of the IDE that you're testing as your default editor
-                      1. Start a workspace using any repository (e.g: `https://github.com/gitpod-io/empty`)
-                      1. Verify that the workspace starts successfully
-                      1. Verify that the IDE opens successfully
-                      1. Verify that the version of the IDE corresponds to the one being updated in this PR
+                      2. Open the preview environment generated for this branch
+                      3. Choose the stable version of the IDE that you're testing as your default editor
+                      4. Start a workspace using any repository (e.g: `https://github.com/gitpod-io/empty`)
+                      5. Verify that the workspace starts successfully
+                      6. Verify that the IDE opens successfully
+                      7. Verify that the version of the IDE corresponds to the one being updated in this PR
 
                       The following resources should help, in case something goes wrong (e.g. workspaces don't start):
 
                       - https://www.gitpod.io/docs/troubleshooting#gitpod-logs-in-jetbrains-gateway
                       - https://docs.google.com/document/d/1K9PSB0G6NwX2Ns_SX_HEgMYTKYsgMJMY2wbh0p6t3lQ
+                      </details>
 
                       ## Release Notes
                       ```release-note
@@ -57,12 +66,19 @@ jobs:
                       -->
                       - [x] /werft with-preview
                       - [x] /werft with-large-vm
-                      - [x] /werft with-integration-tests=jetbrains
+                      - [x] /werft with-gce-vm
+                      - [x] with-integration-tests=jetbrains
+                      - [x] latest-ide-version=false
 
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-updates.yml) GHA_
                   commit-message: "[JetBrains] Update IDE images to new build version"
                   branch: "jetbrains/update-stable-ides"
                   labels: "team: IDE,editor: jetbrains"
+                  token: ${{ secrets.ROBOQUAT_REPO_PAT }}
+                  committer: Robo Quat <roboquat@gitpod.io>
+                  author: Robo Quat <roboquat@gitpod.io>
+                  team-reviewers: |
+                    team-experience
             - name: Get previous job's status
               id: lastrun
               uses: filiptronicek/get-last-job-status@main
@@ -73,3 +89,4 @@ jobs:
                   SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_TITLE: ${{ inputs.productName }}
+                  SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"

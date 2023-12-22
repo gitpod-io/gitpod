@@ -10,7 +10,8 @@ jobs:
         with:
             pluginName: JetBrains Backend Plugin (EAP)
             pluginId: latest-backend-plugin
-            xpath: "(/html/body/table[preceding::h2/text()='com.jetbrains.intellij.idea'][1]/tbody/tr/td[contains(text(),'-EAP-CANDIDATE-SNAPSHOT') and starts-with(text(),'MAJOR_VERSION_PLACEHOLDER')]/text())[1]"
+            productCode: IIU
+            productType: eap,rc,release
             gradlePropertiesPath: components/ide/jetbrains/backend-plugin/gradle-latest.properties
         secrets:
             slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
@@ -20,7 +21,8 @@ jobs:
         with:
             pluginName: JetBrains Gateway Plugin (EAP)
             pluginId: latest-gateway-plugin
-            xpath: "(/html/body/table[preceding::h2/text()='com.jetbrains.gateway'][1]/tbody/tr/td[contains(text(),'-CUSTOM-SNAPSHOT') and starts-with(text(),'MAJOR_VERSION_PLACEHOLDER') and not(contains(text(),'-NIGHTLY'))]/text())[1]"
+            productCode: GW
+            productType: eap,rc,release
             gradlePropertiesPath: components/ide/jetbrains/gateway-plugin/gradle-latest.properties
         secrets:
             slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
@@ -30,7 +32,8 @@ jobs:
         with:
             pluginName: JetBrains Gateway Plugin (Stable)
             pluginId: stable-gateway-plugin
-            xpath: "(/html/body/table[preceding::h2/text()='com.jetbrains.gateway'][1]/tbody/tr/td[contains(text(),'-CUSTOM-SNAPSHOT') and starts-with(text(),'MAJOR_VERSION_PLACEHOLDER') and not(contains(text(),'-NIGHTLY'))]/text())[1]"
+            productCode: GW
+            productType: release
             gradlePropertiesPath: components/ide/jetbrains/gateway-plugin/gradle-stable.properties
         secrets:
             slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}

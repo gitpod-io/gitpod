@@ -1,4 +1,5 @@
 name: JetBrains Test
+run-name: Test ${{ inputs.jb_product }} (latest=${{ inputs.use_latest }}, build_id=${{ inputs.build_id }})
 on:
   workflow_dispatch:
     inputs:
@@ -14,10 +15,32 @@ on:
         type: string
         description: IDE Endpoint
         required: true
+      jb_product:
+        type: string
+        description: JB product
+        required: true
+      use_latest:
+        type: string
+        description: Use latest IDE version
+        required: true
+      build_id:
+        type: string
+        description: Build ID
+        required: true
+      build_url:
+        type: string
+        description: Build URL
+        required: true
 jobs:
   jetbrains-smoke-test-linux:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate Summary
+        if: always()
+        run: |
+          echo "- Build URL: ${{ inputs.build_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- JB Product: ${{ inputs.jb_product }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Latest Version: ${{ inputs.use_latest }}" >> $GITHUB_STEP_SUMMARY
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
@@ -33,7 +56,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Download build dependency
         run: |
-          cd /usr/local/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.4.1/leeway_0.4.1_Linux_x86_64.tar.gz | sudo tar xz
+          cd /usr/local/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.7.3/leeway_0.7.3_Linux_x86_64.tar.gz | sudo tar xz
           cd /usr/local && curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s v1.49.0
           cd /usr/local/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | sudo tar xzv gokart
 
@@ -45,8 +68,14 @@ jobs:
           sudo update-rc.d xvfb defaults
           sudo service xvfb start
       - name: Get leeway cache version
+        env:
+          TEST_USE_LATEST: ${{ inputs.use_latest }}
         run: |
-          leeway collect | grep components/ide/jetbrains/gateway-plugin:publish-latest > gateway.version
+          if [ $TEST_USE_LATEST = "false" ]; then
+            leeway collect | grep components/ide/jetbrains/gateway-plugin:publish-stable > gateway.version
+          else
+            leeway collect | grep components/ide/jetbrains/gateway-plugin:publish-latest > gateway.version
+          fi
       - name: Cache leeway build
         id: cache-npm
         uses: actions/cache@v3
@@ -59,6 +88,8 @@ jobs:
         env:
           DISPLAY: ':10'
           LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: '8388608'
+          LEEWAY_REMOTE_CACHE_BUCKET: '${{ needs.configuration.outputs.leeway_cache_bucket }}'
+          TEST_USE_LATEST: ${{ inputs.use_latest }}
         run: |
           export GATEWAY_LINK=$(jq -r '.inputs.secret_gateway_link' $GITHUB_EVENT_PATH)
           export GITPOD_TEST_ACCESSTOKEN=$(jq -r '.inputs.secret_access_token' $GITHUB_EVENT_PATH)
@@ -66,7 +97,17 @@ jobs:
 
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
 
-          leeway run dev/jetbrains-test:test -Dversion=integration-test -DpublishToJBMarketplace=false
+          if [ $TEST_USE_LATEST = "false" ]; then
+            sudo mkdir -p /workspace/.gradle-stable
+            sudo chown -R $(whoami) /workspace
+            mkdir -p $HOME/.cache/pluginVerifier-stable
+            leeway run dev/jetbrains-test:test-stable -Dversion=integration-test -DpublishToJBMarketplace=false
+          else
+            sudo mkdir -p /workspace/.gradle-latest
+            sudo chown -R $(whoami) /workspace
+            mkdir -p $HOME/.cache/pluginVerifier-latest
+            leeway run dev/jetbrains-test:test-latest -Dversion=integration-test -DpublishToJBMarketplace=false
+          fi
       - name: Move video
         if: always()
         run: |

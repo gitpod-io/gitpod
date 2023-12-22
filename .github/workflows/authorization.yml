@@ -1,0 +1,19 @@
+on:
+  pull_request:
+    paths:
+      - components/spicedb/**
+      - .github/workflows/authorization.yml
+
+name: SpiceDB
+
+jobs:
+  scan-repo:
+    runs-on: ubuntu-latest
+    name: Validate schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate SpiceDB schema
+        uses: authzed/action-spicedb-validate@v1.0.1
+        with:
+          validationfile: "components/spicedb/schema/schema.yaml"

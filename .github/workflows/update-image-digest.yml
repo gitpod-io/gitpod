@@ -1,0 +1,85 @@
+name: Update container images digest
+
+on:
+  workflow_dispatch:
+  schedule:
+    # At the start of every day
+    - cron: "0 0 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set git identity
+        run: |
+          git config --global user.name $GITHUB_USER
+          git config --global user.email $GITHUB_EMAIL
+        env:
+          GITHUB_USER: roboquat
+          GITHUB_EMAIL: roboquat@gitpod.io
+
+      - uses: imjasonh/setup-crane@v0.1
+
+      - name: Check if an update is available
+        shell: bash
+        run: |
+          while IFS= read -r -d '' file; do
+            if [[ "$file" == *testdata* ]]; then
+              echo "Skipping testdata ${file}"
+              continue
+            fi
+            images=$(grep -i -E '[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*@sha256:[a-z0-9]+' "$file" | cut -d @ -f1 | rev | cut -d ' ' -f1 | cut -d '"' -f1 | rev | sed -e "s/^docker:\/\///" | tr '\n' ',' || true)
+            digests=$(grep -i -E '[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*@sha256:[a-z0-9]+' "$file" | cut -d @ -f2 | cut -d ' ' -f1 | cut -d '"' -f1 | tr '\n' ',' || true)
+            IFS=',' read -r -a images2 <<< "$images"
+            IFS=',' read -r -a digests2 <<< "$digests"
+
+            if [ -n "$images" ]; then
+                for i in "${!images2[@]}"; do
+                  if [[ ${images2[i]} != *":"* ]]; then
+                    echo "Image ${images2[i]} in file $file does not have a tag, ignoring..."
+                    continue
+                  fi
+                  if [[ ${images2[i]} == *\.local:* ]]; then
+                    echo "Skipping local registry image ${images2[i]}"
+                    continue
+                  fi
+                  echo "Processing ${images2[i]} in file $file"
+                  updated_digest=$(crane digest "${images2[i]}")
+                  if [ "$updated_digest" != "${digests2[i]}" ] && [ -n "$updated_digest" ]; then
+                    echo "Digest ${digests2[i]} for image ${images2[i]} is different, new digest is $updated_digest, updating..."
+                    sed -i -e "s/${digests2[i]}/$updated_digest/g" "$file"
+                  fi
+                done
+            fi
+          done < <(find "$(pwd)" -type f \( -name "*.yaml" -o -name "*.yml" -o -name "Dockerfile*" -o -name "leeway.Dockerfile" \) -print0)
+
+      - name: Check workspace
+        id: create_pr
+        shell: bash
+        run: |
+          if [[ $(git diff --stat) != '' ]]; then
+            echo "create_pr=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@923ad837f191474af6b1721408744feb989a4c27 # v4
+        if: ${{ steps.create_pr.outputs.create_pr == 'true' }}
+        with:
+          token: ${{ secrets.ROBOQUAT_AUTOMATIC_CHANGELOG }}
+          commit-message: update index
+          title: "Update images digests"
+          body: |
+            Update images digests using the latest version available for image/s
+
+            ```release-note
+            NONE
+            ```
+          labels: automated pr, kind/cleanup, release-note-none
+          branch: update-digests
+          delete-branch: true

@@ -1,0 +1,12 @@
+name: "Deploy monitoring satellite"
+description: "Deploys monitoring satellite to an existing preview environment"
+inputs:
+    sa_key:
+        description: "The service account key to use when authenticating with GCP"
+        required: true
+    previewctl_hash:
+        description: "The Leeway hash of the dev/preview/previewctl:docker package to be used when downloading previewclt"
+        required: false
+runs:
+    using: "docker"
+    image: "Dockerfile"
