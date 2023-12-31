@@ -18,12 +18,16 @@ spec:
       labels:
         severity: critical
         dedicated: included
-      for: 30m
+      for: 20m
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStopping.md
-        summary: 15 or more workspaces are stuck on stopping in cluster {{ $labels.cluster }}.
-        description: '{{ printf "%.2f" $value }} {{ $labels.workspace_type }} workspaces are stuck on stopping for more than 20 minutes.'
+        summary: '{{ printf "%.2f" $value }}% of Regular workspaces stopping in {{ $labels.cluster }}'
+        description: '{{ printf "%.2f" $value }}% of Regular workspaces stopping in {{ $labels.cluster }} is too high.'
       expr: |
+        sum(
+          gitpod_ws_manager_mk2_workspace_phase_total{type="Regular", phase="Stopping", cluster!~"ephemeral.*"}) / sum(gitpod_ws_manager_mk2_workspace_phase_total{type="Regular", cluster!~"ephemeral.*"}
+        ) >= .2
+        and
         sum(
           gitpod_ws_manager_mk2_workspace_phase_total{type="Regular", phase="Stopping", cluster!~"ephemeral.*"}
         ) without(phase) > 15
