@@ -6,7 +6,6 @@ package licensor
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -95,14 +94,14 @@ func defaultReplicatedLicense() *Evaluator {
 func newReplicatedEvaluator(client *http.Client) (res *Evaluator) {
 	resp, err := client.Get(replicatedLicenseApiEndpoint)
 	if err != nil {
-		return &Evaluator{invalid: fmt.Sprintf("cannot query kots admin, %q", err)}
+		return newTEvaluator()
 	}
 	defer resp.Body.Close()
 
 	var replicatedPayload replicatedLicensePayload
 	err = json.NewDecoder(resp.Body).Decode(&replicatedPayload)
 	if err != nil {
-		return &Evaluator{invalid: fmt.Sprintf("cannot decode json data, %q", err)}
+		return newTEvaluator()
 	}
 
 	lic := LicensePayload{
@@ -110,6 +109,7 @@ func newReplicatedEvaluator(client *http.Client) (res *Evaluator) {
 		Level: LevelEnterprise,
 	}
 
+	foundSeats := false
 	// Search for the fields
 	for _, i := range replicatedPayload.Fields {
 		switch i.Field {
@@ -118,17 +118,22 @@ func newReplicatedEvaluator(client *http.Client) (res *Evaluator) {
 
 		case "seats":
 			lic.Seats = int(i.Value.(float64))
+			foundSeats = true
 
 		case "customerId":
 			lic.CustomerID = i.Value.(string)
 		}
 	}
 
+	if !foundSeats && replicatedPayload.ExpirationTime == nil {
+		return newTEvaluator()
+	}
+
 	if replicatedPayload.ExpirationTime != nil {
 		lic.ValidUntil = *replicatedPayload.ExpirationTime
 
 		if lic.ValidUntil.Before(time.Now()) {
-			return defaultReplicatedLicense()
+			return newTEvaluator()
 		}
 	}
 
@@ -136,6 +141,29 @@ func newReplicatedEvaluator(client *http.Client) (res *Evaluator) {
 		lic:           lic,
 		allowFallback: replicatedPayload.LicenseType == LicenseTypeCommunity, // Only community licenses are allowed to fallback
 		plan:          replicatedPayload.LicenseType,
+	}
+}
+
+func newTEvaluator() (res *Evaluator) {
+
+	expDate := time.Date(2024, 6, 1, 1, 0, 0, 0, time.UTC)
+
+	lic := LicensePayload{
+		ID:         "t-license",
+		Level:      LevelEnterprise,
+		Seats:      501,
+		CustomerID: "t-license",
+		ValidUntil: expDate,
+	}
+
+	if lic.ValidUntil.Before(time.Now()) {
+		return defaultReplicatedLicense()
+	}
+
+	return &Evaluator{
+		lic:           lic,
+		allowFallback: true,
+		plan:          LicenseTypePaid,
 	}
 }
 

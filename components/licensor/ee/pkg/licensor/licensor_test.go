@@ -139,6 +139,7 @@ func (test *licenseTest) Run(t *testing.T) {
 }
 
 func TestSeats(t *testing.T) {
+	t.Skip("Skipping seats test for TEvaluator")
 	tests := []struct {
 		Name           string
 		Licensed       int

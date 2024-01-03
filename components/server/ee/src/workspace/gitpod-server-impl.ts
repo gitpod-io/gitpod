@@ -345,7 +345,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async validateLicense(ctx: TraceContext): Promise<LicenseValidationResult> {
+        const l = this.licenseEvaluator.getLicenseData();
         const v = this.licenseEvaluator.validate();
+
+        log.warn(`warn: validating license (valid=${JSON.stringify(v)})`, l);
+        log.warn(`info: validating license (valid=${JSON.stringify(v)})`, l);
+
         if (!v.valid) {
             return v;
         }

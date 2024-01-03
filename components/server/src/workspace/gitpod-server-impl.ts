@@ -2702,6 +2702,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const licensePayload = licenseData.payload;
         const licenseValid = this.licenseEvaluator.validate();
 
+        log.warn(`warn: validating license (valid=${JSON.stringify(licenseValid)})`, licensePayload);
+        log.warn(`info: validating license (valid=${JSON.stringify(licenseValid)})`, licensePayload);
+
         const userCount = await this.userDB.getUserCount(true);
 
         const features = Object.keys(Feature);
