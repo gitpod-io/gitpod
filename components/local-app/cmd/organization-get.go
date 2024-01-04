@@ -19,7 +19,7 @@ import (
 var organizationGetCmd = &cobra.Command{
 	Use:   "get [organization-id]",
 	Short: "Retrieves metadata about a given organization",
-	Args:  cobra.MinimumNArgs(1),
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			cfg := config.FromContext(cmd.Context())
