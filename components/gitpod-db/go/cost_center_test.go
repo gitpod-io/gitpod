@@ -453,12 +453,23 @@ func TestCostCenterManager_ResetUsage(t *testing.T) {
 			})
 		}
 
+		createIdentity := func(t *testing.T, aUserID string, email string) {
+			identityID := uuid.New().String()
+			db := conn.Exec(`INSERT INTO d_b_identity (authProviderID, authId, authName, userid, primaryemail) VALUES (?, ?, ?, ?, ?)`,
+				"gitpod", identityID, "gitpod", aUserID, email)
+			require.NoError(t, db.Error)
+			t.Cleanup(func() {
+				conn.Exec(`DELETE FROM d_b_identity WHERE authId = ?`, identityID)
+			})
+		}
+
 		orgID := uuid.New().String()
 		orgID2 := uuid.New().String()
 		userID := uuid.New().String()
 		t.Cleanup(func() {
 			conn.Exec(`DELETE FROM d_b_free_credits WHERE userId = ?`, userID)
 		})
+		createIdentity(t, userID, "foo@gitpod.io")
 		createMembership(t, orgID, userID)
 		createMembership(t, orgID2, userID)
 		cc1, err := mnr.GetOrCreateCostCenter(context.Background(), db.NewTeamAttributionID(orgID))
@@ -469,4 +480,54 @@ func TestCostCenterManager_ResetUsage(t *testing.T) {
 		require.Equal(t, limitForTeams, cc2.SpendingLimit)
 	})
 
+	t.Run("users with same email get free credits only once", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+		limitForUsers := int32(500)
+		limitForTeams := int32(0)
+		mnr := db.NewCostCenterManager(conn, db.DefaultSpendingLimit{
+			ForTeams: limitForTeams,
+			ForUsers: limitForUsers,
+		})
+		createMembership := func(t *testing.T, anOrgID string, aUserID string) {
+			memberShipID := uuid.New().String()
+			db := conn.Exec(`INSERT INTO d_b_team_membership (id, teamid, userid, role, creationtime) VALUES (?, ?, ?, ?, ?)`,
+				memberShipID,
+				anOrgID,
+				aUserID,
+				"owner",
+				db.TimeToISO8601(time.Now()))
+			require.NoError(t, db.Error)
+			t.Cleanup(func() {
+				conn.Exec(`DELETE FROM d_b_team_membership WHERE id = ?`, memberShipID)
+			})
+		}
+
+		createIdentity := func(t *testing.T, aUserID string, email string) {
+			identityID := uuid.New().String()
+			db := conn.Exec(`INSERT INTO d_b_identity (authProviderID, authId, authName, userid, primaryemail) VALUES (?, ?, ?, ?, ?)`,
+				"gitpod", identityID, "gitpod", aUserID, email)
+			require.NoError(t, db.Error)
+			t.Cleanup(func() {
+				conn.Exec(`DELETE FROM d_b_identity WHERE authId = ?`, identityID)
+			})
+		}
+
+		orgID := uuid.New().String()
+		orgID2 := uuid.New().String()
+		userID := uuid.New().String()
+		userID2 := uuid.New().String()
+		t.Cleanup(func() {
+			conn.Exec(`DELETE FROM d_b_free_credits WHERE userId = ?`, userID)
+		})
+		createIdentity(t, userID, "foo@bar.de")
+		createIdentity(t, userID2, "foo@bar.de")
+		createMembership(t, orgID, userID)
+		createMembership(t, orgID2, userID2)
+		cc1, err := mnr.GetOrCreateCostCenter(context.Background(), db.NewTeamAttributionID(orgID))
+		require.NoError(t, err)
+		cc2, err := mnr.GetOrCreateCostCenter(context.Background(), db.NewTeamAttributionID(orgID2))
+		require.NoError(t, err)
+		require.Equal(t, limitForUsers, cc1.SpendingLimit)
+		require.Equal(t, limitForTeams, cc2.SpendingLimit)
+	})
 }
