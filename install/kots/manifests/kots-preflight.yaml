@@ -14,7 +14,7 @@ spec:
         podSpec:
           containers:
             - name: installer
-              image: "eu.gcr.io/gitpod-core-dev/build/installer:release-2022.11.2.16"
+              image: "eu.gcr.io/gitpod-core-dev/build/installer:release-2022.11.4-gha.21"
               volumeMounts:
                 - mountPath: /mnt/node0
                   name: node-fs0
