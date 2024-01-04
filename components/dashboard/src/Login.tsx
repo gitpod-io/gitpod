@@ -24,6 +24,7 @@ import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authpr
 import { Button, ButtonProps } from "@podkit/buttons/Button";
 import { cn } from "@podkit/lib/cn";
 import { userClient } from "./service/public-api";
+import { firstScreenLoggedIn, measureProcessCompleteMetric } from "./data/performance/measure-app-loading";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -38,6 +39,7 @@ type LoginProps = {
 };
 export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     const { setUser } = useContext(UserContext);
+    const { complete: userLoaded } = measureProcessCompleteMetric("userLoaded", true);
 
     const urlHash = useMemo(() => getURLHash(), []);
 
@@ -48,6 +50,14 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
     // This flag lets us know if the current installation still needs setup
     const { needsSetup, isLoading: needsSetupCheckLoading } = useNeedsSetup();
+
+    useEffect(() => {
+        // User query error is handled by QueryErrorBoundary.tsx, we don't know if <App> is displayed or not
+        // So once user load Login page, request should be completed already
+        userLoaded();
+        // Avoid <App> re-rendering report false negative orgsLoaded and appLoaded
+        firstScreenLoggedIn.value = false;
+    }, [userLoaded]);
 
     useEffect(() => {
         try {

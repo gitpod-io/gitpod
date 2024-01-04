@@ -17,17 +17,47 @@ import { ErrorPages } from "./error-pages/ErrorPages";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
 import { useQueryParams } from "./hooks/use-query-params";
 import { useTheme } from "./theme-context";
+import { firstScreenLoggedIn, measureProcessCompleteMetric } from "./data/performance/measure-app-loading";
 
 export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl﹢"}O`;
 
 // Top level Dashboard App component
 const App: FC = () => {
     const { user, loading } = useUserLoader();
+    const { complete: userLoaded } = measureProcessCompleteMetric("userLoaded", true);
+
     const currentOrgQuery = useCurrentOrg();
     const history = useHistory();
     const location = useLocation();
     const search = useQueryParams();
     const { isDark, setIsDark } = useTheme();
+    const { complete: orgsLoaded, setShouldSend: setShouldSendOrgs } = measureProcessCompleteMetric(
+        "orgsLoaded",
+        false,
+    );
+    const { complete: appLoaded, setShouldSend: setShouldSendApp } = measureProcessCompleteMetric("appLoaded", false);
+
+    useEffect(() => {
+        if (loading) {
+            return;
+        }
+        const hasLogin = !!user;
+        firstScreenLoggedIn.value = hasLogin;
+        userLoaded();
+
+        // avoid registration flow send slow appLoaded
+        if (!firstScreenLoggedIn.value) {
+            return;
+        }
+
+        // only after user logged in, orgs and app loaded will make sense
+        setShouldSendOrgs(hasLogin);
+        setShouldSendApp(hasLogin);
+
+        if (!currentOrgQuery.isLoading) {
+            orgsLoaded();
+        }
+    }, [loading, currentOrgQuery.isLoading, user, userLoaded, setShouldSendOrgs, setShouldSendApp, orgsLoaded]);
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -73,7 +103,7 @@ const App: FC = () => {
     return (
         <Suspense fallback={<AppLoading />}>
             {/* Any required onboarding flows will be handled here before rendering the main app layout & routes */}
-            <AppBlockingFlows>
+            <AppBlockingFlows onReady={() => appLoaded()}>
                 {/* Use org id *and* user id as key to force re-render on org *or* user changes. */}
                 <AppRoutes key={`${currentOrgQuery?.data?.id ?? "no-org"}-${user.id}`} />
             </AppBlockingFlows>

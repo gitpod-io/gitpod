@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, lazy } from "react";
+import { ReactNode, lazy, useEffect } from "react";
 import { useShowDedicatedSetup } from "../dedicated-setup/use-show-dedicated-setup";
 import { useCurrentUser } from "../user-context";
 import { useShowUserOnboarding } from "../onboarding/use-show-user-onboarding";
@@ -17,12 +17,19 @@ const DedicatedSetup = lazy(() => import(/* webpackPrefetch: true */ "../dedicat
 
 // This component handles any flows that should come after we've loaded the user/orgs, but before we render the normal app chrome.
 // Since this runs before the app is rendered, we should avoid adding any lengthy async calls that would delay the app from loading.
-export const AppBlockingFlows: FC = ({ children }) => {
+export const AppBlockingFlows = ({ children, onReady }: { children: ReactNode; onReady?: () => void }) => {
     const history = useHistory();
     const user = useCurrentUser();
     const org = useCurrentOrg();
     const showDedicatedSetup = useShowDedicatedSetup();
     const showUserOnboarding = useShowUserOnboarding();
+
+    useEffect(() => {
+        // once user is loaded, page is not blocking
+        if (onReady && user) {
+            onReady();
+        }
+    }, [user, onReady]);
 
     // This shouldn't happen, but if it does don't render anything yet
     if (!user) {
