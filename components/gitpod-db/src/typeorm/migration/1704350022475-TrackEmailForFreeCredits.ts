@@ -5,7 +5,7 @@
  */
 
 import { MigrationInterface, QueryRunner } from "typeorm";
-import { columnExists } from "./helper/helper";
+import { columnExists, indexExists } from "./helper/helper";
 
 export class TrackEmailForFreeCredits1704350022475 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -13,6 +13,20 @@ export class TrackEmailForFreeCredits1704350022475 implements MigrationInterface
         const column = "email";
         if (!(await columnExists(queryRunner, table, column))) {
             await queryRunner.query(`ALTER TABLE ${table} ADD COLUMN ${column} varchar(255) NULL`);
+        }
+
+        const indexNameUserId = "ind_userId";
+        const indexNameEmail = "ind_email";
+        if (!(await indexExists(queryRunner, table, indexNameUserId))) {
+            await queryRunner.query(
+                `ALTER TABLE \`${table}\` ADD INDEX \`${indexNameUserId}\` (userId), ALGORITHM=INPLACE, LOCK=NONE`,
+            );
+        }
+
+        if (!(await indexExists(queryRunner, table, indexNameEmail))) {
+            await queryRunner.query(
+                `ALTER TABLE \`${table}\` ADD INDEX \`${indexNameEmail}\` (email), ALGORITHM=INPLACE, LOCK=NONE`,
+            );
         }
     }
 
