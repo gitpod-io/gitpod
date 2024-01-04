@@ -78,6 +78,7 @@ func OpenWorkspaceInPreferredEditor(ctx context.Context, clnt *client.Gitpod, wo
 			url = workspace.Msg.Result.Status.Instance.Status.Url
 		}
 
+		slog.Info("opening <" + url + ">")
 		err := open.Run(url)
 		if err != nil {
 			if execErr, ok := err.(*exec.Error); ok && execErr.Err == exec.ErrNotFound {

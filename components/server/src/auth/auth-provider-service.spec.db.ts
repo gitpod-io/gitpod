@@ -128,6 +128,8 @@ describe("AuthProviderService", async () => {
     afterEach(async () => {
         // Clean-up database
         await resetDB(container.get(TypeORM));
+        // Deactivate all services
+        await container.unbindAllAsync();
     });
 
     describe("createAuthProviderOfUser", async () => {

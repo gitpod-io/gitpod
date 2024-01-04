@@ -157,18 +157,6 @@ spec:
                   type: object
                 minItems: 0
                 type: array
-              ssh:
-                description: SSHKey temporal generated SSH key required to access
-                  the workspace
-                properties:
-                  privateKey:
-                    type: string
-                  publicKey:
-                    type: string
-                required:
-                - privateKey
-                - publicKey
-                type: object
               sshGatewayCAPublicKey:
                 type: string
               sshPublicKeys:

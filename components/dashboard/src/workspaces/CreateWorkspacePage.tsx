@@ -49,10 +49,12 @@ import { User_WorkspaceAutostartOption } from "@gitpod/public-api/lib/gitpod/v1/
 import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
 import { converter } from "../service/public-api";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+import { useOrgWorkspaceClassesQuery } from "../data/organizations/org-workspace-classes-query";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
+    const { data: orgWorkspaceClasses } = useOrgWorkspaceClassesQuery();
     const currentOrg = useCurrentOrg().data;
     const projects = useListAllProjectsQuery();
     const workspaces = useListWorkspacesQuery({ limit: 50 });
@@ -70,7 +72,7 @@ export function CreateWorkspacePage() {
     const defaultIde =
         props.ideSettings?.defaultIde !== undefined ? props.ideSettings.defaultIde : user?.editorSettings?.name;
     const [selectedIde, setSelectedIde, selectedIdeIsDirty] = useDirtyState(defaultIde);
-    const defaultWorkspaceClass = props.workspaceClass;
+    const defaultWorkspaceClass = props.workspaceClass ?? orgWorkspaceClasses?.find((e) => e.isDefault)?.id;
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
     const [errorWsClass, setErrorWsClass] = useState<string | undefined>(undefined);
     const [contextURL, setContextURL] = useState<string | undefined>(

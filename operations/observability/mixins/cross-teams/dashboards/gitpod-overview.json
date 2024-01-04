@@ -24,6 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
+  "id": 5,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -93,9 +94,10 @@
         "text": {
           "titleSize": 1
         },
-        "textMode": "value"
+        "textMode": "value",
+        "wideLayout": true
       },
-      "pluginVersion": "9.5.3",
+      "pluginVersion": "10.2.2",
       "targets": [
         {
           "datasource": {
@@ -159,9 +161,10 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "9.5.3",
+      "pluginVersion": "10.2.2",
       "targets": [
         {
           "datasource": {
@@ -234,6 +237,7 @@
         "displayMode": "lcd",
         "minVizHeight": 10,
         "minVizWidth": 0,
+        "namePlacement": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
@@ -245,7 +249,7 @@
         "showUnfilled": true,
         "valueMode": "color"
       },
-      "pluginVersion": "9.5.3",
+      "pluginVersion": "10.2.2",
       "targets": [
         {
           "datasource": {
@@ -294,6 +298,7 @@
         "displayMode": "lcd",
         "minVizHeight": 10,
         "minVizWidth": 0,
+        "namePlacement": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
@@ -305,7 +310,7 @@
         "showUnfilled": true,
         "valueMode": "color"
       },
-      "pluginVersion": "9.5.3",
+      "pluginVersion": "10.2.2",
       "targets": [
         {
           "datasource": {
@@ -334,6 +339,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisGridShow": true,
@@ -348,6 +354,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineStyle": {
               "fill": "solid"
@@ -481,7 +488,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.5.3",
+      "pluginVersion": "10.2.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -586,6 +593,119 @@
         "x": 0,
         "y": 20
       },
+      "id": 36,
+      "panels": [],
+      "title": "SSH Summary",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "The # of connections over SSH. It's possible for a single workspace to have many SSH connections. For example, two tabs on my local machine could both be connected to the same workspace.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "id": 37,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "sum by(cluster) (gitpod_ws_proxy_ssh_connection_count{cluster=~\"$cluster\"})",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Active SSH Connections",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
       "id": 28,
       "panels": [],
       "title": "IPFS Storage",
@@ -603,6 +723,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -616,6 +737,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -659,7 +781,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 30
       },
       "id": 35,
       "options": {
@@ -700,7 +822,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 37
       },
       "id": 13,
       "panels": [],
@@ -731,7 +853,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 29
+        "y": 38
       },
       "hiddenSeries": false,
       "id": 6,
@@ -754,7 +876,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.5.3",
+      "pluginVersion": "10.2.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -832,7 +954,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 45
       },
       "id": 14,
       "panels": [],
@@ -881,7 +1003,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 37
+        "y": 46
       },
       "heatmap": {},
       "hideZeroBuckets": true,
@@ -927,7 +1049,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.5.3",
+      "pluginVersion": "10.2.2",
       "repeat": "cluster",
       "targets": [
         {
@@ -968,7 +1090,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 53
       },
       "id": 15,
       "panels": [],
@@ -999,7 +1121,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 45
+        "y": 54
       },
       "hiddenSeries": false,
       "id": 8,
@@ -1022,7 +1144,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.5.3",
+      "pluginVersion": "10.2.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1128,7 +1250,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 61
       },
       "id": 16,
       "panels": [],
@@ -1158,7 +1280,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 53
+        "y": 62
       },
       "hiddenSeries": false,
       "id": 9,
@@ -1181,7 +1303,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.5.3",
+      "pluginVersion": "10.2.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1257,7 +1379,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 60
+        "y": 69
       },
       "id": 17,
       "panels": [],
@@ -1287,7 +1409,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 61
+        "y": 70
       },
       "hiddenSeries": false,
       "id": 10,
@@ -1367,11 +1489,15 @@
   "refresh": "30s",
   "revision": 1,
   "schemaVersion": 38,
-  "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
+        "current": {
+          "selected": false,
+          "text": "prometheus",
+          "value": "P1809F7CD0C75ACF3"
+        },
         "hide": 0,
         "includeAll": false,
         "multi": false,
@@ -1418,9 +1544,10 @@
       },
       {
         "current": {
-          "selected": true,
-          "text": [],
-          "value": []
+          "isNone": true,
+          "selected": false,
+          "text": "None",
+          "value": ""
         },
         "datasource": {
           "type": "prometheus",

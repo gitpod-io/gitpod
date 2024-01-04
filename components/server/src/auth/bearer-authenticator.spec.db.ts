@@ -72,6 +72,8 @@ describe("BearerAuth", () => {
     afterEach(async () => {
         // Clean-up database
         await resetDB(container.get(TypeORM));
+        // Deactivate all services
+        await container.unbindAllAsync();
     });
 
     it("authExpressRequest should successfully authenticate BearerToken (PAT)", async () => {

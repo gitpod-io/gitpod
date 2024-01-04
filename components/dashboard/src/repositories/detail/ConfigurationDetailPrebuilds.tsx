@@ -8,17 +8,17 @@ import { FC, useCallback, useState } from "react";
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { ConfigurationSettingsField } from "./ConfigurationSettingsField";
 import { Heading3, Subheading } from "@podkit/typography/Headings";
-import { Switch } from "@podkit/switch/Switch";
+import { SwitchInputField } from "@podkit/switch/Switch";
 import { TextMuted } from "@podkit/typography/TextMuted";
 import { PrebuildSettingsForm } from "./prebuilds/PrebuildSettingsForm";
 import { useConfigurationMutation } from "../../data/configurations/configuration-queries";
-import { useToast } from "../../components/toasts/Toasts";
+import { LoadingState } from "@podkit/loading/LoadingState";
+import { EnablePrebuildsError } from "./prebuilds/EnablePrebuildsError";
 
 type Props = {
     configuration: Configuration;
 };
 export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
-    const { toast } = useToast();
     const updateConfiguration = useConfigurationMutation();
 
     const [enabled, setEnabled] = useState(!!configuration.prebuildSettings?.enabled);
@@ -35,24 +35,23 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                     },
                 },
                 {
-                    onError: (err) => {
-                        toast(
-                            <>
-                                <span>
-                                    {newEnabled
-                                        ? "There was a problem enabling prebuilds"
-                                        : "There was a problem disabling prebuilds"}
-                                </span>
-                                {err?.message && <p>{err.message}</p>}
-                            </>,
-                        );
-                        setEnabled(!newEnabled);
+                    onSettled(configuration) {
+                        // True up local state with server state
+                        if (configuration) {
+                            setEnabled(configuration.prebuildSettings?.enabled ?? false);
+                        } else {
+                            setEnabled(false);
+                        }
                     },
                 },
             );
         },
-        [configuration.id, configuration.prebuildSettings, toast, updateConfiguration],
+        [configuration.id, configuration.prebuildSettings, updateConfiguration],
     );
+
+    const handleReconnection = useCallback(() => {
+        updateEnabled(true);
+    }, [updateEnabled]);
 
     return (
         <>
@@ -60,13 +59,15 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                 <Heading3>Prebuilds</Heading3>
                 <Subheading className="max-w-lg">Prebuilds reduce wait time for new workspaces.</Subheading>
 
-                <div className="flex gap-4 mt-6">
-                    {/* TODO: wrap this in a SwitchInputField that handles the switch, label and description and htmlFor/id automatically */}
-                    <Switch checked={enabled} onCheckedChange={updateEnabled} id="prebuilds-enabled" />
-                    <div className="flex flex-col">
-                        <label className="font-semibold" htmlFor="prebuilds-enabled">
-                            {enabled ? "Prebuilds are enabled" : "Prebuilds are disabled"}
-                        </label>
+                <SwitchInputField
+                    className="mt-6"
+                    id="prebuilds-enabled"
+                    checked={enabled}
+                    onCheckedChange={updateEnabled}
+                    label={
+                        !!configuration.prebuildSettings?.enabled ? "Prebuilds are enabled" : "Prebuilds are disabled"
+                    }
+                    description={
                         <TextMuted>
                             Enabling requires permissions to configure repository webhooks.{" "}
                             <a
@@ -79,11 +80,26 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                             </a>
                             .
                         </TextMuted>
-                    </div>
-                </div>
+                    }
+                />
             </ConfigurationSettingsField>
 
-            {enabled && <PrebuildSettingsForm configuration={configuration} />}
+            {updateConfiguration.isLoading && enabled && (
+                <ConfigurationSettingsField>
+                    <div className="flex flex-row gap-2 items-center text-pk-content-tertiary">
+                        <LoadingState delay={false} />
+                        <span>Enabling prebuilds...</span>
+                    </div>
+                </ConfigurationSettingsField>
+            )}
+
+            {updateConfiguration.isError && (
+                <EnablePrebuildsError error={updateConfiguration.error} onReconnect={handleReconnection} />
+            )}
+
+            {enabled && !updateConfiguration.isLoading && !updateConfiguration.isError && (
+                <PrebuildSettingsForm configuration={configuration} />
+            )}
         </>
     );
 };

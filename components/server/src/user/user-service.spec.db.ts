@@ -75,6 +75,8 @@ describe("UserService", async () => {
     afterEach(async () => {
         const typeorm = container.get(TypeORM);
         await resetDB(typeorm);
+        // Deactivate all services
+        await container.unbindAllAsync();
     });
 
     it("createUser", async () => {

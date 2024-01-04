@@ -11,9 +11,6 @@
   <a href="https://gitpod.io/from-referrer/">
     <img src="https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod" alt="Gitpod ready-to-code" />
   </a>
-  <a href="https://werft.gitpod-dev.com/">
-    <img src="https://img.shields.io/badge/Werft.dev-CI--builds-green" alt="Werft.dev - Gitpod CI" />
-  </a>
   <a href="https://www.gitpod.io/chat">
     <img src="https://img.shields.io/discord/816244985187008514" alt="Discord" />
   </a>

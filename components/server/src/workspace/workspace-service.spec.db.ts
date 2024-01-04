@@ -104,7 +104,7 @@ describe("WorkspaceService", async () => {
         // Clean-up database
         await resetDB(container.get(TypeORM));
         // Deactivate all services
-        container.unbindAll();
+        await container.unbindAllAsync();
     });
 
     it("should createWorkspace", async () => {
@@ -632,6 +632,7 @@ async function createTestWorkspace(svc: WorkspaceService, org: Organization, own
             revision: "asdf",
         },
         "github.com/gitpod-io/gitpod",
+        undefined,
     );
     return ws;
 }

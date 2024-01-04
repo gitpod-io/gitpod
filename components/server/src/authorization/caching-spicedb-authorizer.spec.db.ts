@@ -51,7 +51,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
         // Clean-up database
         await resetDB(container.get(TypeORM));
 
-        container.unbindAll();
+        await container.unbindAllAsync();
     });
 
     it("should avoid new-enemy after removal", async () => {
@@ -143,6 +143,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 revision: "asdf",
             },
             "github.com/gitpod-io/gitpod",
+            undefined,
         );
         return ws;
     }

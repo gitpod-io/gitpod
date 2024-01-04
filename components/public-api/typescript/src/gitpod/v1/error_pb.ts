@@ -420,9 +420,29 @@ export class RepositoryUnauthorizedError extends Message<RepositoryUnauthorizedE
   host = "";
 
   /**
-   * @generated from field: repeated string scopes = 2;
+   * @generated from field: repeated string required_scopes = 2;
    */
-  scopes: string[] = [];
+  requiredScopes: string[] = [];
+
+  /**
+   * @generated from field: string provider_type = 3;
+   */
+  providerType = "";
+
+  /**
+   * @generated from field: string repo_name = 4;
+   */
+  repoName = "";
+
+  /**
+   * @generated from field: bool provider_is_connected = 5;
+   */
+  providerIsConnected = false;
+
+  /**
+   * @generated from field: bool is_missing_scopes = 6;
+   */
+  isMissingScopes = false;
 
   constructor(data?: PartialMessage<RepositoryUnauthorizedError>) {
     super();
@@ -433,7 +453,11 @@ export class RepositoryUnauthorizedError extends Message<RepositoryUnauthorizedE
   static readonly typeName = "gitpod.v1.RepositoryUnauthorizedError";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 2, name: "required_scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 3, name: "provider_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "repo_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "provider_is_connected", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "is_missing_scopes", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RepositoryUnauthorizedError {

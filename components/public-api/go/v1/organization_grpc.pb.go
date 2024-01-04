@@ -53,6 +53,9 @@ type OrganizationServiceClient interface {
 	GetOrganizationSettings(ctx context.Context, in *GetOrganizationSettingsRequest, opts ...grpc.CallOption) (*GetOrganizationSettingsResponse, error)
 	// UpdateOrganizationSettings updates the settings of a Organization.
 	UpdateOrganizationSettings(ctx context.Context, in *UpdateOrganizationSettingsRequest, opts ...grpc.CallOption) (*UpdateOrganizationSettingsResponse, error)
+	// ListOrganizationWorkspaceClasses lists workspace classes of a
+	// Organization.
+	ListOrganizationWorkspaceClasses(ctx context.Context, in *ListOrganizationWorkspaceClassesRequest, opts ...grpc.CallOption) (*ListOrganizationWorkspaceClassesResponse, error)
 }
 
 type organizationServiceClient struct {
@@ -180,6 +183,15 @@ func (c *organizationServiceClient) UpdateOrganizationSettings(ctx context.Conte
 	return out, nil
 }
 
+func (c *organizationServiceClient) ListOrganizationWorkspaceClasses(ctx context.Context, in *ListOrganizationWorkspaceClassesRequest, opts ...grpc.CallOption) (*ListOrganizationWorkspaceClassesResponse, error) {
+	out := new(ListOrganizationWorkspaceClassesResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.OrganizationService/ListOrganizationWorkspaceClasses", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrganizationServiceServer is the server API for OrganizationService service.
 // All implementations must embed UnimplementedOrganizationServiceServer
 // for forward compatibility
@@ -211,6 +223,9 @@ type OrganizationServiceServer interface {
 	GetOrganizationSettings(context.Context, *GetOrganizationSettingsRequest) (*GetOrganizationSettingsResponse, error)
 	// UpdateOrganizationSettings updates the settings of a Organization.
 	UpdateOrganizationSettings(context.Context, *UpdateOrganizationSettingsRequest) (*UpdateOrganizationSettingsResponse, error)
+	// ListOrganizationWorkspaceClasses lists workspace classes of a
+	// Organization.
+	ListOrganizationWorkspaceClasses(context.Context, *ListOrganizationWorkspaceClassesRequest) (*ListOrganizationWorkspaceClassesResponse, error)
 	mustEmbedUnimplementedOrganizationServiceServer()
 }
 
@@ -256,6 +271,9 @@ func (UnimplementedOrganizationServiceServer) GetOrganizationSettings(context.Co
 }
 func (UnimplementedOrganizationServiceServer) UpdateOrganizationSettings(context.Context, *UpdateOrganizationSettingsRequest) (*UpdateOrganizationSettingsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateOrganizationSettings not implemented")
+}
+func (UnimplementedOrganizationServiceServer) ListOrganizationWorkspaceClasses(context.Context, *ListOrganizationWorkspaceClassesRequest) (*ListOrganizationWorkspaceClassesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListOrganizationWorkspaceClasses not implemented")
 }
 func (UnimplementedOrganizationServiceServer) mustEmbedUnimplementedOrganizationServiceServer() {}
 
@@ -504,6 +522,24 @@ func _OrganizationService_UpdateOrganizationSettings_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrganizationService_ListOrganizationWorkspaceClasses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOrganizationWorkspaceClassesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganizationServiceServer).ListOrganizationWorkspaceClasses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.OrganizationService/ListOrganizationWorkspaceClasses",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganizationServiceServer).ListOrganizationWorkspaceClasses(ctx, req.(*ListOrganizationWorkspaceClassesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrganizationService_ServiceDesc is the grpc.ServiceDesc for OrganizationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -562,6 +598,10 @@ var OrganizationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateOrganizationSettings",
 			Handler:    _OrganizationService_UpdateOrganizationSettings_Handler,
+		},
+		{
+			MethodName: "ListOrganizationWorkspaceClasses",
+			Handler:    _OrganizationService_ListOrganizationWorkspaceClasses_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

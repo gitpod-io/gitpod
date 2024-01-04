@@ -9,7 +9,6 @@ import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
 import Alert from "../components/Alert";
-import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import DateSelector from "../components/DateSelector";
 import { SpinnerOverlayLoader } from "../components/Loader";
 import { personalAccessTokensService } from "../service/public-api";
@@ -47,7 +46,7 @@ function PersonalAccessTokenCreateView() {
         name: "",
         expirationDays: "30",
         expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        scopes: new Set<string>(),
+        scopes: new Set<string>(AllPermissions[0].scopes), // default to all permissions
     });
     const [modalData, setModalData] = useState<{ token: PersonalAccessToken }>();
 
@@ -169,6 +168,12 @@ function PersonalAccessTokenCreateView() {
                         {errorMsg}
                     </Alert>
                 )}
+                {!editToken && (
+                    <Alert type={"warning"} closable={false} showIcon={true} className="my-4 max-w-lg">
+                        This token will have complete read / write access to the API. Use it responsibly and revoke it
+                        if necessary.
+                    </Alert>
+                )}
                 {modalData && (
                     <ShowTokenModal
                         token={modalData.token}
@@ -223,27 +228,6 @@ function PersonalAccessTokenCreateView() {
                                     }}
                                 />
                             )}
-                            <div>
-                                <CheckboxListField label="Permission">
-                                    {AllPermissions.map((item) => (
-                                        <CheckboxInputField
-                                            key={item.name}
-                                            value={item.name}
-                                            label={item.name}
-                                            hint={item.description}
-                                            checked={item.scopes.every((s) => token.scopes.has(s))}
-                                            topMargin={false}
-                                            onChange={(checked) => {
-                                                if (checked) {
-                                                    update({}, item.scopes);
-                                                } else {
-                                                    update({}, undefined, item.scopes);
-                                                }
-                                            }}
-                                        />
-                                    ))}
-                                </CheckboxListField>
-                            </div>
                         </div>
                     </div>
                     <div className="flex gap-2">
