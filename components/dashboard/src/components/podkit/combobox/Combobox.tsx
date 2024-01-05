@@ -292,7 +292,7 @@ export const ComboboxSelectedItem: FC<ComboboxSelectedItemProps> = ({
                     </div>
                 ) : (
                     <>
-                        <div className="text-pk-content-secondary font-semibold">{title}</div>
+                        <div className="text-pk-content-secondary text-base">{title}</div>
                         <div className="text-xs text-pk-content-tertiary truncate">{subtitle}</div>
                     </>
                 )}
