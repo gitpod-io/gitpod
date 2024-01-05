@@ -405,6 +405,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Name:        "event",
 					AllowValues: []string{"*"},
 				},
+				{
+					Name:        "source",
+					AllowValues: []string{"beacon", "fetch"},
+				},
 			},
 			Buckets: []float64{0.1, 0.5, 1, 3, 5, 10, 15, 30},
 		},

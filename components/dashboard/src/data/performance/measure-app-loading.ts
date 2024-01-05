@@ -92,6 +92,7 @@ function observeHistogramWithBeacon(name: string, labels: Record<string, string>
     if (DEBUG) {
         console.log("====observeHistogramWithBeacon", name, labels, value);
     }
+    labels.source = "beacon";
     return navigator.sendBeacon(`${metricsUrl}/metrics/histogram/observe/${name}`, JSON.stringify({ labels, value }));
 }
 
@@ -99,6 +100,7 @@ async function observeHistogram(name: string, labels: Record<string, string>, va
     if (DEBUG) {
         console.log("====observeHistogram", name, labels, value);
     }
+    labels.source = "fetch";
     const url = `${metricsUrl}/metrics/histogram/observe/${name}`;
     try {
         const response = await fetch(url, {
