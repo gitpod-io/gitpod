@@ -115,7 +115,7 @@ function AddPaymentMethodForm({ attributionId }: { attributionId: string }) {
                 <div className="flex items-center space-x-1">
                     <span>Currency:</span>
                     <DropDown
-                        customClasses="w-32"
+                        className="w-32"
                         renderAsLink={true}
                         activeEntry={currency}
                         entries={[

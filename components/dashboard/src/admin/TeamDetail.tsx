@@ -203,7 +203,7 @@ export default function TeamDetail(props: { team: Team }) {
                             <ItemField className="flex items-center my-auto">
                                 <span className="text-gray-400 capitalize">
                                     <DropDown
-                                        customClasses="w-32"
+                                        className="w-32"
                                         activeEntry={m.role}
                                         entries={[
                                             {

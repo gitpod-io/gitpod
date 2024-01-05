@@ -120,7 +120,7 @@ export default function MembersPage() {
                     </div>
                     <div className="py-2 pl-3 pr-1 border border-gray-100 dark:border-gray-800 ml-2 rounded-md">
                         <DropDown
-                            customClasses="w-32"
+                            className="w-32 text-base"
                             activeEntry={
                                 roleFilter === OrganizationRole.OWNER
                                     ? "Owners"
@@ -206,7 +206,7 @@ export default function MembersPage() {
                                 </ItemField>
                                 <ItemField className="my-auto">
                                     <Tooltip content={dayjs(m.memberSince?.toDate()).format("MMM D, YYYY")}>
-                                        <span className="text-gray-400">
+                                        <span className="text-gray-400 text-base">
                                             {dayjs(m.memberSince?.toDate()).fromNow()}
                                         </span>
                                     </Tooltip>
@@ -215,7 +215,7 @@ export default function MembersPage() {
                                     <span className="text-gray-400 capitalize">
                                         {isOwner ? (
                                             <DropDown
-                                                customClasses="w-32"
+                                                className="w-32 text-base"
                                                 activeEntry={m.role === OrganizationRole.OWNER ? "owner" : "member"}
                                                 entries={[
                                                     {

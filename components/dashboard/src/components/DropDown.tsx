@@ -7,10 +7,11 @@
 import { useEffect, useState } from "react";
 import Arrow from "./Arrow";
 import ContextMenu from "./ContextMenu";
+import { cn } from "@podkit/lib/cn";
 
 export interface DropDownProps {
     prefix?: string;
-    customClasses?: string;
+    className?: string;
     renderAsLink?: boolean;
     activeEntry?: string;
     entries: DropDownEntry[];
@@ -21,12 +22,12 @@ export interface DropDownEntry {
     onClick: () => void;
 }
 
-function DropDown(props: DropDownProps) {
-    const [current, setCurrent] = useState(props.activeEntry || props.entries[0].title);
+function DropDown({ className, prefix, renderAsLink, entries, activeEntry }: DropDownProps) {
+    const [current, setCurrent] = useState(activeEntry || entries[0].title);
     useEffect(() => {
-        setCurrent(props.activeEntry || props.entries[0].title);
-    }, [props.activeEntry, props.entries]);
-    const enhancedEntries = props.entries.map((e) => {
+        setCurrent(activeEntry || entries[0].title);
+    }, [activeEntry, entries]);
+    const enhancedEntries = entries.map((e) => {
         return {
             ...e,
             active: e.title === current,
@@ -41,15 +42,15 @@ function DropDown(props: DropDownProps) {
     const asLinkArrowBorder =
         "border-blue-500 dark:border-blue-400 group-hover:border-blue-600 dark:group-hover:border-blue-500";
     return (
-        <ContextMenu menuEntries={enhancedEntries} customClasses={`${props.customClasses} right-0`}>
+        <ContextMenu menuEntries={enhancedEntries} customClasses={cn(`text-sm right-0`, className)}>
             <span
-                className={`py-2 cursor-pointer text-sm leading-1 group ${
-                    props.renderAsLink ? asLinkFont : defaultFont
+                className={`py-2 cursor-pointer leading-1 group ${
+                    renderAsLink ? asLinkFont : defaultFont
                 } transition ease-in-out`}
             >
-                {props.prefix}
+                {prefix}
                 {current}
-                <Arrow direction={"down"} customBorderClasses={props.renderAsLink ? asLinkArrowBorder : undefined} />
+                <Arrow direction={"down"} customBorderClasses={renderAsLink ? asLinkArrowBorder : undefined} />
             </span>
         </ContextMenu>
     );
