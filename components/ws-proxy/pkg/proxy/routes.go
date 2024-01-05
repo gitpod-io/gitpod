@@ -92,11 +92,11 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip common
 	// if sshGatewayServer not nil, we use /_ssh/host_keys to provider public host key
 	if sshGatewayServer != nil {
 		routes.HandleSSHHostKeyRoute(r.Path("/_ssh/host_keys"), sshGatewayServer.HostKeys)
-		routes.HandleSSHOverWebsocketTunnel(r.Path("/_ssh/tunnel"), sshGatewayServer)
+		// routes.HandleSSHOverWebsocketTunnel(r.Path("/_ssh/tunnel"), sshGatewayServer)
 
-		// This is for backward compatibility.
-		routes.HandleSSHOverWebsocketTunnel(r.Path("/_supervisor/tunnel/ssh"), sshGatewayServer)
-		routes.HandleCreateKeyRoute(r.Path("/_supervisor/v1/ssh_keys/create"), sshGatewayServer.HostKeys)
+		// // This is for backward compatibility.
+		// routes.HandleSSHOverWebsocketTunnel(r.Path("/_supervisor/tunnel/ssh"), sshGatewayServer)
+		// routes.HandleCreateKeyRoute(r.Path("/_supervisor/v1/ssh_keys/create"), sshGatewayServer.HostKeys)
 	}
 
 	// The favicon warants special handling, because we pull that from the supervisor frontend
