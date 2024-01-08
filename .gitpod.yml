@@ -34,6 +34,11 @@ ports:
   - port: 8022
     onOpen: ignore
 tasks:
+  - name: headless-test
+    init: |
+      if [[ -n "$GITPOD_HEADLESS" ]]; then
+        echo is-headless > /workspace/headless-check
+      fi
   - name: Remove GCP_ADC_FILE
     command: |
       if [[ -n "${GCP_ADC_FILE}" ]]; then
