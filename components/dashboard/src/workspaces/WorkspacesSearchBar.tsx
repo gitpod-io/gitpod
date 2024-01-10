@@ -43,7 +43,7 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
             <div className="py-2 pl-3">
                 <DropDown
                     prefix="Limit: "
-                    customClasses="w-32"
+                    className="w-32 text-base"
                     activeEntry={`${limit}`}
                     entries={[
                         {

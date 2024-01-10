@@ -171,7 +171,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                     </div>
                     <div className="flex-1" />
                     <div className="py-2 pl-3">
-                        <DropDown prefix="Prebuild Status: " customClasses="w-32" entries={statusFilterEntries()} />
+                        <DropDown prefix="Prebuild Status: " className="w-32" entries={statusFilterEntries()} />
                     </div>
                     {!props.isAdminDashboard && (
                         <Button
