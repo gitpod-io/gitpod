@@ -45,6 +45,9 @@ export default function MembersPage() {
     const [memberToRemove, setMemberToRemove] = useState<OrganizationMember | undefined>(undefined);
     const inviteId = useInvitationId().data;
 
+    // TODO: fetch from FF
+    const isDataOps = true;
+
     const inviteUrl = useMemo(() => {
         if (!org.data) {
             return undefined;
@@ -260,7 +263,12 @@ export default function MembersPage() {
                 <Modal visible={true} onClose={() => setShowInviteModal(false)}>
                     <ModalHeader>Invite Members</ModalHeader>
                     <ModalBody>
-                        <InputField label="Invite URL" hint="Use this URL to join this organization as a member.">
+                        <InputField
+                            label="Invite URL"
+                            hint={`Use this URL to join this organization as a ${
+                                isDataOps ? "collaborator" : "member"
+                            }.`}
+                        >
                             <InputWithCopy value={inviteUrl} tip="Copy Invite URL" />
                         </InputField>
                     </ModalBody>

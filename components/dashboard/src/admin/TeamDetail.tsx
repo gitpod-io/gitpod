@@ -214,6 +214,10 @@ export default function TeamDetail(props: { team: Team }) {
                                                 title: "member",
                                                 onClick: () => setTeamMemberRole(m.userId, "member"),
                                             },
+                                            {
+                                                title: "collaborator",
+                                                onClick: () => setTeamMemberRole(m.userId, "collaborator"),
+                                            },
                                         ]}
                                     />
                                 </span>
