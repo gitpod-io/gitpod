@@ -56,6 +56,7 @@ import * as IDEWebSocket from "./ide/ide-web-socket";
 import { SupervisorServiceClient } from "./ide/supervisor-service-client";
 import * as LoadingFrame from "./shared/loading-frame";
 import { workspaceUrl } from "./shared/urls";
+import { getExperimentsClient } from "./experiments/client";
 
 window.gitpod = {} as any;
 IDEWorker.install();
@@ -63,6 +64,7 @@ IDEWebSocket.install();
 const ideService = IDEFrontendService.create();
 const loadingIDE = new Promise((resolve) => window.addEventListener("DOMContentLoaded", resolve, { once: true }));
 const toStop = new DisposableCollection();
+const experimentsClient = getExperimentsClient();
 
 document.body.style.visibility = "hidden";
 LoadingFrame.load().then(async (loading) => {
@@ -284,6 +286,7 @@ LoadingFrame.load().then(async (loading) => {
             IDEWebSocket.connectWorkspace(),
             frontendDashboardServiceClient.onInfoUpdate((status) => {
                 if (status.statusPhase === "stopping" || status.statusPhase === "stopped") {
+                    maybeRedirectToCustomUrl();
                     toStop.dispose();
                 }
             }),
@@ -295,3 +298,17 @@ LoadingFrame.load().then(async (loading) => {
         //#endregion
     })();
 });
+
+async function maybeRedirectToCustomUrl() {
+    const redirectURL = await experimentsClient.getValueAsync("dataops", "", {});
+    if (!redirectURL) {
+        return;
+    }
+
+    try {
+        const url = new URL(redirectURL);
+        window.location.href = url.toString();
+    } catch {
+        console.error("Invalid redirect URL");
+    }
+}
