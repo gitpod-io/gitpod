@@ -56,6 +56,7 @@ export const setupQueryClientProvider = () => {
                     if (failureCount > defaultRetryTimes) {
                         return false;
                     }
+                    // Don't retry if the error is a permission denied error
                     if (error && (error as any).code === ErrorCodes.PERMISSION_DENIED) {
                         return false;
                     }

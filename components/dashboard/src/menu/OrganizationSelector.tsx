@@ -58,6 +58,7 @@ export default function OrganizationSelector() {
 
     // Show members if we have an org selected
     if (currentOrg.data) {
+        // collaborator can't access projects, members, usage and billing
         if (hasMemberPermission) {
             // Check both flags as one just controls if the menu item is present, the other if the page is accessible
             if (repoConfigListAndDetail && showRepoConfigMenuItem) {

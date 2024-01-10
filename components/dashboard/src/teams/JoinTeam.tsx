@@ -9,13 +9,13 @@ import { useHistory, useLocation } from "react-router-dom";
 import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { organizationClient } from "../service/public-api";
+import { useIsDataOps } from "../data/featureflag-query";
 
 export default function JoinTeamPage() {
     const orgInvalidator = useOrganizationsInvalidator();
     const history = useHistory();
     const location = useLocation();
-    // TODO: get from FF
-    const isDataOps = true;
+    const isDataOps = useIsDataOps();
 
     const [joinError, setJoinError] = useState<Error>();
     const inviteId = useMemo(() => new URLSearchParams(location.search).get("inviteId"), [location]);

@@ -139,6 +139,7 @@ const OrgPagesNav: FC<OrgPagesNavProps> = ({ className }) => {
                 alternatives: ["/"],
             },
         ];
+        // collaborator can't access projects
         if (hasMemberPermission) {
             menus.push({
                 title: "Projects",

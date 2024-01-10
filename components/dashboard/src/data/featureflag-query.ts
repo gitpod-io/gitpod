@@ -33,6 +33,8 @@ const featureFlags = {
      * Whether to enable org-level workspace class restrictions
      */
     org_workspace_class_restrictions: false,
+    // dummy specified dataops feature, default false
+    dataops: false,
 };
 
 type FeatureFlags = typeof featureFlags;
@@ -59,4 +61,8 @@ export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): Fe
     });
 
     return query.data !== undefined ? query.data : featureFlags[featureFlag];
+};
+
+export const useIsDataOps = () => {
+    return useFeatureFlag("dataops");
 };

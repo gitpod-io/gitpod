@@ -24,6 +24,7 @@ import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { UserService } from "../user/user-service";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { InstallationService } from "../auth/installation-service";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class OrganizationService {
@@ -245,8 +246,7 @@ export class OrganizationService {
         if (await this.teamDB.hasActiveSSO(invite.teamId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
-        // TODO: get from Feature Flag
-        const isDataOps = true;
+        const isDataOps = await getExperimentsClientForBackend().getValueAsync("dataops", false, {});
         const role: OrgMemberRole = isDataOps ? "collaborator" : invite.role;
         try {
             return await this.teamDB.transaction(async (db) => {

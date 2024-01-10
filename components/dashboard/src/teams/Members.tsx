@@ -24,6 +24,7 @@ import { useListOrganizationMembers, useOrganizationMembersInvalidator } from ".
 import { useInvitationId, useInviteInvalidator } from "../data/organizations/invite-query";
 import { Delayed } from "@podkit/loading/Delayed";
 import { Button } from "@podkit/buttons/Button";
+import { useIsDataOps } from "../data/featureflag-query";
 
 function getHumanReadable(role: OrganizationRole): string {
     return OrganizationRole[role].toLowerCase();
@@ -45,8 +46,7 @@ export default function MembersPage() {
     const [memberToRemove, setMemberToRemove] = useState<OrganizationMember | undefined>(undefined);
     const inviteId = useInvitationId().data;
 
-    // TODO: fetch from FF
-    const isDataOps = true;
+    const isDataOps = useIsDataOps();
 
     const inviteUrl = useMemo(() => {
         if (!org.data) {
