@@ -15,7 +15,7 @@ export default function TabMenuItem(p: {
     const classes =
         "cursor-pointer py-2 px-4 border-b-4 transition ease-in-out " +
         (p.selected
-            ? "text-gray-600 dark:text-gray-400 border-gray-400 dark:border-gray-600"
+            ? "text-gray-600 dark:text-gray-400 border-gray-700 dark:border-gray-400"
             : "text-gray-400 dark:text-gray-600 border-transparent hover:border-gray-400 dark:hover:border-gray-600");
     return !p.link || p.link.startsWith("https://") ? (
         <a className={classes} href={p.link} onClick={p.onClick} data-analytics='{"button_type":"tab_menu"}'>
