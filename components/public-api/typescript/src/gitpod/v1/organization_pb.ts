@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -32,12 +32,18 @@ export enum OrganizationRole {
    * @generated from enum value: ORGANIZATION_ROLE_MEMBER = 2;
    */
   MEMBER = 2,
+
+  /**
+   * @generated from enum value: ORGANIZATION_ROLE_COLLABORATOR = 3;
+   */
+  COLLABORATOR = 3,
 }
 // Retrieve enum metadata with: proto3.getEnumType(OrganizationRole)
 proto3.util.setEnumType(OrganizationRole, "gitpod.v1.OrganizationRole", [
   { no: 0, name: "ORGANIZATION_ROLE_UNSPECIFIED" },
   { no: 1, name: "ORGANIZATION_ROLE_OWNER" },
   { no: 2, name: "ORGANIZATION_ROLE_MEMBER" },
+  { no: 3, name: "ORGANIZATION_ROLE_COLLABORATOR" },
 ]);
 
 /**

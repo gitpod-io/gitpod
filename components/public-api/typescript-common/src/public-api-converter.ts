@@ -878,6 +878,8 @@ export class PublicAPIConverter {
                 return OrganizationRole.OWNER;
             case "member":
                 return OrganizationRole.MEMBER;
+            case "collaborator":
+                return OrganizationRole.COLLABORATOR;
             default:
                 return OrganizationRole.UNSPECIFIED;
         }
@@ -889,6 +891,8 @@ export class PublicAPIConverter {
                 return "owner";
             case OrganizationRole.MEMBER:
                 return "member";
+            case OrganizationRole.COLLABORATOR:
+                return "collaborator";
             default:
                 throw new Error(`unknown org member role ${role}`);
         }
