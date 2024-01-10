@@ -26,6 +26,21 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
     const createProject = useCreateProject();
     const [createErrorMsg, setCreateErrorMsg] = useTemporaryState("", 3000);
 
+    // Helper function to process the URL to handle the case where user passed some issues, pulls, branches or files url.
+    const processRepoUrl = (url: string): string => {
+        /**
+         * RegEx explaination:
+         * ^(https?:\/\/)?: This part optionally matches the http or https scheme.
+         * ([\w.-]+): This part matches the hostname (like github.com). \w matches any word character (alphanumeric plus underscore), and . and - match literal periods and hyphens, which are common in domain names.
+         * \/: This matches the forward slash / separator.
+         * ([\w.-]+): This matches the repository owner's username.
+         * \/: Another forward slash as a separator.
+         * ([\w.-]+): This matches the repository name.
+         */
+        const regex = /^(https?:\/\/)?([\w.-]+)\/([\w.-]+)\/([\w.-]+)/;
+        return url.split(regex).slice(1, 5).join("/");
+    };
+
     const handleSubmit = useCallback(() => {
         if (!selectedRepo) {
             setCreateErrorMsg("Please select a repository");
@@ -37,7 +52,7 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
             name: "",
             // deprecated
             slug: "",
-            cloneUrl: selectedRepo.url,
+            cloneUrl: processRepoUrl(selectedRepo.url),
             appInstallationId: "",
         };
 
