@@ -29,6 +29,7 @@ import * as InstallationClasses from "@gitpod/public-api/lib/gitpod/v1/installat
 import * as SCMClasses from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import * as SSHClasses from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 import * as UserClasses from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 // This is used to version the cache
 // If data we cache changes in a non-backwards compatible way, increment this version
@@ -42,6 +43,8 @@ export function isNoPersistence(queryKey: QueryKey): boolean {
     return queryKey.some((e) => e === "no-persistence");
 }
 
+const defaultRetryTimes = 3;
+
 export const setupQueryClientProvider = () => {
     const client = new QueryClient({
         defaultOptions: {
@@ -49,6 +52,15 @@ export const setupQueryClientProvider = () => {
                 // Default stale time to help avoid re-fetching data too frequently
                 staleTime: 1000 * 5, // 5 seconds
                 refetchOnWindowFocus: false,
+                retry: (failureCount, error) => {
+                    if (failureCount > defaultRetryTimes) {
+                        return false;
+                    }
+                    if (error && (error as any).code === ErrorCodes.PERMISSION_DENIED) {
+                        return false;
+                    }
+                    return true;
+                },
             },
         },
         queryCache: new QueryCache({

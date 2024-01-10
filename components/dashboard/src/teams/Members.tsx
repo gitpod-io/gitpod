@@ -25,6 +25,12 @@ import { useInvitationId, useInviteInvalidator } from "../data/organizations/inv
 import { Delayed } from "@podkit/loading/Delayed";
 import { Button } from "@podkit/buttons/Button";
 
+function getHumanReadable(role: OrganizationRole): string {
+    return OrganizationRole[role].toLowerCase();
+}
+
+const AvailableRoleOptions = [OrganizationRole.OWNER, OrganizationRole.MEMBER, OrganizationRole.COLLABORATOR];
+
 export default function MembersPage() {
     const user = useCurrentUser();
     const org = useCurrentOrg();
@@ -118,29 +124,19 @@ export default function MembersPage() {
                             onChange={(e) => setSearchText(e.target.value)}
                         />
                     </div>
-                    <div className="py-2 pl-3 pr-1 border border-gray-100 dark:border-gray-800 ml-2 rounded-md">
+                    <div className="py-2 pl-3 capitalize pr-1 border border-gray-100 dark:border-gray-800 ml-2 rounded-md">
                         <DropDown
-                            customClasses="w-32"
-                            activeEntry={
-                                roleFilter === OrganizationRole.OWNER
-                                    ? "Owners"
-                                    : roleFilter === OrganizationRole.MEMBER
-                                    ? "Members"
-                                    : "All"
-                            }
+                            customClasses="w-36"
+                            activeEntry={roleFilter ? getHumanReadable(roleFilter) + "s" : "All"}
                             entries={[
                                 {
                                     title: "All",
                                     onClick: () => setRoleFilter(undefined),
                                 },
-                                {
-                                    title: "Owners",
-                                    onClick: () => setRoleFilter(OrganizationRole.OWNER),
-                                },
-                                {
-                                    title: "Members",
-                                    onClick: () => setRoleFilter(OrganizationRole.OWNER),
-                                },
+                                ...AvailableRoleOptions.map((role) => ({
+                                    title: getHumanReadable(role) + "s",
+                                    onClick: () => setRoleFilter(role),
+                                })),
                             ]}
                         />
                     </div>
@@ -215,25 +211,15 @@ export default function MembersPage() {
                                     <span className="text-gray-400 capitalize">
                                         {isOwner ? (
                                             <DropDown
-                                                customClasses="w-32"
-                                                activeEntry={m.role === OrganizationRole.OWNER ? "owner" : "member"}
-                                                entries={[
-                                                    {
-                                                        title: "owner",
-                                                        onClick: () =>
-                                                            setTeamMemberRole(m.userId, OrganizationRole.OWNER),
-                                                    },
-                                                    {
-                                                        title: "member",
-                                                        onClick: () =>
-                                                            setTeamMemberRole(m.userId, OrganizationRole.MEMBER),
-                                                    },
-                                                ]}
+                                                customClasses="w-36"
+                                                activeEntry={getHumanReadable(m.role)}
+                                                entries={AvailableRoleOptions.map((role) => ({
+                                                    title: getHumanReadable(role),
+                                                    onClick: () => setTeamMemberRole(m.userId, role),
+                                                }))}
                                             />
-                                        ) : m.role === OrganizationRole.OWNER ? (
-                                            "owner"
                                         ) : (
-                                            "member"
+                                            getHumanReadable(m.role)
                                         )}
                                     </span>
                                     <span className="flex-grow" />

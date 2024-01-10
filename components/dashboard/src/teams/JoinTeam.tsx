@@ -14,6 +14,8 @@ export default function JoinTeamPage() {
     const orgInvalidator = useOrganizationsInvalidator();
     const history = useHistory();
     const location = useLocation();
+    // TODO: get from FF
+    const isDataOps = true;
 
     const [joinError, setJoinError] = useState<Error>();
     const inviteId = useMemo(() => new URLSearchParams(location.search).get("inviteId"), [location]);
@@ -27,13 +29,17 @@ export default function JoinTeamPage() {
                 const result = await organizationClient.joinOrganization({ invitationId: inviteId });
                 orgInvalidator();
 
-                history.push(`/members?org=${result.organizationId}`);
+                if (!isDataOps) {
+                    history.push(`/members?org=${result.organizationId}`);
+                } else {
+                    history.push("/");
+                }
             } catch (error) {
                 console.error(error);
                 setJoinError(error);
             }
         })();
-    }, [history, inviteId, orgInvalidator]);
+    }, [history, inviteId, orgInvalidator, isDataOps]);
 
     useDocumentTitle("Joining Organization");
 

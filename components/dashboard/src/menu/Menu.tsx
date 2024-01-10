@@ -21,6 +21,8 @@ import { getAdminTabs } from "../admin/admin.routes";
 import classNames from "classnames";
 import { User, RoleOrPermission } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
+import { useHasRolePermission } from "../data/organizations/members-query";
+import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 interface Entry {
     title: string;
@@ -127,22 +129,25 @@ type OrgPagesNavProps = {
 };
 const OrgPagesNav: FC<OrgPagesNavProps> = ({ className }) => {
     const location = useLocation();
+    const hasMemberPermission = useHasRolePermission(OrganizationRole.MEMBER);
 
-    const leftMenu: Entry[] = useMemo(
-        () => [
+    const leftMenu: Entry[] = useMemo(() => {
+        const menus = [
             {
                 title: "Workspaces",
                 link: "/workspaces",
                 alternatives: ["/"],
             },
-            {
+        ];
+        if (hasMemberPermission) {
+            menus.push({
                 title: "Projects",
                 link: `/projects`,
                 alternatives: [] as string[],
-            },
-        ],
-        [],
-    );
+            });
+        }
+        return menus;
+    }, [hasMemberPermission]);
 
     return (
         <div

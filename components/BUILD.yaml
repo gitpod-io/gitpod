@@ -241,7 +241,7 @@ scripts:
       printf "\nRestarting server and redis to pick up DB changes...\n"
       kubectl rollout restart deployment/server deployment/redis
 
-  - name: make-user-admin
+  - name: make-user-developer
     deps:
       - components/service-waiter:app
     script: |
@@ -268,7 +268,7 @@ scripts:
         echo "No input."
       else
         echo "User: $user"
-        query="update d_b_user set rolesOrPermissions = '[\"admin\", \"admin-permissions\"]', fgaRelationshipsVersion=0 where name=\"$user\";"
+        query="update d_b_user set rolesOrPermissions = '[\"developer\"]', fgaRelationshipsVersion=0 where name=\"$user\";"
         mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
       fi
       kill $PID || true

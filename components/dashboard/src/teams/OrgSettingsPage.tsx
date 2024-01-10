@@ -43,7 +43,7 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
     const subtitle = "Manage your organization's settings.";
 
     // Render as much of the page as we can in a loading state to avoid content shift
-    if (org.isLoading || orgBillingMode.isLoading) {
+    if (org.isLoading) {
         return (
             <div className="w-full">
                 <Header title={title} subtitle={subtitle} />

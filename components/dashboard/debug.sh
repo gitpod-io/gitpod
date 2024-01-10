@@ -4,4 +4,4 @@
 # See License.AGPL.txt in the project root for license information.
 
 set -Eeuo pipefail
-source /workspace/gitpod/scripts/ws-deploy.sh deployment dashboard
+source /workspace/gitpod/scripts/ws-deploy.sh deployment dashboard false
