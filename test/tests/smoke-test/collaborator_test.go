@@ -51,6 +51,12 @@ go test -run "^TestMembers|TestProjects|TestGetProject$" github.com/gitpod-io/gi
 # debug: go test -run "^TestProjects$" github.com/gitpod-io/gitpod/test/tests/smoke-test -v -count=1
 */
 
+// TestMembers tests collaborator can't access members with:
+//  1. experimental.v1 + COOKIE     -> permission_denied
+//  2. experimental.v1 + PAT        -> permission_denied
+//  3. v1 + COOKIE                  -> permission_denied
+//  4. v1 + PAT                     -> permission_denied
+//  5. server + COOKIE              -> code 403
 func TestMembers(t *testing.T) {
 	if !shouldTestCollaborator() {
 		t.Skip("skipping collaborator test")
@@ -91,6 +97,12 @@ func TestMembers(t *testing.T) {
 	}
 }
 
+// TestProjects tests collaborator can't access projects with:
+//  1. experimental.v1 + COOKIE     -> empty array
+//  2. experimental.v1 + PAT        -> empty array
+//  3. v1 + COOKIE                  -> empty array
+//  4. v1 + PAT                     -> empty array
+//  5. server + COOKIE              -> empty array
 func TestProjects(t *testing.T) {
 	if !shouldTestCollaborator() {
 		t.Skip("skipping collaborator test")
@@ -138,6 +150,9 @@ func TestProjects(t *testing.T) {
 	}
 }
 
+// TestGetProject tests collaborator can't access project detail with:
+//  1. v1 + COOKIE        -> not_found
+//  2. v1 + PAT           -> not_found
 func TestGetProject(t *testing.T) {
 	if !shouldTestCollaborator() {
 		t.Skip("skipping collaborator test")
