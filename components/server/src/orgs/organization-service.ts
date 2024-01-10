@@ -245,10 +245,14 @@ export class OrganizationService {
         if (await this.teamDB.hasActiveSSO(invite.teamId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
+        // TODO: get from Feature Flag
+        const isDataOps = true;
+        const role: OrgMemberRole = isDataOps ? "collaborator" : invite.role;
         try {
             return await this.teamDB.transaction(async (db) => {
                 await this.teamDB.addMemberToTeam(userId, invite.teamId);
-                await this.auth.addOrganizationRole(invite.teamId, userId, invite.role);
+                await this.teamDB.setTeamMemberRole(userId, invite.teamId, role);
+                await this.auth.addOrganizationRole(invite.teamId, userId, role);
                 this.analytics.track({
                     userId: userId,
                     event: "team_joined",
@@ -260,7 +264,7 @@ export class OrganizationService {
                 return invite.teamId;
             });
         } catch (err) {
-            await this.auth.removeOrganizationRole(invite.teamId, userId, "member");
+            await this.auth.removeOrganizationRole(invite.teamId, userId, role);
             throw err;
         }
     }
@@ -303,11 +307,12 @@ export class OrganizationService {
                 }
             });
         } catch (err) {
-            await this.auth.removeOrganizationRole(
-                orgId,
-                memberId,
-                members.find((m) => m.userId === memberId)?.role || "member",
-            );
+            // remove target role and add old role back
+            await this.auth.removeOrganizationRole(orgId, memberId, role);
+            const oldRole = members.find((m) => m.userId === memberId)?.role;
+            if (oldRole) {
+                await this.auth.addOrganizationRole(orgId, memberId, oldRole);
+            }
             throw err;
         }
     }
@@ -352,7 +357,7 @@ export class OrganizationService {
                     await this.userService.deleteUser(userId, memberId);
                 }
                 await db.removeMemberFromTeam(userToBeRemoved.id, orgId);
-                await this.auth.removeOrganizationRole(orgId, memberId, "member");
+                await this.auth.removeOrganizationRole(orgId, memberId, membership.role);
             });
         } catch (err) {
             if (membership) {

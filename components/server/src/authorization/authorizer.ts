@@ -299,11 +299,27 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
-        const updates = [set(rel.organization(orgID).member.user(userID))];
+        const updates = [];
         if (role === "owner") {
-            updates.push(set(rel.organization(orgID).owner.user(userID)));
-        } else {
-            updates.push(remove(rel.organization(orgID).owner.user(userID)));
+            updates.push(
+                set(rel.organization(orgID).owner.user(userID)),
+                // TODO: owner has all permission member's permission should define in schema
+                // we should remove member but since old code was not, keep it to avoid breaking
+                set(rel.organization(orgID).member.user(userID)),
+                remove(rel.organization(orgID).collaborator.user(userID)),
+            );
+        } else if (role === "member") {
+            updates.push(
+                remove(rel.organization(orgID).owner.user(userID)),
+                set(rel.organization(orgID).member.user(userID)),
+                remove(rel.organization(orgID).collaborator.user(userID)),
+            );
+        } else if (role === "collaborator") {
+            updates.push(
+                remove(rel.organization(orgID).owner.user(userID)),
+                remove(rel.organization(orgID).member.user(userID)),
+                set(rel.organization(orgID).collaborator.user(userID)),
+            );
         }
         await this.authorizer.writeRelationships(...updates);
     }
@@ -312,9 +328,20 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
-        const updates = [remove(rel.organization(orgID).owner.user(userID))];
-        if (role === "member") {
-            updates.push(remove(rel.organization(orgID).member.user(userID)));
+        const updates = [];
+        if (role === "owner") {
+            updates.push(remove(rel.organization(orgID).owner.user(userID)));
+        } else if (role === "member") {
+            updates.push(
+                remove(rel.organization(orgID).owner.user(userID)),
+                remove(rel.organization(orgID).member.user(userID)),
+            );
+        } else if (role === "collaborator") {
+            updates.push(
+                remove(rel.organization(orgID).owner.user(userID)),
+                remove(rel.organization(orgID).member.user(userID)),
+                remove(rel.organization(orgID).collaborator.user(userID)),
+            );
         }
         await this.authorizer.writeRelationships(...updates);
     }
