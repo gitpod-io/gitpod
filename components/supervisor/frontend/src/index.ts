@@ -49,6 +49,7 @@ require("../src/shared/index.css");
 
 import { WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
 import { DisposableCollection } from "@gitpod/gitpod-protocol/lib/util/disposable";
+import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import * as heartBeat from "./ide/heart-beat";
 import * as IDEFrontendService from "./ide/ide-frontend-service-impl";
 import * as IDEWorker from "./ide/ide-worker";
@@ -286,7 +287,7 @@ LoadingFrame.load().then(async (loading) => {
             IDEWebSocket.connectWorkspace(),
             frontendDashboardServiceClient.onInfoUpdate((status) => {
                 if (status.statusPhase === "stopping" || status.statusPhase === "stopped") {
-                    maybeRedirectToCustomUrl();
+                    maybeRedirectToCustomUrl(frontendDashboardServiceClient.latestInfo);
                     toStop.dispose();
                 }
             }),
@@ -299,14 +300,29 @@ LoadingFrame.load().then(async (loading) => {
     })();
 });
 
-async function maybeRedirectToCustomUrl() {
-    const redirectURL = await experimentsClient.getValueAsync("dataops", "", {});
-    if (!redirectURL) {
+async function maybeRedirectToCustomUrl(info: IDEFrontendDashboardService.Info) {
+    const isDataOps = await experimentsClient.getValueAsync("dataops", false, {
+        user: { id: info.loggedUserId },
+    });
+    const dataOpsRedirectUrl = await experimentsClient.getValueAsync("dataops_redirect_url", "undefined", {
+        user: { id: info.loggedUserId },
+    });
+
+    if (!isDataOps) {
         return;
     }
 
     try {
+        const params: Record<string, string> = { workspaceID: info.workspaceID };
+        let redirectURL: string;
+        if (dataOpsRedirectUrl === "undefined") {
+            redirectURL = info.contextUrl;
+        } else {
+            redirectURL = dataOpsRedirectUrl;
+            params.contextURL = info.contextUrl;
+        }
         const url = new URL(redirectURL);
+        url.search = new URLSearchParams(params).toString();
         window.location.href = url.toString();
     } catch {
         console.error("Invalid redirect URL");

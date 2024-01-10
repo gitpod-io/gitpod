@@ -51,6 +51,7 @@ export namespace IDEFrontendDashboardService {
         workspaceDescription: string;
         workspaceType: string;
         credentialsToken: string;
+        contextUrl: string;
     }
 
     export interface SetStateData {

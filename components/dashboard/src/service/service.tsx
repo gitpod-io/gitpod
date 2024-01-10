@@ -252,6 +252,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             workspaceType: this.workspace.spec?.type === WorkspaceSpec_WorkspaceType.PREBUILD ? "prebuild" : "regular",
             credentialsToken: this.ideCredentials,
             ownerId: this.workspace.metadata?.ownerId ?? "",
+            contextUrl: this.workspace.metadata?.originalContextUrl ?? "",
         };
     }
 
