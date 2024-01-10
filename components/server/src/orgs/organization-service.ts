@@ -246,7 +246,9 @@ export class OrganizationService {
         if (await this.teamDB.hasActiveSSO(invite.teamId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
-        const isDataOps = await getExperimentsClientForBackend().getValueAsync("dataops", false, {});
+        const isDataOps = await getExperimentsClientForBackend().getValueAsync("dataops", false, {
+            teamId: invite.teamId,
+        });
         const role: OrgMemberRole = isDataOps ? "collaborator" : invite.role;
         try {
             return await this.teamDB.transaction(async (db) => {
