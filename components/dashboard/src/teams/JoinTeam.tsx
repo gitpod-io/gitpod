@@ -9,13 +9,11 @@ import { useHistory, useLocation } from "react-router-dom";
 import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { organizationClient } from "../service/public-api";
-import { useIsDataOps } from "../data/featureflag-query";
 
 export default function JoinTeamPage() {
     const orgInvalidator = useOrganizationsInvalidator();
     const history = useHistory();
     const location = useLocation();
-    const isDataOps = useIsDataOps();
 
     const [joinError, setJoinError] = useState<Error>();
     const inviteId = useMemo(() => new URLSearchParams(location.search).get("inviteId"), [location]);
@@ -26,20 +24,15 @@ export default function JoinTeamPage() {
                 if (!inviteId) {
                     throw new Error("This invite URL is incorrect.");
                 }
-                const result = await organizationClient.joinOrganization({ invitationId: inviteId });
+                await organizationClient.joinOrganization({ invitationId: inviteId });
                 orgInvalidator();
-
-                if (!isDataOps) {
-                    history.push(`/members?org=${result.organizationId}`);
-                } else {
-                    history.push("/");
-                }
+                history.push("/");
             } catch (error) {
                 console.error(error);
                 setJoinError(error);
             }
         })();
-    }, [history, inviteId, orgInvalidator, isDataOps]);
+    }, [history, inviteId, orgInvalidator]);
 
     useDocumentTitle("Joining Organization");
 
