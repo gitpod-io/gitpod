@@ -15,3 +15,8 @@
   border: 0px;
   overflow: hidden;
 }
+
+.gitpod-frame.hidden {
+  width: 0px;
+  height: 0px;
+}
