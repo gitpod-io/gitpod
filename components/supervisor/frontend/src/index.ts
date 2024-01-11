@@ -49,7 +49,6 @@ require("../src/shared/index.css");
 
 import { WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
 import { DisposableCollection } from "@gitpod/gitpod-protocol/lib/util/disposable";
-import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import * as heartBeat from "./ide/heart-beat";
 import * as IDEFrontendService from "./ide/ide-frontend-service-impl";
 import * as IDEWorker from "./ide/ide-worker";
@@ -57,7 +56,6 @@ import * as IDEWebSocket from "./ide/ide-web-socket";
 import { SupervisorServiceClient } from "./ide/supervisor-service-client";
 import * as LoadingFrame from "./shared/loading-frame";
 import { workspaceUrl } from "./shared/urls";
-import { getExperimentsClient } from "./experiments/client";
 
 window.gitpod = {} as any;
 IDEWorker.install();
@@ -65,7 +63,6 @@ IDEWebSocket.install();
 const ideService = IDEFrontendService.create();
 const loadingIDE = new Promise((resolve) => window.addEventListener("DOMContentLoaded", resolve, { once: true }));
 const toStop = new DisposableCollection();
-const experimentsClient = getExperimentsClient();
 
 document.body.style.visibility = "hidden";
 LoadingFrame.load().then(async (loading) => {
@@ -287,7 +284,6 @@ LoadingFrame.load().then(async (loading) => {
             IDEWebSocket.connectWorkspace(),
             frontendDashboardServiceClient.onInfoUpdate((status) => {
                 if (status.statusPhase === "stopping" || status.statusPhase === "stopped") {
-                    maybeRedirectToCustomUrl(frontendDashboardServiceClient.latestInfo);
                     toStop.dispose();
                 }
             }),
@@ -299,32 +295,3 @@ LoadingFrame.load().then(async (loading) => {
         //#endregion
     })();
 });
-
-async function maybeRedirectToCustomUrl(info: IDEFrontendDashboardService.Info) {
-    const isDataOps = await experimentsClient.getValueAsync("dataops", false, {
-        user: { id: info.loggedUserId },
-    });
-    const dataOpsRedirectUrl = await experimentsClient.getValueAsync("dataops_redirect_url", "undefined", {
-        user: { id: info.loggedUserId },
-    });
-
-    if (!isDataOps) {
-        return;
-    }
-
-    try {
-        const params: Record<string, string> = { workspaceID: info.workspaceID };
-        let redirectURL: string;
-        if (dataOpsRedirectUrl === "undefined") {
-            redirectURL = info.contextUrl;
-        } else {
-            redirectURL = dataOpsRedirectUrl;
-            params.contextURL = info.contextUrl;
-        }
-        const url = new URL(redirectURL);
-        url.search = new URLSearchParams(params).toString();
-        window.location.href = url.toString();
-    } catch {
-        console.error("Invalid redirect URL");
-    }
-}

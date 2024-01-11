@@ -221,7 +221,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         this.workspace = workspaceResponse.workspace!;
         this.user = user;
         this.ideCredentials = ideCredentials;
-        const reconcile = (status?: WorkspaceStatus) => {
+        const reconcile = async (status?: WorkspaceStatus) => {
             const info = this.parseInfo(status ?? this.workspace.status!);
             this.latestInfo = info;
             const oldInstanceID = this.instanceID;
@@ -231,6 +231,15 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             if (info.instanceId && oldInstanceID !== info.instanceId) {
                 this.auth();
             }
+
+            // Redirect to custom url
+            if (
+                (info.statusPhase === "stopping" || info.statusPhase === "stopped") &&
+                info.workspaceType === "regular"
+            ) {
+                await this.redirectToCustomUrl();
+            }
+
             this.sendInfoUpdate(this.latestInfo);
         };
         reconcile();
@@ -252,8 +261,38 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             workspaceType: this.workspace.spec?.type === WorkspaceSpec_WorkspaceType.PREBUILD ? "prebuild" : "regular",
             credentialsToken: this.ideCredentials,
             ownerId: this.workspace.metadata?.ownerId ?? "",
-            contextUrl: this.workspace.metadata?.originalContextUrl ?? "",
         };
+    }
+
+    private async redirectToCustomUrl() {
+        const isDataOps = await getExperimentsClient().getValueAsync("dataops", false, {
+            user: { id: this.user!.id },
+            gitpodHost: window.location.host,
+        });
+        const dataOpsRedirectUrl = await getExperimentsClient().getValueAsync("dataops_redirect_url", "undefined", {
+            user: { id: this.user!.id },
+            gitpodHost: window.location.host,
+        });
+
+        if (!isDataOps) {
+            return;
+        }
+
+        try {
+            const params: Record<string, string> = { workspaceID: info.workspaceID };
+            let redirectURL: string;
+            if (dataOpsRedirectUrl === "undefined") {
+                redirectURL = this.workspace.metadata?.originalContextUrl ?? "";
+            } else {
+                redirectURL = dataOpsRedirectUrl;
+                params.contextURL = this.workspace.metadata?.originalContextUrl ?? "";
+            }
+            const url = new URL(redirectURL);
+            url.search = new URLSearchParams(params).toString();
+            this.relocate(url.toString());
+        } catch {
+            console.error("Invalid redirect URL");
+        }
     }
 
     // implements
