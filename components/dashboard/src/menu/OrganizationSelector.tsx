@@ -96,15 +96,18 @@ export default function OrganizationSelector() {
                     });
                 }
             }
+
+            // Org settings is available for all members, but only owner can change them
+            // collaborator can read org setting via API so that other feature like restrict org workspace classes could work
+            // we only hide the menu from dashboard
+            linkEntries.push({
+                title: "Settings",
+                customContent: <LinkEntry>Settings</LinkEntry>,
+                active: false,
+                separator: false,
+                link: "/settings",
+            });
         }
-        // Org settings is available for all members, but only owner can change them
-        linkEntries.push({
-            title: "Settings",
-            customContent: <LinkEntry>Settings</LinkEntry>,
-            active: false,
-            separator: false,
-            link: "/settings",
-        });
     }
 
     // Ensure only last link entry has a separator
