@@ -23,7 +23,7 @@ import { getProjectTabs } from "./projects.routes";
 import search from "../icons/search.svg";
 import Tooltip from "../components/Tooltip";
 import { prebuildClient, watchPrebuild } from "../service/public-api";
-import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild, Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Button } from "@podkit/buttons/Button";
 
 export default function PrebuildsPage(props: { project?: Project; isAdminDashboard?: boolean }) {
@@ -31,7 +31,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
     const project = props.project || currentProject.project;
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
-    const [statusFilter, setStatusFilter] = useState<PrebuildPhase_Phase | undefined>();
+    const [statusFilter, setStatusFilter] = useState<Phase | undefined>();
 
     const [isLoadingPrebuilds, setIsLoadingPrebuilds] = useState<boolean>(true);
     const [prebuilds, setPrebuilds] = useState<Prebuild[]>([]);
@@ -83,7 +83,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
         });
         entries.push({
             title: "READY",
-            onClick: () => setStatusFilter(PrebuildPhase_Phase.AVAILABLE),
+            onClick: () => setStatusFilter(Phase.AVAILABLE),
         });
         return entries;
     };
@@ -286,18 +286,18 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
 
 export function prebuildStatusLabel(prebuild?: Prebuild) {
     switch (prebuild?.status?.phase?.name) {
-        case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
-        case PrebuildPhase_Phase.QUEUED:
+        case Phase.UNSPECIFIED: // Fall through
+        case Phase.QUEUED:
             return <span className="font-medium text-orange-500 uppercase">pending</span>;
-        case PrebuildPhase_Phase.BUILDING:
+        case Phase.BUILDING:
             return <span className="font-medium text-blue-500 uppercase">running</span>;
-        case PrebuildPhase_Phase.ABORTED:
+        case Phase.ABORTED:
             return <span className="font-medium text-gray-500 uppercase">canceled</span>;
-        case PrebuildPhase_Phase.FAILED:
+        case Phase.FAILED:
             return <span className="font-medium text-red-500 uppercase">system error</span>;
-        case PrebuildPhase_Phase.TIMEOUT:
+        case Phase.TIMEOUT:
             return <span className="font-medium text-red-500 uppercase">timed out</span>;
-        case PrebuildPhase_Phase.AVAILABLE:
+        case Phase.AVAILABLE:
             if (prebuild?.status?.message) {
                 return <span className="font-medium text-red-500 uppercase">failed</span>;
             }
@@ -307,18 +307,18 @@ export function prebuildStatusLabel(prebuild?: Prebuild) {
 
 export function prebuildStatusIcon(prebuild?: Prebuild) {
     switch (prebuild?.status?.phase?.name) {
-        case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
-        case PrebuildPhase_Phase.QUEUED:
+        case Phase.UNSPECIFIED: // Fall through
+        case Phase.QUEUED:
             return <img alt="" className="h-4 w-4" src={StatusPaused} />;
-        case PrebuildPhase_Phase.BUILDING:
+        case Phase.BUILDING:
             return <img alt="" className="h-4 w-4" src={StatusRunning} />;
-        case PrebuildPhase_Phase.ABORTED:
+        case Phase.ABORTED:
             return <img alt="" className="h-4 w-4" src={StatusCanceled} />;
-        case PrebuildPhase_Phase.FAILED:
+        case Phase.FAILED:
             return <img alt="" className="h-4 w-4" src={StatusFailed} />;
-        case PrebuildPhase_Phase.TIMEOUT:
+        case Phase.TIMEOUT:
             return <img alt="" className="h-4 w-4" src={StatusFailed} />;
-        case PrebuildPhase_Phase.AVAILABLE:
+        case Phase.AVAILABLE:
             if (prebuild?.status?.message) {
                 return <img alt="" className="h-4 w-4" src={StatusFailed} />;
             }
@@ -328,21 +328,21 @@ export function prebuildStatusIcon(prebuild?: Prebuild) {
 
 function getPrebuildStatusDescription(prebuild: Prebuild): string {
     switch (prebuild.status?.phase?.name) {
-        case PrebuildPhase_Phase.QUEUED:
+        case Phase.QUEUED:
             return `Prebuild is queued and will be processed when there is execution capacity.`;
-        case PrebuildPhase_Phase.BUILDING:
+        case Phase.BUILDING:
             return `Prebuild is currently in progress.`;
-        case PrebuildPhase_Phase.ABORTED:
+        case Phase.ABORTED:
             return `Prebuild has been cancelled. Either a newer commit was pushed to the same branch, a user cancelled it manually, or the prebuild rate limit has been exceeded. ${
                 prebuild.status?.message || ""
             }`;
-        case PrebuildPhase_Phase.FAILED:
+        case Phase.FAILED:
             return `Prebuild failed for system reasons. Please contact support. ${prebuild.status?.message || ""}`;
-        case PrebuildPhase_Phase.TIMEOUT:
+        case Phase.TIMEOUT:
             return `Prebuild timed out. Either the image, or the prebuild tasks took too long. ${
                 prebuild.status?.message || ""
             }`;
-        case PrebuildPhase_Phase.AVAILABLE:
+        case Phase.AVAILABLE:
             if (prebuild.status?.message) {
                 return `The tasks executed in the prebuild returned a non-zero exit code. ${prebuild.status.message}`;
             }
