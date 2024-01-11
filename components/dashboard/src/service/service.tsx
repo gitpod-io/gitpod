@@ -267,11 +267,11 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private async redirectToCustomUrl(info: IDEFrontendDashboardService.Info) {
         const isDataOps = await getExperimentsClient().getValueAsync("dataops", false, {
             user: { id: this.user!.id },
-            gitpodHost: window.location.host,
+            gitpodHost: gitpodHostUrl.toString(),
         });
         const dataOpsRedirectUrl = await getExperimentsClient().getValueAsync("dataops_redirect_url", "undefined", {
             user: { id: this.user!.id },
-            gitpodHost: window.location.host,
+            gitpodHost: gitpodHostUrl.toString(),
         });
 
         if (!isDataOps) {

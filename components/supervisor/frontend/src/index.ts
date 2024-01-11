@@ -64,7 +64,6 @@ const ideService = IDEFrontendService.create();
 const loadingIDE = new Promise((resolve) => window.addEventListener("DOMContentLoaded", resolve, { once: true }));
 const toStop = new DisposableCollection();
 
-document.body.style.visibility = "hidden";
 LoadingFrame.load().then(async (loading) => {
     const frontendDashboardServiceClient = loading.frontendDashboardServiceClient;
     await frontendDashboardServiceClient.initialize();
