@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CancelPrebuildRequest, CancelPrebuildResponse, GetPrebuildRequest, GetPrebuildResponse, ListPrebuildsRequest, ListPrebuildsResponse, StartPrebuildRequest, StartPrebuildResponse, WatchPrebuildRequest, WatchPrebuildResponse } from "./prebuild_pb.js";
+import { CancelPrebuildRequest, CancelPrebuildResponse, GetPrebuildRequest, GetPrebuildResponse, ListOrganizationPrebuildsRequest, ListOrganizationPrebuildsResponse, ListPrebuildsRequest, ListPrebuildsResponse, StartPrebuildRequest, StartPrebuildResponse, WatchPrebuildRequest, WatchPrebuildResponse } from "./prebuild_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -62,6 +62,17 @@ export const PrebuildService = {
       I: WatchPrebuildRequest,
       O: WatchPrebuildResponse,
       kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * ListOrganizationPrebuilds lists all prebuilds of an organization
+     *
+     * @generated from rpc gitpod.v1.PrebuildService.ListOrganizationPrebuilds
+     */
+    listOrganizationPrebuilds: {
+      name: "ListOrganizationPrebuilds",
+      I: ListOrganizationPrebuildsRequest,
+      O: ListOrganizationPrebuildsResponse,
+      kind: MethodKind.Unary,
     },
   }
 } as const;

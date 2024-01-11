@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -51,6 +51,16 @@ func (s *ProxyPrebuildServiceHandler) GetPrebuild(ctx context.Context, req *conn
 
 func (s *ProxyPrebuildServiceHandler) ListPrebuilds(ctx context.Context, req *connect_go.Request[v1.ListPrebuildsRequest]) (*connect_go.Response[v1.ListPrebuildsResponse], error) {
 	resp, err := s.Client.ListPrebuilds(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyPrebuildServiceHandler) ListOrganizationPrebuilds(ctx context.Context, req *connect_go.Request[v1.ListOrganizationPrebuildsRequest]) (*connect_go.Response[v1.ListOrganizationPrebuildsResponse], error) {
+	resp, err := s.Client.ListOrganizationPrebuilds(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
