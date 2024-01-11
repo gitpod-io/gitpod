@@ -9,6 +9,7 @@ import { useHistory, useLocation } from "react-router-dom";
 import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { organizationClient } from "../service/public-api";
+import { workspacesPathMain } from "../workspaces/workspaces.routes";
 
 export default function JoinTeamPage() {
     const orgInvalidator = useOrganizationsInvalidator();
@@ -26,7 +27,8 @@ export default function JoinTeamPage() {
                 }
                 await organizationClient.joinOrganization({ invitationId: inviteId });
                 orgInvalidator();
-                history.push("/");
+
+                history.push(workspacesPathMain);
             } catch (error) {
                 console.error(error);
                 setJoinError(error);
