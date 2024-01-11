@@ -31,6 +31,8 @@ type PrebuildServiceClient interface {
 	GetPrebuild(ctx context.Context, in *GetPrebuildRequest, opts ...grpc.CallOption) (*GetPrebuildResponse, error)
 	ListPrebuilds(ctx context.Context, in *ListPrebuildsRequest, opts ...grpc.CallOption) (*ListPrebuildsResponse, error)
 	WatchPrebuild(ctx context.Context, in *WatchPrebuildRequest, opts ...grpc.CallOption) (PrebuildService_WatchPrebuildClient, error)
+	// ListOrganizationPrebuilds lists all prebuilds of an organization
+	ListOrganizationPrebuilds(ctx context.Context, in *ListOrganizationPrebuildsRequest, opts ...grpc.CallOption) (*ListOrganizationPrebuildsResponse, error)
 }
 
 type prebuildServiceClient struct {
@@ -109,6 +111,15 @@ func (x *prebuildServiceWatchPrebuildClient) Recv() (*WatchPrebuildResponse, err
 	return m, nil
 }
 
+func (c *prebuildServiceClient) ListOrganizationPrebuilds(ctx context.Context, in *ListOrganizationPrebuildsRequest, opts ...grpc.CallOption) (*ListOrganizationPrebuildsResponse, error) {
+	out := new(ListOrganizationPrebuildsResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.PrebuildService/ListOrganizationPrebuilds", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PrebuildServiceServer is the server API for PrebuildService service.
 // All implementations must embed UnimplementedPrebuildServiceServer
 // for forward compatibility
@@ -118,6 +129,8 @@ type PrebuildServiceServer interface {
 	GetPrebuild(context.Context, *GetPrebuildRequest) (*GetPrebuildResponse, error)
 	ListPrebuilds(context.Context, *ListPrebuildsRequest) (*ListPrebuildsResponse, error)
 	WatchPrebuild(*WatchPrebuildRequest, PrebuildService_WatchPrebuildServer) error
+	// ListOrganizationPrebuilds lists all prebuilds of an organization
+	ListOrganizationPrebuilds(context.Context, *ListOrganizationPrebuildsRequest) (*ListOrganizationPrebuildsResponse, error)
 	mustEmbedUnimplementedPrebuildServiceServer()
 }
 
@@ -139,6 +152,9 @@ func (UnimplementedPrebuildServiceServer) ListPrebuilds(context.Context, *ListPr
 }
 func (UnimplementedPrebuildServiceServer) WatchPrebuild(*WatchPrebuildRequest, PrebuildService_WatchPrebuildServer) error {
 	return status.Errorf(codes.Unimplemented, "method WatchPrebuild not implemented")
+}
+func (UnimplementedPrebuildServiceServer) ListOrganizationPrebuilds(context.Context, *ListOrganizationPrebuildsRequest) (*ListOrganizationPrebuildsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListOrganizationPrebuilds not implemented")
 }
 func (UnimplementedPrebuildServiceServer) mustEmbedUnimplementedPrebuildServiceServer() {}
 
@@ -246,6 +262,24 @@ func (x *prebuildServiceWatchPrebuildServer) Send(m *WatchPrebuildResponse) erro
 	return x.ServerStream.SendMsg(m)
 }
 
+func _PrebuildService_ListOrganizationPrebuilds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOrganizationPrebuildsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PrebuildServiceServer).ListOrganizationPrebuilds(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.PrebuildService/ListOrganizationPrebuilds",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PrebuildServiceServer).ListOrganizationPrebuilds(ctx, req.(*ListOrganizationPrebuildsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PrebuildService_ServiceDesc is the grpc.ServiceDesc for PrebuildService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -268,6 +302,10 @@ var PrebuildService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPrebuilds",
 			Handler:    _PrebuildService_ListPrebuilds_Handler,
+		},
+		{
+			MethodName: "ListOrganizationPrebuilds",
+			Handler:    _PrebuildService_ListOrganizationPrebuilds_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
