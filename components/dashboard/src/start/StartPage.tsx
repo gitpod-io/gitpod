@@ -9,11 +9,11 @@ import Alert from "../components/Alert";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { Heading2 } from "../components/typography/headings";
 import { useDocumentTitle } from "../hooks/use-document-title";
-import gitpodIcon from "../icons/gitpod.svg";
 import { gitpodHostUrl } from "../service/service";
 import { VerifyModal } from "./VerifyModal";
 import { useWorkspaceDefaultImageQuery } from "../data/workspaces/default-workspace-image-query";
 import { GetWorkspaceDefaultImageResponse_Source } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { ProductLogo } from "../components/ProductLogo";
 
 export enum StartPhase {
     Checking = 0,
@@ -100,9 +100,7 @@ export function StartPage(props: StartPageProps) {
         <div className="w-screen h-screen align-middle">
             <div className="flex flex-col mx-auto items-center text-center h-screen">
                 <div className="h-1/3"></div>
-                <img
-                    src={gitpodIcon}
-                    alt="Gitpod's logo"
+                <ProductLogo
                     className={`h-16 flex-shrink-0 ${
                         error || phase === StartPhase.Stopped || phase === StartPhase.IdeReady ? "" : "animate-bounce"
                     }`}
