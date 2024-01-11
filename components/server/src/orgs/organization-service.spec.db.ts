@@ -5,7 +5,7 @@
  */
 
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM } from "@gitpod/gitpod-db/lib";
-import { Organization, OrganizationSettings, User } from "@gitpod/gitpod-protocol";
+import { Organization, OrganizationSettings, TeamMemberRole, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import * as chai from "chai";
@@ -27,6 +27,7 @@ describe("OrganizationService", async () => {
 
     let owner: User;
     let member: User;
+    let collaborator: User;
     let stranger: User;
     const adminId = BUILTIN_INSTLLATION_ADMIN_USER_ID;
     let org: Organization;
@@ -36,6 +37,7 @@ describe("OrganizationService", async () => {
         container = createTestContainer();
         Experiments.configureTestingClient({
             centralizedPermissions: true,
+            dataops: true,
         });
         validateDefaultWorkspaceImage = undefined;
         container
@@ -64,7 +66,16 @@ describe("OrganizationService", async () => {
                 authProviderId: "github",
             },
         });
-        await os.joinOrganization(member.id, invite.id);
+        await os.addOrUpdateMember(owner.id, org.id, member.id, "member", { flexibleRole: false });
+
+        collaborator = await userService.createUser({
+            identity: {
+                authId: "github|1234",
+                authName: "github",
+                authProviderId: "github",
+            },
+        });
+        await os.joinOrganization(collaborator.id, invite.id);
 
         stranger = await userService.createUser({
             identity: {
@@ -84,6 +95,7 @@ describe("OrganizationService", async () => {
 
     it("should deleteOrganization", async () => {
         await expectError(ErrorCodes.PERMISSION_DENIED, os.deleteOrganization(member.id, org.id));
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.deleteOrganization(collaborator.id, org.id));
         await expectError(ErrorCodes.NOT_FOUND, os.deleteOrganization(stranger.id, org.id));
 
         await os.deleteOrganization(owner.id, org.id);
@@ -104,8 +116,25 @@ describe("OrganizationService", async () => {
         const invite4 = await os.resetInvite(member.id, org.id);
         expect(invite4.id).to.not.equal(invite3.id);
 
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.getOrCreateInvite(collaborator.id, org.id));
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.resetInvite(collaborator.id, org.id));
+
         await expectError(ErrorCodes.NOT_FOUND, os.getOrCreateInvite(stranger.id, org.id));
         await expectError(ErrorCodes.NOT_FOUND, os.resetInvite(stranger.id, org.id));
+    });
+
+    it("re-join org should not change role", async () => {
+        const invite = await os.getOrCreateInvite(owner.id, org.id);
+        expect(invite).to.not.be.undefined;
+
+        await os.joinOrganization(owner.id, invite.id);
+        await assertUserRole(owner.id, "owner");
+
+        await os.joinOrganization(member.id, invite.id);
+        await assertUserRole(member.id, "member");
+
+        await os.joinOrganization(collaborator.id, invite.id);
+        await assertUserRole(collaborator.id, "collaborator");
     });
 
     it("should listMembers", async () => {
@@ -119,17 +148,36 @@ describe("OrganizationService", async () => {
         expect(members.some((m) => m.userId === owner.id)).to.be.true;
         expect(members.some((m) => m.userId === member.id)).to.be.true;
 
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.listMembers(collaborator.id, org.id));
         await expectError(ErrorCodes.NOT_FOUND, () => os.listMembers(stranger.id, org.id));
     });
 
+    const assertUserRole = async (userId: string, role: TeamMemberRole) => {
+        const list = await os.listMembers(owner.id, org.id);
+        expect(list.find((m) => (m.userId = userId))?.role).to.be.equal(role);
+    };
+
     it("should setOrganizationMemberRole and removeOrganizationMember", async () => {
         await expectError(ErrorCodes.PERMISSION_DENIED, os.addOrUpdateMember(member.id, org.id, owner.id, "member"));
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            os.addOrUpdateMember(collaborator.id, org.id, owner.id, "member"),
+        );
 
         // try upgrade the member to owner
         await expectError(ErrorCodes.PERMISSION_DENIED, os.addOrUpdateMember(member.id, org.id, member.id, "owner"));
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            os.addOrUpdateMember(collaborator.id, org.id, member.id, "owner"),
+        );
 
         // try removing the owner
         await expectError(ErrorCodes.PERMISSION_DENIED, os.removeOrganizationMember(member.id, org.id, owner.id));
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.removeOrganizationMember(collaborator.id, org.id, owner.id));
+
+        // owner can't downgrade if org only have on owner
+        await os.addOrUpdateMember(owner.id, org.id, owner.id, "member");
+        await assertUserRole(owner.id, "owner");
 
         // owners can upgrade members
         await os.addOrUpdateMember(owner.id, org.id, member.id, "owner");
@@ -148,17 +196,19 @@ describe("OrganizationService", async () => {
         // owner can downgrade themselves only if they are not the last owner
         await os.addOrUpdateMember(owner.id, org.id, owner.id, "member");
         // verify they are still an owner
-        const members = await os.listMembers(owner.id, org.id);
-        expect(members.some((m) => m.userId === owner.id && m.role === "owner")).to.be.true;
+        await assertUserRole(owner.id, "owner");
 
         // owner can delete themselves only if they are not the last owner
         await expectError(ErrorCodes.CONFLICT, os.removeOrganizationMember(owner.id, org.id, owner.id));
 
         // members can remove themselves
         await os.removeOrganizationMember(member.id, org.id, member.id);
+        // collaborators can remove themselves
+        await os.removeOrganizationMember(collaborator.id, org.id, collaborator.id);
 
         // try remove the member again
         await expectError(ErrorCodes.NOT_FOUND, os.removeOrganizationMember(member.id, org.id, member.id));
+        await expectError(ErrorCodes.NOT_FOUND, os.removeOrganizationMember(collaborator.id, org.id, collaborator.id));
     });
 
     it("should delete owned user when removing it", async () => {
@@ -192,6 +242,8 @@ describe("OrganizationService", async () => {
         expect(orgs.length).to.eq(3);
         orgs = await os.listOrganizationsByMember(member.id, member.id);
         expect(orgs.length).to.eq(1);
+        orgs = await os.listOrganizationsByMember(collaborator.id, collaborator.id);
+        expect(orgs.length).to.eq(1);
         orgs = await os.listOrganizationsByMember(stranger.id, stranger.id);
         expect(orgs.length).to.eq(0);
         await expectError(ErrorCodes.NOT_FOUND, os.listOrganizationsByMember(stranger.id, owner.id));
@@ -204,6 +256,9 @@ describe("OrganizationService", async () => {
         const foundByMember = await os.getOrganization(member.id, org.id);
         expect(foundByMember.name).to.equal(org.name);
 
+        const foundByCollaborator = await os.getOrganization(collaborator.id, org.id);
+        expect(foundByCollaborator.name).to.equal(org.name);
+
         await expectError(ErrorCodes.NOT_FOUND, os.getOrganization(stranger.id, org.id));
     });
 
@@ -214,6 +269,7 @@ describe("OrganizationService", async () => {
         expect(updated.name).to.equal(org.name);
 
         await expectError(ErrorCodes.PERMISSION_DENIED, os.updateOrganization(member.id, org.id, org));
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.updateOrganization(collaborator.id, org.id, org));
         await expectError(ErrorCodes.NOT_FOUND, os.updateOrganization(stranger.id, org.id, org));
     });
 
@@ -229,6 +285,7 @@ describe("OrganizationService", async () => {
         expect(updated.workspaceSharingDisabled).to.be.true;
 
         await expectError(ErrorCodes.PERMISSION_DENIED, os.updateSettings(member.id, org.id, settings));
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.updateSettings(collaborator.id, org.id, settings));
         await expectError(ErrorCodes.NOT_FOUND, os.updateSettings(stranger.id, org.id, settings));
     });
 
@@ -268,6 +325,54 @@ describe("OrganizationService", async () => {
         expect(orgs.rows.some((org) => org.id === org.id)).to.be.true;
         expect(orgs.rows.some((org) => org.id === strangerOrg.id)).to.be.true;
         expect(orgs.total).to.eq(2);
+    });
+
+    it("should ad as collaborator with dataops + flexibleRole", async () => {
+        await assertUserRole(collaborator.id, "collaborator");
+        const u2 = await userService.createUser({
+            identity: {
+                authId: "github|1234",
+                authName: "github",
+                authProviderId: "github",
+            },
+        });
+        await os.addOrUpdateMember(owner.id, org.id, u2.id, "member");
+        await assertUserRole(u2.id, "member");
+        // flexibleRole: true + dataops should be collaborator
+        await os.addOrUpdateMember(owner.id, org.id, u2.id, "member", { flexibleRole: true });
+        await assertUserRole(u2.id, "collaborator");
+    });
+
+    it("should join an org with different cell id", async () => {
+        Experiments.configureTestingClient({
+            centralizedPermissions: true,
+            dataops: false,
+        });
+        const u1 = await userService.createUser({
+            identity: {
+                authId: "github|1234",
+                authName: "github",
+                authProviderId: "github",
+            },
+        });
+        const invite = await os.getOrCreateInvite(owner.id, org.id);
+
+        await os.joinOrganization(u1.id, invite.id);
+        await assertUserRole(u1.id, "member");
+
+        Experiments.configureTestingClient({
+            centralizedPermissions: true,
+            dataops: true,
+        });
+        const u2 = await userService.createUser({
+            identity: {
+                authId: "github|1234",
+                authName: "github",
+                authProviderId: "github",
+            },
+        });
+        await os.joinOrganization(u2.id, invite.id);
+        await assertUserRole(u2.id, "collaborator");
     });
 
     it("should manage settings", async () => {
