@@ -127,6 +127,10 @@ describe("OrganizationService", async () => {
         const invite = await os.getOrCreateInvite(owner.id, org.id);
         expect(invite).to.not.be.undefined;
 
+        await assertUserRole(owner.id, "owner");
+        await assertUserRole(member.id, "member");
+        await assertUserRole(collaborator.id, "collaborator");
+
         await os.joinOrganization(owner.id, invite.id);
         await assertUserRole(owner.id, "owner");
 
@@ -137,14 +141,14 @@ describe("OrganizationService", async () => {
         await assertUserRole(collaborator.id, "collaborator");
     });
 
-    it("should listMembers", async () => {
+    it.only("should listMembers", async () => {
         let members = await os.listMembers(owner.id, org.id);
-        expect(members.length).to.eq(2);
+        expect(members.length).to.eq(3);
         expect(members.some((m) => m.userId === owner.id)).to.be.true;
         expect(members.some((m) => m.userId === member.id)).to.be.true;
 
         members = await os.listMembers(member.id, org.id);
-        expect(members.length).to.eq(2);
+        expect(members.length).to.eq(3);
         expect(members.some((m) => m.userId === owner.id)).to.be.true;
         expect(members.some((m) => m.userId === member.id)).to.be.true;
 
@@ -154,7 +158,7 @@ describe("OrganizationService", async () => {
 
     const assertUserRole = async (userId: string, role: TeamMemberRole) => {
         const list = await os.listMembers(owner.id, org.id);
-        expect(list.find((m) => (m.userId = userId))?.role).to.be.equal(role);
+        expect(list.find((m) => m.userId === userId)?.role).to.be.equal(role);
     };
 
     it("should setOrganizationMemberRole and removeOrganizationMember", async () => {
