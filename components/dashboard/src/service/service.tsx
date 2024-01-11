@@ -237,7 +237,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
                 (info.statusPhase === "stopping" || info.statusPhase === "stopped") &&
                 info.workspaceType === "regular"
             ) {
-                await this.redirectToCustomUrl();
+                await this.redirectToCustomUrl(info);
             }
 
             this.sendInfoUpdate(this.latestInfo);
@@ -264,7 +264,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         };
     }
 
-    private async redirectToCustomUrl() {
+    private async redirectToCustomUrl(info: IDEFrontendDashboardService.Info) {
         const isDataOps = await getExperimentsClient().getValueAsync("dataops", false, {
             user: { id: this.user!.id },
             gitpodHost: window.location.host,
