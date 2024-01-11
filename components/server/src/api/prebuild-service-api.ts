@@ -141,7 +141,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
     }
 
     async listOrganizationPrebuilds(
-        params: ListOrganizationPrebuildsRequest,
+        request: ListOrganizationPrebuildsRequest,
     ): Promise<ListOrganizationPrebuildsResponse> {
         return new ListOrganizationPrebuildsResponse({});
     }
