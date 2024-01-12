@@ -17,6 +17,7 @@ import { expectError } from "../test/expect-utils";
 import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
 import { OldProjectSettings, ProjectsService } from "./projects-service";
 import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -46,10 +47,10 @@ describe("ProjectsService", async () => {
         // create and add a member
         member = await userDB.newUser();
         const invite = await orgService.getOrCreateInvite(owner.id, org.id);
-        await orgService.joinOrganization(member.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, invite.id));
 
         const anotherInvite = await orgService.getOrCreateInvite(owner.id, anotherOrg.id);
-        await orgService.joinOrganization(member.id, anotherInvite.id);
+        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, anotherInvite.id));
 
         // create a stranger
         stranger = await userDB.newUser();

@@ -11,12 +11,13 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { createTestContainer } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
 import { OrganizationService } from "./organization-service";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { expectError } from "../test/expect-utils";
 import { UserService } from "../user/user-service";
 import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -75,7 +76,8 @@ describe("OrganizationService", async () => {
                 authProviderId: "github",
             },
         });
-        await os.joinOrganization(collaborator.id, invite.id);
+
+        await withTestCtx(SYSTEM_USER, () => os.joinOrganization(collaborator.id, invite.id));
 
         stranger = await userService.createUser({
             identity: {
@@ -131,17 +133,17 @@ describe("OrganizationService", async () => {
         await assertUserRole(member.id, "member");
         await assertUserRole(collaborator.id, "collaborator");
 
-        await os.joinOrganization(owner.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => os.joinOrganization(owner.id, invite.id));
         await assertUserRole(owner.id, "owner");
 
-        await os.joinOrganization(member.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => os.joinOrganization(member.id, invite.id));
         await assertUserRole(member.id, "member");
 
-        await os.joinOrganization(collaborator.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => os.joinOrganization(collaborator.id, invite.id));
         await assertUserRole(collaborator.id, "collaborator");
     });
 
-    it.only("should listMembers", async () => {
+    it("should listMembers", async () => {
         let members = await os.listMembers(owner.id, org.id);
         expect(members.length).to.eq(3);
         expect(members.some((m) => m.userId === owner.id)).to.be.true;
@@ -361,7 +363,7 @@ describe("OrganizationService", async () => {
         });
         const invite = await os.getOrCreateInvite(owner.id, org.id);
 
-        await os.joinOrganization(u1.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => os.joinOrganization(u1.id, invite.id));
         await assertUserRole(u1.id, "member");
 
         Experiments.configureTestingClient({
@@ -375,7 +377,7 @@ describe("OrganizationService", async () => {
                 authProviderId: "github",
             },
         });
-        await os.joinOrganization(u2.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => os.joinOrganization(u2.id, invite.id));
         await assertUserRole(u2.id, "collaborator");
     });
 

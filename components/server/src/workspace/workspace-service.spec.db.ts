@@ -22,11 +22,12 @@ import { Container } from "inversify";
 import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
 import { expectError } from "../test/expect-utils";
-import { createTestContainer } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
 import { WorkspaceService } from "./workspace-service";
 import { ProjectsService } from "../projects/projects-service";
 import { ConfigProvider } from "./config-provider";
 import { UserService } from "../user/user-service";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -75,7 +76,7 @@ describe("WorkspaceService", async () => {
             },
         });
         const invite = await orgService.getOrCreateInvite(owner.id, org.id);
-        await orgService.joinOrganization(member.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, invite.id));
 
         // create a project
         const projectService = container.get(ProjectsService);
