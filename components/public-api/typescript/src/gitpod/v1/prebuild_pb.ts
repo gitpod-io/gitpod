@@ -15,56 +15,6 @@ import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
 import { Commit } from "./scm_pb.js";
 
 /**
- * @generated from enum gitpod.v1.Phase
- */
-export enum Phase {
-  /**
-   * @generated from enum value: PHASE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: PHASE_QUEUED = 1;
-   */
-  QUEUED = 1,
-
-  /**
-   * @generated from enum value: PHASE_BUILDING = 2;
-   */
-  BUILDING = 2,
-
-  /**
-   * @generated from enum value: PHASE_ABORTED = 3;
-   */
-  ABORTED = 3,
-
-  /**
-   * @generated from enum value: PHASE_TIMEOUT = 4;
-   */
-  TIMEOUT = 4,
-
-  /**
-   * @generated from enum value: PHASE_AVAILABLE = 5;
-   */
-  AVAILABLE = 5,
-
-  /**
-   * @generated from enum value: PHASE_FAILED = 6;
-   */
-  FAILED = 6,
-}
-// Retrieve enum metadata with: proto3.getEnumType(Phase)
-proto3.util.setEnumType(Phase, "gitpod.v1.Phase", [
-  { no: 0, name: "PHASE_UNSPECIFIED" },
-  { no: 1, name: "PHASE_QUEUED" },
-  { no: 2, name: "PHASE_BUILDING" },
-  { no: 3, name: "PHASE_ABORTED" },
-  { no: 4, name: "PHASE_TIMEOUT" },
-  { no: 5, name: "PHASE_AVAILABLE" },
-  { no: 6, name: "PHASE_FAILED" },
-]);
-
-/**
  * @generated from message gitpod.v1.GetPrebuildRequest
  */
 export class GetPrebuildRequest extends Message<GetPrebuildRequest> {
@@ -148,7 +98,8 @@ export class ListPrebuildsRequest extends Message<ListPrebuildsRequest> {
   pagination?: PaginationRequest;
 
   /**
-   * it is for backward compatiblity with the current dashboard, use prebuild_id instead
+   * it is for backward compatiblity with the current dashboard, use prebuild_id
+   * instead
    *
    * @generated from field: string workspace_id = 2 [deprecated = true];
    * @deprecated
@@ -489,9 +440,9 @@ export class ListOrganizationPrebuildsRequest extends Message<ListOrganizationPr
   organizationId = "";
 
   /**
-   * @generated from field: gitpod.v1.Filter filter = 3;
+   * @generated from field: gitpod.v1.ListOrganizationPrebuildsRequest.Filter filter = 3;
    */
-  filter?: Filter;
+  filter?: ListOrganizationPrebuildsRequest_Filter;
 
   constructor(data?: PartialMessage<ListOrganizationPrebuildsRequest>) {
     super();
@@ -503,7 +454,7 @@ export class ListOrganizationPrebuildsRequest extends Message<ListOrganizationPr
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
     { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "filter", kind: "message", T: Filter },
+    { no: 3, name: "filter", kind: "message", T: ListOrganizationPrebuildsRequest_Filter },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationPrebuildsRequest {
@@ -520,6 +471,43 @@ export class ListOrganizationPrebuildsRequest extends Message<ListOrganizationPr
 
   static equals(a: ListOrganizationPrebuildsRequest | PlainMessage<ListOrganizationPrebuildsRequest> | undefined, b: ListOrganizationPrebuildsRequest | PlainMessage<ListOrganizationPrebuildsRequest> | undefined): boolean {
     return proto3.util.equals(ListOrganizationPrebuildsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListOrganizationPrebuildsRequest.Filter
+ */
+export class ListOrganizationPrebuildsRequest_Filter extends Message<ListOrganizationPrebuildsRequest_Filter> {
+  /**
+   * @generated from field: gitpod.v1.PrebuildPhase.Phase status = 1;
+   */
+  status = PrebuildPhase_Phase.UNSPECIFIED;
+
+  constructor(data?: PartialMessage<ListOrganizationPrebuildsRequest_Filter>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListOrganizationPrebuildsRequest.Filter";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "status", kind: "enum", T: proto3.getEnumType(PrebuildPhase_Phase) },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationPrebuildsRequest_Filter {
+    return new ListOrganizationPrebuildsRequest_Filter().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListOrganizationPrebuildsRequest_Filter {
+    return new ListOrganizationPrebuildsRequest_Filter().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListOrganizationPrebuildsRequest_Filter {
+    return new ListOrganizationPrebuildsRequest_Filter().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListOrganizationPrebuildsRequest_Filter | PlainMessage<ListOrganizationPrebuildsRequest_Filter> | undefined, b: ListOrganizationPrebuildsRequest_Filter | PlainMessage<ListOrganizationPrebuildsRequest_Filter> | undefined): boolean {
+    return proto3.util.equals(ListOrganizationPrebuildsRequest_Filter, a, b);
   }
 }
 
@@ -704,9 +692,9 @@ export class PrebuildStatus extends Message<PrebuildStatus> {
  */
 export class PrebuildPhase extends Message<PrebuildPhase> {
   /**
-   * @generated from field: gitpod.v1.Phase name = 1;
+   * @generated from field: gitpod.v1.PrebuildPhase.Phase name = 1;
    */
-  name = Phase.UNSPECIFIED;
+  name = PrebuildPhase_Phase.UNSPECIFIED;
 
   constructor(data?: PartialMessage<PrebuildPhase>) {
     super();
@@ -716,7 +704,7 @@ export class PrebuildPhase extends Message<PrebuildPhase> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.PrebuildPhase";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "name", kind: "enum", T: proto3.getEnumType(Phase) },
+    { no: 1, name: "name", kind: "enum", T: proto3.getEnumType(PrebuildPhase_Phase) },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildPhase {
@@ -737,38 +725,51 @@ export class PrebuildPhase extends Message<PrebuildPhase> {
 }
 
 /**
- * @generated from message gitpod.v1.Filter
+ * @generated from enum gitpod.v1.PrebuildPhase.Phase
  */
-export class Filter extends Message<Filter> {
+export enum PrebuildPhase_Phase {
   /**
-   * @generated from field: gitpod.v1.Phase status = 1;
+   * @generated from enum value: PHASE_UNSPECIFIED = 0;
    */
-  status = Phase.UNSPECIFIED;
+  UNSPECIFIED = 0,
 
-  constructor(data?: PartialMessage<Filter>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+  /**
+   * @generated from enum value: PHASE_QUEUED = 1;
+   */
+  QUEUED = 1,
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.Filter";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "status", kind: "enum", T: proto3.getEnumType(Phase) },
-  ]);
+  /**
+   * @generated from enum value: PHASE_BUILDING = 2;
+   */
+  BUILDING = 2,
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Filter {
-    return new Filter().fromBinary(bytes, options);
-  }
+  /**
+   * @generated from enum value: PHASE_ABORTED = 3;
+   */
+  ABORTED = 3,
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Filter {
-    return new Filter().fromJson(jsonValue, options);
-  }
+  /**
+   * @generated from enum value: PHASE_TIMEOUT = 4;
+   */
+  TIMEOUT = 4,
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Filter {
-    return new Filter().fromJsonString(jsonString, options);
-  }
+  /**
+   * @generated from enum value: PHASE_AVAILABLE = 5;
+   */
+  AVAILABLE = 5,
 
-  static equals(a: Filter | PlainMessage<Filter> | undefined, b: Filter | PlainMessage<Filter> | undefined): boolean {
-    return proto3.util.equals(Filter, a, b);
-  }
+  /**
+   * @generated from enum value: PHASE_FAILED = 6;
+   */
+  FAILED = 6,
 }
+// Retrieve enum metadata with: proto3.getEnumType(PrebuildPhase_Phase)
+proto3.util.setEnumType(PrebuildPhase_Phase, "gitpod.v1.PrebuildPhase.Phase", [
+  { no: 0, name: "PHASE_UNSPECIFIED" },
+  { no: 1, name: "PHASE_QUEUED" },
+  { no: 2, name: "PHASE_BUILDING" },
+  { no: 3, name: "PHASE_ABORTED" },
+  { no: 4, name: "PHASE_TIMEOUT" },
+  { no: 5, name: "PHASE_AVAILABLE" },
+  { no: 6, name: "PHASE_FAILED" },
+]);

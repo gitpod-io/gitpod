@@ -64,6 +64,9 @@ message WatchPrebuildResponse {
 }
 
 message ListOrganizationPrebuildsRequest {
+  message Filter {
+    PrebuildPhase.Phase status = 1;
+  }
   PaginationRequest pagination = 1;
   string organization_id = 2;
   Filter filter = 3;
@@ -97,20 +100,15 @@ message PrebuildStatus {
   string message = 3;
 }
 
-enum Phase {
-  PHASE_UNSPECIFIED = 0;
-  PHASE_QUEUED = 1;
-  PHASE_BUILDING = 2;
-  PHASE_ABORTED = 3;
-  PHASE_TIMEOUT = 4;
-  PHASE_AVAILABLE = 5;
-  PHASE_FAILED = 6;
-}
-
 message PrebuildPhase {
+  enum Phase {
+    PHASE_UNSPECIFIED = 0;
+    PHASE_QUEUED = 1;
+    PHASE_BUILDING = 2;
+    PHASE_ABORTED = 3;
+    PHASE_TIMEOUT = 4;
+    PHASE_AVAILABLE = 5;
+    PHASE_FAILED = 6;
+  }
   Phase name = 1;
-}
-
-message Filter {
-  Phase status = 1;
 }

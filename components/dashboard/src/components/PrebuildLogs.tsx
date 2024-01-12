@@ -17,7 +17,7 @@ import { PrebuildStatus } from "../projects/Prebuilds";
 import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
 import { prebuildClient, watchPrebuild, workspaceClient } from "../service/public-api";
 import { GetWorkspaceRequest, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { Prebuild, Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 
 const WorkspaceLogs = React.lazy(() => import("./WorkspaceLogs"));
 
@@ -48,7 +48,8 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                 // In case the Prebuild got "aborted" or "time(d)out" we want to user to proceed anyway
                 if (
                     props.onIgnorePrebuild &&
-                    (prebuild.status?.phase?.name === Phase.ABORTED || prebuild.status?.phase?.name === Phase.TIMEOUT)
+                    (prebuild.status?.phase?.name === PrebuildPhase_Phase.ABORTED ||
+                        prebuild.status?.phase?.name === PrebuildPhase_Phase.TIMEOUT)
                 ) {
                     props.onIgnorePrebuild();
                 }

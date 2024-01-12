@@ -24,7 +24,7 @@ import { shortCommitMessage, toRemoteURL } from "./render-utils";
 import search from "../icons/search.svg";
 import Tooltip from "../components/Tooltip";
 import { prebuildClient } from "../service/public-api";
-import { Prebuild, Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Button } from "@podkit/buttons/Button";
 
 export default function ProjectsPage() {
@@ -380,8 +380,10 @@ export default function ProjectsPage() {
                                                     <ItemFieldContextMenu
                                                         className="py-0.5"
                                                         menuEntries={[
-                                                            prebuild?.status?.phase?.name === Phase.QUEUED ||
-                                                            prebuild?.status?.phase?.name === Phase.BUILDING
+                                                            prebuild?.status?.phase?.name ===
+                                                                PrebuildPhase_Phase.QUEUED ||
+                                                            prebuild?.status?.phase?.name ===
+                                                                PrebuildPhase_Phase.BUILDING
                                                                 ? {
                                                                       title: "Cancel Prebuild",
                                                                       customFontStyle:
