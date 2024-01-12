@@ -16,7 +16,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
-import { Authorizer, SYSTEM_USER_ID } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { ProjectsService } from "../projects/projects-service";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
@@ -25,6 +25,7 @@ import { UserService } from "../user/user-service";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { InstallationService } from "../auth/installation-service";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { runWithSubjectId } from "../util/request-context";
 
 @injectable()
 export class OrganizationService {
@@ -247,10 +248,12 @@ export class OrganizationService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
         // set skipRoleUpdate=true to avoid member/owner click join link again cause role change
-        await this.addOrUpdateMember(SYSTEM_USER_ID, invite.teamId, userId, invite.role, {
-            flexibleRole: true,
-            skipRoleUpdate: true,
-        });
+        await runWithSubjectId(SYSTEM_USER, () =>
+            this.addOrUpdateMember(SYSTEM_USER_ID, invite.teamId, userId, invite.role, {
+                flexibleRole: true,
+                skipRoleUpdate: true,
+            }),
+        );
         return invite.teamId;
     }
 
