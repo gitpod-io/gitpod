@@ -23,7 +23,7 @@ import { getProjectTabs } from "./projects.routes";
 import search from "../icons/search.svg";
 import Tooltip from "../components/Tooltip";
 import { prebuildClient, watchPrebuild } from "../service/public-api";
-import { Prebuild, Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Button } from "@podkit/buttons/Button";
 
 export default function PrebuildsPage(props: { project?: Project; isAdminDashboard?: boolean }) {
@@ -286,18 +286,18 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
 
 export function prebuildStatusLabel(prebuild?: Prebuild) {
     switch (prebuild?.status?.phase?.name) {
-        case Phase.UNSPECIFIED: // Fall through
-        case Phase.QUEUED:
+        case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
+        case PrebuildPhase_Phase.QUEUED:
             return <span className="font-medium text-orange-500 uppercase">pending</span>;
-        case Phase.BUILDING:
+        case PrebuildPhase_Phase.BUILDING:
             return <span className="font-medium text-blue-500 uppercase">running</span>;
-        case Phase.ABORTED:
+        case PrebuildPhase_Phase.ABORTED:
             return <span className="font-medium text-gray-500 uppercase">canceled</span>;
-        case Phase.FAILED:
+        case PrebuildPhase_Phase.FAILED:
             return <span className="font-medium text-red-500 uppercase">system error</span>;
-        case Phase.TIMEOUT:
+        case PrebuildPhase_Phase.TIMEOUT:
             return <span className="font-medium text-red-500 uppercase">timed out</span>;
-        case Phase.AVAILABLE:
+        case PrebuildPhase_Phase.AVAILABLE:
             if (prebuild?.status?.message) {
                 return <span className="font-medium text-red-500 uppercase">failed</span>;
             }
@@ -307,18 +307,18 @@ export function prebuildStatusLabel(prebuild?: Prebuild) {
 
 export function prebuildStatusIcon(prebuild?: Prebuild) {
     switch (prebuild?.status?.phase?.name) {
-        case Phase.UNSPECIFIED: // Fall through
-        case Phase.QUEUED:
+        case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
+        case PrebuildPhase_Phase.QUEUED:
             return <img alt="" className="h-4 w-4" src={StatusPaused} />;
-        case Phase.BUILDING:
+        case PrebuildPhase_Phase.BUILDING:
             return <img alt="" className="h-4 w-4" src={StatusRunning} />;
-        case Phase.ABORTED:
+        case PrebuildPhase_Phase.ABORTED:
             return <img alt="" className="h-4 w-4" src={StatusCanceled} />;
-        case Phase.FAILED:
+        case PrebuildPhase_Phase.FAILED:
             return <img alt="" className="h-4 w-4" src={StatusFailed} />;
-        case Phase.TIMEOUT:
+        case PrebuildPhase_Phase.TIMEOUT:
             return <img alt="" className="h-4 w-4" src={StatusFailed} />;
-        case Phase.AVAILABLE:
+        case PrebuildPhase_Phase.AVAILABLE:
             if (prebuild?.status?.message) {
                 return <img alt="" className="h-4 w-4" src={StatusFailed} />;
             }
@@ -328,21 +328,21 @@ export function prebuildStatusIcon(prebuild?: Prebuild) {
 
 function getPrebuildStatusDescription(prebuild: Prebuild): string {
     switch (prebuild.status?.phase?.name) {
-        case Phase.QUEUED:
+        case PrebuildPhase_Phase.QUEUED:
             return `Prebuild is queued and will be processed when there is execution capacity.`;
-        case Phase.BUILDING:
+        case PrebuildPhase_Phase.BUILDING:
             return `Prebuild is currently in progress.`;
-        case Phase.ABORTED:
+        case PrebuildPhase_Phase.ABORTED:
             return `Prebuild has been cancelled. Either a newer commit was pushed to the same branch, a user cancelled it manually, or the prebuild rate limit has been exceeded. ${
                 prebuild.status?.message || ""
             }`;
-        case Phase.FAILED:
+        case PrebuildPhase_Phase.FAILED:
             return `Prebuild failed for system reasons. Please contact support. ${prebuild.status?.message || ""}`;
-        case Phase.TIMEOUT:
+        case PrebuildPhase_Phase.TIMEOUT:
             return `Prebuild timed out. Either the image, or the prebuild tasks took too long. ${
                 prebuild.status?.message || ""
             }`;
-        case Phase.AVAILABLE:
+        case PrebuildPhase_Phase.AVAILABLE:
             if (prebuild.status?.message) {
                 return `The tasks executed in the prebuild returned a non-zero exit code. ${prebuild.status.message}`;
             }

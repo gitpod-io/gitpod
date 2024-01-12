@@ -14,7 +14,7 @@ import Spinner from "../icons/Spinner.svg";
 import { useCurrentProject } from "./project-context";
 import { shortCommitMessage } from "./render-utils";
 import { prebuildClient, watchPrebuild } from "../service/public-api";
-import { Prebuild, Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { gitpodHostUrl } from "../service/service";
 import { Button } from "@podkit/buttons/Button";
 
@@ -134,7 +134,9 @@ export default function PrebuildPage() {
             <Header title={title} subtitle={renderSubtitle()} />
             <div className="app-container mt-8">
                 <PrebuildLogs workspaceId={prebuild?.workspaceId}>
-                    {[Phase.BUILDING, Phase.QUEUED].includes(prebuild?.status?.phase?.name || Phase.UNSPECIFIED) ? (
+                    {[PrebuildPhase_Phase.BUILDING, PrebuildPhase_Phase.QUEUED].includes(
+                        prebuild?.status?.phase?.name || PrebuildPhase_Phase.UNSPECIFIED,
+                    ) ? (
                         <Button
                             variant="destructive"
                             className="flex items-center space-x-2"
@@ -159,7 +161,7 @@ export default function PrebuildPage() {
                                 )}
                                 <span>Rerun Prebuild ({prebuild?.ref})</span>
                             </Button>
-                            {prebuild?.status?.phase?.name === Phase.AVAILABLE ? (
+                            {prebuild?.status?.phase?.name === PrebuildPhase_Phase.AVAILABLE ? (
                                 <a
                                     className="my-auto"
                                     href={gitpodHostUrl
