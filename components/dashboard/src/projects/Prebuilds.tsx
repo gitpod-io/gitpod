@@ -31,7 +31,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
     const project = props.project || currentProject.project;
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
-    const [statusFilter, setStatusFilter] = useState<Phase | undefined>();
+    const [statusFilter, setStatusFilter] = useState<PrebuildPhase_Phase | undefined>();
 
     const [isLoadingPrebuilds, setIsLoadingPrebuilds] = useState<boolean>(true);
     const [prebuilds, setPrebuilds] = useState<Prebuild[]>([]);
@@ -83,7 +83,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
         });
         entries.push({
             title: "READY",
-            onClick: () => setStatusFilter(Phase.AVAILABLE),
+            onClick: () => setStatusFilter(PrebuildPhase_Phase.AVAILABLE),
         });
         return entries;
     };
