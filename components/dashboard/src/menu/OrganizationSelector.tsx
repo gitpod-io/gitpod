@@ -12,8 +12,9 @@ import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-quer
 import { useLocation } from "react-router";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useFeatureFlag } from "../data/featureflag-query";
-import { useIsOwner, useListOrganizationMembers } from "../data/organizations/members-query";
+import { useIsOwner, useListOrganizationMembers, useHasRolePermission } from "../data/organizations/members-query";
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
+import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 export default function OrganizationSelector() {
     const user = useCurrentUser();
@@ -21,6 +22,7 @@ export default function OrganizationSelector() {
     const currentOrg = useCurrentOrg();
     const members = useListOrganizationMembers().data || [];
     const owner = useIsOwner();
+    const hasMemberPermission = useHasRolePermission(OrganizationRole.MEMBER);
     const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
     const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
@@ -44,7 +46,7 @@ export default function OrganizationSelector() {
               customContent: (
                   <CurrentOrgEntry
                       title={currentOrg.data.name}
-                      subtitle={`${members.length} member${members.length === 1 ? "" : "s"}`}
+                      subtitle={hasMemberPermission ? `${members.length} member${members.length === 1 ? "" : "s"}` : ""}
                   />
               ),
               active: false,
@@ -56,50 +58,56 @@ export default function OrganizationSelector() {
 
     // Show members if we have an org selected
     if (currentOrg.data) {
-        // Check both flags as one just controls if the menu item is present, the other if the page is accessible
-        if (repoConfigListAndDetail && showRepoConfigMenuItem) {
-            linkEntries.push({
-                title: "Repositories",
-                customContent: <LinkEntry>Repositories</LinkEntry>,
-                active: false,
-                separator: false,
-                link: "/repositories",
-            });
-        }
-        linkEntries.push({
-            title: "Members",
-            customContent: <LinkEntry>Members</LinkEntry>,
-            active: false,
-            separator: true,
-            link: "/members",
-        });
-        linkEntries.push({
-            title: "Usage",
-            customContent: <LinkEntry>Usage</LinkEntry>,
-            active: false,
-            separator: false,
-            link: "/usage",
-        });
-        // Show billing if user is an owner of current org
-        if (owner) {
-            if (billingMode?.mode === "usage-based") {
+        // collaborator can't access projects, members, usage and billing
+        if (hasMemberPermission) {
+            // Check both flags as one just controls if the menu item is present, the other if the page is accessible
+            if (repoConfigListAndDetail && showRepoConfigMenuItem) {
                 linkEntries.push({
-                    title: "Billing",
-                    customContent: <LinkEntry>Billing</LinkEntry>,
+                    title: "Repositories",
+                    customContent: <LinkEntry>Repositories</LinkEntry>,
                     active: false,
                     separator: false,
-                    link: "/billing",
+                    link: "/repositories",
                 });
             }
+            linkEntries.push({
+                title: "Members",
+                customContent: <LinkEntry>Members</LinkEntry>,
+                active: false,
+                separator: true,
+                link: "/members",
+            });
+            linkEntries.push({
+                title: "Usage",
+                customContent: <LinkEntry>Usage</LinkEntry>,
+                active: false,
+                separator: false,
+                link: "/usage",
+            });
+            // Show billing if user is an owner of current org
+            if (owner) {
+                if (billingMode?.mode === "usage-based") {
+                    linkEntries.push({
+                        title: "Billing",
+                        customContent: <LinkEntry>Billing</LinkEntry>,
+                        active: false,
+                        separator: false,
+                        link: "/billing",
+                    });
+                }
+            }
+
+            // Org settings is available for all members, but only owner can change them
+            // collaborator can read org setting via API so that other feature like restrict org workspace classes could work
+            // we only hide the menu from dashboard
+            linkEntries.push({
+                title: "Settings",
+                customContent: <LinkEntry>Settings</LinkEntry>,
+                active: false,
+                separator: false,
+                link: "/settings",
+            });
         }
-        // Org settings is available for all members, but only owner can change them
-        linkEntries.push({
-            title: "Settings",
-            customContent: <LinkEntry>Settings</LinkEntry>,
-            active: false,
-            separator: false,
-            link: "/settings",
-        });
     }
 
     // Ensure only last link entry has a separator

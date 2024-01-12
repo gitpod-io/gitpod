@@ -202,11 +202,11 @@ export interface OrganizationSettings {
 }
 
 export type TeamMemberRole = OrgMemberRole;
-export type OrgMemberRole = "owner" | "member";
+export type OrgMemberRole = "owner" | "member" | "collaborator";
 
 export namespace TeamMemberRole {
     export function isValid(role: any): role is TeamMemberRole {
-        return role === "owner" || role === "member";
+        return role === "owner" || role === "member" || role === "collaborator";
     }
 }
 

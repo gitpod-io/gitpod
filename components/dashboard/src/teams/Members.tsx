@@ -24,6 +24,13 @@ import { useListOrganizationMembers, useOrganizationMembersInvalidator } from ".
 import { useInvitationId, useInviteInvalidator } from "../data/organizations/invite-query";
 import { Delayed } from "@podkit/loading/Delayed";
 import { Button } from "@podkit/buttons/Button";
+import { useIsDataOps } from "../data/featureflag-query";
+
+function getHumanReadable(role: OrganizationRole): string {
+    return OrganizationRole[role].toLowerCase();
+}
+
+const AvailableRoleOptions = [OrganizationRole.OWNER, OrganizationRole.MEMBER, OrganizationRole.COLLABORATOR];
 
 export default function MembersPage() {
     const user = useCurrentUser();
@@ -38,6 +45,8 @@ export default function MembersPage() {
     const [roleFilter, setRoleFilter] = useState<OrganizationRole | undefined>();
     const [memberToRemove, setMemberToRemove] = useState<OrganizationMember | undefined>(undefined);
     const inviteId = useInvitationId().data;
+
+    const isDataOps = useIsDataOps();
 
     const inviteUrl = useMemo(() => {
         if (!org.data) {
@@ -118,29 +127,19 @@ export default function MembersPage() {
                             onChange={(e) => setSearchText(e.target.value)}
                         />
                     </div>
-                    <div className="py-2 pl-3 pr-1 border border-gray-100 dark:border-gray-800 ml-2 rounded-md">
+                    <div className="py-2 pl-3 capitalize pr-1 border border-gray-100 dark:border-gray-800 ml-2 rounded-md">
                         <DropDown
-                            customClasses="w-32"
-                            activeEntry={
-                                roleFilter === OrganizationRole.OWNER
-                                    ? "Owners"
-                                    : roleFilter === OrganizationRole.MEMBER
-                                    ? "Members"
-                                    : "All"
-                            }
+                            customClasses="w-36"
+                            activeEntry={roleFilter ? getHumanReadable(roleFilter) + "s" : "All"}
                             entries={[
                                 {
                                     title: "All",
                                     onClick: () => setRoleFilter(undefined),
                                 },
-                                {
-                                    title: "Owners",
-                                    onClick: () => setRoleFilter(OrganizationRole.OWNER),
-                                },
-                                {
-                                    title: "Members",
-                                    onClick: () => setRoleFilter(OrganizationRole.OWNER),
-                                },
+                                ...AvailableRoleOptions.map((role) => ({
+                                    title: getHumanReadable(role) + "s",
+                                    onClick: () => setRoleFilter(role),
+                                })),
                             ]}
                         />
                     </div>
@@ -215,25 +214,15 @@ export default function MembersPage() {
                                     <span className="text-gray-400 capitalize">
                                         {isOwner ? (
                                             <DropDown
-                                                customClasses="w-32"
-                                                activeEntry={m.role === OrganizationRole.OWNER ? "owner" : "member"}
-                                                entries={[
-                                                    {
-                                                        title: "owner",
-                                                        onClick: () =>
-                                                            setTeamMemberRole(m.userId, OrganizationRole.OWNER),
-                                                    },
-                                                    {
-                                                        title: "member",
-                                                        onClick: () =>
-                                                            setTeamMemberRole(m.userId, OrganizationRole.MEMBER),
-                                                    },
-                                                ]}
+                                                customClasses="w-36"
+                                                activeEntry={getHumanReadable(m.role)}
+                                                entries={AvailableRoleOptions.map((role) => ({
+                                                    title: getHumanReadable(role),
+                                                    onClick: () => setTeamMemberRole(m.userId, role),
+                                                }))}
                                             />
-                                        ) : m.role === OrganizationRole.OWNER ? (
-                                            "owner"
                                         ) : (
-                                            "member"
+                                            getHumanReadable(m.role)
                                         )}
                                     </span>
                                     <span className="flex-grow" />
@@ -274,7 +263,12 @@ export default function MembersPage() {
                 <Modal visible={true} onClose={() => setShowInviteModal(false)}>
                     <ModalHeader>Invite Members</ModalHeader>
                     <ModalBody>
-                        <InputField label="Invite URL" hint="Use this URL to join this organization as a member.">
+                        <InputField
+                            label="Invite URL"
+                            hint={`Use this URL to join this organization as a ${
+                                isDataOps ? "collaborator" : "member"
+                            }.`}
+                        >
                             <InputWithCopy value={inviteUrl} tip="Copy Invite URL" />
                         </InputField>
                     </ModalBody>
