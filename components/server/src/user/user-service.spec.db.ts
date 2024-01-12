@@ -8,11 +8,11 @@ import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-s
 import * as chai from "chai";
 import "mocha";
 import { Container } from "inversify";
-import { createTestContainer } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM } from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { OrganizationService } from "../orgs/organization-service";
-import { Authorizer } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
 import { UserService } from "./user-service";
 import { Organization, User } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -26,6 +26,7 @@ describe("UserService", async () => {
     let orgService: OrganizationService;
     let auth: Authorizer;
     let org: Organization;
+    let owner: User;
     let user: User;
     let user2: User;
     let nonOrgUser: User;
@@ -40,6 +41,18 @@ describe("UserService", async () => {
         orgService = container.get<OrganizationService>(OrganizationService);
         org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
         const invite = await orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
+        // first not builtin user join an org will be an owner
+        owner = await userService.createUser({
+            organizationId: org.id,
+            identity: {
+                authId: "foo",
+                authName: "bar",
+                authProviderId: "github",
+                primaryEmail: "yolo@yolo.com",
+            },
+        });
+        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(owner.id, invite.id));
+
         user = await userService.createUser({
             organizationId: org.id,
             identity: {
@@ -49,7 +62,7 @@ describe("UserService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
-        await orgService.joinOrganization(user.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(user.id, invite.id));
 
         user2 = await userService.createUser({
             organizationId: org.id,
@@ -60,7 +73,7 @@ describe("UserService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
-        await orgService.joinOrganization(user2.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(user2.id, invite.id));
 
         nonOrgUser = await userService.createUser({
             identity: {
@@ -191,12 +204,13 @@ describe("UserService", async () => {
 
     it("should listUsers", async () => {
         let users = await userService.listUsers(user.id, {});
-        expect(users.total).to.eq(2);
+        expect(users.total).to.eq(3);
         expect(users.rows.some((u) => u.id === user.id)).to.be.true;
         expect(users.rows.some((u) => u.id === user2.id)).to.be.true;
 
         users = await userService.listUsers(BUILTIN_INSTLLATION_ADMIN_USER_ID, {});
-        expect(users.total).to.eq(4);
+        expect(users.total).to.eq(5);
+        expect(users.rows.some((u) => u.id === owner.id)).to.be.true;
         expect(users.rows.some((u) => u.id === user.id)).to.be.true;
         expect(users.rows.some((u) => u.id === user2.id)).to.be.true;
         expect(users.rows.some((u) => u.id === nonOrgUser.id)).to.be.true;
