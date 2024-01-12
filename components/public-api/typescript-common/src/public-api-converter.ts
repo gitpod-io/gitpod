@@ -95,9 +95,7 @@ import { ContextURL } from "@gitpod/gitpod-protocol/lib/context-url";
 import {
     Prebuild,
     PrebuildStatus,
-    PrebuildPhase,
-    Phase
-} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+    PrebuildPhase, PrebuildPhase_Phase} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
 import {
@@ -1123,22 +1121,22 @@ export class PublicAPIConverter {
         });
     }
 
-    toPrebuildPhase(status: PrebuiltWorkspaceState): Phase {
+    toPrebuildPhase(status: PrebuiltWorkspaceState): PrebuildPhase_Phase {
         switch (status) {
             case "queued":
-                return Phase.QUEUED;
+                return PrebuildPhase_Phase.QUEUED;
             case "building":
-                return Phase.BUILDING;
+                return PrebuildPhase_Phase.BUILDING;
             case "aborted":
-                return Phase.ABORTED;
+                return PrebuildPhase_Phase.ABORTED;
             case "timeout":
-                return Phase.TIMEOUT;
+                return PrebuildPhase_Phase.TIMEOUT;
             case "available":
-                return Phase.AVAILABLE;
+                return PrebuildPhase_Phase.AVAILABLE;
             case "failed":
-                return Phase.FAILED;
+                return PrebuildPhase_Phase.FAILED;
         }
-        return Phase.UNSPECIFIED;
+        return PrebuildPhase_Phase.UNSPECIFIED;
     }
 
     toBlockedRepository(repo: ProtocolBlockedRepository): BlockedRepository {
