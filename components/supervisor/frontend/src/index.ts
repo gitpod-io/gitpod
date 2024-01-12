@@ -63,6 +63,7 @@ IDEWebSocket.install();
 const ideService = IDEFrontendService.create();
 const loadingIDE = new Promise((resolve) => window.addEventListener("DOMContentLoaded", resolve, { once: true }));
 const toStop = new DisposableCollection();
+let willRedirect = false;
 
 LoadingFrame.load().then(async (loading) => {
     const frontendDashboardServiceClient = loading.frontendDashboardServiceClient;
@@ -71,6 +72,10 @@ LoadingFrame.load().then(async (loading) => {
     if (frontendDashboardServiceClient.latestInfo.workspaceType !== "regular") {
         return;
     }
+
+    frontendDashboardServiceClient.onWillRedirect(() => {
+        willRedirect = true;
+    });
 
     document.title = frontendDashboardServiceClient.latestInfo.workspaceDescription ?? "gitpod";
     window.gitpod.loggedUserID = frontendDashboardServiceClient.latestInfo.loggedUserId;
@@ -158,7 +163,7 @@ LoadingFrame.load().then(async (loading) => {
         };
         const updateCurrentFrame = () => {
             const newCurrent = nextFrame();
-            if (current === newCurrent) {
+            if (current === newCurrent || willRedirect) {
                 return;
             }
             current.classList.toggle("hidden", true);
