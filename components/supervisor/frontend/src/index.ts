@@ -166,8 +166,8 @@ LoadingFrame.load().then(async (loading) => {
             if (current === newCurrent || willRedirect) {
                 return;
             }
-            current.classList.toggle("hidden", true);
-            newCurrent.classList.toggle("hidden", false);
+            current.style.visibility = "hidden";
+            newCurrent.style.visibility = "visible";
             if (current === document.body) {
                 while (document.body.firstChild && document.body.firstChild !== newCurrent) {
                     document.body.removeChild(document.body.firstChild);
