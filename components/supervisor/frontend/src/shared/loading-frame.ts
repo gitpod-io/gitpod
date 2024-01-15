@@ -14,6 +14,7 @@ export function load(): Promise<{
     return new Promise((resolve) => {
         const frame = document.createElement("iframe");
         frame.src = startUrl.toString();
+        frame.style.visibility = "visible";
         frame.className = "gitpod-frame loading";
         document.body.prepend(frame);
 
