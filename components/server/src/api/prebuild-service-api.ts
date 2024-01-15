@@ -28,9 +28,16 @@ import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ctxSignal, ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
+import { RepoURL } from "../repohost";
+import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
+import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { Authorizer } from "../authorization/authorizer";
 
 @injectable()
 export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInterface> {
+    @inject(Authorizer)
+    private readonly auth: Authorizer;
+
     @inject(ProjectsService)
     private readonly projectService: ProjectsService;
 
@@ -42,6 +49,12 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
 
     @inject(UserService)
     private readonly userService: UserService;
+
+    @inject(ProjectDB)
+    private readonly projectDB: ProjectDB;
+
+    @inject(TracedWorkspaceDB)
+    private readonly workspaceDb: DBWithTracing<WorkspaceDB>;
 
     async startPrebuild(request: StartPrebuildRequest): Promise<StartPrebuildResponse> {
         if (!uuidValidate(request.configurationId)) {
@@ -143,6 +156,48 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
     async listOrganizationPrebuilds(
         request: ListOrganizationPrebuildsRequest,
     ): Promise<ListOrganizationPrebuildsResponse> {
-        return new ListOrganizationPrebuildsResponse({});
+        const userId = ctxUserId();
+        const { organizationId, pagination } = request;
+
+        const limit = pagination?.pageSize || 25;
+        if (limit > 100) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be less than 100");
+        }
+        if (limit < 25) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be greater than 25");
+        }
+
+        const projects = await this.projectDB.findProjects(organizationId);
+        const result: PrebuildWithStatus[] = [];
+
+        for (const project of projects) {
+            await this.auth.checkPermissionOnProject(userId, "read_prebuild", organizationId);
+
+            const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
+            if (!parsedUrl) {
+                throw new ApplicationError(
+                    ErrorCodes.INTERNAL_SERVER_ERROR,
+                    `Invalid clone URL on project ${project.id}.`,
+                );
+            }
+            const prebuilds = await this.workspaceDb.trace({}).findPrebuiltWorkspacesByProject(project.id);
+            const infos = await this.workspaceDb
+                .trace({})
+                .findPrebuildInfos([...prebuilds.map((prebuild) => prebuild.id)]);
+            result.push(
+                ...infos.map((info) => {
+                    const p = prebuilds.find((prebuild) => prebuild.id === info.id)!;
+                    const r: PrebuildWithStatus = { info, status: p.state };
+                    if (p.error) {
+                        r.error = p.error;
+                    }
+                    return r;
+                }),
+            );
+        }
+
+        return new ListOrganizationPrebuildsResponse({
+            prebuilds: result.map((pb) => this.apiConverter.toPrebuild(pb)),
+        });
     }
 }
