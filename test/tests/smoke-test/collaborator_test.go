@@ -66,8 +66,9 @@ func TestMembers(t *testing.T) {
 	gitpodHost, _ := os.LookupEnv("GITPOD_HOST")
 	orgID, _ := os.LookupEnv("ORG_ID")
 
-	if _, err := connectToServer(gitpodHost, userToken); err != nil {
-		t.Errorf("failed getting server conn: %v", err)
+	serverConn, err0 := connectToServer(gitpodHost, userToken)
+	if err0 != nil {
+		t.Errorf("failed getting server conn: %v", err0)
 	}
 	v1Http, v1Opts, v1Host := getPAPIConnSettings(gitpodHost, userToken, getUseCookie(), false)
 	ev1Http, ev1Opts, ev1Host := getPAPIConnSettings(gitpodHost, userToken, getUseCookie(), true)
@@ -112,8 +113,9 @@ func TestProjects(t *testing.T) {
 	gitpodHost, _ := os.LookupEnv("GITPOD_HOST")
 	orgID, _ := os.LookupEnv("ORG_ID")
 
-	if _, err := connectToServer(gitpodHost, userToken); err != nil {
-		t.Errorf("failed getting server conn: %v", err)
+	serverConn, err0 := connectToServer(gitpodHost, userToken)
+	if err0 != nil {
+		t.Errorf("failed getting server conn: %v", err0)
 	}
 	v1Http, v1Opts, v1Host := getPAPIConnSettings(gitpodHost, userToken, getUseCookie(), false)
 	ev1Http, ev1Opts, ev1Host := getPAPIConnSettings(gitpodHost, userToken, getUseCookie(), false)
@@ -181,11 +183,9 @@ func TestGetProject(t *testing.T) {
 
 // Note: there's no usage endpoint in the server / public v1 experimental.v1 APIs
 
-var serverConn *serverapi.APIoverJSONRPC
-
 func shouldTestCollaborator() bool {
 	should, _ := os.LookupEnv("TEST_COLLABORATOR")
-	return should != "true"
+	return should == "true"
 }
 
 func getUseCookie() bool {
@@ -194,9 +194,6 @@ func getUseCookie() bool {
 }
 
 func connectToServer(gitpodHost, token string) (*serverapi.APIoverJSONRPC, error) {
-	if serverConn != nil {
-		return serverConn, nil
-	}
 	supervisorConn, err := grpc.Dial(util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
@@ -225,7 +222,6 @@ func connectToServer(gitpodHost, token string) (*serverapi.APIoverJSONRPC, error
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to server: %w", err)
 	}
-	serverConn = client
 	return client, nil
 }
 

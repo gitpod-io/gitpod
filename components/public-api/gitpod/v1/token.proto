@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+service TokenService {
+  // CreateUserToken creates a new temporary access token for the specified user.
+  // +admin – only to be used by installation admins
+  rpc CreateTemporaryAccessToken(CreateTemporaryAccessTokenRequest) returns (CreateTemporaryAccessTokenResponse) {}
+}
+
+message CreateTemporaryAccessTokenRequest {
+  // user_id is the identifier of the user for which the token is created.
+  string user_id = 1;
+
+  // expiry_seconds is the number of seconds the token is valid for.
+  // value should in the range [1, 600]
+  int32 expiry_seconds = 2;
+}
+
+message CreateTemporaryAccessTokenResponse {
+  // cookie_name is the name of the cookie to use for the token.
+  string cookie_name = 1;
+
+  string token = 2;
+}

@@ -29,6 +29,9 @@ schema: |-
     permission read_env_var = self
     permission write_env_var = self
 
+    // only used in specified cell, check EXP-1084
+    permission write_temporary_token = installation->admin + organization->installation_admin
+
     permission code_sync = self
   }
 
@@ -240,6 +243,8 @@ assertions:
     - workspace:workspace_2_shared#access@user:user_1
     # stranger can access other's workspaces
     - workspace:workspace_2_shared#access@user:user_2
+    # installation admin can create temp token
+    - user:user_0#write_temporary_token@user:user_admin
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
@@ -264,3 +269,5 @@ assertions:
     - project:project_2#write_info@user:user_2
     - project:project_2#delete@user:user_2
     - organization:org_2#read_billing@user:user_2
+    # org owner cant write_temporary_token, because they are not installation admin
+    - user:user_1#write_temporary_token@user:user_0
