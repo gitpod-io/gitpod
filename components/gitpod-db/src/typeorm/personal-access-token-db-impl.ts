@@ -29,7 +29,7 @@ export class PersonalAccessTokenDBImpl implements PersonalAccessTokenDB {
         const pat = await repo
             .createQueryBuilder("pat")
             .where(`pat.hash = :hash`, { hash })
-            .andWhere(`pat.expirationTime > :expirationTime`, { expirationTime })
+            .andWhere(`pat.expirationTime > :expirationTime OR pat.expirationTime IS NULL`, { expirationTime })
             .andWhere(`pat.deleted = false`)
             .getOne();
 

@@ -53,7 +53,7 @@ export class DBPersonalAccessToken {
     scopes: string[];
 
     @Column("datetime")
-    expirationTime: Date;
+    expirationTime: Date | null;
 
     @Column("datetime")
     createdAt: Date;
