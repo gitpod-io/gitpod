@@ -499,7 +499,7 @@ export namespace BitbucketServer {
     }
 
     export interface BranchWithMeta extends Branch {
-        latestCommitMetadata: Commit;
+        latestCommitMetadata?: Commit;
         htmlUrl: string;
         metadata: {
             "com.atlassian.bitbucket.server.bitbucket-branch:latest-commit-metadata": Commit;
