@@ -54,7 +54,7 @@ const expirationOptions = [7, 30, 60, 180].map((d) => ({
 }));
 
 // Max value of timestamp(6) in mysql is 2038-01-19 03:14:17
-const NoExpiresDate = dayjs("2038-01-01T00:00:00+0:00").toDate();
+const NoExpiresDate = dayjs("2038-01-01T00:00:00+00:00").toDate();
 export function getTokenExpirationDays(showForever: boolean) {
     if (!showForever) {
         return expirationOptions;
