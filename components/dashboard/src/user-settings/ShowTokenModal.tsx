@@ -5,12 +5,12 @@
  */
 
 import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
-import dayjs from "dayjs";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import DateSelector from "../components/DateSelector";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
-import { TokenExpirationDays } from "./PersonalAccessTokens";
+import { getTokenExpirationDays, getTokenExpirationDescription } from "./PersonalAccessTokens";
 import { Button } from "@podkit/buttons/Button";
+import { useIsDataOps } from "../data/featureflag-query";
 
 interface TokenModalProps {
     token: PersonalAccessToken;
@@ -34,6 +34,9 @@ function ShowTokenModal(props: TokenModalProps) {
         props.onClose();
     };
 
+    const isDataOps = useIsDataOps();
+    const TokenExpirationDays = useMemo(() => getTokenExpirationDays(isDataOps), [isDataOps]);
+
     return (
         <Modal visible onClose={props.onClose} onSubmit={save}>
             <ModalHeader>{props.title}</ModalHeader>
@@ -44,24 +47,26 @@ function ShowTokenModal(props: TokenModalProps) {
                 <div className="p-4 mt-2 rounded-xl bg-gray-50 dark:bg-gray-800">
                     <div className="font-semibold text-gray-700 dark:text-gray-200">{props.token.name}</div>
                     <div className="font-medium text-gray-400 dark:text-gray-300">
-                        Expires on {dayjs(props.token.expirationTime!.toDate()).format("MMM D, YYYY")}
+                        {getTokenExpirationDescription(props.token.expirationTime!.toDate())}
                     </div>
                 </div>
                 <div className="mt-4">
                     {props.showDateSelector && (
                         <DateSelector
                             title="Expiration Date"
-                            description={`The token will expire on ${dayjs(expiration.expirationDate).format(
-                                "MMM D, YYYY",
-                            )}`}
+                            description={getTokenExpirationDescription(expiration.expirationDate)}
                             options={TokenExpirationDays}
                             value={TokenExpirationDays.find((i) => i.value === expiration.expirationDays)?.value}
-                            onChange={(value) =>
+                            onChange={(value) => {
+                                const date = TokenExpirationDays.find((e) => e.value === value)?.getDate();
+                                if (!date) {
+                                    return;
+                                }
                                 setExpiration({
                                     expirationDays: value,
-                                    expirationDate: new Date(Date.now() + Number(value) * 24 * 60 * 60 * 1000),
-                                })
-                            }
+                                    expirationDate: date,
+                                });
+                            }}
                         />
                     )}
                 </div>
