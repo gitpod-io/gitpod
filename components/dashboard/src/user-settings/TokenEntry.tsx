@@ -11,7 +11,7 @@ import { ItemFieldContextMenu } from "../components/ItemsList";
 import Tooltip from "../components/Tooltip";
 import { ReactComponent as ExclamationIcon } from "../images/exclamation.svg";
 import { ReactComponent as WarningIcon } from "../images/exclamation2.svg";
-import { AllPermissions } from "./PersonalAccessTokens";
+import { AllPermissions, isNeverExpired } from "./PersonalAccessTokens";
 import { useMemo } from "react";
 
 interface TokenEntryProps {
@@ -21,7 +21,8 @@ interface TokenEntryProps {
 
 function TokenEntry(props: TokenEntryProps) {
     const expiredInfo = useMemo(() => {
-        if (!props.token.expirationTime) {
+        const expiration = props.token.expirationTime!.toDate();
+        if (isNeverExpired(expiration)) {
             return {
                 expired: false,
                 content: "Never expires!",
@@ -31,7 +32,7 @@ function TokenEntry(props: TokenEntryProps) {
                 },
             };
         }
-        const expirationTime = dayjs(props.token.expirationTime.toDate());
+        const expirationTime = dayjs(expiration);
         const expired = expirationTime.isBefore(dayjs());
         return {
             expired,
@@ -67,10 +68,10 @@ function TokenEntry(props: TokenEntryProps) {
             </div>
             <div className="flex items-center w-3/12 text-gray-400">
                 <span className={"flex items-center gap-1 truncate" + (expiredInfo.expired ? " text-orange-600" : "")}>
-                    <span>{expiredInfo.content}</span>
                     {expiredInfo.tooltip && (
                         <Tooltip content={expiredInfo.tooltip.content}>{expiredInfo.tooltip.icon}</Tooltip>
                     )}
+                    <span>{expiredInfo.content}</span>
                 </span>
             </div>
             <div className="flex items-center justify-end w-1/12">
