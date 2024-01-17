@@ -483,6 +483,19 @@ export class ListOrganizationPrebuildsRequest_Filter extends Message<ListOrganiz
    */
   status = PrebuildPhase_Phase.UNSPECIFIED;
 
+  /**
+   * @generated from field: string configuration_id = 2;
+   */
+  configurationId = "";
+
+  /**
+   * Filter the search down by searching for configuration names matching the
+   * query
+   *
+   * @generated from field: string search_term = 3;
+   */
+  searchTerm = "";
+
   constructor(data?: PartialMessage<ListOrganizationPrebuildsRequest_Filter>) {
     super();
     proto3.util.initPartial(data, this);
@@ -492,6 +505,8 @@ export class ListOrganizationPrebuildsRequest_Filter extends Message<ListOrganiz
   static readonly typeName = "gitpod.v1.ListOrganizationPrebuildsRequest.Filter";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "status", kind: "enum", T: proto3.getEnumType(PrebuildPhase_Phase) },
+    { no: 2, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "search_term", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationPrebuildsRequest_Filter {
