@@ -29,7 +29,8 @@ message GetPrebuildResponse {
 
 message ListPrebuildsRequest {
   PaginationRequest pagination = 1;
-  // it is for backward compatiblity with the current dashboard, use prebuild_id instead
+  // it is for backward compatiblity with the current dashboard, use prebuild_id
+  // instead
   string workspace_id = 2 [deprecated = true];
   string configuration_id = 3;
   string git_ref = 4;
@@ -66,6 +67,10 @@ message WatchPrebuildResponse {
 message ListOrganizationPrebuildsRequest {
   message Filter {
     PrebuildPhase.Phase status = 1;
+    string configuration_id = 2;
+    // Filter the search down by searching for configuration names matching the
+    // query
+    string search_term = 3;
   }
   PaginationRequest pagination = 1;
   string organization_id = 2;
