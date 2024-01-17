@@ -25,7 +25,7 @@ interface TokenModalProps {
 
 function ShowTokenModal(props: TokenModalProps) {
     const [expiration, setExpiration] = useState({
-        expirationDays: "30",
+        expirationDays: "30 Days",
         expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
 
