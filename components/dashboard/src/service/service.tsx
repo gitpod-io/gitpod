@@ -288,7 +288,10 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
                 params.contextURL = this.workspace.metadata?.originalContextUrl ?? "";
             }
             const url = new URL(redirectURL);
-            url.search = new URLSearchParams(params).toString();
+            url.search = new URLSearchParams([
+                ...Array.from(url.searchParams.entries()),
+                ...Object.entries(params),
+            ]).toString();
             this.relocate(url.toString());
         } catch {
             console.error("Invalid redirect URL");
