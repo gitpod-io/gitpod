@@ -90,6 +90,8 @@ schema: |-
     permission read_billing = member + owner + installation->admin
     permission write_billing = owner + installation->admin
 
+    permission read_prebuild = member + owner + installation->admin
+
     permission create_workspace = member + collaborator
 
     // can add credit notes and change the spending limits even for free users

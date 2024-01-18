@@ -191,6 +191,43 @@ export class PrebuildManager {
         return result;
     }
 
+    async listPrebuilds(
+        ctx: TraceContext,
+        userId: string,
+        organizationId: string,
+        pagination: {
+            limit: number;
+            offset?: number;
+        },
+        filter?: {
+            configurationId?: string;
+            // status: PrebuildWithStatus;
+            searchTerm?: string;
+        },
+    ): Promise<PrebuildWithStatus[]> {
+        await this.auth.checkPermissionOnOrganization(userId, "read_prebuild", organizationId);
+
+        const result: PrebuildWithStatus[] = [];
+        const prebuiltWorkspaces = await this.workspaceDB
+            .trace(ctx)
+            .findPrebuiltWorkspacesByOrganization(organizationId, pagination.offset, pagination.limit, filter);
+        const infos = await this.workspaceDB
+            .trace({})
+            .findPrebuildInfos([...prebuiltWorkspaces.map((prebuild) => prebuild.id)]);
+        result.push(
+            ...infos.map((info) => {
+                const p = prebuiltWorkspaces.find((prebuild) => prebuild.id === info.id)!;
+                const r: PrebuildWithStatus = { info, status: p.state };
+                if (p.error) {
+                    r.error = p.error;
+                }
+                return r;
+            }),
+        );
+
+        return result;
+    }
+
     async findPrebuildByWorkspaceID(
         ctx: TraceContext,
         userId: string,
