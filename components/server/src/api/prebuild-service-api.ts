@@ -28,18 +28,13 @@ import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ctxSignal, ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
-import { RepoURL } from "../repohost";
 import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
-import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Authorizer } from "../authorization/authorizer";
+import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 
 @injectable()
 export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInterface> {
-    @inject(Authorizer)
-    private readonly auth: Authorizer;
-
     @inject(ProjectsService)
     private readonly projectService: ProjectsService;
 
@@ -51,9 +46,6 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
 
     @inject(UserService)
     private readonly userService: UserService;
-
-    @inject(ProjectDB)
-    private readonly projectDB: ProjectDB;
 
     @inject(TracedWorkspaceDB)
     private readonly workspaceDb: DBWithTracing<WorkspaceDB>;
@@ -158,7 +150,6 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
     async listOrganizationPrebuilds(
         request: ListOrganizationPrebuildsRequest,
     ): Promise<ListOrganizationPrebuildsResponse> {
-        const userId = ctxUserId();
         const { organizationId, pagination } = request;
 
         const limit = pagination?.pageSize || 25;
@@ -179,7 +170,8 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
 
         const prebuilds = await this.workspaceDb
             .trace({})
-            .findPrebuiltWorkspacesByOrganization(organizationId, paginationToken.offset, limit);
+            .findPrebuiltWorkspacesByOrganization(organizationId, paginationToken.offset, limit, request.filter);
+
         const infos = await this.workspaceDb.trace({}).findPrebuildInfos([...prebuilds.map((prebuild) => prebuild.id)]);
         result.push(
             ...infos.map((info) => {

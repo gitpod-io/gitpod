@@ -174,6 +174,11 @@ export interface WorkspaceDB {
         organizationId: string,
         offset?: number,
         limit?: number,
+        filter?: {
+            configurationId?: string;
+            // status: PrebuildWithStatus;
+            searchTerm?: string;
+        },
     ): Promise<PrebuiltWorkspace[]>;
     findPrebuiltWorkspaceById(prebuildId: string): Promise<PrebuiltWorkspace | undefined>;
 
