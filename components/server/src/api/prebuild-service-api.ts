@@ -28,8 +28,6 @@ import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ctxSignal, ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
-import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
-import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 
@@ -46,9 +44,6 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
 
     @inject(UserService)
     private readonly userService: UserService;
-
-    @inject(TracedWorkspaceDB)
-    private readonly workspaceDb: DBWithTracing<WorkspaceDB>;
 
     async startPrebuild(request: StartPrebuildRequest): Promise<StartPrebuildResponse> {
         if (!uuidValidate(request.configurationId)) {
