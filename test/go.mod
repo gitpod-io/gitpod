@@ -3,7 +3,9 @@ module github.com/gitpod-io/gitpod/test
 go 1.21
 
 require (
+	github.com/bufbuild/connect-go v1.10.0
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
@@ -15,9 +17,11 @@ require (
 	github.com/google/go-github/v42 v42.0.0
 	github.com/google/nftables v0.1.0
 	github.com/google/uuid v1.3.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/helloyi/go-sshclient v1.1.1
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/prometheus/procfs v0.10.1
+	github.com/sirupsen/logrus v1.9.3
 	github.com/vishvananda/netns v0.0.4
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	golang.org/x/oauth2 v0.8.0
@@ -25,7 +29,7 @@ require (
 	golang.org/x/sys v0.11.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	google.golang.org/grpc v1.53.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 	k8s.io/api v0.27.3
 	k8s.io/apimachinery v0.27.3
 	k8s.io/cli-runtime v0.27.3
@@ -102,7 +106,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.7.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
@@ -144,7 +147,6 @@ require (
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/slok/go-http-metrics v0.10.0 // indirect
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37 // indirect
 	github.com/spf13/cobra v1.6.0 // indirect
@@ -249,3 +251,5 @@ replace k8s.io/kubectl => k8s.io/kubectl v0.27.3 // leeway indirect from compone
 replace k8s.io/mount-utils => k8s.io/mount-utils v0.27.3 // leeway indirect from components/common-go:lib
 
 replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.27.3 // leeway indirect from components/common-go:lib
+
+replace github.com/gitpod-io/gitpod/components/public-api/go => ../components/public-api/go // leeway

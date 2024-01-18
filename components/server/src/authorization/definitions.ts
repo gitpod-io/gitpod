@@ -54,7 +54,7 @@ export type InstallationPermission = "create_organization" | "configure";
 
 export type OrganizationResourceType = "organization";
 
-export type OrganizationRelation = "installation" | "member" | "owner" | "snapshoter";
+export type OrganizationRelation = "installation" | "member" | "owner" | "snapshoter" | "collaborator";
 
 export type OrganizationPermission =
     | "installation_admin"
@@ -307,6 +307,26 @@ export const rel = {
                                     objectId: objectId,
                                 },
                                 optionalRelation: "member",
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get collaborator() {
+                const result2 = {
+                    ...result,
+                    relation: "collaborator",
+                };
+                return {
+                    user(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: objectId,
+                                },
                             },
                         } as v1.Relationship;
                     },

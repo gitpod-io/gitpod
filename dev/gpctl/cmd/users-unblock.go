@@ -10,18 +10,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// usersBlockCmd represents the describe command
-var usersBlockCmd = &cobra.Command{
-	Use:   "block <userID> ... <userID>",
-	Short: "blocks a user",
+// usersUnblockCmd represents the describe command
+var usersUnblockCmd = &cobra.Command{
+	Use:   "unblock <userID> ... <userID>",
+	Short: "unblocks a user",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		blockUser(ctx, args, true)
+		blockUser(ctx, args, false)
 	},
 }
 
 func init() {
-	usersCmd.AddCommand(usersBlockCmd)
+	usersCmd.AddCommand(usersUnblockCmd)
 }

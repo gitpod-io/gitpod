@@ -97,7 +97,7 @@ function GitProviders() {
         const url = new URL(`https://${ap.host}`);
         switch (ap.type) {
             case AuthProviderType.GITHUB:
-                url.pathname = "settings/developers";
+                url.pathname = "settings/applications";
                 break;
             case AuthProviderType.GITLAB:
                 url.pathname = "-/profile/applications";

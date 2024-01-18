@@ -16,7 +16,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
-import { Authorizer } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { ProjectsService } from "../projects/projects-service";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
@@ -24,6 +24,8 @@ import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { UserService } from "../user/user-service";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { InstallationService } from "../auth/installation-service";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { runWithSubjectId } from "../util/request-context";
 
 @injectable()
 export class OrganizationService {
@@ -245,31 +247,38 @@ export class OrganizationService {
         if (await this.teamDB.hasActiveSSO(invite.teamId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
-        try {
-            return await this.teamDB.transaction(async (db) => {
-                await this.teamDB.addMemberToTeam(userId, invite.teamId);
-                await this.auth.addOrganizationRole(invite.teamId, userId, invite.role);
-                this.analytics.track({
-                    userId: userId,
-                    event: "team_joined",
-                    properties: {
-                        team_id: invite.teamId,
-                        invite_id: inviteId,
-                    },
-                });
-                return invite.teamId;
-            });
-        } catch (err) {
-            await this.auth.removeOrganizationRole(invite.teamId, userId, "member");
-            throw err;
-        }
+        // set skipRoleUpdate=true to avoid member/owner click join link again cause role change
+        await runWithSubjectId(SYSTEM_USER, () =>
+            this.addOrUpdateMember(SYSTEM_USER_ID, invite.teamId, userId, invite.role, {
+                flexibleRole: true,
+                skipRoleUpdate: true,
+            }),
+        );
+        this.analytics.track({
+            userId: userId,
+            event: "team_joined",
+            properties: {
+                team_id: invite.teamId,
+                invite_id: inviteId,
+            },
+        });
+
+        return invite.teamId;
     }
 
+    /**
+     * Add or update member to an organization, if there's no `owner` in the organization, target role will be owner
+     *
+     * @param opts.flexibleRole when target role is not owner, target role is flexible. Is affected by:
+     *     - `dataops` feature
+     * @param opts.notUpdate don't update role
+     */
     public async addOrUpdateMember(
         userId: string,
         orgId: string,
         memberId: string,
         role: OrgMemberRole,
+        opts?: { flexibleRole?: boolean; skipRoleUpdate?: true },
         txCtx?: TransactionalContext,
     ): Promise<void> {
         await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
@@ -290,7 +299,19 @@ export class OrganizationService {
                     log.info({ userId: memberId }, "First member of organization, setting role to owner.");
                 }
 
-                await teamDB.addMemberToTeam(memberId, orgId);
+                const result = await teamDB.addMemberToTeam(memberId, orgId);
+                if (result === "already_member" && opts?.skipRoleUpdate) {
+                    return;
+                }
+
+                if (role !== "owner" && opts?.flexibleRole) {
+                    const isDataOps = await getExperimentsClientForBackend().getValueAsync("dataops", false, {
+                        teamId: orgId,
+                    });
+                    if (isDataOps) {
+                        role = "collaborator";
+                    }
+                }
                 await teamDB.setTeamMemberRole(memberId, orgId, role);
                 await this.auth.addOrganizationRole(orgId, memberId, role);
                 // we can remove the built-in installation admin if we have added an owner
@@ -303,11 +324,12 @@ export class OrganizationService {
                 }
             });
         } catch (err) {
-            await this.auth.removeOrganizationRole(
-                orgId,
-                memberId,
-                members.find((m) => m.userId === memberId)?.role || "member",
-            );
+            // remove target role and add old role back
+            await this.auth.removeOrganizationRole(orgId, memberId, role);
+            const oldRole = members.find((m) => m.userId === memberId)?.role;
+            if (oldRole) {
+                await this.auth.addOrganizationRole(orgId, memberId, oldRole);
+            }
             throw err;
         }
     }
@@ -352,7 +374,7 @@ export class OrganizationService {
                     await this.userService.deleteUser(userId, memberId);
                 }
                 await db.removeMemberFromTeam(userToBeRemoved.id, orgId);
-                await this.auth.removeOrganizationRole(orgId, memberId, "member");
+                await this.auth.removeOrganizationRole(orgId, memberId, membership.role);
             });
         } catch (err) {
             if (membership) {

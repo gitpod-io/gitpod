@@ -40,12 +40,35 @@ export function useListOrganizationMembers() {
 }
 
 export function useIsOwner(): boolean {
+    const role = useMemberRole();
+    return role === OrganizationRole.OWNER;
+}
+
+function useMemberRole(): OrganizationRole {
     const user = useCurrentUser();
     const members = useListOrganizationMembers();
-    const isOwner = useMemo(() => {
-        return members?.data?.some((m) => m.userId === user?.id && m.role === OrganizationRole.OWNER);
-    }, [members?.data, user?.id]);
-    return !!isOwner;
+    return useMemo(
+        () => members.data?.find((m) => m.userId === user?.id)?.role ?? OrganizationRole.UNSPECIFIED,
+        [members.data, user?.id],
+    );
+}
+
+const roleScore: Record<OrganizationRole, number> = {
+    [OrganizationRole.UNSPECIFIED]: 0,
+    [OrganizationRole.COLLABORATOR]: 1,
+    [OrganizationRole.MEMBER]: 2,
+    [OrganizationRole.OWNER]: 3,
+};
+
+// Would be better to align schema.yaml but we can do it simple for now
+export function useHasRolePermission(role: OrganizationRole): boolean {
+    const userRole = useMemberRole();
+    return useMemo(() => {
+        if (userRole === OrganizationRole.UNSPECIFIED) {
+            return false;
+        }
+        return roleScore[userRole] >= roleScore[role];
+    }, [role, userRole]);
 }
 
 function getQueryKey(organizationId: string | undefined) {

@@ -47,12 +47,31 @@ export enum TokenAction {
     Delete = "DELETE",
 }
 
-export const TokenExpirationDays = [
-    { value: "7", label: "7 Days" },
-    { value: "30", label: "30 Days" },
-    { value: "60", label: "60 Days" },
-    { value: "180", label: "180 Days" },
-];
+const expirationOptions = [7, 30, 60, 180].map((d) => ({
+    label: `${d} Days`,
+    value: `${d} Days`,
+    getDate: () => dayjs().add(d, "days").toDate(),
+}));
+
+// Max value of timestamp(6) in mysql is 2038-01-19 03:14:17
+const NoExpiresDate = dayjs("2038-01-01T00:00:00+00:00").toDate();
+export function getTokenExpirationDays(showForever: boolean) {
+    if (!showForever) {
+        return expirationOptions;
+    }
+    return [...expirationOptions, { label: "No expiration", value: "No expiration", getDate: () => NoExpiresDate }];
+}
+
+export function isNeverExpired(date: Date) {
+    return date.getTime() >= NoExpiresDate.getTime();
+}
+
+export function getTokenExpirationDescription(date: Date) {
+    if (isNeverExpired(date)) {
+        return "The token will never expire!";
+    }
+    return `The token will expire on ${dayjs(date).format("MMM D, YYYY")}`;
+}
 
 export const AllPermissions: PermissionDetail[] = [
     {
@@ -202,7 +221,11 @@ function ListAccessTokensView() {
                         </div>
                         <div className="text-gray-400 dark:text-gray-300">
                             <span>
-                                Expires on {dayjs(tokenInfo.data.expirationTime!.toDate()).format("MMM D, YYYY")}
+                                {isNeverExpired(tokenInfo.data.expirationTime!.toDate())
+                                    ? "Never expires!"
+                                    : `Expires on ${dayjs(tokenInfo.data.expirationTime!.toDate()).format(
+                                          "MMM D, YYYY",
+                                      )}`}
                             </span>
                             <span> · </span>
                             <span>Created on {dayjs(tokenInfo.data.createdAt!.toDate()).format("MMM D, YYYY")}</span>

@@ -20,12 +20,13 @@ import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { Mock } from "../test/mocks/mock";
-import { createTestContainer } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
 import { OrganizationService } from "./organization-service";
 import { UsageService } from "./usage-service";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { expectError } from "../test/expect-utils";
 import { UserService } from "../user/user-service";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -65,7 +66,7 @@ describe("UsageService", async () => {
                 authId: "1234",
             },
         });
-        await os.joinOrganization(member.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => os.joinOrganization(member.id, invite.id));
 
         stranger = await userService.createUser({
             identity: {

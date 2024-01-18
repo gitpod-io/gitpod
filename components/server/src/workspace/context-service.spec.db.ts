@@ -22,7 +22,7 @@ import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
-import { createTestContainer } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
 import { WorkspaceService } from "./workspace-service";
 import { ProjectsService } from "../projects/projects-service";
 import { UserService } from "../user/user-service";
@@ -35,6 +35,7 @@ import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { AuthProvider } from "../auth/auth-provider";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -196,7 +197,7 @@ describe("ContextService", async () => {
                 },
             });
             const invite = await orgService.getOrCreateInvite(owner.id, org.id);
-            await orgService.joinOrganization(member.id, invite.id);
+            await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, invite.id));
 
             // create a project
             const projectService = container.get(ProjectsService);

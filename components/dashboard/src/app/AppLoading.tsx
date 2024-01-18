@@ -6,8 +6,8 @@
 
 import { FunctionComponent, useEffect, useState } from "react";
 import { Heading3, Subheading } from "../components/typography/headings";
-import gitpodIcon from "../icons/gitpod.svg";
 import { Delayed } from "@podkit/loading/Delayed";
+import { ProductLogo } from "../components/ProductLogo";
 
 function useDelay(wait: number) {
     const [done, setDone] = useState(false);
@@ -25,7 +25,7 @@ export const AppLoading: FunctionComponent = () => {
     return (
         <Delayed wait={3000}>
             <div className="flex flex-col justify-center items-center w-full h-screen space-y-4">
-                <img src={gitpodIcon} alt="Gitpod's logo" className={"h-16 flex-shrink-0 animate-fade-in"} />
+                <ProductLogo className={"h-16 flex-shrink-0 animate-fade-in"} />
                 {connectionProblems ? (
                     <Heading3 className={done ? "" : "invisible"}>This is taking longer than it should</Heading3>
                 ) : (
