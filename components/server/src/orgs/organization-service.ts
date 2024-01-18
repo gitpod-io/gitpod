@@ -254,6 +254,15 @@ export class OrganizationService {
                 skipRoleUpdate: true,
             }),
         );
+        this.analytics.track({
+            userId: userId,
+            event: "team_joined",
+            properties: {
+                team_id: invite.teamId,
+                invite_id: inviteId,
+            },
+        });
+
         return invite.teamId;
     }
 
