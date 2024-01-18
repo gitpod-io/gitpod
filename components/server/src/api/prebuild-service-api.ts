@@ -32,6 +32,8 @@ import { RepoURL } from "../repohost";
 import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Authorizer } from "../authorization/authorizer";
+import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
+import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 
 @injectable()
 export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInterface> {
@@ -166,38 +168,63 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
         if (limit < 25) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be greater than 25");
         }
-
-        const projects = await this.projectDB.findProjects(organizationId);
-        const result: PrebuildWithStatus[] = [];
-
-        for (const project of projects) {
-            await this.auth.checkPermissionOnProject(userId, "read_prebuild", organizationId);
-
-            const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
-            if (!parsedUrl) {
-                throw new ApplicationError(
-                    ErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Invalid clone URL on project ${project.id}.`,
-                );
-            }
-            const prebuilds = await this.workspaceDb.trace({}).findPrebuiltWorkspacesByProject(project.id);
-            const infos = await this.workspaceDb
-                .trace({})
-                .findPrebuildInfos([...prebuilds.map((prebuild) => prebuild.id)]);
-            result.push(
-                ...infos.map((info) => {
-                    const p = prebuilds.find((prebuild) => prebuild.id === info.id)!;
-                    const r: PrebuildWithStatus = { info, status: p.state };
-                    if (p.error) {
-                        r.error = p.error;
-                    }
-                    return r;
-                }),
-            );
+        if (!uuidValidate(organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
-        return new ListOrganizationPrebuildsResponse({
-            prebuilds: result.map((pb) => this.apiConverter.toPrebuild(pb)),
+        const paginationToken = parsePaginationToken(request.pagination?.token);
+
+        const result: PrebuildWithStatus[] = [];
+        // await this.auth.checkPermissionOnProject(userId, "read_prebuild", organizationId);
+
+        const prebuilds = await this.workspaceDb
+            .trace({})
+            .findPrebuiltWorkspacesByOrganization(organizationId, paginationToken.offset, limit);
+        const infos = await this.workspaceDb.trace({}).findPrebuildInfos([...prebuilds.map((prebuild) => prebuild.id)]);
+        result.push(
+            ...infos.map((info) => {
+                const p = prebuilds.find((prebuild) => prebuild.id === info.id)!;
+                const r: PrebuildWithStatus = { info, status: p.state };
+                if (p.error) {
+                    r.error = p.error;
+                }
+                return r;
+            }),
+        );
+
+        const apiPrebuilds = result.map((pb) => this.apiConverter.toPrebuild(pb));
+
+        const filteredPrebuilds = apiPrebuilds.filter((prebuild) => {
+            if (request.filter?.status) {
+                return prebuild.status?.phase?.name === request.filter.status;
+            }
         });
+
+        filteredPrebuilds.sort((a, b) => {
+            if (a.status?.startTime && b.status?.startTime) {
+                const aTime = a.status.startTime.seconds;
+                const bTime = b.status.startTime.seconds;
+                return Number(bTime - aTime);
+            }
+            return 0;
+        });
+
+        const pagedResult = filteredPrebuilds.slice(0, limit);
+
+        const response = new ListOrganizationPrebuildsResponse({
+            prebuilds: pagedResult,
+        });
+        response.pagination = new PaginationResponse();
+
+        // If we got back an extra row, it means there are more results
+        if (filteredPrebuilds.length > limit) {
+            const nextToken: PaginationToken = {
+                offset: paginationToken.offset + limit,
+            };
+
+            response.pagination.nextToken = generatePaginationToken(nextToken);
+        }
+
+        return response;
     }
 }

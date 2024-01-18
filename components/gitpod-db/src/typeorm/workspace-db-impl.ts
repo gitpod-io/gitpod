@@ -1036,6 +1036,24 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         return res;
     }
 
+    async findPrebuiltWorkspacesByOrganization(
+        organizationId: string,
+        offset?: number,
+        limit?: number,
+    ): Promise<PrebuiltWorkspace[]> {
+        const repo = await this.getPrebuiltWorkspaceRepo();
+
+        const query = repo
+            .createQueryBuilder("pws")
+            .skip(offset || 0)
+            .take(limit || 30)
+            .orderBy("pws.creationTime", "DESC")
+            .innerJoinAndMapOne("pws.workspace", DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id")
+            .andWhere("pws.teamId = :teamId", { teamId: organizationId });
+
+        return await query.getMany();
+    }
+
     async findPrebuiltWorkspaceById(id: string): Promise<PrebuiltWorkspace | undefined> {
         const repo = await this.getPrebuiltWorkspaceRepo();
 

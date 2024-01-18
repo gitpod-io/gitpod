@@ -170,6 +170,11 @@ export interface WorkspaceDB {
     hardDeleteWorkspace(workspaceID: string): Promise<void>;
 
     findPrebuiltWorkspacesByProject(projectId: string, branch?: string, limit?: number): Promise<PrebuiltWorkspace[]>;
+    findPrebuiltWorkspacesByOrganization(
+        organizationId: string,
+        offset?: number,
+        limit?: number,
+    ): Promise<PrebuiltWorkspace[]>;
     findPrebuiltWorkspaceById(prebuildId: string): Promise<PrebuiltWorkspace | undefined>;
 
     storePrebuildInfo(prebuildInfo: PrebuildInfo): Promise<void>;
