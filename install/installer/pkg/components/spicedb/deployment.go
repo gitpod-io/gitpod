@@ -90,7 +90,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									args := []string{
 										"serve",
 										"--log-format=json",
-										"--log-level=info",
+										"--log-level=error",
 										"--datastore-engine=mysql",
 										"--datastore-conn-max-open=100",
 										"--telemetry-endpoint=", // disable telemetry to https://telemetry.authzed.com
