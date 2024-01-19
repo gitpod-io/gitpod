@@ -18,14 +18,12 @@ import { Authorizer } from "../authorization/authorizer";
 import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { UserDB } from "@gitpod/gitpod-db/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class TokenServiceAPI implements ServiceImpl<typeof TokenServiceInterface> {
     @inject(SessionHandler) private readonly session: SessionHandler;
     @inject(Authorizer) private readonly auth: Authorizer;
-    @inject(UserDB) private readonly userDB: UserDB;
 
     async createTemporaryAccessToken(
         req: CreateTemporaryAccessTokenRequest,
@@ -44,22 +42,10 @@ export class TokenServiceAPI implements ServiceImpl<typeof TokenServiceInterface
         const ctxUserID = ctxUserId();
         await this.auth.checkPermissionOnUser(ctxUserID, "write_temporary_token", req.userId);
 
-        // Double check if target user is an organization owned user
-        const targetUser = await this.userDB.findUserById(req.userId);
-        if (!targetUser) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `User '${req.userId}' not found`);
-        }
-        if (!targetUser.organizationId) {
-            throw new ApplicationError(
-                ErrorCodes.PERMISSION_DENIED,
-                `You do not have write_temporary_token on user ${req.userId}`,
-            );
-        }
-
         const newToken = await this.session.createJWTSessionCookie(req.userId, {
             expirySeconds: req.expirySeconds,
         });
-        log.info("Temporary access token created", { targetUser: req.userId });
+        log.debug("Temporary access token created", { targetUser: req.userId });
 
         return new CreateTemporaryAccessTokenResponse({
             cookieName: newToken.name,

@@ -30,7 +30,7 @@ schema: |-
     permission write_env_var = self
 
     // only used in specified cell, check EXP-1084
-    permission write_temporary_token = installation->admin + organization->installation_admin
+    permission write_temporary_token = organization->installation_admin
 
     permission code_sync = self
   }
