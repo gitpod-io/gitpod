@@ -8,7 +8,7 @@ import { Branch, CommitInfo, Repository, RepositoryInfo, User } from "@gitpod/gi
 import { inject, injectable } from "inversify";
 import { RepoURL } from "../repohost";
 import { RepositoryProvider } from "../repohost/repository-provider";
-import { BitbucketServerApi } from "./bitbucket-server-api";
+import { BitbucketServer, BitbucketServerApi } from "./bitbucket-server-api";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
@@ -75,24 +75,10 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
             repositorySlug: repo,
             branchName,
         });
-        const commit = branch.latestCommitMetadata;
-
-        return {
-            htmlUrl: branch.htmlUrl,
-            name: branch.displayId,
-            commit: {
-                sha: commit.id,
-                author: commit.author.displayName,
-                authorAvatarUrl: commit.author.avatarUrl,
-                authorDate: new Date(commit.authorTimestamp).toISOString(),
-                commitMessage: commit.message || "missing commit message",
-            },
-        };
+        return this.toBranch(branch);
     }
 
     async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
-        const branches: Branch[] = [];
-
         const repoKind = await this.getOwnerKind(user, owner);
         if (!repoKind) {
             throw new Error(`Could not find project "${owner}"`);
@@ -102,23 +88,22 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
             owner,
             repositorySlug: repo,
         });
-        for (const entry of branchesResult) {
-            const commit = entry.latestCommitMetadata;
+        return branchesResult.map((entry) => this.toBranch(entry));
+    }
 
-            branches.push({
-                htmlUrl: entry.htmlUrl,
-                name: entry.displayId,
-                commit: {
-                    sha: commit.id,
-                    author: commit.author.displayName,
-                    authorAvatarUrl: commit.author.avatarUrl,
-                    authorDate: new Date(commit.authorTimestamp).toISOString(),
-                    commitMessage: commit.message || "missing commit message",
-                },
-            });
-        }
-
-        return branches;
+    private toBranch(entry: BitbucketServer.BranchWithMeta): Branch {
+        const commit = entry.latestCommitMetadata;
+        return {
+            htmlUrl: entry.htmlUrl,
+            name: entry.displayId,
+            commit: {
+                sha: commit?.id ?? entry.latestCommit,
+                author: commit?.author.displayName || "missing author",
+                authorAvatarUrl: commit?.author.avatarUrl,
+                authorDate: commit?.authorTimestamp ? new Date(commit.authorTimestamp).toISOString() : undefined,
+                commitMessage: commit?.message || "missing commit message",
+            },
+        };
     }
 
     async getCommitInfo(user: User, owner: string, repo: string, ref: string): Promise<CommitInfo | undefined> {
