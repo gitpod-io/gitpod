@@ -157,6 +157,9 @@ relationships: |-
   organization:org_1#owner@user:user_0
   organization:org_1#member@user:user_1
   organization:org_1#member@user:user_2
+  user:user_0#organization@organization:org_1
+  user:user_1#organization@organization:org_1
+  user:user_2#organization@organization:org_1
 
   // org_1 has a project
   project:project_1#org@organization:org_1
@@ -170,6 +173,7 @@ relationships: |-
   organization:org_2#member@user:user_10
   // user_2 is a collaborator of org_2
   organization:org_2#collaborator@user:user_2
+  user:user_10#organization@organization:org_2
 
   // org_2 has a project project_2
   project:project_2#org@organization:org_2
@@ -245,6 +249,8 @@ assertions:
     - workspace:workspace_2_shared#access@user:user_2
     # installation admin can create temp token
     - user:user_0#write_temporary_token@user:user_admin
+    - user:user_1#write_temporary_token@user:user_admin
+    - user:user_2#write_temporary_token@user:user_admin
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
@@ -271,3 +277,5 @@ assertions:
     - organization:org_2#read_billing@user:user_2
     # org owner cant write_temporary_token, because they are not installation admin
     - user:user_1#write_temporary_token@user:user_0
+    # org_2 is not belong to installation_0
+    - user:user_10#write_temporary_token@user:user_admin
