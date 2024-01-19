@@ -6,6 +6,7 @@
 
 import { User as GitpodUser } from "@gitpod/gitpod-protocol";
 import { AuthFlow } from "../../auth/auth-provider";
+import { SubjectId } from "../../auth/subject-id";
 
 // use declaration merging (https://www.typescriptlang.org/docs/handbook/declaration-merging.html) to augment the standard passport/express definitions
 declare global {
@@ -14,6 +15,12 @@ declare global {
 
         interface Request {
             authFlow?: AuthFlow;
+
+            /**
+             * The subject id that authorizes this request.
+             * It also implies that this request requires FGA-based authorization!
+             */
+            subjectId?: SubjectId;
         }
     }
 }

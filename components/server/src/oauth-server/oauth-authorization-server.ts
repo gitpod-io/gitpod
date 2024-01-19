@@ -9,17 +9,17 @@ import {
     DateInterval,
     JwtService,
     OAuthAuthCodeRepository,
+    OAuthClientRepository,
+    OAuthScopeRepository,
     OAuthTokenRepository,
     OAuthUserRepository,
 } from "@jmondi/oauth2-server";
-import { inMemoryClientRepository, inMemoryScopeRepository } from "./repository";
-
-export const clientRepository = inMemoryClientRepository;
-const scopeRepository = inMemoryScopeRepository;
 
 export function createAuthorizationServer(
     authCodeRepository: OAuthAuthCodeRepository,
+    clientRepository: OAuthClientRepository,
     userRepository: OAuthUserRepository,
+    scopeRepository: OAuthScopeRepository,
     tokenRepository: OAuthTokenRepository,
     jwtSecret: string,
 ): AuthorizationServer {

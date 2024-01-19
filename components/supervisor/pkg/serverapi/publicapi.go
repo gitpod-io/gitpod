@@ -42,6 +42,8 @@ type APIInterface interface {
 const (
 	// KindGitpod marks tokens that provide access to the Gitpod server API.
 	KindGitpod = "gitpod"
+
+	KindApiTokenV0 = "apitokenv0"
 )
 
 var errNotConnected = errors.New("not connected to server/public api")

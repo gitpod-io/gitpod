@@ -94,11 +94,23 @@ export function ctxTrySubjectId(): SubjectId | undefined {
 }
 
 /**
+ * @returns the SubjectId this request is authenticated with
+ * @throws 500/INTERNAL_SERVER_ERROR if there is no subjectId
+ */
+export function ctxSubjectId(): SubjectId {
+    const subjectId = ctxGet().subjectId;
+    if (!subjectId) {
+        throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "No subjectId available");
+    }
+    return subjectId;
+}
+
+/**
  * @throws 500/INTERNAL_SERVER_ERROR if there is no userId
  * @returns The userId associated with the current request.
  */
 export function ctxUserId(): string {
-    const userId = ctxGet()?.subjectId?.userId();
+    const userId = ctxGet().subjectId?.userId();
     if (!userId) {
         throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "No userId available");
     }

@@ -50,6 +50,7 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import { maskIp } from "../analytics";
 import { runWithRequestContext } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { getAuthorizingSubjectId } from "../auth/express";
 
 export type GitpodServiceFactory = () => GitpodServerImpl;
 
@@ -93,11 +94,12 @@ namespace WebsocketClientType {
         return result;
     }
 }
-export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
+export type WebsocketAuthenticationLevel = "user" | "subjectid" | "session" | "anonymous";
 
 export interface ClientMetadata {
     id: string;
     authLevel: WebsocketAuthenticationLevel;
+    subjectId?: SubjectId;
     userId?: string;
     type?: WebsocketClientType;
     origin: ClientOrigin;
@@ -111,21 +113,26 @@ interface ClientOrigin {
 }
 export namespace ClientMetadata {
     export function from(
-        userId: string | undefined,
+        subjectId: SubjectId | undefined,
         data?: Omit<ClientMetadata, "id" | "sessionId" | "authLevel">,
     ): ClientMetadata {
         let id = "anonymous";
         let authLevel: WebsocketAuthenticationLevel = "anonymous";
+
+        const userId = subjectId?.userId();
         if (userId) {
             id = userId;
             authLevel = "user";
+        } else if (subjectId) {
+            id = subjectId.toString();
+            authLevel = "subjectid";
         }
-        return { id, authLevel, userId, ...data, origin: data?.origin || {}, headers: data?.headers };
+        return { id, authLevel, subjectId, userId, ...data, origin: data?.origin || {}, headers: data?.headers };
     }
 
     export function fromRequest(req: any) {
         const expressReq = req as express.Request;
-        const user = expressReq.user;
+        const subjectId = getAuthorizingSubjectId(expressReq);
         const type = WebsocketClientType.getClientType(expressReq);
         const version = takeFirst(expressReq.headers["x-client-version"]);
         const userAgent = takeFirst(expressReq.headers["user-agent"]);
@@ -135,7 +142,7 @@ export namespace ClientMetadata {
             instanceId,
             workspaceId,
         };
-        return ClientMetadata.from(user?.id, {
+        return ClientMetadata.from(subjectId, {
             type,
             origin,
             version,
@@ -219,25 +226,40 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         connectionCtx?: TraceContext,
     ): GitpodServerImpl {
         const expressReq = request as express.Request;
+        const subjectId = expressReq.subjectId;
         const user: User | undefined = expressReq.user;
 
         const clientContext = this.getOrCreateClientContext(expressReq);
         const gitpodServer = this.serverFactory();
 
         let resourceGuard: ResourceAccessGuard;
-        const explicitGuard = (expressReq as WithResourceAccessGuard).resourceGuard;
-        if (!!explicitGuard) {
-            resourceGuard = explicitGuard;
-        } else if (!!user) {
-            resourceGuard = new CompositeResourceAccessGuard([
-                new OwnerResourceGuard(user.id),
-                new TeamMemberResourceGuard(user.id),
-                new SharedWorkspaceAccessGuard(),
-                new RepositoryResourceGuard(user, this.hostContextProvider),
-            ]);
-            resourceGuard = new FGAResourceAccessGuard(user.id, resourceGuard);
+        let userId: string | undefined;
+        if (subjectId) {
+            // apitokenv0 case
+            userId = subjectId.userId();
+            if (!userId) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "subjectId must have a userId");
+            }
+            // GitpodServerImpl expects a ResourceAccessGuard, so we give it a "deny all, unless FGA is enabled"
+            resourceGuard = new FGAResourceAccessGuard(userId, { canAccess: async () => false });
         } else {
-            resourceGuard = { canAccess: async () => false };
+            // Legacy cases: old scope-based token and session authentication
+            userId = user?.id;
+
+            const explicitGuard = (expressReq as WithResourceAccessGuard).resourceGuard;
+            if (!!explicitGuard) {
+                resourceGuard = explicitGuard;
+            } else if (!!user) {
+                resourceGuard = new CompositeResourceAccessGuard([
+                    new OwnerResourceGuard(user.id),
+                    new TeamMemberResourceGuard(user.id),
+                    new SharedWorkspaceAccessGuard(),
+                    new RepositoryResourceGuard(user, this.hostContextProvider),
+                ]);
+                resourceGuard = new FGAResourceAccessGuard(user.id, resourceGuard);
+            } else {
+                resourceGuard = { canAccess: async () => false };
+            }
         }
 
         const clientHeaderFields = toClientHeaderFields(expressReq);
@@ -248,7 +270,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
 
         gitpodServer.initialize(
             client,
-            user?.id,
+            userId,
             resourceGuard,
             clientContext.clientMetadata,
             connectionCtx,
@@ -377,7 +399,6 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
 
     protected async onRequest(method: string, ...args: any[]): Promise<any> {
         const span = TraceContext.startSpan(method, undefined);
-        const userId = this.clientMetadata.userId;
         const abortController = new AbortController();
         const cancellationToken = args[args.length - 1];
         if (CancellationToken.is(cancellationToken)) {
@@ -388,7 +409,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                 requestKind: "jsonrpc",
                 requestMethod: method,
                 signal: abortController.signal,
-                subjectId: userId ? SubjectId.fromUserId(userId) : undefined,
+                subjectId: this.clientMetadata.subjectId,
                 traceId: span.context().toTraceId(),
                 headers: this.clientMetadata.headers,
             },

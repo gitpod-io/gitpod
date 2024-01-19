@@ -108,7 +108,6 @@ import { inject, injectable } from "inversify";
 import * as path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { ScopedResourceGuard } from "../auth/resource-access";
 import { EntitlementService } from "../billing/entitlement-service";
 import { Config } from "../config";
 import { IDEService } from "../ide-service";
@@ -126,7 +125,7 @@ import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
 import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
-import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { EnvVarService, ResolvedEnvVars } from "../user/env-var-service";
 import { RedlockAbortSignal } from "redlock";
 import { ConfigProvider } from "./config-provider";
@@ -134,6 +133,9 @@ import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ctxIsAborted, runWithRequestContext, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { ApiAccessTokenV0, ApiTokenScope } from "../auth/api-token-v0";
+import { AuthJWT } from "../auth/jwt";
+import { ScopedResourceGuard } from "../auth/resource-access";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -225,6 +227,8 @@ export class WorkspaceStarter {
         @inject(RedisMutex) private readonly redisMutex: RedisMutex,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
+        @inject(AuthJWT) private readonly authJWT: AuthJWT,
+        @inject(Authorizer) private readonly authorizer: Authorizer,
     ) {}
 
     public async startWorkspace(
@@ -1401,18 +1405,32 @@ export class WorkspaceStarter {
         }
 
         const createGitpodTokenPromise = (async () => {
-            const scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
-            const token = crypto.randomBytes(30).toString("hex");
-            const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
-            const dbToken: GitpodToken = {
-                tokenHash,
-                name: `${instance.id}-default`,
-                type: GitpodTokenType.MACHINE_AUTH_TOKEN,
-                userId: user.id,
-                scopes,
-                created: new Date().toISOString(),
-            };
-            await this.userDB.trace(traceCtx).storeGitpodToken(dbToken);
+            const apitokenv0Enabled = await getExperimentsClientForBackend().getValueAsync("apitokenv0_oauth", false, {
+                user: { id: user.id },
+            });
+
+            let token: string;
+            let scopes: string[];
+            let kind = "gitpod";
+            if (!apitokenv0Enabled) {
+                scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
+                token = crypto.randomBytes(30).toString("hex");
+                const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
+                const dbToken: GitpodToken = {
+                    tokenHash,
+                    name: `${instance.id}-default`,
+                    type: GitpodTokenType.MACHINE_AUTH_TOKEN,
+                    userId: user.id,
+                    scopes,
+                    created: new Date().toISOString(),
+                };
+                await this.userDB.trace(traceCtx).storeGitpodToken(dbToken);
+            } else {
+                const apitoken = await this.createDefaultGitpodAPiToken(user.id, workspace);
+                token = apitoken.token;
+                scopes = apitoken.scopes;
+                kind = "apitokenv0";
+            }
 
             const tokenExpirationTime = new Date();
             tokenExpirationTime.setMinutes(tokenExpirationTime.getMinutes() + 24 * 60);
@@ -1422,10 +1440,10 @@ export class WorkspaceStarter {
             ev.setValue(
                 JSON.stringify([
                     {
-                        token: token,
-                        kind: "gitpod",
+                        token,
+                        kind,
                         host: this.config.hostUrl.url.host,
-                        scope: scopes,
+                        scopes,
                         expiryDate: tokenExpirationTime.toISOString(),
                         reuse: 2,
                     },
@@ -1550,6 +1568,31 @@ export class WorkspaceStarter {
         const sshKeys = await this.userDB.trace(traceCtx).getSSHPublicKeys(user.id);
         spec.setSshPublicKeysList(sshKeys.map((e) => e.key));
         return spec;
+    }
+
+    private async createDefaultGitpodAPiToken(
+        userId: string,
+        workspace: Workspace,
+    ): Promise<{
+        token: string;
+        scopes: string[];
+    }> {
+        // TODO(gpl) Validate that the user actually has these permissions!
+        const scopes: ApiTokenScope[] = [
+            ApiTokenScope.userRead(userId),
+            ApiTokenScope.userCodeSync(userId),
+            ApiTokenScope.userWriteEnvVar(userId),
+            ApiTokenScope.workspaceOwner(workspace.id),
+            ApiTokenScope.organizationMember(workspace.organizationId),
+        ];
+        const apitoken = ApiAccessTokenV0.create(scopes, userId);
+        await this.authorizer.addApiToken(apitoken.id, apitoken.scopes);
+
+        const token = await apitoken.encode(this.authJWT);
+        return {
+            token,
+            scopes: apitoken.scopes.map((s) => s.permission),
+        };
     }
 
     private createDefaultGitpodAPITokenScopes(workspace: Workspace, instance: WorkspaceInstance): string[] {

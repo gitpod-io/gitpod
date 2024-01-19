@@ -28,6 +28,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Subject, SubjectId } from "../auth/subject-id";
 import { ctxTrySubjectId } from "../util/request-context";
 import { reportAuthorizerSubjectId } from "../prometheus-metrics";
+import { ApiTokenScope } from "../auth/api-token-v0";
 
 export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorizer): Authorizer {
     const target = new Authorizer(spiceDbAuthorizer);
@@ -497,6 +498,38 @@ export class Authorizer {
         } else {
             await this.authorizer.writeRelationships(remove(rel.workspace(workspaceID).shared.anyUser));
         }
+    }
+
+    public async addApiToken(tokenId: string, scopes: ApiTokenScope[]): Promise<void> {
+        const userTokenRelations = new Map<string, string>();
+        const relations = scopes
+            .map((s) => {
+                switch (s.permission) {
+                    case "user_read":
+                        userTokenRelations.set(s.targetId, tokenId);
+                        return [set(rel.apitokenv0(tokenId).user_read.anyUser)];
+                    case "user_code_sync":
+                        userTokenRelations.set(s.targetId, tokenId);
+                        return [set(rel.apitokenv0(tokenId).user_code_sync.anyUser)];
+                    case "user_write_env_var":
+                        userTokenRelations.set(s.targetId, tokenId);
+                        return [set(rel.apitokenv0(tokenId).user_write_env_var.anyUser)];
+                    case "workspace_owner":
+                        return [set(rel.workspace(s.targetId).owner.apitokenv0(tokenId))];
+                    case "organization_member":
+                        return [set(rel.organization(s.targetId).member.apitokenv0(tokenId))];
+                }
+            })
+            .flat();
+        // Necessary to de-duplicate here because SpiceDB requires a relation tuple to be unique per request
+        for (const [userId, tokenId] of userTokenRelations.entries()) {
+            relations.push(set(rel.user(userId).apitoken.apitokenv0(tokenId)));
+        }
+        await this.authorizer.writeRelationships(...relations);
+    }
+
+    public async removeApiToken(tokenId: string): Promise<void> {
+        await this.removeAllRelationships(SYSTEM_USER_ID, "apitokenv0", tokenId);
     }
 
     public async find(relation: v1.Relationship): Promise<v1.Relationship | undefined> {

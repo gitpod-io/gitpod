@@ -132,6 +132,7 @@ import { ScmService } from "./scm/scm-service";
 import { ContextService } from "./workspace/context-service";
 import { RateLimitter } from "./rate-limitter";
 import { AnalyticsController } from "./analytics-controller";
+import { ApiTokenRepository } from "./oauth-server/api-token-repository";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -261,6 +262,7 @@ export const productionContainerModule = new ContainerModule(
             .inSingletonScope();
 
         bind(OAuthController).toSelf().inSingletonScope();
+        bind(ApiTokenRepository).toSelf().inSingletonScope();
 
         bind(HeadlessLogService).toSelf().inSingletonScope();
         bind(HeadlessLogController).toSelf().inSingletonScope();
