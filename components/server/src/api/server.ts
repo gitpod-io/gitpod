@@ -61,6 +61,8 @@ import { UserService as UserServiceInternal } from "../user/user-service";
 import { InstallationServiceAPI } from "./installation-service-api";
 import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
 import { RateLimitter } from "../rate-limitter";
+import { TokenServiceAPI } from "./token-service-api";
+import { TokenService } from "@gitpod/public-api/lib/gitpod/v1/token_connect";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -74,6 +76,7 @@ export class API {
     @inject(TeamsServiceAPI) private readonly teamServiceApi: TeamsServiceAPI;
     @inject(WorkspaceServiceAPI) private readonly workspaceServiceApi: WorkspaceServiceAPI;
     @inject(OrganizationServiceAPI) private readonly organizationServiceApi: OrganizationServiceAPI;
+    @inject(TokenServiceAPI) private readonly tokenServiceAPI: TokenServiceAPI;
     @inject(ConfigurationServiceAPI) private readonly configurationServiceApi: ConfigurationServiceAPI;
     @inject(AuthProviderServiceAPI) private readonly authProviderServiceApi: AuthProviderServiceAPI;
     @inject(EnvironmentVariableServiceAPI) private readonly envvarServiceApi: EnvironmentVariableServiceAPI;
@@ -133,6 +136,7 @@ export class API {
                         service(UserService, this.userServiceApi),
                         service(WorkspaceService, this.workspaceServiceApi),
                         service(OrganizationService, this.organizationServiceApi),
+                        service(TokenService, this.tokenServiceAPI),
                         service(ConfigurationService, this.configurationServiceApi),
                         service(AuthProviderService, this.authProviderServiceApi),
                         service(EnvironmentVariableService, this.envvarServiceApi),
@@ -367,6 +371,7 @@ export class API {
         bind(TeamsServiceAPI).toSelf().inSingletonScope();
         bind(WorkspaceServiceAPI).toSelf().inSingletonScope();
         bind(OrganizationServiceAPI).toSelf().inSingletonScope();
+        bind(TokenServiceAPI).toSelf().inSingletonScope();
         bind(ConfigurationServiceAPI).toSelf().inSingletonScope();
         bind(AuthProviderServiceAPI).toSelf().inSingletonScope();
         bind(EnvironmentVariableServiceAPI).toSelf().inSingletonScope();

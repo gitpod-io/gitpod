@@ -37,6 +37,7 @@ import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { VerificationService } from "../auth/verification-service";
 import { InstallationService } from "../auth/installation-service";
 import { RateLimitter } from "../rate-limitter";
+import { Authorizer } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -71,6 +72,7 @@ export class APITeamsServiceSpec {
         this.container.bind(VerificationService).toConstantValue({} as VerificationService);
         this.container.bind(InstallationService).toConstantValue({} as InstallationService);
         this.container.bind(RateLimitter).toConstantValue({} as RateLimitter);
+        this.container.bind(Authorizer).toConstantValue({} as Authorizer);
 
         // Clean-up database
         const typeorm = testContainer.get<TypeORM>(TypeORM);
