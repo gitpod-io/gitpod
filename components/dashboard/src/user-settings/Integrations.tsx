@@ -699,10 +699,20 @@ export function GitIntegrationModal(
         let settingsUrl = ``;
         switch (type) {
             case AuthProviderType.GITHUB:
-                settingsUrl = `${host}/settings/developers`;
+                // if host is empty or untouched by user, use the default value
+                if (host === "") {
+                    settingsUrl = "github.com/settings/developers";
+                } else {
+                    settingsUrl = `${host}/settings/developers`;
+                }
                 break;
             case AuthProviderType.GITLAB:
-                settingsUrl = `${host}/-/profile/applications`;
+                // if host is empty or untouched by user, use the default value
+                if (host === "") {
+                    settingsUrl = "gitlab.com/-/profile/applications";
+                } else {
+                    settingsUrl = `${host}/-/profile/applications`;
+                }
                 break;
             default:
                 return undefined;
@@ -750,14 +760,10 @@ export function GitIntegrationModal(
     };
 
     const copyRedirectURI = () => {
-        const el = document.createElement("textarea");
-        el.value = callbackUrl;
-        document.body.appendChild(el);
-        el.select();
         try {
-            document.execCommand("copy");
-        } finally {
-            document.body.removeChild(el);
+            navigator.clipboard.writeText(callbackUrl);
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -853,6 +859,7 @@ export function GitIntegrationModal(
                                 className="w-full pr-8"
                             />
                             <div className="cursor-pointer" onClick={() => copyRedirectURI()}>
+                                {/* TODO: Handle 'copied' state to change icon to green check mark for better UX */}
                                 <img
                                     src={copy}
                                     title="Copy the redirect URI to clipboard"
