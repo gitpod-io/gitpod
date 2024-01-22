@@ -152,8 +152,8 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
         if (limit > 100) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be less than 100");
         }
-        if (limit < 25) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be greater than 25");
+        if (limit <= 0) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be greater than 0");
         }
         if (!uuidValidate(organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
