@@ -47,10 +47,11 @@ export const useUserLoader = () => {
         },
         onSettled: (loadedUser, err) => {
             if (logginTracingEnabled) {
-                console.error(
-                    "on user loading",
-                    JSON.stringify({ err: err?.toString(), errorCode: err?.code, time: performance.now() }),
-                );
+                console.error("on user loading", {
+                    err: err?.toString(),
+                    errorCode: err?.code,
+                    time: performance.now(),
+                });
             }
             trackLocation(!!loadedUser);
         },
