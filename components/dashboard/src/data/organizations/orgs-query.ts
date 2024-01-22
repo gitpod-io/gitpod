@@ -11,7 +11,7 @@ import { organizationClient } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
 import { noPersistence } from "../setup";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import { useFeatureFlag } from "../featureflag-query";
+import { useIsDashboardLoggingTracingEnabled } from "../featureflag-query";
 
 export function useOrganizationsInvalidator() {
     const user = useCurrentUser();
@@ -25,7 +25,7 @@ export function useOrganizationsInvalidator() {
 
 export function useOrganizations() {
     const user = useCurrentUser();
-    const logginTracingEnabled = useFeatureFlag("dashboard_logging_tracing");
+    const logginTracingEnabled = useIsDashboardLoggingTracingEnabled();
     const query = useQuery<Organization[], Error>(
         getQueryKey(user?.id),
         async () => {

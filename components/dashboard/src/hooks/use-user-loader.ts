@@ -10,13 +10,13 @@ import { trackLocation } from "../Analytics";
 import { useQuery } from "@tanstack/react-query";
 import { noPersistence } from "../data/setup";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { useFeatureFlag, useIsDashboardLoggingTracingEnabled } from "../data/featureflag-query";
 import { userClient } from "../service/public-api";
 
 export const useUserLoader = () => {
     const { user, setUser } = useContext(UserContext);
     const doRetryUserLoader = useFeatureFlag("doRetryUserLoader");
-    const logginTracingEnabled = useFeatureFlag("dashboard_logging_tracing");
+    const logginTracingEnabled = useIsDashboardLoggingTracingEnabled();
 
     // For now, we're using the user context to store the user, but letting react-query handle the loading
     // In the future, we should remove the user context and use react-query to access the user
