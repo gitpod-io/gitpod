@@ -215,6 +215,11 @@ export class API {
                         grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
                         stopTimer({ grpc_code });
                         log.debug("public api: done", { grpc_code });
+                        // If the request took too long, log it
+                        const ctxTime = requestContext.startTime ? performance.now() - requestContext.startTime : 0;
+                        if (grpc_type === "unary" && ctxTime > 5000) {
+                            log.warn("public api: request took too long", { ctxTime, grpc_code });
+                        }
                     };
                     const handleError = (reason: unknown) => {
                         const err = self.apiConverter.toError(reason);
