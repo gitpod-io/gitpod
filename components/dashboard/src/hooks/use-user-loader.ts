@@ -46,7 +46,7 @@ export const useUserLoader = () => {
                 setUser(loadedUser);
             }
         },
-        onSettled: (loadedUser, err) => {
+        onSettled: (loadedUser) => {
             trackLocation(!!loadedUser);
         },
     });
