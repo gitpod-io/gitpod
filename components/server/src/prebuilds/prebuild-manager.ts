@@ -201,7 +201,10 @@ export class PrebuildManager {
             offset?: number;
         },
         filter?: {
-            configurationId?: string;
+            configuration?: {
+                id: string;
+                branch?: string;
+            };
             status?: PrebuiltWorkspaceState;
             searchTerm?: string;
         },

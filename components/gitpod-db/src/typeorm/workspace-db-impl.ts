@@ -1041,7 +1041,10 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         offset?: number,
         limit?: number,
         filter?: {
-            configurationId?: string;
+            configuration?: {
+                id: string;
+                branch?: string;
+            };
             status: PrebuiltWorkspaceState;
             searchTerm?: string;
         },
@@ -1065,8 +1068,11 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             query.andWhere("pws.state = :state", { state: filter.status });
         }
 
-        if (filter?.configurationId) {
-            query.andWhere("pws.projectId = :projectId", { projectId: filter.configurationId });
+        if (filter?.configuration?.id) {
+            query.andWhere("pws.projectId = :projectId", { projectId: filter.configuration.id });
+            if (filter.configuration.branch) {
+                query.andWhere("pws.branch = :branch", { branch: filter.configuration.branch });
+            }
         }
 
         return await query.getMany();

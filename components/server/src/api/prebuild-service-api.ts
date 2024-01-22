@@ -159,14 +159,17 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
+        if (request.filter?.configuration?.branch && !request.filter?.configuration.id) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required when branch is specified");
+        }
+
         const paginationToken = parsePaginationToken(request.pagination?.token);
 
         const prebuildsFilter = {
-            configurationId: request.filter?.configurationId,
+            configuration: request.filter?.configuration,
             searchTerm: request.filter?.searchTerm,
             status: request.filter?.status ? this.apiConverter.fromPrebuildPhase(request.filter.status) : undefined,
         };
-
         const prebuilds = await this.prebuildManager.listPrebuilds(
             {},
             userId,
