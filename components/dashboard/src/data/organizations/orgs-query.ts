@@ -5,7 +5,7 @@
  */
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useLocation } from "react-router";
 import { organizationClient } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
@@ -23,6 +23,7 @@ export function useOrganizationsInvalidator() {
     }, [user?.id, queryClient]);
 }
 
+export let orgsLoaded = false;
 export function useOrganizations() {
     const user = useCurrentUser();
     const logginTracing = useReportDashboardLoggingTracing();
@@ -49,6 +50,9 @@ export function useOrganizations() {
             useErrorBoundary: true,
         },
     );
+    useEffect(() => {
+        orgsLoaded = !query.isLoading;
+    }, [query.isLoading]);
     return query;
 }
 

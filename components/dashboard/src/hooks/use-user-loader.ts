@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { UserContext } from "../user-context";
 import { trackLocation } from "../Analytics";
 import { useQuery } from "@tanstack/react-query";
@@ -13,6 +13,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useFeatureFlag, useReportDashboardLoggingTracing } from "../data/featureflag-query";
 import { userClient } from "../service/public-api";
 
+export let userLoaded = false;
 export const useUserLoader = () => {
     const { user, setUser } = useContext(UserContext);
     const doRetryUserLoader = useFeatureFlag("doRetryUserLoader");
@@ -49,6 +50,10 @@ export const useUserLoader = () => {
             trackLocation(!!loadedUser);
         },
     });
+
+    useEffect(() => {
+        userLoaded = !isLoading;
+    }, [isLoading]);
 
     return { user, loading: isLoading };
 };

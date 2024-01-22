@@ -9,6 +9,8 @@ import { Heading3, Subheading } from "../components/typography/headings";
 import { Delayed } from "@podkit/loading/Delayed";
 import { ProductLogo } from "../components/ProductLogo";
 import { useReportDashboardLoggingTracing } from "../data/featureflag-query";
+import { userLoaded } from "../hooks/use-user-loader";
+import { orgsLoaded } from "../data/organizations/orgs-query";
 
 function useDelay(wait: number) {
     const [done, setDone] = useState(false);
@@ -25,7 +27,10 @@ export const AppLoading: FunctionComponent = () => {
     const logginTracing = useReportDashboardLoggingTracing();
     useEffect(() => {
         if (done) {
-            logginTracing(async () => {}, "At least 8 seconds has passed trying to resolve an API call");
+            logginTracing(async () => {}, "At least 8 seconds has passed trying to resolve an API call", {
+                userLoaded,
+                orgsLoaded,
+            });
         }
     }, [done, logginTracing]);
 

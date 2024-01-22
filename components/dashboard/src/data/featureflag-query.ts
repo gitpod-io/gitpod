@@ -86,19 +86,21 @@ export const useReportDashboardLoggingTracing = () => {
     const enabled = useDedicatedFeatureFlag("dashboard_logging_tracing");
 
     if (!enabled) {
-        return async <T>(fn: () => Promise<T>, _msg: string) => {
+        return async <T>(fn: () => Promise<T>, _msg: string, _meta?: Record<string, any>) => {
             return await fn();
         };
     }
-    return async <T>(fn: () => Promise<T>, msg: string) => {
+    return async <T>(fn: () => Promise<T>, msg: string, meta?: Record<string, any>) => {
         try {
             const result = await fn();
             console.error("[dashboard_tracing] " + msg, {
+                ...meta,
                 time: performance.now(),
             });
             return result;
         } catch (err) {
             console.error("[dashboard_tracing] " + msg, {
+                ...meta,
                 err: err.toString(),
                 errorCode: (err as any)?.code,
                 time: performance.now(),
