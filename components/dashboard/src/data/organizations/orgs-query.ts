@@ -11,6 +11,7 @@ import { organizationClient } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
 import { noPersistence } from "../setup";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { useFeatureFlag } from "../featureflag-query";
 
 export function useOrganizationsInvalidator() {
     const user = useCurrentUser();
@@ -24,6 +25,7 @@ export function useOrganizationsInvalidator() {
 
 export function useOrganizations() {
     const user = useCurrentUser();
+    const logginTracingEnabled = useFeatureFlag("dashboard_logging_tracing");
     const query = useQuery<Organization[], Error>(
         getQueryKey(user?.id),
         async () => {
@@ -42,6 +44,14 @@ export function useOrganizations() {
             staleTime: 1000 * 60 * 60 * 1, // 1 hour
             // We'll let an ErrorBoundary catch the error
             useErrorBoundary: true,
+            onSettled(_, err) {
+                if (logginTracingEnabled) {
+                    console.error(
+                        "on organization loading",
+                        JSON.stringify({ err: err?.toString(), errorCode: err?.code, time: performance.now() }),
+                    );
+                }
+            },
         },
     );
     return query;

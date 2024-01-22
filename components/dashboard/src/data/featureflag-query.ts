@@ -35,6 +35,8 @@ const featureFlags = {
     org_workspace_class_restrictions: false,
     // dummy specified dataops feature, default false
     dataops: false,
+    // Logging tracing for added for investigate hanging issue
+    dashboard_logging_tracing: false,
 };
 
 type FeatureFlags = typeof featureFlags;

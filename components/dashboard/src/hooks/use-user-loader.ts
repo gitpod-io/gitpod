@@ -16,6 +16,7 @@ import { userClient } from "../service/public-api";
 export const useUserLoader = () => {
     const { user, setUser } = useContext(UserContext);
     const doRetryUserLoader = useFeatureFlag("doRetryUserLoader");
+    const logginTracingEnabled = useFeatureFlag("dashboard_logging_tracing");
 
     // For now, we're using the user context to store the user, but letting react-query handle the loading
     // In the future, we should remove the user context and use react-query to access the user
@@ -23,7 +24,6 @@ export const useUserLoader = () => {
         queryKey: noPersistence(["current-user"]),
         queryFn: async () => {
             const user = (await userClient.getAuthenticatedUser({})).user;
-
             return user || null;
         },
         // We'll let an ErrorBoundary catch the error
@@ -45,7 +45,13 @@ export const useUserLoader = () => {
                 setUser(loadedUser);
             }
         },
-        onSettled: (loadedUser) => {
+        onSettled: (loadedUser, err) => {
+            if (logginTracingEnabled) {
+                console.error(
+                    "on user loading",
+                    JSON.stringify({ err: err?.toString(), errorCode: err?.code, time: performance.now() }),
+                );
+            }
             trackLocation(!!loadedUser);
         },
     });
