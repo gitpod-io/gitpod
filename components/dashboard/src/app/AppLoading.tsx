@@ -8,7 +8,7 @@ import { FunctionComponent, useEffect, useState } from "react";
 import { Heading3, Subheading } from "../components/typography/headings";
 import { Delayed } from "@podkit/loading/Delayed";
 import { ProductLogo } from "../components/ProductLogo";
-import { useIsDashboardLoggingTracingEnabled } from "../data/featureflag-query";
+import { useReportDashboardLoggingTracing } from "../data/featureflag-query";
 
 function useDelay(wait: number) {
     const [done, setDone] = useState(false);
@@ -22,14 +22,13 @@ function useDelay(wait: number) {
 
 export const AppLoading: FunctionComponent = () => {
     const done = useDelay(8000);
-    const logginTracingEnabled = useIsDashboardLoggingTracingEnabled();
+    const logginTracing = useReportDashboardLoggingTracing();
     useEffect(() => {
-        if (done && logginTracingEnabled) {
-            console.error("[dashboard_tracing] At least 8 seconds has passed trying to resolve an API call", {
-                time: performance.now(),
-            });
+        if (done) {
+            logginTracing(async () => {}, "At least 8 seconds has passed trying to resolve an API call");
         }
-    }, [done, logginTracingEnabled]);
+    }, [done, logginTracing]);
+
     const connectionProblems = useDelay(25000);
     return (
         <Delayed wait={3000}>

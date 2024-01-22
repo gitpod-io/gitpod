@@ -10,20 +10,20 @@ import { trackLocation } from "../Analytics";
 import { useQuery } from "@tanstack/react-query";
 import { noPersistence } from "../data/setup";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { useFeatureFlag, useIsDashboardLoggingTracingEnabled } from "../data/featureflag-query";
+import { useFeatureFlag, useReportDashboardLoggingTracing } from "../data/featureflag-query";
 import { userClient } from "../service/public-api";
 
 export const useUserLoader = () => {
     const { user, setUser } = useContext(UserContext);
     const doRetryUserLoader = useFeatureFlag("doRetryUserLoader");
-    const logginTracingEnabled = useIsDashboardLoggingTracingEnabled();
+    const logginTracing = useReportDashboardLoggingTracing();
 
     // For now, we're using the user context to store the user, but letting react-query handle the loading
     // In the future, we should remove the user context and use react-query to access the user
     const { isLoading } = useQuery({
         queryKey: noPersistence(["current-user"]),
         queryFn: async () => {
-            const user = (await userClient.getAuthenticatedUser({})).user;
+            const user = (await logginTracing(async () => userClient.getAuthenticatedUser({}), "on user loading")).user;
             return user || null;
         },
         // We'll let an ErrorBoundary catch the error
@@ -46,13 +46,6 @@ export const useUserLoader = () => {
             }
         },
         onSettled: (loadedUser, err) => {
-            if (logginTracingEnabled) {
-                console.error("[dashboard_tracing] on user loading", {
-                    err: err?.toString(),
-                    errorCode: err?.code,
-                    time: performance.now(),
-                });
-            }
             trackLocation(!!loadedUser);
         },
     });

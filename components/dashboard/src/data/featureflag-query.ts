@@ -82,6 +82,28 @@ export const useIsDataOps = () => {
     return useFeatureFlag("dataops");
 };
 
-export const useIsDashboardLoggingTracingEnabled = () => {
-    return useDedicatedFeatureFlag("dashboard_logging_tracing");
+export const useReportDashboardLoggingTracing = () => {
+    const enabled = useDedicatedFeatureFlag("dashboard_logging_tracing");
+
+    if (!enabled) {
+        return async <T>(fn: () => Promise<T>, _msg: string) => {
+            return await fn();
+        };
+    }
+    return async <T>(fn: () => Promise<T>, msg: string) => {
+        try {
+            const result = await fn();
+            console.error("[dashboard_tracing] " + msg, {
+                time: performance.now(),
+            });
+            return result;
+        } catch (err) {
+            console.error("[dashboard_tracing] " + msg, {
+                err: err.toString(),
+                errorCode: (err as any)?.code,
+                time: performance.now(),
+            });
+            throw err;
+        }
+    };
 };

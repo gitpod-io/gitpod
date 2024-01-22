@@ -11,7 +11,7 @@ import { organizationClient } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
 import { noPersistence } from "../setup";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import { useIsDashboardLoggingTracingEnabled } from "../featureflag-query";
+import { useReportDashboardLoggingTracing } from "../featureflag-query";
 
 export function useOrganizationsInvalidator() {
     const user = useCurrentUser();
@@ -25,7 +25,7 @@ export function useOrganizationsInvalidator() {
 
 export function useOrganizations() {
     const user = useCurrentUser();
-    const logginTracingEnabled = useIsDashboardLoggingTracingEnabled();
+    const logginTracing = useReportDashboardLoggingTracing();
     const query = useQuery<Organization[], Error>(
         getQueryKey(user?.id),
         async () => {
@@ -35,7 +35,10 @@ export function useOrganizations() {
                 return [];
             }
 
-            const response = await organizationClient.listOrganizations({});
+            const response = await logginTracing(
+                async () => organizationClient.listOrganizations({}),
+                "on organization loading",
+            );
             return response.organizations;
         },
         {
@@ -44,15 +47,6 @@ export function useOrganizations() {
             staleTime: 1000 * 60 * 60 * 1, // 1 hour
             // We'll let an ErrorBoundary catch the error
             useErrorBoundary: true,
-            onSettled(_, err) {
-                if (logginTracingEnabled) {
-                    console.error("[dashboard_tracing] on organization loading", {
-                        err: err?.toString(),
-                        errorCode: (err as any)?.code,
-                        time: performance.now(),
-                    });
-                }
-            },
         },
     );
     return query;
