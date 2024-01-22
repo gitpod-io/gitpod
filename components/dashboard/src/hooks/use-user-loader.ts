@@ -4,26 +4,27 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { UserContext } from "../user-context";
 import { trackLocation } from "../Analytics";
 import { useQuery } from "@tanstack/react-query";
 import { noPersistence } from "../data/setup";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { useFeatureFlag, useReportDashboardLoggingTracing } from "../data/featureflag-query";
 import { userClient } from "../service/public-api";
 
+export let userLoaded = false;
 export const useUserLoader = () => {
     const { user, setUser } = useContext(UserContext);
     const doRetryUserLoader = useFeatureFlag("doRetryUserLoader");
+    const logTracing = useReportDashboardLoggingTracing();
 
     // For now, we're using the user context to store the user, but letting react-query handle the loading
     // In the future, we should remove the user context and use react-query to access the user
     const { isLoading } = useQuery({
         queryKey: noPersistence(["current-user"]),
         queryFn: async () => {
-            const user = (await userClient.getAuthenticatedUser({})).user;
-
+            const user = (await logTracing(async () => userClient.getAuthenticatedUser({}), "on user loading")).user;
             return user || null;
         },
         // We'll let an ErrorBoundary catch the error
@@ -49,6 +50,10 @@ export const useUserLoader = () => {
             trackLocation(!!loadedUser);
         },
     });
+
+    useEffect(() => {
+        userLoaded = !isLoading;
+    }, [isLoading]);
 
     return { user, loading: isLoading };
 };
