@@ -47,7 +47,7 @@ export const useUserLoader = () => {
         },
         onSettled: (loadedUser, err) => {
             if (logginTracingEnabled) {
-                console.error("on user loading", {
+                console.error("[dashboard_tracing] on user loading", {
                     err: err?.toString(),
                     errorCode: err?.code,
                     time: performance.now(),

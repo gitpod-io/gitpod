@@ -25,7 +25,9 @@ export const AppLoading: FunctionComponent = () => {
     const logginTracingEnabled = useIsDashboardLoggingTracingEnabled();
     useEffect(() => {
         if (done && logginTracingEnabled) {
-            console.error("At least 8 seconds has passed trying to resolve an API call", { time: performance.now() });
+            console.error("[dashboard_tracing] At least 8 seconds has passed trying to resolve an API call", {
+                time: performance.now(),
+            });
         }
     }, [done, logginTracingEnabled]);
     const connectionProblems = useDelay(25000);

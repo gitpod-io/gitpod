@@ -46,7 +46,7 @@ export function useOrganizations() {
             useErrorBoundary: true,
             onSettled(_, err) {
                 if (logginTracingEnabled) {
-                    console.error("on organization loading", {
+                    console.error("[dashboard_tracing] on organization loading", {
                         err: err?.toString(),
                         errorCode: (err as any)?.code,
                         time: performance.now(),
