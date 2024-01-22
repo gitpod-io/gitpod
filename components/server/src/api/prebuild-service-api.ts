@@ -172,7 +172,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             userId,
             organizationId,
             {
-                limit,
+                limit: limit + 1,
                 offset: paginationToken.offset,
             },
             prebuildsFilter,
