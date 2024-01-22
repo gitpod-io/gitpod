@@ -48,7 +48,11 @@ export function useOrganizations() {
                 if (logginTracingEnabled) {
                     console.error(
                         "on organization loading",
-                        JSON.stringify({ err: err?.toString(), errorCode: err?.code, time: performance.now() }),
+                        JSON.stringify({
+                            err: err?.toString(),
+                            errorCode: (err as any)?.code,
+                            time: performance.now(),
+                        }),
                     );
                 }
             },
