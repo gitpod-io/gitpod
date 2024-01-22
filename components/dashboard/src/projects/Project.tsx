@@ -129,6 +129,7 @@ export default function ProjectsPage() {
         }
         prebuildLoaders.add(branch.name);
         const response = await prebuildClient.listOrganizationPrebuilds({
+            organizationId: project.teamId,
             filter: {
                 configuration: {
                     id: project.id,
