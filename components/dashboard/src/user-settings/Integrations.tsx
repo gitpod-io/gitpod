@@ -17,7 +17,6 @@ import { ItemsList } from "../components/ItemsList";
 import { SpinnerLoader } from "../components/Loader";
 import Modal, { ModalBody, ModalHeader, ModalFooter } from "../components/Modal";
 import { Heading2, Subheading } from "../components/typography/headings";
-import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
 import { openAuthorizeWindow, toAuthProviderLabel } from "../provider-utils";
 import { gitpodHostUrl } from "../service/service";
@@ -41,6 +40,7 @@ import { useUpdateUserAuthProviderMutation } from "../data/auth-providers/update
 import { useDeleteUserAuthProviderMutation } from "../data/auth-providers/delete-user-auth-provider-mutation";
 import { Button } from "@podkit/buttons/Button";
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
+import { InputWithCopy } from "../components/InputWithCopy";
 
 export default function Integrations() {
     return (
@@ -759,14 +759,6 @@ export function GitIntegrationModal(
         }
     };
 
-    const copyRedirectURI = () => {
-        try {
-            navigator.clipboard.writeText(callbackUrl);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
     const getNumber = (paramValue: string | null) => {
         if (!paramValue) {
             return 0;
@@ -799,7 +791,7 @@ export function GitIntegrationModal(
                     </span>
                 </div>
 
-                <div className="overscroll-contain max-h-96 overflow-y-auto pr-2">
+                <div className="overscroll-contain max-h-96 space-y-4 overflow-y-auto pr-2">
                     {mode === "new" && (
                         <div className="flex flex-col space-y-2">
                             <label htmlFor="type" className="font-medium">
@@ -849,25 +841,7 @@ export function GitIntegrationModal(
                         <label htmlFor="redirectURI" className="font-medium">
                             Redirect URI
                         </label>
-                        <div className="w-full relative">
-                            <input
-                                id="redirectURI"
-                                disabled={true}
-                                readOnly={true}
-                                type="text"
-                                value={callbackUrl}
-                                className="w-full pr-8"
-                            />
-                            <div className="cursor-pointer" onClick={() => copyRedirectURI()}>
-                                {/* TODO: Handle 'copied' state to change icon to green check mark for better UX */}
-                                <img
-                                    src={copy}
-                                    title="Copy the redirect URI to clipboard"
-                                    className="absolute top-1/3 right-3"
-                                    alt="copy icon"
-                                />
-                            </div>
-                        </div>
+                        <InputWithCopy value={callbackUrl} tip="Copy the redirect URI to clipboard" />
                         <span className="text-gray-500 text-sm">{getRedirectUrlDescription(type, host)}</span>
                     </div>
                     <div className="flex flex-col space-y-2">
