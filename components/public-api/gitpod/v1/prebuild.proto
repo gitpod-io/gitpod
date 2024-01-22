@@ -66,8 +66,12 @@ message WatchPrebuildResponse {
 
 message ListOrganizationPrebuildsRequest {
   message Filter {
+    message Configuration {
+      string id = 1;
+      string branch = 2;
+    }
     PrebuildPhase.Phase status = 1;
-    string configuration_id = 2;
+    Configuration configuration = 2;
     // Filter the search down by searching for configuration names matching the
     // query
     string search_term = 3;
