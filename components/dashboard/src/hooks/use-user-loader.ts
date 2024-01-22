@@ -17,14 +17,14 @@ export let userLoaded = false;
 export const useUserLoader = () => {
     const { user, setUser } = useContext(UserContext);
     const doRetryUserLoader = useFeatureFlag("doRetryUserLoader");
-    const logginTracing = useReportDashboardLoggingTracing();
+    const logTracing = useReportDashboardLoggingTracing();
 
     // For now, we're using the user context to store the user, but letting react-query handle the loading
     // In the future, we should remove the user context and use react-query to access the user
     const { isLoading } = useQuery({
         queryKey: noPersistence(["current-user"]),
         queryFn: async () => {
-            const user = (await logginTracing(async () => userClient.getAuthenticatedUser({}), "on user loading")).user;
+            const user = (await logTracing(async () => userClient.getAuthenticatedUser({}), "on user loading")).user;
             return user || null;
         },
         // We'll let an ErrorBoundary catch the error

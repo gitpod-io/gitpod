@@ -24,15 +24,15 @@ function useDelay(wait: number) {
 
 export const AppLoading: FunctionComponent = () => {
     const done = useDelay(8000);
-    const logginTracing = useReportDashboardLoggingTracing();
+    const logTracing = useReportDashboardLoggingTracing();
     useEffect(() => {
         if (done) {
-            logginTracing(async () => {}, "At least 8 seconds has passed trying to resolve an API call", {
+            logTracing(async () => {}, "At least 8 seconds has passed trying to resolve an API call", {
                 userLoaded,
                 orgsLoaded,
             });
         }
-    }, [done, logginTracing]);
+    }, [done, logTracing]);
 
     const connectionProblems = useDelay(25000);
     return (

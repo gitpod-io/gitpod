@@ -26,7 +26,7 @@ export function useOrganizationsInvalidator() {
 export let orgsLoaded = false;
 export function useOrganizations() {
     const user = useCurrentUser();
-    const logginTracing = useReportDashboardLoggingTracing();
+    const logTracing = useReportDashboardLoggingTracing();
     const query = useQuery<Organization[], Error>(
         getQueryKey(user?.id),
         async () => {
@@ -35,8 +35,7 @@ export function useOrganizations() {
                 console.log("useOrganizations with empty user");
                 return [];
             }
-
-            const response = await logginTracing(
+            const response = await logTracing(
                 async () => organizationClient.listOrganizations({}),
                 "on organization loading",
             );
