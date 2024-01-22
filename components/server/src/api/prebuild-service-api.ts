@@ -18,6 +18,8 @@ import {
     CancelPrebuildResponse,
     WatchPrebuildRequest,
     WatchPrebuildResponse,
+    ListOrganizationPrebuildsRequest,
+    ListOrganizationPrebuildsResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { inject, injectable } from "inversify";
 import { ProjectsService } from "../projects/projects-service";
@@ -136,5 +138,11 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
                 yield new WatchPrebuildResponse({ prebuild });
             }
         }
+    }
+
+    async listOrganizationPrebuilds(
+        request: ListOrganizationPrebuildsRequest,
+    ): Promise<ListOrganizationPrebuildsResponse> {
+        return new ListOrganizationPrebuildsResponse({});
     }
 }

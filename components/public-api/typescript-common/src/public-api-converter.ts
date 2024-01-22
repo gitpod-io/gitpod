@@ -95,9 +95,7 @@ import { ContextURL } from "@gitpod/gitpod-protocol/lib/context-url";
 import {
     Prebuild,
     PrebuildStatus,
-    PrebuildPhase,
-    PrebuildPhase_Phase,
-} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+    PrebuildPhase, PrebuildPhase_Phase} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
 import {

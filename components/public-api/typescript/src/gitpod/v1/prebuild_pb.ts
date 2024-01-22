@@ -98,7 +98,8 @@ export class ListPrebuildsRequest extends Message<ListPrebuildsRequest> {
   pagination?: PaginationRequest;
 
   /**
-   * it is for backward compatiblity with the current dashboard, use prebuild_id instead
+   * it is for backward compatiblity with the current dashboard, use prebuild_id
+   * instead
    *
    * @generated from field: string workspace_id = 2 [deprecated = true];
    * @deprecated
@@ -421,6 +422,150 @@ export class WatchPrebuildResponse extends Message<WatchPrebuildResponse> {
 
   static equals(a: WatchPrebuildResponse | PlainMessage<WatchPrebuildResponse> | undefined, b: WatchPrebuildResponse | PlainMessage<WatchPrebuildResponse> | undefined): boolean {
     return proto3.util.equals(WatchPrebuildResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListOrganizationPrebuildsRequest
+ */
+export class ListOrganizationPrebuildsRequest extends Message<ListOrganizationPrebuildsRequest> {
+  /**
+   * @generated from field: gitpod.v1.PaginationRequest pagination = 1;
+   */
+  pagination?: PaginationRequest;
+
+  /**
+   * @generated from field: string organization_id = 2;
+   */
+  organizationId = "";
+
+  /**
+   * @generated from field: gitpod.v1.ListOrganizationPrebuildsRequest.Filter filter = 3;
+   */
+  filter?: ListOrganizationPrebuildsRequest_Filter;
+
+  constructor(data?: PartialMessage<ListOrganizationPrebuildsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListOrganizationPrebuildsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
+    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "filter", kind: "message", T: ListOrganizationPrebuildsRequest_Filter },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationPrebuildsRequest {
+    return new ListOrganizationPrebuildsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListOrganizationPrebuildsRequest {
+    return new ListOrganizationPrebuildsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListOrganizationPrebuildsRequest {
+    return new ListOrganizationPrebuildsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListOrganizationPrebuildsRequest | PlainMessage<ListOrganizationPrebuildsRequest> | undefined, b: ListOrganizationPrebuildsRequest | PlainMessage<ListOrganizationPrebuildsRequest> | undefined): boolean {
+    return proto3.util.equals(ListOrganizationPrebuildsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListOrganizationPrebuildsRequest.Filter
+ */
+export class ListOrganizationPrebuildsRequest_Filter extends Message<ListOrganizationPrebuildsRequest_Filter> {
+  /**
+   * @generated from field: gitpod.v1.PrebuildPhase.Phase status = 1;
+   */
+  status = PrebuildPhase_Phase.UNSPECIFIED;
+
+  /**
+   * @generated from field: string configuration_id = 2;
+   */
+  configurationId = "";
+
+  /**
+   * Filter the search down by searching for configuration names matching the
+   * query
+   *
+   * @generated from field: string search_term = 3;
+   */
+  searchTerm = "";
+
+  constructor(data?: PartialMessage<ListOrganizationPrebuildsRequest_Filter>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListOrganizationPrebuildsRequest.Filter";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "status", kind: "enum", T: proto3.getEnumType(PrebuildPhase_Phase) },
+    { no: 2, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "search_term", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationPrebuildsRequest_Filter {
+    return new ListOrganizationPrebuildsRequest_Filter().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListOrganizationPrebuildsRequest_Filter {
+    return new ListOrganizationPrebuildsRequest_Filter().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListOrganizationPrebuildsRequest_Filter {
+    return new ListOrganizationPrebuildsRequest_Filter().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListOrganizationPrebuildsRequest_Filter | PlainMessage<ListOrganizationPrebuildsRequest_Filter> | undefined, b: ListOrganizationPrebuildsRequest_Filter | PlainMessage<ListOrganizationPrebuildsRequest_Filter> | undefined): boolean {
+    return proto3.util.equals(ListOrganizationPrebuildsRequest_Filter, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListOrganizationPrebuildsResponse
+ */
+export class ListOrganizationPrebuildsResponse extends Message<ListOrganizationPrebuildsResponse> {
+  /**
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 1;
+   */
+  pagination?: PaginationResponse;
+
+  /**
+   * @generated from field: repeated gitpod.v1.Prebuild prebuilds = 2;
+   */
+  prebuilds: Prebuild[] = [];
+
+  constructor(data?: PartialMessage<ListOrganizationPrebuildsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListOrganizationPrebuildsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationResponse },
+    { no: 2, name: "prebuilds", kind: "message", T: Prebuild, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationPrebuildsResponse {
+    return new ListOrganizationPrebuildsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListOrganizationPrebuildsResponse {
+    return new ListOrganizationPrebuildsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListOrganizationPrebuildsResponse {
+    return new ListOrganizationPrebuildsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListOrganizationPrebuildsResponse | PlainMessage<ListOrganizationPrebuildsResponse> | undefined, b: ListOrganizationPrebuildsResponse | PlainMessage<ListOrganizationPrebuildsResponse> | undefined): boolean {
+    return proto3.util.equals(ListOrganizationPrebuildsResponse, a, b);
   }
 }
 

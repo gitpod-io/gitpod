@@ -18,6 +18,8 @@ import {
     WatchPrebuildResponse,
     CancelPrebuildRequest,
     CancelPrebuildResponse,
+    ListOrganizationPrebuildsRequest,
+    ListOrganizationPrebuildsResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { getGitpodService } from "./service";
 import { converter } from "./public-api";
@@ -141,5 +143,11 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
                 yield new WatchPrebuildResponse({ prebuild });
             }
         }
+    }
+
+    async listOrganizationPrebuilds(
+        request: PartialMessage<ListOrganizationPrebuildsRequest>,
+    ): Promise<ListOrganizationPrebuildsResponse> {
+        return new ListOrganizationPrebuildsResponse({});
     }
 }
