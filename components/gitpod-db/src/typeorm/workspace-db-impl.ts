@@ -1042,7 +1042,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         limit?: number,
         filter?: {
             configurationId?: string;
-            // status: PrebuildWithStatus;
+            status: PrebuiltWorkspaceState;
             searchTerm?: string;
         },
     ): Promise<PrebuiltWorkspace[]> {
@@ -1060,6 +1060,10 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             )
             .skip(offset || 0)
             .take(limit || 30);
+
+        if (filter?.status) {
+            query.andWhere("pws.state = :state", { state: filter.status });
+        }
 
         if (filter?.configurationId) {
             query.andWhere("pws.projectId = :projectId", { projectId: filter.configurationId });

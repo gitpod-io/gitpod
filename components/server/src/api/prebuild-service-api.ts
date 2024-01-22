@@ -161,13 +161,24 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
 
         const paginationToken = parsePaginationToken(request.pagination?.token);
 
-        const prebuilds = await this.prebuildManager.listPrebuilds({}, userId, organizationId, {
-            limit,
-            offset: paginationToken.offset,
-        });
+        const prebuildsFilter = {
+            configurationId: request.filter?.configurationId,
+            searchTerm: request.filter?.searchTerm,
+            status: request.filter?.status ? this.apiConverter.fromPrebuildPhase(request.filter.status) : undefined,
+        };
+
+        const prebuilds = await this.prebuildManager.listPrebuilds(
+            {},
+            userId,
+            organizationId,
+            {
+                limit,
+                offset: paginationToken.offset,
+            },
+            prebuildsFilter,
+        );
 
         const apiPrebuilds = prebuilds.map((pb) => this.apiConverter.toPrebuild(pb));
-
         const pagedResult = apiPrebuilds.slice(0, limit);
 
         const response = new ListOrganizationPrebuildsResponse({

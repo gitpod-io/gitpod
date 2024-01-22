@@ -10,6 +10,7 @@ import {
     CommitInfo,
     PrebuildWithStatus,
     PrebuiltWorkspace,
+    PrebuiltWorkspaceState,
     Project,
     StartPrebuildContext,
     StartPrebuildResult,
@@ -201,7 +202,7 @@ export class PrebuildManager {
         },
         filter?: {
             configurationId?: string;
-            // status: PrebuildWithStatus;
+            status?: PrebuiltWorkspaceState;
             searchTerm?: string;
         },
     ): Promise<PrebuildWithStatus[]> {
