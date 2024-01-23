@@ -145,7 +145,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
     async listOrganizationPrebuilds(
         request: ListOrganizationPrebuildsRequest,
     ): Promise<ListOrganizationPrebuildsResponse> {
-        const { organizationId, pagination } = request;
+        const { organizationId, pagination, filter } = request;
         const userId = ctxUserId();
 
         const limit = pagination?.pageSize ?? 25;
@@ -159,16 +159,16 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
-        if (request.filter?.configuration?.branch && !request.filter?.configuration.id) {
+        if (filter?.configuration?.branch && !filter?.configuration.id) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required when branch is specified");
         }
 
         const paginationToken = parsePaginationToken(request.pagination?.token);
 
         const prebuildsFilter = {
-            configuration: request.filter?.configuration,
-            searchTerm: request.filter?.searchTerm,
-            status: request.filter?.status ? this.apiConverter.fromPrebuildPhase(request.filter.status) : undefined,
+            configuration: filter?.configuration,
+            searchTerm: filter?.searchTerm,
+            status: filter?.status ? this.apiConverter.fromPrebuildPhase(filter.status) : undefined,
         };
         const prebuilds = await this.prebuildManager.listPrebuilds(
             {},

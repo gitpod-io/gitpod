@@ -106,10 +106,10 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         // TODO: encapsulate this validation into some more generic schema validation
         const limit = req.pagination?.pageSize || 25;
         if (limit > 100) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be less than 100");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize cannot be larger than 100");
         }
-        if (limit < 25) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be greater than 25");
+        if (limit <= 0) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be greater than 0");
         }
         if ((req.searchTerm || "").length > 100) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "searchTerm must be less than 100 characters");
