@@ -23,7 +23,7 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { inject, injectable } from "inversify";
 import { ProjectsService } from "../projects/projects-service";
-import { PrebuildManager } from "../prebuilds/prebuild-manager";
+import { PrebuildFilter, PrebuildManager } from "../prebuilds/prebuild-manager";
 import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ctxSignal, ctxUserId } from "../util/request-context";
@@ -165,11 +165,19 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
 
         const paginationToken = parsePaginationToken(request.pagination?.token);
 
-        const prebuildsFilter = {
+        const prebuildsFilter: PrebuildFilter = {
             configuration: filter?.configuration,
             searchTerm: filter?.searchTerm,
-            status: filter?.status ? this.apiConverter.fromPrebuildPhase(filter.status) : undefined,
         };
+        if (filter?.status) {
+            const parsedStatusFilter = this.apiConverter.fromPrebuildPhase(filter.status);
+            if (parsedStatusFilter) {
+                prebuildsFilter.status = parsedStatusFilter;
+            } else {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invalid prebuild status filter provided");
+            }
+        }
+
         const prebuilds = await this.prebuildManager.listPrebuilds(
             {},
             userId,

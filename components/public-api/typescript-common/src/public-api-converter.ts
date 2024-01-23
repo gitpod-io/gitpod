@@ -1139,7 +1139,7 @@ export class PublicAPIConverter {
         return PrebuildPhase_Phase.UNSPECIFIED;
     }
 
-    fromPrebuildPhase (status: PrebuildPhase_Phase): PrebuiltWorkspaceState {
+    fromPrebuildPhase (status: PrebuildPhase_Phase): PrebuiltWorkspaceState | undefined {
         switch (status) {
             case PrebuildPhase_Phase.QUEUED:
                 return "queued";
@@ -1154,7 +1154,7 @@ export class PublicAPIConverter {
             case PrebuildPhase_Phase.FAILED:
                 return "failed";
         }
-        throw new Error(`unknown prebuild status ${status}`);
+        return undefined;
     }
 
     toBlockedRepository(repo: ProtocolBlockedRepository): BlockedRepository {

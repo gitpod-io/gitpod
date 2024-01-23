@@ -49,6 +49,15 @@ export interface StartPrebuildParams {
     forcePrebuild?: boolean;
 }
 
+export interface PrebuildFilter {
+    configuration?: {
+        id: string;
+        branch?: string;
+    };
+    status?: PrebuiltWorkspaceState;
+    searchTerm?: string;
+}
+
 @injectable()
 export class PrebuildManager {
     constructor(
@@ -200,14 +209,7 @@ export class PrebuildManager {
             limit: number;
             offset?: number;
         },
-        filter?: {
-            configuration?: {
-                id: string;
-                branch?: string;
-            };
-            status?: PrebuiltWorkspaceState;
-            searchTerm?: string;
-        },
+        filter?: PrebuildFilter,
     ): Promise<PrebuildWithStatus[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_prebuild", organizationId);
 
