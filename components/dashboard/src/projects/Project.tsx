@@ -128,14 +128,9 @@ export default function ProjectsPage() {
             return;
         }
         prebuildLoaders.add(branch.name);
-        const response = await prebuildClient.listOrganizationPrebuilds({
-            organizationId: project.teamId,
-            filter: {
-                configuration: {
-                    id: project.id,
-                    branch: branch.name,
-                },
-            },
+        const response = await prebuildClient.listPrebuilds({
+            configurationId: project.id,
+            gitRef: branch.name,
             pagination: {
                 pageSize: 1,
             },

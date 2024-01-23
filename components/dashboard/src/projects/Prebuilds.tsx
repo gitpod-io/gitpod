@@ -25,11 +25,8 @@ import Tooltip from "../components/Tooltip";
 import { prebuildClient, watchPrebuild } from "../service/public-api";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Button } from "@podkit/buttons/Button";
-import { useCurrentOrg } from "../data/organizations/orgs-query";
 
 export default function PrebuildsPage(props: { project?: Project; isAdminDashboard?: boolean }) {
-    const currentOrg = useCurrentOrg();
-
     const currentProject = useCurrentProject();
     const project = props.project || currentProject.project;
 
@@ -47,13 +44,8 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
 
         (async () => {
             setIsLoadingPrebuilds(true);
-            const response = await prebuildClient.listOrganizationPrebuilds({
-                organizationId: project.teamId,
-                filter: {
-                    configuration: {
-                        id: currentOrg.data?.id,
-                    },
-                },
+            const response = await prebuildClient.listPrebuilds({
+                configurationId: project.teamId,
             });
             setPrebuilds(response.prebuilds);
             setIsLoadingPrebuilds(false);
@@ -75,7 +67,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
             );
             return () => toCancelWatch.dispose();
         }
-    }, [currentOrg.data?.id, project, props]);
+    }, [project, props]);
 
     useEffect(() => {
         if (prebuilds.length === 0) {
