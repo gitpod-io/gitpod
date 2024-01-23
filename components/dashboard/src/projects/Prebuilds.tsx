@@ -45,7 +45,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
         (async () => {
             setIsLoadingPrebuilds(true);
             const response = await prebuildClient.listPrebuilds({
-                configurationId: project.teamId,
+                configurationId: project.id,
             });
             setPrebuilds(response.prebuilds);
             setIsLoadingPrebuilds(false);
