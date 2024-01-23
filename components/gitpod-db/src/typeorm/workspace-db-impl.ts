@@ -57,6 +57,7 @@ import {
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { DBProject } from "./entity/db-project";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -1046,8 +1047,8 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
      */
     async findPrebuiltWorkspacesByOrganization(
         organizationId: string,
-        offset: number = 0,
-        limit: number = 25,
+        offset = 0,
+        limit = 25,
         filter?: {
             configuration?: {
                 id: string;
@@ -1058,7 +1059,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         },
     ): Promise<PrebuiltWorkspace[]> {
         const repo = await this.getPrebuiltWorkspaceRepo();
-
         const query = repo
             .createQueryBuilder("pws")
             .orderBy("pws.creationTime", "DESC")
@@ -1069,8 +1069,8 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                 "pws.buildWorkspaceId = ws.id AND ws.organizationId = :organizationId",
                 { organizationId },
             )
-            .skip(offset || 0)
-            .take(limit || 30);
+            .skip(offset)
+            .take(limit);
 
         if (filter?.status) {
             query.andWhere("pws.state = :state", { state: filter.status });
@@ -1081,6 +1081,18 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             if (filter.configuration.branch) {
                 query.andWhere("pws.branch = :branch", { branch: filter.configuration.branch });
             }
+        }
+
+        const normalizedSearchTerm = filter?.searchTerm?.trim();
+        if (normalizedSearchTerm) {
+            query.innerJoinAndMapOne("pws.project", DBProject, "project", "pws.projectId = project.id");
+            query.andWhere(
+                new Brackets((qb) => {
+                    qb.where("pws.project.cloneUrl LIKE :searchTerm", {
+                        searchTerm: `%${normalizedSearchTerm}%`,
+                    }).orWhere("pws.project.name LIKE :searchTerm", { searchTerm: `%${normalizedSearchTerm}%` });
+                }),
+            );
         }
 
         return query.getMany();
