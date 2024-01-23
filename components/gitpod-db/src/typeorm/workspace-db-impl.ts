@@ -1046,8 +1046,8 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
      */
     async findPrebuiltWorkspacesByOrganization(
         organizationId: string,
-        offset?: number,
-        limit?: number,
+        offset: number = 0,
+        limit: number = 25,
         filter?: {
             configuration?: {
                 id: string;
