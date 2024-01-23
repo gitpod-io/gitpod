@@ -211,25 +211,21 @@ export class PrebuildManager {
     ): Promise<PrebuildWithStatus[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_prebuild", organizationId);
 
-        const result: PrebuildWithStatus[] = [];
         const prebuiltWorkspaces = await this.workspaceDB
             .trace(ctx)
             .findPrebuiltWorkspacesByOrganization(organizationId, pagination.offset, pagination.limit, filter);
-        const infos = await this.workspaceDB
-            .trace({})
-            .findPrebuildInfos([...prebuiltWorkspaces.map((prebuild) => prebuild.id)]);
-        result.push(
-            ...infos.map((info) => {
-                const p = prebuiltWorkspaces.find((prebuild) => prebuild.id === info.id)!;
-                const r: PrebuildWithStatus = { info, status: p.state };
-                if (p.error) {
-                    r.error = p.error;
-                }
-                return r;
-            }),
-        );
+        const prebuildMap = new Map(prebuiltWorkspaces.map((prebuild) => [prebuild.id, prebuild]));
+        const infos = await this.workspaceDB.trace({}).findPrebuildInfos([...prebuildMap.keys()]);
 
-        return result;
+        return infos.map((info) => {
+            const prebuild = prebuildMap.get(info.id)!;
+            const fullPrebuild: PrebuildWithStatus = { info, status: prebuild.state };
+            if (prebuild.error) {
+                fullPrebuild.error = prebuild.error;
+            }
+
+            return fullPrebuild;
+        });
     }
 
     async findPrebuildByWorkspaceID(

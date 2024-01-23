@@ -1036,15 +1036,14 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         return res;
     }
 
-/**
- * Finds prebuilt workspaces by organization with optional filtering and pagination.
- * @param organizationId The ID of the organization.
- * @param offset Optional offset for pagination.
- * @param limit Optional limit for pagination.
- * @param filter Optional filters for the search.
- * @returns A promise that resolves to an array of PrebuiltWorkspace objects.
- */
-
+    /**
+     * Finds prebuilt workspaces by organization with optional filtering and pagination.
+     * @param organizationId The ID of the organization.
+     * @param offset Offset for pagination.
+     * @param limit Limit for pagination.
+     * @param filter Filters for the search.
+     * @returns A promise that resolves to an array of PrebuiltWorkspace objects.
+     */
     async findPrebuiltWorkspacesByOrganization(
         organizationId: string,
         offset?: number,
@@ -1084,7 +1083,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             }
         }
 
-        return await query.getMany();
+        return query.getMany();
     }
 
     async findPrebuiltWorkspaceById(id: string): Promise<PrebuiltWorkspace | undefined> {
