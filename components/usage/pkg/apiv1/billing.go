@@ -251,14 +251,6 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		return nil, err
 	}
 
-	var isAutomaticTaxSupported bool
-	if stripeCustomer.Tax != nil {
-		isAutomaticTaxSupported = stripeCustomer.Tax.AutomaticTax == "supported"
-	}
-	if !isAutomaticTaxSupported {
-		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
-	}
-
 	// Handle a payment hold for the payment intent
 	// Make sure the provided payment intent hold was successful, and release it
 	result, err := s.stripeClient.TryHoldAmountForPaymentIntent(ctx, stripeCustomer, string(paymentIntentID))
@@ -274,6 +266,22 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 	_, err = s.stripeClient.SetDefaultPaymentForCustomer(ctx, customer.Customer.Id, string(paymentIntentID))
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Failed to set default payment for customer ID %s", customer.Customer.Id)
+	}
+
+	// Customers are created without a valid address by default,
+	// `SetDefaultPaymentForCustomer` will update the customer address to the one provided in the payment modal.
+	// Request the customer data again so the `Tax` property is properly set.
+	stripeCustomer, err = s.stripeClient.GetCustomer(ctx, customer.Customer.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	var isAutomaticTaxSupported bool
+	if stripeCustomer.Tax != nil {
+		isAutomaticTaxSupported = stripeCustomer.Tax.AutomaticTax == "supported"
+	}
+	if !isAutomaticTaxSupported {
+		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
 	}
 
 	subscription, err := s.stripeClient.CreateSubscription(ctx, stripeCustomer.ID, priceID, isAutomaticTaxSupported)
