@@ -1088,9 +1088,9 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             query.innerJoinAndMapOne("pws.project", DBProject, "project", "pws.projectId = project.id");
             query.andWhere(
                 new Brackets((qb) => {
-                    qb.where("pws.project.cloneUrl LIKE :searchTerm", {
+                    qb.where("project.cloneUrl LIKE :searchTerm", {
                         searchTerm: `%${normalizedSearchTerm}%`,
-                    }).orWhere("pws.project.name LIKE :searchTerm", { searchTerm: `%${normalizedSearchTerm}%` });
+                    }).orWhere("project.name LIKE :searchTerm", { searchTerm: `%${normalizedSearchTerm}%` });
                 }),
             );
         }
