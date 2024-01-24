@@ -14,6 +14,7 @@ import { useConfiguration } from "../../data/configurations/configuration-querie
 import { prebuildDisplayProps, prebuildStatusIconName } from "../../projects/Prebuilds";
 import dayjs from "dayjs";
 import { cn } from "@podkit/lib/cn";
+import { shortCommitMessage } from "../../projects/render-utils";
 
 type Props = {
     prebuild: Prebuild;
@@ -36,7 +37,9 @@ export const RepositoryListItem: FC<Props> = ({ prebuild }) => {
             <TableCell hideOnSmallScreen>
                 {prebuild.commit?.author && (
                     <div className="flex flex-col gap-1">
-                        <Text className="text-sm text-pk-content-secondary">{prebuild.commit.message}</Text>
+                        <Text className="text-sm text-pk-content-secondary">
+                            {shortCommitMessage(prebuild.commit.message)}
+                        </Text>
                         <div className="flex gap-1">
                             <img src={prebuild.commit.author.avatarUrl} className="w-5 h-5 rounded-full" alt="" />
                             <Text className="text-xs break-all text-pk-content-secondary">
@@ -47,12 +50,14 @@ export const RepositoryListItem: FC<Props> = ({ prebuild }) => {
                 )}
             </TableCell>
 
-            <TableCell hideOnSmallScreen>{created}</TableCell>
+            <TableCell hideOnSmallScreen>
+                <span className="text-pk-content-secondary text-sm">{created}</span>
+            </TableCell>
 
             <TableCell>
                 <div className="flex flex-row gap-1.5 items-center capitalize">
                     <PrebuildStatusIcon className={cn("w-5 h-5", iconColorClass)} />
-                    <span>{label}</span>
+                    <span className="text-sm text-pk-content-secondary">{label}</span>
                 </div>
             </TableCell>
 
