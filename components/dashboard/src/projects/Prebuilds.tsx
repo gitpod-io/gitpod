@@ -6,7 +6,7 @@
 
 import dayjs from "dayjs";
 import { Project } from "@gitpod/gitpod-protocol";
-import { useEffect, useState } from "react";
+import { ForwardRefExoticComponent, useEffect, useState } from "react";
 import Header from "../components/Header";
 import DropDown, { DropDownEntry } from "../components/DropDown";
 import { ItemsList, Item, ItemField } from "../components/ItemsList";
@@ -25,6 +25,7 @@ import Tooltip from "../components/Tooltip";
 import { prebuildClient, watchPrebuild } from "../service/public-api";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Button } from "@podkit/buttons/Button";
+import { CheckCircle2, CircleSlash, Clock, HelpCircle, LucideProps, PauseCircle, XCircle } from "lucide-react";
 
 export default function PrebuildsPage(props: { project?: Project; isAdminDashboard?: boolean }) {
     const currentProject = useCurrentProject();
@@ -284,25 +285,54 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
     );
 }
 
-export function prebuildStatusLabel(prebuild?: Prebuild) {
-    switch (prebuild?.status?.phase?.name) {
+export const prebuildDisplayProps = (prebuild: Prebuild): { className: string; label: string } => {
+    switch (prebuild.status?.phase?.name) {
         case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
         case PrebuildPhase_Phase.QUEUED:
-            return <span className="font-medium text-orange-500 uppercase">pending</span>;
+            return { className: "text-orange-500", label: "pending" };
         case PrebuildPhase_Phase.BUILDING:
-            return <span className="font-medium text-blue-500 uppercase">running</span>;
+            return { className: "text-blue-500", label: "running" };
         case PrebuildPhase_Phase.ABORTED:
-            return <span className="font-medium text-gray-500 uppercase">canceled</span>;
+            return { className: "text-gray-500", label: "canceled" };
         case PrebuildPhase_Phase.FAILED:
-            return <span className="font-medium text-red-500 uppercase">system error</span>;
+            return { className: "text-red-500", label: "system error" };
         case PrebuildPhase_Phase.TIMEOUT:
-            return <span className="font-medium text-red-500 uppercase">timed out</span>;
+            return { className: "text-red-500", label: "timed out" };
+        case PrebuildPhase_Phase.AVAILABLE:
+            if (prebuild.status?.message) {
+                return { className: "text-red-500", label: "failed" };
+            }
+            return { className: "text-green-500", label: "ready" };
+    }
+
+    return { className: "", label: "" };
+};
+
+export function prebuildStatusLabel(prebuild: Prebuild): JSX.Element {
+    const { className, label } = prebuildDisplayProps(prebuild);
+    return <span className={`font-medium ${className} uppercase`}>{label}</span>;
+}
+
+export function prebuildStatusIconName(prebuild: Prebuild): ForwardRefExoticComponent<LucideProps> {
+    switch (prebuild.status?.phase?.name) {
+        case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
+        case PrebuildPhase_Phase.QUEUED:
+            return PauseCircle;
+        case PrebuildPhase_Phase.BUILDING:
+            return Clock;
+        case PrebuildPhase_Phase.ABORTED:
+            return CircleSlash;
+        case PrebuildPhase_Phase.TIMEOUT:
+        case PrebuildPhase_Phase.FAILED:
+            return XCircle;
         case PrebuildPhase_Phase.AVAILABLE:
             if (prebuild?.status?.message) {
-                return <span className="font-medium text-red-500 uppercase">failed</span>;
+                return XCircle;
             }
-            return <span className="font-medium text-green-500 uppercase">ready</span>;
+            return CheckCircle2;
     }
+
+    return HelpCircle;
 }
 
 export function prebuildStatusIcon(prebuild?: Prebuild) {

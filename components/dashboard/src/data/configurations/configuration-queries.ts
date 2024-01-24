@@ -32,7 +32,7 @@ export const useListConfigurations = (options: ListConfigurationsArgs) => {
     const { searchTerm = "", prebuildsEnabled, pageSize, sortBy, sortOrder } = options;
 
     return useInfiniteQuery(
-        getListConfigurationsQueryKey(org?.id || "", options),
+        getListConfigurationsQueryKey(org?.id ?? "", options),
         // QueryFn receives the past page's pageParam as it's argument
         async ({ pageParam: nextToken }) => {
             if (!org) {

@@ -80,6 +80,8 @@ const ConfigurationDetailPage = React.lazy(
     () => import(/* webpackPrefetch: true */ "../repositories/detail/ConfigurationDetailPage"),
 );
 
+const PrebuildListPage = React.lazy(() => import(/* webpackPrefetch: true */ "../prebuilds/list/PrebuildsList"));
+
 export const AppRoutes = () => {
     const hash = getURLHash();
     const location = useLocation();
@@ -205,6 +207,8 @@ export const AppRoutes = () => {
                     <Route exact path={`/projects/:projectSlug/settings`} component={ProjectSettings} />
                     <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />
                     <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
+
+                    <Route exact path={`/prebuilds`} component={PrebuildListPage} />
 
                     {repoConfigListAndDetail && <Route exact path="/repositories" component={ConfigurationListPage} />}
                     {/* Handles all /repositories/:id/* routes in a nested router */}

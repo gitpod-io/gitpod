@@ -309,8 +309,8 @@ export default function ProjectsPage() {
                                                 alt={branch.changeAuthor}
                                             />
                                         );
-                                        const statusIcon = prebuildStatusIcon(prebuild);
-                                        const status = prebuildStatusLabel(prebuild);
+                                        const statusIcon = prebuild && prebuildStatusIcon(prebuild);
+                                        const status = prebuild && prebuildStatusLabel(prebuild);
 
                                         return (
                                             <Item
