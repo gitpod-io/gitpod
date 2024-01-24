@@ -74,6 +74,7 @@ export type OrganizationPermission =
     | "write_git_provider"
     | "read_billing"
     | "write_billing"
+    | "read_prebuild"
     | "create_workspace"
     | "write_billing_admin";
 

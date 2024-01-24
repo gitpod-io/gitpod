@@ -10,6 +10,7 @@ import {
     CommitInfo,
     PrebuildWithStatus,
     PrebuiltWorkspace,
+    PrebuiltWorkspaceState,
     Project,
     StartPrebuildContext,
     StartPrebuildResult,
@@ -46,6 +47,15 @@ export interface StartPrebuildParams {
     project: Project;
     commitInfo?: CommitInfo;
     forcePrebuild?: boolean;
+}
+
+export interface PrebuildFilter {
+    configuration?: {
+        id: string;
+        branch?: string;
+    };
+    status?: PrebuiltWorkspaceState;
+    searchTerm?: string;
 }
 
 @injectable()
@@ -189,6 +199,35 @@ export class PrebuildManager {
             result.error = pbws.error;
         }
         return result;
+    }
+
+    async listPrebuilds(
+        ctx: TraceContext,
+        userId: string,
+        organizationId: string,
+        pagination: {
+            limit: number;
+            offset?: number;
+        },
+        filter?: PrebuildFilter,
+    ): Promise<PrebuildWithStatus[]> {
+        await this.auth.checkPermissionOnOrganization(userId, "read_prebuild", organizationId);
+
+        const prebuiltWorkspaces = await this.workspaceDB
+            .trace(ctx)
+            .findPrebuiltWorkspacesByOrganization(organizationId, pagination.offset, pagination.limit, filter);
+        const prebuildMap = new Map(prebuiltWorkspaces.map((prebuild) => [prebuild.id, prebuild]));
+        const infos = await this.workspaceDB.trace({}).findPrebuildInfos([...prebuildMap.keys()]);
+
+        return infos.map((info) => {
+            const prebuild = prebuildMap.get(info.id)!;
+            const fullPrebuild: PrebuildWithStatus = { info, status: prebuild.state };
+            if (prebuild.error) {
+                fullPrebuild.error = prebuild.error;
+            }
+
+            return fullPrebuild;
+        });
     }
 
     async findPrebuildByWorkspaceID(

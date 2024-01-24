@@ -20,6 +20,7 @@ import {
     PrebuildInfo,
     AdminGetWorkspacesQuery,
     SnapshotState,
+    PrebuiltWorkspaceState,
 } from "@gitpod/gitpod-protocol";
 
 export type MaybeWorkspace = Workspace | undefined;
@@ -170,6 +171,19 @@ export interface WorkspaceDB {
     hardDeleteWorkspace(workspaceID: string): Promise<void>;
 
     findPrebuiltWorkspacesByProject(projectId: string, branch?: string, limit?: number): Promise<PrebuiltWorkspace[]>;
+    findPrebuiltWorkspacesByOrganization(
+        organizationId: string,
+        offset?: number,
+        limit?: number,
+        filter?: {
+            configuration?: {
+                id: string;
+                branch?: string;
+            };
+            status?: PrebuiltWorkspaceState;
+            searchTerm?: string;
+        },
+    ): Promise<PrebuiltWorkspace[]>;
     findPrebuiltWorkspaceById(prebuildId: string): Promise<PrebuiltWorkspace | undefined>;
 
     storePrebuildInfo(prebuildInfo: PrebuildInfo): Promise<void>;

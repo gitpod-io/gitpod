@@ -1139,6 +1139,24 @@ export class PublicAPIConverter {
         return PrebuildPhase_Phase.UNSPECIFIED;
     }
 
+    fromPrebuildPhase (status: PrebuildPhase_Phase): PrebuiltWorkspaceState | undefined {
+        switch (status) {
+            case PrebuildPhase_Phase.QUEUED:
+                return "queued";
+            case PrebuildPhase_Phase.BUILDING:
+                return "building";
+            case PrebuildPhase_Phase.ABORTED:
+                return "aborted";
+            case PrebuildPhase_Phase.TIMEOUT:
+                return "timeout";
+            case PrebuildPhase_Phase.AVAILABLE:
+                return "available";
+            case PrebuildPhase_Phase.FAILED:
+                return "failed";
+        }
+        return undefined;
+    }
+
     toBlockedRepository(repo: ProtocolBlockedRepository): BlockedRepository {
         return new BlockedRepository({
             id: repo.id,

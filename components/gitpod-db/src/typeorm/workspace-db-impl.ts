@@ -57,6 +57,7 @@ import {
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { DBProject } from "./entity/db-project";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -1034,6 +1035,67 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
 
         const res = await query.getMany();
         return res;
+    }
+
+    /**
+     * Finds prebuilt workspaces by organization with optional filtering and pagination.
+     * @param organizationId The ID of the organization.
+     * @param offset Offset for pagination.
+     * @param limit Limit for pagination.
+     * @param filter Filters for the search.
+     * @returns A promise that resolves to an array of PrebuiltWorkspace objects.
+     */
+    async findPrebuiltWorkspacesByOrganization(
+        organizationId: string,
+        offset = 0,
+        limit = 25,
+        filter?: {
+            configuration?: {
+                id: string;
+                branch?: string;
+            };
+            status: PrebuiltWorkspaceState;
+            searchTerm?: string;
+        },
+    ): Promise<PrebuiltWorkspace[]> {
+        const repo = await this.getPrebuiltWorkspaceRepo();
+        const query = repo
+            .createQueryBuilder("pws")
+            .orderBy("pws.creationTime", "DESC")
+            .innerJoinAndMapOne(
+                "pws.workspace",
+                DBWorkspace,
+                "ws",
+                "pws.buildWorkspaceId = ws.id AND ws.organizationId = :organizationId",
+                { organizationId },
+            )
+            .skip(offset)
+            .take(limit);
+
+        if (filter?.status) {
+            query.andWhere("pws.state = :state", { state: filter.status });
+        }
+
+        if (filter?.configuration?.id) {
+            query.andWhere("pws.projectId = :projectId", { projectId: filter.configuration.id });
+            if (filter.configuration.branch) {
+                query.andWhere("pws.branch = :branch", { branch: filter.configuration.branch });
+            }
+        }
+
+        const normalizedSearchTerm = filter?.searchTerm?.trim();
+        if (normalizedSearchTerm) {
+            query.innerJoinAndMapOne("pws.project", DBProject, "project", "pws.projectId = project.id");
+            query.andWhere(
+                new Brackets((qb) => {
+                    qb.where("project.cloneUrl LIKE :searchTerm", {
+                        searchTerm: `%${normalizedSearchTerm}%`,
+                    }).orWhere("project.name LIKE :searchTerm", { searchTerm: `%${normalizedSearchTerm}%` });
+                }),
+            );
+        }
+
+        return query.getMany();
     }
 
     async findPrebuiltWorkspaceById(id: string): Promise<PrebuiltWorkspace | undefined> {

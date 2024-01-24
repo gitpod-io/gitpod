@@ -23,11 +23,13 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { inject, injectable } from "inversify";
 import { ProjectsService } from "../projects/projects-service";
-import { PrebuildManager } from "../prebuilds/prebuild-manager";
+import { PrebuildFilter, PrebuildManager } from "../prebuilds/prebuild-manager";
 import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ctxSignal, ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
+import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
+import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 
 @injectable()
 export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInterface> {
@@ -143,6 +145,67 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
     async listOrganizationPrebuilds(
         request: ListOrganizationPrebuildsRequest,
     ): Promise<ListOrganizationPrebuildsResponse> {
-        return new ListOrganizationPrebuildsResponse({});
+        const { organizationId, pagination, filter } = request;
+        const userId = ctxUserId();
+
+        const limit = pagination?.pageSize ?? 25;
+        if (limit > 100) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize cannot be larger than 100");
+        }
+        if (limit <= 0) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be greater than 0");
+        }
+        if (!uuidValidate(organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+
+        if (filter?.configuration?.branch && !filter?.configuration.id) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required when branch is specified");
+        }
+
+        const paginationToken = parsePaginationToken(request.pagination?.token);
+
+        const prebuildsFilter: PrebuildFilter = {
+            configuration: filter?.configuration,
+            searchTerm: filter?.searchTerm,
+        };
+        if (filter?.status) {
+            const parsedStatusFilter = this.apiConverter.fromPrebuildPhase(filter.status);
+            if (parsedStatusFilter) {
+                prebuildsFilter.status = parsedStatusFilter;
+            } else {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invalid prebuild status filter provided");
+            }
+        }
+
+        const prebuilds = await this.prebuildManager.listPrebuilds(
+            {},
+            userId,
+            organizationId,
+            {
+                limit: limit + 1,
+                offset: paginationToken.offset,
+            },
+            prebuildsFilter,
+        );
+
+        const apiPrebuilds = prebuilds.map((pb) => this.apiConverter.toPrebuild(pb));
+        const pagedResult = apiPrebuilds.slice(0, limit);
+
+        const response = new ListOrganizationPrebuildsResponse({
+            prebuilds: pagedResult,
+        });
+        response.pagination = new PaginationResponse();
+
+        // If we got back an extra row, it means there are more results
+        if (apiPrebuilds.length > limit) {
+            const nextToken: PaginationToken = {
+                offset: paginationToken.offset + limit,
+            };
+
+            response.pagination.nextToken = generatePaginationToken(nextToken);
+        }
+
+        return response;
     }
 }

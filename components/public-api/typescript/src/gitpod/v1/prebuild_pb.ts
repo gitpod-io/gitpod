@@ -484,9 +484,9 @@ export class ListOrganizationPrebuildsRequest_Filter extends Message<ListOrganiz
   status = PrebuildPhase_Phase.UNSPECIFIED;
 
   /**
-   * @generated from field: string configuration_id = 2;
+   * @generated from field: gitpod.v1.ListOrganizationPrebuildsRequest.Filter.Configuration configuration = 2;
    */
-  configurationId = "";
+  configuration?: ListOrganizationPrebuildsRequest_Filter_Configuration;
 
   /**
    * Filter the search down by searching for configuration names matching the
@@ -505,7 +505,7 @@ export class ListOrganizationPrebuildsRequest_Filter extends Message<ListOrganiz
   static readonly typeName = "gitpod.v1.ListOrganizationPrebuildsRequest.Filter";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "status", kind: "enum", T: proto3.getEnumType(PrebuildPhase_Phase) },
-    { no: 2, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "configuration", kind: "message", T: ListOrganizationPrebuildsRequest_Filter_Configuration },
     { no: 3, name: "search_term", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
@@ -523,6 +523,49 @@ export class ListOrganizationPrebuildsRequest_Filter extends Message<ListOrganiz
 
   static equals(a: ListOrganizationPrebuildsRequest_Filter | PlainMessage<ListOrganizationPrebuildsRequest_Filter> | undefined, b: ListOrganizationPrebuildsRequest_Filter | PlainMessage<ListOrganizationPrebuildsRequest_Filter> | undefined): boolean {
     return proto3.util.equals(ListOrganizationPrebuildsRequest_Filter, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListOrganizationPrebuildsRequest.Filter.Configuration
+ */
+export class ListOrganizationPrebuildsRequest_Filter_Configuration extends Message<ListOrganizationPrebuildsRequest_Filter_Configuration> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string branch = 2;
+   */
+  branch = "";
+
+  constructor(data?: PartialMessage<ListOrganizationPrebuildsRequest_Filter_Configuration>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListOrganizationPrebuildsRequest.Filter.Configuration";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "branch", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationPrebuildsRequest_Filter_Configuration {
+    return new ListOrganizationPrebuildsRequest_Filter_Configuration().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListOrganizationPrebuildsRequest_Filter_Configuration {
+    return new ListOrganizationPrebuildsRequest_Filter_Configuration().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListOrganizationPrebuildsRequest_Filter_Configuration {
+    return new ListOrganizationPrebuildsRequest_Filter_Configuration().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListOrganizationPrebuildsRequest_Filter_Configuration | PlainMessage<ListOrganizationPrebuildsRequest_Filter_Configuration> | undefined, b: ListOrganizationPrebuildsRequest_Filter_Configuration | PlainMessage<ListOrganizationPrebuildsRequest_Filter_Configuration> | undefined): boolean {
+    return proto3.util.equals(ListOrganizationPrebuildsRequest_Filter_Configuration, a, b);
   }
 }
 
