@@ -36,6 +36,7 @@ type PrebuildServiceClient interface {
 	GetPrebuild(context.Context, *connect_go.Request[v1.GetPrebuildRequest]) (*connect_go.Response[v1.GetPrebuildResponse], error)
 	ListPrebuilds(context.Context, *connect_go.Request[v1.ListPrebuildsRequest]) (*connect_go.Response[v1.ListPrebuildsResponse], error)
 	WatchPrebuild(context.Context, *connect_go.Request[v1.WatchPrebuildRequest]) (*connect_go.ServerStreamForClient[v1.WatchPrebuildResponse], error)
+	WatchPrebuildLogs(context.Context, *connect_go.Request[v1.WatchPrebuildLogsRequest]) (*connect_go.ServerStreamForClient[v1.WatchPrebuildLogsResponse], error)
 	// ListOrganizationPrebuilds lists all prebuilds of an organization
 	ListOrganizationPrebuilds(context.Context, *connect_go.Request[v1.ListOrganizationPrebuildsRequest]) (*connect_go.Response[v1.ListOrganizationPrebuildsResponse], error)
 }
@@ -75,6 +76,11 @@ func NewPrebuildServiceClient(httpClient connect_go.HTTPClient, baseURL string, 
 			baseURL+"/gitpod.v1.PrebuildService/WatchPrebuild",
 			opts...,
 		),
+		watchPrebuildLogs: connect_go.NewClient[v1.WatchPrebuildLogsRequest, v1.WatchPrebuildLogsResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.PrebuildService/WatchPrebuildLogs",
+			opts...,
+		),
 		listOrganizationPrebuilds: connect_go.NewClient[v1.ListOrganizationPrebuildsRequest, v1.ListOrganizationPrebuildsResponse](
 			httpClient,
 			baseURL+"/gitpod.v1.PrebuildService/ListOrganizationPrebuilds",
@@ -90,6 +96,7 @@ type prebuildServiceClient struct {
 	getPrebuild               *connect_go.Client[v1.GetPrebuildRequest, v1.GetPrebuildResponse]
 	listPrebuilds             *connect_go.Client[v1.ListPrebuildsRequest, v1.ListPrebuildsResponse]
 	watchPrebuild             *connect_go.Client[v1.WatchPrebuildRequest, v1.WatchPrebuildResponse]
+	watchPrebuildLogs         *connect_go.Client[v1.WatchPrebuildLogsRequest, v1.WatchPrebuildLogsResponse]
 	listOrganizationPrebuilds *connect_go.Client[v1.ListOrganizationPrebuildsRequest, v1.ListOrganizationPrebuildsResponse]
 }
 
@@ -118,6 +125,11 @@ func (c *prebuildServiceClient) WatchPrebuild(ctx context.Context, req *connect_
 	return c.watchPrebuild.CallServerStream(ctx, req)
 }
 
+// WatchPrebuildLogs calls gitpod.v1.PrebuildService.WatchPrebuildLogs.
+func (c *prebuildServiceClient) WatchPrebuildLogs(ctx context.Context, req *connect_go.Request[v1.WatchPrebuildLogsRequest]) (*connect_go.ServerStreamForClient[v1.WatchPrebuildLogsResponse], error) {
+	return c.watchPrebuildLogs.CallServerStream(ctx, req)
+}
+
 // ListOrganizationPrebuilds calls gitpod.v1.PrebuildService.ListOrganizationPrebuilds.
 func (c *prebuildServiceClient) ListOrganizationPrebuilds(ctx context.Context, req *connect_go.Request[v1.ListOrganizationPrebuildsRequest]) (*connect_go.Response[v1.ListOrganizationPrebuildsResponse], error) {
 	return c.listOrganizationPrebuilds.CallUnary(ctx, req)
@@ -130,6 +142,7 @@ type PrebuildServiceHandler interface {
 	GetPrebuild(context.Context, *connect_go.Request[v1.GetPrebuildRequest]) (*connect_go.Response[v1.GetPrebuildResponse], error)
 	ListPrebuilds(context.Context, *connect_go.Request[v1.ListPrebuildsRequest]) (*connect_go.Response[v1.ListPrebuildsResponse], error)
 	WatchPrebuild(context.Context, *connect_go.Request[v1.WatchPrebuildRequest], *connect_go.ServerStream[v1.WatchPrebuildResponse]) error
+	WatchPrebuildLogs(context.Context, *connect_go.Request[v1.WatchPrebuildLogsRequest], *connect_go.ServerStream[v1.WatchPrebuildLogsResponse]) error
 	// ListOrganizationPrebuilds lists all prebuilds of an organization
 	ListOrganizationPrebuilds(context.Context, *connect_go.Request[v1.ListOrganizationPrebuildsRequest]) (*connect_go.Response[v1.ListOrganizationPrebuildsResponse], error)
 }
@@ -166,6 +179,11 @@ func NewPrebuildServiceHandler(svc PrebuildServiceHandler, opts ...connect_go.Ha
 		svc.WatchPrebuild,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.PrebuildService/WatchPrebuildLogs", connect_go.NewServerStreamHandler(
+		"/gitpod.v1.PrebuildService/WatchPrebuildLogs",
+		svc.WatchPrebuildLogs,
+		opts...,
+	))
 	mux.Handle("/gitpod.v1.PrebuildService/ListOrganizationPrebuilds", connect_go.NewUnaryHandler(
 		"/gitpod.v1.PrebuildService/ListOrganizationPrebuilds",
 		svc.ListOrganizationPrebuilds,
@@ -195,6 +213,10 @@ func (UnimplementedPrebuildServiceHandler) ListPrebuilds(context.Context, *conne
 
 func (UnimplementedPrebuildServiceHandler) WatchPrebuild(context.Context, *connect_go.Request[v1.WatchPrebuildRequest], *connect_go.ServerStream[v1.WatchPrebuildResponse]) error {
 	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.PrebuildService.WatchPrebuild is not implemented"))
+}
+
+func (UnimplementedPrebuildServiceHandler) WatchPrebuildLogs(context.Context, *connect_go.Request[v1.WatchPrebuildLogsRequest], *connect_go.ServerStream[v1.WatchPrebuildLogsResponse]) error {
+	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.PrebuildService.WatchPrebuildLogs is not implemented"))
 }
 
 func (UnimplementedPrebuildServiceHandler) ListOrganizationPrebuilds(context.Context, *connect_go.Request[v1.ListOrganizationPrebuildsRequest]) (*connect_go.Response[v1.ListOrganizationPrebuildsResponse], error) {

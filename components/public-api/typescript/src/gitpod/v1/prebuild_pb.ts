@@ -426,6 +426,80 @@ export class WatchPrebuildResponse extends Message<WatchPrebuildResponse> {
 }
 
 /**
+ * @generated from message gitpod.v1.WatchPrebuildLogsRequest
+ */
+export class WatchPrebuildLogsRequest extends Message<WatchPrebuildLogsRequest> {
+  /**
+   * @generated from field: string prebuild_id = 1;
+   */
+  prebuildId = "";
+
+  constructor(data?: PartialMessage<WatchPrebuildLogsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WatchPrebuildLogsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "prebuild_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WatchPrebuildLogsRequest {
+    return new WatchPrebuildLogsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WatchPrebuildLogsRequest {
+    return new WatchPrebuildLogsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WatchPrebuildLogsRequest {
+    return new WatchPrebuildLogsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WatchPrebuildLogsRequest | PlainMessage<WatchPrebuildLogsRequest> | undefined, b: WatchPrebuildLogsRequest | PlainMessage<WatchPrebuildLogsRequest> | undefined): boolean {
+    return proto3.util.equals(WatchPrebuildLogsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WatchPrebuildLogsResponse
+ */
+export class WatchPrebuildLogsResponse extends Message<WatchPrebuildLogsResponse> {
+  /**
+   * @generated from field: string message = 1;
+   */
+  message = "";
+
+  constructor(data?: PartialMessage<WatchPrebuildLogsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WatchPrebuildLogsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WatchPrebuildLogsResponse {
+    return new WatchPrebuildLogsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WatchPrebuildLogsResponse {
+    return new WatchPrebuildLogsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WatchPrebuildLogsResponse {
+    return new WatchPrebuildLogsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WatchPrebuildLogsResponse | PlainMessage<WatchPrebuildLogsResponse> | undefined, b: WatchPrebuildLogsResponse | PlainMessage<WatchPrebuildLogsResponse> | undefined): boolean {
+    return proto3.util.equals(WatchPrebuildLogsResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.ListOrganizationPrebuildsRequest
  */
 export class ListOrganizationPrebuildsRequest extends Message<ListOrganizationPrebuildsRequest> {

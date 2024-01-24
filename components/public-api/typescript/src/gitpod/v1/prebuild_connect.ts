@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CancelPrebuildRequest, CancelPrebuildResponse, GetPrebuildRequest, GetPrebuildResponse, ListOrganizationPrebuildsRequest, ListOrganizationPrebuildsResponse, ListPrebuildsRequest, ListPrebuildsResponse, StartPrebuildRequest, StartPrebuildResponse, WatchPrebuildRequest, WatchPrebuildResponse } from "./prebuild_pb.js";
+import { CancelPrebuildRequest, CancelPrebuildResponse, GetPrebuildRequest, GetPrebuildResponse, ListOrganizationPrebuildsRequest, ListOrganizationPrebuildsResponse, ListPrebuildsRequest, ListPrebuildsResponse, StartPrebuildRequest, StartPrebuildResponse, WatchPrebuildLogsRequest, WatchPrebuildLogsResponse, WatchPrebuildRequest, WatchPrebuildResponse } from "./prebuild_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -61,6 +61,15 @@ export const PrebuildService = {
       name: "WatchPrebuild",
       I: WatchPrebuildRequest,
       O: WatchPrebuildResponse,
+      kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * @generated from rpc gitpod.v1.PrebuildService.WatchPrebuildLogs
+     */
+    watchPrebuildLogs: {
+      name: "WatchPrebuildLogs",
+      I: WatchPrebuildLogsRequest,
+      O: WatchPrebuildLogsResponse,
       kind: MethodKind.ServerStreaming,
     },
     /**

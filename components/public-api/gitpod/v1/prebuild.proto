@@ -16,6 +16,8 @@ service PrebuildService {
   rpc ListPrebuilds(ListPrebuildsRequest) returns (ListPrebuildsResponse) {}
   rpc WatchPrebuild(WatchPrebuildRequest) returns (stream WatchPrebuildResponse) {}
 
+  rpc WatchPrebuildLogs(WatchPrebuildLogsRequest) returns (stream WatchPrebuildLogsResponse) {}
+
   // ListOrganizationPrebuilds lists all prebuilds of an organization
   rpc ListOrganizationPrebuilds(ListOrganizationPrebuildsRequest) returns (ListOrganizationPrebuildsResponse) {}
 }
@@ -62,6 +64,14 @@ message WatchPrebuildRequest {
 }
 message WatchPrebuildResponse {
   Prebuild prebuild = 1;
+}
+
+message WatchPrebuildLogsRequest {
+  string prebuild_id = 1;
+}
+
+message WatchPrebuildLogsResponse {
+  string message = 1;
 }
 
 message ListOrganizationPrebuildsRequest {

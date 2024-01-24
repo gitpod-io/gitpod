@@ -31,6 +31,7 @@ type PrebuildServiceClient interface {
 	GetPrebuild(ctx context.Context, in *GetPrebuildRequest, opts ...grpc.CallOption) (*GetPrebuildResponse, error)
 	ListPrebuilds(ctx context.Context, in *ListPrebuildsRequest, opts ...grpc.CallOption) (*ListPrebuildsResponse, error)
 	WatchPrebuild(ctx context.Context, in *WatchPrebuildRequest, opts ...grpc.CallOption) (PrebuildService_WatchPrebuildClient, error)
+	WatchPrebuildLogs(ctx context.Context, in *WatchPrebuildLogsRequest, opts ...grpc.CallOption) (PrebuildService_WatchPrebuildLogsClient, error)
 	// ListOrganizationPrebuilds lists all prebuilds of an organization
 	ListOrganizationPrebuilds(ctx context.Context, in *ListOrganizationPrebuildsRequest, opts ...grpc.CallOption) (*ListOrganizationPrebuildsResponse, error)
 }
@@ -111,6 +112,38 @@ func (x *prebuildServiceWatchPrebuildClient) Recv() (*WatchPrebuildResponse, err
 	return m, nil
 }
 
+func (c *prebuildServiceClient) WatchPrebuildLogs(ctx context.Context, in *WatchPrebuildLogsRequest, opts ...grpc.CallOption) (PrebuildService_WatchPrebuildLogsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &PrebuildService_ServiceDesc.Streams[1], "/gitpod.v1.PrebuildService/WatchPrebuildLogs", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &prebuildServiceWatchPrebuildLogsClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type PrebuildService_WatchPrebuildLogsClient interface {
+	Recv() (*WatchPrebuildLogsResponse, error)
+	grpc.ClientStream
+}
+
+type prebuildServiceWatchPrebuildLogsClient struct {
+	grpc.ClientStream
+}
+
+func (x *prebuildServiceWatchPrebuildLogsClient) Recv() (*WatchPrebuildLogsResponse, error) {
+	m := new(WatchPrebuildLogsResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *prebuildServiceClient) ListOrganizationPrebuilds(ctx context.Context, in *ListOrganizationPrebuildsRequest, opts ...grpc.CallOption) (*ListOrganizationPrebuildsResponse, error) {
 	out := new(ListOrganizationPrebuildsResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.v1.PrebuildService/ListOrganizationPrebuilds", in, out, opts...)
@@ -129,6 +162,7 @@ type PrebuildServiceServer interface {
 	GetPrebuild(context.Context, *GetPrebuildRequest) (*GetPrebuildResponse, error)
 	ListPrebuilds(context.Context, *ListPrebuildsRequest) (*ListPrebuildsResponse, error)
 	WatchPrebuild(*WatchPrebuildRequest, PrebuildService_WatchPrebuildServer) error
+	WatchPrebuildLogs(*WatchPrebuildLogsRequest, PrebuildService_WatchPrebuildLogsServer) error
 	// ListOrganizationPrebuilds lists all prebuilds of an organization
 	ListOrganizationPrebuilds(context.Context, *ListOrganizationPrebuildsRequest) (*ListOrganizationPrebuildsResponse, error)
 	mustEmbedUnimplementedPrebuildServiceServer()
@@ -152,6 +186,9 @@ func (UnimplementedPrebuildServiceServer) ListPrebuilds(context.Context, *ListPr
 }
 func (UnimplementedPrebuildServiceServer) WatchPrebuild(*WatchPrebuildRequest, PrebuildService_WatchPrebuildServer) error {
 	return status.Errorf(codes.Unimplemented, "method WatchPrebuild not implemented")
+}
+func (UnimplementedPrebuildServiceServer) WatchPrebuildLogs(*WatchPrebuildLogsRequest, PrebuildService_WatchPrebuildLogsServer) error {
+	return status.Errorf(codes.Unimplemented, "method WatchPrebuildLogs not implemented")
 }
 func (UnimplementedPrebuildServiceServer) ListOrganizationPrebuilds(context.Context, *ListOrganizationPrebuildsRequest) (*ListOrganizationPrebuildsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListOrganizationPrebuilds not implemented")
@@ -262,6 +299,27 @@ func (x *prebuildServiceWatchPrebuildServer) Send(m *WatchPrebuildResponse) erro
 	return x.ServerStream.SendMsg(m)
 }
 
+func _PrebuildService_WatchPrebuildLogs_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchPrebuildLogsRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(PrebuildServiceServer).WatchPrebuildLogs(m, &prebuildServiceWatchPrebuildLogsServer{stream})
+}
+
+type PrebuildService_WatchPrebuildLogsServer interface {
+	Send(*WatchPrebuildLogsResponse) error
+	grpc.ServerStream
+}
+
+type prebuildServiceWatchPrebuildLogsServer struct {
+	grpc.ServerStream
+}
+
+func (x *prebuildServiceWatchPrebuildLogsServer) Send(m *WatchPrebuildLogsResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 func _PrebuildService_ListOrganizationPrebuilds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListOrganizationPrebuildsRequest)
 	if err := dec(in); err != nil {
@@ -312,6 +370,11 @@ var PrebuildService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "WatchPrebuild",
 			Handler:       _PrebuildService_WatchPrebuild_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "WatchPrebuildLogs",
+			Handler:       _PrebuildService_WatchPrebuildLogs_Handler,
 			ServerStreams: true,
 		},
 	},
