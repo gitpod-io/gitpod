@@ -148,6 +148,6 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
     async listOrganizationPrebuilds(
         request: PartialMessage<ListOrganizationPrebuildsRequest>,
     ): Promise<ListOrganizationPrebuildsResponse> {
-        throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Not implemented (for jrpc)");
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "Not implemented (for jrpc)");
     }
 }
