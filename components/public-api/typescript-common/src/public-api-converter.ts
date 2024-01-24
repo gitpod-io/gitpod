@@ -95,7 +95,9 @@ import { ContextURL } from "@gitpod/gitpod-protocol/lib/context-url";
 import {
     Prebuild,
     PrebuildStatus,
-    PrebuildPhase, PrebuildPhase_Phase} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+    PrebuildPhase,
+    PrebuildPhase_Phase,
+} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
 import {
@@ -594,6 +596,9 @@ export class PublicAPIConverter {
             if (reason.code === ErrorCodes.PERMISSION_DENIED) {
                 return new ConnectError(reason.message, Code.PermissionDenied, undefined, undefined, reason);
             }
+            if (reason.code === ErrorCodes.UNIMPLEMENTED) {
+                return new ConnectError(reason.message, Code.Unimplemented, undefined, undefined, reason);
+            }
             if (reason.code === ErrorCodes.CONFLICT) {
                 return new ConnectError(reason.message, Code.AlreadyExists, undefined, undefined, reason);
             }
@@ -668,6 +673,9 @@ export class PublicAPIConverter {
                     return new ApplicationError(ErrorCodes.TOO_MANY_RUNNING_WORKSPACES, reason.rawMessage);
             }
             return new ApplicationError(ErrorCodes.PRECONDITION_FAILED, reason.rawMessage);
+        }
+        if (reason.code === Code.Unimplemented) {
+            return new ApplicationError(ErrorCodes.UNIMPLEMENTED, reason.rawMessage);
         }
         if (reason.code === Code.ResourceExhausted) {
             return new ApplicationError(ErrorCodes.TOO_MANY_REQUESTS, reason.rawMessage);
@@ -1139,7 +1147,7 @@ export class PublicAPIConverter {
         return PrebuildPhase_Phase.UNSPECIFIED;
     }
 
-    fromPrebuildPhase (status: PrebuildPhase_Phase): PrebuiltWorkspaceState | undefined {
+    fromPrebuildPhase(status: PrebuildPhase_Phase): PrebuiltWorkspaceState | undefined {
         switch (status) {
             case PrebuildPhase_Phase.QUEUED:
                 return "queued";
