@@ -20,12 +20,16 @@ import {
     CancelPrebuildResponse,
     ListOrganizationPrebuildsRequest,
     ListOrganizationPrebuildsResponse,
+    WatchPrebuildLogsRequest,
+    WatchPrebuildLogsResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { getGitpodService } from "./service";
 import { converter } from "./public-api";
 import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { validate as uuidValidate } from "uuid";
+import { watchPrebuildLogs } from "@gitpod/public-api-common/lib/prebuild-utils";
 
 export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildService> {
     async startPrebuild(
@@ -142,6 +146,51 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
             if (prebuild) {
                 yield new WatchPrebuildResponse({ prebuild });
             }
+        }
+    }
+
+    async *watchPrebuildLogs(
+        request: PartialMessage<WatchPrebuildLogsRequest>,
+        options?: CallOptions | undefined,
+    ): AsyncIterable<WatchPrebuildLogsResponse> {
+        if (!request.prebuildId || !uuidValidate(request.prebuildId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "prebuildId is required");
+        }
+        const prebuild = await this.getPrebuild({ prebuildId: request.prebuildId });
+        if (!prebuild.prebuild?.workspaceId) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "no build workspace found");
+        }
+        const workspace = await getGitpodService().server.getWorkspace(prebuild.prebuild.workspaceId);
+        if (!workspace.latestInstance?.id) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "no build workspace found");
+        }
+        const logSources = await getGitpodService().server.getHeadlessLog(workspace.latestInstance.id);
+        // TODO: Only listening on first stream for now
+        const firstStreamUrl = Object.values(logSources.streams)[0];
+
+        const it = generateAsyncGenerator<string>(
+            (sink) => {
+                try {
+                    const cancel = watchPrebuildLogs(firstStreamUrl, (msg) => {
+                        sink.push(msg);
+                    });
+                    return () => {
+                        cancel();
+                    };
+                } catch (e) {
+                    if (e instanceof Error) {
+                        sink.fail(e);
+                        return;
+                    } else {
+                        sink.fail(new Error(String(e) || "unknown"));
+                    }
+                }
+            },
+            { signal: options?.signal ?? new AbortSignal() },
+        );
+
+        for await (const message of it) {
+            yield new WatchPrebuildLogsResponse({ message });
         }
     }
 

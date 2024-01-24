@@ -6,6 +6,7 @@
 
 import { ServiceImpl } from "@connectrpc/connect";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
+import { watchPrebuildLogs } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { PrebuildService as PrebuildServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/prebuild_connect";
 import {
     GetPrebuildRequest,
@@ -20,6 +21,8 @@ import {
     WatchPrebuildResponse,
     ListOrganizationPrebuildsRequest,
     ListOrganizationPrebuildsResponse,
+    WatchPrebuildLogsRequest,
+    WatchPrebuildLogsResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { inject, injectable } from "inversify";
 import { ProjectsService } from "../projects/projects-service";
@@ -30,11 +33,18 @@ import { ctxSignal, ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
+import { WorkspaceService } from "../workspace/workspace-service";
+import { HEADLESS_LOG_DOWNLOAD_PATH_PREFIX, HEADLESS_LOGS_PATH_PREFIX } from "../workspace/headless-log-service";
+import { HEADLESS_LOG_STREAM_STATUS_CODE } from "@gitpod/gitpod-protocol";
+import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 
 @injectable()
 export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInterface> {
     @inject(ProjectsService)
     private readonly projectService: ProjectsService;
+
+    @inject(WorkspaceService)
+    private readonly workspaceService: WorkspaceService;
 
     @inject(PrebuildManager)
     private readonly prebuildManager: PrebuildManager;
@@ -139,6 +149,96 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             if (prebuild) {
                 yield new WatchPrebuildResponse({ prebuild });
             }
+        }
+    }
+
+    private parsePrebuildLogUrl(url: string) {
+        // url of completed prebuild workspaces
+        const downloadRegex = new RegExp(`${HEADLESS_LOG_DOWNLOAD_PATH_PREFIX}\/(?<instanceId>.*?)\/(?<taskId>.*?)$`);
+        if (downloadRegex.test(url)) {
+            const info = downloadRegex.exec(url)!.groups!;
+            return { type: "completed" as const, instanceId: info.instanceId, taskId: info.taskId };
+        }
+        // url of running prebuild workspaces
+        const runningRegex = new RegExp(`${HEADLESS_LOGS_PATH_PREFIX}\/(?<instanceId>.*?)\/(?<terminalId>.*?)$`);
+        if (runningRegex.test(url)) {
+            const info = runningRegex.exec(url)!.groups!;
+            return { type: "running" as const, instanceId: info.instanceId, terminalId: info.terminalId };
+        }
+    }
+
+    async *watchPrebuildLogs(request: WatchPrebuildLogsRequest): AsyncIterable<WatchPrebuildLogsResponse> {
+        if (!uuidValidate(request.prebuildId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "prebuildId is required");
+        }
+        const userId = ctxUserId();
+
+        const result = await this.prebuildManager.getPrebuild({}, userId, request.prebuildId);
+        if (!result?.info.buildWorkspaceId) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "no build workspace found");
+        }
+        const wsInfo = await this.workspaceService.getWorkspace(userId, result.info.buildWorkspaceId);
+        if (!wsInfo.latestInstance?.id) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "no build workspace found");
+        }
+
+        const urls = await this.workspaceService.getHeadlessLog(userId, wsInfo.latestInstance?.id, async () => {});
+        // TODO: Only listening on first stream for now
+        const firstUrl = Object.values(urls.streams)[0];
+        if (!firstUrl) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "no logs found");
+        }
+
+        const info = this.parsePrebuildLogUrl(firstUrl);
+        if (!info) {
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "cannot parse prebuild log info");
+        }
+        const downloadUrl =
+            info.type === "completed"
+                ? await this.workspaceService.getHeadlessLogDownloadUrl(userId, info.instanceId, info.taskId)
+                : undefined;
+
+        const it = generateAsyncGenerator<string>(
+            (sink) => {
+                try {
+                    if (info.type === "running") {
+                        this.workspaceService
+                            .streamWorkspaceLogs(userId, info.instanceId, info.terminalId, async (msg) =>
+                                sink.push(msg),
+                            )
+                            .then(() => {
+                                sink.push(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
+                            })
+                            .catch((err) => {
+                                console.debug("error streaming running headless logs", err);
+                                sink.push(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 500`);
+                            });
+                        return () => {};
+                    } else {
+                        if (!downloadUrl) {
+                            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "cannot fetch prebuild log");
+                        }
+                        const cancel = watchPrebuildLogs(downloadUrl, (msg: string) => sink.push(msg), false);
+                        return () => {
+                            cancel();
+                        };
+                    }
+                } catch (e) {
+                    if (e instanceof Error) {
+                        sink.fail(e);
+                        return;
+                    } else {
+                        sink.fail(new Error(String(e) || "unknown"));
+                    }
+                }
+            },
+            { signal: ctxSignal() },
+        );
+
+        for await (const message of it) {
+            yield new WatchPrebuildLogsResponse({
+                message,
+            });
         }
     }
 
