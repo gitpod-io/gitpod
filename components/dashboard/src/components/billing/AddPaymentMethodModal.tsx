@@ -101,7 +101,7 @@ function AddPaymentMethodForm({ attributionId }: { attributionId: string }) {
                     release in order to verify your payment method.
                 </Alert>
                 <PaymentElement id="payment-element" />
-                <AddressElement id="address-element" options={{ mode: "billing" }} />
+                <AddressElement id="address-element" options={{ mode: "billing", display: { name: "organization" } }} />
             </ModalBody>
             <ModalFooter
                 className="justify-between"
