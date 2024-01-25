@@ -229,11 +229,14 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
                                             sink.push(msg),
                                         )
                                         .then(() => {
-                                            sink.push(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
+                                            sink.stop();
                                         })
                                         .catch((err) => {
                                             console.debug("error streaming running headless logs", err);
-                                            sink.push(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 500`);
+                                            throw new ApplicationError(
+                                                ErrorCodes.INTERNAL_SERVER_ERROR,
+                                                "error streaming running headless logs",
+                                            );
                                         });
                                     return () => {};
                                 } else {
