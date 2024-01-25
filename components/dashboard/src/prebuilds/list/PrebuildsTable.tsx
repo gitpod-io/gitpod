@@ -15,18 +15,24 @@ import { cn } from "@podkit/lib/cn";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
 import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { STATUS_FILTER_VALUES } from "./PrebuildsList";
+
+export type Filter = {
+    status?: STATUS_FILTER_VALUES;
+};
 
 type Props = {
     prebuilds: Prebuild[];
     searchTerm: string;
+    filter?: Filter;
     hasNextPage: boolean;
     hasMoreThanOnePage: boolean;
     isSearching: boolean;
     isFetchingNextPage: boolean;
     onSearchTermChange: (val: string) => void;
+    onFilterChange: (val: Filter) => void;
     onLoadNextPage: () => void;
 };
-
 export const PrebuildsTable: FC<Props> = ({
     searchTerm,
     prebuilds,
@@ -34,7 +40,9 @@ export const PrebuildsTable: FC<Props> = ({
     hasMoreThanOnePage,
     isSearching,
     isFetchingNextPage,
+    filter,
     onSearchTermChange,
+    onFilterChange,
     onLoadNextPage,
 }) => {
     return (
@@ -44,21 +52,28 @@ export const PrebuildsTable: FC<Props> = ({
                 <div className="flex flex-row flex-wrap gap-2 items-center w-full md:w-auto">
                     {/* TODO: Add search icon on left - need to revisit TextInputs for podkit - and remove global styles */}
                     <TextInput
-                        className="w-full max-w-none md:w-80"
+                        className="w-full max-w-none md:w-60 border-pk-border-base border"
                         value={searchTerm}
-                        type="search"
                         onChange={onSearchTermChange}
                         placeholder="Search prebuilds"
                     />
-                    {/* todo: add filtering logic */}
-                    <Select>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Prebuild status: Any" />
+                    <Select
+                        value={filter?.status}
+                        onValueChange={(status) => {
+                            if (status === "any") {
+                                onFilterChange({ status: undefined });
+                                return;
+                            }
+                            onFilterChange({ status: status as STATUS_FILTER_VALUES });
+                        }}
+                    >
+                        <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Status" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Any status</SelectItem>
-                            <SelectItem value="failing">Failing</SelectItem>
-                            <SelectItem value="succeeding">Succeeding</SelectItem>
+                            <SelectItem value="any">Any</SelectItem>
+                            <SelectItem value="failed">Failed</SelectItem>
+                            <SelectItem value="succeeded">Succeeded</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
