@@ -960,6 +960,30 @@ export class WorkspaceService {
         }
     }
 
+    public getWorkspaceImageBuildLogsIterator(userId: string, workspaceId: string, opts: { signal: AbortSignal }) {
+        return generateAsyncGenerator<string>((sink) => {
+            this.watchWorkspaceImageBuildLogs(userId, workspaceId, {
+                onWorkspaceImageBuildLogs: (_info, content) => {
+                    if (content?.text) {
+                        sink.push(content.text);
+                    }
+                },
+            })
+                .then(() => {
+                    sink.stop();
+                })
+                .catch((err) => {
+                    if (err instanceof Error) {
+                        sink.fail(err);
+                        return;
+                    } else {
+                        sink.fail(new Error(String(err) || "unknown"));
+                    }
+                });
+            return () => {};
+        }, opts);
+    }
+
     public async sendHeartBeat(
         userId: string,
         options: GitpodServer.SendHeartBeatOptions,

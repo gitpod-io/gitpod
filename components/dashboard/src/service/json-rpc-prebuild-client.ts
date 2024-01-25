@@ -30,8 +30,12 @@ import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-asy
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { validate as uuidValidate } from "uuid";
 import { watchPrebuildLogs } from "@gitpod/public-api-common/lib/prebuild-utils";
+import { JsonRpcWorkspaceClient } from "./json-rpc-workspace-client";
+import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildService> {
+    constructor(private workspaceClient: JsonRpcWorkspaceClient) {}
+
     async startPrebuild(
         request: PartialMessage<StartPrebuildRequest>,
         options?: CallOptions,
@@ -149,6 +153,34 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
         }
     }
 
+    private getWorkspaceImageBuildLogsIterator(signal: AbortSignal) {
+        return generateAsyncGenerator<string>(
+            (sink) => {
+                try {
+                    const dispose = getGitpodService().registerClient({
+                        onWorkspaceImageBuildLogs: (info, content) => {
+                            if (!content?.text) {
+                                return;
+                            }
+                            sink.push(content.text);
+                        },
+                    });
+                    return () => {
+                        dispose.dispose();
+                    };
+                } catch (err) {
+                    if (err instanceof Error) {
+                        sink.fail(err);
+                        return;
+                    } else {
+                        sink.fail(new Error(String(err) || "unknown"));
+                    }
+                }
+            },
+            { signal },
+        );
+    }
+
     async *watchPrebuildLogs(
         request: PartialMessage<WatchPrebuildLogsRequest>,
         options?: CallOptions | undefined,
@@ -160,37 +192,75 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
         if (!prebuild.prebuild?.workspaceId) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "no build workspace found");
         }
-        const workspace = await getGitpodService().server.getWorkspace(prebuild.prebuild.workspaceId);
-        if (!workspace.latestInstance?.id) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "no build workspace found");
-        }
-        const logSources = await getGitpodService().server.getHeadlessLog(workspace.latestInstance.id);
-        // TODO: Only listening on first stream for now
-        const firstStreamUrl = Object.values(logSources.streams)[0];
-
-        const it = generateAsyncGenerator<string>(
-            (sink) => {
-                try {
-                    const cancel = watchPrebuildLogs(firstStreamUrl, (msg) => {
-                        sink.push(msg);
-                    });
-                    return () => {
-                        cancel();
-                    };
-                } catch (e) {
-                    if (e instanceof Error) {
-                        sink.fail(e);
-                        return;
-                    } else {
-                        sink.fail(new Error(String(e) || "unknown"));
-                    }
-                }
-            },
-            { signal: options?.signal ?? new AbortSignal() },
+        const wsInfoIt = this.workspaceClient.watchWorkspaceStatus(
+            { workspaceId: prebuild.prebuild.workspaceId },
+            options,
         );
+        let hasImageBuild = false;
+        for await (const wsInfo of wsInfoIt) {
+            switch (wsInfo.status?.phase?.name) {
+                case WorkspacePhase_Phase.IMAGEBUILD: {
+                    if (hasImageBuild) {
+                        break;
+                    }
+                    hasImageBuild = true;
+                    const imageBuildControl = new AbortController();
+                    if (options?.signal) {
+                        options.signal.onabort = () => {
+                            imageBuildControl.abort("parent signal is aborted");
+                        };
+                    }
+                    getGitpodService()
+                        .server.watchWorkspaceImageBuildLogs(prebuild.prebuild.workspaceId)
+                        .then(() => {
+                            imageBuildControl.abort("watch image build finished");
+                        });
+                    const it = this.getWorkspaceImageBuildLogsIterator(imageBuildControl.signal);
+                    for await (const message of it) {
+                        yield new WatchPrebuildLogsResponse({ message });
+                    }
+                    break;
+                }
+                case WorkspacePhase_Phase.RUNNING:
+                case WorkspacePhase_Phase.STOPPED: {
+                    const logSources = await getGitpodService().server.getHeadlessLog(wsInfo.status.instanceId);
+                    // TODO: Only listening on first stream for now
+                    const firstStreamUrl = Object.values(logSources.streams)[0];
+                    if (!firstStreamUrl) {
+                        throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "cannot fetch prebuild log");
+                    }
+                    const it = generateAsyncGenerator<string>(
+                        (sink) => {
+                            try {
+                                const cancel = watchPrebuildLogs(firstStreamUrl, (msg) => {
+                                    sink.push(msg);
+                                });
+                                return () => {
+                                    cancel();
+                                };
+                            } catch (e) {
+                                if (e instanceof Error) {
+                                    sink.fail(e);
+                                    return;
+                                } else {
+                                    sink.fail(new Error(String(e) || "unknown"));
+                                }
+                            }
+                        },
+                        { signal: options?.signal ?? new AbortSignal() },
+                    );
 
-        for await (const message of it) {
-            yield new WatchPrebuildLogsResponse({ message });
+                    for await (const message of it) {
+                        yield new WatchPrebuildLogsResponse({ message });
+                    }
+                    // we don't care the case phase updates from `running` to `stopped` because their logs are the same
+                    // this may cause some logs lost, but better than duplicate?
+                    return;
+                }
+                case WorkspacePhase_Phase.INTERRUPTED: {
+                    return;
+                }
+            }
         }
     }
 

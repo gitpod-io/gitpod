@@ -177,68 +177,109 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
         if (!result?.info.buildWorkspaceId) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "no build workspace found");
         }
-        const wsInfo = await this.workspaceService.getWorkspace(userId, result.info.buildWorkspaceId);
-        if (!wsInfo.latestInstance?.id) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "no build workspace found");
-        }
 
-        const urls = await this.workspaceService.getHeadlessLog(userId, wsInfo.latestInstance?.id, async () => {});
-        // TODO: Only listening on first stream for now
-        const firstUrl = Object.values(urls.streams)[0];
-        if (!firstUrl) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "no logs found");
-        }
-
-        const info = this.parsePrebuildLogUrl(firstUrl);
-        if (!info) {
-            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "cannot parse prebuild log info");
-        }
-        const downloadUrl =
-            info.type === "completed"
-                ? await this.workspaceService.getHeadlessLogDownloadUrl(userId, info.instanceId, info.taskId)
-                : undefined;
-
-        const it = generateAsyncGenerator<string>(
-            (sink) => {
-                try {
-                    if (info.type === "running") {
-                        this.workspaceService
-                            .streamWorkspaceLogs(userId, info.instanceId, info.terminalId, async (msg) =>
-                                sink.push(msg),
-                            )
-                            .then(() => {
-                                sink.push(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
-                            })
-                            .catch((err) => {
-                                console.debug("error streaming running headless logs", err);
-                                sink.push(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 500`);
-                            });
-                        return () => {};
-                    } else {
-                        if (!downloadUrl) {
-                            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "cannot fetch prebuild log");
+        const workspaceStatusIt = this.workspaceService.watchWorkspaceStatus(userId, { signal: ctxSignal() });
+        let hasImageBuild = false;
+        for await (const itWsInfo of workspaceStatusIt) {
+            switch (itWsInfo.status.phase) {
+                case "building": {
+                    if (!hasImageBuild) {
+                        hasImageBuild = true;
+                        const imageBuildIt = this.workspaceService.getWorkspaceImageBuildLogsIterator(
+                            userId,
+                            itWsInfo.workspaceId,
+                            {
+                                signal: ctxSignal(),
+                            },
+                        );
+                        for await (const message of imageBuildIt) {
+                            yield new WatchPrebuildLogsResponse({ message });
                         }
-                        const cancel = watchPrebuildLogs(downloadUrl, (msg: string) => sink.push(msg), false);
-                        return () => {
-                            cancel();
-                        };
                     }
-                } catch (e) {
-                    if (e instanceof Error) {
-                        sink.fail(e);
-                        return;
-                    } else {
-                        sink.fail(new Error(String(e) || "unknown"));
-                    }
+                    break;
                 }
-            },
-            { signal: ctxSignal() },
-        );
+                case "running":
+                case "stopped": {
+                    const urls = await this.workspaceService.getHeadlessLog(userId, itWsInfo.id, async () => {});
+                    // TODO: Only listening on first stream for now
+                    const firstUrl = Object.values(urls.streams)[0];
+                    if (!firstUrl) {
+                        throw new ApplicationError(ErrorCodes.NOT_FOUND, "no logs found");
+                    }
 
-        for await (const message of it) {
-            yield new WatchPrebuildLogsResponse({
-                message,
-            });
+                    const info = this.parsePrebuildLogUrl(firstUrl);
+                    if (!info) {
+                        throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "cannot parse prebuild log info");
+                    }
+                    const downloadUrl =
+                        info.type === "completed"
+                            ? await this.workspaceService.getHeadlessLogDownloadUrl(
+                                  userId,
+                                  info.instanceId,
+                                  info.taskId,
+                              )
+                            : undefined;
+
+                    const it = generateAsyncGenerator<string>(
+                        (sink) => {
+                            try {
+                                if (info.type === "running") {
+                                    this.workspaceService
+                                        .streamWorkspaceLogs(userId, info.instanceId, info.terminalId, async (msg) =>
+                                            sink.push(msg),
+                                        )
+                                        .then(() => {
+                                            sink.push(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
+                                        })
+                                        .catch((err) => {
+                                            console.debug("error streaming running headless logs", err);
+                                            sink.push(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 500`);
+                                        });
+                                    return () => {};
+                                } else {
+                                    if (!downloadUrl) {
+                                        throw new ApplicationError(
+                                            ErrorCodes.PRECONDITION_FAILED,
+                                            "cannot fetch prebuild log",
+                                        );
+                                    }
+                                    const cancel = watchPrebuildLogs(
+                                        downloadUrl,
+                                        (msg: string) => sink.push(msg),
+                                        false,
+                                    );
+                                    return () => {
+                                        cancel();
+                                    };
+                                }
+                            } catch (e) {
+                                if (e instanceof Error) {
+                                    sink.fail(e);
+                                    return;
+                                } else {
+                                    sink.fail(new Error(String(e) || "unknown"));
+                                }
+                            }
+                        },
+                        { signal: ctxSignal() },
+                    );
+
+                    for await (const message of it) {
+                        yield new WatchPrebuildLogsResponse({
+                            message,
+                        });
+                    }
+                    // we don't care the case phase updates from `running` to `stopped` because their logs are the same
+                    // this may cause some logs lost, but better than duplicate?
+                    return;
+                }
+                case "interrupted": {
+                    return;
+                }
+                default: {
+                    break;
+                }
+            }
         }
     }
 

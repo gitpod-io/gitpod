@@ -70,7 +70,7 @@ export const organizationClient = createServiceClient(OrganizationService, {
 // No jsonrcp client for the configuration service as it's only used in new UI of the dashboard
 export const configurationClient = createServiceClient(ConfigurationService);
 export const prebuildClient = createServiceClient(PrebuildService, {
-    client: new JsonRpcPrebuildClient(),
+    client: new JsonRpcPrebuildClient(workspaceClient),
     featureFlagSuffix: "prebuild",
 });
 
