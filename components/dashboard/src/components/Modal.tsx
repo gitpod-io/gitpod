@@ -88,11 +88,12 @@ export const Modal: FC<Props> = ({
                         onClickOutside={handleClickOutside}
                         onEscapeKey={handleEscape}
                         focusLock={!disableFocusLock}
+                        className="relative max-h-[100%] w-full"
                     >
                         {/* Visible Modal */}
                         <div
                             className={cn(
-                                "pointer-events-auto relative flex max-h-[100%] w-full flex-col overflow-hidden",
+                                "pointer-events-auto max-h-[100%] w-full flex-col overflow-hidden",
                                 "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 outline-none",
                                 "p-6 text-left",
                                 "filter drop-shadow-xl",
