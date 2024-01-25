@@ -5,36 +5,27 @@
  */
 
 import EventEmitter from "events";
-import { WatchPrebuildLogsResponse } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { prebuildClient, stream } from "../../service/public-api";
+import { prebuildClient } from "../../service/public-api";
 import { useEffect, useState } from "react";
 
-export function usePrebuildLogsEmitter(prebuildId: string, onError?: (err: Error) => void) {
+export function usePrebuildLogsEmitter(prebuildId: string) {
     const [emitter] = useState(new EventEmitter());
-    const [error, setError] = useState<Error | undefined>(undefined);
     useEffect(() => {
-        const disposable = stream<WatchPrebuildLogsResponse>(
-            (options) => prebuildClient.watchPrebuildLogs({ prebuildId }, options),
-            (response: WatchPrebuildLogsResponse) => {
-                console.log(">>>>>>>>>>>>", response.message);
-                emitter.emit("logs", response.message);
-            },
-            (err) => {
-                if (!err) {
-                    return;
-                }
-                disposable?.dispose();
-                if (err.message === error?.message) {
-                    return;
-                }
-                setError(err);
-                emitter.emit("error", err);
-            },
-        );
-
-        return () => {
-            disposable.dispose();
+        const controller = new AbortController();
+        const watch = async () => {
+            const it = prebuildClient.watchPrebuildLogs({ prebuildId }, { signal: controller.signal });
+            for await (const dta of it) {
+                emitter.emit("logs", dta.message);
+            }
         };
-    }, [prebuildId, emitter, onError, error]);
+        watch()
+            .then(() => {})
+            .catch((err) => {
+                emitter.emit("error", err);
+            });
+        return () => {
+            controller.abort();
+        };
+    }, [prebuildId, emitter]);
     return { emitter };
 }
