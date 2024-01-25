@@ -36,6 +36,7 @@ import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_
 import { WorkspaceService } from "../workspace/workspace-service";
 import { HEADLESS_LOG_DOWNLOAD_PATH_PREFIX, HEADLESS_LOGS_PATH_PREFIX } from "../workspace/headless-log-service";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
+import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 @injectable()
 export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInterface> {
@@ -177,11 +178,15 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "no build workspace found");
         }
 
-        const workspaceStatusIt = this.workspaceService.watchWorkspaceStatus(userId, { signal: ctxSignal() });
+        const workspaceStatusIt = this.workspaceService.getAndWatchWorkspaceStatus(
+            userId,
+            result.info.buildWorkspaceId,
+            { signal: ctxSignal() },
+        );
         let hasImageBuild = false;
         for await (const itWsInfo of workspaceStatusIt) {
-            switch (itWsInfo.status.phase) {
-                case "building": {
+            switch (itWsInfo.status?.phase?.name) {
+                case WorkspacePhase_Phase.IMAGEBUILD: {
                     if (!hasImageBuild) {
                         hasImageBuild = true;
                         const imageBuildIt = this.workspaceService.getWorkspaceImageBuildLogsIterator(
@@ -197,9 +202,13 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
                     }
                     break;
                 }
-                case "running":
-                case "stopped": {
-                    const urls = await this.workspaceService.getHeadlessLog(userId, itWsInfo.id, async () => {});
+                case WorkspacePhase_Phase.RUNNING:
+                case WorkspacePhase_Phase.STOPPED: {
+                    const urls = await this.workspaceService.getHeadlessLog(
+                        userId,
+                        itWsInfo.status.instanceId,
+                        async () => {},
+                    );
                     // TODO: Only listening on first stream for now
                     const firstUrl = Object.values(urls.streams)[0];
                     if (!firstUrl) {
@@ -275,7 +284,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
                     // this may cause some logs lost, but better than duplicate?
                     return;
                 }
-                case "interrupted": {
+                case WorkspacePhase_Phase.INTERRUPTED: {
                     return;
                 }
                 default: {
