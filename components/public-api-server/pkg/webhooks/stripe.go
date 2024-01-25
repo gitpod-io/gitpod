@@ -119,14 +119,8 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		previousAttributes, ok := event.Data.Object["previous_attributes"].(map[string]interface{})
-		if !ok {
-			logger.Error("Failed to find previousAttributes from Stripe webhook.")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
 
-		if _, ok := previousAttributes["address"]; ok {
+		if _, ok := event.Data.PreviousAttributes["address"]; ok {
 			logger.Infof("Customer with ID %s address updated", customerID)
 
 			err = h.billingService.UpdateCustomerSubscriptionsTaxState(req.Context(), customerID)
