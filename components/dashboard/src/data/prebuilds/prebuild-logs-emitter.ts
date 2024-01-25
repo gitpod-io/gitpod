@@ -16,21 +16,25 @@ export function usePrebuildLogsEmitter(prebuildId: string, onError?: (err: Error
         const disposable = stream<WatchPrebuildLogsResponse>(
             (options) => prebuildClient.watchPrebuildLogs({ prebuildId }, options),
             (response: WatchPrebuildLogsResponse) => {
+                console.log(">>>>>>>>>>>>", response.message);
                 emitter.emit("logs", response.message);
             },
             (err) => {
                 if (!err) {
                     return;
                 }
-                onError?.(err);
-                setError(err);
                 disposable.dispose();
+                if (err.message === error?.message) {
+                    return;
+                }
+                setError(err);
+                emitter.emit("error", err);
             },
         );
 
         return () => {
             disposable.dispose();
         };
-    }, [prebuildId, emitter, onError]);
-    return { emitter, error };
+    }, [prebuildId, emitter, onError, error]);
+    return { emitter };
 }

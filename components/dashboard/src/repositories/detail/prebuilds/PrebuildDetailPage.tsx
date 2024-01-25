@@ -8,7 +8,7 @@ import { Timestamp } from "@bufbuild/protobuf";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Button } from "@podkit/buttons/Button";
-import { FC, Suspense, useMemo } from "react";
+import { FC, Suspense, useEffect, useMemo } from "react";
 import { useParams } from "react-router";
 import { useConfiguration } from "../../../data/configurations/configuration-queries";
 import { AlertTriangleIcon, CheckCircle2Icon, CircleSlash2Icon, Loader2Icon } from "lucide-react";
@@ -30,9 +30,13 @@ export const PrebuildDetailPage: FC = () => {
     const { data: repository } = useConfiguration(repositoryId);
     const { toast } = useToast();
 
-    const { emitter: logEmitter } = usePrebuildLogsEmitter(prebuildId, (err) => {
-        toast("Failed to watch prebuild logs: " + err.message);
-    });
+    const { emitter: logEmitter } = usePrebuildLogsEmitter(prebuildId);
+
+    useEffect(() => {
+        logEmitter.on("error", (err: Error) => {
+            toast("Failed to fetch logs: " + err.message);
+        });
+    }, [logEmitter, toast]);
 
     const prebuild = useMemo<Prebuild>(() => {
         return new Prebuild({
