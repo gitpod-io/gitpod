@@ -22,7 +22,7 @@ import {
     StartPrebuildResponse,
     WatchPrebuildRequest,
     WatchPrebuildResponse,
-} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+} from "./prebuild_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
