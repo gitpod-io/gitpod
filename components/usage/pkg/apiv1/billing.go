@@ -296,6 +296,37 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 	}, nil
 }
 
+func (s *BillingService) UpdateCustomerSubscriptionsTaxState(ctx context.Context, req *v1.UpdateCustomerSubscriptionsTaxStateRequest) (*v1.UpdateCustomerSubscriptionsTaxStateResponse, error) {
+	if req.GetCustomerId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Missing CustomerID")
+	}
+
+	stripeCustomer, err := s.stripeClient.GetCustomer(ctx, req.GetCustomerId())
+	if err != nil {
+		log.WithError(err).Error("Failed to retrieve customer from Stripe.")
+		return nil, status.Errorf(codes.NotFound, "Failed to get customer with ID %s: %s", req.GetCustomerId(), err.Error())
+	}
+
+	var isAutomaticTaxSupported bool
+	if stripeCustomer.Tax != nil {
+		isAutomaticTaxSupported = stripeCustomer.Tax.AutomaticTax == "supported"
+	}
+	if !isAutomaticTaxSupported {
+		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
+	}
+
+	for _, subscription := range stripeCustomer.Subscriptions.Data {
+		if subscription.Status != "canceled" && subscription.AutomaticTax.Enabled != isAutomaticTaxSupported {
+			_, err := s.stripeClient.UpdateSubscriptionAutomaticTax(ctx, subscription.ID, isAutomaticTaxSupported)
+			if err != nil {
+				log.WithError(err).Errorf("Failed to update subscription automaticTax with ID %s", subscription.ID)
+			}
+		}
+	}
+
+	return &v1.UpdateCustomerSubscriptionsTaxStateResponse{}, nil
+}
+
 func getPriceIdentifier(attributionID db.AttributionID, stripeCustomer *stripe_api.Customer, s *BillingService) (string, error) {
 	preferredCurrency := stripeCustomer.Metadata["preferredCurrency"]
 	if stripeCustomer.Metadata["preferredCurrency"] == "" {

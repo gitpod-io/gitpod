@@ -405,6 +405,25 @@ func (c *Client) CreateSubscription(ctx context.Context, customerID string, pric
 	return subscription, err
 }
 
+func (c *Client) UpdateSubscriptionAutomaticTax(ctx context.Context, subscriptionID string, isAutomaticTaxSupported bool) (*stripe.Subscription, error) {
+	if subscriptionID == "" {
+		return nil, fmt.Errorf("no subscriptionID specified")
+	}
+
+	params := &stripe.SubscriptionParams{
+		AutomaticTax: &stripe.SubscriptionAutomaticTaxParams{
+			Enabled: stripe.Bool(isAutomaticTaxSupported),
+		},
+	}
+
+	subscription, err := c.sc.Subscriptions.Update(subscriptionID, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update subscription with subscription ID %s", subscriptionID)
+	}
+
+	return subscription, err
+}
+
 func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID string, paymentIntentId string) (*stripe.Customer, error) {
 	if customerID == "" {
 		return nil, fmt.Errorf("no customerID specified")

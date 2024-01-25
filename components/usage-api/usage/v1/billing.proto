@@ -37,6 +37,10 @@ service BillingService {
   rpc CreateStripeSubscription(CreateStripeSubscriptionRequest)
       returns (CreateStripeSubscriptionResponse) {};
 
+  rpc UpdateCustomerSubscriptionsTaxState(
+      UpdateCustomerSubscriptionsTaxStateRequest)
+      returns (UpdateCustomerSubscriptionsTaxStateResponse) {};
+
   // GetPriceInformation returns the price information for a given attribtion id
   rpc GetPriceInformation(GetPriceInformationRequest)
       returns (GetPriceInformationResponse) {};
@@ -111,6 +115,10 @@ message CreateStripeSubscriptionResponse {
 }
 
 message StripeSubscription { string id = 1; }
+
+message UpdateCustomerSubscriptionsTaxStateRequest { string customer_id = 1; }
+
+message UpdateCustomerSubscriptionsTaxStateResponse {}
 
 message GetPriceInformationRequest { string attribution_id = 1; }
 

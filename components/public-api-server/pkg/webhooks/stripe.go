@@ -5,14 +5,12 @@
 package webhooks
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
 	"github.com/sirupsen/logrus"
-	stripe_api "github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/webhook"
 )
 
@@ -22,7 +20,6 @@ const (
 	InvoiceFinalizedEventType            = "invoice.finalized"
 	CustomerSubscriptionDeletedEventType = "customer.subscription.deleted"
 	ChargeDisputeCreatedEventType        = "charge.dispute.created"
-	CustomerTaxIdUpdatedEventType        = "customer.tax_id.updated"
 	CustomerUpdatedEventType             = "customer.updated"
 )
 
@@ -114,36 +111,31 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-	case CustomerTaxIdUpdatedEventType:
-		logger.Info("Handling CustomerTaxIdUpdatedEventType")
-		verificationObj, ok := event.Data.Object["verification"].(stripe_api.TaxIDVerification)
-		if !ok {
-			logger.Error("Failed to find TaxIDVerification from Stripe webhook.")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		b, _ := json.Marshal(verificationObj)
-		logger.Infof("verificationObj obj %s", string(b))
 	case CustomerUpdatedEventType:
 		logger.Info("Handling CustomerUpdatedEventType")
-		addressObj, ok := event.Data.Object["address"].(stripe_api.Address)
+		customerID, ok := event.Data.Object["id"].(string)
 		if !ok {
-			logger.Error("Failed to find addressObj from Stripe webhook.")
+			logger.Error("Failed to identify customer ID from Stripe webhook.")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		customerTaxObj, ok := event.Data.Object["tax"].(stripe_api.CustomerTax)
+		previousAttributes, ok := event.Data.Object["previous_attributes"].(map[string]interface{})
 		if !ok {
-			logger.Error("Failed to find customerTaxObj from Stripe webhook.")
+			logger.Error("Failed to find previousAttributes from Stripe webhook.")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		b, _ := json.Marshal(addressObj)
-		logger.Infof("addressObj obj %s", string(b))
-		b, _ = json.Marshal(customerTaxObj)
-		logger.Infof("customerTaxObj obj %s", string(b))
+		if _, ok := previousAttributes["address"]; ok {
+			logger.Infof("Customer with ID %s address updated", customerID)
+
+			err = h.billingService.UpdateCustomerSubscriptionsTaxState(req.Context(), customerID)
+			if err != nil {
+				logger.WithError(err).Error("Failed to cancel subscription")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
 	default:
 		logger.Errorf("Unexpected Stripe event type: %s", event.Type)
 		w.WriteHeader(http.StatusBadRequest)

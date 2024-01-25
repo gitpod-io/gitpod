@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -81,6 +81,13 @@ export interface CreateStripeSubscriptionResponse {
 
 export interface StripeSubscription {
   id: string;
+}
+
+export interface UpdateCustomerSubscriptionsTaxStateRequest {
+  customerId: string;
+}
+
+export interface UpdateCustomerSubscriptionsTaxStateResponse {
 }
 
 export interface GetPriceInformationRequest {
@@ -1124,6 +1131,110 @@ export const StripeSubscription = {
   },
 };
 
+function createBaseUpdateCustomerSubscriptionsTaxStateRequest(): UpdateCustomerSubscriptionsTaxStateRequest {
+  return { customerId: "" };
+}
+
+export const UpdateCustomerSubscriptionsTaxStateRequest = {
+  encode(message: UpdateCustomerSubscriptionsTaxStateRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.customerId !== "") {
+      writer.uint32(10).string(message.customerId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): UpdateCustomerSubscriptionsTaxStateRequest {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateCustomerSubscriptionsTaxStateRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.customerId = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateCustomerSubscriptionsTaxStateRequest {
+    return { customerId: isSet(object.customerId) ? String(object.customerId) : "" };
+  },
+
+  toJSON(message: UpdateCustomerSubscriptionsTaxStateRequest): unknown {
+    const obj: any = {};
+    if (message.customerId !== "") {
+      obj.customerId = message.customerId;
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<UpdateCustomerSubscriptionsTaxStateRequest>): UpdateCustomerSubscriptionsTaxStateRequest {
+    return UpdateCustomerSubscriptionsTaxStateRequest.fromPartial(base ?? {});
+  },
+  fromPartial(
+    object: DeepPartial<UpdateCustomerSubscriptionsTaxStateRequest>,
+  ): UpdateCustomerSubscriptionsTaxStateRequest {
+    const message = createBaseUpdateCustomerSubscriptionsTaxStateRequest();
+    message.customerId = object.customerId ?? "";
+    return message;
+  },
+};
+
+function createBaseUpdateCustomerSubscriptionsTaxStateResponse(): UpdateCustomerSubscriptionsTaxStateResponse {
+  return {};
+}
+
+export const UpdateCustomerSubscriptionsTaxStateResponse = {
+  encode(_: UpdateCustomerSubscriptionsTaxStateResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): UpdateCustomerSubscriptionsTaxStateResponse {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateCustomerSubscriptionsTaxStateResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): UpdateCustomerSubscriptionsTaxStateResponse {
+    return {};
+  },
+
+  toJSON(_: UpdateCustomerSubscriptionsTaxStateResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  create(base?: DeepPartial<UpdateCustomerSubscriptionsTaxStateResponse>): UpdateCustomerSubscriptionsTaxStateResponse {
+    return UpdateCustomerSubscriptionsTaxStateResponse.fromPartial(base ?? {});
+  },
+  fromPartial(
+    _: DeepPartial<UpdateCustomerSubscriptionsTaxStateResponse>,
+  ): UpdateCustomerSubscriptionsTaxStateResponse {
+    const message = createBaseUpdateCustomerSubscriptionsTaxStateResponse();
+    return message;
+  },
+};
+
 function createBaseGetPriceInformationRequest(): GetPriceInformationRequest {
   return { attributionId: "" };
 }
@@ -1420,6 +1531,14 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    updateCustomerSubscriptionsTaxState: {
+      name: "UpdateCustomerSubscriptionsTaxState",
+      requestType: UpdateCustomerSubscriptionsTaxStateRequest,
+      requestStream: false,
+      responseType: UpdateCustomerSubscriptionsTaxStateResponse,
+      responseStream: false,
+      options: {},
+    },
     /** GetPriceInformation returns the price information for a given attribtion id */
     getPriceInformation: {
       name: "GetPriceInformation",
@@ -1492,6 +1611,10 @@ export interface BillingServiceImplementation<CallContextExt = {}> {
     request: CreateStripeSubscriptionRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<CreateStripeSubscriptionResponse>>;
+  updateCustomerSubscriptionsTaxState(
+    request: UpdateCustomerSubscriptionsTaxStateRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<UpdateCustomerSubscriptionsTaxStateResponse>>;
   /** GetPriceInformation returns the price information for a given attribtion id */
   getPriceInformation(
     request: GetPriceInformationRequest,
@@ -1555,6 +1678,10 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<CreateStripeSubscriptionRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<CreateStripeSubscriptionResponse>;
+  updateCustomerSubscriptionsTaxState(
+    request: DeepPartial<UpdateCustomerSubscriptionsTaxStateRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<UpdateCustomerSubscriptionsTaxStateResponse>;
   /** GetPriceInformation returns the price information for a given attribtion id */
   getPriceInformation(
     request: DeepPartial<GetPriceInformationRequest>,

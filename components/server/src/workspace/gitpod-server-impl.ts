@@ -2754,6 +2754,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.billingModes.getBillingMode(user.id, teamId);
     }
 
+    async getCustomerAutomaticTaxState(ctx: TraceContext, attributionId: string): Promise<string | undefined> {
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
+
+        const user = await this.checkAndBlockUser("getCustomerAutomaticTaxState");
+        await this.guardTeamOperation(attrId.teamId, "update");
+        await this.auth.checkPermissionOnOrganization(user.id, "write_billing", attrId.teamId);
+
+        return this.stripeService.getCustomerAutomaticTaxState(attributionId);
+    }
+
     // (SaaS) – admin
     async adminGetBillingMode(ctx: TraceContextWithSpan, attributionId: string): Promise<BillingMode> {
         traceAPIParams(ctx, { attributionId });

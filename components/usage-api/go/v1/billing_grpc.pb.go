@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -44,6 +44,7 @@ type BillingServiceClient interface {
 	// subscription
 	CreateHoldPaymentIntent(ctx context.Context, in *CreateHoldPaymentIntentRequest, opts ...grpc.CallOption) (*CreateHoldPaymentIntentResponse, error)
 	CreateStripeSubscription(ctx context.Context, in *CreateStripeSubscriptionRequest, opts ...grpc.CallOption) (*CreateStripeSubscriptionResponse, error)
+	UpdateCustomerSubscriptionsTaxState(ctx context.Context, in *UpdateCustomerSubscriptionsTaxStateRequest, opts ...grpc.CallOption) (*UpdateCustomerSubscriptionsTaxStateResponse, error)
 	// GetPriceInformation returns the price information for a given attribtion id
 	GetPriceInformation(ctx context.Context, in *GetPriceInformationRequest, opts ...grpc.CallOption) (*GetPriceInformationResponse, error)
 	// OnChargeDispute handles charge disputes created with the underlying payment
@@ -122,6 +123,15 @@ func (c *billingServiceClient) CreateStripeSubscription(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *billingServiceClient) UpdateCustomerSubscriptionsTaxState(ctx context.Context, in *UpdateCustomerSubscriptionsTaxStateRequest, opts ...grpc.CallOption) (*UpdateCustomerSubscriptionsTaxStateResponse, error) {
+	out := new(UpdateCustomerSubscriptionsTaxStateResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/UpdateCustomerSubscriptionsTaxState", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *billingServiceClient) GetPriceInformation(ctx context.Context, in *GetPriceInformationRequest, opts ...grpc.CallOption) (*GetPriceInformationResponse, error) {
 	out := new(GetPriceInformationResponse)
 	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/GetPriceInformation", in, out, opts...)
@@ -162,6 +172,7 @@ type BillingServiceServer interface {
 	// subscription
 	CreateHoldPaymentIntent(context.Context, *CreateHoldPaymentIntentRequest) (*CreateHoldPaymentIntentResponse, error)
 	CreateStripeSubscription(context.Context, *CreateStripeSubscriptionRequest) (*CreateStripeSubscriptionResponse, error)
+	UpdateCustomerSubscriptionsTaxState(context.Context, *UpdateCustomerSubscriptionsTaxStateRequest) (*UpdateCustomerSubscriptionsTaxStateResponse, error)
 	// GetPriceInformation returns the price information for a given attribtion id
 	GetPriceInformation(context.Context, *GetPriceInformationRequest) (*GetPriceInformationResponse, error)
 	// OnChargeDispute handles charge disputes created with the underlying payment
@@ -194,6 +205,9 @@ func (UnimplementedBillingServiceServer) CreateHoldPaymentIntent(context.Context
 }
 func (UnimplementedBillingServiceServer) CreateStripeSubscription(context.Context, *CreateStripeSubscriptionRequest) (*CreateStripeSubscriptionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateStripeSubscription not implemented")
+}
+func (UnimplementedBillingServiceServer) UpdateCustomerSubscriptionsTaxState(context.Context, *UpdateCustomerSubscriptionsTaxStateRequest) (*UpdateCustomerSubscriptionsTaxStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCustomerSubscriptionsTaxState not implemented")
 }
 func (UnimplementedBillingServiceServer) GetPriceInformation(context.Context, *GetPriceInformationRequest) (*GetPriceInformationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPriceInformation not implemented")
@@ -340,6 +354,24 @@ func _BillingService_CreateStripeSubscription_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_UpdateCustomerSubscriptionsTaxState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCustomerSubscriptionsTaxStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).UpdateCustomerSubscriptionsTaxState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/UpdateCustomerSubscriptionsTaxState",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).UpdateCustomerSubscriptionsTaxState(ctx, req.(*UpdateCustomerSubscriptionsTaxStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BillingService_GetPriceInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPriceInformationRequest)
 	if err := dec(in); err != nil {
@@ -410,6 +442,10 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateStripeSubscription",
 			Handler:    _BillingService_CreateStripeSubscription_Handler,
+		},
+		{
+			MethodName: "UpdateCustomerSubscriptionsTaxState",
+			Handler:    _BillingService_UpdateCustomerSubscriptionsTaxState_Handler,
 		},
 		{
 			MethodName: "GetPriceInformation",
