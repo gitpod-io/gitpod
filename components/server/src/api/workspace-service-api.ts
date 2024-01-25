@@ -79,7 +79,12 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         req: WatchWorkspaceStatusRequest,
         _: HandlerContext,
     ): AsyncIterable<WatchWorkspaceStatusResponse> {
-        return this.workspaceService.getAndWatchWorkspaceStatus(ctxUserId(), req.workspaceId, { signal: ctxSignal() });
+        const it = this.workspaceService.getAndWatchWorkspaceStatus(ctxUserId(), req.workspaceId, {
+            signal: ctxSignal(),
+        });
+        for await (const status of it) {
+            yield status;
+        }
     }
 
     async listWorkspaces(req: ListWorkspacesRequest, _: HandlerContext): Promise<ListWorkspacesResponse> {
