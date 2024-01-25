@@ -70,7 +70,13 @@ message ListOrganizationPrebuildsRequest {
       string id = 1;
       string branch = 2;
     }
-    PrebuildPhase.Phase status = 1;
+    enum State {
+      STATE_UNSPECIFIED = 0;
+      STATE_SUCCEEDED = 1;
+      STATE_FAILED = 2;
+      STATE_UNFINISHED = 3;
+    }
+    State state = 1;
     Configuration configuration = 2;
     // Filter the search down by searching for configuration names matching the
     // query

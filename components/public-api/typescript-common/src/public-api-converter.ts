@@ -97,6 +97,7 @@ import {
     PrebuildStatus,
     PrebuildPhase,
     PrebuildPhase_Phase,
+    ListOrganizationPrebuildsRequest_Filter_State as PrebuildFilterState,
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
@@ -1147,20 +1148,14 @@ export class PublicAPIConverter {
         return PrebuildPhase_Phase.UNSPECIFIED;
     }
 
-    fromPrebuildPhase(status: PrebuildPhase_Phase): PrebuiltWorkspaceState | undefined {
-        switch (status) {
-            case PrebuildPhase_Phase.QUEUED:
-                return "queued";
-            case PrebuildPhase_Phase.BUILDING:
-                return "building";
-            case PrebuildPhase_Phase.ABORTED:
-                return "aborted";
-            case PrebuildPhase_Phase.TIMEOUT:
-                return "timeout";
-            case PrebuildPhase_Phase.AVAILABLE:
-                return "available";
-            case PrebuildPhase_Phase.FAILED:
+    fromPrebuildFilterState(state: PrebuildFilterState) {
+        switch (state) {
+            case PrebuildFilterState.SUCCEEDED:
+                return "succeeded";
+            case PrebuildFilterState.FAILED:
                 return "failed";
+            case PrebuildFilterState.UNFINISHED:
+                return "unfinished";
         }
         return undefined;
     }

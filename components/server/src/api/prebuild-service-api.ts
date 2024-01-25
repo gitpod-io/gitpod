@@ -169,13 +169,9 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             configuration: filter?.configuration,
             searchTerm: filter?.searchTerm,
         };
-        if (filter?.status) {
-            const parsedStatusFilter = this.apiConverter.fromPrebuildPhase(filter.status);
-            if (parsedStatusFilter) {
-                prebuildsFilter.status = parsedStatusFilter;
-            } else {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invalid prebuild status filter provided");
-            }
+
+        if (filter?.state) {
+            prebuildsFilter.state = this.apiConverter.fromPrebuildFilterState(filter?.state);
         }
 
         const prebuilds = await this.prebuildManager.listPrebuilds(

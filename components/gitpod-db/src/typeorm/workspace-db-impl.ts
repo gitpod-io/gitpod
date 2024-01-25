@@ -1054,7 +1054,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                 id: string;
                 branch?: string;
             };
-            status: PrebuiltWorkspaceState;
+            state?: "succeeded" | "failed" | "unfinished";
             searchTerm?: string;
         },
     ): Promise<PrebuiltWorkspace[]> {
@@ -1072,8 +1072,48 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .skip(offset)
             .take(limit);
 
-        if (filter?.status) {
-            query.andWhere("pws.state = :state", { state: filter.status });
+        if (filter?.state) {
+            const { state } = filter;
+            // translating API state to DB state
+            switch (state) {
+                case "failed":
+                    query.andWhere(
+                        new Brackets((qb) => {
+                            qb.where("pws.state = :failedState", { failedState: "failed" })
+                                .orWhere("pws.state = :abortedState", { abortedState: "aborted" })
+                                .orWhere("pws.state = :timeoutState", { timeoutState: "timeout" })
+                                .orWhere(
+                                    new Brackets((qbInner) => {
+                                        qbInner
+                                            .where("pws.state = :availableState", { availableState: "available" })
+                                            .andWhere("pws.error IS NOT NULL AND pws.error <> ''");
+                                    }),
+                                );
+                        }),
+                    );
+                    break;
+                case "succeeded":
+                    query.andWhere(
+                        new Brackets((qb) => {
+                            qb.where("pws.state = :state", { state: "available" }).andWhere(
+                                new Brackets((qbInner) => {
+                                    qbInner.where("pws.error IS NULL").orWhere("pws.error = ''");
+                                }),
+                            );
+                        }),
+                    );
+                    break;
+                case "unfinished":
+                    query.andWhere(
+                        new Brackets((qb) => {
+                            qb.where("pws.state = :queuedState", { queuedState: "queued" }).orWhere(
+                                "pws.state = :buildingState",
+                                { buildingState: "building" },
+                            );
+                        }),
+                    );
+                    break;
+            }
         }
 
         if (filter?.configuration?.id) {

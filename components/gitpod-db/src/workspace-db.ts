@@ -20,7 +20,6 @@ import {
     PrebuildInfo,
     AdminGetWorkspacesQuery,
     SnapshotState,
-    PrebuiltWorkspaceState,
 } from "@gitpod/gitpod-protocol";
 
 export type MaybeWorkspace = Workspace | undefined;
@@ -180,7 +179,7 @@ export interface WorkspaceDB {
                 id: string;
                 branch?: string;
             };
-            status?: PrebuiltWorkspaceState;
+            state?: "succeeded" | "failed" | "unfinished";
             searchTerm?: string;
         },
     ): Promise<PrebuiltWorkspace[]>;

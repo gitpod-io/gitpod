@@ -14,7 +14,7 @@ import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { PrebuildsTable } from "./PrebuildTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { useListOrganizationPrebuildsQuery } from "../../data/prebuilds/organization-prebuilds-query";
-import { PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { ListOrganizationPrebuildsRequest_Filter_State } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 
 const STATUS_FILTER_VALUES = ["succeeded", "failed", "unfinished", undefined] as const; // undefined means any status
 export type STATUS_OPTION = typeof STATUS_FILTER_VALUES[number];
@@ -59,7 +59,7 @@ const PrebuildsListPage: FC = () => {
         useListOrganizationPrebuildsQuery({
             filter: {
                 searchTerm: searchTermDebounced,
-                status: toApiStatus(filter.status),
+                state: toApiStatus(filter.status),
             },
             pageSize: 30,
         });
@@ -105,14 +105,14 @@ const PrebuildsListPage: FC = () => {
     );
 };
 
-const toApiStatus = (status: STATUS_OPTION): PrebuildPhase_Phase | undefined => {
+const toApiStatus = (status: STATUS_OPTION): ListOrganizationPrebuildsRequest_Filter_State | undefined => {
     switch (status) {
         case "failed":
-            return PrebuildPhase_Phase.FAILED; // todo: adjust to needs of proper status
+            return ListOrganizationPrebuildsRequest_Filter_State.FAILED; // todo: adjust to needs of proper status
         case "succeeded":
-            return PrebuildPhase_Phase.AVAILABLE;
+            return ListOrganizationPrebuildsRequest_Filter_State.SUCCEEDED;
         case "unfinished":
-            return PrebuildPhase_Phase.BUILDING;
+            return ListOrganizationPrebuildsRequest_Filter_State.UNFINISHED;
     }
 
     return undefined;

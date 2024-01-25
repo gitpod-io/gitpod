@@ -10,7 +10,6 @@ import {
     CommitInfo,
     PrebuildWithStatus,
     PrebuiltWorkspace,
-    PrebuiltWorkspaceState,
     Project,
     StartPrebuildContext,
     StartPrebuildResult,
@@ -54,7 +53,7 @@ export interface PrebuildFilter {
         id: string;
         branch?: string;
     };
-    status?: PrebuiltWorkspaceState;
+    state?: "failed" | "succeeded" | "unfinished";
     searchTerm?: string;
 }
 

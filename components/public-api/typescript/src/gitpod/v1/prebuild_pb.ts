@@ -479,9 +479,9 @@ export class ListOrganizationPrebuildsRequest extends Message<ListOrganizationPr
  */
 export class ListOrganizationPrebuildsRequest_Filter extends Message<ListOrganizationPrebuildsRequest_Filter> {
   /**
-   * @generated from field: gitpod.v1.PrebuildPhase.Phase status = 1;
+   * @generated from field: gitpod.v1.ListOrganizationPrebuildsRequest.Filter.State state = 1;
    */
-  status = PrebuildPhase_Phase.UNSPECIFIED;
+  state = ListOrganizationPrebuildsRequest_Filter_State.UNSPECIFIED;
 
   /**
    * @generated from field: gitpod.v1.ListOrganizationPrebuildsRequest.Filter.Configuration configuration = 2;
@@ -504,7 +504,7 @@ export class ListOrganizationPrebuildsRequest_Filter extends Message<ListOrganiz
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.ListOrganizationPrebuildsRequest.Filter";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "status", kind: "enum", T: proto3.getEnumType(PrebuildPhase_Phase) },
+    { no: 1, name: "state", kind: "enum", T: proto3.getEnumType(ListOrganizationPrebuildsRequest_Filter_State) },
     { no: 2, name: "configuration", kind: "message", T: ListOrganizationPrebuildsRequest_Filter_Configuration },
     { no: 3, name: "search_term", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
@@ -525,6 +525,38 @@ export class ListOrganizationPrebuildsRequest_Filter extends Message<ListOrganiz
     return proto3.util.equals(ListOrganizationPrebuildsRequest_Filter, a, b);
   }
 }
+
+/**
+ * @generated from enum gitpod.v1.ListOrganizationPrebuildsRequest.Filter.State
+ */
+export enum ListOrganizationPrebuildsRequest_Filter_State {
+  /**
+   * @generated from enum value: STATE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: STATE_SUCCEEDED = 1;
+   */
+  SUCCEEDED = 1,
+
+  /**
+   * @generated from enum value: STATE_FAILED = 2;
+   */
+  FAILED = 2,
+
+  /**
+   * @generated from enum value: STATE_UNFINISHED = 3;
+   */
+  UNFINISHED = 3,
+}
+// Retrieve enum metadata with: proto3.getEnumType(ListOrganizationPrebuildsRequest_Filter_State)
+proto3.util.setEnumType(ListOrganizationPrebuildsRequest_Filter_State, "gitpod.v1.ListOrganizationPrebuildsRequest.Filter.State", [
+  { no: 0, name: "STATE_UNSPECIFIED" },
+  { no: 1, name: "STATE_SUCCEEDED" },
+  { no: 2, name: "STATE_FAILED" },
+  { no: 3, name: "STATE_UNFINISHED" },
+]);
 
 /**
  * @generated from message gitpod.v1.ListOrganizationPrebuildsRequest.Filter.Configuration

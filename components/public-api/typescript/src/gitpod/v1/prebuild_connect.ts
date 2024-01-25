@@ -9,70 +9,83 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CancelPrebuildRequest, CancelPrebuildResponse, GetPrebuildRequest, GetPrebuildResponse, ListOrganizationPrebuildsRequest, ListOrganizationPrebuildsResponse, ListPrebuildsRequest, ListPrebuildsResponse, StartPrebuildRequest, StartPrebuildResponse, WatchPrebuildRequest, WatchPrebuildResponse } from "./prebuild_pb.js";
+import {
+    CancelPrebuildRequest,
+    CancelPrebuildResponse,
+    GetPrebuildRequest,
+    GetPrebuildResponse,
+    ListOrganizationPrebuildsRequest,
+    ListOrganizationPrebuildsResponse,
+    ListPrebuildsRequest,
+    ListPrebuildsResponse,
+    StartPrebuildRequest,
+    StartPrebuildResponse,
+    WatchPrebuildRequest,
+    WatchPrebuildResponse,
+} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
  * @generated from service gitpod.v1.PrebuildService
  */
 export const PrebuildService = {
-  typeName: "gitpod.v1.PrebuildService",
-  methods: {
-    /**
-     * @generated from rpc gitpod.v1.PrebuildService.StartPrebuild
-     */
-    startPrebuild: {
-      name: "StartPrebuild",
-      I: StartPrebuildRequest,
-      O: StartPrebuildResponse,
-      kind: MethodKind.Unary,
+    typeName: "gitpod.v1.PrebuildService",
+    methods: {
+        /**
+         * @generated from rpc gitpod.v1.PrebuildService.StartPrebuild
+         */
+        startPrebuild: {
+            name: "StartPrebuild",
+            I: StartPrebuildRequest,
+            O: StartPrebuildResponse,
+            kind: MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc gitpod.v1.PrebuildService.CancelPrebuild
+         */
+        cancelPrebuild: {
+            name: "CancelPrebuild",
+            I: CancelPrebuildRequest,
+            O: CancelPrebuildResponse,
+            kind: MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc gitpod.v1.PrebuildService.GetPrebuild
+         */
+        getPrebuild: {
+            name: "GetPrebuild",
+            I: GetPrebuildRequest,
+            O: GetPrebuildResponse,
+            kind: MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc gitpod.v1.PrebuildService.ListPrebuilds
+         */
+        listPrebuilds: {
+            name: "ListPrebuilds",
+            I: ListPrebuildsRequest,
+            O: ListPrebuildsResponse,
+            kind: MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc gitpod.v1.PrebuildService.WatchPrebuild
+         */
+        watchPrebuild: {
+            name: "WatchPrebuild",
+            I: WatchPrebuildRequest,
+            O: WatchPrebuildResponse,
+            kind: MethodKind.ServerStreaming,
+        },
+        /**
+         * ListOrganizationPrebuilds lists all prebuilds of an organization
+         *
+         * @generated from rpc gitpod.v1.PrebuildService.ListOrganizationPrebuilds
+         */
+        listOrganizationPrebuilds: {
+            name: "ListOrganizationPrebuilds",
+            I: ListOrganizationPrebuildsRequest,
+            O: ListOrganizationPrebuildsResponse,
+            kind: MethodKind.Unary,
+        },
     },
-    /**
-     * @generated from rpc gitpod.v1.PrebuildService.CancelPrebuild
-     */
-    cancelPrebuild: {
-      name: "CancelPrebuild",
-      I: CancelPrebuildRequest,
-      O: CancelPrebuildResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc gitpod.v1.PrebuildService.GetPrebuild
-     */
-    getPrebuild: {
-      name: "GetPrebuild",
-      I: GetPrebuildRequest,
-      O: GetPrebuildResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc gitpod.v1.PrebuildService.ListPrebuilds
-     */
-    listPrebuilds: {
-      name: "ListPrebuilds",
-      I: ListPrebuildsRequest,
-      O: ListPrebuildsResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc gitpod.v1.PrebuildService.WatchPrebuild
-     */
-    watchPrebuild: {
-      name: "WatchPrebuild",
-      I: WatchPrebuildRequest,
-      O: WatchPrebuildResponse,
-      kind: MethodKind.ServerStreaming,
-    },
-    /**
-     * ListOrganizationPrebuilds lists all prebuilds of an organization
-     *
-     * @generated from rpc gitpod.v1.PrebuildService.ListOrganizationPrebuilds
-     */
-    listOrganizationPrebuilds: {
-      name: "ListOrganizationPrebuilds",
-      I: ListOrganizationPrebuildsRequest,
-      O: ListOrganizationPrebuildsResponse,
-      kind: MethodKind.Unary,
-    },
-  }
 } as const;
