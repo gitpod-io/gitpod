@@ -35,7 +35,6 @@ import { PaginationToken, generatePaginationToken, parsePaginationToken } from "
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { HEADLESS_LOG_DOWNLOAD_PATH_PREFIX, HEADLESS_LOGS_PATH_PREFIX } from "../workspace/headless-log-service";
-import { HEADLESS_LOG_STREAM_STATUS_CODE } from "@gitpod/gitpod-protocol";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 
 @injectable()
