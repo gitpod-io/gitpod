@@ -23,7 +23,7 @@ export function usePrebuildLogsEmitter(prebuildId: string, onError?: (err: Error
                 if (!err) {
                     return;
                 }
-                disposable.dispose();
+                disposable?.dispose();
                 if (err.message === error?.message) {
                     return;
                 }
