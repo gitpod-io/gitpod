@@ -39,6 +39,7 @@ import { AppNotifications } from "../AppNotifications";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { projectsPathInstallGitHubApp } from "../projects/projects.routes";
 import { Heading1, Subheading } from "@podkit/typography/Headings";
+import { PrebuildDetailPage } from "../repositories/detail/prebuilds/PrebuildDetailPage";
 
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
@@ -208,6 +209,12 @@ export const AppRoutes = () => {
 
                     {repoConfigListAndDetail && <Route exact path="/repositories" component={ConfigurationListPage} />}
                     {/* Handles all /repositories/:id/* routes in a nested router */}
+                    {repoConfigListAndDetail && (
+                        <Route
+                            path="/repositories/:repositoryId/prebuilds/:prebuildId"
+                            component={PrebuildDetailPage}
+                        />
+                    )}
                     {repoConfigListAndDetail && <Route path="/repositories/:id" component={ConfigurationDetailPage} />}
                     {/* basic redirect for old team slugs */}
                     <Route path={["/t/"]} exact>

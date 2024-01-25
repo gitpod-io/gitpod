@@ -270,6 +270,7 @@ export function watchPrebuild(
 export function stream<Response>(
     factory: (options: CallOptions) => AsyncIterable<Response>,
     cb: (response: Response) => void,
+    onError?: (err: Error) => void,
 ): Disposable {
     const MAX_BACKOFF = 60000;
     const BASE_BACKOFF = 3000;
@@ -288,6 +289,7 @@ export function stream<Response>(
                     cb(response);
                 }
             } catch (e) {
+                onError?.(e);
                 if (abort.signal.aborted) {
                     // client aborted, don't reconnect, early exit
                     return;
