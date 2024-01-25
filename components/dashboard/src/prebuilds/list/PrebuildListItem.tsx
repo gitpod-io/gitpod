@@ -30,7 +30,7 @@ export const RepositoryListItem: FC<Props> = ({ prebuild }) => {
             <TableCell>
                 <div className="flex flex-col gap-1">
                     <Text className="text-sm text-pk-content-primary text-semibold">{configuration?.name}</Text>
-                    <TextMuted className="text-xs break-all">branch (soon™)</TextMuted>
+                    <TextMuted className="text-xs break-all">{prebuild.ref}</TextMuted>
                 </div>
             </TableCell>
 
@@ -40,7 +40,7 @@ export const RepositoryListItem: FC<Props> = ({ prebuild }) => {
                         <Text className="text-sm text-pk-content-secondary">
                             {shortCommitMessage(prebuild.commit.message)}
                         </Text>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 items-center">
                             <img src={prebuild.commit.author.avatarUrl} className="w-5 h-5 rounded-full" alt="" />
                             <Text className="text-xs break-all text-pk-content-secondary">
                                 {prebuild.commit.author.name}
@@ -51,7 +51,7 @@ export const RepositoryListItem: FC<Props> = ({ prebuild }) => {
             </TableCell>
 
             <TableCell hideOnSmallScreen>
-                <span className="text-pk-content-secondary text-sm">{created}</span>
+                <Text className="text-sm break-all text-pk-content-secondary">{created}</Text>
             </TableCell>
 
             <TableCell>

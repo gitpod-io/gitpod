@@ -56,7 +56,7 @@ const PrebuildsListPage: FC = () => {
     return (
         <>
             <div className="app-container mb-8">
-                <PageHeading title="Prebuilds" subtitle="View logs of all of the Prebuilds that have run." />
+                <PageHeading title="Prebuilds" subtitle="Review prebuilds of your imported repositories." />
 
                 {isLoading && <LoadingState />}
 

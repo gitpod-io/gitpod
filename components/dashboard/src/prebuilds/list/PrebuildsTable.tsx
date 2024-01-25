@@ -46,17 +46,19 @@ export const PrebuildsTable: FC<Props> = ({
                     <TextInput
                         className="w-full max-w-none md:w-80"
                         value={searchTerm}
+                        type="search"
                         onChange={onSearchTermChange}
-                        placeholder="Search imported repositories"
+                        placeholder="Search prebuilds"
                     />
                     {/* todo: add filtering logic */}
                     <Select>
                         <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Prebuilds: All" />
+                            <SelectValue placeholder="Prebuild status: Any" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all"></SelectItem>
-                            <SelectItem value="disabled">Prebuilds: Disabled</SelectItem>
+                            <SelectItem value="all">Any status</SelectItem>
+                            <SelectItem value="failing">Failing</SelectItem>
+                            <SelectItem value="succeeding">Succeeding</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
