@@ -15,11 +15,7 @@ import { cn } from "@podkit/lib/cn";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
 import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { STATUS_FILTER_VALUES } from "./PrebuildsList";
-
-export type Filter = {
-    status?: STATUS_FILTER_VALUES;
-};
+import { Filter, STATUS_OPTION } from "./PrebuildList";
 
 type Props = {
     prebuilds: Prebuild[];
@@ -64,7 +60,7 @@ export const PrebuildsTable: FC<Props> = ({
                                 onFilterChange({ status: undefined });
                                 return;
                             }
-                            onFilterChange({ status: status as STATUS_FILTER_VALUES });
+                            onFilterChange({ status: status as STATUS_OPTION });
                         }}
                     >
                         <SelectTrigger className="w-[120px]">

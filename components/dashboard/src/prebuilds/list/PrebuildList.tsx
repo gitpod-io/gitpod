@@ -11,13 +11,16 @@ import { useDocumentTitle } from "../../hooks/use-document-title";
 import { useQueryParams } from "../../hooks/use-query-params";
 import { PrebuildListEmptyState } from "./PrebuildEmptyListState";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
-import { Filter, PrebuildsTable } from "./PrebuildsTable";
+import { PrebuildsTable } from "./PrebuildTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { useListOrganizationPrebuildsQuery } from "../../data/prebuilds/organization-prebuilds-query";
 import { PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 
-const STATUS_FILTER = ["succeeded", "failed", "unfinished", undefined] as const; // undefined means any status
-export type STATUS_FILTER_VALUES = typeof STATUS_FILTER[number];
+const STATUS_FILTER_VALUES = ["succeeded", "failed", "unfinished", undefined] as const; // undefined means any status
+export type STATUS_OPTION = typeof STATUS_FILTER_VALUES[number];
+export type Filter = {
+    status?: STATUS_OPTION;
+};
 
 const PrebuildsListPage: FC = () => {
     useDocumentTitle("Prebuilds");
@@ -43,7 +46,6 @@ const PrebuildsListPage: FC = () => {
             params.set("search", searchTermDebounced);
         }
 
-        // Since "any" is the default, we don't need to set it in the url
         if (statusFilter) {
             params.set("prebuilds", statusFilter);
         }
@@ -103,7 +105,7 @@ const PrebuildsListPage: FC = () => {
     );
 };
 
-const toApiStatus = (status: STATUS_FILTER_VALUES): PrebuildPhase_Phase | undefined => {
+const toApiStatus = (status: STATUS_OPTION): PrebuildPhase_Phase | undefined => {
     switch (status) {
         case "failed":
             return PrebuildPhase_Phase.FAILED; // todo: adjust to needs of proper status
@@ -116,11 +118,11 @@ const toApiStatus = (status: STATUS_FILTER_VALUES): PrebuildPhase_Phase | undefi
     return undefined;
 };
 
-const parseStatus = (params: URLSearchParams): STATUS_FILTER_VALUES => {
+const parseStatus = (params: URLSearchParams): STATUS_OPTION => {
     const filter = params.get("prebuilds");
-    const validValues = Object.values(STATUS_FILTER).filter((val) => !!val);
+    const validValues = Object.values(STATUS_FILTER_VALUES).filter((val) => !!val);
     if (filter && validValues.includes(filter as any)) {
-        return filter as STATUS_FILTER_VALUES;
+        return filter as STATUS_OPTION;
     }
 
     return undefined;

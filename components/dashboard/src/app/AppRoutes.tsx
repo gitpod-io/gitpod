@@ -80,7 +80,7 @@ const ConfigurationDetailPage = React.lazy(
     () => import(/* webpackPrefetch: true */ "../repositories/detail/ConfigurationDetailPage"),
 );
 
-const PrebuildListPage = React.lazy(() => import(/* webpackPrefetch: true */ "../prebuilds/list/PrebuildsList"));
+const PrebuildListPage = React.lazy(() => import(/* webpackPrefetch: true */ "../prebuilds/list/PrebuildList"));
 
 export const AppRoutes = () => {
     const hash = getURLHash();
