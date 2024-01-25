@@ -15,6 +15,7 @@ import { AlertTriangleIcon, CheckCircle2Icon, CircleSlash2Icon, Loader2Icon } fr
 import dayjs from "dayjs";
 import { usePrebuildLogsEmitter } from "../../../data/prebuilds/prebuild-logs-emitter";
 import React from "react";
+import { useToast } from "../../../components/toasts/Toasts";
 
 const WorkspaceLogs = React.lazy(() => import("../../../components/WorkspaceLogs"));
 
@@ -27,8 +28,11 @@ export const PrebuildDetailPage: FC = () => {
     const { repositoryId, prebuildId } = useParams<PageRouteParams>();
 
     const { data: repository } = useConfiguration(repositoryId);
+    const { toast } = useToast();
 
-    const { emitter: logEmitter, error: logError } = usePrebuildLogsEmitter(prebuildId);
+    const { emitter: logEmitter } = usePrebuildLogsEmitter(prebuildId, (err) => {
+        toast("Failed to watch prebuild logs: " + err.message);
+    });
 
     const prebuild = useMemo<Prebuild>(() => {
         return new Prebuild({
@@ -139,7 +143,6 @@ export const PrebuildDetailPage: FC = () => {
                                 classes="h-full w-full"
                                 xtermClasses="absolute top-0 left-0 bottom-0 right-0 mx-6 my-0"
                                 logsEmitter={logEmitter}
-                                errorMessage={logError?.message}
                             />
                         </Suspense>
                     </div>

@@ -9,7 +9,7 @@ import { WatchPrebuildLogsResponse } from "@gitpod/public-api/lib/gitpod/v1/preb
 import { prebuildClient, stream } from "../../service/public-api";
 import { useEffect, useState } from "react";
 
-export function usePrebuildLogsEmitter(prebuildId: string) {
+export function usePrebuildLogsEmitter(prebuildId: string, onError?: (err: Error) => void) {
     const [emitter] = useState(new EventEmitter());
     const [error, setError] = useState<Error | undefined>(undefined);
     useEffect(() => {
@@ -22,6 +22,7 @@ export function usePrebuildLogsEmitter(prebuildId: string) {
                 if (!err) {
                     return;
                 }
+                onError?.(err);
                 setError(err);
                 disposable.dispose();
             },
@@ -30,6 +31,6 @@ export function usePrebuildLogsEmitter(prebuildId: string) {
         return () => {
             disposable.dispose();
         };
-    }, [prebuildId, emitter]);
+    }, [prebuildId, emitter, onError]);
     return { emitter, error };
 }
