@@ -5,6 +5,7 @@
  */
 
 import { Disposable, DisposableCollection, HEADLESS_LOG_STREAM_STATUS_CODE_REGEX } from "@gitpod/gitpod-protocol";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 /**
  * backoff fetch prebuild logs
@@ -73,7 +74,7 @@ export function watchPrebuildLogs(
                     } else {
                         const code = parseStatusCode(matches[1]);
                         if (code !== 200) {
-                            throw new Error(`stream status code: ${code}`);
+                            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `stream status code: ${code}`);
                         }
                     }
                 } else {
