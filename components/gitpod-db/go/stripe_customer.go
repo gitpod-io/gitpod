@@ -86,7 +86,7 @@ func UpdateStripeCustomerInvalidBillingAddress(ctx context.Context, conn *gorm.D
 		Update("invalidBillingAddress", BoolPointer(invalidBillingAddress))
 
 	if err := tx.Error; err != nil {
-		return StripeCustomer{}, fmt.Errorf("failed to update stripe customer with ID %s", stripeCustomerID)
+		return StripeCustomer{}, fmt.Errorf("failed to update stripe customer with ID %s: %w", stripeCustomerID, err)
 	}
 
 	return GetStripeCustomer(ctx, conn, stripeCustomerID)
