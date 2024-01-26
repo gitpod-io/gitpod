@@ -81,6 +81,7 @@ func GetStripeCustomerByAttributionID(ctx context.Context, conn *gorm.DB, attrib
 func UpdateStripeCustomerInvalidBillingAddress(ctx context.Context, conn *gorm.DB, stripeCustomerID string, invalidBillingAddress bool) (StripeCustomer, error) {
 	tx := conn.
 		WithContext(ctx).
+		Table((&StripeCustomer{}).TableName()).
 		Where("stripeCustomerId = ?", stripeCustomerID).
 		Where("deleted = ?", 0).
 		Update("invalidBillingAddress", BoolPointer(invalidBillingAddress))
