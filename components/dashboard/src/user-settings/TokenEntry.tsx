@@ -67,7 +67,7 @@ function TokenEntry(props: TokenEntryProps) {
                 <span className="truncate whitespace-pre-line">{getScopes()}</span>
             </div>
             <div className="flex items-center w-3/12 text-gray-400">
-                <span className={"flex items-center gap-1 truncate" + (expiredInfo.expired ? " text-orange-600" : "")}>
+                <span className={"flex items-center gap-2 truncate" + (expiredInfo.expired ? " text-orange-600" : "")}>
                     {expiredInfo.tooltip && (
                         <Tooltip content={expiredInfo.tooltip.content}>{expiredInfo.tooltip.icon}</Tooltip>
                     )}
