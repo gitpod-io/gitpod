@@ -113,6 +113,50 @@ export class PrebuildManager {
         }, opts);
     }
 
+    public async *getAndWatchPrebuildStatus(
+        userId: string,
+        filter: {
+            configurationId?: string;
+            prebuildId?: string;
+        },
+        opts: { signal: AbortSignal },
+    ) {
+        if (!filter.configurationId && !filter.prebuildId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `configurationId or prebuildId is required`);
+        }
+        if (filter.prebuildId) {
+            const prebuild = await this.getPrebuild({}, userId, filter.prebuildId);
+            if (!prebuild) {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `prebuild ${filter.prebuildId} not found`);
+            }
+            if (!prebuild?.info.projectId) {
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    `prebuild ${filter.prebuildId} does not belong to any configuration`,
+                );
+            }
+            // if configurationId not match, we should not continue because we will filter by configuration id below
+            if (filter.configurationId && filter.configurationId !== prebuild.info.projectId) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    `prebuild ${filter.prebuildId} does not belong to configuration ${filter.configurationId}`,
+                );
+            }
+            filter.configurationId = prebuild.info.projectId;
+            yield prebuild;
+        }
+        const it = await this.watchPrebuildStatus(userId, filter.configurationId!, opts);
+        for await (const pb of it) {
+            if (filter.prebuildId && pb.info.id !== filter.prebuildId) {
+                continue;
+            }
+            if (pb.info.projectId !== filter.configurationId) {
+                continue;
+            }
+            yield pb;
+        }
+    }
+
     async triggerPrebuild(ctx: TraceContext, user: User, projectId: string, branchName: string | null) {
         await this.auth.checkPermissionOnProject(user.id, "write_prebuild", projectId);
 

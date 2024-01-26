@@ -122,33 +122,16 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "scope is required");
         }
 
-        let configurationId = request.scope.value;
-        if (request.scope.case === "prebuildId") {
-            const resp = await this.getPrebuild(
-                new GetPrebuildRequest({
-                    prebuildId: request.scope.value,
-                }),
-            );
-            yield new WatchPrebuildResponse({
-                prebuild: resp.prebuild,
-            });
-            configurationId = resp.prebuild!.configurationId;
-        }
-        const it = await this.prebuildManager.watchPrebuildStatus(ctxUserId(), configurationId, {
-            signal: ctxSignal(),
-        });
+        const filter = {
+            configurationId: request.scope.case === "configurationId" ? request.scope.value : undefined,
+            prebuildId: request.scope.case === "prebuildId" ? request.scope.value : undefined,
+        };
+        const it = this.prebuildManager.getAndWatchPrebuildStatus(ctxUserId(), filter, { signal: ctxSignal() });
+
         for await (const pb of it) {
-            if (request.scope.case === "prebuildId") {
-                if (pb.info.id !== request.scope.value) {
-                    continue;
-                }
-            } else if (pb.info.projectId !== request.scope.value) {
-                continue;
-            }
-            const prebuild = this.apiConverter.toPrebuild(pb);
-            if (prebuild) {
-                yield new WatchPrebuildResponse({ prebuild });
-            }
+            yield new WatchPrebuildResponse({
+                prebuild: this.apiConverter.toPrebuild(pb),
+            });
         }
     }
 
@@ -167,22 +150,37 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
         }
     }
 
+    private async waitUntilPrebuildWorkspaceCreated(userId: string, prebuildId: string) {
+        let prebuildWorkspaceId: string | undefined;
+        const prebuildIt = this.prebuildManager.getAndWatchPrebuildStatus(
+            userId,
+            { prebuildId },
+            { signal: ctxSignal() },
+        );
+        for await (const pb of prebuildIt) {
+            if (pb.status === "queued") {
+                continue;
+            }
+            prebuildWorkspaceId = pb.info.buildWorkspaceId;
+            await prebuildIt.return();
+            break;
+        }
+        return prebuildWorkspaceId;
+    }
+
     async *watchPrebuildLogs(request: WatchPrebuildLogsRequest): AsyncIterable<WatchPrebuildLogsResponse> {
         if (!uuidValidate(request.prebuildId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "prebuildId is required");
         }
         const userId = ctxUserId();
-
-        const result = await this.prebuildManager.getPrebuild({}, userId, request.prebuildId);
-        if (!result?.info.buildWorkspaceId) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "no build workspace found");
+        const prebuildWorkspaceId = await this.waitUntilPrebuildWorkspaceCreated(userId, request.prebuildId);
+        if (!prebuildWorkspaceId) {
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "prebuild workspace not found");
         }
 
-        const workspaceStatusIt = this.workspaceService.getAndWatchWorkspaceStatus(
-            userId,
-            result.info.buildWorkspaceId,
-            { signal: ctxSignal() },
-        );
+        const workspaceStatusIt = this.workspaceService.getAndWatchWorkspaceStatus(userId, prebuildWorkspaceId, {
+            signal: ctxSignal(),
+        });
         let hasImageBuild = false;
         for await (const itWsInfo of workspaceStatusIt) {
             switch (itWsInfo.status?.phase?.name) {

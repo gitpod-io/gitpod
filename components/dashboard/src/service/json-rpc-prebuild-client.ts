@@ -22,6 +22,7 @@ import {
     ListOrganizationPrebuildsResponse,
     WatchPrebuildLogsRequest,
     WatchPrebuildLogsResponse,
+    PrebuildPhase_Phase,
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { getGitpodService } from "./service";
 import { converter } from "./public-api";
@@ -181,6 +182,28 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
         );
     }
 
+    private async waitUntilPrebuildWorkspaceCreated(prebuildId: string, parentSignal?: AbortSignal) {
+        const controller = new AbortController();
+        parentSignal?.addEventListener("abort", () => {
+            controller.abort();
+        });
+
+        const prebuildIt = this.watchPrebuild(
+            { scope: { case: "prebuildId", value: prebuildId } },
+            { signal: controller.signal },
+        );
+        let prebuildWorkspaceId: string | undefined;
+        for await (const prebuild of prebuildIt) {
+            if (prebuild.prebuild?.status?.phase?.name === PrebuildPhase_Phase.QUEUED) {
+                continue;
+            }
+            prebuildWorkspaceId = prebuild.prebuild?.workspaceId;
+            controller.abort();
+            break;
+        }
+        return prebuildWorkspaceId;
+    }
+
     async *watchPrebuildLogs(
         request: PartialMessage<WatchPrebuildLogsRequest>,
         options?: CallOptions | undefined,
@@ -188,14 +211,12 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
         if (!request.prebuildId || !uuidValidate(request.prebuildId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "prebuildId is required");
         }
-        const prebuild = await this.getPrebuild({ prebuildId: request.prebuildId });
-        if (!prebuild.prebuild?.workspaceId) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "no build workspace found");
+        const prebuildWorkspaceId = await this.waitUntilPrebuildWorkspaceCreated(request.prebuildId, options?.signal);
+        if (!prebuildWorkspaceId) {
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "prebuild workspace not found");
         }
-        const wsInfoIt = this.workspaceClient.watchWorkspaceStatus(
-            { workspaceId: prebuild.prebuild.workspaceId },
-            options,
-        );
+
+        const wsInfoIt = this.workspaceClient.watchWorkspaceStatus({ workspaceId: prebuildWorkspaceId }, options);
         let hasImageBuild = false;
         for await (const wsInfo of wsInfoIt) {
             switch (wsInfo.status?.phase?.name) {
@@ -211,7 +232,7 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
                         };
                     }
                     getGitpodService()
-                        .server.watchWorkspaceImageBuildLogs(prebuild.prebuild.workspaceId)
+                        .server.watchWorkspaceImageBuildLogs(prebuildWorkspaceId)
                         .then(() => {
                             imageBuildControl.abort("watch image build finished");
                         })
