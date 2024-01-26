@@ -70,6 +70,20 @@ func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStrip
 		}, nil
 	}
 
+	updateStripeCustomer := func(stripeCustomerID string) (db.StripeCustomer, error) {
+		stripeCustomer, err := s.stripeClient.GetCustomer(ctx, stripeCustomerID)
+		if err != nil {
+			return db.StripeCustomer{}, err
+		}
+
+		customer, err := db.UpdateStripeCustomerInvalidBillingAddress(ctx, s.conn, stripeCustomer.ID, stripeCustomer.Tax.AutomaticTax == stripe_api.CustomerTaxAutomaticTaxUnrecognizedLocation)
+		if err != nil {
+			return db.StripeCustomer{}, err
+		}
+
+		return customer, nil
+	}
+
 	switch identifier := req.GetIdentifier().(type) {
 	case *v1.GetStripeCustomerRequest_AttributionId:
 		attributionID, err := db.ParseAttributionID(identifier.AttributionId)
@@ -96,12 +110,7 @@ func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStrip
 			return nil, status.Errorf(codes.NotFound, "Failed to lookup stripe customer from DB: %s", err.Error())
 		} else if customer.InvalidBillingAddress == nil {
 			// Update field for old entries in db
-			stripeCustomer, err := s.stripeClient.GetCustomer(ctx, customer.StripeCustomerID)
-			if err != nil {
-				return nil, err
-			}
-
-			customer, err = db.UpdateStripeCustomerInvalidBillingAddress(ctx, s.conn, stripeCustomer.ID, stripeCustomer.Tax.AutomaticTax == stripe_api.CustomerTaxAutomaticTaxUnrecognizedLocation)
+			customer, err = updateStripeCustomer(customer.StripeCustomerID)
 			if err != nil {
 				logger.WithError(err).Error("Failed to update stripe customer from DB")
 			}
@@ -140,12 +149,7 @@ func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStrip
 			return nil, status.Errorf(codes.NotFound, "Failed to lookup stripe customer from DB: %s", err.Error())
 		} else if customer.InvalidBillingAddress == nil {
 			// Update field for old entries in db
-			stripeCustomer, err := s.stripeClient.GetCustomer(ctx, customer.StripeCustomerID)
-			if err != nil {
-				return nil, err
-			}
-
-			customer, err = db.UpdateStripeCustomerInvalidBillingAddress(ctx, s.conn, stripeCustomer.ID, stripeCustomer.Tax.AutomaticTax == stripe_api.CustomerTaxAutomaticTaxUnrecognizedLocation)
+			customer, err = updateStripeCustomer(customer.StripeCustomerID)
 			if err != nil {
 				logger.WithError(err).Error("Failed to update stripe customer from DB")
 			}
@@ -350,6 +354,8 @@ func (s *BillingService) UpdateCustomerSubscriptionsTaxState(ctx context.Context
 			_, err := s.stripeClient.UpdateSubscriptionAutomaticTax(ctx, subscription.ID, isAutomaticTaxSupported)
 			if err != nil {
 				log.WithError(err).Errorf("Failed to update subscription automaticTax with ID %s", subscription.ID)
+			} else {
+				log.Infof("Updated subscription automatic tax supported with ID %s", subscription.ID)
 			}
 		}
 	}

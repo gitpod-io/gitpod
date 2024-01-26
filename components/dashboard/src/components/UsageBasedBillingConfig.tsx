@@ -49,7 +49,6 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
     const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
     const createPaymentIntent = useCreateHoldPaymentIntentMutation();
     const [showAddPaymentMethodModal, setShowAddPaymentMethodModal] = useState<boolean>(false);
-    const [showInvalidBillingAddresToast, setShowInvalidBillingAddresToast] = useState<boolean>(false);
     const { toast } = useToast();
 
     // Stripe-controlled parameters
@@ -71,9 +70,6 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
             try {
                 getGitpodService().server.getStripePortalUrl(attributionId).then(setStripePortalUrl);
                 getGitpodService().server.getUsageBalance(attributionId).then(setCurrentUsage);
-                getGitpodService()
-                    .server.isCustomerBillingAddressInvalid(attributionId)
-                    .then(setShowInvalidBillingAddresToast);
                 const costCenter = await getGitpodService().server.getCostCenter(attributionId);
                 setUsageLimit(costCenter?.spendingLimit || 0);
                 setBillingCycleFrom(dayjs(costCenter?.billingCycleStart || now.startOf("month")).utc(true));
@@ -233,16 +229,6 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
         }
         return usageLimit > 500 ? "Open Source" : "Free";
     }, [usageLimit]);
-
-    useEffect(() => {
-        if (showManageBilling && showInvalidBillingAddresToast) {
-            toast({
-                message:
-                    "Your billing address is invalid, taxes (if applicable) won't be calculated. Please update your billing address.",
-                autoHide: false,
-            });
-        }
-    }, [showManageBilling, showInvalidBillingAddresToast, toast]);
 
     return (
         <div className="mb-16">
