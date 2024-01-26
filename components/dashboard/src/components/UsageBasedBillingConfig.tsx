@@ -238,7 +238,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
         if (showManageBilling && showInvalidBillingAddresToast) {
             toast({
                 message:
-                    "Your billing address is cannot be recognized, taxes (if applicable) won't be collected. Please update your billing address.",
+                    "Your billing address is invalid, taxes (if applicable) won't be calculated. Please update your billing address.",
                 autoHide: false,
             });
         }
