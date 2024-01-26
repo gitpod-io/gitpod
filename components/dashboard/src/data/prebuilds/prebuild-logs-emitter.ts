@@ -13,6 +13,7 @@ export function usePrebuildLogsEmitter(prebuildId: string) {
     useEffect(() => {
         const controller = new AbortController();
         const watch = async () => {
+            console.log("==========startWatch");
             const it = prebuildClient.watchPrebuildLogs({ prebuildId }, { signal: controller.signal });
             for await (const dta of it) {
                 emitter.emit("logs", dta.message);

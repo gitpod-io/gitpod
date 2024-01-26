@@ -32,6 +32,7 @@ export const PrebuildDetailPage: FC = () => {
     const { data: repository, isLoading: repositoryIsLoading } = useConfiguration(repositoryId);
     const { toast } = useToast();
 
+    // TODO: watch
     const { data: prebuild, isLoading: prebuildIsLoading } = usePrebuildQuery(prebuildId);
 
     const { emitter: logEmitter } = usePrebuildLogsEmitter(prebuildId);
@@ -46,12 +47,12 @@ export const PrebuildDetailPage: FC = () => {
         switch (prebuild?.status?.phase?.name) {
             case PrebuildPhase_Phase.QUEUED:
                 return {
-                    icon: <Loader2Icon size={20} className="text-gray-500" />,
+                    icon: <Loader2Icon size={20} className="text-gray-500 animate-spin" />,
                     description: "Prebuild queue",
                 };
             case PrebuildPhase_Phase.BUILDING:
                 return {
-                    icon: <CheckCircle2Icon size={20} className="text-green-500" />,
+                    icon: <Loader2Icon size={20} className="text-gray-500 animate-spin" />,
                     description: "Prebuild building",
                 };
             case PrebuildPhase_Phase.ABORTED:
