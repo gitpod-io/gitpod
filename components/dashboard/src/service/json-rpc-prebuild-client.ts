@@ -214,6 +214,9 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
                         .server.watchWorkspaceImageBuildLogs(prebuild.prebuild.workspaceId)
                         .then(() => {
                             imageBuildControl.abort("watch image build finished");
+                        })
+                        .catch((e) => {
+                            console.error("failed to watch image build logs", e);
                         });
                     const it = this.getWorkspaceImageBuildLogsIterator(imageBuildControl.signal);
                     for await (const message of it) {
