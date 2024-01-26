@@ -29,7 +29,7 @@ import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { validate as uuidValidate } from "uuid";
-import { watchPrebuildLogs } from "@gitpod/public-api-common/lib/prebuild-utils";
+import { onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { JsonRpcWorkspaceClient } from "./json-rpc-workspace-client";
 import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
@@ -232,9 +232,13 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
                     const it = generateAsyncGenerator<string>(
                         (sink) => {
                             try {
-                                const cancel = watchPrebuildLogs(firstStreamUrl, (msg) => {
-                                    sink.push(msg);
-                                });
+                                const cancel = onDownloadPrebuildLogsUrl(
+                                    firstStreamUrl,
+                                    (msg) => {
+                                        sink.push(msg);
+                                    },
+                                    { includeCredentials: true, maxBackoffTimes: 3 },
+                                );
                                 return () => {
                                     cancel();
                                 };

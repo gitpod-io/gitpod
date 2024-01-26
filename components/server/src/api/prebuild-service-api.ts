@@ -6,7 +6,7 @@
 
 import { ServiceImpl } from "@connectrpc/connect";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
-import { watchPrebuildLogs } from "@gitpod/public-api-common/lib/prebuild-utils";
+import { onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { PrebuildService as PrebuildServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/prebuild_connect";
 import {
     GetPrebuildRequest,
@@ -254,10 +254,13 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
                                             "cannot fetch prebuild log",
                                         );
                                     }
-                                    const cancel = watchPrebuildLogs(
+                                    const cancel = onDownloadPrebuildLogsUrl(
                                         downloadUrl,
                                         (msg: string) => sink.push(msg),
-                                        false,
+                                        {
+                                            includeCredentials: false,
+                                            maxBackoffTimes: 3,
+                                        },
                                     );
                                     return () => {
                                         cancel();

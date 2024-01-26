@@ -7,14 +7,20 @@
 import { Disposable, DisposableCollection, HEADLESS_LOG_STREAM_STATUS_CODE_REGEX } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
+const defaultBackoffTimes = 3;
+interface Options {
+    includeCredentials: boolean;
+    maxBackoffTimes?: number;
+}
+
 /**
  * backoff fetch prebuild logs
  * @returns a function to cancel fetching
  */
-export function watchPrebuildLogs(
+export function onDownloadPrebuildLogsUrl(
     streamUrl: string,
     onLog: (message: string) => void,
-    includeCredentials = false,
+    options: Options,
 ): () => void {
     const disposables = new DisposableCollection();
 
@@ -26,6 +32,7 @@ export function watchPrebuildLogs(
     const backoffFactor = 1.2;
     const maxBackoffSeconds = 5;
     let delayInSeconds = initialDelaySeconds;
+    let currentBackoffTimes = 0;
 
     const startWatchingLogs = async () => {
         const retryBackoff = async (reason: string, err?: Error) => {
@@ -43,11 +50,12 @@ export function watchPrebuildLogs(
         let response: Response | undefined = undefined;
         let reader: ReadableStreamDefaultReader<Uint8Array> | undefined = undefined;
         try {
+            currentBackoffTimes += 1;
             console.debug("fetching from streamUrl: " + streamUrl);
             response = await fetch(streamUrl, {
                 method: "GET",
                 cache: "no-cache",
-                credentials: includeCredentials ? "include" : undefined,
+                credentials: options.includeCredentials ? "include" : undefined,
                 keepalive: true,
                 headers: {
                     TE: "trailers", // necessary to receive stream status code
@@ -74,7 +82,10 @@ export function watchPrebuildLogs(
                     } else {
                         const code = parseStatusCode(matches[1]);
                         if (code !== 200) {
-                            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `stream status code: ${code}`);
+                            throw new ApplicationError(
+                                ErrorCodes.INTERNAL_SERVER_ERROR,
+                                `prebuild log download status code: ${code}`,
+                            );
                         }
                     }
                 } else {
@@ -83,15 +94,19 @@ export function watchPrebuildLogs(
 
                 chunk = await reader.read();
             }
-            reader.cancel();
         } catch (err) {
-            reader?.cancel().catch(console.debug);
+            if (currentBackoffTimes > (options.maxBackoffTimes ?? defaultBackoffTimes)) {
+                console.debug("stopped watching headless logs, max backoff reached", err);
+                return;
+            }
             if (err.code === 400) {
                 // sth is really off, and we _should not_ retry
                 console.debug("stopped watching headless logs", err);
                 return;
             }
             await retryBackoff("error while listening to stream", err);
+        } finally {
+            reader?.cancel().catch(console.debug);
         }
     };
     startWatchingLogs().catch(console.error);
