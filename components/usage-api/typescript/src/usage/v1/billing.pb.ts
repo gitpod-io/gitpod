@@ -44,6 +44,7 @@ export interface GetStripeCustomerResponse {
 export interface StripeCustomer {
   id: string;
   currency: string;
+  invalidBillingAddress: boolean;
 }
 
 export interface CreateStripeCustomerRequest {
@@ -542,7 +543,7 @@ export const GetStripeCustomerResponse = {
 };
 
 function createBaseStripeCustomer(): StripeCustomer {
-  return { id: "", currency: "" };
+  return { id: "", currency: "", invalidBillingAddress: false };
 }
 
 export const StripeCustomer = {
@@ -552,6 +553,9 @@ export const StripeCustomer = {
     }
     if (message.currency !== "") {
       writer.uint32(18).string(message.currency);
+    }
+    if (message.invalidBillingAddress === true) {
+      writer.uint32(24).bool(message.invalidBillingAddress);
     }
     return writer;
   },
@@ -577,6 +581,13 @@ export const StripeCustomer = {
 
           message.currency = reader.string();
           continue;
+        case 3:
+          if (tag !== 24) {
+            break;
+          }
+
+          message.invalidBillingAddress = reader.bool();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -590,6 +601,7 @@ export const StripeCustomer = {
     return {
       id: isSet(object.id) ? String(object.id) : "",
       currency: isSet(object.currency) ? String(object.currency) : "",
+      invalidBillingAddress: isSet(object.invalidBillingAddress) ? Boolean(object.invalidBillingAddress) : false,
     };
   },
 
@@ -601,6 +613,9 @@ export const StripeCustomer = {
     if (message.currency !== "") {
       obj.currency = message.currency;
     }
+    if (message.invalidBillingAddress === true) {
+      obj.invalidBillingAddress = message.invalidBillingAddress;
+    }
     return obj;
   },
 
@@ -611,6 +626,7 @@ export const StripeCustomer = {
     const message = createBaseStripeCustomer();
     message.id = object.id ?? "";
     message.currency = object.currency ?? "";
+    message.invalidBillingAddress = object.invalidBillingAddress ?? false;
     return message;
   },
 };

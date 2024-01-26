@@ -141,7 +141,7 @@ func (c *Client) findCustomers(ctx context.Context, query string) (customers []*
 	params := &stripe.CustomerSearchParams{
 		SearchParams: stripe.SearchParams{
 			Query:   query,
-			Expand:  []*string{stripe.String("data.subscriptions")},
+			Expand:  []*string{stripe.String("data.tax"), stripe.String("data.subscriptions")},
 			Context: ctx,
 		},
 	}

@@ -136,39 +136,6 @@ export class StripeService {
         });
         return true;
     }
-
-    async getCustomerAutomaticTaxState(attributionId: string): Promise<string | undefined> {
-        const customerId = await this.findCustomerByAttributionId(attributionId);
-        if (!customerId) {
-            return;
-        }
-        const customer = await this.getStripe().customers.retrieve(customerId, { expand: ["tax"] });
-        if (customer.deleted) {
-            // Ignore deleted customer
-            return;
-        }
-
-        const subscriptions = await reportStripeOutcome("subscriptions_list", () => {
-            return this.getStripe().subscriptions.list({
-                customer: customerId,
-            });
-        });
-        if (subscriptions.data.length <= 0) {
-            // Ignore if no active suscriptions
-            return;
-        }
-
-        const automaticTax = customer.tax?.automatic_tax;
-        if (automaticTax === "failed") {
-            log.error(`Stripe failed to compute automatic tax state`, {
-                attributionId,
-                customerId,
-            });
-            return;
-        }
-
-        return automaticTax;
-    }
 }
 
 async function reportStripeOutcome<T>(op: string, f: () => Promise<T>) {

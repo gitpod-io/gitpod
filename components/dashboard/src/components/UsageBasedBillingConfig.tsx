@@ -49,7 +49,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
     const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
     const createPaymentIntent = useCreateHoldPaymentIntentMutation();
     const [showAddPaymentMethodModal, setShowAddPaymentMethodModal] = useState<boolean>(false);
-    const [showInvalidBillingAddresToast, setshowInvalidBillingAddresToast] = useState<boolean>(false);
+    const [showInvalidBillingAddresToast, setShowInvalidBillingAddresToast] = useState<boolean>(false);
     const { toast } = useToast();
 
     // Stripe-controlled parameters
@@ -72,8 +72,8 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                 getGitpodService().server.getStripePortalUrl(attributionId).then(setStripePortalUrl);
                 getGitpodService().server.getUsageBalance(attributionId).then(setCurrentUsage);
                 getGitpodService()
-                    .server.getCustomerAutomaticTaxState(attributionId)
-                    .then((taxState) => setshowInvalidBillingAddresToast(taxState === "unrecognized_location"));
+                    .server.isCustomerBillingAddressInvalid(attributionId)
+                    .then(setShowInvalidBillingAddresToast);
                 const costCenter = await getGitpodService().server.getCostCenter(attributionId);
                 setUsageLimit(costCenter?.spendingLimit || 0);
                 setBillingCycleFrom(dayjs(costCenter?.billingCycleStart || now.startOf("month")).utc(true));

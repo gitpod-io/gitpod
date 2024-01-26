@@ -78,6 +78,7 @@ message GetStripeCustomerResponse {
 message StripeCustomer {
   string id = 1;
   string currency = 2;
+  bool invalid_billing_address = 3;
 }
 
 message CreateStripeCustomerRequest {
