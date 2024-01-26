@@ -57,19 +57,20 @@ export const PrebuildsTable: FC<Props> = ({
                         value={filter?.status}
                         onValueChange={(status) => {
                             if (status === "any") {
-                                onFilterChange({ status: undefined });
+                                onFilterChange({ ...filter, status: undefined });
                                 return;
                             }
-                            onFilterChange({ status: status as STATUS_OPTION });
+                            onFilterChange({ ...filter, status: status as STATUS_OPTION });
                         }}
                     >
                         <SelectTrigger className="w-[120px]">
                             <SelectValue placeholder="Status" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="any">Any</SelectItem>
-                            <SelectItem value="failed">Failed</SelectItem>
-                            <SelectItem value="succeeded">Succeeded</SelectItem>
+                            <SelectItem value="any">All</SelectItem>
+                            <SelectItem value="failed">Failing</SelectItem>
+                            <SelectItem value="succeeded">Successfull</SelectItem>
+                            <SelectItem value="unfinished">In progress</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

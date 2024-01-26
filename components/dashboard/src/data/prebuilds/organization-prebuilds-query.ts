@@ -9,9 +9,10 @@ import { prebuildClient } from "../../service/public-api";
 import { ListOrganizationPrebuildsRequest_Filter } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { PlainMessage } from "@bufbuild/protobuf";
+import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 
 type Args = {
-    filter: Partial<PlainMessage<ListOrganizationPrebuildsRequest_Filter>>;
+    filter: DeepPartial<PlainMessage<ListOrganizationPrebuildsRequest_Filter>>;
     pageSize: number;
 };
 export const useListOrganizationPrebuildsQuery = ({ filter, pageSize }: Args) => {

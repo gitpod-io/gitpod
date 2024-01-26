@@ -15,11 +15,13 @@ import { PrebuildsTable } from "./PrebuildTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { useListOrganizationPrebuildsQuery } from "../../data/prebuilds/organization-prebuilds-query";
 import { ListOrganizationPrebuildsRequest_Filter_State } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { validate } from "uuid";
 
 const STATUS_FILTER_VALUES = ["succeeded", "failed", "unfinished", undefined] as const; // undefined means any status
 export type STATUS_OPTION = typeof STATUS_FILTER_VALUES[number];
 export type Filter = {
     status?: STATUS_OPTION;
+    configurationId?: string;
 };
 
 const PrebuildsListPage: FC = () => {
@@ -30,6 +32,7 @@ const PrebuildsListPage: FC = () => {
     const params = useQueryParams();
     const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") ?? "");
     const [statusFilter, setPrebuildsFilter] = useState(parseStatus(params));
+    const configurationFilter = useMemo(() => parseConfigurationId(params), [params]);
 
     const handleFilterChange = useCallback((filter: Filter) => {
         setPrebuildsFilter(filter.status);
@@ -37,8 +40,9 @@ const PrebuildsListPage: FC = () => {
     const filter = useMemo<Filter>(() => {
         return {
             status: statusFilter,
+            configurationId: configurationFilter,
         };
-    }, [statusFilter]);
+    }, [configurationFilter, statusFilter]);
 
     useEffect(() => {
         const params = new URLSearchParams();
@@ -50,9 +54,13 @@ const PrebuildsListPage: FC = () => {
             params.set("prebuilds", statusFilter);
         }
 
+        if (configurationFilter) {
+            params.set("configurationId", configurationFilter);
+        }
+
         params.toString();
         history.replace({ search: `?${params.toString()}` });
-    }, [history, statusFilter, searchTermDebounced]);
+    }, [history, statusFilter, searchTermDebounced, configurationFilter]);
 
     // TODO: handle isError case
     const { data, isLoading, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } =
@@ -60,6 +68,7 @@ const PrebuildsListPage: FC = () => {
             filter: {
                 searchTerm: searchTermDebounced,
                 state: toApiStatus(filter.status),
+                ...(configurationFilter ? { configuration: { id: configurationFilter } } : {}),
             },
             pageSize: 30,
         });
@@ -123,6 +132,15 @@ const parseStatus = (params: URLSearchParams): STATUS_OPTION => {
     const validValues = Object.values(STATUS_FILTER_VALUES).filter((val) => !!val);
     if (filter && validValues.includes(filter as any)) {
         return filter as STATUS_OPTION;
+    }
+
+    return undefined;
+};
+
+const parseConfigurationId = (params: URLSearchParams): string | undefined => {
+    const configuration = params.get("configurationId");
+    if (configuration && validate(configuration)) {
+        return configuration;
     }
 
     return undefined;
