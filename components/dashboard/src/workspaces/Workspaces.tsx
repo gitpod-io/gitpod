@@ -86,9 +86,9 @@ const WorkspacesPage: FunctionComponent = () => {
 
             {deleteModalVisible && (
                 <ConfirmationModal
-                    title="Delete Inactive Workspaces"
+                    title="Delete inactive workspaces"
                     areYouSureText="Are you sure you want to delete all inactive workspaces?"
-                    buttonText="Delete Inactive Workspaces"
+                    buttonText="Delete inactive workspaces"
                     onClose={() => setDeleteModalVisible(false)}
                     onConfirm={handleDeleteInactiveWorkspacesConfirmation}
                     visible
@@ -121,7 +121,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                         </div>
                                         <div className="flex flex-grow flex-col ">
                                             <div className="font-medium text-gray-500 dark:text-gray-200 truncate">
-                                                <span>Inactive Workspaces&nbsp;</span>
+                                                <span>Inactive workspaces&nbsp;</span>
                                                 <span className="text-gray-400 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 rounded-xl px-2 py-0.5 text-xs">
                                                     {filteredInactiveWorkspaces.length}
                                                 </span>
@@ -152,7 +152,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                                         evt.stopPropagation();
                                                     }}
                                                 >
-                                                    Delete Inactive Workspaces
+                                                    Delete inactive workspaces
                                                 </Button>
                                             ) : null}
                                         </div>

@@ -29,13 +29,13 @@ export const DeleteWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
 
     return (
         <ConfirmationModal
-            title="Delete Workspace"
+            title="Delete workspace"
             areYouSureText="Are you sure you want to delete this workspace?"
             children={{
                 name: workspace.id,
                 description: workspace.metadata?.name,
             }}
-            buttonText="Delete Workspace"
+            buttonText="Delete workspace"
             warningText={deleteWorkspace.isError ? "There was a problem deleting your workspace." : undefined}
             onClose={onClose}
             onConfirm={handleConfirmation}

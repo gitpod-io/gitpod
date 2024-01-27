@@ -90,7 +90,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                             .toString();
                     }}
                 >
-                    Download Workspace
+                    Download workspace
                 </Button>
                 <Button
                     variant="destructive"
@@ -98,7 +98,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                     disabled={activity || workspace.phase === "stopped"}
                     onClick={stopWorkspace}
                 >
-                    Stop Workspace
+                    Stop workspace
                 </Button>
             </div>
             <div className="flex mt-6">

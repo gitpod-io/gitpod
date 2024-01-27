@@ -21,7 +21,7 @@ export const RepoListEmptyState: FC<Props> = ({ onImport }) => {
                     Importing and configuring repositories allows your team members to be coding at the click of a
                     button.
                 </Subheading>
-                <Button onClick={onImport}>Import a Repository</Button>
+                <Button onClick={onImport}>Import a repository</Button>
             </div>
         </div>
     );

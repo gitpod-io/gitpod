@@ -360,7 +360,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
 
                             <a className="mt-5 self-end" href={stripePortalUrl}>
                                 <Button variant="secondary" disabled={!stripePortalUrl}>
-                                    Manage Billing Settings ↗
+                                    Manage billing settings ↗
                                 </Button>
                             </a>
                         </div>

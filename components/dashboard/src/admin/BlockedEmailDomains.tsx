@@ -139,7 +139,7 @@ export function BlockedEmailDomainsList(props: Props) {
             <div className="flex flex-col space-y-2">
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
                     <div className="w-9/12">Domain</div>
-                    <div className="w-1/12">Block Users</div>
+                    <div className="w-1/12">Block users</div>
                     <div className="w-1/12"></div>
                 </div>
                 {searchResult.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((br) => (
@@ -269,7 +269,7 @@ function Details(props: {
             />
 
             <CheckboxInputField
-                label="Block Users"
+                label="Block users"
                 hint="Block any user that tries to sign up with this email domain."
                 checked={props.br.negative}
                 disabled={!props.update}

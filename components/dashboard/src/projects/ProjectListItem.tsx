@@ -39,7 +39,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                             <DropdownActions>
                                 <DropdownMenuItem asChild>
                                     <a href={gitpodHostUrl.withContext(`${project.cloneUrl}`).toString()}>
-                                        New Workspace
+                                        New workspace
                                     </a>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>

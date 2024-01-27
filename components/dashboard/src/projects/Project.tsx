@@ -374,7 +374,7 @@ export default function ProjectsPage() {
                                                         <Button
                                                             className={`mr-2 py-2 opacity-0 group-hover:opacity-100`}
                                                         >
-                                                            New Workspace
+                                                            New workspace
                                                         </Button>
                                                     </a>
                                                     <ItemFieldContextMenu

@@ -86,7 +86,7 @@ export default function UserSearch() {
                             <input
                                 className="w-64 pl-9 border-0"
                                 type="search"
-                                placeholder="Search Users"
+                                placeholder="Search users"
                                 onKeyDown={(ke) => ke.key === "Enter" && search()}
                                 onChange={(v) => {
                                     setSearchTerm(v.target.value.trim());

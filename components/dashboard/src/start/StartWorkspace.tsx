@@ -526,7 +526,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 }
                 if (!this.state.desktopIde) {
                     phase = StartPhase.Running;
-                    statusMessage = <p className="text-base text-gray-400">Opening Workspace …</p>;
+                    statusMessage = <p className="text-base text-gray-400">Opening workspace …</p>;
                 } else {
                     phase = StartPhase.IdeReady;
                     const openLink = this.state.desktopIde.link;
@@ -548,7 +548,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                     );
                     statusMessage = (
                         <div>
-                            <p className="text-base text-gray-400">Opening Workspace …</p>
+                            <p className="text-base text-gray-400">Opening workspace …</p>
                             <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
                                 <div className="rounded-full w-3 h-3 text-sm bg-green-500">&nbsp;</div>
                                 <div>
@@ -573,7 +573,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                             },
                                         },
                                         {
-                                            title: "Stop Workspace",
+                                            title: "Stop workspace",
                                             onClick: () =>
                                                 workspaceClient.stopWorkspace({ workspaceId: this.props.workspaceId }),
                                         },
@@ -718,7 +718,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 <Button variant="secondary">Go to Dashboard</Button>
                             </a>
                             <a target="_parent" href={gitpodHostUrl.asStart(this.state.workspace.id).toString()}>
-                                <Button>Open Workspace</Button>
+                                <Button>Open workspace</Button>
                             </a>
                         </div>
                     </div>

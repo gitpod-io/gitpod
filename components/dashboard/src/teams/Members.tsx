@@ -232,7 +232,7 @@ export default function MembersPage() {
                                                 ? [
                                                       {
                                                           title: !isRemainingOwner
-                                                              ? "Leave Organization"
+                                                              ? "Leave organization"
                                                               : "Remaining owner",
                                                           customFontStyle: !isRemainingOwner
                                                               ? "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"

@@ -111,7 +111,7 @@ export default function Preferences() {
     return (
         <div>
             <PageWithSettingsSubMenu>
-                <Heading2>New Workspaces</Heading2>
+                <Heading2>New workspaces</Heading2>
                 <Subheading>
                     Choose your default editor.{" "}
                     <a
@@ -165,7 +165,7 @@ export default function Preferences() {
                 <div className="mt-4 max-w-xl">
                     <form onSubmit={saveWorkspaceTimeout}>
                         <InputField
-                            label="Default Workspace Timeout"
+                            label="Default workspace Timeout"
                             hint={
                                 <span>
                                     Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}

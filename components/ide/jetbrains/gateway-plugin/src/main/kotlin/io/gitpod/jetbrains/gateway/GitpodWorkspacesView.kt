@@ -152,7 +152,7 @@ class GitpodWorkspacesView(
                         .horizontalAlign(HorizontalAlign.FILL)
                 }.bottomGap(BottomGap.SMALL)
                 row {
-                    label("Recent Workspaces").bold()
+                    label("Recent workspaces").bold()
                     label("").resizableColumn().horizontalAlign(HorizontalAlign.FILL)
                     actionButton(object :
                         DumbAwareAction("Refresh", "Refresh recent workspaces", AllIcons.Actions.Refresh) {

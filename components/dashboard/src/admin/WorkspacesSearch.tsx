@@ -135,7 +135,7 @@ export function WorkspaceSearch(props: Props) {
                         <input
                             className="w-64 pl-9 border-0"
                             type="search"
-                            placeholder="Search Workspace IDs"
+                            placeholder="Search workspace IDs"
                             onKeyDown={(ke) => ke.key === "Enter" && search()}
                             onChange={(v) => {
                                 setQueryTerm(v.target.value.trim());

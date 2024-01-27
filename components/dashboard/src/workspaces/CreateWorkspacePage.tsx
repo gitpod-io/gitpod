@@ -382,7 +382,7 @@ export function CreateWorkspacePage() {
         return (
             <div className="flex flex-col mt-32 mx-auto ">
                 <div className="flex flex-col max-h-screen max-w-xl mx-auto items-center w-full">
-                    <Heading1>New Workspace</Heading1>
+                    <Heading1>New workspace</Heading1>
                     <div className="text-gray-500 text-center text-base">
                         Start a new workspace with the following options.
                     </div>
@@ -395,7 +395,7 @@ export function CreateWorkspacePage() {
     return (
         <div className="flex flex-col mt-32 mx-auto ">
             <div className="flex flex-col max-h-screen max-w-xl mx-auto items-center w-full">
-                <Heading1>New Workspace</Heading1>
+                <Heading1>New workspace</Heading1>
                 <div className="text-gray-500 text-center text-base">
                     Create a new workspace in the{" "}
                     <span className="font-semibold text-gray-600 dark:text-gray-400">{currentOrg?.name}</span>{" "}
@@ -455,7 +455,7 @@ export function CreateWorkspacePage() {
                         loading={createWorkspaceMutation.isStarting || !!autostart}
                         disabled={continueButtonDisabled}
                     >
-                        {createWorkspaceMutation.isStarting ? "Opening Workspace ..." : "Continue"}
+                        {createWorkspaceMutation.isStarting ? "Opening workspace ..." : "Continue"}
                     </LoadingButton>
                 </div>
                 {existingWorkspaces.length > 0 && !createWorkspaceMutation.isStarting && (

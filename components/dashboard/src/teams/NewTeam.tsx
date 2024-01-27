@@ -73,7 +73,7 @@ export default function NewTeamPage() {
                     )}
                 </div>
                 <div className="flex flex-row-reverse space-x-2 space-x-reverse mt-2">
-                    <Button type="submit">Create Organization</Button>
+                    <Button type="submit">Create organization</Button>
                     <Button variant="secondary" onClick={() => history.push("/")}>
                         Cancel
                     </Button>

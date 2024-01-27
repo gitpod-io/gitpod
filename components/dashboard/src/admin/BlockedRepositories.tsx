@@ -162,7 +162,7 @@ export function BlockedRepositoriesList(props: Props) {
                         />
                     </div>
                     <div className="flex space-x-2">
-                        <Button onClick={add}>New Blocked Repository</Button>
+                        <Button onClick={add}>New Blocked repository</Button>
                     </div>
                 </div>
             </div>
@@ -173,7 +173,7 @@ export function BlockedRepositoriesList(props: Props) {
             <div className="flex flex-col space-y-2">
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
                     <div className="w-9/12">Repository URL (RegEx)</div>
-                    <div className="w-1/12">Block Users</div>
+                    <div className="w-1/12">Block users</div>
                     <div className="w-1/12"></div>
                 </div>
                 {searchResult.blockedRepositories.map((br) => (
@@ -242,7 +242,7 @@ function AddBlockedRepositoryModal(p: AddBlockedRepositoryModalProps) {
 
     return (
         <Modal visible onClose={p.onClose} onSubmit={save}>
-            <ModalHeader>New Blocked Repository</ModalHeader>
+            <ModalHeader>New blocked repository</ModalHeader>
             <ModalBody>
                 <Alert type={"warning"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
                     Entries in this table have an immediate effect on all users. Please use it carefully.
@@ -256,7 +256,7 @@ function AddBlockedRepositoryModal(p: AddBlockedRepositoryModalProps) {
                 <Button variant="secondary" onClick={p.onClose}>
                     Cancel
                 </Button>
-                <Button type="submit">Add Blocked Repository</Button>
+                <Button type="submit">Add blocked repository</Button>
             </ModalFooter>
         </Modal>
     );
@@ -269,9 +269,9 @@ function DeleteBlockedRepositoryModal(props: {
 }) {
     return (
         <ConfirmationModal
-            title="Delete Blocked Repository"
+            title="Delete blocked repository"
             areYouSureText="Are you sure you want to delete this repository from the list?"
-            buttonText="Delete Blocked Repository"
+            buttonText="Delete Blocked repository"
             onClose={props.onClose}
             onConfirm={async () => {
                 await props.deleteBlockedRepository();
@@ -308,7 +308,7 @@ function Details(props: {
             />
 
             <CheckboxInputField
-                label="Block Users"
+                label="Block users"
                 hint="Block any user that tries to open a workspace for a repository URL that matches this RegEx."
                 checked={props.br.blockUser}
                 disabled={!props.update}

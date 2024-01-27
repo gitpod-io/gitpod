@@ -13,10 +13,10 @@ export const EmptyWorkspacesContent = () => {
         <div className="app-container flex flex-col space-y-2">
             <div className="px-6 py-3 flex flex-col">
                 <div className="flex flex-col items-center justify-center h-96 w-96 mx-auto">
-                    <Heading2 className="text-center pb-3">No Workspaces</Heading2>
+                    <Heading2 className="text-center pb-3">No workspaces</Heading2>
                     <Subheading className="text-center pb-6">
-                        Prefix any Git repository URL with {window.location.host}/# or create a new workspace for a
-                        recently used project.{" "}
+                        Prefix any Git repository URL with <code>{window.location.host}/#</code> or create a new
+                        workspace for a recently used project.{" "}
                         <a
                             className="gp-link"
                             target="_blank"
@@ -28,7 +28,7 @@ export const EmptyWorkspacesContent = () => {
                     </Subheading>
                     <span>
                         <LinkButton href={"/new"} className="gap-1.5">
-                            New Workspace{" "}
+                            New workspace{" "}
                             <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
                         </LinkButton>
                     </span>

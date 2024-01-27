@@ -32,7 +32,7 @@ export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps)
     }, [enablePersonalAccessTokens]);
 
     return (
-        <PageWithSubMenu subMenu={settingsMenu} title="User Settings" subtitle="Manage your personal account settings.">
+        <PageWithSubMenu subMenu={settingsMenu} title="User settings" subtitle="Manage your personal account settings.">
             {children}
         </PageWithSubMenu>
     );

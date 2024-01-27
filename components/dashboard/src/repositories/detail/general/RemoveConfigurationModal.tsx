@@ -33,7 +33,7 @@ export const RemoveConfigurationModal: FunctionComponent<RemoveProjectModalProps
 
     return (
         <ConfirmationModal
-            title="Remove Repository"
+            title="Remove repository"
             areYouSureText="Are you sure you want to remove this repository from this organization? Organization members will also lose access to it.."
             children={{
                 name: configuration.name ?? "",
