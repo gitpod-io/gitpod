@@ -420,7 +420,7 @@ function UpdateLimitModal(props: {
 
     return (
         <Modal visible={true} onClose={props.onClose} onSubmit={onSubmit}>
-            <ModalHeader>Usage Limit</ModalHeader>
+            <ModalHeader>Usage limit</ModalHeader>
             <ModalBody>
                 <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>
                 {errorMessage && (

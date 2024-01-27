@@ -64,7 +64,7 @@ export function AddSSHKeyModal(props: AddModalProps) {
 
     return (
         <Modal visible onClose={props.onClose} onSubmit={save}>
-            <ModalHeader>New SSH Key</ModalHeader>
+            <ModalHeader>New SSH key</ModalHeader>
             <ModalBody>
                 {errorMsg.length > 0 && (
                     <Alert type="error" className="mb-2">
@@ -81,7 +81,7 @@ export function AddSSHKeyModal(props: AddModalProps) {
                         target="gitpod-create-ssh-key-doc"
                         className="gp-link"
                     >
-                        Learn how to create an SSH Key
+                        Learn how to create an SSH key
                     </a>
                 </Alert>
                 <InputField label="Key">
@@ -111,7 +111,7 @@ export function AddSSHKeyModal(props: AddModalProps) {
                 <Button variant="secondary" onClick={props.onClose}>
                     Cancel
                 </Button>
-                <Button type="submit">Add SSH Key</Button>
+                <Button type="submit">Add SSH key</Button>
             </ModalFooter>
         </Modal>
     );
@@ -196,7 +196,7 @@ export default function SSHKeys() {
                 {dataList.length !== 0 ? (
                     <div className="mt-3 flex">
                         <Button onClick={addOne} className="ml-2">
-                            New SSH Key
+                            New SSH key
                         </Button>
                     </div>
                 ) : null}

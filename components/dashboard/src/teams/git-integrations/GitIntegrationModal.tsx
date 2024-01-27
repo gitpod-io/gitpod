@@ -223,7 +223,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
             <ModalBody>
                 {isNew && (
                     <Subheading>
-                        Configure a Git Integration with a self-managed instance of GitLab, GitHub, or Bitbucket Server.
+                        Configure a Git integration with a self-managed instance of GitLab, GitHub, or Bitbucket Server.
                     </Subheading>
                 )}
 

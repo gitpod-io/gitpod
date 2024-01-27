@@ -54,7 +54,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
 
     return (
         <Modal visible={true} onClose={p.onClose} onSubmit={save}>
-            <ModalHeader>{isNew ? "New" : "Edit"} Variable</ModalHeader>
+            <ModalHeader>{isNew ? "New" : "Edit"} variable</ModalHeader>
             <ModalBody>
                 {error ? (
                     <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{error}</div>
@@ -87,7 +87,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                 <Button variant="secondary" onClick={p.onClose}>
                     Cancel
                 </Button>
-                <Button type="submit">{isNew ? "Add" : "Update"} Variable</Button>
+                <Button type="submit">{isNew ? "Add" : "Update"} variable</Button>
             </ModalFooter>
         </Modal>
     );

@@ -681,14 +681,14 @@ export function LimitReachedModal(p: { children: React.ReactNode }) {
         <Modal visible={true} closeable={false} onClose={() => {}}>
             <ModalHeader>
                 <div className="flex">
-                    <span className="flex-grow">Limit Reached</span>
+                    <span className="flex-grow">Limit reached</span>
                     <img className="rounded-full w-8 h-8" src={user?.avatarUrl || ""} alt={user?.name || "Anonymous"} />
                 </div>
             </ModalHeader>
             <ModalBody>{p.children}</ModalBody>
             <ModalFooter>
                 <a href={gitpodHostUrl.asDashboard().toString()}>
-                    <Button variant="secondary">Go to Dashboard</Button>
+                    <Button variant="secondary">Go to dashboard</Button>
                 </a>
                 <a href={gitpodHostUrl.with({ pathname: "plans" }).toString()} className="ml-2">
                     <Button>Upgrade</Button>

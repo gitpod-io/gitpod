@@ -261,7 +261,7 @@ export default function MembersPage() {
             {inviteUrl && showInviteModal && (
                 // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setShowInviteModal(false)}>
-                    <ModalHeader>Invite Members</ModalHeader>
+                    <ModalHeader>Invite members</ModalHeader>
                     <ModalBody>
                         <InputField
                             label="Invite URL"
@@ -275,7 +275,7 @@ export default function MembersPage() {
                     <ModalFooter>
                         {!!inviteId && (
                             <Button variant="secondary" onClick={() => resetInviteLink()}>
-                                Reset Invite Link
+                                Reset invite URL
                             </Button>
                         )}
                         <Button variant="secondary" onClick={() => setShowInviteModal(false)}>
@@ -287,7 +287,7 @@ export default function MembersPage() {
             {memberToRemove && (
                 // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setMemberToRemove(undefined)}>
-                    <ModalHeader>Remove Members</ModalHeader>
+                    <ModalHeader>Remove members</ModalHeader>
                     <ModalBody>
                         You are about to remove <b>{memberToRemove.fullName}</b> from this organization.
                         <br />

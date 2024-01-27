@@ -386,7 +386,7 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
             onClose={props.onClose}
             onSubmit={() => handleUpdateTeamSettings({ defaultWorkspaceImage })}
         >
-            <ModalHeader>Workspace Default Image</ModalHeader>
+            <ModalHeader>Workspace default image</ModalHeader>
             <ModalBody>
                 <Alert type="warning" className="mb-2">
                     <span className="font-medium">Warning:</span> You are setting a default image for all workspaces
@@ -408,7 +408,7 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
                 </div>
             </ModalBody>
             <ModalFooter>
-                <Button type="submit">Update workspace Default Image</Button>
+                <Button type="submit">Update workspace default image</Button>
             </ModalFooter>
         </Modal>
     );

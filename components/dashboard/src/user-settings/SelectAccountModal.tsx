@@ -48,7 +48,7 @@ export function SelectAccountModal(
     return (
         // TODO: Use title and buttons props
         <Modal visible={true} onClose={props.close}>
-            <ModalHeader>Select Account</ModalHeader>
+            <ModalHeader>Select account</ModalHeader>
             <ModalBody>
                 <p className="pb-2 text-gray-500 text-base">
                     You are trying to authorize a provider that is already connected with another account on Gitpod.

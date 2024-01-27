@@ -144,11 +144,11 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                 </Button>
                 {isEditing ? (
                     <LoadingButton type="submit" loading={updateVariable.isLoading}>
-                        Update Variable
+                        Update variable
                     </LoadingButton>
                 ) : (
                     <LoadingButton type="submit" loading={createVariable.isLoading}>
-                        Add Variable
+                        Add variable
                     </LoadingButton>
                 )}
             </ModalFooter>

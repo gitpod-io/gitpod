@@ -143,7 +143,7 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
 
     return (
         <Modal visible onClose={props.onClose} onSubmit={addVariable}>
-            <ModalHeader>New Variable</ModalHeader>
+            <ModalHeader>New variable</ModalHeader>
             <ModalBody>
                 <Alert type="warning">
                     <strong>Project environment variables can be exposed.</strong>
@@ -190,7 +190,7 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                     Cancel
                 </Button>
                 <LoadingButton type="submit" loading={setProjectEnvVar.isLoading}>
-                    Add Variable
+                    Add variable
                 </LoadingButton>
             </ModalFooter>
         </Modal>

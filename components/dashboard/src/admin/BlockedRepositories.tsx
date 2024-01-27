@@ -271,7 +271,7 @@ function DeleteBlockedRepositoryModal(props: {
         <ConfirmationModal
             title="Delete blocked repository"
             areYouSureText="Are you sure you want to delete this repository from the list?"
-            buttonText="Delete Blocked repository"
+            buttonText="Delete blocked repository"
             onClose={props.onClose}
             onConfirm={async () => {
                 await props.deleteBlockedRepository();

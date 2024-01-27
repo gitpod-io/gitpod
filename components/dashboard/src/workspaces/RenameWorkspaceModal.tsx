@@ -46,7 +46,7 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
 
     return (
         <Modal visible onClose={onClose} onSubmit={updateWorkspaceDescription}>
-            <ModalHeader>Rename workspace Description</ModalHeader>
+            <ModalHeader>Rename workspace description</ModalHeader>
             <ModalBody>
                 {errorMessage.length > 0 ? (
                     <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{errorMessage}</div>
@@ -69,7 +69,7 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                     Cancel
                 </Button>
                 <LoadingButton type="submit" loading={updateWorkspace.isLoading}>
-                    Update Description
+                    Update description
                 </LoadingButton>
             </ModalFooter>
         </Modal>

@@ -37,7 +37,7 @@ export const AddPaymentMethodModal: FC<Props> = ({ attributionId, clientSecret, 
     return (
         // Because we potentially have an 3DS verification iframe (appended to document.body) don't lock focus to modal
         <Modal visible={true} onClose={onClose} disableFocusLock>
-            <ModalHeader>Add Payment Method</ModalHeader>
+            <ModalHeader>Add payment method</ModalHeader>
             {!stripePromise ? (
                 <ModalBody>
                     <div className="h-80 flex items-center justify-center">
