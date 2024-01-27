@@ -162,7 +162,7 @@ export function BlockedRepositoriesList(props: Props) {
                         />
                     </div>
                     <div className="flex space-x-2">
-                        <Button onClick={add}>New Blocked repository</Button>
+                        <Button onClick={add}>New blocked repository</Button>
                     </div>
                 </div>
             </div>
