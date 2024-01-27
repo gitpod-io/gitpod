@@ -1,23 +1,10 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { Identity } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
-
-export interface TosNotAcceptedYetException extends Error {
-    readonly identity: Identity;
-}
-export namespace TosNotAcceptedYetException {
-    export function create(identity: Identity) {
-        return Object.assign(new Error("TosNotAcceptedYetException"), { identity });
-    }
-    export function is(error: any): error is TosNotAcceptedYetException {
-        return !!error && error.message === "TosNotAcceptedYetException";
-    }
-}
 
 export interface AuthException extends Error {
     readonly payload: any;

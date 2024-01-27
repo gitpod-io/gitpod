@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // source: initializer.proto
@@ -19,13 +19,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = (function() {
-  if (this) { return this; }
-  if (typeof window !== 'undefined') { return window; }
-  if (typeof global !== 'undefined') { return global; }
-  if (typeof self !== 'undefined') { return self; }
-  return Function('return this')();
-}.call(null));
+var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
 goog.exportSymbol('proto.contentservice.CloneTargetMode', null, global);
 goog.exportSymbol('proto.contentservice.CompositeInitializer', null, global);
@@ -1987,7 +1981,8 @@ proto.contentservice.SnapshotInitializer.prototype.toObject = function(opt_inclu
  */
 proto.contentservice.SnapshotInitializer.toObject = function(includeInstance, msg) {
   var f, obj = {
-    snapshot: jspb.Message.getFieldWithDefault(msg, 1, "")
+    snapshot: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    fromVolumeSnapshot: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
   };
 
   if (includeInstance) {
@@ -2028,6 +2023,10 @@ proto.contentservice.SnapshotInitializer.deserializeBinaryFromReader = function(
       var value = /** @type {string} */ (reader.readString());
       msg.setSnapshot(value);
       break;
+    case 2:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setFromVolumeSnapshot(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -2064,6 +2063,13 @@ proto.contentservice.SnapshotInitializer.serializeBinaryToWriter = function(mess
       f
     );
   }
+  f = message.getFromVolumeSnapshot();
+  if (f) {
+    writer.writeBool(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -2082,6 +2088,24 @@ proto.contentservice.SnapshotInitializer.prototype.getSnapshot = function() {
  */
 proto.contentservice.SnapshotInitializer.prototype.setSnapshot = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional bool from_volume_snapshot = 2;
+ * @return {boolean}
+ */
+proto.contentservice.SnapshotInitializer.prototype.getFromVolumeSnapshot = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 2, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.contentservice.SnapshotInitializer} returns this
+ */
+proto.contentservice.SnapshotInitializer.prototype.setFromVolumeSnapshot = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
 
@@ -2328,7 +2352,8 @@ proto.contentservice.FromBackupInitializer.prototype.toObject = function(opt_inc
  */
 proto.contentservice.FromBackupInitializer.toObject = function(includeInstance, msg) {
   var f, obj = {
-    checkoutLocation: jspb.Message.getFieldWithDefault(msg, 1, "")
+    checkoutLocation: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    fromVolumeSnapshot: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
   };
 
   if (includeInstance) {
@@ -2369,6 +2394,10 @@ proto.contentservice.FromBackupInitializer.deserializeBinaryFromReader = functio
       var value = /** @type {string} */ (reader.readString());
       msg.setCheckoutLocation(value);
       break;
+    case 2:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setFromVolumeSnapshot(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -2405,6 +2434,13 @@ proto.contentservice.FromBackupInitializer.serializeBinaryToWriter = function(me
       f
     );
   }
+  f = message.getFromVolumeSnapshot();
+  if (f) {
+    writer.writeBool(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -2423,6 +2459,24 @@ proto.contentservice.FromBackupInitializer.prototype.getCheckoutLocation = funct
  */
 proto.contentservice.FromBackupInitializer.prototype.setCheckoutLocation = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional bool from_volume_snapshot = 2;
+ * @return {boolean}
+ */
+proto.contentservice.FromBackupInitializer.prototype.getFromVolumeSnapshot = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 2, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.contentservice.FromBackupInitializer} returns this
+ */
+proto.contentservice.FromBackupInitializer.prototype.setFromVolumeSnapshot = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
 

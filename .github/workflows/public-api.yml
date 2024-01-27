@@ -1,0 +1,22 @@
+name: public-api-compatibility
+on:
+  pull_request:
+    paths:
+    - components/public-api/**
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: bufbuild/buf-lint-action@v1
+        with:
+          input: "components/public-api"
+      - uses: bufbuild/buf-breaking-action@v1
+        with:
+          input: "components/public-api"
+          # We compare against the target branch of the Pull Request, normally main
+          # Note that we only apply breaking detection to the public-api component.
+          against: "https://github.com/${GITHUB_REPOSITORY}.git#branch=${GITHUB_BASE_REF},subdir=components/public-api"

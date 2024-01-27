@@ -1,12 +1,12 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package workspace
 
 import (
 	"context"
-	"net/rpc"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -16,10 +16,8 @@ import (
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
-//
 type GitTest struct {
 	Skip          bool
 	Name          string
@@ -28,7 +26,7 @@ type GitTest struct {
 	Action        GitFunc
 }
 
-type GitFunc func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) error
+type GitFunc func(rsa *integration.RpcClient, git integration.GitClient, workspaceRoot string) error
 
 func TestGitActions(t *testing.T) {
 	userToken, _ := os.LookupEnv("USER_TOKEN")
@@ -38,26 +36,29 @@ func TestGitActions(t *testing.T) {
 	tests := []GitTest{
 		{
 			Name:          "create, add and commit",
-			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
+			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
-			Action: func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) (err error) {
+			Action: func(rsa *integration.RpcClient, git integration.GitClient, workspaceRoot string) (err error) {
 				var resp agent.ExecResponse
 				err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 					Dir:     workspaceRoot,
 					Command: "bash",
 					Args: []string{
 						"-c",
-						"echo \"another test run...\" >> file_to_commit.txt",
+						"touch file_to_commit.txt",
 					},
 				}, &resp)
 				if err != nil {
 					return err
 				}
-				err = git.ConfigSafeDirectory(workspaceRoot)
+				if resp.ExitCode != 0 {
+					return fmt.Errorf("file create returned rc: %d, out: %v, err: %v", resp.ExitCode, resp.Stdout, resp.Stderr)
+				}
+				err = git.ConfigSafeDirectory()
 				if err != nil {
 					return err
 				}
-				err = git.ConfigUserName(workspaceRoot)
+				err = git.ConfigUserName(workspaceRoot, username)
 				if err != nil {
 					return err
 				}
@@ -69,7 +70,7 @@ func TestGitActions(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				err = git.Commit(workspaceRoot, "automatic test commit", false)
+				err = git.Commit(workspaceRoot, "automatic test commit", false, "--allow-empty")
 				if err != nil {
 					return err
 				}
@@ -77,28 +78,33 @@ func TestGitActions(t *testing.T) {
 			},
 		},
 		{
+			// as of Apr 14, 2023, test fails with:
+			// fatal: could not read Username for 'https://github.com': No such device or address
 			Skip:          true,
 			Name:          "create, add and commit and PUSH",
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
-			Action: func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) (err error) {
+			Action: func(rsa *integration.RpcClient, git integration.GitClient, workspaceRoot string) (err error) {
 				var resp agent.ExecResponse
 				err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 					Dir:     workspaceRoot,
 					Command: "bash",
 					Args: []string{
 						"-c",
-						"echo \"another test run...\" >> file_to_commit.txt",
+						"touch file_to_commit.txt",
 					},
 				}, &resp)
 				if err != nil {
 					return err
 				}
-				err = git.ConfigSafeDirectory(workspaceRoot)
+				if resp.ExitCode != 0 {
+					return fmt.Errorf("file create returned rc: %d, out: %v, err: %v", resp.ExitCode, resp.Stdout, resp.Stderr)
+				}
+				err = git.ConfigSafeDirectory()
 				if err != nil {
 					return err
 				}
-				err = git.ConfigUserName(workspaceRoot)
+				err = git.ConfigUserName(workspaceRoot, username)
 				if err != nil {
 					return err
 				}
@@ -110,7 +116,7 @@ func TestGitActions(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				err = git.Commit(workspaceRoot, "automatic test commit", false)
+				err = git.Commit(workspaceRoot, "automatic test commit", false, "--allow-empty")
 				if err != nil {
 					return err
 				}
@@ -124,9 +130,9 @@ func TestGitActions(t *testing.T) {
 	}
 
 	f := features.New("GitActions").
-		WithLabel("component", "server").
-		Assess("it can run git actions", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		WithLabel("component", "workspace").
+		Assess("it can run git actions", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(testCtx, time.Duration(5*len(tests))*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -134,79 +140,66 @@ func TestGitActions(t *testing.T) {
 				api.Done(t)
 			})
 
-			_, err := api.CreateUser(username, userToken)
-			if err != nil {
-				t.Fatal(err)
+			ffs := []struct {
+				Name string
+				FF   string
+			}{
+				{Name: "classic"},
 			}
 
-			for _, test := range tests {
-				t.Run(test.ContextURL, func(t *testing.T) {
-					if test.Skip {
-						t.SkipNow()
-					}
+			for _, ff := range ffs {
+				for _, test := range tests {
+					test := test
+					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
+						t.Parallel()
+						if test.Skip {
+							t.SkipNow()
+						}
 
-					nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
-					if err != nil {
-						t.Fatal(err)
-					}
+						username := username + ff.Name
+						userId, err := api.CreateUser(username, userToken)
+						if err != nil {
+							t.Fatal(err)
+						}
 
-					defer stopWS(false)
+						if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
+							t.Fatal(err)
+						}
 
-					_, err = integration.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
-					if err != nil {
-						t.Fatal(err)
-					}
+						nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
+						if err != nil {
+							t.Fatal(err)
+						}
+						t.Cleanup(func() {
+							sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+							defer scancel()
 
-					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
-					if err != nil {
-						t.Fatal(err)
-					}
-					defer rsa.Close()
-					integration.DeferCloser(t, closer)
+							sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+							defer sapi.Done(t)
 
-					git := common.Git(rsa)
-					err = test.Action(rsa, git, test.WorkspaceRoot)
-					if err != nil {
-						t.Fatal(err)
-					}
-				})
+							_, err := stopWs(false, sapi)
+							if err != nil {
+								t.Fatal(err)
+							}
+						})
+
+						rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
+						if err != nil {
+							t.Fatal(err)
+						}
+						defer rsa.Close()
+						integration.DeferCloser(t, closer)
+
+						git := integration.Git(rsa)
+						err = test.Action(rsa, git, test.WorkspaceRoot)
+						if err != nil {
+							t.Fatal(err)
+						}
+						t.Log("test finished successfully")
+					})
+				}
 			}
-
-			return ctx
-		}).
-		Feature()
-
-	testEnv.Test(t, f)
-}
-
-func TestGitLFSSupport(t *testing.T) {
-	userToken, _ := os.LookupEnv("USER_TOKEN")
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
-
-	f := features.New("GitLFSSupport").
-		WithLabel("component", "server").
-		Assess("it can open a repo with Git LFS support", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-			defer cancel()
-
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
-
-			_, err := api.CreateUser(username, userToken)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			_, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/atduarte/lfs-test", username, api)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer stopWs(true)
-
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

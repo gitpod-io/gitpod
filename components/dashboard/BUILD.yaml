@@ -3,10 +3,12 @@ packages:
     type: yarn
     srcs:
       - "public/**"
-      - "build/**"
       - "src/**/*.ts*"
       - "src/**/*.css"
       - "src/**/*.svg"
+      - "src/**/*.png"
+      - "src/**/*.webp"
+      - "src/**/*.json"
       - "typings/**"
       - package.json
       - tailwind.config.js
@@ -17,12 +19,17 @@ packages:
       - scripts/run-integration-tests.sh
     deps:
       - components/gitpod-protocol:lib
+      - components/public-api/typescript:lib
+      - components/public-api/typescript-common:lib
     config:
       commands:
-        build: ["yarn", "build"]
-        test: ["yarn", "test"]
+        build:
+         - sh
+         - -c
+         - yq w -i src/service/config.json commit commit-${__git_commit} -j && yarn build
+        test: ["yarn", "test:unit"]
       yarnLock: ${coreYarnLockBase}/yarn.lock
-      dontTest: true
+      dontTest: false
       packaging: archive
   - name: static
     type: generic
@@ -51,6 +58,9 @@ packages:
         - ${imageRepoBase}/dashboard:${version}
         - ${imageRepoBase}/dashboard:commit-${__git_commit}
 scripts:
+  - name: lint
+    script: |-
+      yarn run eslint --max-warnings=0 $(git diff --cached --relative --name-only --diff-filter=ACMRTUXB | grep  -E "\.(js|ts|tsx)$")
   - name: telepresence
     script: |-
       trap "kill 0" EXIT

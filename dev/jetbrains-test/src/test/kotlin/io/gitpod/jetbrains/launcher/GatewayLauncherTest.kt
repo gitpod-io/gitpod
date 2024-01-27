@@ -64,6 +64,8 @@ class GatewayLauncherTest {
         setPreferences("jetbrains.privacy_policy.accepted_version", "999.999")
         setPreferences("jetbrains.privacy_policy.cwmguesteua_accepted_version", "999.999")
         setPreferences("jetbrains.privacy_policy.ij_euaeap_accepted_version", "999.999")
+        setPreferences("jetbrains.privacy_policy.eua_accepted_version", "999.999")
+        Preferences.userRoot().flush()
 
         val gatewayLink = System.getProperty("gateway_link")
         val gatewayPluginPath = System.getProperty("gateway_plugin_path")
@@ -78,8 +80,11 @@ class GatewayLauncherTest {
         val client = OkHttpClient()
         remoteRobot = RemoteRobot("http://localhost:8082", client)
         val ideDownloader = IdeDownloader(client)
+
+        val useLatest = System.getenv("TEST_USE_LATEST")?.toBoolean() ?: false
+        val type = if (useLatest) "eap,rc,release" else "release"
         gatewayProcess = IdeLauncher.launchIde(
-            ideDownloader.downloadAndExtractLatestEap(Ide.GATEWAY, tmpDir),
+            ideDownloader.downloadAndExtract(Ide.GATEWAY, tmpDir, type),
             mapOf("robot-server.port" to 8082),
             emptyList(),
             listOf(

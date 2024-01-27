@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -77,34 +78,28 @@ var runCmd = &cobra.Command{
 			go pprof.Serve(cfg.PProfAddr)
 		}
 
-		var dockerCfg *configfile.ConfigFile
+		var (
+			dockerCfg   *configfile.ConfigFile
+			dockerCfgMu sync.RWMutex
+		)
 		if cfg.AuthCfg != "" {
-			authCfg := cfg.AuthCfg
-			if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
-				authCfg = filepath.Join(tproot, authCfg)
-			}
-			fr, err := os.OpenFile(authCfg, os.O_RDONLY, 0)
-			if err != nil {
-				log.WithError(err).Fatal("cannot read docker auth config")
-			}
-
-			dockerCfg = configfile.New(authCfg)
-			err = dockerCfg.LoadFromReader(fr)
-			fr.Close()
-			if err != nil {
-				log.WithError(err).Fatal("cannot read docker config")
-			}
-			log.WithField("fn", authCfg).Info("using authentication for backing registries")
+			dockerCfg = loadDockerCfg(cfg.AuthCfg)
 		}
 
 		resolverProvider := func() remotes.Resolver {
-			var resolverOpts docker.ResolverOptions
+			client := registry.NewRetryableHTTPClient()
+			client.Transport = rtt
+
+			resolverOpts := docker.ResolverOptions{
+				Client: client,
+			}
+
+			dockerCfgMu.RLock()
+			defer dockerCfgMu.RUnlock()
 			if dockerCfg != nil {
 				resolverOpts.Hosts = docker.ConfigureDefaultRegistries(
 					docker.WithAuthorizer(authorizerFromDockerConfig(dockerCfg)),
-					docker.WithClient(&http.Client{
-						Transport: rtt,
-					}),
+					docker.WithClient(client),
 				)
 			}
 
@@ -170,6 +165,16 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot start watch of configuration file")
 		}
 
+		err = watch.File(ctx, cfg.AuthCfg, func() {
+			dockerCfgMu.Lock()
+			defer dockerCfgMu.Unlock()
+
+			dockerCfg = loadDockerCfg(cfg.AuthCfg)
+		})
+		if err != nil {
+			log.WithError(err).Fatal("cannot start watch of Docker auth configuration file")
+		}
+
 		go func() {
 			defer close(registryDoneChan)
 			reg.MustServe()
@@ -183,6 +188,26 @@ var runCmd = &cobra.Command{
 		case <-registryDoneChan:
 		}
 	},
+}
+
+func loadDockerCfg(fn string) *configfile.ConfigFile {
+	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
+		fn = filepath.Join(tproot, fn)
+	}
+	fr, err := os.OpenFile(fn, os.O_RDONLY, 0)
+	if err != nil {
+		log.WithError(err).Fatal("cannot read docker auth config")
+	}
+
+	dockerCfg := configfile.New(fn)
+	err = dockerCfg.LoadFromReader(fr)
+	fr.Close()
+	if err != nil {
+		log.WithError(err).Fatal("cannot read docker config")
+	}
+	log.WithField("fn", fn).Info("using authentication for backing registries")
+
+	return dockerCfg
 }
 
 func newDefaultTransport() *http.Transport {

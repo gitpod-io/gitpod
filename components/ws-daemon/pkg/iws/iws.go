@@ -1,14 +1,16 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package iws
 
 import (
-	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
+	"math"
 	"net"
 	"os"
 	"os/exec"
@@ -20,6 +22,7 @@ import (
 	"time"
 
 	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 	"golang.org/x/time/rate"
 	"golang.org/x/xerrors"
@@ -27,13 +30,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	linuxproc "github.com/c9s/goprocinfo/linux"
 	"github.com/gitpod-io/gitpod/common-go/cgroups"
+	v2 "github.com/gitpod-io/gitpod/common-go/cgroups/v2"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
+	nsi "github.com/gitpod-io/gitpod/ws-daemon/pkg/nsinsider"
 )
 
 //
@@ -79,29 +85,29 @@ var (
 )
 
 // ServeWorkspace establishes the IWS server for a workspace
-func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod, cgroupMountPoint string) func(ctx context.Context, ws *session.Workspace) error {
+func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod, cgroupMountPoint string, workspaceCIDR string) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
+		span, _ := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
+		defer tracing.FinishSpan(span, &err)
 		if _, running := ws.NonPersistentAttrs[session.AttrWorkspaceServer]; running {
+			span.SetTag("alreadyRunning", true)
 			return nil
 		}
 
-		//nolint:ineffassign
-		span, ctx := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
-		defer tracing.FinishSpan(span, &err)
-
-		helper := &InWorkspaceServiceServer{
+		iws := &InWorkspaceServiceServer{
 			Uidmapper:        uidmapper,
 			Session:          ws,
 			FSShift:          fsshift,
 			CGroupMountPoint: cgroupMountPoint,
+			WorkspaceCIDR:    workspaceCIDR,
 		}
-		err = helper.Start()
+		err = iws.Start()
 		if err != nil {
 			return xerrors.Errorf("cannot start in-workspace-helper server: %w", err)
 		}
 
 		log.WithFields(ws.OWI()).Debug("established IWS server")
-		ws.NonPersistentAttrs[session.AttrWorkspaceServer] = helper.Stop
+		ws.NonPersistentAttrs[session.AttrWorkspaceServer] = iws.Stop
 
 		return nil
 	}
@@ -110,7 +116,7 @@ func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod, cgroupMount
 // StopServingWorkspace stops a previously started workspace server
 func StopServingWorkspace(ctx context.Context, ws *session.Workspace) (err error) {
 	//nolint:ineffassign
-	span, ctx := opentracing.StartSpanFromContext(ctx, "iws.StopServingWorkspace")
+	span, _ := opentracing.StartSpanFromContext(ctx, "iws.StopServingWorkspace")
 	defer tracing.FinishSpan(span, &err)
 
 	rawStop, ok := ws.NonPersistentAttrs[session.AttrWorkspaceServer]
@@ -134,6 +140,8 @@ type InWorkspaceServiceServer struct {
 	Session          *session.Workspace
 	FSShift          api.FSShiftMethod
 	CGroupMountPoint string
+
+	WorkspaceCIDR string
 
 	srv  *grpc.Server
 	sckt io.Closer
@@ -180,6 +188,9 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 		"/iws.InWorkspaceService/Teardown": ratelimit{
 			UseOnce: true,
 		},
+		"/iws.InWorkspaceService/WorkspaceInfo": ratelimit{
+			Limiter: rate.NewLimiter(rate.Every(1500*time.Millisecond), 4),
+		},
 	}
 
 	wbs.srv = grpc.NewServer(grpc.ChainUnaryInterceptor(limits.UnaryInterceptor()))
@@ -223,14 +234,14 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot find workspace rootfs")
 	}
 
-	log.WithField("type", wbs.FSShift).Debug("FSShift")
+	log.WithField("type", wbs.FSShift).WithFields(wbs.Session.OWI()).Debug("FSShift")
 
 	// user namespace support for FUSE landed in Linux 4.18:
 	//   - http://lkml.iu.edu/hypermail/linux/kernel/1806.0/04385.html
 	// Development leading up to this point:
 	//   - https://lists.linuxcontainers.org/pipermail/lxc-devel/2014-July/009797.html
 	//   - https://lists.linuxcontainers.org/pipermail/lxc-users/2014-October/007948.html
-	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "prepare-dev", "--uid", strconv.Itoa(wsinit.GitpodUID), "--gid", strconv.Itoa(wsinit.GitpodGID))
 	})
 	if err != nil {
@@ -245,51 +256,21 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 
-	if wbs.FSShift == api.FSShiftMethod_FUSE || wbs.Session.FullWorkspaceBackup {
-		err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
-			// In case of any change in the user mapping, the next line must be updated.
-			mappings := fmt.Sprintf("0:%v:1:1:100000:65534", wsinit.GitpodUID)
-			c.Args = append(c.Args, "mount-fusefs-mark",
-				"--source", rootfs,
-				"--merged", filepath.Join(wbs.Session.ServiceLocNode, "mark"),
-				"--upper", filepath.Join(wbs.Session.ServiceLocNode, "upper"),
-				"--work", filepath.Join(wbs.Session.ServiceLocNode, "work"),
-				"--uidmapping", mappings,
-				"--gidmapping", mappings)
-		})
-		if err != nil {
-			log.WithField("rootfs", rootfs).WithError(err).Error("cannot mount fusefs mark")
-			return nil, status.Errorf(codes.Internal, "cannot mount fusefs mark")
-		}
-
-		log.WithFields(wbs.Session.OWI()).WithField("configuredShift", wbs.FSShift).WithField("fwb", wbs.Session.FullWorkspaceBackup).Info("fs-shift using fuse")
-
-		if err := wbs.createWorkspaceCgroup(ctx, wscontainerID); err != nil {
-			return nil, err
-		}
-
-		return &api.PrepareForUserNSResponse{
-			FsShift:               api.FSShiftMethod_FUSE,
-			FullWorkspaceBackup:   wbs.Session.FullWorkspaceBackup,
-			PersistentVolumeClaim: wbs.Session.PersistentVolumeClaim,
-		}, nil
-	}
-
 	// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
 	// That's why we resort to exec'ing "nsenter ... mount ...".
-	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "make-shared", "--target", "/")
 	})
 	if err != nil {
-		log.WithField("containerPID", containerPID).WithError(err).Error("cannot make container's rootfs shared")
+		log.WithField("containerPID", containerPID).WithFields(wbs.Session.OWI()).WithError(err).Error("cannot make container's rootfs shared")
 		return nil, status.Errorf(codes.Internal, "cannot make container's rootfs shared")
 	}
 
-	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-shiftfs-mark", "--source", rootfs, "--target", mountpoint)
 	})
 	if err != nil {
-		log.WithField("rootfs", rootfs).WithField("mountpoint", mountpoint).WithError(err).Error("cannot mount shiftfs mark")
+		log.WithField("rootfs", rootfs).WithFields(wbs.Session.OWI()).WithField("mountpoint", mountpoint).WithError(err).Error("cannot mount shiftfs mark")
 		return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
 	}
 
@@ -298,9 +279,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 	}
 
 	return &api.PrepareForUserNSResponse{
-		FsShift:               api.FSShiftMethod_SHIFTFS,
-		FullWorkspaceBackup:   wbs.Session.FullWorkspaceBackup,
-		PersistentVolumeClaim: wbs.Session.PersistentVolumeClaim,
+		FsShift: api.FSShiftMethod_SHIFTFS,
 	}, nil
 }
 
@@ -313,7 +292,7 @@ func (wbs *InWorkspaceServiceServer) createWorkspaceCgroup(ctx context.Context, 
 	unified, err := cgroups.IsUnifiedCgroupSetup()
 	if err != nil {
 		// log error and do not expose it to the user
-		log.WithError(err).Error("could not determine cgroup setup")
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("could not determine cgroup setup")
 		return status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
 	}
 
@@ -327,7 +306,7 @@ func (wbs *InWorkspaceServiceServer) createWorkspaceCgroup(ctx context.Context, 
 		return status.Errorf(codes.NotFound, "cannot find workspace container cgroup")
 	}
 
-	err = evacuateToCGroup(ctx, wbs.CGroupMountPoint, cgroupBase, "workspace")
+	err = evacuateToCGroup(ctx, log.WithFields(wbs.Session.OWI()), wbs.CGroupMountPoint, cgroupBase, "workspace")
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot create workspace cgroup")
 		return status.Errorf(codes.FailedPrecondition, "cannot create workspace cgroup")
@@ -353,9 +332,12 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 		return nil, status.Errorf(codes.Internal, "cannnot setup a pair of veths")
 	}
 
-	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
-		c.Args = append(c.Args, "setup-pair-veths", "--target-pid", strconv.Itoa(int(req.Pid)))
-	}, enterMountNS(true), enterPidNS(true), enterNetNS(true))
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "setup-pair-veths",
+			"--target-pid", strconv.Itoa(int(req.Pid)),
+			fmt.Sprintf("--workspace-cidr=%v", wbs.WorkspaceCIDR),
+		)
+	}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot setup a pair of veths")
 		return nil, status.Errorf(codes.Internal, "cannot setup a pair of veths")
@@ -365,17 +347,30 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 	if err != nil {
 		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
 	}
-	err = nsinsider(wbs.Session.InstanceID, int(pid), func(c *exec.Cmd) {
-		c.Args = append(c.Args, "setup-peer-veth")
-	}, enterMountNS(true), enterPidNS(true), enterNetNS(true))
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(pid), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "setup-peer-veth",
+			fmt.Sprintf("--workspace-cidr=%v", wbs.WorkspaceCIDR),
+		)
+	}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot setup a peer veths")
+
+		nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+			c.Args = append(c.Args, "dump-network-info",
+				fmt.Sprintf("--tag=%v", "pod"))
+		}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
+
+		nsi.Nsinsider(wbs.Session.InstanceID, int(pid), func(c *exec.Cmd) {
+			c.Args = append(c.Args, "dump-network-info",
+				fmt.Sprintf("--tag=%v", "workspace"))
+		}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
+
 		return nil, status.Errorf(codes.Internal, "cannot setup a peer veths")
 	}
 
-	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "enable-ip-forward")
-	}, enterNetNS(true), enterMountNSPid(1))
+	}, nsi.EnterNetNS(true), nsi.EnterMountNSPid(1))
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot enable IP forwarding")
 		return nil, status.Errorf(codes.Internal, "cannot enable IP forwarding")
@@ -384,7 +379,7 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 	return &api.SetupPairVethsResponse{}, nil
 }
 
-func evacuateToCGroup(ctx context.Context, mountpoint, oldGroup, child string) error {
+func evacuateToCGroup(ctx context.Context, log *logrus.Entry, mountpoint, oldGroup, child string) error {
 	newGroup := filepath.Join(oldGroup, child)
 	oldPath := filepath.Join(mountpoint, oldGroup)
 	newPath := filepath.Join(mountpoint, newGroup)
@@ -462,9 +457,9 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 	if err != nil {
 		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
 	}
-	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-proc", "--target", nodeStaging)
-	}, enterMountNS(false), enterPidNS(true), enterNetNS(true))
+	}, nsi.EnterMountNS(false), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
 	if err != nil {
 		return nil, xerrors.Errorf("mount new proc at %s: %w", nodeStaging, err)
 	}
@@ -508,7 +503,7 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 			return
 		}
 
-		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("UmountProc failed")
+		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("UmountProc failed")
 		if _, ok := status.FromError(err); !ok {
 			err = status.Error(codes.Internal, "cannot umount proc")
 		}
@@ -615,7 +610,7 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 		return nil, err
 	}
 
-	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "open-tree", "--target", req.Target, "--pipe-fd", "3")
 		c.ExtraFiles = append(c.ExtraFiles, connFD)
 	})
@@ -659,7 +654,7 @@ func (wbs *InWorkspaceServiceServer) MountSysfs(ctx context.Context, req *api.Mo
 			return
 		}
 
-		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).WithFields(wbs.Session.OWI()).Error("cannot mount sysfs")
+		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("procPID", procPID).WithField("reqPID", reqPID).WithFields(wbs.Session.OWI()).Error("cannot mount sysfs")
 		if _, ok := status.FromError(err); !ok {
 			err = status.Error(codes.Internal, "cannot mount sysfs")
 		}
@@ -688,9 +683,9 @@ func (wbs *InWorkspaceServiceServer) MountSysfs(ctx context.Context, req *api.Mo
 	if err != nil {
 		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
 	}
-	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-sysfs", "--target", nodeStaging)
-	}, enterMountNS(false), enterNetNS(true))
+	}, nsi.EnterMountNS(false), nsi.EnterNetNS(true))
 	if err != nil {
 		return nil, xerrors.Errorf("mount new sysfs at %s: %w", nodeStaging, err)
 	}
@@ -722,10 +717,10 @@ func moveMount(instanceID string, targetPid int, source, target string) error {
 
 	// Note(cw): we also need to enter the target PID namespace because the mount target
 	// 			 might refer to proc.
-	err = nsinsider(instanceID, targetPid, func(c *exec.Cmd) {
+	err = nsi.Nsinsider(instanceID, targetPid, func(c *exec.Cmd) {
 		c.Args = append(c.Args, "move-mount", "--target", target, "--pipe-fd", "3")
 		c.ExtraFiles = append(c.ExtraFiles, mntf)
-	}, enterPidNS(true))
+	}, nsi.EnterPidNS(true))
 	if err != nil {
 		return xerrors.Errorf("cannot move mount: %w", err)
 	}
@@ -754,6 +749,10 @@ func cleanupMaskedMount(owi map[string]interface{}, base string, paths []string)
 	err := unix.Unmount(base, 0)
 	if err != nil {
 		log.WithError(err).WithField("fn", base).WithFields(owi).Warn("cannot unmount dangling base mount")
+		err = unix.Unmount(base, syscall.MNT_DETACH)
+		if err != nil {
+			log.WithError(err).WithField("fn", base).WithFields(owi).Warn("cannot detach dangling base mount")
+		}
 		return
 	}
 
@@ -764,108 +763,6 @@ func cleanupMaskedMount(owi map[string]interface{}, base string, paths []string)
 	}
 }
 
-type nsinsiderOpts struct {
-	MountNS    bool
-	PidNS      bool
-	NetNS      bool
-	MountNSPid int
-}
-
-func enterMountNS(enter bool) nsinsiderOpt {
-	return func(o *nsinsiderOpts) {
-		o.MountNS = enter
-	}
-}
-
-func enterPidNS(enter bool) nsinsiderOpt {
-	return func(o *nsinsiderOpts) {
-		o.PidNS = enter
-	}
-}
-
-func enterNetNS(enter bool) nsinsiderOpt {
-	return func(o *nsinsiderOpts) {
-		o.NetNS = enter
-	}
-}
-
-func enterMountNSPid(pid int) nsinsiderOpt {
-	return func(o *nsinsiderOpts) {
-		o.MountNS = true
-		o.MountNSPid = pid
-	}
-}
-
-type nsinsiderOpt func(*nsinsiderOpts)
-
-func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...nsinsiderOpt) error {
-	cfg := nsinsiderOpts{
-		MountNS: true,
-	}
-	for _, o := range opts {
-		o(&cfg)
-	}
-
-	base, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	type mnt struct {
-		Env    string
-		Source string
-		Flags  int
-	}
-	var nss []mnt
-	if cfg.MountNS {
-		tpid := targetPid
-		if cfg.MountNSPid != 0 {
-			tpid = cfg.MountNSPid
-		}
-		nss = append(nss,
-			mnt{"_LIBNSENTER_ROOTFD", fmt.Sprintf("/proc/%d/root", tpid), unix.O_PATH},
-			mnt{"_LIBNSENTER_CWDFD", fmt.Sprintf("/proc/%d/cwd", tpid), unix.O_PATH},
-			mnt{"_LIBNSENTER_MNTNSFD", fmt.Sprintf("/proc/%d/ns/mnt", tpid), os.O_RDONLY},
-		)
-	}
-	if cfg.PidNS {
-		nss = append(nss, mnt{"_LIBNSENTER_PIDNSFD", fmt.Sprintf("/proc/%d/ns/pid", targetPid), os.O_RDONLY})
-	}
-	if cfg.NetNS {
-		nss = append(nss, mnt{"_LIBNSENTER_NETNSFD", fmt.Sprintf("/proc/%d/ns/net", targetPid), os.O_RDONLY})
-	}
-
-	stdioFdCount := 3
-	cmd := exec.Command(filepath.Join(filepath.Dir(base), "nsinsider"))
-	mod(cmd)
-	cmd.Env = append(cmd.Env, "_LIBNSENTER_INIT=1", "GITPOD_INSTANCE_ID="+instanceID)
-	for _, ns := range nss {
-		f, err := os.OpenFile(ns.Source, ns.Flags, 0)
-		if err != nil {
-			return xerrors.Errorf("cannot open %s: %w", ns.Source, err)
-		}
-		defer f.Close()
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%d", ns.Env, stdioFdCount+len(cmd.ExtraFiles)))
-		cmd.ExtraFiles = append(cmd.ExtraFiles, f)
-	}
-
-	var cmdOut bytes.Buffer
-	cmd.Stdout = &cmdOut
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	err = cmd.Run()
-	log.FromBuffer(&cmdOut, log.WithFields(log.OWI("", "", instanceID)))
-	if err != nil {
-		out, err := cmd.CombinedOutput()
-		return xerrors.Errorf("run nsinsider (%v) failed: %q\n%v",
-			cmd.Args,
-			string(out),
-			err,
-		)
-	}
-	return nil
-}
-
 // maskPath masks the top of the specified path inside a container to avoid
 // security issues from processes reading information from non-namespace aware
 // mounts ( proc/kcore ).
@@ -874,7 +771,7 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 //
 // Blatant copy from runc: https://github.com/opencontainers/runc/blob/master/libcontainer/rootfs_linux.go#L946-L959
 func maskPath(path string) error {
-	if err := unix.Mount("/dev/null", path, "", unix.MS_BIND, ""); err != nil && !os.IsNotExist(err) {
+	if err := unix.Mount("/dev/null", path, "", unix.MS_BIND, ""); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		if err == unix.ENOTDIR {
 			return unix.Mount("tmpfs", path, "tmpfs", unix.MS_RDONLY, "")
 		}
@@ -888,7 +785,7 @@ func maskPath(path string) error {
 // Blatant copy from runc: https://github.com/opencontainers/runc/blob/master/libcontainer/rootfs_linux.go#L907-L916
 func readonlyPath(path string) error {
 	if err := unix.Mount(path, path, "", unix.MS_BIND|unix.MS_REC, ""); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil
 		}
 		return err
@@ -916,12 +813,13 @@ func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *ap
 //
 // <container-cgorup>  drwxr-xr-x 3 root      root
 // └── workspace       drwxr-xr-x 5 gitpodUid gitpodGid
-//     └── user        drwxr-xr-x 5 gitpodUid gitpodGid
+//
+//	└── user        drwxr-xr-x 5 gitpodUid gitpodGid
 func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *api.EvacuateCGroupRequest) (*api.EvacuateCGroupResponse, error) {
 	unified, err := cgroups.IsUnifiedCgroupSetup()
 	if err != nil {
 		// log error and do not expose it to the user
-		log.WithError(err).Error("could not determine cgroup setup")
+		log.WithFields(wbs.Session.OWI()).WithError(err).Error("could not determine cgroup setup")
 		return nil, status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
 	}
 	if !unified {
@@ -950,7 +848,7 @@ func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *ap
 		return nil, status.Errorf(codes.FailedPrecondition, "cannot find workspace cgroup")
 	}
 
-	err = evacuateToCGroup(ctx, wbs.CGroupMountPoint, workspaceCGroup, "user")
+	err = evacuateToCGroup(ctx, log.WithFields(wbs.Session.OWI()), wbs.CGroupMountPoint, workspaceCGroup, "user")
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("path", workspaceCGroup).Error("EvacuateCGroup: cannot produce user cgroup")
 		return nil, status.Errorf(codes.FailedPrecondition, "cannot produce user cgroup")
@@ -985,7 +883,7 @@ func (wbs *InWorkspaceServiceServer) Teardown(ctx context.Context, req *api.Tear
 
 func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
-	err := nsinsider(wbs.Session.InstanceID, 1, func(c *exec.Cmd) {
+	err := nsi.Nsinsider(wbs.Session.InstanceID, 1, func(c *exec.Cmd) {
 		c.Args = append(c.Args, "unmount", "--target", mountpoint)
 	})
 	if err != nil {
@@ -993,6 +891,190 @@ func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
 	}
 
 	return nil
+}
+
+func (wbs *InWorkspaceServiceServer) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
+	log.WithFields(wbs.Session.OWI()).Debug("Received workspace info request")
+	rt := wbs.Uidmapper.Runtime
+	if rt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
+	}
+	wscontainerID, err := rt.WaitForContainer(ctx, wbs.Session.InstanceID)
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("EvacuateCGroup: cannot find workspace container")
+		return nil, status.Errorf(codes.NotFound, "cannot find workspace container")
+	}
+
+	cgroupPath, err := rt.ContainerCGroupPath(ctx, wscontainerID)
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("EvacuateCGroup: cannot find workspace container CGroup path")
+		return nil, status.Errorf(codes.NotFound, "cannot find workspace container cgroup")
+	}
+
+	unified, err := cgroups.IsUnifiedCgroupSetup()
+	if err != nil {
+		// log error and do not expose it to the user
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("could not determine cgroup setup")
+		return nil, status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
+	}
+
+	if !unified {
+		return nil, status.Errorf(codes.FailedPrecondition, "only cgroups v2 is supported")
+	}
+
+	resources, err := getWorkspaceResourceInfo(wbs.CGroupMountPoint, cgroupPath)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			log.WithError(err).WithFields(wbs.Session.OWI()).Error("could not get resource information")
+		}
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+
+	return &api.WorkspaceInfoResponse{
+		Resources: resources,
+	}, nil
+}
+
+func getWorkspaceResourceInfo(mountPoint, cgroupPath string) (*api.Resources, error) {
+	cpu, err := getCpuResourceInfoV2(mountPoint, cgroupPath)
+	if err != nil {
+		return nil, err
+	}
+
+	memory, err := getMemoryResourceInfoV2(mountPoint, cgroupPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.Resources{
+		Cpu:    cpu,
+		Memory: memory,
+	}, nil
+}
+
+func getCpuResourceInfoV2(mountPoint, cgroupPath string) (*api.Cpu, error) {
+	cpu := v2.NewCpuControllerWithMount(mountPoint, cgroupPath)
+
+	t, err := resolveCPUStatV2(cpu)
+	if err != nil {
+		return nil, err
+	}
+
+	time.Sleep(time.Second)
+
+	t2, err := resolveCPUStatV2(cpu)
+	if err != nil {
+		return nil, err
+	}
+
+	cpuUsage := t2.usage - t.usage
+	totalTime := t2.uptime - t.uptime
+	used := cpuUsage / totalTime * 1000
+
+	quota, period, err := cpu.Max()
+	if errors.Is(err, os.ErrNotExist) {
+		quota = math.MaxUint64
+	} else if err != nil {
+		return nil, err
+	}
+
+	// if no cpu limit has been specified, use the number of cores
+	var limit uint64
+	if quota == math.MaxUint64 {
+		// TODO(toru): we have to check a parent cgroup instead of a host resources
+		cpuInfo, err := linuxproc.ReadCPUInfo("/proc/cpuinfo")
+		if err != nil {
+			return nil, err
+		}
+
+		limit = uint64(cpuInfo.NumCore()) * 1000
+	} else {
+		limit = quota / period * 1000
+	}
+
+	return &api.Cpu{
+		Used:  int64(used),
+		Limit: int64(limit),
+	}, nil
+}
+
+func getMemoryResourceInfoV2(mountPoint, cgroupPath string) (*api.Memory, error) {
+	memory := v2.NewMemoryControllerWithMount(mountPoint, cgroupPath)
+	memoryLimit, err := memory.Max()
+	if err != nil {
+		return nil, xerrors.Errorf("could not retrieve memory max: %w", err)
+	}
+
+	memInfo, err := linuxproc.ReadMemInfo("/proc/meminfo")
+	if err != nil {
+		return nil, xerrors.Errorf("failed to read meminfo: %w", err)
+	}
+
+	// if no memory limit has been specified, use total available memory
+	if memoryLimit == math.MaxUint64 || memoryLimit > memInfo.MemTotal*1024 {
+		// total memory is specifed on kilobytes -> convert to bytes
+		memoryLimit = memInfo.MemTotal * 1024
+	}
+
+	usedMemory, err := memory.Current()
+	if err != nil {
+		return nil, xerrors.Errorf("failed to read current memory usage: %w", err)
+	}
+
+	stats, err := memory.Stat()
+	if err != nil {
+		return nil, xerrors.Errorf("failed to read memory stats: %w", err)
+	}
+
+	if stats.InactiveFileTotal > 0 {
+		if usedMemory < stats.InactiveFileTotal {
+			usedMemory = 0
+		} else {
+			usedMemory -= stats.InactiveFileTotal
+		}
+	}
+
+	return &api.Memory{
+		Limit: int64(memoryLimit),
+		Used:  int64(usedMemory),
+	}, nil
+}
+
+type cpuStat struct {
+	usage  float64
+	uptime float64
+}
+
+func resolveCPUStatV2(cpu *v2.Cpu) (*cpuStat, error) {
+	stats, err := cpu.Stat()
+	if err != nil {
+		return nil, xerrors.Errorf("failed to get cpu usage: %w", err)
+	}
+
+	usage := float64(stats.UsageTotal) * 1e-6
+	uptime, err := readProcUptime()
+	if err != nil {
+		return nil, err
+	}
+
+	return &cpuStat{
+		usage:  usage,
+		uptime: uptime,
+	}, nil
+}
+
+func readProcUptime() (float64, error) {
+	content, err := os.ReadFile("/proc/uptime")
+	if err != nil {
+		return 0, xerrors.Errorf("failed to read uptime: %w", err)
+	}
+	values := strings.Split(strings.TrimSpace(string(content)), " ")
+	uptime, err := strconv.ParseFloat(values[0], 64)
+	if err != nil {
+		return 0, xerrors.Errorf("failed to parse uptime: %w", err)
+	}
+
+	return uptime, nil
 }
 
 type ratelimitingInterceptor map[string]ratelimit

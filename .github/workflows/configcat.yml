@@ -1,0 +1,18 @@
+on:
+  push:
+    branches:
+      - main
+name: Configcat code references
+jobs:
+  scan-repo:
+    runs-on: ubuntu-latest
+    name: Scan repository for configcat code references
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Scan & upload
+        uses: configcat/scan-repository@v1
+        with:
+          api-user: ${{ secrets.CONFIGCAT_API_USER }}
+          api-pass: ${{ secrets.CONFIGCAT_API_PASS }}
+          config-id: 08da1258-6541-4fc7-8b61-c8b47f82f3a0

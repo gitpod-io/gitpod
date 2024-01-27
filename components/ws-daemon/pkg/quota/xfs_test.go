@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package quota
 
@@ -89,38 +89,55 @@ func TestSetQuota(t *testing.T) {
 	tests := []struct {
 		Name        string
 		Size        Size
+		IsHard      bool
 		ExecErr     func(cmd string) error
 		ProjectIDs  []int
 		Expectation Expectation
 	}{
 		{
-			Name: "happpy path",
-			Size: 100 * Kilobyte,
+			Name:   "happpy path",
+			Size:   100 * Kilobyte,
+			IsHard: true,
 			Expectation: Expectation{
 				ProjectID:  1000,
 				ProjectIDs: []int{1000},
 				Execs: []string{
 					"project -s -d 1 -p /foo 1000",
-					"limit -p bsoft=102400 bhard=102400 1000",
+					"limit -p bhard=102400 1000",
+				},
+			},
+		},
+		{
+			Name:   "with soft limit",
+			Size:   100 * Kilobyte,
+			IsHard: false,
+			Expectation: Expectation{
+				ProjectID:  1000,
+				ProjectIDs: []int{1000},
+				Execs: []string{
+					"project -s -d 1 -p /foo 1000",
+					"limit -p bsoft=102400 1000",
 				},
 			},
 		},
 		{
 			Name:       "with other prj",
 			Size:       100 * Kilobyte,
+			IsHard:     true,
 			ProjectIDs: []int{1000},
 			Expectation: Expectation{
 				ProjectID:  1001,
 				ProjectIDs: []int{1000, 1001},
 				Execs: []string{
 					"project -s -d 1 -p /foo 1001",
-					"limit -p bsoft=102400 bhard=102400 1001",
+					"limit -p bhard=102400 1001",
 				},
 			},
 		},
 		{
-			Name: "prj creation failure",
-			Size: 100 * Kilobyte,
+			Name:   "prj creation failure",
+			Size:   100 * Kilobyte,
+			IsHard: true,
 			ExecErr: func(cmd string) error {
 				if strings.Contains(cmd, "project") {
 					return fmt.Errorf("failed to create project")
@@ -159,7 +176,7 @@ func TestSetQuota(t *testing.T) {
 				xfs.projectIDs[prjid] = struct{}{}
 			}
 
-			act.ProjectID, err = xfs.SetQuota("/foo", test.Size)
+			act.ProjectID, err = xfs.SetQuota("/foo", test.Size, test.IsHard)
 			if err != nil {
 				act.Error = err.Error()
 			}

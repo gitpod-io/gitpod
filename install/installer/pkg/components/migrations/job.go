@@ -1,12 +1,12 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package migrations
 
 import (
-	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,9 +20,10 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	objectMeta := metav1.ObjectMeta{
-		Name:      Component,
-		Namespace: ctx.Namespace,
-		Labels:    common.DefaultLabels(Component),
+		Name:        Component,
+		Namespace:   ctx.Namespace,
+		Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaBatchJob),
+		Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaBatchJob),
 	}
 
 	return []runtime.Object{&batchv1.Job{
@@ -33,7 +34,6 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: objectMeta,
 				Spec: corev1.PodSpec{
-					Affinity:           common.NodeAffinity(cluster.AffinityLabelMeta),
 					RestartPolicy:      corev1.RestartPolicyNever,
 					ServiceAccountName: Component,
 					EnableServiceLinks: pointer.Bool(false),
@@ -43,9 +43,13 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Name:            Component,
 						Image:           ctx.ImageName(ctx.Config.Repository, "db-migrations", ctx.VersionManifest.Components.DBMigrations.Version),
 						ImagePullPolicy: corev1.PullIfNotPresent,
-						Env: common.MergeEnv(
+						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DatabaseEnv(&ctx.Config),
-						),
+							common.DefaultEnv(&ctx.Config),
+						)),
+						SecurityContext: &corev1.SecurityContext{
+							AllowPrivilegeEscalation: pointer.Bool(false),
+						},
 						Command: []string{
 							"sh",
 							"-c",

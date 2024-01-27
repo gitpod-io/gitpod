@@ -1,10 +1,61 @@
 {
 	auto_https off
 	admin off
+	servers {
+		# gprc service required this, see detail https://github.com/gitpod-io/gitpod/pull/11542#discussion_r937947826
+		# https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/app.go#L199
+		protocols h1 h2 h2c
+	}
+}
+
+# configure headers to force HTTPS and enable more strict rules for the browser
+(security_headers) {
+	header {
+		# enable HSTS
+		Strict-Transport-Security  max-age=31536000
+		# disable clients from sniffing the media type
+		X-Content-Type-Options     nosniff
+		# Define valid parents that may embed a page
+		Content-Security-Policy    "frame-ancestors 'self' https://*.{$GITPOD_DOMAIN} https://{$GITPOD_DOMAIN}"
+		# keep referrer data off of HTTP connections
+		Referrer-Policy            no-referrer-when-downgrade
+		# Enable cross-site filter (XSS) and tell browser to block detected attacks
+		X-XSS-Protection           "1; mode=block"
+
+		defer # delay changes
+	}
+}
+
+(compression) {
+	encode zstd gzip
+}
+
+(upstream_connection) {
+	lb_try_duration 1s
 }
 
 :80 {
+	import security_headers
 	header -Server
+
+	@blobserve path /blobserve/*
+	handle @blobserve {
+		import compression
+
+		uri strip_prefix /blobserve
+		uri replace /__files__/ / 1
+
+		header {
+			Access-Control-Allow-Origin *
+			Access-Control-Allow-Methods "GET, OPTIONS"
+			Cross-Origin-Resource-Policy cross-origin
+			Vary Origin
+		}
+
+		reverse_proxy blobserve.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:4000 {
+			import upstream_connection
+		}
+	}
 
 	root * /www
 	file_server {
@@ -26,18 +77,35 @@
 	header @bin_asset {
 		Content-Type application/octet-stream
 		Content-Disposition attachment
+		# static assets configure cache headers
+		Cache-Control "public, max-age=600"
 	}
 
 	@static_path {
-		path /*
+		path /code/* /image/* /static/*
 	}
 
 	handle @static_path {
 		try_files {path}
+		# static assets configure cache headers and do not check for changes
+		header {
+			Cache-Control "public, max-age=31536000"
+			Access-Control-Allow-Origin *
+			# remove Last-Modified header
+			-Last-Modified
+		}
+	}
+
+	@metrics_web {
+		path /metrics-api/*
+	}
+
+	handle @metrics_web {
+		reverse_proxy ide-metrics.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
 	}
 
 	handle {
-		respond "404 - Not Found" 404
+		reverse_proxy h2c://ide-metrics.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
 	}
 }
 

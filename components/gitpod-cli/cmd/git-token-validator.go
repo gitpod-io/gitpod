@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -16,7 +16,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/gitpod-io/gitpod/common-go/util"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
@@ -36,7 +39,10 @@ var gitTokenValidator = &cobra.Command{
 	Long:   "Tries to guess the scopes needed for a git operation and requests an appropriate token.",
 	Args:   cobra.ExactArgs(0),
 	Hidden: true,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// ignore trace
+		utils.TrackCommandUsageEvent.Command = nil
+
 		log.SetOutput(io.Discard)
 		f, err := os.OpenFile(os.TempDir()+"/gitpod-git-credential-helper.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err == nil {
@@ -46,13 +52,10 @@ var gitTokenValidator = &cobra.Command{
 
 		log.Infof("gp git-token-validator")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+		ctx, cancel := context.WithTimeout(cmd.Context(), 1*time.Minute)
 		defer cancel()
-		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
-		if supervisorAddr == "" {
-			supervisorAddr = "localhost:22999"
-		}
-		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+
+		supervisorConn, err := grpc.Dial(util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.WithError(err).Fatal("error connecting to supervisor")
 		}
@@ -78,6 +81,8 @@ var gitTokenValidator = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("error connecting to server")
 		}
+		defer client.Close()
+
 		params := &serverapi.GuessGitTokenScopesParams{
 			Host:       gitTokenValidatorOpts.Host,
 			RepoURL:    gitTokenValidatorOpts.RepoURL,
@@ -117,7 +122,7 @@ var gitTokenValidator = &cobra.Command{
 					log.WithError(err).Fatalf("error opening access-control: '%s'", message)
 				}
 			}
-			return
+			return nil
 		}
 		if len(guessedTokenScopes.Scopes) > 0 {
 			_, err = supervisor.NewTokenServiceClient(supervisorConn).GetToken(ctx,
@@ -129,9 +134,10 @@ var gitTokenValidator = &cobra.Command{
 				})
 			if err != nil {
 				log.WithError(err).Fatal("error getting new token from token service")
-				return
+				return nil
 			}
 		}
+		return nil
 	},
 }
 

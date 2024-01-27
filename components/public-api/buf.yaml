@@ -1,7 +1,12 @@
 version: v1
 breaking:
   use:
-    - FILE
+    - WIRE_JSON
+  ignore:
+    # Do not enforce breaking change detection for the experimental package
+    - gitpod/experimental
+    # TODO enable again after landing style changes
+    - gitpod/v1
 lint:
   use:
     - DEFAULT

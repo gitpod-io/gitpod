@@ -1,13 +1,13 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { Container, ContainerModule } from "inversify";
-import { retries, suite, test, timeout } from "mocha-typescript";
+import { retries, skip, suite, test, timeout } from "@testdeck/mocha";
 import { expect } from "chai";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { AuthProviderParams } from "../auth/auth-provider";
@@ -20,7 +20,7 @@ import { BitbucketServerApi } from "./bitbucket-server-api";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { BitbucketServerRepositoryProvider } from "./bitbucket-server-repository-provider";
 
-@suite(timeout(10000), retries(0), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER"))
+@suite(timeout(10000), retries(0), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER")))
 class TestBitbucketServerRepositoryProvider {
     protected service: BitbucketServerRepositoryProvider;
     protected user: User;
@@ -50,11 +50,12 @@ class TestBitbucketServerRepositoryProvider {
                 bind(BitbucketServerContextParser).toSelf().inSingletonScope();
                 bind(AuthProviderParams).toConstantValue(TestBitbucketServerRepositoryProvider.AUTH_HOST_CONFIG);
                 bind(BitbucketServerTokenHelper).toSelf().inSingletonScope();
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 bind(TokenService).toConstantValue({
                     createGitpodToken: async () => ({ token: { value: "foobar123-token" } }),
                 } as any);
                 bind(Config).toConstantValue({
-                    hostUrl: new GitpodHostUrl(),
+                    hostUrl: new GitpodHostUrl("https://gitpod.io"),
                 });
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => {
@@ -63,7 +64,6 @@ class TestBitbucketServerRepositoryProvider {
                             scopes: [],
                         };
                     },
-                    getFreshPortAuthenticationToken: undefined as any,
                 });
                 bind(BitbucketServerApi).toSelf().inSingletonScope();
                 bind(HostContextProvider).toConstantValue({});
@@ -121,6 +121,14 @@ class TestBitbucketServerRepositoryProvider {
         const result = await this.service.getCommitInfo(this.user, "JLDEC", "jldec-repo-march-30", "test");
         expect(result).to.deep.include({
             author: "Alex Tugarev",
+        });
+    }
+
+    @test async test_getUserRepos_ok() {
+        const result = await this.service.getUserRepos(this.user);
+        expect(result).to.contain({
+            url: "https://7990-alextugarev-bbs-6v0gqcpgvj7.ws-eu102.gitpod.io/scm/~alex.tugarev/user.repo.git",
+            name: "user.repo",
         });
     }
 }

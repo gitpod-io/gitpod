@@ -1,23 +1,21 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { inject, injectable } from "inversify";
-import * as express from "express";
+import express from "express";
 import { User } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
-import { AuthFlow } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { AuthProviderService } from "./auth-provider-service";
-import { TosFlow } from "../terms/tos-flow";
-import { increaseLoginCounter } from "../../src/prometheus-metrics";
+import { reportJWTCookieIssued, reportLoginCompleted } from "../prometheus-metrics";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
-import { UserService } from "../user/user-service";
-import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
+import { SessionHandler } from "../session-handler";
+import { AuthJWT } from "./jwt";
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -28,8 +26,8 @@ export class LoginCompletionHandler {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-    @inject(UserService) protected readonly userService: UserService;
-    @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
+    @inject(AuthJWT) protected readonly authJWT: AuthJWT;
+    @inject(SessionHandler) protected readonly session: SessionHandler;
 
     async complete(
         request: express.Request,
@@ -49,14 +47,8 @@ export class LoginCompletionHandler {
                 });
             });
         } catch (err) {
-            // Clean up the session & avoid loops
-            await TosFlow.clear(request.session);
-            await AuthFlow.clear(request.session);
-
-            if (authHost) {
-                increaseLoginCounter("failed", authHost);
-            }
-            log.error(logContext, `Redirect to /sorry on login`, err, { err, session: request.session });
+            reportLoginCompleted("failed", "git");
+            log.error(logContext, `Failed to login user. Redirecting to /sorry on login.`, err);
             response.redirect(this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
             return;
         }
@@ -74,55 +66,41 @@ export class LoginCompletionHandler {
                 .toString();
             returnTo = elevateScopesUrl;
         }
-        log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`, { session: request.session });
 
         // Don't forget to mark a dynamic provider as verified
         if (authHost) {
             await this.updateAuthProviderAsVerified(authHost, user);
         }
 
-        // Clean up the session & avoid loops
-        await TosFlow.clear(request.session);
-        await AuthFlow.clear(request.session);
-
         if (authHost) {
-            increaseLoginCounter("succeeded", authHost);
-
-            /** no await */ trackLogin(user, request, authHost, this.analytics, this.subscriptionService).catch((err) =>
+            /** no await */ trackLogin(user, request, authHost, this.analytics).catch((err) =>
                 log.error({ userId: user.id }, "Failed to track Login.", err),
             );
         }
 
-        // Check for and automatically subscribe to Professional OpenSource subscription
-        /** no await */ this.checkForAndSubscribeToProfessionalOss(user).catch((err) => {
-            /** ignore */
-        });
+        const cookie = await this.session.createJWTSessionCookie(user.id);
+        response.cookie(cookie.name, cookie.value, cookie.opts);
+        reportJWTCookieIssued();
 
+        log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`);
+        reportLoginCompleted("succeeded", "git");
         response.redirect(returnTo);
     }
 
-    protected async updateAuthProviderAsVerified(hostname: string, user: User) {
+    public async updateAuthProviderAsVerified(hostname: string, user: User) {
         const hostCtx = this.hostContextProvider.get(hostname);
+        log.info("Updating auth provider as verified", { hostname });
         if (hostCtx) {
             const { params: config } = hostCtx.authProvider;
             const { id, verified, builtin } = config;
             if (!builtin && !verified) {
                 try {
-                    await this.authProviderService.markAsVerified({ id, ownerId: user.id });
+                    await this.authProviderService.markAsVerified({ id, userId: user.id });
                 } catch (error) {
                     log.error(LogContext.from({ user }), `Failed to mark AuthProvider as verified!`, { error });
                 }
             }
         }
-    }
-
-    protected async checkForAndSubscribeToProfessionalOss(user: User) {
-        const eligible = await this.userService.checkAutomaticOssEligibility(user);
-        log.debug({ userId: user.id }, "user eligible for OSS subscription?", { eligible });
-        if (!eligible) {
-            return;
-        }
-        await this.subscriptionService.checkAndSubscribeToOssSubscription(user, new Date());
     }
 }
 export namespace LoginCompletionHandler {

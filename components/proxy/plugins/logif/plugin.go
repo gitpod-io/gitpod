@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package logif
 
@@ -41,7 +41,7 @@ type ConditionalEncoder struct {
 	EncRaw    json.RawMessage `json:"encoder,omitempty" caddy:"namespace=caddy.logging.encoders inline_key=format"`
 	Eval      gval.Evaluable  `json:"-"`
 	Expr      string
-	Logger    func(caddy.Module) *zap.Logger `json:"-"`
+	Logger    func(...caddy.Module) *zap.Logger `json:"-"`
 	Formatter string
 }
 

@@ -1,0 +1,70 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app.kubernetes.io/name: kubernetes
+    app.kubernetes.io/part-of: kube-prometheus
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-monitoring-rules
+  namespace: monitoring-satellite
+spec:
+  groups:
+  - name: prometheus
+    rules:
+    - alert: PrometheusBadConfig
+      annotations:
+        description: Prometheus {{$labels.namespace}}/{{$labels.pod}} has failed to reload its configuration.
+        summary: Failed Prometheus configuration reload.
+      expr: |
+        # Without max_over_time, failed scrapes could create false negatives, see
+        # https://www.robustperception.io/alerting-on-gauges-in-prometheus-2-0 for details.
+        max_over_time(prometheus_config_last_reload_successful{job="prometheus-k8s",namespace="monitoring-satellite"}[5m]) == 0
+      for: 10m
+      labels:
+        severity: critical
+        team: delivery-operations-experience
+    - alert: PrometheusRemoteStorageFailures
+      annotations:
+        description: Prometheus {{$labels.namespace}}/{{$labels.pod}} failed to send {{ printf "%.1f" $value }}% of the samples to {{ $labels.remote_name}}:{{ $labels.url }}
+        summary: Prometheus fails to send samples to remote storage.
+      expr: |
+        (
+          (rate(prometheus_remote_storage_failed_samples_total{job="prometheus-k8s",namespace="monitoring-satellite"}[5m]) or rate(prometheus_remote_storage_samples_failed_total{job="prometheus-k8s",namespace="monitoring-satellite"}[5m]))
+        /
+          (
+            (rate(prometheus_remote_storage_failed_samples_total{job="prometheus-k8s",namespace="monitoring-satellite"}[5m]) or rate(prometheus_remote_storage_samples_failed_total{job="prometheus-k8s",namespace="monitoring-satellite"}[5m]))
+          +
+            (rate(prometheus_remote_storage_succeeded_samples_total{job="prometheus-k8s",namespace="monitoring-satellite"}[5m]) or rate(prometheus_remote_storage_samples_total{job="prometheus-k8s",namespace="monitoring-satellite"}[5m]))
+          )
+        )
+        * 100
+        > 1
+      for: 15m
+      labels:
+        severity: critical
+        team: delivery-operations-experience
+    - alert: PrometheusRuleFailures
+      annotations:
+        description: Prometheus {{$labels.namespace}}/{{$labels.pod}} has failed to evaluate {{ printf "%.0f" $value }} rules in the last 5m.
+        summary: Prometheus is failing rule evaluations.
+      expr: |
+        increase(prometheus_rule_evaluation_failures_total{job="prometheus-k8s",namespace="monitoring-satellite"}[5m]) > 0
+      for: 15m
+      labels:
+        severity: warning
+        team: delivery-operations-experience
+    - alert: PrometheusCrashlooped
+      annotations:
+        description: Prometheus' container restarted in the last 5m. While this alert will resolve itself if prometheus stopped crashing, it is important to understand why it crashed in the first place.
+        summary: Prometheus has just crashlooped.
+      expr: |
+        increase(kube_pod_container_status_restarts_total{cluster=~"$cluster", pod="prometheus-k8s-0", container="prometheus"}[5m]) > 0
+      for: 15m
+      labels:
+        severity: info
+        team: delivery-operations-experience

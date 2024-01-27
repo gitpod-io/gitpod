@@ -1,13 +1,12 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
-import { PrebuildWithStatus, PrebuiltWorkspaceState, Project } from "@gitpod/gitpod-protocol";
-import { useContext, useEffect, useState } from "react";
-import { useLocation, useRouteMatch } from "react-router";
+import dayjs from "dayjs";
+import { Project } from "@gitpod/gitpod-protocol";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import DropDown, { DropDownEntry } from "../components/DropDown";
 import { ItemsList, Item, ItemField } from "../components/ItemsList";
@@ -17,85 +16,58 @@ import StatusFailed from "../icons/StatusFailed.svg";
 import StatusCanceled from "../icons/StatusCanceled.svg";
 import StatusPaused from "../icons/StatusPaused.svg";
 import StatusRunning from "../icons/StatusRunning.svg";
-import { getGitpodService } from "../service/service";
-import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { shortCommitMessage } from "./render-utils";
-import { Link } from "react-router-dom";
-import { Disposable } from "vscode-jsonrpc";
+import { Link, Redirect } from "react-router-dom";
+import { useCurrentProject } from "./project-context";
+import { getProjectTabs } from "./projects.routes";
+import search from "../icons/search.svg";
+import Tooltip from "../components/Tooltip";
+import { prebuildClient, watchPrebuild } from "../service/public-api";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Button } from "@podkit/buttons/Button";
 
-export default function (props: { project?: Project; isAdminDashboard?: boolean }) {
-    const location = useLocation();
-
-    const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(location, teams);
-
-    const match = useRouteMatch<{ team: string; resource: string }>("/(t/)?:team/:resource");
-    const projectSlug = props.isAdminDashboard ? props.project?.slug : match?.params?.resource;
-
-    const [project, setProject] = useState<Project | undefined>();
+export default function PrebuildsPage(props: { project?: Project; isAdminDashboard?: boolean }) {
+    const currentProject = useCurrentProject();
+    const project = props.project || currentProject.project;
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
-    const [statusFilter, setStatusFilter] = useState<PrebuiltWorkspaceState | undefined>();
+    const [statusFilter, setStatusFilter] = useState<PrebuildPhase_Phase | undefined>();
 
     const [isLoadingPrebuilds, setIsLoadingPrebuilds] = useState<boolean>(true);
-    const [prebuilds, setPrebuilds] = useState<PrebuildWithStatus[]>([]);
+    const [prebuilds, setPrebuilds] = useState<Prebuild[]>([]);
+    const [isRunningPrebuild, setIsRunningPrebuild] = useState<boolean>(false);
 
     useEffect(() => {
-        let registration: Disposable;
-        // Props come from the Admin dashboard and we do not need
-        // the variables generated from route or location
-        if (props.project) {
-            setProject(props.project);
-        }
         if (!project) {
             return;
-        }
-        // This call is excluded in the Admin dashboard
-        if (!props.isAdminDashboard) {
-            registration = getGitpodService().registerClient({
-                onPrebuildUpdate: (update: PrebuildWithStatus) => {
-                    if (update.info.projectId === project.id) {
-                        setPrebuilds((prev) => [update, ...prev.filter((p) => p.info.id !== update.info.id)]);
-                        setIsLoadingPrebuilds(false);
-                    }
-                },
-            });
         }
 
         (async () => {
             setIsLoadingPrebuilds(true);
-            const prebuilds =
-                props && props.isAdminDashboard
-                    ? await getGitpodService().server.adminFindPrebuilds({ projectId: project.id })
-                    : await getGitpodService().server.findPrebuilds({ projectId: project.id });
-            setPrebuilds(prebuilds);
+            const response = await prebuildClient.listPrebuilds({
+                configurationId: project.id,
+            });
+            setPrebuilds(response.prebuilds);
             setIsLoadingPrebuilds(false);
         })();
 
+        // This call is excluded in the Admin dashboard
         if (!props.isAdminDashboard) {
-            return () => {
-                registration.dispose();
-            };
+            const toCancelWatch = watchPrebuild(
+                {
+                    scope: {
+                        case: "configurationId",
+                        value: project.id,
+                    },
+                },
+                (prebuild) => {
+                    setPrebuilds((prev) => [prebuild, ...prev.filter((p) => p.id !== prebuild.id)]);
+                    setIsLoadingPrebuilds(false);
+                },
+            );
+            return () => toCancelWatch.dispose();
         }
-    }, [project]);
-
-    useEffect(() => {
-        if (!teams) {
-            return;
-        }
-        (async () => {
-            const projects = !!team
-                ? await getGitpodService().server.getTeamProjects(team.id)
-                : await getGitpodService().server.getUserProjects();
-
-            const newProject =
-                projectSlug && projects.find((p) => (p.slug ? p.slug === projectSlug : p.name === projectSlug));
-
-            if (newProject) {
-                setProject(newProject);
-            }
-        })();
-    }, [projectSlug, team, teams]);
+    }, [project, props]);
 
     useEffect(() => {
         if (prebuilds.length === 0) {
@@ -111,86 +83,112 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
         });
         entries.push({
             title: "READY",
-            onClick: () => setStatusFilter("available"),
+            onClick: () => setStatusFilter(PrebuildPhase_Phase.AVAILABLE),
         });
         return entries;
     };
 
-    const filter = (p: PrebuildWithStatus) => {
-        if (statusFilter && statusFilter !== p.status) {
+    const filter = (p: Prebuild) => {
+        if (statusFilter && statusFilter !== p.status?.phase?.name) {
             return false;
         }
         if (
             searchFilter &&
-            `${p.info.changeTitle} ${p.info.branch}`.toLowerCase().includes(searchFilter.toLowerCase()) === false
+            `${p.commit?.message} ${p.ref}`.toLowerCase().includes(searchFilter.toLowerCase()) === false
         ) {
             return false;
         }
         return true;
     };
 
-    const prebuildSorter = (a: PrebuildWithStatus, b: PrebuildWithStatus) => {
-        if (a.info.startedAt < b.info.startedAt) {
+    const prebuildSorter = (a: Prebuild, b: Prebuild) => {
+        const aDate = a.status?.startTime?.toDate();
+        const bDate = b.status?.startTime?.toDate();
+        if (!aDate) {
             return 1;
         }
-        if (a.info.startedAt === b.info.startedAt) {
+        if (!bDate) {
+            return -1;
+        }
+        if (aDate < bDate) {
+            return 1;
+        }
+        if (aDate === bDate) {
             return 0;
         }
         return -1;
     };
 
-    const triggerPrebuild = (branchName: string | null) => {
+    const runPrebuild = async (branchName: string | null) => {
         if (!project) {
             return;
         }
-        getGitpodService().server.triggerPrebuild(project.id, branchName);
+        setIsRunningPrebuild(true);
+        try {
+            await prebuildClient.startPrebuild({
+                configurationId: project.id,
+                gitRef: branchName || undefined,
+            });
+        } catch (error) {
+            console.error("Could not run prebuild", error);
+        } finally {
+            setIsRunningPrebuild(false);
+        }
     };
 
-    const formatDate = (date: string | undefined) => {
-        return date ? moment(date).fromNow() : "";
+    const formatDate = (date: Date | undefined) => {
+        return date ? dayjs(date).fromNow() : "";
     };
+
+    if (!currentProject.loading && !project) {
+        return <Redirect to="/projects" />;
+    }
 
     return (
         <>
             {!props.isAdminDashboard && (
-                <Header title="Prebuilds" subtitle={`View recent prebuilds for active branches.`} />
+                <Header
+                    title={project?.name || "Unknown project"}
+                    subtitle={`View recent prebuilds for active branches.`}
+                    tabs={getProjectTabs(project)}
+                />
             )}
             <div className={props.isAdminDashboard ? "" : "app-container"}>
-                <div className={props.isAdminDashboard ? "flex" : "flex mt-8"}>
-                    <div className="flex">
-                        <div className="py-4">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 16 16"
-                                width="16"
-                                height="16"
-                            >
-                                <path
-                                    fill="#A8A29E"
-                                    d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z"
-                                />
-                            </svg>
-                        </div>
+                <div className={props.isAdminDashboard ? "flex" : "flex pt-2"}>
+                    <div className="flex relative h-10 my-auto">
+                        <img
+                            src={search}
+                            title="Search"
+                            className="filter-grayscale absolute top-3 left-3"
+                            alt="search icon"
+                        />
                         <input
                             type="search"
+                            className="w-64 pl-9 border-0"
                             placeholder="Search Prebuilds"
                             onChange={(e) => setSearchFilter(e.target.value)}
                         />
                     </div>
                     <div className="flex-1" />
-                    <div className="py-3 pl-3">
-                        <DropDown prefix="Prebuild Status: " contextMenuWidth="w-32" entries={statusFilterEntries()} />
+                    <div className="py-2 pl-3">
+                        <DropDown prefix="Prebuild Status: " customClasses="w-32" entries={statusFilterEntries()} />
                     </div>
-                    {!isLoadingPrebuilds && prebuilds.length === 0 && !props.isAdminDashboard && (
-                        <button onClick={() => triggerPrebuild(null)} className="ml-2">
-                            Run Prebuild
-                        </button>
+                    {!props.isAdminDashboard && (
+                        <Button
+                            onClick={() => runPrebuild(null)}
+                            disabled={isRunningPrebuild}
+                            className="ml-2 flex items-center space-x-2"
+                        >
+                            {isRunningPrebuild && (
+                                <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
+                            )}
+                            <span>Run Prebuild</span>
+                        </Button>
                     )}
                 </div>
                 <ItemsList className="mt-2">
                     <Item header={true}>
-                        <ItemField className="my-auto w-5/12">
+                        <ItemField className="my-auto md:w-3/12 xl:w-4/12">
                             <span>Prebuild</span>
                         </ItemField>
                         <ItemField className="my-auto w-5/12">
@@ -210,69 +208,68 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                         .filter(filter)
                         .sort(prebuildSorter)
                         .map((p, index) => (
-                            <Link
-                                to={`/${!!team ? "t/" + team.slug : "projects"}/${projectSlug}/${p.info.id}`}
-                                className="cursor-pointer"
-                            >
-                                <Item key={`prebuild-${p.info.id}`}>
+                            <Link to={`/projects/${project?.id ?? ""}/${p.id}`} className="cursor-pointer">
+                                <Item key={`prebuild-${p.id}`}>
                                     <ItemField
-                                        className={`flex items-center my-auto w-5/12 ${
+                                        className={`flex items-center my-auto md:w-3/12 xl:w-4/12 ${
                                             props.isAdminDashboard ? "pointer-events-none" : ""
                                         }`}
                                     >
                                         <div>
-                                            <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1">
+                                            <div
+                                                className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1"
+                                                title={getPrebuildStatusDescription(p)}
+                                            >
                                                 <div className="inline-block align-text-bottom mr-2 w-4 h-4">
                                                     {prebuildStatusIcon(p)}
                                                 </div>
                                                 {prebuildStatusLabel(p)}
                                             </div>
                                             <p>
-                                                {p.info.startedByAvatar && (
-                                                    <img
-                                                        className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2"
-                                                        src={p.info.startedByAvatar || ""}
-                                                        alt={p.info.startedBy}
-                                                    />
-                                                )}
-                                                Triggered {formatDate(p.info.startedAt)}
+                                                <Tooltip
+                                                    content={dayjs(p.status?.startTime?.toDate()).format("MMM D, YYYY")}
+                                                >
+                                                    Triggered {formatDate(p.status?.startTime?.toDate())}
+                                                </Tooltip>
                                             </p>
                                         </div>
                                     </ItemField>
                                     <ItemField className="flex items-center my-auto w-5/12">
                                         <div className="truncate">
-                                            <a href={p.info.changeUrl} className="cursor-pointer">
+                                            <a href={p?.contextUrl} className="cursor-pointer">
                                                 <div
                                                     className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1 truncate"
-                                                    title={shortCommitMessage(p.info.changeTitle)}
+                                                    title={shortCommitMessage(p.commit?.message || "")}
                                                 >
-                                                    {shortCommitMessage(p.info.changeTitle)}
+                                                    {shortCommitMessage(p.commit?.message || "")}
                                                 </div>
                                             </a>
                                             <p>
-                                                {p.info.changeAuthorAvatar && (
+                                                {p.commit?.author && (
                                                     <img
                                                         className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2 overflow-hidden"
-                                                        src={p.info.changeAuthorAvatar || ""}
-                                                        alt={p.info.changeAuthor}
+                                                        src={p.commit.author.avatarUrl || ""}
+                                                        alt={p.commit.author.name || ""}
                                                     />
                                                 )}
-                                                Authored {formatDate(p.info.changeDate)} ·{" "}
-                                                {p.info.changeHash?.substring(0, 8)}
+                                                Authored {formatDate(p.commit?.authorDate?.toDate())} ·{" "}
+                                                {p.commit?.sha?.substring(0, 8)}
                                             </p>
                                         </div>
                                     </ItemField>
                                     <ItemField className="flex w-3/12">
-                                        <a href={p.info.changeUrl} className="cursor-pointer">
-                                            <div className="flex space-x-2 truncate">
-                                                <span
-                                                    className="font-medium text-gray-500 dark:text-gray-50 truncate"
-                                                    title={p.info.branch}
-                                                >
-                                                    {p.info.branch}
-                                                </span>
-                                            </div>
-                                        </a>
+                                        <div className="truncate">
+                                            <a href={p.contextUrl} className="cursor-pointer">
+                                                <div className="flex space-x-2 truncate">
+                                                    <span
+                                                        className="font-medium text-gray-500 dark:text-gray-50 truncate"
+                                                        title={p.ref}
+                                                    >
+                                                        {p.ref}
+                                                    </span>
+                                                </div>
+                                            </a>
+                                        </div>
                                         <span className="flex-grow" />
                                     </ItemField>
                                 </Item>
@@ -287,84 +284,75 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
     );
 }
 
-export function prebuildStatusLabel(prebuild?: PrebuildWithStatus) {
-    switch (prebuild?.status) {
-        case undefined: // Fall through
-        case "queued":
+export function prebuildStatusLabel(prebuild?: Prebuild) {
+    switch (prebuild?.status?.phase?.name) {
+        case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
+        case PrebuildPhase_Phase.QUEUED:
             return <span className="font-medium text-orange-500 uppercase">pending</span>;
-        case "building":
+        case PrebuildPhase_Phase.BUILDING:
             return <span className="font-medium text-blue-500 uppercase">running</span>;
-        case "aborted":
+        case PrebuildPhase_Phase.ABORTED:
             return <span className="font-medium text-gray-500 uppercase">canceled</span>;
-        case "failed":
+        case PrebuildPhase_Phase.FAILED:
             return <span className="font-medium text-red-500 uppercase">system error</span>;
-        case "timeout":
+        case PrebuildPhase_Phase.TIMEOUT:
             return <span className="font-medium text-red-500 uppercase">timed out</span>;
-        case "available":
-            if (prebuild?.error) {
+        case PrebuildPhase_Phase.AVAILABLE:
+            if (prebuild?.status?.message) {
                 return <span className="font-medium text-red-500 uppercase">failed</span>;
             }
             return <span className="font-medium text-green-500 uppercase">ready</span>;
     }
 }
 
-export function prebuildStatusIcon(prebuild?: PrebuildWithStatus) {
-    switch (prebuild?.status) {
-        case undefined: // Fall through
-        case "queued":
+export function prebuildStatusIcon(prebuild?: Prebuild) {
+    switch (prebuild?.status?.phase?.name) {
+        case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
+        case PrebuildPhase_Phase.QUEUED:
             return <img alt="" className="h-4 w-4" src={StatusPaused} />;
-        case "building":
+        case PrebuildPhase_Phase.BUILDING:
             return <img alt="" className="h-4 w-4" src={StatusRunning} />;
-        case "aborted":
+        case PrebuildPhase_Phase.ABORTED:
             return <img alt="" className="h-4 w-4" src={StatusCanceled} />;
-        case "failed":
+        case PrebuildPhase_Phase.FAILED:
             return <img alt="" className="h-4 w-4" src={StatusFailed} />;
-        case "timeout":
+        case PrebuildPhase_Phase.TIMEOUT:
             return <img alt="" className="h-4 w-4" src={StatusFailed} />;
-        case "available":
-            if (prebuild?.error) {
+        case PrebuildPhase_Phase.AVAILABLE:
+            if (prebuild?.status?.message) {
                 return <img alt="" className="h-4 w-4" src={StatusFailed} />;
             }
             return <img alt="" className="h-4 w-4" src={StatusDone} />;
     }
 }
 
-function PrebuildStatusDescription(props: { prebuild: PrebuildWithStatus }) {
-    switch (props.prebuild.status) {
-        case "queued":
-            return <span>Prebuild is queued and will be processed when there is execution capacity.</span>;
-        case "building":
-            return <span>Prebuild is currently in progress.</span>;
-        case "aborted":
-            return (
-                <span>
-                    Prebuild has been cancelled. Either a user cancelled it, or the prebuild rate limit has been
-                    exceeded. {props.prebuild.error}
-                </span>
-            );
-        case "failed":
-            return <span>Prebuild failed for system reasons. Please contact support. {props.prebuild.error}</span>;
-        case "timeout":
-            return (
-                <span>
-                    Prebuild timed out. Either the image, or the prebuild tasks took too long. {props.prebuild.error}
-                </span>
-            );
-        case "available":
-            if (props.prebuild?.error) {
-                return (
-                    <span>
-                        The tasks executed in the prebuild returned a non-zero exit code. {props.prebuild.error}
-                    </span>
-                );
+function getPrebuildStatusDescription(prebuild: Prebuild): string {
+    switch (prebuild.status?.phase?.name) {
+        case PrebuildPhase_Phase.QUEUED:
+            return `Prebuild is queued and will be processed when there is execution capacity.`;
+        case PrebuildPhase_Phase.BUILDING:
+            return `Prebuild is currently in progress.`;
+        case PrebuildPhase_Phase.ABORTED:
+            return `Prebuild has been cancelled. Either a newer commit was pushed to the same branch, a user cancelled it manually, or the prebuild rate limit has been exceeded. ${
+                prebuild.status?.message || ""
+            }`;
+        case PrebuildPhase_Phase.FAILED:
+            return `Prebuild failed for system reasons. Please contact support. ${prebuild.status?.message || ""}`;
+        case PrebuildPhase_Phase.TIMEOUT:
+            return `Prebuild timed out. Either the image, or the prebuild tasks took too long. ${
+                prebuild.status?.message || ""
+            }`;
+        case PrebuildPhase_Phase.AVAILABLE:
+            if (prebuild.status?.message) {
+                return `The tasks executed in the prebuild returned a non-zero exit code. ${prebuild.status.message}`;
             }
-            return <span>Prebuild completed successfully.</span>;
+            return `Prebuild completed successfully.`;
         default:
-            return <span>Unknown prebuild status.</span>;
+            return `Unknown prebuild status.`;
     }
 }
 
-export function PrebuildStatus(props: { prebuild: PrebuildWithStatus }) {
+export function PrebuildStatus(props: { prebuild: Prebuild }) {
     const prebuild = props.prebuild;
 
     return (
@@ -376,7 +364,7 @@ export function PrebuildStatus(props: { prebuild: PrebuildWithStatus }) {
                 </div>
             </div>
             <div className="flex space-x-1 items-center text-gray-400">
-                <PrebuildStatusDescription prebuild={prebuild} />
+                <span className="text-left">{getPrebuildStatusDescription(prebuild)}</span>
             </div>
         </div>
     );

@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -13,10 +13,13 @@ import (
 
 	_ "embed"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"github.com/gitpod-io/gitpod/installer/pkg/postprocess"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 )
@@ -42,21 +45,7 @@ A config file is required which can be generated with the init command.`,
   # Install Gitpod into a non-default namespace.
   gitpod-installer render --config config.yaml --namespace gitpod | kubectl apply -f -`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, cfgVersion, cfg, err := loadConfig(renderOpts.ConfigFN)
-		if err != nil {
-			return err
-		}
-
-		if cfg.Experimental != nil {
-			if renderOpts.UseExperimentalConfig {
-				fmt.Fprintf(os.Stderr, "rendering using experimental config\n")
-			} else {
-				fmt.Fprintf(os.Stderr, "ignoring experimental config. Use `--use-experimental-config` to include the experimental section in config\n")
-				cfg.Experimental = nil
-			}
-		}
-
-		yaml, err := renderKubernetesObjects(cfgVersion, cfg)
+		yaml, err := renderFn()
 		if err != nil {
 			return err
 		}
@@ -75,6 +64,24 @@ A config file is required which can be generated with the init command.`,
 
 		return nil
 	},
+}
+
+func renderFn() ([]string, error) {
+	_, cfgVersion, cfg, err := loadConfig(renderOpts.ConfigFN)
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.Experimental != nil {
+		if renderOpts.UseExperimentalConfig {
+			fmt.Fprintf(os.Stderr, "rendering using experimental config\n")
+		} else {
+			fmt.Fprintf(os.Stderr, "ignoring experimental config. Use `--use-experimental-config` to include the experimental section in config\n")
+			cfg.Experimental = nil
+		}
+	}
+
+	return renderKubernetesObjects(cfgVersion, cfg)
 }
 
 func saveYamlToFiles(dir string, yaml []string) error {
@@ -114,7 +121,7 @@ func loadConfig(cfgFN string) (rawCfg interface{}, cfgVersion string, cfg *confi
 		overrideConfig = string(cfgBytes)
 	}
 
-	rawCfg, cfgVersion, err = config.Load(overrideConfig)
+	rawCfg, cfgVersion, err = config.Load(overrideConfig, rootOpts.StrictConfigParse)
 	if err != nil {
 		err = fmt.Errorf("error loading config: %w", err)
 		return
@@ -149,6 +156,11 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 			fmt.Fprintln(os.Stderr, "configuration is invalid")
 			os.Exit(1)
 		}
+
+		// Warnings are printed to stderr
+		for _, r := range res.Warnings {
+			fmt.Fprintf(os.Stderr, "%s\n", r)
+		}
 	}
 
 	ctx, err := common.NewRenderContext(*cfg, *versionMF, renderOpts.Namespace)
@@ -163,6 +175,12 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 		renderable = components.FullObjects
 		helmCharts = components.FullHelmDependencies
 	case configv1.InstallationMeta:
+		renderable = components.MetaObjects
+		helmCharts = components.MetaHelmDependencies
+	case configv1.InstallationIDE:
+		renderable = components.IDEObjects
+		helmCharts = components.IDEHelmDependencies
+	case configv1.InstallationWebApp:
 		renderable = components.WebAppObjects
 		helmCharts = components.WebAppHelmDependencies
 	case configv1.InstallationWorkspace:
@@ -211,9 +229,24 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 		return nil, err
 	}
 
+	postProcessed, err := postprocess.Run(sortedObjs)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		postProcessed, err = postprocess.Override(ucfg.Overrides, postProcessed)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
 	// output the YAML to stdout
 	output := make([]string, 0)
-	for _, c := range sortedObjs {
+	for _, c := range postProcessed {
 		output = append(output, fmt.Sprintf("---\n# %s/%s %s\n%s", c.TypeMeta.APIVersion, c.TypeMeta.Kind, c.Metadata.Name, c.Content))
 	}
 
@@ -223,8 +256,13 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 func init() {
 	rootCmd.AddCommand(renderCmd)
 
-	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file, use - for stdin")
-	renderCmd.PersistentFlags().StringVarP(&renderOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
+	dir, err := os.Getwd()
+	if err != nil {
+		log.WithError(err).Fatal("Failed to get working directory")
+	}
+
+	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", getEnvvar("GITPOD_INSTALLER_CONFIG", filepath.Join(dir, "gitpod.config.yaml")), "path to the config file, use - for stdin")
+	renderCmd.PersistentFlags().StringVarP(&renderOpts.Namespace, "namespace", "n", getEnvvar("NAMESPACE", "default"), "namespace to deploy to")
 	renderCmd.Flags().BoolVar(&renderOpts.ValidateConfigDisabled, "no-validation", false, "if set, the config will not be validated before running")
 	renderCmd.Flags().BoolVar(&renderOpts.UseExperimentalConfig, "use-experimental-config", false, "enable the use of experimental config that is prone to be changed")
 	renderCmd.Flags().StringVar(&renderOpts.FilesDir, "output-split-files", "", "path to output individual Kubernetes manifests to")

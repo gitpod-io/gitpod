@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package observer
 
@@ -30,6 +30,9 @@ type StatsSample struct {
 	Phase          api.WorkspacePhase
 	Failed         bool
 	StartDuration  time.Duration
+	CloneURL       string
+	WorkspaceImage string
+	WorkspaceName  string
 }
 
 // NewStatsObserver produces a stats collecting observer
@@ -61,11 +64,14 @@ func NewStatsObserver(cb func(*Stats)) chan<- *loadgen.SessionEvent {
 				status = make(map[string]*StatsSample)
 			case loadgen.SessionWorkspaceStart:
 				status[evt.WorkspaceStart.Spec.Id] = &StatsSample{
-					InstanceID:    evt.WorkspaceStart.Spec.Id,
-					Start:         evt.WorkspaceStart.Time,
-					Failed:        false,
-					Phase:         api.WorkspacePhase_UNKNOWN,
-					StartDuration: evt.WorkspaceStart.CallDuration,
+					InstanceID:     evt.WorkspaceStart.Spec.Id,
+					Start:          evt.WorkspaceStart.Time,
+					Failed:         false,
+					Phase:          api.WorkspacePhase_UNKNOWN,
+					StartDuration:  evt.WorkspaceStart.CallDuration,
+					CloneURL:       evt.WorkspaceStart.Spec.Metadata.Annotations["context-url"],
+					WorkspaceImage: evt.WorkspaceStart.Spec.Spec.WorkspaceImage,
+					WorkspaceName:  evt.WorkspaceStart.Spec.Metadata.MetaId,
 				}
 			case loadgen.SessionWorkspaceUpdate:
 				up := evt.WorkspaceUpdate.Update

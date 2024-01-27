@@ -1,0 +1,60 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app.kubernetes.io/name: kubernetes
+    app.kubernetes.io/part-of: kube-prometheus
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-operator-monitoring-rules
+  namespace: monitoring-satellite
+spec:
+  groups:
+  - name: prometheus-operator
+    rules:
+    - alert: PrometheusOperatorListErrors
+      annotations:
+        description: Errors while performing List operations in controller {{$labels.controller}} in {{$labels.namespace}} namespace.
+        summary: Errors while performing list operations in controller.
+      expr: |
+        (sum by (controller,namespace) (rate(prometheus_operator_list_operations_failed_total{job="prometheus-operator",namespace="monitoring-satellite"}[10m])) / sum by (controller,namespace) (rate(prometheus_operator_list_operations_total{job="prometheus-operator",namespace="monitoring-satellite"}[10m]))) > 0.4
+      for: 15m
+      labels:
+        severity: warning
+        team: delivery-operations-experience
+    - alert: PrometheusOperatorWatchErrors
+      annotations:
+        description: Errors while performing watch operations in controller {{$labels.controller}} in {{$labels.namespace}} namespace.
+        summary: Errors while performing watch operations in controller.
+      expr: |
+        (sum by (controller,namespace) (rate(prometheus_operator_watch_operations_failed_total{job="prometheus-operator",namespace="monitoring-satellite"}[5m])) / sum by (controller,namespace) (rate(prometheus_operator_watch_operations_total{job="prometheus-operator",namespace="monitoring-satellite"}[5m]))) > 0.4
+      for: 15m
+      labels:
+        severity: warning
+        team: delivery-operations-experience
+    - alert: PrometheusOperatorReconcileErrors
+      annotations:
+        description: '{{ $value | humanizePercentage }} of reconciling operations failed for {{ $labels.controller }} controller in {{ $labels.namespace }} namespace.'
+        summary: Errors while reconciling controller.
+      expr: |
+        (sum by (controller,namespace) (rate(prometheus_operator_reconcile_errors_total{job="prometheus-operator",namespace="monitoring-satellite"}[5m]))) / (sum by (controller,namespace) (rate(prometheus_operator_reconcile_operations_total{job="prometheus-operator",namespace="monitoring-satellite"}[5m]))) > 0.1
+      for: 10m
+      labels:
+        severity: warning
+        team: delivery-operations-experience
+    - alert: ConfigReloaderSidecarErrors
+      annotations:
+        description: |-
+          Errors encountered while the {{$labels.pod}} config-reloader sidecar attempts to sync config in {{$labels.namespace}} namespace.
+          As a result, configuration for service running in {{$labels.pod}} may be stale and cannot be updated anymore.
+        summary: config-reloader sidecar has not had a successful reload for 10m
+      expr: |
+        max_over_time(reloader_last_reload_successful{namespace=~".+"}[5m]) == 0
+      for: 10m
+      labels:
+        severity: warning
+        team: delivery-operations-experience

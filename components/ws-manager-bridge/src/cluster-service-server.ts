@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
@@ -15,8 +15,7 @@ import {
     AdmissionConstraint,
     AdmissionConstraintHasPermission,
     WorkspaceClusterWoTLS,
-    AdmissionConstraintHasUserLevel,
-    AdmissionConstraintHasMoreResources,
+    WorkspaceClass,
 } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import {
     ClusterServiceService,
@@ -34,17 +33,18 @@ import {
     UpdateResponse,
     AdmissionConstraint as GRPCAdmissionConstraint,
 } from "@gitpod/ws-manager-bridge-api/lib";
-import { GetWorkspacesRequest } from "@gitpod/ws-manager/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
     WorkspaceManagerClientProviderCompositeSource,
     WorkspaceManagerClientProviderSource,
 } from "@gitpod/ws-manager/lib/client-provider-source";
 import * as grpc from "@grpc/grpc-js";
-import { ServiceError as grpcServiceError } from "@grpc/grpc-js";
 import { inject, injectable } from "inversify";
 import { BridgeController } from "./bridge-controller";
 import { Configuration } from "./config";
+import { GRPCError } from "./rpc";
+import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { DescribeClusterRequest, DescribeClusterResponse, WorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 
 export interface ClusterServiceServerOptions {
     port: number;
@@ -56,26 +56,17 @@ export class ClusterService implements IClusterServiceServer {
     // Satisfy the grpc.UntypedServiceImplementation interface.
     [name: string]: any;
 
-    @inject(Configuration)
-    protected readonly config: Configuration;
-
-    @inject(WorkspaceClusterDB)
-    protected readonly clusterDB: WorkspaceClusterDB;
-
-    @inject(WorkspaceDB)
-    protected readonly workspaceDB: WorkspaceDB;
-
-    @inject(BridgeController)
-    protected readonly bridgeController: BridgeController;
-
-    @inject(WorkspaceManagerClientProvider)
-    protected readonly clientProvider: WorkspaceManagerClientProvider;
-
-    @inject(WorkspaceManagerClientProviderCompositeSource)
-    protected readonly allClientProvider: WorkspaceManagerClientProviderSource;
+    constructor(
+        @inject(WorkspaceClusterDB) private readonly clusterDB: WorkspaceClusterDB,
+        @inject(WorkspaceDB) private readonly workspaceDB: WorkspaceDB,
+        @inject(BridgeController) private readonly bridgeController: BridgeController,
+        @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
+        @inject(WorkspaceManagerClientProviderCompositeSource)
+        private readonly allClientProvider: WorkspaceManagerClientProviderSource,
+    ) {}
 
     // using a queue to make sure we do concurrency right
-    protected readonly queue: Queue = new Queue();
+    private readonly queue: Queue = new Queue();
 
     public register(
         call: grpc.ServerUnaryCall<RegisterRequest, RegisterResponse>,
@@ -87,8 +78,14 @@ export class ClusterService implements IClusterServiceServer {
                 // check if the name or URL are already registered/in use
                 const req = call.request.toObject();
 
+                if (!isWorkspaceRegion(req.region)) {
+                    throw new GRPCError(grpc.status.INVALID_ARGUMENT, `Invalid value for workspace region.`);
+                }
+
                 const clusterByNamePromise = this.clusterDB.findByName(req.name);
-                const clusterByUrlPromise = this.clusterDB.findFiltered({ url: req.url });
+                const clusterByUrlPromise = this.clusterDB.findFiltered({
+                    url: req.url,
+                });
 
                 const [clusterByName, clusterByUrl] = await Promise.all([clusterByNamePromise, clusterByUrlPromise]);
 
@@ -109,16 +106,13 @@ export class ClusterService implements IClusterServiceServer {
 
                 // store the ws-manager into the database
                 let perfereability = Preferability.NONE;
-                let govern = false;
+                const govern = true;
                 let state: WorkspaceClusterState = "available";
                 if (req.hints) {
                     perfereability = req.hints.perfereability;
-                    if (req.hints.govern) {
-                        govern = req.hints.govern;
-                    }
                     state = mapCordoned(req.hints.cordoned);
                 }
-                let score = mapPreferabilityToScore(perfereability);
+                const score = mapPreferabilityToScore(perfereability);
                 if (score === undefined) {
                     throw new GRPCError(grpc.status.INVALID_ARGUMENT, `unknown preferability ${perfereability}`);
                 }
@@ -141,6 +135,7 @@ export class ClusterService implements IClusterServiceServer {
                 const newCluster: WorkspaceCluster = {
                     name: req.name,
                     url: req.url,
+                    region: req.region,
                     state,
                     score,
                     maxScore: 100,
@@ -150,9 +145,9 @@ export class ClusterService implements IClusterServiceServer {
                 };
 
                 // try to connect to validate the config. Throws an exception if it fails.
-                await new Promise<void>((resolve, reject) => {
-                    const c = this.clientProvider.createClient(newCluster);
-                    c.getWorkspaces(new GetWorkspacesRequest(), (err: any) => {
+                const clusterDesc = await new Promise<DescribeClusterResponse>((resolve, reject) => {
+                    const c = this.clientProvider.createConnection(WorkspaceManagerClient, newCluster);
+                    c.describeCluster(new DescribeClusterRequest(), (err: any, resp: DescribeClusterResponse) => {
                         if (err) {
                             reject(
                                 new GRPCError(
@@ -161,9 +156,21 @@ export class ClusterService implements IClusterServiceServer {
                                 ),
                             );
                         } else {
-                            resolve();
+                            resolve(resp);
                         }
                     });
+                });
+
+                // Make a test call to the cluster to validate the TLS config.
+                // We use this test call to gather the available workspace classes.
+                newCluster.preferredWorkspaceClass = clusterDesc.getPreferredWorkspaceClass();
+                newCluster.availableWorkspaceClasses = clusterDesc.getWorkspaceClassesList().map((c) => {
+                    return <WorkspaceClass>{
+                        creditsPerMinute: c.getCreditsPerMinute(),
+                        description: c.getDescription(),
+                        displayName: c.getDisplayName(),
+                        id: c.getId(),
+                    };
                 });
 
                 await this.clusterDB.save(newCluster);
@@ -222,12 +229,6 @@ export class ClusterService implements IClusterServiceServer {
                                             return false;
                                         }
                                         break;
-                                    case "has-user-level":
-                                        if (v.level === (c as AdmissionConstraintHasUserLevel).level) {
-                                            return false;
-                                        }
-                                    case "has-more-resources":
-                                        return false;
                                 }
                                 return true;
                             });
@@ -262,7 +263,9 @@ export class ClusterService implements IClusterServiceServer {
                     });
                     throw new GRPCError(
                         grpc.status.FAILED_PRECONDITION,
-                        `cluster is not empty (${relevantInstances.length} instances remaining)`,
+                        `cluster is not empty (${relevantInstances.length} instances remaining)[${relevantInstances
+                            .map((i) => i.id)
+                            .join(",")}]`,
                     );
                 }
 
@@ -309,7 +312,7 @@ export class ClusterService implements IClusterServiceServer {
         });
     }
 
-    protected triggerReconcile(action: string, name: string) {
+    private triggerReconcile(action: string, name: string) {
         const payload = { action, name };
         log.info("reconcile: on request", payload);
         this.bridgeController
@@ -326,6 +329,8 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
     clusterStatus.setScore(ws.score);
     clusterStatus.setMaxScore(ws.maxScore);
     clusterStatus.setGoverned(ws.govern);
+    clusterStatus.setRegion(ws.region);
+
     ws.admissionConstraints?.forEach((c) => {
         const constraint = new GRPCAdmissionConstraint();
         switch (c.type) {
@@ -336,12 +341,6 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
                 const perm = new GRPCAdmissionConstraint.HasPermission();
                 perm.setPermission(c.permission);
                 constraint.setHasPermission(perm);
-                break;
-            case "has-user-level":
-                constraint.setHasUserLevel(c.level);
-                break;
-            case "has-more-resources":
-                constraint.setHasMoreResources(true);
                 break;
             default:
                 return;
@@ -366,16 +365,6 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
         }
 
         return <AdmissionConstraintHasPermission>{ type: "has-permission", permission };
-    }
-    if (c.hasHasUserLevel()) {
-        const level = c.getHasUserLevel();
-        if (!level) {
-            return;
-        }
-        return <AdmissionConstraintHasUserLevel>{ type: "has-user-level", level };
-    }
-    if (c.hasHasMoreResources()) {
-        return <AdmissionConstraintHasMoreResources>{ type: "has-more-resources" };
     }
     return;
 }
@@ -433,13 +422,12 @@ function getClientInfo(call: grpc.ServerUnaryCall<any, any>) {
 // "grpc" does not allow additional methods on it's "ServiceServer"s so we have an additional wrapper here
 @injectable()
 export class ClusterServiceServer {
-    @inject(Configuration)
-    protected readonly config: Configuration;
+    constructor(
+        @inject(Configuration) private readonly config: Configuration,
+        @inject(ClusterService) private readonly service: ClusterService,
+    ) {}
 
-    @inject(ClusterService)
-    protected readonly service: ClusterService;
-
-    protected server: grpc.Server | undefined = undefined;
+    private server: grpc.Server | undefined = undefined;
 
     public async start() {
         // Default value for maxSessionMemory is 10 which is low for this gRPC server
@@ -470,29 +458,5 @@ export class ClusterServiceServer {
             });
             this.server = undefined;
         }
-    }
-}
-
-class GRPCError extends Error implements Partial<grpcServiceError> {
-    public name = "ServiceError";
-
-    details: string;
-
-    constructor(public readonly status: grpc.status, err: any) {
-        super(GRPCError.errToMessage(err));
-
-        this.details = this.message;
-    }
-
-    static errToMessage(err: any): string | undefined {
-        if (typeof err === "string") {
-            return err;
-        } else if (typeof err === "object") {
-            return err.message;
-        }
-    }
-
-    static isGRPCError(obj: any): obj is GRPCError {
-        return obj !== undefined && typeof obj === "object" && "status" in obj;
     }
 }

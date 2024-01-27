@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { Workspace } from ".";
@@ -15,8 +15,6 @@ import { Workspace } from ".";
  * TODO(gpl) See if we can get this into `server` code to remove the burden from clients
  */
 export namespace ContextURL {
-    export const INCREMENTAL_PREBUILD_PREFIX = "incremental-prebuild";
-    export const PREBUILD_PREFIX = "prebuild";
     export const IMAGEBUILD_PREFIX = "imagebuild";
     export const SNAPSHOT_PREFIX = "snapshot";
     export const REFERRER_PREFIX = "referrer:";
@@ -38,12 +36,12 @@ export namespace ContextURL {
         try {
             return new URL(normalized);
         } catch (err) {
-            console.error(`unable to parse URL from normalized contextURL: '${normalized}'`, err);
+            console.debug(`unable to parse URL from normalized contextURL: '${normalized}'`);
         }
         return undefined;
     }
 
-    function normalize(ws: Pick<Workspace, "context" | "contextURL"> | undefined): string | undefined {
+    export function normalize(ws: Pick<Workspace, "context" | "contextURL"> | undefined): string | undefined {
         if (!ws) {
             return undefined;
         }
@@ -90,8 +88,6 @@ export namespace ContextURL {
 
         const firstSegment = segments[0];
         if (
-            firstSegment === PREBUILD_PREFIX ||
-            firstSegment === INCREMENTAL_PREBUILD_PREFIX ||
             firstSegment === IMAGEBUILD_PREFIX ||
             firstSegment === SNAPSHOT_PREFIX ||
             firstSegment.startsWith(REFERRER_PREFIX)

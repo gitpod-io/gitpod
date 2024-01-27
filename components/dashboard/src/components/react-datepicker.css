@@ -1,0 +1,49 @@
+/**
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
+ */
+
+.react-datepicker-wrapper {
+    width: fit-content !important;
+}
+
+.react-datepicker {
+    border: 0px !important;
+    border-radius: 1rem !important;
+}
+
+.react-datepicker__month-container {
+    border-radius: 0.75rem !important;
+}
+
+.react-datepicker div {
+    @apply bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700
+}
+
+.react-datepicker div.react-datepicker__day--in-selecting-range {
+    @apply bg-gray-400 dark:bg-gray-600 text-gray-300
+}
+
+.react-datepicker div.react-datepicker__day--selected {
+    @apply dark:bg-gray-300 dark:text-gray-800 bg-gray-500 text-gray-100
+}
+
+.react-datepicker div.react-datepicker__day--selecting-range-start {
+    @apply dark:bg-gray-300 dark:text-gray-800 text-gray-200
+}
+
+.react-datepicker div.react-datepicker__day--selecting-range-end {
+    @apply dark:bg-gray-300 dark:text-gray-800 text-gray-200
+}
+
+.react-datepicker button {
+    @apply dark:bg-gray-800 dark:text-gray-200
+}
+
+.react-datepicker__triangle::before {
+    border-bottom-color: transparent !important;
+}
+.react-datepicker__triangle::after {
+    border-bottom-color: transparent !important;
+}

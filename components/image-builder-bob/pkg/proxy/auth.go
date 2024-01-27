@@ -1,17 +1,39 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package proxy
 
 import (
 	"encoding/base64"
 	"encoding/json"
+	"regexp"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 )
+
+var ecrRegistryRegexp = regexp.MustCompile(`\d{12}.dkr.ecr.\w+-\w+-\w+.amazonaws.com`)
+
+const DummyECRRegistryDomain = "000000000000.dkr.ecr.dummy-host-zone.amazonaws.com"
+
+// isECRRegistry returns true if the registry domain is an ECR registry
+func isECRRegistry(domain string) bool {
+	return ecrRegistryRegexp.MatchString(domain)
+}
+
+// isDockerHubRegistry returns true if the registry domain is an docker hub
+func isDockerHubRegistry(domain string) bool {
+	switch domain {
+	case "registry-1.docker.io":
+		fallthrough
+	case "docker.io":
+		return true
+	default:
+		return false
+	}
+}
 
 // authConfig configures authentication for a single host
 type authConfig struct {
@@ -30,7 +52,34 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 		}).Info("authorizing registry access")
 	}()
 
-	res, ok := a[host]
+	explicitHostMatcher := func() (authConfig, bool) {
+		res, ok := a[host]
+		return res, ok
+	}
+	ecrHostMatcher := func() (authConfig, bool) {
+		if isECRRegistry(host) {
+			res, ok := a[DummyECRRegistryDomain]
+			return res, ok
+		}
+		return authConfig{}, false
+	}
+	dockerHubHostMatcher := func() (authConfig, bool) {
+		if isDockerHubRegistry(host) {
+			res, ok := a["docker.io"]
+			return res, ok
+		}
+		return authConfig{}, false
+	}
+
+	matchers := []func() (authConfig, bool){explicitHostMatcher, ecrHostMatcher, dockerHubHostMatcher}
+	res, ok := authConfig{}, false
+	for _, matcher := range matchers {
+		res, ok = matcher()
+		if ok {
+			break
+		}
+	}
+
 	if !ok {
 		return
 	}

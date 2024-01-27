@@ -1,0 +1,10 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+envvars:
+  DOMAIN: gitpod.io
+  HAS_LOCAL_REGISTRY: "1"
+  IMAGE_PULL_SECRET_NAME: local-registry-pull-secret
+  LOCAL_REGISTRY_ADDRESS: local-registry-address.com
+  LOCAL_REGISTRY_HOST: local-registry-host.com

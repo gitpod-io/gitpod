@@ -8,7 +8,6 @@ packages:
       - imageRepoBase
     srcs:
       - gcloud-default-config
-      - kubeconfig.yaml
     config:
       dockerfile: Dockerfile
       image:

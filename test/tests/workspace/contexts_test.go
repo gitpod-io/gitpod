@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package workspace
 
@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 )
 
 type ContextTest struct {
@@ -25,14 +25,15 @@ type ContextTest struct {
 	WorkspaceRoot      string
 	ExpectedBranch     string
 	ExpectedBranchFunc func(username string) string
+	IgnoreError        bool
 }
 
 func TestGitHubContexts(t *testing.T) {
 	tests := []ContextTest{
 		{
 			Name:           "open repository",
-			ContextURL:     "github.com/gitpod-io/gitpod",
-			WorkspaceRoot:  "/workspace/gitpod",
+			ContextURL:     "github.com/gitpod-io/template-golang-cli",
+			WorkspaceRoot:  "/workspace/template-golang-cli",
 			ExpectedBranch: "main",
 		},
 		{
@@ -42,18 +43,29 @@ func TestGitHubContexts(t *testing.T) {
 			ExpectedBranch: "integration-test-1",
 		},
 		{
+			// Branch name decisions are not tested in the workspace as it is the server side logic
 			Name:          "open issue",
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/issues/88",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
-			ExpectedBranchFunc: func(username string) string {
-				return fmt.Sprintf("%s/integration-tests-test-context-88", username)
-			},
 		},
 		{
 			Name:           "open tag",
 			ContextURL:     "github.com/gitpod-io/gitpod-test-repo/tree/integration-test-context-tag",
 			WorkspaceRoot:  "/workspace/gitpod-test-repo",
 			ExpectedBranch: "HEAD",
+		},
+		{
+			Name:           "Git LFS support",
+			ContextURL:     "github.com/atduarte/lfs-test",
+			WorkspaceRoot:  "/workspace/lfs-test",
+			ExpectedBranch: "main",
+		},
+		{
+			Name:           "empty repo",
+			ContextURL:     "github.com/gitpod-io/empty",
+			WorkspaceRoot:  "/workspace/empty",
+			ExpectedBranch: "HEAD",
+			IgnoreError:    true,
 		},
 	}
 	runContextTests(t, tests)
@@ -80,9 +92,6 @@ func TestGitLabContexts(t *testing.T) {
 			Name:          "open issue",
 			ContextURL:    "gitlab.com/AlexTugarev/gp-test/issues/1",
 			WorkspaceRoot: "/workspace/gp-test",
-			ExpectedBranchFunc: func(username string) string {
-				return fmt.Sprintf("%s/write-a-readme-1", username)
-			},
 		},
 		{
 			Name:           "open tag",
@@ -101,38 +110,52 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 
 	f := features.New("context").
 		WithLabel("component", "server").
-		Assess("should run context tests", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("should run context tests", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+
+			sctx, scancel := context.WithTimeout(testCtx, time.Duration(10*len(tests))*time.Minute)
+			defer scancel()
+
+			api := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			defer api.Done(t)
+
 			for _, test := range tests {
+				test := test
 				t.Run(test.ContextURL, func(t *testing.T) {
+					report.SetupReport(t, report.FeatureContentInit, fmt.Sprintf("Test to open %v", test.ContextURL))
 					if test.Skip {
 						t.SkipNow()
 					}
 
 					t.Parallel()
 
-					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
 					defer cancel()
 
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-					t.Cleanup(func() {
-						api.Done(t)
-					})
+					defer api.Done(t)
 
 					_, err := api.CreateUser(username, userToken)
 					if err != nil {
 						t.Fatal(err)
 					}
 
-					nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
+					nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
 					if err != nil {
 						t.Fatal(err)
 					}
-					defer stopWS(false) // we do not wait for stopped here as it does not matter for this test case and speeds things up
 
-					_, err = integration.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
-					if err != nil {
-						t.Fatal(err)
-					}
+					t.Cleanup(func() {
+						sctx, scancel := context.WithTimeout(context.Background(), 10*time.Minute)
+						defer scancel()
+
+						sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						defer sapi.Done(t)
+
+						_, err := stopWs(true, sapi)
+						if err != nil {
+							t.Fatal(err)
+						}
+					})
 
 					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
 					if err != nil {
@@ -141,13 +164,17 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 					defer rsa.Close()
 					integration.DeferCloser(t, closer)
 
+					if test.ExpectedBranch == "" && test.ExpectedBranchFunc == nil {
+						return
+					}
+
 					// get actual from workspace
-					git := common.Git(rsa)
-					err = git.ConfigSafeDirectory(test.WorkspaceRoot)
+					git := integration.Git(rsa)
+					err = git.ConfigSafeDirectory()
 					if err != nil {
 						t.Fatal(err)
 					}
-					actBranch, err := git.GetBranch(test.WorkspaceRoot)
+					actBranch, err := git.GetBranch(test.WorkspaceRoot, test.IgnoreError)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -157,11 +184,11 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 						expectedBranch = test.ExpectedBranchFunc(username)
 					}
 					if actBranch != expectedBranch {
-						t.Fatalf("expected branch '%s', got '%s'!", test.ExpectedBranch, actBranch)
+						t.Fatalf("expected branch '%s', got '%s'!", expectedBranch, actBranch)
 					}
 				})
 			}
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

@@ -1,29 +1,49 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
+import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import bitbucket from './images/bitbucket.svg';
 import github from './images/github.svg';
 import gitlab from './images/gitlab.svg';
 import gitea from './images/gitea.svg';
 import { gitpodHostUrl } from "./service/service";
 
-function iconForAuthProvider(type: string) {
+function iconForAuthProvider(type: string | AuthProviderType) {
     switch (type) {
         case "GitHub":
-            return <img className="fill-current dark:filter-invert w-5 h-5 ml-3 mr-3 my-auto" src={github} />;
+        case AuthProviderType.GITHUB:
+            return <img className="fill-current dark:filter-invert w-5 h-5 ml-3 mr-3 my-auto" src={github} alt="" />;
         case "GitLab":
-            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitlab} />;
-        case "Bitbucket":
-            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} />;
+        case AuthProviderType.GITLAB:
+            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitlab} alt="" />;
         case "Gitea":
             return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitea} />;
+        case "Bitbucket":
+        case AuthProviderType.BITBUCKET:
+            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} alt="" />;
         case "BitbucketServer":
-            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} />;
+        case AuthProviderType.BITBUCKET_SERVER:
+            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} alt="" />;
         default:
             return <></>;
+    }
+}
+
+export function toAuthProviderLabel(type: AuthProviderType) {
+    switch (type) {
+        case AuthProviderType.GITHUB:
+            return "GitHub";
+        case AuthProviderType.GITLAB:
+            return "GitLab";
+        case AuthProviderType.BITBUCKET:
+            return "Bitbucket Cloud";
+        case AuthProviderType.BITBUCKET_SERVER:
+            return "Bitbucket Server";
+        default:
+            return "-";
     }
 }
 
@@ -40,23 +60,23 @@ function simplifyProviderName(host: string) {
     }
 }
 
-interface OpenAuthorizeWindowParams {
+interface WindowMessageHandler {
+    onSuccess?: (payload?: string) => void;
+    onError?: (error: string | { error: string; description?: string }) => void;
+}
+
+interface OpenAuthorizeWindowParams extends WindowMessageHandler {
     login?: boolean;
     host: string;
     scopes?: string[];
     overrideScopes?: boolean;
     overrideReturn?: string;
-    onSuccess?: (payload?: string) => void;
-    onError?: (error: string | { error: string; description?: string }) => void;
 }
 
 async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
-    const { login, host, scopes, overrideScopes, onSuccess, onError } = params;
-    let search = "message=success";
-    const redirectURL = getSafeURLRedirect();
-    if (redirectURL) {
-        search = `${search}&returnTo=${encodeURIComponent(redirectURL)}`;
-    }
+    const { login, host, scopes, overrideScopes } = params;
+    const successKey = getUniqueSuccessKey();
+    let search = `message=${successKey}`;
     const returnTo = gitpodHostUrl.with({ pathname: "complete-auth", search: search }).toString();
     const requestedScopes = scopes || [];
     const url = login
@@ -75,6 +95,12 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
               })
               .toString();
 
+    openModalWindow(url);
+
+    attachMessageListener(successKey, params);
+}
+
+function openModalWindow(url: string) {
     const width = 800;
     const height = 800;
     const left = window.screen.width / 2 - width / 2;
@@ -84,11 +110,15 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     window.open(
         url,
         "gitpod-auth-window",
-        `width=${width},height=${height},top=${top},left=${left}status=yes,scrollbars=yes,resizable=yes`,
+        `width=${width},height=${height},top=${top},left=${left},status=yes,scrollbars=yes,resizable=yes`,
     );
+}
 
+function attachMessageListener(successKey: string, { onSuccess, onError }: WindowMessageHandler) {
     const eventListener = (event: MessageEvent) => {
-        // todo: check event.origin
+        if (event?.origin !== document.location.origin) {
+            return;
+        }
 
         const killAuthWindow = () => {
             window.removeEventListener("message", eventListener);
@@ -99,7 +129,7 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
             }
         };
 
-        if (typeof event.data === "string" && event.data.startsWith("success")) {
+        if (typeof event.data === "string" && event.data.startsWith(successKey)) {
             killAuthWindow();
             onSuccess && onSuccess(event.data);
         }
@@ -120,18 +150,48 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     };
     window.addEventListener("message", eventListener);
 }
-const getSafeURLRedirect = (source?: string) => {
-    const returnToURL: string | null = new URLSearchParams(source ? source : window.location.search).get("returnTo");
-    if (returnToURL) {
-        // Only allow oauth on the same host
-        if (
-            returnToURL
-                .toLowerCase()
-                .startsWith(`${window.location.protocol}//${window.location.host}/api/oauth/`.toLowerCase())
-        ) {
-            return returnToURL;
-        }
+
+interface OpenOIDCStartWindowParams extends WindowMessageHandler {
+    orgSlug?: string;
+    configId?: string;
+    activate?: boolean;
+    verify?: boolean;
+}
+
+async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
+    const { orgSlug, configId, activate = false, verify = false } = params;
+    const successKey = getUniqueSuccessKey();
+    let search = `message=${successKey}`;
+    const returnTo = gitpodHostUrl.with({ pathname: "complete-auth", search }).toString();
+    const searchParams = new URLSearchParams({ returnTo });
+    if (orgSlug) {
+        searchParams.append("orgSlug", orgSlug);
     }
+    if (configId) {
+        searchParams.append("id", configId);
+    }
+    if (activate) {
+        searchParams.append("activate", "true");
+    } else if (verify) {
+        searchParams.append("verify", "true");
+    }
+
+    const url = gitpodHostUrl
+        .with((url) => ({
+            pathname: `/iam/oidc/start`,
+            search: searchParams.toString(),
+        }))
+        .toString();
+
+    openModalWindow(url);
+
+    attachMessageListener(successKey, params);
+}
+
+// Used to ensure each callback is handled uniquely
+let counter = 0;
+const getUniqueSuccessKey = () => {
+    return `success:${counter++}`;
 };
 
-export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, getSafeURLRedirect };
+export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, openOIDCStartWindow };

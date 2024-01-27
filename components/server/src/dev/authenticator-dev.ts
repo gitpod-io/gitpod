@@ -1,31 +1,27 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
-import { injectable, inject } from "inversify";
-import { UserDB } from "@gitpod/gitpod-db/lib";
-import { Strategy as DummyStrategy } from "passport-dummy";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { ResponseError } from "vscode-jsonrpc";
-import { Authenticator } from "../auth/authenticator";
-import { AuthProvider } from "../auth/auth-provider";
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
+import express from "express";
+import { injectable } from "inversify";
+import { Strategy as DummyStrategy } from "passport-dummy";
+import { AuthProvider } from "../auth/auth-provider";
+import { Authenticator } from "../auth/authenticator";
+import { UserService } from "../user/user-service";
 import { DevData } from "./dev-data";
 
 @injectable()
 export class AuthenticatorDevImpl extends Authenticator {
-    @inject(UserDB) protected userDb: UserDB;
-
     protected async getAuthProviderForHost(_host: string): Promise<AuthProvider | undefined> {
-        return new DummyAuthProvider(this.userDb);
+        return new DummyAuthProvider(this.userService);
     }
 }
 
 class DummyAuthProvider implements AuthProvider {
-    constructor(protected userDb: UserDB) {}
+    constructor(protected userService: UserService) {}
     get info(): AuthProviderInfo {
         return {
             authProviderId: "Public-GitHub",
@@ -44,12 +40,10 @@ class DummyAuthProvider implements AuthProvider {
         throw new Error("Method not implemented.");
     };
     readonly strategy = new DummyStrategy(async (done) => {
-        const maybeUser = await this.userDb.findUserById(DevData.createTestUser().id);
-        if (!maybeUser) {
-            done(new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "No dev user in DB."), undefined);
-        }
+        const testUser = DevData.createTestUser();
         try {
-            done(undefined, maybeUser);
+            const user = await this.userService.findUserById(testUser.id, testUser.id);
+            done(undefined, user);
         } catch (err) {
             done(err, undefined);
         }
@@ -57,7 +51,13 @@ class DummyAuthProvider implements AuthProvider {
     authenticate(req: express.Request, res: express.Response, next: express.NextFunction): void {
         throw new Error("Method not implemented.");
     }
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scopes: string[]): void {
+    authorize(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        state: string,
+        scopes: string[],
+    ): void {
         throw new Error("Method not implemented.");
     }
 }

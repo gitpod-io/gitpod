@@ -1,0 +1,58 @@
+{
+  "server": {
+    "port": 3000,
+    "counterMetrics": [
+      {
+        "name": "gitpod_test_counter",
+        "help": "help",
+        "labels": [
+          {
+            "name": "ide",
+            "allowValues": ["vscode", "idea", "goland", "pycharm"],
+            "defaultValue": "intellij"
+          }
+        ],
+        "client": {
+          "name": "metric_client",
+          "allowValues": ["vscode", "supervisor"],
+          "defaultValue": "supervisor"
+        }
+      },
+      {
+        "name": "gitpod_test_another_counter",
+        "help": "help",
+        "labels": [
+          {
+            "name": "ide",
+            "allowValues": ["vscode", "idea", "goland", "pycharm"],
+            "defaultValue": "intellij"
+          }
+        ]
+      }
+    ],
+    "histogramMetrics": [
+      {
+        "name": "gitpod_test_hist",
+        "help": "hist_help",
+        "labels": [
+          {
+            "name": "ide",
+            "allowValues": ["idea", "goland", "pycharm"]
+          }
+        ],
+        "buckets": [1, 10, 100],
+        "client": {
+          "name": "metric_client",
+          "allowValues": ["jetbrains"],
+          "defaultValue": "jetbrains"
+        }
+      }
+    ],
+    "errorReporting": {
+      "allowComponents": ["supervisor-frontend"]
+    }
+  },
+  "prometheus": {
+    "addr": "127.0.0.1:9500"
+  }
+}

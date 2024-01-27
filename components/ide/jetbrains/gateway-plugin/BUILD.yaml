@@ -1,20 +1,43 @@
 packages:
-  - name: publish
+  - name: publish-stable
     type: generic
     deps:
       - components/gitpod-protocol/java:lib
     srcs:
       - "gradle.properties"
+      - "gradle-stable.properties"
       - "gradle/wrapper/*"
       - "gradlew"
-      - "src/*"
+      - "src/main/kotlin/*"
+      - "src/main/resources/*"
+      - "src/main/resources-stable/*"
       - "*.kts"
       - "*.md"
-    env:
-      - JAVA_HOME=/home/gitpod/.sdkman/candidates/java/current
-      - DO_PUBLISH=${publishToJBMarketplace}
     argdeps:
-      - jbMarketplacePublishTrigger
+      - publishToJBMarketplace
+    env:
+      - DO_PUBLISH=${publishToJBMarketplace}
     config:
       commands:
-        - [ "./gradlew", "-PpluginVersion=0.0.1-${version}", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "buildFromLeeway" ]
+        - [ "./gradlew", "-PpluginVersion=0.0.1-${version}", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=stable", "-Dgradle.user.home=/workspace/.gradle-stable", "-Dplugin.verifier.home.dir=$HOME/.cache/pluginVerifier-stable", "buildFromLeeway" ]
+  - name: publish-latest
+    type: generic
+    deps:
+      - components/gitpod-protocol/java:lib
+    srcs:
+      - "gradle.properties"
+      - "gradle-latest.properties"
+      - "gradle/wrapper/*"
+      - "gradlew"
+      - "src/main/kotlin/*"
+      - "src/main/resources/*"
+      - "src/main/resources-latest/*"
+      - "*.kts"
+      - "*.md"
+    argdeps:
+      - publishToJBMarketplace
+    env:
+      - DO_PUBLISH=${publishToJBMarketplace}
+    config:
+      commands:
+        - [ "./gradlew", "-PpluginVersion=0.0.1-${version}", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=latest", "-Dgradle.user.home=/workspace/.gradle-latest", "-Dplugin.verifier.home.dir=$HOME/.cache/pluginVerifier-latest", "buildFromLeeway" ]

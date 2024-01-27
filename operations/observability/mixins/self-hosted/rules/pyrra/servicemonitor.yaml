@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pyrra
+spec:
+  jobLabel: 'app.kubernetes.io/name'
+  namespaceSelector:
+    matchNames:
+    - monitoring-central
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pyrra
+      port: metrics
+  endpoints:
+  - port: metrics
+    interval: 60s

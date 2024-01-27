@@ -1,0 +1,14 @@
+{
+    "Resp": {
+        "supervisor_image": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-ff38b98b7dde4929159bcaeec68d178898dc2139",
+        "web_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9",
+        "ide_image_layers": [
+            "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:commit-b38092639d1783a1957894ddd4f492b3cdc9794a",
+            "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:commit-b38092639d1783a1957894ddd4f492b3cdc9794a",
+            "eu.gcr.io/gitpod-core-dev/build/ide/intellij:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+            "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:commit-b38092639d1783a1957894ddd4f492b3cdc9794a-latest",
+            "eu.gcr.io/gitpod-core-dev/build/ide/intellij:latest@sha256:e07524e52089829dc8d3b38f7d18fb51b24f07aed7d8e4e6e447899687978d43"
+        ]
+    },
+    "Err": ""
+}

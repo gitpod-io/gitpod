@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import * as opentracing from "opentracing";
@@ -9,11 +9,13 @@ import { TracingConfig, initTracerFromEnv } from "jaeger-client";
 import { Sampler, SamplingDecision } from "./jaeger-client-types";
 import { initGlobalTracer } from "opentracing";
 import { injectable } from "inversify";
-import { ResponseError } from "vscode-jsonrpc";
 import { log, LogContext } from "./logging";
 
 export interface TraceContext {
     span?: opentracing.Span;
+    // TODO(gpl) We are missing this method from type opentracing.SpanContext, which breaks our code under some circumstances (testing).
+    // We should add it, but I won't add right now because of different focus, and it's unclear how we want to use tracing going forward
+    isDebugIDContainerOnly?: () => boolean;
 }
 export type TraceContextWithSpan = TraceContext & {
     span: opentracing.Span;
@@ -58,7 +60,7 @@ export namespace TraceContext {
         }
     }
 
-    export function setError(ctx: TraceContext, err: Error) {
+    export function setError(ctx: TraceContext, err: any) {
         if (!ctx.span) {
             return;
         }
@@ -92,7 +94,7 @@ export namespace TraceContext {
     export function setJsonRPCError(
         ctx: TraceContext,
         method: string,
-        err: ResponseError<any>,
+        err: Error & { code: number },
         withStatusCode: boolean = false,
     ) {
         if (!ctx.span) {
@@ -167,6 +169,7 @@ export namespace TraceContext {
             for (const k of Object.keys(keyValueMap)) {
                 const v = keyValueMap[k];
                 if (v instanceof Object) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     addNestedTags(ctx, v, `${namespace}${k}`);
                 } else {
                     ctx.span.setTag(`${namespace}${k}`, v);
@@ -185,6 +188,15 @@ export namespace TraceContext {
         addNestedTags(ctx, {
             context: owi,
         });
+    }
+
+    export function finishOnce(span: opentracing.Span): () => void {
+        let done = false;
+        return () => {
+            if (done) return;
+            span.finish();
+            done = true;
+        };
     }
 }
 
@@ -212,6 +224,7 @@ export class TracingManager {
 
         if (opts) {
             if (opts.perOpSampling) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 (t as any)._sampler = new PerOperationSampler((t as any)._sampler, opts.perOpSampling);
             }
         }
@@ -240,7 +253,7 @@ export class PerOperationSampler implements Sampler {
     }
 
     isSampled(operation: string, tags: any): boolean {
-        let shouldSample = this.strategies[operation];
+        const shouldSample = this.strategies[operation];
         if (shouldSample === undefined) {
             if (!this.fallback.isSampled) {
                 return false;
@@ -253,6 +266,7 @@ export class PerOperationSampler implements Sampler {
 
     onCreateSpan(span: opentracing.Span): SamplingDecision {
         const outTags = {};
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const isSampled = this.isSampled((span as any).operationName, outTags);
         // NB: return retryable=true here since we can change decision after setOperationName().
         return { sample: isSampled, retryable: true, tags: outTags };
@@ -260,6 +274,7 @@ export class PerOperationSampler implements Sampler {
 
     onSetOperationName(span: opentracing.Span, operationName: string): SamplingDecision {
         const outTags = {};
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const isSampled = this.isSampled((span as any).operationName, outTags);
         return { sample: isSampled, retryable: false, tags: outTags };
     }

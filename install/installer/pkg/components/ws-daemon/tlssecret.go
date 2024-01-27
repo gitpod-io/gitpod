@@ -1,11 +1,12 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package wsdaemon
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
@@ -33,8 +34,11 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				IssuerRef: cmmeta.ObjectReference{
 					Name:  common.CertManagerCAIssuer,
-					Kind:  "Issuer",
+					Kind:  certmanagerv1.ClusterIssuerKind,
 					Group: "cert-manager.io",
+				},
+				SecretTemplate: &certmanagerv1.CertificateSecretTemplate{
+					Labels: common.DefaultLabels(Component),
 				},
 			},
 		},

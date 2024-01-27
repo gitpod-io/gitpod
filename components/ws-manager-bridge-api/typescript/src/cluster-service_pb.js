@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // source: cluster-service.proto
@@ -399,7 +399,8 @@ proto.workspacemanagerbridge.RegisterRequest.toObject = function(includeInstance
     tls: (f = msg.getTls()) && proto.workspacemanagerbridge.TlsConfig.toObject(includeInstance, f),
     hints: (f = msg.getHints()) && proto.workspacemanagerbridge.RegistrationHints.toObject(includeInstance, f),
     admissionConstraintsList: jspb.Message.toObjectList(msg.getAdmissionConstraintsList(),
-    proto.workspacemanagerbridge.AdmissionConstraint.toObject, includeInstance)
+    proto.workspacemanagerbridge.AdmissionConstraint.toObject, includeInstance),
+    region: jspb.Message.getFieldWithDefault(msg, 7, "")
   };
 
   if (includeInstance) {
@@ -458,6 +459,10 @@ proto.workspacemanagerbridge.RegisterRequest.deserializeBinaryFromReader = funct
       var value = new proto.workspacemanagerbridge.AdmissionConstraint;
       reader.readMessage(value,proto.workspacemanagerbridge.AdmissionConstraint.deserializeBinaryFromReader);
       msg.addAdmissionConstraints(value);
+      break;
+    case 7:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setRegion(value);
       break;
     default:
       reader.skipField();
@@ -524,6 +529,13 @@ proto.workspacemanagerbridge.RegisterRequest.serializeBinaryToWriter = function(
       5,
       f,
       proto.workspacemanagerbridge.AdmissionConstraint.serializeBinaryToWriter
+    );
+  }
+  f = message.getRegion();
+  if (f.length > 0) {
+    writer.writeString(
+      7,
+      f
     );
   }
 };
@@ -674,6 +686,24 @@ proto.workspacemanagerbridge.RegisterRequest.prototype.addAdmissionConstraints =
  */
 proto.workspacemanagerbridge.RegisterRequest.prototype.clearAdmissionConstraintsList = function() {
   return this.setAdmissionConstraintsList([]);
+};
+
+
+/**
+ * optional string region = 7;
+ * @return {string}
+ */
+proto.workspacemanagerbridge.RegisterRequest.prototype.getRegion = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.workspacemanagerbridge.RegisterRequest} returns this
+ */
+proto.workspacemanagerbridge.RegisterRequest.prototype.setRegion = function(value) {
+  return jspb.Message.setProto3StringField(this, 7, value);
 };
 
 
@@ -1001,8 +1031,7 @@ proto.workspacemanagerbridge.RegistrationHints.prototype.toObject = function(opt
 proto.workspacemanagerbridge.RegistrationHints.toObject = function(includeInstance, msg) {
   var f, obj = {
     perfereability: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    cordoned: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
-    govern: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
+    cordoned: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
   };
 
   if (includeInstance) {
@@ -1047,10 +1076,6 @@ proto.workspacemanagerbridge.RegistrationHints.deserializeBinaryFromReader = fun
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setCordoned(value);
       break;
-    case 3:
-      var value = /** @type {boolean} */ (reader.readBool());
-      msg.setGovern(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -1094,13 +1119,6 @@ proto.workspacemanagerbridge.RegistrationHints.serializeBinaryToWriter = functio
       f
     );
   }
-  f = message.getGovern();
-  if (f) {
-    writer.writeBool(
-      3,
-      f
-    );
-  }
 };
 
 
@@ -1140,24 +1158,6 @@ proto.workspacemanagerbridge.RegistrationHints.prototype.setCordoned = function(
 };
 
 
-/**
- * optional bool govern = 3;
- * @return {boolean}
- */
-proto.workspacemanagerbridge.RegistrationHints.prototype.getGovern = function() {
-  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
-};
-
-
-/**
- * @param {boolean} value
- * @return {!proto.workspacemanagerbridge.RegistrationHints} returns this
- */
-proto.workspacemanagerbridge.RegistrationHints.prototype.setGovern = function(value) {
-  return jspb.Message.setProto3BooleanField(this, 3, value);
-};
-
-
 
 /**
  * Oneof group definitions for this message. Each group defines the field
@@ -1167,7 +1167,7 @@ proto.workspacemanagerbridge.RegistrationHints.prototype.setGovern = function(va
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_ = [[1,2,3,4]];
+proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_ = [[1,2]];
 
 /**
  * @enum {number}
@@ -1175,9 +1175,7 @@ proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_ = [[1,2,3,4]];
 proto.workspacemanagerbridge.AdmissionConstraint.ConstraintCase = {
   CONSTRAINT_NOT_SET: 0,
   HAS_FEATURE_PREVIEW: 1,
-  HAS_PERMISSION: 2,
-  HAS_USER_LEVEL: 3,
-  HAS_MORE_RESOURCES: 4
+  HAS_PERMISSION: 2
 };
 
 /**
@@ -1219,9 +1217,7 @@ proto.workspacemanagerbridge.AdmissionConstraint.prototype.toObject = function(o
 proto.workspacemanagerbridge.AdmissionConstraint.toObject = function(includeInstance, msg) {
   var f, obj = {
     hasFeaturePreview: (f = msg.getHasFeaturePreview()) && proto.workspacemanagerbridge.AdmissionConstraint.FeaturePreview.toObject(includeInstance, f),
-    hasPermission: (f = msg.getHasPermission()) && proto.workspacemanagerbridge.AdmissionConstraint.HasPermission.toObject(includeInstance, f),
-    hasUserLevel: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    hasMoreResources: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
+    hasPermission: (f = msg.getHasPermission()) && proto.workspacemanagerbridge.AdmissionConstraint.HasPermission.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -1268,14 +1264,6 @@ proto.workspacemanagerbridge.AdmissionConstraint.deserializeBinaryFromReader = f
       reader.readMessage(value,proto.workspacemanagerbridge.AdmissionConstraint.HasPermission.deserializeBinaryFromReader);
       msg.setHasPermission(value);
       break;
-    case 3:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setHasUserLevel(value);
-      break;
-    case 4:
-      var value = /** @type {boolean} */ (reader.readBool());
-      msg.setHasMoreResources(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -1319,20 +1307,6 @@ proto.workspacemanagerbridge.AdmissionConstraint.serializeBinaryToWriter = funct
       2,
       f,
       proto.workspacemanagerbridge.AdmissionConstraint.HasPermission.serializeBinaryToWriter
-    );
-  }
-  f = /** @type {string} */ (jspb.Message.getField(message, 3));
-  if (f != null) {
-    writer.writeString(
-      3,
-      f
-    );
-  }
-  f = /** @type {boolean} */ (jspb.Message.getField(message, 4));
-  if (f != null) {
-    writer.writeBool(
-      4,
-      f
     );
   }
 };
@@ -1643,78 +1617,6 @@ proto.workspacemanagerbridge.AdmissionConstraint.prototype.hasHasPermission = fu
 };
 
 
-/**
- * optional string has_user_level = 3;
- * @return {string}
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.getHasUserLevel = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.workspacemanagerbridge.AdmissionConstraint} returns this
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.setHasUserLevel = function(value) {
-  return jspb.Message.setOneofField(this, 3, proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_[0], value);
-};
-
-
-/**
- * Clears the field making it undefined.
- * @return {!proto.workspacemanagerbridge.AdmissionConstraint} returns this
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.clearHasUserLevel = function() {
-  return jspb.Message.setOneofField(this, 3, proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_[0], undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.hasHasUserLevel = function() {
-  return jspb.Message.getField(this, 3) != null;
-};
-
-
-/**
- * optional bool has_more_resources = 4;
- * @return {boolean}
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.getHasMoreResources = function() {
-  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 4, false));
-};
-
-
-/**
- * @param {boolean} value
- * @return {!proto.workspacemanagerbridge.AdmissionConstraint} returns this
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.setHasMoreResources = function(value) {
-  return jspb.Message.setOneofField(this, 4, proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_[0], value);
-};
-
-
-/**
- * Clears the field making it undefined.
- * @return {!proto.workspacemanagerbridge.AdmissionConstraint} returns this
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.clearHasMoreResources = function() {
-  return jspb.Message.setOneofField(this, 4, proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_[0], undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.hasHasMoreResources = function() {
-  return jspb.Message.getField(this, 4) != null;
-};
-
-
 
 /**
  * List of repeated fields within this message type.
@@ -1762,7 +1664,8 @@ proto.workspacemanagerbridge.ClusterStatus.toObject = function(includeInstance, 
     governed: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
     admissionConstraintList: jspb.Message.toObjectList(msg.getAdmissionConstraintList(),
     proto.workspacemanagerbridge.AdmissionConstraint.toObject, includeInstance),
-    pb_static: jspb.Message.getBooleanFieldWithDefault(msg, 8, false)
+    pb_static: jspb.Message.getBooleanFieldWithDefault(msg, 8, false),
+    region: jspb.Message.getFieldWithDefault(msg, 11, "")
   };
 
   if (includeInstance) {
@@ -1831,6 +1734,10 @@ proto.workspacemanagerbridge.ClusterStatus.deserializeBinaryFromReader = functio
     case 8:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setStatic(value);
+      break;
+    case 11:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setRegion(value);
       break;
     default:
       reader.skipField();
@@ -1915,6 +1822,13 @@ proto.workspacemanagerbridge.ClusterStatus.serializeBinaryToWriter = function(me
   if (f) {
     writer.writeBool(
       8,
+      f
+    );
+  }
+  f = message.getRegion();
+  if (f.length > 0) {
+    writer.writeString(
+      11,
       f
     );
   }
@@ -2082,6 +1996,24 @@ proto.workspacemanagerbridge.ClusterStatus.prototype.getStatic = function() {
  */
 proto.workspacemanagerbridge.ClusterStatus.prototype.setStatic = function(value) {
   return jspb.Message.setProto3BooleanField(this, 8, value);
+};
+
+
+/**
+ * optional string region = 11;
+ * @return {string}
+ */
+proto.workspacemanagerbridge.ClusterStatus.prototype.getRegion = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.workspacemanagerbridge.ClusterStatus} returns this
+ */
+proto.workspacemanagerbridge.ClusterStatus.prototype.setRegion = function(value) {
+  return jspb.Message.setProto3StringField(this, 11, value);
 };
 
 

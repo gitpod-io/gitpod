@@ -1,6 +1,6 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
-// Licensed under the Gitpod Enterprise Source Code License,
-// See License.enterprise.txt in the project root folder.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 //go:build linux
 // +build linux
@@ -103,16 +103,16 @@ func (s *Signature) Validate() error {
 }
 
 // Matches checks if the signature applies to the stream
-func (s *Signature) Matches(in io.ReaderAt) (bool, error) {
+func (s *Signature) Matches(in *SignatureReadCache) (bool, error) {
 	if s.Slice.Start > 0 {
-		_, err := in.ReadAt([]byte{}, s.Slice.Start)
+		_, err := in.Reader.ReadAt([]byte{}, s.Slice.Start)
 		// slice start exceeds what we can read - this signature cannot match
 		if err != nil {
 			return false, nil
 		}
 	}
 	if s.Slice.End > 0 {
-		_, err := in.ReadAt([]byte{}, s.Slice.End)
+		_, err := in.Reader.ReadAt([]byte{}, s.Slice.End)
 		// slice start exceeds what we can read - this signature cannot match
 		if err != nil {
 			return false, nil
@@ -121,21 +121,27 @@ func (s *Signature) Matches(in io.ReaderAt) (bool, error) {
 
 	// check the object kind
 	if s.Kind != ObjectAny {
-		head := make([]byte, 261)
-		_, err := in.ReadAt(head, 0)
-		if err == io.EOF {
-			// cannot read header which means that only Any rules would apply
-			return false, nil
-		}
-		if err != nil {
-			return false, xerrors.Errorf("cannot read stream head: %w", err)
+		var head []byte
+		if len(in.header) > 0 {
+			head = in.header
+		} else {
+			head = make([]byte, 261)
+			_, err := in.Reader.ReadAt(head, 0)
+			if err == io.EOF {
+				// cannot read header which means that only Any rules would apply
+				return false, nil
+			}
+			if err != nil {
+				return false, xerrors.Errorf("cannot read stream head: %w", err)
+			}
+			in.header = head
 		}
 
 		matches := false
 		switch s.Kind {
 		case ObjectELFSymbols, ObjectELFRodata:
 			matches = isELF(head)
-		case ObjectAny:
+		default:
 			matches = true
 		}
 		if !matches {
@@ -172,16 +178,23 @@ func isELF(head []byte) bool {
 }
 
 // matchELF matches a signature against an ELF file
-func (s *Signature) matchELFRodata(in io.ReaderAt) (bool, error) {
-	executable, err := elf.NewFile(in)
-	if err != nil {
-		return false, xerrors.Errorf("cannot anaylse ELF file: %w", err)
+func (s *Signature) matchELFRodata(in *SignatureReadCache) (bool, error) {
+	var rodata []byte
+	if len(in.rodata) > 0 {
+		rodata = in.rodata
+	} else {
+		executable, err := elf.NewFile(in.Reader)
+		if err != nil {
+			return false, xerrors.Errorf("cannot anaylse ELF file: %w", err)
+		}
+
+		rodata, err = ExtractELFRodata(executable)
+		if err != nil {
+			return false, err
+		}
+		in.rodata = rodata
 	}
 
-	rodata, err := ExtractELFRodata(executable)
-	if err != nil {
-		return false, err
-	}
 	matches, err := s.matches(rodata)
 	if matches || err != nil {
 		return matches, err
@@ -191,16 +204,23 @@ func (s *Signature) matchELFRodata(in io.ReaderAt) (bool, error) {
 }
 
 // matchELF matches a signature against an ELF file
-func (s *Signature) matchELF(in io.ReaderAt) (bool, error) {
-	executable, err := elf.NewFile(in)
-	if err != nil {
-		return false, xerrors.Errorf("cannot anaylse ELF file: %w", err)
+func (s *Signature) matchELF(in *SignatureReadCache) (bool, error) {
+	var symbols []string
+	if len(in.symbols) > 0 {
+		symbols = in.symbols
+	} else {
+		executable, err := elf.NewFile(in.Reader)
+		if err != nil {
+			return false, xerrors.Errorf("cannot anaylse ELF file: %w", err)
+		}
+
+		symbols, err = ExtractELFSymbols(executable)
+		if err != nil {
+			return false, err
+		}
+		in.symbols = symbols
 	}
 
-	symbols, err := ExtractELFSymbols(executable)
-	if err != nil {
-		return false, err
-	}
 	for _, sym := range symbols {
 		matches, err := s.matches([]byte(sym))
 		if matches || err != nil {
@@ -213,22 +233,28 @@ func (s *Signature) matchELF(in io.ReaderAt) (bool, error) {
 
 // ExtractELFSymbols extracts all ELF symbol names from an ELF binary
 func ExtractELFSymbols(executable *elf.File) ([]string, error) {
-	var symbols []string
 	syms, err := executable.Symbols()
 	if err != nil && err != elf.ErrNoSymbols {
 		return nil, xerrors.Errorf("cannot get dynsym section: %w", err)
-	}
-	for _, s := range syms {
-		symbols = append(symbols, s.Name)
 	}
 
 	dynsyms, err := executable.DynamicSymbols()
 	if err != nil && err != elf.ErrNoSymbols {
 		return nil, xerrors.Errorf("cannot get dynsym section: %w", err)
 	}
-	for _, s := range dynsyms {
-		symbols = append(symbols, s.Name)
+
+	symbols := make([]string, len(syms)+len(dynsyms))
+	i := 0
+	for _, s := range syms {
+		symbols[i] = s.Name
+		i += 1
 	}
+
+	for _, s := range dynsyms {
+		symbols[i] = s.Name
+		i += 1
+	}
+
 	return symbols, nil
 }
 
@@ -247,11 +273,11 @@ func ExtractELFRodata(executable *elf.File) ([]byte, error) {
 }
 
 // matchAny matches a signature against a binary file
-func (s *Signature) matchAny(in io.ReaderAt) (bool, error) {
+func (s *Signature) matchAny(in *SignatureReadCache) (bool, error) {
 	buffer := make([]byte, 8096)
 	pos := s.Slice.Start
 	for {
-		n, err := in.ReadAt(buffer, pos)
+		n, err := in.Reader.ReadAt(buffer, pos)
 		sub := buffer[0:n]
 		pos += int64(n)
 

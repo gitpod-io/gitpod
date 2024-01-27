@@ -10,5 +10,6 @@ packages:
       - GOOS=linux
     deps:
       - components/supervisor-api/go:lib
+      - components/common-go:lib
     config:
       packaging: app

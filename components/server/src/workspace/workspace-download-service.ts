@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { injectable, inject } from "inversify";
-import * as express from "express";
+import express from "express";
 import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Permission, User } from "@gitpod/gitpod-protocol";
@@ -42,7 +42,7 @@ export class WorkspaceDownloadService {
 
                 if (
                     wsi.ownerId !== userId &&
-                    !this.authorizationService.hasPermission(req.user, Permission.ADMIN_WORKSPACES)
+                    !this.authorizationService.hasPermission(req.user, Permission.ADMIN_WORKSPACE_CONTENT)
                 ) {
                     log.warn({ workspaceId, userId }, "user attempted to download someone else's workspace");
                     res.sendStatus(500);

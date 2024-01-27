@@ -1,6 +1,6 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
-// Licensed under the Gitpod Enterprise Source Code License,
-// See License.enterprise.txt in the project root folder.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package agent
 
@@ -10,6 +10,7 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
@@ -22,21 +23,32 @@ import (
 // call one of ws-manager's libraries.
 
 // stopWorkspace stops a workspace
-func (agent *Smith) stopWorkspace(supervisorPID int) error {
+func (agent *Smith) stopWorkspace(supervisorPID int, instanceID string) error {
+	req := &wsmanapi.StopWorkspaceRequest{
+		Id: instanceID,
+		// Stop workspace without grace period.
+		Policy: wsmanapi.StopWorkspacePolicy_IMMEDIATELY,
+	}
+	_, err := agent.wsman.StopWorkspace(context.Background(), req)
+	if err == nil {
+		return nil
+	}
+
+	log.WithError(err).WithField("instanceID", instanceID).Warn("error stopping workspace through ws-manager, killing supervisor directly")
 	return unix.Kill(supervisorPID, unix.SIGKILL)
 }
 
 // stopWorkspaceAndBlockUser stops a workspace and blocks the user (who would have guessed?)
-func (agent *Smith) stopWorkspaceAndBlockUser(supervisorPID int, ownerID string) error {
-	err := agent.stopWorkspace(supervisorPID)
+func (agent *Smith) stopWorkspaceAndBlockUser(supervisorPID int, ownerID, workspaceID, instanceID string) error {
+	err := agent.stopWorkspace(supervisorPID, instanceID)
 	if err != nil {
-		log.WithError(err).WithField("owner", ownerID).Warn("error stopping workspace")
+		log.WithError(err).WithField("owner", ownerID).WithField("workspaceID", workspaceID).Warn("error stopping workspace")
 	}
-	err = agent.blockUser(ownerID)
+	err = agent.blockUser(ownerID, workspaceID)
 	return err
 }
 
-func (agent *Smith) blockUser(ownerID string) error {
+func (agent *Smith) blockUser(ownerID, workspaceID string) error {
 	if agent.GitpodAPI == nil {
 		return xerrors.Errorf("not connected to Gitpod API")
 	}
@@ -45,7 +57,7 @@ func (agent *Smith) blockUser(ownerID string) error {
 		return xerrors.Errorf("cannot block user as user id is empty")
 	}
 
-	log.Infof("Blocking user %s", ownerID)
+	log.Infof("Blocking user %s - workspace %v", ownerID, workspaceID)
 
 	req := protocol.AdminBlockUserRequest{
 		UserID:    ownerID,
@@ -70,7 +82,8 @@ func (agent *Smith) limitCPUUse(podname string) error {
 			return err
 		}
 
-		pod.Annotations[wsk8s.CPULimitAnnotation] = agent.Config.Enforcement.CPULimitPenalty
+		pod.Annotations[wsk8s.WorkspaceCpuMinLimitAnnotation] = agent.Config.Enforcement.CPULimitPenalty
+		pod.Annotations[wsk8s.WorkspaceCpuBurstLimitAnnotation] = agent.Config.Enforcement.CPULimitPenalty
 		_, err = pods.Update(ctx, pod, corev1.UpdateOptions{})
 		if err != nil {
 			return err

@@ -8,6 +8,7 @@ certificate:
   name: https-certificates
 containerRegistry:
   inCluster: true
+  privateBaseImageAllowList: []
 database:
   inCluster: true
 disableDefinitelyGp: true
@@ -18,6 +19,9 @@ metadata:
   shortname: default
 objectStorage:
   inCluster: true
+  resources:
+    requests:
+      memory: 2Gi
 observability:
   logLevel: info
 openVSX:
@@ -25,9 +29,6 @@ openVSX:
 repository: eu.gcr.io/gitpod-core-dev/build
 workspace:
   maxLifetime: 36h0m0s
-  pvc:
-    size: 30Gi
-    storageClass: ""
   resources:
     requests:
       cpu: "1"
@@ -35,4 +36,4 @@ workspace:
   runtime:
     containerdRuntimeDir: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
     containerdSocket: /run/containerd/containerd.sock
-    fsShiftMethod: fuse
+    fsShiftMethod: shiftfs

@@ -1,102 +1,72 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
-import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
-import { useContext, useEffect, useState } from "react";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
+import dayjs from "dayjs";
+import { useEffect, useMemo, useState } from "react";
+import { Redirect, useHistory, useParams } from "react-router";
 import Header from "../components/Header";
 import PrebuildLogs from "../components/PrebuildLogs";
+import { Subheading } from "../components/typography/headings";
 import Spinner from "../icons/Spinner.svg";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
-import { PrebuildStatus } from "./Prebuilds";
+import { useCurrentProject } from "./project-context";
 import { shortCommitMessage } from "./render-utils";
+import { prebuildClient, watchPrebuild } from "../service/public-api";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { gitpodHostUrl } from "../service/service";
+import { Button } from "@podkit/buttons/Button";
 
-export default function () {
+export default function PrebuildPage() {
     const history = useHistory();
-    const location = useLocation();
+    const { project, loading } = useCurrentProject();
 
-    const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(location, teams);
+    const { prebuildId } = useParams<{ prebuildId: string }>();
 
-    const match = useRouteMatch<{ team: string; project: string; prebuildId: string }>(
-        "/(t/)?:team/:project/:prebuildId",
-    );
-    const projectSlug = match?.params?.project;
-    const prebuildId = match?.params?.prebuildId;
-
-    const [prebuild, setPrebuild] = useState<PrebuildWithStatus | undefined>();
+    const [prebuild, setPrebuild] = useState<Prebuild | undefined>();
     const [isRerunningPrebuild, setIsRerunningPrebuild] = useState<boolean>(false);
     const [isCancellingPrebuild, setIsCancellingPrebuild] = useState<boolean>(false);
 
     useEffect(() => {
-        if (!teams || !projectSlug || !prebuildId) {
+        if (!project || !prebuildId) {
             return;
         }
-        (async () => {
-            const projects = !!team
-                ? await getGitpodService().server.getTeamProjects(team.id)
-                : await getGitpodService().server.getUserProjects();
-
-            const project =
-                projectSlug && projects.find((p) => (!!p.slug ? p.slug === projectSlug : p.name === projectSlug));
-            if (!project) {
-                console.error(new Error(`Project not found! (teamId: ${team?.id}, projectName: ${projectSlug})`));
-                return;
-            }
-
-            const prebuilds = await getGitpodService().server.findPrebuilds({
-                projectId: project.id,
-                prebuildId,
-            });
-            setPrebuild(prebuilds[0]);
-        })();
-
-        return getGitpodService().registerClient({
-            onPrebuildUpdate(update: PrebuildWithStatus) {
-                if (update.info.id !== prebuildId) {
-                    return;
-                }
-
-                setPrebuild(update);
+        const toCancelWatch = watchPrebuild(
+            {
+                scope: {
+                    case: "prebuildId",
+                    value: prebuildId,
+                },
             },
-        }).dispose;
-    }, [prebuildId, projectSlug, team, teams]);
+            (prebuild) => setPrebuild(prebuild),
+        );
+        return () => toCancelWatch.dispose();
+    }, [prebuildId, project]);
 
-    const renderTitle = () => {
+    const title = useMemo(() => {
         if (!prebuild) {
             return "unknown prebuild";
         }
-        return <h1 className="tracking-tight">{prebuild.info.branch} </h1>;
-    };
+        return prebuild.ref;
+    }, [prebuild]);
 
     const renderSubtitle = () => {
         if (!prebuild) {
             return "";
         }
-        const startedByAvatar = prebuild.info.startedByAvatar && (
-            <img
-                className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2"
-                src={prebuild.info.startedByAvatar || ""}
-                alt={prebuild.info.startedBy}
-            />
-        );
         return (
             <div className="flex">
                 <div className="my-auto">
-                    <p>
-                        {startedByAvatar}Triggered {moment(prebuild.info.startedAt).fromNow()}
-                    </p>
+                    <Subheading>Triggered {dayjs(prebuild.status?.startTime?.toDate()).fromNow()}</Subheading>
                 </div>
                 <p className="mx-2 my-auto">·</p>
                 <div className="my-auto">
-                    <p className="text-gray-500 dark:text-gray-50">{shortCommitMessage(prebuild.info.changeTitle)}</p>
+                    <p className="text-gray-500 dark:text-gray-50">
+                        {shortCommitMessage(prebuild.commit?.message || "")}
+                    </p>
                 </div>
-                {!!prebuild.info.basedOnPrebuildId && (
+                {!!prebuild.basedOnPrebuildId && (
                     <>
                         <p className="mx-2 my-auto">·</p>
                         <div className="my-auto">
@@ -104,8 +74,8 @@ export default function () {
                                 Incremental Prebuild (
                                 <a
                                     className="gp-link"
-                                    title={prebuild.info.basedOnPrebuildId}
-                                    href={`./${prebuild.info.basedOnPrebuildId}`}
+                                    title={prebuild.basedOnPrebuildId}
+                                    href={`./${prebuild.basedOnPrebuildId}`}
                                 >
                                     base
                                 </a>
@@ -124,9 +94,14 @@ export default function () {
         }
         try {
             setIsRerunningPrebuild(true);
-            await getGitpodService().server.triggerPrebuild(prebuild.info.projectId, prebuild.info.branch);
+            await prebuildClient.startPrebuild({
+                configurationId: prebuild.configurationId,
+                gitRef: prebuild.ref,
+            });
             // TODO: Open a Prebuilds page that's specific to `prebuild.info.branch`?
-            history.push(`/${!!team ? "t/" + team.slug : "projects"}/${projectSlug}/prebuilds`);
+            if (project) {
+                history.push(`/projects/${project.id}/prebuilds`);
+            }
         } catch (error) {
             console.error("Could not rerun prebuild", error);
         } finally {
@@ -140,7 +115,9 @@ export default function () {
         }
         try {
             setIsCancellingPrebuild(true);
-            await getGitpodService().server.cancelPrebuild(prebuild.info.projectId, prebuild.info.id);
+            await prebuildClient.cancelPrebuild({
+                prebuildId: prebuild.id,
+            });
         } catch (error) {
             console.error("Could not cancel prebuild", error);
         } finally {
@@ -148,55 +125,57 @@ export default function () {
         }
     };
 
-    useEffect(() => {
-        document.title = "Prebuild — Gitpod";
-    }, []);
+    if (!loading && !project) {
+        return <Redirect to={"/projects"} />;
+    }
 
     return (
         <>
-            <Header title={renderTitle()} subtitle={renderSubtitle()} />
+            <Header title={title} subtitle={renderSubtitle()} />
             <div className="app-container mt-8">
-                <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col">
-                    <div className="h-96 flex">
-                        <PrebuildLogs workspaceId={prebuild?.info?.buildWorkspaceId} />
-                    </div>
-                    <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
-                        {prebuild && <PrebuildStatus prebuild={prebuild} />}
-                        <div className="flex-grow" />
-                        {["aborted", "timeout", "failed"].includes(prebuild?.status || "") || !!prebuild?.error ? (
-                            <button
+                <PrebuildLogs workspaceId={prebuild?.workspaceId}>
+                    {[PrebuildPhase_Phase.BUILDING, PrebuildPhase_Phase.QUEUED].includes(
+                        prebuild?.status?.phase?.name || PrebuildPhase_Phase.UNSPECIFIED,
+                    ) ? (
+                        <Button
+                            variant="destructive"
+                            className="flex items-center space-x-2"
+                            disabled={isCancellingPrebuild}
+                            onClick={cancelPrebuild}
+                        >
+                            {isCancellingPrebuild && (
+                                <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
+                            )}
+                            <span>Cancel Prebuild</span>
+                        </Button>
+                    ) : (
+                        <>
+                            <Button
+                                variant="secondary"
                                 className="flex items-center space-x-2"
                                 disabled={isRerunningPrebuild}
                                 onClick={rerunPrebuild}
                             >
                                 {isRerunningPrebuild && (
-                                    <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
+                                    <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
                                 )}
-                                <span>Rerun Prebuild ({prebuild?.info.branch})</span>
-                            </button>
-                        ) : ["building", "queued"].includes(prebuild?.status || "") ? (
-                            <button
-                                className="danger flex items-center space-x-2"
-                                disabled={isCancellingPrebuild}
-                                onClick={cancelPrebuild}
-                            >
-                                {isCancellingPrebuild && (
-                                    <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
-                                )}
-                                <span>Cancel Prebuild</span>
-                            </button>
-                        ) : prebuild?.status === "available" ? (
-                            <a
-                                className="my-auto"
-                                href={gitpodHostUrl.withContext(`${prebuild?.info.changeUrl}`).toString()}
-                            >
-                                <button>New Workspace ({prebuild?.info.branch})</button>
-                            </a>
-                        ) : (
-                            <button disabled={true}>New Workspace ({prebuild?.info.branch})</button>
-                        )}
-                    </div>
-                </div>
+                                <span>Rerun Prebuild ({prebuild?.ref})</span>
+                            </Button>
+                            {prebuild?.status?.phase?.name === PrebuildPhase_Phase.AVAILABLE ? (
+                                <a
+                                    className="my-auto"
+                                    href={gitpodHostUrl
+                                        .withContext(`open-prebuild/${prebuild?.id}/${prebuild?.contextUrl}`)
+                                        .toString()}
+                                >
+                                    <Button>New Workspace (with this prebuild)</Button>
+                                </a>
+                            ) : (
+                                <Button disabled={true}>New Workspace (with this prebuild)</Button>
+                            )}
+                        </>
+                    )}
+                </PrebuildLogs>
             </div>
         </>
     );

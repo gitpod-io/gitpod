@@ -1,14 +1,14 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package config
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/yq"
 	"github.com/go-playground/validator/v10"
 
 	"sigs.k8s.io/yaml"
@@ -47,6 +47,10 @@ type ConfigVersion interface {
 
 	// ClusterValidation introduces configuration specific cluster validation checks
 	ClusterValidation(cfg interface{}) cluster.ValidationChecks
+
+	// CheckDeprecated checks for deprecated config params.
+	// Returns key/value pair of deprecated params/values and any error messages (used for conflicting params)
+	CheckDeprecated(cfg interface{}) (map[string]interface{}, []string)
 }
 
 // AddVersion adds a new version.
@@ -76,7 +80,7 @@ func LoadConfigVersion(version string) (ConfigVersion, error) {
 // Load takes a config string and overrides that onto the default
 // config for that version (passed in the config). If no config version
 // is passed, It overrides it onto the default CurrentVersion of the binary
-func Load(overrideConfig string) (cfg interface{}, version string, err error) {
+func Load(overrideConfig string, strict bool) (cfg interface{}, version string, err error) {
 	var overrideVS struct {
 		APIVersion string `json:"apiVersion"`
 	}
@@ -103,14 +107,19 @@ func Load(overrideConfig string) (cfg interface{}, version string, err error) {
 		return
 	}
 
-	// `apiVersion: vx` line is removed from config since the version dependant
-	// Config structure doesn't have that field
-	// The line-ending is either comma (minified YAML) or newline (unminified)
-	apiVersionRegexp := regexp.MustCompile(`apiVersion: ` + apiVersion + `(,)?`)
-	overrideConfig = apiVersionRegexp.ReplaceAllString(overrideConfig, "")
+	// Remove the apiVersion from the config as this has already been parsed
+	// Use yq to make processing reliable
+	output, err := yq.Process(overrideConfig, "del(.apiVersion)")
+	if err != nil {
+		return
+	}
 
 	// Override passed configuration onto the default
-	err = yaml.UnmarshalStrict([]byte(overrideConfig), cfg)
+	if strict {
+		err = yaml.UnmarshalStrict([]byte(*output), cfg)
+	} else {
+		err = yaml.Unmarshal([]byte(*output), cfg)
+	}
 	if err != nil {
 		return
 	}

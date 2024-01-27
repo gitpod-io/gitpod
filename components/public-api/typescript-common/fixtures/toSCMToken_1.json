@@ -1,0 +1,11 @@
+{
+  "scopes": [
+    "foo"
+  ],
+  "value": "secret",
+  "refreshToken": "refresh!",
+  "username": "root",
+  "idToken": "nope",
+  "expiryDate": "2023-11-29T18:17:16.194Z",
+  "updateDate": "2023-11-29T18:17:16.194Z"
+}

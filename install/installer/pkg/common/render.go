@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package common
 
@@ -9,13 +9,13 @@ import (
 	"strings"
 
 	"github.com/docker/distribution/reference"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
-
 	"helm.sh/helm/v3/pkg/cli/values"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
+
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
 // Renderable turns the config into a set of Kubernetes runtime objects
@@ -61,11 +61,11 @@ func CompositeHelmFunc(f ...HelmFunc) HelmFunc {
 }
 
 type GeneratedValues struct {
-	StorageAccessKey         string
-	StorageSecretKey         string
-	InternalRegistryUsername string
-	InternalRegistryPassword string
-	MessageBusPassword       string
+	StorageAccessKey             string
+	StorageSecretKey             string
+	InternalRegistryUsername     string
+	InternalRegistryPassword     string
+	InternalRegistrySharedSecret string
 }
 
 type RenderContext struct {
@@ -150,20 +150,11 @@ func (r *RenderContext) generateValues() error {
 	}
 	r.Values.InternalRegistryPassword = internalRegistryPassword
 
-	messageBusPassword := ""
-	_ = r.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Common != nil {
-			messageBusPassword = cfg.Common.StaticMessagebusPassword
-		}
-		return nil
-	})
-	if messageBusPassword == "" {
-		messageBusPassword, err = RandomString(20)
-		if err != nil {
-			return err
-		}
+	internalRegistrySharedSecret, err := RandomString(20)
+	if err != nil {
+		return err
 	}
-	r.Values.MessageBusPassword = messageBusPassword
+	r.Values.InternalRegistrySharedSecret = internalRegistrySharedSecret
 
 	return nil
 }

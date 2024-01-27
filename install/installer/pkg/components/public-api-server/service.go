@@ -1,5 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
-// Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+/// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package public_api_server
 
@@ -9,10 +10,18 @@ import (
 )
 
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
-	return common.GenerateService(Component, map[string]common.ServicePort{
-		GRPCPortName: {
+	servicePorts := []common.ServicePort{
+		{
+			Name:          GRPCPortName,
 			ContainerPort: GRPCContainerPort,
 			ServicePort:   GRPCServicePort,
 		},
-	})(ctx)
+		{
+			Name:          HTTPPortName,
+			ContainerPort: HTTPContainerPort,
+			ServicePort:   HTTPServicePort,
+		},
+	}
+
+	return common.GenerateService(Component, servicePorts)(ctx)
 }

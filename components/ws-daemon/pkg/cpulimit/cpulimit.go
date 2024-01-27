@@ -1,15 +1,19 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cpulimit
 
 import (
 	"context"
 	"sort"
+	"strings"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 type Workspace struct {
@@ -18,6 +22,7 @@ type Workspace struct {
 	NrThrottled uint64
 	Usage       CPUTime
 	QoS         int
+	Annotations map[string]string
 }
 
 type WorkspaceHistory struct {
@@ -160,19 +165,23 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 	}
 
 	totalBandwidth, err := BandwithFromUsage(d.LastTickUsage, totalUsage, dt)
+	d.LastTickUsage = totalUsage
 	if err != nil {
 		return DistributorDebug{
 			BandwidthAvail: d.TotalBandwidth,
 			BandwidthUsed:  0,
 		}, err
 	}
-	d.LastTickUsage = totalUsage
 
 	// enforce limits
 	var burstBandwidth Bandwidth
 	for _, id := range wsOrder {
 		ws := d.History[id]
-		limit := d.Limiter.Limit(ws.Usage())
+		limit, err := d.Limiter.Limit(ws)
+		if err != nil {
+			log.WithError(err).Errorf("unable to apply min limit")
+			continue
+		}
 
 		// if we didn't get the max bandwidth, but were throttled last time
 		// and there's still some bandwidth left to give, let's act as if had
@@ -180,7 +189,11 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 		// entire bandwidth at once.
 		var burst bool
 		if totalBandwidth < d.TotalBandwidth && ws.Throttled() {
-			limit = d.BurstLimiter.Limit(ws.Usage())
+			limit, err = d.BurstLimiter.Limit(ws)
+			if err != nil {
+				log.WithError(err).Errorf("unable to apply burst limit")
+				continue
+			}
 
 			// We assume the workspace is going to use as much as their limit allows.
 			// This might not be true, because their process which consumed so much CPU
@@ -206,8 +219,14 @@ func (d *Distributor) Reset() {
 
 // ResourceLimiter implements a strategy to limit the resurce use of a workspace
 type ResourceLimiter interface {
-	Limit(budgetSpent CPUTime) (newLimit Bandwidth)
+	Limit(wsh *WorkspaceHistory) (Bandwidth, error)
 }
+
+var _ ResourceLimiter = (*fixedLimiter)(nil)
+var _ ResourceLimiter = (*annotationLimiter)(nil)
+var _ ResourceLimiter = (*BucketLimiter)(nil)
+var _ ResourceLimiter = (*ClampingBucketLimiter)(nil)
+var _ ResourceLimiter = (*compositeLimiter)(nil)
 
 // FixedLimiter returns a fixed limit
 func FixedLimiter(limit Bandwidth) ResourceLimiter {
@@ -218,8 +237,32 @@ type fixedLimiter struct {
 	FixedLimit Bandwidth
 }
 
-func (f fixedLimiter) Limit(budgetSpent CPUTime) (newLimit Bandwidth) {
-	return f.FixedLimit
+func (f fixedLimiter) Limit(wsh *WorkspaceHistory) (Bandwidth, error) {
+	return f.FixedLimit, nil
+}
+
+func AnnotationLimiter(annotation string) ResourceLimiter {
+	return annotationLimiter{
+		Annotation: annotation,
+	}
+}
+
+type annotationLimiter struct {
+	Annotation string
+}
+
+func (a annotationLimiter) Limit(wsh *WorkspaceHistory) (Bandwidth, error) {
+	value, ok := wsh.LastUpdate.Annotations[a.Annotation]
+	if !ok {
+		return 0, xerrors.Errorf("no annotation named %s found on workspace %s", a.Annotation, wsh.ID)
+	}
+
+	limit, err := resource.ParseQuantity(value)
+	if err != nil {
+		return 0, xerrors.Errorf("failed to parse %s for workspace %s", limit, wsh.ID)
+	}
+
+	return BandwidthFromQuantity(limit), nil
 }
 
 // Bucket describes a "pot of CPU time" which can be spent at a particular rate.
@@ -231,32 +274,36 @@ type Bucket struct {
 // BucketLimiter limits CPU use based on different "pots of CPU time".
 // The current limit is decided by the current bucket which is taken in order.
 // For example:
-//    buckets = [ { Budget: 50, Limit: 20 }, { Budget: 20, Limit: 10 }, { Budget: 0, Limit: 5 } ]
-//    budgetSpent = totalBudget - budgetLeft == 65
-//    then the current limit is 10, because we have spent all our budget from bucket 0, and are currently
-//    spending from the second bucket.
+//
+//	buckets = [ { Budget: 50, Limit: 20 }, { Budget: 20, Limit: 10 }, { Budget: 0, Limit: 5 } ]
+//	budgetSpent = totalBudget - budgetLeft == 65
+//	then the current limit is 10, because we have spent all our budget from bucket 0, and are currently
+//	spending from the second bucket.
+//
 // The last bucket's Budget is always ignored and becomes the default limit if all other
 // buckets are used up.
 // If the list of buckets is empty, this limiter limits to zero.
 type BucketLimiter []Bucket
 
 // Limit limits spending based on the budget that's left
-func (buckets BucketLimiter) Limit(budgetSpent CPUTime) (newLimit Bandwidth) {
+func (buckets BucketLimiter) Limit(wsh *WorkspaceHistory) (Bandwidth, error) {
+	budgetSpent := wsh.Usage()
+
 	for i, bkt := range buckets {
 		if i+1 == len(buckets) {
 			// We've reached the last bucket - budget doesn't matter anymore
-			return bkt.Limit
+			return bkt.Limit, nil
 		}
 
 		budgetSpent -= bkt.Budget
 		if budgetSpent <= 0 {
 			// BudgetSpent value is in this bucket, hence we have found our current bucket
-			return bkt.Limit
+			return bkt.Limit, nil
 		}
 	}
 
 	// empty bucket list
-	return 0
+	return 0, nil
 }
 
 // ClampingBucketLimiter is a stateful limiter that clamps the limit to the last bucket once that bucket is reached.
@@ -267,32 +314,63 @@ type ClampingBucketLimiter struct {
 }
 
 // Limit decides on a CPU use limit
-func (bl *ClampingBucketLimiter) Limit(budgetSpent CPUTime) (newLimit Bandwidth) {
+func (bl *ClampingBucketLimiter) Limit(wsh *WorkspaceHistory) (Bandwidth, error) {
+	budgetSpent := wsh.Usage()
+
 	if bl.lastBucketLock {
 		if budgetSpent < bl.Buckets[len(bl.Buckets)-1].Budget {
 			bl.lastBucketLock = false
 		}
 	}
 	if bl.lastBucketLock {
-		return bl.Buckets[len(bl.Buckets)-1].Limit
+		return bl.Buckets[len(bl.Buckets)-1].Limit, nil
 	}
 
 	for i, bkt := range bl.Buckets {
 		if i+1 == len(bl.Buckets) {
 			// We've reached the last bucket - budget doesn't matter anymore
 			bl.lastBucketLock = true
-			return bkt.Limit
+			return bkt.Limit, nil
 		}
 
 		budgetSpent -= bkt.Budget
 		if budgetSpent <= 0 {
 			// BudgetSpent value is in this bucket, hence we have found our current bucket
-			return bkt.Limit
+			return bkt.Limit, nil
 		}
 	}
 
 	// empty bucket list
-	return 0
+	return 0, nil
+}
+
+type compositeLimiter struct {
+	limiters []ResourceLimiter
+}
+
+func CompositeLimiter(limiters ...ResourceLimiter) ResourceLimiter {
+	return &compositeLimiter{
+		limiters: limiters,
+	}
+}
+
+func (cl *compositeLimiter) Limit(wsh *WorkspaceHistory) (Bandwidth, error) {
+	var errs []error
+	for _, limiter := range cl.limiters {
+		limit, err := limiter.Limit(wsh)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		return limit, nil
+	}
+
+	allerr := make([]string, len(errs))
+	for i, err := range errs {
+		allerr[i] = err.Error()
+	}
+	return 0, xerrors.Errorf("no limiter was able to provide a limit", strings.Join(allerr, ", "))
 }
 
 type CFSController interface {

@@ -40,6 +40,15 @@ service WorkspaceManager {
 
     // controlAdmission makes a workspace accessible for everyone or for the owner only
     rpc ControlAdmission(ControlAdmissionRequest) returns (ControlAdmissionResponse) {}
+
+    // deleteVolumeSnapshot asks ws-manager to delete specific volume snapshot and delete source from cloud provider as well
+    rpc DeleteVolumeSnapshot(DeleteVolumeSnapshotRequest) returns (DeleteVolumeSnapshotResponse) {}
+
+    // UpdateSSHKey update ssh keys
+    rpc UpdateSSHKey(UpdateSSHKeyRequest) returns (UpdateSSHKeyResponse) {}
+
+    // describeCluster provides information about the cluster
+    rpc DescribeCluster(DescribeClusterRequest) returns (DescribeClusterResponse) {}
 }
 
 // MetadataFilter describes conditions for matching a set of workspaces.
@@ -112,6 +121,7 @@ message StopWorkspaceRequest {
 enum StopWorkspacePolicy {
     NORMALLY = 0;
     IMMEDIATELY = 1;
+    ABORT = 2;
 }
 
 // StopWorkspaceResponse is the answer to a stop workspace request
@@ -153,10 +163,18 @@ message MarkActiveRequest {
 
     // closed marks a workspace as closed which will shorten its timeout
     bool closed = 2;
+
+    // ignore_if_active only marks active when user never mark active, otherwise it will ignore
+    bool ignore_if_active = 3;
 }
 
 // MarkActiveResponse is the answer to a mark workspace active request
 message MarkActiveResponse {}
+
+enum TimeoutType {
+    WORKSPACE_TIMEOUT = 0;
+    CLOSED_TIMEOUT = 1;
+}
 
 // SetTimeoutRequest configures the timeout of a workspace
 message SetTimeoutRequest {
@@ -165,6 +183,8 @@ message SetTimeoutRequest {
 
     // duration is the new timeout duration. Must be a valid Go duration (see https://golang.org/pkg/time/#ParseDuration)
     string duration = 2;
+
+    TimeoutType type = 3;
 }
 
 // SetTimeoutResponse is the answer to a set timeout request
@@ -212,6 +232,26 @@ message ControlAdmissionRequest {
 
 message ControlAdmissionResponse {}
 
+// DeleteVolumeSnapshotRequest deletes volume snapshot from the cluster and cloud provider
+message DeleteVolumeSnapshotRequest{
+    // ID is the name of volume snapshot, which is equal to instance id of workspace it was taken from
+    string id = 1;
+
+    // volume_handle is a unique string that is used to restore volume handle in k8s from cloud provider backend
+    string volume_handle = 2;
+
+    // soft_delete controls whether manager should attempt to restore volume snapshot from handle if it doesn't exist in the cluster yet
+    bool soft_delete = 3;
+
+    // ws_type is the type of workspace (prebuild or regular) to which this volume snapshot belongs
+    WorkspaceType ws_type = 4;
+}
+
+message DeleteVolumeSnapshotResponse {
+    // was_deleted will be true if we were able to delete volume snapshot from the cluster
+    bool was_deleted = 1;
+}
+
 enum AdmissionLevel {
     // WORKSPACE_ADMIT_OWNER_ONLY means the workspace can only be accessed using the owner token
     ADMIT_OWNER_ONLY = 0;
@@ -231,6 +271,18 @@ message BackupWorkspaceResponse {
     // URL is the location of the backup
     string url = 1;
 }
+
+// UpdateSSHKeyRequest update ssh public key
+message UpdateSSHKeyRequest {
+    // ID is the unique identifier of the workspace
+    string id = 1;
+
+    // keys is a set of authorized_keys
+    repeated string keys = 2;
+}
+
+// UpdateSSHKeyResponse is the answer to a upload ssh key request
+message UpdateSSHKeyResponse {}
 
 // WorkspaceStatus describes a workspace status
 message WorkspaceStatus {
@@ -275,10 +327,12 @@ message WorkspaceStatus {
 message IDEImage {
     // web_ref is a reference to an OCI image used for serving the web-based IDE
     string web_ref = 1;
-    // desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
-    string desktop_ref = 2;
+    // DEPRECATED desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
+    reserved 2;
     // supervisor_ref is a reference to an OCI image used as supervisor
     string supervisor_ref = 3;
+    // DEPRECATED desktop_plugin_ref is an optional reference to an OCI image used for serving desktop IDE plugin
+    reserved 4;
 }
 
 // WorkspaceSpec is the specification of a workspace at runtime
@@ -288,7 +342,7 @@ message WorkspaceSpec {
 
     // deprecated_ide_image is a field present for backwards compatibility and the same
     // as IDEImage.web_ref. If both fields are present, IDEImage.web_ref takes precedence.
-    string deprecated_ide_image = 2;
+    reserved 2;
 
     // headless marks this workspace a headless one - headless workspaces are not intended for users but for automation
     bool headless = 3;
@@ -310,6 +364,13 @@ message WorkspaceSpec {
 
     // class names the class of this workspace
     string class = 9;
+
+    // ide_image_layers are contains the images needed for the ide to run,
+    // including ide-desktop, desktop-plugin and so on
+    repeated string ide_image_layers = 10;
+
+    // The timeout for closed ide.
+    string closed_timeout = 11;
 }
 
 // PortSpec describes a networking port exposed on a workspace
@@ -325,6 +386,9 @@ message PortSpec {
 
     // url is the public-facing URL this port is available at
     string url = 4;
+
+    // protocol is the workspace port protocol, default is http
+    PortProtocol protocol = 5;
 }
 
 // PortVisibility defines who may access a workspace port which is guarded by an authentication in the proxy
@@ -335,6 +399,24 @@ enum PortVisibility {
 
     // public means the port is accessible by everybody using the workspace port URL
     PORT_VISIBILITY_PUBLIC = 1;
+}
+
+// PortProtocol defines the workspace port protocol
+enum PortProtocol {
+    // http means workspace port protocol is http
+    PORT_PROTOCOL_HTTP = 0;
+
+    // https means workspace port protocol is https
+    PORT_PROTOCOL_HTTPS = 1;
+}
+
+// VolumeSnapshotInfo defines volume snapshot information
+message VolumeSnapshotInfo {
+    // volume_snapshot_name is the name of volume snapshot
+    string volume_snapshot_name = 1;
+
+    // volume_snapshot_handle is a handle that is used to restore volume snapshot
+    string volume_snapshot_handle = 2;
 }
 
 // WorkspaceCondition gives more detailed information as to the state of the workspace. Which condition actually
@@ -373,6 +455,12 @@ message WorkspaceConditions {
 
     // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
     WorkspaceConditionBool stopped_by_request = 11;
+
+    // volume_snapshot contains info about volume snapshot that was used to save persistent volume
+    VolumeSnapshotInfo volume_snapshot = 12;
+
+    // aborted is true if StopWorkspace was called with StopWorkspacePolicy set to ABORT
+    WorkspaceConditionBool aborted = 13;
 }
 
 // WorkspaceConditionBool is a trinary bool: true/false/empty
@@ -434,6 +522,12 @@ message WorkspaceMetadata {
     // Annotations are key/value pairs that gets attached to the workspace.
     // This is primarily intended for annotating headless workspace loads.
     map<string, string> annotations = 4;
+
+    // team the workspace belongs to, if the workspace is not associated with a team, this property will be empty
+    optional string team = 5;
+
+    // project the workspace belongs to, if the workspace is not associated with a project, this property will be empty
+    optional string project = 6;
 }
 
 // WorkspaceRuntimeInfo details the workspace's runtime, e.g. executing system, node other information
@@ -465,7 +559,7 @@ message StartWorkspaceSpec {
 
     // deprecated_ide_image is a field present for backwards compatibility and the same
     // as IDEImage.web_ref. If both fields are present, IDEImage.web_ref takes precedence.
-    string deprecated_ide_image = 2;
+    reserved 2;
 
     // feature_flags provide a means for starting variants of workspaces (e.g. a privileged one)
     repeated WorkspaceFeatureFlag feature_flags = 3;
@@ -499,6 +593,25 @@ message StartWorkspaceSpec {
 
     // Class denotes the class of the workspace we ought to start
     string class = 13;
+
+    // volume_snapshot to use to restore PVC from, if set
+    reserved 14;
+
+    // ssh_public_keys is user's uploaded ssh public keys
+    repeated string ssh_public_keys = 15;
+
+    // sys_envvars are system level environment variables which ought to be available in the workspace
+    repeated EnvironmentVariable sys_envvars = 16;
+
+    // ide_image_layers are contains the images needed for the ide to run,
+    // including ide-desktop, desktop-plugin and so on
+    repeated string ide_image_layers = 17;
+
+    // timeout optionally sets a custom closed timeout
+    string closed_timeout = 18;
+
+    // maximum lifetime of the workspace
+    string maximum_lifetime = 19;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces
@@ -521,17 +634,32 @@ enum WorkspaceFeatureFlag {
     // FullWorkspaceBackup does away with the /workspace host mount. All workspace content lives
     // in the ephemeral container storage. We initlialize workspaces using content layer served by
     // the registry facade and back them up using regular "hardlink backups".
-    FULL_WORKSPACE_BACKUP = 4;
+    reserved 4;
 
-    // FixedResources ensures this workspace is not subject to ws-daemon's dynamic resource limits.
+    // Was used to ensure a workspace is not subject to ws-daemon's dynamic resource limits.
     // In this sence it's akin to "guaranteed" (as compared to burstable) resources for workspaces.
-    FIXED_RESOURCES = 5;
+    reserved 5;
 
     // Was used for UserNamespace
     reserved 6;
 
     // PERSISTENT_VOLUME_CLAIM feature flag for enabling PVC\Snapshot feature support
-    PERSISTENT_VOLUME_CLAIM = 7;
+    reserved 7;
+
+    // Was used for PROTECTED_SECRETS feature flag to enable secrets support
+    reserved 8;
+
+    // WORKSPACE_CLASS_LIMITING feature flag for enabling resuorce limiting based on workspace class
+    reserved 9;
+
+    // WORKSPACE_CONNECTION_LIMITING feature flag for enabling network connection rate limiting
+    WORKSPACE_CONNECTION_LIMITING = 10;
+
+    // WORKSPACE_PSI feature flag for enabling pressure stall information for workspaces
+    WORKSPACE_PSI = 11;
+
+    // SSH_CA feature flag for enabling SSH CA for workspaces
+    SSH_CA = 12;
 }
 
 // GitSpec configures the Git available within the workspace
@@ -567,9 +695,8 @@ enum WorkspaceType {
     // Prebuild workspaces are workspaces used to pre-build the content of other workspaces. They run headless and have no direct user-interaction.
     PREBUILD = 1;
 
-    // Probe workspaces are used to perform end-to-end health checks on the system. They require little to no resources, run headless and never
-    // interact with users directly.
-    PROBE = 2;
+    // DEPRECATED: Probe workspaces.
+    reserved 2;
 
     // DEPRECATED Ghost workspaces
     reserved 3;
@@ -582,4 +709,37 @@ enum WorkspaceType {
 message ExposedPorts {
     // ports is the set of ports which ought to be exposed to the internet
     repeated PortSpec ports = 1;
+}
+
+// SSHPublicKeys describes the user's uploaded ssh public keys, it will be used only in annotations.
+message SSHPublicKeys {
+    // keys is the set of ssh public key
+    repeated string keys = 1;
+}
+
+// DescribeClusterRequest requests information about the cluster
+message DescribeClusterRequest {}
+
+// DescribeClusterResponse is the answer to a DescribeClusterRequest
+message DescribeClusterResponse {
+    // workspace classes that are supported by the cluster
+    repeated WorkspaceClass workspace_classes = 1;
+
+    // preferred_workspace_class is the workspace class that is preferred by the cluster (consider this the "default" workspace class)
+    string preferred_workspace_class = 2;
+}
+
+// WorkspaceClass describes a workspace class that is supported by the cluster
+message WorkspaceClass {
+    // ID is a unique identifier (within the cluster) of this workspace class
+    string id = 1;
+
+    // The string we display to users in the UI
+    string display_name = 2;
+
+    // The description of this workspace class
+    string description = 3;
+
+    // The cost of running a workspace of this class per minute expressed in credits
+    float credits_per_minute = 4;
 }

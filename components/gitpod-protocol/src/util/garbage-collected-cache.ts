@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { repeat } from "./repeat";
@@ -35,6 +35,11 @@ export class GarbageCollectedCache<T> {
     public get(key: string): T | undefined {
         const entry = this.store.get(key);
         if (!entry) {
+            return undefined;
+        }
+        // Still valid?
+        if (entry.expiryDate < Date.now()) {
+            this.store.delete(entry.key);
             return undefined;
         }
         return entry.value;

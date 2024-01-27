@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package baseserver
 
@@ -19,6 +19,9 @@ import (
 type options struct {
 	logger *logrus.Entry
 
+	// version is the version of this application
+	version string
+
 	config *Configuration
 
 	// closeTimeout is the amount we allow for the server to shut down cleanly
@@ -36,7 +39,8 @@ type options struct {
 
 func defaultOptions() *options {
 	return &options{
-		logger: log.New(),
+		logger:  log.New(),
+		version: "unknown",
 		config: &Configuration{
 			Services: ServicesConfiguration{
 				GRPC: nil, // disabled by default
@@ -57,6 +61,13 @@ type Option func(opts *options) error
 func WithConfig(config *Configuration) Option {
 	return func(opts *options) error {
 		opts.config = config
+		return nil
+	}
+}
+
+func WithVersion(version string) Option {
+	return func(opts *options) error {
+		opts.version = version
 		return nil
 	}
 }

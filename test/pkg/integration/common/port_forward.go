@@ -1,18 +1,25 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package common
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os/exec"
 	"strings"
 	"time"
 
-	"golang.org/x/xerrors"
+	"k8s.io/apimachinery/pkg/util/wait"
+)
+
+const (
+	errorDialingBackend = "error: error upgrading connection: error dialing backend: EOF"
 )
 
 // ForwardPortOfPod establishes a TCP port forwarding to a Kubernetes pod
@@ -43,30 +50,59 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 		}
 
 		command := exec.CommandContext(ctx, "kubectl", args...)
+		var serr, sout bytes.Buffer
+		command.Stdout = &sout
+		command.Stderr = &serr
 		err := command.Start()
+		defer func() {
+			if command.Process != nil {
+				_ = command.Process.Kill()
+			}
+		}()
 		if err != nil {
-			errchan <- xerrors.Errorf("unexpected error starting port-forward: %w, args: %v", err, args)
+			if strings.TrimSuffix(serr.String(), "\n") == errorDialingBackend {
+				errchan <- io.EOF
+			} else {
+				errchan <- fmt.Errorf("unexpected error string port-forward: %w", errors.New(serr.String()))
+			}
 		}
 
 		err = command.Wait()
 		if err != nil {
-			errchan <- xerrors.Errorf("unexpected error running port-forward: %w, args: %v", err, args)
+			if strings.TrimSuffix(serr.String(), "\n") == errorDialingBackend {
+				errchan <- io.EOF
+			} else {
+				errchan <- fmt.Errorf("unexpected error running port-forward: %w", errors.New(serr.String()))
+			}
 		}
 	}()
 
 	// wait until we can reach the local port before signaling we are ready
 	go func() {
 		localPort := strings.Split(port, ":")[0]
-		for {
-			conn, _ := net.DialTimeout("tcp", net.JoinHostPort("", localPort), time.Second)
-			if conn != nil {
-				conn.Close()
-				break
+		waitErr := wait.PollImmediate(500*time.Millisecond, 1*time.Minute, func() (bool, error) {
+			conn, err := net.DialTimeout("tcp", net.JoinHostPort("localhost", localPort), 1*time.Second)
+			if err != nil {
+				return false, nil
 			}
-			time.Sleep(500 * time.Millisecond)
-		}
+			if conn == nil {
+				return false, nil
+			}
 
-		readychan <- struct{}{}
+			conn.Close()
+			return true, nil
+		})
+
+		if waitErr == wait.ErrWaitTimeout {
+			errchan <- fmt.Errorf("timeout waiting for port-foward: %w", waitErr)
+			return
+		} else if waitErr != nil {
+			errchan <- waitErr
+			return
+		} else {
+			readychan <- struct{}{}
+
+		}
 	}()
 
 	return readychan, errchan

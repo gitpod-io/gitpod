@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package sshproxy
 
@@ -14,23 +14,24 @@ import (
 
 type Heartbeat interface {
 	// SendHeartbeat sends a heartbeat for a workspace
-	SendHeartbeat(instanceID string, isClosed bool)
+	SendHeartbeat(instanceID string, isClosed, ignoreIfActive bool)
 }
 
 type noHeartbeat struct{}
 
-func (noHeartbeat) SendHeartbeat(instanceID string, isClosed bool) {}
+func (noHeartbeat) SendHeartbeat(instanceID string, isClosed, ignoreIfActive bool) {}
 
 type WorkspaceManagerHeartbeat struct {
 	Client wsmanapi.WorkspaceManagerClient
 }
 
-func (m *WorkspaceManagerHeartbeat) SendHeartbeat(instanceID string, isClosed bool) {
+func (m *WorkspaceManagerHeartbeat) SendHeartbeat(instanceID string, isClosed, ignoreIfActive bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := m.Client.MarkActive(ctx, &wsmanapi.MarkActiveRequest{
-		Id:     instanceID,
-		Closed: isClosed,
+		Id:             instanceID,
+		Closed:         isClosed,
+		IgnoreIfActive: ignoreIfActive,
 	})
 	if err != nil {
 		log.WithError(err).Warn("cannot send heartbeat for workspace instance")

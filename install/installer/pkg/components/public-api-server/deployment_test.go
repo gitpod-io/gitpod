@@ -1,17 +1,21 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
-// Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+/// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package public_api_server
 
 import (
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/pointer"
+
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
 func TestDeployment(t *testing.T) {
-	ctx := renderContextWithPublicAPIEnabled(t)
+	ctx := renderContextWithPublicAPI(t)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -23,7 +27,7 @@ func TestDeployment(t *testing.T) {
 }
 
 func TestDeployment_ServerArguments(t *testing.T) {
-	ctx := renderContextWithPublicAPIEnabled(t)
+	ctx := renderContextWithPublicAPI(t)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -37,7 +41,54 @@ func TestDeployment_ServerArguments(t *testing.T) {
 	apiContainer := containers[0]
 	require.EqualValues(t, []string{
 		"run",
-		"--grpc-port=9001",
-		`--gitpod-api-url=wss://test.domain.everything.awesome.is/api/v1`,
+		"--config=/config.json",
+		`--json-log=true`,
 	}, apiContainer.Args)
+
+	require.Equal(t, []corev1.Volume{
+		{
+			Name: configmapVolume,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: Component,
+					},
+				},
+			},
+		},
+		{
+			Name: "database-config",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "gcp-db-creds-service-account-name",
+				},
+			},
+		},
+		{
+			Name: "stripe-secret",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "stripe-webhook-secret",
+					Optional:   pointer.Bool(true),
+				},
+			},
+		},
+		{
+			Name: "personal-access-token-signing-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "personal-access-token-signing-key",
+					Optional:   pointer.Bool(true),
+				},
+			},
+		},
+		{
+			Name: "auth-pki-signing",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "auth-pki",
+				},
+			},
+		},
+	}, dpl.Spec.Template.Spec.Volumes, "must bind volumes")
 }

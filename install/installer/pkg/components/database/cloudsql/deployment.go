@@ -1,13 +1,14 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cloudsql
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,15 +18,16 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-cloud-sql-proxy", Component),
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:        fmt.Sprintf("%s-cloud-sql-proxy", Component),
+				Namespace:   ctx.Namespace,
+				Labels:      labels,
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 			},
 			Spec: appsv1.DeploymentSpec{
 				Strategy: appsv1.DeploymentStrategy{
@@ -35,22 +37,20 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						MaxSurge:       &intstr.IntOrString{IntVal: 1},
 					},
 				},
-				Selector: &metav1.LabelSelector{MatchLabels: labels},
+				Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 				Replicas: common.Replicas(ctx, Component),
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      Component,
-						Namespace: ctx.Namespace,
-						Labels:    labels,
+						Name:        Component,
+						Namespace:   ctx.Namespace,
+						Labels:      labels,
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 					},
 					Spec: corev1.PodSpec{
-						Affinity: &corev1.Affinity{
-							NodeAffinity: common.NodeAffinity(cluster.AffinityLabelMeta).NodeAffinity,
-						},
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),
-						DNSPolicy:                     "ClusterFirst",
-						RestartPolicy:                 "Always",
+						DNSPolicy:                     corev1.DNSClusterFirst,
+						RestartPolicy:                 corev1.RestartPolicyAlways,
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						Volumes: []corev1.Volume{{
 							Name:         "cloudsql",
@@ -64,8 +64,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Containers: []corev1.Container{{
 							Name: "cloud-sql-proxy",
 							SecurityContext: &corev1.SecurityContext{
-								Privileged:   pointer.Bool(false),
-								RunAsNonRoot: pointer.Bool(false),
+								Privileged:               pointer.Bool(false),
+								RunAsNonRoot:             pointer.Bool(false),
+								AllowPrivilegeEscalation: pointer.Bool(false),
 							},
 							Image: ctx.ImageName(ImageRepo, ImageName, ImageVersion),
 							Command: []string{
@@ -84,6 +85,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								MountPath: "/credentials",
 								Name:      "gcloud-sql-token",
 							}},
+							Env: common.CustomizeEnvvar(ctx, Component, []corev1.EnvVar{}),
 						}},
 					},
 				},

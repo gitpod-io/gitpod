@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package kubernetes
 
@@ -21,10 +21,11 @@ func NetworkIsReachableProbe(url string) func() error {
 	return func() error {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			Proxy:           http.ProxyFromEnvironment,
 		}
 		client := &http.Client{
 			Transport: tr,
-			Timeout:   1 * time.Second,
+			Timeout:   5 * time.Second,
 			// never follow redirects
 			CheckRedirect: func(*http.Request, []*http.Request) error {
 				return http.ErrUseLastResponse

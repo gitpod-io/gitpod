@@ -1,0 +1,30 @@
+name: "Create preview environment"
+description: "Creates the infrastructure for a preview environment"
+inputs:
+    name:
+        description: "The name of the preview environment to deploy Gitpod to"
+        required: false
+    infrastructure_provider:
+        description: "The infrastructure provider to use"
+        required: true
+    large_vm:
+        description: "Whether to use a larger VM for the env"
+        required: true
+        default: false
+    preemptible:
+        description: "Whether to use preemptible VMs for the env"
+        required: true
+        default: true
+    sa_key:
+        description: "The service account key to use when authenticating with GCP"
+        required: true
+    previewctl_hash:
+        description: "The Leeway hash of the dev/preview/previewctl:docker package to be used when downloading previewclt"
+        required: false
+    recreate_vm:
+        description: "Whether to recreate the VM"
+        required: false
+        default: "false"
+runs:
+    using: "docker"
+    image: "Dockerfile"

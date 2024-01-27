@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package io.gitpod.jetbrains.gateway
 
@@ -21,7 +21,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class GatewayGitpodClient(
-    private val lifetimeDefinition: LifetimeDefinition, private val gitpodHost: String
+    private val lifetimeDefinition: LifetimeDefinition,
+    private val gitpodHost: String
 ) : GitpodClient() {
 
     private val mutex = Mutex()
@@ -29,7 +30,7 @@ class GatewayGitpodClient(
     private val listeners = concurrentMapOf<String, CopyOnWriteArrayList<Channel<WorkspaceInstance>>?>()
 
     private val timeoutDelayInMinutes = 15
-    private var timeoutJob: Job? = null;
+    private var timeoutJob: Job? = null
 
     init {
         GlobalScope.launch {
@@ -59,7 +60,7 @@ class GatewayGitpodClient(
         }
     }
 
-    private var syncJob: Job? = null;
+    private var syncJob: Job? = null
     override fun notifyConnect() {
         syncJob?.cancel()
         syncJob = GlobalScope.launch {
@@ -69,9 +70,9 @@ class GatewayGitpodClient(
                     continue
                 }
                 try {
-                    syncWorkspace(id);
+                    syncWorkspace(id)
                 } catch (t: Throwable) {
-                    thisLogger().error("${gitpodHost}: ${id}: failed to sync", t)
+                    thisLogger().error("$gitpodHost: $id: failed to sync", t)
                 }
             }
         }
@@ -79,7 +80,7 @@ class GatewayGitpodClient(
 
     override fun onInstanceUpdate(instance: WorkspaceInstance?) {
         if (instance == null) {
-            return;
+            return
         }
         GlobalScope.launch {
             val wsListeners = listeners[instance.workspaceId] ?: return@launch
@@ -102,7 +103,7 @@ class GatewayGitpodClient(
         val listener = Channel<WorkspaceInstance>()
         mutex.withLock {
             val listeners = this.listeners.getOrPut(workspaceId) { CopyOnWriteArrayList() }!!
-            listeners.add(listener);
+            listeners.add(listener)
             cancelTimeout("listening to workspace: $workspaceId")
         }
         listenerLifetime.onTerminationOrNow {
@@ -120,7 +121,7 @@ class GatewayGitpodClient(
             if (listeners.isNullOrEmpty()) {
                 return
             }
-            listeners.remove(listener);
+            listeners.remove(listener)
             if (listeners.isNotEmpty()) {
                 return
             }
@@ -137,5 +138,4 @@ class GatewayGitpodClient(
         onInstanceUpdate(info.latestInstance)
         return info
     }
-
 }

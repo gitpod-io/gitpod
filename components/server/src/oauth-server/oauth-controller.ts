@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { AuthCodeRepositoryDB } from "@gitpod/gitpod-db/lib/typeorm/auth-code-repository-db";
@@ -10,11 +10,12 @@ import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { OAuthRequest, OAuthResponse } from "@jmondi/oauth2-server";
 import { handleExpressResponse, handleExpressError } from "@jmondi/oauth2-server/dist/adapters/express";
-import * as express from "express";
+import express from "express";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { Config } from "../config";
 import { clientRepository, createAuthorizationServer } from "./oauth-authorization-server";
+import { inMemoryDatabase } from "./db";
 
 @injectable()
 export class OAuthController {
@@ -24,8 +25,8 @@ export class OAuthController {
 
     private getValidUser(req: express.Request, res: express.Response): User | null {
         if (!req.isAuthenticated() || !User.is(req.user)) {
-            const redirectTarget = encodeURIComponent(`${this.config.hostUrl}api${req.originalUrl}`);
-            const redirectTo = `${this.config.hostUrl}login?returnTo=${redirectTarget}`;
+            const returnToPath = encodeURIComponent(`api${req.originalUrl}`);
+            const redirectTo = `${this.config.hostUrl}login?returnToPath=${returnToPath}`;
             res.redirect(redirectTo);
             return null;
         }
@@ -100,8 +101,8 @@ export class OAuthController {
             if (!oauthClientsApproved || !oauthClientsApproved[clientID]) {
                 const client = await clientRepository.getByIdentifier(clientID);
                 if (client) {
-                    const redirectTarget = encodeURIComponent(`${this.config.hostUrl}api${req.originalUrl}`);
-                    const redirectTo = `${this.config.hostUrl}oauth-approval?clientID=${client.id}&clientName=${client.name}&returnTo=${redirectTarget}`;
+                    const returnToPath = encodeURIComponent(`api${req.originalUrl}`);
+                    const redirectTo = `${this.config.hostUrl}oauth-approval?clientID=${client.id}&clientName=${client.name}&returnToPath=${returnToPath}`;
                     res.redirect(redirectTo);
                     return false;
                 } else {
@@ -136,11 +137,13 @@ export class OAuthController {
 
             const user = this.getValidUser(req, res);
             if (!user) {
+                res.sendStatus(400);
                 return;
             }
 
             // Check for approval of this client
-            if (!this.hasApproval(user, clientID.toString(), req, res)) {
+            if (!(await this.hasApproval(user, clientID.toString(), req, res))) {
+                res.sendStatus(400);
                 return;
             }
 
@@ -160,7 +163,12 @@ export class OAuthController {
                 const oauthResponse = await authorizationServer.completeAuthorizationRequest(authRequest);
                 return handleExpressResponse(res, oauthResponse);
             } catch (e) {
-                handleExpressError(e, res);
+                try {
+                    handleExpressError(e, res);
+                } catch (error) {
+                    log.error(`Authorization request handling failed.`, error, { request });
+                    res.sendStatus(500);
+                }
             }
         });
 
@@ -170,9 +178,24 @@ export class OAuthController {
                 const oauthResponse = await authorizationServer.respondToAccessTokenRequest(req, response);
                 return handleExpressResponse(res, oauthResponse);
             } catch (e) {
-                handleExpressError(e, res);
-                return;
+                try {
+                    handleExpressError(e, res);
+                } catch (error) {
+                    log.error(`Access token request handling failed.`, error);
+                    res.sendStatus(500);
+                }
             }
+        });
+
+        router.get("/oauth/inspect", async (req: express.Request, res: express.Response) => {
+            const clientId = req.query.client as string;
+            if (typeof clientId !== "string" || !Object.keys(inMemoryDatabase.clients).includes(clientId)) {
+                return res.sendStatus(400);
+            }
+
+            const client = inMemoryDatabase.clients[clientId];
+            const scopes = client.scopes.map((s) => s.name);
+            return res.send(scopes);
         });
 
         return router;

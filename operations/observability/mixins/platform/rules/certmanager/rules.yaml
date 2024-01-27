@@ -1,0 +1,68 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app.kubernetes.io/name: certmanager
+    app.kubernetes.io/part-of: kube-prometheus
+    prometheus: k8s
+    role: alert-rules
+  name: certmanager-monitoring-rules
+  namespace: monitoring-satellite
+spec:
+  groups:
+  - name: cert-manager
+    rules:
+    - alert: CertManagerAbsent
+      annotations:
+        description: New certificates will not be able to be minted, and existing ones can't be renewed until cert-manager is back.
+        summary: Cert Manager has dissapeared from Prometheus service discovery.
+      expr: absent(up{job="certmanager"})
+      for: 10m
+      labels:
+        severity: critical
+        team: platform
+  - name: certificates
+    rules:
+    - alert: CertManagerCertExpirySoon
+      annotations:
+        dashboard_url: https://grafana.gitpod.io/d/TvuRo2iMk/cert-manager
+        description: The domain that this cert covers will be unavailable after {{ $value | humanizeDuration }}. Clients using endpoints that this cert protects will start to fail in {{ $value | humanizeDuration }}.
+        summary: The cert `{{ $labels.name }}` is {{ $value | humanizeDuration }} from expiry, it should have renewed over a week ago.
+      expr: |
+        avg by (exported_namespace, namespace, name) (
+          certmanager_certificate_expiration_timestamp_seconds - time()
+        ) < (7 * 24 * 3600) # 21 days in seconds
+      for: 1h
+      labels:
+        severity: warning
+        team: platform
+    - alert: CertManagerCertNotReady
+      annotations:
+        dashboard_url: https://grafana.gitpod.io/d/TvuRo2iMk/cert-manager
+        description: This certificate has not been ready to serve traffic for at least 10m. If the cert is being renewed or there is another valid cert, the ingress controller _may_ be able to serve that instead.
+        summary: The cert `{{ $labels.name }}` is not ready to serve traffic.
+      expr: |
+        max by (name, exported_namespace, namespace, condition) (
+          certmanager_certificate_ready_status{condition!="True"} == 1
+        )
+      for: 10m
+      labels:
+        severity: critical
+        team: platform
+    - alert: CertManagerHittingRateLimits
+      annotations:
+        dashboard_url: https://grafana.gitpod.io/d/TvuRo2iMk/cert-manager
+        description: Depending on the rate limit, cert-manager may be unable to generate certificates for up to a week.
+        summary: Cert manager hitting LetsEncrypt rate limits.
+      expr: |
+        sum by (host) (
+          rate(certmanager_http_acme_client_request_count{status="429"}[5m])
+        ) > 0
+      for: 5m
+      labels:
+        severity: critical
+        team: platform

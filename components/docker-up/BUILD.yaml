@@ -6,9 +6,16 @@ packages:
       - go.sum
       - "docker-up/**"
       - dependencies.sh
+    deps:
+      - components/common-go:lib
+    argdeps:
+      - dockerVersion
+      - dockerComposeVersion
     env:
       - CGO_ENABLED=0
       - GOOS=linux
+      - DOCKER_VERSION=${dockerVersion}
+      - DOCKER_COMPOSE_VERSION=${dockerComposeVersion}
     prep:
       - ["mv", "docker-up/main.go", "."]
       - ["rmdir", "docker-up"]
@@ -21,6 +28,8 @@ packages:
       - go.mod
       - go.sum
       - "runc-facade/**"
+    deps:
+      - components/common-go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -37,12 +46,15 @@ packages:
     config:
       commands:
         - ["mv", "components-docker-up--bin-docker-up/docker-up", "docker-up"]
+        - ["mv", "components-docker-up--bin-docker-up/checksums.txt", "checksums.txt"]
+        - ["mv", "components-docker-up--bin-docker-up/docker-compose", "docker-compose-linux-x86_64"]
         - ["rm", "-r", "components-docker-up--bin-docker-up"]
         - ["mv", "components-docker-up--bin-runc-facade/docker-up", "runc-facade"]
         - ["rm", "-r", "components-docker-up--bin-runc-facade"]
-        # Override docker-compose with custom version https://github.com/gitpod-io/compose/pull/1
-        - ["curl", "-sSL", "https://github.com/gitpod-io/compose/releases/download/2.5.0-gitpod.0/docker-compose-linux-x86_64", "-o", "docker-compose"]
+        - ["sha256sum", "-c", "checksums.txt"]
+        - ["mv", "docker-compose-linux-x86_64", "docker-compose"]
         - ["chmod", "+x", "docker-compose"]
+        - ["rm", "checksums.txt"]
   - name: docker
     type: docker
     deps:

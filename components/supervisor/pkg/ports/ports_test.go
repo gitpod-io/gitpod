@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package ports
 
@@ -12,22 +12,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
-	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 func TestPortsUpdateState(t *testing.T) {
 	type ExposureExpectation []ExposedPort
 	type UpdateExpectation [][]*api.PortsStatus
 	type ConfigChange struct {
-		workspace []*gitpod.PortConfig
-		instance  []*gitpod.PortsItems
+		instance []*gitpod.PortsItems
 	}
 	type Change struct {
 		Config      *ConfigChange
@@ -61,11 +59,11 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080, Served: true}},
-				[]*api.PortsStatus{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
-				[]*api.PortsStatus{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}, {LocalPort: 60000, Served: true}},
-				[]*api.PortsStatus{{LocalPort: 8080, Served: false, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}, {LocalPort: 60000, Served: true}},
-				[]*api.PortsStatus{{LocalPort: 8080, Served: false, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}, {LocalPort: 60000, Served: true}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: false, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}, {LocalPort: 60000, Served: true}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: false, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -79,22 +77,25 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080, Served: true}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private}},
 				{},
 			},
 		},
 		{
 			Desc: "basic port publically exposed",
 			Changes: []Change{
-				{Exposed: []ExposedPort{{LocalPort: 8080, Public: false, URL: "foobar"}}},
-				{Exposed: []ExposedPort{{LocalPort: 8080, Public: true, URL: "foobar"}}},
 				{Served: []ServedPort{{Port: 8080}}},
+				{Exposed: []ExposedPort{{LocalPort: 8080, Public: true, URL: "foobar"}}},
+				{Exposed: []ExposedPort{{LocalPort: 8080, Public: false, URL: "foobar"}}},
+			},
+			ExpectedExposure: ExposureExpectation{
+				{LocalPort: 8080},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
-				[]*api.PortsStatus{{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
-				[]*api.PortsStatus{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
 			},
 		},
 		{
@@ -104,48 +105,8 @@ func TestPortsUpdateState(t *testing.T) {
 				{Served: []ServedPort{}},
 				{Served: []ServedPort{{net.IPv4zero, 8080, false}}},
 			},
-
 			ExpectedExposure: ExposureExpectation(nil),
 			ExpectedUpdates:  UpdateExpectation{{}},
-		},
-		{
-			Desc: "serving configured workspace port",
-			Changes: []Change{
-				{Config: &ConfigChange{
-					workspace: []*gitpod.PortConfig{
-						{Port: 8080, OnOpen: "open-browser"},
-						{Port: 9229, OnOpen: "ignore", Visibility: "private"},
-					},
-				}},
-				{
-					Exposed: []ExposedPort{
-						{LocalPort: 8080, Public: true, URL: "8080-foobar"},
-						{LocalPort: 9229, Public: false, URL: "9229-foobar"},
-					},
-				},
-				{
-					Served: []ServedPort{
-						{net.IPv4zero, 8080, false},
-						{net.IPv4(127, 0, 0, 1), 9229, true},
-					},
-				},
-			},
-			ExpectedExposure: []ExposedPort{
-				{LocalPort: 8080},
-				{LocalPort: 9229},
-			},
-			ExpectedUpdates: UpdateExpectation{
-				{},
-				[]*api.PortsStatus{{LocalPort: 8080}, {LocalPort: 9229}},
-				[]*api.PortsStatus{
-					{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "8080-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
-					{LocalPort: 9229, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "9229-foobar", OnExposed: api.OnPortExposedAction_ignore}},
-				},
-				[]*api.PortsStatus{
-					{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "8080-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
-					{LocalPort: 9229, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "9229-foobar", OnExposed: api.OnPortExposedAction_ignore}},
-				},
-			},
 		},
 		{
 			Desc: "serving port from the configured port range",
@@ -166,10 +127,11 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 4040, Served: true}},
-				[]*api.PortsStatus{{LocalPort: 4040, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "4040-foobar", OnExposed: api.OnPortExposedAction_open_browser}}},
+				{},
+				[]*api.PortsStatus{{LocalPort: 4040, Served: true, OnOpen: api.PortsStatus_open_browser}},
+				[]*api.PortsStatus{{LocalPort: 4040, Served: true, OnOpen: api.PortsStatus_open_browser, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "4040-foobar", OnExposed: api.OnPortExposedAction_open_browser}}},
 				[]*api.PortsStatus{
-					{LocalPort: 4040, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "4040-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
+					{LocalPort: 4040, Served: true, OnOpen: api.PortsStatus_open_browser, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "4040-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
 					{LocalPort: 60000, Served: true},
 				},
 			},
@@ -178,7 +140,7 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "auto expose configured ports",
 			Changes: []Change{
 				{
-					Config: &ConfigChange{workspace: []*gitpod.PortConfig{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
 						{Port: 8080, Visibility: "private"},
 					}},
 				},
@@ -209,12 +171,12 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080}},
-				[]*api.PortsStatus{{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
-				[]*api.PortsStatus{{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
-				[]*api.PortsStatus{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
-				[]*api.PortsStatus{{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
-				[]*api.PortsStatus{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, OnOpen: api.PortsStatus_notify}},
+				[]*api.PortsStatus{{LocalPort: 8080, OnOpen: api.PortsStatus_notify, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, OnOpen: api.PortsStatus_notify, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, OnOpen: api.PortsStatus_notify, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
 			},
 		},
 		{
@@ -231,8 +193,8 @@ func TestPortsUpdateState(t *testing.T) {
 			ExpectedUpdates: UpdateExpectation{
 				{},
 				{
-					{LocalPort: 8080, Served: true},
-					{LocalPort: 3000, Served: true},
+					{LocalPort: 3000, Served: true, OnOpen: api.PortsStatus_notify_private},
+					{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private},
 				},
 			},
 		},
@@ -240,7 +202,7 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "served between auto exposing configured and exposed update",
 			Changes: []Change{
 				{
-					Config: &ConfigChange{workspace: []*gitpod.PortConfig{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
 						{Port: 8080, Visibility: "private"},
 					}},
 				},
@@ -256,9 +218,9 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 8080}},
-				{{LocalPort: 8080, Served: true}},
-				{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				{{LocalPort: 8080, OnOpen: api.PortsStatus_notify}},
+				{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify}},
+				{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
 			},
 		},
 		{
@@ -282,8 +244,8 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, Served: true}},
-				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -307,8 +269,8 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, Served: true}},
-				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -329,8 +291,8 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, Served: true}},
-				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -351,8 +313,8 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, Served: true}},
-				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -373,8 +335,8 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, Served: true}},
-				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -395,8 +357,8 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, Served: true}},
-				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -417,8 +379,8 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, Served: true}},
-				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -439,15 +401,15 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, Served: true}},
-				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private}},
+				{{LocalPort: 5900, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
 			Desc: "port status has description set as soon as the port gets exposed, if there was a description configured",
 			Changes: []Change{
 				{
-					Config: &ConfigChange{workspace: []*gitpod.PortConfig{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
 						{Port: 8080, Visibility: "private", Description: "Development server"},
 					}},
 				},
@@ -463,16 +425,16 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 8080, Description: "Development server"}},
-				{{LocalPort: 8080, Description: "Development server", Served: true}},
-				{{LocalPort: 8080, Description: "Development server", Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				{{LocalPort: 8080, Description: "Development server", OnOpen: api.PortsStatus_notify}},
+				{{LocalPort: 8080, Description: "Development server", Served: true, OnOpen: api.PortsStatus_notify}},
+				{{LocalPort: 8080, Description: "Development server", Served: true, OnOpen: api.PortsStatus_notify, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
 			},
 		},
 		{
 			Desc: "port status has the name attribute set as soon as the port gets exposed, if there was a name configured in Gitpod's Workspace",
 			Changes: []Change{
 				{
-					Config: &ConfigChange{workspace: []*gitpod.PortConfig{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
 						{Port: 3000, Visibility: "private", Name: "react"},
 					}},
 				},
@@ -488,9 +450,196 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 3000, Name: "react"}},
-				{{LocalPort: 3000, Name: "react", Served: true}},
-				{{LocalPort: 3000, Name: "react", Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				{{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify}},
+				{{LocalPort: 3000, Name: "react", Served: true, OnOpen: api.PortsStatus_notify}},
+				{{LocalPort: 3000, Name: "react", Served: true, OnOpen: api.PortsStatus_notify, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+			},
+		},
+		{
+			Desc: "change configed ports order",
+			Changes: []Change{
+				{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
+						{Port: 3001, Visibility: "private", Name: "react"},
+						{Port: 3000, Visibility: "private", Name: "react"},
+					}},
+				},
+				{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
+						{Port: "5000-5999", Visibility: "private", Name: "react"},
+						{Port: 3001, Visibility: "private", Name: "react"},
+						{Port: 3000, Visibility: "private", Name: "react"},
+					}},
+				},
+				{
+					Served: []ServedPort{{net.IPv4zero, 5002, false}},
+				},
+				{
+					Served: []ServedPort{{net.IPv4zero, 5002, false}, {net.IPv4zero, 5001, false}},
+				},
+				{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
+						{Port: 3000, Visibility: "private", Name: "react"},
+						{Port: 3001, Visibility: "private", Name: "react"},
+					}},
+				},
+				{
+					Served: []ServedPort{{net.IPv4zero, 5001, false}, {net.IPv4zero, 3000, false}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 3000, Public: false, URL: "foobar"}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 5002},
+				{LocalPort: 5001},
+				{LocalPort: 3000},
+				{LocalPort: 3001},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 5002, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 5001, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 5002, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 5001, Served: true, OnOpen: api.PortsStatus_notify_private},
+					{LocalPort: 5002, Served: true, OnOpen: api.PortsStatus_notify_private},
+				},
+				{
+					{LocalPort: 3000, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 5001, Served: true, OnOpen: api.PortsStatus_notify_private},
+				},
+				{
+					{LocalPort: 3000, Name: "react", Served: true, OnOpen: api.PortsStatus_notify, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 5001, Served: true, OnOpen: api.PortsStatus_notify_private},
+				},
+			},
+		},
+		{
+			Desc: "change configed ports order with ranged covered not ranged",
+			Changes: []Change{
+				{
+					Config: &ConfigChange{
+						instance: []*gitpod.PortsItems{
+							{Port: 3001, Visibility: "private", Name: "react"},
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+					},
+				},
+				{
+					Config: &ConfigChange{
+						instance: []*gitpod.PortsItems{
+							{Port: 3003, Visibility: "private", Name: "react"},
+							{Port: 3001, Visibility: "private", Name: "react"},
+							{Port: "3001-3005", Visibility: "private", Name: "react"},
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+					},
+				},
+				{
+					Served: []ServedPort{{net.IPv4zero, 3000, false}},
+				},
+				{
+					Served: []ServedPort{{net.IPv4zero, 3000, false}, {net.IPv4zero, 3001, false}, {net.IPv4zero, 3002, false}},
+				},
+				{
+					Config: &ConfigChange{
+						instance: []*gitpod.PortsItems{
+							{Port: 3003, Visibility: "private", Name: "react"},
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+					},
+				},
+				{
+					Config: &ConfigChange{
+						instance: []*gitpod.PortsItems{
+							{Port: "3001-3005", Visibility: "private", Name: "react"},
+							{Port: 3003, Visibility: "private", Name: "react"},
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+					},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 3000},
+				{LocalPort: 3001},
+				{LocalPort: 3002},
+				{LocalPort: 3003},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3003, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3003, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3003, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3002, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3003, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Served: true, OnOpen: api.PortsStatus_notify_private},
+					{LocalPort: 3002, Served: true, OnOpen: api.PortsStatus_notify_private},
+				},
+				{
+					{LocalPort: 3001, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3002, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3003, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+			},
+		},
+		{
+			// Please make sure this test pass for code browser resolveExternalPort
+			// see also https://github.com/gitpod-io/openvscode-server/blob/5ab7644a8bbf37d28e23212bc6f1529cafd8bf7b/extensions/gitpod-web/src/extension.ts#L310-L339
+			Desc: "expose port without served, port should be responded for use case of openvscode-server",
+			Changes: []Change{
+				{
+					Exposed: []ExposedPort{{LocalPort: 3000, Public: false, URL: "foobar"}},
+				},
+			},
+			// this will not exposed because test manager didn't implement it properly
+			// ExpectedExposure: []ExposedPort{
+			// 	{LocalPort: 3000},
+			// },
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{
+					{LocalPort: 3000, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}},
+				},
 			},
 		},
 	}
@@ -555,7 +704,6 @@ func TestPortsUpdateState(t *testing.T) {
 				for _, c := range test.Changes {
 					if c.Config != nil {
 						change := &Configs{}
-						change.workspaceConfigs = parseWorkspaceConfigs(c.Config.workspace)
 						portConfigs, rangeConfigs := parseInstanceConfigs(c.Config.instance)
 						change.instancePortConfigs = portConfigs
 						change.instanceRangeConfigs = rangeConfigs
@@ -581,8 +729,6 @@ func TestPortsUpdateState(t *testing.T) {
 			wg.Wait()
 
 			var (
-				sorPorts         = cmpopts.SortSlices(func(x, y uint32) bool { return x < y })
-				sortPortStatus   = cmpopts.SortSlices(func(x, y *api.PortsStatus) bool { return x.LocalPort < y.LocalPort })
 				sortExposed      = cmpopts.SortSlices(func(x, y ExposedPort) bool { return x.LocalPort < y.LocalPort })
 				ignoreUnexported = cmpopts.IgnoreUnexported(
 					api.PortsStatus{},
@@ -593,7 +739,7 @@ func TestPortsUpdateState(t *testing.T) {
 				t.Errorf("unexpected exposures (-want +got):\n%s", diff)
 			}
 
-			if diff := cmp.Diff(test.ExpectedUpdates, UpdateExpectation(updts), sorPorts, sortPortStatus, ignoreUnexported); diff != "" {
+			if diff := cmp.Diff(test.ExpectedUpdates, UpdateExpectation(updts), ignoreUnexported); diff != "" {
 				t.Errorf("unexpected updates (-want +got):\n%s", diff)
 			}
 		})
@@ -642,7 +788,7 @@ func (tep *testExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 func (tep *testExposedPorts) Run(ctx context.Context) {
 }
 
-func (tep *testExposedPorts) Expose(ctx context.Context, local uint32, public bool) <-chan error {
+func (tep *testExposedPorts) Expose(ctx context.Context, local uint32, public bool, protocol string) <-chan error {
 	tep.mu.Lock()
 	defer tep.mu.Unlock()
 
@@ -744,4 +890,103 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestManager_getStatus(t *testing.T) {
+	type portState struct {
+		port      uint32
+		notServed bool
+	}
+	type fields struct {
+		orderInYaml []any
+		state       []portState
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []uint32
+	}{
+		{
+			name: "happy path",
+			fields: fields{
+				// The port number (e.g. 1337) or range (e.g. 3000-3999) to expose.
+				orderInYaml: []any{1002, 1000, "3000-3999", 1001},
+				state:       []portState{{port: 1000}, {port: 1001}, {port: 1002}, {port: 3003}, {port: 3001}, {port: 3002}, {port: 4002}, {port: 4000}, {port: 5000}, {port: 5005}},
+			},
+			want: []uint32{1002, 1000, 3001, 3002, 3003, 1001, 4000, 4002, 5000, 5005},
+		},
+		{
+			name: "order for ranged ports and inside ranged order by number ASC",
+			fields: fields{
+				orderInYaml: []any{1002, "3000-3999", 1009, "4000-4999"},
+				state:       []portState{{port: 5000}, {port: 1000}, {port: 1009}, {port: 4000}, {port: 4001}, {port: 3000}, {port: 3009}},
+			},
+			want: []uint32{3000, 3009, 1009, 4000, 4001, 1000, 5000},
+		},
+		{
+			name: "served ports order by number ASC",
+			fields: fields{
+				orderInYaml: []any{},
+				state:       []portState{{port: 4000}, {port: 4003}, {port: 4007}, {port: 4001}, {port: 4006}},
+			},
+			want: []uint32{4000, 4001, 4003, 4006, 4007},
+		},
+		{
+			// Please make sure this test pass for code browser resolveExternalPort
+			// see also https://github.com/gitpod-io/openvscode-server/blob/5ab7644a8bbf37d28e23212bc6f1529cafd8bf7b/extensions/gitpod-web/src/extension.ts#L310-L339
+			name: "expose not served ports should respond their status",
+			fields: fields{
+				orderInYaml: []any{},
+				state:       []portState{{port: 4000, notServed: true}},
+			},
+			want: []uint32{4000},
+		},
+		// It will not works because we do not `Run` ports Manger
+		// As ports Manger will autoExpose those ports (but not ranged port) in yaml
+		// and they will exists in state
+		// {
+		// 	name: "not ignore ports that not served but exists in yaml",
+		// 	fields: fields{
+		// 		orderInYaml: []any{1002, 1000, 1001},
+		// 		state:       []uint32{},
+		// 	},
+		// 	want: []uint32{1002, 1000, 1001},
+		// },
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			state := make(map[uint32]*managedPort)
+			for _, s := range tt.fields.state {
+				state[s.port] = &managedPort{
+					Served:             !s.notServed,
+					LocalhostPort:      s.port,
+					TunneledTargetPort: s.port,
+					TunneledClients:    map[string]uint32{},
+				}
+			}
+			portsItems := []*gitpod.PortsItems{}
+			for _, port := range tt.fields.orderInYaml {
+				portsItems = append(portsItems, &gitpod.PortsItems{Port: port})
+			}
+			portsConfig, rangeConfig := parseInstanceConfigs(portsItems)
+			pm := &Manager{
+				configs: &Configs{
+					instancePortConfigs:  portsConfig,
+					instanceRangeConfigs: rangeConfig,
+				},
+				state: state,
+			}
+			got := pm.getStatus()
+			if len(got) != len(tt.want) {
+				t.Errorf("Manager.getStatus() length = %v, want %v", len(got), len(tt.want))
+			}
+			gotPorts := []uint32{}
+			for _, g := range got {
+				gotPorts = append(gotPorts, g.LocalPort)
+			}
+			if diff := cmp.Diff(gotPorts, tt.want); diff != "" {
+				t.Errorf("unexpected exposures (-want +got):\n%s", diff)
+			}
+		})
+	}
 }

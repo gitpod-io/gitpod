@@ -1,0 +1,173 @@
+on:
+    workflow_call:
+        inputs:
+            pluginName:
+                description: Name of the plugin.
+                type: string
+                required: true
+            pluginId:
+                description: ID of the plugin in lowercase and without spaces.
+                type: string
+                required: true
+            productCode:
+                description: JB Product Code
+                type: string
+                required: true
+            productType:
+                description: JB Product Type
+                type: string
+                required: true
+            gradlePropertiesPath:
+                description: Path for the gradle.properties file of the plugin.
+                type: string
+                required: true
+        secrets:
+            slackWebhook:
+                required: true
+            roboquatRepoPat:
+                required: true
+jobs:
+    update-plugin-platform:
+        name: Update Platform Version from ${{ inputs.pluginName }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+            - name: Get Current Platform Version
+              id: current-version
+              run: |
+                  CURRENT_VERSION=$(cat ${{ inputs.gradlePropertiesPath }} | grep platformVersion= | sed 's/platformVersion=//')
+                  echo "Current platform version: $CURRENT_VERSION"
+                  echo "::set-output name=result::$CURRENT_VERSION"
+            - name: Get Latest Platform Version
+              id: latest-version
+              run: |
+                URL="https://data.services.jetbrains.com/products/releases?code=${{ inputs.productCode }}&type=${{ inputs.productType }}&platform=linux"
+                echo "URL: $URL"
+                RELEASE=$(curl -s "$URL" |jq ".${{ inputs.productCode }}[0]")
+                MAJOR_VERSION=$(echo $RELEASE |jq -r ".majorVersion")
+                echo "MAJOR_VERSION: $MAJOR_VERSION"
+
+                BUILD=$(echo $RELEASE |jq -r ".build")
+                echo "BUILD: $BUILD"
+                MAJOR=$(cut -d. -f1 <<< $BUILD)
+                echo "MAJOR: $MAJOR"
+                MINOR=$(cut -d. -f2 <<< $BUILD)
+                echo "MINOR: $MINOR"
+                LATEST_VERSION="$MAJOR.$MINOR-EAP-CANDIDATE-SNAPSHOT"
+                echo "Latest platform version: $LATEST_VERSION"
+
+                echo "::set-output name=sinceBuild::$MAJOR.$MINOR"
+                echo "::set-output name=untilBuild::$MAJOR.*"
+                echo "::set-output name=majorVersion::$MAJOR_VERSION"
+                echo "::set-output name=result::$LATEST_VERSION"
+            - name: Update ${{ inputs.gradlePropertiesPath }}
+              if: ${{ steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+              run: |
+                  sed -i "s/pluginSinceBuild=.*/pluginSinceBuild=${{ steps.latest-version.outputs.sinceBuild }}/" ${{ inputs.gradlePropertiesPath }}
+                  sed -i "s/pluginUntilBuild=.*/pluginUntilBuild=${{ steps.latest-version.outputs.untilBuild }}/" ${{ inputs.gradlePropertiesPath }}
+                  sed -i "s/pluginVerifierIdeVersions=.*/pluginVerifierIdeVersions=${{ steps.latest-version.outputs.majorVersion }}/" ${{ inputs.gradlePropertiesPath }}
+                  sed -i 's/platformVersion=${{ steps.current-version.outputs.result }}/platformVersion=${{ steps.latest-version.outputs.result }}/' ${{ inputs.gradlePropertiesPath }}
+                  git diff
+            - name: Create Pull Request for Gateway Plugin
+              id: create-gateway-pr
+              if: ${{ contains(inputs.pluginId, 'gateway-plugin') && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+              uses: peter-evans/create-pull-request@v4
+              with:
+                  title: "[JetBrains] Update Platform Version from ${{ inputs.pluginName }}"
+                  body: |
+                      ## Description
+                      This PR updates the Platform Version from ${{ inputs.pluginName }} to the latest version.
+
+                      ## How to test
+
+                      Merge if tests are green, if something breaks then add tests for regressions.
+
+                      <details>
+                      <summary>if you want to test manually for some reasons</summary>
+
+                      1. Ensure you have the Gateway installed from [JetBrains Toolbox App](https://www.jetbrains.com/toolbox-app/) and have it up-to-date.
+                        - You should use Gateway version corresponding to plugin qualifier, i.e. for stable plugin test with released, for latest test with EAP.
+                        - It could be that a new Gateway is not published for the given SDK yet then wait for it to be published. You can check the build version in the About dialog.
+                      2. Download the plugin build related to this branch in [Dev Versions](https://plugins.jetbrains.com/plugin/18438-gitpod-gateway/versions/dev), and [install it on the Gateway](https://www.jetbrains.com/help/idea/managing-plugins.html#install_plugin_from_disk).
+                        - You can also uninstall current Gitpod plugin, configure dev channel using https://plugins.jetbrains.com/plugins/list?channel=dev&pluginId=18438-gitpod-gateway and restart GW to test that the proper version is detected and installed.
+                      3. Create a new workspace from the Gateway (it's ok to use the pre-selected IDE and Repository) and confirm if JetBrains Client can connect to it.
+                      </details>
+
+                      ## Release Notes
+                      ```release-note
+                      NONE
+                      ```
+
+                      ## Werft options:
+                      - [x] /werft publish-to-jb-marketplace
+                      - [x] /werft with-preview
+                      - [x] /werft with-large-vm
+                      - [x] /werft with-gce-vm
+                      - [x] with-integration-tests=jetbrains
+                      - [x] latest-ide-version=${{ contains(inputs.pluginId, 'latest') }}
+
+                      _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
+                  commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
+                  branch: "jetbrains/${{ inputs.pluginId }}-platform"
+                  labels: "team: IDE,editor: jetbrains"
+                  team-reviewers: |
+                    team-experience
+                  token: ${{ secrets.roboquatRepoPat }}
+                  committer: Robo Quat <roboquat@gitpod.io>
+                  author: Robo Quat <roboquat@gitpod.io>
+            - name: Create Pull Request for Backend Plugin
+              id: create-backend-pr
+              if: ${{ contains(inputs.pluginId, 'backend-plugin') && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+              uses: peter-evans/create-pull-request@v4
+              with:
+                  title: "[JetBrains] Update Platform Version from ${{ inputs.pluginName }}"
+                  body: |
+                      ## Description
+                      This PR updates the Platform Version from ${{ inputs.pluginName }} to the latest version.
+
+                      ## How to test
+
+                      Merge if tests are green, if something breaks then add tests for regressions.
+
+                      <details>
+                      <summary>if you want to test manually for some reasons</summary>
+                      1. Open the preview environment generated for this branch
+                      2. Choose the _Latest Release (Unstable)_ version of IntelliJ IDEA as your preferred editor
+                      3. Start a workspace using this repository: https://github.com/gitpod-samples/spring-petclinic
+                      4. Verify that the workspace starts successfully
+                      5. Verify that the IDE opens successfully
+                      </details>
+
+                      ## Release Notes
+                      ```release-note
+                      NONE
+                      ```
+
+                      ## Werft options:
+                      - [x] /werft with-preview
+                      - [x] /werft with-large-vm
+                      - [x] /werft with-gce-vm
+                      - [x] with-integration-tests=jetbrains
+                      - [x] latest-ide-version=${{ contains(inputs.pluginId, 'latest') }}
+
+                      _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
+                  commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
+                  branch: "jetbrains/${{ inputs.pluginId }}-platform"
+                  labels: "team: IDE,editor: jetbrains"
+                  team-reviewers: |
+                    team-experience
+                  token: ${{ secrets.roboquatRepoPat }}
+                  committer: Robo Quat <roboquat@gitpod.io>
+                  author: Robo Quat <roboquat@gitpod.io>
+            - name: Get previous job's status
+              id: lastrun
+              uses: filiptronicek/get-last-job-status@main
+            - name: Slack Notification
+              if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
+                  SLACK_COLOR: ${{ job.status }}
+                  SLACK_TITLE: ${{ inputs.productName }}
+                  SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"

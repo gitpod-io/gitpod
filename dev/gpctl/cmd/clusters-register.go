@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -70,6 +71,17 @@ var clustersRegisterCmd = &cobra.Command{
 			request.Name = name
 		}
 
+		region, err := cmd.Flags().GetString("region")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if len(region) > 0 {
+			request.Region = region
+		}
+		if strings.ToLower(region) != region {
+			log.Fatal("Region must be all lowercase.")
+		}
+
 		url, err := cmd.Flags().GetString("url")
 		if err != nil {
 			log.Fatal(err)
@@ -113,14 +125,6 @@ var clustersRegisterCmd = &cobra.Command{
 			request.Hints.Cordoned = cordoned
 		}
 
-		govern, err := cmd.Flags().GetBool("hint-govern")
-		if err != nil {
-			log.Fatal(err)
-		}
-		if cmd.Flags().Changed("hint-govern") {
-			request.Hints.Govern = govern
-		}
-
 		preferability, err := cmd.Flags().GetString("hint-preferability")
 		if err != nil {
 			log.Fatal(err)
@@ -150,10 +154,11 @@ var clustersRegisterCmd = &cobra.Command{
 
 func init() {
 	clustersRegisterCmd.Flags().String("name", "", "cluster name")
+	clustersRegisterCmd.Flags().String("region", "", "region name - one of [europe, north-america] or empty, which allows cross-region workspaces")
 	clustersRegisterCmd.Flags().String("url", "", "cluster url")
 	clustersRegisterCmd.Flags().String("tls-path", "", "folder containing the ws cluster's ca.crt, tls.crt and tls.key")
 	clustersRegisterCmd.Flags().Bool("hint-cordoned", false, "sets hint cordoned")
-	clustersRegisterCmd.Flags().Bool("hint-govern", false, "sets hint govern")
+	clustersRegisterCmd.Flags().Bool("hint-govern", true, "DEPRECATED: sets hint govern")
 	clustersRegisterCmd.Flags().String("hint-preferability", "none", "sets hint preferability, one of: 'none', 'prefer', 'dontschedule'")
 
 	clustersRegisterCmd.Flags().String("from-file", "", "reads request from JSON file, '-' for stdin")

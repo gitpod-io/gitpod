@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package image_builder_mk3
 
@@ -8,10 +8,11 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
-	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -34,7 +35,7 @@ func pullSecretName(ctx *common.RenderContext) (string, error) {
 }
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
 	var hashObj []runtime.Object
 	if objs, err := configmap(ctx); err != nil {
@@ -72,7 +73,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name: "wsman-tls-certs",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: wsmanager.TLSSecretNameClient,
+					SecretName: wsmanagermk2.TLSSecretNameClient,
 				},
 			},
 		},
@@ -81,12 +82,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: secretName,
+					Items:      []corev1.KeyToPath{{Key: ".dockerconfigjson", Path: "pull-secret.json"}},
 				},
 			},
 		},
-		*common.InternalCAVolume(),
-		*common.NewEmptyDirVolume("cacerts"),
+		common.CAVolume(),
 	}
+
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "configuration",
@@ -100,24 +102,38 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		{
 			Name:      "pull-secret",
-			MountPath: PullSecretFile,
-			SubPath:   ".dockerconfigjson",
+			MountPath: "/config/pull-secret",
 		},
+		common.CAVolumeMount(),
 	}
-	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
-		volumes = append(volumes, *vol)
-		volumeMounts = append(volumeMounts, *mnt)
+
+	if ctx.Config.Kind == config.InstallationWorkspace {
+		// Only enable TLS in workspace clusters. This check can be removed
+		// once image-builder-mk3 has been removed from application clusters
+		// (https://github.com/gitpod-io/gitpod/issues/7845).
+		volumes = append(volumes, corev1.Volume{
+			Name: VolumeTLSCerts,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{SecretName: TLSSecretName},
+			},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      VolumeTLSCerts,
+			MountPath: "/certs",
+			ReadOnly:  true,
+		})
 	}
 
 	return []runtime.Object{&appsv1.Deployment{
 		TypeMeta: common.TypeMetaDeployment,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
-			Namespace: ctx.Namespace,
-			Labels:    labels,
+			Name:        Component,
+			Namespace:   ctx.Namespace,
+			Labels:      labels,
+			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 		},
 		Spec: appsv1.DeploymentSpec{
-			Selector: &metav1.LabelSelector{MatchLabels: labels},
+			Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 			Replicas: common.Replicas(ctx, Component),
 			Strategy: common.DeploymentStrategy,
 			Template: corev1.PodTemplateSpec{
@@ -125,21 +141,21 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Name:      Component,
 					Namespace: ctx.Namespace,
 					Labels:    labels,
-					Annotations: map[string]string{
-						common.AnnotationConfigChecksum: configHash,
-					},
+					Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+						return map[string]string{
+							common.AnnotationConfigChecksum: configHash,
+						}
+					}),
 				},
 				Spec: corev1.PodSpec{
-					Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
+					Affinity:                      cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelServices),
+					TopologySpreadConstraints:     cluster.WithHostnameTopologySpread(Component),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
-					DNSPolicy:                     "ClusterFirst",
-					RestartPolicy:                 "Always",
+					DNSPolicy:                     corev1.DNSClusterFirst,
+					RestartPolicy:                 corev1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					Volumes:                       volumes,
-					InitContainers: []corev1.Container{
-						*common.InternalCAContainer(ctx),
-					},
 					Containers: []corev1.Container{{
 						Name:            Component,
 						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
@@ -149,10 +165,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							"--config",
 							"/config/image-builder.json",
 						},
-						Env: common.MergeEnv(
+						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
-							common.WorkspaceTracingEnv(ctx),
-						),
+							common.WorkspaceTracingEnv(ctx, Component),
+						)),
 						Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								"cpu":    resource.MustParse("100m"),
@@ -164,8 +180,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:          RPCPortName,
 						}},
 						SecurityContext: &corev1.SecurityContext{
-							Privileged: pointer.Bool(false),
-							RunAsUser:  pointer.Int64(33333),
+							Privileged:               pointer.Bool(false),
+							AllowPrivilegeEscalation: pointer.Bool(false),
+							RunAsUser:                pointer.Int64(33333),
 						},
 						VolumeMounts: volumeMounts,
 					},

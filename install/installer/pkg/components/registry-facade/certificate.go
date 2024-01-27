@@ -1,11 +1,12 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package registryfacade
 
 import (
 	"fmt"
+
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 
@@ -27,11 +28,14 @@ func certificate(ctx *common.RenderContext) ([]runtime.Object, error) {
 			SecretName: common.RegistryFacadeTLSCertSecret,
 			IssuerRef: cmmeta.ObjectReference{
 				Name:  common.CertManagerCAIssuer,
-				Kind:  "Issuer",
+				Kind:  certmanagerv1.ClusterIssuerKind,
 				Group: "cert-manager.io",
 			},
 			DNSNames: []string{
 				fmt.Sprintf("reg.%s", ctx.Config.Domain),
+			},
+			SecretTemplate: &certmanagerv1.CertificateSecretTemplate{
+				Labels: common.DefaultLabels(Component),
 			},
 		},
 	}}, nil

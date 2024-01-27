@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { injectable, inject } from "inversify";
@@ -48,4 +48,13 @@ export class EncryptionServiceImpl implements EncryptionService {
     protected deserialize<T>(data: string): T {
         return JSON.parse(data) as T;
     }
+}
+
+/** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
+export namespace GlobalEncryptionService {
+    export let encryptionService: EncryptionService;
+}
+
+export function getGlobalEncryptionService() {
+    return GlobalEncryptionService.encryptionService;
 }

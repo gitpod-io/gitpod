@@ -1,0 +1,40 @@
+name: JB Plugins Platform Update
+on:
+    workflow_dispatch:
+    schedule:
+        # At 11:00 on every day-of-week from Monday through Friday.
+        - cron: "0 11 * * 1-5"
+jobs:
+    update-latest-backend-plugin:
+        uses: ./.github/workflows/jetbrains-update-plugin-platform-template.yml
+        with:
+            pluginName: JetBrains Backend Plugin (EAP)
+            pluginId: latest-backend-plugin
+            productCode: IIU
+            productType: eap,rc,release
+            gradlePropertiesPath: components/ide/jetbrains/backend-plugin/gradle-latest.properties
+        secrets:
+            slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+            roboquatRepoPat: ${{ secrets.ROBOQUAT_REPO_PAT }}
+    update-latest-gateway-plugin:
+        uses: ./.github/workflows/jetbrains-update-plugin-platform-template.yml
+        with:
+            pluginName: JetBrains Gateway Plugin (EAP)
+            pluginId: latest-gateway-plugin
+            productCode: GW
+            productType: eap,rc,release
+            gradlePropertiesPath: components/ide/jetbrains/gateway-plugin/gradle-latest.properties
+        secrets:
+            slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+            roboquatRepoPat: ${{ secrets.ROBOQUAT_REPO_PAT }}
+    update-stable-gateway-plugin:
+        uses: ./.github/workflows/jetbrains-update-plugin-platform-template.yml
+        with:
+            pluginName: JetBrains Gateway Plugin (Stable)
+            pluginId: stable-gateway-plugin
+            productCode: GW
+            productType: release
+            gradlePropertiesPath: components/ide/jetbrains/gateway-plugin/gradle-stable.properties
+        secrets:
+            slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+            roboquatRepoPat: ${{ secrets.ROBOQUAT_REPO_PAT }}

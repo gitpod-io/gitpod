@@ -1,0 +1,383 @@
+# Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: api.stripe.com
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Content-Type:
+                - application/x-www-form-urlencoded
+            Stripe-Version:
+                - "2020-08-27"
+            User-Agent:
+                - Stripe/v1 GoBindings/72.114.0
+            X-Stripe-Client-User-Agent:
+                - '{"application":null,"bindings_version":"72.114.0","lang":"go","lang_version":"go1.19.5","publisher":"stripe","uname":"Linux gitpodio-gitpod-tojg8kfndm8 6.1.20-060120-generic #202303171032-Ubuntu SMP PREEMPT_DYNAMIC Fri Mar 17 11:30:51 UTC x86_64 x86_64 x86_64 GNU/Linux\n"}'
+        url: https://api.stripe.com/v1/disputes/dp_1MrLJpAyBDPbWrhawbWHEIDL?expand[0]=payment_intent.customer
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        transfer_encoding: []
+        trailer: {}
+        content_length: 9692
+        uncompressed: false
+        body: |-
+            {
+              "id": "dp_1MrLJpAyBDPbWrhawbWHEIDL",
+              "object": "dispute",
+              "amount": 100,
+              "balance_transaction": "txn_1MrLJpAyBDPbWrhaoqkdM6Pg",
+              "balance_transactions": [
+                {
+                  "id": "txn_1MrLJpAyBDPbWrhaoqkdM6Pg",
+                  "object": "balance_transaction",
+                  "amount": -100,
+                  "available_on": 1680566400,
+                  "created": 1680182109,
+                  "currency": "eur",
+                  "description": "Chargeback withdrawal for ch_3MrLJoAyBDPbWrha4K2JqJ2G",
+                  "exchange_rate": null,
+                  "fee": 1500,
+                  "fee_details": [
+                    {
+                      "amount": 1500,
+                      "application": null,
+                      "currency": "eur",
+                      "description": "Dispute fee",
+                      "type": "stripe_fee"
+                    }
+                  ],
+                  "net": -1600,
+                  "reporting_category": "dispute",
+                  "source": "dp_1MrLJpAyBDPbWrhawbWHEIDL",
+                  "status": "pending",
+                  "type": "adjustment"
+                }
+              ],
+              "charge": "ch_3MrLJoAyBDPbWrha4K2JqJ2G",
+              "created": 1680182109,
+              "currency": "eur",
+              "evidence": {
+                "access_activity_log": null,
+                "billing_address": "39111",
+                "cancellation_policy": null,
+                "cancellation_policy_disclosure": null,
+                "cancellation_rebuttal": null,
+                "customer_communication": null,
+                "customer_email_address": "milan+stripe-dispute@gitpod.io",
+                "customer_name": "Milan Test Dispute",
+                "customer_purchase_ip": null,
+                "customer_signature": null,
+                "duplicate_charge_documentation": null,
+                "duplicate_charge_explanation": null,
+                "duplicate_charge_id": null,
+                "product_description": null,
+                "receipt": null,
+                "refund_policy": null,
+                "refund_policy_disclosure": null,
+                "refund_refusal_explanation": null,
+                "service_date": null,
+                "service_documentation": null,
+                "shipping_address": null,
+                "shipping_carrier": null,
+                "shipping_date": null,
+                "shipping_documentation": null,
+                "shipping_tracking_number": null,
+                "uncategorized_file": null,
+                "uncategorized_text": null
+              },
+              "evidence_details": {
+                "due_by": 1680998399,
+                "has_evidence": false,
+                "past_due": false,
+                "submission_count": 0
+              },
+              "is_charge_refundable": false,
+              "livemode": false,
+              "metadata": {},
+              "payment_intent": {
+                "id": "pi_3MrLJoAyBDPbWrha4geRUptb",
+                "object": "payment_intent",
+                "amount": 100,
+                "amount_capturable": 0,
+                "amount_details": {
+                  "tip": {}
+                },
+                "amount_received": 100,
+                "application": null,
+                "application_fee_amount": null,
+                "automatic_payment_methods": null,
+                "canceled_at": null,
+                "cancellation_reason": null,
+                "capture_method": "automatic",
+                "charges": {
+                  "object": "list",
+                  "data": [
+                    {
+                      "id": "ch_3MrLJoAyBDPbWrha4K2JqJ2G",
+                      "object": "charge",
+                      "amount": 100,
+                      "amount_captured": 100,
+                      "amount_refunded": 0,
+                      "application": null,
+                      "application_fee": null,
+                      "application_fee_amount": null,
+                      "balance_transaction": "txn_3MrLJoAyBDPbWrha460gRh0F",
+                      "billing_details": {
+                        "address": {
+                          "city": null,
+                          "country": null,
+                          "line1": null,
+                          "line2": null,
+                          "postal_code": "39111",
+                          "state": null
+                        },
+                        "email": null,
+                        "name": null,
+                        "phone": null
+                      },
+                      "calculated_statement_descriptor": "GITPOD.IO",
+                      "captured": true,
+                      "created": 1680182108,
+                      "currency": "eur",
+                      "customer": "cus_NcaUPpUY7gFAs7",
+                      "description": "asdasd",
+                      "destination": null,
+                      "dispute": "dp_1MrLJpAyBDPbWrhawbWHEIDL",
+                      "disputed": true,
+                      "failure_balance_transaction": null,
+                      "failure_code": null,
+                      "failure_message": null,
+                      "fraud_details": {},
+                      "invoice": null,
+                      "livemode": false,
+                      "metadata": {},
+                      "on_behalf_of": null,
+                      "order": null,
+                      "outcome": {
+                        "network_status": "approved_by_network",
+                        "reason": null,
+                        "risk_level": "normal",
+                        "risk_score": 3,
+                        "seller_message": "Payment complete.",
+                        "type": "authorized"
+                      },
+                      "paid": true,
+                      "payment_intent": "pi_3MrLJoAyBDPbWrha4geRUptb",
+                      "payment_method": "src_1MrLJnAyBDPbWrha6IRSXAZT",
+                      "payment_method_details": {
+                        "card": {
+                          "brand": "visa",
+                          "checks": {
+                            "address_line1_check": null,
+                            "address_postal_code_check": "pass",
+                            "cvc_check": "pass"
+                          },
+                          "country": "US",
+                          "exp_month": 4,
+                          "exp_year": 2024,
+                          "fingerprint": "Ktjcyilms0eJhW5S",
+                          "funding": "credit",
+                          "installments": null,
+                          "last4": "0259",
+                          "mandate": null,
+                          "network": "visa",
+                          "three_d_secure": null,
+                          "wallet": null
+                        },
+                        "type": "card"
+                      },
+                      "receipt_email": "milan+stripe-dispute@gitpod.io",
+                      "receipt_number": null,
+                      "receipt_url": "https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xTEZGcHVBeUJEUGJXcmhhKKSdlqEGMgZvJWSZi6U6LBYd0Eabq05S6pQL_NkuA_kGSaSdM7zqvEKt79RhBL6zW1pIdIHm9O38-2Ly",
+                      "refunded": false,
+                      "refunds": {
+                        "object": "list",
+                        "data": [],
+                        "has_more": false,
+                        "total_count": 0,
+                        "url": "/v1/charges/ch_3MrLJoAyBDPbWrha4K2JqJ2G/refunds"
+                      },
+                      "review": null,
+                      "shipping": null,
+                      "source": {
+                        "id": "src_1MrLJnAyBDPbWrha6IRSXAZT",
+                        "object": "source",
+                        "amount": null,
+                        "card": {
+                          "address_line1_check": null,
+                          "address_zip_check": "pass",
+                          "brand": "Visa",
+                          "country": "US",
+                          "cvc_check": "pass",
+                          "dynamic_last4": null,
+                          "exp_month": 4,
+                          "exp_year": 2024,
+                          "fingerprint": "Ktjcyilms0eJhW5S",
+                          "funding": "credit",
+                          "last4": "0259",
+                          "name": null,
+                          "three_d_secure": "optional",
+                          "tokenization_method": null
+                        },
+                        "created": 1680182108,
+                        "currency": null,
+                        "flow": "none",
+                        "livemode": false,
+                        "metadata": {},
+                        "owner": {
+                          "address": {
+                            "city": null,
+                            "country": null,
+                            "line1": null,
+                            "line2": null,
+                            "postal_code": "39111",
+                            "state": null
+                          },
+                          "email": null,
+                          "name": null,
+                          "phone": null,
+                          "verified_address": null,
+                          "verified_email": null,
+                          "verified_name": null,
+                          "verified_phone": null
+                        },
+                        "statement_descriptor": null,
+                        "status": "chargeable",
+                        "type": "card",
+                        "usage": "reusable"
+                      },
+                      "source_transfer": null,
+                      "statement_descriptor": "Gitpod.io",
+                      "statement_descriptor_suffix": null,
+                      "status": "succeeded",
+                      "transfer_data": null,
+                      "transfer_group": null
+                    }
+                  ],
+                  "has_more": false,
+                  "total_count": 1,
+                  "url": "/v1/charges?payment_intent=pi_3MrLJoAyBDPbWrha4geRUptb"
+                },
+                "confirmation_method": "automatic",
+                "created": 1680182108,
+                "currency": "eur",
+                "customer": {
+                  "id": "cus_NcaUPpUY7gFAs7",
+                  "object": "customer",
+                  "address": {
+                    "city": "",
+                    "country": "CZ",
+                    "line1": "",
+                    "line2": "",
+                    "postal_code": "",
+                    "state": ""
+                  },
+                  "balance": 0,
+                  "created": 1680182072,
+                  "currency": null,
+                  "default_currency": null,
+                  "default_source": "src_1MrLJnAyBDPbWrha6IRSXAZT",
+                  "delinquent": false,
+                  "description": null,
+                  "discount": null,
+                  "email": "milan+stripe-dispute@gitpod.io",
+                  "invoice_prefix": "9B6F1202",
+                  "invoice_settings": {
+                    "custom_fields": null,
+                    "default_payment_method": null,
+                    "footer": null,
+                    "rendering_options": null
+                  },
+                  "livemode": false,
+                  "metadata": {
+                    "attributionId": "team:479efa39-6937-4ee7-ac61-6b4b623d049f"
+                  },
+                  "name": "Milan Test Dispute",
+                  "phone": null,
+                  "preferred_locales": [],
+                  "shipping": null,
+                  "tax_exempt": "none",
+                  "test_clock": null
+                },
+                "description": "asdasd",
+                "invoice": null,
+                "last_payment_error": null,
+                "latest_charge": "ch_3MrLJoAyBDPbWrha4K2JqJ2G",
+                "livemode": false,
+                "metadata": {},
+                "next_action": null,
+                "on_behalf_of": null,
+                "payment_method": null,
+                "payment_method_options": {
+                  "card": {
+                    "installments": null,
+                    "mandate_options": null,
+                    "network": null,
+                    "request_three_d_secure": "automatic"
+                  }
+                },
+                "payment_method_types": [
+                  "card"
+                ],
+                "processing": null,
+                "receipt_email": "milan+stripe-dispute@gitpod.io",
+                "review": null,
+                "setup_future_usage": "off_session",
+                "shipping": null,
+                "source": "src_1MrLJnAyBDPbWrha6IRSXAZT",
+                "statement_descriptor": "Gitpod.io",
+                "statement_descriptor_suffix": null,
+                "status": "succeeded",
+                "transfer_data": null,
+                "transfer_group": null
+              },
+              "reason": "fraudulent",
+              "status": "needs_response"
+            }
+        headers:
+            Access-Control-Allow-Credentials:
+                - "true"
+            Access-Control-Allow-Methods:
+                - GET, POST, HEAD, OPTIONS, DELETE
+            Access-Control-Allow-Origin:
+                - '*'
+            Access-Control-Expose-Headers:
+                - Request-Id, Stripe-Manage-Version, X-Stripe-External-Auth-Required, X-Stripe-Privileged-Session-Required
+            Access-Control-Max-Age:
+                - "300"
+            Cache-Control:
+                - no-cache, no-store
+            Content-Length:
+                - "9692"
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 30 Mar 2023 13:29:08 GMT
+            Request-Id:
+                - req_N0hol0KcKDB8Pt
+            Server:
+                - nginx
+            Strict-Transport-Security:
+                - max-age=63072000; includeSubDomains; preload
+            Stripe-Version:
+                - "2020-08-27"
+        status: 200 OK
+        code: 200
+        duration: 396.974908ms

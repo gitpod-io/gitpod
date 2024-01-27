@@ -1,0 +1,19 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+envvars:
+  DB_INCLUSTER_ENABLED: "0"
+  DB_EXTERNAL_CERTIFICATE_NAME: database-secret
+  DOMAIN: gitpod.io
+  REGISTRY_INCLUSTER_ENABLED: "1"
+  REGISTRY_INCLUSTER_STORAGE_S3_BUCKET_NAME: container-s3-bucket
+  REGISTRY_INCLUSTER_STORAGE_S3_CERTIFICATE_NAME: container-s3-secret
+  REGISTRY_INCLUSTER_STORAGE_S3_ENDPOINT: container-s3-bucket.com
+  REGISTRY_INCLUSTER_STORAGE_S3_REGION: container-s3-region
+  REGISTRY_INCLUSTER_STORAGE: s3
+  STORE_PROVIDER: s3
+  STORE_REGION: s3-region
+  STORE_S3_BUCKET: s3-bucket
+  STORE_S3_CREDENTIALS_NAME: s3-secret
+  STORE_S3_ENDPOINT: s3-endpoint.com

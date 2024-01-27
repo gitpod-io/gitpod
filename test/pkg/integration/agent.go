@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package integration
 
@@ -19,13 +19,13 @@ import (
 
 // ServeAgent is the main entrypoint for agents. It establishes flags and starts an RPC server
 // on a port passed as flag.
-func ServeAgent(rcvr interface{}) {
+func ServeAgent(done chan struct{}, rcvr interface{}) {
 	defaultPort, _ := strconv.Atoi(os.Getenv("AGENT_RPC_PORT"))
 	port := flag.Int("rpc-port", defaultPort, "the port on wich to run the RPC server on")
 	flag.Parse()
 
 	ta := &testAgent{
-		Done: make(chan struct{}),
+		Done: done,
 	}
 
 	err := rpc.RegisterName("TestAgent", ta)
@@ -56,7 +56,7 @@ func ServeAgent(rcvr interface{}) {
 
 	select {
 	case <-sigChan:
-	case <-ta.Done:
+	case <-done:
 	}
 	fmt.Println("shutting down")
 }

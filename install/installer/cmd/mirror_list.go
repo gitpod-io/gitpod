@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -26,6 +26,8 @@ type mirrorListRepo struct {
 var mirrorListOpts struct {
 	ConfigFN          string
 	ExcludeThirdParty bool
+	Repository        string
+	Domain            string
 }
 
 // mirrorListCmd represents the mirror list command
@@ -63,6 +65,14 @@ image to the "target" repo`,
 			return err
 		}
 
+		if mirrorListOpts.Repository != "" {
+			cfg.Repository = mirrorListOpts.Repository
+		}
+
+		if mirrorListOpts.Domain != "" {
+			cfg.Domain = mirrorListOpts.Domain
+		}
+
 		images, err := generateMirrorList(cfgVersion, cfg)
 		if err != nil {
 			return err
@@ -84,6 +94,8 @@ func init() {
 
 	mirrorListCmd.Flags().BoolVar(&mirrorListOpts.ExcludeThirdParty, "exclude-third-party", false, "exclude non-Gitpod images")
 	mirrorListCmd.Flags().StringVarP(&mirrorListOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
+	mirrorListCmd.Flags().StringVar(&mirrorListOpts.Repository, "repository", "", "overwrite the registry in the config")
+	mirrorListCmd.Flags().StringVar(&mirrorListOpts.Domain, "domain", "", "overwrite the domain in the config")
 }
 
 func renderAllKubernetesObject(cfgVersion string, cfg *configv1.Config) ([]string, error) {
@@ -107,14 +119,16 @@ func renderAllKubernetesObject(cfgVersion string, cfg *configv1.Config) ([]strin
 				InCluster: pointer.Bool(false),
 				External: &configv1.ContainerRegistryExternal{
 					URL: "some-url",
-					Certificate: configv1.ObjectRef{
+					Certificate: &configv1.ObjectRef{
 						Kind: configv1.ObjectRefSecret,
 						Name: "value",
 					},
 				},
 				S3Storage: &configv1.S3Storage{
-					Bucket: "some-bucket",
-					Certificate: configv1.ObjectRef{
+					Bucket:   "some-bucket",
+					Region:   "some-region",
+					Endpoint: "some-url",
+					Certificate: &configv1.ObjectRef{
 						Kind: configv1.ObjectRefSecret,
 						Name: "value",
 					},
@@ -123,38 +137,14 @@ func renderAllKubernetesObject(cfgVersion string, cfg *configv1.Config) ([]strin
 			cfg.ObjectStorage = configv1.ObjectStorage{
 				InCluster: pointer.Bool(false),
 				S3: &configv1.ObjectStorageS3{
-					Endpoint: "endpoint",
-					Credentials: configv1.ObjectRef{
+					Endpoint:   "endpoint",
+					BucketName: "some-bucket",
+					Credentials: &configv1.ObjectRef{
 						Kind: configv1.ObjectRefSecret,
 						Name: "value",
 					},
 				},
 			}
-			return renderKubernetesObjects(cfgVersion, cfg)
-		},
-		func() ([]string, error) {
-			// Render for external depedencies - Azure
-			cfg.Database.CloudSQL = nil
-			cfg.ContainerRegistry = configv1.ContainerRegistry{
-				InCluster: pointer.Bool(false),
-				External: &configv1.ContainerRegistryExternal{
-					URL: "some-url",
-					Certificate: configv1.ObjectRef{
-						Kind: configv1.ObjectRefSecret,
-						Name: "value",
-					},
-				},
-			}
-			cfg.ObjectStorage = configv1.ObjectStorage{
-				InCluster: pointer.Bool(false),
-				Azure: &configv1.ObjectStorageAzure{
-					Credentials: configv1.ObjectRef{
-						Kind: configv1.ObjectRefSecret,
-						Name: "value",
-					},
-				},
-			}
-
 			return renderKubernetesObjects(cfgVersion, cfg)
 		},
 		func() ([]string, error) {
@@ -179,6 +169,12 @@ func renderAllKubernetesObject(cfgVersion string, cfg *configv1.Config) ([]strin
 					},
 				},
 			}
+
+			return renderKubernetesObjects(cfgVersion, cfg)
+		},
+		func() ([]string, error) {
+			// Render for ShiftFS
+			cfg.Workspace.Runtime.FSShiftMethod = configv1.FSShiftShiftFS
 
 			return renderKubernetesObjects(cfgVersion, cfg)
 		},

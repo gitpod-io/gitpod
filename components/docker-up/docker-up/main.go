@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 // Download files to be embed in the binary
 //go:generate ./dependencies.sh
@@ -58,6 +58,7 @@ var aptUpdated = false
 const (
 	dockerSocketFN = "/var/run/docker.sock"
 	gitpodUserId   = 33333
+	containerIf    = "eth0"
 )
 
 func main() {
@@ -101,10 +102,10 @@ func runWithinNetns() (err error) {
 	listenFDs, _ := strconv.Atoi(os.Getenv("LISTEN_FDS"))
 
 	args := []string{
-		"--experimental",
-		"--rootless",
 		"--data-root=/workspace/.docker-root",
+		"--cri-containerd",
 	}
+
 	if opts.Verbose {
 		args = append(args,
 			"--log-level", "debug",
@@ -123,7 +124,6 @@ func runWithinNetns() (err error) {
 	}
 	args = append(args, userArgs...)
 
-	containerIf := "ceth0"
 	netIface, err := netlink.LinkByName(containerIf)
 	if err != nil {
 		return xerrors.Errorf("cannot get container network device %s: %w", containerIf, err)
@@ -285,7 +285,7 @@ var prerequisites = map[string]func() error{
 	"docker-compose": installDockerCompose,
 	"iptables":       installIptables,
 	"uidmap":         installUidMap,
-	"runcV1.1.0":     installRunc,
+	"runcV1.1.3":     installRunc,
 }
 
 func ensurePrerequisites() error {
@@ -456,7 +456,7 @@ func needInstallRunc() bool {
 		return true
 	}
 
-	return major < 1 || major == 1 && minor < 1
+	return major < 1 || major == 1 && minor < 3
 }
 
 func detectRuncVersion(output string) (major, minor int, err error) {

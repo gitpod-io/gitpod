@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package pkg
 
@@ -14,7 +14,7 @@ import (
 
 func (o *OpenVSXProxy) ErrorHandler(rw http.ResponseWriter, r *http.Request, e error) {
 	reqid := r.Context().Value(REQUEST_ID_CTX).(string)
-	key := r.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
+	key, ok := r.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
 
 	logFields := logrus.Fields{
 		LOG_FIELD_FUNC:       "error_handler",
@@ -35,6 +35,10 @@ func (o *OpenVSXProxy) ErrorHandler(rw http.ResponseWriter, r *http.Request, e e
 
 	log.WithFields(logFields).WithError(e).Warn("handling error")
 	o.metrics.IncStatusCounter(r, "error")
+
+	if !ok {
+		return
+	}
 
 	if key == "" {
 		log.WithFields(logFields).Error("cache key header is missing")
@@ -67,6 +71,6 @@ func (o *OpenVSXProxy) ErrorHandler(rw http.ResponseWriter, r *http.Request, e e
 	}
 	rw.WriteHeader(cached.StatusCode)
 	rw.Write(cached.Body)
-	log.WithFields(logFields).Info("used cached response due to a proxy error")
+	log.WithFields(logFields).Debug("used cached response due to a proxy error")
 	o.metrics.BackupCacheServeCounter.Inc()
 }

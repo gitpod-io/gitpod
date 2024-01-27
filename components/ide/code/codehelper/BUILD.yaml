@@ -1,4 +1,19 @@
 packages:
+  - name: docker
+    type: docker
+    srcs:
+      - "supervisor-ide-config.json"
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.codeHelperImage
+      image:
+        - ${imageRepoBase}/ide/code-codehelper:${version}
+        - ${imageRepoBase}/ide/code-codehelper:commit-${__git_commit}
   - name: app
     type: go
     srcs:

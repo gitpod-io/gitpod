@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package builder
 
@@ -24,8 +24,10 @@ import (
 )
 
 const (
-	buildkitdSocketPath      = "unix:///run/buildkit/buildkitd.sock"
-	maxConnectionAttempts    = 10
+	buildkitdSocketPath = "unix:///run/buildkit/buildkitd.sock"
+	// maxConnectionAttempts is the number of attempts to try to connect to the buildkit daemon.
+	// Uses exponential backoff to retry. 8 attempts is a bit over 4 minutes.
+	maxConnectionAttempts    = 8
 	initialConnectionTimeout = 2 * time.Second
 )
 
@@ -138,7 +140,7 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 		// "--debug",
 		"build",
 		"--progress=plain",
-		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true,compression=estargz,force-compression=true",
+		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true",
 		//"--export-cache=type=inline",
 		"--local=context=" + contextdir,
 		//"--export-cache=type=registry,ref=" + target + "-cache",
@@ -155,6 +157,8 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 
 	env := os.Environ()
 	env = append(env, "DOCKER_CONFIG=/tmp")
+	// set log max size to 4MB from 2MB default (to prevent log clipping for large builds)
+	env = append(env, "BUILDKIT_STEP_LOG_MAX_SIZE=4194304")
 	buildctlCmd.Env = env
 
 	if err := buildctlCmd.Start(); err != nil {
@@ -209,7 +213,7 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 	cmd := exec.Command("buildkitd",
 		"--debug",
 		"--addr="+socketPath,
-		"--oci-worker-net=host", "--oci-worker-snapshotter=stargz",
+		"--oci-worker-net=host",
 		"--root=/workspace/buildkit",
 	)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: 0, Gid: 0}}
@@ -251,29 +255,34 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 }
 
 func connectToBuildkitd(socketPath string) (cl *client.Client, err error) {
+	backoff := 1 * time.Second
 	for i := 0; i < maxConnectionAttempts; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), initialConnectionTimeout)
 
 		log.WithField("attempt", i).Debug("attempting to connect to buildkitd")
 		cl, err = client.New(ctx, socketPath, client.WithFailFast())
 		if err != nil {
+			cancel()
 			if i == maxConnectionAttempts-1 {
 				log.WithField("attempt", i).WithError(err).Warn("cannot connect to buildkitd")
+				break
 			}
 
-			cancel()
-			time.Sleep(1 * time.Second)
+			time.Sleep(backoff)
+			backoff = 2 * backoff
 			continue
 		}
 
 		_, err = cl.ListWorkers(ctx)
 		if err != nil {
+			cancel()
 			if i == maxConnectionAttempts-1 {
 				log.WithField("attempt", i).WithError(err).Error("cannot connect to buildkitd")
+				break
 			}
 
-			cancel()
-			time.Sleep(1 * time.Second)
+			time.Sleep(backoff)
+			backoff = 2 * backoff
 			continue
 		}
 

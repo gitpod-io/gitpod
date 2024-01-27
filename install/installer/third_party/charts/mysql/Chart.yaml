@@ -1,6 +1,6 @@
 # Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
-# See License-AGPL.txt in the project root for license information.
+# See License.AGPL.txt in the project root for license information.
 
 apiVersion: v2
 description: Gitpod MySQL
@@ -8,5 +8,5 @@ name: mysql
 version: 1.0.0
 dependencies:
   - name: mysql
-    version: 8.6.2
-    repository: https://charts.bitnami.com/bitnami
+    version: 9.4.5
+    repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami

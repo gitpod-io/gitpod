@@ -48,12 +48,21 @@ service InWorkspaceService {
 
     // Set up a pair of veths that interconnect the specified PID and the workspace container's network namespace.
     rpc SetupPairVeths(SetupPairVethsRequest) returns (SetupPairVethsResponse) {}
+
+    // Get information about the workspace
+    rpc WorkspaceInfo(WorkspaceInfoRequest) returns (WorkspaceInfoResponse) {}
+}
+
+service WorkspaceInfoService {
+    // Get information about the workspace
+    rpc WorkspaceInfo(WorkspaceInfoRequest) returns (WorkspaceInfoResponse) {}
 }
 
 message PrepareForUserNSRequest {}
 message PrepareForUserNSResponse {
     FSShiftMethod fs_shift = 1;
-    bool full_workspace_backup = 2;
+    // was used for full workspace backup
+    reserved 2;
     bool persistent_volume_claim = 3;
 }
 
@@ -61,7 +70,8 @@ message PrepareForUserNSResponse {
 // user namespaced workspaces.
 enum FSShiftMethod {
     SHIFTFS = 0;
-    FUSE = 1;
+    // was used for FUSE
+    reserved 1;
 }
 
 message WriteIDMappingResponse {
@@ -106,3 +116,23 @@ message SetupPairVethsRequest {
     int64 pid = 1;
 }
 message SetupPairVethsResponse {}
+
+message WorkspaceInfoRequest {}
+message WorkspaceInfoResponse {
+    Resources resources = 1;
+}
+
+message Resources {
+    Cpu cpu = 1;
+    Memory memory = 2;
+}
+
+message Cpu {
+    int64 used = 1;
+    int64 limit = 2;
+}
+
+message Memory {
+    int64 used = 1;
+    int64 limit = 2;
+}

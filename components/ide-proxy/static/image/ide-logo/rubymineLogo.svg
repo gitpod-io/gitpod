@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="60" viewBox="0 0 60 60" width="60" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <linearGradient id="a" gradientTransform="matrix(1 0 0 -1 0 72)" gradientUnits="userSpaceOnUse" x1="42.5094" x2="25.99826" y1="26.94837" y2="65.85494">
+        <stop offset=".172" stop-color="#ff1f51" />
+        <stop offset=".28" stop-color="#ff3648" />
+        <stop offset=".468" stop-color="#ff593b" />
+        <stop offset=".646" stop-color="#ff7231" />
+        <stop offset=".809" stop-color="#ff812b" />
+        <stop offset=".941" stop-color="#ff8629" />
+    </linearGradient>
+    <linearGradient id="b" gradientTransform="matrix(1 0 0 -1 0 72)" gradientUnits="userSpaceOnUse" x1="28.51526" x2="21.52612" y1="60.95101" y2="43.33758">
+        <stop offset=".022" stop-color="#9039d0" />
+        <stop offset=".629" stop-color="#ff1f51" />
+    </linearGradient>
+    <linearGradient id="c" gradientTransform="matrix(1 0 0 -1 0 72)" gradientUnits="userSpaceOnUse" x1=".27453" x2="38.84081" y1="62.39985" y2="13.3747">
+        <stop offset=".107" stop-color="#9039d0" />
+        <stop offset=".387" stop-color="#ff1f51" />
+        <stop offset=".629" stop-color="#ff1f51" />
+        <stop offset=".66" stop-color="#ff3648" />
+        <stop offset=".714" stop-color="#ff593b" />
+        <stop offset=".765" stop-color="#ff7231" />
+        <stop offset=".812" stop-color="#ff812b" />
+        <stop offset=".85" stop-color="#ff8629" />
+    </linearGradient>
+    <path d="m49.88572 0-17.14286 6.17143-13.54286-6.17143-13.28571 33.34286 15.25714-6.08572-.25714 16.88572 32.65714.6 6.42857-33z" fill="url(#a)" />
+    <path d="m43.54286 19.45714-21.6-14.14285-17.4 10.71428 38.14286 14.74286z" fill="url(#b)" />
+    <path d="m24.94286 58.45714 22.45714-3-7.11428-13.71428 4.71428-5.74286.51429-3.51429-23.57143-27.25714-21.94286 5.4v31.45714l12.68572 17.91429z" fill="url(#c)" />
+    <path d="m11.48571 11.48571h37.02858v37.02858h-37.02858z" />
+    <g fill="#fff">
+        <path d="m15 41.57143h13.88572v2.31429h-13.88572z" />
+        <path d="m29.65714 16.28571h3.68572l4.02857 6.51429 4.02857-6.51429h3.68571v15.34286h-3.42857v-10.02857l-4.28571 6.6h-.08571l-4.28572-6.51428v9.94285h-3.34286z" />
+        <path d="m14.91429 16.28571h7.02857a5.99021 5.99021 0 0 1 4.45714 1.54286 4.79369 4.79369 0 0 1 1.28571 3.51429v.08571a4.64946 4.64946 0 0 1 -.94285 3 4.95922 4.95922 0 0 1 -2.4 1.71429l3.77143 5.48571h-3.94286l-3.17143-4.71428h-2.82857v4.71428h-3.34286v-15.34285zm6.85714 7.45715a2.50079 2.50079 0 0 0 1.88571-.6 2.14638 2.14638 0 0 0 .68572-1.54286v-.08571a1.94394 1.94394 0 0 0 -.68572-1.62857 3.1841 3.1841 0 0 0 -1.97142-.51429h-3.34286v4.37143z" />
+    </g>
+</svg>

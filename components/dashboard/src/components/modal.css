@@ -1,0 +1,47 @@
+/**
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .gp-modal-footer-alert {
+        margin-top: -1px;
+        margin-left: -25px;
+        margin-right: -25px;
+    }
+    .gp-modal-footer-alert_animate {
+        @apply bottom-2;
+        margin-left: 0px;
+        margin-right: 0px;
+        left: -1px;
+        right: -1px;
+        /* Start w/ a fixed height to keep it smaller than the footer */
+        max-height: 70px;
+        overflow: hidden;
+        animation: showModalFooterAlert 0.5s ease-out forwards;
+    }
+
+    /* Animates alert from behind footer */
+    @keyframes showModalFooterAlert {
+        0% {
+            @apply bottom-2;
+        }
+
+        /* Swaps max-height and overflow so it's not fixed height anymore */
+        50% {
+            max-height: inherit;
+            overflow: visible;
+        }
+
+        100% {
+            bottom: 85px;
+            max-height: inherit;
+            overflow: visible;
+        }
+    }
+}

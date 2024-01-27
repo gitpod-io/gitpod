@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { PrimaryColumn, Column, Entity, Index } from "typeorm";
@@ -37,12 +37,10 @@ export class DBSnapshot implements Snapshot {
     @Column()
     bucketId: string;
 
-    @Column({ nullable: true })
-    layoutData?: string;
-
     @Column({
         // because we introduced this as an afterthought the default is 'available'
         default: <SnapshotState>"available",
+        type: "varchar",
     })
     @Index("ind_state")
     state: SnapshotState;

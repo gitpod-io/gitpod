@@ -1,0 +1,151 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "gitpod/v1/pagination.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+service EnvironmentVariableService {
+  // ListUserEnvironmentVariables returns all environment variables for the
+  // authenticated user.
+  rpc ListUserEnvironmentVariables(ListUserEnvironmentVariablesRequest) returns (ListUserEnvironmentVariablesResponse) {}
+
+  // UpdateUserEnvironmentVariable updates an environment variable for the
+  // authenticated user.
+  rpc UpdateUserEnvironmentVariable(UpdateUserEnvironmentVariableRequest) returns (UpdateUserEnvironmentVariableResponse) {}
+
+  // CreateUserEnvironmentVariable creates a new environment variable for the
+  // authenticated user.
+  rpc CreateUserEnvironmentVariable(CreateUserEnvironmentVariableRequest) returns (CreateUserEnvironmentVariableResponse) {}
+
+  // DeleteUserEnvironmentVariable deletes an environment variable for the
+  // authenticated user.
+  rpc DeleteUserEnvironmentVariable(DeleteUserEnvironmentVariableRequest) returns (DeleteUserEnvironmentVariableResponse) {}
+
+  // ListConfigurationEnvironmentVariables returns all environment variables in
+  // a configuration.
+  rpc ListConfigurationEnvironmentVariables(ListConfigurationEnvironmentVariablesRequest) returns (ListConfigurationEnvironmentVariablesResponse) {}
+
+  // UpdateConfigurationEnvironmentVariable updates an environment variable in
+  // a configuration.
+  rpc UpdateConfigurationEnvironmentVariable(UpdateConfigurationEnvironmentVariableRequest) returns (UpdateConfigurationEnvironmentVariableResponse) {}
+
+  // CreateConfigurationEnvironmentVariable creates a new environment variable
+  // in a configuration.
+  rpc CreateConfigurationEnvironmentVariable(CreateConfigurationEnvironmentVariableRequest) returns (CreateConfigurationEnvironmentVariableResponse) {}
+
+  // DeleteConfigurationEnvironmentVariable deletes an environment variable in
+  // a configuration.
+  rpc DeleteConfigurationEnvironmentVariable(DeleteConfigurationEnvironmentVariableRequest) returns (DeleteConfigurationEnvironmentVariableResponse) {}
+
+  rpc ResolveWorkspaceEnvironmentVariables(ResolveWorkspaceEnvironmentVariablesRequest) returns (ResolveWorkspaceEnvironmentVariablesResponse) {}
+}
+
+message UserEnvironmentVariable {
+  string id = 1;
+  string name = 2;
+  string value = 3;
+  string repository_pattern = 4;
+}
+
+message ListUserEnvironmentVariablesRequest {
+  PaginationRequest pagination = 1;
+}
+
+message ListUserEnvironmentVariablesResponse {
+  repeated UserEnvironmentVariable environment_variables = 1;
+  PaginationResponse pagination = 2;
+}
+
+message UpdateUserEnvironmentVariableRequest {
+  string environment_variable_id = 1;
+  optional string name = 2;
+  optional string value = 3;
+  optional string repository_pattern = 4;
+}
+
+message UpdateUserEnvironmentVariableResponse {
+  UserEnvironmentVariable environment_variable = 1;
+}
+
+message CreateUserEnvironmentVariableRequest {
+  string name = 1;
+  string value = 2;
+  string repository_pattern = 3;
+}
+
+message CreateUserEnvironmentVariableResponse {
+  UserEnvironmentVariable environment_variable = 1;
+}
+
+message DeleteUserEnvironmentVariableRequest {
+  string environment_variable_id = 1;
+}
+
+message DeleteUserEnvironmentVariableResponse {}
+
+enum EnvironmentVariableAdmission {
+  ENVIRONMENT_VARIABLE_ADMISSION_UNSPECIFIED = 0;
+  ENVIRONMENT_VARIABLE_ADMISSION_PREBUILD = 1;
+  ENVIRONMENT_VARIABLE_ADMISSION_EVERYWHERE = 2;
+}
+
+message ConfigurationEnvironmentVariable {
+  string id = 1;
+  string name = 2;
+  string configuration_id = 4;
+  EnvironmentVariableAdmission admission = 5;
+}
+
+message ListConfigurationEnvironmentVariablesRequest {
+  string configuration_id = 1;
+  PaginationRequest pagination = 2;
+}
+
+message ListConfigurationEnvironmentVariablesResponse {
+  repeated ConfigurationEnvironmentVariable environment_variables = 1;
+  PaginationResponse pagination = 2;
+}
+
+message UpdateConfigurationEnvironmentVariableRequest {
+  string configuration_id = 1;
+  string environment_variable_id = 2;
+  optional string name = 3;
+  optional string value = 4;
+  optional EnvironmentVariableAdmission admission = 5;
+}
+
+message UpdateConfigurationEnvironmentVariableResponse {
+  ConfigurationEnvironmentVariable environment_variable = 1;
+}
+
+message CreateConfigurationEnvironmentVariableRequest {
+  string configuration_id = 1;
+  string name = 2;
+  string value = 3;
+  EnvironmentVariableAdmission admission = 4;
+}
+
+message CreateConfigurationEnvironmentVariableResponse {
+  ConfigurationEnvironmentVariable environment_variable = 1;
+}
+
+message DeleteConfigurationEnvironmentVariableRequest {
+  string environment_variable_id = 1;
+}
+
+message DeleteConfigurationEnvironmentVariableResponse {}
+
+message ResolveWorkspaceEnvironmentVariablesRequest {
+  string workspace_id = 1;
+}
+
+message ResolveWorkspaceEnvironmentVariablesResponse {
+  repeated EnvironmentVariable environment_variables = 1;
+}
+
+message EnvironmentVariable {
+  string name = 1;
+  string value = 2;
+}

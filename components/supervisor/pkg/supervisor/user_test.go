@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package supervisor
 
@@ -51,7 +51,7 @@ func TestHasUser(t *testing.T) {
 			},
 			Expectation: Expectation{
 				Exists: true,
-				Error:  "user named gitpod exists but uses different UID 1000",
+				Error:  "user named gitpod exists but uses different UID 1000, should be: 33333",
 			},
 		},
 		{
@@ -145,7 +145,7 @@ func TestHasGroup(t *testing.T) {
 			},
 			Expectation: Expectation{
 				Exists: true,
-				Error:  "group named gitpod exists but uses different GID 1000",
+				Error:  "group named gitpod exists but uses different GID 1000, should be: 33333",
 			},
 		},
 		{

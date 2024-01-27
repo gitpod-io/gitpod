@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package wsproxy
 
@@ -9,7 +9,11 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
+	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
+	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
@@ -21,13 +25,61 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	header := HostHeader
+	blobServeHost := fmt.Sprintf("ide.%s", ctx.Config.Domain)
+	gitpodInstallationHostName := ctx.Config.Domain
+
+	installationShortNameSuffix := ""
+	if ctx.Config.Metadata.InstallationShortname != "" && ctx.Config.Metadata.InstallationShortname != configv1.InstallationShortNameOldDefault {
+		installationShortNameSuffix = "-" + ctx.Config.Metadata.InstallationShortname
+	}
+
+	gitpodInstallationWorkspaceHostSuffix := fmt.Sprintf(".ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
+	gitpodInstallationWorkspaceHostSuffixRegex := fmt.Sprintf("\\.ws[^\\.]*\\.%s", ctx.Config.Domain)
+
+	wsManagerConfig := &config.WorkspaceManagerConn{
+		Addr: fmt.Sprintf("ws-manager-mk2:%d", wsmanagermk2.RPCPort),
+		TLS: struct {
+			CA   string "json:\"ca\""
+			Cert string "json:\"crt\""
+			Key  string "json:\"key\""
+		}{
+			CA:   "/ws-manager-client-tls-certs/ca.crt",
+			Cert: "/ws-manager-client-tls-certs/tls.crt",
+			Key:  "/ws-manager-client-tls-certs/tls.key",
+		},
+	}
+
+	ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace == nil {
+			return nil
+		}
+		if ucfg.Workspace.WSProxy.IngressHeader != "" {
+			header = ucfg.Workspace.WSProxy.IngressHeader
+		}
+		if ucfg.Workspace.WSProxy.BlobServeHost != "" {
+			blobServeHost = ucfg.Workspace.WSProxy.BlobServeHost
+		}
+		if ucfg.Workspace.WSProxy.GitpodInstallationHostName != "" {
+			gitpodInstallationHostName = ucfg.Workspace.WSProxy.GitpodInstallationHostName
+		}
+		if ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffix != "" {
+			gitpodInstallationWorkspaceHostSuffix = ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffix
+		}
+		if ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffixRegex != "" {
+			gitpodInstallationWorkspaceHostSuffixRegex = ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffixRegex
+		}
+
+		return nil
+	})
+
 	// todo(sje): wsManagerProxy seems to be unused
 	wspcfg := config.Config{
 		Namespace: ctx.Namespace,
 		Ingress: proxy.HostBasedIngressConfig{
-			HTTPAddress:  fmt.Sprintf(":%d", HTTPProxyPort),
-			HTTPSAddress: fmt.Sprintf(":%d", HTTPSProxyPort),
-			Header:       HostHeader,
+			HTTPAddress:  fmt.Sprintf("0.0.0.0:%d", HTTPProxyPort),
+			HTTPSAddress: fmt.Sprintf("0.0.0.0:%d", HTTPSProxyPort),
+			Header:       header,
 		},
 		Proxy: proxy.Config{
 			HTTPS: struct {
@@ -44,39 +96,36 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				MaxIdleConnsPerHost: 100,
 			},
 			BlobServer: &proxy.BlobServerConfig{
-				Scheme: "http",
-				Host:   fmt.Sprintf("blobserve.%s.svc.cluster.local:%d", ctx.Namespace, common.BlobServeServicePort),
+				Scheme:     "https",
+				Host:       blobServeHost,
+				PathPrefix: "/blobserve",
 			},
 			GitpodInstallation: &proxy.GitpodInstallation{
 				Scheme:                   "https",
-				HostName:                 ctx.Config.Domain,
-				WorkspaceHostSuffix:      fmt.Sprintf(".ws.%s", ctx.Config.Domain),
-				WorkspaceHostSuffixRegex: fmt.Sprintf("\\.ws[^\\.]*\\.%s", ctx.Config.Domain),
+				HostName:                 gitpodInstallationHostName,
+				WorkspaceHostSuffix:      gitpodInstallationWorkspaceHostSuffix,
+				WorkspaceHostSuffixRegex: gitpodInstallationWorkspaceHostSuffixRegex,
 			},
 			WorkspacePodConfig: &proxy.WorkspacePodConfig{
-				TheiaPort:       workspace.ContainerPort,
-				SupervisorPort:  workspace.SupervisorPort,
-				SupervisorImage: ctx.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
+				TheiaPort:               workspace.ContainerPort,
+				IDEDebugPort:            workspace.IDEDebugPort,
+				SupervisorPort:          workspace.SupervisorPort,
+				SupervisorDebugPort:     workspace.SupervisorDebugPort,
+				DebugWorkspaceProxyPort: workspace.DebugWorkspaceProxyPort,
+				SupervisorImage:         ctx.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 			},
 			BuiltinPages: proxy.BuiltinPagesConfig{
 				Location: "/app/public",
 			},
 		},
-		PProfAddr:          ":60060",
-		PrometheusAddr:     "127.0.0.1:9500",
+		PProfAddr:          common.LocalhostAddressFromPort(baseserver.BuiltinDebugPort),
+		PrometheusAddr:     common.LocalhostPrometheusAddr(),
 		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
-		WorkspaceManager: &config.WorkspaceManagerConn{
-			Addr: "ws-manager:8080",
-			TLS: struct {
-				CA   string "json:\"ca\""
-				Cert string "json:\"crt\""
-				Key  string "json:\"key\""
-			}{
-				CA:   "/ws-manager-client-tls-certs/ca.crt",
-				Cert: "/ws-manager-client-tls-certs/tls.crt",
-				Key:  "/ws-manager-client-tls-certs/tls.key",
-			},
-		},
+		WorkspaceManager:   wsManagerConfig,
+	}
+
+	if ctx.Config.SSHGatewayCAKey != nil {
+		wspcfg.Proxy.SSHGatewayCAKeyFile = "/mnt/ca-key/ca.key"
 	}
 
 	fc, err := common.ToJSONString(wspcfg)
@@ -88,9 +137,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
 			},
 			Data: map[string]string{
 				"config.json": string(fc),

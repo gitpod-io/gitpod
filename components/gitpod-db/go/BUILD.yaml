@@ -1,0 +1,22 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+packages:
+  - name: lib
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - :init-testdb
+      - components/common-go:lib
+    config:
+      packaging: library
+
+  - name: init-testdb
+    type: generic
+    deps:
+      - components/gitpod-db:dbtest-init
+    ephemeral: true

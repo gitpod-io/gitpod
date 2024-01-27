@@ -1,19 +1,18 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { injectable, inject } from "inversify";
 
 import { FileProvider, MaybeContent } from "../repohost/file-provider";
 import { Commit, User, Repository } from "@gitpod/gitpod-protocol";
-import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
+import { GitHubRestApi } from "./api";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class GithubFileProvider implements FileProvider {
-    @inject(GitHubGraphQlEndpoint) protected readonly githubGraphQlApi: GitHubGraphQlEndpoint;
     @inject(GitHubRestApi) protected readonly githubApi: GitHubRestApi;
 
     public async getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent> {
@@ -55,17 +54,38 @@ export class GithubFileProvider implements FileProvider {
             return undefined;
         }
 
+        const params = {
+            owner: commit.repository.owner,
+            repo: commit.repository.name,
+            path,
+            ref: commit.revision,
+            headers: {
+                accept: "application/vnd.github.raw",
+            },
+        };
+
         try {
-            const contents = await this.githubGraphQlApi.getFileContents(
-                user,
-                commit.repository.owner,
-                commit.repository.name,
-                commit.revision,
-                path,
-            );
-            return contents;
+            const response = await this.githubApi.run(user, (api) => api.repos.getContent(params));
+            if (response.status === 200) {
+                if (typeof response.data === "string") {
+                    return response.data;
+                }
+                log.warn("GithubFileProvider.getFileContent – unexpected response type.", {
+                    request: params,
+                    response: {
+                        headers: {
+                            "content-encoding": response.headers["content-encoding"],
+                            "content-type": response.headers["content-type"],
+                        },
+                        type: typeof response.data,
+                    },
+                });
+            }
+            return undefined;
         } catch (err) {
-            log.error(err);
+            log.debug("Failed to get Github file content", err, {
+                request: params,
+            });
         }
     }
 }

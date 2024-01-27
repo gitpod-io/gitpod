@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { WorkspaceConfig } from "@gitpod/gitpod-protocol";
@@ -41,29 +41,33 @@ export class ConfigInferrer {
         if (!pckjsonContent) {
             return;
         }
-        let command: "yarn" | "npm" = "npm";
+        let pckjson;
+        try {
+            pckjson = JSON.parse(pckjsonContent);
+        } catch (e) {
+            console.log(e, pckjsonContent);
+        }
+        let command: "yarn" | "npm" | "pnpm" = "npm";
         if (await ctx.exists("yarn.lock")) {
             command = "yarn";
         }
+        if ((await ctx.exists("pnpm-lock.yaml")) || pckjson?.packageManager?.startsWith("pnpm")) {
+            command = "pnpm";
+        }
         this.addCommand(ctx.config, command + " install", "init");
-        try {
-            const pckjson = JSON.parse(pckjsonContent);
-            if (pckjson.scripts) {
-                if (pckjson.scripts.build) {
-                    this.addCommand(ctx.config, command + " run build", "init");
-                } else if (pckjson.scripts.compile) {
-                    this.addCommand(ctx.config, command + " run compile", "init");
-                }
-                if (pckjson.scripts.start) {
-                    this.addCommand(ctx.config, command + " run start", "command");
-                } else if (pckjson.scripts.dev) {
-                    this.addCommand(ctx.config, command + " run dev", "command");
-                } else if (pckjson.scripts.watch) {
-                    this.addCommand(ctx.config, command + " run watch", "command");
-                }
+        if (pckjson.scripts) {
+            if (pckjson.scripts.build) {
+                this.addCommand(ctx.config, command + " run build", "init");
+            } else if (pckjson.scripts.compile) {
+                this.addCommand(ctx.config, command + " run compile", "init");
             }
-        } catch (e) {
-            console.log(e, pckjsonContent);
+            if (pckjson.scripts.start) {
+                this.addCommand(ctx.config, command + " run start", "command");
+            } else if (pckjson.scripts.dev) {
+                this.addCommand(ctx.config, command + " run dev", "command");
+            } else if (pckjson.scripts.watch) {
+                this.addCommand(ctx.config, command + " run watch", "command");
+            }
         }
         this.addExtension(ctx, "dbaeumer.vscode-eslint");
     }
@@ -77,6 +81,16 @@ export class ConfigInferrer {
             this.addCommand(ctx.config, cmd + " build", "init");
             this.addExtension(ctx, "redhat.java");
             this.addExtension(ctx, "vscjava.vscode-java-debug");
+            return;
+        }
+        // Gradle Kotlin DSL
+        if (await ctx.exists("build.gradle.kts")) {
+            let cmd = "gradle";
+            if (await ctx.exists("gradlew")) {
+                cmd = "./gradlew";
+            }
+            this.addCommand(ctx.config, cmd + " build", "init");
+            this.addExtension(ctx, "fwcd.kotlin");
             return;
         }
         if (await ctx.exists("pom.xml")) {
@@ -146,7 +160,7 @@ export class ConfigInferrer {
             this.addCommand(ctx.config, "go get", "init");
             this.addCommand(ctx.config, "go build ./...", "init");
             this.addCommand(ctx.config, "go test ./...", "init");
-            this.addCommand(ctx.config, "go run", "command");
+            this.addCommand(ctx.config, "go run .", "command");
             this.addExtension(ctx, "golang.go");
         }
     }

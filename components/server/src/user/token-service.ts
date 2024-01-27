@@ -1,44 +1,58 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject, postConstruct } from "inversify";
+import { injectable, inject } from "inversify";
 import { Token, Identity, User, TokenEntry } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { v4 as uuidv4 } from "uuid";
 import { TokenProvider } from "./token-provider";
-import { TokenGarbageCollector } from "./token-garbage-collector";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
 
 @injectable()
 export class TokenService implements TokenProvider {
     static readonly GITPOD_AUTH_PROVIDER_ID = "Gitpod";
-    static readonly GITPOD_PORT_AUTH_TOKEN_EXPIRY_MILLIS = 30 * 60 * 1000;
 
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(TokenGarbageCollector) protected readonly tokenGC: TokenGarbageCollector;
     @inject(UserDB) protected readonly userDB: UserDB;
 
-    @postConstruct()
-    init() {
-        /** no await */ this.tokenGC.start().catch((err) => {
-            /** ignore */
-        });
+    // Introducing GC to token cache to guard from potentialy stale fetch requests. This is setting
+    // a hard limit at 10s (+5s) after which after which compteting request will trigger a new request,
+    // if applicable.
+    private readonly getTokenForHostCache = new GarbageCollectedCache<Promise<Token | undefined>>(10, 5);
+
+    async getTokenForHost(user: User | string, host: string): Promise<Token | undefined> {
+        const userId = User.is(user) ? user.id : user;
+        // (AT) when it comes to token renewal, the awaited http requests may
+        // cause "parallel" calls to repeat the renewal, which will fail.
+        // Caching for pending operations should solve this issue.
+        const key = `${host}-${userId}`;
+        let promise = this.getTokenForHostCache.get(key);
+        if (!promise) {
+            promise = this.doGetTokenForHost(userId, host);
+            this.getTokenForHostCache.set(key, promise);
+            promise = promise.finally(() => this.getTokenForHostCache.delete(key));
+        }
+        return promise;
     }
 
-    async getTokenForHost(user: User, host: string): Promise<Token> {
+    private async doGetTokenForHost(userId: string, host: string): Promise<Token | undefined> {
+        const user = await this.userDB.findUserById(userId);
+        if (!user) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${userId}) not found.`);
+        }
         const identity = this.getIdentityForHost(user, host);
         let token = await this.userDB.findTokenForIdentity(identity);
         if (!token) {
-            throw new Error(
-                `No token found for user ${identity.authProviderId}/${identity.authId}/${identity.authName}!`,
-            );
+            return undefined;
         }
-        const refreshTime = new Date();
-        refreshTime.setTime(refreshTime.getTime() + 30 * 60 * 1000);
-        if (token.expiryDate && token.expiryDate < refreshTime.toISOString()) {
+        const aboutToExpireTime = new Date();
+        aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
+        if (token.expiryDate && token.expiryDate < aboutToExpireTime.toISOString()) {
             const { authProvider } = this.hostContextProvider.get(host)!;
             if (authProvider.refreshToken) {
                 await authProvider.refreshToken(user);
@@ -77,52 +91,20 @@ export class TokenService implements TokenProvider {
         return await this.userDB.addToken(identity, token);
     }
 
-    /**
-     * Currently this methods creates a new Token with every call.
-     * This relies on two things:
-     *  - the frontends to not request too many tokens (puts load on the DB)
-     *  - the TokenGarbageCollector to cleanup expired tokens
-     * @param user
-     * @param workspaceId
-     */
-    async getFreshPortAuthenticationToken(user: User, workspaceId: string): Promise<Token> {
-        const newPortAuthToken = (): Token => {
-            return {
-                value: uuidv4(),
-                scopes: [TokenService.generateWorkspacePortAuthScope(workspaceId)],
-                updateDate: new Date().toISOString(),
-                expiryDate: new Date(Date.now() + TokenService.GITPOD_PORT_AUTH_TOKEN_EXPIRY_MILLIS).toISOString(),
-            };
-        };
-
-        const identity = await this.getOrCreateGitpodIdentity(user);
-        const token = newPortAuthToken();
-        const tokenEntry = await this.userDB.addToken(identity, token);
-        // The following necessary to allow fast retrieval.
-        // TODO: Move tokens like this into a separate data store
-        tokenEntry.token.value = tokenEntry.uid;
-        await this.userDB.updateTokenEntry(tokenEntry);
-        return token;
-    }
-
-    protected getIdentityForHost(user: User, host: string): Identity {
+    private getIdentityForHost(user: User, host: string): Identity {
         const authProviderId = this.getAuthProviderId(host);
         const hostIdentity = authProviderId && User.getIdentity(user, authProviderId);
         if (!hostIdentity) {
-            throw new Error(`User ${user.name} has no identity for host: ${host}!`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${user.id}) has no identity for host: ${host}.`);
         }
         return hostIdentity;
     }
 
-    protected getAuthProviderId(host: string): string | undefined {
+    private getAuthProviderId(host: string): string | undefined {
         const hostContext = this.hostContextProvider.get(host);
         if (!hostContext) {
             return undefined;
         }
         return hostContext.authProvider.authProviderId;
-    }
-
-    public static generateWorkspacePortAuthScope(workspaceId: string): string {
-        return `access/workspace/${workspaceId}/port/*`;
     }
 }

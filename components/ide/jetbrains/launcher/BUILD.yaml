@@ -1,0 +1,43 @@
+packages:
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.jbLauncher
+      buildArgs:
+        JETBRAINS_BACKEND_QUALIFIER: stable
+      image:
+        - ${imageRepoBase}/ide/jb-launcher:commit-${__git_commit}
+  - name: app
+    type: go
+    srcs:
+      - "testdata/**"
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    deps:
+      - components/gitpod-protocol/go:lib
+      - components/supervisor-api/go:lib
+      - components/common-go:lib
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/jetbrains/launcher.Version=commit-${__git_commit}'"]
+  - name: hot-swap
+    type: generic
+    deps:
+      - :app
+    argdeps:
+      - workspaceUrl
+    srcs:
+      - "hot-swap.sh"
+    config:
+      commands:
+        - ["./hot-swap.sh", "${workspaceUrl}"]

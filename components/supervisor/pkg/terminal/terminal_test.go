@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package terminal
 
@@ -47,8 +47,11 @@ func TestTitle(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
 			mux := NewMux()
-			defer mux.Close()
+			defer mux.Close(ctx)
 
 			tmpWorkdir, err := os.MkdirTemp("", "workdirectory")
 			if err != nil {
@@ -59,7 +62,7 @@ func TestTitle(t *testing.T) {
 			terminalService := NewMuxTerminalService(mux)
 			terminalService.DefaultWorkdir = tmpWorkdir
 
-			term, err := terminalService.OpenWithOptions(context.Background(), &api.OpenTerminalRequest{}, TermOptions{
+			term, err := terminalService.OpenWithOptions(ctx, &api.OpenTerminalRequest{}, TermOptions{
 				Title: test.Title,
 			})
 			if err != nil {
@@ -71,6 +74,7 @@ func TestTitle(t *testing.T) {
 			}
 
 			listener := &TestTitleTerminalServiceListener{
+				ctx:   ctx,
 				resps: make(chan *api.ListenTerminalResponse),
 			}
 			titles := listener.Titles(2)
@@ -87,12 +91,12 @@ func TestTitle(t *testing.T) {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
 
-			_, err = terminalService.Write(context.Background(), &api.WriteTerminalRequest{Alias: term.Terminal.Alias, Stdin: []byte(test.Command + "\r\n")})
+			_, err = terminalService.Write(ctx, &api.WriteTerminalRequest{Alias: term.Terminal.Alias, Stdin: []byte(test.Command + "\r\n")})
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			_, err = terminalService.Shutdown(context.Background(), &api.ShutdownTerminalRequest{Alias: term.Terminal.Alias})
+			_, err = terminalService.Shutdown(ctx, &api.ShutdownTerminalRequest{Alias: term.Terminal.Alias})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -106,6 +110,7 @@ func TestTitle(t *testing.T) {
 }
 
 type TestTitleTerminalServiceListener struct {
+	ctx   context.Context
 	resps chan *api.ListenTerminalResponse
 	grpc.ServerStream
 }
@@ -116,7 +121,7 @@ func (listener *TestTitleTerminalServiceListener) Send(resp *api.ListenTerminalR
 }
 
 func (listener *TestTitleTerminalServiceListener) Context() context.Context {
-	return context.Background()
+	return listener.ctx
 }
 
 func (listener *TestTitleTerminalServiceListener) Titles(size int) chan string {
@@ -186,22 +191,25 @@ func TestAnnotations(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
 			mux := NewMux()
-			defer mux.Close()
+			defer mux.Close(ctx)
 
 			terminalService := NewMuxTerminalService(mux)
 			var err error
 			if test.Opts == nil {
-				_, err = terminalService.Open(context.Background(), test.Req)
+				_, err = terminalService.Open(ctx, test.Req)
 			} else {
-				_, err = terminalService.OpenWithOptions(context.Background(), test.Req, *test.Opts)
+				_, err = terminalService.OpenWithOptions(ctx, test.Req, *test.Opts)
 			}
 			if err != nil {
 				t.Fatal(err)
 				return
 			}
 
-			lr, err := terminalService.List(context.Background(), &api.ListTerminalsRequest{})
+			lr, err := terminalService.List(ctx, &api.ListTerminalsRequest{})
 			if err != nil {
 				t.Fatal(err)
 				return
@@ -277,7 +285,8 @@ func TestConcurrent(t *testing.T) {
 		listenerCount = 2
 	)
 
-	eg, _ := errgroup.WithContext(context.Background())
+	eg, ctx := errgroup.WithContext(context.Background())
+	defer terminals.Close(ctx)
 	for i := 0; i < terminalCount; i++ {
 		alias, err := terminals.Start(exec.Command("/bin/bash", "-i"), TermOptions{
 			ReadTimeout: 0,
@@ -314,8 +323,11 @@ func TestConcurrent(t *testing.T) {
 }
 
 func TestWorkDirProvider(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	mux := NewMux()
-	defer mux.Close()
+	defer mux.Close(ctx)
 
 	terminalService := NewMuxTerminalService(mux)
 
@@ -324,7 +336,7 @@ func TestWorkDirProvider(t *testing.T) {
 		providedWorkDir string
 	}
 	assertWorkDir := func(arg *AssertWorkDirTest) {
-		term, err := terminalService.Open(context.Background(), &api.OpenTerminalRequest{
+		term, err := terminalService.Open(ctx, &api.OpenTerminalRequest{
 			Workdir: arg.providedWorkDir,
 		})
 		if err != nil {
@@ -333,7 +345,7 @@ func TestWorkDirProvider(t *testing.T) {
 		if diff := cmp.Diff(arg.expectedWorkDir, term.Terminal.CurrentWorkdir); diff != "" {
 			t.Errorf("unexpected output (-want +got):\n%s", diff)
 		}
-		_, err = terminalService.Shutdown(context.Background(), &api.ShutdownTerminalRequest{
+		_, err = terminalService.Shutdown(ctx, &api.ShutdownTerminalRequest{
 			Alias: term.Terminal.Alias,
 		})
 		if err != nil {

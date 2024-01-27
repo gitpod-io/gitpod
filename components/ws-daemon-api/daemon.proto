@@ -15,6 +15,9 @@ service WorkspaceContentService {
     // If there is no initialization is going on, an error is returned.
     rpc WaitForInit(WaitForInitRequest) returns (WaitForInitResponse) {}
 
+    // IsWorkspaceExists checks if ws-daemon knows about workspace.
+    rpc IsWorkspaceExists(IsWorkspaceExistsRequest) returns (IsWorkspaceExistsResponse) {}
+
     // TakeSnapshot creates a backup/snapshot of a workspace
     rpc TakeSnapshot(TakeSnapshotRequest) returns (TakeSnapshotResponse) {}
 
@@ -39,12 +42,12 @@ message InitWorkspaceRequest {
 
     // full_workspace_backup means we ignore the initializer and wait for a workspace pod with the given instance ID to
     // appear at our local containerd.
-    bool full_workspace_backup = 4;
+    reserved 4;
 
     // content_manifest describes the layers that comprise the workspace image content.
     // This manifest is not used to actually download content, but to produce a new manifest for snapshots and backups.
     // This field is ignored if full_workspace_backup is false.
-    bytes content_manifest = 5;
+    reserved 5;
 
     // Was used for user_namespaced
     reserved 6;
@@ -59,7 +62,7 @@ message InitWorkspaceRequest {
     // persistent_volume_claim means that we use PVC instead of HostPath to mount /workspace folder and content-init
     // happens inside workspacekit instead of in ws-daemon. We also use k8s Snapshots to store\restore workspace content
     // instead of GCS\tar.
-    bool persistent_volume_claim = 9;
+    reserved 9;
 }
 
 // WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
@@ -80,6 +83,16 @@ message WaitForInitRequest {
 }
 
 message WaitForInitResponse {}
+
+message IsWorkspaceExistsRequest {
+    // ID is a unique identifier of the workspace
+    string id = 1;
+}
+
+message IsWorkspaceExistsResponse {
+    // exists indicates if ws-daemon knows about this workspace or not
+    bool exists = 1;
+}
 
 // TakeSnapshotRequest creates a backup/snapshot of a workspace
 message TakeSnapshotRequest {

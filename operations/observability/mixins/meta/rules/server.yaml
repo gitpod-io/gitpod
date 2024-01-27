@@ -1,0 +1,138 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: server-monitoring-rules
+spec:
+  groups:
+  - name: server
+    rules:
+    - alert: WebsocketConnectionsNotClosing
+      expr: sum(server_websocket_connection_count) by (cluster) == 10000
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebsocketConnectionsNotClosing.md
+        summary: Open websocket connections are not closing for the last 10 minutes and accumulating in {{ $labels.cluster }}.
+        description: We have accumulated {{ printf "%.2f" $value }} open websocket connections.
+
+    - alert: ServerEventLoopLagTooHigh
+      expr: avg_over_time(nodejs_eventloop_lag_seconds{job="server"}[20m]) > 0.35
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/ServerEventLoopLagTooHigh.md
+        summary: Server accumulated too much "event loop lag" on {{ $labels.cluster }}. The webapp will become unresponsive if we don't act here.
+        description: Server has accumulated {{ printf "%.2f" $value }}s event loop lag.
+
+    - alert: InstanceStartFailures
+      # Reasoning: 1 failure every 120s should not trigger an incident: 1/120 = 0.00833.. => 0.01
+      expr: sum(irate(gitpod_server_instance_starts_failed_total{reason!~"imageBuildFailed|imageBuildFailedUser"}[2m])) by (reason) > 0.01
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/InstanceStartFailures.md
+        summary: Server tries to start an instance, but cannot for whatever reason. Investigation required.
+        description: Server cannot start workspace instances on workspace clusters.
+
+    # Rollout alerts
+    - alert: JsonRpcApiErrorRates
+      expr: sum(rate(gitpod_server_api_calls_total{statusCode!~"2.*|3.*|4.*|640"}[5m])) by (cluster) / sum(rate(gitpod_server_api_calls_total[5m])) by (cluster) > 0.04
+      for: 5m
+      labels:
+        severity: critical
+        team: webapp
+        dedicated: included
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodApiErrorRate.md
+        summary: The error rate of the JSON RPC API is high on {{ $labels.cluster }}. Investigation required.
+        description: JSON RPC API error rate high
+
+    - alert: GitpodV1APIServerErrors
+      expr: sum(rate(grpc_server_handled_total{grpc_code=~"Internal|Unknown|DataLoss", grpc_service=~"gitpod.v1.*"}[5m])) by (cluster) / sum(rate(grpc_server_handled_total{grpc_service=~"gitpod.v1.*"}[5m])) by (cluster) > 0.01
+      for: 5m
+      labels:
+        severity: critical
+        team: webapp
+        dedicated: included
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodV1APIServerErrors.md
+        summary: gitpod.v1 API is returning higher number of errors on {{ $labels.cluster }}. Investigation required.
+        description: gitpod.v1 API is returning higher number of errors
+
+
+    - alert: WebsocketConnectionRateHigh
+      # Reasoning: the values are taken from past data
+      expr: sum(rate(gitpod_server_api_connections_total[2m])) by (pod) > 5
+      for: 10m
+      labels:
+        # sent to the team internal channel until we fine tuned it
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebsocketConnectionRateHigh.md
+        summary: The websocket connection rate is higher than usual. Investigation required.
+        description: Websocket connection rate high
+
+    - alert: ServerHighCPUUsage
+      # Reasoning: high rates of CPU consumption should only be temporary.
+      expr: avg(rate(container_cpu_usage_seconds_total{container!="POD", pod=~"server-.*"}[5m])) by (cluster) > 0.4
+      for: 10m
+      labels:
+        # sent to the team internal channel until we fine tuned it
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesHighCPUUsage.md
+        summary: Server has excessive CPU usage.
+        description: Server is consumming too much CPU. Please investigate.
+        dashboard_url: https://grafana.gitpod.io/d/6581e46e4e5c7ba40a07646395ef7b23/kubernetes-compute-resources-pod?var-cluster={{ $labels.cluster }}&var-namespace=default
+
+    - alert: WebAppServicesCrashlooping
+      # Reasoning: alert if any pod is stuck in crashlooping more than 5 minute.
+      expr: sum(increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (cluster, pod) > 0
+      # Five minutes sound high, but that's the only value that's higher than recent history
+      for: 5m
+      labels:
+        severity: critical
+        team: webapp
+        dedicated: included
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesCrashlooping.md
+        summary: Pod is crash looping in {{ $labels.cluster }}.
+        description: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is stuck in crashlooping for at least 5 minutes
+
+    - alert: WebAppServicesCrashloopingInternal
+      # Reasoning: alert if any pod is stuck in crashlooping more than 1 minute.
+      # Used for fine tuning the alert above (WebAppServicesCrashlooping)!
+      expr: sum(increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (cluster, pod) > 0
+      # Let's be more ambitious than 5m
+      for: 1m
+      labels:
+        # sent to the team internal channel until we can propagate these values to CRITICAL
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesCrashlooping.md
+        summary: Pod is crash looping in {{ $labels.cluster }}.
+        description: "FINE TUNE: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is stuck in crashlooping for at least 1 minute"
+
+    - alert: StartWorkspace_InternalErrors
+      expr: sum(increase(gitpod_server_api_calls_total{method="startWorkspace", statusCode=~"5.*"}[1m])) by (cluster) > 5
+      for: 5m
+      labels:
+        severity: critical
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/StartWorkspace_InternalErrors.md
+        summary: Failing to start workspaces in {{ $labels.cluster }}.
+        description: Server is failed to start {{ printf "%.2f" $value }} workspaces in {{ $labels.cluster }} in the last 5 minutes

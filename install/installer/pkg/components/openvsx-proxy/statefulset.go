@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package openvsx_proxy
 
@@ -15,12 +15,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
 
 func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaStatefulSet)
 	// todo(sje): add redis
 
 	configHash, err := common.ObjectHash(configmap(ctx))
@@ -28,17 +29,54 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	volumeClaimTemplates := []v1.PersistentVolumeClaim{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   "redis-data",
+				Labels: common.DefaultLabels(Component),
+			},
+			Spec: v1.PersistentVolumeClaimSpec{
+				AccessModes: []v1.PersistentVolumeAccessMode{
+					v1.ReadWriteOnce,
+				},
+				Resources: v1.ResourceRequirements{
+					Requests: v1.ResourceList{
+						"storage": resource.MustParse("8Gi"),
+					},
+				},
+			},
+		},
+	}
+
+	volumes := []v1.Volume{
+		{
+			Name: "config",
+			VolumeSource: v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+				},
+			},
+		},
+	}
+
+	if ctx.Config.OpenVSX.Proxy != nil && ctx.Config.OpenVSX.Proxy.DisablePVC {
+		volumeClaimTemplates = nil
+		volumes = append(volumes, *common.NewEmptyDirVolume("redis-data"))
+	}
+
 	const redisContainerName = "redis"
+
 	return []runtime.Object{&appsv1.StatefulSet{
 		TypeMeta: common.TypeMetaStatefulSet,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
-			Namespace: ctx.Namespace,
-			Labels:    labels,
+			Name:        Component,
+			Namespace:   ctx.Namespace,
+			Labels:      labels,
+			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
 		},
 		Spec: appsv1.StatefulSetSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: labels,
+				MatchLabels: common.DefaultLabels(Component),
 			},
 			ServiceName: Component,
 			// todo(sje): receive config value
@@ -48,25 +86,20 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Name:      Component,
 					Namespace: ctx.Namespace,
 					Labels:    labels,
-					Annotations: map[string]string{
-						common.AnnotationConfigChecksum: configHash,
-					},
+					Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap, func() map[string]string {
+						return map[string]string{
+							common.AnnotationConfigChecksum: configHash,
+						}
+					}),
 				},
 				Spec: v1.PodSpec{
-					Affinity:                      common.NodeAffinity(cluster.AffinityLabelIDE),
+					Affinity:                      cluster.WithNodeAffinity(cluster.AffinityLabelIDE),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
-					DNSPolicy:                     "ClusterFirst",
-					RestartPolicy:                 "Always",
+					DNSPolicy:                     v1.DNSClusterFirst,
+					RestartPolicy:                 v1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: pointer.Int64(30),
-					Volumes: []v1.Volume{{
-						Name: "config",
-						VolumeSource: v1.VolumeSource{
-							ConfigMap: &v1.ConfigMapVolumeSource{
-								LocalObjectReference: v1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
-							},
-						},
-					}},
+					Volumes:                       volumes,
 					Containers: []v1.Container{{
 						Name:  Component,
 						Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.OpenVSXProxy.Version),
@@ -79,6 +112,9 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							},
 						},
+						SecurityContext: &v1.SecurityContext{
+							AllowPrivilegeEscalation: pointer.Bool(false),
+						},
 						ImagePullPolicy: v1.PullIfNotPresent,
 						Resources: common.ResourceRequirements(ctx, Component, Component, v1.ResourceRequirements{
 							Requests: v1.ResourceList{
@@ -90,16 +126,17 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:          PortName,
 							ContainerPort: ContainerPort,
 						}, {
-							Name:          PrometheusPortName,
-							ContainerPort: PrometheusPort,
+							Name:          baseserver.BuiltinMetricsPortName,
+							ContainerPort: baseserver.BuiltinMetricsPort,
 						}},
 						VolumeMounts: []v1.VolumeMount{{
 							Name:      "config",
 							MountPath: "/config",
 						}},
-						Env: common.MergeEnv(
+						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
-						),
+							common.ConfigcatEnv(ctx),
+						)),
 					}, {
 						Name:  redisContainerName,
 						Image: ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/redis", "6.2"),
@@ -115,6 +152,9 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Ports: []v1.ContainerPort{{
 							ContainerPort: 6379,
 						}},
+						SecurityContext: &v1.SecurityContext{
+							AllowPrivilegeEscalation: pointer.Bool(false),
+						},
 						Resources: common.ResourceRequirements(ctx, Component, redisContainerName, v1.ResourceRequirements{
 							Requests: v1.ResourceList{
 								"cpu":    resource.MustParse("1m"),
@@ -128,27 +168,11 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:      "redis-data",
 							MountPath: "/data",
 						}},
-					},
-					},
-				},
-			},
-			VolumeClaimTemplates: []v1.PersistentVolumeClaim{{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:   "redis-data",
-					Labels: labels,
-				},
-				Spec: v1.PersistentVolumeClaimSpec{
-					AccessModes: []v1.PersistentVolumeAccessMode{
-						v1.ReadWriteOnce,
-					},
-					Resources: v1.ResourceRequirements{
-						Requests: v1.ResourceList{
-							"storage": resource.MustParse("8Gi"),
-						},
+					}, *common.KubeRBACProxyContainer(ctx),
 					},
 				},
 			},
-			},
-		},
-	}}, nil
+			VolumeClaimTemplates: volumeClaimTemplates,
+		}},
+	}, nil
 }

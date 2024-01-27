@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package supervisor
 
@@ -11,6 +11,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -20,6 +21,7 @@ import (
 const (
 	NotifierMaxPendingNotifications   = 120
 	SubscriberMaxPendingNotifications = 100
+	SubscriberMaxSubscriptions        = 10
 )
 
 // NewNotificationService creates a new notification service.
@@ -78,12 +80,13 @@ func (srv *NotificationService) RegisterGRPC(s *grpc.Server) {
 
 // RegisterREST registers a REST service.
 func (srv *NotificationService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterNotificationServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
+	return api.RegisterNotificationServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // Notify sends a notification to the user.
 func (srv *NotificationService) Notify(ctx context.Context, req *api.NotifyRequest) (*api.NotifyResponse, error) {
 	if len(srv.pendingNotifications) >= NotifierMaxPendingNotifications {
+		log.Warnf("Max number of pending notifications exceeded (%d)", NotifierMaxPendingNotifications)
 		return nil, status.Error(codes.ResourceExhausted, "Max number of pending notifications exceeded")
 	}
 
@@ -172,6 +175,11 @@ func (srv *NotificationService) Subscribe(req *api.SubscribeRequest, resp api.No
 func (srv *NotificationService) subscribeLocked(req *api.SubscribeRequest, resp api.NotificationService_SubscribeServer) *subscription {
 	srv.mutex.Lock()
 	defer srv.mutex.Unlock()
+
+	if len(srv.subscriptions) >= SubscriberMaxSubscriptions {
+		log.Warnf("potentially leaking subscription: max number exceeded (%d)", SubscriberMaxSubscriptions)
+	}
+
 	// account for some back pressure
 	capacity := len(srv.pendingNotifications)
 	if SubscriberMaxPendingNotifications > capacity {

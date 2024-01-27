@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package ports
 
@@ -10,11 +10,9 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"reflect"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -24,12 +22,13 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"inet.af/tcpproxy"
 )
 
 var workspaceIPAdress string
 
 func init() {
-	workspaceIPAdress = defaultRoutableIP()
+	_, workspaceIPAdress = defaultRoutableIP()
 }
 
 // NewManager creates a new port manager
@@ -67,9 +66,10 @@ type localhostProxy struct {
 }
 
 type autoExposure struct {
-	state  api.PortAutoExposure
-	ctx    context.Context
-	public bool
+	state    api.PortAutoExposure
+	ctx      context.Context
+	public   bool
+	protocol string
 }
 
 // Manager brings together served and exposed ports. It keeps track of which port is exposed, which one is served,
@@ -106,10 +106,12 @@ type managedPort struct {
 	Served       bool
 	Exposed      bool
 	Visibility   api.PortVisibility
+	Protocol     api.PortProtocol
 	Description  string
 	Name         string
 	URL          string
-	OnExposed    api.OnPortExposedAction
+	OnExposed    api.OnPortExposedAction // deprecated
+	OnOpen       api.PortsStatus_OnOpenAction
 	AutoExposure api.PortAutoExposure
 
 	LocalhostPort uint32
@@ -172,46 +174,62 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 			forceUpdate = true
 		case exposed = <-exposedUpdates:
 			if exposed == nil {
-				log.Error("exposed ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("exposed ports observer stopped unexpectedly")
+				}
 				return
 			}
 		case served = <-servedUpdates:
 			if served == nil {
-				log.Error("served ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("served ports observer stopped unexpectedly")
+				}
 				return
 			}
 		case configured = <-configUpdates:
 			if configured == nil {
-				log.Error("configured ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("configured ports observer stopped unexpectedly")
+				}
 				return
 			}
 		case tunneled = <-tunneledUpdates:
 			if tunneled == nil {
-				log.Error("tunneled ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("tunneled ports observer stopped unexpectedly")
+				}
 				return
 			}
 
 		case err := <-exposedErrors:
 			if err == nil {
-				log.Error("exposed ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("exposed ports observer stopped unexpectedly")
+				}
 				return
 			}
 			log.WithError(err).Warn("error while observing exposed ports")
 		case err := <-servedErrors:
 			if err == nil {
-				log.Error("served ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("served ports observer stopped unexpectedly")
+				}
 				return
 			}
 			log.WithError(err).Warn("error while observing served ports")
 		case err := <-configErrors:
 			if err == nil {
-				log.Error("port configs observer stopped")
+				if ctx.Err() == nil {
+					log.Error("port configs observer stopped unexpectedly")
+				}
 				return
 			}
 			log.WithError(err).Warn("error while observing served port configs")
 		case err := <-tunneledErrors:
 			if err == nil {
-				log.Error("tunneled ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("tunneled ports observer stopped unexpectedly")
+				}
 				return
 			}
 			log.WithError(err).Warn("error while observing tunneled ports")
@@ -289,7 +307,7 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 	stateChanged := !reflect.DeepEqual(newState, pm.state)
 	pm.state = newState
 
-	if !stateChanged {
+	if !stateChanged && configured == nil {
 		return
 	}
 
@@ -308,25 +326,47 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 	state := make(map[uint32]*managedPort)
 
+	genManagedPort := func(port uint32) *managedPort {
+		if mp, exists := state[port]; exists {
+			return mp
+		}
+		config, _, exists := pm.configs.Get(port)
+		var portConfig *gitpod.PortConfig
+		if exists && config != nil {
+			portConfig = &config.PortConfig
+		}
+		mp := &managedPort{
+			LocalhostPort: port,
+			OnExposed:     getOnExposedAction(portConfig, port),
+			OnOpen:        getOnOpenAction(portConfig, port),
+		}
+		if exists {
+			mp.Name = config.Name
+			mp.Description = config.Description
+		}
+		state[port] = mp
+		return mp
+	}
+
 	// 1. first capture exposed and tunneled since they don't depend on configured or served ports
 	for _, exposed := range pm.exposed {
 		port := exposed.LocalPort
 		if pm.boundInternally(port) {
 			continue
 		}
-
-		config, _, _ := pm.configs.Get(port)
 		Visibility := api.PortVisibility_private
 		if exposed.Public {
 			Visibility = api.PortVisibility_public
 		}
-		state[port] = &managedPort{
-			LocalhostPort: port,
-			Exposed:       true,
-			Visibility:    Visibility,
-			URL:           exposed.URL,
-			OnExposed:     getOnExposedAction(config, port),
+		portProtocol := api.PortProtocol_http
+		if exposed.Protocol == gitpod.PortProtocolHTTPS {
+			portProtocol = api.PortProtocol_https
 		}
+		mp := genManagedPort(port)
+		mp.Exposed = true
+		mp.Protocol = portProtocol
+		mp.Visibility = Visibility
+		mp.URL = exposed.URL
 	}
 
 	for _, tunneled := range pm.tunneled {
@@ -334,13 +374,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		if pm.boundInternally(port) {
 			continue
 		}
-
-		mp, exists := state[port]
-		if !exists {
-			mp = &managedPort{}
-			state[port] = mp
-		}
-		mp.LocalhostPort = port
+		mp := genManagedPort(port)
 		mp.Tunneled = true
 		mp.TunneledTargetPort = tunneled.Desc.TargetPort
 		mp.TunneledVisibility = tunneled.Desc.Visibility
@@ -349,30 +383,16 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 
 	// 2. second capture configured since we don't want to auto expose already exposed ports
 	if pm.configs != nil {
-		pm.configs.ForEach(func(port uint32, config *gitpod.PortConfig) {
+		pm.configs.ForEach(func(port uint32, config *SortConfig) {
 			if pm.boundInternally(port) {
 				return
 			}
-
-			mp, exists := state[port]
-			if !exists {
-				mp = &managedPort{}
-				state[port] = mp
-			}
-			mp.LocalhostPort = port
-			mp.Description = config.Description
-			mp.Name = config.Name
-
+			mp := genManagedPort(port)
 			autoExpose, autoExposed := pm.autoExposed[port]
 			if autoExposed {
 				mp.AutoExposure = autoExpose.state
 			}
-			if mp.Exposed {
-				return
-			}
-			mp.OnExposed = getOnExposedAction(config, port)
-
-			if autoExposed {
+			if mp.Exposed || autoExposed {
 				return
 			}
 
@@ -381,7 +401,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 				mp.Visibility = api.PortVisibility_public
 			}
 			public := mp.Visibility == api.PortVisibility_public
-			mp.AutoExposure = pm.autoExpose(ctx, mp.LocalhostPort, public).state
+			mp.AutoExposure = pm.autoExpose(ctx, mp.LocalhostPort, public, config.Protocol).state
 		})
 	}
 
@@ -393,14 +413,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		if pm.boundInternally(port) {
 			continue
 		}
-
-		mp, exists := state[port]
-		if !exists {
-			mp = &managedPort{}
-			state[port] = mp
-		}
-
-		mp.LocalhostPort = port
+		mp := genManagedPort(port)
 		mp.Served = true
 
 		autoExposure, autoExposed := pm.autoExposed[port]
@@ -410,19 +423,32 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		}
 
 		var public bool
+		protocol := "http"
 		config, kind, exists := pm.configs.Get(mp.LocalhostPort)
+
+		getProtocol := func(p api.PortProtocol) string {
+			switch p {
+			case api.PortProtocol_https:
+				return "https"
+			default:
+				return "http"
+			}
+		}
+
 		configured := exists && kind == PortConfigKind
 		if mp.Exposed || configured {
 			public = mp.Visibility == api.PortVisibility_public
-		} else {
-			public = exists && config.Visibility == "public"
+			protocol = getProtocol(mp.Protocol)
+		} else if exists {
+			public = config.Visibility == "public"
+			protocol = config.Protocol
 		}
 
-		if mp.Exposed && ((mp.Visibility == api.PortVisibility_public && public) || (mp.Visibility == api.PortVisibility_private && !public)) {
+		if mp.Exposed && ((mp.Visibility == api.PortVisibility_public && public) || (mp.Visibility == api.PortVisibility_private && !public)) && protocol != "https" {
 			continue
 		}
 
-		mp.AutoExposure = pm.autoExpose(ctx, mp.LocalhostPort, public).state
+		mp.AutoExposure = pm.autoExpose(ctx, mp.LocalhostPort, public, protocol).state
 	}
 
 	var ports []uint32
@@ -443,12 +469,13 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 }
 
 // clients should guard a call with check whether such port is already exposed or auto exposed
-func (pm *Manager) autoExpose(ctx context.Context, localPort uint32, public bool) *autoExposure {
-	exposing := pm.E.Expose(ctx, localPort, public)
+func (pm *Manager) autoExpose(ctx context.Context, localPort uint32, public bool, protocol string) *autoExposure {
+	exposing := pm.E.Expose(ctx, localPort, public, protocol)
 	autoExpose := &autoExposure{
-		state:  api.PortAutoExposure_trying,
-		ctx:    ctx,
-		public: public,
+		state:    api.PortAutoExposure_trying,
+		ctx:      ctx,
+		public:   public,
+		protocol: protocol,
 	}
 	go func() {
 		err := <-exposing
@@ -475,7 +502,7 @@ func (pm *Manager) RetryAutoExpose(ctx context.Context, localPort uint32) {
 	if !autoExposed || autoExpose.state != api.PortAutoExposure_failed || autoExpose.ctx.Err() != nil {
 		return
 	}
-	pm.autoExpose(autoExpose.ctx, localPort, autoExpose.public)
+	pm.autoExpose(autoExpose.ctx, localPort, autoExpose.public, autoExpose.protocol)
 	pm.forceUpdate()
 }
 
@@ -564,6 +591,7 @@ func (pm *Manager) updateProxies() {
 	}
 }
 
+// deprecated
 func getOnExposedAction(config *gitpod.PortConfig, port uint32) api.OnPortExposedAction {
 	if config == nil {
 		// anything above 32767 seems odd (e.g. used by language servers)
@@ -584,6 +612,28 @@ func getOnExposedAction(config *gitpod.PortConfig, port uint32) api.OnPortExpose
 		return api.OnPortExposedAction_open_preview
 	}
 	return api.OnPortExposedAction_notify
+}
+
+func getOnOpenAction(config *gitpod.PortConfig, port uint32) api.PortsStatus_OnOpenAction {
+	if config == nil {
+		// anything above 32767 seems odd (e.g. used by language servers)
+		unusualRange := !(0 < port && port < 32767)
+		wellKnown := port <= 10000
+		if unusualRange || !wellKnown {
+			return api.PortsStatus_ignore
+		}
+		return api.PortsStatus_notify_private
+	}
+	if config.OnOpen == "ignore" {
+		return api.PortsStatus_ignore
+	}
+	if config.OnOpen == "open-browser" {
+		return api.PortsStatus_open_browser
+	}
+	if config.OnOpen == "open-preview" {
+		return api.PortsStatus_open_preview
+	}
+	return api.PortsStatus_notify
 }
 
 func (pm *Manager) boundInternally(port uint32) bool {
@@ -622,8 +672,15 @@ func (pm *Manager) Expose(ctx context.Context, port uint32) error {
 	pm.mu.RUnlock()
 	unlock = false
 
-	public := exists && config.Visibility != "private"
-	err := <-pm.E.Expose(ctx, port, public)
+	public := false
+	protocol := gitpod.PortProtocolHTTP
+
+	if exists {
+		public = config.Visibility != "private"
+		protocol = config.Protocol
+	}
+
+	err := <-pm.E.Expose(ctx, port, public, protocol)
 	if err != nil && err != context.Canceled {
 		log.WithError(err).WithField("port", port).Error("cannot expose port")
 	}
@@ -730,6 +787,22 @@ func (pm *Manager) getStatus() []*api.PortsStatus {
 	for port := range pm.state {
 		res = append(res, pm.getPortStatus(port))
 	}
+	sort.SliceStable(res, func(i, j int) bool {
+		// Max number of port 65536
+		score1 := NON_CONFIGED_BASIC_SCORE + res[i].LocalPort
+		score2 := NON_CONFIGED_BASIC_SCORE + res[j].LocalPort
+		if c, _, ok := pm.configs.Get(res[i].LocalPort); ok {
+			score1 = c.Sort
+		}
+		if c, _, ok := pm.configs.Get(res[j].LocalPort); ok {
+			score2 = c.Sort
+		}
+		if score1 != score2 {
+			return score1 < score2
+		}
+		// Ranged ports
+		return res[i].LocalPort < res[j].LocalPort
+	})
 	return res
 }
 
@@ -740,10 +813,12 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 		Served:      mp.Served,
 		Description: mp.Description,
 		Name:        mp.Name,
+		OnOpen:      mp.OnOpen,
 	}
 	if mp.Exposed && mp.URL != "" {
 		ps.Exposed = &api.ExposedPortInfo{
 			Visibility: mp.Visibility,
+			Protocol:   mp.Protocol,
 			Url:        mp.URL,
 			OnExposed:  mp.OnExposed,
 		}
@@ -760,60 +835,37 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 }
 
 func startLocalhostProxy(port uint32) (io.Closer, error) {
-	host := fmt.Sprintf("localhost:%d", port)
+	listen := fmt.Sprintf("%s:%d", workspaceIPAdress, port)
+	target := fmt.Sprintf("localhost:%d", port)
 
-	dsturl, err := url.Parse("http://" + host)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot produce proxy destination URL: %w", err)
-	}
+	var p tcpproxy.Proxy
+	p.AddRoute(listen, tcpproxy.To(target))
 
-	proxy := httputil.NewSingleHostReverseProxy(dsturl)
-	originalDirector := proxy.Director
-	proxy.Director = func(req *http.Request) {
-		req.Host = host
-		originalDirector(req)
-	}
-	proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
-		log.WithError(err).WithField("local-port", port).WithField("url", req.URL.String()).Warn("localhost proxy request failed")
-		rw.WriteHeader(http.StatusBadGateway)
-	}
-
-	proxyAddr := fmt.Sprintf("%v:%d", workspaceIPAdress, port)
-	lis, err := net.Listen("tcp", proxyAddr)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot listen on proxy port %d: %w", port, err)
-	}
-
-	srv := &http.Server{
-		Addr:    proxyAddr,
-		Handler: proxy,
-	}
 	go func() {
-		err := srv.Serve(lis)
-		if err == http.ErrServerClosed {
+		err := p.Run()
+		if err == net.ErrClosed || strings.Contains(err.Error(), "use of closed network connection") {
 			return
 		}
 		log.WithError(err).WithField("local-port", port).Error("localhost proxy failed")
 	}()
-
-	return srv, nil
+	return &p, nil
 }
 
-func defaultRoutableIP() string {
+func defaultRoutableIP() (string, string) {
 	iface, err := nettest.RoutedInterface("ip", net.FlagUp|net.FlagBroadcast)
 	if err != nil {
-		return ""
+		return "", ""
 	}
 
 	iface, err = net.InterfaceByName(iface.Name)
 	if err != nil {
-		return ""
+		return "", ""
 	}
 
 	addresses, err := iface.Addrs()
 	if err != nil {
-		return ""
+		return "", ""
 	}
 
-	return addresses[0].(*net.IPNet).IP.String()
+	return iface.Name, addresses[0].(*net.IPNet).IP.String()
 }

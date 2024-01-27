@@ -1,15 +1,17 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -17,7 +19,7 @@ import (
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/distribution/reference"
-	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
+	blobserve_config "github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -28,6 +30,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/common-go/watch"
 )
 
 var jsonLog bool
@@ -39,45 +42,69 @@ var runCmd = &cobra.Command{
 	Short: "Starts the blobserve",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg, err := config.GetConfig(args[0])
+		cfg, err := blobserve_config.GetConfig(args[0])
 		if err != nil {
 			log.WithError(err).WithField("filename", args[0]).Fatal("cannot load config")
 		}
 
-		var dockerCfg *configfile.ConfigFile
+		var (
+			dockerCfg   *configfile.ConfigFile
+			dockerCfgMu sync.RWMutex
+		)
 		if cfg.AuthCfg != "" {
-			authCfg := cfg.AuthCfg
-			if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
-				authCfg = filepath.Join(tproot, authCfg)
-			}
-			fr, err := os.OpenFile(authCfg, os.O_RDONLY, 0)
-			if err != nil {
-				log.WithError(err).Fatal("cannot read docker auth config")
-			}
-
-			dockerCfg = configfile.New(authCfg)
-			err = dockerCfg.LoadFromReader(fr)
-			fr.Close()
-			if err != nil {
-				log.WithError(err).Fatal("cannot read docker config")
-			}
-			log.WithField("fn", authCfg).Info("using authentication for backing registries")
+			dockerCfg = loadDockerCfg(cfg.AuthCfg)
 		}
 
 		reg := prometheus.NewRegistry()
 
+		var (
+			clientRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+				Name: "http_client_requests_total",
+				Help: "Counter of outgoing HTTP requests",
+			}, []string{"method", "code"})
+			clientRequestsDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+				Name:    "http_client_requests_duration_seconds",
+				Help:    "Histogram of outgoing HTTP request durations",
+				Buckets: prometheus.DefBuckets,
+			}, []string{"method", "code"})
+			serverRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+				Name: "http_server_requests_total",
+				Help: "Counter of incoming HTTP requests",
+			}, []string{"method", "code"})
+			serverRequestsDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+				Name:    "http_server_requests_duration_seconds",
+				Help:    "Histogram of incoming HTTP request durations",
+				Buckets: prometheus.DefBuckets,
+			}, []string{"method", "code"})
+		)
+
 		resolverProvider := func() remotes.Resolver {
 			var resolverOpts docker.ResolverOptions
+
+			dockerCfgMu.RLock()
+			defer dockerCfgMu.RUnlock()
 			if dockerCfg != nil {
 				resolverOpts.Hosts = docker.ConfigureDefaultRegistries(
 					docker.WithAuthorizer(authorizerFromDockerConfig(dockerCfg)),
+					docker.WithClient(&http.Client{
+						Transport: promhttp.InstrumentRoundTripperCounter(clientRequestsTotal,
+							promhttp.InstrumentRoundTripperDuration(clientRequestsDuration,
+								http.DefaultTransport)),
+					}),
 				)
 			}
 
 			return docker.NewResolver(resolverOpts)
 		}
 
-		srv, err := blobserve.NewServer(cfg.BlobServe, resolverProvider)
+		srv, err := blobserve.NewServer(cfg.BlobServe, resolverProvider,
+			func(h http.Handler) http.Handler {
+				return promhttp.InstrumentHandlerCounter(serverRequestsTotal,
+					promhttp.InstrumentHandlerDuration(serverRequestsDuration,
+						h),
+				)
+			},
+		)
 		if err != nil {
 			log.WithError(err).Fatal("cannot create blob server")
 		}
@@ -90,6 +117,10 @@ var runCmd = &cobra.Command{
 			reg.MustRegister(
 				collectors.NewGoCollector(),
 				collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+				clientRequestsTotal,
+				clientRequestsDuration,
+				serverRequestsTotal,
+				serverRequestsDuration,
 			)
 
 			handler := http.NewServeMux()
@@ -136,6 +167,19 @@ var runCmd = &cobra.Command{
 			}()
 		}
 
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err = watch.File(ctx, cfg.AuthCfg, func() {
+			dockerCfgMu.Lock()
+			defer dockerCfgMu.Unlock()
+
+			dockerCfg = loadDockerCfg(cfg.AuthCfg)
+		})
+		if err != nil {
+			log.WithError(err).Fatal("cannot start watch of Docker auth configuration file")
+		}
+
 		log.Info("🏪 blobserve is up and running")
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
@@ -145,6 +189,26 @@ var runCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+}
+
+func loadDockerCfg(fn string) *configfile.ConfigFile {
+	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
+		fn = filepath.Join(tproot, fn)
+	}
+	fr, err := os.OpenFile(fn, os.O_RDONLY, 0)
+	if err != nil {
+		log.WithError(err).Fatal("cannot read docker auth config")
+	}
+
+	dockerCfg := configfile.New(fn)
+	err = dockerCfg.LoadFromReader(fr)
+	fr.Close()
+	if err != nil {
+		log.WithError(err).Fatal("cannot read docker config")
+	}
+	log.WithField("fn", fn).Info("using authentication for backing registries")
+
+	return dockerCfg
 }
 
 // FromDockerConfig turns docker client config into docker registry hosts

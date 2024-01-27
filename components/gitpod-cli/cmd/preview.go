@@ -1,20 +1,22 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
 import (
-	"log"
+	"context"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 )
 
 var regexLocalhost = regexp.MustCompile(`((^(localhost|127\.0\.0\.1))|(https?://(localhost|127\.0\.0\.1)))(:[0-9]+)?`)
@@ -28,42 +30,66 @@ var previewCmd = &cobra.Command{
 	Use:   "preview <url>",
 	Short: "Opens a URL in the IDE's preview",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
+
+		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
+		defer cancel()
+		client, err := supervisor.New(ctx)
+		if err != nil {
+			return err
+		}
+		defer client.Close()
+
+		client.WaitForIDEReady(ctx)
+
+		gpBrowserEnvVar := "GP_PREVIEW_BROWSER"
+
 		url := replaceLocalhostInURL(args[0])
 		if previewCmdOpts.External {
 			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 				url = "https://" + url
 			}
-			openPreview("GP_EXTERNAL_BROWSER", url)
-			return
+			gpBrowserEnvVar = "GP_EXTERNAL_BROWSER"
 		}
-		openPreview("GP_PREVIEW_BROWSER", url)
+
+		return openPreview(gpBrowserEnvVar, url)
 	},
 }
 
-func openPreview(gpBrowserEnvVar string, url string) {
+func openPreview(gpBrowserEnvVar string, url string) error {
 	pcmd := os.Getenv(gpBrowserEnvVar)
 	if pcmd == "" {
-		log.Fatalf("%s is not set", gpBrowserEnvVar)
-		return
+		return xerrors.Errorf("%s is not set", gpBrowserEnvVar)
 	}
 	pargs, err := shlex.Split(pcmd)
 	if err != nil {
-		log.Fatalf("cannot parse %s: %v", gpBrowserEnvVar, err)
-		return
+		return xerrors.Errorf("cannot parse %s: %w", gpBrowserEnvVar, err)
 	}
 	if len(pargs) > 1 {
 		pcmd = pargs[0]
 	}
 	pcmd, err = exec.LookPath(pcmd)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	err = unix.Exec(pcmd, append(pargs, url), os.Environ())
-	if err != nil {
-		log.Fatal(err)
+	var args []string
+	for _, parg := range pargs[1:] {
+		if parg == "" {
+			continue
+		}
+		args = append(args, parg)
 	}
+	args = append(args, url)
+
+	previewCmd := exec.Command(pcmd, args...)
+	err = previewCmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func replaceLocalhostInURL(url string) string {

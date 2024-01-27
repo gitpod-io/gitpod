@@ -1,0 +1,48 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app.kubernetes.io/name: kubernetes
+    app.kubernetes.io/part-of: kube-prometheus
+    prometheus: k8s
+    role: alert-rules
+  name: node-monitoring-rules
+  namespace: monitoring-satellite
+spec:
+  groups:
+  - name: node
+    rules:
+    - alert: NodeFilesystemAlmostOutOfSpace
+      annotations:
+        description: Filesystem on {{ $labels.device }} at {{ $labels.instance }} has only {{ printf "%.2f" $value }}% available space left.
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/NodeFilesystemAlmostOutOfSpace.md
+        summary: Filesystem has less than 3% space left.
+      expr: |
+        (
+          node_filesystem_avail_bytes{job="node-exporter",fstype!="shiftfs"} / node_filesystem_size_bytes{job="node-exporter",fstype!="shiftfs"} * 100 < 3
+        and
+          node_filesystem_readonly{job="node-exporter",fstype!="shiftfs"} == 0
+        )
+      for: 15m
+      labels:
+        severity: critical
+        team: platform
+    - alert: NodeFilesystemAlmostOutOfFiles
+      annotations:
+        description: Filesystem on {{ $labels.device }} at {{ $labels.instance }} has only {{ printf "%.2f" $value }}% available inodes left.
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/NodeFilesystemAlmostOutOfFiles.md
+        summary: Filesystem has less than 3% inodes left.
+      expr: |
+        (
+          node_filesystem_files_free{job="node-exporter",fstype!="shiftfs"} / node_filesystem_files{job="node-exporter",fstype!="shiftfs"} * 100 < 3
+        and
+          node_filesystem_readonly{job="node-exporter",fstype!="shiftfs"} == 0
+        )
+      for: 1h
+      labels:
+        severity: critical
+        team: platform

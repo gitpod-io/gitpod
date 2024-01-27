@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package resolve
 
@@ -220,14 +220,14 @@ func (pr *PrecachingRefResolver) StartCaching(ctx context.Context, interval time
 	for {
 		for _, c := range pr.Candidates {
 			var opts []DockerRefResolverOption
-			if pr.Auth != nil {
+			if pr.Auth != ((auth.RegistryAuthenticator)(nil)) {
 				ref, err := reference.ParseNormalizedNamed(c)
 				if err != nil {
 					log.WithError(err).WithField("ref", c).Warn("unable to precache reference: cannot parse")
 					continue
 				}
 
-				auth, err := pr.Auth.Authenticate(reference.Domain(ref))
+				auth, err := pr.Auth.Authenticate(ctx, reference.Domain(ref))
 				if err != nil {
 					log.WithError(err).WithField("ref", c).Warn("unable to precache reference: cannot authenticate")
 					continue

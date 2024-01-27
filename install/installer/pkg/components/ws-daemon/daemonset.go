@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package wsdaemon
 
@@ -9,7 +9,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -22,7 +21,7 @@ import (
 
 func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := ctx.Config
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDaemonset)
 
 	configHash, err := common.ObjectHash(configmap(ctx))
 	if err != nil {
@@ -30,35 +29,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	initContainers := []corev1.Container{
-		{
-			Name:  "disable-kube-health-monitor",
-			Image: ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/ubuntu", "20.04"),
-			Command: []string{
-				"/usr/bin/nsenter",
-				"-t",
-				"1",
-				"-a",
-				"/bin/bash",
-				"-c",
-			},
-			Args: []string{`exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted of stderr
-set -euExo pipefail
-systemctl status kube-container-runtime-monitor.service || true
-if [ "$(systemctl is-active kube-container-runtime-monitor.service)" == "active" ]
-then
-	echo "kube-container-runtime-monitor.service is active"
-	systemctl stop kube-container-runtime-monitor.service
-	systemctl disable kube-container-runtime-monitor.service
-	systemctl status kube-container-runtime-monitor.service || true
-else
-	echo "kube-container-runtime-monitor.service is not active, not doing anything"
-fi
-`},
-			SecurityContext: &corev1.SecurityContext{
-				Privileged: pointer.Bool(true),
-				ProcMount:  func() *corev1.ProcMountType { r := corev1.DefaultProcMount; return &r }(),
-			},
-		},
 		{
 			Name:  "seccomp-profile-installer",
 			Image: ctx.ImageName(cfg.Repository, "seccomp-profile-installer", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.SeccompProfileInstaller.Version),
@@ -94,98 +64,149 @@ fi
 		},
 	}
 
-	if cfg.Workspace.Runtime.FSShiftMethod == config.FSShiftShiftFS {
-		initContainers = append(initContainers, corev1.Container{
-			Name:  "shiftfs-module-loader",
-			Image: ctx.ImageName(cfg.Repository, "shiftfs-module-loader", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.ShiftFSModuleLoader.Version),
-			VolumeMounts: []corev1.VolumeMount{{
-				Name:      "node-linux-src",
-				ReadOnly:  true,
-				MountPath: "/usr/src_node",
+	volumes := []corev1.Volume{
+		{
+			Name: "hostfs",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+				Path: "/",
 			}},
-			SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
-		})
+		},
+		{
+			Name: "working-area-mk2",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+				Path: HostWorkingAreaMk2,
+				Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
+			}},
+		},
+		{
+			Name:         "tls-certs",
+			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: TLSSecretName}},
+		},
+		{
+			Name: "config",
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+			}},
+		},
+		{
+			Name: "containerd-socket",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+				Path: ctx.Config.Workspace.Runtime.ContainerDSocketDir,
+			}},
+		},
+		{
+			Name: "node-fs0",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+				Path: ctx.Config.Workspace.Runtime.ContainerDRuntimeDir,
+				Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
+			}},
+		},
+		{
+			Name: "node-mounts",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+				Path: "/proc/mounts",
+				Type: func() *corev1.HostPathType { r := corev1.HostPathFile; return &r }(),
+			}},
+		},
+		{
+			Name: "node-cgroups",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+				Path: "/sys/fs/cgroup",
+				Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
+			}},
+		},
+		{
+			Name: "node-hosts",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+				Path: "/etc/hosts",
+				Type: func() *corev1.HostPathType { r := corev1.HostPathFile; return &r }(),
+			}},
+		},
+		{
+			Name: "node-linux-src",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+				Path: "/usr/src",
+				Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
+			}},
+		},
+		{
+			Name:         "hostseccomp",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/var/lib/kubelet/seccomp"}},
+		},
+		{
+			Name: "gcloud-tmp",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+				Path: HostBackupPath,
+				Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
+			}},
+		},
+		common.CAVolume(),
+	}
+
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:             "working-area-mk2",
+			MountPath:        ContainerWorkingAreaMk2,
+			MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationBidirectional; return &r }(),
+		},
+		{
+			Name:      "config",
+			MountPath: "/config",
+		},
+		{
+			Name:      "containerd-socket",
+			MountPath: "/mnt/containerd",
+		},
+		{
+			Name:      "node-fs0",
+			MountPath: "/mnt/node0",
+		},
+		{
+			Name:             "node-mounts",
+			ReadOnly:         true,
+			MountPath:        "/mnt/mounts",
+			MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationHostToContainer; return &r }(),
+		},
+		{
+			Name:             "node-cgroups",
+			MountPath:        "/mnt/node-cgroups",
+			MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationHostToContainer; return &r }(),
+		},
+		{
+			Name:      "node-hosts",
+			MountPath: "/mnt/hosts",
+		},
+		{
+			Name:      "tls-certs",
+			MountPath: "/certs",
+		},
+		{
+			Name:      "gcloud-tmp",
+			MountPath: "/mnt/sync-tmp",
+		},
+		common.CAVolumeMount(),
+	}
+
+	tolerations := []corev1.Toleration{
+		{
+			Key:      "node.kubernetes.io/disk-pressure",
+			Operator: "Exists",
+			Effect:   "NoExecute",
+		},
+		{
+			Key:      "node.kubernetes.io/memory-pressure",
+			Operator: "Exists",
+			Effect:   "NoExecute",
+		},
+		{
+			Key:      "node.kubernetes.io/out-of-disk",
+			Operator: "Exists",
+			Effect:   "NoExecute",
+		},
 	}
 
 	podSpec := corev1.PodSpec{
-		Volumes: []corev1.Volume{
-			{
-				Name: "hostfs",
-				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-					Path: "/",
-				}},
-			},
-			{
-				Name: "working-area",
-				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-					Path: HostWorkingArea,
-					Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
-				}},
-			},
-			{
-				Name:         "tls-certs",
-				VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: TLSSecretName}},
-			},
-			{
-				Name: "config",
-				VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-				}},
-			},
-			{
-				Name: "containerd-socket",
-				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-					Path: ctx.Config.Workspace.Runtime.ContainerDSocket,
-					Type: func() *corev1.HostPathType { r := corev1.HostPathSocket; return &r }(),
-				}},
-			},
-			{
-				Name: "node-fs0",
-				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-					Path: ctx.Config.Workspace.Runtime.ContainerDRuntimeDir,
-					Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
-				}},
-			},
-			{
-				Name: "node-mounts",
-				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-					Path: "/proc/mounts",
-					Type: func() *corev1.HostPathType { r := corev1.HostPathFile; return &r }(),
-				}},
-			},
-			{
-				Name: "node-cgroups",
-				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-					Path: "/sys/fs/cgroup",
-					Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
-				}},
-			},
-			{
-				Name: "node-hosts",
-				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-					Path: "/etc/hosts",
-					Type: func() *corev1.HostPathType { r := corev1.HostPathFile; return &r }(),
-				}},
-			},
-			{
-				Name: "node-linux-src",
-				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-					Path: "/usr/src",
-					Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
-				}},
-			},
-			{
-				Name:         "hostseccomp",
-				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/var/lib/kubelet/seccomp"}},
-			},
-			{
-				Name: "gcloud-tmp",
-				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-					Path: HostBackupPath,
-					Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
-				}},
-			},
-		},
+		Volumes:        volumes,
 		InitContainers: initContainers,
 		Containers: []corev1.Container{
 			{
@@ -198,67 +219,18 @@ fi
 				},
 				Ports: []corev1.ContainerPort{{
 					Name:          "rpc",
-					HostPort:      ServicePort,
 					ContainerPort: ServicePort,
 				}},
-				Env: common.MergeEnv(
+				Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 					common.DefaultEnv(&cfg),
-					common.WorkspaceTracingEnv(ctx),
-					[]corev1.EnvVar{{
-						Name: "NODENAME",
-						ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								FieldPath: "spec.nodeName",
-							},
-						},
-					}},
-				),
+					common.WorkspaceTracingEnv(ctx, Component),
+					common.NodeNameEnv(ctx),
+				)),
 				Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{Requests: corev1.ResourceList{
-					"cpu":    resource.MustParse("1m"),
-					"memory": resource.MustParse("1Mi"),
+					"cpu":    resource.MustParse("500m"),
+					"memory": resource.MustParse("4Gi"),
 				}}),
-				VolumeMounts: []corev1.VolumeMount{
-					{
-						Name:             "working-area",
-						MountPath:        ContainerWorkingArea,
-						MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationBidirectional; return &r }(),
-					},
-					{
-						Name:      "config",
-						MountPath: "/config",
-					},
-					{
-						Name:      "containerd-socket",
-						MountPath: "/mnt/containerd.sock",
-					},
-					{
-						Name:      "node-fs0",
-						MountPath: "/mnt/node0",
-					},
-					{
-						Name:             "node-mounts",
-						ReadOnly:         true,
-						MountPath:        "/mnt/mounts",
-						MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationHostToContainer; return &r }(),
-					},
-					{
-						Name:             "node-cgroups",
-						MountPath:        "/mnt/node-cgroups",
-						MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationHostToContainer; return &r }(),
-					},
-					{
-						Name:      "node-hosts",
-						MountPath: "/mnt/hosts",
-					},
-					{
-						Name:      "tls-certs",
-						MountPath: "/certs",
-					},
-					{
-						Name:      "gcloud-tmp",
-						MountPath: "/mnt/sync-tmp",
-					},
-				},
+				VolumeMounts:    volumeMounts,
 				ImagePullPolicy: corev1.PullIfNotPresent,
 				SecurityContext: &corev1.SecurityContext{
 					Privileged: pointer.Bool(true),
@@ -289,50 +261,18 @@ fi
 					SuccessThreshold:    1,
 					FailureThreshold:    5,
 				},
-				Lifecycle: &corev1.Lifecycle{
-					PostStart: &corev1.LifecycleHandler{
-						Exec: &corev1.ExecAction{
-							Command: []string{
-								"/bin/bash", "-c", fmt.Sprintf(`wait4x http http://localhost:%v/ready -t30s --expect-status-code 200 && kubectl label --overwrite nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}=true`, ReadinessPort),
-							},
-						},
-					},
-					PreStop: &corev1.LifecycleHandler{
-						Exec: &corev1.ExecAction{
-							Command: []string{
-								"/bin/bash", "-c", `kubectl label nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}-`,
-							},
-						},
-					},
-				},
 			},
 			*common.KubeRBACProxyContainer(ctx),
 		},
-		RestartPolicy:                 "Always",
+		RestartPolicy:                 corev1.RestartPolicyAlways,
 		TerminationGracePeriodSeconds: pointer.Int64(30),
-		DNSPolicy:                     "ClusterFirst",
+		DNSPolicy:                     corev1.DNSClusterFirst,
 		ServiceAccountName:            Component,
 		HostPID:                       true,
-		Affinity:                      common.NodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
-		Tolerations: []corev1.Toleration{
-			{
-				Key:      "node.kubernetes.io/disk-pressure",
-				Operator: "Exists",
-				Effect:   "NoExecute",
-			},
-			{
-				Key:      "node.kubernetes.io/memory-pressure",
-				Operator: "Exists",
-				Effect:   "NoExecute",
-			},
-			{
-				Key:      "node.kubernetes.io/out-of-disk",
-				Operator: "Exists",
-				Effect:   "NoExecute",
-			},
-		},
-		PriorityClassName:  common.SystemNodeCritical,
-		EnableServiceLinks: pointer.Bool(false),
+		Affinity:                      cluster.WithNodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
+		Tolerations:                   tolerations,
+		PriorityClassName:             common.SystemNodeCritical,
+		EnableServiceLinks:            pointer.Bool(false),
 	}
 
 	err = common.AddStorageMounts(ctx, &podSpec, Component)
@@ -340,33 +280,28 @@ fi
 		return nil, err
 	}
 
-	if vol, mnt, env, ok := common.CustomCACertVolume(ctx); ok {
-		podSpec.Volumes = append(podSpec.Volumes, *vol)
-		pod := podSpec.Containers[0]
-		pod.VolumeMounts = append(pod.VolumeMounts, *mnt)
-		pod.Env = append(pod.Env, env...)
-		podSpec.Containers[0] = pod
-	}
-
 	return []runtime.Object{&appsv1.DaemonSet{
 		TypeMeta: common.TypeMetaDaemonset,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
-			Namespace: ctx.Namespace,
-			Labels:    labels,
+			Name:        Component,
+			Namespace:   ctx.Namespace,
+			Labels:      labels,
+			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDaemonset),
 		},
 		Spec: appsv1.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{MatchLabels: labels},
+			Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels,
-					Annotations: map[string]string{
-						"seccomp.security.alpha.kubernetes.io/shiftfs-module-loader": "unconfined",
-						common.AnnotationConfigChecksum:                              configHash,
-					},
+					Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDaemonset, func() map[string]string {
+						return map[string]string{
+							common.AnnotationConfigChecksum: configHash,
+						}
+					}),
 				},
 				Spec: podSpec,
 			},
+			UpdateStrategy: common.DaemonSetRolloutStrategy(),
 		},
 	}}, nil
 }

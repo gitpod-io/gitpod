@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package service
 
@@ -20,16 +20,9 @@ import (
 
 func TestListLogs(t *testing.T) {
 	cfg := config.StorageConfig{
-		Stage: config.StageProduction,
-		Kind:  config.GCloudStorage, // dummy, mocked away
-		BackupTrail: struct {
-			Enabled   bool "json:\"enabled\""
-			MaxLength int  "json:\"maxLength\""
-		}{
-			Enabled:   false,
-			MaxLength: 3,
-		},
-		BlobQuota: 1073741824, // 1Gi
+		Stage:     config.StageProduction,
+		Kind:      config.GCloudStorage, // dummy, mocked away
+		BlobQuota: 1073741824,           // 1Gi
 	}
 
 	OwnerId := "1234"
@@ -70,7 +63,7 @@ func TestListLogs(t *testing.T) {
 				daFactory: daFactory,
 			}
 
-			s.EXPECT().InstanceObject(gomock.Any(), gomock.Any(), gomock.Any()).
+			s.EXPECT().InstanceObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return("")
 			da.EXPECT().Init(gomock.Any(), gomock.Eq(OwnerId), gomock.Eq(WorkspaceId), gomock.Not(gomock.Eq(""))).
 				Times(1)

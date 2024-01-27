@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package main
 
@@ -8,10 +8,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/netip"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
+	"time"
 	"unsafe"
 
 	cli "github.com/urfave/cli/v2"
@@ -21,6 +20,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	_ "github.com/gitpod-io/gitpod/common-go/nsenter"
 	"github.com/google/nftables"
+	"github.com/google/nftables/binaryutil"
 	"github.com/google/nftables/expr"
 	"github.com/vishvananda/netlink"
 )
@@ -83,74 +83,6 @@ func main() {
 				},
 				Action: func(c *cli.Context) error {
 					return unix.Mount("none", c.String("target"), "", unix.MS_SHARED, "")
-				},
-			},
-			{
-				Name:  "mount-fusefs-mark",
-				Usage: "mounts a fusefs mark",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "source",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "merged",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "upper",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "work",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "uidmapping",
-						Required: false,
-					},
-					&cli.StringFlag{
-						Name:     "gidmapping",
-						Required: false,
-					},
-				},
-				Action: func(c *cli.Context) error {
-					target := filepath.Clean(c.String("merged"))
-					upper := filepath.Clean(c.String("upper"))
-					work := filepath.Clean(c.String("work"))
-					source := filepath.Clean(c.String("source"))
-
-					args := []string{
-						fmt.Sprintf("lowerdir=%s,upperdir=%v,workdir=%v", source, upper, work),
-					}
-
-					if len(c.String("uidmapping")) > 0 {
-						args = append(args, fmt.Sprintf("uidmapping=%v", c.String("uidmapping")))
-					}
-
-					if len(c.String("gidmapping")) > 0 {
-						args = append(args, fmt.Sprintf("gidmapping=%v", c.String("gidmapping")))
-					}
-
-					cmd := exec.Command(
-						fmt.Sprintf("%v/.supervisor/fuse-overlayfs", source),
-						"-o",
-						strings.Join(args, ","),
-						"none",
-						target,
-					)
-					cmd.Dir = source
-
-					out, err := cmd.CombinedOutput()
-					if err != nil {
-						return xerrors.Errorf("fuse-overlayfs (%v) failed: %q\n%v",
-							cmd.Args,
-							string(out),
-							err,
-						)
-					}
-
-					return nil
 				},
 			},
 			{
@@ -266,22 +198,25 @@ func main() {
 						Name:     "target-pid",
 						Required: true,
 					},
+					&cli.StringFlag{
+						Name:     "workspace-cidr",
+						Required: true,
+					},
 				},
 				Action: func(c *cli.Context) error {
-					containerIf, vethIf, cethIf := "eth0", "veth0", "ceth0"
-					mask := net.IPv4Mask(255, 255, 255, 0)
-					vethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 1),
-						Mask: mask,
+					containerIf, vethIf, cethIf := "eth0", "veth0", "eth0"
+					networkCIDR := c.String("workspace-cidr")
+
+					vethIp, cethIp, mask, err := processWorkspaceCIDR(networkCIDR)
+					if err != nil {
+						return xerrors.Errorf("parsing workspace CIDR (%v):%v", networkCIDR, err)
 					}
-					cethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 2),
-						Mask: mask,
+
+					vethIpNet := net.IPNet{
+						IP:   vethIp,
+						Mask: mask.Mask,
 					}
-					masqueradeAddr := net.IPNet{
-						IP:   vethIp.IP.Mask(mask),
-						Mask: mask,
-					}
+
 					targetPid := c.Int("target-pid")
 
 					eth0, err := netlink.LinkByName(containerIf)
@@ -306,7 +241,7 @@ func main() {
 					if err != nil {
 						return xerrors.Errorf("cannot found %q netns failed: %v", vethIf, err)
 					}
-					if err := netlink.AddrAdd(vethLink, &netlink.Addr{IPNet: &vethIp}); err != nil {
+					if err := netlink.AddrAdd(vethLink, &netlink.Addr{IPNet: &vethIpNet}); err != nil {
 						return xerrors.Errorf("failed to add IP address to %q: %v", vethIf, err)
 					}
 					if err := netlink.LinkSetUp(vethLink); err != nil {
@@ -327,29 +262,10 @@ func main() {
 						Type:     nftables.ChainTypeNAT,
 					})
 
-					// ip saddr 10.0.5.0/24 oifname "eth0" masquerade
 					nc.AddRule(&nftables.Rule{
 						Table: nat,
 						Chain: postrouting,
 						Exprs: []expr.Any{
-							&expr.Payload{
-								DestRegister: 1,
-								Base:         expr.PayloadBaseNetworkHeader,
-								Offset:       12,
-								Len:          net.IPv4len,
-							},
-							&expr.Bitwise{
-								SourceRegister: 1,
-								DestRegister:   1,
-								Len:            net.IPv4len,
-								Mask:           masqueradeAddr.Mask,
-								Xor:            net.IPv4Mask(0, 0, 0, 0),
-							},
-							&expr.Cmp{
-								Op:       expr.CmpOpEq,
-								Register: 1,
-								Data:     masqueradeAddr.IP.To4(),
-							},
 							&expr.Meta{Key: expr.MetaKeyOIFNAME, Register: 1},
 							&expr.Cmp{
 								Op:       expr.CmpOpEq,
@@ -406,7 +322,7 @@ func main() {
 
 							&expr.Immediate{
 								Register: 2,
-								Data:     cethIp.IP.To4(),
+								Data:     cethIp.To4(),
 							},
 							&expr.NAT{
 								Type:        expr.NATTypeDestNAT,
@@ -416,7 +332,6 @@ func main() {
 							},
 						},
 					})
-
 					if err := nc.Flush(); err != nil {
 						return xerrors.Errorf("failed to apply nftables: %v", err)
 					}
@@ -427,23 +342,31 @@ func main() {
 			{
 				Name:  "setup-peer-veth",
 				Usage: "set up a peer veth",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "workspace-cidr",
+						Required: true,
+					},
+				},
 				Action: func(c *cli.Context) error {
-					cethIf := "ceth0"
-					mask := net.IPv4Mask(255, 255, 255, 0)
-					cethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 2),
-						Mask: mask,
+					cethIf := "eth0"
+
+					networkCIDR := c.String("workspace-cidr")
+					vethIp, cethIp, mask, err := processWorkspaceCIDR(networkCIDR)
+					if err != nil {
+						return xerrors.Errorf("parsing workspace CIDR (%v):%v", networkCIDR, err)
 					}
-					vethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 1),
-						Mask: mask,
+
+					cethIpNet := net.IPNet{
+						IP:   cethIp,
+						Mask: mask.Mask,
 					}
 
 					cethLink, err := netlink.LinkByName(cethIf)
 					if err != nil {
 						return xerrors.Errorf("cannot found %q netns failed: %v", cethIf, err)
 					}
-					if err := netlink.AddrAdd(cethLink, &netlink.Addr{IPNet: &cethIp}); err != nil {
+					if err := netlink.AddrAdd(cethLink, &netlink.Addr{IPNet: &cethIpNet}); err != nil {
 						return xerrors.Errorf("failed to add IP address to %q: %v", cethIf, err)
 					}
 					if err := netlink.LinkSetUp(cethLink); err != nil {
@@ -460,10 +383,10 @@ func main() {
 
 					defaultGw := netlink.Route{
 						Scope: netlink.SCOPE_UNIVERSE,
-						Gw:    vethIp.IP,
+						Gw:    vethIp,
 					}
 					if err := netlink.RouteReplace(&defaultGw); err != nil {
-						return xerrors.Errorf("failed to set up deafult gw: %v", err)
+						return xerrors.Errorf("failed to set up default gw (%v): %v", vethIp.String(), err)
 					}
 
 					return nil
@@ -474,6 +397,207 @@ func main() {
 				Usage: "enable IPv4 forwarding",
 				Action: func(c *cli.Context) error {
 					return os.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1"), 0644)
+				},
+			},
+			{
+				Name:  "dump-network-info",
+				Usage: "dump network info",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name: "tag",
+					},
+				},
+				Action: func(c *cli.Context) error {
+					links, err := netlink.LinkList()
+					if err != nil {
+						return xerrors.Errorf("cannot list network links: %v", err)
+					}
+
+					tag := c.String("tag")
+
+					for _, link := range links {
+						attrs := link.Attrs()
+
+						ip4, _ := netlink.AddrList(link, netlink.FAMILY_V4)
+						ip6, _ := netlink.AddrList(link, netlink.FAMILY_V6)
+
+						log.Infof("%v", struct {
+							Tag   string
+							Name  string
+							Type  string
+							Ip4   []netlink.Addr
+							Ip6   []netlink.Addr
+							Flags net.Flags
+							MTU   int
+						}{
+							Tag:   tag,
+							Name:  attrs.Name,
+							Type:  link.Type(),
+							Ip4:   ip4,
+							Ip6:   ip6,
+							Flags: attrs.Flags,
+							MTU:   attrs.MTU,
+						})
+					}
+
+					return nil
+				},
+			},
+			{
+				Name:  "setup-connection-limit",
+				Usage: "set up network connection rate limiting",
+				Flags: []cli.Flag{
+					&cli.IntFlag{
+						Name:     "limit",
+						Required: true,
+					},
+					&cli.IntFlag{
+						Name:     "bucketsize",
+						Required: false,
+					},
+					&cli.BoolFlag{
+						Name:     "enforce",
+						Required: false,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					const drop_stats = "ws-connection-drop-stats"
+					nftcon := nftables.Conn{}
+
+					connLimit := c.Int("limit")
+					bucketSize := c.Int("bucketsize")
+					if bucketSize == 0 {
+						bucketSize = 1000
+					}
+					enforce := c.Bool("enforce")
+
+					// nft add table ip gitpod
+					gitpodTable := nftcon.AddTable(&nftables.Table{
+						Family: nftables.TableFamilyIPv4,
+						Name:   "gitpod",
+					})
+
+					// nft add chain ip gitpod ratelimit { type filter hook postrouting priority 0 \; }
+					ratelimit := nftcon.AddChain(&nftables.Chain{
+						Table:    gitpodTable,
+						Name:     "ratelimit",
+						Type:     nftables.ChainTypeFilter,
+						Hooknum:  nftables.ChainHookPostrouting,
+						Priority: nftables.ChainPriorityFilter,
+					})
+
+					// nft add counter gitpod connection_drop_stats
+					nftcon.AddObject(&nftables.CounterObj{
+						Table: gitpodTable,
+						Name:  drop_stats,
+					})
+
+					// nft add set gitpod ws-connections { type ipv4_addr; flags timeout, dynamic; }
+					set := &nftables.Set{
+						Table:      gitpodTable,
+						Name:       "ws-connections",
+						KeyType:    nftables.TypeIPAddr,
+						Dynamic:    true,
+						HasTimeout: true,
+					}
+					if err := nftcon.AddSet(set, nil); err != nil {
+						return err
+					}
+
+					verdict := expr.VerdictAccept
+					if enforce {
+						verdict = expr.VerdictDrop
+					}
+
+					// nft add rule ip gitpod ratelimit ip protocol tcp ct state new meter ws-connections
+					// '{ ip daddr & 0.0.0.0 timeout 1m limit rate over 3000/minute burst 1000 packets }' counter name ws-connection-drop-stats drop
+					nftcon.AddRule(&nftables.Rule{
+						// ip gitpod ratelimit
+						Table: gitpodTable,
+						Chain: ratelimit,
+
+						Exprs: []expr.Any{
+							// ip protocol tcp
+							// get offset into network header and check if tcp
+							&expr.Payload{
+								DestRegister: 1,
+								Base:         expr.PayloadBaseNetworkHeader,
+								Offset:       uint32(9),
+								Len:          uint32(1),
+							},
+							&expr.Cmp{
+								Register: 1,
+								Op:       expr.CmpOpEq,
+								Data:     []byte{unix.IPPROTO_TCP},
+							},
+							// ct state new
+							// get state from conntrack entry and check for 'new' (0x00000008)
+							&expr.Ct{
+								Key:            expr.CtKeySTATE,
+								Register:       1,
+								SourceRegister: false,
+							},
+							&expr.Bitwise{
+								DestRegister:   1,
+								SourceRegister: 1,
+								Len:            4,
+								Mask:           binaryutil.NativeEndian.PutUint32(expr.CtStateBitNEW),
+								Xor:            binaryutil.NativeEndian.PutUint32(0),
+							},
+							&expr.Cmp{
+								Register: 1,
+								Op:       expr.CmpOpNeq,
+								Data:     []byte{0, 0, 0, 0},
+							},
+							// ip daddr & 0.0.0.0
+							// get the destination address and AND every address with zero
+							// to ensure that every address is placed into the same bucket
+							&expr.Payload{
+								DestRegister: 1,
+								Base:         expr.PayloadBaseNetworkHeader,
+								Offset:       uint32(16),
+								Len:          uint32(4),
+							},
+							&expr.Bitwise{
+								DestRegister:   1,
+								SourceRegister: 1,
+								Len:            1,
+								Mask:           []byte{0x00},
+								Xor:            []byte{0x00},
+							},
+							// timeout 1m limit rate over 3000/minute burst 1000 packets
+							&expr.Dynset{
+								SrcRegKey: 1,
+								SetName:   set.Name,
+								Operation: uint32(unix.NFT_DYNSET_OP_ADD),
+								Timeout:   time.Duration(60 * time.Second),
+								Exprs: []expr.Any{
+									&expr.Limit{
+										Type:  expr.LimitTypePkts,
+										Rate:  uint64(connLimit),
+										Unit:  expr.LimitTimeMinute,
+										Burst: uint32(bucketSize),
+										Over:  true,
+									},
+								},
+							},
+							// counter name "ws-connection-drop-stats"
+							&expr.Objref{
+								Type: 1,
+								Name: drop_stats,
+							},
+							// drop
+							&expr.Verdict{
+								Kind: verdict,
+							},
+						},
+					})
+
+					if err := nftcon.Flush(); err != nil {
+						return xerrors.Errorf("failed to apply connection limit: %v", err)
+					}
+
+					return nil
 				},
 			},
 		},
@@ -528,3 +652,27 @@ const (
 	// FlagAtRecursive: Apply to the entire subtree: https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/fcntl.h#L112
 	flagAtRecursive = 0x8000
 )
+
+func processWorkspaceCIDR(networkCIDR string) (net.IP, net.IP, *net.IPNet, error) {
+	netIP, mask, err := net.ParseCIDR(networkCIDR)
+	if err != nil {
+		return nil, nil, nil, xerrors.Errorf("cannot configure workspace CIDR: %w", err)
+	}
+
+	addr, err := netip.ParseAddr(netIP.String())
+	if err != nil {
+		return nil, nil, nil, xerrors.Errorf("cannot configure workspace CIDR: %w", err)
+	}
+
+	vethIp := addr.Next()
+	if !vethIp.IsValid() {
+		return nil, nil, nil, xerrors.Errorf("workspace CIDR is not big enough (%v)", networkCIDR)
+	}
+
+	cethIp := vethIp.Next()
+	if !cethIp.IsValid() {
+		return nil, nil, nil, xerrors.Errorf("workspace CIDR is not big enough (%v)", networkCIDR)
+	}
+
+	return net.ParseIP(vethIp.String()), net.ParseIP(cethIp.String()), mask, nil
+}

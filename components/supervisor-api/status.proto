@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 syntax = "proto3";
 
@@ -19,6 +19,9 @@ service StatusService {
     rpc SupervisorStatus(SupervisorStatusRequest) returns (SupervisorStatusResponse) {
         option (google.api.http) = {
             get: "/v1/status/supervisor"
+            additional_bindings {
+                get: "/v1/status/supervisor/willShutdown/{willShutdown=true}",
+            }
         };
     }
 
@@ -81,7 +84,10 @@ service StatusService {
 
 }
 
-message SupervisorStatusRequest {}
+message SupervisorStatusRequest {
+    // if true this request will return either when it times out or when the supervisor is about to shutdown.
+    bool willShutdown = 1;
+}
 message SupervisorStatusResponse {
     bool ok = 1;
 }
@@ -142,6 +148,13 @@ enum PortVisibility {
     private = 0;
     public = 1;
 }
+
+enum PortProtocol {
+    http = 0;
+    https = 1;
+}
+
+// DEPRECATED(use PortsStatus.OnOpenAction)
 enum OnPortExposedAction {
     ignore = 0;
     open_browser = 1;
@@ -154,8 +167,10 @@ message ExposedPortInfo {
     PortVisibility visibility = 1;
     // url is the URL at which the port is available
     string url = 2;
-    // action hint on expose
-    OnPortExposedAction on_exposed = 3;
+    // DEPRECATED(use PortsStatus.on_open instead): action hint on expose
+    OnPortExposedAction on_exposed = 3 [deprecated=true];
+
+    PortProtocol protocol = 4;
 }
 message TunneledPortInfo {
   // target port is the desired port on the remote machine
@@ -201,6 +216,17 @@ message PortsStatus {
 
     // Port name, obtained from Gitpod PortConfig.
     string name = 9;
+
+    enum OnOpenAction {
+        ignore = 0;
+        open_browser = 1;
+        open_preview = 2;
+        notify = 3;
+        notify_private = 4;
+    }
+
+    // Action hint on open
+    OnOpenAction on_open = 10;
 }
 
 message TasksStatusRequest {
@@ -240,4 +266,10 @@ message ResourcesStatusResponse {
 message ResourceStatus {
     int64 used = 1;
     int64 limit = 2;
+    ResourceStatusSeverity severity = 3;
+}
+enum ResourceStatusSeverity {
+    normal = 0;
+    warning = 1;
+    danger = 2;
 }

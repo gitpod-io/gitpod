@@ -1,11 +1,14 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package loadgen
 
 import (
 	"math/rand"
+	"net/url"
+	"path"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -160,11 +163,23 @@ type WorkspaceCfg struct {
 	CloneTarget    string                     `json:"cloneTarget"`
 	Score          int                        `json:"score"`
 	Environment    []*api.EnvironmentVariable `json:"environment"`
+	WorkspaceClass string                     `json:"workspaceClass"`
+	RepositoryAuth *RepositoryAuth            `json:"auth,omitempty"`
+}
+
+type RepositoryAuth struct {
+	AuthUser     string `json:"authUser"`
+	AuthPassword string `json:"authPassword"`
 }
 
 type MultiWorkspaceGenerator struct {
 	Template *api.StartWorkspaceRequest
-	Repos    []WorkspaceCfg
+	Config   MultiGeneratorConfig
+}
+
+type MultiGeneratorConfig struct {
+	Repos []WorkspaceCfg
+	Auth  *RepositoryAuth
 }
 
 func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
@@ -177,7 +192,7 @@ func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
 		return nil, err
 	}
 
-	repo := selectRepo(f.Repos)
+	repo := selectRepo(f.Config.Repos)
 	log.Infof("selecting repo %s", repo.CloneURL)
 
 	out := proto.Clone(f.Template).(*api.StartWorkspaceRequest)
@@ -186,22 +201,33 @@ func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
 	if out.Metadata.Annotations == nil {
 		out.Metadata.Annotations = make(map[string]string)
 	}
+
+	cloneUrl, err := url.Parse(repo.CloneURL)
+	if err != nil {
+		return nil, err
+	}
+	repositoryName := strings.TrimRight(path.Base(cloneUrl.Path), ".git")
+	gitConfig := f.prepareGitConfig(repo)
+
 	out.Metadata.Annotations["context-url"] = repo.CloneURL
 	out.ServicePrefix = workspaceID
+	out.Spec.WorkspaceLocation = repositoryName
 	out.Spec.Initializer = &csapi.WorkspaceInitializer{
 		Spec: &csapi.WorkspaceInitializer_Git{
 			Git: &csapi.GitInitializer{
-				CheckoutLocation: "",
+				CheckoutLocation: repositoryName,
 				CloneTaget:       repo.CloneTarget,
 				RemoteUri:        repo.CloneURL,
 				TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
-				Config: &csapi.GitConfig{
-					Authentication: csapi.GitAuthMethod_NO_AUTH,
-				},
+				Config:           gitConfig,
 			},
 		},
 	}
+
 	out.Spec.WorkspaceImage = repo.WorkspaceImage
+	if len(repo.WorkspaceClass) > 0 {
+		out.Spec.Class = repo.WorkspaceClass
+	}
 	out.Spec.Envvars = append(out.Spec.Envvars, repo.Environment...)
 	r := StartWorkspaceSpec(*out)
 	return &r, nil
@@ -224,4 +250,23 @@ func selectRepo(repos []WorkspaceCfg) WorkspaceCfg {
 	}
 
 	return repos[len(repos)-1]
+}
+
+func (f *MultiWorkspaceGenerator) prepareGitConfig(repo WorkspaceCfg) *csapi.GitConfig {
+	gitConfig := &csapi.GitConfig{
+		Authentication: csapi.GitAuthMethod_NO_AUTH,
+	}
+	if f.Config.Auth != nil {
+		gitConfig.Authentication = csapi.GitAuthMethod_BASIC_AUTH
+		gitConfig.AuthUser = f.Config.Auth.AuthUser
+		gitConfig.AuthPassword = f.Config.Auth.AuthPassword
+	}
+
+	if repo.RepositoryAuth != nil {
+		gitConfig.Authentication = csapi.GitAuthMethod_BASIC_AUTH
+		gitConfig.AuthUser = repo.RepositoryAuth.AuthUser
+		gitConfig.AuthPassword = repo.RepositoryAuth.AuthPassword
+	}
+
+	return gitConfig
 }

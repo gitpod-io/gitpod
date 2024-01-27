@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package io.gitpod.jetbrains.auth
 
@@ -38,7 +38,6 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import kotlin.math.absoluteValue
 
-
 @Service
 internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
     override val name: String
@@ -66,7 +65,7 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
         constructor(gitpodHost: String) {
             val codeVerifier = generateCodeVerifier()
             val codeChallenge = generateCodeChallenge(codeVerifier)
-            val serviceUrl = newFromEncoded("https://${gitpodHost}/api/oauth")
+            val serviceUrl = newFromEncoded("https://$gitpodHost/api/oauth")
             credentialsAcquirer = GitpodAuthCredentialsAcquirer(
                 serviceUrl.resolve("token"), mapOf(
                     "grant_type" to "authorization_code",
@@ -94,7 +93,7 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
                 val bytes = ByteArray(size)
                 secureRandom.nextBytes(bytes)
 
-                val mask = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~";
+                val mask = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~"
                 val scale = 256 / mask.length
                 val builder = StringBuilder()
                 for (i in 0 until size) {
@@ -147,7 +146,6 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
 
         private data class AuthorizationResponseData(val accessToken: String)
         private data class JsonWebToken(val jti: String)
-
     }
 
     companion object {
@@ -198,7 +196,7 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
                     listener()
                 }
             }
-            dispatcher.addListener(internalListener);
+            dispatcher.addListener(internalListener)
             return Disposable { dispatcher.removeListener(internalListener) }
         }
     }

@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package dart
 
@@ -133,6 +133,7 @@ func Inject(cfg *rest.Config, namespace, targetService string, options ...Inject
 
 	renamedSpec := oldService.Spec.DeepCopy()
 	renamedSpec.ClusterIP = ""
+	renamedSpec.ClusterIPs = []string{}
 	renamedMeta := oldService.ObjectMeta.DeepCopy()
 	renamedMeta.Name = fmt.Sprintf(fmtOriginalService, oldService.Name)
 	renamedMeta.ResourceVersion = ""
@@ -162,6 +163,7 @@ func Inject(cfg *rest.Config, namespace, targetService string, options ...Inject
 
 	newSpec := oldService.Spec.DeepCopy()
 	newSpec.ClusterIP = ""
+	newSpec.ClusterIPs = []string{}
 	newSpec.Selector = labels
 	newMeta := oldService.ObjectMeta.DeepCopy()
 	if newMeta.Labels == nil {
@@ -333,6 +335,8 @@ func Remove(cfg *rest.Config, namespace, targetService string) error {
 		GracePeriodSeconds: &gracePeriod,
 	})
 	if err != nil {
+
+		log.Info("tried to: proxy deployment deleted")
 		return err
 	}
 	log.WithField("name", pdp).Info("proxy deployment deleted")

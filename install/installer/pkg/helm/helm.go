@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package helm
 
@@ -11,9 +11,10 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sigs.k8s.io/yaml"
 	"strings"
 	"syscall"
+
+	"sigs.k8s.io/yaml"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
@@ -22,6 +23,8 @@ import (
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // TemplateConfig
@@ -112,7 +115,7 @@ func writeCharts(chart *charts.Chart) (string, error) {
 
 // AffinityYaml convert an affinity into a YAML byte array
 func AffinityYaml(orLabels ...string) ([]byte, error) {
-	affinities := common.NodeAffinity(orLabels...)
+	affinities := nodeAffinity(orLabels...)
 
 	marshal, err := yaml.Marshal(affinities)
 	if err != nil {
@@ -122,6 +125,28 @@ func AffinityYaml(orLabels ...string) ([]byte, error) {
 	return marshal, nil
 }
 
+func nodeAffinity(orLabels ...string) *corev1.Affinity {
+	var terms []corev1.NodeSelectorTerm
+	for _, lbl := range orLabels {
+		terms = append(terms, corev1.NodeSelectorTerm{
+			MatchExpressions: []corev1.NodeSelectorRequirement{
+				{
+					Key:      lbl,
+					Operator: corev1.NodeSelectorOpExists,
+				},
+			},
+		})
+	}
+
+	return &corev1.Affinity{
+		NodeAffinity: &corev1.NodeAffinity{
+			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+				NodeSelectorTerms: terms,
+			},
+		},
+	}
+}
+
 func ImagePullSecrets(key string, ctx *common.RenderContext) string {
 	if len(ctx.Config.ImagePullSecrets) > 0 {
 		var pullSecrets []string
@@ -129,8 +154,7 @@ func ImagePullSecrets(key string, ctx *common.RenderContext) string {
 			pullSecrets = append(pullSecrets, i.Name)
 		}
 
-		// Helm array nomenclature
-		return KeyValue(key, fmt.Sprintf("{%s}", strings.Join(pullSecrets, ",")))
+		return KeyValueArray(key, pullSecrets)
 	}
 
 	// Nothing to be set
@@ -208,4 +232,61 @@ func ImportTemplate(chart *charts.Chart, templateCfg TemplateConfig, pkgConfig P
 
 		return append(templates, rel.Manifest), nil
 	}
+}
+
+// CustomizeAnnotation check for customized annotations and output in Helm format
+func CustomizeAnnotation(registryValues []string, prefix string, ctx *common.RenderContext, component string, typeMeta metav1.TypeMeta, existingAnnotations ...func() map[string]string) []string {
+	annotations := common.CustomizeAnnotation(ctx, component, typeMeta, existingAnnotations...)
+	if len(annotations) > 0 {
+		for k, v := range annotations {
+			// Escape any dots in the keys so they're not expanded
+			key := strings.Replace(k, ".", "\\.", -1)
+			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, key), v))
+		}
+	}
+
+	return registryValues
+}
+
+// CustomizeLabel check for customized labels and output in Helm format - also removes the default labels, which conflict with Helm
+func CustomizeLabel(registryValues []string, prefix string, ctx *common.RenderContext, component string, typeMeta metav1.TypeMeta, existingLabels ...func() map[string]string) []string {
+	labels := common.CustomizeLabel(ctx, component, typeMeta, existingLabels...)
+
+	// Remove the default labels
+	for k := range common.DefaultLabels(component) {
+		delete(labels, k)
+	}
+
+	if len(labels) > 0 {
+		for k, v := range labels {
+			// Escape any dots in the keys so they're not expanded
+			key := strings.Replace(k, ".", "\\.", -1)
+			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, key), v))
+		}
+	}
+
+	return registryValues
+}
+
+// CustomizeEnvvar check for customized envvars and output in Helm format - assumes name/value only
+func CustomizeEnvvar(registryValues []string, prefix string, ctx *common.RenderContext, component string, existingEnvvars ...[]corev1.EnvVar) []string {
+	// Helm is unlikely to have any existing envvars, so treat them as optional
+	envvars := common.CustomizeEnvvar(ctx, component, func() []corev1.EnvVar {
+		envs := make([]corev1.EnvVar, 0)
+
+		for _, e := range existingEnvvars {
+			envs = append(envs, e...)
+		}
+
+		return envs
+	}())
+
+	if len(envvars) > 0 {
+		for k, v := range envvars {
+			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s[%d].name", prefix, k), v.Name))
+			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s[%d].value", prefix, k), v.Value))
+		}
+	}
+
+	return registryValues
 }

@@ -1,18 +1,26 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package helm
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"os"
+	"strings"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
 
 // KeyValue ensure that a key/value pair is correctly formatted for Values
 func KeyValue(key string, value string) string {
 	return fmt.Sprintf("%s=%s", key, value)
+}
+
+// KeyValueArray ensure that a key/value pair is correctly formatted for Arrays
+func KeyValueArray(key string, arr []string) string {
+	// Helm array nomenclature
+	return KeyValue(key, fmt.Sprintf("{%s}", strings.Join(arr, ",")))
 }
 
 // KeyFileValue ensure that a key/value pair is correctly formatted for FileValues

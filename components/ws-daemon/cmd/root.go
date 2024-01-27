@@ -1,12 +1,14 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -47,6 +49,8 @@ func Execute() {
 }
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
+
 	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "j", true, "produce JSON log output on verbose level")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose JSON logging")
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file")

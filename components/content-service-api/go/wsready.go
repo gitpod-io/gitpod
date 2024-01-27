@@ -1,8 +1,10 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package api
+
+import "time"
 
 //go:generate sh generate.sh
 
@@ -22,5 +24,20 @@ const (
 
 // WorkspaceReadyMessage describes the content of a workspace-ready file in a workspace
 type WorkspaceReadyMessage struct {
-	Source WorkspaceInitSource `json:"source"`
+	Source  WorkspaceInitSource `json:"source"`
+	Metrics InitializerMetrics  `json:"metrics"`
 }
+
+// InitializerStats contains statistics about the initialization
+type InitializerMetric struct {
+	// Type of the initializer
+	Type string `json:"type"`
+
+	// Duration of the initialization
+	Duration time.Duration `json:"duration"`
+
+	// Size of the data that was initialized in bytes
+	Size uint64 `json:"size"`
+}
+
+type InitializerMetrics []InitializerMetric

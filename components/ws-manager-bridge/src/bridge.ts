@@ -1,42 +1,40 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable, interfaces } from "inversify";
-import { MessageBusIntegration } from "./messagebus-integration";
+import { inject, injectable } from "inversify";
 import {
     Disposable,
-    WorkspaceInstance,
     Queue,
     WorkspaceInstancePort,
     PortVisibility,
-    RunningWorkspaceInfo,
     DisposableCollection,
+    PortProtocol,
 } from "@gitpod/gitpod-protocol";
 import {
     WorkspaceStatus,
     WorkspacePhase,
-    GetWorkspacesRequest,
     WorkspaceConditionBool,
     PortVisibility as WsManPortVisibility,
-    PromisifiedWorkspaceManagerClient,
+    PortProtocol as WsManPortProtocol,
+    DescribeClusterRequest,
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
-import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import { TracedWorkspaceDB, TracedUserDB, DBWithTracing } from "@gitpod/gitpod-db/lib/traced-db";
-import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
+import { TracedWorkspaceDB, DBWithTracing } from "@gitpod/gitpod-db/lib/traced-db";
+import { Metrics } from "./metrics";
 import { ClientProvider, WsmanSubscriber } from "./wsman-subscriber";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Configuration } from "./config";
-import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
-import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from "./preparing-update-emulator";
+import { WorkspaceClass, WorkspaceCluster, WorkspaceClusterDB } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { performance } from "perf_hooks";
+import { WorkspaceInstanceController } from "./workspace-instance-controller";
+import { PrebuildUpdater } from "./prebuild-updater";
+import { RedisPublisher } from "@gitpod/gitpod-db/lib";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -48,30 +46,20 @@ function toBool(b: WorkspaceConditionBool | undefined): boolean | undefined {
     return b === WorkspaceConditionBool.TRUE;
 }
 
-export type WorkspaceClusterInfo = Pick<WorkspaceCluster, "name" | "url" | "govern">;
+export type WorkspaceClusterInfo = Pick<WorkspaceCluster, "name" | "url">;
 
 @injectable()
 export class WorkspaceManagerBridge implements Disposable {
-    @inject(TracedWorkspaceDB)
-    protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-
-    @inject(TracedUserDB)
-    protected readonly userDB: DBWithTracing<UserDB>;
-
-    @inject(MessageBusIntegration)
-    protected readonly messagebus: MessageBusIntegration;
-
-    @inject(PrometheusMetricsExporter)
-    protected readonly prometheusExporter: PrometheusMetricsExporter;
-
-    @inject(Configuration)
-    protected readonly config: Configuration;
-
-    @inject(PreparingUpdateEmulatorFactory)
-    protected readonly preparingUpdateEmulatorFactory: interfaces.Factory<PreparingUpdateEmulator>;
-
-    @inject(IAnalyticsWriter)
-    protected readonly analytics: IAnalyticsWriter;
+    constructor(
+        @inject(WorkspaceClusterDB) private readonly clusterDB: WorkspaceClusterDB,
+        @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
+        @inject(Metrics) private readonly metrics: Metrics,
+        @inject(Configuration) private readonly config: Configuration,
+        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(PrebuildUpdater) private readonly prebuildUpdater: PrebuildUpdater,
+        @inject(WorkspaceInstanceController) private readonly workspaceInstanceController: WorkspaceInstanceController, // bound in "transient" mode: we expect to receive a fresh instance here
+        @inject(RedisPublisher) private readonly publisher: RedisPublisher,
+    ) {}
 
     protected readonly disposables = new DisposableCollection();
     protected readonly queues = new Map<string, Queue>();
@@ -79,38 +67,40 @@ export class WorkspaceManagerBridge implements Disposable {
     protected cluster: WorkspaceClusterInfo;
 
     public start(cluster: WorkspaceClusterInfo, clientProvider: ClientProvider) {
-        const logPayload = { name: cluster.name, url: cluster.url, govern: cluster.govern };
+        const logPayload = { name: cluster.name, url: cluster.url };
         log.info(`Starting bridge to cluster...`, logPayload);
         this.cluster = cluster;
 
-        const startStatusUpdateHandler = (writeToDB: boolean) => {
+        const startStatusUpdateHandler = () => {
             log.debug(`Starting status update handler: ${cluster.name}`, logPayload);
-            /* no await */ this.startStatusUpdateHandler(clientProvider, writeToDB, logPayload)
+            /* no await */ this.startStatusUpdateHandler(clientProvider, logPayload)
                 // this is a mere safe-guard: we do not expect the code inside to fail
                 .catch((err) => log.error("Cannot start status update handler", err));
         };
 
-        if (cluster.govern) {
-            // notify servers and _update the DB_
-            startStatusUpdateHandler(true);
+        // notify servers and _update the DB_
+        startStatusUpdateHandler();
 
-            // the actual "governing" part
-            const controllerInterval = this.config.controllerIntervalSeconds;
-            if (controllerInterval <= 0) {
-                throw new Error("controllerInterval <= 0!");
-            }
-            log.debug(`Starting controller: ${cluster.name}`, logPayload);
-            this.startController(clientProvider, controllerInterval, this.config.controllerMaxDisconnectSeconds);
-        } else {
-            // _DO NOT_ update the DB (another bridge is responsible for that)
-            // Still, listen to all updates, generate/derive new state and distribute it locally!
-            startStatusUpdateHandler(false);
-
-            // emulate WorkspaceInstance updates for all Workspaces in the  "preparing" or "building" phase in this cluster
-            const updateEmulator = this.preparingUpdateEmulatorFactory() as PreparingUpdateEmulator;
-            this.disposables.push(updateEmulator);
-            updateEmulator.start(cluster.name);
+        // the actual "governing" part
+        const controllerIntervalSeconds = this.config.controllerIntervalSeconds;
+        if (controllerIntervalSeconds <= 0) {
+            throw new Error("controllerIntervalSeconds <= 0!");
         }
+
+        log.debug(`Starting controller: ${cluster.name}`, logPayload);
+        // Control all workspace instances, either against ws-manager or configured timeouts
+        this.workspaceInstanceController.start(
+            cluster.name,
+            clientProvider,
+            controllerIntervalSeconds,
+            this.config.controllerMaxDisconnectSeconds,
+        );
+
+        const tim = setInterval(() => {
+            this.updateWorkspaceClasses(cluster, clientProvider);
+        }, controllerIntervalSeconds * 1000);
+        this.disposables.push({ dispose: () => clearInterval(tim) });
+
         log.info(`Started bridge to cluster.`, logPayload);
     }
 
@@ -118,11 +108,32 @@ export class WorkspaceManagerBridge implements Disposable {
         this.dispose();
     }
 
-    protected async startStatusUpdateHandler(
-        clientProvider: ClientProvider,
-        writeToDB: boolean,
-        logPayload: {},
-    ): Promise<void> {
+    protected async updateWorkspaceClasses(clusterInfo: WorkspaceClusterInfo, clientProvider: ClientProvider) {
+        try {
+            const client = await clientProvider();
+            const resp = await client.describeCluster({}, new DescribeClusterRequest());
+
+            const cluster = await this.clusterDB.findByName(clusterInfo.name);
+            if (!cluster) {
+                return;
+            }
+            cluster.availableWorkspaceClasses = resp.getWorkspaceClassesList().map((c) => {
+                return <WorkspaceClass>{
+                    creditsPerMinute: c.getCreditsPerMinute(),
+                    description: c.getDescription(),
+                    displayName: c.getDisplayName(),
+                    id: c.getId(),
+                };
+            });
+            cluster.preferredWorkspaceClass = resp.getPreferredWorkspaceClass();
+
+            await this.clusterDB.save(cluster);
+        } catch (e) {
+            log.error({}, "Failed to update workspace classes", e, { clusterInfo });
+        }
+    }
+
+    protected async startStatusUpdateHandler(clientProvider: ClientProvider, logPayload: {}): Promise<void> {
         const subscriber = new WsmanSubscriber(clientProvider);
         this.disposables.push(subscriber);
 
@@ -132,7 +143,7 @@ export class WorkspaceManagerBridge implements Disposable {
                     ctx,
                     sx,
                     (m) => m.getId(),
-                    (ctx, msg) => this.handleStatusUpdate(ctx, msg, writeToDB),
+                    (ctx, msg) => this.handleStatusUpdate(ctx, msg),
                 ),
             );
         };
@@ -141,7 +152,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 ctx,
                 s,
                 (msg) => msg.getId(),
-                (ctx, s) => this.handleStatusUpdate(ctx, s, writeToDB),
+                (ctx, s) => this.handleStatusUpdate(ctx, s),
             );
         };
         await subscriber.subscribe({ onReconnect, onStatusUpdate }, logPayload);
@@ -161,15 +172,15 @@ export class WorkspaceManagerBridge implements Disposable {
 
         // We can't just handle the status update directly, but have to "serialize" it to ensure the updates stay in order.
         // If we did not do this, the async nature of our code would allow for one message to overtake the other.
-        let q = this.queues.get(instanceId) || new Queue();
+        const q = this.queues.get(instanceId) || new Queue();
         q.enqueue(() => handler(ctx, msg)).catch((e) => log.error({ instanceId }, e));
         this.queues.set(instanceId, q);
     }
 
-    protected async handleStatusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus, writeToDB: boolean) {
+    protected async handleStatusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus) {
         const start = performance.now();
         const status = rawStatus.toObject();
-        log.info("Handling WorkspaceStatus update", status);
+        log.info("Handling WorkspaceStatus update", filterStatus(status));
 
         if (!status.spec || !status.metadata || !status.conditions) {
             log.warn("Received invalid status update", status);
@@ -183,36 +194,25 @@ export class WorkspaceManagerBridge implements Disposable {
         };
 
         try {
-            this.prometheusExporter.reportWorkspaceInstanceUpdateStarted(
-                writeToDB,
-                this.cluster.name,
-                status.spec.type,
-            );
-            await this.statusUpdate(ctx, rawStatus, writeToDB);
+            this.metrics.reportWorkspaceInstanceUpdateStarted(this.cluster.name, status.spec.type);
+            await this.statusUpdate(ctx, rawStatus);
         } catch (e) {
             const durationMs = performance.now() - start;
-            this.prometheusExporter.reportWorkspaceInstanceUpdateCompleted(
+            this.metrics.reportWorkspaceInstanceUpdateCompleted(
                 durationMs / 1000,
-                writeToDB,
                 this.cluster.name,
                 status.spec.type,
                 e,
             );
             log.error(logCtx, "Failed to complete WorkspaceInstance status update", e);
             throw e;
-        } finally {
-            const durationMs = performance.now() - start;
-            this.prometheusExporter.reportWorkspaceInstanceUpdateCompleted(
-                durationMs / 1000,
-                writeToDB,
-                this.cluster.name,
-                status.spec.type,
-            );
-            log.info(logCtx, "Successfully completed WorkspaceInstance status update");
         }
+        const durationMs = performance.now() - start;
+        this.metrics.reportWorkspaceInstanceUpdateCompleted(durationMs / 1000, this.cluster.name, status.spec.type);
+        log.info(logCtx, "Successfully completed WorkspaceInstance status update");
     }
 
-    private async statusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus, writeToDB: boolean) {
+    private async statusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus) {
         const status = rawStatus.toObject();
 
         if (!status.spec || !status.metadata || !status.conditions) {
@@ -221,7 +221,7 @@ export class WorkspaceManagerBridge implements Disposable {
 
         const span = TraceContext.startSpan("handleStatusUpdate", ctx);
         span.setTag("status", JSON.stringify(filterStatus(status)));
-        span.setTag("writeToDB", writeToDB);
+        span.setTag("statusVersion", status.statusVersion);
         try {
             // Beware of the ID mapping here: What's a workspace to the ws-manager is a workspace instance to the rest of the system.
             //                                The workspace ID of ws-manager is the workspace instance ID in the database.
@@ -229,17 +229,30 @@ export class WorkspaceManagerBridge implements Disposable {
             const instanceId = status.id!;
             const workspaceId = status.metadata!.metaId!;
             const userId = status.metadata!.owner!;
+            const logContext: LogContext = {
+                userId,
+                instanceId,
+                workspaceId,
+            };
 
             const instance = await this.workspaceDB.trace({ span }).findInstanceById(instanceId);
             if (instance) {
-                this.prometheusExporter.statusUpdateReceived(this.cluster.name, true);
+                this.metrics.statusUpdateReceived(this.cluster.name, true);
             } else {
                 // This scenario happens when the update for a WorkspaceInstance is picked up by a ws-manager-bridge in a different region,
-                // before db-sync finished running. This is because all ws-manager-bridge instances receive updates from all WorkspaceClusters.
+                // before periodic deleter finished running. This is because all ws-manager-bridge instances receive updates from all WorkspaceClusters.
                 // We ignore this update because we do not have anything to reconcile this update against, but also because we assume it is handled
                 // by another instance of ws-manager-bridge that is in the region where the WorkspaceInstance record was created.
-                this.prometheusExporter.statusUpdateReceived(this.cluster.name, false);
+                this.metrics.statusUpdateReceived(this.cluster.name, false);
                 return;
+            }
+
+            const currentStatusVersion = instance.status.version || 0;
+            if (currentStatusVersion > 0 && currentStatusVersion >= status.statusVersion) {
+                // We've gotten an event which is older than one we've already processed. We shouldn't process the stale one.
+                span.setTag("statusUpdate.staleEvent", true);
+                this.metrics.recordStaleStatusUpdate();
+                log.debug(ctx, "Stale status update received, skipping.");
             }
 
             if (!!status.spec.exposedPortsList) {
@@ -247,6 +260,7 @@ export class WorkspaceManagerBridge implements Disposable {
                     return <WorkspaceInstancePort>{
                         port: p.port,
                         visibility: mapPortVisibility(p.visibility),
+                        protocol: mapPortProtocol(p.protocol),
                         url: p.url,
                     };
                 });
@@ -255,12 +269,24 @@ export class WorkspaceManagerBridge implements Disposable {
             if (!instance.status.conditions.firstUserActivity && status.conditions.firstUserActivity) {
                 // Only report this when it's observed the first time
                 const firstUserActivity = mapFirstUserActivity(rawStatus.getConditions()!.getFirstUserActivity())!;
-                this.prometheusExporter.observeFirstUserActivity(instance, firstUserActivity);
+                this.metrics.observeFirstUserActivity(instance, firstUserActivity);
             }
 
             instance.ideUrl = status.spec.url!;
+            instance.status.version = status.statusVersion;
             instance.status.timeout = status.spec.timeout;
-            instance.status.conditions.failed = status.conditions.failed;
+            if (!!instance.status.conditions.failed && !status.conditions.failed) {
+                // We already have a "failed" condition, and received an empty one: This is a bug, "failed" conditions are terminal per definition.
+                // Do not override!
+                log.error(logContext, 'We received an empty "failed" condition overriding an existing one!', {
+                    current: instance.status.conditions.failed,
+                });
+
+                // TODO(gpl) To make ensure we do not break anything big time we keep the unconditional override for now, and observe for some time.
+                instance.status.conditions.failed = status.conditions.failed;
+            } else {
+                instance.status.conditions.failed = status.conditions.failed;
+            }
             instance.status.conditions.pullingImages = toBool(status.conditions.pullingImages!);
             instance.status.conditions.deployed = toBool(status.conditions.deployed);
             instance.status.conditions.timeout = status.conditions.timeout;
@@ -274,26 +300,6 @@ export class WorkspaceManagerBridge implements Disposable {
             instance.status.podName = instance.status.podName || status.runtime?.podName;
             instance.status.nodeIp = instance.status.nodeIp || status.runtime?.nodeIp;
             instance.status.ownerToken = status.auth!.ownerToken;
-
-            if (status.repo) {
-                const r = status.repo;
-                const undefinedIfEmpty = <T>(l: T[]) => (l.length > 0 ? l : undefined);
-
-                instance.status.repo = {
-                    branch: r.branch,
-                    latestCommit: r.latestCommit,
-                    uncommitedFiles: undefinedIfEmpty(r.uncommitedFilesList),
-                    totalUncommitedFiles: r.totalUncommitedFiles,
-                    unpushedCommits: undefinedIfEmpty(r.unpushedCommitsList),
-                    totalUntrackedFiles: r.totalUntrackedFiles,
-                    untrackedFiles: undefinedIfEmpty(r.untrackedFilesList),
-                    totalUnpushedCommits: r.totalUnpushedCommits,
-                };
-            }
-
-            if (instance.status.conditions.deployed && !instance.deployedTime) {
-                instance.deployedTime = new Date().toISOString();
-            }
 
             let lifecycleHandler: (() => Promise<void>) | undefined;
             switch (status.phase) {
@@ -309,16 +315,26 @@ export class WorkspaceManagerBridge implements Disposable {
                 case WorkspacePhase.RUNNING:
                     if (!instance.startedTime) {
                         instance.startedTime = new Date().toISOString();
-                        this.prometheusExporter.observeWorkspaceStartupTime(instance);
+                        this.metrics.observeWorkspaceStartupTime(instance);
                         this.analytics.track({
                             event: "workspace_running",
                             messageId: `bridge-wsrun-${instance.id}`,
                             properties: { instanceId: instance.id, workspaceId: workspaceId },
                             userId,
+                            timestamp: new Date(instance.startedTime),
                         });
                     }
 
                     instance.status.phase = "running";
+                    // let's check if the state is inconsistent and be loud if it is.
+                    if (instance.stoppedTime || instance.stoppingTime) {
+                        log.error("Resetting already stopped workspace to running.", {
+                            instanceId: instance.id,
+                            stoppedTime: instance.stoppedTime,
+                        });
+                        instance.stoppedTime = undefined;
+                        instance.stoppingTime = undefined;
+                    }
                     break;
                 case WorkspacePhase.INTERRUPTED:
                     instance.status.phase = "interrupted";
@@ -333,7 +349,7 @@ export class WorkspaceManagerBridge implements Disposable {
                             instance.stoppingTime = new Date().toISOString();
                         }
                     } else {
-                        log.warn("Got a stopping event for an already stopped workspace.", instance);
+                        log.warn(logContext, "Got a stopping event for an already stopped workspace.", instance);
                     }
                     break;
                 case WorkspacePhase.STOPPED:
@@ -345,144 +361,30 @@ export class WorkspaceManagerBridge implements Disposable {
                         // yet. Just for this case we need to set it now.
                         instance.stoppingTime = now;
                     }
-                    lifecycleHandler = () => this.onInstanceStopped({ span }, userId, instance);
+                    lifecycleHandler = () => this.workspaceInstanceController.onStopped({ span }, userId, instance);
                     break;
             }
 
             span.setTag("after", JSON.stringify(instance));
 
             // now notify all prebuild listeners about updates - and update DB if needed
-            await this.updatePrebuiltWorkspace({ span }, userId, status, writeToDB);
+            await this.prebuildUpdater.updatePrebuiltWorkspace({ span }, userId, status);
 
-            if (writeToDB) {
-                await this.workspaceDB.trace(ctx).storeInstance(instance);
+            await this.workspaceDB.trace(ctx).storeInstance(instance);
 
-                // cleanup
-                // important: call this after the DB update
-                await this.cleanupProbeWorkspace(ctx, status);
-
-                if (!!lifecycleHandler) {
-                    await lifecycleHandler();
-                }
+            // cleanup
+            // important: call this after the DB update
+            if (!!lifecycleHandler) {
+                await lifecycleHandler();
             }
-            await this.messagebus.notifyOnInstanceUpdate(ctx, userId, instance);
+            await this.publisher.publishInstanceUpdate({
+                ownerID: userId,
+                instanceID: instance.id,
+                workspaceID: instance.workspaceId,
+            });
         } catch (e) {
             TraceContext.setError({ span }, e);
             throw e;
-        } finally {
-            span.finish();
-        }
-    }
-
-    protected startController(
-        clientProvider: ClientProvider,
-        controllerIntervalSeconds: number,
-        controllerMaxDisconnectSeconds: number,
-        maxTimeToRunningPhaseSeconds = 60 * 60,
-    ) {
-        let disconnectStarted = Number.MAX_SAFE_INTEGER;
-        this.disposables.push(
-            repeat(async () => {
-                try {
-                    const client = await clientProvider();
-                    await this.controlInstallationInstances(client, maxTimeToRunningPhaseSeconds);
-
-                    disconnectStarted = Number.MAX_SAFE_INTEGER; // Reset disconnect period
-                } catch (e) {
-                    if (durationLongerThanSeconds(disconnectStarted, controllerMaxDisconnectSeconds)) {
-                        log.warn("Error while controlling installation's workspaces", e, {
-                            installation: this.cluster.name,
-                        });
-                    } else if (disconnectStarted > Date.now()) {
-                        disconnectStarted = Date.now();
-                    }
-                }
-            }, controllerIntervalSeconds * 1000),
-        );
-    }
-
-    protected async controlInstallationInstances(
-        client: PromisifiedWorkspaceManagerClient,
-        maxTimeToRunningPhaseSeconds: number,
-    ) {
-        const installation = this.cluster.name;
-        log.debug("controlling instances", { installation });
-        let ctx: TraceContext = {};
-
-        const runningInstances = await this.workspaceDB.trace(ctx).findRunningInstancesWithWorkspaces(installation);
-        const runningInstancesIdx = new Map<string, RunningWorkspaceInfo>();
-        runningInstances.forEach((i) => runningInstancesIdx.set(i.latestInstance.id, i));
-
-        const actuallyRunningInstances = await client.getWorkspaces(ctx, new GetWorkspacesRequest());
-        actuallyRunningInstances.getStatusList().forEach((s) => runningInstancesIdx.delete(s.getId()));
-
-        const promises: Promise<any>[] = [];
-        for (const [instanceId, ri] of runningInstancesIdx.entries()) {
-            const instance = ri.latestInstance;
-            if (
-                !(
-                    instance.status.phase === "running" ||
-                    durationLongerThanSeconds(Date.parse(instance.creationTime), maxTimeToRunningPhaseSeconds)
-                )
-            ) {
-                log.debug({ instanceId }, "Skipping instance", {
-                    phase: instance.status.phase,
-                    creationTime: instance.creationTime,
-                    region: instance.region,
-                });
-                continue;
-            }
-
-            log.info(
-                { instanceId, workspaceId: instance.workspaceId },
-                "Database says the instance is starting for too long or running, but wsman does not know about it. Marking as stopped in database.",
-                { installation },
-            );
-            instance.status.phase = "stopped";
-            instance.stoppingTime = new Date().toISOString();
-            instance.stoppedTime = new Date().toISOString();
-            promises.push(this.workspaceDB.trace({}).storeInstance(instance));
-            promises.push(this.onInstanceStopped({}, ri.workspace.ownerId, instance));
-            promises.push(this.stopPrebuildInstance(ctx, instance));
-        }
-        await Promise.all(promises);
-    }
-
-    protected async cleanupProbeWorkspace(ctx: TraceContext, status: WorkspaceStatus.AsObject | undefined) {
-        // probes are an EE feature - we just need the hook here
-    }
-
-    protected async updatePrebuiltWorkspace(
-        ctx: TraceContext,
-        userId: string,
-        status: WorkspaceStatus.AsObject,
-        writeToDB: boolean,
-    ) {
-        // prebuilds are an EE feature - we just need the hook here
-    }
-
-    protected async stopPrebuildInstance(ctx: TraceContext, instance: WorkspaceInstance): Promise<void> {
-        // prebuilds are an EE feature - we just need the hook here
-    }
-
-    protected async onInstanceStopped(
-        ctx: TraceContext,
-        ownerUserID: string,
-        instance: WorkspaceInstance,
-    ): Promise<void> {
-        const span = TraceContext.startSpan("onInstanceStopped", ctx);
-
-        try {
-            await this.userDB.trace({ span }).deleteGitpodTokensNamedLike(ownerUserID, `${instance.id}-%`);
-            this.analytics.track({
-                userId: ownerUserID,
-                event: "workspace_stopped",
-                messageId: `bridge-wsstopped-${instance.id}`,
-                properties: { instanceId: instance.id, workspaceId: instance.workspaceId },
-            });
-        } catch (err) {
-            TraceContext.setError({ span }, err);
-            throw err;
         } finally {
             span.finish();
         }
@@ -512,15 +414,20 @@ const mapPortVisibility = (visibility: WsManPortVisibility | undefined): PortVis
     }
 };
 
-const durationLongerThanSeconds = (time: number, durationSeconds: number, now: number = Date.now()) => {
-    return (now - time) / 1000 > durationSeconds;
+const mapPortProtocol = (protocol: WsManPortProtocol): PortProtocol => {
+    switch (protocol) {
+        case WsManPortProtocol.PORT_PROTOCOL_HTTPS:
+            return "https";
+        default:
+            return "http";
+    }
 };
 
 /**
  * Filter here to avoid overloading spans
  * @param status
  */
-const filterStatus = (status: WorkspaceStatus.AsObject): Partial<WorkspaceStatus.AsObject> => {
+export const filterStatus = (status: WorkspaceStatus.AsObject): Partial<WorkspaceStatus.AsObject> => {
     return {
         id: status.id,
         metadata: status.metadata,

@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es6",
+        "lib": [
+            "es6",
+            "ES2020.Promise"
+        ],
+        "outDir": "lib",
+        "sourceMap": true,
+        "declaration": true,
+        "useUnknownInCatchVariables": false
+    },
+    "include": [
+        "src"
+    ]
+}

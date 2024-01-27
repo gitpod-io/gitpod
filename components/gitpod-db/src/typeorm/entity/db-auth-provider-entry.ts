@@ -1,14 +1,14 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { PrimaryColumn, Column, Entity, Index } from "typeorm";
 import { TypeORM } from "../typeorm";
 import { AuthProviderEntry, OAuth2Config } from "@gitpod/gitpod-protocol";
 import { Transformer } from "../transformer";
-import { encryptionService } from "../user-db-impl";
+import { getGlobalEncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 
 @Entity()
 export class DBAuthProviderEntry implements AuthProviderEntry {
@@ -17,6 +17,13 @@ export class DBAuthProviderEntry implements AuthProviderEntry {
 
     @Column()
     ownerId: string;
+
+    @Column({
+        ...TypeORM.UUID_COLUMN_TYPE,
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    organizationId?: string;
 
     @Column("varchar")
     status: AuthProviderEntry.Status;
@@ -31,8 +38,7 @@ export class DBAuthProviderEntry implements AuthProviderEntry {
         type: "simple-json",
         transformer: Transformer.compose(
             Transformer.SIMPLE_JSON([]),
-            // Relies on the initialization of the var in UserDbImpl
-            Transformer.encrypted(() => encryptionService),
+            Transformer.encrypted(getGlobalEncryptionService),
         ),
     })
     oauth: OAuth2Config;
@@ -43,7 +49,4 @@ export class DBAuthProviderEntry implements AuthProviderEntry {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     oauthRevision?: string;
-
-    @Column()
-    deleted?: boolean;
 }

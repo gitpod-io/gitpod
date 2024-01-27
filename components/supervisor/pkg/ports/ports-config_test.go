@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package ports
 
@@ -16,51 +16,35 @@ import (
 
 func TestPortsConfig(t *testing.T) {
 	tests := []struct {
-		Desc           string
-		WorkspacePorts []*gitpod.PortConfig
-		GitpodConfig   *gitpod.GitpodConfig
-		Expectation    *PortConfigTestExpectations
+		Desc         string
+		GitpodConfig *gitpod.GitpodConfig
+		Expectation  *PortConfigTestExpectations
 	}{
 		{
 			Desc:        "no configs",
 			Expectation: &PortConfigTestExpectations{},
 		},
 		{
-			Desc: "workspace port config",
-			WorkspacePorts: []*gitpod.PortConfig{
-				{
-					Port:       9229,
-					OnOpen:     "ignore",
-					Visibility: "public",
-				},
-			},
-			Expectation: &PortConfigTestExpectations{
-				WorkspaceConfigs: []*gitpod.PortConfig{
-					{
-						Port:       9229,
-						OnOpen:     "ignore",
-						Visibility: "public",
-					},
-				},
-			},
-		},
-		{
 			Desc: "instance port config",
 			GitpodConfig: &gitpod.GitpodConfig{
 				Ports: []*gitpod.PortsItems{
 					{
-						Port:       9229,
-						OnOpen:     "ignore",
-						Visibility: "public",
+						Port:        9229,
+						OnOpen:      "ignore",
+						Visibility:  "public",
+						Name:        "Nice Port Name",
+						Description: "Nice Port Description",
 					},
 				},
 			},
 			Expectation: &PortConfigTestExpectations{
 				InstancePortConfigs: []*gitpod.PortConfig{
 					{
-						Port:       9229,
-						OnOpen:     "ignore",
-						Visibility: "public",
+						Port:        9229,
+						OnOpen:      "ignore",
+						Visibility:  "public",
+						Name:        "Nice Port Name",
+						Description: "Nice Port Description",
 					},
 				},
 			},
@@ -70,19 +54,23 @@ func TestPortsConfig(t *testing.T) {
 			GitpodConfig: &gitpod.GitpodConfig{
 				Ports: []*gitpod.PortsItems{
 					{
-						Port:       "9229-9339",
-						OnOpen:     "ignore",
-						Visibility: "public",
+						Port:        "9229-9339",
+						OnOpen:      "ignore",
+						Visibility:  "public",
+						Name:        "Nice Port Name",
+						Description: "Nice Port Description",
 					},
 				},
 			},
 			Expectation: &PortConfigTestExpectations{
 				InstanceRangeConfigs: []*RangeConfig{
 					{
-						PortsItems: &gitpod.PortsItems{
-							Port:       "9229-9339",
-							OnOpen:     "ignore",
-							Visibility: "public",
+						PortsItems: gitpod.PortsItems{
+							Port:        "9229-9339",
+							OnOpen:      "ignore",
+							Visibility:  "public",
+							Description: "Nice Port Description",
+							Name:        "Nice Port Name",
 						},
 						Start: 9229,
 						End:   9339,
@@ -95,8 +83,10 @@ func TestPortsConfig(t *testing.T) {
 		t.Run(test.Desc, func(t *testing.T) {
 			configService := &testGitpodConfigService{
 				configs: make(chan *gitpod.GitpodConfig),
+				changes: make(chan *struct{}),
 			}
 			defer close(configService.configs)
+			defer close(configService.changes)
 
 			context, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -106,27 +96,10 @@ func TestPortsConfig(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			gitpodAPI := gitpod.NewMockAPIInterface(ctrl)
-			gitpodAPI.EXPECT().GetWorkspace(context, workspaceID).Times(1).Return(&gitpod.WorkspaceInfo{
-				Workspace: &gitpod.Workspace{
-					Config: &gitpod.WorkspaceConfig{
-						Ports: test.WorkspacePorts,
-					},
-				},
-			}, nil)
-
-			service := NewConfigService(workspaceID, configService, gitpodAPI)
+			service := NewConfigService(workspaceID, configService)
 			updates, errors := service.Observe(context)
 
 			actual := &PortConfigTestExpectations{}
-			select {
-			case err := <-errors:
-				t.Fatal(err)
-			case change := <-updates:
-				for _, config := range change.workspaceConfigs {
-					actual.WorkspaceConfigs = append(actual.WorkspaceConfigs, config)
-				}
-			}
 
 			if test.GitpodConfig != nil {
 				go func() {
@@ -138,7 +111,7 @@ func TestPortsConfig(t *testing.T) {
 				case change := <-updates:
 					actual.InstanceRangeConfigs = change.instanceRangeConfigs
 					for _, config := range change.instancePortConfigs {
-						actual.InstancePortConfigs = append(actual.InstancePortConfigs, config)
+						actual.InstancePortConfigs = append(actual.InstancePortConfigs, &config.PortConfig)
 					}
 				}
 			}
@@ -151,13 +124,13 @@ func TestPortsConfig(t *testing.T) {
 }
 
 type PortConfigTestExpectations struct {
-	WorkspaceConfigs     []*gitpod.PortConfig
 	InstancePortConfigs  []*gitpod.PortConfig
 	InstanceRangeConfigs []*RangeConfig
 }
 
 type testGitpodConfigService struct {
 	configs chan *gitpod.GitpodConfig
+	changes chan *struct{}
 }
 
 func (service *testGitpodConfigService) Watch(ctx context.Context) {
@@ -165,4 +138,8 @@ func (service *testGitpodConfigService) Watch(ctx context.Context) {
 
 func (service *testGitpodConfigService) Observe(ctx context.Context) <-chan *gitpod.GitpodConfig {
 	return service.configs
+}
+
+func (service *testGitpodConfigService) ObserveImageFile(ctx context.Context) <-chan *struct{} {
+	return service.changes
 }

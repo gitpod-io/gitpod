@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package config
 
@@ -33,6 +33,14 @@ func Validate(version ConfigVersion, cfg interface{}) (r *ValidationResult, err 
 	}
 
 	var res ValidationResult
+
+	warnings, conflicts := version.CheckDeprecated(cfg)
+
+	for k, v := range warnings {
+		res.Warnings = append(res.Warnings, fmt.Sprintf("Deprecated config parameter: %s=%v", k, v))
+	}
+	res.Fatal = append(res.Fatal, conflicts...)
+
 	err = validate.Struct(cfg)
 	if err != nil {
 		validationErrors := err.(validator.ValidationErrors)
@@ -47,6 +55,8 @@ func Validate(version ConfigVersion, cfg interface{}) (r *ValidationResult, err 
 					res.Fatal = append(res.Fatal, fmt.Sprintf("Field '%s' is %s '%s'", v.Namespace(), tag, v.Param()))
 				case "startswith":
 					res.Fatal = append(res.Fatal, fmt.Sprintf("Field '%s' must start with '%s'", v.Namespace(), v.Param()))
+				case "block_new_users_passlist":
+					res.Fatal = append(res.Fatal, fmt.Sprintf("Field '%s' failed. If 'Enabled = true', there must be at least one fully-qualified domain name in the passlist", v.Namespace()))
 				default:
 					// General error message
 					res.Fatal = append(res.Fatal, fmt.Sprintf("Field '%s' failed %s validation", v.Namespace(), v.Tag()))

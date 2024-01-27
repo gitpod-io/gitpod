@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package logif
 
@@ -13,9 +13,10 @@ import (
 // UnmarshalCaddyfile sets up the module form Caddyfile tokens.
 //
 // Syntax:
-// if {
-//     "<expression>"
-// } [<encoder>]
+//
+//	if {
+//	    "<expression>"
+//	} [<encoder>]
 //
 // The <expression> must be on a single line.
 // Refer to `lang.Lang` for its syntax.

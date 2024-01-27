@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package pkg
 
@@ -19,11 +19,11 @@ type Config struct {
 	CacheDurationRegular util.Duration `json:"cache_duration_regular"`
 	CacheDurationBackup  util.Duration `json:"cache_duration_backup"`
 	URLUpstream          string        `json:"url_upstream"`
-	URLLocal             string        `json:"url_local"`
 	MaxIdleConns         int           `json:"max_idle_conns"`
 	MaxIdleConnsPerHost  int           `json:"max_idle_conns_per_host"`
 	RedisAddr            string        `json:"redis_addr"`
 	PrometheusAddr       string        `json:"prometheusAddr"`
+	AllowCacheDomain     []string      `json:"allow_cache_domain"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime
@@ -36,7 +36,6 @@ func (c *Config) Validate() error {
 		validation.Field(&c.CacheDurationRegular, validation.Required),
 		validation.Field(&c.CacheDurationBackup, validation.Required),
 		validation.Field(&c.URLUpstream, validation.Required, is.URL),
-		validation.Field(&c.URLLocal, validation.Required, is.URL),
 	)
 }
 

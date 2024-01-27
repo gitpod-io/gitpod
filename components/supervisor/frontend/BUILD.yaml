@@ -4,12 +4,19 @@ packages:
     srcs:
       - "src/**"
       - "public/**"
+      - config.json
       - package.json
       - webpack.config.js
       - tsconfig.json
     deps:
       - components/gitpod-protocol:lib
       - components/supervisor-api/typescript-grpc:lib
+      - components/ide-metrics-api/typescript-grpcweb:lib
     config:
       dontTest: true
       yarnLock: ${coreYarnLockBase}/../yarn.lock
+      commands:
+        build:
+         - sh
+         - -c
+         - yq w -i config.json commit commit-${__git_commit} -j && yarn build

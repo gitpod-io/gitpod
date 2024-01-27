@@ -1,12 +1,14 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package proxy
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
@@ -22,7 +24,7 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
 	var hashObj []runtime.Object
 	if objs, err := configmap(ctx); err != nil {
@@ -32,8 +34,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	prometheusPort := corev1.ContainerPort{
-		ContainerPort: PrometheusPort,
-		Name:          MetricsContainerName,
+		ContainerPort: baseserver.BuiltinMetricsPort,
+		Name:          baseserver.BuiltinMetricsPortName,
 	}
 
 	volumes := []corev1.Volume{{
@@ -96,24 +98,33 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	var podAntiAffinity *corev1.PodAntiAffinity
+	var frontendDevEnabled bool
+	var trustedSegmentKey string
+	var untrustedSegmentKey string
+	var segmentEndpoint string
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.UsePodAntiAffinity {
-			podAntiAffinity = &corev1.PodAntiAffinity{
-				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{{
-					Weight: 100,
-					PodAffinityTerm: corev1.PodAffinityTerm{
-						LabelSelector: &metav1.LabelSelector{
-							MatchExpressions: []metav1.LabelSelectorRequirement{{
-								Key:      "component",
-								Operator: "In",
-								Values:   []string{Component},
-							}},
-						},
-						TopologyKey: cluster.AffinityLabelMeta,
-					},
-				}},
+		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil {
+			frontendDevEnabled = cfg.WebApp.ProxyConfig.FrontendDevEnabled
+			if cfg.WebApp.ProxyConfig.AnalyticsPlugin != nil {
+				trustedSegmentKey = cfg.WebApp.ProxyConfig.AnalyticsPlugin.TrustedSegmentKey
+				untrustedSegmentKey = cfg.WebApp.ProxyConfig.AnalyticsPlugin.UntrustedSegmentKey
+				segmentEndpoint = cfg.WebApp.ProxyConfig.AnalyticsPlugin.SegmentEndpoint
 			}
+		}
+		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil && cfg.WebApp.ProxyConfig.Configcat != nil && cfg.WebApp.ProxyConfig.Configcat.FromConfigMap != "" {
+			volumes = append(volumes, corev1.Volume{
+				Name: "configcat",
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{Name: cfg.WebApp.ProxyConfig.Configcat.FromConfigMap},
+						Optional:             pointer.Bool(true),
+					},
+				},
+			})
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      "configcat",
+				MountPath: "/data/configcat",
+			})
 		}
 		return nil
 	})
@@ -123,12 +134,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      labels,
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 			},
 			Spec: appsv1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{MatchLabels: labels},
+				Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 				Replicas: common.Replicas(ctx, Component),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
@@ -136,22 +148,23 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Name:      Component,
 						Namespace: ctx.Namespace,
 						Labels:    labels,
-						Annotations: map[string]string{
-							common.AnnotationConfigChecksum: configHash,
-						},
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+							return map[string]string{
+								common.AnnotationConfigChecksum: configHash,
+							}
+						}),
 					},
 					Spec: corev1.PodSpec{
-						Affinity: &corev1.Affinity{
-							NodeAffinity:    common.NodeAffinity(cluster.AffinityLabelMeta).NodeAffinity,
-							PodAntiAffinity: podAntiAffinity,
-						},
+						Affinity:                      cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelMeta),
+						TopologySpreadConstraints:     cluster.WithHostnameTopologySpread(Component),
 						PriorityClassName:             common.SystemNodeCritical,
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),
-						DNSPolicy:                     "ClusterFirst",
-						RestartPolicy:                 "Always",
+						DNSPolicy:                     corev1.DNSClusterFirst,
+						RestartPolicy:                 corev1.RestartPolicyAlways,
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						SecurityContext: &corev1.PodSecurityContext{
+
 							RunAsNonRoot: pointer.Bool(false),
 						},
 						Volumes: volumes,
@@ -173,9 +186,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Args: []string{
-								"--v=10",
 								"--logtostderr",
-								fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", PrometheusPort),
+								fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", baseserver.BuiltinMetricsPort),
 								"--upstream=http://127.0.0.1:9545/",
 							},
 							Env: []corev1.EnvVar{{
@@ -188,8 +200,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							}},
 							Ports: []corev1.ContainerPort{{
-								ContainerPort: PrometheusPort,
-								Name:          MetricsContainerName,
+								ContainerPort: baseserver.BuiltinMetricsPort,
+								Name:          baseserver.BuiltinMetricsPortName,
 								Protocol:      *common.TCPProtocol,
 							}},
 							Resources: common.ResourceRequirements(ctx, Component, kubeRbacProxyContainerName, corev1.ResourceRequirements{
@@ -223,9 +235,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ContainerPort: ContainerSSHPort,
 								Name:          ContainerSSHName,
 								Protocol:      *common.TCPProtocol,
-							}, prometheusPort},
+							}, prometheusPort, {
+								ContainerPort: ContainerAnalyticsPort,
+								Name:          ContainerAnalyticsName,
+							}, {
+								ContainerPort: ContainerConfigcatPort,
+								Name:          ContainerConfigcatName,
+							}},
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: pointer.Bool(false),
+								Privileged:               pointer.Bool(false),
+								AllowPrivilegeEscalation: pointer.Bool(false),
 							},
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
@@ -241,13 +260,29 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								FailureThreshold:    3,
 							},
 							VolumeMounts: volumeMounts,
-							Env: common.MergeEnv(
+							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
+								common.ConfigcatProxyEnv(ctx),
 								[]corev1.EnvVar{{
 									Name:  "PROXY_DOMAIN",
 									Value: ctx.Config.Domain,
+								}, {
+									Name:  "FRONTEND_DEV_ENABLED",
+									Value: fmt.Sprintf("%t", frontendDevEnabled),
+								}, {
+									Name:  "WORKSPACE_HANDLER_FILE",
+									Value: strings.ToLower(string(ctx.Config.Kind)),
+								}, {
+									Name:  "ANALYTICS_PLUGIN_TRUSTED_SEGMENT_KEY",
+									Value: trustedSegmentKey,
+								}, {
+									Name:  "ANALYTICS_PLUGIN_UNTRUSTED_SEGMENT_KEY",
+									Value: untrustedSegmentKey,
+								}, {
+									Name:  "ANALYTICS_PLUGIN_SEGMENT_ENDPOINT",
+									Value: segmentEndpoint,
 								}},
-							),
+							)),
 						}},
 					},
 				},

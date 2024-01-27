@@ -6,6 +6,8 @@ THIS_DIR="$(dirname "$0")"
 PRIVATE_KEY_PATH="$HOME/.ssh/vm_id_rsa"
 PUBLIC_KEY_PATH="$HOME/.ssh/vm_id_rsa.pub"
 
+mkdir -p "$HOME/.ssh"
+
 function log {
     echo "[$(date)] $*"
 }

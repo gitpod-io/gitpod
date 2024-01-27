@@ -1,0 +1,19 @@
+{
+    "entrypoint": "/ide/codehelper",
+    "entrypointArgs": [ "--port", "{IDEPORT}", "--host", "0.0.0.0", "--without-connection-token", "--server-data-dir", "/workspace/.vscode-remote" ],
+    "readinessProbe": {
+        "type": "http",
+        "http": {
+            "path": "version"
+        }
+    },
+    "env": {
+        "PATH": "/ide/bin/remote-cli:$PATH",
+        "EDITOR": "/ide/bin/remote-cli/gitpod-code",
+        "VISUAL": "$EDITOR",
+        "GP_OPEN_EDITOR": "$EDITOR",
+        "GIT_EDITOR": "$EDITOR --wait",
+        "GP_PREVIEW_BROWSER": "$EDITOR --preview",
+        "GP_EXTERNAL_BROWSER": "$EDITOR --openExternal"
+    }
+}

@@ -1,0 +1,20 @@
+version: v1
+plugins:
+  - name: go
+    out: go
+    opt:
+     - module=github.com/gitpod-io/gitpod/usage-api
+  - name: go-grpc
+    out: go
+    opt:
+      - module=github.com/gitpod-io/gitpod/usage-api
+
+  - name: ts_proto
+    out: typescript/src
+    path: typescript/node_modules/.bin/protoc-gen-ts_proto
+    opt:
+     - context=true
+     - lowerCaseServiceMethods=true
+     - stringEnums=true
+     - fileSuffix=.pb
+     - outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false

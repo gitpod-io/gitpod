@@ -1,85 +1,142 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-export namespace ErrorCodes {
+import { scrubber } from "../util/scrubbing";
+
+export class ApplicationError extends Error {
+    constructor(readonly code: ErrorCode, readonly message: string, readonly data?: any) {
+        super(message);
+        this.data = scrubber.scrub(this.data, true);
+    }
+
+    toJson() {
+        return {
+            code: this.code,
+            message: this.message,
+            data: this.data,
+        };
+    }
+}
+
+export namespace ApplicationError {
+    export function hasErrorCode(e: any): e is Error & { code: ErrorCode; data?: any } {
+        return ErrorCode.is(e["code"]);
+    }
+
+    export async function notFoundToUndefined<T>(p: Promise<T>): Promise<T | undefined> {
+        try {
+            return await p;
+        } catch (e) {
+            if (hasErrorCode(e) && e.code === ErrorCodes.NOT_FOUND) {
+                return undefined;
+            }
+            throw e;
+        }
+    }
+}
+
+export namespace ErrorCode {
+    export function isUserError(code: number | ErrorCode) {
+        return code >= 400 && code < 500;
+    }
+    export function is(code: any): code is ErrorCode {
+        if (typeof code !== "number") {
+            return false;
+        }
+        return Object.values(ErrorCodes).includes(code as ErrorCode);
+    }
+}
+
+export type ErrorCode = typeof ErrorCodes[keyof typeof ErrorCodes];
+
+export const ErrorCodes = {
     // 400 Unauthorized
-    export const BAD_REQUEST = 400;
+    BAD_REQUEST: 400 as const,
 
     // 401 Unauthorized
-    export const NOT_AUTHENTICATED = 401;
-
-    // 402 Payment Required
-    export const NOT_ENOUGH_CREDIT = 402;
+    NOT_AUTHENTICATED: 401 as const,
 
     // 403 Forbidden
-    export const PERMISSION_DENIED = 403;
+    PERMISSION_DENIED: 403 as const,
 
     // 404 Not Found
-    export const NOT_FOUND = 404;
+    NOT_FOUND: 404 as const,
 
     // 409 Conflict (e.g. already existing)
-    export const CONFLICT = 409;
+    CONFLICT: 409 as const,
 
-    // 410 No User
-    export const SETUP_REQUIRED = 410;
+    // 411 No User
+    NEEDS_VERIFICATION: 411 as const,
+
+    // 412 Precondition Failed
+    PRECONDITION_FAILED: 412 as const,
 
     // 429 Too Many Requests
-    export const TOO_MANY_REQUESTS = 429;
+    TOO_MANY_REQUESTS: 429 as const,
 
     // 430 Repository not whitelisted (custom status code)
-    export const REPOSITORY_NOT_WHITELISTED = 430;
+    REPOSITORY_NOT_WHITELISTED: 430 as const,
+
+    // 451 Out of credits
+    PAYMENT_SPENDING_LIMIT_REACHED: 451 as const,
+
+    // 451 Error creating a subscription
+    SUBSCRIPTION_ERROR: 452 as const,
+
+    // 455 Invalid cost center (custom status code)
+    INVALID_COST_CENTER: 455 as const,
 
     // 460 Context Parse Error (custom status code)
-    export const CONTEXT_PARSE_ERROR = 460;
+    CONTEXT_PARSE_ERROR: 460 as const,
 
-    // 461 Invalid gitpod yml
-    export const INVALID_GITPOD_YML = 461;
-
-    // 450 Payment error
-    export const PAYMENT_ERROR = 450;
+    // 461 Invalid gitpod yml (custom status code)
+    INVALID_GITPOD_YML: 461 as const,
 
     // 470 User Blocked (custom status code)
-    export const USER_BLOCKED = 470;
+    USER_BLOCKED: 470 as const,
 
     // 471 User Deleted (custom status code)
-    export const USER_DELETED = 471;
+    USER_DELETED: 471 as const,
 
     // 472 Terms Acceptance Required (custom status code)
-    export const USER_TERMS_ACCEPTANCE_REQUIRED = 472;
-
-    // 480 Plan does not allow private repos
-    export const PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS = 480;
+    USER_TERMS_ACCEPTANCE_REQUIRED: 472 as const,
 
     // 481 Professional plan is required for this operation
-    export const PLAN_PROFESSIONAL_REQUIRED = 481;
-
-    // 485 Plan is only allowed for students
-    export const PLAN_ONLY_ALLOWED_FOR_STUDENTS = 485;
+    PLAN_PROFESSIONAL_REQUIRED: 481 as const,
 
     // 490 Too Many Running Workspace
-    export const TOO_MANY_RUNNING_WORKSPACES = 490;
+    TOO_MANY_RUNNING_WORKSPACES: 490 as const,
+
+    // 498 The operation was cancelled, typically by the caller.
+    CANCELLED: 498 as const,
+
+    // 4981 The deadline expired before the operation could complete.
+    DEADLINE_EXCEEDED: 4981 as const,
+
+    // 500 Internal Server Error
+    INTERNAL_SERVER_ERROR: 500 as const,
 
     // 501 EE Feature
-    export const EE_FEATURE = 501;
+    EE_FEATURE: 501 as const,
+
+    // 521 Unimplemented
+    UNIMPLEMENTED: 521 as const,
 
     // 555 EE License Required
-    export const EE_LICENSE_REQUIRED = 555;
+    EE_LICENSE_REQUIRED: 555 as const,
 
     // 601 SaaS Feature
-    export const SAAS_FEATURE = 601;
-
-    // 610 Invalid Team Subscription Quantity
-    export const TEAM_SUBSCRIPTION_INVALID_QUANTITY = 610;
-
-    // 620 Team Subscription Assignment Failed
-    export const TEAM_SUBSCRIPTION_ASSIGNMENT_FAILED = 620;
+    SAAS_FEATURE: 601 as const,
 
     // 630 Snapshot Error
-    export const SNAPSHOT_ERROR = 630;
+    SNAPSHOT_ERROR: 630 as const,
 
     // 640 Headless logs are not available (yet)
-    export const HEADLESS_LOG_NOT_YET_AVAILABLE = 640;
-}
+    HEADLESS_LOG_NOT_YET_AVAILABLE: 640 as const,
+
+    // 650 Invalid Value
+    INVALID_VALUE: 650 as const,
+};

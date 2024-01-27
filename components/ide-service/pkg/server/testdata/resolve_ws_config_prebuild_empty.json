@@ -1,0 +1,6 @@
+{
+  "type": 1,
+  "context": "{\"isFile\":false,\"path\":\"\",\"title\":\"gitpod-io/empty \",\"revision\":\"\",\"repository\":{\"cloneUrl\":\"https://github.com/gitpod-io/empty.git\",\"host\":\"github.com\",\"name\":\"empty\",\"owner\":\"gitpod-io\",\"private\":false},\"normalizedContextURL\":\"https://github.com/gitpod-io/empty\",\"checkoutLocation\":\"empty\"}",
+  "ide_settings": "{\"settingVersion\":\"2.0\",\"defaultIde\":\"intellj\",\"useLatestVersion\":false}",
+  "workspace_config": "{\"tasks\":[{\"init\":\"echo 'init script'\",\"command\":\"echo 'start script'\"}],\"_origin\":\"repo\",\"image\":\"docker.io/gitpod/workspace-full:latest\",\"vscode\":{\"extensions\":[]}}"
+}

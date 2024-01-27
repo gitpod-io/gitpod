@@ -1,53 +1,70 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { FormEvent, useContext, useEffect, useState } from "react";
+import { ConnectError } from "@connectrpc/connect";
+import { FormEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { getGitpodService } from "../service/service";
-import { TeamsContext } from "./teams-context";
+import { Heading1, Heading3, Subheading } from "../components/typography/headings";
+import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
+import { useDocumentTitle } from "../hooks/use-document-title";
+import { organizationClient } from "../service/public-api";
+import { Button } from "@podkit/buttons/Button";
+import { TextInputField } from "../components/forms/TextInputField";
 
-export default function () {
-    const { setTeams } = useContext(TeamsContext);
+export default function NewTeamPage() {
+    const invalidateOrgs = useOrganizationsInvalidator();
+    const [name, setName] = useState("");
+
     const history = useHistory();
 
     const [creationError, setCreationError] = useState<Error>();
-    let name = "";
     const createTeam = async (event: FormEvent) => {
         event.preventDefault();
+
         try {
-            const team = await getGitpodService().server.createTeam(name);
-            const teams = await getGitpodService().server.getTeams();
-            setTeams(teams);
-            history.push(`/t/${team.slug}`);
+            const team = await organizationClient.createOrganization({ name });
+            invalidateOrgs();
+            // Redirects to the new Org's dashboard
+            history.push(`/workspaces/?org=${team.organization?.id}`);
         } catch (error) {
             console.error(error);
-            setCreationError(error);
+            if (error instanceof ConnectError) {
+                setCreationError(new Error(error.rawMessage));
+            } else {
+                setCreationError(error);
+            }
         }
     };
 
-    useEffect(() => {
-        document.title = "New Team — Gitpod";
-    }, []);
+    useDocumentTitle("New Organization");
 
     return (
         <div className="flex flex-col w-96 mt-24 mx-auto items-center">
-            <h1>New Team</h1>
-            <p className="text-gray-500 text-center text-base">
-                Teams allow you to <strong>manage multiple projects</strong>, <strong>group workspaces</strong>, and{" "}
-                <strong>collaborate with your team</strong>.
-            </p>
-            <form className="mt-16 w-full" onSubmit={createTeam}>
-                <div className="border rounded-xl p-6 border-gray-100 dark:border-gray-800">
-                    <h3 className="text-center text-xl mb-6">What's your team's name?</h3>
-                    <h4>Team Name</h4>
-                    <input
+            <Heading1>New&nbsp;Organization</Heading1>
+            <Subheading className="text-center">
+                <a href="https://www.gitpod.io/docs/configure/teams" className="gp-link">
+                    Organizations
+                </a>{" "}
+                allow you to manage related{" "}
+                <a href="https://www.gitpod.io/docs/configure/projects" className="gp-link">
+                    projects
+                </a>{" "}
+                and collaborate with other members.
+            </Subheading>
+            <form className="mt-16" onSubmit={createTeam}>
+                <div className="rounded-xl p-6 bg-gray-50 dark:bg-gray-800">
+                    <Heading3>You're creating a new organization</Heading3>
+                    <Subheading>After creating an organization, you can invite others to join.</Subheading>
+
+                    <TextInputField
+                        label="Organization Name"
+                        value={name}
                         autoFocus
                         className={`w-full${!!creationError ? " error" : ""}`}
-                        type="text"
-                        onChange={(event) => (name = event.target.value)}
+                        onChange={setName}
                     />
                     {!!creationError && (
                         <p className="text-gitpod-red">
@@ -56,23 +73,12 @@ export default function () {
                     )}
                 </div>
                 <div className="flex flex-row-reverse space-x-2 space-x-reverse mt-2">
-                    <button type="submit">Create Team</button>
-                    <button className="secondary" onClick={() => history.push("/")}>
+                    <Button type="submit">Create Organization</Button>
+                    <Button variant="secondary" onClick={() => history.push("/")}>
                         Cancel
-                    </button>
+                    </Button>
                 </div>
             </form>
-            <p className="text-center w-full mt-12 text-gray-500">
-                <strong>Teams &amp; Projects</strong> are currently in Beta.{" "}
-                <a
-                    href="https://github.com/gitpod-io/gitpod/issues/5095"
-                    target="gitpod-feedback-issue"
-                    rel="noopener"
-                    className="gp-link"
-                >
-                    Send feedback
-                </a>
-            </p>
         </div>
     );
 }

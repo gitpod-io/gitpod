@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package dispatch
 
@@ -82,10 +82,10 @@ type Dispatch struct {
 }
 
 type workspaceState struct {
-	SeenContainer bool
-	Context       context.Context
-	Cancel        context.CancelFunc
-	Workspace     *Workspace
+	WorkspaceAdded bool
+	Context        context.Context
+	Cancel         context.CancelFunc
+	Workspace      *Workspace
 }
 
 type contextKey struct{}
@@ -191,7 +191,7 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 		// we haven't seen this pod before - add it, and wait for the container
 		owi := wsk8s.GetOWIFromObject(&newPod.ObjectMeta)
 		d.ctxs[workspaceInstanceID] = &workspaceState{
-			SeenContainer: false,
+			WorkspaceAdded: false,
 			Workspace: &Workspace{
 				InstanceID:  workspaceInstanceID,
 				WorkspaceID: workspaceID,
@@ -199,7 +199,8 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 			},
 		}
 
-		waitForPodCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		// Important!!!!: ideally this timeout must be equal to ws-manager https://github.com/gitpod-io/gitpod/blob/main/components/ws-manager/pkg/manager/manager.go#L171
+		waitForPodCtx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		containerCtx, containerCtxCancel := context.WithCancel(context.Background())
 		containerCtx = context.WithValue(containerCtx, contextDispatch, d)
 		go func() {
@@ -219,23 +220,23 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 			s.Context = containerCtx
 			s.Cancel = containerCtxCancel
 			s.Workspace.ContainerID = containerID
-			s.SeenContainer = true
-			d.mu.Unlock()
 
 			for _, l := range d.Listener {
-				l := l
-				go func() {
-					err := l.WorkspaceAdded(containerCtx, s.Workspace)
+				go func(listener Listener) {
+					err := listener.WorkspaceAdded(containerCtx, s.Workspace)
 					if err != nil {
 						log.WithError(err).WithFields(owi).Error("dispatch listener failed")
 					}
-				}()
+				}(l)
 			}
+
+			s.WorkspaceAdded = true
+			d.mu.Unlock()
 		}()
 		go func() {
 			// no matter if the container was deleted or not - we've lost our guard that was waiting for that to happen.
 			// Hence, we must stop listening for it to come into existence and cancel the context.
-			err := d.Runtime.WaitForContainerStop(waitForPodCtx, workspaceInstanceID)
+			err := d.Runtime.WaitForContainerStop(context.Background(), workspaceInstanceID)
 			if err != nil && !errors.Is(err, context.DeadlineExceeded) {
 				log.WithError(err).WithFields(owi).Error("unexpected waiting for container to stop")
 			}
@@ -246,7 +247,7 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 		return
 	}
 
-	if !state.SeenContainer {
+	if !state.WorkspaceAdded {
 		return
 	}
 

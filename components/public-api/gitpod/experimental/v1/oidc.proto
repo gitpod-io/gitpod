@@ -1,0 +1,204 @@
+syntax = "proto3";
+
+package gitpod.experimental.v1;
+
+import "gitpod/experimental/v1/pagination.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
+
+// Configuration of an OpenID client.
+//
+// For the metadata describing the configuration of OIDC providers, cf.
+// https://openid.net/specs/openid-connect-discovery-1_0.html
+message OIDCClientConfig {
+  // ID is the unique identifier for the OIDC Config.
+  // Read only.
+  string id = 1;
+
+  string organization_id = 2;
+
+  OIDCConfig oidc_config = 3;
+
+  OAuth2Config oauth2_config = 4;
+
+  // Optional.
+  bool oauth_only = 5;
+
+  // List of the JWS signing algorithms (alg values) supported by the OP for the
+  // ID Token to encode the Claims in a JWT. The algorithm RS256 MUST be
+  // included.
+  // Optional.
+  repeated string id_token_signing_alg_values_supported = 6;
+
+  // Time when the config was created.
+  // Read-only.
+  google.protobuf.Timestamp creation_time = 7;
+
+  // Describes the status of this configuration item.
+  // Read-only.
+  OIDCClientConfigStatus status = 8;
+
+  // Whether this config can be used for sign-ins.
+  // Defaults to false.
+  // Optional.
+  bool active = 9;
+
+  // Whether this config was tested by executing the OIDC flow.
+  // Defaults to false.
+  // Optional.
+  bool verified = 10;
+}
+
+// The OIDC specific part of the client configuration.
+message OIDCConfig {
+  // URL using the https scheme with no query or fragment component that the
+  // OIDC provider asserts as its Issuer Identifier.
+  // Required.
+  string issuer = 1;
+
+  // A KeySet that can validate the id_token (JSON web token)
+  // Either one is required.
+  string jwks = 2;
+  string jwks_url = 3;
+
+  // Provider specific parameters to control the behavior of the consent screen.
+  // Optional.
+  ConsentScreenHints hints = 4;
+
+  // Optional overrides for key mapping to be applied when extracting claims from id_tokens.
+  // Should only be set, if an override is required.
+  // Optional.
+  ClaimMappingOverride override_claim_mapping = 5;
+}
+
+// Provider specific parameters to control the behavior of the consent screen.
+message ConsentScreenHints {
+  // Control options for the consent screen.
+  // Optional.
+  string prompt = 1;
+  // A hint to pre-select the tenant from an AD.
+  // Optional.
+  string domain_hint = 2;
+  // Optional.
+  string login_hint = 3;
+}
+
+// Optional overrides for key mapping to be applied when extracting claims from id_tokens.
+message ClaimMappingOverride {
+  // Optional.
+  string claim_email_key = 1;
+  // Optional.
+  string claim_groups_key = 2;
+  // Optional.
+  string claim_username_key = 3;
+}
+
+// The OAuth2 specific part of the client configuration.
+message OAuth2Config {
+  // Required.
+  string client_id = 1;
+  // Required for creation/updates.
+  // Empty on read.
+  string client_secret = 2;
+  // Required.
+  string authorization_endpoint = 3;
+  // Required.
+  string token_endpoint = 4;
+  // Required.
+  repeated string scopes = 5;
+
+  // Source for additional claims for the token.
+  // Additional keys may be used to control the extraction of a profile.
+  // Required.
+  string userinfo_endpoint = 6;
+
+  // Keys of the userinfo result to extract a profile from.
+  // Optional.
+  UserInfoKeys userinfo_keys = 7;
+}
+
+// Description of keys of a userinfo result.
+message UserInfoKeys {
+  // Optional.
+  string userinfo_id_key = 1;
+  // Optional.
+  string userinfo_name_key = 2;
+}
+
+// The status of an OIDC client configuration.
+message OIDCClientConfigStatus {}
+
+service OIDCService {
+  // Creates a new OIDC client configuration.
+  rpc CreateClientConfig(CreateClientConfigRequest) returns (CreateClientConfigResponse) {}
+
+  // Retrieves an OIDC client configuration by ID.
+  rpc GetClientConfig(GetClientConfigRequest) returns (GetClientConfigResponse) {}
+
+  // Lists OIDC client configurations.
+  rpc ListClientConfigs(ListClientConfigsRequest) returns (ListClientConfigsResponse) {}
+
+  // Updates modifiable properties of an existing OIDC client configuration.
+  rpc UpdateClientConfig(UpdateClientConfigRequest) returns (UpdateClientConfigResponse) {}
+
+  // Removes an OIDC client configuration by ID.
+  rpc DeleteClientConfig(DeleteClientConfigRequest) returns (DeleteClientConfigResponse) {}
+
+  // Activates an OIDC client configuration by ID.
+  rpc SetClientConfigActivation(SetClientConfigActivationRequest) returns (SetClientConfigActivationResponse) {}
+}
+
+message CreateClientConfigRequest {
+  OIDCClientConfig config = 1;
+
+  // Optional.
+  bool use_discovery = 2;
+}
+
+message CreateClientConfigResponse {
+  OIDCClientConfig config = 1;
+}
+
+message GetClientConfigRequest {
+  string id = 1;
+  string organization_id = 2;
+}
+
+message GetClientConfigResponse {
+  OIDCClientConfig config = 1;
+}
+
+message ListClientConfigsRequest {
+  string organization_id = 1;
+
+  // Page information
+  Pagination pagination = 2;
+}
+
+message ListClientConfigsResponse {
+  repeated OIDCClientConfig client_configs = 1;
+
+  int64 total_results = 2;
+}
+
+message UpdateClientConfigRequest {
+  OIDCClientConfig config = 1;
+}
+
+message UpdateClientConfigResponse {}
+
+message DeleteClientConfigRequest {
+  string id = 1;
+  string organization_id = 2;
+}
+
+message DeleteClientConfigResponse {}
+
+message SetClientConfigActivationRequest {
+  string id = 1;
+  string organization_id = 2;
+  bool activate = 3;
+}
+
+message SetClientConfigActivationResponse {}

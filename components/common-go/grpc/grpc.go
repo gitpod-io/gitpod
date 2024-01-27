@@ -1,19 +1,22 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package grpc
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/opentracing/opentracing-go"
@@ -22,8 +25,10 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/status"
 )
 
 // maxMsgSize use 16MB as the default message size limit.
@@ -85,13 +90,22 @@ func DefaultServerOptions() []grpc.ServerOption {
 // ServerOptionsWithInterceptors returns the default ServerOption sets options for internal components with additional interceptors.
 // By default, Interceptors for OpenTracing (grpc_opentracing) are added as the last one.
 func ServerOptionsWithInterceptors(stream []grpc.StreamServerInterceptor, unary []grpc.UnaryServerInterceptor) []grpc.ServerOption {
+	tracingFilterFunc := grpc_opentracing.WithFilterFunc(func(ctx context.Context, fullMethodName string) bool {
+		return fullMethodName != "/grpc.health.v1.Health/Check"
+	})
+
 	stream = append(stream,
-		grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
+		grpc_opentracing.StreamServerInterceptor(tracingFilterFunc),
 		grpc_recovery.StreamServerInterceptor(), // must be last, to be executed first after the rpc handler, we want upstream interceptors to have a meaningful response to work with
 	)
 	unary = append(unary,
-		grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
-		grpc_recovery.UnaryServerInterceptor(), // must be last, to be executed first after the rpc handler, we want upstream interceptors to have a meaningful response to work with
+		grpc_opentracing.UnaryServerInterceptor(tracingFilterFunc),
+		grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(
+			func(ctx context.Context, p interface{}) error {
+				log.WithField("stack", string(debug.Stack())).Errorf("[PANIC] %s", p)
+				return status.Errorf(codes.Internal, "%s", p)
+			},
+		)), // must be last, to be executed first after the rpc handler, we want upstream interceptors to have a meaningful response to work with
 	)
 
 	return []grpc.ServerOption{

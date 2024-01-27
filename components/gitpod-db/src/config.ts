@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { injectable } from "inversify";
@@ -13,13 +13,19 @@ import { ConnectionConfig } from "mysql";
 export class Config {
     get dbConfig(): DatabaseConfig {
         // defaults to be used only in tests
-        const dbSetup = {
+        const dbSetup: DatabaseConfig = {
             host: process.env.DB_HOST || "localhost",
-            port: getEnvVarParsed("DB_PORT", Number.parseInt, "3306"),
+            port: getEnvVarParsed("DB_PORT", Number.parseInt, "23306"),
             username: process.env.DB_USERNAME || "gitpod",
             password: process.env.DB_PASSWORD || "test",
             database: process.env.DB_NAME || "gitpod",
         };
+
+        if (process.env.DB_CA_CERT) {
+            dbSetup.ssl = {
+                ca: process.env.DB_CA_CERT,
+            };
+        }
 
         log.info(`Using DB: ${dbSetup.host}:${dbSetup.port}/${dbSetup.database}`);
 
@@ -28,23 +34,26 @@ export class Config {
 
     get mysqlConfig(): ConnectionConfig {
         const dbConfig = this.dbConfig;
-        return {
+        const mysqlConfig: ConnectionConfig = {
             host: dbConfig.host,
             port: dbConfig.port,
             user: dbConfig.username,
             password: dbConfig.password,
             database: dbConfig.database,
         };
+        if (dbConfig.ssl?.ca) {
+            mysqlConfig.ssl = {
+                ca: dbConfig.ssl.ca,
+            };
+        }
+        return mysqlConfig;
     }
 
     get dbEncryptionKeys(): string {
-        return getEnvVar("DB_ENCRYPTION_KEYS");
-    }
-
-    get deletedEntryGCConfig(): DeletedEntryGCConfig {
-        const enabled = getEnvVar("DB_DELETED_ENTRIES_GC_ENABLED", "true") === "true";
-        const intervalMS = parseInt(getEnvVar("DB_DELETED_ENTRIES_GC_INTERVAL", (10 * 60 * 1000).toString()));
-        return { enabled, intervalMS };
+        return getEnvVar(
+            "DB_ENCRYPTION_KEYS",
+            `[{"name":"general","version":1,"primary":true,"material":"5vRrp0H4oRgdkPnX1qQcS54Q0xggr6iyho42IQ1rO+c="}]`,
+        );
     }
 }
 
@@ -54,9 +63,7 @@ export interface DatabaseConfig {
     database?: string;
     username?: string;
     password?: string;
-}
-
-export interface DeletedEntryGCConfig {
-    enabled: boolean;
-    intervalMS: number;
+    ssl?: {
+        ca?: string;
+    };
 }

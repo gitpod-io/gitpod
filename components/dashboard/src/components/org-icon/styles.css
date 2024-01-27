@@ -1,0 +1,39 @@
+/**
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .bg-gradient-1 {
+        background: linear-gradient(45deg, theme('colors.orange.500') 25%, theme('colors.orange.300') 75%);
+    }
+    .bg-gradient-2 {
+        background: linear-gradient(45deg, theme('colors.orange.500') 25%, theme('colors.pink.800') 75%);
+    }
+    .bg-gradient-3 {
+        background: linear-gradient(45deg, theme('colors.orange.500') 25%, theme('colors.red.500') 75%);
+    }
+    .bg-gradient-4 {
+        background: linear-gradient(45deg, theme('colors.orange.500') 25%, theme('colors.green.700') 75%);
+    }
+    .bg-gradient-5 {
+        background: linear-gradient(45deg, theme('colors.orange.500') 25%, theme('colors.yellow.300') 75%);
+    }
+    .bg-gradient-6 {
+        background: linear-gradient(45deg, theme('colors.orange.500') 25%, theme('colors.indigo.700') 75%);
+    }
+    .bg-gradient-7 {
+        background: linear-gradient(45deg, theme('colors.orange.500') 25%, theme('colors.teal.500') 75%);
+    }
+    .bg-gradient-8 {
+        background: linear-gradient(45deg, theme('colors.orange.500') 25%, theme('colors.sky.900') 75%);
+    }
+    .bg-gradient-9 {
+        background: linear-gradient(45deg, theme('colors.orange.500') 25%, theme('colors.rose.300') 75%);
+    }
+}

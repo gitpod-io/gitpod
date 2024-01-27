@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package supervisor
 
@@ -224,7 +224,7 @@ func TestTaskManager(t *testing.T) {
 						GitpodTasks:    gitpodTasks,
 						GitpodHeadless: strconv.FormatBool(test.Headless),
 					},
-				}, terminalService, contentState, &reporter)
+				}, terminalService, contentState, &reporter, nil, nil)
 			)
 			taskManager.storeLocation = storeLocation
 			contentState.MarkContentReady(test.Source)
@@ -298,7 +298,7 @@ func TestGetTask(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			command := getCommand(&task{config: test.Task, TaskStatus: api.TaskStatus{Id: "0"}}, test.IsHeadless, test.ContentSource, "/")
+			command := getCommand(&task{config: test.Task, TaskStatus: api.TaskStatus{Id: "0"}}, test.IsHeadless, test.IsHeadless, test.ContentSource, "/")
 			if diff := cmp.Diff(test.Expectation, command); diff != "" {
 				t.Errorf("unexpected getCommand() (-want +got):\n%s", diff)
 			}

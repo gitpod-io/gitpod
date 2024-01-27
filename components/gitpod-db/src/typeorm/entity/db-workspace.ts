@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { PrimaryColumn, Column, Entity, Index } from "typeorm";
@@ -30,6 +30,13 @@ export class DBWorkspace implements Workspace {
     @Column("varchar")
     @Index("ind_creationTime")
     creationTime: string;
+
+    @Column({
+        ...TypeORM.UUID_COLUMN_TYPE,
+        transformer: Transformer.MAP_NULL_TO_UNDEFINED,
+    })
+    @Index()
+    organizationId: string;
 
     @Column(TypeORM.UUID_COLUMN_TYPE)
     @Index()
@@ -78,11 +85,15 @@ export class DBWorkspace implements Workspace {
 
     @Index("ind_type")
     @Column({
+        type: "varchar",
         default: "regular",
     })
     type: WorkspaceType;
 
-    @Column()
+    @Column({
+        type: "varchar",
+        default: "",
+    })
     softDeleted?: WorkspaceSoftDeletion;
 
     @Column({
@@ -97,7 +108,7 @@ export class DBWorkspace implements Workspace {
     })
     contentDeletedTime?: string;
 
-    // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
+    // This column triggers the periodic deleter deletion mechanism. It's not intended for public consumption.
     @Column()
     deleted?: boolean;
 

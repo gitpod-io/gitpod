@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import randomNumber = require("random-number-csprng");
@@ -32,8 +32,8 @@ function clean(segment: string | undefined, maxChars: number = 16) {
 }
 
 async function random(array: string[], length: number = 1): Promise<string> {
-    var result = "";
-    for (var i = 0; i < length; i++) {
+    let result = "";
+    for (let i = 0; i < length; i++) {
         result += array[await randomNumber(0, array.length - 1)];
     }
     return result;

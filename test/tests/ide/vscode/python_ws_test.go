@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package ide
 
@@ -23,7 +23,7 @@ import (
 )
 
 func poolTask(task func() (bool, error)) (bool, error) {
-	timeout := time.After(5 * time.Minute)
+	timeout := time.After(10 * time.Minute)
 	ticker := time.Tick(20 * time.Second)
 	for {
 		select {
@@ -47,8 +47,8 @@ func TestPythonExtWorkspace(t *testing.T) {
 
 	f := features.New("PythonExtensionWorkspace").
 		WithLabel("component", "server").
-		Assess("it can run python extension in a workspace", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("it can run python extension in a workspace", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -78,13 +78,21 @@ func TestPythonExtWorkspace(t *testing.T) {
 				t.Fatalf("cannot set ide to vscode insiders: %q", err)
 			}
 
-			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/gitpod-io/python-test-workspace", username, api)
+			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, "github.com/gitpod-io/python-test-workspace", username, api)
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer stopWs(true)
+			defer func() {
+				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				defer scancel()
 
-			_, err = integration.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
+				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+				defer sapi.Done(t)
+
+				stopWs(true, sapi)
+			}()
+
+			_, err = integration.WaitForWorkspaceStart(t, ctx, nfo.LatestInstance.ID, nfo.Workspace.ID, api)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -129,12 +137,13 @@ func TestPythonExtWorkspace(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			serverUrl, err := api.GetServerEndpoint()
+
 			jsonCookie := fmt.Sprintf(
-				`{"name": "%v","value": "%v","domain": "%v","path": "%v","expires": %v,"httpOnly": %v,"secure": %v,"sameSite": "Lax"}`,
+				`{"name": "%v","value": "%v", "url": "%v","expires": %v,"httpOnly": %v,"secure": %v,"sameSite": "Lax"}`,
 				sessionCookie.Name,
 				sessionCookie.Value,
-				sessionCookie.Domain,
-				sessionCookie.Path,
+				serverUrl,
 				sessionCookie.Expires.Unix(),
 				sessionCookie.HttpOnly,
 				sessionCookie.Secure,
@@ -166,7 +175,7 @@ func TestPythonExtWorkspace(t *testing.T) {
 				t.Fatal("There was an error running ide test")
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

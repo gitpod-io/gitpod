@@ -1,0 +1,26 @@
+version: v1
+plugins:
+  - name: go
+    out: go
+    opt:
+     - module=github.com/gitpod-io/gitpod/content-service/api
+  - name: go-grpc
+    out: go
+    opt:
+      - module=github.com/gitpod-io/gitpod/content-service/api
+
+  - name: js
+    out: typescript/src
+    opt: import_style=commonjs,binary
+
+  - name: protoc-gen-grpc
+    path: typescript/node_modules/.bin/grpc_tools_node_protoc_plugin
+    out: typescript/src
+    opt:
+     - grpc_js
+
+  - name: protoc-gen-ts
+    path: typescript/node_modules/.bin/protoc-gen-ts
+    out: typescript/src
+    opt:
+     - grpc_js

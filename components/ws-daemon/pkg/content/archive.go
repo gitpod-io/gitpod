@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package content
 
@@ -14,13 +14,12 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	carchive "github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
 // BuildTarbal creates an OCI compatible tar file dst from the folder src, expecting the overlay whiteout format
-func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBackup bool, opts ...carchive.TarOption) (err error) {
+func BuildTarbal(ctx context.Context, src string, dst string, opts ...carchive.TarOption) (err error) {
 	var cfg carchive.TarConfig
 	for _, opt := range opts {
 		opt(&cfg)
@@ -34,10 +33,6 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 	// ensure the src actually exists before trying to tar it
 	if _, err := os.Stat(src); err != nil {
 		return xerrors.Errorf("Unable to tar files: %v", err.Error())
-	}
-
-	if fullWorkspaceBackup {
-		log.Warn("Full workspace backup is disabled.")
 	}
 
 	uidMaps := make([]idtools.IDMap, len(cfg.UIDMaps))

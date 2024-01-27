@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -17,6 +17,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
@@ -42,7 +43,7 @@ func init() {
 
 func getWorkspacesClient(ctx context.Context) (*grpc.ClientConn, api.WorkspaceManagerClient, error) {
 	var addr string
-	secopt := grpc.WithInsecure()
+	secopt := grpc.WithTransportCredentials(insecure.NewCredentials())
 	if host, _ := workspacesCmd.PersistentFlags().GetString("host"); host == "" {
 		cfg, namespace, err := getKubeconfig()
 		if err != nil {
@@ -78,11 +79,11 @@ func getWorkspacesClient(ctx context.Context) (*grpc.ClientConn, api.WorkspaceMa
 		}
 
 		if certFromSecret, _ := workspacesCmd.Flags().GetBool("tls-from-secret"); certFromSecret {
-			certPool, err := util.CertPoolFromSecret(clientSet, namespace, "ws-manager-tls", []string{"ca.crt"})
+			certPool, err := util.CertPoolFromSecret(clientSet, namespace, "ws-manager-mk2-tls", []string{"ca.crt"})
 			if err != nil {
 				return nil, nil, xerrors.Errorf("could not load ca cert: %w", err)
 			}
-			cert, err := util.CertFromSecret(clientSet, namespace, "ws-manager-client-tls", "tls.crt", "tls.key")
+			cert, err := util.CertFromSecret(clientSet, namespace, "ws-manager-mk2-client-tls", "tls.crt", "tls.key")
 			if err != nil {
 				return nil, nil, xerrors.Errorf("could not load tls cert: %w", err)
 			}

@@ -1,12 +1,13 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package proxy
 
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	networkingv1 "k8s.io/api/networking/v1"
@@ -42,7 +43,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}, {
 				Ports: []networkingv1.NetworkPolicyPort{{
 					Protocol: common.TCPProtocol,
-					Port:     &intstr.IntOrString{IntVal: PrometheusPort},
+					Port:     &intstr.IntOrString{IntVal: baseserver.BuiltinMetricsPort},
 				}},
 				From: []networkingv1.NetworkPolicyPeer{{
 					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
@@ -50,6 +51,58 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}},
 					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
 						"component": common.ServerComponent,
+					}},
+				}},
+			}, {
+				Ports: []networkingv1.NetworkPolicyPort{{
+					Protocol: common.TCPProtocol,
+					Port:     &intstr.IntOrString{IntVal: ContainerAnalyticsPort},
+				}},
+				From: []networkingv1.NetworkPolicyPeer{{
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.ServerComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.WSManagerBridgeComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.WSProxyComponent,
+					}},
+				}},
+			}, {
+				Ports: []networkingv1.NetworkPolicyPort{{
+					Protocol: common.TCPProtocol,
+					Port:     &intstr.IntOrString{IntVal: ContainerConfigcatPort},
+				}},
+				From: []networkingv1.NetworkPolicyPeer{{
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.ServerComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.WSManagerBridgeComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.IDEServiceComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.PublicApiComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.UsageComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.OpenVSXProxyComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.DashboardComponent,
 					}},
 				}},
 			}},

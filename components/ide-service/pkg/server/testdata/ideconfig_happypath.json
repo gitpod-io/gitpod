@@ -1,0 +1,90 @@
+{
+  "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-ff38b98b7dde4929159bcaeec68d178898dc2139",
+  "ideOptions": {
+    "options": {
+      "code": {
+        "orderKey": "00",
+        "title": "VS Code",
+        "type": "browser",
+        "logo": "https://ide.gitpod.io/image/ide-logo/vscode.svg",
+        "label": "Browser",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
+      },
+      "code-desktop": {
+        "orderKey": "02",
+        "title": "VS Code",
+        "type": "desktop",
+        "logo": "https://ide.gitpod.io/image/ide-logo/vscode.svg",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop:commit-c2b7421628ed5a5fb618817a4fd1549684659c2d",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:commit-c2b7421628ed5a5fb618817a4fd1549684659c2d"
+      },
+      "goland": {
+        "orderKey": "05",
+        "title": "GoLand",
+        "type": "desktop",
+        "logo": "https://ide.gitpod.io/image/ide-logo/golandLogo.svg",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/goland:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df"
+      },
+      "intellij": {
+        "orderKey": "04",
+        "title": "IntelliJ IDEA",
+        "type": "desktop",
+        "logo": "https://ide.gitpod.io/image/ide-logo/intellijIdeaLogo.svg",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df"
+      },
+      "phpstorm": {
+        "orderKey": "07",
+        "title": "PhpStorm",
+        "type": "desktop",
+        "logo": "https://ide.gitpod.io/image/ide-logo/phpstormLogo.svg",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df"
+      },
+      "pycharm": {
+        "orderKey": "06",
+        "title": "PyCharm",
+        "type": "desktop",
+        "logo": "https://ide.gitpod.io/image/ide-logo/pycharmLogo.svg",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df"
+      }
+    },
+    "defaultIde": "code",
+    "defaultDesktopIde": "code-desktop",
+    "clients": {
+      "jetbrains-gateway": {
+        "defaultDesktopIDE": "intellij",
+        "desktopIDEs": [
+          "intellij",
+          "goland",
+          "pycharm",
+          "phpstorm"
+        ],
+        "installationSteps": [
+          "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
+        ]
+      },
+      "vscode": {
+        "defaultDesktopIDE": "code-desktop",
+        "desktopIDEs": [
+          "code-desktop"
+        ],
+        "installationSteps": [
+          "If you don't see an open dialog in your browser, make sure you have \u003ca target='_blank' class='gp-link' href='https://code.visualstudio.com/download'\u003eVS Code\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
+        ]
+      },
+      "vscode-insiders": {
+        "defaultDesktopIDE": "code-desktop",
+        "desktopIDEs": [
+          "code-desktop"
+        ],
+        "installationSteps": [
+          "If you don't see an open dialog in your browser, make sure you have \u003ca target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'\u003eVS Code Insiders\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
+        ]
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package blobserve
 
@@ -52,7 +52,12 @@ func TestBlobFor(t *testing.T) {
 			out := bytes.NewBuffer(nil)
 			gz := gzip.NewWriter(out)
 			tr := tar.NewWriter(gz)
-			tr.WriteHeader(&tar.Header{Typeflag: tar.TypeReg, Name: "foo.txt", Size: 0})
+
+			err := tr.WriteHeader(&tar.Header{Typeflag: tar.TypeReg, Name: "foo.txt", Size: 0})
+			if err != nil {
+				return nil, err
+			}
+
 			tr.Close()
 			gz.Close()
 			return out.Bytes(), nil

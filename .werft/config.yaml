@@ -1,5 +1,0 @@
-rules:
-- path: ".werft/build.yaml"
-  matchesAll:
-  - or: ["repo.ref ~= refs/heads/"]
-  - or: ["trigger !== deleted"]

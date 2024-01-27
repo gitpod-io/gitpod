@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package incluster
 
@@ -15,14 +15,15 @@ import (
 // service this doesn't use the common.GenerateService function
 // because it's more complex than this caters for
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaService)
 
 	return []runtime.Object{&corev1.Service{
 		TypeMeta: common.TypeMetaService,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
-			Namespace: ctx.Namespace,
-			Labels:    labels,
+			Name:        Component,
+			Namespace:   ctx.Namespace,
+			Labels:      labels,
+			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaService),
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{

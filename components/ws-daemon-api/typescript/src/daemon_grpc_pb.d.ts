@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // package: wsdaemon
@@ -17,6 +17,7 @@ import * as content_service_api_initializer_pb from "@gitpod/content-service/lib
 interface IWorkspaceContentServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     initWorkspace: IWorkspaceContentServiceService_IInitWorkspace;
     waitForInit: IWorkspaceContentServiceService_IWaitForInit;
+    isWorkspaceExists: IWorkspaceContentServiceService_IIsWorkspaceExists;
     takeSnapshot: IWorkspaceContentServiceService_ITakeSnapshot;
     disposeWorkspace: IWorkspaceContentServiceService_IDisposeWorkspace;
     backupWorkspace: IWorkspaceContentServiceService_IBackupWorkspace;
@@ -39,6 +40,15 @@ interface IWorkspaceContentServiceService_IWaitForInit extends grpc.MethodDefini
     requestDeserialize: grpc.deserialize<daemon_pb.WaitForInitRequest>;
     responseSerialize: grpc.serialize<daemon_pb.WaitForInitResponse>;
     responseDeserialize: grpc.deserialize<daemon_pb.WaitForInitResponse>;
+}
+interface IWorkspaceContentServiceService_IIsWorkspaceExists extends grpc.MethodDefinition<daemon_pb.IsWorkspaceExistsRequest, daemon_pb.IsWorkspaceExistsResponse> {
+    path: "/wsdaemon.WorkspaceContentService/IsWorkspaceExists";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<daemon_pb.IsWorkspaceExistsRequest>;
+    requestDeserialize: grpc.deserialize<daemon_pb.IsWorkspaceExistsRequest>;
+    responseSerialize: grpc.serialize<daemon_pb.IsWorkspaceExistsResponse>;
+    responseDeserialize: grpc.deserialize<daemon_pb.IsWorkspaceExistsResponse>;
 }
 interface IWorkspaceContentServiceService_ITakeSnapshot extends grpc.MethodDefinition<daemon_pb.TakeSnapshotRequest, daemon_pb.TakeSnapshotResponse> {
     path: "/wsdaemon.WorkspaceContentService/TakeSnapshot";
@@ -73,6 +83,7 @@ export const WorkspaceContentServiceService: IWorkspaceContentServiceService;
 export interface IWorkspaceContentServiceServer extends grpc.UntypedServiceImplementation {
     initWorkspace: grpc.handleUnaryCall<daemon_pb.InitWorkspaceRequest, daemon_pb.InitWorkspaceResponse>;
     waitForInit: grpc.handleUnaryCall<daemon_pb.WaitForInitRequest, daemon_pb.WaitForInitResponse>;
+    isWorkspaceExists: grpc.handleUnaryCall<daemon_pb.IsWorkspaceExistsRequest, daemon_pb.IsWorkspaceExistsResponse>;
     takeSnapshot: grpc.handleUnaryCall<daemon_pb.TakeSnapshotRequest, daemon_pb.TakeSnapshotResponse>;
     disposeWorkspace: grpc.handleUnaryCall<daemon_pb.DisposeWorkspaceRequest, daemon_pb.DisposeWorkspaceResponse>;
     backupWorkspace: grpc.handleUnaryCall<daemon_pb.BackupWorkspaceRequest, daemon_pb.BackupWorkspaceResponse>;
@@ -85,6 +96,9 @@ export interface IWorkspaceContentServiceClient {
     waitForInit(request: daemon_pb.WaitForInitRequest, callback: (error: grpc.ServiceError | null, response: daemon_pb.WaitForInitResponse) => void): grpc.ClientUnaryCall;
     waitForInit(request: daemon_pb.WaitForInitRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: daemon_pb.WaitForInitResponse) => void): grpc.ClientUnaryCall;
     waitForInit(request: daemon_pb.WaitForInitRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: daemon_pb.WaitForInitResponse) => void): grpc.ClientUnaryCall;
+    isWorkspaceExists(request: daemon_pb.IsWorkspaceExistsRequest, callback: (error: grpc.ServiceError | null, response: daemon_pb.IsWorkspaceExistsResponse) => void): grpc.ClientUnaryCall;
+    isWorkspaceExists(request: daemon_pb.IsWorkspaceExistsRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: daemon_pb.IsWorkspaceExistsResponse) => void): grpc.ClientUnaryCall;
+    isWorkspaceExists(request: daemon_pb.IsWorkspaceExistsRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: daemon_pb.IsWorkspaceExistsResponse) => void): grpc.ClientUnaryCall;
     takeSnapshot(request: daemon_pb.TakeSnapshotRequest, callback: (error: grpc.ServiceError | null, response: daemon_pb.TakeSnapshotResponse) => void): grpc.ClientUnaryCall;
     takeSnapshot(request: daemon_pb.TakeSnapshotRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: daemon_pb.TakeSnapshotResponse) => void): grpc.ClientUnaryCall;
     takeSnapshot(request: daemon_pb.TakeSnapshotRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: daemon_pb.TakeSnapshotResponse) => void): grpc.ClientUnaryCall;
@@ -104,6 +118,9 @@ export class WorkspaceContentServiceClient extends grpc.Client implements IWorks
     public waitForInit(request: daemon_pb.WaitForInitRequest, callback: (error: grpc.ServiceError | null, response: daemon_pb.WaitForInitResponse) => void): grpc.ClientUnaryCall;
     public waitForInit(request: daemon_pb.WaitForInitRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: daemon_pb.WaitForInitResponse) => void): grpc.ClientUnaryCall;
     public waitForInit(request: daemon_pb.WaitForInitRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: daemon_pb.WaitForInitResponse) => void): grpc.ClientUnaryCall;
+    public isWorkspaceExists(request: daemon_pb.IsWorkspaceExistsRequest, callback: (error: grpc.ServiceError | null, response: daemon_pb.IsWorkspaceExistsResponse) => void): grpc.ClientUnaryCall;
+    public isWorkspaceExists(request: daemon_pb.IsWorkspaceExistsRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: daemon_pb.IsWorkspaceExistsResponse) => void): grpc.ClientUnaryCall;
+    public isWorkspaceExists(request: daemon_pb.IsWorkspaceExistsRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: daemon_pb.IsWorkspaceExistsResponse) => void): grpc.ClientUnaryCall;
     public takeSnapshot(request: daemon_pb.TakeSnapshotRequest, callback: (error: grpc.ServiceError | null, response: daemon_pb.TakeSnapshotResponse) => void): grpc.ClientUnaryCall;
     public takeSnapshot(request: daemon_pb.TakeSnapshotRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: daemon_pb.TakeSnapshotResponse) => void): grpc.ClientUnaryCall;
     public takeSnapshot(request: daemon_pb.TakeSnapshotRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: daemon_pb.TakeSnapshotResponse) => void): grpc.ClientUnaryCall;

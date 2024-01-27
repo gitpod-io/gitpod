@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cgroup
 
@@ -14,6 +14,13 @@ import (
 	"github.com/opencontainers/runc/libcontainer/specconv"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+)
+
+var (
+	fuseDeviceMajor int64 = 10
+	fuseDeviceMinor int64 = 229
 )
 
 type FuseDeviceEnablerV2 struct{}
@@ -21,11 +28,13 @@ type FuseDeviceEnablerV2 struct{}
 func (c *FuseDeviceEnablerV2) Name() string  { return "fuse-device-enabler-v2" }
 func (c *FuseDeviceEnablerV2) Type() Version { return Version2 }
 
-func (c *FuseDeviceEnablerV2) Apply(ctx context.Context, basePath, cgroupPath string) error {
-	fullCgroupPath := filepath.Join(basePath, cgroupPath)
-	cgroupFD, err := unix.Open(fullCgroupPath, unix.O_DIRECTORY|unix.O_RDONLY, 0o600)
+func (c *FuseDeviceEnablerV2) Apply(ctx context.Context, opts *PluginOptions) error {
+	fullCgroupPath := filepath.Join(opts.BasePath, opts.CgroupPath)
+	log.WithField("cgroupPath", fullCgroupPath).Debug("configuring devices")
+
+	cgroupFD, err := unix.Open(fullCgroupPath, unix.O_DIRECTORY|unix.O_RDONLY|unix.O_CLOEXEC, 0600)
 	if err != nil {
-		return xerrors.Errorf("cannot get directory fd for %s", fullCgroupPath)
+		return xerrors.Errorf("cannot get directory fd for %s: %w", fullCgroupPath, err)
 	}
 	defer unix.Close(cgroupFD)
 

@@ -1,12 +1,13 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package observer
 
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -73,14 +74,24 @@ func (o *SuccessObserver) Wait(ctx context.Context, expected int) error {
 		case <-ticker.C:
 			o.m.Lock()
 			running := 0
-			for _, ws := range o.workspaces {
-				if ws.Phase == api.WorkspacePhase_RUNNING {
+			var stopped []string
+			for id, ws := range o.workspaces {
+				switch ws.Phase {
+				case api.WorkspacePhase_RUNNING:
 					running += 1
+				case api.WorkspacePhase_STOPPED:
+					stopped = append(stopped, id)
 				}
 			}
 
 			if float32(running) >= float32(len(o.workspaces))*o.successRate {
 				return nil
+			}
+
+			// Quit early if too many workspaces have stopped already. They'll never become ready.
+			maxRunning := len(o.workspaces) - len(stopped)
+			if float32(maxRunning) < float32(len(o.workspaces))*o.successRate {
+				return fmt.Errorf("too many workspaces in stopped state (%d), will never get enough ready workspaces. Stopped workspaces: %v", len(stopped), strings.Join(stopped, ", "))
 			}
 
 			o.m.Unlock()

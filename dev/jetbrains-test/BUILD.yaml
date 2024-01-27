@@ -1,0 +1,19 @@
+scripts:
+  - name: test-stable
+    srcs:
+      - "test.sh"
+    deps:
+      - components/ide/jetbrains/gateway-plugin:publish-stable
+    workdir: origin
+    script: |
+        cp $COMPONENTS_IDE_JETBRAINS_GATEWAY_PLUGIN__PUBLISH_STABLE/build/distributions/gitpod-gateway.zip gitpod-gateway.zip
+        ./test.sh
+  - name: test-latest
+    srcs:
+      - "test.sh"
+    deps:
+      - components/ide/jetbrains/gateway-plugin:publish-latest
+    workdir: origin
+    script: |
+        cp $COMPONENTS_IDE_JETBRAINS_GATEWAY_PLUGIN__PUBLISH_LATEST/build/distributions/gitpod-gateway.zip gitpod-gateway.zip
+        ./test.sh

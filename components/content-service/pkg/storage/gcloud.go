@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package storage
 
@@ -10,10 +10,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -156,7 +157,7 @@ func gcpEnsureExists(ctx context.Context, client *gcpstorage.Client, bucketName 
 	err = hdl.Create(ctx, gcpConfig.Project, &gcpstorage.BucketAttrs{
 		Location: gcpConfig.Region,
 	})
-	if e, ok := err.(*googleapi.Error); ok && e.Code == http.StatusConflict && strings.Contains(strings.ToLower(e.Message), "you already own this bucket") {
+	if e, ok := err.(*googleapi.Error); ok && e.Code == http.StatusConflict && strings.Contains(strings.ToLower(e.Message), "you already own") {
 		// Looks like we had a bucket creation race and lost.
 		// That's ok - at least the bucket exists now and is still owned by us.
 	} else if err != nil {
@@ -187,9 +188,48 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 	span.SetTag("gcsObj", obj)
 	defer tracing.FinishSpan(span, &err)
 
-	rc, _, err := rs.ObjectAccess(ctx, bkt, obj)
-	if rc == nil {
-		return false, err
+	backupDir, err := os.MkdirTemp("", "backup-")
+	if err != nil {
+		return true, err
+	}
+	defer os.RemoveAll(backupDir)
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	backupSpan := opentracing.StartSpan("downloadBackup", opentracing.ChildOf(span.Context()))
+
+	go func() {
+		defer wg.Done()
+
+		sa := ""
+		if rs.GCPConfig.CredentialsFile != "" {
+			sa = fmt.Sprintf(`-o "Credentials:gs_service_key_file=%v"`, rs.GCPConfig.CredentialsFile)
+		}
+
+		args := fmt.Sprintf(`gsutil -q -m %v\
+		  -o "GSUtil:sliced_object_download_max_components=8" \
+		  -o "GSUtil:parallel_thread_count=1" \
+		  cp gs://%s %s`, sa, filepath.Join(bkt, obj), backupDir)
+
+		log.WithField("flags", args).Debug("gsutil flags")
+
+		cmd := exec.Command("/bin/bash", []string{"-c", args}...)
+		var out []byte
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file to GCS using gsutil")
+			err = xerrors.Errorf("unexpected error downloading backup")
+			return
+		}
+	}()
+
+	wg.Wait()
+	tracing.FinishSpan(backupSpan, &err)
+
+	rc, err := os.Open(filepath.Join(backupDir, obj))
+	if err != nil {
+		return true, err
 	}
 	defer rc.Close()
 
@@ -215,7 +255,7 @@ func (rs *DirectGCPStorage) fixLegacyFilenames(ctx context.Context, destination 
 	defer tracing.FinishSpan(span, &err)
 
 	legacyPath := filepath.Join(destination, rs.WorkspaceName)
-	if fi, err := os.Stat(legacyPath); os.IsNotExist(err) {
+	if fi, err := os.Stat(legacyPath); errors.Is(err, fs.ErrNotExist) {
 		// legacy path does not exist, nothing to do here
 		return nil
 	} else if fi.IsDir() {
@@ -318,22 +358,9 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 	defer tracing.FinishSpan(span, &err)
 	log := log.WithFields(log.OWI(rs.Username, rs.WorkspaceName, ""))
 
-	options, err := GetUploadOptions(opts)
-	if err != nil {
-		err = xerrors.Errorf("cannot get options: %w", err)
-		return
-	}
-
 	if rs.client == nil {
 		err = xerrors.Errorf("no gcloud client available - did you call Init()?")
 		return
-	}
-
-	// check if we have not yet exceeded the max number of backups
-	if name != DefaultBackup {
-		if err = rs.ensureBackupSlotAvailable(); err != nil {
-			return
-		}
 	}
 
 	sfn, err := os.Open(source)
@@ -352,146 +379,54 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 	span.SetTag("totalSize", totalSize)
 
 	bucket = rs.bucketName()
-	bkt := rs.client.Bucket(bucket)
-
 	object = rs.objectName(name)
-	obj := bkt.Object(object)
 
 	uploadSpan := opentracing.StartSpan("remote-upload", opentracing.ChildOf(span.Context()))
 	uploadSpan.SetTag("bucket", bucket)
 	uploadSpan.SetTag("obj", object)
 
-	var firstBackup bool
-	if _, e := obj.Attrs(ctx); e == gcpstorage.ErrObjectNotExist {
-		firstBackup = true
+	err = gcpEnsureExists(ctx, rs.client, bucket, rs.GCPConfig)
+	if err != nil {
+		err = xerrors.Errorf("unexpected error: %w", err)
+		return
 	}
 
 	var wg sync.WaitGroup
-	var written int64
 
 	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
 
-		wc := obj.NewWriter(ctx)
-		wc.Metadata = options.Annotations
-		wc.ContentType = options.ContentType
-		// Increase chunk size for faster uploading
-		wc.ChunkSize = googleapi.DefaultUploadChunkSize * 4
-
-		written, err = io.Copy(wc, sfn)
-		if err != nil {
-			log.WithError(err).WithField("name", name).Error("Error while uploading file")
-			return
+		sa := ""
+		if rs.GCPConfig.CredentialsFile != "" {
+			sa = fmt.Sprintf(`-o "Credentials:gs_service_key_file=%v"`, rs.GCPConfig.CredentialsFile)
 		}
 
-		// persist changes in GCS
-		err = wc.Close()
+		args := fmt.Sprintf(`gsutil -q -m %v\
+		  -o "GSUtil:parallel_composite_upload_threshold=150M" \
+		  -o "GSUtil:parallel_process_count=3" \
+		  -o "GSUtil:parallel_thread_count=6" \
+		  cp %s gs://%s`, sa, source, filepath.Join(bucket, object))
+
+		log.WithField("flags", args).Debug("gsutil flags")
+
+		cmd := exec.Command("/bin/bash", []string{"-c", args}...)
+		var out []byte
+		out, err = cmd.CombinedOutput()
 		if err != nil {
-			log.WithError(err).WithField("name", name).Error("Error while uploading file")
+			log.WithError(err).WithField("out", string(out)).Error("unexpected error uploading file to GCS using gsutil")
+			err = xerrors.Errorf("unexpected error uploading backup")
 			return
 		}
 	}()
 
 	wg.Wait()
 
-	if written != totalSize {
-		err = xerrors.Errorf("Wrote fewer bytes than it should have, %d instead of %d", written, totalSize)
-		return
-	}
-
-	// maintain backup trail if we're asked to - we do this prior to overwriting the regular backup file
-	// to make sure we're trailign the previous backup.
-	if options.BackupTrail.Enabled && !firstBackup {
-		err := rs.trailBackup(ctx, bkt, obj, options.BackupTrail.ThisBackupID, options.BackupTrail.TrailLength)
-		if err != nil {
-			log.WithError(err).Error("cannot maintain backup trail")
-		}
-	}
-
 	uploadSpan.Finish()
 
 	err = nil
 	return
-}
-
-func (rs *DirectGCPStorage) ensureBackupSlotAvailable() error {
-	if rs.GCPConfig.MaximumBackupCount == 0 {
-		// check is disabled
-		return nil
-	}
-	if rs.client == nil {
-		return xerrors.Errorf("no gcloud client available - did you call Init()?")
-	}
-
-	bkt := rs.client.Bucket(rs.bucketName())
-	ctx := context.Background()
-	objs := bkt.Objects(ctx, &gcpstorage.Query{Prefix: fmt.Sprintf("workspaces/%s", rs.WorkspaceName)})
-
-	objcnt := 0
-	for {
-		_, err := objs.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return err
-		}
-		objcnt++
-	}
-
-	if objcnt > rs.GCPConfig.MaximumBackupCount {
-		return xerrors.Errorf("Maximum number of snapshots (%d of %d) reached", objcnt, rs.GCPConfig.MaximumBackupCount)
-	}
-
-	return nil
-}
-
-func (rs *DirectGCPStorage) trailBackup(ctx context.Context, bkt *gcpstorage.BucketHandle, obj *gcpstorage.ObjectHandle, backupID string, trailLength int) (err error) {
-	//nolint:ineffassign
-	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadChunk")
-	defer tracing.FinishSpan(span, &err)
-
-	trailIter := bkt.Objects(ctx, &gcpstorage.Query{Prefix: rs.trailPrefix()})
-	trailingObj := bkt.Object(rs.trailingObjectName(backupID, time.Now()))
-	_, err = trailingObj.CopierFrom(obj).Run(ctx)
-	if err != nil {
-		return
-	}
-	span.LogKV("trailingBackupDone", trailingObj.ObjectName())
-	log.WithField("obj", trailingObj.ObjectName()).Debug("trailing backup done")
-
-	var (
-		oldTrailObj *gcpstorage.ObjectAttrs
-		trail       []string
-	)
-	for oldTrailObj, err = trailIter.Next(); oldTrailObj != nil; oldTrailObj, err = trailIter.Next() {
-		trail = append(trail, oldTrailObj.Name)
-	}
-	if err != iterator.Done && err != nil {
-		return
-	}
-	log.WithField("trailLength", len(trail)).Debug("listed backup trail")
-	span.LogKV("trailLength", len(trail), "event", "listed backup trail")
-
-	sort.Slice(trail, func(i, j int) bool { return trail[i] < trail[j] })
-
-	for i, oldTrailObj := range trail {
-		if i >= len(trail)-trailLength {
-			break
-		}
-
-		err := bkt.Object(oldTrailObj).Delete(ctx)
-		if err != nil {
-			span.LogKV("event", "cannot delete trailing backup", "bkt", rs.bucketName(), "obj", oldTrailObj)
-			log.WithError(err).WithField("obj", oldTrailObj).Warn("cannot delete old trailing backup")
-			continue
-		}
-		span.LogKV("event", "old trailing object deleted", "bkt", rs.bucketName(), "obj", oldTrailObj)
-		log.WithField("obj", oldTrailObj).WithField("originalTrailLength", len(trail)).Debug("old trailing object deleted")
-	}
-	return nil
 }
 
 func (rs *DirectGCPStorage) bucketName() string {
@@ -522,14 +457,6 @@ func (rs *DirectGCPStorage) workspacePrefix() string {
 
 func (rs *DirectGCPStorage) objectName(name string) string {
 	return gcpWorkspaceBackupObjectName(rs.workspacePrefix(), name)
-}
-
-func (rs *DirectGCPStorage) trailPrefix() string {
-	return fmt.Sprintf("%s/trail-", rs.workspacePrefix())
-}
-
-func (rs *DirectGCPStorage) trailingObjectName(id string, t time.Time) string {
-	return fmt.Sprintf("%s%d-%s", rs.trailPrefix(), t.Unix(), id)
 }
 
 func newGCPClient(ctx context.Context, cfg config.GCPConfig) (*gcpstorage.Client, error) {
@@ -601,7 +528,7 @@ func (p *PresignedGCPStorage) Bucket(owner string) string {
 }
 
 // BlobObject returns a blob's object name
-func (p *PresignedGCPStorage) BlobObject(name string) (string, error) {
+func (p *PresignedGCPStorage) BlobObject(userID, name string) (string, error) {
 	return blobObjectName(name)
 }
 
@@ -696,7 +623,7 @@ func (p *PresignedGCPStorage) downloadInfo(ctx context.Context, client *gcpstora
 		Method:         "GET",
 		GoogleAccessID: p.accessID,
 		PrivateKey:     p.privateKey,
-		Expires:        time.Now().Add(30 * time.Minute),
+		Expires:        time.Now().Add(1 * time.Hour),
 		ContentType:    options.ContentType,
 	})
 	if err != nil {
@@ -801,7 +728,7 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 }
 
 // DeleteBucket deletes a bucket
-func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (err error) {
+func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, userID, bucket string) (err error) {
 	client, err := newGCPClient(ctx, p.config)
 	if err != nil {
 		return err
@@ -870,11 +797,11 @@ func (p *PresignedGCPStorage) ObjectExists(ctx context.Context, bucket, obj stri
 }
 
 // BackupObject returns a backup's object name that a direct downloader would download
-func (p *PresignedGCPStorage) BackupObject(workspaceID string, name string) string {
+func (p *PresignedGCPStorage) BackupObject(ownerID string, workspaceID string, name string) string {
 	return fmt.Sprintf("workspaces/%s", gcpWorkspaceBackupObjectName(workspaceID, name))
 }
 
 // InstanceObject returns a instance's object name that a direct downloader would download
-func (p *PresignedGCPStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
-	return p.BackupObject(workspaceID, InstanceObjectName(instanceID, name))
+func (p *PresignedGCPStorage) InstanceObject(ownerID string, workspaceID string, instanceID string, name string) string {
+	return p.BackupObject(ownerID, workspaceID, InstanceObjectName(instanceID, name))
 }

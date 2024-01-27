@@ -1,8 +1,10 @@
-# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
-# Licensed under the Gitpod Enterprise Source Code License,
-# See License.enterprise.txt in the project root folder.
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
 
-FROM alpine:3.15
+
+
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:af8a06428ec2679884374891296754df12d5247ccaf95d2cc5d844d915a2218f
 
 RUN apk add --no-cache git bash ca-certificates
 COPY components-ee-agent-smith--app/agent-smith /app/

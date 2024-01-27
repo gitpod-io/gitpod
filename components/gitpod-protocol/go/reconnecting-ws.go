@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package protocol
 
@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -23,13 +24,16 @@ var ErrClosed = errors.New("reconnecting-ws: closed")
 // ErrBadHandshake is returned when the server response to opening handshake is
 // invalid.
 type ErrBadHandshake struct {
-	URL       string
-	ReqHeader http.Header
-	Resp      *http.Response
+	URL  string
+	Resp *http.Response
 }
 
 func (e *ErrBadHandshake) Error() string {
-	return fmt.Sprintf("reconnecting-ws: bad handshake: code %v - URL: %v - headers: %v", e.Resp.StatusCode, e.URL, e.ReqHeader)
+	var statusCode int
+	if e.Resp != nil {
+		statusCode = e.Resp.StatusCode
+	}
+	return fmt.Sprintf("reconnecting-ws: bad handshake: code %v - URL: %v", statusCode, e.URL)
 }
 
 // The ReconnectingWebsocket represents a Reconnecting WebSocket connection.
@@ -37,10 +41,6 @@ type ReconnectingWebsocket struct {
 	url              string
 	reqHeader        http.Header
 	handshakeTimeout time.Duration
-
-	minReconnectionDelay        time.Duration
-	maxReconnectionDelay        time.Duration
-	reconnectionDelayGrowFactor float64
 
 	once     sync.Once
 	closeErr error
@@ -59,18 +59,15 @@ type ReconnectingWebsocket struct {
 // NewReconnectingWebsocket creates a new instance of ReconnectingWebsocket
 func NewReconnectingWebsocket(url string, reqHeader http.Header, log *logrus.Entry) *ReconnectingWebsocket {
 	return &ReconnectingWebsocket{
-		url:                         url,
-		reqHeader:                   reqHeader,
-		minReconnectionDelay:        2 * time.Second,
-		maxReconnectionDelay:        30 * time.Second,
-		reconnectionDelayGrowFactor: 1.5,
-		handshakeTimeout:            2 * time.Second,
-		connCh:                      make(chan chan *WebsocketConnection),
-		closedCh:                    make(chan struct{}),
-		errCh:                       make(chan error),
-		log:                         log,
-		badHandshakeCount:           0,
-		badHandshakeMax:             15,
+		url:               url,
+		reqHeader:         reqHeader,
+		handshakeTimeout:  2 * time.Second,
+		connCh:            make(chan chan *WebsocketConnection),
+		closedCh:          make(chan struct{}),
+		errCh:             make(chan error),
+		log:               log,
+		badHandshakeCount: 0,
+		badHandshakeMax:   15,
 	}
 }
 
@@ -169,7 +166,9 @@ func (rc *ReconnectingWebsocket) Dial(ctx context.Context) error {
 		case connCh := <-rc.connCh:
 			connCh <- conn
 		case <-rc.errCh:
-			conn.Close()
+			if conn != nil {
+				conn.Close()
+			}
 
 			time.Sleep(1 * time.Second)
 			conn = rc.connect(ctx)
@@ -181,7 +180,16 @@ func (rc *ReconnectingWebsocket) Dial(ctx context.Context) error {
 }
 
 func (rc *ReconnectingWebsocket) connect(ctx context.Context) *WebsocketConnection {
-	delay := rc.minReconnectionDelay
+	exp := &backoff.ExponentialBackOff{
+		InitialInterval:     2 * time.Second,
+		RandomizationFactor: 0.5,
+		Multiplier:          1.5,
+		MaxInterval:         30 * time.Second,
+		MaxElapsedTime:      0,
+		Stop:                backoff.Stop,
+		Clock:               backoff.SystemClock,
+	}
+	exp.Reset()
 	for {
 		// Gorilla websocket does not check if context is valid when dialing so we do it prior
 		select {
@@ -205,34 +213,33 @@ func (rc *ReconnectingWebsocket) connect(ctx context.Context) *WebsocketConnecti
 			}
 		}
 
-		if err == websocket.ErrBadHandshake {
-			rc.badHandshakeCount++
-			// if mal-formed handshake request (unauthorized, forbidden) or client actions (redirect) are required then fail immediately
-			// otherwise try several times and fail, maybe temporarily unavailable, like server restart
-			if rc.badHandshakeCount > rc.badHandshakeMax || (http.StatusMultipleChoices <= resp.StatusCode && resp.StatusCode < http.StatusInternalServerError) {
-				_ = rc.closeWithError(&ErrBadHandshake{rc.url, rc.reqHeader, resp})
-				return nil
-			}
-		}
 		var statusCode int
 		if resp != nil {
 			statusCode = resp.StatusCode
 		}
-		rc.log.WithField("url", rc.url).Info("websocket handshake")
 
+		// 200 is bad gateway for ws, we should keep trying
+		if err == websocket.ErrBadHandshake && statusCode != 200 {
+			rc.badHandshakeCount++
+			// if mal-formed handshake request (unauthorized, forbidden) or client actions (redirect) are required then fail immediately
+			// otherwise try several times and fail, maybe temporarily unavailable, like server restart
+			if rc.badHandshakeCount > rc.badHandshakeMax || (http.StatusMultipleChoices <= statusCode && statusCode < http.StatusInternalServerError) {
+				_ = rc.closeWithError(&ErrBadHandshake{rc.url, resp})
+				return nil
+			}
+		}
+
+		delay := exp.NextBackOff()
 		rc.log.WithError(err).
 			WithField("url", rc.url).
 			WithField("badHandshakeCount", fmt.Sprintf("%d/%d", rc.badHandshakeCount, rc.badHandshakeMax)).
 			WithField("statusCode", statusCode).
-			Errorf("failed to connect, trying again in %d seconds...", uint32(delay.Seconds()))
+			WithField("delay", delay.String()).
+			Error("failed to connect, trying again...")
 		select {
 		case <-rc.closedCh:
 			return nil
 		case <-time.After(delay):
-			delay = time.Duration(float64(delay) * rc.reconnectionDelayGrowFactor)
-			if delay > rc.maxReconnectionDelay {
-				delay = rc.maxReconnectionDelay
-			}
 		}
 	}
 }

@@ -1,87 +1,102 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import AlertBox from "./AlertBox";
-import Modal from "./Modal";
-import { useRef, useEffect } from "react";
+import Alert from "./Alert";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "./Modal";
+import { FC, ReactNode, useCallback, useState } from "react";
+import { Button, ButtonProps } from "@podkit/buttons/Button";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
-export default function ConfirmationModal(props: {
+type Props = {
     title?: string;
     areYouSureText?: string;
-    children?: Entity | React.ReactChild[] | React.ReactChild;
+    children?: Entity | ReactNode;
     buttonText?: string;
     buttonDisabled?: boolean;
+    buttonType?: ButtonProps["variant"];
     visible?: boolean;
+    warningHead?: string;
     warningText?: string;
+    footerAlert?: ReactNode;
     onClose: () => void;
-    onConfirm: () => void;
-}) {
-    const child: React.ReactChild[] = [<p className="mt-3 mb-3 text-base text-gray-500">{props.areYouSureText}</p>];
+    onConfirm: () => void | Promise<void>;
+};
+export const ConfirmationModal: FC<Props> = ({
+    title = "Confirm",
+    areYouSureText,
+    children,
+    buttonText = "Yes, I'm Sure",
+    buttonDisabled,
+    buttonType = "destructive",
+    visible,
+    warningHead,
+    warningText,
+    footerAlert,
+    onClose,
+    onConfirm,
+}) => {
+    const [isLoading, setIsLoading] = useState(false);
+    const handleSubmit = useCallback(async () => {
+        setIsLoading(true);
 
-    if (props.warningText) {
-        child.unshift(<AlertBox>{props.warningText}</AlertBox>);
-    }
+        await onConfirm();
 
-    const isEntity = (x: any): x is Entity => typeof x === "object" && "name" in x;
-    if (props.children) {
-        if (isEntity(props.children)) {
-            child.push(
-                <div className="w-full p-4 mb-2 bg-gray-100 dark:bg-gray-700 rounded-xl group">
-                    <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">{props.children.name}</p>
-                    {props.children.description && (
-                        <p className="text-gray-500 truncate">{props.children.description}</p>
-                    )}
-                </div>,
-            );
-        } else if (Array.isArray(props.children)) {
-            child.push(...props.children);
-        } else {
-            child.push(props.children);
-        }
-    }
-    const cancelButtonRef = useRef<HTMLButtonElement>(null);
-
-    const buttons = [
-        <button className="secondary" onClick={props.onClose} autoFocus ref={cancelButtonRef}>
-            Cancel
-        </button>,
-        <button className="ml-2 danger" onClick={props.onConfirm} disabled={props.buttonDisabled}>
-            {props.buttonText || "Yes, I'm Sure"}
-        </button>,
-    ];
-
-    const buttonDisabled = useRef(props.buttonDisabled);
-    useEffect(() => {
-        buttonDisabled.current = props.buttonDisabled;
-    });
+        setIsLoading(false);
+    }, [onConfirm]);
 
     return (
         <Modal
-            title={props.title || "Confirm"}
-            buttons={buttons}
-            visible={props.visible === undefined ? true : props.visible}
-            onClose={props.onClose}
-            onEnter={() => {
-                if (cancelButtonRef?.current?.contains(document.activeElement)) {
-                    props.onClose();
-                    return false;
-                }
-                if (buttonDisabled.current) {
-                    return false;
-                }
-                props.onConfirm();
-                return true;
-            }}
+            visible={visible === undefined ? true : visible}
+            onClose={onClose}
+            onSubmit={handleSubmit}
+            disabled={buttonDisabled}
         >
-            {child}
+            <ModalHeader>{title}</ModalHeader>
+            <ModalBody>
+                {warningText && (
+                    <Alert type="warning" className="mb-4">
+                        <strong>{warningHead}</strong>
+                        {warningHead ? ": " : ""}
+                        {warningText}
+                    </Alert>
+                )}
+                <p className="mb-3 text-base text-gray-500">{areYouSureText}</p>
+                {isEntity(children) ? (
+                    <div className="w-full p-4 mb-2 bg-gray-100 dark:bg-gray-700 rounded-xl group">
+                        <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">{children.name}</p>
+                        {children.description && (
+                            <p className="text-gray-500 dark:text-gray-300 truncate">{children.description}</p>
+                        )}
+                    </div>
+                ) : (
+                    children
+                )}
+            </ModalBody>
+            <ModalFooter alert={footerAlert}>
+                <Button variant="secondary" onClick={onClose} autoFocus>
+                    Cancel
+                </Button>
+                <LoadingButton
+                    type="submit"
+                    variant={buttonType}
+                    className="ml-2"
+                    disabled={buttonDisabled}
+                    loading={isLoading}
+                >
+                    {buttonText}
+                </LoadingButton>
+            </ModalFooter>
         </Modal>
     );
-}
+};
+export default ConfirmationModal;
 
 export interface Entity {
     name: string;
     description?: string;
 }
+
+const isEntity = (x: any): x is Entity => typeof x === "object" && "name" in x;

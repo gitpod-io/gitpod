@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package initializer
 
@@ -135,9 +135,9 @@ func TestFileDownloadInitializer(t *testing.T) {
 			initializer.HTTPClient = client
 			initializer.RetryTimeout = 0
 
-			src, err := initializer.Run(context.Background(), nil)
+			src, _, err := initializer.Run(context.Background(), nil)
 			if err == nil && src != api.WorkspaceInitFromOther {
-				t.Error("initializer returned wrong content init source")
+				t.Errorf("initializer returned wrong content init source. expected %v, got %v", api.WorkspaceInitFromOther, src)
 			}
 			if err != nil && err.Error() != test.ExpectedError {
 				t.Fatalf("unexpected error: %v", err)

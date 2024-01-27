@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package registry
 
@@ -9,6 +9,7 @@ import (
 	"compress/gzip"
 	"context"
 	"io"
+	"io/fs"
 	"os"
 	"strconv"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/pkg/errors"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -54,6 +56,10 @@ type filebackedLayer struct {
 // FileLayerSource provides the same layers independent of the workspace spec
 type FileLayerSource []filebackedLayer
 
+func (s FileLayerSource) Name() string {
+	return "filelayer"
+}
+
 // Envs returns the list of env modifiers
 func (s FileLayerSource) Envs(ctx context.Context, spec *api.ImageSpec) ([]EnvModifier, error) {
 	return nil, nil
@@ -80,7 +86,7 @@ func (s FileLayerSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst 
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (s FileLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (s FileLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	var src filebackedLayer
 	for _, l := range s {
 		if l.Descriptor.Digest == dgst {
@@ -94,7 +100,7 @@ func (s FileLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst 
 	}
 
 	f, err := os.OpenFile(src.Filename, os.O_RDONLY, 0)
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		err = errdefs.ErrNotFound
 		return
 	}
@@ -102,7 +108,7 @@ func (s FileLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst 
 		return
 	}
 
-	return src.Descriptor.MediaType, "", f, nil
+	return false, src.Descriptor.MediaType, "", f, nil
 }
 
 // NewFileLayerSource produces a static layer source where each file is expected to be a gzipped layer
@@ -161,13 +167,17 @@ func NewFileLayerSource(ctx context.Context, file ...string) (FileLayerSource, e
 
 type imagebackedLayer struct {
 	AddonLayer
-	Fetcher remotes.Fetcher
+	NewFetcher func() (remotes.Fetcher, error)
 }
 
 // ImageLayerSource provides additional layers from another image
 type ImageLayerSource struct {
 	envs   []EnvModifier
 	layers []imagebackedLayer
+}
+
+func (s ImageLayerSource) Name() string {
+	return "imagelayer"
 }
 
 // Envs returns the list of env modifiers
@@ -196,24 +206,28 @@ func (s ImageLayerSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (s ImageLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (s ImageLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	var src imagebackedLayer
 	for _, l := range s.layers {
 		if l.Descriptor.Digest == dgst {
 			src = l
 		}
 	}
-	if src.Fetcher == nil {
+	if src.NewFetcher == nil {
 		err = errdefs.ErrNotFound
 		return
 	}
 
-	rc, err := src.Fetcher.Fetch(ctx, src.Descriptor)
+	fetcher, err := src.NewFetcher()
+	if err != nil {
+		return
+	}
+	rc, err := fetcher.Fetch(ctx, src.Descriptor)
 	if err != nil {
 		return
 	}
 
-	return src.Descriptor.MediaType, "", rc, nil
+	return false, src.Descriptor.MediaType, "", rc, nil
 }
 
 const (
@@ -223,7 +237,8 @@ const (
 )
 
 // NewStaticSourceFromImage downloads image layers into the store and uses them as static layer
-func NewStaticSourceFromImage(ctx context.Context, resolver remotes.Resolver, ref string) (*ImageLayerSource, error) {
+func NewStaticSourceFromImage(ctx context.Context, newResolver ResolverProvider, ref string) (*ImageLayerSource, error) {
+	resolver := newResolver()
 	_, desc, err := resolver.Resolve(ctx, ref)
 	if err != nil {
 		return nil, err
@@ -261,7 +276,12 @@ func NewStaticSourceFromImage(ctx context.Context, resolver remotes.Resolver, re
 				Descriptor: ml,
 				DiffID:     cfg.RootFS.DiffIDs[i],
 			},
-			Fetcher: fetcher,
+			NewFetcher: func() (remotes.Fetcher, error) {
+				// Must create a new resolver for each fetcher, otherwise this will keep using the originally
+				// provided pull secret which eventually expires.
+				resolver := newResolver()
+				return resolver.Fetcher(ctx, ref)
+			},
 		}
 		res = append(res, l)
 	}
@@ -314,6 +334,10 @@ func getSkipNLabelValue(cfg *ociv1.ImageConfig) (skipN int, err error) {
 // CompositeLayerSource appends layers from different sources
 type CompositeLayerSource []LayerSource
 
+func (cs CompositeLayerSource) Name() string {
+	return "composite"
+}
+
 // Envs returns the list of env modifiers
 func (cs CompositeLayerSource) Envs(ctx context.Context, spec *api.ImageSpec) ([]EnvModifier, error) {
 	var res []EnvModifier
@@ -352,7 +376,7 @@ func (cs CompositeLayerSource) HasBlob(ctx context.Context, spec *api.ImageSpec,
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (cs CompositeLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (cs CompositeLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	for _, s := range cs {
 		if s.HasBlob(ctx, spec, dgst) {
 			return s.GetBlob(ctx, spec, dgst)
@@ -364,7 +388,7 @@ func (cs CompositeLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec,
 }
 
 // RefSource extracts an image reference from an image spec
-type RefSource func(*api.ImageSpec) (ref string, err error)
+type RefSource func(*api.ImageSpec) (ref []string, err error)
 
 // NewSpecMappedImageSource creates a new spec mapped image source
 func NewSpecMappedImageSource(resolver ResolverProvider, refSource RefSource) (*SpecMappedImagedSource, error) {
@@ -388,73 +412,110 @@ type SpecMappedImagedSource struct {
 	cache *lru.Cache
 }
 
+func (src *SpecMappedImagedSource) Name() string {
+	return "specmapped"
+}
+
 // Envs returns the list of env modifiers
 func (src *SpecMappedImagedSource) Envs(ctx context.Context, spec *api.ImageSpec) ([]EnvModifier, error) {
-	lsrc, err := src.getDelegate(ctx, spec)
+	lsrcs, err := src.getDelegate(ctx, spec)
 	if err != nil {
 		return nil, err
 	}
-	if lsrc == nil {
-		return []EnvModifier{}, nil
+	var res []EnvModifier
+	for _, lsrc := range lsrcs {
+		if lsrc == nil {
+			continue
+		}
+		envs, err := lsrc.Envs(ctx, spec)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, envs...)
 	}
-	return lsrc.Envs(ctx, spec)
+	return res, nil
 }
 
 // GetLayer returns the list of all layers from this source
 func (src *SpecMappedImagedSource) GetLayer(ctx context.Context, spec *api.ImageSpec) ([]AddonLayer, error) {
-	lsrc, err := src.getDelegate(ctx, spec)
+	lsrcs, err := src.getDelegate(ctx, spec)
 	if err != nil {
 		return nil, err
 	}
-	if lsrc == nil {
-		return []AddonLayer{}, nil
+	var res []AddonLayer
+	for _, lsrc := range lsrcs {
+		if lsrc == nil {
+			continue
+		}
+		ls, err := lsrc.GetLayer(ctx, spec)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, ls...)
 	}
-	return lsrc.GetLayer(ctx, spec)
+	return res, nil
 }
 
 // HasBlob checks if a digest can be served by this blob source
 func (src *SpecMappedImagedSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) bool {
-	lsrc, err := src.getDelegate(ctx, spec)
+	lsrcs, err := src.getDelegate(ctx, spec)
 	if err != nil {
 		return false
 	}
-	if lsrc == nil {
-		return false
+	for _, lsrc := range lsrcs {
+		if lsrc == nil {
+			continue
+		}
+		if lsrc.HasBlob(ctx, spec, dgst) {
+			return true
+		}
 	}
-	return lsrc.HasBlob(ctx, spec, dgst)
+	return false
 }
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (src *SpecMappedImagedSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
-	lsrc, err := src.getDelegate(ctx, spec)
+func (src *SpecMappedImagedSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
+	lsrcs, err := src.getDelegate(ctx, spec)
 	if err != nil {
 		return
 	}
-	return lsrc.GetBlob(ctx, spec, dgst)
+	for _, lsrc := range lsrcs {
+		if lsrc == nil {
+			continue
+		}
+		if lsrc.HasBlob(ctx, spec, dgst) {
+			return lsrc.GetBlob(ctx, spec, dgst)
+		}
+	}
+	err = errdefs.ErrNotFound
+	return
 }
 
 // getDelegate returns the cached layer source delegate computed from the image spec
-func (src *SpecMappedImagedSource) getDelegate(ctx context.Context, spec *api.ImageSpec) (LayerSource, error) {
-	ref, err := src.RefSource(spec)
+func (src *SpecMappedImagedSource) getDelegate(ctx context.Context, spec *api.ImageSpec) ([]LayerSource, error) {
+	refs, err := src.RefSource(spec)
 	if err != nil {
 		return nil, err
 	}
-	if ref == "" {
-		return nil, nil
-	}
+	layers := make([]LayerSource, len(refs))
 
-	if s, ok := src.cache.Get(ref); ok {
-		return s.(LayerSource), nil
+	for i, ref := range refs {
+		if ref == "" {
+			continue
+		}
+		if s, ok := src.cache.Get(ref); ok {
+			layers[i] = s.(LayerSource)
+			continue
+		}
+		lsrc, err := NewStaticSourceFromImage(ctx, src.Resolver, ref)
+		if err != nil {
+			return nil, err
+		}
+		src.cache.Add(ref, lsrc)
+		layers[i] = lsrc
 	}
-
-	lsrc, err := NewStaticSourceFromImage(ctx, src.Resolver(), ref)
-	if err != nil {
-		return nil, err
-	}
-	src.cache.Add(ref, lsrc)
-
-	return lsrc, nil
+	return layers, nil
 }
 
 // NewContentLayerSource creates a new layer source providing the content layer of an image spec
@@ -471,6 +532,10 @@ func NewContentLayerSource() (*ContentLayerSource, error) {
 // ContentLayerSource provides layers from other images based on the image spec
 type ContentLayerSource struct {
 	blobCache *lru.Cache
+}
+
+func (src *ContentLayerSource) Name() string {
+	return "contentlayer"
 }
 
 // Envs returns the list of env modifiers
@@ -549,15 +614,15 @@ func (src *ContentLayerSource) HasBlob(ctx context.Context, spec *api.ImageSpec,
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (src *ContentLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (src *ContentLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	if blob, ok := src.blobCache.Get(dgst); ok {
-		return ociv1.MediaTypeImageLayer, "", io.NopCloser(bytes.NewReader(blob.([]byte))), nil
+		return false, ociv1.MediaTypeImageLayer, "", io.NopCloser(bytes.NewReader(blob.([]byte))), nil
 	}
 
 	for _, layer := range spec.ContentLayer {
 		if dl := layer.GetDirect(); dl != nil {
 			if digest.FromBytes(dl.Content) == dgst {
-				return ociv1.MediaTypeImageLayer, "", io.NopCloser(bytes.NewReader(dl.Content)), nil
+				return false, ociv1.MediaTypeImageLayer, "", io.NopCloser(bytes.NewReader(dl.Content)), nil
 			}
 		}
 
@@ -568,7 +633,7 @@ func (src *ContentLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec,
 					mt = ociv1.MediaTypeImageLayer
 				}
 
-				return mt, rl.Url, nil, nil
+				return false, mt, rl.Url, nil, nil
 			}
 		}
 	}
@@ -676,6 +741,13 @@ type RevisioningLayerSource struct {
 	past   []LayerSource
 }
 
+func (src *RevisioningLayerSource) Name() string {
+	src.mu.RLock()
+	defer src.mu.RUnlock()
+
+	return src.active.Name()
+}
+
 func (src *RevisioningLayerSource) Update(s LayerSource) {
 	src.mu.Lock()
 	defer src.mu.Unlock()
@@ -716,7 +788,7 @@ func (src *RevisioningLayerSource) HasBlob(ctx context.Context, details *api.Ima
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
-func (src *RevisioningLayerSource) GetBlob(ctx context.Context, details *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+func (src *RevisioningLayerSource) GetBlob(ctx context.Context, details *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
 	src.mu.RLock()
 	defer src.mu.RUnlock()
 

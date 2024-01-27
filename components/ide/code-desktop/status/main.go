@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package main
 
@@ -13,9 +13,12 @@ import (
 	"net/url"
 	"os"
 
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/gitpod-io/gitpod/common-go/util"
+	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 func main() {
@@ -38,7 +41,6 @@ func main() {
 	errlog := log.New(os.Stderr, "VS Code Desktop status: ", log.LstdFlags)
 
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-
 		wsInfo, err := GetWSInfo(context.Background())
 		if err != nil {
 			errlog.Printf("cannot get workspace info: %v\n", err)
@@ -46,14 +48,20 @@ func main() {
 		}
 
 		type Query struct {
-			InstanceId  string `json:"instanceId"`
-			WorkspaceId string `json:"workspaceId"`
-			GitpodHost  string `json:"gitpodHost"`
+			InstanceId     string `json:"instanceId"`
+			WorkspaceId    string `json:"workspaceId"`
+			GitpodHost     string `json:"gitpodHost"`
+			DebugWorkspace bool   `json:"debugWorkspace"`
+		}
+		debugWorkspace := false
+		if wsInfo.GetDebugWorkspaceType() != supervisor.DebugWorkspaceType_noDebug {
+			debugWorkspace = true
 		}
 		query := &Query{
-			InstanceId:  wsInfo.InstanceId,
-			WorkspaceId: wsInfo.WorkspaceId,
-			GitpodHost:  wsInfo.GitpodHost,
+			InstanceId:     wsInfo.InstanceId,
+			WorkspaceId:    wsInfo.WorkspaceId,
+			GitpodHost:     wsInfo.GitpodHost,
+			DebugWorkspace: debugWorkspace,
 		}
 		b, err := json.Marshal(query)
 		if err != nil {
@@ -62,10 +70,15 @@ func main() {
 		}
 		queryString := string(b)
 
+		workspaceLocation := wsInfo.GetWorkspaceLocationFile()
+		if workspaceLocation == "" {
+			workspaceLocation = wsInfo.GetWorkspaceLocationFolder()
+		}
+
 		link := url.URL{
 			Scheme:   schema,
 			Host:     "gitpod.gitpod-desktop",
-			Path:     wsInfo.CheckoutLocation,
+			Path:     workspaceLocation,
 			RawQuery: url.QueryEscape(queryString),
 		}
 
@@ -85,11 +98,7 @@ func main() {
 }
 
 func GetWSInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
-	supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
-	if supervisorAddr == "" {
-		supervisorAddr = "localhost:22999"
-	}
-	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+	supervisorConn, err := grpc.Dial(util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
 	}

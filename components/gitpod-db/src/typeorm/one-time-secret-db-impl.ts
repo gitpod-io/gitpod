@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { inject, injectable } from "inversify";
@@ -64,8 +64,6 @@ export class TypeORMOneTimeSecretDBImpl implements OneTimeSecretDB {
     }
 
     public async pruneExpired(): Promise<void> {
-        await (
-            await this.getEntityManager()
-        ).query("UPDATE d_b_one_time_secret SET deleted = 1 WHERE deleted = 0 AND expirationTime < NOW()");
+        await (await this.getEntityManager()).query("DELETE FROM d_b_one_time_secret WHERE expirationTime < NOW()");
     }
 }

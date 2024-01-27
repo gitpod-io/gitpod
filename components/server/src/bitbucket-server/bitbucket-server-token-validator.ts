@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { inject, injectable } from "inversify";
@@ -20,7 +20,7 @@ export class BitbucketServerTokenValidator implements IGitTokenValidator {
 
         let found = false;
         let isPrivateRepo: boolean | undefined;
-        let writeAccessToRepo: boolean | undefined;
+        let writeAccessToRepo: boolean | undefined = false;
 
         try {
             const repository = await this.api.getRepository(token, {
@@ -30,27 +30,14 @@ export class BitbucketServerTokenValidator implements IGitTokenValidator {
             });
             found = true;
             isPrivateRepo = !repository.public;
+            writeAccessToRepo = await this.api.hasRepoPermission(token, {
+                permission: "REPO_WRITE",
+                projectKey: repository.project.key,
+                repoName: repository.name,
+                repoId: repository.id,
+            });
         } catch (error) {
             console.error(error);
-        }
-
-        if (found) {
-            writeAccessToRepo = false;
-            const username = await this.api.currentUsername(token);
-            const userProfile = await this.api.getUserProfile(token, username);
-            if (owner === userProfile.slug) {
-                writeAccessToRepo = true;
-            } else {
-                let permission = await this.api.getPermission(token, {
-                    repoKind: repoKind as any,
-                    owner,
-                    username,
-                    repoName: repo,
-                });
-                if (permission && ["REPO_WRITE", "REPO_ADMIN", "PROJECT_ADMIN", ""].includes(permission)) {
-                    writeAccessToRepo = true;
-                }
-            }
         }
 
         return {

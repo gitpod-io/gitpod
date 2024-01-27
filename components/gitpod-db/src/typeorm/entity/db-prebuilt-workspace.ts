@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { PrimaryColumn, Column, Entity, Index } from "typeorm";
@@ -41,7 +41,9 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
     })
     branch?: string;
 
-    @Column()
+    @Column({
+        type: "varchar",
+    })
     @Index("ind_6a04b7005d5ad0e664725f9f17")
     state: PrebuiltWorkspaceState;
 
@@ -51,6 +53,7 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
         default: () => "CURRENT_TIMESTAMP(6)",
         transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
     })
+    @Index("ind_creationTime")
     creationTime: string;
 
     @Column(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
@@ -77,4 +80,8 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
         transformer: Transformer.MAP_BIGINT_TO_NUMBER,
     })
     statusVersion: number;
+
+    // This column triggers the periodic deleter deletion mechanism. It's not intended for public consumption.
+    @Column()
+    deleted?: boolean;
 }

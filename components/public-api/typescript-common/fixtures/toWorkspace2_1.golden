@@ -1,0 +1,88 @@
+{
+    "result": {
+        "id": "gitpodio-workspaceimage-qjvlhi8es6o",
+        "metadata": {
+            "ownerId": "b49148ed-6e1f-4eae-927f-1e62a3c9dab9",
+            "organizationId": "ce36c2f8-5d43-4b1d-92f2-08cb6f0e0869",
+            "configurationId": "af8f3b00-5a0c-4be1-89bf-52bc72b75205",
+            "annotations": {},
+            "name": "gitpod-io/workspace-images - main",
+            "pinned": false,
+            "originalContextUrl": "https://github.com/gitpod-io/workspace-images"
+        },
+        "spec": {
+            "initializer": {
+                "specs": [
+                    {
+                        "git": {
+                            "remoteUri": "https://github.com/gitpod-io/workspace-images.git",
+                            "upstreamRemoteUri": "",
+                            "targetMode": "CLONE_TARGET_MODE_REMOTE_COMMIT",
+                            "cloneTarget": "fa52963fa39227bcfbf005d396eb753bf3981e40",
+                            "checkoutLocation": "workspace-images",
+                            "config": {
+                                "customConfig": {},
+                                "authentication": "AUTH_METHOD_UNSPECIFIED",
+                                "authUser": "",
+                                "authPassword": "",
+                                "authOts": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "type": "WORKSPACE_TYPE_REGULAR",
+            "ports": [
+                {
+                    "port": "5000",
+                    "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+                    "url": "https://5000-gitpodio-workspaceimage-qjvlhi8es6o.ws.gitpod.io",
+                    "protocol": "PROTOCOL_HTTP"
+                }
+            ],
+            "environmentVariables": [],
+            "git": {
+                "username": "",
+                "email": ""
+            },
+            "timeout": {
+                "disconnected": "3600s"
+            },
+            "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+            "class": "g1-standard----class",
+            "sshPublicKeys": [],
+            "subassemblyReferences": [],
+            "logUrl": "",
+            "editor": {
+                "name": "code",
+                "version": "latest"
+            }
+        },
+        "status": {
+            "statusVersion": "1701406924",
+            "phase": {
+                "name": "PHASE_RUNNING",
+                "lastTransitionTime": "2023-12-01T05:02:04.539Z"
+            },
+            "workspaceUrl": "https://gitpodio-workspaceimage-qjvlhi8es6o.ws.gitpod.io",
+            "conditions": {
+                "failed": "",
+                "failedReason": "FAILED_REASON_UNSPECIFIED",
+                "timeout": ""
+            },
+            "gitStatus": {
+                "cloneUrl": "https://github.com/gitpod-io/workspace-images.git",
+                "branch": "main",
+                "latestCommit": "fa52963fa39227bcfbf005d396eb753bf3981e40",
+                "uncommitedFiles": [],
+                "totalUncommitedFiles": 0,
+                "untrackedFiles": [],
+                "totalUntrackedFiles": 0,
+                "unpushedCommits": [],
+                "totalUnpushedCommits": 0
+            },
+            "instanceId": "e6f37fdb-dea1-4640-9e8b-8cdb04791a13"
+        }
+    },
+    "err": ""
+}

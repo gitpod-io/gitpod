@@ -1,13 +1,13 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { Container, ContainerModule } from "inversify";
-import { suite, test, timeout } from "mocha-typescript";
+import { skip, suite, test, timeout } from "@testdeck/mocha";
 import { expect } from "chai";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { BitbucketServerFileProvider } from "./bitbucket-server-file-provider";
@@ -19,8 +19,9 @@ import { Config } from "../config";
 import { TokenProvider } from "../user/token-provider";
 import { BitbucketServerApi } from "./bitbucket-server-api";
 import { HostContextProvider } from "../auth/host-context-provider";
+import { URL } from "url";
 
-@suite(timeout(10000), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER"))
+@suite(timeout(10000), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER")))
 class TestBitbucketServerContextParser {
     protected parser: BitbucketServerContextParser;
     protected user: User;
@@ -39,11 +40,12 @@ class TestBitbucketServerContextParser {
                 bind(BitbucketServerContextParser).toSelf().inSingletonScope();
                 bind(AuthProviderParams).toConstantValue(TestBitbucketServerContextParser.AUTH_HOST_CONFIG);
                 bind(BitbucketServerTokenHelper).toSelf().inSingletonScope();
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 bind(TokenService).toConstantValue({
                     createGitpodToken: async () => ({ token: { value: "foobar123-token" } }),
                 } as any);
                 bind(Config).toConstantValue({
-                    hostUrl: new GitpodHostUrl(),
+                    hostUrl: new GitpodHostUrl("https://gitpod.io"),
                 });
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => {
@@ -52,7 +54,6 @@ class TestBitbucketServerContextParser {
                             scopes: [],
                         };
                     },
-                    getFreshPortAuthenticationToken: undefined as any,
                 });
                 bind(BitbucketServerApi).toSelf().inSingletonScope();
                 bind(HostContextProvider).toConstantValue({
@@ -185,6 +186,33 @@ class TestBitbucketServerContextParser {
         });
     }
 
+    @test async test_branch_context_01() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            "https://bitbucket.gitpod-dev.com/users/svenefftinge/repos/browser-extension-test/commits?until=refs%2Fheads%2Fmy-branch&merges=include",
+        );
+
+        expect(result).to.deep.include({
+            ref: "my-branch",
+            refType: "branch",
+            revision: "3ca42b45bc693973cb21a112a418c13f8b4d11a5",
+            path: "",
+            isFile: false,
+            repository: {
+                cloneUrl: "https://bitbucket.gitpod-dev.com/scm/~svenefftinge/browser-extension-test.git",
+                defaultBranch: "main",
+                host: "bitbucket.gitpod-dev.com",
+                name: "browser-extension-test",
+                owner: "svenefftinge",
+                repoKind: "users",
+                private: false,
+                webUrl: "https://bitbucket.gitpod-dev.com/users/svenefftinge/repos/browser-extension-test",
+            },
+            title: "svenefftinge/browser-extension-test - my-branch",
+        });
+    }
+
     @test async test_PR_context_01() {
         const result = await this.parser.handle(
             {},
@@ -303,6 +331,14 @@ class TestBitbucketServerContextParser {
                 },
             },
         });
+    }
+
+    @test test_toSimpleBranchName() {
+        const url = new URL(
+            "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123/browse?at=refs%2Fheads%2Ffoo",
+        );
+        const branchName = this.parser.toSimpleBranchName(url.searchParams.get("at")!);
+        expect(branchName).to.equal("foo");
     }
 }
 

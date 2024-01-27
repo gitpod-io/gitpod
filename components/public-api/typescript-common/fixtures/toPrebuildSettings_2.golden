@@ -1,0 +1,10 @@
+{
+    "result": {
+        "enabled": false,
+        "branchMatchingPattern": "",
+        "branchStrategy": "BRANCH_MATCHING_STRATEGY_UNSPECIFIED",
+        "prebuildInterval": 0,
+        "workspaceClass": ""
+    },
+    "err": ""
+}

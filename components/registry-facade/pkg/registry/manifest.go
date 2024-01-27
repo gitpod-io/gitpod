@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package registry
 
@@ -43,22 +43,33 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 			respondWithError(w, distv2.ErrorCodeManifestUnknown)
 		})
 	}
+	log.Infof("provider %s will handle request for %s", spname, name)
 	spec, err := sp.GetSpec(ctx, name)
 	if err != nil {
-		log.WithError(err).WithField("specProvName", spname).WithField("name", name).Error("cannot get spec")
+		// treat invalid names from node-labeler as debug, not errors
+		// ref: https://github.com/gitpod-io/gitpod/blob/1a3c4b0bb6f13fe38481d21ddd146747c1a1935f/components/node-labeler/cmd/run.go#L291
+		var isNodeLabeler bool
+		if name == "not-a-valid-image" {
+			isNodeLabeler = true
+		}
+		if isNodeLabeler {
+			log.WithError(err).WithField("specProvName", spname).WithField("name", name).Info("this was node-labeler, we expected no spec")
+		} else {
+			log.WithError(err).WithField("specProvName", spname).WithField("name", name).Error("cannot get spec")
+		}
+
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, distv2.ErrorCodeManifestUnknown)
 		})
 	}
 
 	manifestHandler := &manifestHandler{
-		Context:          ctx,
-		Name:             name,
-		Spec:             spec,
-		Resolver:         reg.Resolver(),
-		Store:            reg.Store,
-		ConfigModifier:   reg.ConfigModifier,
-		ManifestModifier: reg.ipfsManifestModifier,
+		Context:        ctx,
+		Name:           name,
+		Spec:           spec,
+		Resolver:       reg.Resolver(),
+		Store:          reg.Store,
+		ConfigModifier: reg.ConfigModifier,
 	}
 	reference := getReference(ctx)
 	dgst, err := digest.Parse(reference)
@@ -87,11 +98,10 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 type manifestHandler struct {
 	Context context.Context
 
-	Spec             *api.ImageSpec
-	Resolver         remotes.Resolver
-	Store            BlobStore
-	ConfigModifier   ConfigModifier
-	ManifestModifier func(*ociv1.Manifest) error
+	Spec           *api.ImageSpec
+	Resolver       remotes.Resolver
+	Store          BlobStore
+	ConfigModifier ConfigModifier
 
 	Name   string
 	Tag    string
@@ -209,14 +219,6 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 				err = w.Commit(ctx, 0, cfgDgst, content.WithLabels(contentTypeLabel(manifest.Config.MediaType)))
 				if err != nil {
 					log.WithError(err).WithFields(logFields).Warn("cannot commit config to store - we'll regenerate it on demand")
-				}
-			}
-
-			// We might have additional modifications, e.g. adding IPFS URLs to the layers
-			if mh.ManifestModifier != nil {
-				err = mh.ManifestModifier(manifest)
-				if err != nil {
-					log.WithError(err).WithFields(logFields).Warn("cannot modify manifest")
 				}
 			}
 

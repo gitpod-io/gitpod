@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { Commit, Repository, User } from "@gitpod/gitpod-protocol";
@@ -63,7 +63,7 @@ export class BitbucketFileProvider implements FileProvider {
             ).data;
             return contents as string;
         } catch (err) {
-            log.error({ userId: user.id }, err);
+            log.debug({ userId: user.id }, err);
         }
     }
 }

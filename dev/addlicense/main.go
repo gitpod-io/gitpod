@@ -54,6 +54,7 @@ var (
 	verbose   = flag.Bool("v", false, "verbose mode: print the name of the files that are modified")
 	stdin     = flag.Bool("s", false, "read paths to file that are modified from stdin")
 	checkonly = flag.Bool("check", false, "check only mode: verify presence of license headers and exit with non-zero code if missing")
+	remove    = flag.Bool("remove", false, "remove header mode: if a license header is present, we'll remove it")
 )
 
 func main() {
@@ -119,6 +120,15 @@ func main() {
 					if isMissingLicenseHeader {
 						fmt.Printf("%s\n", f.path)
 						return errors.New("missing license header")
+					}
+				} else if *remove {
+					modified, haslic, err := removeLicense(f.path, f.mode, t, data)
+					if err != nil {
+						log.Printf("%s: %v", f.path, err)
+						return err
+					}
+					if haslic && !modified {
+						log.Printf("%s should have been modified but wasn't", f.path)
 					}
 				} else {
 					modified, err := addLicense(f.path, f.mode, t, data)
@@ -205,6 +215,37 @@ func addLicense(path string, fmode os.FileMode, tmpl *template.Template, data *c
 	}
 	b = append(lic, b...)
 	return true, os.WriteFile(path, b, fmode)
+}
+
+func removeLicense(path string, fmode os.FileMode, tmpl *template.Template, data *copyrightData) (haslic bool, modified bool, err error) {
+	var lic []byte
+	lic, err = licenseHeader(path, tmpl, data)
+	if err != nil || lic == nil {
+		return false, false, err
+	}
+
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return false, false, err
+	}
+	olen := len(b)
+	if !hasLicense(b) {
+		return false, false, nil
+	}
+
+	lic = bytes.TrimSpace(lic)
+
+	b = bytes.ReplaceAll(b, []byte("Copyright (c) 2021 Gitpod GmbH."), []byte("Copyright (c) 2022 Gitpod GmbH."))
+	b = bytes.ReplaceAll(b, []byte("Copyright (c) 2020 Gitpod GmbH."), []byte("Copyright (c) 2022 Gitpod GmbH."))
+	b = bytes.ReplaceAll(b, bytes.TrimSpace(lic), nil)
+	if len(b) >= olen {
+		fmt.Println(string(lic))
+		fmt.Println("---")
+		fmt.Println(string(b[:len(lic)]))
+		fmt.Println("===")
+	}
+
+	return len(b) < olen, true, os.WriteFile(path, b, fmode)
 }
 
 // fileHasLicense reports whether the file at path contains a license header.

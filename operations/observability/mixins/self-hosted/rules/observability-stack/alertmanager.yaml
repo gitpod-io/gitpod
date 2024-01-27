@@ -1,0 +1,45 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app.kubernetes.io/name: kubernetes
+    app.kubernetes.io/part-of: kube-prometheus
+    prometheus: k8s
+    role: alert-rules
+  name: alertmanager-monitoring-rules
+  namespace: monitoring-satellite
+spec:
+  groups:
+  - name: alertmanager
+    rules:
+    - alert: AlertmanagerFailedReload
+      annotations:
+        description: Configuration has failed to load for {{ $labels.namespace }}/{{ $labels.pod}}.
+        summary: Reloading an Alertmanager configuration has failed.
+      expr: |
+        # Without max_over_time, failed scrapes could create false negatives, see
+        # https://www.robustperception.io/alerting-on-gauges-in-prometheus-2-0 for details.
+        max_over_time(alertmanager_config_last_reload_successful{job="alertmanager-main",namespace="monitoring-satellite"}[5m]) == 0
+      for: 10m
+      labels:
+        severity: critical
+        team: delivery-operations-experience
+    - alert: AlertmanagerFailedToSendAlerts
+      annotations:
+        description: Alertmanager {{ $labels.namespace }}/{{ $labels.pod}} failed to send {{ $value | humanizePercentage }} of notifications to {{ $labels.integration }}.
+        summary: An Alertmanager instance failed to send notifications.
+      expr: |
+        (
+          rate(alertmanager_notifications_failed_total{job="alertmanager-main",namespace="monitoring-satellite"}[5m])
+        /
+          rate(alertmanager_notifications_total{job="alertmanager-main",namespace="monitoring-satellite"}[5m])
+        )
+        > 0.01
+      for: 5m
+      labels:
+        severity: warning
+        team: delivery-operations-experience

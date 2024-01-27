@@ -1,12 +1,13 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package main
 
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -50,6 +51,14 @@ func main() {
 		if err != nil {
 			logrus.Fatal(err)
 		}
+
+		if _, err := os.Stat(filepath.Join(home, ".kube")); errors.Is(err, os.ErrNotExist) {
+			err := os.Mkdir(filepath.Join(home, ".kube"), os.ModePerm)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+		}
+
 		kubecfgfn = filepath.Join(home, ".kube", "config")
 	}
 
@@ -127,7 +136,7 @@ func getNodeName(clusterName, project string) (nodeName, zone string, err error)
 		Zone string `json:"zone"`
 	}
 
-	out, err := exec.Command("gcloud", "compute", "instances", "list", "--format=json", "--quiet", "--project", project, "--filter=name~server-ws-.*"+clusterName).CombinedOutput()
+	out, err := exec.Command("gcloud", "compute", "instances", "list", "--format=json", "--quiet", "--project", project, "--filter", "labels.cluster-name>=ws-"+clusterName+" AND labels.cluster-name<=ws-"+clusterName+" AND labels.instance-type>=control-plane AND labels.instance-type<=control-plane").CombinedOutput()
 	if err != nil {
 		return "", "", fmt.Errorf("failed to describe node instances: %s: %w", string(out), err)
 	}

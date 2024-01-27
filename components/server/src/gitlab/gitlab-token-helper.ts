@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { User, Token } from "@gitpod/gitpod-protocol";
@@ -30,7 +30,7 @@ export class GitLabTokenHelper {
         const { host } = this.config;
         try {
             const token = await this.tokenProvider.getTokenForHost(user, host);
-            if (this.containsScopes(token, requiredScopes)) {
+            if (token && this.containsScopes(token, requiredScopes)) {
                 return token;
             }
         } catch (e) {
@@ -39,7 +39,13 @@ export class GitLabTokenHelper {
         if (requiredScopes.length === 0) {
             requiredScopes = GitLabScope.Requirements.DEFAULT;
         }
-        throw UnauthorizedError.create(host, requiredScopes, "missing-identity");
+        throw UnauthorizedError.create({
+            host,
+            providerType: "GitLab",
+            requiredScopes: GitLabScope.Requirements.DEFAULT,
+            providerIsConnected: false,
+            isMissingScopes: true,
+        });
     }
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {
         const set = new Set(wantedScopes);

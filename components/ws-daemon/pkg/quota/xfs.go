@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package quota
 
@@ -86,7 +86,7 @@ func (xfs *XFS) getUsedProjectIDs() ([]int, error) {
 }
 
 // SetQuota sets the quota for a path
-func (xfs *XFS) SetQuota(path string, quota Size) (projectID int, err error) {
+func (xfs *XFS) SetQuota(path string, quota Size, isHard bool) (projectID int, err error) {
 	xfs.mu.Lock()
 	var (
 		prjID = prjidLow
@@ -113,11 +113,26 @@ func (xfs *XFS) SetQuota(path string, quota Size) (projectID int, err error) {
 		}
 	}()
 
+	_, err = xfs.SetQuotaWithPrjId(path, quota, prjID, isHard)
+	if err != nil {
+		return 0, err
+	}
+
+	return prjID, nil
+}
+
+func (xfs *XFS) SetQuotaWithPrjId(path string, quota Size, prjID int, isHard bool) (projectID int, err error) {
 	_, err = xfs.exec(xfs.Dir, fmt.Sprintf("project -s -d 1 -p %s %d", path, prjID))
 	if err != nil {
 		return 0, err
 	}
-	_, err = xfs.exec(xfs.Dir, fmt.Sprintf("limit -p bsoft=%d bhard=%d %d", quota, quota, prjID))
+
+	if isHard {
+		_, err = xfs.exec(xfs.Dir, fmt.Sprintf("limit -p bhard=%d %d", quota, prjID))
+	} else {
+		_, err = xfs.exec(xfs.Dir, fmt.Sprintf("limit -p bsoft=%d %d", quota, prjID))
+	}
+
 	if err != nil {
 		return 0, err
 	}

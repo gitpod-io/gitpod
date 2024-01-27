@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 syntax = "proto3";
 
@@ -29,6 +29,8 @@ message RegisterRequest {
   TlsConfig tls = 3;
   RegistrationHints hints = 4;
   repeated AdmissionConstraint admission_constraints = 5;
+  // the region this cluster is in, e.g. "europe-west1"
+  string region = 7;
 
   // DEPRECATED
   // repeated AdmissionPreference admission_preference = 6;
@@ -46,7 +48,7 @@ message TlsConfig {
 message RegistrationHints {
   Preferability perfereability = 1;
   bool cordoned = 2;
-  bool govern = 3;
+  reserved 3; // bool govern = 3;
 }
 
 message AdmissionConstraint {
@@ -58,8 +60,8 @@ message AdmissionConstraint {
   oneof constraint {
     FeaturePreview has_feature_preview = 1;
     HasPermission has_permission = 2;
-    string has_user_level = 3;
-    bool has_more_resources = 4;
+    // deprecated and removed: has_user_level = 3;
+    // deprecated and removed: bool has_more_resources = 4;
   }
 }
 
@@ -79,9 +81,14 @@ message ClusterStatus {
   repeated AdmissionConstraint admission_constraint = 7;
   bool static = 8;
 
+  reserved 10; // string application_cluster = 10;
+
   // DEPRECATED
   // repeated AdmissionPreference admission_preference = 9;
   reserved 9;
+
+  // The region in which this cluster runs
+  string region = 11;
 }
 
 enum ClusterState {

@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -88,7 +88,7 @@ func prewarmCache(cl *client.Client, images []string) error {
 		eg.Go(func() error {
 			var c console.Console
 			// not using shared context to not disrupt display but let is finish reporting errors
-			_, err := progressui.DisplaySolveStatus(context.TODO(), "", c, os.Stderr, ch)
+			_, err := progressui.DisplaySolveStatus(context.TODO(), c, os.Stderr, ch)
 			return err
 		})
 		err = eg.Wait()

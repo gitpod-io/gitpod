@@ -1,13 +1,14 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInstance, PortVisibility } from "./workspace-instance";
+import { WorkspaceInstance, PortVisibility, PortProtocol } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
 import { Project } from "./teams-projects-protocol";
 import { createHash } from "crypto";
+import { WorkspaceRegion } from "./workspace-cluster";
 
 export interface UserInfo {
     name?: string;
@@ -16,6 +17,9 @@ export interface UserInfo {
 export interface User {
     /** The user id */
     id: string;
+
+    /** The ID of the Organization this user is owned by. If undefined, the user is owned by the installation */
+    organizationId?: string;
 
     /** The timestamp when the user entry was created */
     creationDate: string;
@@ -45,6 +49,18 @@ export interface User {
     markedDeleted?: boolean;
 
     additionalData?: AdditionalUserData;
+
+    // Identifies an explicit team or user ID to which all the user's workspace usage should be attributed to (e.g. for billing purposes)
+    usageAttributionId?: string;
+
+    // The last time this user got verified somehow. The user is not verified if this is empty.
+    lastVerificationTime?: string;
+
+    // The phone number used for the last phone verification.
+    verificationPhoneNumber?: string;
+
+    // The FGA relationships version of this user
+    fgaRelationshipsVersion?: number;
 }
 
 export namespace User {
@@ -54,57 +70,9 @@ export namespace User {
     export function getIdentity(user: User, authProviderId: string): Identity | undefined {
         return user.identities.find((id) => id.authProviderId === authProviderId);
     }
-    export function censor(user: User): User {
-        const res = { ...user };
-        delete res.additionalData;
-        res.identities = res.identities.map((i) => {
-            delete i.tokens;
 
-            // The user field is not in the Identity shape, but actually exists on DBIdentity.
-            // Trying to push this object out via JSON RPC will fail because of the cyclic nature
-            // of this field.
-            delete (i as any).user;
-            return i;
-        });
-        return res;
-    }
-
-    /**
-     * Tries to return the primaryEmail of the first identity this user signed up with.
-     * @param user
-     * @returns A primaryEmail, or undefined if there is none.
-     */
-    export function getPrimaryEmail(user: User): string | undefined {
-        const identities = user.identities.filter((i) => !!i.primaryEmail);
-        if (identities.length <= 0) {
-            return undefined;
-        }
-
-        return identities[0].primaryEmail || undefined;
-    }
-    export function getName(user: User): string | undefined {
-        const name = user.fullName || user.name;
-        if (name) {
-            return name;
-        }
-
-        for (const id of user.identities) {
-            if (id.authName !== "") {
-                return id.authName;
-            }
-        }
-        return undefined;
-    }
-
-    export function hasPreferredIde(user: User) {
-        return (
-            typeof user?.additionalData?.ideSettings?.defaultIde !== "undefined" ||
-            typeof user?.additionalData?.ideSettings?.useLatestVersion !== "undefined"
-        );
-    }
-
-    export function isOnboardingUser(user: User) {
-        return !hasPreferredIde(user);
+    export function isOrganizationOwned(user: User) {
+        return !!user.organizationId;
     }
 
     export function migrationIDESettings(user: User) {
@@ -138,7 +106,15 @@ export namespace User {
     }
 }
 
-export interface AdditionalUserData {
+export interface WorkspaceTimeoutSetting {
+    // user globol workspace timeout
+    workspaceTimeout: string;
+    // control whether to enable the closed timeout of a workspace, i.e. close web ide, disconnect ssh connection
+    disabledClosedTimeout: boolean;
+}
+
+export interface AdditionalUserData extends Partial<WorkspaceTimeoutSetting> {
+    /** @deprecated unused */
     platforms?: UserPlatform[];
     emailNotificationSettings?: EmailNotificationSettings;
     featurePreview?: boolean;
@@ -149,10 +125,67 @@ export interface AdditionalUserData {
     // TODO(rl): provide a management UX to allow rescinding of approval
     oauthClientsApproved?: { [key: string]: string };
     // to remember GH Orgs the user installed/updated the GH App for
+    /** @deprecated unused */
     knownGitHubOrgs?: string[];
-
     // Git clone URL pointing to the user's dotfile repo
     dotfileRepo?: string;
+    // preferred workspace classes
+    workspaceClasses?: WorkspaceClasses;
+    // additional user profile data
+    profile?: ProfileDetails;
+    /** @deprecated */
+    shouldSeeMigrationMessage?: boolean;
+    // remembered workspace auto start options
+    workspaceAutostartOptions?: WorkspaceAutostartOption[];
+}
+
+export interface WorkspaceAutostartOption {
+    cloneURL: string;
+    organizationId: string;
+    workspaceClass?: string;
+    ideSettings?: IDESettings;
+    region?: WorkspaceRegion;
+}
+
+export namespace AdditionalUserData {
+    export function set(user: User, partialData: Partial<AdditionalUserData>): User {
+        if (!user.additionalData) {
+            user.additionalData = {
+                ...partialData,
+            };
+        } else {
+            user.additionalData = {
+                ...user.additionalData,
+                ...partialData,
+            };
+        }
+        return user;
+    }
+}
+// The format in which we store User Profiles in
+export interface ProfileDetails {
+    // when was the last time the user updated their profile information or has been nudged to do so.
+    lastUpdatedDetailsNudge?: string;
+    // when was the last time the user has accepted our privacy policy
+    acceptedPrivacyPolicyDate?: string;
+    // the user's company name
+    companyName?: string;
+    // the user's email
+    emailAddress?: string;
+    // type of role user has in their job
+    jobRole?: string;
+    // freeform entry for job role user works in (when jobRole is "other")
+    jobRoleOther?: string;
+    // Reasons user is exploring Gitpod when they signed up
+    explorationReasons?: string[];
+    // what user hopes to accomplish when they signed up
+    signupGoals?: string[];
+    // freeform entry for signup goals (when signupGoals is "other")
+    signupGoalsOther?: string;
+    // Set after a user completes the onboarding flow
+    onboardedTimestamp?: string;
+    // Onboarding question about a user's company size
+    companySize?: string;
 }
 
 export interface EmailNotificationSettings {
@@ -164,12 +197,20 @@ export interface EmailNotificationSettings {
 export type IDESettings = {
     settingVersion?: string;
     defaultIde?: string;
+    useLatestVersion?: boolean;
     // DEPRECATED: Use defaultIde after `settingVersion: 2.0`, no more specialify desktop or browser.
     useDesktopIde?: boolean;
     // DEPRECATED: Same with useDesktopIde.
     defaultDesktopIde?: string;
-    useLatestVersion?: boolean;
 };
+
+export interface WorkspaceClasses {
+    regular?: string;
+    /**
+     * @deprecated see Project.settings.prebuilds.workspaceClass
+     */
+    prebuild?: string;
+}
 
 export interface UserPlatform {
     uid: string;
@@ -197,16 +238,28 @@ export interface UserFeatureSettings {
     permanentWSFeatureFlags?: NamedWorkspaceFeatureFlag[];
 }
 
+export type BillingTier = "paid" | "free";
+
 /**
  * The values of this type MUST MATCH enum values in WorkspaceFeatureFlag from ws-manager/client/core_pb.d.ts
  * If they don't we'll break things during workspace startup.
  */
 export const WorkspaceFeatureFlags = {
     full_workspace_backup: undefined,
-    fixed_resources: undefined,
-    persistent_volume_claim: undefined,
+    workspace_class_limiting: undefined,
+    workspace_connection_limiting: undefined,
+    workspace_psi: undefined,
+    ssh_ca: undefined,
 };
 export type NamedWorkspaceFeatureFlag = keyof typeof WorkspaceFeatureFlags;
+export namespace NamedWorkspaceFeatureFlag {
+    export const WORKSPACE_PERSISTED_FEATTURE_FLAGS: NamedWorkspaceFeatureFlag[] = ["full_workspace_backup"];
+    export function isWorkspacePersisted(ff: NamedWorkspaceFeatureFlag): boolean {
+        return WORKSPACE_PERSISTED_FEATTURE_FLAGS.includes(ff);
+    }
+}
+
+export type EnvVar = UserEnvVar | ProjectEnvVarWithValue | EnvVarWithValue;
 
 export interface EnvVarWithValue {
     name: string;
@@ -214,12 +267,14 @@ export interface EnvVarWithValue {
 }
 
 export interface ProjectEnvVarWithValue extends EnvVarWithValue {
-    id: string;
-    projectId: string;
+    id?: string;
     censored: boolean;
 }
 
-export type ProjectEnvVar = Omit<ProjectEnvVarWithValue, "value">;
+export interface ProjectEnvVar extends Omit<ProjectEnvVarWithValue, "value"> {
+    id: string;
+    projectId: string;
+}
 
 export interface UserEnvVarValue extends EnvVarWithValue {
     id?: string;
@@ -232,6 +287,17 @@ export interface UserEnvVar extends UserEnvVarValue {
 }
 
 export namespace UserEnvVar {
+    export const DELIMITER = "/";
+    export const WILDCARD_ASTERISK = "*";
+    // This wildcard is only allowed on the last segment, and matches arbitrary segments to the right
+    export const WILDCARD_DOUBLE_ASTERISK = "**";
+    const WILDCARD_SHARP = "#"; // TODO(gpl) Where does this come from? Bc we have/had patterns as part of URLs somewhere, maybe...?
+    const MIN_PATTERN_SEGMENTS = 2;
+
+    function isWildcard(c: string): boolean {
+        return c === WILDCARD_ASTERISK || c === WILDCARD_SHARP;
+    }
+
     /**
      * @param variable
      * @returns Either a string containing an error message or undefined.
@@ -243,7 +309,7 @@ export namespace UserEnvVar {
             return "Name must not be empty.";
         }
         if (name.length > 255) {
-            return 'Name too long. Maximum name length is 255 characters.';
+            return "Name too long. Maximum name length is 255 characters.";
         }
         if (!/^[a-zA-Z_]+[a-zA-Z0-9_]*$/.test(name)) {
             return "Name must match /^[a-zA-Z_]+[a-zA-Z0-9_]*$/.";
@@ -252,13 +318,13 @@ export namespace UserEnvVar {
             return "Value must not be empty.";
         }
         if (variable.value.length > 32767) {
-            return 'Value too long. Maximum value length is 32767 characters.';
+            return "Value too long. Maximum value length is 32767 characters.";
         }
         if (pattern.trim() === "") {
             return "Scope must not be empty.";
         }
-        const split = pattern.split("/");
-        if (split.length < 2) {
+        const split = splitRepositoryPattern(pattern);
+        if (split.length < MIN_PATTERN_SEGMENTS) {
             return "A scope must use the form 'organization/repo'.";
         }
         for (const name of split) {
@@ -271,55 +337,111 @@ export namespace UserEnvVar {
         return undefined;
     }
 
-    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function normalizeRepoPattern(pattern: string) {
         return pattern.toLocaleLowerCase();
     }
 
-    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
-    export function score(value: UserEnvVarValue): number {
-        // We use a score to enforce precedence:
-        //      value/value = 0
-        //      value/*     = 1
-        //      */value     = 2
-        //      */*         = 3
-        //      #/#         = 4 (used for env vars passed through the URL)
-        // the lower the score, the higher the precedence.
-        const [ownerPattern, repoPattern] = splitRepositoryPattern(value.repositoryPattern);
-        let score = 0;
-        if (repoPattern == "*") {
-            score += 1;
-        }
-        if (ownerPattern == "*") {
-            score += 2;
-        }
-        if (ownerPattern == "#" || repoPattern == "#") {
-            score = 4;
-        }
-        return score;
+    function splitRepositoryPattern(pattern: string): string[] {
+        return pattern.split(DELIMITER);
     }
 
-    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
-    export function filter<T extends UserEnvVarValue>(vars: T[], owner: string, repo: string): T[] {
-        let result = vars.filter((e) => {
-            const [ownerPattern, repoPattern] = splitRepositoryPattern(e.repositoryPattern);
-            if (ownerPattern !== "*" && ownerPattern !== "#" && !!owner && ownerPattern !== owner.toLocaleLowerCase()) {
-                return false;
-            }
-            if (repoPattern !== "*" && repoPattern !== "#" && !!repo && repoPattern !== repo.toLocaleLowerCase()) {
-                return false;
-            }
-            return true;
-        });
+    function joinRepositoryPattern(...parts: string[]): string {
+        return parts.join(DELIMITER);
+    }
 
+    /**
+     * Matches the given EnvVar pattern against the fully qualified name of the repository:
+     *  - GitHub: "repo/owner"
+     *  - GitLab: "some/nested/repo" (up to MAX_PATTERN_SEGMENTS deep)
+     * @param pattern
+     * @param repoFqn
+     * @returns True if the pattern matches that fully qualified name
+     */
+    export function matchEnvVarPattern(pattern: string, repoFqn: string): boolean {
+        const fqnSegments = splitRepositoryPattern(repoFqn);
+        const patternSegments = splitRepositoryPattern(pattern);
+        if (patternSegments.length < MIN_PATTERN_SEGMENTS) {
+            // Technically not a problem, but we should not allow this for safety reasons.
+            // And because we hisotrically never allowed this (GitHub would always require at least "*/*") we are just keeping old constraints.
+            // Note: Most importantly this guards against arbitrary wildcard matches
+            return false;
+        }
+
+        function isWildcardMatch(patternSegment: string, isLastSegment: boolean): boolean {
+            if (isWildcard(patternSegment)) {
+                return true;
+            }
+            return isLastSegment && patternSegment === WILDCARD_DOUBLE_ASTERISK;
+        }
+        let i = 0;
+        for (; i < patternSegments.length; i++) {
+            if (i >= fqnSegments.length) {
+                return false;
+            }
+            const fqnSegment = fqnSegments[i];
+            const patternSegment = patternSegments[i];
+            const isLastSegment = patternSegments.length === i + 1;
+            if (!isWildcardMatch(patternSegment, isLastSegment) && patternSegment !== fqnSegment.toLocaleLowerCase()) {
+                return false;
+            }
+        }
+        if (fqnSegments.length > i) {
+            // Special case: "**" as last segment matches arbitrary # of segments to the right
+            if (patternSegments[i - 1] === WILDCARD_DOUBLE_ASTERISK) {
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    // Matches the following patterns for "some/nested/repo", ordered by highest score:
+    //  - exact: some/nested/repo ()
+    //  - partial:
+    //    - some/nested/*
+    //    - some/*
+    //  - generic:
+    //    - */*/*
+    //    - */*
+    // Does NOT match:
+    //  - */repo (number of parts does not match)
+    // cmp. test cases in env-var-service.spec.ts
+    export function filter<T extends UserEnvVarValue>(vars: T[], owner: string, repo: string): T[] {
+        const matchedEnvVars = vars.filter((e) =>
+            matchEnvVarPattern(e.repositoryPattern, joinRepositoryPattern(owner, repo)),
+        );
         const resmap = new Map<string, T[]>();
-        result.forEach((e) => {
+        matchedEnvVars.forEach((e) => {
             const l = resmap.get(e.name) || [];
             l.push(e);
             resmap.set(e.name, l);
         });
 
-        result = [];
+        // In cases of multiple matches per env var: find the best match
+        // Best match is the most specific pattern, where the left-most segment is most significant
+        function scoreMatchedEnvVar(e: T): number {
+            function valueSegment(segment: string): number {
+                switch (segment) {
+                    case WILDCARD_ASTERISK:
+                        return 2;
+                    case WILDCARD_SHARP:
+                        return 2;
+                    case WILDCARD_DOUBLE_ASTERISK:
+                        return 1;
+                    default:
+                        return 3;
+                }
+            }
+            const patternSegments = splitRepositoryPattern(e.repositoryPattern);
+            let result = 0;
+            for (const segment of patternSegments) {
+                // We can assume the pattern matches from context, so we just need to check whether it's a wildcard or not
+                const val = valueSegment(segment);
+                result = result * 10 + val;
+            }
+            return result;
+        }
+        const result = [];
         for (const name of resmap.keys()) {
             const candidates = resmap.get(name);
             if (!candidates) {
@@ -332,12 +454,12 @@ export namespace UserEnvVar {
                 continue;
             }
 
-            let minscore = 10;
-            let bestCandidate: T | undefined;
-            for (const e of candidates) {
-                const score = UserEnvVar.score(e);
-                if (!bestCandidate || score < minscore) {
-                    minscore = score;
+            let bestCandidate = candidates[0];
+            let bestScore = scoreMatchedEnvVar(bestCandidate);
+            for (const e of candidates.slice(1)) {
+                const score = scoreMatchedEnvVar(e);
+                if (score > bestScore) {
+                    bestScore = score;
                     bestCandidate = e;
                 }
             }
@@ -346,14 +468,68 @@ export namespace UserEnvVar {
 
         return result;
     }
+}
 
-    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
-    export function splitRepositoryPattern(repositoryPattern: string): string[] {
-        const patterns = repositoryPattern.split("/");
-        const repoPattern = patterns.slice(1).join("/");
-        const ownerPattern = patterns[0];
-        return [ownerPattern, repoPattern];
+export interface SSHPublicKeyValue {
+    name: string;
+    key: string;
+}
+export interface UserSSHPublicKey extends SSHPublicKeyValue {
+    id: string;
+    key: string;
+    userId: string;
+    fingerprint: string;
+    creationTime: string;
+    lastUsedTime?: string;
+}
+
+export type UserSSHPublicKeyValue = Omit<UserSSHPublicKey, "userId">;
+
+export namespace SSHPublicKeyValue {
+    export function validate(value: SSHPublicKeyValue): string | undefined {
+        if (value.name.length === 0) {
+            return "Title must not be empty.";
+        }
+        if (value.name.length > 255) {
+            return "Title too long. Maximum value length is 255 characters.";
+        }
+        if (value.key.length === 0) {
+            return "Key must not be empty.";
+        }
+        try {
+            getData(value);
+        } catch (e) {
+            return "Key is invalid. You must supply a key in OpenSSH public key format.";
+        }
+        return;
     }
+
+    export function getData(value: SSHPublicKeyValue) {
+        // Begins with 'ssh-rsa', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-ed25519', 'sk-ecdsa-sha2-nistp256@openssh.com', or 'sk-ssh-ed25519@openssh.com'.
+        const regex =
+            /^(?<type>ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521|ssh-ed25519|sk-ecdsa-sha2-nistp256@openssh\.com|sk-ssh-ed25519@openssh\.com) (?<key>.*?)( (?<email>.*?))?$/;
+        const resultGroup = regex.exec(value.key.trim());
+        if (!resultGroup) {
+            throw new Error("Key is invalid.");
+        }
+        return {
+            type: resultGroup.groups?.["type"] as string,
+            key: resultGroup.groups?.["key"] as string,
+            email: resultGroup.groups?.["email"] || undefined,
+        };
+    }
+
+    export function getFingerprint(value: SSHPublicKeyValue) {
+        const data = getData(value);
+        const buf = Buffer.from(data.key, "base64");
+        // gitlab style
+        // const hash = createHash("md5").update(buf).digest("hex");
+        // github style
+        const hash = createHash("sha256").update(buf).digest("base64");
+        return hash;
+    }
+
+    export const MAXIMUM_KEY_LENGTH = 5;
 }
 
 export interface GitpodToken {
@@ -367,16 +543,13 @@ export interface GitpodToken {
     type: GitpodTokenType;
 
     /** The user the token belongs to. */
-    user: User;
+    userId: string;
 
     /** Scopes (e.g. limition to read-only) */
     scopes: string[];
 
     /** Created timestamp */
     created: string;
-
-    // token is deleted on the database and about to be collected by db-sync
-    deleted?: boolean;
 }
 
 export enum GitpodTokenType {
@@ -407,11 +580,12 @@ export interface Identity {
     authId: string;
     authName: string;
     primaryEmail?: string;
-    /** @deprecated */
-    tokens?: Token[];
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;
-    // readonly identities cannot be modified by the user
+    // The last time this entry was touched during a signin.
+    lastSigninTime?: string;
+
+    // @deprecated as no longer in use since '19
     readonly?: boolean;
 }
 
@@ -444,17 +618,11 @@ export interface TokenEntry {
     token: Token;
     expiryDate?: string;
     refreshable?: boolean;
-    /** This is a flag that triggers the HARD DELETION of this entity */
-    deleted?: boolean;
 }
 
 export interface EmailDomainFilterEntry {
     domain: string;
     negative: boolean;
-}
-
-export interface EduEmailDomain {
-    domain: string;
 }
 
 export type AppInstallationPlatform = "github";
@@ -475,6 +643,7 @@ export interface PendingGithubEvent {
     creationDate: Date;
     type: string;
     event: string;
+    deleted: boolean;
 }
 
 export interface Snapshot {
@@ -483,29 +652,16 @@ export interface Snapshot {
     availableTime?: string;
     originalWorkspaceId: string;
     bucketId: string;
-    layoutData?: string;
     state: SnapshotState;
     message?: string;
 }
 
-export interface VolumeSnapshot {
-    id: string;
-    creationTime: string;
-    originalWorkspaceId: string;
-    volumeHandle: string;
-}
-
 export type SnapshotState = "pending" | "available" | "error";
-
-export interface LayoutData {
-    workspaceId: string;
-    lastUpdatedTime: string;
-    layoutData: string;
-}
 
 export interface Workspace {
     id: string;
     creationTime: string;
+    organizationId: string;
     contextURL: string;
     description: string;
     ownerId: string;
@@ -535,7 +691,7 @@ export interface Workspace {
     shareable?: boolean;
     pinned?: boolean;
 
-    // workspace is hard-deleted on the database and about to be collected by db-sync
+    // workspace is hard-deleted on the database and about to be collected by periodic deleter
     readonly deleted?: boolean;
 
     /**
@@ -564,23 +720,9 @@ export interface Workspace {
 
 export type WorkspaceSoftDeletion = "user" | "gc";
 
-export type WorkspaceType = "regular" | "prebuild" | "probe";
+export type WorkspaceType = "regular" | "prebuild";
 
 export namespace Workspace {
-    export function getFullRepositoryName(ws: Workspace): string | undefined {
-        if (CommitContext.is(ws.context)) {
-            return ws.context.repository.owner + "/" + ws.context.repository.name;
-        }
-        return undefined;
-    }
-
-    export function getFullRepositoryUrl(ws: Workspace): string | undefined {
-        if (CommitContext.is(ws.context)) {
-            return `https://${ws.context.repository.host}/${getFullRepositoryName(ws)}`;
-        }
-        return undefined;
-    }
-
     export function getPullRequestNumber(ws: Workspace): number | undefined {
         if (PullRequestContext.is(ws.context)) {
             return ws.context.nr;
@@ -614,13 +756,6 @@ export interface GuessGitTokenScopesParams {
     host: string;
     repoUrl: string;
     gitCommand: string;
-    currentToken: GitToken;
-}
-
-export interface GitToken {
-    token: string;
-    user: string;
-    scopes: string[];
 }
 
 export interface GuessedGitTokenScopes {
@@ -637,9 +772,14 @@ export interface JetBrainsConfig {
     goland?: JetBrainsProductConfig;
     pycharm?: JetBrainsProductConfig;
     phpstorm?: JetBrainsProductConfig;
+    rubymine?: JetBrainsProductConfig;
+    webstorm?: JetBrainsProductConfig;
+    rider?: JetBrainsProductConfig;
+    clion?: JetBrainsProductConfig;
 }
 export interface JetBrainsProductConfig {
     prebuilds?: JetBrainsPrebuilds;
+    vmoptions?: string;
 }
 export interface JetBrainsPrebuilds {
     version?: "stable" | "latest" | "both";
@@ -648,6 +788,12 @@ export interface JetBrainsPrebuilds {
 export interface RepositoryCloneInformation {
     url: string;
     checkoutLocation?: string;
+}
+
+export interface CoreDumpConfig {
+    enabled?: boolean;
+    softLimit?: number;
+    hardLimit?: number;
 }
 
 export interface WorkspaceConfig {
@@ -662,6 +808,8 @@ export interface WorkspaceConfig {
     github?: GithubAppConfig;
     vscode?: VSCodeConfig;
     jetbrains?: JetBrainsConfig;
+    coreDump?: CoreDumpConfig;
+    ideCredentials?: string;
 
     /** deprecated. Enabled by default **/
     experimentalNetwork?: boolean;
@@ -670,13 +818,11 @@ export interface WorkspaceConfig {
      * Where the config object originates from.
      *
      * repo - from the repository
-     * project-db - from the "Project" stored in the database
-     * definitly-gp - from github.com/gitpod-io/definitely-gp
      * derived - computed based on analyzing the repository
      * additional-content - config comes from additional content, usually provided through the project's configuration
      * default - our static catch-all default config
      */
-    _origin?: "repo" | "project-db" | "definitely-gp" | "derived" | "additional-content" | "default";
+    _origin?: "repo" | "derived" | "additional-content" | "default";
 
     /**
      * Set of automatically infered feature flags. That's not something the user can set, but
@@ -755,7 +901,9 @@ export interface PrebuiltWorkspace {
 
 export namespace PrebuiltWorkspace {
     export function isDone(pws: PrebuiltWorkspace) {
-        return pws.state === "available" || pws.state === "timeout" || pws.state === "aborted";
+        return (
+            pws.state === "available" || pws.state === "timeout" || pws.state === "aborted" || pws.state === "failed"
+        );
     }
 
     export function isAvailable(pws: PrebuiltWorkspace) {
@@ -782,19 +930,13 @@ export interface PrebuiltWorkspaceUpdatable {
     contextUrl?: string;
 }
 
-export interface WhitelistedRepository {
-    url: string;
-    name: string;
-    description?: string;
-    avatar?: string;
-}
-
 export type PortOnOpen = "open-browser" | "open-preview" | "notify" | "ignore";
 
 export interface PortConfig {
     port: number;
     onOpen?: PortOnOpen;
     visibility?: PortVisibility;
+    protocol?: PortProtocol;
     description?: string;
     name?: string;
 }
@@ -879,6 +1021,7 @@ export namespace ExternalImageConfigFile {
 
 export interface WorkspaceContext {
     title: string;
+    ref?: string;
     /** This contains the URL portion of the contextURL (which might contain other modifiers as well). It's optional because it's not set for older workspaces. */
     normalizedContextURL?: string;
     forceCreateNewWorkspace?: boolean;
@@ -941,14 +1084,17 @@ export namespace SnapshotContext {
     }
 }
 
-export interface StartPrebuildContext extends WorkspaceContext {
-    actual: WorkspaceContext;
+export interface WithCommitHistory {
     commitHistory?: string[];
     additionalRepositoryCommitHistories?: {
         cloneUrl: string;
         commitHistory: string[];
     }[];
-    project?: Project;
+}
+
+export interface StartPrebuildContext extends WorkspaceContext, WithCommitHistory {
+    actual: WorkspaceContext;
+    project: Project;
     branch?: string;
 }
 
@@ -991,17 +1137,6 @@ export namespace WithEnvvarsContext {
     }
 }
 
-export interface WorkspaceProbeContext extends WorkspaceContext {
-    responseURL: string;
-    responseToken: string;
-}
-
-export namespace WorkspaceProbeContext {
-    export function is(context: any): context is WorkspaceProbeContext {
-        return context && "responseURL" in context && "responseToken" in context;
-    }
-}
-
 export type RefType = "branch" | "tag" | "revision";
 export namespace RefType {
     export const getRefType = (commit: Commit): RefType => {
@@ -1041,6 +1176,16 @@ export namespace AdditionalContentContext {
     }
 }
 
+export interface OpenPrebuildContext extends WorkspaceContext {
+    openPrebuildID: string;
+}
+
+export namespace OpenPrebuildContext {
+    export function is(ctx: any): ctx is OpenPrebuildContext {
+        return "openPrebuildID" in ctx;
+    }
+}
+
 export interface CommitContext extends WorkspaceContext, GitCheckoutInfo {
     /** @deprecated Moved to .repository.cloneUrl, left here for backwards-compatibility for old workspace contextes in the DB */
     cloneUrl?: string;
@@ -1072,6 +1217,10 @@ export namespace CommitContext {
             hasher.update(info.revision);
         }
         return hasher.digest("hex");
+    }
+
+    export function isDefaultBranch(commitContext: CommitContext): boolean {
+        return commitContext.ref === commitContext.repository.defaultBranch;
     }
 }
 
@@ -1143,6 +1292,12 @@ export interface Repository {
         parent: Repository;
     };
 }
+
+export interface RepositoryInfo {
+    url: string;
+    name: string;
+}
+
 export interface Branch {
     name: string;
     commit: CommitInfo;
@@ -1155,12 +1310,6 @@ export interface CommitInfo {
     commitMessage: string;
     authorAvatarUrl?: string;
     authorDate?: string;
-}
-
-export namespace Repository {
-    export function fullRepoName(repo: Repository): string {
-        return `${repo.host}/${repo.owner}/${repo.name}`;
-    }
 }
 
 export interface WorkspaceInstancePortsChangedEvent {
@@ -1193,26 +1342,6 @@ export interface WorkspaceCreationResult {
     createdWorkspaceId?: string;
     workspaceURL?: string;
     existingWorkspaces?: WorkspaceInfo[];
-    runningWorkspacePrebuild?: {
-        prebuildID: string;
-        workspaceID: string;
-        instanceID: string;
-        starting: RunningWorkspacePrebuildStarting;
-        sameCluster: boolean;
-    };
-    runningPrebuildWorkspaceID?: string;
-}
-export type RunningWorkspacePrebuildStarting = "queued" | "starting" | "running";
-
-export enum CreateWorkspaceMode {
-    // Default returns a running prebuild if there is any, otherwise creates a new workspace (using a prebuild if one is available)
-    Default = "default",
-    // ForceNew creates a new workspace irrespective of any running prebuilds. This mode is guaranteed to actually create a workspace - but may degrade user experience as currently runnig prebuilds are ignored.
-    ForceNew = "force-new",
-    // UsePrebuild polls the database waiting for a currently running prebuild to become available. This mode exists to handle the db-sync delay.
-    UsePrebuild = "use-prebuild",
-    // SelectIfRunning returns a list of currently running workspaces for the context URL if there are any, otherwise falls back to Default mode
-    SelectIfRunning = "select-if-running",
 }
 
 export namespace WorkspaceCreationResult {
@@ -1227,26 +1356,14 @@ export namespace WorkspaceCreationResult {
     }
 }
 
-export interface UserMessage {
-    readonly id: string;
-    readonly title?: string;
-    /**
-     * date from where on this message should be shown
-     */
-    readonly from?: string;
-    readonly content?: string;
-    readonly url?: string;
-}
-
 export interface AuthProviderInfo {
     readonly authProviderId: string;
     readonly authProviderType: string;
     readonly host: string;
     readonly ownerId?: string;
+    readonly organizationId?: string;
     readonly verified: boolean;
-    readonly isReadonly?: boolean;
     readonly hiddenOnDashboard?: boolean;
-    readonly loginContextMatcher?: string;
     readonly disallowLogin?: boolean;
     readonly icon?: string;
     readonly description?: string;
@@ -1265,6 +1382,7 @@ export interface AuthProviderEntry {
     readonly type: AuthProviderEntry.Type;
     readonly host: string;
     readonly ownerId: string;
+    readonly organizationId?: string;
 
     readonly status: AuthProviderEntry.Status;
 
@@ -1284,7 +1402,6 @@ export interface OAuth2Config {
 
     readonly settingsUrl?: string;
     readonly authorizationParams?: { [key: string]: string };
-    readonly configURL?: string;
 }
 
 export namespace AuthProviderEntry {
@@ -1294,8 +1411,19 @@ export namespace AuthProviderEntry {
         clientId?: string;
         clientSecret?: string;
     };
-    export type UpdateEntry = Pick<AuthProviderEntry, "id" | "ownerId"> &
-        Pick<OAuth2Config, "clientId" | "clientSecret">;
+    export type UpdateEntry = Pick<AuthProviderEntry, "id" | "ownerId"> & {
+        clientId?: string;
+        clientSecret?: string;
+    };
+    export type NewOrgEntry = NewEntry & {
+        organizationId: string;
+    };
+    export type UpdateOrgEntry = Pick<AuthProviderEntry, "id"> & {
+        clientId?: string;
+        clientSecret?: string;
+        organizationId: string;
+    };
+    export type UpdateOAuth2Config = Pick<OAuth2Config, "clientId" | "clientSecret">;
     export function redact(entry: AuthProviderEntry): AuthProviderEntry {
         return {
             ...entry,
@@ -1310,40 +1438,25 @@ export namespace AuthProviderEntry {
 export interface Configuration {
     readonly daysBeforeGarbageCollection: number;
     readonly garbageCollectionStartDate: number;
+    readonly isSingleOrgInstallation: boolean;
 }
 
-export interface TheiaPlugin {
+export interface StripeConfig {
+    individualUsagePriceIds: { [currency: string]: string };
+    teamUsagePriceIds: { [currency: string]: string };
+}
+
+export interface LinkedInProfile {
     id: string;
-    pluginName: string;
-    pluginId?: string;
-    /**
-     * Id of the user which uploaded this plugin.
-     */
-    userId?: string;
-    bucketName: string;
-    path: string;
-    hash?: string;
-    state: TheiaPlugin.State;
-}
-export namespace TheiaPlugin {
-    export enum State {
-        Uploading = "uploading",
-        Uploaded = "uploaded",
-        CheckinFailed = "checkin-failed",
-    }
+    firstName: string;
+    lastName: string;
+    profilePicture: string;
+    emailAddress: string;
 }
 
-export interface TermsAcceptanceEntry {
-    readonly userId: string;
-    readonly termsRevision: string;
-    readonly acceptionTime: string;
-}
-
-export interface Terms {
-    readonly revision: string;
-    readonly activeSince: string;
-    readonly adminOnlyTerms: boolean;
-    readonly updateMessage: string;
-    readonly content: string;
-    readonly formElements?: object;
-}
+export type SuggestedRepository = {
+    url: string;
+    projectId?: string;
+    projectName?: string;
+    repositoryName?: string;
+};

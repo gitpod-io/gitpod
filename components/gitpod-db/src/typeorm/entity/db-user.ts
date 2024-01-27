@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { PrimaryColumn, Entity, Column, OneToMany, JoinColumn, Index } from "typeorm";
@@ -15,6 +15,13 @@ import { Transformer } from "../transformer";
 export class DBUser implements User {
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     id: string;
+
+    @Column({
+        ...TypeORM.UUID_COLUMN_TYPE,
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    organizationId?: string;
 
     @Column("varchar")
     @Index("ind_creationDate")
@@ -78,4 +85,28 @@ export class DBUser implements User {
         nullable: true,
     })
     additionalData?: AdditionalUserData;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    usageAttributionId?: string;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    lastVerificationTime?: string;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    verificationPhoneNumber?: string;
+
+    @Column({
+        default: 0,
+        transformer: Transformer.MAP_ZERO_TO_UNDEFINED,
+    })
+    fgaRelationshipsVersion?: number;
 }

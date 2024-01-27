@@ -1,13 +1,13 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -16,7 +16,11 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpodlib"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
+	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 var (
@@ -30,17 +34,18 @@ var initCmd = &cobra.Command{
 	Long: `
 Create a Gitpod configuration for this project.
 	`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		cfg := gitpodlib.GitpodFile{}
 		if interactive {
-			if err := askForDockerImage(&cfg); err != nil {
-				log.Fatal(err)
+			if err := askForDockerImage(ctx, &cfg); err != nil {
+				return err
 			}
 			if err := askForPorts(&cfg); err != nil {
-				log.Fatal(err)
+				return err
 			}
 			if err := askForTask(&cfg); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		} else {
 			cfg.AddPort(3000)
@@ -49,43 +54,61 @@ Create a Gitpod configuration for this project.
 
 		d, err := yaml.Marshal(cfg)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		if !interactive {
-			d = []byte(`# List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
+			wsInfo, err := gitpod.GetWSInfo(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get workspace info: %w", err)
+			}
+			defaultImage, err := getDefaultWorkspaceImage(ctx, wsInfo)
+			if err != nil {
+				fmt.Printf("failed to get organization default workspace image: %v\n", err)
+				fmt.Println("fallback to gitpod default")
+				defaultImage = "gitpod/workspace-full"
+			}
+			yml := fmt.Sprintf(`# Image of workspace. Learn more: https://www.gitpod.io/docs/configure/workspaces/workspace-image
+image: %s
+
+# List the start up tasks. Learn more: https://www.gitpod.io/docs/configure/workspaces/tasks
 tasks:
-  - init: echo 'init script' # runs during prebuild
+  - name: Script Task
+    init: echo 'init script' # runs during prebuild => https://www.gitpod.io/docs/configure/projects/prebuilds
     command: echo 'start script'
 
-# List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
+# List the ports to expose. Learn more: https://www.gitpod.io/docs/configure/workspaces/ports
 ports:
-  - port: 3000
+  - name: Frontend
+    description: Port 3000 for the frontend
+    port: 3000
     onOpen: open-preview
-`)
+
+# Learn more from ready-to-use templates: https://www.gitpod.io/docs/introduction/getting-started/quickstart
+`, defaultImage)
+			d = []byte(yml)
 		} else {
 			fmt.Printf("\n\n---\n%s", d)
 		}
 
-		if _, err := os.Stat(".gitpod.yml"); err == nil {
+		if _, err = os.Stat(".gitpod.yml"); err == nil {
 			prompt := promptui.Prompt{
 				IsConfirm: true,
 				Label:     ".gitpod.yml file already exists, overwrite?",
 			}
-			if _, err := prompt.Run(); err != nil {
+			if _, err = prompt.Run(); err != nil {
 				fmt.Printf("Not overwriting .gitpod.yml file. Aborting.\n")
-				os.Exit(1)
-				return
+				return GpError{Silence: true, Err: err, OutCome: utils.Outcome_Success}
 			}
 		}
 
-		if err := os.WriteFile(".gitpod.yml", d, 0644); err != nil {
-			log.Fatal(err)
+		if err = os.WriteFile(".gitpod.yml", d, 0644); err != nil {
+			return err
 		}
 
 		// open .gitpod.yml and Dockerfile
 		if v, ok := cfg.Image.(gitpodlib.GitpodImage); ok {
-			if _, err := os.Stat(v.File); os.IsNotExist(err) {
-				if err := os.WriteFile(v.File, []byte(`FROM gitpod/workspace-full
+			if _, err = os.Stat(v.File); os.IsNotExist(err) {
+				if err = os.WriteFile(v.File, []byte(`FROM gitpod/workspace-full
 
 USER gitpod
 
@@ -98,14 +121,32 @@ USER gitpod
 #
 # More information: https://www.gitpod.io/docs/config-docker/
 `), 0644); err != nil {
-					log.Fatal(err)
+					return err
 				}
 			}
 
-			openCmd.Run(cmd, []string{v.File})
+			openCmd.RunE(cmd, []string{v.File})
 		}
-		openCmd.Run(cmd, []string{".gitpod.yml"})
+		return openCmd.RunE(cmd, []string{".gitpod.yml"})
 	},
+}
+
+func getDefaultWorkspaceImage(ctx context.Context, wsInfo *api.WorkspaceInfoResponse) (string, error) {
+	client, err := gitpod.ConnectToServer(ctx, wsInfo, []string{
+		"function:getDefaultWorkspaceImage",
+	})
+	if err != nil {
+		return "", err
+	}
+	defer client.Close()
+
+	res, err := client.GetDefaultWorkspaceImage(ctx, &protocol.GetDefaultWorkspaceImageParams{
+		WorkspaceID: wsInfo.WorkspaceId,
+	})
+	if err != nil {
+		return "", err
+	}
+	return res.Image, nil
 }
 
 func isRequired(input string) error {
@@ -128,7 +169,7 @@ func ask(lbl string, def string, validator promptui.ValidateFunc) (string, error
 	return prompt.Run()
 }
 
-func askForDockerImage(cfg *gitpodlib.GitpodFile) error {
+func askForDockerImage(ctx context.Context, cfg *gitpodlib.GitpodFile) error {
 	prompt := promptui.Select{
 		Label: "Workspace Docker image",
 		Items: []string{"default", "custom image", "docker file"},
@@ -142,6 +183,15 @@ func askForDockerImage(cfg *gitpodlib.GitpodFile) error {
 	}
 
 	if chce == 0 {
+		wsInfo, err := gitpod.GetWSInfo(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get workspace info: %w", err)
+		}
+		defaultImage, err := getDefaultWorkspaceImage(ctx, wsInfo)
+		if err != nil {
+			return fmt.Errorf("failed to get organization default workspace image: %w", err)
+		}
+		cfg.SetImageName(defaultImage)
 		return nil
 	}
 	if chce == 1 {

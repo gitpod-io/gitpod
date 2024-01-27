@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 //go:generate ./generate-mock.sh
 
@@ -14,6 +14,9 @@ import (
 
 	"golang.org/x/xerrors"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	config "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
@@ -25,14 +28,11 @@ const (
 
 	// DefaultBackupManifest is the name of the manifest of the regular default backup we upload
 	DefaultBackupManifest = "wsfull.json"
-
-	// FmtFullWorkspaceBackup is the format for names of full workspace backups
-	FmtFullWorkspaceBackup = "wsfull-%d.tar"
 )
 
 var (
 	// ErrNotFound is returned when an object is not found
-	ErrNotFound = xerrors.Errorf("not found")
+	ErrNotFound = fmt.Errorf("not found")
 )
 
 // BucketNamer provides names for storage buckets
@@ -56,7 +56,7 @@ type InstanceObjectNamer interface {
 // BlobObjectNamer provides names for blob objects
 type BlobObjectNamer interface {
 	// BlobObject returns a blob's object name
-	BlobObject(name string) (string, error)
+	BlobObject(userID, name string) (string, error)
 }
 
 // PresignedAccess provides presigned URLs to access remote storage objects
@@ -80,7 +80,7 @@ type PresignedAccess interface {
 	DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) error
 
 	// DeleteBucket deletes a bucket
-	DeleteBucket(ctx context.Context, bucket string) error
+	DeleteBucket(ctx context.Context, userID, bucket string) error
 
 	// ObjectHash gets a hash value of an object
 	ObjectHash(ctx context.Context, bucket string, obj string) (string, error)
@@ -89,10 +89,10 @@ type PresignedAccess interface {
 	ObjectExists(ctx context.Context, bucket string, path string) (bool, error)
 
 	// BackupObject returns a backup's object name that a direct downloader would download
-	BackupObject(workspaceID string, name string) string
+	BackupObject(ownerID string, workspaceID string, name string) string
 
 	// InstanceObject returns a instance's object name that a direct downloader would download
-	InstanceObject(workspaceID string, instanceID string, name string) string
+	InstanceObject(ownerID string, workspaceID string, instanceID string, name string) string
 }
 
 // ObjectMeta describtes the metadata of a remote object
@@ -165,12 +165,6 @@ type DirectAccess interface {
 
 // UploadOptions configure remote storage upload
 type UploadOptions struct {
-	BackupTrail struct {
-		Enabled      bool
-		ThisBackupID string
-		TrailLength  int
-	}
-
 	// Annotations are generic metadata atteched to a storage object
 	Annotations map[string]string
 
@@ -179,24 +173,6 @@ type UploadOptions struct {
 
 // UploadOption configures a particular aspect of remote storage upload
 type UploadOption func(*UploadOptions) error
-
-// WithBackupTrail enables backup trailing for this upload
-func WithBackupTrail(thisBackupID string, trailLength int) UploadOption {
-	return func(opts *UploadOptions) error {
-		if thisBackupID == "" {
-			return xerrors.Errorf("backup ID is missing")
-		}
-		if trailLength < 1 {
-			return xerrors.Errorf("backup trail length must be greater zero")
-		}
-
-		opts.BackupTrail.Enabled = true
-		opts.BackupTrail.ThisBackupID = thisBackupID
-		opts.BackupTrail.TrailLength = trailLength
-
-		return nil
-	}
-}
 
 // WithAnnotations adds arbitrary metadata to a storage object
 func WithAnnotations(md map[string]string) UploadOption {
@@ -249,6 +225,15 @@ func NewDirectAccess(c *config.StorageConfig) (DirectAccess, error) {
 		return newDirectGCPAccess(c.GCloudConfig, stage)
 	case config.MinIOStorage:
 		return newDirectMinIOAccess(c.MinIOConfig)
+	case config.S3Storage:
+		cfg, err := loadAwsConfig(c.S3Config)
+		if err != nil {
+			return nil, err
+		}
+
+		return newDirectS3Access(s3.NewFromConfig(*cfg), S3Config{
+			Bucket: c.S3Config.Bucket,
+		}), nil
 	default:
 		return &DirectNoopStorage{}, nil
 	}
@@ -266,10 +251,37 @@ func NewPresignedAccess(c *config.StorageConfig) (PresignedAccess, error) {
 		return newPresignedGCPAccess(c.GCloudConfig, stage)
 	case config.MinIOStorage:
 		return newPresignedMinIOAccess(c.MinIOConfig)
+	case config.S3Storage:
+		cfg, err := loadAwsConfig(c.S3Config)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewPresignedS3Access(s3.NewFromConfig(*cfg), S3Config{
+			Bucket: c.S3Config.Bucket,
+		}), nil
 	default:
 		log.Warnf("falling back to noop presigned storage access. Is this intentional? (storage kind: %s)", c.Kind)
 		return &PresignedNoopStorage{}, nil
 	}
+}
+
+func loadAwsConfig(s3config *config.S3Config) (*aws.Config, error) {
+	var opts []func(*awsconfig.LoadOptions) error
+	if s3config.CredentialsFile != "" {
+		opts = append(opts, awsconfig.WithSharedConfigFiles([]string{s3config.CredentialsFile}))
+	}
+
+	if s3config.Region != "" {
+		opts = append(opts, awsconfig.WithRegion(s3config.Region))
+	}
+
+	cfg, err := awsconfig.LoadDefaultConfig(context.TODO(), opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
 }
 
 func extractTarbal(ctx context.Context, dest string, src io.Reader, mappings []archive.IDMapping) error {

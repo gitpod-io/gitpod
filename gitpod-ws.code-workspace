@@ -1,31 +1,125 @@
 {
     "folders": [
-        { "path": "." },
-        { "path": "components/blobserve" },
-        { "path": "components/common-go" },
-        { "path": "components/content-service" },
-        { "path": "components/docker-up" },
-        { "path": "components/ee/agent-smith" },
-        { "path": "components/gitpod-cli" },
-        { "path": "components/gitpod-protocol" },
-        { "path": "components/image-builder-bob" },
-        { "path": "components/image-builder-mk3" },
-        { "path": "components/licensor" },
-        { "path": "components/local-app" },
-        { "path": "components/registry-facade" },
-        { "path": "components/service-waiter" },
-        { "path": "components/supervisor" },
-        { "path": "components/workspacekit" },
-        { "path": "components/ws-daemon" },
-        { "path": "components/ws-manager" },
-        { "path": "components/ws-proxy" },
-        { "path": "test" },
-        { "path": "dev/blowtorch" },
-        { "path": "dev/changelog" },
-        { "path": "dev/gpctl" },
-        { "path": "dev/loadgen" },
-        { "path": "dev/poolkeeper" },
-        { "path": "install/installer" }
+        {
+            "path": "."
+        },
+        {
+            "path": "components/blobserve"
+        },
+        {
+            "path": "components/common-go"
+        },
+        {
+            "path": "components/content-service"
+        },
+        {
+            "path": "components/docker-up"
+        },
+        {
+            "path": "components/ee/agent-smith"
+        },
+        {
+            "path": "components/gitpod-cli"
+        },
+        {
+            "path": "components/gitpod-protocol"
+        },
+        {
+            "path": "components/ide-metrics"
+        },
+        {
+            "path": "components/ide-service"
+        },
+        {
+            "path": "components/image-builder-bob"
+        },
+        {
+            "path": "components/image-builder-mk3"
+        },
+        {
+            "path": "components/local-app"
+        },
+        {
+            "path": "components/registry-facade"
+        },
+        {
+            "path": "components/service-waiter"
+        },
+        {
+            "path": "components/supervisor"
+        },
+        {
+            "path": "components/usage"
+        },
+        {
+            "path": "components/usage-api"
+        },
+        {
+            "path": "components/workspacekit"
+        },
+        {
+            "path": "components/ws-daemon"
+        },
+        {
+            "path": "components/ws-manager-api"
+        },
+        {
+            "path": "components/ws-manager-mk2"
+        },
+        {
+            "path": "components/ws-proxy"
+        },
+        {
+            "path": "components/public-api"
+        },
+        {
+            "path": "components/public-api-server"
+        },
+        {
+            "path": "components/public-api/typescript"
+        },
+        {
+            "path": "components/gitpod-db"
+        },
+        {
+            "path": "test"
+        },
+        {
+            "path": "dev/blowtorch"
+        },
+        {
+            "path": "dev/changelog"
+        },
+        {
+            "path": "dev/gpctl"
+        },
+        {
+            "path": "dev/gp-gcloud"
+        },
+        {
+            "path": "dev/loadgen"
+        },
+        {
+            "path": "dev/preview/previewctl"
+        },
+        {
+            "path": "install/installer"
+        },
+        {
+            "path": "install/preview"
+        },
+        {
+            "path": "components/node-labeler"
+        },
+        {
+            "path": "components/server"
+        },
+        {
+            "path": "components/spicedb"
+        },
+        {
+            "path": "components/spicedb/codegen"
+        }
     ],
     "settings": {
         "typescript.tsdk": "gitpod/node_modules/typescript/lib",
@@ -63,6 +157,6 @@
         "gopls": {
             "allowModfileModifications": true
         },
-        "prettier.configPath": ".prettierrc.json"
+        "prettier.configPath": "/workspace/gitpod/.prettierrc.json"
     }
 }

@@ -1,41 +1,68 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package server
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/server/ide"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var Objects = common.CompositeRenderFunc(
 	configmap,
 	deployment,
-	ide.Objects,
-	networkpolicy,
-	role,
-	rolebinding,
-	common.GenerateService(Component, map[string]common.ServicePort{
-		ContainerPortName: {
+	func(ctx *common.RenderContext) ([]runtime.Object, error) {
+		return Networkpolicy(ctx, Component)
+	},
+	func(ctx *common.RenderContext) ([]runtime.Object, error) {
+		return Role(ctx, Component)
+	},
+	func(ctx *common.RenderContext) ([]runtime.Object, error) {
+		return Rolebinding(ctx, Component)
+	},
+	pdb,
+	common.GenerateService(Component, []common.ServicePort{
+		{
+			Name:          ContainerPortName,
 			ContainerPort: ContainerPort,
 			ServicePort:   ServicePort,
 		},
-		PrometheusPortName: {
-			ContainerPort: PrometheusPort,
-			ServicePort:   PrometheusPort,
+		{
+			Name:          baseserver.BuiltinMetricsPortName,
+			ContainerPort: baseserver.BuiltinMetricsPort,
+			ServicePort:   baseserver.BuiltinMetricsPort,
 		},
-		InstallationAdminName: {
+		{
+			Name:          InstallationAdminName,
 			ContainerPort: InstallationAdminPort,
 			ServicePort:   InstallationAdminPort,
 		},
-		DebugPortName: {
-			ContainerPort: common.DebugPort,
-			ServicePort:   common.DebugPort,
+		{
+			Name:          IAMSessionPortName,
+			ContainerPort: IAMSessionPort,
+			ServicePort:   IAMSessionPort,
 		},
-		DebugNodePortName: {
+		{
+			Name:          DebugPortName,
+			ContainerPort: baseserver.BuiltinDebugPort,
+			ServicePort:   baseserver.BuiltinDebugPort,
+		},
+		{
+			Name:          DebugNodePortName,
 			ContainerPort: common.DebugNodePort,
 			ServicePort:   common.DebugNodePort,
+		},
+		{
+			Name:          GRPCAPIName,
+			ContainerPort: GRPCAPIPort,
+			ServicePort:   GRPCAPIPort,
+		},
+		{
+			Name:          PublicAPIName,
+			ContainerPort: PublicAPIPort,
+			ServicePort:   PublicAPIPort,
 		},
 	}),
 	common.DefaultServiceAccount(Component),

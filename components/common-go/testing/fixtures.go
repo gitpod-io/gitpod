@@ -1,14 +1,16 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package testing
 
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -95,7 +97,7 @@ func (ft *FixtureTest) Run() {
 				goldenFilePath = ft.GoldPath(fn)
 			}
 			if *update {
-				if _, err := os.Stat(goldenFilePath); *force || os.IsNotExist(err) {
+				if _, err := os.Stat(goldenFilePath); *force || errors.Is(err, fs.ErrNotExist) {
 					err = os.WriteFile(goldenFilePath, actual, 0600)
 					if err != nil {
 						t.Errorf("cannot write gold standard %s: %v", goldenFilePath, err)

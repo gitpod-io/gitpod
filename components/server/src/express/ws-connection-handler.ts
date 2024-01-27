@@ -1,15 +1,16 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
-import * as websocket from "ws";
+import express from "express";
+import websocket from "ws";
 import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { WsNextFunction, WsRequestHandler } from "./ws-handler";
+import { ClientMetadata } from "../websocket/websocket-connection-manager";
 
 /**
  * This class provides a websocket handler that manages ping-pong behavior for all incoming websocket requests.
@@ -30,19 +31,20 @@ export class WsConnectionHandler implements Disposable {
                 try {
                     switch (ws.readyState) {
                         case websocket.CLOSED:
-                            // ws should not be in the clients list anymore, but still happens:
-                            // we rely on a 'close' event being generated, but never receive it. At the same time, the readyState is 'CLOSED' (3).
-                            // judging from the ws source code, this might only happen if an earlier registered handler throws an (unhandled) error.
-                            log.warn("websocket in strange state", { readyState: ws.readyState });
+                            // (AT) for unknown reasons the expected `close` event was not emitted, otherwise this websocket would
+                            // no longer be contained in the list of clients iterated over. make sure we release all resources bound
+                            // to this client connection.
+                            const emitClose = (ws as any).emitClose;
+                            if (typeof emitClose === "function") {
+                                this.clients.delete(ws);
 
-                            // the following is a hack trying to mitigate the effects of leaking CLOSED websockets
-                            if (process.env.EXPERIMENTAL_WS_TERMINATION) {
-                                try {
-                                    (ws as any).emitClose();
-                                    log.warn("websocket (experimental): close emitted");
-                                } catch (err) {
-                                    log.error("websocket (experimental): error on emit('close')", err);
-                                }
+                                emitClose();
+                                log.warn(
+                                    "websocket in strange state. forcefully emitting a close event to release resources.",
+                                    {
+                                        clientMetadata: (ws as any).clientMetadata,
+                                    },
+                                );
                             }
                             return;
                         case websocket.CONNECTING:
@@ -89,6 +91,8 @@ export class WsConnectionHandler implements Disposable {
 
     handler(): WsRequestHandler {
         return (ws: websocket, req: express.Request, next: WsNextFunction) => {
+            // attaching ClientMetadata to websocket to use it for logging on websocket errors
+            (ws as any).clientMetadata = ClientMetadata.fromRequest(req);
             // maintain set of clients
             this.clients.add(ws);
             ws.on("close", () => this.clients.delete(ws));

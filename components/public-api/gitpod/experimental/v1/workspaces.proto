@@ -1,0 +1,464 @@
+syntax = "proto3";
+
+package gitpod.experimental.v1;
+
+import "gitpod/experimental/v1/pagination.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
+
+service WorkspacesService {
+  // ListWorkspaces enumerates all workspaces belonging to the authenticated user.
+  rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse) {}
+
+  // GetWorkspace returns a single workspace.
+  rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {}
+
+  // StreamWorkspaceStatus returns workspace status once it changed.
+  rpc StreamWorkspaceStatus(StreamWorkspaceStatusRequest) returns (stream StreamWorkspaceStatusResponse) {}
+
+  // GetOwnerToken returns an owner token.
+  rpc GetOwnerToken(GetOwnerTokenRequest) returns (GetOwnerTokenResponse) {}
+
+  // CreateAndStartWorkspace creates a new workspace and starts it.
+  rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest) returns (CreateAndStartWorkspaceResponse) {}
+
+  // StartWorkspace starts an existing workspace.
+  rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
+
+  // StopWorkspace stops a running workspace (instance).
+  // Errors:
+  //   NOT_FOUND:           the workspace_id is unkown
+  //   FAILED_PRECONDITION: if there's no running instance
+  rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse) {}
+
+  // DeleteWorkspace deletes a workspace.
+  // When the workspace is running, it will be stopped as well.
+  // Deleted workspaces cannot be started again.
+  rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {}
+
+  rpc UpdatePort(UpdatePortRequest) returns (UpdatePortResponse) {}
+
+  // ListWorkspaceClasses enumerates all available workspace classes.
+  rpc ListWorkspaceClasses(ListWorkspaceClassesRequest) returns (ListWorkspaceClassesResponse) {}
+
+  // GetDefaultWorkspaceImage returns the default workspace image from different sources.
+  rpc GetDefaultWorkspaceImage(GetDefaultWorkspaceImageRequest) returns (GetDefaultWorkspaceImageResponse) {}
+}
+
+message ListWorkspacesRequest {
+  Pagination pagination = 1;
+  google.protobuf.FieldMask field_mask = 2;
+  string organization_id = 3;
+}
+message ListWorkspacesResponse {
+  string next_page_token = 1;
+
+  repeated Workspace result = 2;
+}
+
+message GetWorkspaceRequest {
+  string workspace_id = 1;
+}
+message GetWorkspaceResponse {
+  Workspace result = 1;
+}
+
+message StreamWorkspaceStatusRequest {
+  string workspace_id = 1;
+}
+
+message StreamWorkspaceStatusResponse {
+  WorkspaceStatus result = 1;
+}
+
+message GetOwnerTokenRequest {
+  string workspace_id = 1;
+}
+message GetOwnerTokenResponse {
+  string token = 1;
+}
+
+message CreateAndStartWorkspaceRequest {
+  string idempotency_token = 1;
+
+  oneof source {
+    string context_url = 2;
+    string prebuild_id = 3;
+  }
+
+  StartWorkspaceSpec start_spec = 5;
+
+  string organization_id = 6;
+
+  bool ignore_running_workspace_on_same_commit = 7;
+  bool ignore_running_prebuild = 8;
+  bool allow_using_previous_prebuilds = 9;
+  bool force_default_config = 10;
+}
+message CreateAndStartWorkspaceResponse {
+  string workspace_id = 1;
+}
+
+message StartWorkspaceRequest {
+  string workspace_id = 1;
+}
+
+message StartWorkspaceResponse {
+  Workspace result = 1;
+}
+
+message StopWorkspaceRequest {
+  string workspace_id = 1;
+}
+
+message StopWorkspaceResponse {
+  Workspace result = 1;
+}
+
+message DeleteWorkspaceRequest {
+  string workspace_id = 1;
+}
+
+message DeleteWorkspaceResponse {}
+
+message ListWorkspaceClassesRequest {}
+
+message ListWorkspaceClassesResponse {
+  repeated WorkspaceClass result = 1;
+}
+
+////////////////////////////////
+// Shared messages come here
+////////////////////////////////
+
+// Workspace describes a single workspace
+message Workspace {
+  // workspace_id is the ID of the workspace
+  string workspace_id = 1;
+
+  // owner_id is the ID of the user who created this workspace
+  string owner_id = 2;
+
+  // project_id is the ID of the project which this workspace belongs to
+  string project_id = 3;
+
+  // context reports the original context the workspace was created from
+  WorkspaceContext context = 4;
+
+  // description is a human readable description of the workspace
+  string description = 5;
+
+  // status is the current status of this Workspace.
+  WorkspaceStatus status = 6;
+}
+
+// WorkspaceStatus represents the currently observed status of a Workspace, including data about child resources that belong to this Workspace.
+message WorkspaceStatus {
+  // instance is the currently assigned WorkspaceInstance to this workspace. Empty when there is no WorkspaceInstance assigned.
+  WorkspaceInstance instance = 1;
+}
+
+// WorkspaceContext describes the context a workspace was created from
+message WorkspaceContext {
+  // GitProvider describes the git provider
+  message GitProvider {
+    // type is the git provider type, e.g. 'github', 'gitlab', 'bitbucket'
+    string type = 1;
+
+    // hostname is the git provider hostname
+    string hostname = 2;
+  }
+
+  // Repository describes the originating repository
+  message Repository {
+    string name = 1;
+    string owner = 2;
+  }
+
+  // Explicit Git context
+  message Git {
+    string normalized_context_url = 1;
+    Repository repository = 2;
+
+    // provider is the git provider
+    GitProvider provider = 3;
+  }
+
+  // Workspace was created from a prebuild
+  message Prebuild {
+    // original_context is the Git context which lead to the selection
+    // of a prebuild.
+    Git original_context = 1;
+
+    // prebuild_id is the ID of the prebuild which was used to create this workspace
+    string prebuild_id = 2;
+  }
+
+  // Snapshot context points to the snapshot which the workspace was created from
+  message Snapshot {
+    string snapshot_id = 1;
+  }
+
+  // All workspace context originates from a URL - this is the context URL
+  // which led to the creation of a workspace.
+  string context_url = 1;
+
+  oneof details {
+    Git git = 2;
+    Prebuild prebuild = 3;
+    Snapshot snapshot = 4;
+  }
+}
+
+// WorkspaceInstance describes a single workspace instance
+message WorkspaceInstance {
+  // Instance ID is the unique identifier of the workspace instance
+  string instance_id = 1;
+
+  // Workspace ID is the unique identifier of the workspace this instance belongs to
+  string workspace_id = 2;
+
+  google.protobuf.Timestamp created_at = 3;
+
+  WorkspaceInstanceStatus status = 4;
+}
+
+// WorkspaceStatus describes a workspace status
+message WorkspaceInstanceStatus {
+  // Phase is a simple, high-level summary of where the workspace instance is in its lifecycle.
+  // The phase is not intended to be a comprehensive rollup of observations of the workspace state,
+  // nor is it intended to be a comprehensive state machine.
+  // (based on  https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase)
+  enum Phase {
+    // Unknown indicates an issue within the workspace manager in that it cannot determine the actual phase of
+    // a workspace. This phase is usually accompanied by an error.
+    PHASE_UNSPECIFIED = 0;
+
+    // Preparing means that we haven't actually started the workspace instance just yet, but rather
+    // are still preparing for launch.
+    PHASE_PREPARING = 1;
+
+    // ImageBuild indicates that there's an image build running for this workspace.
+    PHASE_IMAGEBUILD = 2;
+
+    // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
+    // some space within the cluster. If for example the cluster needs to scale up to accomodate the
+    // workspace, the workspace will be in Pending state until that happened.
+    PHASE_PENDING = 3;
+
+    // Creating means the workspace is currently being created. That includes downloading the images required
+    // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
+    // network speed, image size and cache states.
+    PHASE_CREATING = 4;
+
+    // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
+    // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
+    PHASE_INITIALIZING = 5;
+
+    // Running means the workspace is able to actively perform work, either by serving a user through Theia,
+    // or as a headless workspace.
+    PHASE_RUNNING = 6;
+
+    // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
+    // When in this state, we expect it to become running or stopping anytime soon.
+    PHASE_INTERRUPTED = 7;
+
+    // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
+    PHASE_STOPPING = 8;
+
+    // Stopped means the workspace ended regularly because it was shut down.
+    PHASE_STOPPED = 9;
+  }
+
+  // Conditions gives more detailed information as to the state of the workspace. Which condition actually
+  // has a value depends on the phase the workspace is in.
+  message Conditions {
+    // failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
+    // This field is filled exclusively when caused by system errors.
+    string failed = 1;
+
+    // timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
+    string timeout = 2;
+
+    // first_user_activity is the time when MarkActive was first called on the workspace
+    google.protobuf.Timestamp first_user_activity = 9;
+
+    // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
+    optional bool stopped_by_request = 11;
+  }
+
+  // version of the status update. Workspace instances themselves are unversioned,
+  // but their statuus has different versions.
+  // The value of this field has no semantic meaning (e.g. don't interpret it as
+  // as a timestemp), but it can be used to impose a partial order.
+  // If a.status_version < b.status_version then a was the status before b.
+  uint64 status_version = 1;
+
+  // the phase of a workspace is a simple, high-level summary of where the workspace instance is in its lifecycle
+  Phase phase = 2;
+
+  // conditions detail the current state of the workspace instance
+  Conditions conditions = 3;
+
+  // message is an optional human-readable message detailing the current phase
+  string message = 4;
+
+  // URL contains the endpoint at which the workspace instance is available
+  string url = 5;
+
+  // Admission describes who can access a workspace instance and its ports.
+  AdmissionLevel admission = 6;
+
+  // ports is the list of exposed ports in the workspace.
+  repeated Port ports = 7;
+
+  // recent_folders is the opened folders inside the workspace. Used to determine the folder path to load the workspace in.
+  repeated string recent_folders = 8;
+
+  // gitStatus details the Git working copy status of the workspace.
+  // Note: this is a best-effort field and more often than not will not be present. Its absence does not
+  // indicate the absence of a working copy.
+  GitStatus git_status = 9;
+}
+
+// PortPolicy defines the accssbility policy of a workspace port is guarded by an authentication in the proxy
+enum PortPolicy {
+  PORT_POLICY_UNSPECIFIED = 0;
+
+  // Private means the port is accessible by the workspace owner only using the workspace port URL
+  PORT_POLICY_PRIVATE = 1;
+
+  // Public means the port is accessible by everybody using the workspace port URL
+  PORT_POLICY_PUBLIC = 2;
+}
+
+// PortProtocol defines the backend protocol of port
+enum PortProtocol {
+  PORT_PROTOCOL_UNSPECIFIED = 0;
+
+  // Http means the port backend is http
+  PORT_PROTOCOL_HTTP = 1;
+
+  // Https means the port backend is https
+  PORT_PROTOCOL_HTTPS = 2;
+}
+
+message Port {
+  // port number
+  uint64 port = 1;
+
+  // policy of this port
+  PortPolicy policy = 2;
+
+  // url that can be used to access the port
+  string url = 3;
+
+  // backend protocol of this port
+  PortProtocol protocol = 4;
+}
+
+// Admission level describes who can access a workspace instance and its ports.
+enum AdmissionLevel {
+  ADMISSION_LEVEL_UNSPECIFIED = 0;
+
+  // ADMISSION_LEVEL_OWNER_ONLY means the workspace can only be accessed using the owner token
+  ADMISSION_LEVEL_OWNER_ONLY = 1;
+
+  // ADMISSION_LEVEL_EVERYONE means the workspace (including ports) can be accessed by everyone.
+  ADMISSION_LEVEL_EVERYONE = 2;
+}
+
+// StartWorkspaceSpec influences the workspace start
+message StartWorkspaceSpec {
+  string workspace_class = 1;
+  IDESettings ide_settings = 2;
+  string region = 3;
+}
+
+message IDESettings {
+  string default_ide = 1;
+  bool use_latest_version = 2;
+}
+
+message PortSpec {
+  // port number
+  uint64 port = 1;
+
+  // policy of this port
+  PortPolicy policy = 2;
+
+  // backend protocol of this port
+  PortProtocol protocol = 3;
+}
+
+message UpdatePortRequest {
+  string workspace_id = 1;
+  PortSpec port = 2;
+}
+
+message UpdatePortResponse {}
+
+// GitStatus describes the current working copy status, akin to a combination of "git status" and "git branch"
+message GitStatus {
+  // branch is branch we're currently on
+  string branch = 1;
+
+  // latest_commit is the most recent commit on the current branch
+  string latest_commit = 2;
+
+  // uncommited_files is an array of uncommitted files, possibly truncated
+  repeated string uncommited_files = 3;
+
+  // the total number of uncommited files
+  int32 total_uncommited_files = 6;
+
+  // untracked_files is an array of untracked files in the workspace, possibly truncated
+  repeated string untracked_files = 4;
+
+  // the total number of untracked files
+  int32 total_untracked_files = 7;
+
+  // unpushed_commits is an array of unpushed changes in the workspace, possibly truncated
+  repeated string unpushed_commits = 5;
+
+  // the total number of unpushed changes
+  int32 total_unpushed_commits = 8;
+}
+
+message WorkspaceClass {
+  // id is the unique identifier of the workspace class
+  string id = 1;
+
+  // display_name is the human readable name of the workspace class
+  string display_name = 2;
+
+  // description is a human readable description of the workspace class
+  string description = 3;
+
+  // is_default indicates if this workspace class is the default one
+  bool is_default = 4;
+}
+
+message GetDefaultWorkspaceImageRequest {
+  optional string workspace_id = 1;
+}
+
+message GetDefaultWorkspaceImageResponse {
+  enum ImageSource {
+    IMAGE_SOURCE_UNSPECIFIED = 0;
+
+    // IMAGE_SOURCE_INSTALLATION means the image from Gitpod instance install config
+    IMAGE_SOURCE_INSTALLATION = 1;
+
+    // IMAGE_SOURCE_ORGANIZATION means the image from  Organization settings
+    IMAGE_SOURCE_ORGANIZATION = 2;
+  }
+
+  // image is the image ref
+  string image = 1;
+
+  // source is the source of the image
+  ImageSource source = 2;
+}

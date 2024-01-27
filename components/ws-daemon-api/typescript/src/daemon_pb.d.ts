@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // package: wsdaemon
@@ -13,7 +13,7 @@
 import * as jspb from "google-protobuf";
 import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
 
-export class InitWorkspaceRequest extends jspb.Message { 
+export class InitWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): InitWorkspaceRequest;
 
@@ -26,18 +26,10 @@ export class InitWorkspaceRequest extends jspb.Message {
     clearInitializer(): void;
     getInitializer(): content_service_api_initializer_pb.WorkspaceInitializer | undefined;
     setInitializer(value?: content_service_api_initializer_pb.WorkspaceInitializer): InitWorkspaceRequest;
-    getFullWorkspaceBackup(): boolean;
-    setFullWorkspaceBackup(value: boolean): InitWorkspaceRequest;
-    getContentManifest(): Uint8Array | string;
-    getContentManifest_asU8(): Uint8Array;
-    getContentManifest_asB64(): string;
-    setContentManifest(value: Uint8Array | string): InitWorkspaceRequest;
     getRemoteStorageDisabled(): boolean;
     setRemoteStorageDisabled(value: boolean): InitWorkspaceRequest;
     getStorageQuotaBytes(): number;
     setStorageQuotaBytes(value: number): InitWorkspaceRequest;
-    getPersistentVolumeClaim(): boolean;
-    setPersistentVolumeClaim(value: boolean): InitWorkspaceRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): InitWorkspaceRequest.AsObject;
@@ -54,15 +46,12 @@ export namespace InitWorkspaceRequest {
         id: string,
         metadata?: WorkspaceMetadata.AsObject,
         initializer?: content_service_api_initializer_pb.WorkspaceInitializer.AsObject,
-        fullWorkspaceBackup: boolean,
-        contentManifest: Uint8Array | string,
         remoteStorageDisabled: boolean,
         storageQuotaBytes: number,
-        persistentVolumeClaim: boolean,
     }
 }
 
-export class WorkspaceMetadata extends jspb.Message { 
+export class WorkspaceMetadata extends jspb.Message {
     getOwner(): string;
     setOwner(value: string): WorkspaceMetadata;
     getMetaId(): string;
@@ -85,7 +74,7 @@ export namespace WorkspaceMetadata {
     }
 }
 
-export class InitWorkspaceResponse extends jspb.Message { 
+export class InitWorkspaceResponse extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): InitWorkspaceResponse.AsObject;
@@ -102,7 +91,7 @@ export namespace InitWorkspaceResponse {
     }
 }
 
-export class WaitForInitRequest extends jspb.Message { 
+export class WaitForInitRequest extends jspb.Message {
     getId(): string;
     setId(value: string): WaitForInitRequest;
 
@@ -122,7 +111,7 @@ export namespace WaitForInitRequest {
     }
 }
 
-export class WaitForInitResponse extends jspb.Message { 
+export class WaitForInitResponse extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WaitForInitResponse.AsObject;
@@ -139,7 +128,47 @@ export namespace WaitForInitResponse {
     }
 }
 
-export class TakeSnapshotRequest extends jspb.Message { 
+export class IsWorkspaceExistsRequest extends jspb.Message {
+    getId(): string;
+    setId(value: string): IsWorkspaceExistsRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): IsWorkspaceExistsRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: IsWorkspaceExistsRequest): IsWorkspaceExistsRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: IsWorkspaceExistsRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): IsWorkspaceExistsRequest;
+    static deserializeBinaryFromReader(message: IsWorkspaceExistsRequest, reader: jspb.BinaryReader): IsWorkspaceExistsRequest;
+}
+
+export namespace IsWorkspaceExistsRequest {
+    export type AsObject = {
+        id: string,
+    }
+}
+
+export class IsWorkspaceExistsResponse extends jspb.Message {
+    getExists(): boolean;
+    setExists(value: boolean): IsWorkspaceExistsResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): IsWorkspaceExistsResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: IsWorkspaceExistsResponse): IsWorkspaceExistsResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: IsWorkspaceExistsResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): IsWorkspaceExistsResponse;
+    static deserializeBinaryFromReader(message: IsWorkspaceExistsResponse, reader: jspb.BinaryReader): IsWorkspaceExistsResponse;
+}
+
+export namespace IsWorkspaceExistsResponse {
+    export type AsObject = {
+        exists: boolean,
+    }
+}
+
+export class TakeSnapshotRequest extends jspb.Message {
     getId(): string;
     setId(value: string): TakeSnapshotRequest;
     getReturnImmediately(): boolean;
@@ -162,7 +191,7 @@ export namespace TakeSnapshotRequest {
     }
 }
 
-export class TakeSnapshotResponse extends jspb.Message { 
+export class TakeSnapshotResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): TakeSnapshotResponse;
 
@@ -182,7 +211,7 @@ export namespace TakeSnapshotResponse {
     }
 }
 
-export class DisposeWorkspaceRequest extends jspb.Message { 
+export class DisposeWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): DisposeWorkspaceRequest;
     getBackup(): boolean;
@@ -208,7 +237,7 @@ export namespace DisposeWorkspaceRequest {
     }
 }
 
-export class DisposeWorkspaceResponse extends jspb.Message { 
+export class DisposeWorkspaceResponse extends jspb.Message {
 
     hasGitStatus(): boolean;
     clearGitStatus(): void;
@@ -231,7 +260,7 @@ export namespace DisposeWorkspaceResponse {
     }
 }
 
-export class BackupWorkspaceRequest extends jspb.Message { 
+export class BackupWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): BackupWorkspaceRequest;
 
@@ -251,7 +280,7 @@ export namespace BackupWorkspaceRequest {
     }
 }
 
-export class BackupWorkspaceResponse extends jspb.Message { 
+export class BackupWorkspaceResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): BackupWorkspaceResponse;
 

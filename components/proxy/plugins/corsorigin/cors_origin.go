@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package plugins
 
@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
@@ -27,9 +28,10 @@ func init() {
 
 // CorsOrigin implements an HTTP handler that generates a valid CORS Origin value
 type CorsOrigin struct {
-	AnyDomain  bool   `json:"any_domain,omitempty"`
-	BaseDomain string `json:"base_domain,omitempty"`
-	Debug      bool   `json:"debug,omitempty"`
+	AnyDomain      bool     `json:"any_domain,omitempty"`
+	BaseDomain     string   `json:"base_domain,omitempty"`
+	AllowedOrigins []string `json:"allowed_origins,omitempty"`
+	Debug          bool     `json:"debug,omitempty"`
 }
 
 // CaddyModule returns the Caddy module information.
@@ -54,9 +56,12 @@ func (m CorsOrigin) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	var allowedOrigins []string
 	if m.AnyDomain {
 		allowedOrigins = []string{"*"}
-	} else {
+	} else if m.BaseDomain != "" {
 		allowedOrigins = []string{"*." + m.BaseDomain}
+	} else if len(m.AllowedOrigins) != 0 {
+		allowedOrigins = m.AllowedOrigins
 	}
+
 	c := cors.New(cors.Options{
 		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   allowedMethods,
@@ -98,8 +103,15 @@ func (m *CorsOrigin) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 			}
 
 			m.AnyDomain = b
+
 		case "base_domain":
 			m.BaseDomain = value
+
+		case "allowed_origins":
+			// comma separated
+			origins := strings.Split(value, ",")
+			m.AllowedOrigins = origins
+
 		case "debug":
 			b, err := strconv.ParseBool(value)
 			if err != nil {
@@ -112,8 +124,12 @@ func (m *CorsOrigin) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 		}
 	}
 
-	if !m.AnyDomain && m.BaseDomain == "" {
-		return fmt.Errorf("Please configure the base_domain subdirective")
+	if m.BaseDomain != "" && len(m.AllowedOrigins) != 0 {
+		return fmt.Errorf("base_domain and allowed_origins subdirectives are mutually exclusive, configure only one of them")
+	}
+
+	if !m.AnyDomain && m.BaseDomain == "" && len(m.AllowedOrigins) == 0 {
+		return fmt.Errorf("Please configure the base_domain or allowed_origins subdirective")
 	}
 
 	return nil

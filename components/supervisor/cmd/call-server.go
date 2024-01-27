@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -51,10 +51,10 @@ var callServerCmd = &cobra.Command{
 		enc.SetEscapeHTML(false)
 		enc.SetIndent("", "  ")
 
-		instanceID, _ := cmd.Flags().GetString("instance-id")
-		updates, err := api.InstanceUpdates(ctx, instanceID)
+		workspaceID, _ := cmd.Flags().GetString("workspace-id")
+		updates, err := api.WorkspaceUpdates(ctx, workspaceID)
 		if err != nil {
-			log.WithError(err).Fatal("InstanceUpdates")
+			log.WithError(err).Fatal("WorkspaceUpdates")
 		}
 		for u := range updates {
 			err := enc.Encode(u)
@@ -68,5 +68,5 @@ var callServerCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(callServerCmd)
 
-	callServerCmd.Flags().String("instance-id", os.Getenv("GITPOD_INSTANCE_ID"), "instance ID to listen for")
+	callServerCmd.Flags().String("workspace-id", os.Getenv("GITPOD_WORKSPACE_ID"), "workspace ID to listen for")
 }

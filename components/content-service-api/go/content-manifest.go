@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package api
 
@@ -19,18 +19,8 @@ const (
 
 // WorkspaceContentManifest describes the content that makes up a workspace
 type WorkspaceContentManifest struct {
-	Type WorkspaceContentType `json:"type"`
-
 	Layers []WorkspaceContentLayer `json:"layers"`
 }
-
-// WorkspaceContentType is the type of workspace content this manifest describes
-type WorkspaceContentType string
-
-const (
-	// TypeFullWorkspaceContentV1 is the content type for a v1 full workspace backup manifest
-	TypeFullWorkspaceContentV1 WorkspaceContentType = "application/vnd.gitpod.wsfull.v1"
-)
 
 // WorkspaceContentLayer describes the disposition of a single content layer.
 type WorkspaceContentLayer struct {

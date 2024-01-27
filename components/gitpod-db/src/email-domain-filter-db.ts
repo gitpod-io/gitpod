@@ -1,14 +1,15 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { EmailDomainFilterEntry } from "@gitpod/gitpod-protocol";
 
 export const EmailDomainFilterDB = Symbol("EmailDomainFilterDB");
 export interface EmailDomainFilterDB {
-    storeFilterEntry(entry: EmailDomainFilterEntry): Promise<void>;
+    storeFilterEntry(entry: EmailDomainFilterEntry): Promise<EmailDomainFilterEntry>;
+    getFilterEntries(): Promise<EmailDomainFilterEntry[]>;
 
     /**
      * @param emailDomain

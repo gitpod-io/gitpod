@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package proxy
 
@@ -14,10 +14,11 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 )
 
 // WorkspaceAuthHandler rejects requests which are not authenticated or authorized to access a workspace.
-func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.MiddlewareFunc {
+func WorkspaceAuthHandler(domain string, info common.WorkspaceInfoProvider) mux.MiddlewareFunc {
 	return func(h http.Handler) http.Handler {
 		cookiePrefix := domain
 		for _, c := range []string{" ", "-", "."} {
@@ -29,8 +30,8 @@ func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.Middlew
 			var (
 				log  = getLog(req.Context())
 				vars = mux.Vars(req)
-				wsID = vars[workspaceIDIdentifier]
-				port = vars[workspacePortIdentifier]
+				wsID = vars[common.WorkspaceIDIdentifier]
+				port = vars[common.WorkspacePortIdentifier]
 			)
 			if wsID == "" {
 				log.Warn("workspace request without workspace ID")
@@ -41,7 +42,6 @@ func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.Middlew
 
 			ws := info.WorkspaceInfo(wsID)
 			if ws == nil {
-				log.WithField("workspaceId", wsID).Warn("did not find workspace info")
 				resp.WriteHeader(http.StatusNotFound)
 
 				return

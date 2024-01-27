@@ -1,0 +1,36 @@
+{
+  "name": "pycharm",
+  "displayName": "PyCharm",
+  "version": "latest",
+  "entrypoint": "/ide-desktop/jb-launcher",
+  "entrypointArgs": [
+    "{DESKTOPIDEPORT}",
+    "pycharm",
+    "Open in PyCharm"
+  ],
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "/status"
+    }
+  },
+  "env": {
+    "JETBRAINS_BACKEND_QUALIFIER": "latest",
+    "PATH": "/ide-desktop/pycharm-latest/bin:$PATH",
+    "EDITOR": "/ide-desktop/pycharm-latest/bin/idea-cli open",
+    "VISUAL": "$EDITOR",
+    "GP_OPEN_EDITOR": "$EDITOR",
+    "GIT_EDITOR": "$EDITOR --wait",
+    "GP_PREVIEW_BROWSER": "/ide-desktop/pycharm-latest/bin/idea-cli preview",
+    "GP_EXTERNAL_BROWSER": "/ide-desktop/pycharm-latest/bin/idea-cli preview"
+  },
+  "prebuild": {
+    "args": [
+      "warmup",
+      "pycharm"
+    ],
+    "env": {
+      "JETBRAINS_BACKEND_QUALIFIER": "latest"
+    }
+  }
+}

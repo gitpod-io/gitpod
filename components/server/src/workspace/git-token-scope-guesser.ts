@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { AuthProviderInfo, GuessedGitTokenScopes, GuessGitTokenScopesParams } from "@gitpod/gitpod-protocol";
@@ -11,15 +11,12 @@ import { GitTokenValidator } from "./git-token-validator";
 
 @injectable()
 export class GitTokenScopeGuesser {
-    @inject(GitTokenValidator) tokenValidator: GitTokenValidator;
+    constructor(@inject(GitTokenValidator) private readonly tokenValidator: GitTokenValidator) {}
 
     async guessGitTokenScopes(
-        authProvider: AuthProviderInfo | undefined,
-        params: GuessGitTokenScopesParams,
+        authProvider: AuthProviderInfo,
+        params: GuessGitTokenScopesParams & { currentToken?: string },
     ): Promise<GuessedGitTokenScopes> {
-        if (!authProvider) {
-            return { message: "Unknown host" };
-        }
         const { repoUrl, gitCommand, currentToken } = params;
 
         const parsedRepoUrl = repoUrl && RepoURL.parseRepoUrl(repoUrl);
@@ -30,13 +27,13 @@ export class GitTokenScopeGuesser {
         const { host, repo, owner, repoKind } = parsedRepoUrl;
 
         // in case of git operation which require write access to a remote
-        if (gitCommand === "push") {
+        if (currentToken && gitCommand === "push") {
             const validationResult = await this.tokenValidator.checkWriteAccess({
                 host,
                 owner,
                 repo,
                 repoKind,
-                token: currentToken.token,
+                token: currentToken,
             });
             const hasWriteAccess = validationResult && validationResult.writeAccessToRepo === true;
             if (hasWriteAccess) {

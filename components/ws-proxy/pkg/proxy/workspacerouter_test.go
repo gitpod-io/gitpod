@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package proxy
 
@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
 )
@@ -23,6 +24,7 @@ func TestWorkspaceRouter(t *testing.T) {
 		Status             int
 		URL                string
 		AdditionalHitCount int
+		DebugWorkspace     string
 	}
 	tests := []struct {
 		Name         string
@@ -30,7 +32,7 @@ func TestWorkspaceRouter(t *testing.T) {
 		Headers      map[string]string
 		WSHostSuffix string
 		Router       WorkspaceRouter
-		Infos        []WorkspaceInfo
+		Infos        []common.WorkspaceInfo
 		Expected     Expectation
 	}{
 		{
@@ -45,6 +47,21 @@ func TestWorkspaceRouter(t *testing.T) {
 				WorkspaceID: "amaranth-smelt-9ba20cc1",
 				Status:      http.StatusOK,
 				URL:         "http://amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
+			},
+		},
+		{
+			Name: "host-based debug workspace access",
+			URL:  "http://debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
+			Headers: map[string]string{
+				forwardedHostnameHeader: "debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev",
+			},
+			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix, wsHostRegex),
+			WSHostSuffix: wsHostSuffix,
+			Expected: Expectation{
+				DebugWorkspace: "true",
+				WorkspaceID:    "amaranth-smelt-9ba20cc1",
+				Status:         http.StatusOK,
+				URL:            "http://debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			},
 		},
 		{
@@ -63,16 +80,19 @@ func TestWorkspaceRouter(t *testing.T) {
 			},
 		},
 		{
-			Name: "host-based blobserve access",
-			URL:  "http://blobserve.ws.gitpod.dev/image:version:/foo/main.js",
+			Name: "host-based debug port access",
+			URL:  "http://1234-debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			Headers: map[string]string{
-				forwardedHostnameHeader: "blobserve.ws.gitpod.dev",
+				forwardedHostnameHeader: "1234-debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev",
 			},
 			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix, wsHostRegex),
 			WSHostSuffix: wsHostSuffix,
 			Expected: Expectation{
-				Status: http.StatusOK,
-				URL:    "http://blobserve.ws.gitpod.dev/image:version:/foo/main.js",
+				DebugWorkspace: "true",
+				WorkspaceID:    "amaranth-smelt-9ba20cc1",
+				WorkspacePort:  "1234",
+				Status:         http.StatusOK,
+				URL:            "http://1234-debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			},
 		},
 	}
@@ -90,8 +110,9 @@ func TestWorkspaceRouter(t *testing.T) {
 					return
 				}
 
-				act.WorkspaceID = vars[workspaceIDIdentifier]
-				act.WorkspacePort = vars[workspacePortIdentifier]
+				act.WorkspaceID = vars[common.WorkspaceIDIdentifier]
+				act.WorkspacePort = vars[common.WorkspacePortIdentifier]
+				act.DebugWorkspace = vars[common.DebugWorkspaceIdentifier]
 				act.URL = req.URL.String()
 				act.AdditionalHitCount++
 			}
@@ -162,66 +183,17 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Path:       "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly@sha256:41aeea688aa0943bd746cb70c4ed378910f7c7ecf56f5f53ccb2b76c6b68e1a7/__files__/index.html",
 		},
 		{
+			Name:       "no match 3",
+			HostHeader: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
+			Path:       "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly@sha256:41aeea688aa0943bd746cb70c4ed378910f7c7ecf56f5f53ccb2b76c6b68e1a7/__files__/index.html",
+		},
+		{
 			Name:       "workspace match",
 			HostHeader: "amaranth-smelt-9ba20cc1" + wsHostSuffix,
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
-					workspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
-				},
-			},
-		},
-		{
-			Name:       "unique webview workspace match 2",
-			HostHeader: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
-			Path:       "/amaranth-smelt-9ba20cc1/index.html",
-			Expected: matchResult{
-				MatchesWorkspace: true,
-				WorkspaceVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					foreignOriginIdentifier: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
-					foreignPathIdentifier:   "/index.html",
-				},
-			},
-		},
-		{
-			Name:       "unique webview port match 2",
-			HostHeader: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
-			Path:       "/8080-amaranth-smelt-9ba20cc1/index.html",
-			Expected: matchResult{
-				MatchesPort: true,
-				PortVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					workspacePortIdentifier: "8080",
-					foreignOriginIdentifier: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
-					foreignPathIdentifier:   "/index.html",
-				},
-			},
-		},
-		{
-			Name:       "unique webworker workspace match",
-			HostHeader: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
-			Path:       "/amaranth-smelt-9ba20cc1/index.html",
-			Expected: matchResult{
-				MatchesWorkspace: true,
-				WorkspaceVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					foreignOriginIdentifier: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
-					foreignPathIdentifier:   "/index.html",
-				},
-			},
-		},
-		{
-			Name:       "unique webworker port match",
-			HostHeader: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
-			Path:       "/8080-amaranth-smelt-9ba20cc1/index.html",
-			Expected: matchResult{
-				MatchesPort: true,
-				PortVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					workspacePortIdentifier: "8080",
-					foreignOriginIdentifier: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
-					foreignPathIdentifier:   "/index.html",
+					common.WorkspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
 				},
 			},
 		},
@@ -231,8 +203,8 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					workspacePortIdentifier: "8080",
+					common.WorkspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
+					common.WorkspacePortIdentifier: "8080",
 				},
 			},
 		},

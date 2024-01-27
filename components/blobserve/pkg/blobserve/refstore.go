@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package blobserve
 
@@ -16,6 +16,7 @@ import (
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/xerrors"
 
+	blobserve_config "github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
 )
@@ -53,7 +54,7 @@ type refstore struct {
 	once  *sync.Once
 }
 
-func newRefStore(cfg Config, resolver ResolverProvider) (*refstore, error) {
+func newRefStore(cfg blobserve_config.BlobServe, resolver ResolverProvider) (*refstore, error) {
 	bs, err := newBlobSpace(cfg.BlobSpace.Location, cfg.BlobSpace.MaxSize, 10*time.Minute)
 	if err != nil {
 		return nil, err

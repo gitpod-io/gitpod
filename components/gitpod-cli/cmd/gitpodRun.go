@@ -1,16 +1,16 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
 import (
 	"encoding/base64"
 	"io"
-	"log"
 	"os"
 	"syscall"
 
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +26,10 @@ var gitpodRunCmd = &cobra.Command{
 	Short:  "Used by Gitpod to ensure smooth operation",
 	Hidden: true,
 	Args:   cobra.MaximumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// ignore trace
+		utils.TrackCommandUsageEvent.Command = nil
+
 		var tmpfile *os.File
 		var err error
 		if len(args) == 1 {
@@ -36,27 +39,28 @@ var gitpodRunCmd = &cobra.Command{
 		}
 		if err != nil {
 			_ = os.Remove(tmpfile.Name())
-			log.Fatal(err)
+			return err
 		}
 
 		decoder := base64.NewDecoder(base64.RawStdEncoding, &delimitingReader{os.Stdin, false})
 		_, err = io.Copy(tmpfile, decoder)
 		if err != nil {
 			_ = os.Remove(tmpfile.Name())
-			log.Fatal(err)
+			return err
 		}
 		tmpfile.Close()
 
 		err = os.Chmod(tmpfile.Name(), 0700)
 		if err != nil {
 			_ = os.Remove(tmpfile.Name())
-			log.Fatal(err)
+			return err
 		}
 		err = syscall.Exec(tmpfile.Name(), []string{"gpr", "serve"}, []string{})
 		if err != nil {
 			_ = os.Remove(tmpfile.Name())
-			log.Fatal(err)
+			return err
 		}
+		return nil
 	},
 }
 

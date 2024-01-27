@@ -1,28 +1,34 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
-// Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+/// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package wsmanagerbridge
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestWorkspaceManagerList_WhenSkipSelfIsSet(t *testing.T) {
 	testCases := []struct {
+		Kind                    config.InstallationKind
 		SkipSelf                bool
 		ExpectWorkspaceClusters bool
 	}{
-		{SkipSelf: true, ExpectWorkspaceClusters: false},
-		{SkipSelf: false, ExpectWorkspaceClusters: true},
+		{Kind: config.InstallationMeta, SkipSelf: true, ExpectWorkspaceClusters: false},
+		{Kind: config.InstallationMeta, SkipSelf: false, ExpectWorkspaceClusters: false}, // cannot mount anything it if there is nothing to mount
+		{Kind: config.InstallationFull, SkipSelf: true, ExpectWorkspaceClusters: false},
+		{Kind: config.InstallationFull, SkipSelf: false, ExpectWorkspaceClusters: true},
 	}
 
 	for _, testCase := range testCases {
-		ctx := renderContextWithConfig(t, testCase.SkipSelf)
+		ctx := renderContextWithConfig(t, testCase.Kind, testCase.SkipSelf)
 
 		wsclusters := WSManagerList(ctx)
 		if testCase.ExpectWorkspaceClusters {
@@ -33,8 +39,9 @@ func TestWorkspaceManagerList_WhenSkipSelfIsSet(t *testing.T) {
 	}
 }
 
-func renderContextWithConfig(t *testing.T, skipSelf bool) *common.RenderContext {
+func renderContextWithConfig(t *testing.T, kind config.InstallationKind, skipSelf bool) *common.RenderContext {
 	ctx, err := common.NewRenderContext(config.Config{
+		Kind: kind,
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
 				WorkspaceManagerBridge: &experimental.WsManagerBridgeConfig{

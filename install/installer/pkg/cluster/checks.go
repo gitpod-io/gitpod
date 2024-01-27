@@ -1,12 +1,14 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cluster
 
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/netip"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -23,40 +25,6 @@ const (
 	kernelVersionConstraint     = ">= 5.4.0-0"
 	kubernetesVersionConstraint = ">= 1.21.0-0"
 )
-
-// checkAffinityLabels validates that the nodes have all the required affinity labels applied
-// It assumes all the values are `true`
-func checkAffinityLabels(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
-	nodes, err := listNodesFromContext(ctx, config)
-	if err != nil {
-		return nil, err
-	}
-
-	affinityList := map[string]bool{}
-	for _, affinity := range AffinityList {
-		affinityList[affinity] = false
-	}
-
-	var res []ValidationError
-	for _, node := range nodes {
-		for k, v := range node.GetLabels() {
-			if _, found := affinityList[k]; found {
-				affinityList[k] = v == "true"
-			}
-		}
-	}
-
-	// Check all the values in the map are `true`
-	for k, v := range affinityList {
-		if !v {
-			res = append(res, ValidationError{
-				Message: "Affinity label not found in cluster: " + k,
-				Type:    ValidationStatusError,
-			})
-		}
-	}
-	return res, nil
-}
 
 // checkCertManagerInstalled checks that cert-manager is installed as a cluster dependency
 func checkCertManagerInstalled(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
@@ -91,7 +59,7 @@ func checkCertManagerInstalled(ctx context.Context, config *rest.Config, namespa
 
 // checkContainerDRuntime checks that the nodes are running with the containerd runtime
 func checkContainerDRuntime(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
-	nodes, err := listNodesFromContext(ctx, config)
+	nodes, err := ListNodesFromContext(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +107,7 @@ func checkKubernetesVersion(ctx context.Context, config *rest.Config, namespace 
 		})
 	}
 
-	nodes, err := listNodesFromContext(ctx, config)
+	nodes, err := ListNodesFromContext(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +231,7 @@ func checkKernelVersion(ctx context.Context, config *rest.Config, namespace stri
 		return nil, err
 	}
 
-	nodes, err := listNodesFromContext(ctx, config)
+	nodes, err := ListNodesFromContext(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -324,4 +292,65 @@ func checkNamespaceExists(ctx context.Context, config *rest.Config, namespace st
 	}
 
 	return nil, nil
+}
+
+func CheckWorkspaceCIDR(networkCIDR string) ValidationCheck {
+	return ValidationCheck{
+		Name:        "workspace CIDR is present and valid",
+		Description: "ensures the workspace CIDR contains a valid network address range",
+		Check: func(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
+			netIP, ipNet, err := net.ParseCIDR(networkCIDR)
+			if err != nil {
+				return []ValidationError{
+					{
+						Message: fmt.Sprintf("invalid workspace CIDR: %v", err),
+						Type:    ValidationStatusError,
+					},
+				}, nil
+			}
+
+			ipNet.Mask.Size()
+			mask, _ := ipNet.Mask.Size()
+			if mask > 30 {
+				return []ValidationError{
+					{
+						Message: "the workspace CIDR does not have a mask less than or equal to /30",
+						Type:    ValidationStatusError,
+					},
+				}, nil
+			}
+
+			addr, err := netip.ParseAddr(netIP.String())
+			if err != nil {
+				return []ValidationError{
+					{
+						Message: fmt.Sprintf("invalid workspace CIDR: %v", err),
+						Type:    ValidationStatusError,
+					},
+				}, nil
+			}
+
+			vethIp := addr.Next()
+			if !vethIp.IsValid() {
+				return []ValidationError{
+					{
+						Message: fmt.Sprintf("workspace CIDR is not big enough (%v)", networkCIDR),
+						Type:    ValidationStatusError,
+					},
+				}, nil
+			}
+
+			cethIp := vethIp.Next()
+			if !cethIp.IsValid() {
+				return []ValidationError{
+					{
+						Message: fmt.Sprintf("workspace CIDR is not big enough (%v)", networkCIDR),
+						Type:    ValidationStatusError,
+					},
+				}, nil
+			}
+
+			return nil, nil
+		},
+	}
 }

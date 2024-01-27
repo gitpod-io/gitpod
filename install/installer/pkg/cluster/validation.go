@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cluster
 
@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
@@ -66,11 +67,6 @@ var ClusterChecks = ValidationChecks{
 		Check:       checkKubernetesVersion,
 	},
 	{
-		Name:        "affinity labels",
-		Check:       checkAffinityLabels,
-		Description: "all required affinity node labels " + fmt.Sprint(AffinityList) + " are present in the cluster",
-	},
-	{
 		Name:        "cert-manager installed",
 		Check:       checkCertManagerInstalled,
 		Description: "cert-manager is installed and has available issuer",
@@ -100,7 +96,7 @@ func (checks ValidationChecks) Validate(ctx context.Context, config *rest.Config
 	}
 	ctx = context.WithValue(ctx, keyClientset, client)
 
-	list, err := listNodesFromContext(ctx, config)
+	list, err := ListNodesFromContext(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +143,7 @@ const (
 	keyClientset = "clientset"
 )
 
-func listNodesFromContext(ctx context.Context, config *rest.Config) ([]corev1.Node, error) {
+func ListNodesFromContext(ctx context.Context, config *rest.Config) ([]corev1.Node, error) {
 	client, err := clientsetFromContext(ctx, config)
 	if err != nil {
 		return nil, err

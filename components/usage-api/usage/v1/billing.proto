@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package usage.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/usage-api/v1";
+
+service BillingService {
+  // ReconcileInvoices retrieves current credit balance and reflects it in
+  // billing system. Internal RPC, not intended for general consumption.
+  rpc ReconcileInvoices(ReconcileInvoicesRequest)
+      returns (ReconcileInvoicesResponse) {};
+
+  // FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
+  // having been invoiced.
+  rpc FinalizeInvoice(FinalizeInvoiceRequest)
+      returns (FinalizeInvoiceResponse) {};
+
+  // CancelSubscription cancels a stripe subscription in our system
+  // Called by a stripe webhook
+  rpc CancelSubscription(CancelSubscriptionRequest)
+      returns (CancelSubscriptionResponse) {};
+
+  // GetStripeCustomer retrieves a Stripe Customer
+  rpc GetStripeCustomer(GetStripeCustomerRequest)
+      returns (GetStripeCustomerResponse) {};
+
+  rpc CreateStripeCustomer(CreateStripeCustomerRequest)
+      returns (CreateStripeCustomerResponse) {};
+
+  // CreateHoldPaymentIntent is meant to create a PaymentIntent for the given
+  // customer, that is meant as measure to verify the payment
+  // method/creditability of this user on first signup, before we create the
+  // subscription
+  rpc CreateHoldPaymentIntent(CreateHoldPaymentIntentRequest)
+      returns (CreateHoldPaymentIntentResponse) {};
+
+  rpc CreateStripeSubscription(CreateStripeSubscriptionRequest)
+      returns (CreateStripeSubscriptionResponse) {};
+
+  // GetPriceInformation returns the price information for a given attribtion id
+  rpc GetPriceInformation(GetPriceInformationRequest)
+      returns (GetPriceInformationResponse) {};
+
+  // OnChargeDispute handles charge disputes created with the underlying payment
+  // provider.
+  rpc OnChargeDispute(OnChargeDisputeRequest)
+      returns (OnChargeDisputeResponse) {};
+}
+
+message ReconcileInvoicesRequest {}
+
+message ReconcileInvoicesResponse {}
+
+message FinalizeInvoiceRequest { string invoice_id = 1; }
+
+message FinalizeInvoiceResponse {}
+
+message CancelSubscriptionRequest { string subscription_id = 1; }
+
+message CancelSubscriptionResponse {}
+
+message GetStripeCustomerRequest {
+  oneof identifier {
+    string attribution_id = 1;
+    string stripe_customer_id = 2;
+  }
+}
+
+message GetStripeCustomerResponse {
+  StripeCustomer customer = 1;
+  string attribution_id = 2;
+}
+
+message StripeCustomer {
+  string id = 1;
+  string currency = 2;
+}
+
+message CreateStripeCustomerRequest {
+  string attribution_id = 1;
+
+  // name is the customer name
+  string name = 2;
+  string email = 3;
+  string currency = 4;
+  // Gitpod User ID for the user setting up billing.
+  string billing_creator_user_id = 5;
+}
+
+message CreateStripeCustomerResponse { StripeCustomer customer = 1; }
+
+message CreateHoldPaymentIntentRequest { string attribution_id = 1; }
+
+message CreateHoldPaymentIntentResponse {
+  string payment_intent_id = 1;
+  string payment_intent_client_secret = 2;
+}
+
+message CreateStripeSubscriptionRequest {
+  string attribution_id = 1;
+
+  // was used for setup_intent_id
+  reserved 2;
+
+  int64 usage_limit = 3;
+  string payment_intent_id = 4;
+}
+
+message CreateStripeSubscriptionResponse {
+  StripeSubscription subscription = 1;
+}
+
+message StripeSubscription { string id = 1; }
+
+message GetPriceInformationRequest { string attribution_id = 1; }
+
+message GetPriceInformationResponse { string human_readable_description = 2; }
+
+message OnChargeDisputeRequest { string dispute_id = 1; }
+
+message OnChargeDisputeResponse {}

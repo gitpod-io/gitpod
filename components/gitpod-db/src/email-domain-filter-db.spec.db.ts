@@ -1,15 +1,15 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import * as chai from "chai";
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { testContainer } from "./test-container";
 import { TypeORM } from "./typeorm/typeorm";
 import { EmailDomainFilterDB } from "./email-domain-filter-db";
-import { DBEmailDomainFilterEntry } from "./typeorm/entity/db-email-domain-filter-entry";
+import { resetDB } from "./test/reset-db";
 const expect = chai.expect;
 
 @suite
@@ -27,9 +27,7 @@ export class EmailDomainFilterDBSpec {
     }
 
     protected async clear() {
-        const connection = await this.typeORM.getConnection();
-        const manager = connection.manager;
-        await manager.clear(DBEmailDomainFilterEntry);
+        await resetDB(this.typeORM);
     }
 
     @test public async filterSimple() {

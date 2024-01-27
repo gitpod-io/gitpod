@@ -1,23 +1,29 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package io.gitpod.jetbrains.remote
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.application
+import com.intellij.util.net.ssl.CertificateManager
+import com.intellij.util.proxy.CommonProxy
 import com.jetbrains.rd.util.lifetime.Lifetime
 import git4idea.config.GitVcsApplicationSettings
 import io.gitpod.gitpodprotocol.api.GitpodClient
 import io.gitpod.gitpodprotocol.api.GitpodServerLauncher
+import io.gitpod.gitpodprotocol.api.entities.RemoteTrackMessage
 import io.gitpod.jetbrains.remote.services.HeartbeatService
 import io.gitpod.jetbrains.remote.utils.Retrier.retry
 import io.gitpod.supervisor.api.*
@@ -28,6 +34,7 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
 import io.prometheus.client.CollectorRegistry
+import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
 import io.prometheus.client.exporter.PushGateway
 import kotlinx.coroutines.GlobalScope
@@ -38,6 +45,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.ide.BuiltInServerManager
 import java.net.URI
+import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
@@ -46,6 +54,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import javax.websocket.DeploymentException
 
+@Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 @Service
 class GitpodManager : Disposable {
 
@@ -64,13 +73,29 @@ class GitpodManager : Disposable {
         lifetime.terminate()
     }
 
+    val registry = CollectorRegistry()
+
     init {
-        val monitoringJob =  GlobalScope.launch {
+        // Rate of low memory after GC notifications in the last 5 minutes:
+        // rate(gitpod_jb_backend_low_memory_after_gc_total[5m])
+        val lowMemoryCounter = Counter.build()
+            .name("gitpod_jb_backend_low_memory_after_gc")
+            .help("Low memory notifications after GC")
+            .labelNames("product", "qualifier")
+            .register(registry)
+        LowMemoryWatcher.register({
+            lowMemoryCounter.labels(backendKind, backendQualifier).inc()
+         }, LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC, this)
+    }
+
+    init {
+        val monitoringJob = GlobalScope.launch {
             if (application.isHeadlessEnvironment) {
                 return@launch
             }
-            val pg = PushGateway("localhost:22999")
-            val registry = CollectorRegistry()
+            val pg = if(devMode) null else PushGateway("localhost:22999")
+            // Heap usage at any time in the last 5 minutes:
+            // max_over_time(gitpod_jb_backend_memory_used_bytes[5m:])/max_over_time(gitpod_jb_backend_memory_max_bytes[5m:])
             val allocatedGauge = Gauge.build()
                     .name("gitpod_jb_backend_memory_max_bytes")
                     .help("Total allocated memory of JB backend in bytes.")
@@ -81,13 +106,14 @@ class GitpodManager : Disposable {
                     .help("Used memory of JB backend in bytes.")
                     .labelNames("product", "qualifier")
                     .register(registry)
-            while(isActive) {
+
+            while (isActive) {
                 val totalMemory = Runtime.getRuntime().totalMemory()
                 allocatedGauge.labels(backendKind, backendQualifier).set(totalMemory.toDouble())
                 val usedMemory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())
                 usedGauge.labels(backendKind, backendQualifier).set(usedMemory.toDouble())
                 try {
-                    pg.push(registry, "jb_backend")
+                    pg?.push(registry, "jb_backend")
                 } catch (t: Throwable) {
                     thisLogger().error("gitpod: failed to push monitoring metrics:", t)
                 }
@@ -108,7 +134,7 @@ class GitpodManager : Disposable {
                     .connectTimeout(Duration.ofSeconds(5))
                     .build()
                 val httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:24000/gatewayLink?backendPort=${backendPort}"))
+                    .uri(URI.create("http://localhost:24000/gatewayLink?backendPort=$backendPort"))
                     .GET()
                     .build()
                 val response =
@@ -133,7 +159,7 @@ class GitpodManager : Disposable {
         GitVcsApplicationSettings.getInstance().isUseCredentialHelper = true
     }
 
-    private val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
+    val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
     private val notificationsJob = GlobalScope.launch {
         if (application.isHeadlessEnvironment) {
             return@launch
@@ -199,14 +225,16 @@ class GitpodManager : Disposable {
         }
     }
 
+    var infoResponse: WorkspaceInfoResponse? = null
     val pendingInfo = CompletableFuture<WorkspaceInfoResponse>()
+
     private val infoJob = GlobalScope.launch {
         if (application.isHeadlessEnvironment) {
             return@launch
         }
         try {
             // TODO(ak) replace retry with proper handling of grpc errors
-            val infoResponse = retry(3) {
+            infoResponse = retry(3) {
                 InfoServiceGrpc
                         .newFutureStub(supervisorChannel)
                         .workspaceInfo(Info.WorkspaceInfoRequest.newBuilder().build())
@@ -232,7 +260,11 @@ class GitpodManager : Disposable {
         val tokenResponse = retry(3) {
             val request = Token.GetTokenRequest.newBuilder()
                     .setHost(info.gitpodApi.host)
+                    .addScope("function:openPort")
                     .addScope("function:sendHeartBeat")
+                    .addScope("function:setWorkspaceTimeout")
+                    .addScope("function:stopWorkspace")
+                    .addScope("function:takeSnapshot")
                     .addScope("function:trackEvent")
                     .setKind("gitpod")
                     .build()
@@ -249,24 +281,30 @@ class GitpodManager : Disposable {
         val connect = {
             val originalClassLoader = Thread.currentThread().contextClassLoader
             try {
+                val proxies = CommonProxy.getInstance().select(URL(info.gitpodHost))
+                val sslContext = CertificateManager.getInstance().sslContext
+
                 // see https://intellij-support.jetbrains.com/hc/en-us/community/posts/360003146180/comments/360000376240
                 Thread.currentThread().contextClassLoader = HeartbeatService::class.java.classLoader
+
                 launcher.listen(
                         info.gitpodApi.endpoint,
                         info.gitpodHost,
                         plugin.pluginId.idString,
                         plugin.version,
-                        tokenResponse.token
+                        tokenResponse.token,
+                        proxies,
+                        sslContext
                 )
             } finally {
-                Thread.currentThread().contextClassLoader = originalClassLoader;
+                Thread.currentThread().contextClassLoader = originalClassLoader
             }
         }
 
         val minReconnectionDelay = 2 * 1000L
         val maxReconnectionDelay = 30 * 1000L
-        val reconnectionDelayGrowFactor = 1.5;
-        var reconnectionDelay = minReconnectionDelay;
+        val reconnectionDelayGrowFactor = 1.5
+        var reconnectionDelay = minReconnectionDelay
         val gitpodHost = info.gitpodApi.host
         var closeReason: Any = "cancelled"
         try {
@@ -306,5 +344,64 @@ class GitpodManager : Disposable {
         lifetime.onTerminationOrNow {
             serverJob.cancel()
         }
+    }
+
+    private val versionName = ApplicationInfo.getInstance().versionName
+    private val fullVersion = ApplicationInfo.getInstance().fullVersion
+
+    fun trackEvent(eventName: String, props: Map<String, Any?>) {
+        val timestamp = System.currentTimeMillis()
+        GlobalScope.launch {
+            val info = pendingInfo.await()
+            val event = RemoteTrackMessage().apply {
+                event = eventName
+                properties = mapOf(
+                        "instanceId" to info.instanceId,
+                        "workspaceId" to info.workspaceId,
+                        "appName" to versionName,
+                        "appVersion" to fullVersion,
+                        "timestamp" to timestamp,
+                        "product" to backendKind,
+                        "qualifier" to backendQualifier
+                ).plus(props)
+            }
+            if (devMode) {
+                thisLogger().warn("gitpod: $event")
+            } else {
+                client.server.trackEvent(event)
+            }
+        }
+    }
+
+    var resourceStatus: Status.ResourcesStatusResponse? = null
+
+    private val metricsJob = GlobalScope.launch {
+        if (application.isHeadlessEnvironment) {
+            return@launch
+        }
+        val status = StatusServiceGrpc.newFutureStub(supervisorChannel)
+        while (isActive) {
+            try {
+                val f = status.resourcesStatus(Status.ResourcesStatuRequest.getDefaultInstance())
+                resourceStatus = f.asDeferred().await()
+            } catch (t: Throwable) {
+                if (t is CancellationException) {
+                    throw t
+                }
+                thisLogger().error("gitpod: failed to retrieve resource status: ", t)
+            }
+            delay(1000L)
+        }
+    }
+    init {
+        lifetime.onTerminationOrNow {
+            metricsJob.cancel()
+        }
+    }
+
+    /** Opens the give URL in the Browser and records an event indicating it was open from a custom IntelliJ Action. */
+    fun openUrlFromAction(url: String) {
+        trackEvent("jb_execute_command_gitpod_open_link", mapOf("url" to url))
+        BrowserUtil.browse(url)
     }
 }

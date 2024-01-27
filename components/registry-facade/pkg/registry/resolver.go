@@ -1,17 +1,16 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package registry
 
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/containerd/containerd/remotes"
-	redis "github.com/go-redis/redis/v8"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type RedisCachedResolver struct {
@@ -57,7 +56,7 @@ func (rcr *RedisCachedResolver) Resolve(ctx context.Context, ref string) (name s
 	}
 
 	if raw, err := json.Marshal(resolverResult{Name: name, Desc: desc}); err == nil {
-		rcr.Client.Set(ctx, "resolve."+ref, string(raw), 2*time.Hour)
+		rcr.Client.Set(ctx, "resolve."+ref, string(raw), 0)
 	}
 
 	return

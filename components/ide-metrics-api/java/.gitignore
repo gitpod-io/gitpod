@@ -1,0 +1,5 @@
+.gradle
+.settings
+.vscode
+bin
+build

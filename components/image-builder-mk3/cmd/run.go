@@ -1,31 +1,22 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
 import (
 	"context"
-	"net"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
-	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/image-builder/api"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/orchestrator"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 
 	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
 )
 
 // runCmd represents the run command
@@ -34,35 +25,14 @@ var runCmd = &cobra.Command{
 	Short: "Starts the image-builder service",
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := getConfig()
+		log.WithField("config", cfg).Info("Starting image-builder-mk3")
 
-		common_grpc.SetupLogging()
-		var promreg prometheus.Registerer
-		if cfg.Prometheus.Addr != "" {
-			reg := prometheus.NewRegistry()
-			promreg = reg
-
-			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-
-			// BEWARE: for the gRPC client side metrics to work it's important to call common_grpc.ClientMetrics()
-			//         before NewOrchestratingBuilder as the latter produces the gRPC client.
-			reg.MustRegister(
-				collectors.NewGoCollector(),
-				collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-				common_grpc.ClientMetrics(),
-			)
-
-			go func() {
-				err := http.ListenAndServe(cfg.Prometheus.Addr, handler)
-				if err != nil {
-					log.WithError(err).Error("Prometheus metrics server failed")
-				}
-			}()
-			log.WithField("addr", cfg.Prometheus.Addr).Info("started Prometheus metrics server")
-		}
-
-		if cfg.PProf.Addr != "" {
-			go pprof.Serve(cfg.PProf.Addr)
+		srv, err := baseserver.New("image-builder-mk3",
+			baseserver.WithConfig(cfg.Server),
+			baseserver.WithVersion(Version),
+		)
+		if err != nil {
+			log.WithError(err).Fatal("Failed to setup server.")
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -87,52 +57,23 @@ var runCmd = &cobra.Command{
 			go resolver.StartCaching(ctx, interval)
 			service.RefResolver = resolver
 		}
-		if promreg != nil {
-			err = service.RegisterMetrics(promreg)
-			if err != nil {
-				log.Fatal(err)
-			}
+
+		err = service.RegisterMetrics(srv.MetricsRegistry())
+		if err != nil {
+			log.WithError(err).Fatal("Failed to register metrics.")
 		}
 
 		err = service.Start(ctx)
 		if err != nil {
-			log.Fatal(err)
+			log.WithError(err).Fatal("Failed to start orchestrator service.")
 		}
 
-		grpcOpts := common_grpc.DefaultServerOptions()
-		tlsOpt, err := cfg.Service.TLS.ServerOption()
+		api.RegisterImageBuilderServer(srv.GRPC(), service)
+
+		err = srv.ListenAndServe()
 		if err != nil {
-			log.WithError(err).Fatal("cannot use TLS config")
+			log.WithError(err).Fatal("Failed to start server")
 		}
-		if tlsOpt != nil {
-			log.WithField("crt", cfg.Service.TLS.Certificate).WithField("key", cfg.Service.TLS.PrivateKey).Debug("securing gRPC server with TLS")
-			grpcOpts = append(grpcOpts, tlsOpt)
-		} else {
-			log.Warn("no TLS configured - gRPC server will be unsecured")
-		}
-
-		server := grpc.NewServer(grpcOpts...)
-		api.RegisterImageBuilderServer(server, service)
-		lis, err := net.Listen("tcp", cfg.Service.Addr)
-		if err != nil {
-			log.WithError(err).Fatalf("cannot listen on %s", cfg.Service.Addr)
-		}
-		go func() {
-			err := server.Serve(lis)
-			if err != nil {
-				log.WithError(err).Fatal("cannot start server")
-			}
-		}()
-		log.WithField("addr", cfg.Service.Addr).Info("started workspace content server")
-
-		// run until we're told to stop
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-		log.Info("👷 image-builder is up and running. Stop with SIGINT or CTRL+C")
-		<-sigChan
-		server.Stop()
-		// service.Stop()
-		log.Info("Received SIGINT - shutting down")
 	},
 }
 

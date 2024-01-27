@@ -1,0 +1,4 @@
+THIS FILE IS REPLACED DURING THE LEEWAY BUILD.
+
+It's not valid yaml, which is intentional. This way a locally built installer
+fails if it's run with ws-manager-mk2 enabled.

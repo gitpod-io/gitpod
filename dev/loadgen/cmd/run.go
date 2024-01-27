@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -9,17 +9,21 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -53,7 +57,6 @@ var runCmd = &cobra.Command{
 			},
 			ServicePrefix: "will-be-overriden",
 			Spec: &api.StartWorkspaceSpec{
-				DeprecatedIdeImage: "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8c1466008dedabe79d82cbb91931a16f7ce7994c",
 				IdeImage: &api.IDEImage{
 					WebRef: "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8c1466008dedabe79d82cbb91931a16f7ce7994c",
 				},
@@ -82,7 +85,7 @@ var runCmd = &cobra.Command{
 				Envvars: []*api.EnvironmentVariable{
 					{
 						Name:  "THEIA_SUPERVISOR_TOKENS",
-						Value: `[{"token":"foobar","host":"gitpod-staging.com","scope":["function:getWorkspace","function:getLoggedInUser","function:getPortAuthenticationToken","function:getWorkspaceOwner","function:getWorkspaceUsers","function:isWorkspaceOwner","function:controlAdmission","function:setWorkspaceTimeout","function:getWorkspaceTimeout","function:sendHeartBeat","function:getOpenPorts","function:openPort","function:closePort","function:getLayout","function:generateNewGitpodToken","function:takeSnapshot","function:storeLayout","function:stopWorkspace","resource:workspace::fa498dcc-0a84-448f-9666-79f297ad821a::get/update","resource:workspaceInstance::e0a17083-6a78-441a-9b97-ef90d6aff463::get/update/delete","resource:snapshot::*::create/get","resource:gitpodToken::*::create","resource:userStorage::*::create/get/update"],"expiryDate":"2020-12-01T07:55:12.501Z","reuse":2}]`,
+						Value: `[{"token":"foobar","host":"gitpod-staging.com","scope":["function:getWorkspace","function:getLoggedInUser","function:getWorkspaceOwner","function:getWorkspaceUsers","function:isWorkspaceOwner","function:controlAdmission","function:setWorkspaceTimeout","function:getWorkspaceTimeout","function:sendHeartBeat","function:getOpenPorts","function:openPort","function:closePort","function:generateNewGitpodToken","function:takeSnapshot","function:stopWorkspace","resource:workspace::fa498dcc-0a84-448f-9666-79f297ad821a::get/update","resource:workspaceInstance::e0a17083-6a78-441a-9b97-ef90d6aff463::get/update/delete","resource:snapshot::*::create/get","resource:gitpodToken::*::create","resource:userStorage::*::create/get/update"],"expiryDate":"2020-12-01T07:55:12.501Z","reuse":2}]`,
 					},
 				},
 			},
@@ -108,8 +111,15 @@ var runCmd = &cobra.Command{
 			})
 			opts = append(opts, grpc.WithTransportCredentials(creds))
 		} else {
-			opts = append(opts, grpc.WithInsecure())
+			opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		}
+
+		sessionID := uuid.New().String()
+		resultsDir := fmt.Sprintf("results/run-%s", sessionID)
+		if err := os.MkdirAll(resultsDir, 0755); err != nil {
+			log.Fatal(err)
+		}
+		log.Infof("Results will be saved in dir %s", resultsDir)
 
 		conn, err := grpc.Dial("localhost:8080", opts...)
 		if err != nil {
@@ -117,7 +127,10 @@ var runCmd = &cobra.Command{
 		}
 		defer conn.Close()
 		client := api.NewWorkspaceManagerClient(conn)
-		executor := &loadgen.WsmanExecutor{C: client}
+		executor := &loadgen.WsmanExecutor{
+			C:         client,
+			SessionId: sessionID,
+		}
 
 		session := &loadgen.Session{
 			Executor: executor,
@@ -132,7 +145,7 @@ var runCmd = &cobra.Command{
 					if err != nil {
 						return
 					}
-					os.WriteFile("stats.json", fc, 0644)
+					os.WriteFile(path.Join(resultsDir, "stats.json"), fc, 0644)
 				}),
 			},
 			PostLoadWait: func() {

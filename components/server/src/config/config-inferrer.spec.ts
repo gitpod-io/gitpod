@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import "mocha";
@@ -53,7 +53,7 @@ vscode:
 });
 
 describe("config inferrer", () => {
-    it("check node", async () =>
+    it("[node] yarn", async () =>
         expect(
             {
                 "yarn.lock": "",
@@ -65,8 +65,7 @@ describe("config inferrer", () => {
                         "build": "npx tsc",
                         "watch": "npx tsc -w"
                     }
-                }
-            `,
+                }`,
             },
             {
                 tasks: [
@@ -80,6 +79,56 @@ describe("config inferrer", () => {
                 },
             },
         )),
+        it("[node] npm", async () =>
+            expect(
+                {
+                    "package.json": `
+                    {
+                        "scripts": {
+                            "clean": "npx rimraf lib",
+                            "build": "npx tsc",
+                            "watch": "npx tsc -w"
+                        }
+                    }`,
+                },
+                {
+                    tasks: [
+                        {
+                            init: "npm install && npm run build",
+                            command: "npm run watch",
+                        },
+                    ],
+                    vscode: {
+                        extensions: ["dbaeumer.vscode-eslint"],
+                    },
+                },
+            )),
+        it("[node] pnpm", async () =>
+            expect(
+                {
+                    "pnpm-lock.yaml": "",
+                    "package.json": `
+                        {
+                            "packageManager": "pnpm@6.32.4",
+                            "scripts": {
+                                "clean": "npx rimraf lib",
+                                "build": "npx tsc",
+                                "watch": "npx tsc -w"
+                            }
+                        }`,
+                },
+                {
+                    tasks: [
+                        {
+                            init: "pnpm install && pnpm run build",
+                            command: "pnpm run watch",
+                        },
+                    ],
+                    vscode: {
+                        extensions: ["dbaeumer.vscode-eslint"],
+                    },
+                },
+            )),
         it("[java] mvn wrapper", async () =>
             expect(
                 {
@@ -147,6 +196,40 @@ describe("config inferrer", () => {
                     },
                 },
             )),
+        it("[kotlin] gradle", async () =>
+            expect(
+                {
+                    "build.gradle.kts": "",
+                    "pom.xml": "",
+                },
+                {
+                    tasks: [
+                        {
+                            init: "gradle build",
+                        },
+                    ],
+                    vscode: {
+                        extensions: ["fwcd.kotlin"],
+                    },
+                },
+            )),
+        it("[kotlin] gradle wrapper", async () =>
+            expect(
+                {
+                    "build.gradle.kts": "",
+                    gradlew: "",
+                },
+                {
+                    tasks: [
+                        {
+                            init: "./gradlew build",
+                        },
+                    ],
+                    vscode: {
+                        extensions: ["fwcd.kotlin"],
+                    },
+                },
+            )),
         it("[python] pip install", async () =>
             expect(
                 {
@@ -172,7 +255,7 @@ describe("config inferrer", () => {
                     tasks: [
                         {
                             init: "go get && go build ./... && go test ./...",
-                            command: "go run",
+                            command: "go run .",
                         },
                     ],
                     vscode: {

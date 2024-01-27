@@ -1,12 +1,12 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import * as express from "express";
+import express from "express";
 import { inject, injectable } from "inversify";
 import { AuthUserSetup } from "../auth/auth-provider";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
@@ -49,11 +49,17 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
         return "x-token-auth";
     }
 
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        super.authorize(req, res, next, scope ? scope : BitbucketServerOAuthScopes.Requirements.DEFAULT);
+    authorize(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        state: string,
+        scope?: string[],
+    ) {
+        super.authorize(req, res, next, state, scope ? scope : BitbucketServerOAuthScopes.Requirements.DEFAULT);
     }
 
-    protected readAuthUserSetup = async (accessToken: string, _tokenResponse: object) => {
+    protected async readAuthUserSetup(accessToken: string, _tokenResponse: object) {
         try {
             const username = await this.api.currentUsername(accessToken);
             const userProfile = await this.api.getUserProfile(accessToken, username);
@@ -74,5 +80,5 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
             log.error(`(${this.strategyName}) Reading current user info failed`, error, { error });
             throw error;
         }
-    };
+    }
 }

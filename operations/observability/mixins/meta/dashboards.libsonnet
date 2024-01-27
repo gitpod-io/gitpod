@@ -1,6 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 {
@@ -10,14 +11,14 @@
     // 'my-new-dashboard.json': (import 'dashboards/components/new-component.json'),
     'gitpod-component-dashboard.json': (import 'dashboards/components/dashboard.json'),
     'gitpod-component-db.json': (import 'dashboards/components/db.json'),
-    'gitpod-component-db-sync.json': (import 'dashboards/components/db-sync.json'),
-    'gitpod-component-image-builder.json': (import 'dashboards/components/image-builder.json'),
-    'gitpod-component-messagebus.json': (import 'dashboards/components/messagebus.json'),
     'gitpod-component-ws-manager-bridge.json': (import 'dashboards/components/ws-manager-bridge.json'),
     'gitpod-component-proxy.json': (import 'dashboards/components/proxy.json'),
     'gitpod-component-server.json': (import 'dashboards/components/server.json'),
+    'gitpod-component-server-garbage-collector.json': (import 'dashboards/components/server-garbage-collector.json'),
+    'gitpod-component-usage.json': (import 'dashboards/components/usage.json'),
     'gitpod-slo-login.json': (import 'dashboards/SLOs/login.json'),
     'gitpod-meta-overview.json': (import 'dashboards/components/meta-overview.json'),
     'gitpod-meta-services.json': (import 'dashboards/components/meta-services.json'),
+    'gitpod-components-spicedb.json': (import 'dashboards/components/spicedb.json'),
   },
 }

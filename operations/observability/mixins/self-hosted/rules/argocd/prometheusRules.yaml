@@ -1,0 +1,54 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd
+    app.kubernetes.io/part-of: kube-prometheus
+    prometheus: k8s
+    role: alert-rules
+  name: argocd-monitoring-rules
+  namespace: monitoring-satellite
+spec:
+  groups:
+  - name: argocd-apps
+    rules:
+    - alert: ArgoCDAppStuckInUnknown
+      for: 1h
+      annotations:
+        description: App {{ $labels.name }} in {{ $labels.label_environment }} is stuck in `Unknown` for 1h. ArgoCD is probably generating errors when trying to compare live and desired manifests.
+        summary: App {{ $labels.name }} is stuck in `Unknown` state.
+        dashboard_url: https://grafana.gitpod.io/d/argocd-apps/argocd?refresh=30s&var-environment={{ $labels.label_environment }}&var-team={{ $labels.team }}
+      expr: label_replace(argocd_app_info{sync_status="Unknown"} * on(name) group_left(label_environment, label_team) argocd_app_labels, "team", "$1", "label_team", "(.*)")
+      labels:
+        severity: warning
+    - alert: ArgoCDAppOutOfSyncForTooLong
+      for: 1d
+      annotations:
+        description: App {{ $labels.name }} in {{ $labels.label_environment }} is `OutOfSync` for more than an entire day. The live manifests do not match with what is desired in git!
+        summary: App {{ $labels.name }} is stuck in `OutOfSync` state.
+        dashboard_url: https://grafana.gitpod.io/d/argocd-apps/argocd?refresh=30s&var-environment={{ $labels.label_environment }}&var-team={{ $labels.team }}
+      expr: label_replace(argocd_app_info{sync_status="OutOfSync"} * on(name) group_left(label_environment, label_team) argocd_app_labels, "team", "$1", "label_team", "(.*)")
+      labels:
+        severity: warning
+    - alert: ArgoCDAppStuckInProgressing
+      for: 1h
+      annotations:
+        description: App {{ $labels.name }} in {{ $labels.label_environment }} is stuck in `Progressing` for 1h. It is possible that the application is left in a weird state.
+        summary: App {{ $labels.name }} is stuck in `Progressing` state.
+        dashboard_url: https://grafana.gitpod.io/d/argocd-apps/argocd?refresh=30s&var-environment={{ $labels.label_environment }}&var-team={{ $labels.team }}
+      expr: label_replace(argocd_app_info{health_status="Progressing"} * on(name) group_left(label_environment, label_team) argocd_app_labels, "team", "$1", "label_team", "(.*)")
+      labels:
+        severity: warning
+    - alert: ArgoCDAppDegraded
+      for: 20m
+      annotations:
+        description: App {{ $labels.name }} in {{ $labels.label_environment }} is stuck in `Degraded`. This means that the synchronization failed requires investigation.
+        summary: App {{ $labels.name }} is stuck in `Degraded` state.
+        dashboard_url: https://grafana.gitpod.io/d/argocd-apps/argocd?refresh=30s&var-environment={{ $labels.label_environment }}&var-team={{ $labels.team }}
+      expr: label_replace(argocd_app_info{health_status="Degraded"} * on(name) group_left(label_environment, label_team) argocd_app_labels, "team", "$1", "label_team", "(.*)")
+      labels:
+        severity: warning

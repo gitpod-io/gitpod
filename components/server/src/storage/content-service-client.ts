@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { DeleteUserContentRequest, DeleteUserContentResponse } from "@gitpod/content-service/lib/content_pb";
@@ -21,13 +21,13 @@ import {
     WorkspaceSnapshotExistsRequest,
     WorkspaceSnapshotExistsResponse,
 } from "@gitpod/content-service/lib/workspace_pb";
+import { SnapshotUrl } from "@gitpod/gitpod-protocol";
+import { inject, injectable } from "inversify";
 import {
     CachingContentServiceClientProvider,
     CachingIDEPluginClientProvider,
     CachingWorkspaceServiceClientProvider,
-} from "@gitpod/content-service/lib/sugar";
-import { SnapshotUrl } from "@gitpod/gitpod-protocol";
-import { inject, injectable } from "inversify";
+} from "../util/content-service-sugar";
 import { StorageClient } from "./storage-client";
 
 @injectable()

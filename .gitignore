@@ -2,6 +2,7 @@ dist/
 components/*/lib/
 components/ee/*/lib/
 components/*/typescript/lib/
+components/*/typescript-*/lib/
 components/local-app-api/*/lib/
 components/supervisor/frontend/lib/
 src-gen/
@@ -56,3 +57,6 @@ components/server/*.log
 
 # Jetbrains workspace files
 .idea/misc.xml
+
+# Local redis dump files
+dump.rdb

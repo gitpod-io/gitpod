@@ -1,0 +1,28 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+containerRegistry:
+  inCluster: false
+  external:
+    url: gcp-reg-url
+    certificate:
+      kind: secret
+      name: gcp-reg-secret
+database:
+  inCluster: false
+  cloudSQL:
+    instance: gcp-db-instance
+    serviceAccount:
+      kind: secret
+      name: gcp-db-service-account
+domain: gitpod.io
+metadata:
+  region: gcp-region
+objectStorage:
+  inCluster: false
+  cloudStorage:
+    project: gcp-project-name
+    serviceAccount:
+      kind: secret
+      name: gcp-store-secret

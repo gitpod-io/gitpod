@@ -1,0 +1,30 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+containerRegistry:
+  inCluster: true
+  s3storage:
+    bucket: container-s3-bucket
+    endpoint: container-s3-bucket.com
+    region: container-s3-region
+    certificate:
+      kind: secret
+      name: container-s3-secret
+database:
+  inCluster: false
+  external:
+    certificate:
+      kind: secret
+      name: database-secret
+domain: gitpod.io
+metadata:
+  region: s3-region
+objectStorage:
+  inCluster: false
+  s3:
+    endpoint: s3-endpoint.com
+    credentials:
+      kind: secret
+      name: s3-secret
+    bucket: s3-bucket

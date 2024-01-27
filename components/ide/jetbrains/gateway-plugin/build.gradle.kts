@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.changelog.markdownToHTML
@@ -11,20 +11,40 @@ fun properties(key: String) = project.findProperty(key).toString()
 plugins {
     // Java support
     id("java")
-    // Kotlin support
-    id("org.jetbrains.kotlin.jvm") version "1.5.10"
+    // Kotlin support - check the latest version at https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
+    id("org.jetbrains.kotlin.jvm") version "1.9.10"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij") version "1.1.5"
+    id("org.jetbrains.intellij") version "1.11.0"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
     id("org.jetbrains.changelog") version "1.1.2"
     // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
     id("io.gitlab.arturbosch.detekt") version "1.17.1"
     // ktlint linter - read more: https://github.com/JLLeitschuh/ktlint-gradle
     id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
+    // Gradle Properties Plugin - read more: https://github.com/stevesaliman/gradle-properties-plugin
+    id("net.saliman.properties") version "1.5.2"
 }
 
 group = properties("pluginGroup")
-version = properties("pluginVersion")
+val environmentName = properties("environmentName")
+var pluginVersion = properties("pluginVersion")
+
+if (environmentName.isNotBlank()) {
+    pluginVersion += "-$environmentName"
+}
+
+project(":") {
+    kotlin {
+        val excludedPackage = if (environmentName == "latest") "stable" else "latest"
+        sourceSets["main"].kotlin.exclude("io/gitpod/jetbrains/gateway/${excludedPackage}/**")
+    }
+
+    sourceSets {
+        main {
+            resources.srcDirs("src/main/resources-${environmentName}")
+        }
+    }
+}
 
 // Configure project's dependencies
 repositories {
@@ -40,6 +60,7 @@ dependencies {
     compileOnly("org.eclipse.jetty.websocket:websocket-api:9.4.44.v20210927")
     testImplementation(kotlin("test"))
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
+    implementation("org.eclipse.jetty.websocket:javax-websocket-client-impl:9.4.44.v20210927")
 }
 
 // Configure gradle-intellij-plugin plugin.
@@ -59,7 +80,7 @@ intellij {
 // Configure gradle-changelog-plugin plugin.
 // Read more: https://github.com/JetBrains/gradle-changelog-plugin
 changelog {
-    version = properties("pluginVersion")
+    version = pluginVersion
     groups = emptyList()
 }
 
@@ -77,18 +98,23 @@ detekt {
 }
 
 tasks {
+    // JetBrains Gateway 2022.3+ requires Source Compatibility set to 17.
     // Set the compatibility versions to 1.8
     withType<JavaCompile> {
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
     }
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "11"
-        kotlinOptions.freeCompilerArgs = listOf("-Xjvm-default=enable")
+        kotlinOptions.jvmTarget = "17"
+        kotlinOptions.freeCompilerArgs = listOf("-Xjvm-default=all")
     }
 
     withType<Detekt> {
-        jvmTarget = "11"
+        jvmTarget = "17"
+    }
+
+    buildSearchableOptions {
+        enabled = false
     }
 
     test {
@@ -96,7 +122,7 @@ tasks {
     }
 
     patchPluginXml {
-        version.set(properties("pluginVersion"))
+        version.set(pluginVersion)
         sinceBuild.set(properties("pluginSinceBuild"))
         untilBuild.set(properties("pluginUntilBuild"))
 
@@ -128,8 +154,8 @@ tasks {
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         var pluginChannel: String? = System.getenv("JB_GATEWAY_GITPOD_PLUGIN_CHANNEL")
         if (pluginChannel.isNullOrBlank()) {
-            pluginChannel = if (properties("pluginVersion").matches(".+-main\\..+".toRegex())) {
-                "Nightly"
+            pluginChannel = if (pluginVersion.contains("-main-gha.")) {
+                "Stable"
             } else {
                 "Dev"
             }

@@ -1,15 +1,11 @@
 packages:
   - name: docker
     type: docker
-    srcs:
-      - "startup.sh"
-      - "supervisor-ide-config.json"
-    deps:
-      - components/ide/code/codehelper:app
     argdeps:
       - imageRepoBase
       - codeCommit
       - codeQuality
+      - codeVersion
     config:
       dockerfile: leeway.Dockerfile
       metadata:
@@ -17,6 +13,7 @@ packages:
       buildArgs:
         CODE_COMMIT: ${codeCommit}
         CODE_QUALITY: ${codeQuality}
+        CODE_VERSION: ${codeVersion}
       image:
         - ${imageRepoBase}/ide/code:${version}
         - ${imageRepoBase}/ide/code:commit-${__git_commit}

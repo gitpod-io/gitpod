@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package quota
 
@@ -31,7 +31,7 @@ const (
 )
 
 var (
-	sizeRegexp = regexp.MustCompile(`(\d+)(k|m|g|t)?`)
+	sizeRegexp = regexp.MustCompile(`^(\d+)(k|m|g|t)?$`)
 
 	// ErrInvalidSize is returned by ParseSize if input was not a valid size
 	ErrInvalidSize = errors.New("invalid size")

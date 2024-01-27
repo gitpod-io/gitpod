@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package io.gitpod.jetbrains.gateway
 
@@ -22,7 +22,7 @@ class GitpodSettingsState : PersistentStateComponent<GitpodSettingsState> {
     var gitpodHost: String = "gitpod.io"
         set(value) {
             if (value.isNullOrBlank()) {
-                return;
+                return
             }
             val gitpodHost = try {
                 URL(value.trim()).host
@@ -33,6 +33,15 @@ class GitpodSettingsState : PersistentStateComponent<GitpodSettingsState> {
                 return
             }
             field = gitpodHost
+            dispatcher.multicaster.didChange()
+        }
+
+    var forceHttpTunnel: Boolean = false
+        set(value) {
+            if (value == field) {
+                return
+            }
+            field = value
             dispatcher.multicaster.didChange()
         }
 
@@ -47,7 +56,7 @@ class GitpodSettingsState : PersistentStateComponent<GitpodSettingsState> {
                 listener()
             }
         }
-        dispatcher.addListener(internalListener);
+        dispatcher.addListener(internalListener)
         return Disposable { dispatcher.removeListener(internalListener) }
     }
 
@@ -58,5 +67,4 @@ class GitpodSettingsState : PersistentStateComponent<GitpodSettingsState> {
     override fun loadState(state: GitpodSettingsState) {
         XmlSerializerUtil.copyBean(state, this)
     }
-
 }

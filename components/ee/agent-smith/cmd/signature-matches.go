@@ -1,6 +1,6 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
-// Licensed under the Gitpod Enterprise Source Code License,
-// See License.enterprise.txt in the project root folder.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -28,6 +28,10 @@ var signatureMatchesCmd = &cobra.Command{
 		}
 		defer f.Close()
 
+		sfc := classifier.SignatureReadCache{
+			Reader: f,
+		}
+
 		if cfgFile == "" {
 			log.Info("no config present - reading signature from STDIN")
 			var sig classifier.Signature
@@ -36,7 +40,7 @@ var signatureMatchesCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			match, err := sig.Matches(f)
+			match, err := sig.Matches(&sfc)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -60,7 +64,7 @@ var signatureMatchesCmd = &cobra.Command{
 		var res []*classifier.Signature
 		for _, bl := range cfg.Blocklists.Levels() {
 			for _, s := range bl.Signatures {
-				m, err := s.Matches(f)
+				m, err := s.Matches(&sfc)
 				if err != nil {
 					log.WithError(err).WithField("signature", s.Name).Warn("cannot match signature")
 					continue

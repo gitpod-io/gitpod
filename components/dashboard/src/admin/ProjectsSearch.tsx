@@ -1,25 +1,28 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
+import dayjs from "dayjs";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-import { adminMenu } from "./admin-menu";
 import ProjectDetail from "./ProjectDetail";
 import { getGitpodService } from "../service/service";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { AdminGetListResult, Project } from "@gitpod/gitpod-protocol";
+import { AdminPageHeader } from "./AdminPageHeader";
+import Pagination from "../Pagination/Pagination";
+import { SpinnerLoader } from "../components/Loader";
+import searchIcon from "../icons/search.svg";
+import Tooltip from "../components/Tooltip";
 
 export default function ProjectsSearchPage() {
     return (
-        <PageWithSubMenu subMenu={adminMenu} title="Projects" subtitle="Search and manage all projects.">
+        <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
             <ProjectsSearch />
-        </PageWithSubMenu>
+        </AdminPageHeader>
     );
 }
 
@@ -30,6 +33,8 @@ export function ProjectsSearch() {
     const [searchResult, setSearchResult] = useState<AdminGetListResult<Project>>({ total: 0, rows: [] });
     const [currentProject, setCurrentProject] = useState<Project | undefined>(undefined);
     const [currentProjectOwner, setCurrentProjectOwner] = useState<string | undefined>("");
+    const pageLength = 50;
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         const projectId = location.pathname.split("/")[3];
@@ -46,22 +51,15 @@ export function ProjectsSearch() {
         } else {
             setCurrentProject(undefined);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location]);
 
     useEffect(() => {
         (async () => {
             if (currentProject) {
-                if (currentProject.userId) {
-                    const owner = await getGitpodService().server.adminGetUser(currentProject.userId);
-                    if (owner) {
-                        setCurrentProjectOwner(owner?.name);
-                    }
-                }
-                if (currentProject.teamId) {
-                    const owner = await getGitpodService().server.adminGetTeamById(currentProject.teamId);
-                    if (owner) {
-                        setCurrentProjectOwner(owner?.name);
-                    }
+                const owner = await getGitpodService().server.adminGetTeamById(currentProject.teamId);
+                if (owner) {
+                    setCurrentProjectOwner(owner.name);
                 }
             }
         })();
@@ -71,16 +69,17 @@ export function ProjectsSearch() {
         return <ProjectDetail project={currentProject} owner={currentProjectOwner} />;
     }
 
-    const search = async () => {
+    const search = async (page: number = 1) => {
         setSearching(true);
         try {
             const result = await getGitpodService().server.adminGetProjectsBySearchTerm({
                 searchTerm,
-                limit: 50,
+                limit: pageLength,
                 orderBy: "creationTime",
-                offset: 0,
+                offset: (page - 1) * pageLength,
                 orderDir: "desc",
             });
+            setCurrentPage(page);
             setSearchResult(result);
         } finally {
             setSearching(false);
@@ -88,27 +87,24 @@ export function ProjectsSearch() {
     };
 
     return (
-        <>
-            <div className="pt-8 flex">
+        <div className="app-container">
+            <div className="pt-3 mb-3 flex">
                 <div className="flex justify-between w-full">
-                    <div className="flex">
-                        <div className="py-4">
-                            <svg
-                                className={searching ? "animate-spin" : ""}
-                                width="16"
-                                height="16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    fillRule="evenodd"
-                                    clipRule="evenodd"
-                                    d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z"
-                                    fill="#A8A29E"
-                                />
-                            </svg>
-                        </div>
+                    <div className="flex relative h-10 my-auto">
+                        {searching ? (
+                            <span className="filter-grayscale absolute top-3 left-3">
+                                <SpinnerLoader small={true} />
+                            </span>
+                        ) : (
+                            <img
+                                src={searchIcon}
+                                title="Search"
+                                className="filter-grayscale absolute top-3 left-3"
+                                alt="search icon"
+                            />
+                        )}
                         <input
+                            className="w-64 pl-9 border-0"
                             type="search"
                             placeholder="Search Projects"
                             onKeyDown={(k) => k.key === "Enter" && search()}
@@ -117,9 +113,6 @@ export function ProjectsSearch() {
                             }}
                         />
                     </div>
-                    <button disabled={searching} onClick={search}>
-                        Search
-                    </button>
                 </div>
             </div>
             <div className="flex flex-col space-y-2">
@@ -132,7 +125,12 @@ export function ProjectsSearch() {
                     <ProjectResultItem project={project} />
                 ))}
             </div>
-        </>
+            <Pagination
+                currentPage={currentPage}
+                setPage={search}
+                totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
+            />
+        </div>
     );
 
     function ProjectResultItem(p: { project: Project }) {
@@ -142,7 +140,7 @@ export function ProjectsSearch() {
                 to={"/admin/projects/" + p.project.id}
                 data-analytics='{"button_type":"sidebar_menu"}'
             >
-                <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
+                <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">
                     <div className="flex flex-col w-4/12 truncate">
                         <div className="font-medium text-gray-800 dark:text-gray-100 truncate">{p.project.name}</div>
                     </div>
@@ -150,9 +148,11 @@ export function ProjectsSearch() {
                         <div className="text-gray-500 dark:text-gray-100 truncate">{p.project.cloneUrl}</div>
                     </div>
                     <div className="flex w-2/12 self-center">
-                        <div className="text-sm w-full text-gray-400 truncate">
-                            {moment(p.project.creationTime).fromNow()}
-                        </div>
+                        <Tooltip content={dayjs(p.project.creationTime).format("MMM D, YYYY")}>
+                            <div className="text-sm w-full text-gray-400 truncate">
+                                {dayjs(p.project.creationTime).fromNow()}
+                            </div>
+                        </Tooltip>
                     </div>
                 </div>
             </Link>

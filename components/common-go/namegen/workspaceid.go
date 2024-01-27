@@ -1,18 +1,37 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package namegen
 
 import (
 	"crypto/rand"
+	"errors"
+	"fmt"
 	"math/big"
 	"regexp"
 	"strings"
 )
 
-// WorkspaceIDPattern generates a new workspace ID by randomly choosing
-var WorkspaceIDPattern = regexp.MustCompile(`^[a-z]{3,12}-[a-z]{2,16}-[a-z0-9]{8}$`)
+// PossibleWorkspaceIDPatterns
+// gitpod-protocol/src/util/generate-workspace-id.ts is authoritative over the generation
+// ws-proxy/pkg/proxy/workspacerouter.go is authoritative for this regexp
+var PossibleWorkspaceIDPatterns = []string{
+	"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+	"[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11}",
+}
+
+var workspaceIDPattern = regexp.MustCompile(getWorkspaceIDPatternStr())
+
+// getWorkspaceIDPatternStr is the expected Workspace ID pattern str
+// ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$|^[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11}$
+func getWorkspaceIDPatternStr() string {
+	patterns := []string{}
+	for _, p := range PossibleWorkspaceIDPatterns {
+		patterns = append(patterns, fmt.Sprintf("^%s$", p))
+	}
+	return strings.Join(patterns, "|")
+}
 
 func GenerateWorkspaceID() (string, error) {
 	s1, err := chooseRandomly(colors, 1)
@@ -23,12 +42,24 @@ func GenerateWorkspaceID() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	s3, err := chooseRandomly(characters, 8)
+	s3, err := chooseRandomly(characters, 11)
 	if err != nil {
 		return "", err
 	}
 
 	return strings.Join([]string{s1, s2, s3}, "-"), nil
+}
+
+var (
+	InvalidWorkspaceID = errors.New("workspace id does not match required format")
+)
+
+func ValidateWorkspaceID(id string) error {
+	if !workspaceIDPattern.MatchString(id) {
+		return fmt.Errorf("id '%s' does not match workspace ID regex '%s': %w", id, workspaceIDPattern.String(), InvalidWorkspaceID)
+	}
+
+	return nil
 }
 
 func chooseRandomly(options []string, length int) (res string, err error) {

@@ -1,14 +1,15 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
+	"path/filepath"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/spf13/cobra"
 )
@@ -61,5 +62,10 @@ func runConfigValidation(version string, cfg interface{}) error {
 func init() {
 	validateCmd.AddCommand(validateConfigCmd)
 
-	validateCmd.PersistentFlags().StringVarP(&validateConfigOpts.Config, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
+	dir, err := os.Getwd()
+	if err != nil {
+		log.WithError(err).Fatal("Failed to get working directory")
+	}
+
+	validateCmd.PersistentFlags().StringVarP(&validateConfigOpts.Config, "config", "c", getEnvvar("GITPOD_INSTALLER_CONFIG", filepath.Join(dir, "gitpod.config.yaml")), "path to the config file")
 }

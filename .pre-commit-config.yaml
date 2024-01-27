@@ -4,6 +4,7 @@ repos:
     hooks:
       #- id: check-yaml
       #  args: [--allow-multiple-documents]
+      - id: check-json
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-symlinks
@@ -21,7 +22,7 @@ repos:
         exclude: |
           (?x)^(
             .*example-layer.tar.gz|
-            .*\.(png|svg|ico|gpg)|
+            .*\.(png|svg|ico|gpg|webp)|
             dev/version-manifest/version-manifest|
             .*gradle-wrapper\.jar
           )$
@@ -50,3 +51,34 @@ repos:
         entry: leeway run components:update-license-header
         language: system
         pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: mocha-tests-only
+        name: mocha-tests-only
+        entry: leeway run components:check-mocha-no-only
+        language: system
+        pass_filenames: false
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.75.0
+    hooks:
+      - id: terraform_fmt
+        args:
+          - --args=-diff
+
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.15.0
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: dashboard-linter
+        name: dashboard-linter
+        entry: leeway run components/dashboard:lint
+        language: system
+        pass_filenames: false
+        files: ^components/dashboard/
+
+exclude: ^install/installer/.*/.*\.golden$

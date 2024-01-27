@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package wsproxy
 
@@ -16,6 +16,25 @@ import (
 
 func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{
+		&rbacv1.ClusterRoleBinding{
+			TypeMeta: common.TypeMetaClusterRoleBinding,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   fmt.Sprintf("%s-%s-kube-rbac-proxy", ctx.Namespace, Component),
+				Labels: common.DefaultLabels(Component),
+			},
+			RoleRef: rbacv1.RoleRef{
+				Kind:     "ClusterRole",
+				Name:     fmt.Sprintf("%s-kube-rbac-proxy", ctx.Namespace),
+				APIGroup: "rbac.authorization.k8s.io",
+			},
+			Subjects: []rbacv1.Subject{
+				{
+					Kind:      "ServiceAccount",
+					Name:      Component,
+					Namespace: ctx.Namespace,
+				},
+			},
+		},
 		&rbacv1.RoleBinding{
 			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{

@@ -20,9 +20,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # This Dockerfile was taken from https://github.com/ep76/docker-openssh-static and adapted.
-FROM alpine:3.15 AS builder
+FROM alpine:3.19 AS builder
 
-ARG openssh_url=https://github.com/openssh/openssh-portable/archive/refs/tags/V_9_0_P1.tar.gz
+ARG openssh_url=https://github.com/openssh/openssh-portable/archive/refs/tags/V_9_6_P1.tar.gz
 
 WORKDIR /build
 
@@ -52,14 +52,13 @@ RUN ./configure \
     --sysconfdir=/etc/ssh \
     --with-ldflags=-static \
     --with-privsep-user=nobody \
-    --with-ssl-engine
+    --with-ssl-engine \
+    --with-pie
 
-COPY supervisorenv.patch .
 ENV aports=https://raw.githubusercontent.com/alpinelinux/aports/master/main/openssh
 RUN curl -fsSL \
     "${aports}/{avoid-redefined-warnings-when-building-with-utmps,disable-forwarding-by-default,fix-utmp,fix-verify-dns-segfault,gss-serv.c,sftp-interactive}.patch" \
     | patch -p1
-RUN cat supervisorenv.patch | patch -p1
 RUN make install-nosysconf exec_prefix=/openssh
 
 RUN TEST_SSH_UNSAFE_PERMISSIONS=1 \

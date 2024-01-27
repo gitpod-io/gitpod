@@ -4,11 +4,11 @@
   "version": "0.1.5",
   "license": "UNLICENSED",
   "scripts": {
-    "start": "node ./dist/src/index.js",
-    "start-ee": "node ./dist/ee/src/index.js",
-    "test": "mocha --opts mocha.opts './**/*.spec.ts' --exclude './node_modules/**'",
-    "prepare": "yarn clean && yarn build",
-    "build": "npx tsc",
+    "start": "node ./dist/index.js",
+    "test": "mocha './**/*.spec.ts' --exclude './node_modules/**' --exit",
+    "lint": "yarn eslint src/*.ts src/**/*.ts",
+    "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
+    "build": "yarn lint && npx tsc",
     "build:clean": "yarn clean && yarn build",
     "rebuild": "yarn build:clean",
     "build:watch": "watch 'yarn build' .",
@@ -19,34 +19,47 @@
     "debug": "nodemon -w ./dist --inspect=9300 ./dist/index.js",
     "telepresence": "leeway run .:telepresence"
   },
+  "mocha": {
+    "require": [
+      "ts-node/register",
+      "reflect-metadata/Reflect",
+      "source-map-support/register"
+    ],
+    "extensions": [
+      "ts"
+    ],
+    "exit": true
+  },
   "files": [
     "/dist"
   ],
   "dependencies": {
     "@gitpod/gitpod-db": "0.1.5",
-    "@gitpod/gitpod-messagebus": "0.1.5",
     "@gitpod/gitpod-protocol": "0.1.5",
     "@gitpod/ws-daemon": "0.1.5",
     "@gitpod/ws-manager": "0.1.5",
     "@gitpod/ws-manager-bridge-api": "0.1.5",
-    "amqplib": "^0.8.0",
     "express": "^4.17.3",
-    "inversify": "^5.0.1",
-    "prom-client": "^13.2.0",
+    "inversify": "^6.0.1",
+    "ioredis": "^5.3.2",
+    "prom-client": "^14.2.0",
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
-    "@types/amqplib": "^0.8.2",
+    "@testdeck/mocha": "^0.3.3",
     "@types/chai": "^4.2.21",
     "@types/express": "^4.17.13",
-    "@types/google-protobuf": "^3.7.4",
-    "@types/mocha": "^2.2.45",
+    "@types/google-protobuf": "^3.15.5",
+    "@types/mocha": "^10.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.5.0",
+    "@typescript-eslint/parser": "^5.5.0",
     "chai": "^4.3.4",
+    "eslint": "^8.47.0",
     "expect": "^1.20.2",
-    "mocha": "^5.0.0",
-    "mocha-typescript": "^1.1.11",
-    "ts-node": "<7.0.0",
-    "tslint": "^5.9.1",
+    "ioredis-mock": "^8.7.0",
+    "mocha": "^10.2.0",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.4.0",
     "typescript": "~4.4.2",
     "watch": "^1.0.2"
   }

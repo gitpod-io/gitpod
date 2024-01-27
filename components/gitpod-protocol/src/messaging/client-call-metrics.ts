@@ -1,31 +1,12 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { injectable } from "inversify";
 import * as prometheusClient from "prom-client";
-
-type GrpcMethodType = "unary" | "client_stream" | "server_stream" | "bidi_stream";
-export interface IGrpcCallMetricsLabels {
-    service: string;
-    method: string;
-    type: GrpcMethodType;
-}
-
-export interface IGrpcCallMetricsLabelsWithCode extends IGrpcCallMetricsLabels {
-    code: string;
-}
-
-export const IClientCallMetrics = Symbol("IClientCallMetrics");
-
-export interface IClientCallMetrics {
-    started(labels: IGrpcCallMetricsLabels): void;
-    sent(labels: IGrpcCallMetricsLabels): void;
-    received(labels: IGrpcCallMetricsLabels): void;
-    handled(labels: IGrpcCallMetricsLabelsWithCode): void;
-}
+import { IClientCallMetrics, IGrpcCallMetricsLabels, IGrpcCallMetricsLabelsWithCode } from "../util/grpc";
 
 @injectable()
 export class PrometheusClientCallMetrics implements IClientCallMetrics {
@@ -33,6 +14,7 @@ export class PrometheusClientCallMetrics implements IClientCallMetrics {
     readonly sentCounter: prometheusClient.Counter<string>;
     readonly receivedCounter: prometheusClient.Counter<string>;
     readonly handledCounter: prometheusClient.Counter<string>;
+    readonly handledSecondsHistogram: prometheusClient.Histogram<string>;
 
     constructor() {
         this.startedCounter = new prometheusClient.Counter({
@@ -59,6 +41,20 @@ export class PrometheusClientCallMetrics implements IClientCallMetrics {
             labelNames: ["grpc_service", "grpc_method", "grpc_type", "grpc_code"],
             registers: [prometheusClient.register],
         });
+        this.handledSecondsHistogram = new prometheusClient.Histogram({
+            name: "grpc_client_handling_seconds",
+            help: "Histogram of response latency (seconds) of the gRPC until it is finished by the application.",
+            labelNames: ["grpc_service", "grpc_method", "grpc_type", "grpc_code"],
+            registers: [prometheusClient.register],
+        });
+    }
+
+    dispose(): void {
+        prometheusClient.register.removeSingleMetric("grpc_client_started_total");
+        prometheusClient.register.removeSingleMetric("grpc_client_msg_sent_total");
+        prometheusClient.register.removeSingleMetric("grpc_client_msg_received_total");
+        prometheusClient.register.removeSingleMetric("grpc_client_handled_total");
+        prometheusClient.register.removeSingleMetric("grpc_client_handling_seconds");
     }
 
     started(labels: IGrpcCallMetricsLabels): void {
@@ -91,6 +87,16 @@ export class PrometheusClientCallMetrics implements IClientCallMetrics {
             grpc_method: labels.method,
             grpc_type: labels.type,
             grpc_code: labels.code,
+        });
+    }
+
+    startHandleTimer(
+        labels: IGrpcCallMetricsLabelsWithCode,
+    ): (labels?: Partial<Record<string, string | number>> | undefined) => number {
+        return this.handledSecondsHistogram.startTimer({
+            grpc_service: labels.service,
+            grpc_method: labels.method,
+            grpc_type: labels.type,
         });
     }
 }

@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package quota_test
 
@@ -23,8 +23,8 @@ func TestParseSize(t *testing.T) {
 		{"42m", 42 * quota.Megabyte, nil},
 		{"42g", 42 * quota.Gigabyte, nil},
 		{"42t", 42 * quota.Terabyte, nil},
-		// This test should fail but doesn't because match somehow matches the regexp
-		// {"-42m", 0, quota.ErrInvalidSize},
+		{"-42m", 0, quota.ErrInvalidSize},
+		{"ab-42mcd", 0, quota.ErrInvalidSize},
 		{"abc", 0, quota.ErrInvalidSize},
 		{"99999999999999999999999999999999999999999999999999999999999999999999999999999999", 0, quota.ErrInvalidSize},
 	}

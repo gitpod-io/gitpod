@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { Entity, Column, PrimaryColumn, Index } from "typeorm";
@@ -20,7 +20,9 @@ export const enum SyncResource {
     Tasks = "tasks",
     Extensions = "extensions",
     GlobalState = "globalState",
+    Profiles = "profiles",
 }
+
 export const ALL_SYNC_RESOURCES: SyncResource[] = [
     SyncResource.Settings,
     SyncResource.Keybindings,
@@ -28,11 +30,21 @@ export const ALL_SYNC_RESOURCES: SyncResource[] = [
     SyncResource.Tasks,
     SyncResource.Extensions,
     SyncResource.GlobalState,
+    SyncResource.Profiles,
 ];
 
+export type IUserDataResourceManifest = Partial<Record<ServerResource, string>>;
+
+export interface IUserDataCollectionManifest {
+    [collectionId: string]: {
+        readonly latest?: IUserDataResourceManifest;
+    };
+}
+
 export interface IUserDataManifest {
-    readonly latest?: Record<ServerResource, string>;
+    readonly latest?: IUserDataResourceManifest;
     readonly session: string;
+    readonly collections?: IUserDataCollectionManifest;
     /**
      * This property reflects a weak ETag for caching code sync responses,
      * in the server, this is send in the Etag header and it's calculated by Express.js or we can override it manually.
@@ -40,8 +52,8 @@ export interface IUserDataManifest {
     //readonly ref: string;
 }
 
-export type ServerResource = SyncResource | "machines";
-export const ALL_SERVER_RESOURCES: ServerResource[] = [...ALL_SYNC_RESOURCES, "machines"];
+export type ServerResource = SyncResource | "machines" | "editSessions";
+export const ALL_SERVER_RESOURCES: ServerResource[] = [...ALL_SYNC_RESOURCES, "machines", "editSessions"];
 
 @Entity()
 @Index("ind_dbsync", ["created"]) // DBSync
@@ -54,6 +66,9 @@ export class DBCodeSyncResource {
 
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     rev: string;
+
+    @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
+    collection: string;
 
     @Column({
         type: "timestamp",
@@ -71,7 +86,4 @@ export class DBCodeSyncResource {
         },
     })
     created: string;
-
-    @Column()
-    deleted: boolean;
 }

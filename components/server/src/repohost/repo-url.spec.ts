@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import * as chai from "chai";
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import { RepoURL } from "./repo-url";
 
 const expect = chai.expect;
@@ -70,6 +70,16 @@ export class RepoUrlTest {
             repoKind: "users",
             owner: "jan",
             repo: "yolo",
+        });
+    }
+
+    @test public parseScmCloneUrl_with_port() {
+        const testUrl = RepoURL.parseRepoUrl("https://foo.bar.com:12345/scm/proj/repoName.git");
+        expect(testUrl).to.deep.include({
+            host: "foo.bar.com:12345",
+            repoKind: "projects",
+            owner: "proj",
+            repo: "repoName",
         });
     }
 }

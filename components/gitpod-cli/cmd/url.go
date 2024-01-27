@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -10,7 +10,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 )
 
 // urlCmd represents the url command
@@ -23,19 +25,19 @@ particular port. For example:
     gp url 8080
 will print the URL of a service/server exposed on port 8080.`,
 	Args: cobra.MaximumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			fmt.Println(os.Getenv("GITPOD_WORKSPACE_URL"))
-			return
+			return nil
 		}
 
 		port, err := strconv.ParseUint(args[0], 10, 16)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "port \"%s\" is not a valid number\n", args[0])
-			return
+			return GpError{Err: xerrors.Errorf("port \"%s\" is not a valid number", args[0]), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
 
 		fmt.Println(GetWorkspaceURL(int(port)))
+		return nil
 	},
 }
 

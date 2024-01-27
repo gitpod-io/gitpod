@@ -1,0 +1,95 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-metrics
+  labels:
+    app.kubernetes.io/component: argocd-metrics
+    app.kubernetes.io/name: argocd
+    app.kubernetes.io/part-of: kube-prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+    - argocd
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-metrics
+  endpoints:
+  - port: metrics
+    interval: 60s
+    relabelings:
+      - action: drop
+        regex: (argocd_git_request_duration_seconds_count|argocd_git_request_duration_seconds_sum|argocd_redis_request_duration_seconds_bucket|argocd_redis_request_duration_bucket|argocd_repo_pending_request_total|argocd_cluster_info|argocd_cluster_cache_age_seconds|argocd_cluster_connection_status|argocd_app_reconcile_sum|argocd_redis_request_duration_seconds_count|argocd_kubectl_exec_total|argocd_redis_request_duration_seconds_sum|argocd_redis_request_duration_count|argocd_redis_request_duration_sum|)
+        sourceLabels:
+          - "__name__"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-server-metrics
+  labels:
+    app.kubernetes.io/component: argocd-server-metrics
+    app.kubernetes.io/name: argocd
+    app.kubernetes.io/part-of: kube-prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+    - argocd
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-server-metrics
+  endpoints:
+  - port: metrics
+    interval: 60s
+    relabelings:
+      - action: drop
+        regex: (argocd_git_request_duration_seconds_count|argocd_git_request_duration_seconds_sum|argocd_redis_request_duration_seconds_bucket|argocd_redis_request_duration_bucket|argocd_repo_pending_request_total|argocd_cluster_info|argocd_cluster_cache_age_seconds|argocd_cluster_connection_status|argocd_app_reconcile_sum|argocd_redis_request_duration_seconds_count|argocd_kubectl_exec_total|argocd_redis_request_duration_seconds_sum|argocd_redis_request_duration_count|argocd_redis_request_duration_sum|)
+        sourceLabels:
+          - "__name__"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-repo-server-metrics
+  labels:
+    app.kubernetes.io/component: argocd-repo-server
+    app.kubernetes.io/name: argocd-repo-server
+    app.kubernetes.io/part-of: kube-prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+    - argocd
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-repo-server
+  endpoints:
+  - port: metrics
+    interval: 60s
+    relabelings:
+      - action: drop
+        regex: (argocd_git_request_duration_seconds_count|argocd_git_request_duration_seconds_sum|argocd_redis_request_duration_seconds_bucket|argocd_redis_request_duration_bucket|argocd_repo_pending_request_total|argocd_cluster_info|argocd_cluster_cache_age_seconds|argocd_cluster_connection_status|argocd_app_reconcile_sum|argocd_redis_request_duration_seconds_count|argocd_kubectl_exec_total|argocd_redis_request_duration_seconds_sum|argocd_redis_request_duration_count|argocd_redis_request_duration_sum|)
+        sourceLabels:
+          - "__name__"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-applicationset-controller-metrics
+  labels:
+    app.kubernetes.io/component: argocd-applicationset-controller
+    app.kubernetes.io/name: argocd-applicationset-controller
+    app.kubernetes.io/part-of: kube-prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+    - argocd
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-applicationset-controller
+  endpoints:
+  - port: metrics
+    interval: 60s
+    relabelings:
+      - action: drop
+        regex: (argocd_git_request_duration_seconds_count|argocd_git_request_duration_seconds_sum|argocd_redis_request_duration_seconds_bucket|argocd_redis_request_duration_bucket|argocd_repo_pending_request_total|argocd_cluster_info|argocd_cluster_cache_age_seconds|argocd_cluster_connection_status|argocd_app_reconcile_sum|argocd_redis_request_duration_seconds_count|argocd_kubectl_exec_total|argocd_redis_request_duration_seconds_sum|argocd_redis_request_duration_count|argocd_redis_request_duration_sum|)
+        sourceLabels:
+          - "__name__"

@@ -32,9 +32,6 @@ flags:
   components-ee-agent-smith-app:
     paths:
       - components/ee/agent-smith/
-  components-ee-kedge-app:
-    paths:
-      - components/ee/kedge/
   components-gitpod-cli-app:
     paths:
       - components/gitpod-cli/
@@ -44,9 +41,6 @@ flags:
   components-image-builder-app:
     paths:
       - components/image-builder/
-  components-licensor-app:
-    paths:
-      - components/licensor/
   components-local-app-api-go-lib:
     paths:
       - components/local-app-api/go/
@@ -86,18 +80,12 @@ flags:
   components-ws-manager-bridge-app:
     paths:
       - components/ws-manager-bridge/
-  components-ws-manager-app:
-    paths:
-      - components/ws-manager/
   dev-blowtorch-app:
     paths:
       - dev/blowtorch/
   dev-loadgen-app:
     paths:
       - dev/loadgen/
-  dev-poolkeeper-app:
-    paths:
-      - dev/poolkeeper/
   dev-version-manifest-app:
     paths:
       - dev/version-manifest/

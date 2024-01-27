@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // package: iws
@@ -23,6 +23,7 @@ interface IInWorkspaceServiceService extends grpc.ServiceDefinition<grpc.Untyped
     umountSysfs: IInWorkspaceServiceService_IUmountSysfs;
     teardown: IInWorkspaceServiceService_ITeardown;
     setupPairVeths: IInWorkspaceServiceService_ISetupPairVeths;
+    workspaceInfo: IInWorkspaceServiceService_IWorkspaceInfo;
 }
 
 interface IInWorkspaceServiceService_IPrepareForUserNS extends grpc.MethodDefinition<workspace_daemon_pb.PrepareForUserNSRequest, workspace_daemon_pb.PrepareForUserNSResponse> {
@@ -106,6 +107,15 @@ interface IInWorkspaceServiceService_ISetupPairVeths extends grpc.MethodDefiniti
     responseSerialize: grpc.serialize<workspace_daemon_pb.SetupPairVethsResponse>;
     responseDeserialize: grpc.deserialize<workspace_daemon_pb.SetupPairVethsResponse>;
 }
+interface IInWorkspaceServiceService_IWorkspaceInfo extends grpc.MethodDefinition<workspace_daemon_pb.WorkspaceInfoRequest, workspace_daemon_pb.WorkspaceInfoResponse> {
+    path: "/iws.InWorkspaceService/WorkspaceInfo";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<workspace_daemon_pb.WorkspaceInfoRequest>;
+    requestDeserialize: grpc.deserialize<workspace_daemon_pb.WorkspaceInfoRequest>;
+    responseSerialize: grpc.serialize<workspace_daemon_pb.WorkspaceInfoResponse>;
+    responseDeserialize: grpc.deserialize<workspace_daemon_pb.WorkspaceInfoResponse>;
+}
 
 export const InWorkspaceServiceService: IInWorkspaceServiceService;
 
@@ -119,6 +129,7 @@ export interface IInWorkspaceServiceServer extends grpc.UntypedServiceImplementa
     umountSysfs: grpc.handleUnaryCall<workspace_daemon_pb.UmountProcRequest, workspace_daemon_pb.UmountProcResponse>;
     teardown: grpc.handleUnaryCall<workspace_daemon_pb.TeardownRequest, workspace_daemon_pb.TeardownResponse>;
     setupPairVeths: grpc.handleUnaryCall<workspace_daemon_pb.SetupPairVethsRequest, workspace_daemon_pb.SetupPairVethsResponse>;
+    workspaceInfo: grpc.handleUnaryCall<workspace_daemon_pb.WorkspaceInfoRequest, workspace_daemon_pb.WorkspaceInfoResponse>;
 }
 
 export interface IInWorkspaceServiceClient {
@@ -149,6 +160,9 @@ export interface IInWorkspaceServiceClient {
     setupPairVeths(request: workspace_daemon_pb.SetupPairVethsRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.SetupPairVethsResponse) => void): grpc.ClientUnaryCall;
     setupPairVeths(request: workspace_daemon_pb.SetupPairVethsRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.SetupPairVethsResponse) => void): grpc.ClientUnaryCall;
     setupPairVeths(request: workspace_daemon_pb.SetupPairVethsRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.SetupPairVethsResponse) => void): grpc.ClientUnaryCall;
+    workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+    workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+    workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class InWorkspaceServiceClient extends grpc.Client implements IInWorkspaceServiceClient {
@@ -180,4 +194,40 @@ export class InWorkspaceServiceClient extends grpc.Client implements IInWorkspac
     public setupPairVeths(request: workspace_daemon_pb.SetupPairVethsRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.SetupPairVethsResponse) => void): grpc.ClientUnaryCall;
     public setupPairVeths(request: workspace_daemon_pb.SetupPairVethsRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.SetupPairVethsResponse) => void): grpc.ClientUnaryCall;
     public setupPairVeths(request: workspace_daemon_pb.SetupPairVethsRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.SetupPairVethsResponse) => void): grpc.ClientUnaryCall;
+    public workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+    public workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+    public workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+}
+
+interface IWorkspaceInfoServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
+    workspaceInfo: IWorkspaceInfoServiceService_IWorkspaceInfo;
+}
+
+interface IWorkspaceInfoServiceService_IWorkspaceInfo extends grpc.MethodDefinition<workspace_daemon_pb.WorkspaceInfoRequest, workspace_daemon_pb.WorkspaceInfoResponse> {
+    path: "/iws.WorkspaceInfoService/WorkspaceInfo";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<workspace_daemon_pb.WorkspaceInfoRequest>;
+    requestDeserialize: grpc.deserialize<workspace_daemon_pb.WorkspaceInfoRequest>;
+    responseSerialize: grpc.serialize<workspace_daemon_pb.WorkspaceInfoResponse>;
+    responseDeserialize: grpc.deserialize<workspace_daemon_pb.WorkspaceInfoResponse>;
+}
+
+export const WorkspaceInfoServiceService: IWorkspaceInfoServiceService;
+
+export interface IWorkspaceInfoServiceServer extends grpc.UntypedServiceImplementation {
+    workspaceInfo: grpc.handleUnaryCall<workspace_daemon_pb.WorkspaceInfoRequest, workspace_daemon_pb.WorkspaceInfoResponse>;
+}
+
+export interface IWorkspaceInfoServiceClient {
+    workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+    workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+    workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+}
+
+export class WorkspaceInfoServiceClient extends grpc.Client implements IWorkspaceInfoServiceClient {
+    constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
+    public workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+    public workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+    public workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
 }

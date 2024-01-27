@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package supervisor
 
@@ -93,7 +93,7 @@ func hasGroup(name string, gid int) (bool, error) {
 	}
 	if grpByID == nil && grpByName != nil {
 		// a group with this name already exists, but has a different GID
-		return true, xerrors.Errorf("group named %s exists but uses different GID %s", name, grpByName.Gid)
+		return true, xerrors.Errorf("group named %s exists but uses different GID %s, should be: %d", name, grpByName.Gid, gitpodGID)
 	}
 
 	// group exists and all is well
@@ -127,7 +127,7 @@ func hasUser(u *user.User) (bool, error) {
 	}
 	if userByID == nil && userByName != nil {
 		// a user with this name already exists, but has a different GID
-		return true, xerrors.Errorf("user named %s exists but uses different UID %s", u.Username, userByName.Uid)
+		return true, xerrors.Errorf("user named %s exists but uses different UID %s, should be: %d", u.Username, userByName.Uid, gitpodUID)
 	}
 
 	// at this point it doesn't matter if we use userByID or byName - they're likely the same

@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package analytics
 
@@ -41,10 +41,20 @@ type TrackMessage struct {
 func NewFromEnvironment() Writer {
 	switch os.Getenv("GITPOD_ANALYTICS_WRITER") {
 	case "log":
+		log.Debug("log analytics")
 		return &logAnalyticsWriter{}
 	case "segment":
-		return &segmentAnalyticsWriter{Client: segment.New(os.Getenv("GITPOD_ANALYTICS_SEGMENT_KEY"))}
+		log.Debug("segment analytics")
+		client, err := segment.NewWithConfig(os.Getenv("GITPOD_ANALYTICS_SEGMENT_KEY"), segment.Config{
+			Endpoint: os.Getenv("GITPOD_ANALYTICS_SEGMENT_ENDPOINT"),
+		})
+		if err != nil {
+			log.WithError(err).Error("cannot create segment client")
+			return &noAnalyticsWriter{}
+		}
+		return &segmentAnalyticsWriter{client}
 	default:
+		log.Debug("no analytics")
 		return &noAnalyticsWriter{}
 	}
 }

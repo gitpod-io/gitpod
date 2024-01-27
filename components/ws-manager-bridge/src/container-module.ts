@@ -1,20 +1,16 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 require("reflect-metadata");
 
 import { ContainerModule } from "inversify";
-import { MessageBusHelper, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
-import { MessagebusConfiguration } from "@gitpod/gitpod-messagebus/lib/config";
-import { MessageBusIntegration } from "./messagebus-integration";
 import { Configuration } from "./config";
 import * as fs from "fs";
 import { WorkspaceManagerBridgeFactory, WorkspaceManagerBridge } from "./bridge";
-import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
+import { Metrics } from "./metrics";
 import { BridgeController, WorkspaceManagerClientProviderConfigSource } from "./bridge-controller";
 import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 import {
@@ -29,20 +25,20 @@ import {
 import { ClusterService, ClusterServiceServer } from "./cluster-service-server";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { newAnalyticsWriterFromEnv } from "@gitpod/gitpod-protocol/lib/util/analytics";
-import { MetaInstanceController } from "./meta-instance-controller";
-import { IClientCallMetrics } from "@gitpod/content-service/lib/client-call-metrics";
+import { IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
-import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from "./preparing-update-emulator";
 import { PrebuildStateMapper } from "./prebuild-state-mapper";
+import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
+import { Client } from "@gitpod/gitpod-protocol/lib/experiments/types";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { WorkspaceInstanceController, WorkspaceInstanceControllerImpl } from "./workspace-instance-controller";
+import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
+import { PrebuildUpdater } from "./prebuild-updater";
+import { Redis } from "ioredis";
+import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
 
 export const containerModule = new ContainerModule((bind) => {
-    bind(MessagebusConfiguration).toSelf().inSingletonScope();
-    bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
-    bind(MessageBusIntegration).toSelf().inSingletonScope();
-
     bind(BridgeController).toSelf().inSingletonScope();
-
-    bind(MetaInstanceController).toSelf().inSingletonScope();
 
     bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();
     bind(IClientCallMetrics).to(PrometheusClientCallMetrics).inSingletonScope();
@@ -59,9 +55,7 @@ export const containerModule = new ContainerModule((bind) => {
     bind(ClusterServiceServer).toSelf().inSingletonScope();
     bind(ClusterService).toSelf().inRequestScope();
 
-    bind(TracingManager).toSelf().inSingletonScope();
-
-    bind(PrometheusMetricsExporter).toSelf().inSingletonScope();
+    bind(Metrics).toSelf().inSingletonScope();
 
     bind(Configuration)
         .toDynamicValue((ctx) => {
@@ -79,8 +73,24 @@ export const containerModule = new ContainerModule((bind) => {
 
     bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 
-    bind(PreparingUpdateEmulator).toSelf().inRequestScope();
-    bind(PreparingUpdateEmulatorFactory).toAutoFactory(PreparingUpdateEmulator);
-
     bind(PrebuildStateMapper).toSelf().inSingletonScope();
+    bind(PrebuildUpdater).toSelf().inSingletonScope();
+
+    bind(DebugApp).toSelf().inSingletonScope();
+
+    bind(Client).toDynamicValue(getExperimentsClientForBackend).inSingletonScope();
+
+    // transient to make sure we're creating a separate instance every time we ask for it
+    bind(WorkspaceInstanceController).to(WorkspaceInstanceControllerImpl).inTransientScope();
+
+    bind(AppClusterWorkspaceInstancesController).toSelf().inSingletonScope();
+
+    bind(Redis).toDynamicValue((ctx) => {
+        const config = ctx.container.get<Configuration>(Configuration);
+        const [host, port] = config.redis.address.split(":");
+        const username = process.env.REDIS_USERNAME;
+        const password = process.env.REDIS_PASSWORD;
+        return newRedisClient({ host, port: Number(port), connectionName: "server", username, password });
+    });
+    bind(RedisPublisher).toSelf().inSingletonScope();
 });

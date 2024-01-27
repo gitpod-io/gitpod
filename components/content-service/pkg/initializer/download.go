@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package initializer
 
@@ -45,18 +45,38 @@ type fileDownloadInitializer struct {
 }
 
 // Run initializes the workspace
-func (ws *fileDownloadInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
+func (ws *fileDownloadInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, metrics csapi.InitializerMetrics, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "FileDownloadInitializer.Run")
 	defer tracing.FinishSpan(span, &err)
+	start := time.Now()
+	initialSize, fsErr := getFsUsage()
+	if fsErr != nil {
+		log.WithError(fsErr).Error("could not get disk usage")
+	}
 
 	for _, info := range ws.FilesInfos {
 		err := ws.downloadFile(ctx, info)
 		if err != nil {
 			tracing.LogError(span, xerrors.Errorf("cannot download file '%s' from '%s': %w", info.Path, info.URL, err))
-			return src, err
+			return src, nil, err
 		}
 	}
-	return csapi.WorkspaceInitFromOther, nil
+
+	if fsErr == nil {
+		currentSize, fsErr := getFsUsage()
+		if fsErr != nil {
+			log.WithError(fsErr).Error("could not get disk usage")
+		}
+
+		metrics = csapi.InitializerMetrics{csapi.InitializerMetric{
+			Type:     "fileDownload",
+			Duration: time.Since(start),
+			Size:     currentSize - initialSize,
+		}}
+	}
+
+	src = csapi.WorkspaceInitFromOther
+	return
 }
 
 func (ws *fileDownloadInitializer) downloadFile(ctx context.Context, info fileInfo) (err error) {

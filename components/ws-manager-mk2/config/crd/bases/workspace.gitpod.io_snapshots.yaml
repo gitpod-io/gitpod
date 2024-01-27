@@ -1,0 +1,84 @@
+# Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.10.0
+  creationTimestamp: null
+  name: snapshots.workspace.gitpod.io
+spec:
+  group: workspace.gitpod.io
+  names:
+    kind: Snapshot
+    listKind: SnapshotList
+    plural: snapshots
+    shortNames:
+    - snapshot
+    singular: snapshot
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.workspaceID
+      name: Workspace
+      type: string
+    - jsonPath: .status.url
+      name: URL
+      priority: 10
+      type: string
+    - jsonPath: .status.completed
+      name: Completed
+      type: boolean
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Snapshot is the Schema for the snapshot API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SnapshotSpec defines the desired state of the snapshot
+            properties:
+              nodeName:
+                type: string
+              workspaceID:
+                type: string
+            required:
+            - nodeName
+            - workspaceID
+            type: object
+          status:
+            description: SnapshotStatus defines the observed state of the snapshot
+            properties:
+              completed:
+                description: Completed indicates if the snapshot operation has completed
+                  either by taking the snapshot or due to failure
+                type: boolean
+              error:
+                description: Erorr is the error observed during snapshot creation
+                  if any
+                type: string
+              url:
+                description: URL contains the url of the snapshot
+                type: string
+            required:
+            - completed
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

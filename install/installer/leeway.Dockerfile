@@ -1,12 +1,13 @@
 # Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
-# See License-AGPL.txt in the project root for license information.
+# See License.AGPL.txt in the project root for license information.
 
-FROM alpine:3.15
-COPY --from=alpine/helm:3.8.0 /usr/bin/helm /usr/bin/helm
+FROM cgr.dev/chainguard/helm:latest@sha256:86b838d172e29083552da4f831676b1726bf5e2d38a43f9c39f6bb8569c137e0
+
 COPY install-installer--app/installer install-installer--app/provenance-bundle.jsonl /app/
-RUN apk add --no-cache curl jq yq  \
-    && curl -L "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl \
-    && chmod +x /usr/local/bin/kubectl
+
+COPY dev-gpctl--app/gpctl /app/
+
 ENTRYPOINT [ "/app/installer" ]
+
 CMD [ "help" ]

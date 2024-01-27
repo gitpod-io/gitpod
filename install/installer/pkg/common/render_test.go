@@ -1,24 +1,25 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
-// Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+/// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package common_test
 
 import (
 	"testing"
 
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	content_service "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	content_service "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
 func TestCompositeRenderFunc_NilObjectsNilError(t *testing.T) {
@@ -58,12 +59,10 @@ func TestReplicas(t *testing.T) {
 		},
 	}
 	ctx, err := common.NewRenderContext(config.Config{
-		Experimental: &experimental.Config{
-			Common: &experimental.CommonConfig{
-				PodConfig: map[string]*experimental.PodConfig{
-					"server":    {Replicas: pointer.Int32(123)},
-					"dashboard": {Replicas: pointer.Int32(456)},
-				},
+		Components: &config.Components{
+			PodConfig: map[string]*config.PodConfig{
+				"server":    {Replicas: pointer.Int32(123)},
+				"dashboard": {Replicas: pointer.Int32(456)},
 			},
 		},
 	}, versions.Manifest{}, "test_namespace")
@@ -140,18 +139,16 @@ func TestResourceRequirements(t *testing.T) {
 		},
 	}
 	ctx, err := common.NewRenderContext(config.Config{
-		Experimental: &experimental.Config{
-			Common: &experimental.CommonConfig{
-				PodConfig: map[string]*experimental.PodConfig{
-					server.Component: {
-						Resources: map[string]*corev1.ResourceRequirements{
-							server.Component: &serverResources,
-						},
+		Components: &config.Components{
+			PodConfig: map[string]*config.PodConfig{
+				server.Component: {
+					Resources: map[string]*corev1.ResourceRequirements{
+						server.Component: &serverResources,
 					},
-					dashboard.Component: {
-						Resources: map[string]*corev1.ResourceRequirements{
-							dashboard.Component: &dashboardResources,
-						},
+				},
+				dashboard.Component: {
+					Resources: map[string]*corev1.ResourceRequirements{
+						dashboard.Component: &dashboardResources,
 					},
 				},
 			},
@@ -181,32 +178,6 @@ func TestResourceRequirements(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestStaticMessagebusPassword(t *testing.T) {
-	const expectedPassword = "some-password"
-
-	ctx, err := common.NewRenderContext(config.Config{
-		Experimental: &experimental.Config{
-			Common: &experimental.CommonConfig{
-				StaticMessagebusPassword: expectedPassword,
-			},
-		},
-	}, versions.Manifest{}, "test_namespace")
-	require.NoError(t, err)
-
-	actualPassword := ctx.Values.MessageBusPassword
-
-	require.Equal(t, expectedPassword, actualPassword)
-}
-
-func TestDynamicMessagebusPassword(t *testing.T) {
-	ctx, err := common.NewRenderContext(config.Config{}, versions.Manifest{}, "test_namespace")
-	require.NoError(t, err)
-
-	actualPassword := ctx.Values.MessageBusPassword
-
-	require.NotEmpty(t, actualPassword)
 }
 
 func TestRepoName(t *testing.T) {

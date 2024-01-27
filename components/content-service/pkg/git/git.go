@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package git
 
@@ -22,7 +22,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 )
 
-const (
+var (
 	// errNoCommitsYet is a substring of a Git error if we have no commits yet in a working copy
 	errNoCommitsYet = "does not have any commits yet"
 )
@@ -92,6 +92,9 @@ type Client struct {
 
 	// UpstreamCloneURI is the fork upstream of a repository
 	UpstreamRemoteURI string
+
+	// if true will run git command as gitpod user (should be executed as root that has access to sudo in this case)
+	RunAsGitpodUser bool
 }
 
 // Status describes the status of a Git repo/working copy akin to "git status"
@@ -147,10 +150,16 @@ func (e OpFailedError) Error() string {
 
 // GitWithOutput starts git and returns the stdout of the process. This function returns once git is started,
 // not after it finishd. Once the returned reader returned io.EOF, the command is finished.
-func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...string) (out []byte, err error) {
+func (c *Client) GitWithOutput(ctx context.Context, ignoreErr *string, subcommand string, args ...string) (out []byte, err error) {
 	//nolint:staticcheck,ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("git.%s", subcommand))
-	defer tracing.FinishSpan(span, &err)
+	defer func() {
+		if err != nil && ignoreErr != nil && strings.Contains(err.Error(), *ignoreErr) {
+			tracing.FinishSpan(span, nil)
+		} else {
+			tracing.FinishSpan(span, &err)
+		}
+	}()
 
 	fullArgs := make([]string, 0)
 	env := make([]string, 0)
@@ -181,11 +190,22 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 	if os.Getenv("https_proxy") != "" {
 		env = append(env, fmt.Sprintf("https_proxy=%s", os.Getenv("https_proxy")))
 	}
+	if v := os.Getenv("GIT_SSL_CAPATH"); v != "" {
+		env = append(env, fmt.Sprintf("GIT_SSL_CAPATH=%s", v))
+	}
+
 	if v := os.Getenv("GIT_SSL_CAINFO"); v != "" {
 		env = append(env, fmt.Sprintf("GIT_SSL_CAINFO=%s", v))
 	}
 
-	cmd := exec.Command("git", fullArgs...)
+	span.LogKV("args", fullArgs)
+
+	cmdName := "git"
+	if c.RunAsGitpodUser {
+		cmdName = "sudo"
+		fullArgs = append([]string{"-u", "gitpod", "git"}, fullArgs...)
+	}
+	cmd := exec.Command(cmdName, fullArgs...)
 	cmd.Dir = c.Location
 	cmd.Env = env
 
@@ -208,7 +228,7 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 
 // Git executes git using the client configuration
 func (c *Client) Git(ctx context.Context, subcommand string, args ...string) (err error) {
-	_, err = c.GitWithOutput(ctx, subcommand, args...)
+	_, err = c.GitWithOutput(ctx, nil, subcommand, args...)
 	if err != nil {
 		return err
 	}
@@ -265,7 +285,7 @@ func GitStatusFromFiles(ctx context.Context, loc string) (res *Status, err error
 
 // Status runs git status
 func (c *Client) Status(ctx context.Context) (res *Status, err error) {
-	gitout, err := c.GitWithOutput(ctx, "status", "--porcelain=v2", "--branch", "-uall")
+	gitout, err := c.GitWithOutput(ctx, nil, "status", "--porcelain=v2", "--branch", "-uall")
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +295,7 @@ func (c *Client) Status(ctx context.Context) (res *Status, err error) {
 	}
 
 	unpushedCommits := make([]string, 0)
-	gitout, err = c.GitWithOutput(ctx, "log", "--pretty=%h: %s", "--branches", "--not", "--remotes")
+	gitout, err = c.GitWithOutput(ctx, &errNoCommitsYet, "log", "--pretty=%h: %s", "--branches", "--not", "--remotes")
 	if err != nil && !strings.Contains(err.Error(), errNoCommitsYet) {
 		return nil, err
 	}
@@ -296,7 +316,7 @@ func (c *Client) Status(ctx context.Context) (res *Status, err error) {
 	}
 
 	latestCommit := ""
-	gitout, err = c.GitWithOutput(ctx, "log", "--pretty=%H", "-n", "1")
+	gitout, err = c.GitWithOutput(ctx, &errNoCommitsYet, "log", "--pretty=%H", "-n", "1")
 	if err != nil && !strings.Contains(err.Error(), errNoCommitsYet) {
 		return nil, err
 	}
@@ -313,28 +333,27 @@ func (c *Client) Status(ctx context.Context) (res *Status, err error) {
 
 // Clone runs git clone
 func (c *Client) Clone(ctx context.Context) (err error) {
-	err = os.MkdirAll(c.Location, 0755)
+	err = os.MkdirAll(c.Location, 0775)
 	if err != nil {
 		log.WithError(err).Error("cannot create clone location")
 	}
 
-	args := []string{"--depth=1", "--no-single-branch", c.RemoteURI}
+	args := []string{"--depth=1", "--shallow-submodules", c.RemoteURI}
 
 	for key, value := range c.Config {
 		args = append(args, "--config")
 		args = append(args, strings.TrimSpace(key)+"="+strings.TrimSpace(value))
 	}
 
+	// TODO: remove workaround once https://gitlab.com/gitlab-org/gitaly/-/issues/4248 is fixed
+	if strings.Contains(c.RemoteURI, "gitlab.com") {
+		args = append(args, "--config")
+		args = append(args, "http.version=HTTP/1.1")
+	}
+
 	args = append(args, ".")
 
 	return c.Git(ctx, "clone", args...)
-}
-
-// Fetch runs git fetch and prunes remote-tracking references as well as ALL LOCAL TAGS.
-func (c *Client) Fetch(ctx context.Context) (err error) {
-	// we need to fetch with pruning to avoid issues like github.com/gitpod-io/gitpod/issues/7561.
-	// See https://git-scm.com/docs/git-fetch#Documentation/git-fetch.txt---prune for more details.
-	return c.Git(ctx, "fetch", "-p", "-P", "--tags", "-f")
 }
 
 // UpdateRemote performs a git fetch on the upstream remote URI

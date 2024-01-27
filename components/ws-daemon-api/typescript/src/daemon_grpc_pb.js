@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // GENERATED CODE -- DO NOT EDIT!
@@ -77,6 +77,28 @@ function deserialize_wsdaemon_InitWorkspaceResponse(buffer_arg) {
   return daemon_pb.InitWorkspaceResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_wsdaemon_IsWorkspaceExistsRequest(arg) {
+  if (!(arg instanceof daemon_pb.IsWorkspaceExistsRequest)) {
+    throw new Error('Expected argument of type wsdaemon.IsWorkspaceExistsRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsdaemon_IsWorkspaceExistsRequest(buffer_arg) {
+  return daemon_pb.IsWorkspaceExistsRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsdaemon_IsWorkspaceExistsResponse(arg) {
+  if (!(arg instanceof daemon_pb.IsWorkspaceExistsResponse)) {
+    throw new Error('Expected argument of type wsdaemon.IsWorkspaceExistsResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsdaemon_IsWorkspaceExistsResponse(buffer_arg) {
+  return daemon_pb.IsWorkspaceExistsResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_wsdaemon_TakeSnapshotRequest(arg) {
   if (!(arg instanceof daemon_pb.TakeSnapshotRequest)) {
     throw new Error('Expected argument of type wsdaemon.TakeSnapshotRequest');
@@ -148,6 +170,18 @@ waitForInit: {
     requestDeserialize: deserialize_wsdaemon_WaitForInitRequest,
     responseSerialize: serialize_wsdaemon_WaitForInitResponse,
     responseDeserialize: deserialize_wsdaemon_WaitForInitResponse,
+  },
+  // IsWorkspaceExists checks if ws-daemon knows about workspace.
+isWorkspaceExists: {
+    path: '/wsdaemon.WorkspaceContentService/IsWorkspaceExists',
+    requestStream: false,
+    responseStream: false,
+    requestType: daemon_pb.IsWorkspaceExistsRequest,
+    responseType: daemon_pb.IsWorkspaceExistsResponse,
+    requestSerialize: serialize_wsdaemon_IsWorkspaceExistsRequest,
+    requestDeserialize: deserialize_wsdaemon_IsWorkspaceExistsRequest,
+    responseSerialize: serialize_wsdaemon_IsWorkspaceExistsResponse,
+    responseDeserialize: deserialize_wsdaemon_IsWorkspaceExistsResponse,
   },
   // TakeSnapshot creates a backup/snapshot of a workspace
 takeSnapshot: {

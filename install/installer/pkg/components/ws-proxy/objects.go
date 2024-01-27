@@ -1,13 +1,12 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package wsproxy
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -17,33 +16,31 @@ var Objects = common.CompositeRenderFunc(
 	networkpolicy,
 	rolebinding,
 	role,
+	pdb,
 	func(cfg *common.RenderContext) ([]runtime.Object, error) {
-		ports := map[string]common.ServicePort{
-			HTTPProxyPortName: {
-				ContainerPort: HTTPProxyPort,
+		ports := []common.ServicePort{
+			{
+				Name:          HTTPProxyPortName,
+				ContainerPort: HTTPProxyTargetPort,
 				ServicePort:   HTTPProxyPort,
 			},
-			HTTPSProxyPortName: {
-				ContainerPort: HTTPSProxyPort,
+			{
+				Name:          HTTPSProxyPortName,
+				ContainerPort: HTTPSProxyTargetPort,
 				ServicePort:   HTTPSProxyPort,
 			},
-			MetricsPortName: {
-				ContainerPort: MetricsPort,
-				ServicePort:   MetricsPort,
+			{
+				Name:          baseserver.BuiltinMetricsPortName,
+				ContainerPort: baseserver.BuiltinMetricsPort,
+				ServicePort:   baseserver.BuiltinMetricsPort,
 			},
-			SSHPortName: {
+			{
+				Name:          SSHPortName,
 				ContainerPort: SSHTargetPort,
 				ServicePort:   SSHServicePort,
 			},
 		}
-		return common.GenerateService(Component, ports, func(service *corev1.Service) {
-			// In the case of Workspace only setup, `ws-proxy` service is the entrypoint
-			// Hence we use LoadBalancer type for the service
-			if cfg.Config.Kind == config.InstallationWorkspace {
-				service.Spec.Type = corev1.ServiceTypeLoadBalancer
-				service.Annotations["cloud.google.com/neg"] = `{"exposed_ports": {"80":{},"443": {}}}`
-			}
-		})(cfg)
+		return common.GenerateService(Component, ports)(cfg)
 	},
 	common.DefaultServiceAccount(Component),
 )

@@ -1,11 +1,13 @@
 {
    "folders": [
+      { "path": "../image-builder-api/go" },
       { "path": "../image-builder-bob" },
       { "path": "../image-builder-mk3" },
-      { "path": "../ws-manager" },
+      { "path": "../ws-manager-mk2" },
       { "path": "../server" },
       { "path": "../../test" },
-      { "path": "../../dev/gpctl" }
+      { "path": "../../dev/gpctl" },
+      { "path": "../../install/installer" }
    ],
    "settings": {
       "typescript.tsdk": "gitpod/node_modules/typescript/lib",

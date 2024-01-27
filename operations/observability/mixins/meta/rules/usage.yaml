@@ -1,0 +1,72 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: usage-monitoring-rules
+spec:
+  groups:
+  - name: usage
+    rules:
+    - alert: GitpodUsageReconcileUsageFailures
+      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.UsageService", grpc_method="ReconcileUsage", grpc_code!="OK"}[30m])) > 1
+      for: 30m
+      labels:
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodUsageReconcileUsageFailures.md
+        summary: There are failed usage reconciliations.
+        description: We have accumulated {{ printf "%.2f" $value }} failures. This affects how up-to-date usage data is.
+
+    - alert: GitpodUsageReconcileInvoicesFailures
+      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.BillingService", grpc_method="ReconcileInvoices", grpc_code!="OK"}[30m])) > 1
+      for: 30m
+      labels:
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodUsageReconcileInvoicesFailures.md
+        summary: There are failed Stripe invoice reconciliations.
+        description: We have accumulated {{ printf "%.2f" $value }} failures. This affects how much customers will be billed.
+
+    - alert: GitpodUsageBillingServiceFinalizeInvoiceFailures
+      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.BillingService", grpc_method="FinalizeInvoice", grpc_code!="OK"}[30m])) > 1
+      for: 30m
+      labels:
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodUsageBillingServiceFinalizeInvoiceFailures.md
+        summary: Invoice finalization is failing. We are not balancing out user/team usage.
+        description: We have accumulated {{ printf "%.2f" $value }} failures. This affects if customers have their balance reset and can therefore start new workspaces.
+
+    - alert: GitpodUsageTooLongSinceLastSuccessfulLedgerReconciliation
+      expr: (time() - gitpod_usage_ledger_last_completed_time{outcome="success"}) > 60 * 60
+      for: 30m
+      labels:
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodUsageTooLongSinceLastSuccessfulLedgerReconciliation.md
+        summary: Usage reconciliation has not run successfully for {{ printf "%.2f" $value }} seconds. Usage data is stale.
+        description: We have not executed scheduled usage reconciliation for {{ printf "%.2f" $value }} seconds. We expect the data to update every 15 minutes to avoid stale usage records and stale invoices.
+
+    - alert: UsageHighCPUUsage
+      # Reasoning: high rates of CPU consumption should only be temporary.
+      expr: avg(rate(container_cpu_usage_seconds_total{container!="POD", pod=~"usage-.*"}[5m])) by (cluster) > 0.2
+      for: 10m
+      labels:
+        # sent to the team internal channel until we fine tuned it
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesHighCPUUsage.md
+        summary: Usage has excessive CPU usage.
+        description: Usage is consumming too much CPU. Please investigate.
+        dashboard_url: https://grafana.gitpod.io/d/6581e46e4e5c7ba40a07646395ef7b23/kubernetes-compute-resources-pod?var-cluster={{ $labels.cluster }}&var-namespace=default

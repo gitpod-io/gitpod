@@ -43,6 +43,10 @@
 
 	rewrite /schemas/gitpod-schema.json /static/schemas/gitpod-schema.json
 
+	# avoid multiple redirects to return a static html file to not loose
+	# window.opener and brake the automatic closing of the auth redirect
+	rewrite /complete-auth /complete-auth/index.html
+
 	header -Server
 
 	root * /www

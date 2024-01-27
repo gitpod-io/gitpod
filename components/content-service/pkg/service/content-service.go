@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package service
 
@@ -42,7 +42,7 @@ func (cs *ContentService) DeleteUserContent(ctx context.Context, req *api.Delete
 	defer tracing.FinishSpan(span, &err)
 
 	bucket := cs.s.Bucket(req.OwnerId)
-	err = cs.s.DeleteBucket(ctx, bucket)
+	err = cs.s.DeleteBucket(ctx, req.OwnerId, bucket)
 	// TODO
 	if err == storage.ErrNotFound {
 		log.WithFields(log.OWI(req.OwnerId, "", "")).Debug("DeleteUserContent: NotFound")

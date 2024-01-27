@@ -1,20 +1,25 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
-// Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+/// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package server
 
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/auth"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
 func TestConfigMap(t *testing.T) {
@@ -27,8 +32,9 @@ func TestConfigMap(t *testing.T) {
 		WorkspaceImage                    string
 		JWTSecret                         string
 		SessionSecret                     string
-		BlockedRepositories               []experimental.BlockedRepository
 		GitHubApp                         experimental.GithubApp
+		Auth                              auth.Config
+		Redis                             redis.Configuration
 	}
 
 	expectation := Expectation{
@@ -40,10 +46,6 @@ func TestConfigMap(t *testing.T) {
 		WorkspaceImage:                    "some-workspace-image",
 		JWTSecret:                         "some-jwt-secret",
 		SessionSecret:                     "some-session-secret",
-		BlockedRepositories: []experimental.BlockedRepository{{
-			UrlRegExp: "https://github.com/some-user/some-bad-repo",
-			BlockUser: true,
-		}},
 		GitHubApp: experimental.GithubApp{
 			AppId:           123,
 			AuthProviderId:  "some-auth-provider-id",
@@ -55,9 +57,39 @@ func TestConfigMap(t *testing.T) {
 			WebhookSecret:   "some-webhook-secret",
 			CertSecretName:  "some-cert-secret-name",
 		},
+		Auth: auth.Config{
+			PKI: auth.PKIConfig{
+				Signing: auth.KeyPair{
+					ID:             "0001",
+					PrivateKeyPath: "/secrets/auth-pki/signing/tls.key",
+					PublicKeyPath:  "/secrets/auth-pki/signing/tls.crt",
+				},
+			},
+			Session: auth.SessionConfig{
+				LifetimeSeconds: int64((7 * 24 * time.Hour).Seconds()),
+				Issuer:          "https://awesome.domain",
+				Cookie: auth.CookieConfig{
+					Name:     "_awesome_domain_jwt2_",
+					MaxAge:   int64((7 * 24 * time.Hour).Seconds()),
+					SameSite: "lax",
+					Secure:   true,
+					HTTPOnly: true,
+				},
+			},
+		},
+		Redis: redis.Configuration{
+			Address: "redis.test_namespace.svc.cluster.local:6379",
+		},
 	}
 
 	ctx, err := common.NewRenderContext(config.Config{
+		Domain: "awesome.domain",
+		Workspace: config.Workspace{
+			WorkspaceImage: expectation.WorkspaceImage,
+		},
+		ContainerRegistry: config.ContainerRegistry{
+			PrivateBaseImageAllowList: expectation.DefaultBaseImageRegistryWhiteList,
+		},
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
 				Server: &experimental.ServerConfig{
@@ -65,18 +97,13 @@ func TestConfigMap(t *testing.T) {
 					EnableLocalApp:                    pointer.Bool(expectation.EnableLocalApp),
 					RunDbDeleter:                      pointer.Bool(expectation.RunDbDeleter),
 					DisableWorkspaceGarbageCollection: expectation.DisableWorkspaceGarbageCollection,
-					DefaultBaseImageRegistryWhiteList: expectation.DefaultBaseImageRegistryWhiteList,
-					WorkspaceDefaults: experimental.WorkspaceDefaults{
-						WorkspaceImage: expectation.WorkspaceImage,
-					},
 					OAuthServer: experimental.OAuthServer{
 						JWTSecret: expectation.JWTSecret,
 					},
 					Session: experimental.Session{
 						Secret: expectation.SessionSecret,
 					},
-					GithubApp:           &expectation.GitHubApp,
-					BlockedRepositories: expectation.BlockedRepositories,
+					GithubApp: &expectation.GitHubApp,
 				},
 			},
 		},
@@ -113,16 +140,6 @@ func TestConfigMap(t *testing.T) {
 		WorkspaceImage:                    config.WorkspaceDefaults.WorkspaceImage,
 		JWTSecret:                         config.OAuthServer.JWTSecret,
 		SessionSecret:                     config.Session.Secret,
-		BlockedRepositories: func(config ConfigSerialized) []experimental.BlockedRepository {
-			var blockedRepos []experimental.BlockedRepository
-			for _, repo := range config.BlockedRepositories {
-				blockedRepos = append(blockedRepos, experimental.BlockedRepository{
-					UrlRegExp: repo.UrlRegExp,
-					BlockUser: repo.BlockUser,
-				})
-			}
-			return blockedRepos
-		}(config),
 		GitHubApp: experimental.GithubApp{
 			AppId:           config.GitHubApp.AppId,
 			AuthProviderId:  config.GitHubApp.AuthProviderId,
@@ -134,29 +151,9 @@ func TestConfigMap(t *testing.T) {
 			WebhookSecret:   config.GitHubApp.WebhookSecret,
 			CertSecretName:  config.GitHubApp.CertSecretName,
 		},
+		Auth:  config.Auth,
+		Redis: config.Redis,
 	}
 
 	assert.Equal(t, expectation, actual)
-}
-
-func TestInvalidBlockedRepositoryRegularExpressions(t *testing.T) {
-	const invalidRegexp = "["
-
-	ctx, err := common.NewRenderContext(config.Config{
-		Experimental: &experimental.Config{
-			WebApp: &experimental.WebAppConfig{
-				Server: &experimental.ServerConfig{
-					BlockedRepositories: []experimental.BlockedRepository{{
-						UrlRegExp: invalidRegexp,
-						BlockUser: false,
-					}},
-				},
-			},
-		},
-	}, versions.Manifest{}, "test_namespace")
-	require.NoError(t, err)
-
-	_, err = configmap(ctx)
-
-	require.Error(t, err, "expected to fail when rendering configmap with invalid blocked repo regexp %q", invalidRegexp)
 }

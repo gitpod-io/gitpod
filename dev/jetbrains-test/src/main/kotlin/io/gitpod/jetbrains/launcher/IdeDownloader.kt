@@ -23,8 +23,8 @@ class IdeDownloader @JvmOverloads constructor(private val httpClient: OkHttpClie
         }
     }
 
-    fun downloadAndExtractLatestEap(ide: Ide, toDir: Path): Path {
-        val idePackage = downloadIde(ide, toDir)
+    fun downloadAndExtract(ide: Ide, toDir: Path, type: String): Path {
+        val idePackage = downloadIde(ide, toDir, type)
         return extractIde(idePackage, toDir)
     }
 
@@ -43,8 +43,8 @@ class IdeDownloader @JvmOverloads constructor(private val httpClient: OkHttpClie
         }
     }
 
-    private fun downloadIde(ide: Ide, toDir: Path): Path {
-        val ideDownloadLink = getIdeDownloadUrl(ide, httpClient)
+    private fun downloadIde(ide: Ide, toDir: Path, type: String): Path {
+        val ideDownloadLink = getIdeDownloadUrl(ide, httpClient, type)
         val idePackageName = ideDownloadLink.substringAfterLast("/").removeSuffix("/")
         val targetFile = toDir.resolve(idePackageName)
         return downloadFile(ideDownloadLink, targetFile)
@@ -60,13 +60,13 @@ class IdeDownloader @JvmOverloads constructor(private val httpClient: OkHttpClie
         }
     }
 
-    private fun getIdeDownloadUrl(ide: Ide, httpClient: OkHttpClient): String {
+    private fun getIdeDownloadUrl(ide: Ide, httpClient: OkHttpClient, type: String): String {
         return httpClient.newCall(
             Request.Builder().url(
                 "https://data.services.jetbrains.com/products/releases".toHttpUrl()
                     .newBuilder()
                     .addQueryParameter("code", ide.feedsCode)
-                    .addQueryParameter("type", "eap,rc,release")
+                    .addQueryParameter("type", type)
                     .addQueryParameter("platform", getFeedsOsPropertyName())
                     .build()
             ).build()

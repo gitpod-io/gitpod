@@ -1,51 +1,43 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { DisposableCollection, Disposable } from '@gitpod/gitpod-protocol/lib/util/disposable';
+import { DisposableCollection, Disposable } from "@gitpod/gitpod-protocol/lib/util/disposable";
+import { FrontendDashboardServiceClient } from "../shared/frontend-dashboard-service";
 
 let lastActivity = 0;
 const updateLastActivitiy = () => {
     lastActivity = new Date().getTime();
 };
 export const track = (w: Window) => {
-    w.document.addEventListener('mousemove', updateLastActivitiy, { capture: true });
-    w.document.addEventListener('keydown', updateLastActivitiy, { capture: true });
-}
+    w.document.addEventListener("mousemove", updateLastActivitiy, { capture: true });
+    w.document.addEventListener("keydown", updateLastActivitiy, { capture: true });
+};
 
 let toCancel: DisposableCollection | undefined;
-export function schedule(instanceId: string): void {
+export function schedule(frontendDashboardServiceClient: FrontendDashboardServiceClient): void {
     if (toCancel) {
         return;
     }
-    toCancel = new DisposableCollection()
+    toCancel = new DisposableCollection();
     const sendHeartBeat = async (wasClosed?: true) => {
         try {
-            await window.gitpod.service.server.sendHeartBeat({ instanceId, wasClosed });
+            frontendDashboardServiceClient.activeHeartbeat(); // wasClosed
+            if (wasClosed) {
+                frontendDashboardServiceClient.trackEvent({
+                    event: "ide_close_signal",
+                    properties: {
+                        clientKind: "supervisor-frontend",
+                    },
+                });
+            }
         } catch (err) {
-            console.error('Failed to send hearbeat:', err);
+            console.error("Failed to send hearbeat:", err);
         }
-    }
-    sendHeartBeat();
-    let unloadTimeout: any;
-    const beforeUnloadListener = () => {
-        unloadTimeout = setTimeout(() => {
-            // if unload was cancelled then resume heartbeating
-            sendHeartBeat();
-        }, 2000);
-        sendHeartBeat(true);
     };
-    const unloadListener = () => {
-        if (unloadTimeout) {
-            clearTimeout(unloadTimeout);
-        }
-    }
-    window.addEventListener('beforeunload', beforeUnloadListener);
-    window.addEventListener('unload', unloadListener);
-    toCancel.push(Disposable.create(() => window.removeEventListener('beforeunload', beforeUnloadListener)));
-    toCancel.push(Disposable.create(() => window.removeEventListener('unload', unloadListener)));
+    sendHeartBeat();
 
     let activityInterval = 30000;
     const intervalHandle = setInterval(() => {
@@ -65,4 +57,4 @@ export const cancel = () => {
         toCancel.dispose();
         toCancel = undefined;
     }
-}
+};

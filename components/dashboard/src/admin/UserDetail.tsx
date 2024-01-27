@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import {
@@ -12,45 +12,28 @@ import {
     User,
     WorkspaceFeatureFlags,
 } from "@gitpod/gitpod-protocol";
-import { AccountStatement, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
-import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useEffect, useRef, useState } from "react";
-import CheckBox from "../components/CheckBox";
 import Modal from "../components/Modal";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
-import { adminMenu } from "./admin-menu";
 import { WorkspaceSearch } from "./WorkspacesSearch";
 import Property from "./Property";
+import { AdminPageHeader } from "./AdminPageHeader";
+import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
+import { Heading2, Subheading } from "../components/typography/headings";
+import { Button } from "@podkit/buttons/Button";
 
 export default function UserDetail(p: { user: User }) {
     const [activity, setActivity] = useState(false);
     const [user, setUser] = useState(p.user);
-    const [accountStatement, setAccountStatement] = useState<AccountStatement>();
-    const [isStudent, setIsStudent] = useState<boolean>();
     const [editFeatureFlags, setEditFeatureFlags] = useState(false);
     const [editRoles, setEditRoles] = useState(false);
     const userRef = useRef(user);
 
-    const isProfessionalOpenSource =
-        accountStatement && accountStatement.subscriptions.some((s) => s.planId === Plans.FREE_OPEN_SOURCE.chargebeeId);
-
-    useEffect(() => {
-        setUser(p.user);
-        getGitpodService()
-            .server.adminGetAccountStatement(p.user.id)
-            .then((as) => setAccountStatement(as))
-            .catch((e) => {
-                console.error(e);
-            });
-        getGitpodService()
-            .server.adminIsStudent(p.user.id)
-            .then((isStud) => setIsStudent(isStud));
-    }, [p.user]);
-
-    const email = User.getPrimaryEmail(p.user);
-    const emailDomain = email ? email.split("@")[email.split("@").length - 1] : undefined;
+    const initialize = () => {
+        setUser(user);
+    };
+    useEffect(initialize, [user]);
 
     const updateUser: UpdateUserFunction = async (fun) => {
         setActivity(true);
@@ -61,18 +44,9 @@ export default function UserDetail(p: { user: User }) {
         }
     };
 
-    const addStudentDomain = async () => {
-        if (!emailDomain) {
-            console.log("cannot add student's email domain because there is none!");
-            return;
-        }
-
+    const verifyUser = async () => {
         await updateUser(async (u) => {
-            await getGitpodService().server.adminAddStudentEmailDomain(u.id, emailDomain);
-            await getGitpodService()
-                .server.adminIsStudent(u.id)
-                .then((isStud) => setIsStudent(isStud));
-            return u;
+            return await getGitpodService().server.adminVerifyUser(u.id);
         });
     };
 
@@ -98,186 +72,130 @@ export default function UserDetail(p: { user: User }) {
     const flags = getFlags(user, updateUser);
     const rop = getRopEntries(user, updateUser);
 
-    const downloadAccountStatement = async () => {
-        if (!accountStatement) {
-            return;
-        }
-        try {
-            const blob = new Blob([JSON.stringify(accountStatement)], { type: "application/json" });
-            const fileDownloadUrl = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = fileDownloadUrl;
-            link.setAttribute("download", "AccountStatement.json");
-            document.body.appendChild(link);
-            link.click();
-        } catch (error) {
-            console.error(`Error downloading account statement `, error);
-        }
-    };
-
     return (
         <>
-            <PageWithSubMenu subMenu={adminMenu} title="Users" subtitle="Search and manage all users.">
-                <div className="flex">
-                    <div className="flex-1">
-                        <div className="flex">
-                            <h3>{user.fullName}</h3>
-                            {user.blocked ? <Label text="Blocked" color="red" /> : null}{" "}
-                            {user.markedDeleted ? <Label text="Deleted" color="red" /> : null}
+            <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
+                <div className="app-container">
+                    <div className="flex mt-8">
+                        <div className="flex-1">
+                            <div className="flex">
+                                <Heading2>{user.fullName}</Heading2>
+                                {user.blocked ? <Label text="Blocked" color="red" /> : null}{" "}
+                                {user.markedDeleted ? <Label text="Deleted" color="red" /> : null}
+                                {user.lastVerificationTime ? <Label text="Verified" color="green" /> : null}
+                            </div>
+                            <Subheading>
+                                {user.identities
+                                    .map((i) => i.primaryEmail)
+                                    .filter((e) => !!e)
+                                    .join(", ")}
+                                {user.verificationPhoneNumber ? ` — ${user.verificationPhoneNumber}` : null}
+                            </Subheading>
                         </div>
-                        <p>
-                            {user.identities
-                                .map((i) => i.primaryEmail)
-                                .filter((e) => !!e)
-                                .join(", ")}
-                        </p>
+                        {!user.lastVerificationTime ? (
+                            <Button variant="secondary" className="ml-3" disabled={activity} onClick={verifyUser}>
+                                Verify User
+                            </Button>
+                        ) : null}
+                        <Button variant="destructive" className="ml-3" disabled={activity} onClick={toggleBlockUser}>
+                            {user.blocked ? "Unblock" : "Block"} User
+                        </Button>
+                        <Button variant="destructive" className="ml-3" disabled={activity} onClick={deleteUser}>
+                            Delete User
+                        </Button>
                     </div>
-                    <button className="secondary danger ml-3" disabled={activity} onClick={toggleBlockUser}>
-                        {user.blocked ? "Unblock" : "Block"} User
-                    </button>
-                    <button className="danger ml-3" disabled={activity} onClick={deleteUser}>
-                        Delete User
-                    </button>
-                </div>
-                <div className="flex mt-6">
-                    <div className="w-40">
-                        <img className="rounded-full h-28 w-28" alt={user.fullName} src={user.avatarUrl} />
-                    </div>
-                    <div className="flex flex-col w-full">
-                        <div className="flex w-full mt-6">
-                            <Property name="Sign Up Date">{moment(user.creationDate).format("MMM D, YYYY")}</Property>
-                            <Property
-                                name="Remaining Hours"
-                                actions={
-                                    accountStatement && [
+                    <div className="flex mt-6">
+                        <div className="w-40">
+                            <img className="rounded-full h-28 w-28" alt={user.fullName} src={user.avatarUrl} />
+                        </div>
+                        <div className="flex flex-col w-full">
+                            <div className="flex w-full mt-6">
+                                <Property name="Sign Up Date">
+                                    {dayjs(user.creationDate).format("MMM D, YYYY")}
+                                </Property>
+                                <Property
+                                    name="Feature Flags"
+                                    actions={[
                                         {
-                                            label: "Download Account Statement",
-                                            onClick: () => downloadAccountStatement(),
-                                        },
-                                        {
-                                            label: "Grant 20 Extra Hours",
-                                            onClick: async () => {
-                                                await getGitpodService().server.adminGrantExtraHours(user.id, 20);
-                                                setAccountStatement(
-                                                    await getGitpodService().server.adminGetAccountStatement(user.id),
-                                                );
+                                            label: "Edit Feature Flags",
+                                            onClick: () => {
+                                                setEditFeatureFlags(true);
                                             },
                                         },
-                                    ]
-                                }
-                            >
-                                {accountStatement?.remainingHours ? accountStatement?.remainingHours.toString() : "---"}
-                            </Property>
-                            <Property
-                                name="Plan"
-                                actions={
-                                    accountStatement && [
+                                    ]}
+                                >
+                                    {user.featureFlags?.permanentWSFeatureFlags?.join(", ") || "---"}
+                                </Property>
+                                <Property
+                                    name="Roles"
+                                    actions={[
                                         {
-                                            label:
-                                                (isProfessionalOpenSource ? "Disable" : "Enable") + " Professional OSS",
-                                            onClick: async () => {
-                                                await getGitpodService().server.adminSetProfessionalOpenSource(
-                                                    user.id,
-                                                    !isProfessionalOpenSource,
-                                                );
-                                                setAccountStatement(
-                                                    await getGitpodService().server.adminGetAccountStatement(user.id),
-                                                );
+                                            label: "Edit Roles",
+                                            onClick: () => {
+                                                setEditRoles(true);
                                             },
                                         },
-                                    ]
-                                }
-                            >
-                                {accountStatement?.subscriptions
-                                    ? accountStatement.subscriptions
-                                          .filter((s) => Subscription.isActive(s, new Date().toISOString()))
-                                          .map((s) => Plans.getById(s.planId)?.name)
-                                          .join(", ")
-                                    : "---"}
-                            </Property>
-                        </div>
-                        <div className="flex w-full mt-6">
-                            <Property
-                                name="Feature Flags"
-                                actions={[
-                                    {
-                                        label: "Edit Feature Flags",
-                                        onClick: () => {
-                                            setEditFeatureFlags(true);
-                                        },
-                                    },
-                                ]}
-                            >
-                                {user.featureFlags?.permanentWSFeatureFlags?.join(", ") || "---"}
-                            </Property>
-                            <Property
-                                name="Roles"
-                                actions={[
-                                    {
-                                        label: "Edit Roles",
-                                        onClick: () => {
-                                            setEditRoles(true);
-                                        },
-                                    },
-                                ]}
-                            >
-                                {user.rolesOrPermissions?.join(", ") || "---"}
-                            </Property>
-                            <Property
-                                name="Student"
-                                actions={
-                                    !isStudent &&
-                                    emailDomain &&
-                                    !["gmail.com", "yahoo.com", "hotmail.com"].includes(emailDomain)
-                                        ? [
-                                              {
-                                                  label: `Make '${emailDomain}' a student domain`,
-                                                  onClick: addStudentDomain,
-                                              },
-                                          ]
-                                        : undefined
-                                }
-                            >
-                                {isStudent === undefined ? "---" : isStudent ? "Enabled" : "Disabled"}
-                            </Property>
+                                    ]}
+                                >
+                                    {user.rolesOrPermissions?.join(", ") || "---"}
+                                </Property>
+                            </div>
                         </div>
                     </div>
                 </div>
+
                 <WorkspaceSearch user={user} />
-            </PageWithSubMenu>
+            </AdminPageHeader>
+
             <Modal
                 visible={editFeatureFlags}
                 onClose={() => setEditFeatureFlags(false)}
                 title="Edit Feature Flags"
                 buttons={[
-                    <button className="secondary" onClick={() => setEditFeatureFlags(false)}>
+                    <Button variant="secondary" onClick={() => setEditFeatureFlags(false)}>
                         Done
-                    </button>,
+                    </Button>,
                 ]}
             >
-                <p>Edit feature access by adding or removing feature flags for this user.</p>
-                <div className="flex flex-col">
+                <CheckboxListField
+                    label="Edit feature access by adding or removing feature flags for this user."
+                    className="mt-0"
+                >
                     {flags.map((e) => (
-                        <CheckBox key={e.title} title={e.title} desc="" checked={!!e.checked} onChange={e.onClick} />
+                        <CheckboxInputField
+                            key={e.title}
+                            label={e.title}
+                            checked={!!e.checked}
+                            topMargin={false}
+                            onChange={e.onClick}
+                        />
                     ))}
-                </div>
+                </CheckboxListField>
             </Modal>
             <Modal
                 visible={editRoles}
                 onClose={() => setEditRoles(false)}
                 title="Edit Roles"
                 buttons={[
-                    <button className="secondary" onClick={() => setEditRoles(false)}>
+                    <Button variant="secondary" onClick={() => setEditRoles(false)}>
                         Done
-                    </button>,
+                    </Button>,
                 ]}
             >
-                <p>Edit user permissions by adding or removing roles for this user.</p>
-                <div className="flex flex-col">
+                <CheckboxListField
+                    label="Edit user permissions by adding or removing roles for this user."
+                    className="mt-0"
+                >
                     {rop.map((e) => (
-                        <CheckBox key={e.title} title={e.title} desc="" checked={!!e.checked} onChange={e.onClick} />
+                        <CheckboxInputField
+                            key={e.title}
+                            label={e.title}
+                            checked={!!e.checked}
+                            topMargin={false}
+                            onChange={e.onClick}
+                        />
                     ))}
-                </div>
+                </CheckboxListField>
             </Modal>
         </>
     );

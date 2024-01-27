@@ -3,6 +3,7 @@ packages:
     type: yarn
     srcs:
       - "src/**/*.ts"
+      - .eslintrc
       - package.json
       - mocha.opts
     deps:
@@ -13,10 +14,24 @@ packages:
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
       dontTest: true
+  - name: latest-migration
+    type: generic
+    srcs:
+      - "src/typeorm/migration/*.ts"
+      - "scripts/generate-latest-migration.sh"
+    config:
+      dontTest: false
+      commands:
+        - ["sh", "-c", "scripts/generate-latest-migration.sh > latest-migration.txt"]
+      test:
+        - ["scripts/generate-latest-migration.sh", "test"]
+        - ["sh", "-c", "rm -rf src"]
+        - ["sh", "-c", "rm -rf scripts"]
   - name: migrations
     type: yarn
     srcs:
       - "src/**/*.ts"
+      - .eslintrc
       - package.json
     deps:
       - components/gitpod-protocol:lib
@@ -28,7 +43,8 @@ packages:
   - name: dbtest
     type: yarn
     srcs:
-      - "**/*.ts"
+      - "src/**/*.ts"
+      - .eslintrc
       - package.json
       - mocha.opts
     deps:
@@ -50,7 +66,6 @@ packages:
       - :migrations
       - install/installer/pkg/components/database/incluster/init:init-scripts
     env:
-      - DB_HOST=127.0.0.1
       - DB_PORT=23306
       - DB_USER=root
       - DB_PASSWORD=test
@@ -61,7 +76,8 @@ packages:
         # Check if a DB is present. If not: start one and wait until it's up
         # Note: In CI there is a DB running as sidecar; in workspaces we're starting it once.
         #       Re-use of the instance because of the init scripts (cmp. next step).
-        - ["sh", "-c", "mysqladmin ping -h \"$DB_HOST\" \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER --silent || (docker run -d -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD -e MYSQL_TCP_PORT=$DB_PORT -p $DB_PORT:$DB_PORT mysql:5.7; while ! mysqladmin ping -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER --silent; do echo \"waiting for DB...\"; sleep 2; done)"]
+        # (gpl): It would be nice to use bitnami/mysql here as we do in previews. However the container does not start in Gitpod workspaces due to some docker/kernel/namespace issue.
+        - ["sh", "-c", "mysqladmin ping --wait=${DB_RETRIES:-1} -h $DB_HOST --port $DB_PORT -p$DB_PASSWORD -u$DB_USER --default-auth=mysql_native_password --silent || (docker run --name test-mysql -d -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD -e MYSQL_TCP_PORT=$DB_PORT -p $DB_PORT:$DB_PORT mysql:8.0.33 --default-authentication-plugin=mysql_native_password; while ! mysqladmin ping -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u$DB_USER --default-auth=mysql_native_password --silent; do echo \"waiting for DB...\"; sleep 2; done)"]
         # Apply the DB initialization scripts (re-creates the "gitpod" DB if already there)
         - ["mkdir", "-p", "init-scripts"]
         - ["sh", "-c", "find . -name \"*.sql\" | sort | xargs -I file cp file init-scripts"]
@@ -95,12 +111,18 @@ packages:
         - ${imageRepoBase}/db-migrations:${version}
         - ${imageRepoBase}/db-migrations:commit-${__git_commit}
 scripts:
+- name: init-testdb
+  description: "Starts a properly initialized MySQL instance to run tests against. Usage: '. $(leeway run components/gitpod-db:init-testdb)'"
+  deps: []
+  script: |
+    export DB_HOST=${DB_HOST:-127.0.0.1}
+    leeway build components/gitpod-db/go:init-testdb
 - name: db-test-env
   description: "Creates a file with env vars necessary for running DB tests. The file delets itself after being sourced. Usage: '. $(leeway run components/gitpod-db:db-test-env)'"
   deps: []
   script: |
     TMP="$(mktemp)"
     echo '#!/bin/bash' > $TMP
-    echo 'export DB_ENCRYPTION_KEYS="[{\"name\":\"general\",\"version\":1,\"primary\":true,\"material\":\"5vRrp0H4oRgdkPnX1qQcS54Q0xggr6iyho42IQ1rO+c=\"}]";export DB_HOST=127.0.0.1;export DB_PORT=23306;export DB_USER=root;export DB_PASSWORD=test;' >> $TMP
+    echo 'export DB_ENCRYPTION_KEYS="[{\"name\":\"general\",\"version\":1,\"primary\":true,\"material\":\"5vRrp0H4oRgdkPnX1qQcS54Q0xggr6iyho42IQ1rO+c=\"}]";export DB_HOST=${DB_HOST:-127.0.0.1};export DB_PORT=23306;export DB_USER=root;export DB_PASSWORD=test;' >> $TMP
     echo "rm -f $TMP" >> $TMP
     echo $TMP

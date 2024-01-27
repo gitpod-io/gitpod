@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { PrimaryColumn, Column, Index, Entity } from "typeorm";
@@ -12,6 +12,7 @@ import {
     WorkspaceInstancePhase,
     WorkspaceInstanceConfiguration,
     ImageBuildInfo,
+    WorkspaceInstanceRepoStatus,
 } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "../typeorm";
 import { Transformer } from "../transformer";
@@ -40,6 +41,7 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
     })
     startedTime?: string;
 
+    // DEPRECATED
     @Column({
         default: "",
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
@@ -75,15 +77,23 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
     @Column("json")
     status: WorkspaceInstanceStatus;
 
+    @Column({
+        type: "json",
+        nullable: true,
+    })
+    gitStatus?: WorkspaceInstanceRepoStatus;
+
     /**
      * This field is a databse-only copy of status.phase for the sole purpose of creating indexes on it.
      * Is replicated inside workspace-db-impl.ts/storeInstance.
      */
-    @Column()
+    @Column({
+        type: "varchar",
+    })
     @Index("ind_phasePersisted")
     phasePersisted: WorkspaceInstancePhase;
 
-    // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
+    // This column triggers the periodic deleter deletion mechanism. It's not intended for public consumption.
     @Column()
     deleted?: boolean;
 
@@ -91,8 +101,20 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
         type: "simple-json",
         nullable: true,
     })
-    configuration?: WorkspaceInstanceConfiguration;
+    configuration: WorkspaceInstanceConfiguration;
 
     @Column("simple-json", { nullable: true })
     imageBuildInfo?: ImageBuildInfo;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    workspaceClass?: string;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    usageAttributionId?: string;
 }

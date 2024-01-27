@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package proxy
 
@@ -27,7 +27,8 @@ type Config struct {
 	GitpodInstallation *GitpodInstallation `json:"gitpodInstallation"`
 	WorkspacePodConfig *WorkspacePodConfig `json:"workspacePodConfig"`
 
-	BuiltinPages BuiltinPagesConfig `json:"builtinPages"`
+	BuiltinPages        BuiltinPagesConfig `json:"builtinPages"`
+	SSHGatewayCAKeyFile string             `json:"sshCAKeyFile"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime.
@@ -71,8 +72,11 @@ func (c *HostBasedIngressConfig) Validate() error {
 
 // WorkspacePodConfig contains config around the workspace pod.
 type WorkspacePodConfig struct {
-	TheiaPort      uint16 `json:"theiaPort"`
-	SupervisorPort uint16 `json:"supervisorPort"`
+	TheiaPort               uint16 `json:"theiaPort"`
+	IDEDebugPort            uint16 `json:"ideDebugPort"`
+	SupervisorPort          uint16 `json:"supervisorPort"`
+	SupervisorDebugPort     uint16 `json:"supervisorDebugPort"`
+	DebugWorkspaceProxyPort uint16 `json:"debugWorkspaceProxyPort"`
 	// SupervisorImage is deprecated
 	SupervisorImage string `json:"supervisorImage"`
 }
@@ -85,7 +89,10 @@ func (c *WorkspacePodConfig) Validate() error {
 
 	err := validation.ValidateStruct(c,
 		validation.Field(&c.TheiaPort, validation.Required),
+		validation.Field(&c.IDEDebugPort, validation.Required),
 		validation.Field(&c.SupervisorPort, validation.Required),
+		validation.Field(&c.SupervisorDebugPort, validation.Required),
+		validation.Field(&c.DebugWorkspaceProxyPort, validation.Required),
 	)
 	if len(c.SupervisorImage) > 0 {
 		log.Warn("config value 'workspacePodConfig.supervisorImage' is deprected, use it only to be backwards compatible")
@@ -120,8 +127,9 @@ func (c *GitpodInstallation) Validate() error {
 
 // BlobServerConfig configures where to serve the IDE from.
 type BlobServerConfig struct {
-	Scheme string `json:"scheme"`
-	Host   string `json:"host"`
+	Scheme     string `json:"scheme"`
+	Host       string `json:"host"`
+	PathPrefix string `json:"pathPrefix"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime.

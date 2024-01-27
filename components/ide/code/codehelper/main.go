@@ -1,30 +1,30 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package main
 
 import (
 	"context"
 	"errors"
-	"io"
-	"net/http"
+	"fmt"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/util"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -34,30 +34,57 @@ var (
 	Version = ""
 )
 
-const Code = "/ide/bin/gitpod-code"
+const (
+	Code                     = "/ide/bin/gitpod-code"
+	ProductJsonLocation      = "/ide/product.json"
+	WebWorkbenchMainLocation = "/ide/out/vs/workbench/workbench.web.main.js"
+	ServerMainLocation       = "/ide/out/vs/server/node/server.main.js"
+)
 
 func main() {
-	log.Init(ServiceName, Version, true, false)
+	enableDebug := os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true"
+
+	log.Init(ServiceName, Version, true, enableDebug)
+	log.Info("codehelper started")
 	startTime := time.Now()
 
-	log.Info("wait until content available")
-
-	// wait until content ready
-	contentStatus, wsInfo, err := resolveWorkspaceInfo(context.Background())
-	if err != nil || wsInfo == nil || contentStatus == nil || !contentStatus.Available {
-		log.WithError(err).WithField("wsInfo", wsInfo).WithField("cstate", contentStatus).Error("resolve workspace info failed")
+	phaseDone := phaseLogging("ResolveWsInfo")
+	cstate, wsInfo, err := resolveWorkspaceInfo(context.Background())
+	if err != nil || wsInfo == nil {
+		log.WithError(err).WithField("wsInfo", wsInfo).Error("resolve workspace info failed")
 		return
 	}
-	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("content available")
+	phaseDone()
+
+	url, err := url.Parse(wsInfo.GitpodHost)
+	if err != nil {
+		log.WithError(err).Errorf("failed to parse GitpodHost %s", wsInfo.GitpodHost)
+		return
+	}
+	domain := url.Hostname()
 
 	// code server args install extension with id
 	args := []string{}
 
-	// install extension with filepath
-	extPathArgs := []string{}
-
-	if os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true" {
+	if enableDebug {
 		args = append(args, "--inspect", "--log=trace")
+	} else {
+		switch log.Log.Logger.GetLevel() {
+		case logrus.PanicLevel:
+			args = append(args, "--log=critical")
+		case logrus.FatalLevel:
+			args = append(args, "--log=critical")
+		case logrus.ErrorLevel:
+			args = append(args, "--log=error")
+		case logrus.WarnLevel:
+			args = append(args, "--log=warn")
+		case logrus.InfoLevel:
+			args = append(args, "--log=info")
+		case logrus.DebugLevel:
+			args = append(args, "--log=debug")
+		case logrus.TraceLevel:
+			args = append(args, "--log=trace")
+		}
 	}
 
 	args = append(args, "--install-builtin-extension", "gitpod.gitpod-theme")
@@ -72,6 +99,7 @@ func main() {
 		log.WithError(err).WithField("wsContextUrl", wsContextUrl).Error("parse ws context url failed")
 	}
 
+	phaseDone = phaseLogging("GetExtensions")
 	uniqMap := map[string]struct{}{}
 	extensions, err := getExtensions(wsInfo.GetCheckoutLocation())
 	if err != nil {
@@ -83,68 +111,49 @@ func main() {
 			continue
 		}
 		uniqMap[ext.Location] = struct{}{}
-		if !ext.IsUrl {
+		// don't install url extension for backup, see https://github.com/microsoft/vscode/issues/143617#issuecomment-1047881213
+		if cstate.Source != supervisor.ContentSource_from_backup || !ext.IsUrl {
 			args = append(args, "--install-extension", ext.Location)
-		} else {
-			extPathArgs = append(extPathArgs, "--install-extension", ext.Location)
 		}
 	}
-
-	// install path extension first
-	// see https://github.com/microsoft/vscode/issues/143617#issuecomment-1047881213
-	if len(extPathArgs) > 0 {
-		// ensure extensions install in correct dir
-		extPathArgs = append(extPathArgs, os.Args[1:]...)
-		extPathArgs = append(extPathArgs, "--do-not-sync")
-		log.Info("installing extensions by path")
-		cmd := exec.Command(Code, extPathArgs...)
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		if err := cmd.Run(); err != nil {
-			log.WithError(err).Error("installing extensions by path failed")
-		}
-		log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("extensions with path installed")
-	}
+	phaseDone()
 
 	// install extensions and run code server with exec
 	args = append(args, os.Args[1:]...)
 	args = append(args, "--do-not-sync")
 	args = append(args, "--start-server")
+	cmdEnv := append(os.Environ(), fmt.Sprintf("GITPOD_CODE_HOST=%s", domain))
 	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("starting server")
-	if err := syscall.Exec(Code, append([]string{"gitpod-code"}, args...), os.Environ()); err != nil {
+	if err := syscall.Exec(Code, append([]string{"gitpod-code"}, args...), cmdEnv); err != nil {
 		log.WithError(err).Error("install ext and start code server failed")
 	}
 }
 
 func resolveWorkspaceInfo(ctx context.Context) (*supervisor.ContentStatusResponse, *supervisor.WorkspaceInfoResponse, error) {
-	resolve := func(ctx context.Context) (contentStatus *supervisor.ContentStatusResponse, wsInfo *supervisor.WorkspaceInfoResponse, err error) {
-		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
-		if supervisorAddr == "" {
-			supervisorAddr = "localhost:22999"
-		}
-		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+	resolve := func(ctx context.Context) (cstate *supervisor.ContentStatusResponse, wsInfo *supervisor.WorkspaceInfoResponse, err error) {
+		supervisorConn, err := grpc.Dial(util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			err = errors.New("dial supervisor failed: " + err.Error())
 			return
 		}
 		defer supervisorConn.Close()
+		if cstate, err = supervisor.NewStatusServiceClient(supervisorConn).ContentStatus(ctx, &supervisor.ContentStatusRequest{}); err != nil {
+			err = errors.New("get content state failed: " + err.Error())
+			return
+		}
 		if wsInfo, err = supervisor.NewInfoServiceClient(supervisorConn).WorkspaceInfo(ctx, &supervisor.WorkspaceInfoRequest{}); err != nil {
 			err = errors.New("get workspace info failed: " + err.Error())
 			return
-		}
-		contentStatus, err = supervisor.NewStatusServiceClient(supervisorConn).ContentStatus(ctx, &supervisor.ContentStatusRequest{Wait: true})
-		if err != nil {
-			err = errors.New("get content available failed: " + err.Error())
 		}
 		return
 	}
 	// try resolve workspace info 10 times
 	for attempt := 0; attempt < 10; attempt++ {
-		if contentStatus, wsInfo, err := resolve(ctx); err != nil {
+		if cstate, wsInfo, err := resolve(ctx); err != nil {
 			log.WithError(err).Error("resolve workspace info failed")
 			time.Sleep(1 * time.Second)
 		} else {
-			return contentStatus, wsInfo, err
+			return cstate, wsInfo, err
 		}
 	}
 	return nil, nil, errors.New("failed with attempt 10 times")
@@ -176,39 +185,22 @@ func getExtensions(repoRoot string) (extensions []Extension, err error) {
 		return
 	}
 	if config == nil || config.Vscode == nil {
-		err = errors.New("config.vscode field not exists")
 		return
 	}
-	var wg sync.WaitGroup
-	var extensionsMu sync.Mutex
 	for _, ext := range config.Vscode.Extensions {
 		lowerCaseExtension := strings.ToLower(ext)
 		if isUrl(lowerCaseExtension) {
-			wg.Add(1)
-			go func(url string) {
-				defer wg.Done()
-				location, err := downloadExtension(url)
-				if err != nil {
-					log.WithError(err).WithField("url", url).Error("download extension failed")
-					return
-				}
-				extensionsMu.Lock()
-				extensions = append(extensions, Extension{
-					IsUrl:    true,
-					Location: location,
-				})
-				extensionsMu.Unlock()
-			}(ext)
+			extensions = append(extensions, Extension{
+				IsUrl:    true,
+				Location: ext,
+			})
 		} else {
-			extensionsMu.Lock()
 			extensions = append(extensions, Extension{
 				IsUrl:    false,
 				Location: lowerCaseExtension,
 			})
-			extensionsMu.Unlock()
 		}
 	}
-	wg.Wait()
 	return
 }
 
@@ -217,34 +209,14 @@ func isUrl(lowerCaseIdOrUrl string) bool {
 	return isUrl
 }
 
-func downloadExtension(url string) (location string, err error) {
+func phaseLogging(phase string) context.CancelFunc {
+	ctx, cancel := context.WithCancel(context.Background())
 	start := time.Now()
-	log.WithField("url", url).Info("start download extension")
-	client := &http.Client{
-		Timeout: 20 * time.Second,
-	}
-	resp, err := client.Get(url)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		err = errors.New("failed to download extension: " + http.StatusText(resp.StatusCode))
-		return
-	}
-	out, err := os.CreateTemp("", "vsix*.vsix")
-	if err != nil {
-		err = errors.New("failed to create tmp vsix file: " + err.Error())
-		return
-	}
-	defer out.Close()
-	if _, err = io.Copy(out, resp.Body); err != nil {
-		err = errors.New("failed to resolve body stream: " + err.Error())
-		return
-	}
-	location = out.Name()
-	log.WithField("url", url).WithField("location", location).
-		WithField("cost", time.Now().Local().Sub(start).Milliseconds()).
-		Info("download extension success")
-	return
+	log.WithField("phase", phase).Info("phase start")
+	go func() {
+		<-ctx.Done()
+		duration := time.Now().Local().Sub(start).Seconds()
+		log.WithField("phase", phase).WithField("duration", duration).Info("phase end")
+	}()
+	return cancel
 }

@@ -1,0 +1,82 @@
+workspaces: 12
+ideImage: eu.gcr.io/gitpod-core-dev/build/ide/code:commit-ff263e14024f00d0ed78386b4417dfa6bcd4ae2f
+waitForRunning: "630s"
+waitForStopping: "630s"
+successRate: 1
+environment:
+  - name: "THEIA_SUPERVISOR_TOKENS"
+    value: '[{"token":"foobar","host":"gitpod-staging.com","scope":["function:getWorkspace","function:getLoggedInUser","function:getWorkspaceOwner","function:getWorkspaceUsers","function:isWorkspaceOwner","function:controlAdmission","function:setWorkspaceTimeout","function:getWorkspaceTimeout","function:sendHeartBeat","function:getOpenPorts","function:openPort","function:closePort","function:generateNewGitpodToken","function:takeSnapshot","function:stopWorkspace","resource:workspace::fa498dcc-0a84-448f-9666-79f297ad821a::get/update","resource:workspaceInstance::e0a17083-6a78-441a-9b97-ef90d6aff463::get/update/delete","resource:snapshot::*::create/get","resource:gitpodToken::*::create","resource:userStorage::*::create/get/update"],"expiryDate":"2020-12-01T07:55:12.501Z","reuse":2}]'
+workspaceClass: ""
+workspaceTimeout: 1h
+repos:
+  - cloneURL: https://github.com/gitpod-io/workspace-stress
+    cloneTarget: main
+    score: 20
+    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
+    environment:
+    # cpu
+    - name: "CPU_COUNT" # start N workers
+      value: "1"
+    - name: "CPU_BACKOFF" # wait N microseconds between the start of each stress worker process
+      value: "10000000"
+    - name: "CPU_TIMEOUT" # stop cpu stress test after N seconds
+      value: "600s"
+    # common IO
+    - name: "DISK_IO_FILE_SIZE" # how big of a test-file should be used
+      value: "2g"
+    - name: "DISK_IO_TOTAL" # specifies how much I/O will be done
+      value: "100g"
+    - name: "DISK_IO_TIMEOUT" # stop io stress test after N seconds
+      value: "600"
+    # random read/write IO
+    # - name: DISK_IO_MODE # values can be read, write, rw, randreadm randwrite, randrw
+    #   value: "randrw"
+    # - name: "DISK_IO_BLOCKSIZE" # specifies the block-size that will be used
+    #   value: "8k"
+    # - name: "DISK_IO_FSYNC" # sync command which writes kernel cached pages to disk every number of blocks specified
+    #   value: 1000
+    # - name: "DISK_IO_DEPTH" # specifies number of I/O units to keep in-flight
+    #   value: 10
+    # - name: "DISK_IO_JOBS" # specifies the number of jobs
+    #   value: 20
+    # sequential read/write IO
+    - name: DISK_IO_MODE # values can be read, write, rw, randreadm randwrite, randrw
+      value: "rw"
+    - name: "DISK_IO_BLOCKSIZE" # specifies the block-size that will be used
+      value: "1024k"
+    - name: "DISK_IO_FSYNC" # sync command which writes kernel cached pages to disk every number of blocks specified
+      value: 10000
+    - name: "DISK_IO_DEPTH" # specifies number of I/O units to keep in-flight
+      value: 32
+    - name: "DISK_IO_JOBS" # specifies the number of jobs
+      value: 1
+    # memory
+    - name: "MEMORY_BYTES" # systems if not enough physical memory and swap is not available
+      value: "2G"
+    - name: "MEMORY_TIMEOUT" # stop cpu stress test after N seconds
+      value: "600s"
+    # backup
+    - name: "BACKUP_SIZE" # size of the backup in gigabyte
+      value: 12
+    # network
+    - name: "NETWORK_WORKERS" # number of workers stressin
+      value: 1
+    # tasks
+    - name: "GITPOD_TASKS"
+      value: "[{\"name\":\"Setup\",\"init\":\"sudo install-packages stress-ng fio && gp sync-done setup\"},{\"name\":\"start cpu stress\",\"init\":\"gp sync-await setup\",\"command\":\"stress-ng --cpu ${CPU_COUNT:-3} --backoff ${CPU_BACKOFF:-10000000} --timeout ${CPU_TIMEOUT:-600s}\"},{\"name\":\"start io stress\",\"init\":\"gp sync-await setup\",\"command\":\"fio --name io-stress --eta-newline=5s --filename=/workspace/gitpod.temp --rw=${DISK_IO_MODE} --size=${DISK_IO_FILE_SIZE:-2g} --io_size=${DISK_IO_TOTAL:-50g} --blocksize=${DISK_IO_BLOCKSIZE} --ioengine=libaio --fsync=${DISK_IO_FSYNC} --iodepth=${DISK_IO_DEPTH} --direct=1 --numjobs=${DISK_IO_JOBS} --runtime=${DISK_IO_TIMEOUT:-600}\"},{\"name\":\"start memory stress\",\"init\":\"gp sync-await setup\",\"command\":\"stress-ng --vm 1 --vm-keep --vm-bytes ${MEMORY_BYTES:-6G} --timeout ${MEMORY_TIMEOUT:-600s}\"},{\"name\":\"create backup file\",\"init\":\"gp sync-await setup\",\"command\":\"dd if=/dev/zero of=/workspace/benchmark-backup bs=1000M count=${BACKUP_SIZE:-2}\"},{\"name\":\"start network stress\",\"init\":\"gp sync-await setup\",\"command\":\"stress-ng --class network --all ${NETWORK_WORKERS:-4}\"}]"
+  - cloneURL: https://github.com/gitpod-io/template-typescript-node
+    cloneTarget: master
+    score: 20
+    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
+  - cloneURL: https://github.com/gitpod-io/template-typescript-react
+    cloneTarget: main
+    score: 20
+    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
+  - cloneURL: https://github.com/gitpod-io/template-python-django
+    cloneTarget: main
+    score: 20
+    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
+  - cloneURL: https://github.com/gitpod-io/non-gitpodified-repo
+    score: 20
+    cloneTarget: main
+    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest

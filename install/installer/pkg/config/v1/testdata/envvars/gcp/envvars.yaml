@@ -1,0 +1,17 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+envvars:
+  DB_INCLUSTER_ENABLED: "0"
+  DB_CLOUDSQL_SERVICE_ACCOUNT_NAME: gcp-db-service-account
+  DB_CLOUDSQL_INSTANCE: gcp-db-instance
+  DB_CLOUDSQL_ENABLED: "1"
+  DOMAIN: gitpod.io
+  REGISTRY_INCLUSTER_ENABLED: "0"
+  REGISTRY_EXTERNAL_CERTIFICATE_NAME: gcp-reg-secret
+  REGISTRY_URL: gcp-reg-url
+  STORE_PROVIDER: gcp
+  STORE_REGION: gcp-region
+  STORE_GCP_PROJECT: gcp-project-name
+  STORE_GCP_SERVICE_ACCOUNT_NAME: gcp-store-secret

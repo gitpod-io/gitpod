@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-werft-cred.0
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -30,28 +30,51 @@ ports:
     onOpen: ignore
   # Dev Theia
   - port: 13444
+  # Used when using port-forwarding to SSH to preview environment VMs
+  - port: 8022
+    onOpen: ignore
 tasks:
-  - name: Add Harvester kubeconfig
+  - name: Remove GCP_ADC_FILE
     command: |
-      ./dev/preview/util/download-and-merge-harvester-kubeconfig.sh
+      if [[ -n "${GCP_ADC_FILE}" ]]; then
+        echo "$GCP_ADC_FILE" > "/home/gitpod/.config/gcloud/application_default_credentials.json"
+        yes | gcloud auth application-default revoke
+        gp env -u GCP_ADC_FILE
+      fi
+      exit 0
+  - name: Install `gitpod` CLI
+    command: |
+      leeway run components/local-app:install-cli
+      leeway run components/local-app:cli-completion
+      exit 0
+  # This task takes care of configuring your workspace so it can manage and interact
+  # with preview environments.
+  - name: Preview environment configuration
+    init: leeway run dev/preview/previewctl:install
+    command: INSTALL_CONTEXT=true leeway run dev/preview:configure-workspace
+  - name: Installer dependencies
+    init: |
+      (cd install/installer && make deps)
       exit 0
   - name: Java
     command: |
       if [ -z "$RUN_GRADLE_TASK" ]; then
         read -r -p "Press enter to continue Java gradle task"
       fi
-      leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew --build-cache build
-      leeway exec --package components/ide/jetbrains/backend-plugin:plugin --package components/ide/jetbrains/gateway-plugin:publish --parallel -- ./gradlew --build-cache buildPlugin
+      leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
+      leeway exec --package components/ide/jetbrains/backend-plugin:plugin-latest --package components/ide/jetbrains/gateway-plugin:publish-latest --parallel -- ./gradlew buildPlugin
   - name: TypeScript
-    before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
+  - name: Install pre-commit hooks
+    init: |
+      pre-commit install --install-hooks
+      exit 0
   - name: Go
-    before: pre-commit install --install-hooks
-    init: leeway exec --filter-type go -v -- go mod verify
-    openMode: split-right
+    init: |
+      ./components/gitpod-protocol/go/scripts/generate-config.sh
+      leeway exec --filter-type go -v -- go mod verify
 vscode:
   extensions:
-    - bradlc.vscode-tailwindcss
     - EditorConfig.EditorConfig
     - golang.go
     - hashicorp.terraform
@@ -62,11 +85,11 @@ vscode:
     - matthewpi.caddyfile-support
     - heptio.jsonnet
     - timonwong.shellcheck
-    - vscjava.vscode-java-pack
     - fwcd.kotlin
     - dbaeumer.vscode-eslint
     - esbenp.prettier-vscode
+    - akosyakov.gitpod-monitor
+    - hbenl.vscode-mocha-test-adapter
 jetbrains:
-  goland:
-    prebuilds:
-      version: stable
+  intellij:
+    vmoptions: -Xmx4g

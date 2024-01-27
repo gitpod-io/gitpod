@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package io.gitpod.jetbrains.remote.services
 
@@ -24,8 +24,8 @@ class HeartbeatService : Disposable {
         val info = manager.pendingInfo.await()
         val intervalInSeconds = 30
         var current = ControllerStatus(
-            connected = false,
-            secondsSinceLastActivity = 0
+                connected = false,
+                secondsSinceLastActivity = 0
         )
         while (isActive) {
             try {
@@ -41,6 +41,11 @@ class HeartbeatService : Disposable {
 
                 if (wasClosed != null) {
                     manager.client.server.sendHeartBeat(SendHeartBeatOptions(info.instanceId, wasClosed)).await()
+                    if (wasClosed) {
+                        manager.trackEvent("ide_close_signal", mapOf(
+                                "clientKind" to "jetbrains"
+                        ))
+                    }
                 }
             } catch (t: Throwable) {
                 thisLogger().error("gitpod: failed to check activity:", t)

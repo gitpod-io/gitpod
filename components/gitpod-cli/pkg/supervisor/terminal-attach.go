@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package supervisor
 
@@ -15,6 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/term"
+	"golang.org/x/xerrors"
 )
 
 type AttachToTerminalOpts struct {
@@ -23,13 +24,13 @@ type AttachToTerminalOpts struct {
 	Token       string
 }
 
-func AttachToTerminal(ctx context.Context, client api.TerminalServiceClient, alias string, opts AttachToTerminalOpts) {
+func (client *SupervisorClient) AttachToTerminal(ctx context.Context, alias string, opts AttachToTerminalOpts) (int, error) {
 	// Copy to stdout/stderr
-	listen, err := client.Listen(ctx, &api.ListenTerminalRequest{
+	listen, err := client.Terminal.Listen(ctx, &api.ListenTerminalRequest{
 		Alias: alias,
 	})
 	if err != nil {
-		log.WithError(err).Fatal("cannot attach to terminal")
+		return 0, xerrors.Errorf("cannot attach to terminal: %w", err)
 	}
 	var exitCode int
 	errchan := make(chan error, 5)
@@ -50,7 +51,7 @@ func AttachToTerminal(ctx context.Context, client api.TerminalServiceClient, ali
 	// Set stdin in raw mode.
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
-		panic(err)
+		return 0, xerrors.Errorf("cannot attach to terminal: %w", err)
 	}
 	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
 
@@ -85,7 +86,7 @@ func AttachToTerminal(ctx context.Context, client api.TerminalServiceClient, ali
 					expectResize = true
 				}
 
-				_, err = client.SetSize(ctx, req)
+				_, err = client.Terminal.SetSize(ctx, req)
 				if err != nil && expectResize {
 					log.WithError(err).Error("cannot set terminal size")
 					continue
@@ -100,7 +101,7 @@ func AttachToTerminal(ctx context.Context, client api.TerminalServiceClient, ali
 			for {
 				n, err := os.Stdin.Read(buf)
 				if n > 0 {
-					_, serr := client.Write(ctx, &api.WriteTerminalRequest{Alias: alias, Stdin: buf[:n]})
+					_, serr := client.Terminal.Write(ctx, &api.WriteTerminalRequest{Alias: alias, Stdin: buf[:n]})
 					if serr != nil {
 						errchan <- err
 						return
@@ -115,15 +116,14 @@ func AttachToTerminal(ctx context.Context, client api.TerminalServiceClient, ali
 	}
 
 	// wait indefinitely
-	stopch := make(chan os.Signal, 1)
-	signal.Notify(stopch, syscall.SIGTERM|syscall.SIGINT)
 	select {
 	case err := <-errchan:
 		if err != io.EOF {
-			log.WithError(err).Error("error")
+			return 0, err
 		} else {
-			os.Exit(exitCode)
+			return exitCode, nil
 		}
-	case <-stopch:
+	case <-ctx.Done():
+		return 0, nil
 	}
 }

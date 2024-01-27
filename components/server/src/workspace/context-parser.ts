@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { WorkspaceContext, User } from "@gitpod/gitpod-protocol";
@@ -57,9 +57,9 @@ export abstract class AbstractContextParser implements IContextParser {
             segments.splice(0, lenghtOfRelativePath);
         }
 
-        var owner: string = segments[0];
-        var repoName: string = segments[1];
-        var moreSegmentsStart: number = 2;
+        const owner: string = segments[0];
+        const repoName: string = segments[1];
+        const moreSegmentsStart: number = 2;
         const endsWithRepoName = segments.length === moreSegmentsStart;
         const searchParams = url.searchParams;
         return {
@@ -102,7 +102,18 @@ export interface IPrefixContextParser {
 }
 export const IPrefixContextParser = Symbol("IPrefixContextParser");
 
+// See https://www.kernel.org/pub/software/scm/git/docs/git-check-ref-format.html
+// the magic sequence @{, consecutive dots, leading and trailing dot, ref ending in .lock
+// Adapted from https://github.com/desktop/desktop/blob/1e3df9608a834dabdabe793b1b538e334f33c8a1/app/src/lib/sanitize-ref-name.ts
+const invalidCharacterRegex = /[\x00-\x20\x7F~^:?*\[\\|""]+|@{|\.\.+|^\.|\.$|\.lock$|\/$/g;
+
+/** Sanitize a proposed reference name by replacing illegal characters. */
+function sanitizedRefName(name: string): string {
+    return name.replace(invalidCharacterRegex, "-").replace(/^[-\+]*/g, "");
+}
+
 export namespace IssueContexts {
+    export const maxBaseBranchLength = 30;
     export function toBranchName(user: User, issueTitle: string, issueNr: number): string {
         const titleWords = issueTitle
             .toLowerCase()
@@ -111,12 +122,12 @@ export namespace IssueContexts {
             .filter((w) => w.length > 0);
         let localBranch = (user.name + "/").toLowerCase();
         for (const segment of titleWords) {
-            if (localBranch.length > 30) {
+            if (localBranch.length > maxBaseBranchLength) {
                 break;
             }
             localBranch += segment + "-";
         }
         localBranch += issueNr;
-        return localBranch;
+        return sanitizedRefName(localBranch);
     }
 }

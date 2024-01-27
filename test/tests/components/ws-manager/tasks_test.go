@@ -1,15 +1,17 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package wsmanager
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	supervisorapi "github.com/gitpod-io/gitpod/supervisor/api"
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
@@ -20,46 +22,45 @@ import (
 )
 
 func TestRegularWorkspaceTasks(t *testing.T) {
+	testRepo := "https://github.com/gitpod-io/empty"
+	testRepoName := "empty"
+	wsLoc := fmt.Sprintf("/workspace/%s", testRepoName)
 	tests := []struct {
 		Name        string
-		Task        gitpod.TasksItems
-		LookForFile string
+		Task        []gitpod.TasksItems
+		LookForFile []string
+		FF          []wsmanapi.WorkspaceFeatureFlag
 	}{
 		{
-			Name:        "init",
-			Task:        gitpod.TasksItems{Init: "touch /workspace/init-ran; exit"},
-			LookForFile: "init-ran",
-		},
-		{
-			Name:        "before",
-			Task:        gitpod.TasksItems{Before: "touch /workspace/before-ran; exit"},
-			LookForFile: "before-ran",
-		},
-		{
-			Name:        "command",
-			Task:        gitpod.TasksItems{Command: "touch /workspace/command-ran; exit"},
-			LookForFile: "command-ran",
+			Name: "classic",
+			Task: []gitpod.TasksItems{
+				{Init: fmt.Sprintf("touch %s/init-ran; exit", wsLoc)},
+				{Before: fmt.Sprintf("touch %s/before-ran; exit", wsLoc)},
+				{Command: fmt.Sprintf("touch %s/command-ran; exit", wsLoc)},
+			},
+			LookForFile: []string{"init-ran", "before-ran", "command-ran"},
 		},
 	}
 
 	f := features.New("ws-manager").
 		WithLabel("component", "ws-manager").
 		WithLabel("type", "tasks").
-		Assess("it can run workspace tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-			defer cancel()
-
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
-
+		Assess("it can run workspace tasks", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			for _, test := range tests {
+				test := test
 				t.Run(test.Name, func(t *testing.T) {
-					// t.Parallel()
+					t.Parallel()
+
+					ctx, cancel := context.WithTimeout(testCtx, time.Duration(5*len(tests))*time.Minute)
+					defer cancel()
+
+					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+					t.Cleanup(func() {
+						api.Done(t)
+					})
 
 					addInitTask := func(swr *wsmanapi.StartWorkspaceRequest) error {
-						tasks, err := json.Marshal([]gitpod.TasksItems{test.Task})
+						tasks, err := json.Marshal(test.Task)
 						if err != nil {
 							return err
 						}
@@ -67,24 +68,45 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 							Name:  "GITPOD_TASKS",
 							Value: string(tasks),
 						})
+						swr.Spec.FeatureFlags = test.FF
+						swr.Spec.Initializer = &csapi.WorkspaceInitializer{
+							Spec: &csapi.WorkspaceInitializer_Git{
+								Git: &csapi.GitInitializer{
+									RemoteUri:        testRepo,
+									CheckoutLocation: testRepoName,
+									Config:           &csapi.GitConfig{},
+								},
+							},
+						}
+						swr.Spec.WorkspaceLocation = testRepoName
 						return nil
 					}
 
-					nfo, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(addInitTask))
+					// TODO: change to use server API to launch the workspace, so we could run the integration test as the user code flow
+					//       which is client -> server -> ws-manager rather than client -> ws-manager directly
+					nfo, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(addInitTask))
 					if err != nil {
 						t.Fatal(err)
 					}
 
 					t.Cleanup(func() {
-						_ = integration.DeleteWorkspace(ctx, api, nfo.Req.Id)
+						sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+						defer scancel()
+
+						sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						defer sapi.Done(t)
+
+						if _, err = stopWs(true, sapi); err != nil {
+							t.Errorf("cannot stop workspace: %q", err)
+						}
 					})
 
 					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.Req.Id))
+					integration.DeferCloser(t, closer)
 					if err != nil {
 						t.Fatalf("unexpected error instrumenting workspace: %v", err)
 					}
 					defer rsa.Close()
-					integration.DeferCloser(t, closer)
 
 					var parsedResp struct {
 						Result struct {
@@ -97,7 +119,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 					for i := 1; i < 10; i++ {
 						var res agent.ExecResponse
 						err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
-							Dir:     "/workspace",
+							Dir:     wsLoc,
 							Command: "curl",
 							// nftable rule only forwards to this ip address
 							Args: []string{"10.0.5.2:22999/_supervisor/v1/status/tasks"},
@@ -110,7 +132,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 							t.Fatalf("cannot decode supervisor status response: %s", err)
 						}
 
-						if len(parsedResp.Result.Tasks) != 1 {
+						if len(parsedResp.Result.Tasks) != len(test.Task) {
 							t.Fatalf("expected one task to run, but got %d", len(parsedResp.Result.Tasks))
 						}
 						if parsedResp.Result.Tasks[0].State == supervisorapi.TaskState_name[int32(supervisorapi.TaskState_closed)] {
@@ -126,27 +148,28 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 
 					var ls agent.ListDirResponse
 					err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
-						Dir: "/workspace",
+						Dir: wsLoc,
 					}, &ls)
 					if err != nil {
 						t.Fatal(err)
 					}
 
-					var foundMaker bool
-					for _, f := range ls.Files {
-						t.Logf("file in workspace: %s", f)
-						if f == test.LookForFile {
-							foundMaker = true
-							break
+					for _, lff := range test.LookForFile {
+						var foundMaker bool
+						for _, f := range ls.Files {
+							if f == lff {
+								foundMaker = true
+								break
+							}
 						}
-					}
-					if !foundMaker {
-						t.Fatal("task seems to have run, but cannot find the file it should have created")
+						if !foundMaker {
+							t.Fatalf("task seems to have run, but cannot find %s it should have created", lff)
+						}
 					}
 				})
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

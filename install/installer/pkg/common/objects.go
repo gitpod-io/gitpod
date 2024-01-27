@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package common
 
@@ -28,9 +28,10 @@ func DefaultServiceAccount(component string) RenderFunc {
 			&corev1.ServiceAccount{
 				TypeMeta: TypeMetaServiceAccount,
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      component,
-					Namespace: cfg.Namespace,
-					Labels:    DefaultLabels(component),
+					Name:        component,
+					Namespace:   cfg.Namespace,
+					Labels:      CustomizeLabel(cfg, component, TypeMetaConfigmap),
+					Annotations: CustomizeAnnotation(cfg, component, TypeMetaConfigmap),
 				},
 				AutomountServiceAccountToken: pointer.Bool(true),
 				ImagePullSecrets:             pullSecrets,
@@ -40,17 +41,18 @@ func DefaultServiceAccount(component string) RenderFunc {
 }
 
 type ServicePort struct {
+	Name          string
 	ContainerPort int32
 	ServicePort   int32
 }
 
-func GenerateService(component string, ports map[string]ServicePort, mod ...func(spec *corev1.Service)) RenderFunc {
+func GenerateService(component string, ports []ServicePort, mod ...func(spec *corev1.Service)) RenderFunc {
 	return func(cfg *RenderContext) ([]runtime.Object, error) {
 		var servicePorts []corev1.ServicePort
-		for name, port := range ports {
+		for _, port := range ports {
 			servicePorts = append(servicePorts, corev1.ServicePort{
 				Protocol:   *TCPProtocol,
-				Name:       name,
+				Name:       port.Name,
 				Port:       port.ServicePort,
 				TargetPort: intstr.IntOrString{IntVal: port.ContainerPort},
 			})
@@ -79,6 +81,14 @@ func GenerateService(component string, ports map[string]ServicePort, mod ...func
 			// Apply any custom modifications to the spec
 			m(service)
 		}
+
+		// Add in the customizations for labels and annotations
+		service.ObjectMeta.Labels = CustomizeLabel(cfg, component, TypeMetaService, func() map[string]string {
+			return service.ObjectMeta.Labels
+		})
+		service.ObjectMeta.Annotations = CustomizeAnnotation(cfg, component, TypeMetaService, func() map[string]string {
+			return service.ObjectMeta.Annotations
+		})
 
 		return []runtime.Object{service}, nil
 	}

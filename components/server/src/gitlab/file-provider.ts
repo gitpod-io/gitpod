@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { injectable, inject } from "inversify";
@@ -30,7 +30,7 @@ export class GitlabFileProvider implements FileProvider {
         path: string,
     ): Promise<string> {
         const result = await this.gitlabApi.run<GitLab.Commit[]>(user, async (g) => {
-            return g.Commits.all(`${repository.owner}/${repository.name}`, { path, ref_name: revisionOrBranch });
+            return g.Commits.all(`${repository.owner}/${repository.name}`, { path, refName: revisionOrBranch });
         });
 
         if (GitLab.ApiError.is(result)) {
@@ -53,7 +53,7 @@ export class GitlabFileProvider implements FileProvider {
             const result = await this.gitlabApi.getRawContents(user, org, name, commitish, path);
             return result;
         } catch (error) {
-            log.error(error);
+            log.debug(error);
         }
     }
 }

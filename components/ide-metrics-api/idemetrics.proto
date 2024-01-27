@@ -1,0 +1,77 @@
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package ide_metrics_api;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/ide-metrics/api";
+option java_package = "io.gitpod.idemetrics.api";
+
+service MetricsService {
+    rpc AddCounter(AddCounterRequest) returns (AddCounterResponse) {
+        option (google.api.http) = {
+            post : "/metrics/counter/add/{name}"
+            body : "*"
+        };
+    }
+    rpc ObserveHistogram(ObserveHistogramRequest) returns (ObserveHistogramResponse) {
+        option (google.api.http) = {
+            post : "/metrics/histogram/observe/{name}"
+            body : "*"
+        };
+    }
+    rpc AddHistogram(AddHistogramRequest) returns (AddHistogramResponse) {
+        option (google.api.http) = {
+            post : "/metrics/histogram/add/{name}"
+            body : "*"
+        };
+    }
+    rpc reportError(ReportErrorRequest) returns (ReportErrorResponse) {
+        option (google.api.http) = {
+            post: "/reportError"
+            body : "*"
+        };
+    }
+}
+
+message AddCounterRequest {
+    string name = 1;
+    map<string, string> labels = 2;
+    int32 value = 3;
+}
+
+message AddCounterResponse {}
+
+message ObserveHistogramRequest {
+    string name = 1;
+    map<string, string> labels = 2;
+    double value = 3;
+}
+
+message ObserveHistogramResponse {}
+
+message AddHistogramRequest {
+    string name = 1;
+    map<string, string> labels = 2;
+    uint64 count = 3;
+    double sum = 4;
+    repeated uint64 buckets = 5;
+}
+
+message AddHistogramResponse {}
+
+message ReportErrorRequest {
+    string error_stack = 1;
+    string component = 2;
+    string version = 3;
+    string user_id = 4;
+    string workspace_id = 5;
+    string instance_id = 6;
+    map<string, string> properties = 7;
+}
+
+message ReportErrorResponse {}

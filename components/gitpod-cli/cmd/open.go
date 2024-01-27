@@ -1,21 +1,21 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
 import (
-	"log"
 	"os"
 	"os/exec"
-	"sync"
 	"time"
+
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
+
+	"context"
 
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/unix"
-
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
+	"golang.org/x/xerrors"
 )
 
 // initCmd represents the init command
@@ -23,88 +23,50 @@ var openCmd = &cobra.Command{
 	Use:   "open <filename>",
 	Short: "Opens a file in Gitpod",
 	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		wait, _ := cmd.Flags().GetBool("wait")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
 
-		err := tryOpenInTheia(args, wait)
-		if err == nil {
-			// opening in Theia worked - we're good
-			return
+		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
+		defer cancel()
+
+		client, err := supervisor.New(ctx)
+		if err != nil {
+			return err
 		}
+		defer client.Close()
+
+		client.WaitForIDEReady(ctx)
+
+		wait, _ := cmd.Flags().GetBool("wait")
 
 		pcmd := os.Getenv("GP_OPEN_EDITOR")
 		if pcmd == "" {
-			log.Fatal("GP_OPEN_EDITOR is not set")
-			return
+			return xerrors.Errorf("GP_OPEN_EDITOR is not set")
 		}
 		pargs, err := shlex.Split(pcmd)
 		if err != nil {
-			log.Fatalf("cannot parse GP_OPEN_EDITOR: %v", err)
-			return
+			return xerrors.Errorf("cannot parse GP_OPEN_EDITOR: %w", err)
 		}
 		if len(pargs) > 1 {
 			pcmd = pargs[0]
 		}
 		pcmd, err = exec.LookPath(pcmd)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		if wait {
 			pargs = append(pargs, "--wait")
 		}
-
-		err = unix.Exec(pcmd, append(pargs, args...), os.Environ())
-		if err != nil {
-			log.Fatal(err)
-		}
+		c := exec.CommandContext(cmd.Context(), pcmd, append(pargs[1:], args...)...)
+		c.Stdin = os.Stdin
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		return c.Run()
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(openCmd)
 	openCmd.Flags().BoolP("wait", "w", false, "wait until all opened files are closed again")
-}
-
-func tryOpenInTheia(args []string, wait bool) error {
-	service, err := theialib.NewServiceFromEnv()
-	if err != nil {
-		return err
-	}
-
-	var wg sync.WaitGroup
-	for _, fn := range args {
-		if fn == "--wait" {
-			continue
-		}
-
-		_, err := service.OpenFile(theialib.OpenFileRequest{Path: fn})
-		if err != nil {
-			return err
-		}
-		if !wait {
-			continue
-		}
-
-		wg.Add(1)
-		go func(fn string) {
-			defer wg.Done()
-
-			for {
-				resp, err := service.IsFileOpen(theialib.IsFileOpenRequest{Path: fn})
-				if err != nil {
-					log.Fatal(err)
-					return
-				}
-				if !resp.IsOpen {
-					return
-				}
-
-				time.Sleep(1 * time.Second)
-			}
-		}(fn)
-	}
-
-	wg.Wait()
-	return nil
 }

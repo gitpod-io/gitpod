@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: ws-manager-bridge-monitoring-rules
+spec:
+  groups:
+  - name: ws-manager-bridge
+    rules:
+    - alert: WsManagerBridgeHighCPUUsage
+      expr: sum(rate(process_cpu_seconds_total{job="ws-manager-bridge"}[5m])) by (cluster) > 0.5
+      for: 10m
+      labels:
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesHighCPUUsage.md
+        summary: WS Manager Bridge has excessive CPU usage.
+        description: WS Manager Bridge is consumming too much CPU. Please investigate.
+        dashboard_url: https://grafana.gitpod.io/d/AJKH-pJ4k/kubernetes-applications?var-cluster={{ $labels.cluster }}&var-job=ws-manager-bridge&var-pod=All

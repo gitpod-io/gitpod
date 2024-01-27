@@ -1,12 +1,12 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { Entity, Column, PrimaryColumn, ManyToOne, Index } from "typeorm";
 
-import { Identity, Token } from "@gitpod/gitpod-protocol";
+import { Identity } from "@gitpod/gitpod-protocol";
 import { DBUser } from "./db-user";
 import { Transformer } from "../transformer";
 
@@ -33,24 +33,18 @@ export class DBIdentity implements Identity {
     })
     primaryEmail?: string;
 
-    /** @deprecated */
-    @Column({
-        type: "simple-json",
-        // We want to deprecate the field without changing the schema just yet so we silence all writes and reads
-        transformer: {
-            to(value: any): any {
-                return [];
-            },
-            from(value: any): any {
-                return [];
-            },
-        },
-    })
-    tokens: Token[];
-
     @Column()
     deleted?: boolean;
 
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    lastSigninTime?: string;
+
+    /**
+     * @deprecated as no longer in use since '19
+     */
     @Column()
     readonly?: boolean;
 }

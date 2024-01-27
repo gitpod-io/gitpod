@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // GENERATED CODE -- DO NOT EDIT!
@@ -140,6 +140,28 @@ function serialize_iws_UmountProcResponse(arg) {
 
 function deserialize_iws_UmountProcResponse(buffer_arg) {
   return workspace_daemon_pb.UmountProcResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_WorkspaceInfoRequest(arg) {
+  if (!(arg instanceof workspace_daemon_pb.WorkspaceInfoRequest)) {
+    throw new Error('Expected argument of type iws.WorkspaceInfoRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_WorkspaceInfoRequest(buffer_arg) {
+  return workspace_daemon_pb.WorkspaceInfoRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_WorkspaceInfoResponse(arg) {
+  if (!(arg instanceof workspace_daemon_pb.WorkspaceInfoResponse)) {
+    throw new Error('Expected argument of type iws.WorkspaceInfoResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_WorkspaceInfoResponse(buffer_arg) {
+  return workspace_daemon_pb.WorkspaceInfoResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_iws_WriteIDMappingRequest(arg) {
@@ -291,6 +313,34 @@ setupPairVeths: {
     responseSerialize: serialize_iws_SetupPairVethsResponse,
     responseDeserialize: deserialize_iws_SetupPairVethsResponse,
   },
+  // Get information about the workspace
+workspaceInfo: {
+    path: '/iws.InWorkspaceService/WorkspaceInfo',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.WorkspaceInfoRequest,
+    responseType: workspace_daemon_pb.WorkspaceInfoResponse,
+    requestSerialize: serialize_iws_WorkspaceInfoRequest,
+    requestDeserialize: deserialize_iws_WorkspaceInfoRequest,
+    responseSerialize: serialize_iws_WorkspaceInfoResponse,
+    responseDeserialize: deserialize_iws_WorkspaceInfoResponse,
+  },
 };
 
 exports.InWorkspaceServiceClient = grpc.makeGenericClientConstructor(InWorkspaceServiceService);
+var WorkspaceInfoServiceService = exports.WorkspaceInfoServiceService = {
+  // Get information about the workspace
+workspaceInfo: {
+    path: '/iws.WorkspaceInfoService/WorkspaceInfo',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.WorkspaceInfoRequest,
+    responseType: workspace_daemon_pb.WorkspaceInfoResponse,
+    requestSerialize: serialize_iws_WorkspaceInfoRequest,
+    requestDeserialize: deserialize_iws_WorkspaceInfoRequest,
+    responseSerialize: serialize_iws_WorkspaceInfoResponse,
+    responseDeserialize: deserialize_iws_WorkspaceInfoResponse,
+  },
+};
+
+exports.WorkspaceInfoServiceClient = grpc.makeGenericClientConstructor(WorkspaceInfoServiceService);

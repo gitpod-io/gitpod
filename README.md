@@ -11,24 +11,23 @@
   <a href="https://gitpod.io/from-referrer/">
     <img src="https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod" alt="Gitpod ready-to-code" />
   </a>
-  <a href="https://werft.gitpod-dev.com/">
-    <img src="https://img.shields.io/badge/Werft.dev-CI--builds-green" alt="Werft.dev - Gitpod CI" />
-  </a>
   <a href="https://www.gitpod.io/chat">
     <img src="https://img.shields.io/discord/816244985187008514" alt="Discord" />
   </a>
 </p>
 
-Gitpod is an open-source Kubernetes application for ready-to-code developer environments that spins up fresh, automated dev environments
-for each task, in the cloud, in seconds. It enables you to describe your dev environment as code and start instant, remote and cloud-based developer environments directly from your browser or your Desktop IDE.
+Gitpod is an open-source Kubernetes application for ready-to-code cloud development environments that spins up fresh, automated dev environments
+for each task, in the cloud, in seconds. It enables you to describe your dev environment as code and start instant, remote and cloud development environments directly from your browser or your Desktop IDE.
 
-Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and continuously prebuilds dev environments for all your branches. As a result, team members can instantly start coding with fresh, ephemeral and fully-compiled dev environments - no matter if you are building a new feature, want to fix a bug or do a code review.
+Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and continuously prebuilds dev environments for all your branches. As a result, team members can instantly start coding with fresh, ephemeral, and fully-compiled dev environments - no matter if you are building a new feature, want to fix a bug, or do a code review.
 
-![browser-vscode](https://user-images.githubusercontent.com/22498066/135150975-23bba3a6-f099-48c5-83ed-a1a6627ff0e9.png)
+<a href="https://www.gitpod.io">
+  <img src="https://user-images.githubusercontent.com/22498066/135150975-23bba3a6-f099-48c5-83ed-a1a6627ff0e9.png" alt="browser-vscode" />
+</a>
 
 ## Features
 
-🏗 [Dev environments as code](https://www.gitpod.io/docs/#-dev-environments-as-code) - Gitpod applies lessons learned from infrastructure-as-code. Spinning up dev environments is easily repeatable and reproducible empowering you to automate, version-control and share dev environments across your team.
+🏗 [Dev environments as code](https://www.gitpod.io/docs/#-dev-environments-as-code) - Gitpod applies lessons learned from infrastructure-as-code. Spinning up dev environments is easily repeatable and reproducible empowering you to automate, version-control, and share dev environments across your team.
 
 ⚡️ [Prebuilt dev environments](https://www.gitpod.io/docs/#prebuilds) - Gitpod continuously prebuilds all your git branches similar to a CI server. Control how Gitpod pre-configures and initializes environments before you even start a workspace through `init` commands in your `.gitpod.yml`.
 
@@ -44,8 +43,6 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 [Learn more 👉](https://www.gitpod.io/)
 
-Gitpod is provided as a [managed Saas version](https://gitpod.io) with a free subscription for open-source or a [free self-hosted version](https://www.gitpod.io/self-hosted). An enterprise license is available [here](https://www.gitpod.io/self-hosted).
-
 ## Getting Started
 
 You can start using Gitpod in one or more of the following ways:
@@ -59,7 +56,9 @@ You can start using Gitpod in one or more of the following ways:
 ## Documentation
 
 All documentation can be found on https://www.gitpod.io/docs.
-For example, see [Introduction](https://www.gitpod.io/docs) and [Getting Started](https://www.gitpod.io/docs/getting-started) sections. 📚
+For example, see [Introduction](https://www.gitpod.io/docs) and [Getting Started](https://www.gitpod.io/docs/getting-started) sections. See also: [Gitpod Architecture](https://www.youtube.com/watch?v=svV-uE0Cdjk) 📚.
+
+Also check out [**awesome-gitpod**](https://github.com/Gitpod-Samples/awesome-gitpod) ✨
 
 ## Questions
 
@@ -74,21 +73,18 @@ The issue tracker is used for tracking **bug reports** and **feature requests** 
 
 You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) or [create a new one](https://github.com/gitpod-io/gitpod/issues/new?template=feature_request.md).
 
-## Development Process
+### How do GitHub Issues get prioritized?
 
-We work with quarterly roadmaps in autonomous product teams.
+Each Gitpod team has [its own project board](https://github.com/orgs/gitpod-io/projects) that follows a similar structure. You can find these project boards attached to [the GitHub organization](https://github.com/gitpod-io). Each team board has a "GroundWork" tab which shows current GitHub issues in progress. Each team project board also has an "inbox" where issues are sent for review by the team (and should be responded to within 48 hours). "Upvoting" by [reacting](https://docs.github.com/en/rest/reference/reactions) to GitHub issues helps signal to Gitpod that issues are important to you. If you are unsure of the status of an issue, please comment and a Gitpodder should respond to you shortly. For any other questions, please utilize the [Gitpod community](https://www.gitpod.io/community).
 
--   [Gitpod Architecture](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74)
--   [Product Roadmap](https://github.com/orgs/gitpod-io/projects/27)
+### Adding a new component to Gitpod
 
-### How do GitHub Issues get prioritised?
-
-Most GitHub issues (except smaller or more urgent issues) relate to our [current product roadmap items](https://github.com/orgs/gitpod-io/projects/27). Gitpod teams work against these roadmap items. Each Gitpod team has [its own project board](https://github.com/orgs/gitpod-io/projects) that follows a similar structure. You can find these project boards attached to [the GitHub organisation](https://github.com/gitpod-io). Each team board has a "GroundWork" tab which shows current GitHub issues in progress. Each team project board also has an "inbox" where issues are sent for review by the team (and should be responded to within 48 hours). "Upvoting" by [reacting](https://docs.github.com/en/rest/reference/reactions) to GitHub issues helps signal to Gitpod that issues are important to you. If you are unsure of the status of an issue, please comment and a Gitpodder should respond to you shortly. For any other questions, please utilise the [Gitpod community](https://www.gitpod.io/community).
+For new Go projects, please update [gitpod-ws.code-workspace](./gitpod-ws.code-workspace) to include the folder. Why? This will make it so that [IntelliSense](https://code.visualstudio.com/docs/editor/intellisense) works with your project, without having to exclusively open the project in a separate context, e.g. `code components/<my-new-component>`. References [1](https://go.googlesource.com/tools/+/refs/heads/master/gopls/doc/workspace.md#multiple-workspace-folders)[2](https://code.visualstudio.com/docs/editor/multi-root-workspaces)
 
 ## Related Projects
 
-During the development of Gitpod, we also developed some of our own infrastructure tooling to make development easier and more efficient.
-To this end we've developed a number of open source projects including:
+During the development of Gitpod, we also developed some of our own infrastructure toolings to make development easier and more efficient.
+To this end, we've developed a number of open source projects including:
 
 1. [**Werft**](https://github.com/csweichel/werft) - A Kubernetes native CI system
 1. [**Leeway**](https://github.com/gitpod-io/leeway) - A heavily caching build system
@@ -98,4 +94,4 @@ To this end we've developed a number of open source projects including:
 ## Code of Conduct
 
 We want to create a welcoming environment for everyone who is interested in contributing to Gitpod or participating in discussions with the Gitpod community.
-This project has adopted the [Contributor Covenant Code of Conduct](https://github.com/gitpod-io/gitpod/blob/master/CODE_OF_CONDUCT.md), [version 2.0](https://www.contributor-covenant.org/version/2/0/code_of_conduct/).
+This project has adopted the [Contributor Covenant Code of Conduct](https://github.com/gitpod-io/.github/blob/main/CODE_OF_CONDUCT.md), [version 2.0](https://www.contributor-covenant.org/version/2/0/code_of_conduct/).

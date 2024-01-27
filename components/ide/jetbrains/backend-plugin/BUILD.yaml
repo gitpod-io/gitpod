@@ -1,6 +1,41 @@
 packages:
-  - name: plugin
+  - name: docker
     type: generic
+    deps:
+      - :stable
+      - :latest
+  - name: stable
+    type: docker
+    deps:
+      - :plugin-stable
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.jbBackendPlugin
+      buildArgs:
+        JETBRAINS_BACKEND_QUALIFIER: stable
+      image:
+        - ${imageRepoBase}/ide/jb-backend-plugin:commit-${__git_commit}
+  - name: latest
+    type: docker
+    deps:
+      - :plugin-latest
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.jbBackendPluginLatest
+      buildArgs:
+        JETBRAINS_BACKEND_QUALIFIER: latest
+      image:
+        - ${imageRepoBase}/ide/jb-backend-plugin:commit-${__git_commit}-latest
+  - name: plugin-stable
+    type: generic
+    argdeps:
+      - noVerifyJBPlugin
     deps:
       - components/supervisor-api/java:lib
       - components/gitpod-protocol/java:lib
@@ -8,11 +43,40 @@ packages:
       - "**/*.kt"
       - "build.gradle.kts"
       - "gradle.properties"
+      - "gradle-stable.properties"
       - "gradle/wrapper/*"
       - "gradlew"
       - "settings.gradle.kts"
       - "src/main/resources/*"
+      - "src/main/resources-stable/*"
+      - "build.sh"
+    env:
+      - JB_QUALIFIER=stable
+      - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
     config:
       commands:
-        - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "runPluginVerifier"]
-        - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "buildPlugin"]
+        - ["./build.sh"]
+  - name: plugin-latest
+    type: generic
+    argdeps:
+      - noVerifyJBPlugin
+    deps:
+      - components/supervisor-api/java:lib
+      - components/gitpod-protocol/java:lib
+    srcs:
+      - "**/*.kt"
+      - "build.gradle.kts"
+      - "gradle.properties"
+      - "gradle-latest.properties"
+      - "gradle/wrapper/*"
+      - "gradlew"
+      - "settings.gradle.kts"
+      - "src/main/resources/*"
+      - "src/main/resources-latest/*"
+      - "build.sh"
+    env:
+      - JB_QUALIFIER=latest
+      - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
+    config:
+      commands:
+        - ["./build.sh"]

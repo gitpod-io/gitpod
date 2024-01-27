@@ -1,11 +1,12 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package openvsx_proxy
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -17,16 +18,20 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	domain, err := url.Parse(ctx.Config.OpenVSX.URL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse openvsx url: %w", err)
+	}
 	imgcfg := openvsx.Config{
 		LogDebug:             false,
 		CacheDurationRegular: util.Duration(time.Minute * 5),
 		CacheDurationBackup:  util.Duration(time.Hour * 72),
 		URLUpstream:          ctx.Config.OpenVSX.URL,
-		URLLocal:             fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain),
 		MaxIdleConns:         1000,
 		MaxIdleConnsPerHost:  1000,
-		PrometheusAddr:       fmt.Sprintf(":%d", PrometheusPort),
+		PrometheusAddr:       common.LocalhostPrometheusAddr(),
 		RedisAddr:            "localhost:6379",
+		AllowCacheDomain:     []string{domain.Host},
 	}
 
 	redisCfg := `
@@ -48,9 +53,10 @@ maxmemory-policy allkeys-lfu
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-config", Component),
-				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Name:        fmt.Sprintf("%s-config", Component),
+				Namespace:   ctx.Namespace,
+				Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
 			},
 			Data: data,
 		},

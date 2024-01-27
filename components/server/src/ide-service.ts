@@ -1,87 +1,106 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { JetBrainsConfig, TaskConfig, Workspace } from "@gitpod/gitpod-protocol";
-import { injectable } from "inversify";
+import { IDESettings, User, Workspace } from "@gitpod/gitpod-protocol";
+import { IDEClient, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import * as IdeServiceApi from "@gitpod/ide-service-api/lib/ide.pb";
+import {
+    IDEServiceClient,
+    IDEServiceDefinition,
+    ResolveWorkspaceConfigResponse,
+} from "@gitpod/ide-service-api/lib/ide.pb";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
+import { inject, injectable } from "inversify";
+import { AuthorizationService } from "./user/authorization-service";
 
+export interface IDEConfig {
+    supervisorImage: string;
+    ideOptions: IDEOptions;
+    clients?: { [id: string]: IDEClient };
+}
 @injectable()
 export class IDEService {
-    resolveGitpodTasks(ws: Workspace): TaskConfig[] {
-        const tasks: TaskConfig[] = [];
-        if (ws.config.tasks) {
-            tasks.push(...ws.config.tasks);
-        }
-        // TODO(ak) it is a hack to get users going, we should rather layer JB products on prebuild workspaces and move logic to corresponding images
-        if (ws.type === "prebuild" && ws.config.jetbrains) {
-            let warmUp = "";
-            for (const key in ws.config.jetbrains) {
-                let productCode;
-                if (key === "intellij") {
-                    productCode = "IIU";
-                } else if (key === "goland") {
-                    productCode = "GO";
-                } else if (key === "pycharm") {
-                    productCode = "PCP";
-                } else if (key === "phpstorm") {
-                    productCode = "PS";
-                }
-                const prebuilds = productCode && ws.config.jetbrains[key as keyof JetBrainsConfig]?.prebuilds;
-                if (prebuilds) {
-                    warmUp +=
-                        prebuilds.version === "latest"
-                            ? ""
-                            : `
-echo 'warming up stable release of ${key}...'
-echo 'downloading stable ${key} backend...'
-mkdir /tmp/backend
-curl -sSLo /tmp/backend/backend.tar.gz "https://download.jetbrains.com/product?type=release&distribution=linux&code=${productCode}"
-tar -xf /tmp/backend/backend.tar.gz --strip-components=1 --directory /tmp/backend
+    @inject(IDEServiceDefinition.name)
+    protected readonly ideService: IDEServiceClient;
 
-echo 'configuring JB system config and caches aligned with runtime...'
-printf '\nshared.indexes.download.auto.consent=true' >> "/tmp/backend/bin/idea.properties"
-unset JAVA_TOOL_OPTIONS
-export IJ_HOST_CONFIG_BASE_DIR=/workspace/.config/JetBrains
-export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains
+    @inject(AuthorizationService)
+    protected readonly authService: AuthorizationService;
 
-echo 'running stable ${key} backend in warmup mode...'
-/tmp/backend/bin/remote-dev-server.sh warmup "$GITPOD_REPO_ROOT"
+    private cacheConfig?: IDEConfig;
 
-echo 'removing stable ${key} backend...'
-rm -rf /tmp/backend
-`;
-                    warmUp +=
-                        prebuilds.version === "stable"
-                            ? ""
-                            : `
-echo 'warming up latest release of ${key}...'
-echo 'downloading latest ${key} backend...'
-mkdir /tmp/backend-latest
-curl -sSLo /tmp/backend-latest/backend-latest.tar.gz "https://download.jetbrains.com/product?type=release,eap,rc&distribution=linux&code=${productCode}"
-tar -xf /tmp/backend-latest/backend-latest.tar.gz --strip-components=1 --directory /tmp/backend-latest
-
-echo 'configuring JB system config and caches aligned with runtime...'
-printf '\nshared.indexes.download.auto.consent=true' >> "/tmp/backend-latest/bin/idea.properties"
-unset JAVA_TOOL_OPTIONS
-export IJ_HOST_CONFIG_BASE_DIR=/workspace/.config/JetBrains-latest
-export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains-latest
-
-echo 'running ${key} backend in warmup mode...'
-/tmp/backend-latest/bin/remote-dev-server.sh warmup "$GITPOD_REPO_ROOT"
-
-echo 'removing latest ${key} backend...'
-rm -rf /tmp/backend-latest
-`;
-                }
-            }
-            if (warmUp) {
-                tasks.push({
-                    init: warmUp.trim(),
-                });
+    async getIDEConfig(request: { user: { id: string; email?: string } }): Promise<IDEConfig> {
+        try {
+            const response = await this.ideService.getConfig(request);
+            const config: IDEConfig = JSON.parse(response.content);
+            this.cacheConfig = config;
+            return config;
+        } catch (e) {
+            console.error("failed get ide config:", e);
+            if (this.cacheConfig == null) {
+                throw new Error("failed get ide config:" + e.message);
+            } else {
+                return this.cacheConfig;
             }
         }
-        return tasks;
+    }
+
+    migrateSettings(user: User): IDESettings | undefined {
+        if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.0") {
+            return undefined;
+        }
+        const newIDESettings: IDESettings = {
+            settingVersion: "2.0",
+        };
+        const ideSettings = user.additionalData.ideSettings;
+        if (ideSettings.useDesktopIde) {
+            if (ideSettings.defaultDesktopIde === "code-desktop") {
+                newIDESettings.defaultIde = "code-desktop";
+            } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
+                newIDESettings.defaultIde = "code-desktop";
+                newIDESettings.useLatestVersion = true;
+            } else {
+                newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
+                newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
+            }
+        } else {
+            const useLatest = ideSettings.defaultIde === "code-latest";
+            newIDESettings.defaultIde = "code";
+            newIDESettings.useLatestVersion = useLatest;
+        }
+        return newIDESettings;
+    }
+
+    async resolveWorkspaceConfig(
+        workspace: Workspace,
+        user: User,
+        userSelectedIdeSettings?: IDESettings,
+    ): Promise<ResolveWorkspaceConfigResponse> {
+        const workspaceType =
+            workspace.type === "prebuild" ? IdeServiceApi.WorkspaceType.PREBUILD : IdeServiceApi.WorkspaceType.REGULAR;
+
+        const req: IdeServiceApi.ResolveWorkspaceConfigRequest = {
+            type: workspaceType,
+            context: JSON.stringify(workspace.context),
+            ideSettings: JSON.stringify(userSelectedIdeSettings || user.additionalData?.ideSettings),
+            workspaceConfig: JSON.stringify(workspace.config),
+            user: {
+                id: user.id,
+                email: getPrimaryEmail(user),
+            },
+        };
+        for (let attempt = 0; attempt < 15; attempt++) {
+            if (attempt != 0) {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+            try {
+                return await this.ideService.resolveWorkspaceConfig(req);
+            } catch (e) {
+                console.error("ide-service: failed to resolve workspace config: ", e);
+            }
+        }
+        throw new Error("failed to resolve workspace IDE configuration");
     }
 }

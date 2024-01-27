@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import * as fs from "fs";
@@ -9,11 +9,23 @@ import { filePathTelepresenceAware } from "./env";
 import { DeepPartial } from "./util/deep-partial";
 import { PermissionName } from "./permission";
 
+const workspaceRegions = ["europe", "north-america", "south-america", "africa", "asia", ""] as const;
+export type WorkspaceRegion = typeof workspaceRegions[number];
+
+export function isWorkspaceRegion(s: string): s is WorkspaceRegion {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return workspaceRegions.indexOf(s as any) !== -1;
+}
+
 export interface WorkspaceCluster {
     // Name of the workspace cluster.
     // This is the string set in each
     // Must be identical to the installationShortname of the cluster it represents!
     name: string;
+
+    // The name of the region this cluster belongs to. E.g. europe or north-america
+    // The name can be at most 60 characters.
+    region: WorkspaceRegion;
 
     // URL of the cluster's ws-manager API
     url: string;
@@ -35,6 +47,18 @@ export interface WorkspaceCluster {
 
     // An optional set of constraints that limit who can start workspaces on the cluster
     admissionConstraints?: AdmissionConstraint[];
+
+    // The classes of workspaces that can be started on this cluster
+    availableWorkspaceClasses?: WorkspaceClass[];
+
+    // The class of workspaces that should be started on this cluster by default
+    preferredWorkspaceClass?: string;
+}
+
+export namespace WorkspaceCluster {
+    export function preferredWorkspaceClass(cluster: WorkspaceCluster): WorkspaceClass | undefined {
+        return (cluster.availableWorkspaceClasses || []).find((c) => c.id === cluster.preferredWorkspaceClass);
+    }
 }
 
 export type WorkspaceClusterState = "available" | "cordoned" | "draining";
@@ -56,12 +80,10 @@ export type WorkspaceManagerConnectionInfo = Pick<WorkspaceCluster, "name" | "ur
 export type AdmissionConstraint =
     | AdmissionConstraintFeaturePreview
     | AdmissionConstraintHasPermission
-    | AdmissionConstraintHasUserLevel
-    | AdmissionConstraintHasMoreResources;
+    | AdmissionConstraintHasClass;
 export type AdmissionConstraintFeaturePreview = { type: "has-feature-preview" };
 export type AdmissionConstraintHasPermission = { type: "has-permission"; permission: PermissionName };
-export type AdmissionConstraintHasUserLevel = { type: "has-user-level"; level: string };
-export type AdmissionConstraintHasMoreResources = { type: "has-more-resources" };
+export type AdmissionConstraintHasClass = { type: "has-class"; id: string; displayName: string };
 
 export namespace AdmissionConstraint {
     export function is(o: any): o is AdmissionConstraint {
@@ -73,6 +95,20 @@ export namespace AdmissionConstraint {
     export function hasPermission(ac: AdmissionConstraint, permission: PermissionName): boolean {
         return isHasPermissionConstraint(ac) && ac.permission === permission;
     }
+}
+
+export interface WorkspaceClass {
+    // id is a unique identifier (within the cluster) of this workspace class
+    id: string;
+
+    // The string we display to users in the UI
+    displayName: string;
+
+    // The description of this workspace class
+    description: string;
+
+    // The cost of running a workspace of this class per minute expressed in credits
+    creditsPerMinute: number;
 }
 
 export const WorkspaceClusterDB = Symbol("WorkspaceClusterDB");
@@ -100,8 +136,10 @@ export interface WorkspaceClusterDB {
      * Lists all WorkspaceClusterWoTls for which the given predicate is true (does not return TLS for size/speed concerns)
      * @param predicate
      */
-    findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTLS[]>;
+    findFiltered(predicate: WorkspaceClusterFilter): Promise<WorkspaceClusterWoTLS[]>;
 }
-export interface WorkspaceClusterFilter extends Pick<WorkspaceCluster, "state" | "govern" | "url"> {
-    minScore: number;
-}
+
+export type WorkspaceClusterFilter = DeepPartial<
+    Pick<WorkspaceCluster, "name" | "state" | "govern" | "url" | "region">
+> &
+    Partial<{ minScore: number }>;

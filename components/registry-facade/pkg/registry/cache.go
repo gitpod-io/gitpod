@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package registry
 
@@ -10,47 +10,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sync"
 	"time"
 
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	redis "github.com/go-redis/redis/v8"
-	files "github.com/ipfs/go-ipfs-files"
-	ipfs "github.com/ipfs/interface-go-ipfs-core"
-	"github.com/ipfs/interface-go-ipfs-core/options"
+	ipfs "github.com/ipfs/boxo/coreiface"
+	"github.com/ipfs/boxo/coreiface/options"
+	files "github.com/ipfs/boxo/files"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	redis "github.com/redis/go-redis/v9"
 	"golang.org/x/xerrors"
 )
-
-// ipfsManifestModifier modifies a manifest and adds IPFS URLs to the layers
-func (reg *Registry) ipfsManifestModifier(mf *ociv1.Manifest) error {
-	if reg.IPFS == nil {
-		return nil
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	var wg sync.WaitGroup
-	for i, l := range mf.Layers {
-		wg.Add(1)
-		go func(i int, dgst digest.Digest) {
-			defer wg.Done()
-
-			url, _ := reg.IPFS.Get(ctx, dgst)
-			if url == "" {
-				return
-			}
-			mf.Layers[i].URLs = append(mf.Layers[i].URLs, url)
-		}(i, l.Digest)
-	}
-	wg.Wait()
-
-	return nil
-}
 
 // IPFSBlobCache can cache blobs in IPFS
 type IPFSBlobCache struct {
@@ -74,7 +46,7 @@ func (store *IPFSBlobCache) Get(ctx context.Context, dgst digest.Digest) (ipfsUR
 }
 
 // Store stores a blob in IPFS. Will happily overwrite/re-upload a blob.
-func (store *IPFSBlobCache) Store(ctx context.Context, dgst digest.Digest, content io.Reader) (err error) {
+func (store *IPFSBlobCache) Store(ctx context.Context, dgst digest.Digest, content io.Reader, mediaType string) (err error) {
 	if store == nil || store.IPFS == nil || store.Redis == nil {
 		return nil
 	}
@@ -91,7 +63,10 @@ func (store *IPFSBlobCache) Store(ctx context.Context, dgst digest.Digest, conte
 		return err
 	}
 
-	res := store.Redis.Set(ctx, dgst.String(), p.Cid().String(), 0)
+	res := store.Redis.MSet(ctx,
+		dgst.String(), p.Cid().String(),
+		mediaTypeKeyFromDigest(dgst), mediaType,
+	)
 	if err := res.Err(); err != nil {
 		return err
 	}

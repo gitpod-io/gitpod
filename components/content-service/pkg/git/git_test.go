@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package git
 
@@ -394,6 +394,16 @@ func TestGitStatusFromFiles(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
+			statusLocation, err := os.MkdirTemp("", "git-status")
+			if err != nil {
+				t.Errorf("cannot create temporal directory: %v", err)
+				return
+			}
+
+			defer func() {
+				os.RemoveAll(statusLocation)
+			}()
+
 			client, err := newGitClient(ctx)
 			if err != nil {
 				t.Errorf("cannot prep %s: %v", test.Name, err)
@@ -406,37 +416,37 @@ func TestGitStatusFromFiles(t *testing.T) {
 				return
 			}
 
-			gitout, err := client.GitWithOutput(ctx, "status", "--porcelain=v2", "--branch", "-uall")
+			gitout, err := client.GitWithOutput(ctx, nil, "status", "--porcelain=v2", "--branch", "-uall")
 			if err != nil {
 				t.Errorf("error calling GitWithOutput: %v", err)
 				return
 			}
-			if err := os.WriteFile(filepath.Join("/tmp", "git_status.txt"), gitout, 0755); err != nil {
+			if err := os.WriteFile(filepath.Join(statusLocation, "git_status.txt"), gitout, 0755); err != nil {
 				t.Errorf("error creating file: %v", err)
 				return
 			}
 
-			gitout, err = client.GitWithOutput(ctx, "log", "--pretty=%h: %s", "--branches", "--not", "--remotes")
+			gitout, err = client.GitWithOutput(ctx, &errNoCommitsYet, "log", "--pretty=%h: %s", "--branches", "--not", "--remotes")
 			if err != nil {
 				t.Errorf("error calling GitWithOutput: %v", err)
 				return
 			}
-			if err := os.WriteFile(filepath.Join("/tmp", "git_log_1.txt"), gitout, 0755); err != nil {
+			if err := os.WriteFile(filepath.Join(statusLocation, "git_log_1.txt"), gitout, 0755); err != nil {
 				t.Errorf("error creating file: %v", err)
 				return
 			}
 
-			gitout, err = client.GitWithOutput(ctx, "log", "--pretty=%H", "-n", "1")
+			gitout, err = client.GitWithOutput(ctx, &errNoCommitsYet, "log", "--pretty=%H", "-n", "1")
 			if err != nil && !strings.Contains(err.Error(), "fatal: your current branch 'master' does not have any commits yet") {
 				t.Errorf("error calling GitWithOutput: %v", err)
 				return
 			}
-			if err := os.WriteFile(filepath.Join("/tmp", "git_log_2.txt"), gitout, 0755); err != nil {
+			if err := os.WriteFile(filepath.Join(statusLocation, "git_log_2.txt"), gitout, 0755); err != nil {
 				t.Errorf("error creating file: %v", err)
 				return
 			}
 
-			status, err := GitStatusFromFiles(ctx, "/tmp")
+			status, err := GitStatusFromFiles(ctx, statusLocation)
 			if err != test.Error {
 				t.Errorf("expected error does not match for %s: %v != %v", test.Name, err, test.Error)
 				return

@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import EventEmitter from "events";
@@ -56,6 +56,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
         return function cleanUp() {
             terminal.dispose();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -70,12 +71,14 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
             clearTimeout(timeout!);
             window.removeEventListener("resize", onWindowResize);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         if (terminalRef.current && props.errorMessage) {
             terminalRef.current.write(`\r\n\u001b[38;5;196m${props.errorMessage}\u001b[0m\r\n`);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [terminalRef.current, props.errorMessage]);
 
     useEffect(() => {
@@ -83,6 +86,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
             return;
         }
         terminalRef.current.setOption("theme", isDark ? darkTheme : lightTheme);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [terminalRef.current, isDark]);
 
     return (

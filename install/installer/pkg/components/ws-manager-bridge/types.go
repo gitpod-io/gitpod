@@ -1,20 +1,23 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package wsmanagerbridge
 
+import "github.com/gitpod-io/gitpod/installer/pkg/components/redis"
+
 // Configuration from components/ws-manager-bridge/src/config.ts
 type Configuration struct {
-	Installation                        string             `json:"installation"`
-	StaticBridges                       []WorkspaceCluster `json:"staticBridges"`
-	ClusterService                      ClusterService     `json:"clusterService"`
-	WSClusterDBReconcileIntervalSeconds int32              `json:"wsClusterDBReconcileIntervalSeconds"`
-	ControllerIntervalSeconds           int32              `json:"controllerIntervalSeconds"`
-	ControllerMaxDisconnectSeconds      int32              `json:"controllerMaxDisconnectSeconds"`
-	MaxTimeToRunningPhaseSeconds        int32              `json:"maxTimeToRunningPhaseSeconds"`
-	EmulatePreparingIntervalSeconds     int32              `json:"emulatePreparingIntervalSeconds"`
-	Timeouts                            Timeouts           `json:"timeouts"`
+	Installation                        string              `json:"installation"`
+	StaticBridges                       []WorkspaceCluster  `json:"staticBridges"`
+	ClusterService                      ClusterService      `json:"clusterService"`
+	WSClusterDBReconcileIntervalSeconds int32               `json:"wsClusterDBReconcileIntervalSeconds"`
+	ControllerIntervalSeconds           int32               `json:"controllerIntervalSeconds"`
+	ControllerMaxDisconnectSeconds      int32               `json:"controllerMaxDisconnectSeconds"`
+	EmulatePreparingIntervalSeconds     int32               `json:"emulatePreparingIntervalSeconds"`
+	Timeouts                            Timeouts            `json:"timeouts"`
+	ClusterSyncIntervalSeconds          int32               `json:"clusterSyncIntervalSeconds"`
+	Redis                               redis.Configuration `json:"redis"`
 }
 
 type ClusterService struct {
@@ -23,10 +26,11 @@ type ClusterService struct {
 }
 
 type Timeouts struct {
-	MetaInstanceCheckIntervalSeconds int32 `json:"metaInstanceCheckIntervalSeconds"`
-	PreparingPhaseSeconds            int32 `json:"preparingPhaseSeconds"`
-	StoppingPhaseSeconds             int32 `json:"stoppingPhaseSeconds"`
-	UnknownPhaseSeconds              int32 `json:"unknownPhaseSeconds"`
+	PreparingPhaseSeconds int32 `json:"preparingPhaseSeconds"`
+	BuildingPhaseSeconds  int32 `json:"buildingPhaseSeconds"`
+	UnknownPhaseSeconds   int32 `json:"unknownPhaseSeconds"`
+	PendingPhaseSeconds   int32 `json:"pendingPhaseSeconds"`
+	StoppingPhaseSeconds  int32 `json:"stoppingPhaseSeconds"`
 }
 
 // WorkspaceCluster from components/gitpod-protocol/src/workspace-cluster.ts
@@ -39,6 +43,8 @@ type WorkspaceCluster struct {
 	Score                int32                 `json:"score"`
 	Govern               bool                  `json:"govern"`
 	AdmissionConstraints []AdmissionConstraint `json:"admissionConstraints"`
+	ApplicationCluster   string                `json:"applicationCluster"`
+	Region               string                `json:"region"`
 }
 
 // WorkspaceClusterTLS is the struct we use in ws-manager-bridge cluster registrations.
@@ -72,14 +78,9 @@ const (
 type AdmissionConstraintPermission string
 
 const (
-	AdmissionConstraintPermissionMonitor             AdmissionConstraintPermission = "monitor"
-	AdmissionConstraintPermissionEnforcement         AdmissionConstraintPermission = "enforcement"
-	AdmissionConstraintPermissionPrivilegedWS        AdmissionConstraintPermission = "privileged-ws"
 	AdmissionConstraintPermissionRegistryAccess      AdmissionConstraintPermission = "registry-access"
 	AdmissionConstraintPermissionAdminUsers          AdmissionConstraintPermission = "admin-users"
 	AdmissionConstraintPermissionAdminWorkspaces     AdmissionConstraintPermission = "admin-workspaces"
-	AdmissionConstraintPermissionAdminApi            AdmissionConstraintPermission = "admin-api"
-	AdmissionConstraintPermissionIDESettings         AdmissionConstraintPermission = "ide-settings"
 	AdmissionConstraintPermissionNewWorkspaceCluster AdmissionConstraintPermission = "new-workspace-cluster"
 	AdmissionConstraintPermissionTeamsAndProjects    AdmissionConstraintPermission = "teams-and-projects"
 )

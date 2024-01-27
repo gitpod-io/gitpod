@@ -1,5 +1,5 @@
 OUTPUT ?= dist
-VERSION_MANIFEST = ./pkg/config/versions/versions.yaml
+VERSION_MANIFEST ?= ./pkg/config/versions/versions.yaml
 
 all: clean deps versionManifest compile
 

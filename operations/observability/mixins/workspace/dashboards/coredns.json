@@ -36,7 +36,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -82,7 +82,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "max(rate(coredns_dns_request_duration_seconds_bucket{cluster=\"$cluster\"}[5m]))",
@@ -132,7 +132,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "editable": true,
       "error": false,
@@ -187,7 +187,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(coredns_dns_requests_total{cluster=\"$cluster\"}[1m])) by (pod)",
@@ -235,7 +235,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -299,7 +299,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(coredns_dns_requests_total{cluster=\"$cluster\"}[1m]))",
@@ -325,7 +325,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "editable": true,
       "error": false,
@@ -380,7 +380,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(coredns_dns_requests_total{cluster=\"$cluster\"}[1m])) by (proto)",
@@ -428,7 +428,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -484,7 +484,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(coredns_cache_entries{cluster=\"$cluster\", type=\"denial\"})",
@@ -502,7 +502,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -558,7 +558,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(coredns_cache_entries{cluster=\"$cluster\", type=\"success\"})",
@@ -576,7 +576,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -636,7 +636,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(kube_pod_container_status_running{cluster=\"$cluster\", container=\"coredns\"})",
@@ -658,7 +658,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "editable": true,
       "error": false,
@@ -708,7 +708,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(coredns_cache_hits_total{cluster=\"$cluster\", type=\"success\"}[1m]))",
@@ -722,7 +722,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(coredns_cache_hits_total{cluster=\"$cluster\", type=\"denial\"}[1m]))",
@@ -775,7 +775,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "editable": true,
       "error": false,
@@ -825,7 +825,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(coredns_cache_evictions_total{cluster=\"$cluster\", type=\"success\"}[1m]))",
@@ -839,7 +839,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(coredns_cache_evictions_total{cluster=\"$cluster\", type=\"denial\"}[1m]))",
@@ -892,7 +892,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "editable": true,
       "error": false,
@@ -951,7 +951,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(coredns_dns_requests_total{cluster=\"$cluster\"}[1m])) by (type)",
@@ -1003,7 +1003,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "editable": true,
       "error": false,
@@ -1053,7 +1053,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(coredns_dns_responses_total{cluster=\"$cluster\"}[1m])) by (rcode)",
@@ -1104,7 +1104,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "editable": true,
       "error": false,
@@ -1159,7 +1159,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(coredns_dns_do_requests_total{cluster=\"$cluster\"}[1m]))",
@@ -1173,7 +1173,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(coredns_dns_requests_total{cluster=\"$cluster\"}[1m]))",
@@ -1224,7 +1224,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "editable": true,
       "error": false,
@@ -1287,7 +1287,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.99, sum(rate(coredns_dns_request_size_bytes_bucket{cluster=\"$cluster\", proto=\"udp\"}[1m])) by (le,proto))",
@@ -1301,7 +1301,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.90, sum(rate(coredns_dns_request_size_bytes_bucket{cluster=\"$cluster\", proto=\"udp\"}[1m])) by (le,proto))",
@@ -1315,7 +1315,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.50, sum(rate(coredns_dns_request_size_bytes_bucket{cluster=\"$cluster\", proto=\"udp\"}[1m])) by (le,proto))",
@@ -1367,7 +1367,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "editable": true,
       "error": false,
@@ -1430,7 +1430,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.99, sum(rate(coredns_dns_request_size_bytes_bucket{cluster=\"$cluster\", proto=\"tcp\"}[5m])) by (le,proto))",
@@ -1443,7 +1443,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.90, sum(rate(coredns_dns_request_size_bytes_bucket{cluster=\"$cluster\", proto=\"tcp\"}[5m])) by (le,proto))",
@@ -1456,7 +1456,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.50, sum(rate(coredns_dns_request_size_bytes_bucket{cluster=\"$cluster\", proto=\"tcp\"}[5m])) by (le,proto))",
@@ -1507,7 +1507,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "editable": true,
       "error": false,
@@ -1574,7 +1574,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.99, sum(rate(coredns_dns_response_size_bytes_bucket{cluster=\"$cluster\", proto=\"udp\"}[1m])) by (le,proto)) ",
@@ -1588,7 +1588,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.90, sum(rate(coredns_dns_response_size_bytes_bucket{cluster=\"$cluster\", proto=\"udp\"}[1m])) by (le,proto)) ",
@@ -1602,7 +1602,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.50, sum(rate(coredns_dns_response_size_bytes_bucket{cluster=\"$cluster\", proto=\"udp\"}[1m])) by (le,proto)) ",
@@ -1655,7 +1655,7 @@
       "dashes": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "editable": true,
       "error": false,
@@ -1722,7 +1722,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.99, sum(rate(coredns_dns_response_size_bytes_bucket{cluster=\"$cluster\", proto=\"tcp\"}[1m])) by (le,proto)) ",
@@ -1736,7 +1736,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.90, sum(rate(coredns_dns_response_size_bytes_bucket{cluster=\"$cluster\", proto=\"tcp\"}[1m])) by (le,proto)) ",
@@ -1750,7 +1750,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "histogram_quantile(0.50, sum(rate(coredns_dns_response_size_bytes_bucket{cluster=\"$cluster\", proto=\"tcp\"}[1m])) by (le, proto)) ",
@@ -1805,13 +1805,30 @@
     "list": [
       {
         "current": {
+          "selected": false,
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
           "selected": true,
           "text": "us30",
           "value": "us30"
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "P4169E866C3094E38"
+          "uid": "${datasource}"
         },
         "definition": "label_values(kube_pod_container_status_running{container=\"coredns\"}, cluster)",
         "hide": 0,

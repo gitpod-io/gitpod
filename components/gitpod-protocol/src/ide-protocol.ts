@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 /**
@@ -34,6 +34,14 @@ export interface IDEOptions {
      * Client specific IDE options.
      */
     clients?: { [id: string]: IDEClient };
+}
+
+export namespace IDEOptions {
+    export function asArray(options: IDEOptions): (IDEOption & { id: string })[] {
+        return Object.keys(options.options)
+            .map((id) => ({ ...options.options[id], id }))
+            .sort((a, b) => (a.orderKey || "").localeCompare(b.orderKey || ""));
+    }
 }
 
 export interface IDEClient {
@@ -87,7 +95,7 @@ export interface IDEOption {
     label?: string;
 
     /**
-     * Notes to the IDE option that are renderd in the preferences when a user
+     * Notes to the IDE option that are rendered in the preferences when a user
      * chooses this IDE.
      */
     notes?: string[];
@@ -96,6 +104,11 @@ export interface IDEOption {
      * If `true` this IDE option is not visible in the IDE preferences.
      */
     hidden?: boolean;
+
+    /**
+     * If `true` this IDE option is conditionally shown in the IDE preferences
+     */
+    experimental?: boolean;
 
     /**
      * The image ref to the IDE image.
@@ -116,4 +129,24 @@ export interface IDEOption {
      * we resolve the tag regularly to the most recent image version.
      */
     resolveImageDigest?: boolean;
+
+    /**
+     * The plugin image ref for the IDE image, this image ref always resolve to digest.
+     */
+    pluginImage?: string;
+
+    /**
+     * The latest plugin image ref for the latest IDE image, this image ref always resolve to digest.
+     */
+    pluginLatestImage?: string;
+
+    /**
+     * ImageVersion the semantic version of the IDE image.
+     */
+    imageVersion?: string;
+
+    /**
+     * LatestImageVersion the semantic version of the latest IDE image.
+     */
+    latestImageVersion?: string;
 }

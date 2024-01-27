@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package service
 
@@ -44,7 +44,7 @@ func (cs *WorkspaceService) WorkspaceDownloadURL(ctx context.Context, req *api.W
 	span.SetTag("workspaceId", req.WorkspaceId)
 	defer tracing.FinishSpan(span, &err)
 
-	blobName := cs.s.BackupObject(req.WorkspaceId, storage.DefaultBackup)
+	blobName := cs.s.BackupObject(req.OwnerId, req.WorkspaceId, storage.DefaultBackup)
 
 	info, err := cs.s.SignDownload(ctx, cs.s.Bucket(req.OwnerId), blobName, &storage.SignedURLOptions{})
 	if err != nil {
@@ -73,7 +73,7 @@ func (cs *WorkspaceService) DeleteWorkspace(ctx context.Context, req *api.Delete
 	defer tracing.FinishSpan(span, &err)
 
 	if req.IncludeSnapshots {
-		prefix := cs.s.BackupObject(req.WorkspaceId, "")
+		prefix := cs.s.BackupObject(req.OwnerId, req.WorkspaceId, "")
 		if !strings.HasSuffix(prefix, "/") {
 			prefix = prefix + "/"
 		}
@@ -89,7 +89,7 @@ func (cs *WorkspaceService) DeleteWorkspace(ctx context.Context, req *api.Delete
 		return &api.DeleteWorkspaceResponse{}, nil
 	}
 
-	blobName := cs.s.BackupObject(req.WorkspaceId, storage.DefaultBackup)
+	blobName := cs.s.BackupObject(req.OwnerId, req.WorkspaceId, storage.DefaultBackup)
 	err = cs.s.DeleteObject(ctx, cs.s.Bucket(req.OwnerId), &storage.DeleteObjectQuery{Name: blobName})
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
@@ -100,7 +100,7 @@ func (cs *WorkspaceService) DeleteWorkspace(ctx context.Context, req *api.Delete
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
 
-	trailPrefix := cs.s.BackupObject(req.WorkspaceId, "trail-")
+	trailPrefix := cs.s.BackupObject(req.OwnerId, req.WorkspaceId, "trail-")
 	err = cs.s.DeleteObject(ctx, cs.s.Bucket(req.OwnerId), &storage.DeleteObjectQuery{Prefix: trailPrefix})
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
@@ -121,7 +121,7 @@ func (cs *WorkspaceService) WorkspaceSnapshotExists(ctx context.Context, req *ap
 	span.SetTag("filename", req.Filename)
 	defer tracing.FinishSpan(span, &err)
 
-	exists, err := cs.s.ObjectExists(ctx, cs.s.Bucket(req.OwnerId), cs.s.BackupObject(req.WorkspaceId, req.Filename))
+	exists, err := cs.s.ObjectExists(ctx, cs.s.Bucket(req.OwnerId), cs.s.BackupObject(req.OwnerId, req.WorkspaceId, req.Filename))
 	if err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}

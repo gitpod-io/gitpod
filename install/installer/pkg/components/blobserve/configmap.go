@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package blobserve
 
@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gitpod-io/gitpod/blobserve/pkg/blobserve"
-	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
+	blobserve_config "github.com/gitpod-io/gitpod/blobserve/pkg/config"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
@@ -21,68 +21,19 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	// todo(sje): find this value
-	hasOpenVSXProxy := true
-
-	// todo(sje): find this value
-	openVSXProxyUrl := "vsx-proxy-host"
-	if hasOpenVSXProxy {
-		openVSXProxyUrl = fmt.Sprintf("open-vsx.%s", ctx.Config.Domain)
-	}
-
-	bscfg := config.Config{
-		BlobServe: blobserve.Config{
+	bscfg := blobserve_config.Config{
+		BlobServe: blobserve_config.BlobServe{
 			Port:    ContainerPort,
 			Timeout: util.Duration(time.Second * 5),
-			Repos: map[string]blobserve.Repo{
+			Repos: map[string]blobserve_config.Repo{
 				ctx.RepoName(ctx.Config.Repository, ide.CodeIDEImage): {
 					PrePull: []string{},
 					Workdir: "/ide",
-					Replacements: []blobserve.StringReplacement{{
-						Search:      "vscode-webview.net",
-						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
-					}, {
-						Search:      "vscode-webview.net",
-						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
-					}, {
-						Search:      "vscode-webview.net",
-						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
-					}, {
-						Search:      "vscode-cdn.net",
-						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
-					}, {
-						Search:      "vscode-cdn.net",
-						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
-					}, {
-						Search:      "vscode-cdn.net",
-						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
-					}, {
-						Search:      "open-vsx.org",
-						Replacement: openVSXProxyUrl,
-						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
-					}, {
-						Search:      "open-vsx.org",
-						Replacement: openVSXProxyUrl,
-						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
-					}},
-					InlineStatic: []blobserve.InlineReplacement{{
-						Search:      "${window.location.origin}",
-						Replacement: ".",
-					}, {
-						Search:      "value.startsWith(window.location.origin)",
-						Replacement: "value.startsWith(window.location.origin) || value.startsWith('${ide}')",
-					}, {
-						Search:      "./out",
-						Replacement: "${ide}/out",
-					}, {
-						Search:      "./node_modules",
-						Replacement: "${ide}/node_modules",
+					// TODO consider to provide it as a part of image label or rather inline ${ide} and ${supervisor} in index.html
+					// to decouple blobserve and code image
+					InlineStatic: []blobserve_config.InlineReplacement{{
+						Search:      "{{WORKBENCH_WEB_BASE_URL}}",
+						Replacement: "${ide}",
 					}, {
 						Search:      "/_supervisor/frontend",
 						Replacement: "${supervisor}",
@@ -92,15 +43,23 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PrePull: []string{},
 					Workdir: "/.supervisor/frontend",
 				},
+				ctx.RepoName(ctx.Config.Repository, ide.XtermIDEImage): {
+					PrePull: []string{},
+					Workdir: "/ide/xterm",
+					InlineStatic: []blobserve_config.InlineReplacement{{
+						Search:      "/_supervisor/frontend",
+						Replacement: "${supervisor}",
+					}},
+				},
 			},
-			BlobSpace: blobserve.BlobSpace{
+			BlobSpace: blobserve_config.BlobSpace{
 				Location: "/mnt/cache/blobserve",
 				MaxSize:  MaxSizeBytes,
 			},
 		},
-		AuthCfg:            "/mnt/pull-secret.json",
-		PProfAddr:          ":6060",
-		PrometheusAddr:     "127.0.0.1:9500",
+		AuthCfg:            "/mnt/pull-secret/pull-secret.json",
+		PProfAddr:          common.LocalhostAddressFromPort(baseserver.BuiltinDebugPort),
+		PrometheusAddr:     common.LocalhostPrometheusAddr(),
 		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 	}
 
@@ -113,9 +72,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
 			},
 			Data: map[string]string{
 				"config.json": string(fc),

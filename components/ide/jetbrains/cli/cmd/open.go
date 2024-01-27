@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -25,10 +24,7 @@ var openCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		url, err := url.Parse("http://localhost:63342/api/gitpod/cli")
-		if err != nil {
-			log.Fatal(err)
-		}
+		url := getCliApiUrl()
 		query := url.Query()
 		query.Add("op", "open")
 		query.Add("file", file)

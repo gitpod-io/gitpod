@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -20,21 +23,23 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
-  "iteration": 1637673525850,
+  "id": 68,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "datasource": "$datasource",
+      "datasource": {
+        "uid": "$datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -83,7 +88,7 @@
       },
       "gridPos": {
         "h": 12,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 0
       },
@@ -92,10 +97,12 @@
         "legend": {
           "calcs": [],
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "8.2.2",
@@ -103,7 +110,9 @@
       "repeatDirection": "h",
       "targets": [
         {
-          "datasource": "$datasource",
+          "datasource": {
+            "uid": "$datasource"
+          },
           "exemplar": true,
           "expr": "sum(\n    rate(container_cpu_usage_seconds_total{container!=\"POD\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$component-.*\"}[5m])\n) by (pod, cluster, node)",
           "hide": false,
@@ -113,19 +122,21 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "$cluster: CPU per Pod (# of vCores)",
       "type": "timeseries"
     },
     {
-      "datasource": "$datasource",
+      "datasource": {
+        "uid": "$datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -174,7 +185,7 @@
       },
       "gridPos": {
         "h": 12,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 12
       },
@@ -183,16 +194,21 @@
         "legend": {
           "calcs": [],
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "8.2.2",
       "repeat": "cluster",
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "exemplar": true,
           "expr": "sum(container_memory_working_set_bytes{container!=\"POD\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$component-.*\"}) by (pod, cluster, node)",
           "interval": "",
@@ -201,19 +217,21 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "$cluster: RAM usage",
       "type": "timeseries"
     },
     {
-      "datasource": "$datasource",
+      "datasource": {
+        "uid": "$datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -262,7 +280,7 @@
       },
       "gridPos": {
         "h": 12,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 24
       },
@@ -271,10 +289,12 @@
         "legend": {
           "calcs": [],
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "8.2.2",
@@ -282,6 +302,9 @@
       "repeatDirection": "h",
       "targets": [
         {
+          "datasource": {
+            "uid": "$datasource"
+          },
           "exemplar": true,
           "expr": "sum (\n  rate(container_network_receive_bytes_total{container!=\"POD\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$component-.*\"}[5m])\n) by (pod, cluster, node)",
           "interval": "",
@@ -290,14 +313,12 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "$cluster: Network Utilization",
       "type": "timeseries"
     }
   ],
   "refresh": "",
-  "schemaVersion": 31,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [
     "gitpod-mixin"
@@ -310,11 +331,8 @@
           "text": "VictoriaMetrics",
           "value": "VictoriaMetrics"
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
-        "label": null,
         "multi": false,
         "name": "datasource",
         "options": [],
@@ -328,7 +346,7 @@
       {
         "allValue": ".*",
         "current": {
-          "selected": false,
+          "selected": true,
           "text": [
             "All"
           ],
@@ -336,10 +354,11 @@
             "$__all"
           ]
         },
-        "datasource": "$datasource",
-        "definition": "label_values(up{job=\"messagebus\"}, cluster)",
-        "description": null,
-        "error": null,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(up{job=\"redis\"},cluster)",
         "hide": 0,
         "includeAll": true,
         "label": "cluster",
@@ -347,8 +366,8 @@
         "name": "cluster",
         "options": [],
         "query": {
-          "query": "label_values(up{job=\"messagebus\"}, cluster)",
-          "refId": "StandardVariableQuery"
+          "query": "label_values(up{job=\"redis\"},cluster)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
         "regex": "",
@@ -362,7 +381,7 @@
       {
         "allValue": ".*",
         "current": {
-          "selected": false,
+          "selected": true,
           "text": [
             "All"
           ],
@@ -370,10 +389,11 @@
             "$__all"
           ]
         },
-        "datasource": "$datasource",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
         "definition": "label_values(kube_node_info{cluster=~\"$cluster\", node=~\".*-services-.*\"}, node)",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": true,
         "label": "node",
@@ -393,15 +413,11 @@
       {
         "allValue": "",
         "current": {
-          "selected": false,
+          "selected": true,
           "text": [
             "content-service",
             "dashboard",
             "db",
-            "db-sync",
-            "messagebus",
-            "kedge",
-            "payment-endpoint",
             "proxy",
             "server",
             "ws-manager-bridge"
@@ -410,17 +426,11 @@
             "content-service",
             "dashboard",
             "db",
-            "db-sync",
-            "messagebus",
-            "kedge",
-            "payment-endpoint",
             "proxy",
             "server",
             "ws-manager-bridge"
           ]
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": true,
         "label": "component",
@@ -449,26 +459,6 @@
           },
           {
             "selected": true,
-            "text": "db-sync",
-            "value": "db-sync"
-          },
-          {
-            "selected": true,
-            "text": "messagebus",
-            "value": "messagebus"
-          },
-          {
-            "selected": true,
-            "text": "kedge",
-            "value": "kedge"
-          },
-          {
-            "selected": true,
-            "text": "payment-endpoint",
-            "value": "payment-endpoint"
-          },
-          {
-            "selected": true,
             "text": "proxy",
             "value": "proxy"
           },
@@ -493,7 +483,7 @@
             "value": "image-builder-mk3"
           }
         ],
-        "query": "content-service, dashboard, db, db-sync, messagebus, kedge, payment-endpoint, proxy, server, ws-manager-bridge, image-builder, image-builder-mk3",
+        "query": "content-service, dashboard, db, proxy, server, ws-manager-bridge, image-builder, image-builder-mk3",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"
@@ -508,5 +498,6 @@
   "timezone": "utc",
   "title": "Meta Services",
   "uid": "gitpod-services",
-  "version": 28
+  "version": 1,
+  "weekStart": ""
 }

@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { AuthProviderEntry as AuthProviderEntry } from "@gitpod/gitpod-protocol";
@@ -20,7 +20,9 @@ export interface AuthProviderEntryDB {
      */
     findAllHosts(): Promise<string[]>;
     findByHost(host: string): Promise<AuthProviderEntry | undefined>;
+    findById(id: string): Promise<AuthProviderEntry | undefined>;
     findByUserId(userId: string): Promise<AuthProviderEntry[]>;
+    findByOrgId(organizationId: string): Promise<AuthProviderEntry[]>;
 }
 
 export function hashOAuth(oauth: AuthProviderEntry["oauth"]): string {

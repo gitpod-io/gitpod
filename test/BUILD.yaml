@@ -1,6 +1,6 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
-# See License-AGPL.txt in the project root for license information.
+# See License.AGPL.txt in the project root for license information.
 
 packages:
   - name: app
@@ -18,6 +18,8 @@ packages:
       - components/image-builder-api/go:lib
       - components/supervisor-api/go:lib
       - components/ws-manager-api/go:lib
+      - components/ide-service-api/go:lib
+      - components/public-api/go:lib
     prep:
       - ["go", "get", "-v", "./..."]
       - ["sh", "-c", "echo package main > main.go"]

@@ -1,0 +1,125 @@
+{
+  "organizationId": "organizationId",
+  "ownerId": "ownerId",
+  "contextURL": "https://github.com/gitpod-io/empty",
+  "projectId": null,
+  "description": "empty",
+  "context": {
+    "isFile": false,
+    "path": "",
+    "title": "gitpod-io/empty - master",
+    "ref": "master",
+    "refType": "branch",
+    "revision": "revision",
+    "repository": {
+      "cloneUrl": "https://github.com/gitpod-io/empty.git",
+      "host": "github.com",
+      "name": "empty",
+      "owner": "gitpod.io",
+      "private": false
+    }
+  },
+  "config": {
+    "image": "gitpod/workspace-base",
+    "ports": [
+      {
+        "port": 8080,
+        "onOpen": "notify"
+      },
+      {
+        "port": 8081,
+        "onOpen": "ignore"
+      },
+      {
+        "port": 8082,
+        "onOpen": "ignore"
+      },
+      {
+        "port": 8083,
+        "onOpen": "ignore"
+      },
+      {
+        "port": 3306,
+        "onOpen": "ignore"
+      }
+    ],
+    "tasks": [
+      {
+        "init": "npm install",
+        "command": "/etc/docker/startup.sh"
+      }
+    ],
+    "vscode": {
+      "extensions": [
+      ]
+    }
+  },
+  "imageSource": {
+    "baseImageResolved": "gitpod/workspace-base"
+  },
+  "imageNameResolved": "gitpod/workspace-base",
+  "baseImageNameResolved": "gitpod/workspace-base",
+  "shareable": false,
+  "type": "regular",
+  "softDeleted": null,
+  "deleted": false,
+  "pinned": true,
+  "basedOnPrebuildId": null,
+  "basedOnSnapshotId": null,
+  "workspaceId": "longlong-650a-413a-b5ed-aaaaa",
+  "region": "us02",
+  "startedTime": "2019-12-12T18:38:38.625Z",
+  "deployedTime": "2019-12-12T18:38:21.501Z",
+  "stoppedTime": "2019-12-12T19:20:11.821Z",
+  "ideUrl": "https://longlong-650a-413a-b5ed-aaaaa.ws-us02.gitpod.io",
+  "workspaceImage": "gitpod/workspace-base",
+  "status": {
+    "repo": {
+      "branch": "master",
+      "latestCommit": "latestCommit",
+      "untrackedFiles": [
+        "a.jpg"
+      ],
+      "uncommitedFiles": [
+        "package.json"
+      ]
+    },
+    "phase": "stopped",
+    "conditions": {
+      "timeout": "workspace timed out after period of inactivity took longer than 00h30m",
+      "deployed": false,
+      "pullingImages": false,
+      "serviceExists": false
+    },
+    "exposedPorts": [
+      {
+        "port": 8080,
+        "targetPort": 38080
+      },
+      {
+        "port": 8081,
+        "targetPort": 38081
+      },
+      {
+        "port": 8082,
+        "targetPort": 38082
+      },
+      {
+        "port": 8083,
+        "targetPort": 38083
+      },
+      {
+        "port": 3306,
+        "targetPort": 33306
+      }
+    ]
+  },
+  "gitStatus": null,
+  "phasePersisted": "stopped",
+  "configuration": null,
+  "imageBuildInfo": null,
+  "instanceId": "instanceId",
+  "workspaceCreationTime": "2019-08-08T20:38:43.425Z",
+  "instanceCreationTime": "2019-12-12T18:38:21.095Z",
+  "phase": "stopped"
+}

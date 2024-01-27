@@ -1,17 +1,15 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package pkg
 
 import (
 	"bytes"
-	"compress/gzip"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -21,7 +19,7 @@ import (
 
 func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 	reqid := r.Request.Context().Value(REQUEST_ID_CTX).(string)
-	key := r.Request.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
+	key, ok := r.Request.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
 
 	logFields := logrus.Fields{
 		LOG_FIELD_FUNC:            "response_handler",
@@ -41,8 +39,12 @@ func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 			Info("processing response finished")
 	}(start)
 
-	log.WithFields(logFields).Info("handling response")
+	log.WithFields(logFields).Debug("handling response")
 	o.metrics.IncStatusCounter(r.Request, strconv.Itoa(r.StatusCode))
+
+	if !ok {
+		return nil
+	}
 
 	if key == "" {
 		log.WithFields(logFields).Error("cache key header is missing - sending response as is")
@@ -55,7 +57,6 @@ func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 		return err
 	}
 	r.Body.Close()
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(rawBody))
 
 	if r.StatusCode >= 500 || r.StatusCode == http.StatusTooManyRequests || r.StatusCode == http.StatusRequestTimeout {
 		// use cache if exists
@@ -88,66 +89,26 @@ func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(cached.Body))
 		r.ContentLength = int64(len(cached.Body))
 		r.StatusCode = cached.StatusCode
-		log.WithFields(logFields).Info("used cache response due to an upstream error")
+		log.WithFields(logFields).Debug("used cache response due to an upstream error")
 		o.metrics.BackupCacheServeCounter.Inc()
 		return nil
 	}
 
 	// no error (status code < 500)
-	body := rawBody
-	contentType := r.Header.Get("Content-Type")
-	if strings.HasPrefix(contentType, "application/json") {
-		isCompressedResponse := strings.EqualFold(r.Header.Get("Content-Encoding"), "gzip")
-		if isCompressedResponse {
-			gzipReader, err := gzip.NewReader(ioutil.NopCloser(bytes.NewBuffer(rawBody)))
-			if err != nil {
-				log.WithFields(logFields).WithError(err)
-				return nil
-			}
-
-			body, err = ioutil.ReadAll(gzipReader)
-			if err != nil {
-				log.WithFields(logFields).WithError(err).Error("error reading compressed response body")
-				return nil
-			}
-			gzipReader.Close()
-		}
-
-		if log.Log.Level >= logrus.DebugLevel {
-			log.WithFields(logFields).Debugf("replacing %d occurence(s) of '%s' in response body ...", strings.Count(string(body), o.Config.URLUpstream), o.Config.URLUpstream)
-		}
-		bodyStr := strings.ReplaceAll(string(body), o.Config.URLUpstream, o.Config.URLLocal)
-		body = []byte(bodyStr)
-
-		if isCompressedResponse {
-			var b bytes.Buffer
-			gzipWriter := gzip.NewWriter(&b)
-			_, err = gzipWriter.Write(body)
-			if err != nil {
-				log.WithFields(logFields).WithError(err).Error("error writing compressed response body")
-				return nil
-			}
-			gzipWriter.Close()
-			body = b.Bytes()
-		}
-	} else {
-		log.WithFields(logFields).Debugf("response is not JSON but '%s', skipping replacing '%s' in response body", contentType, o.Config.URLUpstream)
-	}
-
 	cacheObj := &CacheObject{
 		Header:     r.Header,
-		Body:       body,
+		Body:       rawBody,
 		StatusCode: r.StatusCode,
 	}
 	err = o.StoreCache(key, cacheObj)
 	if err != nil {
 		log.WithFields(logFields).WithError(err).Error("error storing response to cache")
 	} else {
-		log.WithFields(logFields).Info("successfully stored response to cache")
+		log.WithFields(logFields).Debug("successfully stored response to cache")
 	}
 
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-	r.ContentLength = int64(len(body))
-	r.Header.Set("Content-Length", strconv.Itoa(len(body)))
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(rawBody))
+	r.ContentLength = int64(len(rawBody))
+	r.Header.Set("Content-Length", strconv.Itoa(len(rawBody)))
 	return nil
 }

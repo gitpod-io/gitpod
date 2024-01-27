@@ -1,0 +1,36 @@
+{
+  "name": "webstorm",
+  "displayName": "WebStorm",
+  "version": "latest",
+  "entrypoint": "/ide-desktop/jb-launcher",
+  "entrypointArgs": [
+    "{DESKTOPIDEPORT}",
+    "webstorm",
+    "Open in WebStorm"
+  ],
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "/status"
+    }
+  },
+  "env": {
+    "JETBRAINS_BACKEND_QUALIFIER": "latest",
+    "PATH": "/ide-desktop/webstorm-latest/bin:$PATH",
+    "EDITOR": "/ide-desktop/webstorm-latest/bin/idea-cli open",
+    "VISUAL": "$EDITOR",
+    "GP_OPEN_EDITOR": "$EDITOR",
+    "GIT_EDITOR": "$EDITOR --wait",
+    "GP_PREVIEW_BROWSER": "/ide-desktop/webstorm-latest/bin/idea-cli preview",
+    "GP_EXTERNAL_BROWSER": "/ide-desktop/webstorm-latest/bin/idea-cli preview"
+  },
+  "prebuild": {
+    "args": [
+      "warmup",
+      "webstorm"
+    ],
+    "env": {
+      "JETBRAINS_BACKEND_QUALIFIER": "latest"
+    }
+  }
+}

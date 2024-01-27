@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { URL } from "url";
@@ -10,7 +10,7 @@ export namespace RepoURL {
         repoUrl: string,
     ): { host: string; owner: string; repo: string; repoKind?: string } | undefined {
         const u = new URL(repoUrl);
-        const host = u.hostname || "";
+        const host = u.host || "";
         const path = u.pathname || "";
         const segments = path.split("/").filter((s) => !!s); // e.g. [ 'gitpod-io', 'gitpod.git' ]
         if (segments.length === 2) {

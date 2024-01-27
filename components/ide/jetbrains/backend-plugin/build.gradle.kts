@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -10,18 +10,38 @@ fun properties(key: String) = project.findProperty(key).toString()
 plugins {
     // Java support
     id("java")
-    // Kotlin support
-    id("org.jetbrains.kotlin.jvm") version "1.5.10"
+    // Kotlin support - check the latest version at https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
+    id("org.jetbrains.kotlin.jvm") version "1.9.0"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij") version "1.0"
+    id("org.jetbrains.intellij") version "1.10.1"
     // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
-    id("io.gitlab.arturbosch.detekt") version "1.17.1"
+    id("io.gitlab.arturbosch.detekt") version "1.21.0"
     // ktlint linter - read more: https://github.com/JLLeitschuh/ktlint-gradle
-    id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
+    id("org.jlleitschuh.gradle.ktlint") version "11.0.0"
+    // Gradle Properties Plugin - read more: https://github.com/stevesaliman/gradle-properties-plugin
+    id("net.saliman.properties") version "1.5.2"
 }
 
 group = properties("pluginGroup")
-version = properties("version")
+val environmentName = properties("environmentName")
+var pluginVersion = properties("pluginVersion")
+
+if (environmentName.isNotBlank()) {
+    pluginVersion += "-$environmentName"
+}
+
+project(":") {
+    kotlin {
+        val excludedPackage = if (environmentName == "latest") "stable" else "latest"
+        sourceSets["main"].kotlin.exclude("io/gitpod/jetbrains/remote/${excludedPackage}/**")
+    }
+
+    sourceSets {
+        main {
+            resources.srcDirs("src/main/resources-${environmentName}")
+        }
+    }
+}
 
 // Configure project's dependencies
 repositories {
@@ -74,15 +94,15 @@ detekt {
 
 tasks {
     withType<JavaCompile> {
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
     }
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "11"
+        kotlinOptions.jvmTarget = "17"
     }
 
     withType<Detekt> {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 
     buildSearchableOptions {
@@ -90,10 +110,17 @@ tasks {
     }
 
     test {
-        useJUnitPlatform()
+        // Currently, we need to indicate where are the test classes.
+        // Read more: https://youtrack.jetbrains.com/issue/IDEA-278926/All-inheritors-of-UsefulTestCase-are-invisible-for-Gradle#focus=Comments-27-5561012.0-0
+        isScanForTestClasses = false
+        include("**/*Test.class")
     }
 
     runPluginVerifier {
         ideVersions.set(properties("pluginVerifierIdeVersions").split(',').map(String::trim).filter(String::isNotEmpty))
+    }
+
+    patchPluginXml {
+        version.set(pluginVersion)
     }
 }

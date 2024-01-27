@@ -1,0 +1,55 @@
+packages:
+  - name: "deploy-dependencies"
+    type: "generic"
+    deps:
+      - install/installer:raw-app
+      - components:all-docker
+      - dev/version-manifest:app
+    config:
+      commands:
+        - [ "sh", "-c", "sudo mv install-installer--raw-app/installer /usr/local/bin" ]
+        - [ "sh", "-c", "cat components--all-docker/versions.yaml > /tmp/versions.yaml" ]
+
+scripts:
+
+  - name: configure-workspace
+    description: Configures the workspace so that it has access to development resources (dev, harvester) as well as your preview environment.
+    script: ./workflow/preview/configure-workspace.sh
+
+  - name: build
+    description: Build all packages needed to deploy Gitpod to preview environments
+    script: ./workflow/preview/build.sh
+
+  - name: create-preview
+    description: Provisions a new preview environment
+    script: |
+      export GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-$PREVIEW_ENV_DEV_SA_KEY_PATH}"
+      export GOOGLE_BACKEND_CREDENTIALS="${GOOGLE_BACKEND_CREDENTIALS:-$PREVIEW_ENV_DEV_SA_KEY_PATH}"
+      export TF_VAR_cert_issuer="${TF_VAR_cert_issuer:-letsencrypt-issuer-gitpod-core-dev}"
+      export TF_VAR_dev_kube_path="${TF_VAR_dev_kube_path:-/home/gitpod/.kube/config}"
+      export TF_VAR_dev_kube_context="${TF_VAR_dev_kube_context:-dev}"
+      export TF_VAR_harvester_kube_path="${TF_VAR_harvester_kube_path:-$HOME/.kube/config}"
+      export TF_VAR_harvester_kube_context="${TF_VAR_harvester_kube_context:-harvester}"
+      export TF_VAR_preview_name="${TF_VAR_preview_name:-$(previewctl get name)}"
+      export TF_VAR_vm_cpu="${TF_VAR_vm_cpu:-6}"
+      export TF_VAR_vm_memory="${TF_VAR_vm_memory:-12Gi}"
+      export TF_VAR_vm_storage_class="${TF_VAR_vm_storage_class:-longhorn-gitpod-k3s-202304191605-onereplica}"
+      ./workflow/preview/deploy-harvester.sh
+
+  - name: delete-preview
+    description: Delete an existing preview environment
+    script: |
+      export DESTROY=true
+      export GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-$PREVIEW_ENV_DEV_SA_KEY_PATH}"
+      export GOOGLE_BACKEND_CREDENTIALS="${GOOGLE_BACKEND_CREDENTIALS:-$PREVIEW_ENV_DEV_SA_KEY_PATH}"
+      export TF_VAR_kubeconfig_path="${TF_VAR_kubeconfig_path:-$HOME/.kube/config}"
+      export TF_VAR_preview_name="${TF_VAR_preview_name:-$(previewctl get name)}"
+      ./workflow/preview/deploy-harvester.sh
+
+  - name: deploy-gitpod
+    description: Deploys Gitpod to an existing preview environment
+    script: ./workflow/preview/deploy-gitpod.sh
+
+  - name: deploy-monitoring-satellite
+    description: Deploys monitoring-satellite to an existing preview environment
+    script: ./workflow/preview/deploy-monitoring-satellite.sh

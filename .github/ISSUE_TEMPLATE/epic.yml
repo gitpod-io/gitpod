@@ -1,104 +1,69 @@
-name: Epic
-description: Create an epic
+name: Epic (User Impacting)
+description: A group of related issues which MUST be delivered together, as small in scope as possible and finite (e.g not a grouping). This template is not designed for investigations, spikes, or tech-debt.
 title: "Epic: "
 labels: ["type: epic"]
 body:
-- type: markdown
-  attributes:
-    value: Before raising an epic, please search for existing epics[[1](https://github.com/gitpod-io/gitpod/issues?q=is%3Aopen+is%3Aissue+label%3A%22type%3A+epic%22)][[2](https://github.com/gitpod-io/gitpod/issues?q=is%3Aopen+is%3Aissue+%22Epic%3A+%22)] to avoid creating duplicates. Read more about [Epics](https://www.notion.so/gitpod/Development-Process-2-0-6681854173ab4d2f92880f9f3d85cab5#321619f5a4bd4391be83c66feb2cdb49) (internal) in **Development Process**.
 - type: textarea
-  id: summary
+  id: press-release
   attributes:
-    label: Summary
-    description: TLDR description of the epic. Give a succinct and plain overview of what the epic is about.
-    placeholder: Give a succinct and plain overview of what the epic is about.
+    label: Press release (and FAQ's)
+    description: What would the future feature announcement look like from a customer/user point of view? Think about questions both Gitpodders, and users/customers might ask about this feature.
   validations:
-    required: true
+    required: false
 - type: textarea
   id: context
   attributes:
     label: Context
-    description: What thinking led to this? Provide any necessary historical context required to understand this epic.
-    placeholder: Provide any necessary historical context required to understand this epic.
+    description: What thinking led to this issue? Provide any necessary historical context required to understand this epic.
   validations:
-    required: true
+    required: false
 - type: textarea
   id: value
   attributes:
     label: Value
-    description: Why should we do it? How do we know this is a real problem and worth solving?
-    placeholder: Explicitly describe the value to Gitpod and/or our users. I.e. why answer should we undertake this epic?
+    description: Why should we do this work? How do we know this is a real problem and worth solving?
   validations:
-    required: true
+    required: false
 - type: textarea
   id: acceptance-criteria
   attributes:
     label: Acceptance Criteria
     description: What needs to be done before the work is considered complete? The checks which must be complete for this epic to be considered done.
-    placeholder: Defines clearly when the work is complete. Acts as a litmus test for "done" and avoids "done" being ambiguous. Useful for implicit assumptions, e.g. ensuring docs updates are not forgotten.
   validations:
-    required: true
+    required: false
 - type: textarea
   id: measurement
   attributes:
     label: Measurement
-    description: How will we know whether we've been successful / solved the problem? How will you measure the success of the epic? Ideally this metric is one of our key product metrics.
-    placeholder: Important as it's how we track the outcomes (not just output) of the work and prove a change was worth it. Or it should be removed or iterated.
-  validations:
-    required: true
-- type: textarea
-  id: growth-area
-  attributes:
-    label: Growth Area
-    description: Which aspect of Gitpod do we expect improvements in? Acquisition/Onboarding/Exploration/Expansion as defined in [Funnel Proposal](https://www.notion.so/gitpod/Funnel-Proposal-d7d0dba8aced4184b660092a74f8dd3a) (internal)
-    placeholder: Growth is key. This allows us to frame epics from a growth context. Which areas are we expecting this epic to help us with our growth initiatives?
+    description: What will we measure to know whether we've been successful?
   validations:
     required: false
 - type: textarea
   id: personas
   attributes:
     label: Persona(s)
-    description: Who will be impacted by this change? Which of our personas will be impacted by this change?
-    placeholder: Why? To bring persona's into our work. Persona's can help us prioritise our markets. Currently, we are not focusing on the education/training persona currently. We should avoid epics which target this persona.
-  validations:
-    required: false
-- type: textarea
-  id: hypothesis
-  attributes:
-    label: Hypothesis
-    description: If we do X, we expect Y
-    placeholder: Can be useful if the work is explicitly experimental.
+    description: Optionally specifiy which user will be impacted by this change?
+    placeholder: Developer/Installer/Project Configurer/Customer/Security Reviewer - optionally the ecosystem persona e.g. Python Developers
   validations:
     required: false
 - type: textarea
   id: in-scope
   attributes:
     label: In scope
-    description: Explicitly define the items in scope.
-    placeholder: Optional, sometimes is useful for explicitness.
+    description: Optionally define items explicitly in scope.
   validations:
     required: false
 - type: textarea
   id: out-of-scope
   attributes:
     label: Out of scope
-    description: Explicitly define the items out of scope.
-    placeholder: Optional, sometimes is useful for explicitness.
+    description: Optionally define items explicitly out of scope, to avoid side-quests and rabbitholes.
   validations:
     required: false
 - type: textarea
   id: complexities
   attributes:
     label: Complexities
-    description: Discuss any known complexities
-    placeholder: Optional, sometimes is useful for explicitness.
-  validations:
-    required: false
-- type: textarea
-  id: press-release
-  attributes:
-    label: Press release
-    description: Create excitement about the idea
-    placeholder: Useful if you want to spend the extra time to get stakeholders, the team, or customers excited.
+    description: Optionally make explicit any complexities, e.g. dependencies on other teams, technical challenges, unknowns.
   validations:
     required: false

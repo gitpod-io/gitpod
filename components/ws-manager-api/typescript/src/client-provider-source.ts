@@ -1,11 +1,16 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
-import { injectable, inject, multiInject } from 'inversify';
-import { TLSConfig, WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterWoTLS } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { injectable, inject, multiInject } from "inversify";
+import {
+    TLSConfig,
+    WorkspaceCluster,
+    WorkspaceClusterDB,
+    WorkspaceClusterWoTLS,
+} from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export const WorkspaceManagerClientProviderSource = Symbol("WorkspaceManagerClientProviderSource");
 
@@ -14,17 +19,16 @@ export interface WorkspaceManagerClientProviderSource {
     getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]>;
 }
 
-
 @injectable()
 export class WorkspaceManagerClientProviderEnvSource implements WorkspaceManagerClientProviderSource {
     protected _clusters: WorkspaceCluster[] | undefined = undefined;
 
     public async getWorkspaceCluster(name: string): Promise<WorkspaceCluster | undefined> {
-        return this.clusters.find(m => m.name === name);
+        return this.clusters.find((m) => m.name === name);
     }
 
-    public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]> {
-        return this.clusters;
+    public async getAllWorkspaceClusters(region?: string): Promise<WorkspaceClusterWoTLS[]> {
+        return this.clusters.filter((m) => !region || m.region === region);
     }
 
     protected get clusters(): WorkspaceCluster[] {
@@ -40,9 +44,9 @@ export class WorkspaceManagerClientProviderEnvSource implements WorkspaceManager
             throw new Error("WSMAN_CFG_MANAGERS not set!");
         }
 
-        const decoded = Buffer.from(configEncoded, 'base64').toString();
+        const decoded = Buffer.from(configEncoded, "base64").toString();
         const clusters = JSON.parse(decoded) as WorkspaceCluster[];
-        return clusters.map(c => {
+        return clusters.map((c) => {
             if (!c.tls) {
                 return c;
             }
@@ -53,8 +57,8 @@ export class WorkspaceManagerClientProviderEnvSource implements WorkspaceManager
                     ca: TLSConfig.loadFromBase64File(c.tls.ca),
                     crt: TLSConfig.loadFromBase64File(c.tls.crt),
                     key: TLSConfig.loadFromBase64File(c.tls.key),
-                }
-            }
+                },
+            };
         });
     }
 }
@@ -65,7 +69,7 @@ export class WorkspaceManagerClientProviderDBSource implements WorkspaceManagerC
     protected readonly db: WorkspaceClusterDB;
 
     public async getWorkspaceCluster(name: string): Promise<WorkspaceCluster | undefined> {
-        return await this.db.findByName(name);
+        return this.db.findByName(name);
     }
 
     public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]> {
@@ -94,7 +98,9 @@ export class WorkspaceManagerClientProviderCompositeSource implements WorkspaceM
             const clusters = await source.getAllWorkspaceClusters();
             for (const cluster of clusters) {
                 if (allClusters.has(cluster.name)) {
-                    log.warn(`${cluster.name} is specified multiple times, overriding with: \n${JSON.stringify(cluster)}`);
+                    log.warn(
+                        `${cluster.name} is specified multiple times, overriding with: \n${JSON.stringify(cluster)}`,
+                    );
                 }
                 allClusters.set(cluster.name, cluster);
             }

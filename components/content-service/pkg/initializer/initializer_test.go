@@ -1,13 +1,12 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package initializer_test
 
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -15,9 +14,9 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 )
 
-type InitializerFunc func(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error)
+type InitializerFunc func(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, csapi.InitializerMetrics, error)
 
-func (f InitializerFunc) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
+func (f InitializerFunc) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, csapi.InitializerMetrics, error) {
 	return f(ctx, mappings)
 }
 
@@ -25,85 +24,9 @@ type RecordingInitializer struct {
 	CallCount int
 }
 
-func (f *RecordingInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
+func (f *RecordingInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, csapi.InitializerMetrics, error) {
 	f.CallCount++
-	return csapi.WorkspaceInitFromOther, nil
-}
-
-func TestGetCheckoutLocationsFromInitializer(t *testing.T) {
-
-	var init []*csapi.WorkspaceInitializer
-	init = append(init, &csapi.WorkspaceInitializer{
-		Spec: &csapi.WorkspaceInitializer_Git{
-			Git: &csapi.GitInitializer{
-				CheckoutLocation: "/foo",
-				CloneTaget:       "head",
-				Config: &csapi.GitConfig{
-					Authentication: csapi.GitAuthMethod_NO_AUTH,
-				},
-				RemoteUri:  "somewhere-else",
-				TargetMode: csapi.CloneTargetMode_LOCAL_BRANCH,
-			},
-		},
-	})
-	init = append(init, &csapi.WorkspaceInitializer{
-		Spec: &csapi.WorkspaceInitializer_Git{
-			Git: &csapi.GitInitializer{
-				CheckoutLocation: "/bar",
-				CloneTaget:       "head",
-				Config: &csapi.GitConfig{
-					Authentication: csapi.GitAuthMethod_NO_AUTH,
-				},
-				RemoteUri:  "somewhere-else",
-				TargetMode: csapi.CloneTargetMode_LOCAL_BRANCH,
-			},
-		},
-	})
-
-	tests := []struct {
-		Name        string
-		Initializer *csapi.WorkspaceInitializer
-		Expectation string
-	}{
-		{
-			Name: "single git initializer",
-			Initializer: &csapi.WorkspaceInitializer{
-				Spec: &csapi.WorkspaceInitializer_Git{
-					Git: &csapi.GitInitializer{
-						CheckoutLocation: "/foo",
-						CloneTaget:       "head",
-						Config: &csapi.GitConfig{
-							Authentication: csapi.GitAuthMethod_NO_AUTH,
-						},
-						RemoteUri:  "somewhere-else",
-						TargetMode: csapi.CloneTargetMode_LOCAL_BRANCH,
-					},
-				},
-			},
-			Expectation: "/foo",
-		},
-		{
-			Name: "multiple git initializer",
-			Initializer: &csapi.WorkspaceInitializer{
-				Spec: &csapi.WorkspaceInitializer_Composite{
-					Composite: &csapi.CompositeInitializer{
-						Initializer: init,
-					},
-				},
-			},
-			Expectation: "/foo,/bar",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.Name, func(t *testing.T) {
-			locations := strings.Join(initializer.GetCheckoutLocationsFromInitializer(test.Initializer), ",")
-			if locations != test.Expectation {
-				t.Errorf("expected %s, got %s", test.Expectation, locations)
-			}
-		})
-	}
-
+	return csapi.WorkspaceInitFromOther, nil, nil
 }
 
 func TestCompositeInitializer(t *testing.T) {
@@ -150,8 +73,8 @@ func TestCompositeInitializer(t *testing.T) {
 			Name: "error propagation",
 			Children: []initializer.Initializer{
 				&RecordingInitializer{},
-				InitializerFunc(func(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
-					return csapi.WorkspaceInitFromOther, fmt.Errorf("error happened here")
+				InitializerFunc(func(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, csapi.InitializerMetrics, error) {
+					return csapi.WorkspaceInitFromOther, nil, fmt.Errorf("error happened here")
 				}),
 				&RecordingInitializer{},
 			},
@@ -171,7 +94,7 @@ func TestCompositeInitializer(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			comp := initializer.CompositeInitializer(test.Children)
-			src, err := comp.Run(context.Background(), nil)
+			src, _, err := comp.Run(context.Background(), nil)
 			test.Eval(t, src, err, test.Children)
 		})
 	}

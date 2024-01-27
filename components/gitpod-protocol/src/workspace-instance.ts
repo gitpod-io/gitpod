@@ -1,10 +1,11 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { NamedWorkspaceFeatureFlag } from "./protocol";
+import { EnvVar, NamedWorkspaceFeatureFlag, TaskConfig } from "./protocol";
+import { WorkspaceRegion } from "./workspace-cluster";
 
 // WorkspaceInstance describes a part of a workspace's lifetime, specifically a single running session of it
 export interface WorkspaceInstance {
@@ -30,36 +31,54 @@ export interface WorkspaceInstance {
     stoppedTime?: string;
 
     // ideUrl is the URL at which the workspace is available on the internet
-    // Note: this is nitially empty, filled during starting process!
+    // Note: this is initially empty, filled during starting process!
     ideUrl: string;
 
     // region is the name of the workspace cluster this instance runs in
-    // Note: this is nitially empty, filled during starting process!
+    // Note: this is initially empty, filled during starting process!
     region: string;
 
     // workspaceImage is the name of the Docker image this instance runs
-    // Note: this is nitially empty, filled during starting process!
+    // Note: this is initially empty, filled during starting process!
     workspaceImage: string;
 
     // status is the latest status of the instance that we're aware of
     status: WorkspaceInstanceStatus;
 
-    // configuration captures the per-instance configuration variance of a workspace
-    // Beware: this field was added retroactively and not all instances have valid
-    //         values here.
-    configuration?: WorkspaceInstanceConfiguration;
+    // repo contains information about the Git working copy inside the workspace
+    gitStatus?: WorkspaceInstanceRepoStatus;
 
-    // instance is hard-deleted on the database and about to be collected by db-sync
+    // configuration captures the per-instance configuration variance of a workspace
+    configuration: WorkspaceInstanceConfiguration;
+
+    // instance is hard-deleted on the database and about to be collected by periodic deleter
     readonly deleted?: boolean;
 
     /**
      * Contains information about the image build, if there was any
      */
     imageBuildInfo?: ImageBuildInfo;
+
+    /**
+     * workspace class, also known as workspace size, determines the type of
+     * resources that are provided to the workspace.
+     */
+    workspaceClass?: string;
+
+    /**
+     * Identifies the team or user to which this instance's runtime should be attributed to
+     * (e.g. for usage analytics or billing purposes).
+     */
+    usageAttributionId?: string;
 }
 
 // WorkspaceInstanceStatus describes the current state of a workspace instance
 export interface WorkspaceInstanceStatus {
+    // version is the current version of the workspace instance status
+    // Note: consider this value opague. The only guarantee given is that it imposes
+    //       a partial order on status updates, i.e. a.version > b.version -> a newer than b.
+    version?: number;
+
     // phase describes a high-level state of the workspace instance
     phase: WorkspaceInstancePhase;
 
@@ -71,9 +90,6 @@ export interface WorkspaceInstanceStatus {
 
     // exposedPorts is the list of currently exposed ports
     exposedPorts?: WorkspaceInstancePort[];
-
-    // repo contains information about the Git working copy inside the workspace
-    repo?: WorkspaceInstanceRepoStatus;
 
     // timeout is a non-default timeout value configured for a workspace
     timeout?: string;
@@ -169,6 +185,9 @@ export type AdmissionLevel = "owner_only" | "everyone";
 // PortVisibility describes how a port can be accessed
 export type PortVisibility = "public" | "private";
 
+// PortProtocol
+export type PortProtocol = "http" | "https";
+
 // WorkspaceInstancePort describes a port exposed on a workspace instance
 export interface WorkspaceInstancePort {
     // The outward-facing port number
@@ -179,6 +198,8 @@ export interface WorkspaceInstancePort {
 
     // Public, outward-facing URL where the port can be accessed on.
     url?: string;
+
+    protocol?: PortProtocol;
 }
 
 // WorkspaceInstanceRepoStatus describes the status of th Git working copy of a workspace
@@ -207,11 +228,52 @@ export interface WorkspaceInstanceRepoStatus {
     // the total number of unpushed changes
     totalUnpushedCommits?: number;
 }
+export namespace WorkspaceInstanceRepoStatus {
+    export function equals(
+        a: WorkspaceInstanceRepoStatus | undefined,
+        b: WorkspaceInstanceRepoStatus | undefined,
+    ): boolean {
+        if (!a && !b) {
+            return true;
+        }
+        if (!a || !b) {
+            return false;
+        }
+        return (
+            a.branch === b.branch &&
+            a.latestCommit === b.latestCommit &&
+            a.totalUncommitedFiles === b.totalUncommitedFiles &&
+            a.totalUnpushedCommits === b.totalUnpushedCommits &&
+            a.totalUntrackedFiles === b.totalUntrackedFiles &&
+            stringArrayEquals(a.uncommitedFiles, b.uncommitedFiles) &&
+            stringArrayEquals(a.untrackedFiles, b.untrackedFiles) &&
+            stringArrayEquals(a.unpushedCommits, b.unpushedCommits)
+        );
+    }
+    function stringArrayEquals(a: string[] | undefined, b: string[] | undefined): boolean {
+        if (a === undefined && b === undefined) return true;
+
+        if (a === undefined || b === undefined) return false;
+
+        if (a.length !== b.length) return false;
+
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) return false;
+        }
+
+        return true;
+    }
+}
 
 // ConfigurationIdeConfig ide config of WorkspaceInstanceConfiguration
 export interface ConfigurationIdeConfig {
     useLatest?: boolean;
-    desktopIdeAlias?: string;
+    ide?: string;
+}
+
+export interface IdeSetup {
+    tasks?: TaskConfig[];
+    envvars?: EnvVar[];
 }
 
 // WorkspaceInstanceConfiguration contains all per-instance configuration
@@ -226,13 +288,25 @@ export interface WorkspaceInstanceConfiguration {
     // ideImage is the ref of the IDE image this instance uses.
     ideImage: string;
 
-    // desktopIdeImage is the ref of the desktop IDE image this instance uses.
-    desktopIdeImage?: string;
+    // ideImageLayers are images needed for the ide to run,
+    // including ide-desktop, desktop-plugin and so on
+    ideImageLayers?: string[];
 
     // supervisorImage is the ref of the supervisor image this instance uses.
     supervisorImage?: string;
 
+    // ideSetup contains all piece that are necessary to get the IDE running
+    // TODO(gpl) ideally also contains the fields above: ideImage, ideImageLayers and supervisorImage
+    ideSetup?: IdeSetup;
+
+    // ideConfig contains user-controlled IDE configuration
     ideConfig?: ConfigurationIdeConfig;
+
+    // The region the user passed as a preference for this workspace
+    regionPreference?: WorkspaceRegion;
+
+    // Whether this instance is started from a backup
+    fromBackup?: boolean;
 }
 
 /**

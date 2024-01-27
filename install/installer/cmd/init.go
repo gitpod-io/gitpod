@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -13,8 +13,9 @@ import (
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Create a base config file",
+	Use:        "init",
+	Deprecated: `use "config init" command instead`,
+	Short:      "Create a base config file",
 	Long: `Create a base config file
 
 This file contains all the credentials to install a Gitpod instance and

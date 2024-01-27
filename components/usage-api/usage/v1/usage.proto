@@ -1,0 +1,155 @@
+syntax = "proto3";
+
+package usage.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/usage-api/v1";
+
+import "google/protobuf/timestamp.proto";
+
+service UsageService {
+
+    // GetCostCenter retrieves the active cost center for the given attributionID
+    rpc GetCostCenter(GetCostCenterRequest) returns (GetCostCenterResponse) {}
+
+    // SetCostCenter stores the given cost center
+    rpc SetCostCenter(SetCostCenterRequest) returns (SetCostCenterResponse) {}
+
+    // Triggers reconciliation of usage.
+    rpc ReconcileUsage(ReconcileUsageRequest) returns (ReconcileUsageResponse) {}
+
+    // ResetUsage resets Usage for CostCenters which have expired or will explire shortly
+    rpc ResetUsage(ResetUsageRequest) returns (ResetUsageResponse) {}
+
+    // ListUsage retrieves all usage for the specified attributionId and theb given time range
+    rpc ListUsage(ListUsageRequest) returns (ListUsageResponse) {}
+
+    // GetBalance returns the current credits balance for the given attributionId
+    rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse) {}
+
+    // AddUsageCreditNote adds a usage credit note to the given cost center with the effective date of now
+    rpc AddUsageCreditNote(AddUsageCreditNoteRequest) returns (AddUsageCreditNoteResponse) {}
+}
+
+message ReconcileUsageRequest {
+    // from specifies the starting time range for this request.
+    google.protobuf.Timestamp from = 1;
+
+    // to specifies the end time range for this request.
+    google.protobuf.Timestamp to = 2;
+}
+
+message ReconcileUsageResponse {}
+
+message PaginatedRequest {
+    int64 per_page = 1;
+    int64 page = 2;
+}
+
+message PaginatedResponse {
+    int64 per_page = 2;
+    int64 total_pages = 3;
+    int64 total = 4;
+    int64 page = 5;
+}
+
+message ListUsageRequest {
+    string attribution_id = 1;
+
+    // optional user_id can be used to filter the results to only include instances created by the given user
+    string user_id = 6;
+
+    // from specifies the starting time range for this request.
+    // All instances which existed starting at from will be returned.
+    google.protobuf.Timestamp from = 2;
+
+    // to specifies the end time range for this request.
+    // All instances which existed ending at to will be returned.
+    google.protobuf.Timestamp to = 3;
+
+    enum Ordering {
+        ORDERING_DESCENDING = 0;
+        ORDERING_ASCENDING = 1;
+    }
+
+    Ordering order = 4;
+
+    PaginatedRequest pagination = 5;
+}
+
+message ListUsageResponse {
+    repeated Usage usage_entries = 1;
+    PaginatedResponse pagination = 2;
+    // the amount of credits the given account (attributionId) has used during the requested period
+    double credits_used = 3;
+}
+
+message Usage {
+    string id = 1;
+	string attribution_id = 2;
+	string description = 3;
+	double credits = 4;
+    google.protobuf.Timestamp effective_time = 5;
+
+    enum Kind {
+        KIND_WORKSPACE_INSTANCE = 0;
+        KIND_INVOICE = 1;
+    }
+	Kind kind = 6;
+	string workspace_instance_id = 7;
+	bool draft = 8;
+	string metadata = 9;
+}
+
+message SetCostCenterRequest {
+    CostCenter cost_center = 1;
+}
+
+message SetCostCenterResponse {
+    CostCenter cost_center = 1;
+}
+
+message GetBalanceRequest {
+    string attribution_id = 1;
+}
+
+message GetBalanceResponse {
+    double credits = 4;
+}
+
+message GetCostCenterRequest {
+    string attribution_id = 1;
+}
+
+message GetCostCenterResponse {
+    CostCenter cost_center = 1;
+}
+
+message CostCenter {
+    string attribution_id = 1;
+    int32 spending_limit = 2;
+    enum BillingStrategy {
+        BILLING_STRATEGY_STRIPE = 0;
+        BILLING_STRATEGY_OTHER = 1;
+    }
+    BillingStrategy billing_strategy = 3;
+
+    // next_billing_time specifies when the next billing cycle happens. Only set when billing strategy is 'other'. This property is readonly.
+    google.protobuf.Timestamp next_billing_time = 4;
+    google.protobuf.Timestamp billing_cycle_start = 5;
+}
+
+message ResetUsageRequest {}
+
+message ResetUsageResponse {}
+
+message AddUsageCreditNoteRequest {
+    string attribution_id = 1;
+    // the amount of credits to add to the given account
+    int32 credits = 2;
+    // a human readable description for the reason this credit note exists
+    string description = 3;
+    // the id of the user (admin) who created the note
+    string user_id = 4;
+}
+
+message AddUsageCreditNoteResponse {}

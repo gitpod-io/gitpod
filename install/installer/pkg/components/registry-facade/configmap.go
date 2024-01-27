@@ -1,14 +1,15 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package registryfacade
 
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	regfac "github.com/gitpod-io/gitpod/registry-facade/api/config"
 
@@ -18,17 +19,20 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	var tls regfac.TLS
-	if ctx.Config.Certificate.Name != "" {
-		tls = regfac.TLS{
-			Certificate: "/mnt/certificates/tls.crt",
-			PrivateKey:  "/mnt/certificates/tls.key",
-		}
+	var (
+		ipfsCache  *regfac.IPFSCacheConfig
+		redisCache *regfac.RedisCacheConfig
+	)
+	remoteSpecProviders := []*regfac.RSProvider{
+		{
+			Addr: fmt.Sprintf("dns:///ws-manager-mk2:%d", wsmanagermk2.RPCPort),
+			TLS: &regfac.TLS{
+				Authority:   "/ws-manager-mk2-client-tls-certs/ca.crt",
+				Certificate: "/ws-manager-mk2-client-tls-certs/tls.crt",
+				PrivateKey:  "/ws-manager-mk2-client-tls-certs/tls.key",
+			},
+		},
 	}
-
-	var ipfsCache *regfac.IPFSCacheConfig
-	var redisCache *regfac.RedisCacheConfig
-
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
 			return nil
@@ -37,10 +41,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		if ucfg.Workspace.RegistryFacade.RedisCache.Enabled {
 			cacheCfg := ucfg.Workspace.RegistryFacade.RedisCache
 			redisCache = &regfac.RedisCacheConfig{
-				Enabled:       true,
-				MasterName:    cacheCfg.MasterName,
-				SentinelAddrs: cacheCfg.SentinelAddrs,
-				Username:      cacheCfg.Username,
+				Enabled:            true,
+				SingleHostAddress:  cacheCfg.SingleHostAddress,
+				Username:           cacheCfg.Username,
+				UseTLS:             cacheCfg.UseTLS,
+				InsecureSkipVerify: cacheCfg.InsecureSkipVerify,
 			}
 		}
 
@@ -57,16 +62,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	rfcfg := regfac.ServiceConfig{
 		Registry: regfac.Config{
-			Port: ContainerPort,
-			RemoteSpecProvider: &regfac.RSProvider{
-				Addr: fmt.Sprintf("dns:///ws-manager:%d", wsmanager.RPCPort),
-				TLS: &regfac.TLS{
-					Authority:   "/ws-manager-client-tls-certs/ca.crt",
-					Certificate: "/ws-manager-client-tls-certs/tls.crt",
-					PrivateKey:  "/ws-manager-client-tls-certs/tls.key",
-				},
+			Port:               ServicePort,
+			RemoteSpecProvider: remoteSpecProviders,
+			TLS: &regfac.TLS{
+				Certificate: "/mnt/certificates/tls.crt",
+				PrivateKey:  "/mnt/certificates/tls.key",
 			},
-			TLS:         &tls,
 			Store:       "/mnt/cache/registry",
 			RequireAuth: false,
 			StaticLayer: []regfac.StaticLayerCfg{
@@ -86,9 +87,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			IPFSCache:  ipfsCache,
 			RedisCache: redisCache,
 		},
-		AuthCfg:            "/mnt/pull-secret.json",
-		PProfAddr:          ":6060",
-		PrometheusAddr:     "127.0.0.1:9500",
+		AuthCfg:            "/mnt/pull-secret/pull-secret.json",
+		PProfAddr:          common.LocalhostAddressFromPort(baseserver.BuiltinDebugPort),
+		PrometheusAddr:     common.LocalhostPrometheusAddr(),
 		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 	}
 
@@ -101,9 +102,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
 			},
 			Data: map[string]string{
 				"config.json": string(fc),

@@ -1,22 +1,41 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-const inspect: (object: any) => string = require("util").inspect; // undefined in frontend
+import { scrubber } from "./scrubbing";
 
+const inspect: (object: unknown) => string = require("util").inspect; // undefined in frontend
+
+const plainLogging: boolean = false; // set to true during development to get non JSON output
 let jsonLogging: boolean = false;
 let component: string | undefined;
 let version: string | undefined;
 
 export interface LogContext {
-    instanceId?: string;
+    organizationId?: string;
     sessionId?: string;
     userId?: string;
+    subjectId?: string;
     workspaceId?: string;
+    instanceId?: string;
 }
+
+/**
+ * allows to globally augment the log context, default is an identity function
+ */
+let logContextAugmenter: LogContext.Augmenter = (context) => context;
+
 export namespace LogContext {
+    export type Augmenter = (context: LogContext | undefined) => LogContext | undefined;
+    export function setAugmenter(augmenter: Augmenter): void {
+        logContextAugmenter = augmenter;
+    }
+
+    /**
+     * @deprecated create LogContext directly
+     */
     export function from(params: { userId?: string; user?: any; request?: any }) {
         return <LogContext>{
             sessionId: params.request?.requestID,
@@ -25,72 +44,80 @@ export namespace LogContext {
     }
 }
 
+let logItemHook: LogHook.Hook | undefined = undefined;
+export namespace LogHook {
+    export type Hook = (item: LogItem) => void;
+    export function setHook(hook: Hook): void {
+        logItemHook = hook;
+    }
+}
+
 export interface LogPayload {
     // placeholder to indicate that only dictionary-style objects should be passed as payload
 }
 
 export namespace log {
-    export function error(context: LogContext, message: string, error: any, payload: LogPayload): void;
-    export function error(context: LogContext, message: string, error: any): void;
+    export function error(context: LogContext, message: string, error: unknown, payload: LogPayload): void;
+    export function error(context: LogContext, message: string, error: unknown): void;
     export function error(context: LogContext, message: string, payload: LogPayload): void;
     export function error(context: LogContext, message: string): void;
-    export function error(context: LogContext, error: any, payload: LogPayload): void;
-    export function error(context: LogContext, error: any): void;
-    export function error(message: string, error: any, payload: LogPayload): void;
-    export function error(message: string, error: any): void;
+    export function error(context: LogContext, error: unknown, payload: LogPayload): void;
+    export function error(context: LogContext, error: unknown): void;
+    export function error(message: string, error: unknown, payload: LogPayload): void;
+    export function error(message: string, error: unknown): void;
     export function error(message: string, payload: LogPayload): void;
     export function error(message: string): void;
-    export function error(error: any, payload: LogPayload): void;
-    export function error(error: any): void;
-    export function error(...args: any[]): void {
+    export function error(error: unknown, payload: LogPayload): void;
+    export function error(error: unknown): void;
+    export function error(...args: unknown[]): void {
         errorLog(false, args);
     }
 
-    export function warn(context: LogContext, message: string, error: any, payload: LogPayload): void;
-    export function warn(context: LogContext, message: string, error: any): void;
+    export function warn(context: LogContext, message: string, error: unknown, payload: LogPayload): void;
+    export function warn(context: LogContext, message: string, error: unknown): void;
     export function warn(context: LogContext, message: string, payload: LogPayload): void;
     export function warn(context: LogContext, message: string): void;
-    export function warn(context: LogContext, error: any, payload: LogPayload): void;
-    export function warn(context: LogContext, error: any): void;
-    export function warn(message: string, error: any, payload: LogPayload): void;
-    export function warn(message: string, error: any): void;
+    export function warn(context: LogContext, error: unknown, payload: LogPayload): void;
+    export function warn(context: LogContext, error: unknown): void;
+    export function warn(message: string, error: unknown, payload: LogPayload): void;
+    export function warn(message: string, error: unknown): void;
     export function warn(message: string, payload: LogPayload): void;
     export function warn(message: string): void;
-    export function warn(error: any, payload: LogPayload): void;
-    export function warn(error: any): void;
-    export function warn(...args: any[]): void {
+    export function warn(error: unknown, payload: LogPayload): void;
+    export function warn(error: unknown): void;
+    export function warn(...args: unknown[]): void {
         warnLog(false, args);
     }
 
-    export function info(context: LogContext, message: string, error: any, payload: LogPayload): void;
-    export function info(context: LogContext, message: string, error: any): void;
+    export function info(context: LogContext, message: string, error: unknown, payload: LogPayload): void;
+    export function info(context: LogContext, message: string, error: unknown): void;
     export function info(context: LogContext, message: string, payload: LogPayload): void;
     export function info(context: LogContext, message: string): void;
-    export function info(context: LogContext, error: any, payload: LogPayload): void;
-    export function info(context: LogContext, error: any): void;
-    export function info(message: string, error: any, payload: LogPayload): void;
-    export function info(message: string, error: any): void;
+    export function info(context: LogContext, error: unknown, payload: LogPayload): void;
+    export function info(context: LogContext, error: unknown): void;
+    export function info(message: string, error: unknown, payload: LogPayload): void;
+    export function info(message: string, error: unknown): void;
     export function info(message: string, payload: LogPayload): void;
     export function info(message: string): void;
-    export function info(error: any, payload: LogPayload): void;
-    export function info(error: any): void;
-    export function info(...args: any[]): void {
+    export function info(error: unknown, payload: LogPayload): void;
+    export function info(error: unknown): void;
+    export function info(...args: unknown[]): void {
         infoLog(false, args);
     }
 
-    export function debug(context: LogContext, message: string, error: any, payload: LogPayload): void;
-    export function debug(context: LogContext, message: string, error: any): void;
+    export function debug(context: LogContext, message: string, error: unknown, payload: LogPayload): void;
+    export function debug(context: LogContext, message: string, error: unknown): void;
     export function debug(context: LogContext, message: string, payload: LogPayload): void;
     export function debug(context: LogContext, message: string): void;
-    export function debug(context: LogContext, error: any, payload: LogPayload): void;
-    export function debug(context: LogContext, error: any): void;
-    export function debug(message: string, error: any, payload: LogPayload): void;
-    export function debug(message: string, error: any): void;
+    export function debug(context: LogContext, error: unknown, payload: LogPayload): void;
+    export function debug(context: LogContext, error: unknown): void;
+    export function debug(message: string, error: unknown, payload: LogPayload): void;
+    export function debug(message: string, error: unknown): void;
     export function debug(message: string, payload: LogPayload): void;
     export function debug(message: string): void;
-    export function debug(error: any, payload: LogPayload): void;
-    export function debug(error: any): void;
-    export function debug(...args: any[]): void {
+    export function debug(error: unknown, payload: LogPayload): void;
+    export function debug(error: unknown): void;
+    export function debug(...args: unknown[]): void {
         debugLog(false, args);
     }
 
@@ -111,16 +138,16 @@ export namespace log {
     export function setLogLevel(logLevel: LogrusLogLevel | undefined) {
         jsonLogging = true;
 
-        console.error = function (...args: any[]): void {
+        console.error = function (...args: unknown[]): void {
             errorLog(true, args);
         };
-        console.warn = function (...args: any[]): void {
+        console.warn = function (...args: unknown[]): void {
             warnLog(true, args);
         };
-        console.info = function (...args: any[]): void {
+        console.info = function (...args: unknown[]): void {
             infoLog(true, args);
         };
-        console.debug = function (...args: any[]): void {
+        console.debug = function (...args: unknown[]): void {
             debugLog(true, args);
         };
 
@@ -154,25 +181,25 @@ export namespace log {
     }
 }
 
-type DoLogFunction = (calledViaConsole: boolean, args: any[]) => void;
+type DoLogFunction = (calledViaConsole: boolean, args: unknown[]) => void;
 
 let errorLog = doErrorLog;
-function doErrorLog(calledViaConsole: boolean, args: any[]): void {
+function doErrorLog(calledViaConsole: boolean, args: unknown[]): void {
     doLog(calledViaConsole, errorConsoleLog, "ERROR", args);
 }
 
 let warnLog = doWarnLog;
-function doWarnLog(calledViaConsole: boolean, args: any[]): void {
+function doWarnLog(calledViaConsole: boolean, args: unknown[]): void {
     doLog(calledViaConsole, warnConsoleLog, "WARNING", args);
 }
 
 let infoLog = doInfoLog;
-function doInfoLog(calledViaConsole: boolean, args: any[]): void {
+function doInfoLog(calledViaConsole: boolean, args: unknown[]): void {
     doLog(calledViaConsole, infoConsoleLog, "INFO", args);
 }
 
 let debugLog = doDebugLog;
-function doDebugLog(calledViaConsole: boolean, args: any[]): void {
+function doDebugLog(calledViaConsole: boolean, args: unknown[]): void {
     doLog(calledViaConsole, debugConsoleLog, "DEBUG", args);
 }
 
@@ -228,8 +255,9 @@ namespace GoogleLogSeverity {
     };
 }
 
-function doLog(calledViaConsole: boolean, consoleLog: ConsoleLog, severity: GoogleLogSeverity, args: any[]): void {
+function doLog(calledViaConsole: boolean, consoleLog: ConsoleLog, severity: GoogleLogSeverity, args: unknown[]): void {
     if (!jsonLogging) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         consoleLog(...args);
         return;
     }
@@ -242,7 +270,7 @@ function doLog(calledViaConsole: boolean, consoleLog: ConsoleLog, severity: Goog
     let context: LogContext | undefined;
     let message: string | undefined;
     let error: Error | undefined;
-    let payloadArgs: any[];
+    let payloadArgs: unknown[];
 
     if (args[0] instanceof Error) {
         // console.xyz(Error, ...any) / log.xyz(Error) / log.xyz(Error, LogPayload)
@@ -263,7 +291,7 @@ function doLog(calledViaConsole: boolean, consoleLog: ConsoleLog, severity: Goog
         // or when passing, by mistake, log.xyz instead of console.xyz to third-party code as a callback (*))
         payloadArgs = args;
     } else {
-        context = args[0];
+        context = args[0] instanceof Object ? args[0] : undefined;
         if (args[1] instanceof Error) {
             // log.xyz(LogContext, Error) / log.xyz(LogContext, Error, LogPayload)
             error = args[1];
@@ -296,20 +324,24 @@ function makeLogItem(
     context: LogContext | undefined,
     message: string | undefined,
     error: Error | undefined,
-    payloadArgs: any[],
+    payloadArgs: unknown[],
     calledViaConsole: boolean,
 ): string | undefined {
     if (context !== undefined && Object.keys(context).length == 0) {
         context = undefined;
     }
+    context = logContextAugmenter(context);
+    context = scrubPayload(context, plainLogging);
 
     let reportedErrorEvent: {} = {};
     if (GoogleLogSeverity.isGreaterOrEqualThanWarning(severity)) {
         reportedErrorEvent = makeReportedErrorEvent(error);
     }
 
-    const payload: any = payloadArgs.length == 0 ? undefined : payloadArgs.length == 1 ? payloadArgs[0] : payloadArgs;
-    const logItem: any = {
+    payloadArgs = payloadArgs.map((arg) => scrubPayload(arg, plainLogging));
+    const payload: unknown =
+        payloadArgs.length == 0 ? undefined : payloadArgs.length == 1 ? payloadArgs[0] : payloadArgs;
+    const logItem: LogItem = {
         // undefined fields get eliminated in JSON.stringify()
         ...reportedErrorEvent,
         component,
@@ -321,11 +353,24 @@ function makeLogItem(
         payload,
         loggedViaConsole: calledViaConsole ? true : undefined,
     };
+    if (logItemHook) {
+        try {
+            logItemHook(logItem);
+        } catch (err) {}
+    }
+    if (plainLogging) {
+        return `[${logItem.severity}] [${logItem.component}] ${logItem.message}
+            ${JSON.stringify(payload || "", undefined, "              ")}
+            ${error || ""}
+        `.trim();
+    }
     let result: string = stringifyLogItem(logItem);
 
     if (result.length > maxAllowedLogItemLength && payload !== undefined) {
         delete logItem.payload;
-        logItem.payloadStub = `Payload stripped as log item was longer than ${maxAllowedLogItemLength} characters`;
+        (<any>(
+            logItem
+        )).payloadStub = `Payload stripped as log item was longer than ${maxAllowedLogItemLength} characters`;
 
         result = stringifyLogItem(logItem);
 
@@ -341,10 +386,17 @@ function makeLogItem(
     return result;
 }
 
+function scrubPayload<T>(payload: T, plainLogging: boolean): T {
+    if (plainLogging) {
+        return payload;
+    }
+    return scrubber.scrub(payload, false);
+}
+
 // See https://cloud.google.com/error-reporting/docs/formatting-error-messages
 // and https://cloud.google.com/error-reporting/reference/rest/v1beta1/projects.events/report#ReportedErrorEvent
-function makeReportedErrorEvent(error: Error | undefined) {
-    const result: any = {
+function makeReportedErrorEvent(error: Error | undefined): {} {
+    const result = {
         // Serves as marker only
         "@type": "type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent",
         // This is useful for filtering in the UI
@@ -352,21 +404,31 @@ function makeReportedErrorEvent(error: Error | undefined) {
             service: component || "<ts-not-set>",
             version: version || "<ts-not-set>",
         },
-    };
 
-    if (error) {
         // According to: https://cloud.google.com/error-reporting/docs/formatting-error-messages#json_representation
-        const stackTrace = error.stack;
-        if (stackTrace) {
-            result.stack_trace = stackTrace;
-        }
-    }
+        stack_trace: error?.stack,
+    };
 
     return result;
 }
 
-function makeLogItemStub(logItem: any): any {
-    const result: any = {
+type LogItem = {
+    component?: string;
+    severity: string;
+    time?: string;
+    context?: LogContext;
+    environment?: string;
+    region?: string;
+    message?: string;
+    messageStub?: string;
+    errorStub?: string;
+    error?: unknown;
+    payload?: unknown;
+    loggedViaConsole?: boolean;
+};
+
+function makeLogItemStub(logItem: LogItem): LogItem {
+    const result = <LogItem>{
         component: logItem.component,
         severity: logItem.severity,
         time: logItem.time,
@@ -380,7 +442,7 @@ function makeLogItemStub(logItem: any): any {
             result.messageStub = logItem.message.substring(0, maxMessageStubLength) + " ... (too long, truncated)";
         }
     }
-    if (logItem.error instanceof Error) {
+    if (logItem.error instanceof Error && logItem.error.stack) {
         if (logItem.error.stack.length <= maxErrorStubLength) {
             result.error = logItem.error.stack;
         } else {
@@ -390,7 +452,7 @@ function makeLogItemStub(logItem: any): any {
     return result;
 }
 
-function stringifyLogItem(logItem: any): string {
+function stringifyLogItem(logItem: LogItem): string {
     try {
         return jsonStringifyWithErrors(logItem);
     } catch (err) {
@@ -406,13 +468,13 @@ function stringifyLogItem(logItem: any): string {
 /**
  * Jsonifies Errors properly, not as {} only.
  */
-function jsonStringifyWithErrors(value: any): string {
-    return JSON.stringify(value, (key: string, value: any): any => {
+function jsonStringifyWithErrors(value: unknown): string {
+    return JSON.stringify(value, (_, value) => {
         return value instanceof Error ? value.stack : value;
     });
 }
 
-type ConsoleLog = (message?: any, ...optionalArgs: any[]) => void; // signature of console.xyz
+type ConsoleLog = (message?: unknown, ...optionalArgs: unknown[]) => void; // signature of console.xyz
 const logConsoleLog: ConsoleLog = console.log;
 const errorConsoleLog: ConsoleLog = console.error;
 const warnConsoleLog: ConsoleLog = console.warn;

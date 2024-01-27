@@ -1,0 +1,45 @@
+namespace: monitoring-satellite
+tracing:
+  install: true
+  honeycombAPIKey: ${HONEYCOMB_API_KEY}
+  honeycombDataset: preview-environments
+  extraSpanAttributes:
+    preview.name: ${PREVIEW_NAME}
+certmanager:
+  installServiceMonitors: true
+  namespace: cert-manager
+pyrra:
+  install: true
+prometheus:
+  externalLabels:
+    cluster: ${PREVIEW_NAME}
+    environment: preview-environments
+  resources:
+    requests:
+      cpu: 50m
+      memory: 200Mi
+  remoteWrite:
+    - username: ${PROM_REMOTE_WRITE_USER}
+      password: ${PROM_REMOTE_WRITE_PASSWORD}
+      url: "https://victoriametrics.gitpod.io/api/v1/write"
+      writeRelabelConfigs:
+          - action: keep
+            regex: "rest_client_requests_total.*|http_prober_.*"
+            separator: ";"
+            sourceLabels:
+            - __name__
+            - job
+imports:
+  yaml:
+    - gitURL: https://github.com/gitpod-io/observability
+      path: monitoring-satellite/manifests/kube-prometheus-rules
+    - gitURL: https://github.com/gitpod-io/observability
+      path: monitoring-satellite/manifests/grafana
+    - gitURL: https://github.com/gitpod-io/observability
+      path: monitoring-satellite/manifests/probers
+    - gitURL: https://github.com/gitpod-io/observability
+      path: monitoring-satellite/manifests/crds
+    - path: ${WORKSPACE_ROOT}/operations/observability/mixins/workspace/rules/central
+    - path: ${WORKSPACE_ROOT}/operations/observability/mixins/workspace/rules/satellite
+    - path: ${WORKSPACE_ROOT}/operations/observability/mixins/meta/rules
+    - path: ${WORKSPACE_ROOT}/operations/observability/mixins/IDE/rules

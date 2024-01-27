@@ -1,10 +1,12 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package container
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,17 +58,12 @@ func FromConfig(cfg *Config) (rt Runtime, err error) {
 		return
 	}
 
-	mounts, err := NewNodeMountsLookup(&cfg.Mounts)
-	if err != nil {
-		return nil, err
-	}
-
 	switch cfg.Runtime {
 	case RuntimeContainerd:
 		if cfg.Containerd == nil {
 			return nil, xerrors.Errorf("runtime is set to containerd, but not containerd config is provided")
 		}
-		return NewContainerd(cfg.Containerd, mounts, cfg.Mapping)
+		return NewContainerd(cfg.Containerd, cfg.Mapping)
 	default:
 		return nil, xerrors.Errorf("unknown runtime type: %s", cfg.Runtime)
 	}
@@ -83,7 +80,7 @@ func (mapping PathMapping) Translate(from string) (result string, err error) {
 		}
 		pth := filepath.Join(cp, strings.TrimPrefix(from, np))
 
-		if _, err := os.Stat(pth); os.IsNotExist(err) {
+		if _, err := os.Stat(pth); errors.Is(err, fs.ErrNotExist) {
 			return "", xerrors.Errorf("path does not exist in container at %s", pth)
 		} else if err != nil {
 			return "", err

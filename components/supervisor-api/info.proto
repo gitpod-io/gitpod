@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 syntax = "proto3";
 
@@ -78,4 +78,35 @@ message WorkspaceInfoResponse {
 
     // ide_port is the port on which the IDE is to be run
     uint32 ide_port = 14;
+
+    message WorkspaceClass {
+        // id is the id of the workspace class
+        string id = 1;
+
+        // display_name is the display_name of the workspace class
+        string display_name = 2;
+
+        // description is the description of the workspace class
+        string description = 3;
+    }
+    // workspace_class denotes the class of the workspace
+    WorkspaceClass workspace_class = 15;
+
+    // owner_id is user id who owns the workspace
+    string owner_id = 16;
+
+    // debug_workspace_type indicates whether it is a regular or prebuild debug workspace
+    DebugWorkspaceType debug_workspace_type = 17;
+
+    // configcat_enabled controls whether configcat is enabled
+    bool configcat_enabled = 18;
+
+    // DEPRECATED default_workspace_image is the default image of the workspace
+    reserved 19;
+}
+
+enum DebugWorkspaceType {
+  noDebug = 0;
+  regular = 1;
+  prebuild = 2;
 }

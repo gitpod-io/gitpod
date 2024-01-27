@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package pkg
 
@@ -47,7 +47,7 @@ func (p *Prometheus) Start(cfg *Config) {
 				log.WithError(err).Error("Prometheus metrics server failed")
 			}
 		}()
-		log.WithField("addr", cfg.PrometheusAddr).Info("started Prometheus metrics server")
+		log.WithField("addr", cfg.PrometheusAddr).Debug("started Prometheus metrics server")
 	}
 
 	p.createMetrics()

@@ -1,12 +1,14 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
-// Licensed under the Gitpod Enterprise Source Code License,
-// See License.enterprise.txt in the project root folder.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package classifier
 
 import (
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"os"
 	"regexp"
 	"strings"
@@ -178,7 +180,7 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 	r, err := os.Open(executable)
 	if err != nil {
 		var reason string
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			reason = processMissNotFound
 		} else if errors.Is(err, os.ErrPermission) {
 			reason = processMissPermissionDenied
@@ -196,8 +198,12 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 	defer r.Close()
 
 	var serr error
+
+	src := SignatureReadCache{
+		Reader: r,
+	}
 	for _, sig := range sigcl.Signatures {
-		match, err := sig.Matches(r)
+		match, err := sig.Matches(&src)
 		if match {
 			sigcl.signatureHitTotal.Inc()
 			return &Classification{
@@ -215,6 +221,13 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 	}
 
 	return sigNoMatch, nil
+}
+
+type SignatureReadCache struct {
+	Reader  io.ReaderAt
+	header  []byte
+	symbols []string
+	rodata  []byte
 }
 
 func (sigcl *SignatureMatchClassifier) Describe(d chan<- *prometheus.Desc) {

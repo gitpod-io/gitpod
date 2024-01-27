@@ -1,21 +1,20 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import * as chai from "chai";
 const expect = chai.expect;
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
+import { v4 as uuidv4 } from "uuid";
 
 import { testContainer } from "./test-container";
 import { TeamDBImpl } from "./typeorm/team-db-impl";
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
-import { DBTeam } from "./typeorm/entity/db-team";
-import { DBTeamMembership } from "./typeorm/entity/db-team-membership";
-import { DBUser } from "./typeorm/entity/db-user";
-import { DBIdentity } from "./typeorm/entity/db-identity";
+import { Connection } from "typeorm";
+import { resetDB } from "./test/reset-db";
 
 @suite
 class TeamDBSpec {
@@ -32,11 +31,7 @@ class TeamDBSpec {
 
     async wipeRepo() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const manager = await typeorm.getConnection();
-        await manager.getRepository(DBTeam).delete({});
-        await manager.getRepository(DBTeamMembership).delete({});
-        await manager.getRepository(DBUser).delete({});
-        await manager.getRepository(DBIdentity).delete({});
+        await resetDB(typeorm);
     }
 
     @test(timeout(10000))
@@ -64,7 +59,6 @@ class TeamDBSpec {
         const members = await this.db.findMembersByTeam(team.id);
         expect(members.length).to.eq(1);
         expect(members[0].userId).to.eq(user.id);
-        expect(members[0].primaryEmail).to.eq("tom@example.com");
     }
 
     @test(timeout(15000))
@@ -144,12 +138,53 @@ class TeamDBSpec {
     @test(timeout(10000))
     public async findTeams() {
         const user = await this.userDb.newUser();
-        await this.db.createTeam(user.id, "First Team");
+        const t1 = await this.db.createTeam(user.id, "First Team");
         await this.db.createTeam(user.id, "Second Team");
 
-        const searchTerm = "first";
-        const result = await this.db.findTeams(0, 10, "creationTime", "DESC", searchTerm);
+        let searchTerm = "first";
+        let result = await this.db.findTeams(0, 10, "creationTime", "DESC", searchTerm);
         expect(result.rows.length).to.eq(1);
+
+        searchTerm = "team";
+        result = await this.db.findTeams(0, 10, "creationTime", "DESC", searchTerm);
+        expect(result.rows.length).to.eq(2);
+
+        await this.db.deleteTeam(t1.id);
+        result = await this.db.findTeams(0, 10, "creationTime", "DESC", searchTerm);
+        expect(result.rows.length).to.eq(1);
+    }
+
+    @test(timeout(10000))
+    public async test_hasActiveSSO() {
+        expect((await this.db.findTeams(0, 1, "creationTime", "ASC")).total, "case 1: empty db").to.be.eq(0);
+
+        const user = await this.userDb.newUser();
+        const org = await this.db.createTeam(user.id, "Some Org");
+        await this.db.createTeam(user.id, "Another Org");
+        expect(await this.db.hasActiveSSO(org.id), "case 2: org without sso").to.be.false;
+
+        const id = uuidv4();
+        await this.exec(async (c) => {
+            await c.query(
+                "INSERT INTO d_b_oidc_client_config (id, issuer, organizationId, data, active) VALUES (?,?,?,?,?)",
+                [id, "https://issuer.local", org.id, "{}", 0],
+            );
+        });
+        expect(await this.db.hasActiveSSO(org.id), "case 3: org with inactive sso").to.be.false;
+
+        await this.exec(async (c) => {
+            await c.query("UPDATE d_b_oidc_client_config set active = ? where id = ?", [1, id]);
+        });
+        expect(await this.db.hasActiveSSO(org.id), "case 4: org with active sso").to.be.true;
+
+        await this.db.deleteTeam(org.id);
+        expect(await this.db.hasActiveSSO(org.id), "case 5: deleted org").to.be.false;
+    }
+
+    protected async exec(queryFn: (connection: Connection) => Promise<void>) {
+        const typeorm = testContainer.get<TypeORM>(TypeORM);
+        const connection = await typeorm.getConnection();
+        await queryFn(connection);
     }
 }
 

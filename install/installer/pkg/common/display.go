@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package common
 
@@ -25,7 +25,6 @@ var sortOrder = []string{
 	"Issuer",
 	"Certificate",
 	"LimitRange",
-	"PodSecurityPolicy",
 	"PodDisruptionBudget",
 	"ServiceAccount",
 	"Secret",
@@ -69,9 +68,13 @@ func DependencySortingRenderFunc(objects []RuntimeObject) ([]RuntimeObject, erro
 		sortMap[v] = k
 	}
 
-	sort.Slice(objects, func(i, j int) bool {
+	sort.SliceStable(objects, func(i, j int) bool {
 		scoreI := sortMap[objects[i].Kind]
 		scoreJ := sortMap[objects[j].Kind]
+
+		if scoreI == scoreJ {
+			return objects[i].Metadata.Name < objects[j].Metadata.Name
+		}
 
 		return scoreI < scoreJ
 	})
@@ -99,9 +102,10 @@ func GenerateInstallationConfigMap(ctx *RenderContext, objects []RuntimeObject) 
 	cfgMap := corev1.ConfigMap{
 		TypeMeta: TypeMetaConfigmap,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      component,
-			Namespace: ctx.Namespace,
-			Labels:    DefaultLabels(component),
+			Name:        component,
+			Namespace:   ctx.Namespace,
+			Labels:      CustomizeLabel(ctx, component, TypeMetaConfigmap),
+			Annotations: CustomizeAnnotation(ctx, component, TypeMetaConfigmap),
 		},
 	}
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -18,8 +18,12 @@ import (
 	"github.com/prometheus/procfs"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/gitpod-io/gitpod/common-go/util"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
@@ -29,7 +33,11 @@ var credentialHelper = &cobra.Command{
 	Long:   "Supports reading of credentials per host.",
 	Args:   cobra.MinimumNArgs(1),
 	Hidden: true,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// ignore trace
+		utils.TrackCommandUsageEvent.Command = nil
+
+		exitCode := 0
 		action := args[0]
 		log.SetOutput(io.Discard)
 		f, err := os.OpenFile(os.TempDir()+"/gitpod-git-credential-helper.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
@@ -38,14 +46,14 @@ var credentialHelper = &cobra.Command{
 			log.SetOutput(f)
 		}
 		if action != "get" {
-			return
+			return nil
 		}
 
 		result, err := parseFromStdin()
 		host := result["host"]
 		if err != nil || host == "" {
 			log.WithError(err).Print("error parsing 'host' from stdin")
-			return
+			return GpError{OutCome: utils.Outcome_UserErr, Silence: true, ExitCode: &exitCode}
 		}
 
 		var user, token string
@@ -64,17 +72,13 @@ var credentialHelper = &cobra.Command{
 			}
 		}()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+		ctx, cancel := context.WithTimeout(cmd.Context(), 1*time.Minute)
 		defer cancel()
 
-		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
-		if supervisorAddr == "" {
-			supervisorAddr = "localhost:22999"
-		}
-		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+		supervisorConn, err := grpc.Dial(util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.WithError(err).Print("error connecting to supervisor")
-			return
+			return GpError{Err: xerrors.Errorf("error connecting to supervisor: %w", err), Silence: true, ExitCode: &exitCode}
 		}
 
 		resp, err := supervisor.NewTokenServiceClient(supervisorConn).GetToken(ctx, &supervisor.GetTokenRequest{
@@ -83,7 +87,7 @@ var credentialHelper = &cobra.Command{
 		})
 		if err != nil {
 			log.WithError(err).Print("error getting token from supervisior")
-			return
+			return GpError{Err: xerrors.Errorf("error getting token from supervisior: %w", err), Silence: true, ExitCode: &exitCode}
 		}
 
 		user = resp.User
@@ -104,12 +108,11 @@ var credentialHelper = &cobra.Command{
 			return gitCmdInfo.Ok()
 		})
 		if err != nil {
-			log.WithError(err).Print("error walking process tree")
-			return
+			return GpError{Err: xerrors.Errorf("error walking process tree: %w", err), Silence: true, ExitCode: &exitCode}
 		}
 		if !gitCmdInfo.Ok() {
 			log.Warn(`Could not detect "RepoUrl" and or "GitCommand", token validation will not be performed`)
-			return
+			return nil
 		}
 
 		// Starts another process which tracks the executed git event
@@ -136,14 +139,14 @@ var credentialHelper = &cobra.Command{
 		)
 		err = validator.Start()
 		if err != nil {
-			log.WithError(err).Print("error spawning validator")
-			return
+			return GpError{Err: xerrors.Errorf("error spawning validator: %w", err), Silence: true, ExitCode: &exitCode}
 		}
 		err = validator.Process.Release()
 		if err != nil {
 			log.WithError(err).Print("error releasing validator")
-			return
+			return GpError{Err: xerrors.Errorf("error releasing validator: %w", err), Silence: true, ExitCode: &exitCode}
 		}
+		return nil
 	},
 }
 
@@ -229,9 +232,11 @@ func walkProcessTree(pid int, fn pidCallbackFn) error {
 // - Private npm package
 //   - Create a private git repository for an npm package e.g https://github.com/jeanp413/test-private-package
 //   - Start a workspace, then run `npm install github:jeanp413/test-private-package` with and without permissions in the dashboard
+//
 // - Private npm package no access
 //   - Open this workspace https://github.com/jeanp413/test-gp-bug and run `npm install`
-//   - Observe NO notification with this message appears `Unknown repository '' Please grant the necessary permissions.`
+//   - Observe NO notification with this message appears `Unknown repository ” Please grant the necessary permissions.`
+//
 // - Clone private repo without permission
 //   - Start a workspace, then run `git clone 'https://gitlab.ebizmarts.com/ebizmarts/magento2-pos-api-request.git`, you should see a prompt ask your username and password, instead of `'gp credential-helper' told us to quit`
 func init() {

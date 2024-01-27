@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package tracing
 
@@ -21,6 +21,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/components/scrubber"
 )
 
 type tracingOptions struct {
@@ -100,7 +101,7 @@ func FromContext(ctx context.Context, name string) (opentracing.Span, context.Co
 
 // ApplyOWI sets the owner, workspace and instance tags on a span
 func ApplyOWI(span opentracing.Span, owi logrus.Fields) {
-	for _, k := range []string{log.OwnerField, log.WorkspaceField, log.InstanceField} {
+	for _, k := range []string{log.OwnerIDField, log.WorkspaceIDField, log.WorkspaceInstanceIDField, log.ProjectIDField, log.TeamIDField} {
 		val, ok := owi[k]
 		if !ok {
 			continue
@@ -110,7 +111,8 @@ func ApplyOWI(span opentracing.Span, owi logrus.Fields) {
 	}
 }
 
-// GetTraceID extracts the ueber-trace-id from the context
+// GetTraceID extracts the uber-trace-id from the context which encodes
+// {trace-id}:{span-id}:{parent-span-id}:{flags}
 func GetTraceID(span opentracing.Span) string {
 	var buf bytes.Buffer
 	err := opentracing.GlobalTracer().Inject(span.Context(), opentracing.Binary, &buf)
@@ -159,7 +161,7 @@ func LogRequestSafe(span opentracing.Span, req proto.Message) {
 // LogMessageSafe logs a grpc message but redacts passwords and secrets
 func LogMessageSafe(span opentracing.Span, name string, req proto.Message) {
 	reqs, _ := protojson.Marshal(req)
-	safeReqs, err := log.RedactJSON(reqs)
+	safeReqs, err := scrubber.Default.JSON(reqs)
 
 	var msg string
 	if err != nil {

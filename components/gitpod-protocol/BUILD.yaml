@@ -8,15 +8,19 @@ packages:
   - name: lib
     type: yarn
     srcs:
+      - "data/*.json"
       - "src/**"
       - "test/**"
-      - package.json
+      - .eslintrc
       - mocha.opts
-      - "data/*.json"
+      - package.json
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
+      commands:
+        # leeway executes the build and test step in the wrong order, so we need to call a special script that builds before testing
+        test: ["yarn", "test:leeway"]
   - name: gitpod-schema
     type: generic
     srcs:

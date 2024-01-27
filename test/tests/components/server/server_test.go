@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package server
 
@@ -19,8 +19,8 @@ import (
 func TestServerAccess(t *testing.T) {
 	f := features.New("GetLoggedInUser").
 		WithLabel("component", "server").
-		Assess("it can get a not built-in logged user", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("it can get a not built-in logged user", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -40,7 +40,7 @@ func TestServerAccess(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
@@ -52,8 +52,8 @@ func TestStartWorkspace(t *testing.T) {
 
 	f := features.New("CreateWorkspace").
 		WithLabel("component", "server").
-		Assess("it can run workspace tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("it can run workspace tasks", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -67,8 +67,8 @@ func TestStartWorkspace(t *testing.T) {
 			}
 
 			resp, err := server.CreateWorkspace(ctx, &protocol.CreateWorkspaceOptions{
-				ContextURL: "github.com/gitpod-io/gitpod",
-				Mode:       "force-new",
+				ContextURL:                         "github.com/gitpod-io/gitpod",
+				IgnoreRunningWorkspaceOnSameCommit: true,
 			})
 			if err != nil {
 				t.Fatalf("cannot start workspace: %q", err)
@@ -93,13 +93,13 @@ func TestStartWorkspace(t *testing.T) {
 				t.Fatal("CreateWorkspace did not start the workspace")
 			}
 
-			_, err = integration.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
+			_, err = integration.WaitForWorkspaceStart(t, ctx, nfo.LatestInstance.ID, resp.CreatedWorkspaceID, api)
 			if err != nil {
 				t.Fatalf("cannot get workspace: %q", err)
 			}
 
 			t.Logf("workspace is running: instanceID=%s", nfo.LatestInstance.ID)
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

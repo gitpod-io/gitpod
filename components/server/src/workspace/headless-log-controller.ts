@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { inject, injectable } from "inversify";
-import * as express from "express";
+import express from "express";
 import {
     HEADLESS_LOG_STREAM_STATUS_CODE,
     Queue,
@@ -20,32 +20,34 @@ import {
     OwnerResourceGuard,
     TeamMemberResourceGuard,
     RepositoryResourceGuard,
+    FGAResourceAccessGuard,
+    ResourceAccessGuard,
 } from "../auth/resource-access";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { TeamDB } from "@gitpod/gitpod-db/lib/team-db";
-import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
+import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./headless-log-service";
 import * as opentracing from "opentracing";
 import { asyncHandler } from "../express-util";
-import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { isWithFunctionAccessGuard } from "../auth/function-access";
 import { accessHeadlessLogs } from "../auth/rate-limiter";
 import { BearerAuth } from "../auth/bearer-authenticator";
 import { ProjectsService } from "../projects/projects-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-
-export const HEADLESS_LOGS_PATH_PREFIX = "/headless-logs";
-export const HEADLESS_LOG_DOWNLOAD_PATH_PREFIX = "/headless-log-download";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { WorkspaceService } from "./workspace-service";
+import { ctxIsAborted, runWithSubjectId } from "../util/request-context";
+import { SubjectId } from "../auth/subject-id";
 
 @injectable()
 export class HeadlessLogController {
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
-    @inject(HeadlessLogService) protected readonly headlessLogService: HeadlessLogService;
     @inject(BearerAuth) protected readonly auth: BearerAuth;
     @inject(ProjectsService) protected readonly projectService: ProjectsService;
     @inject(TeamDB) protected readonly teamDb: TeamDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
+    @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
 
     get headlessLogs(): express.Router {
         const router = express.Router();
@@ -55,87 +57,75 @@ export class HeadlessLogController {
             authenticateAndAuthorize,
             asyncHandler(async (req: express.Request, res: express.Response) => {
                 const span = opentracing.globalTracer().startSpan(HEADLESS_LOGS_PATH_PREFIX);
-                try {
-                    const params = { instanceId: req.params.instanceId, terminalId: req.params.terminalId };
-                    const user = req.user as User; // verified by authenticateAndAuthorize
-
-                    const instanceId = params.instanceId;
-                    const ws = await this.authorizeHeadlessLogAccess(span, user, instanceId, res);
-                    if (!ws) {
-                        return;
-                    }
-                    const { workspace, instance } = ws;
-
-                    const logCtx = { userId: user.id, instanceId, workspaceId: workspace!.id };
-                    log.debug(logCtx, HEADLESS_LOGS_PATH_PREFIX);
-
-                    const aborted = new Deferred<boolean>();
+                const user = req.user as User; // verified by authenticateAndAuthorize
+                await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
                     try {
-                        const head = {
-                            "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
-                            "Transfer-Encoding": "chunked",
-                            "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
-                        };
-                        res.writeHead(200, head);
+                        const instanceId = req.params.instanceId;
+                        const terminalId = req.params.terminalId;
 
-                        const abort = (err: any) => {
-                            aborted.resolve(true);
-                            log.debug(logCtx, "headless-log: aborted");
-                        };
-                        req.on("abort", abort); // abort handling if the reqeuest was aborted
+                        const logCtx = { userId: user.id, instanceId };
+                        try {
+                            const head = {
+                                "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
+                                "Transfer-Encoding": "chunked",
+                                "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
+                            };
+                            res.writeHead(200, head);
 
-                        const queue = new Queue(); // Make sure we forward in the correct order
-                        const writeToResponse = async (chunk: string) =>
-                            queue.enqueue(
-                                () =>
-                                    new Promise<void>(async (resolve, reject) => {
-                                        if (aborted.isResolved && (await aborted.promise)) {
-                                            return;
-                                        }
-
-                                        const done = res.write(chunk, "utf-8", (err?: Error | null) => {
-                                            if (err) {
-                                                reject(err); // propagate write error to upstream
+                            const queue = new Queue(); // Make sure we forward in the correct order
+                            const writeToResponse = async (chunk: string) =>
+                                queue.enqueue(
+                                    () =>
+                                        new Promise<void>(async (resolve, reject) => {
+                                            if (ctxIsAborted()) {
                                                 return;
                                             }
-                                        });
-                                        // handle as per doc: https://nodejs.org/api/stream.html#stream_writable_write_chunk_encoding_callback
-                                        if (!done) {
-                                            res.once("drain", resolve);
-                                        } else {
-                                            setImmediate(resolve);
-                                        }
-                                    }),
+
+                                            const done = res.write(chunk, "utf-8", (err?: Error | null) => {
+                                                if (err) {
+                                                    reject(err); // propagate write error to upstream
+                                                    return;
+                                                }
+                                            });
+                                            // handle as per doc: https://nodejs.org/api/stream.html#stream_writable_write_chunk_encoding_callback
+                                            if (!done) {
+                                                res.once("drain", resolve);
+                                            } else {
+                                                setImmediate(resolve);
+                                            }
+                                        }),
+                                );
+                            await this.workspaceService.streamWorkspaceLogs(
+                                user.id,
+                                instanceId,
+                                terminalId,
+                                writeToResponse,
+                                async () => {
+                                    const ws = await this.authorizeHeadlessLogAccess(span, user, instanceId, res);
+                                    if (!ws) {
+                                        throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "permission denied");
+                                    }
+                                },
                             );
-                        const logEndpoint = HeadlessLogEndpoint.fromWithOwnerToken(instance);
-                        await this.headlessLogService.streamWorkspaceLogWhileRunning(
-                            logCtx,
-                            logEndpoint,
-                            instanceId,
-                            params.terminalId,
-                            writeToResponse,
-                            aborted,
-                        );
 
-                        // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
-                        // So we resort to this hand-written solution
-                        res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
+                            // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
+                            // So we resort to this hand-written solution
+                            res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
 
-                        res.end();
-                    } catch (err) {
-                        log.debug(logCtx, "error streaming headless logs", err);
+                            res.end();
+                        } catch (err) {
+                            log.debug(logCtx, "error streaming headless logs", err);
 
-                        res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 500`);
-                        res.end();
+                            res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 500`);
+                            res.end();
+                        }
+                    } catch (e) {
+                        TraceContext.setError({ span }, e);
+                        throw e;
                     } finally {
-                        aborted.resolve(true); // ensure that the promise gets resolved eventually!
+                        span.finish();
                     }
-                } catch (e) {
-                    TraceContext.setError({ span }, e);
-                    throw e;
-                } finally {
-                    span.finish();
-                }
+                });
             }),
         ]);
         router.get("/", malformedRequestHandler);
@@ -150,32 +140,40 @@ export class HeadlessLogController {
             authenticateAndAuthorize,
             asyncHandler(async (req: express.Request, res: express.Response) => {
                 const span = opentracing.globalTracer().startSpan(HEADLESS_LOG_DOWNLOAD_PATH_PREFIX);
-                const params = { instanceId: req.params.instanceId, taskId: req.params.taskId };
+
                 const user = req.user as User; // verified by authenticateAndAuthorize
-
-                const instanceId = params.instanceId;
-                const ws = await this.authorizeHeadlessLogAccess(span, user, instanceId, res);
-                if (!ws) {
-                    return;
-                }
-                const { workspace, instance } = ws;
-
-                const logCtx = { userId: user.id, instanceId, workspaceId: workspace!.id };
-                log.debug(logCtx, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX);
-
-                try {
-                    const taskId = params.taskId;
-                    const downloadUrl = await this.headlessLogService.getHeadlessLogDownloadUrl(
-                        user.id,
-                        instance,
-                        workspace.ownerId,
-                        taskId,
-                    );
-                    res.send(downloadUrl); // cmp. headless_log_download.go
-                } catch (err) {
-                    log.error(logCtx, "error retrieving headless log download URL", err);
-                    res.status(500);
-                }
+                await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
+                    try {
+                        const instanceId = req.params.instanceId;
+                        const taskId = req.params.taskId;
+                        try {
+                            const downloadUrl = await this.workspaceService.getHeadlessLogDownloadUrl(
+                                user.id,
+                                instanceId,
+                                taskId,
+                                async () => {
+                                    const ws = await this.authorizeHeadlessLogAccess(span, user, instanceId, res);
+                                    if (!ws) {
+                                        throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "permission denied");
+                                    }
+                                },
+                            );
+                            res.send(downloadUrl); // cmp. headless_log_download.go
+                        } catch (err) {
+                            log.error(
+                                { userId: user.id, instanceId },
+                                "error retrieving headless log download URL",
+                                err,
+                            );
+                            res.status(500);
+                        }
+                    } catch (e) {
+                        TraceContext.setError({ span }, e);
+                        throw e;
+                    } finally {
+                        span.finish();
+                    }
+                });
             }),
         ]);
         router.get("/", malformedRequestHandler);
@@ -206,18 +204,21 @@ export class HeadlessLogController {
 
         let teamMembers: TeamMemberInfo[] = [];
         if (workspace?.projectId) {
-            const p = await this.projectService.getProject(workspace.projectId);
+            const p = await ApplicationError.notFoundToUndefined(
+                this.projectService.getProject(user.id, workspace.projectId),
+            );
             if (p?.teamId) {
                 teamMembers = await this.teamDb.findMembersByTeam(p.teamId);
             }
         }
 
         // [gpl] It's a bit sad that we have to duplicate this access check... but that's due to the way our API code is written
-        const resourceGuard = new CompositeResourceAccessGuard([
+        let resourceGuard: ResourceAccessGuard = new CompositeResourceAccessGuard([
             new OwnerResourceGuard(user.id),
             new TeamMemberResourceGuard(user.id),
             new RepositoryResourceGuard(user, this.hostContextProvider),
         ]);
+        resourceGuard = new FGAResourceAccessGuard(user.id, resourceGuard);
         if (!(await resourceGuard.canAccess({ kind: "workspaceLog", subject: workspace, teamMembers }, "get"))) {
             res.sendStatus(403);
             log.warn(logCtx, "unauthenticated headless log access");

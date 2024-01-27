@@ -1,10 +1,11 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package content_service
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
@@ -17,7 +18,7 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
 	configHash, err := common.ObjectHash(configmap(ctx))
 	if err != nil {
@@ -25,20 +26,24 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	podSpec := corev1.PodSpec{
-		Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
+		Affinity:                      cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelMeta),
+		TopologySpreadConstraints:     cluster.WithHostnameTopologySpread(Component),
 		ServiceAccountName:            Component,
 		EnableServiceLinks:            pointer.Bool(false),
-		DNSPolicy:                     "ClusterFirst",
-		RestartPolicy:                 "Always",
+		DNSPolicy:                     corev1.DNSClusterFirst,
+		RestartPolicy:                 corev1.RestartPolicyAlways,
 		TerminationGracePeriodSeconds: pointer.Int64(30),
-		Volumes: []corev1.Volume{{
-			Name: "config",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+		Volumes: []corev1.Volume{
+			{
+				Name: "config",
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+					},
 				},
 			},
-		}},
+			common.CAVolume(),
+		},
 		Containers: []corev1.Container{{
 			Name:            Component,
 			Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ContentService.Version),
@@ -58,27 +63,31 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:          RPCServiceName,
 				ContainerPort: RPCPort,
 			}, {
-				ContainerPort: PrometheusPort,
-				Name:          PrometheusName,
+				ContainerPort: baseserver.BuiltinMetricsPort,
+				Name:          baseserver.BuiltinMetricsPortName,
 			}},
 			SecurityContext: &corev1.SecurityContext{
 				Privileged: pointer.Bool(false),
 				RunAsUser:  pointer.Int64(1000),
 			},
-			Env: common.MergeEnv(
+			Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 				common.DefaultEnv(&ctx.Config),
-				common.WorkspaceTracingEnv(ctx),
+				common.WorkspaceTracingEnv(ctx, Component),
 				[]corev1.EnvVar{{
 					Name:  "GRPC_GO_RETRY",
 					Value: "on",
 				}},
-			),
-			VolumeMounts: []corev1.VolumeMount{{
-				Name:      "config",
-				MountPath: "/config",
-				ReadOnly:  true,
-			}},
-		}},
+			)),
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "config",
+					MountPath: "/config",
+					ReadOnly:  true,
+				},
+				common.CAVolumeMount(),
+			},
+		}, *common.KubeRBACProxyContainer(ctx),
+		},
 	}
 
 	err = common.AddStorageMounts(ctx, &podSpec, Component)
@@ -90,12 +99,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&v1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      labels,
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 			},
 			Spec: v1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{MatchLabels: labels},
+				Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 				Replicas: common.Replicas(ctx, Component),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
@@ -103,9 +113,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Name:      Component,
 						Namespace: ctx.Namespace,
 						Labels:    labels,
-						Annotations: map[string]string{
-							common.AnnotationConfigChecksum: configHash,
-						},
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+							return map[string]string{
+								common.AnnotationConfigChecksum: configHash,
+							}
+						}),
 					},
 					Spec: podSpec,
 				},

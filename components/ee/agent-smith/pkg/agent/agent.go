@@ -1,6 +1,6 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
-// Licensed under the Gitpod Enterprise Source Code License,
-// See License.enterprise.txt in the project root folder.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package agent
 
@@ -15,6 +15,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -24,8 +27,10 @@ import (
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/detector"
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 const (
@@ -40,6 +45,8 @@ type Smith struct {
 	EnforcementRules map[string]config.EnforcementRules
 	Kubernetes       kubernetes.Interface
 	metrics          *metrics
+
+	wsman wsmanapi.WorkspaceManagerClient
 
 	timeElapsedHandler    func(t time.Time) time.Duration
 	notifiedInfringements *lru.Cache
@@ -96,6 +103,28 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 		}
 	}
 
+	grpcOpts := common_grpc.DefaultClientOptions()
+	if cfg.WorkspaceManager.TLS.Authority != "" || cfg.WorkspaceManager.TLS.Certificate != "" && cfg.WorkspaceManager.TLS.PrivateKey != "" {
+		tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+			cfg.WorkspaceManager.TLS.Authority, cfg.WorkspaceManager.TLS.Certificate, cfg.WorkspaceManager.TLS.PrivateKey,
+			common_grpc.WithSetRootCAs(true),
+			common_grpc.WithServerName("ws-manager"),
+		)
+		if err != nil {
+			log.WithField("config", cfg.WorkspaceManager.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
+			return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
+		}
+
+		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
+	} else {
+		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+	conn, err := grpc.Dial(cfg.WorkspaceManager.Address, grpcOpts...)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot dial ws-manager-mk2: %w", err)
+	}
+	wsman := wsmanapi.NewWorkspaceManagerClient(conn)
+
 	detec, err := detector.NewProcfsDetector()
 	if err != nil {
 		return nil, err
@@ -118,6 +147,8 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 		Config:     cfg,
 		GitpodAPI:  api,
 		Kubernetes: clientset,
+
+		wsman: wsman,
 
 		detector:   detec,
 		classifier: class,
@@ -184,6 +215,7 @@ func (ws InfringingWorkspace) DescribeInfringements(charCount int) string {
 type Infringement struct {
 	Description string
 	Kind        config.GradedInfringementKind
+	CommandLine []string
 }
 
 // defaultRuleset is the name ("remote origin URL") of the default enforcement rules
@@ -280,7 +312,11 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 				InstanceID:    proc.Workspace.InstanceID,
 				GitRemoteURL:  []string{proc.Workspace.GitURL},
 				Infringements: []Infringement{
-					{Kind: config.GradeKind(config.InfringementExec, common.Severity(cl.Level)), Description: fmt.Sprintf("%s: %s", cl.Classifier, cl.Message)},
+					{
+						Kind:        config.GradeKind(config.InfringementExec, common.Severity(cl.Level)),
+						Description: fmt.Sprintf("%s: %s", cl.Classifier, cl.Message),
+						CommandLine: proc.CommandLine,
+					},
 				},
 			})
 		}
@@ -302,7 +338,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 		case config.PenaltyStopWorkspace:
 			log.WithField("infringement", ws.Infringements).WithFields(owi).Info("stopping workspace")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
-			err := agent.stopWorkspace(ws.SupervisorPID)
+			err := agent.stopWorkspace(ws.SupervisorPID, ws.InstanceID)
 			if err != nil {
 				log.WithError(err).WithFields(owi).Debug("failed to stop workspace")
 				agent.metrics.penaltyFailures.WithLabelValues(string(p), err.Error()).Inc()
@@ -311,7 +347,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 		case config.PenaltyStopWorkspaceAndBlockUser:
 			log.WithField("infringement", ws.Infringements).WithFields(owi).Info("stopping workspace and blocking user")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
-			err := agent.stopWorkspaceAndBlockUser(ws.SupervisorPID, ws.Owner)
+			err := agent.stopWorkspaceAndBlockUser(ws.SupervisorPID, ws.Owner, ws.WorkspaceID, ws.InstanceID)
 			if err != nil {
 				log.WithError(err).WithFields(owi).Debug("failed to stop workspace and block user")
 				agent.metrics.penaltyFailures.WithLabelValues(string(p), err.Error()).Inc()

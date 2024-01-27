@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package main
 
@@ -9,11 +9,14 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 )
+
+const RETRY = 10
 
 var (
 	defaultOOMScoreAdj = 1000
@@ -79,16 +82,33 @@ func createAndRunc(runcPath string, log *logrus.Logger) error {
 	if err != nil {
 		return xerrors.Errorf("cannot encode config.json: %w", err)
 	}
-	for _, fn := range []string{"config.json", "/tmp/debug.json"} {
-		err = os.WriteFile(fn, fc, 0644)
-		if err != nil {
-			return xerrors.Errorf("cannot encode config.json: %w", err)
-		}
+	err = os.WriteFile("config.json", fc, 0644)
+	if err != nil {
+		return xerrors.Errorf("cannot encode config.json: %w", err)
 	}
 
-	err = syscall.Exec(runcPath, os.Args, os.Environ())
-	if err != nil {
-		return xerrors.Errorf("exec %s: %w", runcPath, err)
+	// See here for more details on why retries are necessary.
+	// https://github.com/gitpod-io/gitpod/issues/12365
+	for i := 0; i <= RETRY; i++ {
+
+		cmd := exec.Command(runcPath, os.Args[1:]...)
+		cmd.Stdin = os.Stdin
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		err = cmd.Run()
+
+		if err != nil {
+			log.WithError(err).Warn("runc failed")
+
+			// runc creation failures can be caused by timing issues with workspacekit/seccomp notify under load.
+			// Easing of on the pressure here lowers the likelihood of that error.
+			// NOTE(cw): glossing over races with delays is bad style, but also pragmatic.
+			//
+			// Context: https://linear.app/gitpod/issue/ENG-797/docker-containers-sometimes-fail-to-start
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		return nil
 	}
-	return nil
+	return xerrors.Errorf("exec %s: %w", runcPath, err)
 }

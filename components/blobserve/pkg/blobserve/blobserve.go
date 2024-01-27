@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package blobserve
 
@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"html"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -25,8 +24,8 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/xerrors"
 
+	blobserve_config "github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/util"
 )
 
 // ResolverProvider provides new resolver
@@ -34,8 +33,9 @@ type ResolverProvider func() remotes.Resolver
 
 // Server offers image blobs for download
 type Server struct {
-	Config   Config
-	Resolver ResolverProvider
+	Config     blobserve_config.BlobServe
+	Resolver   ResolverProvider
+	middleware mux.MiddlewareFunc
 
 	refstore *refstore
 }
@@ -43,40 +43,6 @@ type Server struct {
 type BlobserveInlineVars struct {
 	IDE             string `json:"ide"`
 	SupervisorImage string `json:"supervisor"`
-}
-
-type BlobSpace struct {
-	Location string `json:"location"`
-	MaxSize  int64  `json:"maxSizeBytes,omitempty"`
-}
-
-type Repo struct {
-	PrePull      []string            `json:"prePull,omitempty"`
-	Workdir      string              `json:"workdir,omitempty"`
-	Replacements []StringReplacement `json:"replacements,omitempty"`
-	InlineStatic []InlineReplacement `json:"inlineStatic,omitempty"`
-}
-
-// Config configures a server.
-type Config struct {
-	Port    int             `json:"port"`
-	Timeout util.Duration   `json:"timeout,omitempty"`
-	Repos   map[string]Repo `json:"repos"`
-	// AllowAnyRepo enables users to access any repo/image, irregardles if they're listed in the
-	// ref config or not.
-	AllowAnyRepo bool      `json:"allowAnyRepo"`
-	BlobSpace    BlobSpace `json:"blobSpace"`
-}
-
-type StringReplacement struct {
-	Path        string `json:"path"`
-	Search      string `json:"search"`
-	Replacement string `json:"replacement"`
-}
-
-type InlineReplacement struct {
-	Search      string `json:"search"`
-	Replacement string `json:"replacement"`
 }
 
 // From https://github.com/distribution/distribution/blob/v2.7.1/reference/regexp.go
@@ -116,16 +82,17 @@ var ReferenceRegexp = expression(reference.NameRegexp,
 	optional(literal("@"), reference.DigestRegexp))
 
 // NewServer creates a new blob server
-func NewServer(cfg Config, resolver ResolverProvider) (*Server, error) {
+func NewServer(cfg blobserve_config.BlobServe, resolver ResolverProvider, middleware mux.MiddlewareFunc) (*Server, error) {
 	refstore, err := newRefStore(cfg, resolver)
 	if err != nil {
 		return nil, err
 	}
 
 	s := &Server{
-		Config:   cfg,
-		Resolver: resolver,
-		refstore: refstore,
+		Config:     cfg,
+		Resolver:   resolver,
+		middleware: middleware,
+		refstore:   refstore,
 	}
 	for repo, repoCfg := range cfg.Repos {
 		for _, ver := range repoCfg.PrePull {
@@ -143,6 +110,7 @@ func NewServer(cfg Config, resolver ResolverProvider) (*Server, error) {
 // Serve serves the registry on the given port
 func (reg *Server) Serve() error {
 	r := mux.NewRouter()
+	r.Use(reg.middleware)
 	// path must be at least `/image-name:tag` (tag required)
 	// could also be like `/my-reg.com:8080/my/special_alpine:1.2.3/`
 	// or `/my-reg.com:8080/alpine:1.2.3/additional/path/will/be/ignored.json`
@@ -203,7 +171,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	repo := pref.Name()
 
 	var workdir string
-	var inlineReplacements []InlineReplacement
+	var inlineReplacements []blobserve_config.InlineReplacement
 	if cfg, ok := reg.Config.Repos[repo]; ok {
 		workdir = cfg.Workdir
 		inlineReplacements = cfg.InlineStatic
@@ -215,12 +183,19 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 
 	// The blobFor operation's context must be independent of this request. Even if we do not
 	// serve this request in time, we might want to serve another from the same ref in the future.
-	blob, hash, err := reg.refstore.BlobFor(context.Background(), ref, req.Header.Get("X-BlobServe-ReadOnly") == "true")
+	blobFS, hash, err := reg.refstore.BlobFor(context.Background(), ref, false)
 	if err == errdefs.ErrNotFound {
 		http.Error(w, fmt.Sprintf("image %s not found: %q", html.EscapeString(ref), err), http.StatusNotFound)
 		return
 	} else if err != nil {
 		http.Error(w, fmt.Sprintf("internal error: %q", err), http.StatusInternalServerError)
+		return
+	}
+
+	// warm-up, didn't need response content
+	if req.Method == http.MethodHead {
+		w.Header().Set("Cache-Control", "no-cache")
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -231,45 +206,55 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set("ETag", hash)
-	w.Header().Set("Cache-Control", "no-cache")
+
+	inlineVarsValue := req.Header.Get("X-BlobServe-InlineVars")
+	if inlineVarsValue == "" {
+		w.Header().Set("Cache-Control", "public, max-age=31536000")
+	} else {
+		w.Header().Set("Cache-Control", "no-cache")
+	}
+
+	var fs http.FileSystem = blobFS
+	if workdir != "" {
+		fs = prefixingFilesystem{Prefix: workdir, FS: blobFS}
+	}
 
 	// http.FileServer has a special case where ServeFile redirects any request where r.URL.Path
 	// ends in "/index.html" to the same path, without the final "index.html".
 	// We do not want this behaviour to make the gitpod-ide-index mechanism in ws-proxy work.
-	imagePath := strings.TrimPrefix(req.URL.Path, pathPrefix)
-	if imagePath == "/index.html" || imagePath == "/" {
-		fn := filepath.Join(workdir, "index.html")
-
-		fc, err := blob.Open(fn)
+	resourcePath := strings.TrimPrefix(req.URL.Path, pathPrefix)
+	if resourcePath == "/" {
+		resourcePath = "/index.html"
+	}
+	if strings.HasSuffix(resourcePath, "/index.html") {
+		fc, err := fs.Open(resourcePath)
 		if err != nil {
-			log.WithError(err).WithField("fn", fn).Error("cannot stat index.html")
+			log.WithError(err).WithField("fn", resourcePath).Error("cannot open resource")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
 		defer fc.Close()
 
-		var modTime time.Time
-		if s, err := fc.Stat(); err == nil {
-			modTime = s.ModTime()
+		stat, err := fc.Stat()
+		if err != nil {
+			log.WithError(err).WithField("fn", resourcePath).Error("cannot stat resource")
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
 		}
 
 		content, err := inlineVars(req, fc, inlineReplacements)
 		if err != nil {
 			log.WithError(err).Error()
 		}
-		http.ServeContent(w, req, "index.html", modTime, content)
+
+		http.ServeContent(w, req, stat.Name(), stat.ModTime(), content)
 		return
 	}
 
-	var fs http.FileSystem
-	fs = blob
-	if workdir != "" {
-		fs = prefixingFilesystem{Prefix: workdir, FS: fs}
-	}
 	http.StripPrefix(pathPrefix, http.FileServer(fs)).ServeHTTP(w, req)
 }
 
-func inlineVars(req *http.Request, r io.ReadSeeker, inlineReplacements []InlineReplacement) (io.ReadSeeker, error) {
+func inlineVars(req *http.Request, r io.ReadSeeker, inlineReplacements []blobserve_config.InlineReplacement) (io.ReadSeeker, error) {
 	inlineVarsValue := req.Header.Get("X-BlobServe-InlineVars")
 	if len(inlineReplacements) == 0 || inlineVarsValue == "" {
 		return r, nil
@@ -281,7 +266,7 @@ func inlineVars(req *http.Request, r io.ReadSeeker, inlineReplacements []InlineR
 		return r, xerrors.Errorf("cannot parse inline vars: %w: %s", err, inlineVars)
 	}
 
-	content, err := ioutil.ReadAll(r)
+	content, err := io.ReadAll(r)
 	if err != nil {
 		return r, xerrors.Errorf("cannot read index.html: %w", err)
 	}

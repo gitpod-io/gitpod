@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package supervisor
 
@@ -21,6 +21,9 @@ func TestBuildChildProcEnv(t *testing.T) {
 			"SUPERVISOR_ADDR=localhost:8080",
 			"HOME=/home/gitpod",
 			"USER=gitpod",
+			"BROWSER=/.supervisor/browser.sh",
+			"HISTFILE=/workspace/.gitpod/.shell_history",
+			"PROMPT_COMMAND=history -a",
 		)
 	}
 
@@ -85,16 +88,24 @@ func TestBuildChildProcEnv(t *testing.T) {
 			},
 		},
 		{
-			Name:        "ots",
-			Input:       []string{},
-			OTS:         `[{"name":"foo","value":"bar"},{"name":"GITPOD_TOKENS","value":"foobar"}]`,
-			Expectation: []string{"HOME=/home/gitpod", "SUPERVISOR_ADDR=localhost:8080", "USER=gitpod", "foo=bar"},
+			Name:  "ots",
+			Input: []string{},
+			OTS:   `[{"name":"foo","value":"bar"},{"name":"GITPOD_TOKENS","value":"foobar"}]`,
+			Expectation: []string{
+				"HOME=/home/gitpod",
+				"BROWSER=/.supervisor/browser.sh",
+				"HISTFILE=/workspace/.gitpod/.shell_history",
+				"PROMPT_COMMAND=history -a", "SUPERVISOR_ADDR=localhost:8080", "USER=gitpod", "foo=bar"},
 		},
 		{
-			Name:        "failed ots",
-			Input:       []string{},
-			OTS:         `invalid json`,
-			Expectation: []string{"HOME=/home/gitpod", "SUPERVISOR_ADDR=localhost:8080", "USER=gitpod"},
+			Name:  "failed ots",
+			Input: []string{},
+			OTS:   `invalid json`,
+			Expectation: []string{
+				"HOME=/home/gitpod",
+				"BROWSER=/.supervisor/browser.sh",
+				"HISTFILE=/workspace/.gitpod/.shell_history",
+				"PROMPT_COMMAND=history -a", "SUPERVISOR_ADDR=localhost:8080", "USER=gitpod"},
 		},
 	}
 
@@ -122,7 +133,7 @@ func TestBuildChildProcEnv(t *testing.T) {
 				cfg.EnvvarOTS = srv.URL
 			}
 
-			act := buildChildProcEnv(cfg, test.Input)
+			act := buildChildProcEnv(cfg, test.Input, false)
 			assert(t, act)
 		})
 	}

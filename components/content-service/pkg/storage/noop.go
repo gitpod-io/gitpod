@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package storage
 
@@ -97,7 +97,7 @@ func (s *PresignedNoopStorage) DeleteObject(ctx context.Context, bucket string, 
 }
 
 // DeleteBucket deletes a bucket
-func (s *PresignedNoopStorage) DeleteBucket(ctx context.Context, bucket string) error {
+func (s *PresignedNoopStorage) DeleteBucket(ctx context.Context, userID, bucket string) error {
 	return nil
 }
 
@@ -107,7 +107,7 @@ func (*PresignedNoopStorage) Bucket(string) string {
 }
 
 // BlobObject returns a blob's object name
-func (*PresignedNoopStorage) BlobObject(name string) (string, error) {
+func (*PresignedNoopStorage) BlobObject(userID, name string) (string, error) {
 	return "", nil
 }
 
@@ -121,11 +121,11 @@ func (p *PresignedNoopStorage) ObjectExists(ctx context.Context, bucket, obj str
 }
 
 // BackupObject returns a backup's object name that a direct downloader would download
-func (*PresignedNoopStorage) BackupObject(workspaceID string, name string) string {
+func (*PresignedNoopStorage) BackupObject(ownerID string, workspaceID string, name string) string {
 	return ""
 }
 
 // InstanceObject returns a instance's object name that a direct downloader would download
-func (*PresignedNoopStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
+func (*PresignedNoopStorage) InstanceObject(ownerID string, workspaceID string, instanceID string, name string) string {
 	return ""
 }

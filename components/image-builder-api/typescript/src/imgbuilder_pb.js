@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // source: imgbuilder.proto
@@ -1759,7 +1759,8 @@ proto.builder.BuildRequest.toObject = function(includeInstance, msg) {
     source: (f = msg.getSource()) && proto.builder.BuildSource.toObject(includeInstance, f),
     auth: (f = msg.getAuth()) && proto.builder.BuildRegistryAuth.toObject(includeInstance, f),
     forceRebuild: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
-    triggeredBy: jspb.Message.getFieldWithDefault(msg, 4, "")
+    triggeredBy: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    supervisorRef: jspb.Message.getFieldWithDefault(msg, 5, "")
   };
 
   if (includeInstance) {
@@ -1813,6 +1814,10 @@ proto.builder.BuildRequest.deserializeBinaryFromReader = function(msg, reader) {
     case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.setTriggeredBy(value);
+      break;
+    case 5:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setSupervisorRef(value);
       break;
     default:
       reader.skipField();
@@ -1870,6 +1875,13 @@ proto.builder.BuildRequest.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       4,
+      f
+    );
+  }
+  f = message.getSupervisorRef();
+  if (f.length > 0) {
+    writer.writeString(
+      5,
       f
     );
   }
@@ -1983,6 +1995,24 @@ proto.builder.BuildRequest.prototype.getTriggeredBy = function() {
  */
 proto.builder.BuildRequest.prototype.setTriggeredBy = function(value) {
   return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional string supervisor_ref = 5;
+ * @return {string}
+ */
+proto.builder.BuildRequest.prototype.getSupervisorRef = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.builder.BuildRequest} returns this
+ */
+proto.builder.BuildRequest.prototype.setSupervisorRef = function(value) {
+  return jspb.Message.setProto3StringField(this, 5, value);
 };
 
 

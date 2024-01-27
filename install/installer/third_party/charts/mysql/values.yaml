@@ -1,12 +1,11 @@
 # Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
-# See License-AGPL.txt in the project root for license information.
+# See License.AGPL.txt in the project root for license information.
 
 mysql:
   fullnameOverride: mysql
   image:
-    # We switched to the specific version because "5.7" was broken at least once
-    tag: 5.7.34-debian-10-r55
+    tag: "overwritten"
   primary:
     extraEnvVars:
       # We rely on this in our DB implementations: NULL (re-)sets configured columns to be initialized with CURRENT_TIMESTAMP.

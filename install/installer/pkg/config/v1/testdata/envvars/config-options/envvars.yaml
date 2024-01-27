@@ -1,0 +1,15 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+envvars:
+  DOMAIN: test.gitpod.io
+  DISTRIBUTION: distribution-name
+  HTTP_PROXY_NAME: http-proxy-settings
+  LOCAL_REGISTRY_ADDRESS: mylocalregistry.com
+  IMAGE_PULL_SECRET_NAME: image-pull-secret
+  OPEN_VSX_URL: https://my-openvsx.com
+  SSH_GATEWAY: "1"
+  SSH_GATEWAY_HOST_KEY_NAME: ssh-gateway-secret
+  USER_MANAGEMENT_BLOCK_ENABLED: "1"
+  USER_MANAGEMENT_BLOCK_PASSLIST: gitpod.io domain.com domain2.com

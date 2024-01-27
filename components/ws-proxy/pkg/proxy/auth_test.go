@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package proxy
 
@@ -17,6 +17,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 )
 
 func TestWorkspaceAuthHandler(t *testing.T) {
@@ -34,7 +35,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 		testPort    = 8080
 	)
 	var (
-		ownerOnlyInfos = map[string]*WorkspaceInfo{
+		ownerOnlyInfos = map[string]*common.WorkspaceInfo{
 			workspaceID: {
 				WorkspaceID: workspaceID,
 				InstanceID:  instanceID,
@@ -45,7 +46,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 				Ports: []*api.PortSpec{{Port: testPort, Visibility: api.PortVisibility_PORT_VISIBILITY_PRIVATE}},
 			},
 		}
-		publicPortInfos = map[string]*WorkspaceInfo{
+		publicPortInfos = map[string]*common.WorkspaceInfo{
 			workspaceID: {
 				WorkspaceID: workspaceID,
 				InstanceID:  instanceID,
@@ -56,7 +57,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 				Ports: []*api.PortSpec{{Port: testPort, Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC}},
 			},
 		}
-		admitEveryoneInfos = map[string]*WorkspaceInfo{
+		admitEveryoneInfos = map[string]*common.WorkspaceInfo{
 			workspaceID: {
 				WorkspaceID: workspaceID,
 				InstanceID:  instanceID,
@@ -66,7 +67,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 	)
 	tests := []struct {
 		Name        string
-		Infos       map[string]*WorkspaceInfo
+		Infos       map[string]*common.WorkspaceInfo
 		OwnerCookie string
 		WorkspaceID string
 		Port        string
@@ -234,10 +235,10 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 				setOwnerTokenCookie(req, instanceID, test.OwnerCookie)
 			}
 			vars := map[string]string{
-				workspaceIDIdentifier: test.WorkspaceID,
+				common.WorkspaceIDIdentifier: test.WorkspaceID,
 			}
 			if test.Port != "" {
-				vars[workspacePortIdentifier] = test.Port
+				vars[common.WorkspacePortIdentifier] = test.Port
 			}
 			req = mux.SetURLVars(req, vars)
 

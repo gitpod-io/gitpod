@@ -428,7 +428,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "count by (severity,cluster) (gitpod_agent_smith_egress_violations_total)",
@@ -800,7 +800,7 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "exemplar": true,
-          "expr": "sum(gitpod_ws_manager_workspace_phase_total{cluster=~\"()\", phase=\"RUNNING\", type=\"REGULAR\"})  by (cluster) - on (cluster) sum(gitpod_agent_smith_procfs_detector_workspace_count{cluster=~\"()\"}) by (cluster)",
+          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{cluster=~\"()\", phase=\"Running\", type=\"Regular\"})  by (cluster) - on (cluster) sum(gitpod_agent_smith_procfs_detector_workspace_count{cluster=~\"()\"}) by (cluster)",
           "interval": "",
           "legendFormat": "Difference",
           "refId": "A"
@@ -2607,16 +2607,13 @@
           "text": "VictoriaMetrics",
           "value": "VictoriaMetrics"
         },
-        "description": null,
-        "error": null,
-        "hide": 2,
+        "hide": 0,
         "includeAll": false,
-        "label": null,
         "multi": false,
         "name": "datasource",
         "options": [],
         "query": "prometheus",
-        "refresh": 2,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"

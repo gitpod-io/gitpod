@@ -1,15 +1,15 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 require("reflect-metadata");
 
-import * as ws from "ws";
-import * as express from "express";
+import ws from "ws";
+import express from "express";
 
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import * as chai from "chai";
 const expect = chai.expect;
 

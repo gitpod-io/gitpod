@@ -1,17 +1,20 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package seccomp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/moby/sys/mountinfo"
@@ -104,9 +107,19 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 	return fd, nil
 }
 
+const (
+	// IWS backoff is the backoff configuration we use for interacting with the in-workspace service
+	iwsBackoffInitialWait = 10 * time.Millisecond
+	iwsBackoffSteps       = 6
+	iwsBackoffFactor      = 5
+	iwsBackoffMaxWait     = 2500 * time.Millisecond
+)
+
 // Handle actually listens on the seccomp notif FD and handles incoming requests.
 // This function returns when the notif FD is closed.
-func Handle(fd libseccomp.ScmpFd, handler SyscallHandler) (stop chan<- struct{}, errchan <-chan error) {
+func Handle(fd libseccomp.ScmpFd, handler SyscallHandler, wsid string) (stop chan<- struct{}, errchan <-chan error) {
+	log := log.WithField("workspaceId", wsid)
+
 	ec := make(chan error)
 	stp := make(chan struct{})
 
@@ -114,6 +127,20 @@ func Handle(fd libseccomp.ScmpFd, handler SyscallHandler) (stop chan<- struct{},
 	go func() {
 		for {
 			req, err := libseccomp.NotifReceive(fd)
+			if err != nil {
+				if err == syscall.ENOENT {
+					log.WithError(err).Warn("failed to get notification beucase it has already been not valid anymore(the kernel sets that)")
+					continue
+				}
+
+				log.WithError(err).Error("failed to get notification")
+				ec <- err
+				if err == unix.ECANCELED {
+					return
+				}
+
+				continue
+			}
 			select {
 			case <-stp:
 				// if we're asked stop we might still have to answer a syscall.
@@ -128,32 +155,27 @@ func Handle(fd libseccomp.ScmpFd, handler SyscallHandler) (stop chan<- struct{},
 				}
 			default:
 			}
-			if err != nil {
-				ec <- err
-				if err == unix.ECANCELED {
-					return
+
+			go func() {
+				syscallName, _ := req.Data.Syscall.GetName()
+
+				handler, ok := handledSyscalls[syscallName]
+				if !ok {
+					handler = handleUnknownSyscall
 				}
+				val, errno, flags := handler(req)
 
-				continue
-			}
-
-			syscallName, _ := req.Data.Syscall.GetName()
-
-			handler, ok := handledSyscalls[syscallName]
-			if !ok {
-				handler = handleUnknownSyscall
-			}
-			val, errno, flags := handler(req)
-
-			err = libseccomp.NotifRespond(fd, &libseccomp.ScmpNotifResp{
-				ID:    req.ID,
-				Error: errno,
-				Val:   val,
-				Flags: flags,
-			})
-			if err != nil {
-				ec <- err
-			}
+				ierr := libseccomp.NotifRespond(fd, &libseccomp.ScmpNotifResp{
+					ID:    req.ID,
+					Error: errno,
+					Val:   val,
+					Flags: flags,
+				})
+				if ierr != nil {
+					log.WithError(ierr).Error("failed to return notification response")
+					ec <- ierr
+				}
+			}()
 		}
 	}()
 
@@ -186,6 +208,7 @@ type InWorkspaceHandler struct {
 	Ring2PID    int
 	Ring2Rootfs string
 	BindEvents  chan<- BindEvent
+	WorkspaceId string
 }
 
 // BindEvent describes a process binding to a socket
@@ -196,9 +219,10 @@ type BindEvent struct {
 // Mount handles mount syscalls
 func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	log := log.WithFields(map[string]interface{}{
-		"syscall": "mount",
-		"pid":     req.Pid,
-		"id":      req.ID,
+		"syscall":            "mount",
+		log.WorkspaceIDField: h.WorkspaceId,
+		"pid":                req.Pid,
+		"id":                 req.ID,
 	})
 
 	memFile, err := readarg.OpenMem(req.Pid)
@@ -246,7 +270,7 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 		}
 
 		stat, err := os.Lstat(target)
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			err = os.MkdirAll(target, 0755)
 		}
 		if err != nil {
@@ -268,25 +292,42 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 			}
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		iws, err := h.Daemon(ctx)
-		if err != nil {
-			log.WithField("target", target).WithField("dest", dest).WithField("mode", stat.Mode()).WithError(err).Errorf("cannot get IWS client to mount %s", filesystem)
-			return Errno(unix.EFAULT)
-		}
-		defer iws.Close()
+		wait := iwsBackoffInitialWait
+		for i := 0; i < iwsBackoffSteps; i++ {
+			err = func() error {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				iws, err := h.Daemon(ctx)
+				if err != nil {
+					log.WithField("target", target).WithField("dest", dest).WithField("mode", stat.Mode()).WithError(err).Errorf("cannot get IWS client to mount %s", filesystem)
+					return err
+				}
+				defer iws.Close()
 
-		call := iws.MountProc
-		if filesystem == "sysfs" {
-			call = iws.MountSysfs
+				call := iws.MountProc
+				if filesystem == "sysfs" {
+					call = iws.MountSysfs
+				}
+				_, err = call(ctx, &daemonapi.MountProcRequest{
+					Target: dest,
+					Pid:    int64(req.Pid),
+				})
+				if err != nil {
+					log.WithField("target", dest).WithError(err).Errorf("cannot mount %s", filesystem)
+					return err
+				}
+				return nil
+			}()
+			if err != nil {
+				time.Sleep(wait)
+				wait = wait * iwsBackoffFactor
+				if wait > iwsBackoffMaxWait {
+					wait = iwsBackoffMaxWait
+				}
+			}
 		}
-		_, err = call(ctx, &daemonapi.MountProcRequest{
-			Target: dest,
-			Pid:    int64(req.Pid),
-		})
 		if err != nil {
-			log.WithField("target", dest).WithError(err).Errorf("cannot mount %s", filesystem)
+			// We've already logged the reason above
 			return Errno(unix.EFAULT)
 		}
 
@@ -301,9 +342,10 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 func (h *InWorkspaceHandler) Umount(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	nme, _ := req.Data.Syscall.GetName()
 	log := log.WithFields(map[string]interface{}{
-		"syscall": nme,
-		"pid":     req.Pid,
-		"id":      req.ID,
+		"syscall":            nme,
+		log.WorkspaceIDField: h.WorkspaceId,
+		"pid":                req.Pid,
+		"id":                 req.ID,
 	})
 
 	memFile, err := readarg.OpenMem(req.Pid)
@@ -380,9 +422,10 @@ func (h *InWorkspaceHandler) Umount(req *libseccomp.ScmpNotifReq) (val uint64, e
 
 func (h *InWorkspaceHandler) Bind(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	log := log.WithFields(map[string]interface{}{
-		"syscall": "bind",
-		"pid":     req.Pid,
-		"id":      req.ID,
+		"syscall":            "bind",
+		log.WorkspaceIDField: h.WorkspaceId,
+		"pid":                req.Pid,
+		"id":                 req.ID,
 	})
 	// We want the syscall to succeed, no matter what we do in this handler.
 	// The Kernel will execute the syscall for us.
@@ -425,9 +468,10 @@ func (h *InWorkspaceHandler) Bind(req *libseccomp.ScmpNotifReq) (val uint64, err
 
 func (h *InWorkspaceHandler) Chown(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
 	log := log.WithFields(map[string]interface{}{
-		"syscall": "chown",
-		"pid":     req.Pid,
-		"id":      req.ID,
+		"syscall":            "chown",
+		log.WorkspaceIDField: h.WorkspaceId,
+		"pid":                req.Pid,
+		"id":                 req.ID,
 	})
 
 	memFile, err := readarg.OpenMem(req.Pid)

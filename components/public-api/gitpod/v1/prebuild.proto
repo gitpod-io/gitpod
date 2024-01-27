@@ -1,0 +1,123 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "gitpod/v1/pagination.proto";
+import "gitpod/v1/scm.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+service PrebuildService {
+  rpc StartPrebuild(StartPrebuildRequest) returns (StartPrebuildResponse) {}
+  rpc CancelPrebuild(CancelPrebuildRequest) returns (CancelPrebuildResponse) {}
+
+  rpc GetPrebuild(GetPrebuildRequest) returns (GetPrebuildResponse) {}
+  rpc ListPrebuilds(ListPrebuildsRequest) returns (ListPrebuildsResponse) {}
+  rpc WatchPrebuild(WatchPrebuildRequest) returns (stream WatchPrebuildResponse) {}
+
+  // ListOrganizationPrebuilds lists all prebuilds of an organization
+  rpc ListOrganizationPrebuilds(ListOrganizationPrebuildsRequest) returns (ListOrganizationPrebuildsResponse) {}
+}
+
+message GetPrebuildRequest {
+  string prebuild_id = 1;
+}
+message GetPrebuildResponse {
+  Prebuild prebuild = 1;
+}
+
+message ListPrebuildsRequest {
+  PaginationRequest pagination = 1;
+  // it is for backward compatiblity with the current dashboard, use prebuild_id
+  // instead
+  string workspace_id = 2 [deprecated = true];
+  string configuration_id = 3;
+  string git_ref = 4;
+}
+
+message ListPrebuildsResponse {
+  PaginationResponse pagination = 1;
+  repeated Prebuild prebuilds = 2;
+}
+
+message StartPrebuildRequest {
+  string configuration_id = 1;
+  string git_ref = 2;
+}
+message StartPrebuildResponse {
+  string prebuild_id = 1;
+}
+
+message CancelPrebuildRequest {
+  string prebuild_id = 1;
+}
+message CancelPrebuildResponse {}
+
+message WatchPrebuildRequest {
+  oneof scope {
+    string prebuild_id = 1;
+    string configuration_id = 2;
+  }
+}
+message WatchPrebuildResponse {
+  Prebuild prebuild = 1;
+}
+
+message ListOrganizationPrebuildsRequest {
+  message Filter {
+    message Configuration {
+      string id = 1;
+      string branch = 2;
+    }
+    PrebuildPhase.Phase status = 1;
+    Configuration configuration = 2;
+    // Filter the search down by searching for configuration names matching the
+    // query
+    string search_term = 3;
+  }
+  PaginationRequest pagination = 1;
+  string organization_id = 2;
+  Filter filter = 3;
+}
+
+message ListOrganizationPrebuildsResponse {
+  PaginationResponse pagination = 1;
+  repeated Prebuild prebuilds = 2;
+}
+
+message Prebuild {
+  string id = 1;
+  // it is for backward compatiblity with the current dashboard, use id instead
+  string workspace_id = 2 [deprecated = true];
+
+  string based_on_prebuild_id = 3;
+
+  string configuration_id = 4;
+  string ref = 5;
+
+  Commit commit = 6;
+  string context_url = 7;
+
+  PrebuildStatus status = 8;
+}
+
+message PrebuildStatus {
+  PrebuildPhase phase = 1;
+  google.protobuf.Timestamp start_time = 2;
+  // message is an optional human-readable message detailing the current phase
+  string message = 3;
+}
+
+message PrebuildPhase {
+  enum Phase {
+    PHASE_UNSPECIFIED = 0;
+    PHASE_QUEUED = 1;
+    PHASE_BUILDING = 2;
+    PHASE_ABORTED = 3;
+    PHASE_TIMEOUT = 4;
+    PHASE_AVAILABLE = 5;
+    PHASE_FAILED = 6;
+  }
+  Phase name = 1;
+}

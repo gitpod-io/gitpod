@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  personal-access-token-signing-key: Zm9vCg==
+kind: Secret
+metadata:
+  name: personal-access-token-signing-key
+  namespace: default
+type: Opaque

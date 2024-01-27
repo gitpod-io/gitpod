@@ -1,11 +1,12 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package grpc
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,12 +26,19 @@ type keyFunc func(req interface{}) (string, error)
 
 // RateLimit configures the reate limit for a function
 type RateLimit struct {
-	Block          bool          `json:"block"`
-	BucketSize     uint          `json:"bucketSize"`
+	Block      bool `json:"block"`
+	BucketSize uint `json:"bucketSize"`
+	// RefillInterval is the rate at which a new token gets added to the bucket.
+	// Note that this does _not_ completely refill the bucket, only one token gets added,
+	// so effectively this is the rate at which requests can be made.
 	RefillInterval util.Duration `json:"refillInterval"`
 
-	KeyCacheSize uint   `json:"keyCacheSize,omitempty"`
-	Key          string `json:"key,omitempty"`
+	// Key is the proto field name to rate limit on. Each unique value of this
+	// field gets its own rate limit bucket. Must be a String, Enum, or Boolean field.
+	// Can be a composite key by separating fields by comma, e.g. `foo.bar,foo.baz`
+	Key string `json:"key,omitempty"`
+	// KeyCacheSize is the max number of buckets kept in a LRU cache.
+	KeyCacheSize uint `json:"keyCacheSize,omitempty"`
 }
 
 func (r RateLimit) Limiter() *rate.Limiter {
@@ -78,17 +86,31 @@ func NewRatelimitingInterceptor(f map[string]RateLimit) RatelimitingInterceptor 
 }
 
 func fieldAccessKey(key string) keyFunc {
+	fields := strings.Split(key, ",")
+	paths := make([][]string, len(fields))
+	for i, field := range fields {
+		paths[i] = strings.Split(field, ".")
+	}
 	return func(req interface{}) (string, error) {
 		msg, ok := req.(proto.Message)
 		if !ok {
 			return "", status.Errorf(codes.Internal, "request was not a protobuf message")
 		}
 
-		val, ok := getFieldValue(msg.ProtoReflect(), strings.Split(key, "."))
-		if !ok {
-			return "", status.Errorf(codes.Internal, "Field %s does not exist in message. This is a rate limiting configuration error.", key)
+		var composite string
+		for i, field := range fields {
+			val, ok := getFieldValue(msg.ProtoReflect(), paths[i])
+			if !ok {
+				return "", status.Errorf(codes.Internal, "Field %s does not exist in message. This is a rate limiting configuration error.", field)
+			}
+			// It's technically possible that `|` is part of one of the field values, and therefore could cause collisions
+			// in composite keys, e.g. values (`a|`, `b`), and (`a`, `|b`) would result in the same composite key `a||b`
+			// and share the rate limit. This is highly unlikely though given the current fields we rate limit on and
+			// otherwise unlikely to cause issues.
+			composite += "|" + val
 		}
-		return val, nil
+
+		return composite, nil
 	}
 }
 
@@ -110,12 +132,23 @@ func getFieldValue(msg protoreflect.Message, path []string) (val string, ok bool
 		return getFieldValue(child, path[1:])
 	}
 
-	if field.Kind() != protoreflect.StringKind {
-		// we only support string fields
+	switch field.Kind() {
+	case protoreflect.StringKind:
+		return msg.Get(field).String(), true
+	case protoreflect.EnumKind:
+		enumNum := msg.Get(field).Enum()
+		return strconv.Itoa(int(enumNum)), true
+	case protoreflect.BoolKind:
+		if msg.Get(field).Bool() {
+			return "t", true
+		} else {
+			return "f", true
+		}
+
+	default:
+		// we only support string and enum fields
 		return "", false
 	}
-
-	return msg.Get(field).String(), true
 }
 
 // RatelimitingInterceptor limits how often a gRPC function may be called. If the limit has been

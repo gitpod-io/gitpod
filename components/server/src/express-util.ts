@@ -1,14 +1,13 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { URL } from "url";
-import * as express from "express";
+import express from "express";
 import * as crypto from "crypto";
-import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import * as session from "express-session";
+import { IncomingHttpHeaders } from "http";
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
@@ -17,72 +16,23 @@ export const query = (...tuples: [string, string][]) => {
     return "?" + tuples.map((t) => `${t[0]}=${encodeURIComponent(t[1])}`).join("&");
 };
 
-// We do not precise UUID parsing here, we just want to distinguish three cases:
-//  - the base domain
-//  - a frontend domain (workspace domain)
-//  - a workspace port domain
-// We control all of those values and the base domain, so we don't need to much effort
-export const isAllowedWebsocketDomain = (originHeader: any, gitpodHostName: string): boolean => {
-    if (!originHeader || typeof originHeader !== "string") {
-        return false;
+// Strict: We only allow connections from the base domain, so disallow connections from all other Origins
+//      Only (current) exception: If no Origin header is set, skip the check!
+// Non-Strict: "rely" on subdomain parsing (do we still need this?)
+export const isAllowedWebsocketDomain = (originHeader: string, gitpodHostName: string): boolean => {
+    if (!originHeader) {
+        // Origin header check not applied because of empty Origin header
+        return true;
     }
 
-    var originHostname = "";
     try {
         const originUrl = new URL(originHeader);
-        originHostname = originUrl.hostname;
-        if (originHostname === gitpodHostName) {
-            return true;
-        }
-        if (looksLikeWorkspaceHostname(originUrl, gitpodHostName)) {
-            return true;
-        } else {
-            return false;
-        }
+        const originHostname = originUrl.hostname;
+        return originHostname === gitpodHostName;
     } catch (err) {
         return false;
     }
 };
-
-const looksLikeWorkspaceHostname = (originHostname: URL, gitpodHostName: string): boolean => {
-    // Is prefix a valid (looking) workspace ID?
-    const found = originHostname.toString().lastIndexOf(gitpodHostName);
-    if (found === -1) {
-        return false;
-    }
-    const url = new GitpodHostUrl(originHostname);
-    const workspaceId = url.workspaceId;
-    if (workspaceId) {
-        const hostname = url.url.hostname as string;
-        if (hostname.startsWith(workspaceId)) {
-            return true;
-        }
-    }
-    return false;
-};
-
-export function saveSession(session: session.Session): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        session.save((err: any) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve();
-            }
-        });
-    });
-}
-export function destroySession(session: session.Session): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        session.destroy((error: any) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve();
-            }
-        });
-    });
-}
 
 /**
  * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For
@@ -92,7 +42,7 @@ export function destroySession(session: session.Session): Promise<void> {
  * @returns fingerprint which is a hash over (potential) client ip (or just proxy ip) and User Agent
  */
 export function getRequestingClientInfo(req: express.Request) {
-    const ip = req.ips[0] || req.ip; // on PROD this should be a client IP address
+    const ip = clientIp(req);
     const ua = req.get("user-agent");
     const fingerprint = crypto.createHash("sha256").update(`${ip}–${ua}`).digest("hex");
     return { ua, fingerprint };
@@ -124,7 +74,15 @@ export function unhandledToError(req: express.Request, res: express.Response, ne
     if (isAnsweredRequest(req, res)) {
         return next();
     }
-    return next(new Error("unhandled request: " + req.method + " " + req.originalUrl));
+    /* Handle unknown routes gracefully to improve user experience and security.
+     * - Use a 404 status to indicate a "Not Found" error.
+     * - Provide a clear and informative message to guide the user.
+     * - Avoid exposing stack traces to prevent potential security vulnerabilities.
+     * Note: Detailed error logging is delegated to the `bottomErrorHandler()` function.
+     */
+    res.status(404).send(
+        "Resource Not Accessible: The content you're attempting to access may have been removed, renamed, or is temporarily unavailable. Kindly verify the URL and retry.",
+    );
 }
 
 /**
@@ -145,11 +103,10 @@ export function bottomErrorHandler(log: (...args: any[]) => void): express.Error
         } else {
             msg = err.toString();
         }
-        log({ sessionId: req.sessionID }, err, {
+        log(err, {
             originalUrl: req.originalUrl,
             headers: req.headers,
             cookies: req.cookies,
-            session: req.session,
         });
         if (!isAnsweredRequest(req, response)) {
             response.status(status).send({ error: msg });
@@ -170,3 +127,35 @@ export const takeFirst = (h: string | string[] | undefined): string | undefined 
     }
     return h;
 };
+
+export function clientIp(req: express.Request): string | undefined {
+    const clientIp = takeFirst(req.headers["x-real-ip"]);
+    if (!clientIp) {
+        return undefined;
+    }
+    return clientIp.split(",")[0];
+}
+
+export function toHeaders(headers: IncomingHttpHeaders): Headers {
+    const result = new Headers();
+    for (const [key, value] of Object.entries(headers)) {
+        result.set(key, value as string);
+    }
+    return result;
+}
+
+export interface ClientHeaderFields {
+    ip?: string;
+    userAgent?: string;
+    dnt?: string;
+    clientRegion?: string;
+}
+
+export function toClientHeaderFields(expressReq: express.Request): ClientHeaderFields {
+    return {
+        ip: clientIp(expressReq),
+        userAgent: expressReq.headers["user-agent"],
+        dnt: takeFirst(expressReq.headers.dnt),
+        clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
+    };
+}

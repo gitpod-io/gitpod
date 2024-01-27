@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+package gitpod.experimental.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
+
+message User {
+  // id is a UUID of the user
+  string id = 1;
+
+  // name is the username
+  string name = 2;
+
+  // avatar_url is a link to the user avatar
+  string avatar_url = 3;
+
+  // created_at is the creation time
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message SSHKey {
+  // id is a UUID of the SSH key
+  string id = 1;
+
+  // name is the name of the SSH key
+  string name = 2;
+
+  // key is the public SSH key
+  string key = 3;
+
+  // created_at is the creation time
+  google.protobuf.Timestamp created_at = 4;
+}
+
+service UserService {
+  // GetAuthenticatedUser gets the user info.
+  rpc GetAuthenticatedUser(GetAuthenticatedUserRequest) returns (GetAuthenticatedUserResponse) {}
+
+  // ListSSHKeys lists the public SSH keys.
+  rpc ListSSHKeys(ListSSHKeysRequest) returns (ListSSHKeysResponse) {}
+
+  // CreateSSHKey adds a public SSH key.
+  rpc CreateSSHKey(CreateSSHKeyRequest) returns (CreateSSHKeyResponse) {}
+
+  // GetSSHKey retrieves an ssh key by ID.
+  rpc GetSSHKey(GetSSHKeyRequest) returns (GetSSHKeyResponse) {}
+
+  // DeleteSSHKey removes a public SSH key.
+  rpc DeleteSSHKey(DeleteSSHKeyRequest) returns (DeleteSSHKeyResponse) {}
+
+  rpc GetGitToken(GetGitTokenRequest) returns (GetGitTokenResponse) {}
+
+  rpc BlockUser(BlockUserRequest) returns (BlockUserResponse) {}
+}
+
+message GetAuthenticatedUserRequest {}
+
+message GetAuthenticatedUserResponse {
+  User user = 1;
+}
+
+message ListSSHKeysRequest {
+  // TODO: pagination options
+}
+
+message ListSSHKeysResponse {
+  repeated SSHKey keys = 1;
+}
+
+message CreateSSHKeyRequest {
+  // name is the SSH key name
+  string name = 1;
+
+  // the public SSH key
+  string key = 2;
+}
+
+message CreateSSHKeyResponse {
+  SSHKey key = 1;
+}
+
+message GetSSHKeyRequest {
+  // id is the unique identifier of the SSH key to retreive.
+  string key_id = 1;
+}
+
+message GetSSHKeyResponse {
+  SSHKey key = 1;
+}
+
+message DeleteSSHKeyRequest {
+  // id is the unique identifier of the SSH key to retreive.
+  string key_id = 1;
+}
+
+message DeleteSSHKeyResponse {}
+
+message GetGitTokenRequest {
+  string host = 1;
+}
+
+message GetGitTokenResponse {
+  GitToken token = 1;
+}
+
+message GitToken {
+  // expiry_date is the date when the token will expire
+  string expiry_date = 1;
+
+  // id_token is the unique identifier for the token
+  string id_token = 2;
+
+  // refresh_token is the token used to refresh the git token
+  string refresh_token = 3;
+
+  // scopes is a list of permissions associated with the token
+  repeated string scopes = 4;
+
+  // update_date is the date when the token was last updated
+  string update_date = 5;
+
+  // username is the username associated with the token
+  string username = 6;
+
+  // value is the actual token value for the token
+  string value = 7;
+}
+
+message BlockUserRequest {
+  // the ID of a User to block
+  string user_id = 1;
+
+  // reason is the reason for blocking the user
+  string reason = 2;
+}
+
+message BlockUserResponse {}

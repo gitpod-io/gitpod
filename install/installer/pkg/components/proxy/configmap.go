@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package proxy
 
@@ -29,9 +29,6 @@ var vhostDockerRegistry []byte
 //go:embed templates/configmap/vhost.empty.tpl
 var vhostEmptyTmpl []byte
 
-//go:embed templates/configmap/vhost.kedge.tpl
-var vhostKedgeTmpl []byte
-
 //go:embed templates/configmap/vhost.minio.tpl
 var vhostMinioTmpl []byte
 
@@ -40,9 +37,6 @@ var vhostOpenVSXTmpl []byte
 
 //go:embed templates/configmap/vhost.ide-proxy.tpl
 var ideProxyTmpl []byte
-
-//go:embed templates/configmap/vhost.payment-endpoint.tpl
-var vhostPaymentEndpointTmpl []byte
 
 type commonTpl struct {
 	Domain       string
@@ -102,29 +96,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	paymentEndpoint, err := renderTemplate(vhostPaymentEndpointTmpl, commonTpl{
-		Domain:       ctx.Config.Domain,
-		ReverseProxy: fmt.Sprintf("payment-endpoint.%s.%s:%d", ctx.Namespace, kubeDomain, 3002), // todo(sje): get port from (future) config
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// todo(sje): can this be deleted?
-	kedge, err := renderTemplate(vhostKedgeTmpl, commonTpl{
-		Domain:       ctx.Config.Domain,
-		ReverseProxy: fmt.Sprintf("kedge.%s.%s:%d", ctx.Namespace, kubeDomain, 8080), // todo(sje): get port from (future) config
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	data := map[string]string{
-		"vhost.empty":            *empty,
-		"vhost.open-vsx":         *openVSX,
-		"vhost.payment-endpoint": *paymentEndpoint,
-		"vhost.ide-proxy":        *ideProxy,
-		"vhost.kedge":            *kedge,
+		"vhost.empty":     *empty,
+		"vhost.open-vsx":  *openVSX,
+		"vhost.ide-proxy": *ideProxy,
 	}
 
 	if ctx.Config.ObjectStorage.CloudStorage == nil {
@@ -172,9 +147,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-config", Component),
-				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Name:        fmt.Sprintf("%s-config", Component),
+				Namespace:   ctx.Namespace,
+				Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
 			},
 			Data: data,
 		},

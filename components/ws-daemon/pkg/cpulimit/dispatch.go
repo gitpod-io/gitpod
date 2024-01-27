@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cpulimit
 
@@ -18,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/gitpod-io/gitpod/common-go/cgroups"
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
@@ -66,8 +66,8 @@ func NewDispatchListener(cfg *Config, prom prometheus.Registerer) *DispatchListe
 
 	if cfg.Enabled {
 		dist := NewDistributor(d.source, d.sink,
-			FixedLimiter(BandwidthFromQuantity(d.Config.Limit)),
-			FixedLimiter(BandwidthFromQuantity(d.Config.BurstLimit)),
+			CompositeLimiter(AnnotationLimiter(kubernetes.WorkspaceCpuMinLimitAnnotation), FixedLimiter(BandwidthFromQuantity(d.Config.Limit))),
+			CompositeLimiter(AnnotationLimiter(kubernetes.WorkspaceCpuBurstLimitAnnotation), FixedLimiter(BandwidthFromQuantity(d.Config.BurstLimit))),
 			BandwidthFromQuantity(d.Config.TotalBandwidth),
 		)
 		go dist.Run(context.Background(), time.Duration(d.Config.ControlPeriod))
@@ -100,9 +100,10 @@ type DispatchListener struct {
 }
 
 type workspace struct {
-	CFS       CFSController
-	OWI       logrus.Fields
-	HardLimit ResourceLimiter
+	CFS         CFSController
+	OWI         logrus.Fields
+	HardLimit   ResourceLimiter
+	Annotations map[string]string
 
 	lastThrottled uint64
 }
@@ -141,6 +142,7 @@ func (d *DispatchListener) source(context.Context) ([]Workspace, error) {
 			ID:          id,
 			NrThrottled: throttled,
 			Usage:       usage,
+			Annotations: w.Annotations,
 		})
 	}
 	return res, nil
@@ -159,7 +161,7 @@ func (d *DispatchListener) sink(id string, limit Bandwidth, burst bool) {
 	d.workspacesBurstCounterVec.WithLabelValues("none").Inc()
 
 	changed, err := ws.CFS.SetLimit(limit)
-	if err != nil {
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		log.WithError(err).WithFields(ws.OWI).Warn("cannot set CPU limit")
 	}
 	if changed {
@@ -184,12 +186,13 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 
 	controller, err := newCFSController(d.Config.CGroupBasePath, cgroupPath)
 	if err != nil {
-		return err
+		return xerrors.Errorf("cannot start CFS controller: %w", err)
 	}
 
 	d.workspaces[ws.InstanceID] = &workspace{
-		CFS: controller,
-		OWI: ws.OWI(),
+		CFS:         controller,
+		OWI:         ws.OWI(),
+		Annotations: ws.Pod.Annotations,
 	}
 	go func() {
 		<-ctx.Done()
@@ -215,15 +218,7 @@ func (d *DispatchListener) WorkspaceUpdated(ctx context.Context, ws *dispatch.Wo
 		return xerrors.Errorf("received update for a workspace we haven't seen before: %s", ws.InstanceID)
 	}
 
-	newCPULimit := ws.Pod.Annotations[wsk8s.CPULimitAnnotation]
-	if newCPULimit != "" {
-		limit, err := resource.ParseQuantity(newCPULimit)
-		if err != nil {
-			return xerrors.Errorf("cannot enforce fixed CPU limit: %w", err)
-		}
-		wsinfo.HardLimit = FixedLimiter(BandwidthFromQuantity(limit))
-	}
-
+	wsinfo.Annotations = ws.Pod.Annotations
 	return nil
 }
 
@@ -235,8 +230,8 @@ func newCFSController(basePath, cgroupPath string) (CFSController, error) {
 
 	if unified {
 		fullPath := filepath.Join(basePath, cgroupPath)
-		if err := cgroups.EnsureCpuControllerEnabled(basePath, cgroupPath); err != nil {
-			return nil, err
+		if err := cgroups.EnsureCpuControllerEnabled(basePath, filepath.Join("/", cgroupPath)); err != nil {
+			return nil, xerrors.Errorf("could not check CPU controller is enabled: %w", err)
 		}
 
 		return CgroupV2CFSController(fullPath), nil

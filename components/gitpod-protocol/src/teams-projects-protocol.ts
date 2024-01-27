@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { PrebuiltWorkspaceState } from "./protocol";
+import { PrebuiltWorkspaceState, WorkspaceClasses } from "./protocol";
 import { v4 as uuidv4 } from "uuid";
 import { DeepPartial } from "./util/deep-partial";
 
@@ -13,26 +13,58 @@ export interface ProjectConfig {
 }
 
 export interface ProjectSettings {
-    useIncrementalPrebuilds?: boolean;
+    /**
+     * Controls settings of prebuilds for this project.
+     */
+    prebuilds?: PrebuildSettings;
+
+    // preferred workspace classes
+    workspaceClasses?: WorkspaceClasses;
+}
+export namespace PrebuildSettings {
+    export type BranchStrategy = "default-branch" | "all-branches" | "matched-branches";
+}
+
+export interface PrebuildSettings {
+    enable?: boolean;
+
+    /**
+     * Defines an interval of commits to run new prebuilds for. Defaults to 20
+     */
+    prebuildInterval?: number;
+
+    /**
+     * Which branches to consider to run new prebuilds on. Default to "all-branches"
+     */
+    branchStrategy?: PrebuildSettings.BranchStrategy;
+    /**
+     * If `branchStrategy` s set to "matched-branches", this should define a glob-pattern to be used
+     * to match the branch to run new prebuilds on. Defaults to "**"
+     */
+    branchMatchingPattern?: string;
+
+    /**
+     * Preferred workspace class for prebuilds.
+     */
+    workspaceClass?: string;
 }
 
 export interface Project {
     id: string;
     name: string;
-    slug?: string;
     cloneUrl: string;
-    teamId?: string;
-    userId?: string;
+    teamId: string;
     appInstallationId: string;
-    config?: ProjectConfig;
     settings?: ProjectSettings;
     creationTime: string;
-    /** This is a flag that triggers the HARD DELETION of this entity */
-    deleted?: boolean;
     markedDeleted?: boolean;
 }
 
 export namespace Project {
+    export function is(data?: any): data is Project {
+        return typeof data === "object" && ["id", "name", "cloneUrl", "teamId"].every((p) => p in data);
+    }
+
     export const create = (project: Omit<Project, "id" | "creationTime">): Project => {
         return {
             ...project,
@@ -41,8 +73,38 @@ export namespace Project {
         };
     };
 
+    export type PrebuildSettingsWithDefaults = Required<Pick<PrebuildSettings, "prebuildInterval">> & PrebuildSettings;
+
+    export const PREBUILD_SETTINGS_DEFAULTS: PrebuildSettingsWithDefaults = {
+        enable: false,
+        branchMatchingPattern: "**",
+        prebuildInterval: 20,
+        branchStrategy: "all-branches",
+    };
+
+    /**
+     * Returns effective prebuild settings for the given project. The resulting settings
+     * contain default values for properties which are not set explicitly for this project.
+     */
+    export function getPrebuildSettings(project: Project): PrebuildSettingsWithDefaults {
+        // ignoring persisted properties with `undefined` values to exclude them from the override.
+        const overrides = Object.fromEntries(
+            Object.entries(project.settings?.prebuilds ?? {}).filter(([_, value]) => value !== undefined),
+        );
+
+        return {
+            ...PREBUILD_SETTINGS_DEFAULTS,
+            ...overrides,
+        };
+    }
+
+    export function hasPrebuildSettings(project: Project) {
+        return !(typeof project.settings?.prebuilds === "undefined");
+    }
+
     export interface Overview {
         branches: BranchDetails[];
+        isConsideredInactive?: boolean;
     }
 
     export namespace Overview {
@@ -65,6 +127,8 @@ export namespace Project {
         changeUrl?: string;
         changeHash: string;
     }
+
+    export type Visibility = "public" | "org-public" | "private";
 }
 
 export type PartialProject = DeepPartial<Project> & Pick<Project, "id">;
@@ -118,25 +182,43 @@ export interface StartPrebuildResult {
     done: boolean;
 }
 
-export interface Team {
+// alias for backwards compatibility
+export type Team = Organization;
+export interface Organization {
     id: string;
     name: string;
-    slug: string;
+    slug?: string;
     creationTime: string;
     markedDeleted?: boolean;
-    /** This is a flag that triggers the HARD DELETION of this entity */
-    deleted?: boolean;
 }
 
-export type TeamMemberRole = "owner" | "member";
+export interface OrganizationSettings {
+    workspaceSharingDisabled?: boolean;
+    // null or empty string to reset to default
+    defaultWorkspaceImage?: string | null;
 
-export interface TeamMemberInfo {
+    // empty array to allow all kind of workspace classes
+    allowedWorkspaceClasses?: string[] | null;
+}
+
+export type TeamMemberRole = OrgMemberRole;
+export type OrgMemberRole = "owner" | "member" | "collaborator";
+
+export namespace TeamMemberRole {
+    export function isValid(role: any): role is TeamMemberRole {
+        return role === "owner" || role === "member" || role === "collaborator";
+    }
+}
+
+export type TeamMemberInfo = OrgMemberInfo;
+export interface OrgMemberInfo {
     userId: string;
     fullName?: string;
     primaryEmail?: string;
     avatarUrl?: string;
     role: TeamMemberRole;
     memberSince: string;
+    ownedByOrganization: boolean;
 }
 
 export interface TeamMembershipInvite {

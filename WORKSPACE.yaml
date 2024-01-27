@@ -1,41 +1,37 @@
 # this file makes this a leeway workspace
 defaultTarget: components:all
 defaultArgs:
+  imageRepoBase: "eu.gcr.io/gitpod-core-dev/build"
   coreYarnLockBase: ../..
   npmPublishTrigger: "false"
   publishToNPM: true
-  jbMarketplacePublishTrigger: "false"
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: 32d5576921d1fb2a4891adb67f5003c554b04125
+  codeCommit: 58bb230c0b29056eacd49010e91cd71567d667fd
+  codeVersion: 1.86.0
   codeQuality: stable
-  jetbrainsBackendQualifier: stable
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.1.1.tar.gz"
-  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2022.1.1.tar.gz"
-  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2022.1.1.tar.gz"
-  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2022.1.1.tar.gz"
+  noVerifyJBPlugin: false
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2023.3.2.tar.gz"
+  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2023.3.2.tar.gz"
+  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2023.3.2.tar.gz"
+  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2023.3.2.tar.gz"
+  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2023.3.2.tar.gz"
+  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2023.3.2.tar.gz"
+  riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2023.3.3.tar.gz"
+  clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2023.3.2.tar.gz"
+  jbBackendVersion: "latest"
+  dockerVersion: "20.10.24"
+  dockerComposeVersion: "2.23.3-gitpod.1"
 provenance:
   enabled: true
   slsa: true
 defaultVariant:
+  env:
+    - NODE_OPTIONS=--max_old_space_size=8192
   srcs:
     exclude:
       # Make sure we don't include node_modules/**/*.ts by accident
       - "**/node_modules/**"
   config:
     go:
-      lintCommand: ["sh", "-c", "golangci-lint run --disable govet,errcheck,typecheck,staticcheck --allow-parallel-runners --timeout 5m"]
-variants:
-  - name: oss
-    srcs:
-      exclude:
-        - "**/ee"
-        - "**/ee/**"
-        - "**/*_ee.*"
-        - "**/*_ee_*.*"
-    env:
-      - GITPOD_OSS_BUILD=true
-    config:
-      go:
-        buildTags:
-          - -tags oss
+      lintCommand: ["sh", "-c", "golangci-lint run --disable govet,errcheck,typecheck,staticcheck,structcheck -e '.*declared but not used.*' --allow-parallel-runners --timeout 15m"]

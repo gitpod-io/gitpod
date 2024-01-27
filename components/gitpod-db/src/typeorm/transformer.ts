@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { ValueTransformer } from "typeorm/decorator/options/ValueTransformer";
@@ -23,6 +23,36 @@ export namespace Transformer {
         },
     };
 
+    export const MAP_ZERO_TO_UNDEFINED: ValueTransformer = {
+        to(value: any): any {
+            if (value === undefined) {
+                return 0;
+            }
+            return value;
+        },
+        from(value: any): any {
+            if (value === 0) {
+                return undefined;
+            }
+            return value;
+        },
+    };
+
+    export const MAP_NULL_TO_UNDEFINED: ValueTransformer = {
+        to(value: any): any {
+            if (value === undefined) {
+                return null;
+            }
+            return value;
+        },
+        from(value: any): any {
+            if (value === null) {
+                return undefined;
+            }
+            return value;
+        },
+    };
+
     export const MAP_ISO_STRING_TO_TIMESTAMP_DROP: ValueTransformer = {
         to(value: any): any {
             // DROP all input values as they are set by the DB 'ON UPDATE'/ as default value.
@@ -34,6 +64,7 @@ export namespace Transformer {
         },
         from(value: any): any {
             // From TIMESTAMP to ISO string
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             return new Date(Date.parse(value)).toISOString();
         },
     };
@@ -44,6 +75,7 @@ export namespace Transformer {
                 return JSON.stringify(value || defaultValue);
             },
             from(value: any): any {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 return JSON.parse(value);
             },
         };
@@ -55,6 +87,7 @@ export namespace Transformer {
                 return encryptionServiceProvider().encrypt(value);
             },
             from(value: any): any {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 return encryptionServiceProvider().decrypt(value);
             },
         };
@@ -87,6 +120,15 @@ export namespace Transformer {
             }
 
             return num;
+        },
+    };
+
+    export const ALWAYS_EMPTY_STRING: ValueTransformer = {
+        to(value: any): any {
+            return "";
+        },
+        from(value: any): any {
+            return "";
         },
     };
 }

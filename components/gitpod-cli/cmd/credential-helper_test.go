@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -63,10 +63,10 @@ func Test_parse_git_command_and_remote(t *testing.T) {
 		{
 			Name: "JB push command",
 			Commands: []string{
-				"/usr/lib/git-core/git remote-https origin https://github.com/gitpod-io/spring-petclinic.git",
+				"/usr/lib/git-core/git remote-https origin https://github.com/gitpod-samples/spring-petclinic.git",
 				"/bin/git -c core.quotepath=false -c log.showSignature=false push --progress --porcelain origin refs/heads/master:master",
 			},
-			Expected: gitCommandInfo{RepoUrl: "https://github.com/gitpod-io/spring-petclinic.git", GitCommand: "push"},
+			Expected: gitCommandInfo{RepoUrl: "https://github.com/gitpod-samples/spring-petclinic.git", GitCommand: "push"},
 		},
 	}
 	for _, tt := range tests {

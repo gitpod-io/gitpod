@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
+import express from "express";
 import { inject, injectable } from "inversify";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
@@ -18,7 +18,10 @@ export class NewsletterSubscriptionController {
         const router = express.Router();
 
         router.get("/unsubscribe", async (req: express.Request, res: express.Response) => {
-            const email: string | undefined = req.query.email?.toString();
+            // Parsed query parameter values always have any "+" signs converted to spaces (" ").
+            // Thankfully, since spaces are very uncommon in email addresses, we know that any space
+            // was likely a "+" sign originally, and we can replace them back.
+            const email: string | undefined = req.query.email?.toString().trim().replace(/ /g, "+");
             const newsletterType: string | undefined = req.query.type?.toString();
             if (!email || !newsletterType) {
                 res.sendStatus(400);

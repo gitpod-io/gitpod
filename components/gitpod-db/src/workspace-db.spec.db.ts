@@ -1,22 +1,22 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import * as chai from "chai";
 const expect = chai.expect;
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { fail } from "assert";
 
 import { WorkspaceInstance, Workspace, PrebuiltWorkspace, CommitContext } from "@gitpod/gitpod-protocol";
 import { testContainer } from "./test-container";
 import { TypeORMWorkspaceDBImpl } from "./typeorm/workspace-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
-import { DBWorkspace } from "./typeorm/entity/db-workspace";
 import { DBPrebuiltWorkspace } from "./typeorm/entity/db-prebuilt-workspace";
-import { DBWorkspaceInstance } from "./typeorm/entity/db-workspace-instance";
 import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { resetDB } from "./test/reset-db";
+import { v4 } from "uuid";
 
 @suite
 class WorkspaceDBSpec {
@@ -29,6 +29,8 @@ class WorkspaceDBSpec {
     readonly userId = "12345";
     readonly projectAID = "projectA";
     readonly projectBID = "projectB";
+    readonly orgidA = "orgA";
+    readonly orgidB = "orgB";
     readonly ws: Workspace = {
         id: "1",
         type: "regular",
@@ -39,16 +41,24 @@ class WorkspaceDBSpec {
             tasks: [],
         },
         projectId: this.projectAID,
-        context: { title: "example" },
+        context: <CommitContext>{
+            title: "example",
+            repository: {
+                cloneUrl: "https://github.com/gitpod-io/gitpod",
+            },
+            revision: "abc",
+        },
         contextURL: "example.org",
         description: "blabla",
         ownerId: this.userId,
+        organizationId: this.orgidA,
     };
     readonly wsi1: WorkspaceInstance = {
         workspaceId: this.ws.id,
         id: "123",
         ideUrl: "example.org",
         region: "unknown",
+        workspaceClass: undefined,
         workspaceImage: "abc.io/test/image:123",
         creationTime: this.timeBefore,
         startedTime: undefined,
@@ -56,6 +66,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "preparing",
             conditions: {},
         },
@@ -64,12 +75,14 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
+        usageAttributionId: undefined,
     };
     readonly wsi2: WorkspaceInstance = {
         workspaceId: this.ws.id,
         id: "1234",
         ideUrl: "example.org",
         region: "unknown",
+        workspaceClass: undefined,
         workspaceImage: "abc.io/test/image:123",
         creationTime: this.timeAfter,
         startedTime: undefined,
@@ -77,6 +90,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "running",
             conditions: {},
         },
@@ -85,6 +99,7 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
+        usageAttributionId: undefined,
     };
     readonly ws2: Workspace = {
         id: "2",
@@ -96,16 +111,24 @@ class WorkspaceDBSpec {
             tasks: [],
         },
         projectId: this.projectBID,
-        context: { title: "example" },
+        context: <CommitContext>{
+            title: "example",
+            repository: {
+                cloneUrl: "https://github.com/gitpod-io/gitpod",
+            },
+            revision: "abc",
+        },
         contextURL: "https://github.com/gitpod-io/gitpod",
         description: "Gitpod",
         ownerId: this.userId,
+        organizationId: this.orgidA,
     };
     readonly ws2i1: WorkspaceInstance = {
         workspaceId: this.ws2.id,
         id: "4",
         ideUrl: "example.org",
         region: "unknown",
+        workspaceClass: undefined,
         workspaceImage: "abc.io/test/image:123",
         creationTime: this.timeBefore,
         startedTime: undefined,
@@ -113,6 +136,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "preparing",
             conditions: {},
         },
@@ -121,6 +145,7 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
+        usageAttributionId: undefined,
     };
 
     readonly ws3: Workspace = {
@@ -132,16 +157,24 @@ class WorkspaceDBSpec {
             image: "",
             tasks: [],
         },
-        context: { title: "example" },
+        context: <CommitContext>{
+            title: "example",
+            repository: {
+                cloneUrl: "https://github.com/gitpod-io/gitpod",
+            },
+            revision: "abc",
+        },
         contextURL: "example.org",
         description: "blabla",
         ownerId: this.userId,
+        organizationId: this.orgidB,
     };
     readonly ws3i1: WorkspaceInstance = {
         workspaceId: this.ws3.id,
         id: "3_1",
         ideUrl: "example.org",
         region: "unknown",
+        workspaceClass: undefined,
         workspaceImage: "abc.io/test/image:123",
         creationTime: this.timeBefore,
         startedTime: undefined,
@@ -149,6 +182,7 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
+            version: 1,
             phase: "preparing",
             conditions: {},
         },
@@ -157,6 +191,7 @@ class WorkspaceDBSpec {
             ideImage: "unknown",
         },
         deleted: false,
+        usageAttributionId: undefined,
     };
 
     async before() {
@@ -168,10 +203,7 @@ class WorkspaceDBSpec {
     }
 
     async wipeRepo() {
-        const mnr = await this.typeorm.getConnection();
-        await mnr.getRepository(DBWorkspace).delete({});
-        await mnr.getRepository(DBWorkspaceInstance).delete({});
-        await mnr.getRepository(DBPrebuiltWorkspace).delete({});
+        await resetDB(this.typeorm);
     }
 
     @test(timeout(10000))
@@ -190,6 +222,16 @@ class WorkspaceDBSpec {
             return;
         }
         fail("Rollback failed");
+    }
+
+    @test(timeout(10000))
+    public async testFindByInstanceId() {
+        await this.db.transaction(async (db) => {
+            await Promise.all([db.store(this.ws), db.storeInstance(this.wsi1)]);
+            const dbResult = await db.findByInstanceId(this.wsi1.id);
+            const expected = await db.findById(this.wsi1.workspaceId);
+            expect(dbResult).to.deep.eq(expected);
+        });
     }
 
     @test(timeout(10000))
@@ -234,6 +276,7 @@ class WorkspaceDBSpec {
             description: "something",
             contextURL: "https://github.com/foo/bar",
             ownerId: "1221423",
+            organizationId: "org123",
             context: {
                 title: "my title",
             },
@@ -258,6 +301,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "https://github.com/foo/bar",
                 ownerId: "1221423",
+                organizationId: "org123",
                 context: {
                     title: "my title",
                 },
@@ -290,13 +334,6 @@ class WorkspaceDBSpec {
         await Promise.all([this.db.store(this.ws), this.db.storeInstance(this.wsi1), this.db.storeInstance(this.wsi2)]);
         const dbResult = await this.db.findWorkspacesForGarbageCollection(14, 10);
         expect(dbResult.length).to.eq(0);
-    }
-
-    @test(timeout(10000))
-    public async testFindAllWorkspaces_contextUrl() {
-        await Promise.all([this.db.store(this.ws)]);
-        const dbResult = await this.db.findAllWorkspaces(0, 10, "contextURL", "DESC", undefined, this.ws.contextURL);
-        expect(dbResult.total).to.eq(1);
     }
 
     @test(timeout(10000))
@@ -500,6 +537,7 @@ class WorkspaceDBSpec {
     public async testCountUnabortedPrebuildsSince() {
         const now = new Date();
         const cloneURL = "https://github.com/gitpod-io/gitpod";
+        const projectId = v4();
 
         await Promise.all([
             // Created now, and queued
@@ -508,6 +546,7 @@ class WorkspaceDBSpec {
                 buildWorkspaceId: "apples",
                 creationTime: now.toISOString(),
                 cloneURL: cloneURL,
+                projectId,
                 commit: "",
                 state: "queued",
                 statusVersion: 0,
@@ -518,6 +557,7 @@ class WorkspaceDBSpec {
                 buildWorkspaceId: "bananas",
                 creationTime: now.toISOString(),
                 cloneURL: cloneURL,
+                projectId,
                 commit: "",
                 state: "aborted",
                 statusVersion: 0,
@@ -528,14 +568,26 @@ class WorkspaceDBSpec {
                 buildWorkspaceId: "oranges",
                 creationTime: secondsBefore(now.toISOString(), 62),
                 cloneURL: cloneURL,
+                projectId,
                 commit: "",
                 state: "available",
+                statusVersion: 0,
+            }),
+            // different project now and queued
+            this.storePrebuiltWorkspace({
+                id: "prebuild123-other",
+                buildWorkspaceId: "apples",
+                creationTime: now.toISOString(),
+                cloneURL: cloneURL,
+                projectId: "other-projectId",
+                commit: "",
+                state: "queued",
                 statusVersion: 0,
             }),
         ]);
 
         const minuteAgo = secondsBefore(now.toISOString(), 60);
-        const unabortedCount = await this.db.countUnabortedPrebuildsSince(cloneURL, new Date(minuteAgo));
+        const unabortedCount = await this.db.countUnabortedPrebuildsSince(projectId, new Date(minuteAgo));
         expect(unabortedCount).to.eq(1);
     }
 
@@ -553,11 +605,13 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/inactive",
                 ownerId: "1221423",
+                organizationId: "org123",
                 context: <CommitContext>{
                     title: "my title",
                     repository: {
                         cloneUrl: inactiveRepo,
                     },
+                    revision: "abc",
                 },
                 config: {},
                 type: "regular",
@@ -568,11 +622,13 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/active",
                 ownerId: "1221423",
+                organizationId: "org123",
                 context: <CommitContext>{
                     title: "my title",
                     repository: {
                         cloneUrl: activeRepo,
                     },
+                    revision: "abc",
                 },
                 config: {},
                 type: "regular",
@@ -583,6 +639,51 @@ class WorkspaceDBSpec {
         expect(inactiveCount).to.eq(0, "there should be no regular workspaces in the past 7 days");
         const activeCount = await this.db.getWorkspaceCountByCloneURL(activeRepo, 7, "regular");
         expect(activeCount).to.eq(1, "there should be exactly one regular workspace");
+    }
+
+    @test(timeout(10000))
+    public async testGetUnresolvedUpdatables() {
+        {
+            // setup ws, wsi, pws, and updatables
+            const timeWithOffset = (offsetInHours: number) => {
+                const date = new Date();
+                date.setHours(date.getHours() - offsetInHours);
+                return date;
+            };
+
+            for (let i = 1; i <= 10; i++) {
+                const ws = await this.db.store({
+                    ...this.ws,
+                    id: `ws-${i}`,
+                    creationTime: timeWithOffset(i).toISOString(),
+                });
+                const pws = await this.db.storePrebuiltWorkspace({
+                    buildWorkspaceId: ws.id,
+                    cloneURL: ws.cloneUrl!,
+                    commit: "abc",
+                    creationTime: ws.creationTime,
+                    id: ws.id + "-pws",
+                    state: "queued",
+                    statusVersion: 123,
+                });
+                await this.db.storeInstance({
+                    ...this.wsi1,
+                    workspaceId: ws.id,
+                    id: ws.id + "-wsi",
+                });
+                await this.db.attachUpdatableToPrebuild("pwsid-which-is-ignored-anyways", {
+                    id: `pwu-${i}`,
+                    installationId: "foobar",
+                    isResolved: false,
+                    owner: "owner",
+                    repo: "repo",
+                    prebuiltWorkspaceId: pws.id,
+                });
+            }
+        }
+
+        expect((await this.db.getUnresolvedUpdatables()).length).to.eq(10, "there should be 10 updatables in total");
+        expect((await this.db.getUnresolvedUpdatables(5)).length).to.eq(5, "there should be 5 updatables");
     }
 
     private async storePrebuiltWorkspace(pws: PrebuiltWorkspace) {
@@ -602,6 +703,148 @@ class WorkspaceDBSpec {
                 pws.id,
             ]);
         }
+    }
+
+    @test(timeout(10000))
+    public async findWorkspacesForPurging() {
+        const creationTime = "2018-01-01T00:00:00.000Z";
+        const ownerId = "1221423";
+        const organizationId = "org123";
+        const purgeDate = new Date("2019-02-01T00:00:00.000Z");
+        const d20180202 = "2018-02-02T00:00:00.000Z";
+        const d20180201 = "2018-02-01T00:00:00.000Z";
+        const d20180131 = "2018-01-31T00:00:00.000Z";
+        await Promise.all([
+            this.db.store({
+                id: "1",
+                creationTime,
+                description: "something",
+                contextURL: "http://github.com/myorg/inactive",
+                ownerId,
+                organizationId,
+                context: {
+                    title: "my title",
+                },
+                config: {},
+                type: "regular",
+                contentDeletedTime: d20180131,
+            }),
+            this.db.store({
+                id: "2",
+                creationTime,
+                description: "something",
+                contextURL: "http://github.com/myorg/active",
+                ownerId,
+                organizationId,
+                context: {
+                    title: "my title",
+                },
+                config: {},
+                type: "regular",
+                contentDeletedTime: d20180201,
+            }),
+            this.db.store({
+                id: "3",
+                creationTime,
+                description: "something",
+                contextURL: "http://github.com/myorg/active",
+                ownerId,
+                organizationId,
+                context: {
+                    title: "my title",
+                },
+                config: {},
+                type: "regular",
+                contentDeletedTime: d20180202,
+            }),
+            this.db.store({
+                id: "4",
+                creationTime,
+                description: "something",
+                contextURL: "http://github.com/myorg/active",
+                ownerId,
+                organizationId,
+                context: {
+                    title: "my title",
+                },
+                config: {},
+                type: "regular",
+                contentDeletedTime: undefined,
+            }),
+        ]);
+
+        const wsIds = await this.db.findWorkspacesForPurging(365, 1000, purgeDate);
+        expect(wsIds).to.deep.equal([
+            {
+                id: "1",
+                ownerId,
+            },
+        ]);
+    }
+
+    @test(timeout(10000))
+    public async findWorkspacesByOrganizationId() {
+        await this.db.store(this.ws);
+        await this.db.store(this.ws2);
+        await this.db.store(this.ws3);
+        let result = await this.db.find({
+            userId: this.userId,
+            organizationId: this.orgidA,
+        });
+
+        expect(result.length).to.eq(2);
+        for (const ws of result) {
+            expect(ws.workspace.organizationId).to.equal(this.orgidA);
+        }
+
+        result = await this.db.find({
+            userId: this.userId,
+            organizationId: this.orgidB,
+        });
+
+        expect(result.length).to.eq(1);
+        for (const ws of result) {
+            expect(ws.workspace.organizationId).to.equal(this.orgidB);
+        }
+
+        result = await this.db.find({
+            userId: this.userId,
+            organizationId: "no-org",
+        });
+
+        expect(result.length).to.eq(0);
+    }
+
+    @test(timeout(10000))
+    public async hardDeleteWorkspace() {
+        await this.db.store(this.ws);
+        await this.db.storeInstance(this.wsi1);
+        await this.db.storeInstance(this.wsi2);
+        let result = await this.db.findInstances(this.ws.id);
+        expect(result.length).to.eq(2);
+        await this.db.hardDeleteWorkspace(this.ws.id);
+        result = await this.db.findInstances(this.ws.id);
+        expect(result.length).to.eq(0);
+    }
+
+    @test()
+    public async storeAndUpdateGitStatus() {
+        const inst = {
+            ...this.wsi1,
+            gitstatus: undefined,
+        };
+
+        await this.db.storeInstance(inst);
+        let result = await this.db.findInstances(inst.workspaceId);
+        expect(!result[0].gitStatus).to.be.true;
+
+        inst.gitStatus = {
+            branch: "my/branch",
+        };
+        await this.db.storeInstance(inst);
+
+        result = await this.db.findInstances(inst.workspaceId);
+        expect(result[0].gitStatus?.branch).to.eq("my/branch");
     }
 }
 module.exports = new WorkspaceDBSpec();

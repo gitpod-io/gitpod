@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  oidc-client-jwt-signing-key: and0LWtleS1mb3ItcHJldmlldy1lbnZzCg==
+kind: Secret
+metadata:
+  name: oidc-client-jwt-signing-key
+  namespace: default
+type: Opaque

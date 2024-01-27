@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package orchestrator
 
@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/docker/distribution/reference"
 	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
@@ -26,9 +27,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -55,17 +57,26 @@ const (
 
 // NewOrchestratingBuilder creates a new orchestrating image builder
 func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err error) {
-	var authentication auth.RegistryAuthenticator
+	var authentication auth.CompositeAuth
 	if cfg.PullSecretFile != "" {
 		fn := cfg.PullSecretFile
 		if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
 			fn = filepath.Join(tproot, fn)
 		}
 
-		authentication, err = auth.NewDockerConfigFileAuth(fn)
+		ath, err := auth.NewDockerConfigFileAuth(fn)
 		if err != nil {
-			return
+			return nil, err
 		}
+		authentication = append(authentication, ath)
+	}
+	if cfg.EnableAdditionalECRAuth {
+		awsCfg, err := awsconfig.LoadDefaultConfig(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		ecrc := ecr.NewFromConfig(awsCfg)
+		authentication = append(authentication, auth.NewECRAuthenticator(ecrc))
 	}
 
 	var wsman wsmanapi.WorkspaceManagerClient
@@ -86,7 +97,7 @@ func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err e
 
 			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
 		} else {
-			grpcOpts = append(grpcOpts, grpc.WithInsecure())
+			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		}
 		conn, err := grpc.Dial(cfg.WorkspaceManager.Address, grpcOpts...)
 		if err != nil {
@@ -148,10 +159,6 @@ func (o *Orchestrator) ResolveBaseImage(ctx context.Context, req *protocol.Resol
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
 
-	reqs, _ := protojson.Marshal(req)
-	safeReqs, _ := log.RedactJSON(reqs)
-	log.WithField("req", safeReqs).Debug("ResolveBaseImage")
-
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
 
 	refstr, err := o.getAbsoluteImageRef(ctx, req.Ref, reqauth)
@@ -170,10 +177,6 @@ func (o *Orchestrator) ResolveWorkspaceImage(ctx context.Context, req *protocol.
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
 
-	reqs, _ := protojson.Marshal(req)
-	safeReqs, _ := log.RedactJSON(reqs)
-	log.WithField("req", safeReqs).Debug("ResolveWorkspaceImage")
-
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
 	if _, ok := status.FromError(err); err != nil && ok {
@@ -190,7 +193,7 @@ func (o *Orchestrator) ResolveWorkspaceImage(ctx context.Context, req *protocol.
 
 	// to check if the image exists we must have access to the image caching registry and the refstr we check here does not come
 	// from the user. Thus we can safely use auth.AllowedAuthForAll here.
-	auth, err := auth.AllowedAuthForAll().GetAuthFor(o.Auth, refstr)
+	auth, err := auth.AllowedAuthForAll().GetAuthFor(ctx, o.Auth, refstr)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace image authentication: %v", err)
 	}
@@ -225,7 +228,6 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 
 	// resolve build request authentication
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
-
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
 	if _, ok := status.FromError(err); err != nil && ok {
 		return err
@@ -237,7 +239,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot produce workspace image ref: %q", err)
 	}
-	wsrefAuth, err := auth.AllowedAuthForAll().GetAuthFor(o.Auth, wsrefstr)
+	wsrefAuth, err := auth.AllowedAuthForAll().GetAuthFor(ctx, o.Auth, wsrefstr)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get workspace image authentication: %q", err)
 	}
@@ -266,6 +268,8 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		}
 		return nil
 	}
+
+	o.metrics.BuildStarted()
 
 	// Once a build is running we don't want it cancelled becuase the server disconnected i.e. during deployment.
 	// Instead we want to impose our own timeout/lifecycle on the build. Using context.WithTimeout does not shadow its parent's
@@ -319,7 +323,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		return false
 	}
 
-	pbaseref, err := reference.Parse(baseref)
+	pbaseref, err := reference.ParseNormalizedNamed(baseref)
 	if err != nil {
 		return xerrors.Errorf("cannot parse baseref: %v", err)
 	}
@@ -330,11 +334,12 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		bobBaseref += ":latest"
 	}
 	wsref, err := reference.ParseNamed(wsrefstr)
-	var baseRefAuth []byte
+	var additionalAuth []byte
 	if err == nil {
-		baseRefAuth, err = json.Marshal(reqauth.GetImageBuildAuthFor([]string{
+		ath := reqauth.GetImageBuildAuthFor(ctx, o.Auth, []string{reference.Domain(pbaseref), auth.DummyECRRegistryDomain}, []string{
 			reference.Domain(wsref),
-		}))
+		})
+		additionalAuth, err = json.Marshal(ath)
 		if err != nil {
 			return xerrors.Errorf("cannot marshal additional auth: %w", err)
 		}
@@ -355,12 +360,12 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				Owner: req.GetTriggeredBy(),
 			},
 			Spec: &wsmanapi.StartWorkspaceSpec{
-				Initializer:        initializer,
-				Timeout:            maxBuildRuntime.String(),
-				WorkspaceImage:     o.Config.BuilderImage,
-				DeprecatedIdeImage: o.Config.BuilderImage,
+				Initializer:    initializer,
+				Timeout:        maxBuildRuntime.String(),
+				WorkspaceImage: o.Config.BuilderImage,
 				IdeImage: &wsmanapi.IDEImage{
-					WebRef: o.Config.BuilderImage,
+					WebRef:        o.Config.BuilderImage,
+					SupervisorRef: req.SupervisorRef,
 				},
 				WorkspaceLocation: contextPath,
 				Envvars: []*wsmanapi.EnvironmentVariable{
@@ -374,15 +379,15 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 					{Name: "WORKSPACEKIT_BOBPROXY_BASEREF", Value: baseref},
 					{Name: "WORKSPACEKIT_BOBPROXY_TARGETREF", Value: wsrefstr},
 					{
-						Name: "WORKSPACEKIT_BOBPROXY_TARGETAUTH",
+						Name: "WORKSPACEKIT_BOBPROXY_AUTH",
 						Secret: &wsmanapi.EnvironmentVariable_SecretKeyRef{
 							SecretName: o.Config.PullSecret,
 							Key:        ".dockerconfigjson",
 						},
 					},
 					{
-						Name:  "WORKSPACEKIT_BOBPROXY_AUTH",
-						Value: string(baseRefAuth),
+						Name:  "WORKSPACEKIT_BOBPROXY_ADDITIONALAUTH",
+						Value: string(additionalAuth),
 					},
 					{Name: "SUPERVISOR_DEBUG_ENABLE", Value: fmt.Sprintf("%v", log.Log.Logger.IsLevelEnabled(logrus.DebugLevel))},
 				},
@@ -435,6 +440,10 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		if update.Status == protocol.BuildStatus_done_failure || update.Status == protocol.BuildStatus_done_success {
 			// build is done
 			o.clearListener(buildID)
+			o.metrics.BuildDone(update.Status == protocol.BuildStatus_done_success)
+			if update.Status != protocol.BuildStatus_done_success {
+				log.WithField("UserID", req.GetTriggeredBy()).Error("image build done failed for user")
+			}
 			break
 		}
 	}
@@ -550,16 +559,16 @@ func (o *Orchestrator) checkImageExists(ctx context.Context, ref string, authent
 
 // getAbsoluteImageRef returns the "digest" form of an image, i.e. contains no mutable image tags
 func (o *Orchestrator) getAbsoluteImageRef(ctx context.Context, ref string, allowedAuth auth.AllowedAuthFor) (res string, err error) {
-	auth, err := allowedAuth.GetAuthFor(o.Auth, ref)
+	auth, err := allowedAuth.GetAuthFor(ctx, o.Auth, ref)
 	if err != nil {
 		return "", status.Errorf(codes.InvalidArgument, "cannt resolve base image ref: %v", err)
 	}
 
 	ref, err = o.RefResolver.Resolve(ctx, ref, resolve.WithAuthentication(auth))
-	if xerrors.Is(err, resolve.ErrNotFound) {
+	if errors.Is(err, resolve.ErrNotFound) {
 		return "", status.Error(codes.NotFound, "cannot resolve image")
 	}
-	if xerrors.Is(err, resolve.ErrUnauthorized) {
+	if errors.Is(err, resolve.ErrUnauthorized) {
 		return "", status.Error(codes.Unauthenticated, "cannot resolve image")
 	}
 	if err != nil {

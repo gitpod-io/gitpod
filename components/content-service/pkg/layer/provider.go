@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package layer
 
@@ -109,11 +109,7 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 	}
 	manifest = &mf
 
-	if mf.Type != csapi.TypeFullWorkspaceContentV1 {
-		err = errUnsupportedContentType
-		return
-	}
-
+	err = errUnsupportedContentType
 	return
 }
 
@@ -126,9 +122,7 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 	defer func() {
 		// we never return a nil manifest, just maybe an empty one
 		if manifest == nil {
-			manifest = &csapi.WorkspaceContentManifest{
-				Type: csapi.TypeFullWorkspaceContentV1,
-			}
+			manifest = &csapi.WorkspaceContentManifest{}
 		}
 	}()
 
@@ -213,103 +207,6 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 		}
 
 		layer, err = contentDescriptorToLayer(cdesc)
-		if err != nil {
-			return nil, nil, err
-		}
-		return []Layer{*layer}, nil, nil
-	}
-	if initializer.GetBackup() != nil {
-		// We were asked to restore a backup and have tried above. We've failed to restore the backup,
-		// hance the backup initializer failed.
-		return nil, nil, xerrors.Errorf("no backup found")
-	}
-
-	return nil, nil, xerrors.Errorf("no backup or valid initializer present")
-}
-
-// GetContentLayerPVC provides the content layer for a workspace that uses PVC feature
-func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID string, initializer *csapi.WorkspaceInitializer) (l []Layer, manifest *csapi.WorkspaceContentManifest, err error) {
-	span, ctx := tracing.FromContext(ctx, "GetContentLayerPVC")
-	defer tracing.FinishSpan(span, &err)
-	tracing.ApplyOWI(span, log.OWI(owner, workspaceID, ""))
-
-	defer func() {
-		// we never return a nil manifest, just maybe an empty one
-		if manifest == nil {
-			manifest = &csapi.WorkspaceContentManifest{
-				Type: csapi.TypeFullWorkspaceContentV1,
-			}
-		}
-	}()
-
-	// check if workspace has an FWB
-	bucket := s.Storage.Bucket(owner)
-	span.LogKV("bucket", bucket)
-
-	// check if legacy workspace backup is present
-	var layer *Layer
-	info, err := s.Storage.SignDownload(ctx, bucket, fmt.Sprintf(fmtLegacyBackupName, workspaceID), &storage.SignedURLOptions{})
-	if err != nil && !xerrors.Is(err, storage.ErrNotFound) {
-		return nil, nil, err
-	}
-	if err == nil {
-		span.LogKV("backup found", "legacy workspace backup")
-
-		cdesc, err := executor.PrepareFromBackup(info.URL)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		layer, err = contentDescriptorToLayerPVC(cdesc)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		l = []Layer{*layer}
-		return l, manifest, nil
-	}
-
-	// At this point we've found neither a full-workspace-backup, nor a legacy backup.
-	// It's time to use the initializer.
-	if gis := initializer.GetSnapshot(); gis != nil {
-		return s.getSnapshotContentLayer(ctx, gis)
-	}
-	if pis := initializer.GetPrebuild(); pis != nil {
-		l, manifest, err = s.getPrebuildContentLayer(ctx, pis)
-		if err != nil {
-			log.WithError(err).WithFields(log.OWI(owner, workspaceID, "")).Warn("cannot initialize from prebuild - falling back to Git")
-			span.LogKV("fallback-to-git", err.Error())
-
-			// we failed creating a prebuild initializer, so let's try falling back to the Git part.
-			var init []*csapi.WorkspaceInitializer
-			for _, gi := range pis.Git {
-				init = append(init, &csapi.WorkspaceInitializer{
-					Spec: &csapi.WorkspaceInitializer_Git{
-						Git: gi,
-					},
-				})
-			}
-			initializer = &csapi.WorkspaceInitializer{
-				Spec: &csapi.WorkspaceInitializer_Composite{
-					Composite: &csapi.CompositeInitializer{
-						Initializer: init,
-					},
-				},
-			}
-		} else {
-			// creating the initializer worked - we're done here
-			return
-		}
-	}
-	if gis := initializer.GetGit(); gis != nil {
-		span.LogKV("initializer", "Git")
-
-		cdesc, err := executor.Prepare(initializer, nil)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		layer, err = contentDescriptorToLayerPVC(cdesc)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -420,6 +317,7 @@ func (s *Provider) getPrebuildContentLayer(ctx context.Context, pb *csapi.Prebui
 	}
 
 	layer, err := contentDescriptorToLayer(cdesc)
+
 	if err != nil {
 		return nil, nil, err
 	}
@@ -463,29 +361,6 @@ func contentDescriptorToLayer(cdesc []byte) (*Layer, error) {
 		fileInLayer{&tar.Header{Typeflag: tar.TypeDir, Name: "/workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
 		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/workspace/.gitpod/content.json", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(cdesc))}, cdesc},
 	)
-}
-
-var prestophookScript = `#!/bin/bash
-cd ${GITPOD_REPO_ROOT}
-git config --global --add safe.directory ${GITPOD_REPO_ROOT}
-git status --porcelain=v2 --branch -uall > /.workspace/prestophookdata/git_status.txt
-git log --pretty='%h: %s' --branches --not --remotes > /.workspace/prestophookdata/git_log_1.txt
-git log --pretty=%H -n 1 > /.workspace/prestophookdata/git_log_2.txt
-`
-
-// version of this function for persistent volume claim feature
-// we cannot use /workspace folder as when mounting /workspace folder through PVC
-// it will mask anything that was in container layer, hence we are using /.workspace instead here
-func contentDescriptorToLayerPVC(cdesc []byte) (*Layer, error) {
-	layers := []fileInLayer{
-		{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		{&tar.Header{Typeflag: tar.TypeDir, Name: "/.workspace/.gitpod", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755}, nil},
-		{&tar.Header{Typeflag: tar.TypeReg, Name: "/.supervisor/prestophook.sh", Uid: 0, Gid: 0, Mode: 0775, Size: int64(len(prestophookScript))}, []byte(prestophookScript)},
-	}
-	if len(cdesc) > 0 {
-		layers = append(layers, fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/.workspace/.gitpod/content.json", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(cdesc))}, cdesc})
-	}
-	return layerFromContent(layers...)
 }
 
 func workspaceReadyLayer(src csapi.WorkspaceInitSource) (*Layer, error) {

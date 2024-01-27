@@ -1,0 +1,62 @@
+packages:
+  - name: cli
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    env:
+      - CGO_ENABLED=0
+    deps:
+      - components/common-go:lib
+    config:
+      packaging: app
+  - name: docker
+    type: docker
+    deps:
+      - :cli
+    argdeps:
+      - version
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/previewctl:${version}
+        - ${imageRepoBase}/previewctl:hash-${__pkg_version}
+  - name: "install"
+    type: "generic"
+    argdeps:
+      - no-cache
+    deps:
+      - :cli
+    config:
+      commands:
+        - [ "sh", "-c", "mkdir -p /workspace/bin && sudo mv dev-preview-previewctl--cli/previewctl /workspace/bin/previewctl" ]
+        - [ "sh", "-c", "if ! $(grep 'previewctl completion bash' ~/.bashrc > /dev/null); then echo '. <(previewctl completion bash)' >> ~/.bashrc; fi" ]
+        - [ "sh", "-c", "if ! $(grep 'previewctl completion zsh' ~/.zshrc > /dev/null); then echo '. <(previewctl completion zsh)' >> ~/.zshrc; fi" ]
+
+scripts:
+  - name: install
+    description: Build and install previewctl into the current environment
+    script:
+      leeway build dev/preview/previewctl:install -Dno-cache=$RANDOM --dont-test --cache=remote-pull
+  - name: download
+    description:
+    script: |
+      if [[ -z "$INPUT_PREVIEWCTL_HASH" ]]; then
+        # If a specific hash isn't provided we'll use the latest image off main
+        PREVIEWCTL_VERSION=$(\
+            gcloud container images list-tags eu.gcr.io/gitpod-core-dev/build/previewctl \
+                --filter="tags:main-gha.*" \
+                --limit=1 \
+                --format=json \
+            | jq --raw-output '.[0].tags[0]' \
+        )
+        PREVIEWCTL_IMAGE="eu.gcr.io/gitpod-core-dev/build/previewctl:$PREVIEWCTL_VERSION"
+      else
+        PREVIEWCTL_IMAGE="eu.gcr.io/gitpod-core-dev/build/previewctl:hash-$INPUT_PREVIEWCTL_HASH"
+      fi
+
+      echo "Downloading previewctl for $PREVIEWCTL_IMAGE"
+      oci-tool fetch file -o $HOME/bin/previewctl --platform=linux-amd64 "$PREVIEWCTL_IMAGE" app/previewctl
+      chmod +x $HOME/bin/previewctl

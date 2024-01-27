@@ -1,6 +1,6 @@
 # Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
-# See License-AGPL.txt in the project root for license information.
+# See License.AGPL.txt in the project root for license information.
 
 packages:
   - name: all
@@ -13,9 +13,7 @@ packages:
       - :publish-api
       - dev:all-app
       - install/installer:docker
-      - install/kots:lint
       - components/gitpod-protocol:all
-      - operations/observability/mixins:lint
   - name: docker-versions
     type: docker
     config:
@@ -35,13 +33,14 @@ packages:
       - components/dashboard:docker
       - components/docker-up:docker
       - components/ee/agent-smith:docker
-      - components/ee/db-sync:docker
-      - components/ee/kedge:docker
-      - components/ee/payment-endpoint:docker
       - components/gitpod-db:docker
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders
       - components/ide/code:docker
+      - components/ide/code/codehelper:docker
+      - components/ide/jetbrains/launcher:docker
+      - components/ide/jetbrains/backend-plugin:stable
+      - components/ide/jetbrains/backend-plugin:latest
       - components/ide/jetbrains/image:goland
       - components/ide/jetbrains/image:goland-latest
       - components/ide/jetbrains/image:intellij
@@ -50,26 +49,37 @@ packages:
       - components/ide/jetbrains/image:phpstorm-latest
       - components/ide/jetbrains/image:pycharm
       - components/ide/jetbrains/image:pycharm-latest
+      - components/ide/jetbrains/image:rubymine
+      - components/ide/jetbrains/image:rubymine-latest
+      - components/ide/jetbrains/image:webstorm
+      - components/ide/jetbrains/image:webstorm-latest
+      - components/ide/jetbrains/image:rider
+      - components/ide/jetbrains/image:rider-latest
+      - components/ide/jetbrains/image:clion
+      - components/ide/jetbrains/image:clion-latest
       - components/image-builder-bob:docker
       - components/image-builder-mk3:docker
+      - components/ipfs/ipfs-cluster:docker
+      - components/ipfs/kubo:docker
       - components/local-app:docker
       - components/public-api-server:docker
+      - components/usage:docker
       - components/openvsx-proxy:docker
       - components/proxy:docker
       - components/registry-facade:docker
-      - components/registry-facade/ca-updater:docker
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor:docker
-      - components/installation-telemetry:docker
       - components/workspacekit:docker
       - components/ws-daemon:docker
       - components/ws-daemon/seccomp-profile-installer:docker
-      - components/ws-daemon/shiftfs-module-loader:docker
       - components/ws-manager-bridge:docker
-      - components/ws-manager:docker
+      - components/ws-manager-mk2:docker
       - components/ws-proxy:docker
       - components/ide-proxy:docker
+      - components/ide-metrics:docker
+      - components/ide-service:docker
+      - components/node-labeler:docker
       - test:docker
       - dev/version-manifest:app
     config:
@@ -81,11 +91,14 @@ packages:
   - name: publish-api
     type: generic
     deps:
+      - components/ide-metrics-api/typescript-grpc:publish
+      - components/ide-metrics-api/typescript-grpcweb:publish
       - components/gitpod-protocol:publish
       - components/local-app-api/typescript-grpcweb:publish
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor-api/typescript-grpcweb:publish
-      - components/ide/jetbrains/gateway-plugin:publish
+      - components/ide/jetbrains/gateway-plugin:publish-stable
+      - components/ide/jetbrains/gateway-plugin:publish-latest
       - components/public-api/typescript:publish
   - name: all-apps
     type: generic
@@ -95,9 +108,6 @@ packages:
       - components/dashboard:app
       - components/docker-up:app
       - components/ee/agent-smith:app
-      - components/ee/db-sync:app
-      - components/ee/kedge:app
-      - components/ee/payment-endpoint:app
       - components/image-builder-mk3:app
       - components/openvsx-proxy:app
       - components/public-api-server:app
@@ -106,34 +116,23 @@ packages:
       - components/service-waiter:app
       - components/supervisor:app
       - components/supervisor/frontend:app
-      - components/installation-telemetry:app
       - components/workspacekit:app
       - components/ws-daemon:app
       - components/ws-manager-bridge:app
-      - components/ws-manager:app
+      - components/ide-metrics:app
+      - components/ide-service:app
+      - components/ide/jetbrains/launcher:app
+      - components/node-labeler:app
 scripts:
   - name: update-license-header
     description: Updates the license header in all source files
     deps:
       - dev/addlicense:app
     script: |
-      tmpdir=$(mktemp -d)
-      echo "Temp Dir: $tmpdir"
-
-      leeway collect files               --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | uniq > $tmpdir/all
-      leeway collect files --variant oss --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | uniq > $tmpdir/oss
-
-      grep -v -f $tmpdir/oss $tmpdir/all > $tmpdir/ee
-      grep -E "^components\/ee\/" $tmpdir/oss >> $tmpdir/ee
-      grep -v -E "^chart\/" $tmpdir/oss | grep -v -E "^install\/" > $tmpdir/agpl
-      grep -v -f $tmpdir/agpl $tmpdir/oss > $tmpdir/mit
-
       # set `export LICENCE_HEADER_CHECK_ONLY=true` to just check if all headers are there (and exit with status code 1 if not)
       check=$([ "$LICENCE_HEADER_CHECK_ONLY" = true ] && printf "%s" '-check')
 
-      cat $tmpdir/ee   | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l gpshf . || exit 1
-      cat $tmpdir/agpl | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l agpl  . || exit 1
-      cat $tmpdir/mit  | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l mit   . || exit 1
+      leeway collect files --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | sort | uniq | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l agpl  . || exit 1
   - name: dejson-log-output
     script: |-
       jq -Rr '. as $line |
@@ -149,7 +148,7 @@ scripts:
     srcs:
       - components/**/*
     script: |
-      GO_COMPONENTS=( local-app-api content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api )
+      GO_COMPONENTS=( local-app-api content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api usage-api spicedb )
 
       for COMPONENT in "${GO_COMPONENTS[@]}";do
         echo "Generating code for component $COMPONENT..."
@@ -158,7 +157,7 @@ scripts:
         popd > /dev/null
       done
 
-      WEB_COMPONENTS=( local-app-api/typescript-grpcweb supervisor-api/typescript-grpc supervisor-api/typescript-grpcweb )
+      WEB_COMPONENTS=( local-app-api/typescript-grpcweb supervisor-api/typescript-grpc supervisor-api/typescript-grpcweb spicedb/typescript )
       for COMPONENT in "${WEB_COMPONENTS[@]}";do
         echo "Generating code for component $COMPONENT..."
         pushd $COMPONENT > /dev/null
@@ -173,16 +172,30 @@ scripts:
       - test/**/*
       - dev/**/*
     script: |
-      leeway exec --filter-type go -v -- go mod tidy -compat=1.18
+      leeway exec --filter-type go -v -- go mod tidy -compat=1.21
 
       # not all the code is present in leeway.
       # ensure we update everything containing a go.mod file
       for COMPONENT in $(find . -name go.mod); do
         DIRECTORY=$(dirname $COMPONENT)
+        echo "$DIRECTORY"
         pushd $DIRECTORY > /dev/null
-        go mod tidy -compat=1.18
+        go mod tidy -compat=1.21 -v
         popd > /dev/null
       done
+
+  - name: check-mocha-no-only
+    srcs:
+      - components/**/*
+    script: |
+      if [ "$(git diff --cached | grep "+" | grep "\w+\.only(")" != "" ]; then
+        echo ""
+        echo "COMMIT FAILED:"
+        echo "Some spec files have .only. Please remove only and try committing again."
+        exit 1
+      else
+        exit 0
+      fi
 
   - name: unblock-user
     deps:
@@ -214,7 +227,19 @@ scripts:
         query="update d_b_user set blocked=0 where name=\"$user\";"
         mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
       fi
+
+      printf "\nFGA: Reset fgaRelationshipsVersion for $user...\n"
+      query="update d_b_user set additionalData = JSON_REMOVE(additionalData, '$.fgaRelationshipsVersion') where name=\"$user\";"
+      mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
+      if [ $? -ne 0 ]; then
+        echo "error resetting fgaRelationshipsVersion"
+        kill $PID || true
+        exit 1
+      fi
       kill $PID || true
+
+      printf "\nRestarting server and redis to pick up DB changes...\n"
+      kubectl rollout restart deployment/server deployment/redis
 
   - name: make-user-admin
     deps:
@@ -243,19 +268,40 @@ scripts:
         echo "No input."
       else
         echo "User: $user"
-        query="update d_b_user set rolesOrPermissions = '[\"admin\"]' where name=\"$user\";"
+        query="update d_b_user set rolesOrPermissions = '[\"admin\", \"admin-permissions\"]', fgaRelationshipsVersion=0 where name=\"$user\";"
         mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
       fi
       kill $PID || true
+
+      printf "\nRestarting server and redis to pick up DB changes...\n"
+      kubectl rollout restart deployment/server deployment/redis
 
   - name: add-smith-token
     deps:
       - components/service-waiter:app
     script: |
       echo "$"
-      export DB_USERNAME=$(kubectl get secrets mysql -o jsonpath="{.data.username}" | base64 -d)
-      export DB_PASSWORD=$(kubectl get secrets mysql -o jsonpath="{.data.password}" | base64 -d)
-      kubectl port-forward statefulset/mysql 3306 &
+      export DB_USERNAME=$(\
+        kubectl \
+          --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+          --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+          --namespace "${PREVIEW_NAMESPACE}" \
+          get secrets mysql -o jsonpath="{.data.username}" \
+        | base64 -d \
+      )
+      export DB_PASSWORD=$(\
+        kubectl \
+          --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+          --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+          --namespace "${PREVIEW_NAMESPACE}" \
+          get secrets mysql -o jsonpath="{.data.password}" \
+        | base64 -d \
+      )
+      kubectl \
+        --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+        --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+        --namespace "${PREVIEW_NAMESPACE}" \
+        port-forward statefulset/mysql 3306 &
       PID=$!
       service-waiter database -t 20s
       if [ $? -ne 0 ]; then
@@ -267,7 +313,7 @@ scripts:
       query="insert into d_b_user(id,name,creationDate,rolesOrPermissions,additionalData) values('builtin-user-agent-smith-0000000', 'agent-smith', DATE_FORMAT(NOW(3), '%Y-%m-%dT%T.%fZ'),'[\"admin\"]','{\"emailNotificationSettings\": {\"allowsChangelogMail\": false, \"allowsOnboardingMail\": true}}') on duplicate key update id=id;"
       mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
 
-      query="insert into d_b_gitpod_token(tokenHash,name,type,userId,scopes,created,deleted) VALUES('$TOKEN','agent-smith',0,'builtin-user-agent-smith-0000000','function:adminBlockUser', '2021-03-16T10:28:57.608Z', false) on duplicate key update tokenHash=tokenHash;"
+      query="insert into d_b_gitpod_token(tokenHash,name,type,userId,scopes,created,deleted) VALUES('${TOKEN}','agent-smith',0,'builtin-user-agent-smith-0000000','function:adminBlockUser', '2021-03-16T10:28:57.608Z', false) on duplicate key update tokenHash=tokenHash;"
       mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
 
       kill $PID || true

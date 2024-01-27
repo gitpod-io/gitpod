@@ -1,0 +1,30 @@
+packages:
+  - name: app
+    type: go
+    deps:
+      - components/common-go:lib
+      - components/ide-metrics-api/go:lib
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid= -X 'github.com/gitpod-io/gitpod/ide-metrics/cmd.Version=commit-${__git_commit}'"]
+
+  - name: docker
+    type: docker
+    deps:
+      - components/ide-metrics:app
+    argdeps:
+      - imageRepoBase
+    config:
+      metadata:
+        helm-component: ideMetrics
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/ide-metrics:${version}
+        - ${imageRepoBase}/ide-metrics:commit-${__git_commit}

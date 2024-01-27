@@ -1,10 +1,13 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package api
 
-import "os"
+import (
+	"os"
+	"time"
+)
 
 // ListDirRequest is the argument for ListDir
 type ListDirRequest struct {
@@ -39,3 +42,9 @@ type ExecResponse struct {
 	Stdout   string
 	Stderr   string
 }
+
+type BurnCpuRequest struct {
+	Procs   uint
+	Timeout time.Duration
+}
+type BurnCpuResponse struct{}

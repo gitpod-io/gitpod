@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // package: contentservice
@@ -252,6 +252,8 @@ export namespace GitConfig {
 export class SnapshotInitializer extends jspb.Message {
     getSnapshot(): string;
     setSnapshot(value: string): SnapshotInitializer;
+    getFromVolumeSnapshot(): boolean;
+    setFromVolumeSnapshot(value: boolean): SnapshotInitializer;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SnapshotInitializer.AsObject;
@@ -266,6 +268,7 @@ export class SnapshotInitializer extends jspb.Message {
 export namespace SnapshotInitializer {
     export type AsObject = {
         snapshot: string,
+        fromVolumeSnapshot: boolean,
     }
 }
 
@@ -300,6 +303,8 @@ export namespace PrebuildInitializer {
 export class FromBackupInitializer extends jspb.Message {
     getCheckoutLocation(): string;
     setCheckoutLocation(value: string): FromBackupInitializer;
+    getFromVolumeSnapshot(): boolean;
+    setFromVolumeSnapshot(value: boolean): FromBackupInitializer;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): FromBackupInitializer.AsObject;
@@ -314,6 +319,7 @@ export class FromBackupInitializer extends jspb.Message {
 export namespace FromBackupInitializer {
     export type AsObject = {
         checkoutLocation: string,
+        fromVolumeSnapshot: boolean,
     }
 }
 

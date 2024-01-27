@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { injectable, inject } from "inversify";
@@ -30,7 +30,7 @@ export class GitHubTokenHelper {
         const { host } = this.config;
         try {
             const token = await this.tokenProvider.getTokenForHost(user, host);
-            if (this.containsScopes(token, requiredScopes)) {
+            if (token && this.containsScopes(token, requiredScopes)) {
                 return token;
             }
         } catch {
@@ -39,7 +39,13 @@ export class GitHubTokenHelper {
         if (requiredScopes.length === 0) {
             requiredScopes = GitHubScope.Requirements.DEFAULT;
         }
-        throw UnauthorizedError.create(host, requiredScopes, "missing-identity");
+        throw UnauthorizedError.create({
+            host,
+            providerType: "GitHub",
+            requiredScopes: GitHubScope.Requirements.DEFAULT,
+            providerIsConnected: false,
+            isMissingScopes: true,
+        });
     }
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {
         const wantedSet = new Set(wantedScopes);

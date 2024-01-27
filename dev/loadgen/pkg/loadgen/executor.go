@@ -1,14 +1,16 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package loadgen
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
+	"os"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -16,6 +18,10 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+)
+
+var (
+	markActiveInterval = 1 * time.Minute
 )
 
 // Executor starts and watches workspaces
@@ -28,6 +34,9 @@ type Executor interface {
 
 	// StopAll stops all workspaces started by the executor
 	StopAll(ctx context.Context) error
+
+	// Dump dumps the executor state to a file
+	Dump(path string) error
 }
 
 // StartWorkspaceSpec specifies a workspace
@@ -101,22 +110,35 @@ func (fe *FakeExecutor) StopAll() error {
 	return nil
 }
 
-const loadgenAnnotation = "loadgen"
+const (
+	loadgenAnnotation = "loadgen"
+	// loadgenSessionAnnotation is used to identify which loadgen session
+	// a workspace belongs to. Allows for running multiple loadgens in parallel.
+	loadgenSessionAnnotation = "loadgen-session-id"
+)
 
 // WsmanExecutor talks to a ws manager
 type WsmanExecutor struct {
 	C          api.WorkspaceManagerClient
 	Sub        []context.CancelFunc
+	SessionId  string
 	workspaces []string
+	mu         sync.Mutex
 }
 
 // StartWorkspace starts a new workspace
 func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration time.Duration, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	// Make the start workspace timeout same as the ws-manager start workspace timeout
+	// https://github.com/gitpod-io/gitpod/blob/f0d464788dbf1ec9495b0802849c95ff86500c98/components/ws-manager/pkg/manager/manager.go#L182
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	s := *spec
+	if s.Metadata.Annotations == nil {
+		s.Metadata.Annotations = make(map[string]string)
+	}
 	s.Metadata.Annotations[loadgenAnnotation] = "true"
+	s.Metadata.Annotations[loadgenSessionAnnotation] = w.SessionId
 	ss := api.StartWorkspaceRequest(s)
 
 	t0 := time.Now()
@@ -125,8 +147,39 @@ func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration t
 		return 0, err
 	}
 
+	go w.SimulateActivity(ss.Id, markActiveInterval)
+
+	// Must lock as StartWorkspace is called from multiple goroutines.
+	w.mu.Lock()
 	w.workspaces = append(w.workspaces, ss.Id)
+	w.mu.Unlock()
 	return time.Since(t0), nil
+}
+
+// SimulateActivity simulates activity in a workspace by marking it active at the given interval.
+// Normally the IDE would be calling this when a user is active in a workspace.
+// Marking workspaces as active generates events on the Workspace resource, which could mean increased
+// load on the ws-manager-mk2 and more events being sent to bridge (although we should filter out events
+// that only change a workspace's last activity timestamp).
+func (w *WsmanExecutor) SimulateActivity(workspaceID string, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		_, err := w.C.MarkActive(context.Background(), &api.MarkActiveRequest{
+			Id: workspaceID,
+		})
+		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				// Workspace no longer exists, stop marking it active.
+				log.WithError(err).WithField("workspaceId", workspaceID).Debug("workspace no longer exists, stopping activity simulation")
+				return
+			}
+
+			log.WithError(err).WithField("workspaceId", workspaceID).Warn("failed to mark workspace active")
+			continue
+		}
+	}
 }
 
 // Observe observes all workspaces started by the excecutor
@@ -136,34 +189,45 @@ func (w *WsmanExecutor) Observe() (<-chan WorkspaceUpdate, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	w.Sub = append(w.Sub, cancel)
 
-	sub, err := w.C.Subscribe(ctx, &api.SubscribeRequest{})
-	if err != nil {
-		return nil, err
-	}
 	go func() {
 		defer close(res)
 		for {
-			resp, err := sub.Recv()
+			sub, err := w.C.Subscribe(ctx, &api.SubscribeRequest{
+				MustMatch: w.loadgenSessionFilter(),
+			})
 			if err != nil {
-				if err != io.EOF && status.Code(err) != codes.Canceled {
-					log.WithError(err).Warn("subscription failure")
-				}
-				return
-			}
-			status := resp.GetStatus()
-			if status == nil {
+				log.WithError(err).Warn("failed to subscribe to ws-manager, retrying...")
+				time.Sleep(5 * time.Second)
 				continue
 			}
 
-			res <- WorkspaceUpdate{
-				InstanceID:  status.Id,
-				WorkspaceID: status.Metadata.MetaId,
-				OwnerID:     status.Metadata.Owner,
-				Failed:      status.Conditions.Failed != "",
-				Phase:       status.Phase,
+			for {
+				resp, err := sub.Recv()
+				if err != nil {
+					if status.Code(err) != codes.Canceled {
+						log.WithError(err).Warn("lost connection to ws-manager, retrying...")
+						time.Sleep(5 * time.Second)
+						// Break and resubscribe.
+						break
+					}
+					return
+				}
+				status := resp.GetStatus()
+				if status == nil {
+					continue
+				}
+
+				res <- WorkspaceUpdate{
+					InstanceID:  status.Id,
+					WorkspaceID: status.Metadata.MetaId,
+					OwnerID:     status.Metadata.Owner,
+					Failed:      status.Conditions.Failed != "",
+					Phase:       status.Phase,
+				}
 			}
 		}
 	}()
+
 	return res, nil
 }
 
@@ -173,7 +237,12 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 		s()
 	}
 
-	log.Info("stopping workspaces")
+	listReq := api.GetWorkspacesRequest{
+		MustMatch: w.loadgenSessionFilter(),
+	}
+
+	log.Infof("stopping %d workspaces", len(w.workspaces))
+	start := time.Now()
 	for _, id := range w.workspaces {
 		stopReq := api.StopWorkspaceRequest{
 			Id:     id,
@@ -182,37 +251,90 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 
 		_, err := w.C.StopWorkspace(ctx, &stopReq)
 		if err != nil {
-			log.Warnf("failed to stop %s", id)
+			log.Warnf("failed to stop %s: %v", id, err)
 		}
 	}
 
 	w.workspaces = make([]string, 0)
 
-	listReq := api.GetWorkspacesRequest{
-		MustMatch: &api.MetadataFilter{
-			Annotations: map[string]string{
-				loadgenAnnotation: "true",
-			},
-		},
-	}
-
 	for {
 		resp, err := w.C.GetWorkspaces(ctx, &listReq)
-		if len(resp.Status) == 0 {
-			break
-		}
-
 		if err != nil {
 			log.Warnf("could not get workspaces: %v", err)
+		} else {
+			n := len(resp.GetStatus())
+			if n == 0 {
+				break
+			}
+			ex := resp.GetStatus()[0]
+			log.Infof("%d workspaces remaining, e.g. %s", n, ex.Id)
 		}
 
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("not all workspaces could be stopped")
+			elapsed := time.Since(start)
+			return fmt.Errorf("not all workspaces could be stopped: %s", elapsed)
 		default:
 			time.Sleep(5 * time.Second)
 		}
 	}
 
+	elapsed := time.Since(start)
+	log.Infof("Time taken to stop workspaces: %s", elapsed)
+
 	return nil
+}
+
+func (w *WsmanExecutor) Dump(path string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	listReq := api.GetWorkspacesRequest{
+		MustMatch: w.loadgenSessionFilter(),
+	}
+
+	resp, err := w.C.GetWorkspaces(ctx, &listReq)
+	if err != nil {
+		return err
+	}
+
+	var wss []WorkspaceState
+	for _, status := range resp.GetStatus() {
+		ws := WorkspaceState{
+			WorkspaceName: status.Metadata.MetaId,
+			InstanceId:    status.Id,
+			Phase:         status.Phase,
+			Class:         status.Spec.Class,
+			NodeName:      status.Runtime.NodeName,
+			Pod:           status.Runtime.PodName,
+			Context:       status.Metadata.Annotations["context-url"],
+		}
+
+		wss = append(wss, ws)
+	}
+
+	fc, err := json.MarshalIndent(wss, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, fc, 0644)
+}
+
+func (w *WsmanExecutor) loadgenSessionFilter() *api.MetadataFilter {
+	return &api.MetadataFilter{
+		Annotations: map[string]string{
+			loadgenAnnotation:        "true",
+			loadgenSessionAnnotation: w.SessionId,
+		},
+	}
+}
+
+type WorkspaceState struct {
+	WorkspaceName string
+	InstanceId    string
+	Phase         api.WorkspacePhase
+	Class         string
+	NodeName      string
+	Pod           string
+	Context       string
 }

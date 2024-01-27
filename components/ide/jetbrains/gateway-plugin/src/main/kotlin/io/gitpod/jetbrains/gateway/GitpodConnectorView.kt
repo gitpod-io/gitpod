@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package io.gitpod.jetbrains.gateway
 
@@ -31,7 +31,7 @@ class GitpodConnectorView(
         row {
             panel {
                 verticalAlign(VerticalAlign.BOTTOM)
-                separator(null, WelcomeScreenUIManager.getSeparatorColor())
+                separator(WelcomeScreenUIManager.getSeparatorColor())
                 indent {
                     row {
                         button("Back") {
@@ -44,5 +44,4 @@ class GitpodConnectorView(
     }.apply {
         this.background = WelcomeScreenUIManager.getMainAssociatedComponentBackground()
     }
-
 }

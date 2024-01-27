@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package io.gitpod.jetbrains.gateway
 
@@ -9,10 +9,7 @@ import com.intellij.openapi.CompositeDisposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.remoteDev.util.onTerminationOrNow
-import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.enteredTextSatisfies
@@ -30,6 +27,7 @@ import kotlinx.coroutines.future.await
 import java.util.*
 import javax.swing.DefaultComboBoxModel
 
+@Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 class GitpodStartWorkspaceView(
     lifetime: Lifetime
 ) {
@@ -63,20 +61,43 @@ class GitpodStartWorkspaceView(
             label("Start from any GitLab, GitHub or Bitbucket URL:")
         }
         row {
-            comboBox(backendsModel)
+            val backendsComboBox = comboBox(backendsModel)
                 .gap(RightGap.SMALL)
                 .visibleIf(backendsLoaded)
+            var hasContextUrlChangedFromUi = false
             val contextUrl = textField()
                 .resizableColumn()
                 .horizontalAlign(HorizontalAlign.FILL)
                 .applyToComponent {
-                    this.text = "https://github.com/gitpod-io/spring-petclinic"
+                    this.text = "https://github.com/gitpod-samples/spring-petclinic"
                 }
+                .whenTextChangedFromUi {
+                    hasContextUrlChangedFromUi = true
+                }
+            backendsComboBox.whenItemSelectedFromUi {
+                if (!hasContextUrlChangedFromUi) {
+                    contextUrl.applyToComponent {
+                        backendsModel.selectedItem.let {
+                            text = when(it) {
+                                "IntelliJ IDEA" -> "https://github.com/gitpod-samples/spring-petclinic"
+                                "WebStorm" -> "https://github.com/gitpod-samples/template-typescript-react"
+                                "PyCharm" -> "https://github.com/gitpod-samples/template-python-django"
+                                "GoLand" -> "https://github.com/gitpod-samples/template-golang-cli"
+                                "Rider" -> "https://github.com/gitpod-samples/template-dotnet-core-cli-csharp"
+                                "CLion" -> "https://github.com/gitpod-samples/template-cpp"
+                                "RubyMine" -> "https://github.com/gitpod-samples/template-ruby-on-rails-postgres"
+                                "PhpStorm" -> "https://github.com/gitpod-samples/template-php-laravel-mysql"
+                                else -> "https://github.com/gitpod-io/empty"
+                            }
+                        }
+                    }
+                }
+            }
             button("New Workspace") {
                 if (contextUrl.component.text.isNotBlank()) {
                     backendsModel.selectedItem?.let {
                         backendToId[it]?.let { backend ->
-                            BrowserUtil.browse("https://${settings.gitpodHost}#referrer:jetbrains-gateway:${backend}/${contextUrl.component.text}")
+                            BrowserUtil.browse("https://${settings.gitpodHost}#referrer:jetbrains-gateway:$backend/${contextUrl.component.text}")
                         }
                     }
                 }

@@ -1,0 +1,63 @@
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package ide_service_api;
+
+option go_package = "github.com/gitpod-io/gitpod/ide-service/api";
+option java_package = "io.gitpod.ideservice.api";
+
+service IDEService {
+    rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    rpc ResolveWorkspaceConfig(ResolveWorkspaceConfigRequest) returns (ResolveWorkspaceConfigResponse) {
+        option idempotency_level = IDEMPOTENT;
+    }
+}
+
+message GetConfigRequest {
+    User user = 1;
+}
+
+message GetConfigResponse {
+    string content = 1;
+}
+
+// TODO: import type from other packages
+// EnvironmentVariable describes an env var as key/value pair
+message EnvironmentVariable {
+    string name = 1;
+    string value = 2;
+}
+
+enum WorkspaceType {
+    REGULAR = 0;
+    PREBUILD = 1;
+}
+
+message User {
+    string id = 1;
+    optional string email = 2;
+}
+
+message ResolveWorkspaceConfigRequest {
+    WorkspaceType type = 1;
+    string context = 2;
+    string ide_settings = 3;
+    string workspace_config = 4;
+    User user = 5;
+}
+
+message ResolveWorkspaceConfigResponse {
+    repeated EnvironmentVariable envvars = 1;
+    string supervisor_image = 2;
+    string web_image = 3;
+    repeated string ide_image_layers = 4;
+    // control whether to configure default IDE for a user
+    string referer_ide = 5;
+    string tasks = 6;
+    string ide_settings = 7;
+}

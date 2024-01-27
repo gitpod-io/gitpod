@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package contentservice
 
@@ -65,8 +65,10 @@ func TestUploadUrl(t *testing.T) {
 
 	f := features.New("UploadUrlRequest").
 		WithLabel("component", "content-service").
-		Assess("it should run content-service tests", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("it should run content-service tests", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Parallel()
+
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -101,7 +103,7 @@ func TestUploadUrl(t *testing.T) {
 				})
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
@@ -125,8 +127,10 @@ func TestDownloadUrl(t *testing.T) {
 
 	f := features.New("DownloadUrl").
 		WithLabel("component", "server").
-		Assess("it should pass download URL tests", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("it should pass download URL tests", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Parallel()
+
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -161,7 +165,7 @@ func TestDownloadUrl(t *testing.T) {
 				})
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
@@ -171,8 +175,10 @@ func TestDownloadUrl(t *testing.T) {
 func TestUploadDownloadBlob(t *testing.T) {
 	f := features.New("UploadDownloadBlob").
 		WithLabel("component", "server").
-		Assess("it should upload and download blob", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("it should upload and download blob", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Parallel()
+
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -194,7 +200,7 @@ func TestUploadDownloadBlob(t *testing.T) {
 			originalUrl := resp.Url
 			updatedUrl, err := api.Storage(originalUrl)
 			if err != nil {
-				t.Fatalf("error resolving blob upload target url")
+				t.Fatalf("error resolving blob upload target url: %q", err)
 			}
 			t.Logf("upload URL: %s", updatedUrl)
 
@@ -207,7 +213,7 @@ func TestUploadDownloadBlob(t *testing.T) {
 			originalUrl = resp2.Url
 			updatedUrl, err = api.Storage(originalUrl)
 			if err != nil {
-				t.Fatalf("error resolving blob download target url")
+				t.Fatalf("error resolving blob download target url: %q", err)
 			}
 			t.Logf("download URL: %s", updatedUrl)
 
@@ -216,65 +222,7 @@ func TestUploadDownloadBlob(t *testing.T) {
 				t.Fatalf("blob content mismatch: should '%s' but is '%s'", blobContent, body)
 			}
 
-			return ctx
-		}).
-		Feature()
-
-	testEnv.Test(t, f)
-}
-
-// TestUploadDownloadBlobViaServer uploads a blob via server → content-server and downloads it afterwards
-func TestUploadDownloadBlobViaServer(t *testing.T) {
-	integration.SkipWithoutUsername(t, username)
-	f := features.New("UploadDownloadBlobViaServer").
-		WithLabel("component", "content-server").
-		Assess("it should uploads a blob via server → content-server and downloads it afterwards", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-			defer cancel()
-
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
-
-			blobContent := fmt.Sprintf("Hello Blobs! It's %s!", time.Now())
-
-			server, err := api.GitpodServer()
-			if err != nil {
-				t.Fatalf("cannot get content blob upload URL: %q", err)
-			}
-
-			originalUrl, err := server.GetContentBlobUploadURL(ctx, "test-blob")
-			if err != nil {
-				t.Fatalf("cannot get content blob upload URL: %q", err)
-			}
-			updatedUrl, err := api.Storage(originalUrl)
-			if err != nil {
-				t.Fatalf("error resolving blob upload target url")
-			}
-			t.Logf("upload URL: %s", updatedUrl)
-
-			uploadBlob(t, originalUrl, updatedUrl, blobContent)
-
-			originalUrl, err = server.GetContentBlobDownloadURL(ctx, "test-blob")
-			if err != nil {
-				t.Fatalf("cannot get content blob download URL: %q", err)
-			}
-
-			updatedUrl, err = api.Storage(originalUrl)
-			if err != nil {
-				t.Fatalf("error resolving blob download target url")
-			}
-			t.Logf("download URL: %s", updatedUrl)
-
-			body := downloadBlob(t, originalUrl, updatedUrl)
-			if string(body) != blobContent {
-				t.Fatalf("blob content mismatch: should '%s' but is '%s'", blobContent, body)
-			}
-
-			t.Log("Uploading and downloading blob to content store succeeded.")
-
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

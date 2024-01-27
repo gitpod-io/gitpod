@@ -1,0 +1,53 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: image-builder-central-monitoring-rules
+spec:
+  groups:
+    - name: image-builder-central
+      rules:
+      - alert: GitpodImageBuildDurationAnomaly
+        labels:
+          severity: warning
+          team: engine
+        annotations:
+          runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImageBuildDurationAnomaly.md
+          summary: image builds are happening too frequently in cluster {{ $labels.cluster }}
+          description: Users are waiting more often for image builds
+        expr: |
+          (
+              (
+                  avg_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="ImageBuild", cluster!~"ephemeral.*"}[4h])
+                  - avg_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="ImageBuild", cluster!~"ephemeral.*"}[7d])
+              )
+              / stddev_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="ImageBuild", cluster!~"ephemeral.*"}[30d])
+          ) > 2.5
+      - alert: GitpodImageBuilderCrashlooping
+        labels:
+          severity: critical
+          dedicated: included
+        annotations:
+          runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceDeploymentCrashlooping.md
+          summary: image-builder-mk3 is crash looping in cluster {{ $labels.cluster }}
+          description: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 3 minutes.
+        expr: |
+          increase(kube_pod_container_status_restarts_total{container="image-builder-mk3", cluster!~"ephemeral.*"}[1m]) > 3
+        for: 3m
+      - alert: GitpodImageBuilderReplicasMismatch
+        labels:
+          severity: critical
+          dedicated: included
+        annotations:
+          runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceDeploymentReplicaMismatch.md
+          summary: Desired number of replicas for image-builder-mk3 are not available in cluster {{ $labels.cluster }}
+          description: The mismatch is {{ printf "%.2f" $value }}
+        expr: |
+          kube_deployment_spec_replicas{container="image-builder-mk3", cluster!~"ephemeral.*"} != kube_deployment_status_replicas_available{container="image-builder-mk3", cluster!~"ephemeral.*"}
+        for: 3m

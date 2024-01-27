@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -13,14 +13,17 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"sigs.k8s.io/yaml"
 
@@ -52,7 +55,7 @@ var benchmarkCommand = &cobra.Command{
 		}
 
 		var load loadgen.LoadGenerator
-		load = loadgen.NewFixedLoadGenerator(500*time.Millisecond, 300*time.Millisecond)
+		load = loadgen.NewFixedLoadGenerator(800*time.Millisecond, 300*time.Millisecond)
 		load = loadgen.NewWorkspaceCountLimitingGenerator(load, scenario.Workspaces)
 
 		template := &api.StartWorkspaceRequest{
@@ -64,7 +67,6 @@ var benchmarkCommand = &cobra.Command{
 			},
 			ServicePrefix: "will-be-overriden",
 			Spec: &api.StartWorkspaceSpec{
-				DeprecatedIdeImage: scenario.IDEImage,
 				IdeImage: &api.IDEImage{
 					WebRef: scenario.IDEImage,
 				},
@@ -73,11 +75,11 @@ var benchmarkCommand = &cobra.Command{
 					Email:    "test@gitpod.io",
 					Username: "foobar",
 				},
-				FeatureFlags:      []api.WorkspaceFeatureFlag{},
-				Timeout:           "5m",
-				WorkspaceImage:    "will-be-overriden",
-				WorkspaceLocation: "workspace-stress",
-				Envvars:           scenario.Environment,
+				FeatureFlags:   scenario.FeatureFlags,
+				Timeout:        scenario.WorkspaceTimeout,
+				WorkspaceImage: "will-be-overriden",
+				Envvars:        scenario.Environment,
+				Class:          scenario.WorkspaceClass,
 			},
 			Type: api.WorkspaceType_REGULAR,
 		}
@@ -101,7 +103,7 @@ var benchmarkCommand = &cobra.Command{
 			})
 			opts = append(opts, grpc.WithTransportCredentials(creds))
 		} else {
-			opts = append(opts, grpc.WithInsecure())
+			opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		}
 
 		conn, err := grpc.Dial(benchmarkOpts.Host, opts...)
@@ -117,13 +119,26 @@ var benchmarkCommand = &cobra.Command{
 
 		success := observer.NewSuccessObserver(scenario.SuccessRate)
 
+		sessionID := uuid.New().String()
+		resultsDir := fmt.Sprintf("results/benchmark-%s", sessionID)
+		if err = os.MkdirAll(resultsDir, 0755); err != nil {
+			log.Fatal(err)
+		}
+		log.Infof("Results will be saved in dir %s", resultsDir)
+
 		session := &loadgen.Session{
-			Executor: &loadgen.WsmanExecutor{C: api.NewWorkspaceManagerClient(conn)},
+			Executor: &loadgen.WsmanExecutor{
+				C:         api.NewWorkspaceManagerClient(conn),
+				SessionId: sessionID,
+			},
 			// Executor: loadgen.NewFakeExecutor(),
 			Load: load,
 			Specs: &loadgen.MultiWorkspaceGenerator{
 				Template: template,
-				Repos:    scenario.Repos,
+				Config: loadgen.MultiGeneratorConfig{
+					Repos: scenario.Repos,
+					Auth:  scenario.RepositoryAuth,
+				},
 			},
 			Worker: 5,
 			Observer: []chan<- *loadgen.SessionEvent{
@@ -134,7 +149,7 @@ var benchmarkCommand = &cobra.Command{
 					if err != nil {
 						return
 					}
-					os.WriteFile("stats.json", fc, 0644)
+					os.WriteFile(path.Join(resultsDir, "stats.json"), fc, 0644)
 				}),
 				success.Observe(),
 			},
@@ -151,7 +166,7 @@ var benchmarkCommand = &cobra.Command{
 				}
 			},
 			Termination: func(executor loadgen.Executor) error {
-				return handleWorkspaceDeletion(scenario.StoppingTimeout, executor)
+				return handleWorkspaceDeletion(scenario.StoppingTimeout, resultsDir, executor, false)
 			},
 		}
 
@@ -164,7 +179,7 @@ var benchmarkCommand = &cobra.Command{
 			// cancel workspace creation so that no new workspaces are created while we are deleting them
 			scancel()
 
-			if err := handleWorkspaceDeletion(scenario.StoppingTimeout, session.Executor); err != nil {
+			if err := handleWorkspaceDeletion(scenario.StoppingTimeout, resultsDir, session.Executor, true); err != nil {
 				log.Warnf("could not delete workspaces: %v", err)
 				os.Exit(1)
 			}
@@ -187,37 +202,41 @@ func init() {
 }
 
 type BenchmarkScenario struct {
-	Workspaces      int                        `json:"workspaces"`
-	IDEImage        string                     `json:"ideImage"`
-	Repos           []loadgen.WorkspaceCfg     `json:"repos"`
-	Environment     []*api.EnvironmentVariable `json:"environment"`
-	RunningTimeout  string                     `json:"waitForRunning"`
-	StoppingTimeout string                     `json:"waitForStopping"`
-	SuccessRate     float32                    `json:"successRate"`
+	Workspaces       int                        `json:"workspaces"`
+	IDEImage         string                     `json:"ideImage"`
+	Repos            []loadgen.WorkspaceCfg     `json:"repos"`
+	Environment      []*api.EnvironmentVariable `json:"environment"`
+	RunningTimeout   string                     `json:"waitForRunning"`
+	StoppingTimeout  string                     `json:"waitForStopping"`
+	SuccessRate      float32                    `json:"successRate"`
+	WorkspaceClass   string                     `json:"workspaceClass"`
+	FeatureFlags     []api.WorkspaceFeatureFlag `json:"featureFlags"`
+	RepositoryAuth   *loadgen.RepositoryAuth    `json:"repoAuth,omitempty"`
+	WorkspaceTimeout string                     `json:"workspaceTimeout,omitempty"`
 }
 
-func handleWorkspaceDeletion(timeout string, executor loadgen.Executor) error {
+func handleWorkspaceDeletion(timeout string, resultsDir string, executor loadgen.Executor, canceled bool) error {
 	if runOpts.Interactive {
 		if !confirmDeletion() {
 			return nil
 		}
 
-		if err := stopWorkspaces(timeout, executor); err != nil {
-			return err
-		}
+		return stopWorkspaces(timeout, resultsDir, executor)
 	} else {
-		if err := stopWorkspaces(timeout, executor); err != nil {
-			return err
+		if !canceled {
+			fmt.Println("Waiting for 2 minutes before deleting workspaces")
+			time.Sleep(2 * time.Minute)
 		}
+
+		return stopWorkspaces(timeout, resultsDir, executor)
 	}
-	return nil
 }
 
 func confirmDeletion() bool {
 	fmt.Println("Do you want to delete the created workspaces? y/n")
 	var response string
 	_, err := fmt.Scanln(&response)
-	if err != nil {
+	if err != nil && err.Error() != "unexpected newline" {
 		log.Fatal(err)
 	}
 
@@ -228,12 +247,17 @@ func confirmDeletion() bool {
 	return response == "y"
 }
 
-func stopWorkspaces(timeout string, executor loadgen.Executor) error {
+func stopWorkspaces(timeout string, resultsDir string, executor loadgen.Executor) error {
 	stopping, err := time.ParseDuration(timeout)
 	if err != nil {
 		return fmt.Errorf("invalid timeout")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), stopping)
 	defer cancel()
+	resultFile := path.Join(resultsDir, "benchmark-result.json")
+	if err := executor.Dump(resultFile); err != nil {
+		log.Warn("could not dump workspace state, trying to stop them anyway")
+	}
+	log.Infof("Saved benchmark results to %s", resultFile)
 	return executor.StopAll(ctx)
 }

@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package registry
 
@@ -51,10 +51,12 @@ func (m *measuringRegistryRoundTripper) RoundTrip(req *http.Request) (*http.Resp
 
 // Metrics combine custom metrics exported by registry facade
 type metrics struct {
-	ManifestHist          prometheus.Histogram
-	ReqFailedCounter      *prometheus.CounterVec
-	BlobCounter           prometheus.Counter
-	BlobDownloadSpeedHist prometheus.Histogram
+	ManifestHist            prometheus.Histogram
+	ReqFailedCounter        *prometheus.CounterVec
+	BlobCounter             prometheus.Counter
+	BlobDownloadSizeCounter *prometheus.CounterVec
+	BlobDownloadCounter     *prometheus.CounterVec
+	BlobDownloadSpeedHist   *prometheus.HistogramVec
 }
 
 func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
@@ -88,11 +90,29 @@ func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
 		return nil, err
 	}
 
-	blobDownloadSpeedHist := prometheus.NewHistogram(prometheus.HistogramOpts{
+	blobDownloadCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "blob_req_dl_total",
+		Help: "number of blob download requests",
+	}, []string{"blobSource", "ok"})
+	err = reg.Register(blobDownloadCounter)
+	if err != nil {
+		return nil, err
+	}
+
+	blobDownloadSizeCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "blob_req_bytes_total",
+		Help: "amount of blob bytes downloaded",
+	}, []string{"blobSource"})
+	err = reg.Register(blobDownloadSizeCounter)
+	if err != nil {
+		return nil, err
+	}
+
+	blobDownloadSpeedHist := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "blob_req_bytes_second",
 		Help:    "blob download speed in bytes per second",
-		Buckets: prometheus.ExponentialBuckets(1024*1024, 2, 10),
-	})
+		Buckets: prometheus.ExponentialBuckets(1024*1024, 2, 15),
+	}, []string{"blobSource"})
 	if upstream {
 		err = reg.Register(blobDownloadSpeedHist)
 		if err != nil {
@@ -101,9 +121,11 @@ func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
 	}
 
 	return &metrics{
-		ManifestHist:          manifestHist,
-		ReqFailedCounter:      reqFailedCounter,
-		BlobCounter:           blobCounter,
-		BlobDownloadSpeedHist: blobDownloadSpeedHist,
+		ManifestHist:            manifestHist,
+		ReqFailedCounter:        reqFailedCounter,
+		BlobCounter:             blobCounter,
+		BlobDownloadSpeedHist:   blobDownloadSpeedHist,
+		BlobDownloadSizeCounter: blobDownloadSizeCounter,
+		BlobDownloadCounter:     blobDownloadCounter,
 	}, nil
 }

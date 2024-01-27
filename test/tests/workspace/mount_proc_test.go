@@ -1,13 +1,12 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package workspace
 
 import (
 	"context"
 	"fmt"
-	"net/rpc"
 	"sync"
 	"testing"
 	"time"
@@ -24,7 +23,7 @@ const (
 	parallel      = 5
 )
 
-func loadMountProc(t *testing.T, rsa *rpc.Client) {
+func loadMountProc(t *testing.T, rsa *integration.RpcClient) {
 	var resp agent.ExecResponse
 	err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     "/",
@@ -47,19 +46,34 @@ func loadMountProc(t *testing.T, rsa *rpc.Client) {
 func TestMountProc(t *testing.T) {
 	f := features.New("proc mount").
 		WithLabel("component", "workspace").
-		Assess("load test proc mount", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("load test proc mount", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
+
+			t.Parallel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})
 
-			ws, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}
+
+			t.Cleanup(func() {
+				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				defer scancel()
+
+				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+				defer sapi.Done(t)
+
+				_, err = stopWs(true, sapi)
+				if err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
+				}
+			})
 
 			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(ws.Req.Id), integration.WithWorkspacekitLift(true))
 			if err != nil {
@@ -78,12 +92,7 @@ func TestMountProc(t *testing.T) {
 			}
 			wg.Wait()
 
-			err = integration.DeleteWorkspace(ctx, api, ws.Req.Id)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

@@ -1,14 +1,17 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { Branch, CommitInfo, Repository, User } from "@gitpod/gitpod-protocol";
+import { Branch, CommitInfo, Repository, RepositoryInfo, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { RepoURL } from "../repohost";
 import { RepositoryProvider } from "../repohost/repository-provider";
-import { BitbucketServerApi } from "./bitbucket-server-api";
+import { BitbucketServer, BitbucketServerApi } from "./bitbucket-server-api";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 @injectable()
 export class BitbucketServerRepositoryProvider implements RepositoryProvider {
@@ -72,24 +75,10 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
             repositorySlug: repo,
             branchName,
         });
-        const commit = branch.latestCommitMetadata;
-
-        return {
-            htmlUrl: branch.htmlUrl,
-            name: branch.displayId,
-            commit: {
-                sha: commit.id,
-                author: commit.author.displayName,
-                authorAvatarUrl: commit.author.avatarUrl,
-                authorDate: new Date(commit.authorTimestamp).toISOString(),
-                commitMessage: commit.message || "missing commit message",
-            },
-        };
+        return this.toBranch(branch);
     }
 
     async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
-        const branches: Branch[] = [];
-
         const repoKind = await this.getOwnerKind(user, owner);
         if (!repoKind) {
             throw new Error(`Could not find project "${owner}"`);
@@ -99,23 +88,22 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
             owner,
             repositorySlug: repo,
         });
-        for (const entry of branchesResult) {
-            const commit = entry.latestCommitMetadata;
+        return branchesResult.map((entry) => this.toBranch(entry));
+    }
 
-            branches.push({
-                htmlUrl: entry.htmlUrl,
-                name: entry.displayId,
-                commit: {
-                    sha: commit.id,
-                    author: commit.author.displayName,
-                    authorAvatarUrl: commit.author.avatarUrl,
-                    authorDate: new Date(commit.authorTimestamp).toISOString(),
-                    commitMessage: commit.message || "missing commit message",
-                },
-            });
-        }
-
-        return branches;
+    private toBranch(entry: BitbucketServer.BranchWithMeta): Branch {
+        const commit = entry.latestCommitMetadata;
+        return {
+            htmlUrl: entry.htmlUrl,
+            name: entry.displayId,
+            commit: {
+                sha: commit?.id ?? entry.latestCommit,
+                author: commit?.author.displayName || "missing author",
+                authorAvatarUrl: commit?.author.avatarUrl,
+                authorDate: commit?.authorTimestamp ? new Date(commit.authorTimestamp).toISOString() : undefined,
+                commitMessage: commit?.message || "missing commit message",
+            },
+        };
     }
 
     async getCommitInfo(user: User, owner: string, repo: string, ref: string): Promise<CommitInfo | undefined> {
@@ -143,14 +131,53 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         }
     }
 
-    async getUserRepos(user: User): Promise<string[]> {
-        // TODO(janx): Not implemented yet
-        return [];
+    async getUserRepos(user: User): Promise<RepositoryInfo[]> {
+        const repoSearchEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "repositoryFinderSearch",
+            false,
+            {
+                user: {
+                    id: user.id,
+                    email: getPrimaryEmail(user),
+                },
+            },
+        );
+
+        try {
+            const repos = repoSearchEnabled
+                ? // Get up to 100 of the most recent repos if repo searching is enabled
+                  await this.api.getRecentRepos(user, { limit: 100 })
+                : // Otherwise continue to get up to 10k repos
+                  await this.api.getRepos(user, { maxPages: 10, permission: "REPO_READ" });
+
+            const result: RepositoryInfo[] = [];
+            repos.forEach((r) => {
+                const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href;
+                if (cloneUrl) {
+                    result.push({
+                        url: cloneUrl.replace("http://", "https://"),
+                        name: r.name,
+                    });
+                }
+            });
+
+            return result;
+        } catch (error) {
+            log.error("BitbucketServerRepositoryProvider.getUserRepos", error);
+            return [];
+        }
     }
 
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
-        // TODO(janx): Not implemented yet
-        return false;
+        let canRead = false;
+
+        try {
+            const repository = await this.getRepo(user, owner, repo);
+            canRead = !!repository;
+            // errors are expected here in the case that user does not have read access
+        } catch (e) {}
+
+        return canRead;
     }
 
     async getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number): Promise<string[]> {
@@ -168,5 +195,23 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
 
         const commits = commitsResult.values || [];
         return commits.map((c) => c.id);
+    }
+
+    public async searchRepos(user: User, searchString: string, limit: number): Promise<RepositoryInfo[]> {
+        // Only load 1 page of limit results for our searchString
+        const results = await this.api.getRepos(user, { maxPages: 1, limit, searchString });
+
+        const repos: RepositoryInfo[] = [];
+        results.forEach((r) => {
+            const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href;
+            if (cloneUrl) {
+                repos.push({
+                    url: cloneUrl.replace("http://", "https://"),
+                    name: r.name,
+                });
+            }
+        });
+
+        return repos;
     }
 }

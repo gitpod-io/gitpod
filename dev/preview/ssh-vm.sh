@@ -7,31 +7,34 @@ set -euo pipefail
 
 THIS_DIR="$(dirname "$0")"
 
-source "$THIS_DIR/util/preview-name-from-branch.sh"
-
-if [[ -z "${VM_NAME:-}" ]]; then
-    VM_NAME="$(preview-name-from-branch)"
-fi
-
-NAMESPACE="preview-${VM_NAME}"
 PRIVATE_KEY=$HOME/.ssh/vm_id_rsa
 PUBLIC_KEY=$HOME/.ssh/vm_id_rsa.pub
 PORT=8022
 USER="ubuntu"
 COMMAND=""
+BRANCH=""
 
-while getopts c:n:p:u:v: flag
+while getopts c:n:p:u:b: flag
 do
     case "${flag}" in
         c) COMMAND="${OPTARG}";;
         n) NAMESPACE="${OPTARG}";;
         p) PORT="${OPTARG}";;
         u) USER="${OPTARG}";;
-        v) VM_NAME="${OPTARG}";;
+        b) BRANCH="${2}";;
         *) ;;
     esac
 done
 
+if [ -z "${VM_NAME:-}" ]; then
+  if [[ "${BRANCH}" == "" ]]; then
+      VM_NAME="$(previewctl get name)"
+  else
+      VM_NAME="$(previewctl get name --branch "$BRANCH")"
+  fi
+fi
+
+NAMESPACE="preview-${VM_NAME}"
 
 function log {
     echo "[$(date)] $*"

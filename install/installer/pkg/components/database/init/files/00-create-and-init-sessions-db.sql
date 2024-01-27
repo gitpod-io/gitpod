@@ -1,5 +1,5 @@
 -- Copyright (c) 2020 Gitpod GmbH. All rights reserved.
--- Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+-- Licensed under the GNU Affero General Public License (AGPL). See License.AGPL.txt in the project root for license information.
 
 -- must be idempotent
 
@@ -7,6 +7,7 @@ CREATE DATABASE IF NOT EXISTS `gitpod-sessions` CHARSET utf8mb4;
 
 USE `gitpod-sessions`;
 
+-- This removed again in later migration -  in pkg/components/database/incluster/init/04-drop-sessions-db.sql
 CREATE TABLE IF NOT EXISTS sessions (
    `session_id` varchar(128) COLLATE utf8mb4_bin NOT NULL,
    `expires` int(11) unsigned NOT NULL,

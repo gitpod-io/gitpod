@@ -1,0 +1,96 @@
+{
+    "result": {
+        "id": "gitpodio-gitpod-ve5gs3cb32j",
+        "metadata": {
+            "ownerId": "b49148ed-6e1f-4eae-927f-1e62a3c9dab9",
+            "organizationId": "ce36c2f8-5d43-4b1d-92f2-08cb6f0e0869",
+            "configurationId": "1fffcdbd-f716-4185-a14f-a689bd52cd2d",
+            "annotations": {},
+            "name": "gitpod-io/gitpod - main",
+            "pinned": true,
+            "originalContextUrl": "https://github.com/gitpod-io/gitpod"
+        },
+        "spec": {
+            "initializer": {
+                "specs": [
+                    {
+                        "prebuild": {
+                            "prebuildId": "68da9714-93c0-4b7c-8579-dee70b1fbc3a"
+                        }
+                    }
+                ]
+            },
+            "type": "WORKSPACE_TYPE_REGULAR",
+            "ports": [
+                {
+                    "port": "3000",
+                    "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+                    "url": "https://3000-gitpodio-gitpod-ve5gs3cb32j.ws.gitpod.io",
+                    "protocol": "PROTOCOL_HTTP"
+                },
+                {
+                    "port": "3306",
+                    "admission": "ADMISSION_LEVEL_EVERYONE",
+                    "url": "https://3306-gitpodio-gitpod-ve5gs3cb32j.ws.gitpod.io",
+                    "protocol": "PROTOCOL_HTTP"
+                }
+            ],
+            "environmentVariables": [],
+            "git": {
+                "username": "",
+                "email": ""
+            },
+            "timeout": {
+                "disconnected": "3722s"
+            },
+            "admission": "ADMISSION_LEVEL_EVERYONE",
+            "class": "g1-xlarge",
+            "sshPublicKeys": [],
+            "subassemblyReferences": [],
+            "logUrl": "",
+            "editor": {
+                "name": "code",
+                "version": "stable"
+            }
+        },
+        "status": {
+            "statusVersion": "1701406421",
+            "phase": {
+                "name": "PHASE_RUNNING",
+                "lastTransitionTime": "2023-12-01T04:53:41.918Z"
+            },
+            "workspaceUrl": "https://gitpodio-gitpod-ve5gs3cb32j.ws.gitpod.io",
+            "conditions": {
+                "failed": "",
+                "failedReason": "FAILED_REASON_UNSPECIFIED",
+                "timeout": ""
+            },
+            "gitStatus": {
+                "cloneUrl": "https://github.com/gitpod-io/gitpod.git",
+                "branch": "hw/papi-refine-ws",
+                "latestCommit": "3da336cde4a9a29e9e4dd6424bd4b791d616c735",
+                "uncommitedFiles": [
+                    "components/public-api/generate.sh",
+                    "components/public-api/typescript-common/fixtures/toWorkspace_1.golden",
+                    "components/public-api/typescript-common/fixtures/toWorkspace_1.json",
+                    "components/public-api/typescript-common/fixtures/toWorkspace_2.golden",
+                    "components/public-api/typescript-common/fixtures/toWorkspace_2.json",
+                    "components/public-api/typescript-common/fixtures/toWorkspace_3.golden",
+                    "components/public-api/typescript-common/fixtures/toWorkspace_3.json",
+                    "components/public-api/typescript-common/fixtures/toWorkspace_4.golden",
+                    "components/public-api/typescript-common/fixtures/toWorkspace_4.json",
+                    "components/public-api/typescript-common/src/public-api-converter.spec.ts"
+                ],
+                "totalUncommitedFiles": 10,
+                "untrackedFiles": [],
+                "totalUntrackedFiles": 0,
+                "unpushedCommits": [
+                    "3da336cde: Revert \"Revert \"Refine workspace API (#19138)\" (#19172)\""
+                ],
+                "totalUnpushedCommits": 1
+            },
+            "instanceId": "4b1ef455-e04c-43d3-bf5d-0d67f168c9f3"
+        }
+    },
+    "err": ""
+}

@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package executor
 
@@ -78,12 +78,12 @@ func Execute(ctx context.Context, destination string, cfgin io.Reader, forceGitU
 		ilr = &initializer.EmptyInitializer{}
 	}
 
-	src, err = initializer.InitializeWorkspace(ctx, destination, rs, append(opts, initializer.WithInitializer(ilr))...)
+	src, stats, err := initializer.InitializeWorkspace(ctx, destination, rs, append(opts, initializer.WithInitializer(ilr))...)
 	if err != nil {
 		return "", err
 	}
 
-	err = initializer.PlaceWorkspaceReadyFile(ctx, destination, src, initializer.GitpodUID, initializer.GitpodGID)
+	err = initializer.PlaceWorkspaceReadyFile(ctx, destination, src, stats, initializer.GitpodUID, initializer.GitpodGID)
 	if err != nil {
 		return src, err
 	}

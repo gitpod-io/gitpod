@@ -12,6 +12,8 @@ packages:
       - components/gitpod-protocol/go:lib
       - components/supervisor-api/go:lib
       - components/ws-daemon-api/go:lib
+      - components/ide-metrics-api/go:lib
+      - components/public-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -21,6 +23,7 @@ packages:
     type: docker
     srcs:
       - "supervisor-config.json"
+      - "browser.sh"
     deps:
       - :app
       - components/supervisor/frontend:app
@@ -28,9 +31,11 @@ packages:
       - components/gitpod-cli:app
     argdeps:
       - imageRepoBase
+      - dockerVersion
     config:
       buildArgs:
         VERSION: ${version}
+        DOCKER_VERSION: ${dockerVersion}
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.supervisor

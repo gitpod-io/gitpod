@@ -1,193 +1,209 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useState } from "react";
-import { WhitelistedRepository, WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import Header from "../components/Header";
-import DropDown from "../components/DropDown";
-import { WorkspaceModel } from "./workspace-model";
 import { WorkspaceEntry } from "./WorkspaceEntry";
-import { getGitpodService } from "../service/service";
 import { ItemsList } from "../components/ItemsList";
-import { TeamsContext } from "../teams/teams-context";
-import { UserContext } from "../user-context";
-import { User } from "@gitpod/gitpod-protocol";
-import { useLocation } from "react-router";
-import { StartWorkspaceModalContext, StartWorkspaceModalKeyBinding } from "./start-workspace-modal-context";
-import SelectIDEModal from "../settings/SelectIDEModal";
-import { getExperimentsClient } from "../experiments/client";
+import Arrow from "../components/Arrow";
+import ConfirmationModal from "../components/ConfirmationModal";
+import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
+import { EmptyWorkspacesContent } from "./EmptyWorkspacesContent";
+import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
+import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-inactive-workspaces-mutation";
+import { useToast } from "../components/toasts/Toasts";
+import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { Button } from "@podkit/buttons/Button";
 
-export interface WorkspacesProps {}
+const WorkspacesPage: FunctionComponent = () => {
+    const [limit, setLimit] = useState(50);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [showInactive, setShowInactive] = useState(false);
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const { data, isLoading } = useListWorkspacesQuery({ limit });
+    const deleteInactiveWorkspaces = useDeleteInactiveWorkspacesMutation();
+    const { toast } = useToast();
 
-export interface WorkspacesState {
-    workspaces: WorkspaceInfo[];
-    isTemplateModelOpen: boolean;
-    repos: WhitelistedRepository[];
-}
+    // Sort workspaces into active/inactive groups
+    const { activeWorkspaces, inactiveWorkspaces } = useMemo(() => {
+        const sortedWorkspaces = (data || []).sort(sortWorkspaces);
+        const activeWorkspaces = sortedWorkspaces.filter((ws) => isWorkspaceActive(ws));
 
-export default function () {
-    const location = useLocation();
+        // respecting the limit, return inactive workspaces as well
+        const inactiveWorkspaces = sortedWorkspaces
+            .filter((ws) => !isWorkspaceActive(ws))
+            .slice(0, limit - activeWorkspaces.length);
 
-    const { user } = useContext(UserContext);
-    const { teams } = useContext(TeamsContext);
-    const [activeWorkspaces, setActiveWorkspaces] = useState<WorkspaceInfo[]>([]);
-    const [inactiveWorkspaces, setInactiveWorkspaces] = useState<WorkspaceInfo[]>([]);
-    const [workspaceModel, setWorkspaceModel] = useState<WorkspaceModel>();
-    const { setIsStartWorkspaceModalVisible } = useContext(StartWorkspaceModalContext);
-    const [isExperimentEnabled, setExperiment] = useState<boolean>(false);
+        return {
+            activeWorkspaces,
+            inactiveWorkspaces,
+        };
+    }, [data, limit]);
 
-    useEffect(() => {
-        (async () => {
-            const workspaceModel = new WorkspaceModel(setActiveWorkspaces, setInactiveWorkspaces);
-            setWorkspaceModel(workspaceModel);
-        })();
-    }, [teams, location]);
+    const { filteredActiveWorkspaces, filteredInactiveWorkspaces } = useMemo(() => {
+        const filteredActiveWorkspaces = activeWorkspaces.filter(
+            (info) =>
+                `${info.metadata!.name}${info.id}${info.metadata!.originalContextUrl}${
+                    info.status?.gitStatus?.cloneUrl
+                }${info.status?.gitStatus?.branch}`
+                    .toLowerCase()
+                    .indexOf(searchTerm.toLowerCase()) !== -1,
+        );
 
-    const isOnboardingUser = user && User.isOnboardingUser(user);
-    useEffect(() => {
-        (async () => {
-            if (teams && teams.length > 0) {
-                const isEnabled = await getExperimentsClient().getValueAsync("isMyFirstFeatureEnabled", false, {
-                    teamName: teams[0]?.name,
-                });
-                setExperiment(isEnabled);
-            }
-        })();
-    }, [teams]);
-    console.log("Is experiment enabled? ", isExperimentEnabled);
+        const filteredInactiveWorkspaces = inactiveWorkspaces.filter(
+            (info) =>
+                `${info.metadata!.name}${info.id}${info.metadata!.originalContextUrl}${
+                    info.status?.gitStatus?.cloneUrl
+                }${info.status?.gitStatus?.branch}`
+                    .toLowerCase()
+                    .indexOf(searchTerm.toLowerCase()) !== -1,
+        );
+
+        return {
+            filteredActiveWorkspaces,
+            filteredInactiveWorkspaces,
+        };
+    }, [activeWorkspaces, inactiveWorkspaces, searchTerm]);
+
+    const handleDeleteInactiveWorkspacesConfirmation = useCallback(async () => {
+        try {
+            await deleteInactiveWorkspaces.mutateAsync({
+                workspaceIds: inactiveWorkspaces.map((info) => info.id),
+            });
+
+            setDeleteModalVisible(false);
+            toast("Your workspace was deleted");
+        } catch (e) {}
+    }, [deleteInactiveWorkspaces, inactiveWorkspaces, toast]);
 
     return (
         <>
             <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
-            {isOnboardingUser && <SelectIDEModal />}
-            {workspaceModel?.initialized &&
-                (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || workspaceModel.searchTerm ? (
+
+            {deleteModalVisible && (
+                <ConfirmationModal
+                    title="Delete Inactive Workspaces"
+                    areYouSureText="Are you sure you want to delete all inactive workspaces?"
+                    buttonText="Delete Inactive Workspaces"
+                    onClose={() => setDeleteModalVisible(false)}
+                    onConfirm={handleDeleteInactiveWorkspacesConfirmation}
+                    visible
+                />
+            )}
+
+            {!isLoading &&
+                (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || searchTerm ? (
                     <>
-                        <div className="app-container py-2 flex">
-                            <div className="flex">
-                                <div className="py-4">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 16 16"
-                                        width="16"
-                                        height="16"
-                                    >
-                                        <path
-                                            fill="#A8A29E"
-                                            d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z"
-                                        />
-                                    </svg>
-                                </div>
-                                <input
-                                    type="search"
-                                    className="text-sm"
-                                    placeholder="Search Workspaces"
-                                    onChange={(v) => {
-                                        if (workspaceModel) workspaceModel.setSearch(v.target.value);
-                                    }}
-                                />
-                            </div>
-                            <div className="flex-1" />
-                            <div className="py-3"></div>
-                            <div className="py-3 pl-3">
-                                <DropDown
-                                    prefix="Limit: "
-                                    contextMenuWidth="w-32"
-                                    activeEntry={workspaceModel ? workspaceModel?.limit + "" : undefined}
-                                    entries={[
-                                        {
-                                            title: "50",
-                                            onClick: () => {
-                                                if (workspaceModel) workspaceModel.limit = 50;
-                                            },
-                                        },
-                                        {
-                                            title: "100",
-                                            onClick: () => {
-                                                if (workspaceModel) workspaceModel.limit = 100;
-                                            },
-                                        },
-                                        {
-                                            title: "200",
-                                            onClick: () => {
-                                                if (workspaceModel) workspaceModel.limit = 200;
-                                            },
-                                        },
-                                    ]}
-                                />
-                            </div>
-                            <button onClick={() => setIsStartWorkspaceModalVisible(true)} className="ml-2">
-                                New Workspace{" "}
-                                <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
-                            </button>
-                        </div>
+                        <WorkspacesSearchBar
+                            limit={limit}
+                            searchTerm={searchTerm}
+                            onLimitUpdated={setLimit}
+                            onSearchTermUpdated={setSearchTerm}
+                        />
                         <ItemsList className="app-container pb-40">
                             <div className="border-t border-gray-200 dark:border-gray-800"></div>
-                            {activeWorkspaces.map((e) => {
-                                return (
-                                    <WorkspaceEntry
-                                        key={e.workspace.id}
-                                        desc={e}
-                                        model={workspaceModel}
-                                        stopWorkspace={(wsId) => getGitpodService().server.stopWorkspace(wsId)}
-                                    />
-                                );
+                            {filteredActiveWorkspaces.map((info) => {
+                                return <WorkspaceEntry key={info.id} info={info} />;
                             })}
-                            {activeWorkspaces.length > 0 && <div className="py-6"></div>}
-                            {inactiveWorkspaces.length > 0 && (
-                                <div className="p-3 text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-center">
-                                    Unpinned workspaces that have been inactive for more than 14 days will be
-                                    automatically deleted.{" "}
-                                    <a
-                                        className="gp-link"
-                                        href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection"
+                            {filteredActiveWorkspaces.length > 0 && <div className="py-6"></div>}
+                            {filteredInactiveWorkspaces.length > 0 && (
+                                <div>
+                                    <div
+                                        onClick={() => setShowInactive(!showInactive)}
+                                        className="flex cursor-pointer py-6 px-6 flex-row text-gray-400 bg-gray-50  hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl mb-2"
                                     >
-                                        Learn more
-                                    </a>
+                                        <div className="pr-2">
+                                            <Arrow direction={showInactive ? "down" : "right"} />
+                                        </div>
+                                        <div className="flex flex-grow flex-col ">
+                                            <div className="font-medium text-gray-500 dark:text-gray-200 truncate">
+                                                <span>Inactive Workspaces&nbsp;</span>
+                                                <span className="text-gray-400 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 rounded-xl px-2 py-0.5 text-xs">
+                                                    {filteredInactiveWorkspaces.length}
+                                                </span>
+                                            </div>
+                                            <div className="text-sm flex-auto">
+                                                Workspaces that have been stopped for more than 24 hours. Inactive
+                                                workspaces are automatically deleted after 14 days.{" "}
+                                                <a
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="gp-link"
+                                                    href="https://www.gitpod.io/docs/configure/workspaces/workspace-lifecycle#workspace-deletion"
+                                                    onClick={(evt) => evt.stopPropagation()}
+                                                >
+                                                    Learn more
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div className="self-center">
+                                            {showInactive ? (
+                                                <Button
+                                                    variant="ghost"
+                                                    // TODO: Remove these classes once we decide on the new button style
+                                                    // Leaving these to emulate the old button's danger.secondary style until we decide if we want that style or not
+                                                    className="bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200 text-red-600 hover:text-red-700 hover:opacity-100"
+                                                    onClick={(evt) => {
+                                                        setDeleteModalVisible(true);
+                                                        evt.stopPropagation();
+                                                    }}
+                                                >
+                                                    Delete Inactive Workspaces
+                                                </Button>
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                    {showInactive ? (
+                                        <>
+                                            {filteredInactiveWorkspaces.map((info) => {
+                                                return <WorkspaceEntry key={info.id} info={info} />;
+                                            })}
+                                        </>
+                                    ) : null}
                                 </div>
                             )}
-                            {inactiveWorkspaces.map((e) => {
-                                return (
-                                    <WorkspaceEntry
-                                        key={e.workspace.id}
-                                        desc={e}
-                                        model={workspaceModel}
-                                        stopWorkspace={(wsId) => getGitpodService().server.stopWorkspace(wsId)}
-                                    />
-                                );
-                            })}
                         </ItemsList>
                     </>
                 ) : (
-                    <div className="app-container flex flex-col space-y-2">
-                        <div className="px-6 py-3 flex flex-col text-gray-400 border-t border-gray-200 dark:border-gray-800">
-                            <div className="flex flex-col items-center justify-center h-96 w-96 mx-auto">
-                                <>
-                                    <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Workspaces</h3>
-                                    <div className="text-center pb-6 text-gray-500">
-                                        Prefix any Git repository URL with {window.location.host}/# or create a new
-                                        workspace for a recently used project.{" "}
-                                        <a className="gp-link" href="https://www.gitpod.io/docs/getting-started/">
-                                            Learn more
-                                        </a>
-                                    </div>
-                                    <span>
-                                        <button onClick={() => setIsStartWorkspaceModalVisible(true)}>
-                                            New Workspace{" "}
-                                            <span className="opacity-60 hidden md:inline">
-                                                {StartWorkspaceModalKeyBinding}
-                                            </span>
-                                        </button>
-                                    </span>
-                                </>
-                            </div>
-                        </div>
-                    </div>
+                    <EmptyWorkspacesContent />
                 ))}
         </>
     );
+};
+
+export default WorkspacesPage;
+
+const sortWorkspaces = (a: Workspace, b: Workspace) => {
+    const result = workspaceActiveDate(b).localeCompare(workspaceActiveDate(a));
+    if (result === 0) {
+        // both active now? order by workspace id
+        return b.id.localeCompare(a.id);
+    }
+    return result;
+};
+
+/**
+ * Given a WorkspaceInfo, return a ISO string of the last related activitiy
+ */
+function workspaceActiveDate(info: Workspace): string {
+    return info.status!.phase!.lastTransitionTime!.toDate().toISOString();
+}
+
+/**
+ * Returns a boolean indicating if the workspace should be considered active.
+ * A workspace is considered active if it is pinned, not stopped, or was active within the last 24 hours
+ *
+ * @param info WorkspaceInfo
+ * @returns boolean If workspace is considered active
+ */
+function isWorkspaceActive(info: Workspace): boolean {
+    const lastSessionStart = info.status!.phase!.lastTransitionTime!.toDate().toISOString();
+    const twentyfourHoursAgo = hoursBefore(new Date().toISOString(), 24);
+
+    const isStopped = info.status?.phase?.name === WorkspacePhase_Phase.STOPPED;
+    return info.metadata!.pinned || !isStopped || isDateSmallerOrEqual(twentyfourHoursAgo, lastSessionStart);
 }

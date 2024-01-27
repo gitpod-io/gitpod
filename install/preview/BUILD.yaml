@@ -1,0 +1,15 @@
+packages:
+  - name: docker
+    type: docker
+    deps:
+      - install/installer:app
+      - install/preview/prettylog:app
+    argdeps:
+      - imageRepoBase
+    srcs:
+      - "entrypoint.sh"
+      - "manifests/*.yaml"
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/local-preview:${version}

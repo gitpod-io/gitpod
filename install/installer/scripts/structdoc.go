@@ -1,5 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
-// Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+/// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package main
 
@@ -53,6 +54,8 @@ func extractTags(tag string) (result fieldSpec, err error) {
 
 	metadata, err := tagObj.Get("json")
 	if err != nil {
+		// There is no "json" tag in this key - move on
+		err = nil
 		return
 	}
 

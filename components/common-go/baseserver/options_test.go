@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package baseserver
 
@@ -32,6 +32,7 @@ func TestOptions(t *testing.T) {
 		WithMetricsRegistry(registry),
 		WithHealthHandler(health),
 		WithGRPCHealthService(grpcHealthService),
+		WithVersion("foo-bar"),
 	}
 	actual, err := evaluateOptions(defaultOptions(), opts...)
 	require.NoError(t, err)
@@ -48,6 +49,7 @@ func TestOptions(t *testing.T) {
 		metricsRegistry: registry,
 		healthHandler:   health,
 		grpcHealthCheck: grpcHealthService,
+		version:         "foo-bar",
 	}
 
 	require.Equal(t, expected, actual)

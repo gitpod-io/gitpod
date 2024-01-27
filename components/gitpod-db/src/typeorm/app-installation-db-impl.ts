@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { AppInstallation, AppInstallationPlatform, AppInstallationState } from "@gitpod/gitpod-protocol";
@@ -49,14 +49,15 @@ export class TypeORMAppInstallationDBImpl implements AppInstallationDB {
         installationID: string,
     ): Promise<AppInstallation | undefined> {
         const repo = await this.getRepo();
-        const qb = repo
+        const installation = await repo
             .createQueryBuilder("installation")
             .where("installation.installationID = :installationID", { installationID })
-            .andWhere('installation.state != "uninstalled"')
-            .orderBy("installation.lastUpdateTime", "DESC")
-            .limit(1);
+            .andWhere("installation.platform = :platform", { platform })
+            .andWhere("installation.state IN ('claimed.user', 'claimed.platform', 'installed')")
+            .orderBy("installation.creationTime", "DESC")
+            .getOne();
 
-        return (await qb.getMany())[0];
+        return installation;
     }
 
     public async recordUninstallation(

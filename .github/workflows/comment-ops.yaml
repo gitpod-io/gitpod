@@ -1,0 +1,118 @@
+name: comment-ops
+
+on:
+  issue_comment:
+    types: [created]
+
+# This action *ALWAYS* runs on main.
+# Any changes done to it, will not have an effect, until said changes have landed on the main branch
+# This has a side effect that always `head_ref == main` and `head_sha == main_head_sha`
+# Therefore we can't find out easily which PR the comment that triggered the action belongs to
+
+jobs:
+  configure:
+    # We *MUST* always check the author_association, which tells us if the person is an owner of the repo, or member of the org (i.e. has permissions)
+    # Otherwise they can execute arbitrary code if the triggered workflow (i.e. the build) is modified, as it's being run by the github-actions bot, and it always has permissions
+    if: |
+      (github.event.issue.author_association == 'OWNER' || github.event.issue.author_association == 'MEMBER') &&
+      (github.event.issue.pull_request && contains(github.event.comment.body, '/gh run')) &&
+      (contains(github.event.comment.body, 'recreate-vm'))
+    runs-on: ubuntu-latest
+    # Technically we don't need these here, as we don't reuse them between jobs, but it's good to have them in a single place
+    outputs:
+      branch: ${{ steps.comment-branch.outputs.head_ref }}
+      run_url: ${{ fromJSON(steps.run_outputs.outputs.result).html_url }}
+      run_id: ${{ fromJSON(steps.run_outputs.outputs.result).id }}
+      recreate_vm: ${{ steps.configure.outputs.recreate_vm }}
+    steps:
+      # In order for us to find out from which PR the comment originates, we use the `xt0rted/pull-request-comment-branch@v1` action
+      - uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+      # Set outputs we can reuse in the steps
+      - name: Set outputs
+        id: outputs
+        run: |
+          {
+            echo "recreate_vm=${{ contains(github.event.comment.body, 'recreate-vm') }}"
+          } >> $GITHUB_OUTPUT
+      # Trigger the build workflow with the input we got from the comment
+      # In the triggered job (build), we'll combine the information from the PR description, with the input we pass here
+      # Also we use workflow_dispatch, instead of a workflow_call ( uses: ./build.yaml with: ...)
+      # Because with the latter it's not possible to trigger a dynamic one (i.e. based on a branch) - the name has to be hardcoded
+      - name: Trigger Workflow
+        uses: actions/github-script@v6
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'build.yml',
+              ref: '${{ steps.comment-branch.outputs.head_ref }}',
+              inputs: {
+                "recreate_vm": '${{ steps.outputs.outputs.recreate_vm }}'
+              }
+            })
+      # Getting the ID of the workflow we triggered above is a bit tricky, as it's async :(
+      # There is a trick we can do - add an input with a unique id, get the list of worklow runs, and check for that input in them until we can find it
+      # But it's an overkill for now
+      # Instead, we wait a little, and grab the last job that was triggered by a `workflow_dispatch` event, AND is not completed, and we hope for the best 🤞
+      - name: Get run URL
+        uses: actions/github-script@v6
+        id: run_outputs
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            await new Promise(r => setTimeout(r, 5000));
+            let result = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'build.yml',
+              branch: '${{ steps.comment-branch.outputs.head_ref }}',
+              event: 'workflow_dispatch',
+              per_page: 10
+            });
+
+            var url = result.data.workflow_runs
+              .filter(function (e) {
+                return e.status != 'completed' && e.status != 'skipped'
+            });
+
+            return url[0];
+      # Comment with a link to the job that got triggered
+      - name: Update comment with workflow run
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            let commentBody = '${{ github.event.comment.body }}'
+            commentBody += `\n\n#### Comment triggered a workflow run
+
+              Started workflow run: [${{ fromJSON(steps.run_outputs.outputs.result).id }}](${{ fromJSON(steps.run_outputs.outputs.result).html_url }})
+              * \`recreate_vm: ${{ steps.outputs.outputs.recreate_vm }}\``
+            github.rest.issues.updateComment({
+              issue_number: ${{ github.event.issue.number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ github.event.comment.id }},
+              body: commentBody
+            })
+
+  # Comment if this job failed, so there's some feedback
+  comment-fail:
+    if: (always() && contains(needs.*.result, 'failure'))
+    needs: [ configure ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            let commentBody = '${{ github.event.comment.body }}'
+            commentBody += "\n\n Chat ops job failed. See [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details"
+            github.rest.issues.updateComment({
+              issue_number: ${{ github.event.issue.number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ github.event.comment.id }},
+              body: commentBody
+            })

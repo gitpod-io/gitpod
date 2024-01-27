@@ -1,10 +1,36 @@
 {
-    "entrypoint": "/ide-desktop/startup.sh",
-    "entrypointArgs": [ "{DESKTOPIDEPORT}", "goland", "Open in GoLand" ],
-    "readinessProbe": {
-        "type": "http",
-        "http": {
-            "path": "/status"
-        }
-      }
+  "name": "goland",
+  "displayName": "GoLand",
+  "version": "stable",
+  "entrypoint": "/ide-desktop/jb-launcher",
+  "entrypointArgs": [
+    "{DESKTOPIDEPORT}",
+    "goland",
+    "Open in GoLand"
+  ],
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "/status"
+    }
+  },
+  "env": {
+    "JETBRAINS_BACKEND_QUALIFIER": "stable",
+    "PATH": "/ide-desktop/goland/bin:$PATH",
+    "EDITOR": "/ide-desktop/goland/bin/idea-cli open",
+    "VISUAL": "$EDITOR",
+    "GP_OPEN_EDITOR": "$EDITOR",
+    "GIT_EDITOR": "$EDITOR --wait",
+    "GP_PREVIEW_BROWSER": "/ide-desktop/goland/bin/idea-cli preview",
+    "GP_EXTERNAL_BROWSER": "/ide-desktop/goland/bin/idea-cli preview"
+  },
+  "prebuild": {
+    "args": [
+      "warmup",
+      "goland"
+    ],
+    "env": {
+      "JETBRAINS_BACKEND_QUALIFIER": "stable"
+    }
+  }
 }

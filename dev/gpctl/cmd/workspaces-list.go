@@ -1,11 +1,12 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -32,12 +33,47 @@ var workspacesListCmd = &cobra.Command{
 			log.WithError(err).Fatal("error during RPC call")
 		}
 
-		tpl := `OWNER	WORKSPACE	INSTANCE	PHASE
-{{- range .Status }}
-{{ .Metadata.Owner }}	{{ .Metadata.MetaId }}	{{ .Id }}	{{ .Phase -}}
+		type PrintWorkspace struct {
+			Owner       string
+			WorkspaceID string
+			Instance    string
+			Phase       string
+			Type        string
+			Pod         string
+			Active      bool
+			Node        string
+		}
+
+		var out []PrintWorkspace
+		for _, w := range resp.Status {
+			pod := "unknown"
+			switch w.GetSpec().GetType() {
+			case api.WorkspaceType_REGULAR:
+				pod = fmt.Sprintf("ws-%s", w.GetId())
+			case api.WorkspaceType_PREBUILD:
+				pod = fmt.Sprintf("prebuild-%s", w.GetId())
+			case api.WorkspaceType_IMAGEBUILD:
+				pod = fmt.Sprintf("imagebuild-%s", w.GetId())
+			}
+
+			out = append(out, PrintWorkspace{
+				Owner:       w.GetMetadata().GetOwner(),
+				WorkspaceID: w.GetMetadata().GetMetaId(),
+				Instance:    w.GetId(),
+				Phase:       w.GetPhase().String(),
+				Type:        w.GetSpec().GetType().String(),
+				Pod:         pod,
+				Active:      w.GetConditions().FirstUserActivity != nil,
+				Node:        w.Runtime.NodeName,
+			})
+		}
+
+		tpl := `OWNER	WORKSPACE	INSTANCE	PHASE	TYPE	POD	ACTIVE	NODE
+{{- range . }}
+{{ .Owner }}	{{ .WorkspaceID }}	{{ .Instance }}	{{ .Phase }}	{{ .Type }}	{{ .Pod }}	{{ .Active }}	{{ .Node -}}
 {{ end }}
 `
-		err = getOutputFormat(tpl, "{..id}").Print(resp)
+		err = getOutputFormat(tpl, "{.id}").Print(out)
 		if err != nil {
 			log.Fatal(err)
 		}

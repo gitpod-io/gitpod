@@ -1,14 +1,16 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cpulimit_test
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"math"
 	"math/rand"
@@ -381,7 +383,7 @@ func defaultQoSConsumerSet(t *testing.T) []Consumer {
 
 func generateOrRestoreConsumers(t *testing.T, fn string, cs []Consumer) []Consumer {
 	fc, err := os.ReadFile(fn)
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		var (
 			rcs []*RecordedConsumer
 			res []Consumer

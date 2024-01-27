@@ -1,6 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 local grafana = import 'github.com/grafana/grafonnet-lib/grafonnet/grafana.libsonnet';
@@ -33,7 +34,7 @@ local clusterTemplate =
   template.new(
     name='cluster',
     datasource='$datasource',
-    query='label_values(gitpod_ws_manager_workspace_startup_seconds_count, %s)' % _config.clusterLabel,
+    query='label_values(gitpod_ws_manager_mk2_workspace_startup_seconds_count, %s)' % _config.clusterLabel,
     current='all',
     hide=if _config.showMultiCluster then '' else 'hide',
     refresh=2,
@@ -66,9 +67,9 @@ local higherStartupSLOStatPanel =
   .addTarget(prometheus.target(
     |||
       (
-        sum(rate(gitpod_ws_manager_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",type="REGULAR", le="128"}[30d]))
+        sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",type="Regular", le="128"}[30d]))
         /
-        sum(rate(gitpod_ws_manager_workspace_startup_seconds_count{%(clusterLabel)s=~"$cluster",type="REGULAR"}[30d]))
+        sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_count{%(clusterLabel)s=~"$cluster",type="Regular"}[30d]))
       ) - 0.95
     ||| % _config, legendFormat='Monthly error budget remaining'
   ))
@@ -102,9 +103,9 @@ local lowerStartupSLOStatPanel =
   .addTarget(prometheus.target(
     |||
       (
-        sum(rate(gitpod_ws_manager_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",type="REGULAR", le="16"}[30d]))
+        sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",type="Regular", le="16"}[30d]))
         /
-        sum(rate(gitpod_ws_manager_workspace_startup_seconds_count{%(clusterLabel)s=~"$cluster",type="REGULAR"}[30d]))
+        sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_count{%(clusterLabel)s=~"$cluster",type="Regular"}[30d]))
       ) - 0.5
     ||| % _config, legendFormat='Monthly error budget remaining'
   ))
@@ -127,7 +128,7 @@ local workspaceStartupTimeHeatMap =
     repeat='%s' % _config.clusterLabel,
   )
   .addTarget(prometheus.target(
-    'sum(rate(gitpod_ws_manager_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",type="REGULAR"}[$__rate_interval])) by (le)' % _config,
+    'sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",type="Regular"}[$__rate_interval])) by (le)' % _config,
     legendFormat='{{le}}',
     format='heatmap'
   ))
@@ -146,22 +147,22 @@ local workspaceStartupTimeQuantiles =
   .addTarget(prometheus.target(
     |||
       histogram_quantile(0.95,
-        sum(rate(gitpod_ws_manager_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",type="REGULAR"}[$__rate_interval])) by (le)
+        sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",type="Regular"}[$__rate_interval])) by (le)
       )
     ||| % _config, legendFormat='95th Percentile'
   ))
   .addTarget(prometheus.target(
     |||
       histogram_quantile(0.5,
-        sum(rate(gitpod_ws_manager_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",type="REGULAR"}[$__rate_interval])) by (le)
+        sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{%(clusterLabel)s=~"$cluster",type="Regular"}[$__rate_interval])) by (le)
       )
     ||| % _config, legendFormat='50th Percentile'
   ))
   .addTarget(prometheus.target(
     |||
-      sum(rate(gitpod_ws_manager_workspace_startup_seconds_sum{%(clusterLabel)s=~"$cluster",type="REGULAR"}[$__rate_interval]))
+      sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_sum{%(clusterLabel)s=~"$cluster",type="Regular"}[$__rate_interval]))
       /
-      sum(rate(gitpod_ws_manager_workspace_startup_seconds_count{%(clusterLabel)s=~"$cluster",type="REGULAR"}[$__rate_interval]))
+      sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_count{%(clusterLabel)s=~"$cluster",type="Regular"}[$__rate_interval]))
     ||| % _config, legendFormat='avg'
   ));
 

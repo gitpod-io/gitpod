@@ -1,12 +1,14 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package logs
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -49,7 +51,7 @@ func ListPrebuildLogFiles(ctx context.Context, location string) (filePaths []str
 	listLogFiles := func(relativeLocation, prefix string) (logFiles []string, errr error) {
 		absDirPath := filepath.Join(location, relativeLocation)
 		files, err := os.ReadDir(absDirPath)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		}
 
@@ -62,9 +64,16 @@ func ListPrebuildLogFiles(ctx context.Context, location string) (filePaths []str
 		}
 		return logFiles, nil
 	}
-	filePaths, err = listLogFiles(strings.TrimPrefix(TerminalStoreLocation, "/workspace"), prebuildLogFilePrefix)
+	// list log files in `location` first
+	filePaths, err = listLogFiles("", prebuildLogFilePrefix)
 	if err != nil {
 		return nil, err
+	}
+	if len(filePaths) == 0 {
+		filePaths, err = listLogFiles(strings.TrimPrefix(TerminalStoreLocation, "/workspace"), prebuildLogFilePrefix)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if len(filePaths) == 0 {
 		filePaths, err = listLogFiles(strings.TrimPrefix(legacyTerminalStoreLocation, "/workspace"), legacyPrebuildLogFilePrefix)

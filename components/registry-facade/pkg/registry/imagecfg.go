@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package registry
 
@@ -37,6 +37,33 @@ func (p FixedImageSpecProvider) GetSpec(ctx context.Context, ref string) (*api.I
 		return nil, xerrors.Errorf("%w: %s", ErrRefInvalid, errdefs.ErrNotFound)
 	}
 	return res, nil
+}
+
+// NewCompositeSpecProvider aggregates multiple image spec providers
+type CompositeSpecProvider struct {
+	providers []ImageSpecProvider
+}
+
+// NewCompositeSpecProvider produces a new composite image spec provider
+func NewCompositeSpecProvider(providers ...ImageSpecProvider) *CompositeSpecProvider {
+	return &CompositeSpecProvider{
+		providers: providers,
+	}
+}
+
+// GetSpec returns the spec for the image or the error of the last image spec provider
+func (csp *CompositeSpecProvider) GetSpec(ctx context.Context, ref string) (spec *api.ImageSpec, err error) {
+	if len(csp.providers) == 0 {
+		return nil, xerrors.Errorf("no image spec providers configured")
+	}
+
+	for _, p := range csp.providers {
+		spec, err = p.GetSpec(ctx, ref)
+		if err == nil {
+			return spec, nil
+		}
+	}
+	return
 }
 
 // RemoteSpecProvider queries a remote spec provider using gRPC

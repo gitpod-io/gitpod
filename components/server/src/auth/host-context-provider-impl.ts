@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { HostContext } from "./host-context";
@@ -75,7 +75,7 @@ export class HostContextProviderImpl implements HostContextProvider {
         const knownOAuthRevisions = Array.from(this.dynamicHosts.entries())
             .map(([_, hostContext]) => hostContext.authProvider.params.oauthRevision)
             .filter((rev) => !!rev) as string[];
-        const newAndUpdatedAuthProviders = await this.authProviderService.getAllAuthProviders(knownOAuthRevisions);
+        const newAndUpdatedAuthProviders = await this.authProviderService.getAllAuthProviderParams(knownOAuthRevisions);
         ctx.span?.setTag("updateDynamicHosts.newAndUpdatedAuthProviders", newAndUpdatedAuthProviders.length);
 
         for (const config of newAndUpdatedAuthProviders) {

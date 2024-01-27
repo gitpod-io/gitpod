@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package wsmanagerbridge
 
@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,13 +26,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Host: "localhost",
 		},
 		Timeouts: Timeouts{
-			MetaInstanceCheckIntervalSeconds: 60,
-			PreparingPhaseSeconds:            3600,
-			StoppingPhaseSeconds:             3600,
-			UnknownPhaseSeconds:              600,
+			PreparingPhaseSeconds: 3600,
+			BuildingPhaseSeconds:  3600,
+			UnknownPhaseSeconds:   600,
+			PendingPhaseSeconds:   3600,
+			StoppingPhaseSeconds:  3600,
 		},
 		EmulatePreparingIntervalSeconds: 10,
 		StaticBridges:                   WSManagerList(ctx),
+		ClusterSyncIntervalSeconds:      60,
+		Redis:                           redis.GetConfiguration(ctx),
 	}
 
 	fc, err := common.ToJSONString(wsmbcfg)
@@ -43,9 +47,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-config", Component),
-				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Name:        fmt.Sprintf("%s-config", Component),
+				Namespace:   ctx.Namespace,
+				Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
 			},
 			Data: map[string]string{
 				"ws-manager-bridge.json": string(fc),

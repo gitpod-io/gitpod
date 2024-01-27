@@ -1,0 +1,18 @@
+/**
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
+ */
+
+.country-list {
+    width: 29rem !important;
+}
+
+input[type="tel"],
+.country-list {
+    @apply block w-56 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-md border border-gray-300 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400 focus:ring-0;
+}
+
+input[type="tel"]::placeholder {
+    @apply text-gray-400 dark:text-gray-500;
+}

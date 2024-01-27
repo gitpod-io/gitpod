@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package blobserve
 
@@ -8,12 +8,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
 
+	blobserve_config "github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -43,14 +43,21 @@ func Test_diskBlobspace_modifyFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			tmp, err := ioutil.TempDir("", "")
+			tmp, err := os.MkdirTemp("", "")
 			if err != nil {
 				t.Fatal(err)
 			}
 			defer os.RemoveAll(tmp)
 
-			os.MkdirAll(filepath.Join(tmp, "b1"), 0755)
-			ioutil.WriteFile(filepath.Join(tmp, "b1", "f1"), []byte("hello world"), 0600)
+			err = os.MkdirAll(filepath.Join(tmp, "b1"), 0755)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = os.WriteFile(filepath.Join(tmp, "b1", "f1"), []byte("hello world"), 0600)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			b := &diskBlobspace{
 				Location: tmp,
@@ -60,7 +67,7 @@ func Test_diskBlobspace_modifyFile(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			ctnt, err := ioutil.ReadFile(filepath.Join(tmp, "b1", "f1"))
+			ctnt, err := os.ReadFile(filepath.Join(tmp, "b1", "f1"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -120,7 +127,7 @@ func Test_inlineVars(t *testing.T) {
 	tests := []struct {
 		Name         string
 		InlineVars   *BlobserveInlineVars
-		Replacements []InlineReplacement
+		Replacements []blobserve_config.InlineReplacement
 		Content      string
 		Expected     string
 	}{
@@ -135,7 +142,7 @@ func Test_inlineVars(t *testing.T) {
 		},
 		{
 			Name: "no inline vars",
-			Replacements: []InlineReplacement{
+			Replacements: []blobserve_config.InlineReplacement{
 				{Search: "aaa", Replacement: "${ide}"},
 				{Search: "bbb", Replacement: "${supervisor}"},
 			},
@@ -148,7 +155,7 @@ func Test_inlineVars(t *testing.T) {
 				IDE:             "foo",
 				SupervisorImage: "bar",
 			},
-			Replacements: []InlineReplacement{
+			Replacements: []blobserve_config.InlineReplacement{
 				{Search: "aaa", Replacement: "${ide}"},
 				{Search: "bbb", Replacement: "${supervisor}"},
 			},

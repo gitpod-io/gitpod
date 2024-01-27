@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { injectable, inject } from "inversify";
@@ -71,7 +71,7 @@ export class KeyProviderImpl implements KeyProvider {
                 name: config.name,
                 version: config.version,
             },
-            material: new Buffer(config.material, "base64"),
+            material: Buffer.from(config.material, "base64"),
         };
     }
 }

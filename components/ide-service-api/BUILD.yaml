@@ -1,0 +1,8 @@
+packages:
+  - name: proto
+    type: generic
+    srcs:
+      - "*.proto"
+    config:
+      commands:
+        - ["echo"]

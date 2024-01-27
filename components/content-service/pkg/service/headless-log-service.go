@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package service
 
@@ -54,7 +54,7 @@ func (ls *HeadlessLogService) LogDownloadURL(ctx context.Context, req *api.LogDo
 	span.SetTag("instanceId", req.InstanceId)
 	defer tracing.FinishSpan(span, &err)
 
-	blobName := ls.s.InstanceObject(req.WorkspaceId, req.InstanceId, logs.UploadedHeadlessLogPath(req.TaskId))
+	blobName := ls.s.InstanceObject(req.OwnerId, req.WorkspaceId, req.InstanceId, logs.UploadedHeadlessLogPath(req.TaskId))
 	info, err := ls.s.SignDownload(ctx, ls.s.Bucket(req.OwnerId), blobName, &storage.SignedURLOptions{})
 	if err != nil {
 		log.WithFields(log.OWI(req.OwnerId, req.WorkspaceId, "")).
@@ -87,7 +87,7 @@ func (ls *HeadlessLogService) ListLogs(ctx context.Context, req *api.ListLogsReq
 	// we do not need to check whether the bucket exists because ListObjects() does that for us
 
 	// all files under this prefix are headless log files, named after their respective taskId
-	prefix := ls.s.InstanceObject(req.WorkspaceId, req.InstanceId, logs.UploadedHeadlessLogPathPrefix)
+	prefix := ls.s.InstanceObject(req.OwnerId, req.WorkspaceId, req.InstanceId, logs.UploadedHeadlessLogPathPrefix)
 	objects, err := da.ListObjects(ctx, prefix)
 	if err != nil {
 		return nil, err

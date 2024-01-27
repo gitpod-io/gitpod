@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package terminal
 
@@ -18,16 +18,11 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-)
-
-const (
-	// closeTerminaldefaultGracePeriod is the time terminal
-	// processes get between SIGTERM and SIGKILL.
-	closeTerminaldefaultGracePeriod = 10 * time.Second
 )
 
 // NewMuxTerminalService creates a new terminal service.
@@ -67,7 +62,7 @@ func (srv *MuxTerminalService) RegisterGRPC(s *grpc.Server) {
 
 // RegisterREST registers a REST service.
 func (srv *MuxTerminalService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterTerminalServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
+	return api.RegisterTerminalServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // Open opens a new terminal running the shell.
@@ -99,7 +94,7 @@ func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.Ope
 	if cmd.Dir == "" {
 		cmd.Dir = srv.DefaultWorkdir
 	}
-	cmd.Env = append(srv.Env, "TERM=xterm-color")
+	cmd.Env = append(srv.Env, "TERM=xterm-256color")
 	for key, value := range req.Env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", key, value))
 	}
@@ -138,7 +133,7 @@ func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.Ope
 
 // Close closes a terminal for the given alias.
 func (srv *MuxTerminalService) Shutdown(ctx context.Context, req *api.ShutdownTerminalRequest) (*api.ShutdownTerminalResponse, error) {
-	err := srv.Mux.CloseTerminal(req.Alias, closeTerminaldefaultGracePeriod)
+	err := srv.Mux.CloseTerminal(ctx, req.Alias)
 	if err == ErrNotFound {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}

@@ -1,0 +1,3 @@
+{
+  "commit": "<this value will insert by leeway before running tsc/webpack>"
+}

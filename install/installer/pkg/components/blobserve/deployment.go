@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package blobserve
 
@@ -20,14 +20,16 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
 	volumeName := "pull-secret"
 	var secretName string
 	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
 		secretName = dockerregistry.BuiltInRegistryAuth
 	} else if ctx.Config.ContainerRegistry.External != nil {
-		secretName = ctx.Config.ContainerRegistry.External.Certificate.Name
+		if ctx.Config.ContainerRegistry.External.Certificate != nil {
+			secretName = ctx.Config.ContainerRegistry.External.Certificate.Name
+		}
 	} else {
 		return nil, fmt.Errorf("%s: invalid container registry config", Component)
 	}
@@ -54,12 +56,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      labels,
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
 			},
 			Spec: appsv1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{MatchLabels: labels},
+				Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
 				Replicas: common.Replicas(ctx, Component),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
@@ -67,30 +70,39 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Name:      Component,
 						Namespace: ctx.Namespace,
 						Labels:    labels,
-						Annotations: map[string]string{
-							common.AnnotationConfigChecksum: configHash,
-						},
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+							return map[string]string{
+								common.AnnotationConfigChecksum: configHash,
+							}
+						}),
 					},
 					Spec: corev1.PodSpec{
-						Affinity:           common.NodeAffinity(cluster.AffinityLabelWorkspaceServices),
-						ServiceAccountName: Component,
-						EnableServiceLinks: pointer.Bool(false),
-						Volumes: []corev1.Volume{{
-							Name:         "cache",
-							VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
-						}, {
-							Name: "config",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+						Affinity:                  cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelIDE),
+						TopologySpreadConstraints: cluster.WithHostnameTopologySpread(Component),
+						ServiceAccountName:        Component,
+						EnableServiceLinks:        pointer.Bool(false),
+						Volumes: []corev1.Volume{
+							{
+								Name:         "cache",
+								VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
+							}, {
+								Name: "config",
+								VolumeSource: corev1.VolumeSource{
+									ConfigMap: &corev1.ConfigMapVolumeSource{
+										LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+									},
+								},
+							}, {
+								Name: volumeName,
+								VolumeSource: corev1.VolumeSource{
+									Secret: &corev1.SecretVolumeSource{
+										SecretName: secretName,
+										Items:      []corev1.KeyToPath{{Key: ".dockerconfigjson", Path: "pull-secret.json"}},
+									},
 								},
 							},
-						}, {
-							Name: volumeName,
-							VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
-								SecretName: secretName,
-							}},
-						}},
+							common.CAVolume(),
+						},
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Args:            []string{"run", "/mnt/config/config.json"},
@@ -110,22 +122,24 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Privileged: pointer.Bool(false),
 								RunAsUser:  pointer.Int64(1000),
 							},
-							Env: common.MergeEnv(
+							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
-								common.WorkspaceTracingEnv(ctx),
-							),
-							VolumeMounts: []corev1.VolumeMount{{
-								Name:      "config",
-								MountPath: "/mnt/config",
-								ReadOnly:  true,
-							}, {
-								Name:      "cache",
-								MountPath: "/mnt/cache",
-							}, {
-								Name:      volumeName,
-								MountPath: "/mnt/pull-secret.json",
-								SubPath:   ".dockerconfigjson",
-							}},
+								common.WorkspaceTracingEnv(ctx, Component),
+							)),
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "config",
+									MountPath: "/mnt/config",
+									ReadOnly:  true,
+								}, {
+									Name:      "cache",
+									MountPath: "/mnt/cache",
+								}, {
+									Name:      volumeName,
+									MountPath: "/mnt/pull-secret",
+								},
+								common.CAVolumeMount(),
+							},
 
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
@@ -136,7 +150,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 								InitialDelaySeconds: 5,
 								PeriodSeconds:       5,
-								TimeoutSeconds:      1,
+								TimeoutSeconds:      2,
 								SuccessThreshold:    1,
 								FailureThreshold:    3,
 							},
@@ -149,7 +163,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 								InitialDelaySeconds: 5,
 								PeriodSeconds:       10,
-								TimeoutSeconds:      1,
+								TimeoutSeconds:      2,
 								SuccessThreshold:    1,
 								FailureThreshold:    3,
 							},

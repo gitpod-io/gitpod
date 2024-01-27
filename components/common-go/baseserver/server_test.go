@@ -1,12 +1,13 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package baseserver_test
 
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -28,7 +29,7 @@ func TestServer_StartStop(t *testing.T) {
 	baseserver.StartServerForTests(t, srv)
 
 	require.Equal(t, "http://127.0.0.1:8765", srv.HTTPAddress())
-	require.Equal(t, "localhost:8766", srv.GRPCAddress())
+	require.Equal(t, "127.0.0.1:8766", srv.GRPCAddress())
 	require.NoError(t, srv.Close())
 }
 
@@ -48,15 +49,11 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 			var opts []baseserver.Option
 			opts = append(opts, baseserver.WithUnderTest())
 			if test.StartHTTP {
-				opts = append(opts, baseserver.WithHTTP(&baseserver.ServerConfiguration{
-					Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
-				}))
+				opts = append(opts, baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)))
 			}
 
 			if test.StartGRPC {
-				opts = append(opts, baseserver.WithGRPC(&baseserver.ServerConfiguration{
-					Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
-				}))
+				opts = append(opts, baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)))
 			}
 
 			srv, err := baseserver.New("test_server", opts...)
@@ -83,9 +80,7 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 
 func TestServer_Metrics_gRPC(t *testing.T) {
 	ctx := context.Background()
-	srv := baseserver.NewForTests(t, baseserver.WithGRPC(&baseserver.ServerConfiguration{
-		Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
-	}))
+	srv := baseserver.NewForTests(t, baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)))
 
 	// At this point, there must be metrics registry available for use
 	require.NotNil(t, srv.MetricsRegistry())
@@ -109,4 +104,22 @@ func TestServer_Metrics_gRPC(t *testing.T) {
 	count, err := testutil.GatherAndCount(registry, expected...)
 	require.NoError(t, err)
 	require.Equal(t, len(expected)*1, count, "expected 1 count for each metric")
+}
+
+func TestServer_Metrics_HTTP(t *testing.T) {
+	srv := baseserver.NewForTests(t, baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)))
+
+	// At this point, there must be metrics registry available for use
+	require.NotNil(t, srv.MetricsRegistry())
+	// Let's start our server up
+	baseserver.StartServerForTests(t, srv)
+
+	_, err := http.Get(fmt.Sprintf("%s/foo/bar", srv.HTTPAddress()))
+	require.NoError(t, err)
+
+	registry := srv.MetricsRegistry()
+
+	count, err := testutil.GatherAndCount(registry, "gitpod_http_request_duration_seconds", "gitpod_http_response_size_bytes", "gitpod_http_requests_inflight")
+	require.NoError(t, err)
+	require.Equal(t, 3, count, "expecting 1 count for each above metric")
 }

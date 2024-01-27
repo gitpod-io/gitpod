@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package server
 
@@ -14,31 +14,31 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+func Rolebinding(ctx *common.RenderContext, component string) ([]runtime.Object, error) {
+	labels := common.DefaultLabels(component)
 
 	return []runtime.Object{
 		&rbacv1.RoleBinding{
 			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
+				Name:      component,
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},
 			RoleRef: rbacv1.RoleRef{
 				Kind:     "Role",
-				Name:     Component,
+				Name:     component,
 				APIGroup: "rbac.authorization.k8s.io",
 			},
 			Subjects: []rbacv1.Subject{{
 				Kind: "ServiceAccount",
-				Name: Component,
+				Name: component,
 			}},
 		},
 		&rbacv1.ClusterRoleBinding{
 			TypeMeta: common.TypeMetaClusterRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:   fmt.Sprintf("%s-%s-rb-kube-rbac-proxy", ctx.Namespace, Component),
+				Name:   fmt.Sprintf("%s-%s-rb-kube-rbac-proxy", ctx.Namespace, component),
 				Labels: labels,
 			},
 			RoleRef: rbacv1.RoleRef{
@@ -48,14 +48,14 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Subjects: []rbacv1.Subject{{
 				Kind:      "ServiceAccount",
-				Name:      Component,
+				Name:      component,
 				Namespace: ctx.Namespace,
 			}},
 		},
 		&rbacv1.RoleBinding{
 			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-unprivileged", Component),
+				Name:      fmt.Sprintf("%s-unprivileged", component),
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},
@@ -66,7 +66,7 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Subjects: []rbacv1.Subject{{
 				Kind: "ServiceAccount",
-				Name: Component,
+				Name: component,
 			}},
 		},
 	}, nil

@@ -1,6 +1,6 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
-// Licensed under the Gitpod Enterprise Source Code License,
-// See License.enterprise.txt in the project root folder.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package config
 
@@ -165,17 +165,28 @@ type Kubernetes struct {
 
 // Config configures Agent Smith
 type Config struct {
-	GitpodAPI           GitpodAPI `json:"gitpodAPI"`
-	KubernetesNamespace string    `json:"namespace"`
+	WorkspaceManager    WorkspaceManagerConfig `json:"wsman"`
+	GitpodAPI           GitpodAPI              `json:"gitpodAPI"`
+	KubernetesNamespace string                 `json:"namespace"`
 
 	Blocklists *Blocklists `json:"blocklists,omitempty"`
 
 	Enforcement       Enforcement        `json:"enforcement,omitempty"`
 	ExcessiveCPUCheck *ExcessiveCPUCheck `json:"excessiveCPUCheck,omitempty"`
-	SlackWebhooks     *SlackWebhooks     `json:"slackWebhooks,omitempty"`
 	Kubernetes        Kubernetes         `json:"kubernetes"`
 
 	ProbePath string `json:"probePath,omitempty"`
+}
+
+type TLS struct {
+	Authority   string `json:"ca"`
+	Certificate string `json:"crt"`
+	PrivateKey  string `json:"key"`
+}
+
+type WorkspaceManagerConfig struct {
+	Address string `json:"address"`
+	TLS     TLS    `json:"tls,omitempty"`
 }
 
 // Slackwebhooks holds slack notification configuration for different levels of penalty severity

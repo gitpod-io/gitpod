@@ -1,6 +1,6 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
-// Licensed under the Gitpod Enterprise Source Code License,
-// See License.enterprise.txt in the project root folder.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
 
 package classifier
 
@@ -22,6 +22,10 @@ func TestMatchELF(t *testing.T) {
 	}
 	defer input.Close()
 
+	sfc := SignatureReadCache{
+		Reader: input,
+	}
+
 	sig := Signature{
 		Kind:    ObjectELFSymbols,
 		Pattern: []byte("bash_groupname_completion_function"),
@@ -32,7 +36,7 @@ func TestMatchELF(t *testing.T) {
 		return
 	}
 
-	matches, err := sig.Matches(input)
+	matches, err := sig.Matches(&sfc)
 	if err != nil {
 		t.Errorf("cannot match signature: %v", err)
 		return
@@ -60,7 +64,11 @@ func TestMatchAny(t *testing.T) {
 			return
 		}
 
-		matches, err := test.Signature.matchAny(bytes.NewReader(test.Input))
+		sfc := SignatureReadCache{
+			Reader: bytes.NewReader(test.Input),
+		}
+
+		matches, err := test.Signature.matchAny(&sfc)
 		if err != nil {
 			t.Errorf("[%03d] cannot match signature: %v", i, err)
 			return

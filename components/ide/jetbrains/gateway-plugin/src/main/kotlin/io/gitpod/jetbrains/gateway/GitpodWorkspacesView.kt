@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package io.gitpod.jetbrains.gateway
 
@@ -28,6 +28,7 @@ import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.isNotAlive
 import io.gitpod.gitpodprotocol.api.entities.GetWorkspacesOptions
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
+import io.gitpod.gitpodprotocol.api.entities.WorkspaceType
 import io.gitpod.jetbrains.auth.GitpodAuthService
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.GlobalScope
@@ -37,6 +38,7 @@ import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import org.apache.http.client.utils.URIBuilder
 import java.time.OffsetDateTime
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -118,13 +120,25 @@ class GitpodWorkspacesView(
                     }
                     label("").resizableColumn().horizontalAlign(HorizontalAlign.FILL)
                     actionsButton(object :
-                        DumbAwareAction("Open Dashboard", "Open Dashboard", AllIcons.Nodes.Servlet) {
+                        DumbAwareAction("Dashboard", "Dashboard", AllIcons.Nodes.Servlet) {
                         override fun actionPerformed(e: AnActionEvent) {
                             BrowserUtil.browse("https://${settings.gitpodHost}")
                         }
+                    }, object : DumbAwareAction("Usage", "Usage", AllIcons.Actions.DynamicUsages) {
+                        override fun actionPerformed(e: AnActionEvent) {
+                            BrowserUtil.browse("https://${settings.gitpodHost}/usage")
+                        }
                     }, object : DumbAwareAction("Documentation", "Documentation", AllIcons.Toolwindows.Documentation) {
                         override fun actionPerformed(e: AnActionEvent) {
-                            BrowserUtil.browse("https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway")
+                            BrowserUtil.browse("https://www.gitpod.io/docs/integrations/jetbrains-gateway")
+                        }
+                    }, object : DumbAwareAction("Feedback", "Feedback", AllIcons.Actions.IntentionBulb) {
+                        override fun actionPerformed(e: AnActionEvent) {
+                            BrowserUtil.browse("https://github.com/gitpod-io/gitpod/issues/6576")
+                        }
+                    }, object : DumbAwareAction("Help", "Help", AllIcons.Actions.Help) {
+                        override fun actionPerformed(e: AnActionEvent) {
+                            BrowserUtil.browse("https://www.gitpod.io/contact/support?subject=technical%20support")
                         }
                     }, object : DumbAwareAction("Log Out", "Log out", AllIcons.Actions.Exit) {
                         override fun actionPerformed(e: AnActionEvent) {
@@ -180,7 +194,7 @@ class GitpodWorkspacesView(
                 ensureActive()
                 updateLifetime?.terminate()
                 updateLifetime = lifetime.createNested()
-                doUpdate(updateLifetime, workspacesPane);
+                doUpdate(updateLifetime, workspacesPane)
             }
         }
         lifetime.onTerminationOrNow { updateActor.close() }
@@ -239,15 +253,15 @@ class GitpodWorkspacesView(
                                 }
                             } catch (e: Throwable) {
                                 thisLogger().error(
-                                    "${gitpodHost}: ${it.workspace.id}: failed to parse creation time",
+                                    "$gitpodHost: ${it.workspace.id}: failed to parse creation time",
                                     e
                                 )
                                 null
                             }
                         }
                     for (info in sortedInfos) {
-                        if (info.latestInstance == null) {
-                            continue;
+                        if (info.latestInstance == null || info.workspace.type != WorkspaceType.regular) {
+                            continue
                         }
                         indent {
                             row {
@@ -272,9 +286,12 @@ class GitpodWorkspacesView(
                                     }
                                 ).gap(RightGap.SMALL)
                                 panel {
-                                    row {
+                                    val contextUrlRow = row {
                                         browserLink(info.workspace.id, info.latestInstance.ideUrl)
-                                    }.rowComment("<a href='${info.workspace.context.normalizedContextURL}'>${info.workspace.context.normalizedContextURL}</a>")
+                                    }
+                                    info.workspace.context.normalizedContextURL.ifPresent {
+                                        contextUrlRow.rowComment("<a href='$it'>$it</a>")
+                                    }
                                 }
                                 label("").resizableColumn().horizontalAlign(HorizontalAlign.FILL)
                                 panel {
@@ -283,7 +300,7 @@ class GitpodWorkspacesView(
                                         it.totalUncommitedFiles + it.totalUntrackedFiles + it.totalUnpushedCommits
                                     } ?: 0
                                     row {
-                                        label(info.workspace.context.ref)
+                                        info.workspace.context.ref.ifPresentOrElse({ label(it) }, { label("(detached)") })
                                     }.rowComment(
                                         when {
                                             changes == 1 -> "<b>$changes Change</b>"
@@ -295,7 +312,14 @@ class GitpodWorkspacesView(
                                 label(getRelativeTimeSpan(info.latestInstance.creationTime))
                                 button("Connect") {
                                     if (!canConnect) {
-                                        BrowserUtil.browse(info.latestInstance.ideUrl)
+                                        val startUrl = URIBuilder()
+                                                .setScheme("https")
+                                                .setHost(gitpodHost)
+                                                .setPath("start")
+                                                .setFragment(info.workspace.id)
+                                                .build()
+                                                .toString()
+                                        BrowserUtil.browse(startUrl)
                                     } else {
                                         GatewayUI.getInstance().connect(
                                             mapOf(
@@ -327,10 +351,12 @@ class GitpodWorkspacesView(
                     try {
                         info = client.syncWorkspace(update.workspaceId)
                     } catch (t: Throwable) {
-                        thisLogger().error("${gitpodHost}: ${update.workspaceId}: failed to sync", t)
+                        thisLogger().error("$gitpodHost: ${update.workspaceId}: failed to sync", t)
                         continue
                     }
-                    workspacesMap[update.workspaceId] = info
+                    if (info.workspace.type == WorkspaceType.regular) {
+                        workspacesMap[update.workspaceId] = info
+                    }
                 } else if (WorkspaceInstance.isUpToDate(info.latestInstance, update)) {
                     continue
                 } else {

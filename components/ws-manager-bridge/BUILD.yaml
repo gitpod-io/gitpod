@@ -2,13 +2,13 @@ packages:
   - name: app
     type: yarn
     srcs:
-      - "**/*.ts"
+      - "src/**/*.ts"
+      - .eslintrc
       - package.json
       - mocha.opts
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
-      - components/gitpod-messagebus:lib
       - components/gitpod-protocol:lib
       - components/ws-daemon-api/typescript:lib
       - components/ws-manager-api/typescript:lib
@@ -37,7 +37,12 @@ packages:
 scripts:
   - name: telepresence
     script: |-
+      # next line ensures telepresence can handle the UID restriction in the bridge deployment
+      # links:
+      #  - PR: https://github.com/telepresenceio/telepresence/pull/1323/files
+      #  - comment mentioning this solution: https://github.com/telepresenceio/telepresence/issues/1309#issuecomment-615312753
+      export TELEPRESENCE_USE_OCP_IMAGE=1
       telepresence --swap-deployment ws-manager-bridge \
                    --method inject-tcp \
-                   --run node --inspect ./dist/ee/src/index.js | \
-        leeway run gitpod-core/components:dejson-log-output
+                   --expose 18080:8080 \
+                   --run  yarn start

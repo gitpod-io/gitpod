@@ -1,12 +1,13 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package baseserver
 
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -15,13 +16,19 @@ import (
 	"syscall"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+	http_metrics "github.com/slok/go-http-metrics/metrics/prometheus"
+	"github.com/slok/go-http-metrics/middleware"
+	"github.com/slok/go-http-metrics/middleware/std"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -40,9 +47,15 @@ func New(name string, opts ...Option) (*Server, error) {
 		options: options,
 	}
 	server.builtinServices = newBuiltinServices(server)
+	server.tracingCloser = tracing.Init(name)
 
 	server.httpMux = http.NewServeMux()
-	server.http = &http.Server{Handler: server.httpMux}
+	server.http = &http.Server{Handler: std.Handler("", middleware.New(middleware.Config{
+		Recorder: http_metrics.NewRecorder(http_metrics.Config{
+			Prefix:   "gitpod",
+			Registry: server.MetricsRegistry(),
+		}),
+	}), server.httpMux)}
 
 	err = server.initializeMetrics()
 	if err != nil {
@@ -61,18 +74,18 @@ func New(name string, opts ...Option) (*Server, error) {
 // Server implements graceful shutdown making it suitable for usage in integration tests. See server_test.go.
 //
 // Server is composed of the following:
-// 	* Debug server which serves observability and debug endpoints
-//		- /metrics for Prometheus metrics
-//		- /pprof for Golang profiler
-//		- /ready for kubernetes readiness check
-//		- /live for kubernetes liveness check
-//	* (optional) gRPC server with standard interceptors and configuration
-//		- Started when baseserver is configured WithGRPCPort (port is non-negative)
-//		- Use Server.GRPC() to get access to the underlying grpc.Server and register services
-//	* (optional) HTTP server
-//		- Currently does not come with any standard HTTP middlewares
-//		- Started when baseserver is configured WithHTTPPort (port is non-negative)
-// 		- Use Server.HTTPMux() to get access to the root handler and register your endpoints
+//   - Debug server which serves observability and debug endpoints
+//   - /metrics for Prometheus metrics
+//   - /pprof for Golang profiler
+//   - /ready for kubernetes readiness check
+//   - /live for kubernetes liveness check
+//   - (optional) gRPC server with standard interceptors and configuration
+//   - Started when baseserver is configured WithGRPCPort (port is non-negative)
+//   - Use Server.GRPC() to get access to the underlying grpc.Server and register services
+//   - (optional) HTTP server
+//   - Currently does not come with any standard HTTP middlewares
+//   - Started when baseserver is configured WithHTTPPort (port is non-negative)
+//   - Use Server.HTTPMux() to get access to the root handler and register your endpoints
 type Server struct {
 	// Name is the name of this server, used for logging context
 	Name string
@@ -89,6 +102,8 @@ type Server struct {
 	// grpc is a grpc Server, only used when port is specified in cfg
 	grpc         *grpc.Server
 	grpcListener net.Listener
+
+	tracingCloser io.Closer
 
 	// listening indicates the server is serving. When closed, the server is in the process of graceful termination.
 	listening chan struct{}
@@ -158,11 +173,9 @@ func (s *Server) ListenAndServe() error {
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
 	// Await operating system signals, or server errors.
-	select {
-	case sig := <-signals:
-		s.Logger().Infof("Received system signal %s, closing server.", sig.String())
-		return nil
-	}
+	sig := <-signals
+	s.Logger().Infof("Received system signal %s, closing server.", sig.String())
+	return nil
 }
 
 func (s *Server) Close() error {
@@ -190,6 +203,10 @@ func (s *Server) GRPC() *grpc.Server {
 
 func (s *Server) MetricsRegistry() *prometheus.Registry {
 	return s.options.metricsRegistry
+}
+
+func (s *Server) Tracer() opentracing.Tracer {
+	return opentracing.GlobalTracer()
 }
 
 func (s *Server) close(ctx context.Context) error {
@@ -229,6 +246,11 @@ func (s *Server) close(ctx context.Context) error {
 	}
 	s.Logger().Info("Debug server terminated.")
 
+	err = s.tracingCloser.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close tracing: %w", err)
+	}
+
 	return nil
 }
 
@@ -261,13 +283,24 @@ func (s *Server) initializeGRPC() error {
 	common_grpc.SetupLogging()
 
 	grpcMetrics := grpc_prometheus.NewServerMetrics()
-	grpcMetrics.EnableHandlingTimeHistogram()
+	grpcMetrics.EnableHandlingTimeHistogram(
+		grpc_prometheus.WithHistogramBuckets([]float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600}),
+	)
 	if err := s.MetricsRegistry().Register(grpcMetrics); err != nil {
 		return fmt.Errorf("failed to register grpc metrics: %w", err)
 	}
 
 	unary := []grpc.UnaryServerInterceptor{
-		grpc_logrus.UnaryServerInterceptor(s.Logger()),
+		grpc_logrus.UnaryServerInterceptor(s.Logger(),
+			grpc_logrus.WithDecider(func(fullMethodName string, err error) bool {
+				// Skip logs for anything that does not contain an error.
+				if err == nil {
+					return false
+				}
+				// Skip gRPC healthcheck logs, they are frequent and pollute our logging infra
+				return fullMethodName != "/grpc.health.v1.Health/Check"
+			}),
+		),
 		grpcMetrics.UnaryServerInterceptor(),
 	}
 	stream := []grpc.StreamServerInterceptor{
@@ -289,6 +322,7 @@ func (s *Server) initializeGRPC() error {
 		opts = append(opts, grpc.Creds(credentials.NewTLS(tlsConfig)))
 	}
 
+	opts = append(opts, grpc.MaxRecvMsgSize(100*1024*1024))
 	s.grpc = grpc.NewServer(opts...)
 
 	reflection.Register(s.grpc)
@@ -310,6 +344,17 @@ func (s *Server) initializeMetrics() error {
 		return fmt.Errorf("failed to register process collectors: %w", err)
 	}
 
+	err = registerMetrics(s.MetricsRegistry())
+	if err != nil {
+		return fmt.Errorf("failed to register baseserver metrics: %w", err)
+	}
+
+	if err := s.MetricsRegistry().Register(log.DefaultMetrics); err != nil {
+		return fmt.Errorf("failed to register log metrics: %w", err)
+	}
+
+	reportServerVersion(s.options.version)
+
 	return nil
 }
 
@@ -328,12 +373,21 @@ func (s *Server) HealthAddr() string {
 func (s *Server) HTTPAddress() string {
 	return httpAddress(s.options.config.Services.HTTP, s.httpListener)
 }
-func (s *Server) GRPCAddress() string { return s.options.config.Services.GRPC.GetAddress() }
+func (s *Server) GRPCAddress() string {
+	// If the server hasn't started, it won't have a listener yet
+	if s.grpcListener == nil {
+		return ""
+	}
+
+	return s.grpcListener.Addr().String()
+}
 
 const (
 	BuiltinDebugPort   = 6060
-	BuiltinMetricsPort = 9502
+	BuiltinMetricsPort = 9500
 	BuiltinHealthPort  = 9501
+
+	BuiltinMetricsPortName = "metrics"
 )
 
 type builtinServices struct {
@@ -361,7 +415,7 @@ func newBuiltinServices(server *Server) *builtinServices {
 			Handler: server.healthEndpoint(),
 		},
 		Metrics: &http.Server{
-			Addr:    fmt.Sprintf(":%d", BuiltinMetricsPort),
+			Addr:    fmt.Sprintf("127.0.0.1:%d", BuiltinMetricsPort),
 			Handler: server.metricsEndpoint(),
 		},
 	}
@@ -386,7 +440,11 @@ func (s *builtinServices) ListenAndServe() error {
 			return err
 		}
 		s.Health.Addr = l.Addr().String()
-		return s.Health.Serve(l)
+		err = s.Health.Serve(l)
+		if err == http.ErrServerClosed {
+			return nil
+		}
+		return err
 	})
 	return eg.Wait()
 }

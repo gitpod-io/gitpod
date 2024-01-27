@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package archive
 
@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path"
 	"sort"
+	"strings"
 	"syscall"
 	"time"
 
@@ -80,6 +81,7 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 	finished := make(chan bool)
 	m := make(map[string]Info)
 
+	unpackSpan := opentracing.StartSpan("unpackTarbal", opentracing.ChildOf(span.Context()))
 	go func() {
 		defer close(finished)
 		for {
@@ -109,7 +111,6 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 		"tar",
 		"--extract",
 		"--preserve-permissions",
-		"--xattrs", "--xattrs-include=security.capability",
 	)
 	tarcmd.Dir = dst
 	tarcmd.Stdin = teeReader
@@ -123,7 +124,9 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 	log.WithField("log", string(msg)).Debug("decompressing tar stream log")
 
 	<-finished
+	tracing.FinishSpan(unpackSpan, &err)
 
+	chownSpan := opentracing.StartSpan("chown", opentracing.ChildOf(span.Context()))
 	// lets create a sorted list of pathes and chown depth first.
 	paths := make([]string, 0, len(m))
 	for path := range m {
@@ -147,6 +150,7 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 			log.WithError(err).WithField("uid", uid).WithField("gid", gid).WithField("path", p).Debug("cannot chown")
 		}
 	}
+	tracing.FinishSpan(chownSpan, &err)
 
 	log.WithField("duration", time.Since(start).Milliseconds()).Debug("untar complete")
 	return nil
@@ -188,13 +192,25 @@ func remapFile(name string, uid, gid int, xattrs map[string]string) error {
 	}
 
 	for key, value := range xattrs {
+		// do not set trusted attributes
+		if strings.HasPrefix(key, "trusted.") {
+			continue
+		}
+
+		if strings.HasPrefix(key, "user.") {
+			// This is a marker to match inodes, such as when an upper layer copies a lower layer file in overlayfs.
+			// However, when restoring a content, the container in the workspace is not always running, so there is no problem ignoring the failure.
+			if strings.HasSuffix(key, ".overlay.impure") || strings.HasSuffix(key, ".overlay.origin") {
+				continue
+			}
+		}
+
 		if err := unix.Lsetxattr(name, key, []byte(value), 0); err != nil {
-			log.WithField("name", key).WithField("value", value).WithField("file", name).WithError(err).Error("restoring extended attributes")
 			if err == syscall.ENOTSUP || err == syscall.EPERM {
 				continue
 			}
 
-			return err
+			log.WithField("name", key).WithField("value", value).WithField("file", name).WithError(err).Warn("restoring extended attributes")
 		}
 	}
 

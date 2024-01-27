@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package cmd
 
@@ -54,7 +54,6 @@ Conditions:
 {{- if not (eq .Conditions.Failed "") }}  Failed:	{{ .Conditions.Failed }}{{ end }}
 {{- if not (eq .Conditions.Timeout "") }}  Timeout:	{{ .Conditions.Timeout }}{{ end }}
   PullingImages:	{{ .Conditions.PullingImages }}
-  ServiceExists:	{{ .Conditions.ServiceExists }}
   Deployed:	{{ .Conditions.Deployed }}
   FinalBackupComplete:	{{ .Conditions.FinalBackupComplete }}
 Spec:

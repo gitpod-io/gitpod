@@ -14,7 +14,6 @@ packages:
     type: generic
     deps:
       - :app
-      - components/ws-manager:userns-test-fixtures
     config:
       commands:
         - ["sh", "-c", "components-ws-daemon-seccomp-profile-installer--app/seccomp-profile-installer $(cat components-ws-manager--userns-test-fixtures/pod.json  | jq -r '.reason.spec.containers[0].securityContext.capabilities.add | map(\"CAP_\"+.) | join(\" \")') > workspace_default.json"]

@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 /**
@@ -23,9 +23,15 @@ export function install(): void {
 }
 
 function proxyUrl(scriptUrl: string | URL | TrustedScriptURL): string {
-    scriptUrl = scriptUrl instanceof URL ? scriptUrl : new URL(typeof scriptUrl === 'string' ? scriptUrl : scriptUrl.toString(), document.baseURI);
-    if (scriptUrl.origin !== location.origin || (scriptUrl.protocol !== 'http:' && scriptUrl.protocol !== 'https:')) {
+    scriptUrl =
+        scriptUrl instanceof URL
+            ? scriptUrl
+            : new URL(typeof scriptUrl === "string" ? scriptUrl : scriptUrl.toString(), document.baseURI);
+    if (scriptUrl.origin !== location.origin || (scriptUrl.protocol !== "http:" && scriptUrl.protocol !== "https:")) {
         return scriptUrl.toString();
     }
-    return new URL('_supervisor/frontend/worker-proxy.js#' + encodeURI(scriptUrl.toString()), document.baseURI).toString();
-};
+    return new URL(
+        "_supervisor/frontend/worker-proxy.js#" + encodeURI(scriptUrl.toString()),
+        document.baseURI,
+    ).toString();
+}

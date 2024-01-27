@@ -1,4 +1,0 @@
-tracing:
-  endpoint: http://otel-collector:14268/api/traces
-  samplerType: const
-  samplerParam: "1"

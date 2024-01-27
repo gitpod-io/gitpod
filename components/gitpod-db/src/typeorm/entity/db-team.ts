@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { Team } from "@gitpod/gitpod-protocol";
@@ -25,8 +25,4 @@ export class DBTeam implements Team {
 
     @Column()
     markedDeleted?: boolean;
-
-    // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
-    @Column()
-    deleted: boolean;
 }

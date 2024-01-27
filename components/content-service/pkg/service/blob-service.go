@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 package service
 
@@ -51,7 +51,7 @@ func (cs *BlobService) UploadUrl(ctx context.Context, req *api.UploadUrlRequest)
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	blobName, err := cs.s.BlobObject(req.Name)
+	blobName, err := cs.s.BlobObject(req.OwnerId, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -96,7 +96,7 @@ func (cs *BlobService) DownloadUrl(ctx context.Context, req *api.DownloadUrlRequ
 	span.SetTag("name", req.Name)
 	defer tracing.FinishSpan(span, &err)
 
-	blobName, err := cs.s.BlobObject(req.Name)
+	blobName, err := cs.s.BlobObject(req.OwnerId, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -129,13 +129,13 @@ func (cs *BlobService) Delete(ctx context.Context, req *api.DeleteRequest) (resp
 	exact := req.GetExact()
 	prefix := req.GetPrefix()
 	if exact != "" {
-		exact, err = cs.s.BlobObject(exact)
+		exact, err = cs.s.BlobObject(req.OwnerId, exact)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 		query = &storage.DeleteObjectQuery{Name: exact}
 	} else if prefix != "" {
-		prefix, err = cs.s.BlobObject(prefix)
+		prefix, err = cs.s.BlobObject(req.OwnerId, prefix)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
