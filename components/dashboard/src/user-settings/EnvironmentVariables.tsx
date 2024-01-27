@@ -227,7 +227,7 @@ export default function EnvVars() {
             )}
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
-                    <Heading2>Environment Variables</Heading2>
+                    <Heading2>Environment variables</Heading2>
                     <Subheading>
                         Variables are used to store information like passwords.{" "}
                         <a
@@ -243,7 +243,7 @@ export default function EnvVars() {
                 {envVars.length !== 0 ? (
                     <div className="flex mt-0">
                         <Button onClick={add} className="ml-2">
-                            New Variable
+                            New variable
                         </Button>
                     </div>
                 ) : null}
@@ -252,13 +252,13 @@ export default function EnvVars() {
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full h-96">
                     <div className="pt-28 flex flex-col items-center w-96 m-auto">
                         <Heading2 color="light" className="text-center pb-3">
-                            No Environment Variables
+                            No environment variables
                         </Heading2>
                         <Subheading className="text-center pb-6">
                             In addition to user-specific environment variables you can also pass variables through a
                             workspace creation URL.
                         </Subheading>
-                        <Button onClick={add}>New Variable</Button>
+                        <Button onClick={add}>New variable</Button>
                     </div>
                 </div>
             ) : (

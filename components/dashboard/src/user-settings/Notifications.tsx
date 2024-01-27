@@ -73,7 +73,7 @@ export default function Notifications() {
     return (
         <div>
             <PageWithSettingsSubMenu>
-                <Heading2>Email Notifications</Heading2>
+                <Heading2>Email notifications</Heading2>
                 <CheckboxInputField
                     label="Onboarding guide"
                     hint="In the first weeks after you sign up, we'll guide you through the product, so you can get the most out of it"
@@ -87,7 +87,7 @@ export default function Notifications() {
                     onChange={toggleChangelogMail}
                 />
                 <CheckboxInputField
-                    label="Developer Experience & Product Tips"
+                    label="Developer experience & product tips"
                     hint="Bring back joy and speed to your workflows"
                     checked={isDevXMail}
                     onChange={toggleDevXMail}

@@ -124,7 +124,7 @@ export default function Preferences() {
                     </a>
                 </Subheading>
                 <SelectIDE location="preferences" />
-                <Heading3 className="mt-12">Workspace Options</Heading3>
+                <Heading3 className="mt-12">Workspace options</Heading3>
                 <Subheading>Clear last used options for creating workspaces.</Subheading>
                 <Button className="mt-4" variant="secondary" onClick={clearCreateWorkspaceOptions}>
                     Reset Options
@@ -165,7 +165,7 @@ export default function Preferences() {
                 <div className="mt-4 max-w-xl">
                     <form onSubmit={saveWorkspaceTimeout}>
                         <InputField
-                            label="Default workspace Timeout"
+                            label="Default workspace timeout"
                             hint={
                                 <span>
                                     Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}

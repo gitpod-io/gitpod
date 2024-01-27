@@ -68,14 +68,14 @@ export default function ProjectVariablesPage() {
             )}
             <div className="mb-2 flex">
                 <div className="flex-grow">
-                    <Heading2>Environment Variables</Heading2>
+                    <Heading2>Environment variables</Heading2>
                     <Subheading>Manage project-specific environment variables.</Subheading>
                 </div>
                 {envVars.length > 0 && <Button onClick={() => setShowAddVariableModal(true)}>New Variable</Button>}
             </div>
             {envVars.length === 0 ? (
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center justify-center space-y-3">
-                    <Heading2 color="light">No Environment Variables</Heading2>
+                    <Heading2 color="light">No environment variables</Heading2>
                     <Subheading className="text-center w-96">
                         All <strong>project-specific environment variables</strong> will be visible in prebuilds and
                         optionally in workspaces for this project.

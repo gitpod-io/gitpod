@@ -53,17 +53,17 @@ function getSettingsMenu(enablePersonalAccessTokens?: boolean) {
             link: [settingsPathVariables],
         },
         {
-            title: "SSH Keys",
+            title: "SSH keys",
             link: [settingsPathSSHKeys],
         },
         {
-            title: "Git Providers",
+            title: "Git providers",
             link: [settingsPathIntegrations, "/access-control"],
         },
         ...(enablePersonalAccessTokens
             ? [
                   {
-                      title: "Access Tokens",
+                      title: "Access tokens",
                       link: [
                           settingsPathPersonalAccessTokens,
                           settingsPathPersonalAccessTokenCreate,

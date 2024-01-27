@@ -84,9 +84,9 @@ export default function Account() {
     return (
         <div>
             <ConfirmationModal
-                title="Delete Account"
+                title="Delete account"
                 areYouSureText="You are about to permanently delete your account."
-                buttonText="Delete Account"
+                buttonText="Delete account"
                 buttonDisabled={typedEmail !== (original.emailAddress || "")}
                 visible={modal}
                 onClose={close}
@@ -125,16 +125,16 @@ export default function Account() {
                         user={user}
                     >
                         <div className="flex flex-row mt-8">
-                            <Button type="submit">Update Profile</Button>
+                            <Button type="submit">Update profile</Button>
                         </div>
                     </ProfileInformation>
                 </form>
-                <Heading2 className="mt-12">Delete Account</Heading2>
+                <Heading2 className="mt-12">Delete account</Heading2>
                 <Subheading className="mb-3">
                     This action will remove all the data associated with your account in Gitpod.
                 </Subheading>
                 <Button variant="destructive" onClick={() => setModal(true)}>
-                    Delete Account
+                    Delete account
                 </Button>
             </PageWithSettingsSubMenu>
         </div>

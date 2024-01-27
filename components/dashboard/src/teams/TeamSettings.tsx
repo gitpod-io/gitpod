@@ -168,7 +168,7 @@ export default function TeamSettingsPage() {
                     </ConfigurationSettingsField>
 
                     <ConfigurationSettingsField>
-                        <Heading3>Collaboration & Sharing</Heading3>
+                        <Heading3>Collaboration & sharing</Heading3>
 
                         {updateTeamSettings.isError && (
                             <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
@@ -178,7 +178,7 @@ export default function TeamSettingsPage() {
                         )}
 
                         <CheckboxInputField
-                            label="Workspace Sharing"
+                            label="Workspace sharing"
                             hint="Allow workspaces created within an Organization to share the workspace with any authenticated user."
                             checked={!settings?.workspaceSharingDisabled}
                             onChange={(checked) => handleUpdateTeamSettings({ workspaceSharingDisabled: !checked })}
@@ -187,7 +187,7 @@ export default function TeamSettingsPage() {
                     </ConfigurationSettingsField>
 
                     <ConfigurationSettingsField>
-                        <Heading3>Workspace Images</Heading3>
+                        <Heading3>Workspace images</Heading3>
                         <Subheading>Choose a default image for all workspaces in the organization.</Subheading>
 
                         <WorkspaceImageButton

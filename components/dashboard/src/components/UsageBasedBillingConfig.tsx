@@ -294,7 +294,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                                         "YYYY-MM-DD",
                                     )}`}
                                 >
-                                    <Button variant="secondary">View Usage →</Button>
+                                    <Button variant="secondary">View usage →</Button>
                                 </Link>
                             </div>
                         </div>
@@ -320,7 +320,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                             </div>
                         </div>
                         <div className="flex flex-col p-4 rounded-b-xl bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Upgrade Plan</div>
+                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Upgrade plan</div>
                             <div className="mt-1 text-xl font-semibold flex-grow text-gray-800 dark:text-gray-100">
                                 Pay-as-you-go
                             </div>
@@ -333,12 +333,12 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                                 {stripePortalUrl && (
                                     <a href={stripePortalUrl}>
                                         <Button variant="secondary" disabled={!stripePortalUrl}>
-                                            View Past Invoices ↗
+                                            View past invoices ↗
                                         </Button>
                                     </a>
                                 )}
                                 <LoadingButton loading={createPaymentIntent.isLoading} onClick={handleAddPaymentMethod}>
-                                    Upgrade Plan
+                                    Upgrade plan
                                 </LoadingButton>
                             </div>
                         </div>

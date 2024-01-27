@@ -180,7 +180,7 @@ export default function SSHKeys() {
             )}
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
-                    <Heading2>SSH Keys</Heading2>
+                    <Heading2>SSH keys</Heading2>
                     <Subheading>
                         Create and manage SSH keys.{" "}
                         <a
@@ -203,7 +203,7 @@ export default function SSHKeys() {
             </div>
             {dataList.length === 0 ? (
                 <EmptyMessage
-                    title="No SSH Keys"
+                    title="No SSH keys"
                     subtitle={
                         <span>
                             SSH keys allow you to establish a <b>secure connection</b> between your <b>computer</b> and{" "}
