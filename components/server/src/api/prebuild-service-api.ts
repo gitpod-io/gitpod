@@ -170,7 +170,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             configuration: filter?.configuration,
             searchTerm: filter?.searchTerm,
         };
-        gi;
+
         if (filter?.state) {
             prebuildsFilter.state = this.apiConverter.fromPrebuildFilterState(filter?.state);
         }

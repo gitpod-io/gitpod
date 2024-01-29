@@ -206,7 +206,7 @@ export class PrebuildManager {
         organizationId: string,
         pagination: {
             limit: number;
-            offset?: number;
+            offset: number;
         },
         filter: PrebuildFilter,
         sort: {
@@ -218,7 +218,7 @@ export class PrebuildManager {
 
         const prebuiltWorkspaces = await this.workspaceDB
             .trace(ctx)
-            .findPrebuiltWorkspacesByOrganization(organizationId, pagination.offset, pagination.limit, filter, sort);
+            .findPrebuiltWorkspacesByOrganization(organizationId, pagination, filter, sort);
         const prebuildMap = new Map(prebuiltWorkspaces.map((prebuild) => [prebuild.id, prebuild]));
         const infos = await this.workspaceDB.trace({}).findPrebuildInfos([...prebuildMap.keys()]);
 

@@ -1040,15 +1040,17 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
     /**
      * Finds prebuilt workspaces by organization with optional filtering and pagination.
      * @param organizationId The ID of the organization.
-     * @param offset Offset for pagination.
-     * @param limit Limit for pagination.
+     * @param pagination Pagination per page size and result offset.
      * @param filter Filters for the search.
+     * @param sort Sort field and direction
      * @returns A promise that resolves to an array of PrebuiltWorkspace objects.
      */
     async findPrebuiltWorkspacesByOrganization(
         organizationId: string,
-        offset: number,
-        limit: number,
+        pagination: {
+            offset: number;
+            limit: number;
+        },
         filter: {
             configuration?: {
                 id: string;
@@ -1065,6 +1067,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         const repo = await this.getPrebuiltWorkspaceRepo();
         const query = repo
             .createQueryBuilder("pws")
+            // todo: take sort field into account
             .orderBy("pws.creationTime", sort.order ?? "DESC")
             .innerJoinAndMapOne(
                 "pws.workspace",
@@ -1073,8 +1076,8 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                 "pws.buildWorkspaceId = ws.id AND ws.organizationId = :organizationId",
                 { organizationId },
             )
-            .skip(offset)
-            .take(limit);
+            .skip(pagination.offset)
+            .take(pagination.limit);
 
         if (filter.state) {
             const { state } = filter;
