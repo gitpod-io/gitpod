@@ -72,6 +72,8 @@ import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { SnapshotService } from "./snapshot-service";
 import { InstallationService } from "../auth/installation-service";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
+import { WatchWorkspaceStatusResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
@@ -100,6 +102,7 @@ export class WorkspaceService {
         @inject(Authorizer) private readonly auth: Authorizer,
 
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
+        @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter,
     ) {}
 
     /**
@@ -879,6 +882,40 @@ export class WorkspaceService {
         }, opts);
     }
 
+    public async *getAndWatchWorkspaceStatus(
+        userId: string,
+        workspaceId: string | undefined,
+        opts: { signal: AbortSignal },
+    ) {
+        if (workspaceId) {
+            const instance = await this.getCurrentInstance(userId, workspaceId);
+            const status = this.apiConverter.toWorkspace(instance).status;
+            if (status) {
+                const response = new WatchWorkspaceStatusResponse();
+                response.workspaceId = instance.workspaceId;
+                response.status = status;
+                yield response;
+            }
+        }
+        const it = this.watchWorkspaceStatus(userId, opts);
+        for await (const instance of it) {
+            if (!instance) {
+                continue;
+            }
+            if (workspaceId && instance.workspaceId !== workspaceId) {
+                continue;
+            }
+            const status = this.apiConverter.toWorkspace(instance).status;
+            if (!status) {
+                continue;
+            }
+            const response = new WatchWorkspaceStatusResponse();
+            response.workspaceId = instance.workspaceId;
+            response.status = status;
+            yield response;
+        }
+    }
+
     public async watchWorkspaceImageBuildLogs(
         userId: string,
         workspaceId: string,
@@ -958,6 +995,30 @@ export class WorkspaceService {
         } finally {
             aborted.resolve(false);
         }
+    }
+
+    public getWorkspaceImageBuildLogsIterator(userId: string, workspaceId: string, opts: { signal: AbortSignal }) {
+        return generateAsyncGenerator<string>((sink) => {
+            this.watchWorkspaceImageBuildLogs(userId, workspaceId, {
+                onWorkspaceImageBuildLogs: (_info, content) => {
+                    if (content?.text) {
+                        sink.push(content.text);
+                    }
+                },
+            })
+                .then(() => {
+                    sink.stop();
+                })
+                .catch((err) => {
+                    if (err instanceof Error) {
+                        sink.fail(err);
+                        return;
+                    } else {
+                        sink.fail(new Error(String(err) || "unknown"));
+                    }
+                });
+            return () => {};
+        }, opts);
     }
 
     public async sendHeartBeat(

@@ -305,7 +305,7 @@ https://{$GITPOD_DOMAIN} {
 		}
 	}
 
-	@backend path /api/* /headless-logs/*
+	@backend path /api/* /headless-logs/* /prebuild-logs/*
 	handle @backend {
 		gitpod.cors_origin {
 			base_domain {$GITPOD_DOMAIN}

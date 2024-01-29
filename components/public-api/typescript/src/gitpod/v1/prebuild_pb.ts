@@ -426,6 +426,80 @@ export class WatchPrebuildResponse extends Message<WatchPrebuildResponse> {
 }
 
 /**
+ * @generated from message gitpod.v1.GetPrebuildLogUrlRequest
+ */
+export class GetPrebuildLogUrlRequest extends Message<GetPrebuildLogUrlRequest> {
+  /**
+   * @generated from field: string prebuild_id = 1;
+   */
+  prebuildId = "";
+
+  constructor(data?: PartialMessage<GetPrebuildLogUrlRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetPrebuildLogUrlRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "prebuild_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPrebuildLogUrlRequest {
+    return new GetPrebuildLogUrlRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPrebuildLogUrlRequest {
+    return new GetPrebuildLogUrlRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPrebuildLogUrlRequest {
+    return new GetPrebuildLogUrlRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetPrebuildLogUrlRequest | PlainMessage<GetPrebuildLogUrlRequest> | undefined, b: GetPrebuildLogUrlRequest | PlainMessage<GetPrebuildLogUrlRequest> | undefined): boolean {
+    return proto3.util.equals(GetPrebuildLogUrlRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetPrebuildLogUrlResponse
+ */
+export class GetPrebuildLogUrlResponse extends Message<GetPrebuildLogUrlResponse> {
+  /**
+   * @generated from field: string url = 1;
+   */
+  url = "";
+
+  constructor(data?: PartialMessage<GetPrebuildLogUrlResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetPrebuildLogUrlResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPrebuildLogUrlResponse {
+    return new GetPrebuildLogUrlResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPrebuildLogUrlResponse {
+    return new GetPrebuildLogUrlResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPrebuildLogUrlResponse {
+    return new GetPrebuildLogUrlResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetPrebuildLogUrlResponse | PlainMessage<GetPrebuildLogUrlResponse> | undefined, b: GetPrebuildLogUrlResponse | PlainMessage<GetPrebuildLogUrlResponse> | undefined): boolean {
+    return proto3.util.equals(GetPrebuildLogUrlResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.ListOrganizationPrebuildsRequest
  */
 export class ListOrganizationPrebuildsRequest extends Message<ListOrganizationPrebuildsRequest> {

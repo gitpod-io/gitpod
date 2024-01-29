@@ -26,7 +26,11 @@ import {
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { TeamDB } from "@gitpod/gitpod-db/lib/team-db";
-import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./headless-log-service";
+import {
+    HEADLESS_LOGS_PATH_PREFIX,
+    HEADLESS_LOG_DOWNLOAD_PATH_PREFIX,
+    PREBUILD_LOGS_PATH_PREFIX,
+} from "./headless-log-service";
 import * as opentracing from "opentracing";
 import { asyncHandler } from "../express-util";
 import { isWithFunctionAccessGuard } from "../auth/function-access";
@@ -39,6 +43,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { WorkspaceService } from "./workspace-service";
 import { ctxIsAborted, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { PrebuildManager } from "../prebuilds/prebuild-manager";
 
 @injectable()
 export class HeadlessLogController {
@@ -48,6 +53,7 @@ export class HeadlessLogController {
     @inject(TeamDB) protected readonly teamDb: TeamDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
+    @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
 
     get headlessLogs(): express.Router {
         const router = express.Router();
@@ -166,6 +172,73 @@ export class HeadlessLogController {
                                 err,
                             );
                             res.status(500);
+                        }
+                    } catch (e) {
+                        TraceContext.setError({ span }, e);
+                        throw e;
+                    } finally {
+                        span.finish();
+                    }
+                });
+            }),
+        ]);
+        router.get("/", malformedRequestHandler);
+        return router;
+    }
+
+    get prebuildLogs(): express.Router {
+        const router = express.Router();
+
+        router.use(this.auth.restHandlerOptionally);
+        router.get("/:prebuildId", [
+            authenticateAndAuthorize,
+            asyncHandler(async (req: express.Request, res: express.Response) => {
+                const span = opentracing.globalTracer().startSpan(PREBUILD_LOGS_PATH_PREFIX);
+                const user = req.user as User; // verified by authenticateAndAuthorize
+                await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
+                    try {
+                        const prebuildId = req.params.prebuildId;
+
+                        const logCtx = { userId: user.id, prebuildId };
+                        try {
+                            const head = {
+                                "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
+                                "Transfer-Encoding": "chunked",
+                                "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
+                            };
+                            res.writeHead(200, head);
+
+                            const queue = new Queue(); // Make sure we forward in the correct order
+                            const writeToResponse = async (chunk: string) =>
+                                queue.enqueue(
+                                    () =>
+                                        new Promise<void>(async (resolve, reject) => {
+                                            if (ctxIsAborted()) {
+                                                return;
+                                            }
+
+                                            const done = res.write(chunk, "utf-8", (err?: Error | null) => {
+                                                if (err) {
+                                                    reject(err); // propagate write error to upstream
+                                                    return;
+                                                }
+                                            });
+                                            // handle as per doc: https://nodejs.org/api/stream.html#stream_writable_write_chunk_encoding_callback
+                                            if (!done) {
+                                                res.once("drain", resolve);
+                                            } else {
+                                                setImmediate(resolve);
+                                            }
+                                        }),
+                                );
+                            await this.prebuildManager.watchPrebuildLogs(user.id, prebuildId, writeToResponse);
+                            res.sendStatus(200);
+                            res.end();
+                        } catch (err) {
+                            log.debug(logCtx, "error streaming headless logs", err);
+                            res.setHeader("X-Prebuild-Error", err instanceof Error ? err.toString() : String(err));
+                            res.sendStatus(500);
+                            res.end();
                         }
                     } catch (e) {
                         TraceContext.setError({ span }, e);

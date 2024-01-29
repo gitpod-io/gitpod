@@ -20,12 +20,16 @@ import {
     CancelPrebuildResponse,
     ListOrganizationPrebuildsRequest,
     ListOrganizationPrebuildsResponse,
+    GetPrebuildLogUrlRequest,
+    GetPrebuildLogUrlResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { getGitpodService } from "./service";
 import { converter } from "./public-api";
 import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { validate as uuidValidate } from "uuid";
+import { getPrebuildLogPath } from "@gitpod/public-api-common/lib/prebuild-utils";
 
 export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildService> {
     async startPrebuild(
@@ -143,6 +147,15 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
                 yield new WatchPrebuildResponse({ prebuild });
             }
         }
+    }
+
+    async getPrebuildLogUrl(request: PartialMessage<GetPrebuildLogUrlRequest>): Promise<GetPrebuildLogUrlResponse> {
+        if (!request.prebuildId || !uuidValidate(request.prebuildId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "prebuildId is required");
+        }
+        await this.getPrebuild({ prebuildId: request.prebuildId });
+        const url = `${window.location.protocol}//${window.location.host}${getPrebuildLogPath(request.prebuildId)}`;
+        return new GetPrebuildLogUrlResponse({ url });
     }
 
     async listOrganizationPrebuilds(
