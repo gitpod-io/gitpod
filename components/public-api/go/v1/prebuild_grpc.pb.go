@@ -31,7 +31,6 @@ type PrebuildServiceClient interface {
 	GetPrebuild(ctx context.Context, in *GetPrebuildRequest, opts ...grpc.CallOption) (*GetPrebuildResponse, error)
 	ListPrebuilds(ctx context.Context, in *ListPrebuildsRequest, opts ...grpc.CallOption) (*ListPrebuildsResponse, error)
 	WatchPrebuild(ctx context.Context, in *WatchPrebuildRequest, opts ...grpc.CallOption) (PrebuildService_WatchPrebuildClient, error)
-	GetPrebuildLogUrl(ctx context.Context, in *GetPrebuildLogUrlRequest, opts ...grpc.CallOption) (*GetPrebuildLogUrlResponse, error)
 	// ListOrganizationPrebuilds lists all prebuilds of an organization
 	ListOrganizationPrebuilds(ctx context.Context, in *ListOrganizationPrebuildsRequest, opts ...grpc.CallOption) (*ListOrganizationPrebuildsResponse, error)
 }
@@ -112,15 +111,6 @@ func (x *prebuildServiceWatchPrebuildClient) Recv() (*WatchPrebuildResponse, err
 	return m, nil
 }
 
-func (c *prebuildServiceClient) GetPrebuildLogUrl(ctx context.Context, in *GetPrebuildLogUrlRequest, opts ...grpc.CallOption) (*GetPrebuildLogUrlResponse, error) {
-	out := new(GetPrebuildLogUrlResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.PrebuildService/GetPrebuildLogUrl", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *prebuildServiceClient) ListOrganizationPrebuilds(ctx context.Context, in *ListOrganizationPrebuildsRequest, opts ...grpc.CallOption) (*ListOrganizationPrebuildsResponse, error) {
 	out := new(ListOrganizationPrebuildsResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.v1.PrebuildService/ListOrganizationPrebuilds", in, out, opts...)
@@ -139,7 +129,6 @@ type PrebuildServiceServer interface {
 	GetPrebuild(context.Context, *GetPrebuildRequest) (*GetPrebuildResponse, error)
 	ListPrebuilds(context.Context, *ListPrebuildsRequest) (*ListPrebuildsResponse, error)
 	WatchPrebuild(*WatchPrebuildRequest, PrebuildService_WatchPrebuildServer) error
-	GetPrebuildLogUrl(context.Context, *GetPrebuildLogUrlRequest) (*GetPrebuildLogUrlResponse, error)
 	// ListOrganizationPrebuilds lists all prebuilds of an organization
 	ListOrganizationPrebuilds(context.Context, *ListOrganizationPrebuildsRequest) (*ListOrganizationPrebuildsResponse, error)
 	mustEmbedUnimplementedPrebuildServiceServer()
@@ -163,9 +152,6 @@ func (UnimplementedPrebuildServiceServer) ListPrebuilds(context.Context, *ListPr
 }
 func (UnimplementedPrebuildServiceServer) WatchPrebuild(*WatchPrebuildRequest, PrebuildService_WatchPrebuildServer) error {
 	return status.Errorf(codes.Unimplemented, "method WatchPrebuild not implemented")
-}
-func (UnimplementedPrebuildServiceServer) GetPrebuildLogUrl(context.Context, *GetPrebuildLogUrlRequest) (*GetPrebuildLogUrlResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPrebuildLogUrl not implemented")
 }
 func (UnimplementedPrebuildServiceServer) ListOrganizationPrebuilds(context.Context, *ListOrganizationPrebuildsRequest) (*ListOrganizationPrebuildsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListOrganizationPrebuilds not implemented")
@@ -276,24 +262,6 @@ func (x *prebuildServiceWatchPrebuildServer) Send(m *WatchPrebuildResponse) erro
 	return x.ServerStream.SendMsg(m)
 }
 
-func _PrebuildService_GetPrebuildLogUrl_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPrebuildLogUrlRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PrebuildServiceServer).GetPrebuildLogUrl(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gitpod.v1.PrebuildService/GetPrebuildLogUrl",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrebuildServiceServer).GetPrebuildLogUrl(ctx, req.(*GetPrebuildLogUrlRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _PrebuildService_ListOrganizationPrebuilds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListOrganizationPrebuildsRequest)
 	if err := dec(in); err != nil {
@@ -334,10 +302,6 @@ var PrebuildService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPrebuilds",
 			Handler:    _PrebuildService_ListPrebuilds_Handler,
-		},
-		{
-			MethodName: "GetPrebuildLogUrl",
-			Handler:    _PrebuildService_GetPrebuildLogUrl_Handler,
 		},
 		{
 			MethodName: "ListOrganizationPrebuilds",

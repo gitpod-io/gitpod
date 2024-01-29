@@ -20,16 +20,12 @@ import {
     CancelPrebuildResponse,
     ListOrganizationPrebuildsRequest,
     ListOrganizationPrebuildsResponse,
-    GetPrebuildLogUrlRequest,
-    GetPrebuildLogUrlResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { getGitpodService } from "./service";
 import { converter } from "./public-api";
 import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { validate as uuidValidate } from "uuid";
-import { getPrebuildLogPath } from "@gitpod/public-api-common/lib/prebuild-utils";
 
 export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildService> {
     async startPrebuild(
@@ -54,6 +50,10 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
         return new CancelPrebuildResponse();
     }
 
+    get gitpodHost(): string {
+        return window.location.protocol + "//" + window.location.host;
+    }
+
     async getPrebuild(
         request: PartialMessage<GetPrebuildRequest>,
         options?: CallOptions,
@@ -66,7 +66,7 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `prebuild ${request.prebuildId} not found`);
         }
         return new GetPrebuildResponse({
-            prebuild: converter.toPrebuild(result),
+            prebuild: converter.toPrebuild(this.gitpodHost, result),
         });
     }
 
@@ -80,7 +80,7 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
                 const prebuild = await getGitpodService().server.getPrebuild(pbws.id);
                 if (prebuild) {
                     return new ListPrebuildsResponse({
-                        prebuilds: [converter.toPrebuild(prebuild)],
+                        prebuilds: [converter.toPrebuild(this.gitpodHost, prebuild)],
                     });
                 }
             }
@@ -97,7 +97,7 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
             limit: request.pagination?.pageSize || undefined,
         });
         return new ListPrebuildsResponse({
-            prebuilds: converter.toPrebuilds(result),
+            prebuilds: converter.toPrebuilds(this.gitpodHost, result),
         });
     }
 
@@ -142,20 +142,11 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
             } else if (pb.info.projectId !== request.scope.value) {
                 continue;
             }
-            const prebuild = converter.toPrebuild(pb);
+            const prebuild = converter.toPrebuild(this.gitpodHost, pb);
             if (prebuild) {
                 yield new WatchPrebuildResponse({ prebuild });
             }
         }
-    }
-
-    async getPrebuildLogUrl(request: PartialMessage<GetPrebuildLogUrlRequest>): Promise<GetPrebuildLogUrlResponse> {
-        if (!request.prebuildId || !uuidValidate(request.prebuildId)) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "prebuildId is required");
-        }
-        await this.getPrebuild({ prebuildId: request.prebuildId });
-        const url = `${window.location.protocol}//${window.location.host}${getPrebuildLogPath(request.prebuildId)}`;
-        return new GetPrebuildLogUrlResponse({ url });
     }
 
     async listOrganizationPrebuilds(

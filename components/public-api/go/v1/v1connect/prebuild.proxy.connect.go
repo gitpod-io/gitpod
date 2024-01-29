@@ -59,16 +59,6 @@ func (s *ProxyPrebuildServiceHandler) ListPrebuilds(ctx context.Context, req *co
 	return connect_go.NewResponse(resp), nil
 }
 
-func (s *ProxyPrebuildServiceHandler) GetPrebuildLogUrl(ctx context.Context, req *connect_go.Request[v1.GetPrebuildLogUrlRequest]) (*connect_go.Response[v1.GetPrebuildLogUrlResponse], error) {
-	resp, err := s.Client.GetPrebuildLogUrl(ctx, req.Msg)
-	if err != nil {
-		// TODO(milan): Convert to correct status code
-		return nil, err
-	}
-
-	return connect_go.NewResponse(resp), nil
-}
-
 func (s *ProxyPrebuildServiceHandler) ListOrganizationPrebuilds(ctx context.Context, req *connect_go.Request[v1.ListOrganizationPrebuildsRequest]) (*connect_go.Response[v1.ListOrganizationPrebuildsResponse], error) {
 	resp, err := s.Client.ListOrganizationPrebuilds(ctx, req.Msg)
 	if err != nil {

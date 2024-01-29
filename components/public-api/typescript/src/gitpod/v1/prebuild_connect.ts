@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CancelPrebuildRequest, CancelPrebuildResponse, GetPrebuildLogUrlRequest, GetPrebuildLogUrlResponse, GetPrebuildRequest, GetPrebuildResponse, ListOrganizationPrebuildsRequest, ListOrganizationPrebuildsResponse, ListPrebuildsRequest, ListPrebuildsResponse, StartPrebuildRequest, StartPrebuildResponse, WatchPrebuildRequest, WatchPrebuildResponse } from "./prebuild_pb.js";
+import { CancelPrebuildRequest, CancelPrebuildResponse, GetPrebuildRequest, GetPrebuildResponse, ListOrganizationPrebuildsRequest, ListOrganizationPrebuildsResponse, ListPrebuildsRequest, ListPrebuildsResponse, StartPrebuildRequest, StartPrebuildResponse, WatchPrebuildRequest, WatchPrebuildResponse } from "./prebuild_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -62,15 +62,6 @@ export const PrebuildService = {
       I: WatchPrebuildRequest,
       O: WatchPrebuildResponse,
       kind: MethodKind.ServerStreaming,
-    },
-    /**
-     * @generated from rpc gitpod.v1.PrebuildService.GetPrebuildLogUrl
-     */
-    getPrebuildLogUrl: {
-      name: "GetPrebuildLogUrl",
-      I: GetPrebuildLogUrlRequest,
-      O: GetPrebuildLogUrlResponse,
-      kind: MethodKind.Unary,
     },
     /**
      * ListOrganizationPrebuilds lists all prebuilds of an organization
