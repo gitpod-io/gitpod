@@ -153,7 +153,7 @@ import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { GitpodServer } from "@gitpod/gitpod-protocol";
 import { getPrebuildLogPath } from "./prebuild-utils";
-import { URL } from "url";
+const URL = require("url").URL || window.URL;
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
