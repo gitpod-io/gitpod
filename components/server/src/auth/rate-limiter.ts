@@ -133,6 +133,7 @@ const defaultFunctions: FunctionsConfig = {
     getSnapshots: { group: "default", points: 1 },
     guessGitTokenScopes: { group: "default", points: 1 },
     getUsageBalance: { group: "default", points: 1 },
+    isCustomerBillingAddressInvalid: { group: "default", points: 1 },
     resolveContext: { group: "default", points: 1 },
 
     adminGetUsers: { group: "default", points: 1 },

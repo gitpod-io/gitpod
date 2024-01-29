@@ -77,22 +77,25 @@ export const Modal: FC<Props> = ({
     return (
         <Portal>
             {/* backdrop overlay */}
-            <div className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen focus:ring-0" tabIndex={0}>
+            <div
+                className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 h-full w-full overflow-y-auto overflow-x-hidden outline-none focus:ring-0"
+                tabIndex={0}
+            >
                 {/* Modal outer-container for positioning */}
-                <div className="flex justify-center items-center w-screen h-screen">
+                <div className="pointer-events-none relative h-[calc(100%-1rem)] w-auto min-[576px]:mx-auto min-[576px]:mt-7 min-[576px]:h-[calc(100%-3.5rem)] min-[576px]:max-w-[500px]">
                     <FocusOn
                         autoFocus={autoFocus}
                         onClickOutside={handleClickOutside}
                         onEscapeKey={handleEscape}
                         focusLock={!disableFocusLock}
+                        className="relative max-h-[100%] w-full"
                     >
                         {/* Visible Modal */}
                         <div
                             className={cn(
-                                "relative flex flex-col max-h-screen max-w-screen",
-                                "w-screen h-screen sm:w-auto sm:h-auto sm:max-w-lg",
+                                "pointer-events-auto max-h-[100%] w-full flex-col overflow-hidden",
+                                "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 outline-none",
                                 "p-6 text-left",
-                                "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800",
                                 "filter drop-shadow-xl",
                                 "rounded-none sm:rounded-xl",
                                 className,
@@ -167,17 +170,18 @@ export const ModalHeader: FC<ModalHeaderProps> = ({ children }) => {
 type ModalBodyProps = {
     children: ReactNode;
     hideDivider?: boolean;
-    noScroll?: boolean;
 };
 
-export const ModalBody: FC<ModalBodyProps> = ({ children, hideDivider = false, noScroll = false }) => {
+export const ModalBody: FC<ModalBodyProps> = ({ children, hideDivider = false }) => {
     return (
         // Allows the first tabbable element in the body to receive focus on mount
         <AutoFocusInside
-            className={cn("md:flex-grow relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-6", {
-                "border-t border-b mt-2 py-4": !hideDivider,
-                "overflow-y-auto": !noScroll,
-            })}
+            className={cn(
+                "md:flex-grow relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-6 overflow-y-auto",
+                {
+                    "border-t border-b mt-2 py-4": !hideDivider,
+                },
+            )}
         >
             {children}
         </AutoFocusInside>

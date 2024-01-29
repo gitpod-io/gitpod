@@ -70,6 +70,20 @@ func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStrip
 		}, nil
 	}
 
+	updateStripeCustomer := func(stripeCustomerID string) (db.StripeCustomer, error) {
+		stripeCustomer, err := s.stripeClient.GetCustomer(ctx, stripeCustomerID)
+		if err != nil {
+			return db.StripeCustomer{}, err
+		}
+
+		customer, err := db.UpdateStripeCustomerInvalidBillingAddress(ctx, s.conn, stripeCustomer.ID, stripeCustomer.Tax.AutomaticTax == stripe_api.CustomerTaxAutomaticTaxUnrecognizedLocation)
+		if err != nil {
+			return db.StripeCustomer{}, err
+		}
+
+		return customer, nil
+	}
+
 	switch identifier := req.GetIdentifier().(type) {
 	case *v1.GetStripeCustomerRequest_AttributionId:
 		attributionID, err := db.ParseAttributionID(identifier.AttributionId)
@@ -92,6 +106,14 @@ func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStrip
 			}
 
 			logger.WithError(err).Error("Failed to lookup stripe customer from DB")
+
+			return nil, status.Errorf(codes.NotFound, "Failed to lookup stripe customer from DB: %s", err.Error())
+		} else if customer.InvalidBillingAddress == nil {
+			// Update field for old entries in db
+			customer, err = updateStripeCustomer(customer.StripeCustomerID)
+			if err != nil {
+				logger.WithError(err).Error("Failed to update stripe customer from DB")
+			}
 		}
 
 		return &v1.GetStripeCustomerResponse{
@@ -125,6 +147,12 @@ func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStrip
 			logger.WithError(err).Error("Failed to lookup stripe customer from DB")
 
 			return nil, status.Errorf(codes.NotFound, "Failed to lookup stripe customer from DB: %s", err.Error())
+		} else if customer.InvalidBillingAddress == nil {
+			// Update field for old entries in db
+			customer, err = updateStripeCustomer(customer.StripeCustomerID)
+			if err != nil {
+				logger.WithError(err).Error("Failed to update stripe customer from DB")
+			}
 		}
 
 		return &v1.GetStripeCustomerResponse{
@@ -164,10 +192,11 @@ func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.Creat
 	}
 
 	err = db.CreateStripeCustomer(ctx, s.conn, db.StripeCustomer{
-		StripeCustomerID: customer.ID,
-		AttributionID:    attributionID,
-		CreationTime:     db.NewVarCharTime(time.Unix(customer.Created, 0)),
-		Currency:         req.GetCurrency(),
+		StripeCustomerID:      customer.ID,
+		AttributionID:         attributionID,
+		CreationTime:          db.NewVarCharTime(time.Unix(customer.Created, 0)),
+		Currency:              req.GetCurrency(),
+		InvalidBillingAddress: db.BoolPointer(true), // true as address is empty
 	})
 	if err != nil {
 		log.WithField("attribution_id", attributionID).WithField("stripe_customer_id", customer.ID).WithError(err).Error("Failed to store Stripe Customer in the database.")
@@ -251,14 +280,6 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		return nil, err
 	}
 
-	var isAutomaticTaxSupported bool
-	if stripeCustomer.Tax != nil {
-		isAutomaticTaxSupported = stripeCustomer.Tax.AutomaticTax == "supported"
-	}
-	if !isAutomaticTaxSupported {
-		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
-	}
-
 	// Handle a payment hold for the payment intent
 	// Make sure the provided payment intent hold was successful, and release it
 	result, err := s.stripeClient.TryHoldAmountForPaymentIntent(ctx, stripeCustomer, string(paymentIntentID))
@@ -276,6 +297,22 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		return nil, status.Errorf(codes.InvalidArgument, "Failed to set default payment for customer ID %s", customer.Customer.Id)
 	}
 
+	// Customers are created without a valid address by default,
+	// `SetDefaultPaymentForCustomer` will update the customer address to the one provided in the payment modal.
+	// Request the customer data again so the `Tax` property is properly set.
+	stripeCustomer, err = s.stripeClient.GetCustomer(ctx, customer.Customer.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	var isAutomaticTaxSupported bool
+	if stripeCustomer.Tax != nil {
+		isAutomaticTaxSupported = stripeCustomer.Tax.AutomaticTax == stripe_api.CustomerTaxAutomaticTaxSupported
+	}
+	if !isAutomaticTaxSupported {
+		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
+	}
+
 	subscription, err := s.stripeClient.CreateSubscription(ctx, stripeCustomer.ID, priceID, isAutomaticTaxSupported)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to create subscription with customer ID %s", customer.Customer.Id)
@@ -286,6 +323,44 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 			Id: subscription.ID,
 		},
 	}, nil
+}
+
+func (s *BillingService) UpdateCustomerSubscriptionsTaxState(ctx context.Context, req *v1.UpdateCustomerSubscriptionsTaxStateRequest) (*v1.UpdateCustomerSubscriptionsTaxStateResponse, error) {
+	if req.GetCustomerId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Missing CustomerID")
+	}
+
+	stripeCustomer, err := s.stripeClient.GetCustomer(ctx, req.GetCustomerId())
+	if err != nil {
+		log.WithError(err).Error("Failed to retrieve customer from Stripe.")
+		return nil, status.Errorf(codes.NotFound, "Failed to get customer with ID %s: %s", req.GetCustomerId(), err.Error())
+	}
+
+	var isAutomaticTaxSupported bool
+	if stripeCustomer.Tax != nil {
+		isAutomaticTaxSupported = stripeCustomer.Tax.AutomaticTax == stripe_api.CustomerTaxAutomaticTaxSupported
+
+		_, err = db.UpdateStripeCustomerInvalidBillingAddress(ctx, s.conn, stripeCustomer.ID, stripeCustomer.Tax.AutomaticTax == stripe_api.CustomerTaxAutomaticTaxUnrecognizedLocation)
+		if err != nil {
+			log.WithError(err).Error("Failed to update stripe customer from DB")
+		}
+	}
+	if !isAutomaticTaxSupported {
+		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
+	}
+
+	for _, subscription := range stripeCustomer.Subscriptions.Data {
+		if subscription.Status != "canceled" && subscription.AutomaticTax.Enabled != isAutomaticTaxSupported {
+			_, err := s.stripeClient.UpdateSubscriptionAutomaticTax(ctx, subscription.ID, isAutomaticTaxSupported)
+			if err != nil {
+				log.WithError(err).Errorf("Failed to update subscription automaticTax with ID %s", subscription.ID)
+			} else {
+				log.Infof("Updated subscription automatic tax supported with ID %s", subscription.ID)
+			}
+		}
+	}
+
+	return &v1.UpdateCustomerSubscriptionsTaxStateResponse{}, nil
 }
 
 func getPriceIdentifier(attributionID db.AttributionID, stripeCustomer *stripe_api.Customer, s *BillingService) (string, error) {
@@ -637,10 +712,16 @@ func (s *BillingService) GetPriceInformation(ctx context.Context, req *v1.GetPri
 }
 
 func (s *BillingService) storeStripeCustomer(ctx context.Context, cus *stripe_api.Customer, attributionID db.AttributionID) (*v1.StripeCustomer, error) {
+	var invalidBillingAddress *bool
+	if cus.Tax != nil {
+		invalidBillingAddress = db.BoolPointer(cus.Tax.AutomaticTax == stripe_api.CustomerTaxAutomaticTaxUnrecognizedLocation)
+	}
+
 	err := db.CreateStripeCustomer(ctx, s.conn, db.StripeCustomer{
-		StripeCustomerID: cus.ID,
-		AttributionID:    attributionID,
-		Currency:         cus.Metadata[stripe.PreferredCurrencyMetadataKey],
+		StripeCustomerID:      cus.ID,
+		AttributionID:         attributionID,
+		Currency:              cus.Metadata[stripe.PreferredCurrencyMetadataKey],
+		InvalidBillingAddress: invalidBillingAddress,
 		// We use the original Stripe supplied creation timestamp, this ensures that we stay true to our ordering of customer creation records.
 		CreationTime: db.NewVarCharTime(time.Unix(cus.Created, 0)),
 	})
@@ -648,10 +729,7 @@ func (s *BillingService) storeStripeCustomer(ctx context.Context, cus *stripe_ap
 		return nil, err
 	}
 
-	return &v1.StripeCustomer{
-		Id:       cus.ID,
-		Currency: cus.Metadata[stripe.PreferredCurrencyMetadataKey],
-	}, nil
+	return convertStripeCustomer(cus), nil
 }
 
 func balancesForStripeCostCenters(ctx context.Context, cm *db.CostCenterManager, balances []db.Balance) ([]db.Balance, error) {
@@ -675,15 +753,25 @@ func balancesForStripeCostCenters(ctx context.Context, cm *db.CostCenterManager,
 }
 
 func convertStripeCustomer(customer *stripe_api.Customer) *v1.StripeCustomer {
+	var invalidBillingAddress bool
+	if customer.Tax != nil {
+		invalidBillingAddress = customer.Tax.AutomaticTax == stripe_api.CustomerTaxAutomaticTaxUnrecognizedLocation
+	}
 	return &v1.StripeCustomer{
-		Id:       customer.ID,
-		Currency: customer.Metadata[stripe.PreferredCurrencyMetadataKey],
+		Id:                    customer.ID,
+		Currency:              customer.Metadata[stripe.PreferredCurrencyMetadataKey],
+		InvalidBillingAddress: invalidBillingAddress,
 	}
 }
 
 func convertDBStripeCustomerToResponse(cus db.StripeCustomer) *v1.StripeCustomer {
+	var invalidBillingAddress bool
+	if cus.InvalidBillingAddress != nil {
+		invalidBillingAddress = *cus.InvalidBillingAddress
+	}
 	return &v1.StripeCustomer{
-		Id:       cus.StripeCustomerID,
-		Currency: cus.Currency,
+		Id:                    cus.StripeCustomerID,
+		Currency:              cus.Currency,
+		InvalidBillingAddress: invalidBillingAddress,
 	}
 }

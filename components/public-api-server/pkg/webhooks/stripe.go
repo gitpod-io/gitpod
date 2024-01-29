@@ -20,6 +20,7 @@ const (
 	InvoiceFinalizedEventType            = "invoice.finalized"
 	CustomerSubscriptionDeletedEventType = "customer.subscription.deleted"
 	ChargeDisputeCreatedEventType        = "charge.dispute.created"
+	CustomerUpdatedEventType             = "customer.updated"
 )
 
 type webhookHandler struct {
@@ -109,6 +110,25 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			logger.WithError(err).Errorf("Failed to handle charge dispute event for dispute ID: %s", disputeID)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
+		}
+	case CustomerUpdatedEventType:
+		logger.Info("Handling CustomerUpdatedEventType")
+		customerID, ok := event.Data.Object["id"].(string)
+		if !ok {
+			logger.Error("Failed to identify customer ID from Stripe webhook.")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if _, ok := event.Data.PreviousAttributes["address"]; ok {
+			logger.Infof("Customer with ID %s address updated", customerID)
+
+			err = h.billingService.UpdateCustomerSubscriptionsTaxState(req.Context(), customerID)
+			if err != nil {
+				logger.WithError(err).Error("Failed to cancel subscription")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 		}
 	default:
 		logger.Errorf("Unexpected Stripe event type: %s", event.Type)
