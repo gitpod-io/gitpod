@@ -146,7 +146,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
     async listOrganizationPrebuilds(
         request: ListOrganizationPrebuildsRequest,
     ): Promise<ListOrganizationPrebuildsResponse> {
-        const { organizationId, pagination, filter } = request;
+        const { organizationId, pagination, filter, sort } = request;
         const userId = ctxUserId();
 
         const limit = pagination?.pageSize ?? 25;
@@ -155,6 +155,9 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
         }
         if (limit <= 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be greater than 0");
+        }
+        if ((filter?.searchTerm || "").length > 100) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "searchTerm must be less than 100 characters");
         }
         if (!uuidValidate(organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
@@ -175,12 +178,10 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             prebuildsFilter.state = this.apiConverter.fromPrebuildFilterState(filter?.state);
         }
 
-        const sorting =
-            request.sort ??
-            new Sort({
-                field: "creationTime",
-                order: SortOrder.DESC,
-            });
+        const sorting = new Sort({
+            field: sort?.field ?? "creationTime",
+            order: sort?.order ?? SortOrder.DESC,
+        });
 
         const prebuilds = await this.prebuildManager.listPrebuilds(
             {},
