@@ -1067,8 +1067,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         const repo = await this.getPrebuiltWorkspaceRepo();
         const query = repo
             .createQueryBuilder("pws")
-            // todo: take sort field into account
-            .orderBy("pws.creationTime", sort.order)
             .innerJoinAndMapOne(
                 "pws.workspace",
                 DBWorkspace,
@@ -1077,7 +1075,8 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                 { organizationId },
             )
             .skip(pagination.offset)
-            .take(pagination.limit);
+            .take(pagination.limit)
+            .orderBy("pws.creationTime", sort.order); // todo: take sort field into account
 
         if (filter.state) {
             const { state } = filter;
