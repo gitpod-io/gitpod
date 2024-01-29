@@ -17,12 +17,21 @@ import { LoadingState } from "@podkit/loading/LoadingState";
 import { useListOrganizationPrebuildsQuery } from "../../data/prebuilds/organization-prebuilds-query";
 import { ListOrganizationPrebuildsRequest_Filter_State } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { validate } from "uuid";
+import type { TableSortOrder } from "@podkit/tables/SortableTable";
+import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 
 const STATUS_FILTER_VALUES = ["succeeded", "failed", "unfinished", undefined] as const; // undefined means any status
-export type STATUS_OPTION = typeof STATUS_FILTER_VALUES[number];
+export type StatusOption = typeof STATUS_FILTER_VALUES[number];
 export type Filter = {
-    status?: STATUS_OPTION;
+    status?: StatusOption;
     configurationId?: string;
+};
+
+const SORT_FIELD_VALUES = ["creationTime"] as const;
+export type SortField = typeof SORT_FIELD_VALUES[number];
+export type Sort = {
+    sortBy: SortField;
+    sortOrder: TableSortOrder;
 };
 
 const PrebuildsListPage: FC = () => {
@@ -31,9 +40,13 @@ const PrebuildsListPage: FC = () => {
     const history = useHistory();
 
     const params = useQueryParams();
+
     const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") ?? "");
     const [statusFilter, setPrebuildsFilter] = useState(parseStatus(params));
     const configurationFilter = useMemo(() => parseConfigurationId(params), [params]);
+
+    const [sortBy, setSortBy] = useState(parseSortBy(params));
+    const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
 
     const handleFilterChange = useCallback((filter: Filter) => {
         setPrebuildsFilter(filter.status);
@@ -44,6 +57,20 @@ const PrebuildsListPage: FC = () => {
             configurationId: configurationFilter,
         };
     }, [configurationFilter, statusFilter]);
+
+    const sort = useMemo<Sort>(() => {
+        return {
+            sortBy,
+            sortOrder,
+        };
+    }, [sortBy, sortOrder]);
+    const handleSort = useCallback(
+        (columnName: SortField, newSortOrder: TableSortOrder) => {
+            setSortBy(columnName);
+            setSortOrder(newSortOrder);
+        },
+        [setSortOrder],
+    );
 
     useEffect(() => {
         const params = new URLSearchParams();
@@ -80,6 +107,10 @@ const PrebuildsListPage: FC = () => {
             state: toApiStatus(filter.status),
             ...(configurationFilter ? { configuration: { id: configurationFilter } } : {}),
         },
+        sort: {
+            order: sortOrder === "desc" ? SortOrder.DESC : SortOrder.ASC,
+            field: sortBy,
+        },
         pageSize: 30,
     });
 
@@ -111,10 +142,12 @@ const PrebuildsListPage: FC = () => {
                         isFetchingNextPage={isFetchingNextPage}
                         hasNextPage={!!hasNextPage}
                         filter={filter}
+                        sort={sort}
                         hasMoreThanOnePage={hasMoreThanOnePage}
                         onLoadNextPage={() => fetchNextPage()}
                         onFilterChange={handleFilterChange}
                         onSearchTermChange={setSearchTerm}
+                        onSort={handleSort}
                     />
                 )}
 
@@ -125,7 +158,7 @@ const PrebuildsListPage: FC = () => {
     );
 };
 
-const toApiStatus = (status: STATUS_OPTION): ListOrganizationPrebuildsRequest_Filter_State | undefined => {
+const toApiStatus = (status: StatusOption): ListOrganizationPrebuildsRequest_Filter_State | undefined => {
     switch (status) {
         case "failed":
             return ListOrganizationPrebuildsRequest_Filter_State.FAILED; // todo: adjust to needs of proper status
@@ -138,14 +171,32 @@ const toApiStatus = (status: STATUS_OPTION): ListOrganizationPrebuildsRequest_Fi
     return undefined;
 };
 
-const parseStatus = (params: URLSearchParams): STATUS_OPTION => {
+const parseStatus = (params: URLSearchParams): StatusOption => {
     const filter = params.get("prebuilds");
     const validValues = Object.values(STATUS_FILTER_VALUES).filter((val) => !!val);
     if (filter && validValues.includes(filter as any)) {
-        return filter as STATUS_OPTION;
+        return filter as StatusOption;
     }
 
     return undefined;
+};
+
+const parseSortOrder = (params: URLSearchParams): TableSortOrder => {
+    const sortOrder = params.get("sortOrder");
+    if (sortOrder === "asc" || sortOrder === "desc") {
+        return sortOrder;
+    }
+    return "desc";
+};
+
+const parseSortBy = (params: URLSearchParams): SortField => {
+    const sortBy = params.get("sortBy");
+
+    // todo: potentially allow more fields
+    if (sortBy === "creationTime") {
+        return sortBy;
+    }
+    return "creationTime";
 };
 
 const parseConfigurationId = (params: URLSearchParams): string | undefined => {

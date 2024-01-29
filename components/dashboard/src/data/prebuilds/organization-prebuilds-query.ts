@@ -8,18 +8,20 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { prebuildClient } from "../../service/public-api";
 import { ListOrganizationPrebuildsRequest_Filter } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { useCurrentOrg } from "../organizations/orgs-query";
-import { PlainMessage } from "@bufbuild/protobuf";
+import { PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+import { Sort } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 
 type Args = {
     filter: DeepPartial<PlainMessage<ListOrganizationPrebuildsRequest_Filter>>;
+    sort: PartialMessage<Sort>;
     pageSize: number;
 };
-export const useListOrganizationPrebuildsQuery = ({ filter, pageSize }: Args) => {
+export const useListOrganizationPrebuildsQuery = ({ filter, pageSize, sort }: Args) => {
     const { data: org } = useCurrentOrg();
 
     return useInfiniteQuery(
-        getListConfigurationsPrebuildsQueryKey(org?.id ?? "", { filter, pageSize }),
+        getListConfigurationsPrebuildsQueryKey(org?.id ?? "", { filter, pageSize, sort }),
         async ({ pageParam: nextToken }) => {
             if (!org) {
                 throw new Error("No org currently selected");
@@ -28,6 +30,7 @@ export const useListOrganizationPrebuildsQuery = ({ filter, pageSize }: Args) =>
             const { prebuilds, pagination } = await prebuildClient.listOrganizationPrebuilds({
                 organizationId: org.id,
                 filter,
+                sort,
                 pagination: { pageSize, token: nextToken },
             });
             return {

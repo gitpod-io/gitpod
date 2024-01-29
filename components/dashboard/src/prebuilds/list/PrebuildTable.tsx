@@ -15,12 +15,17 @@ import { cn } from "@podkit/lib/cn";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
 import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { Filter, STATUS_OPTION } from "./PrebuildList";
+import { Filter, SortField, StatusOption } from "./PrebuildList";
+import { SortCallback, SortableTableHead, TableSortOrder } from "@podkit/tables/SortableTable";
 
 type Props = {
     prebuilds: Prebuild[];
     searchTerm: string;
     filter?: Filter;
+    sort: {
+        sortBy: SortField;
+        sortOrder: TableSortOrder;
+    };
     hasNextPage: boolean;
     hasMoreThanOnePage: boolean;
     isSearching: boolean;
@@ -28,6 +33,7 @@ type Props = {
     onSearchTermChange: (val: string) => void;
     onFilterChange: (val: Filter) => void;
     onLoadNextPage: () => void;
+    onSort: (columnName: SortField, direction: TableSortOrder) => void;
 };
 export const PrebuildsTable: FC<Props> = ({
     searchTerm,
@@ -37,9 +43,11 @@ export const PrebuildsTable: FC<Props> = ({
     isSearching,
     isFetchingNextPage,
     filter,
+    sort,
     onSearchTermChange,
     onFilterChange,
     onLoadNextPage,
+    onSort,
 }) => {
     return (
         <>
@@ -54,13 +62,13 @@ export const PrebuildsTable: FC<Props> = ({
                         placeholder="Search prebuilds"
                     />
                     <Select
-                        value={filter?.status}
+                        value={filter?.status ?? "any"}
                         onValueChange={(status) => {
                             if (status === "any") {
                                 onFilterChange({ ...filter, status: undefined });
                                 return;
                             }
-                            onFilterChange({ ...filter, status: status as STATUS_OPTION });
+                            onFilterChange({ ...filter, status: status as StatusOption });
                         }}
                     >
                         <SelectTrigger className="w-[120px]">
@@ -82,9 +90,15 @@ export const PrebuildsTable: FC<Props> = ({
                             <TableRow>
                                 <TableHead className="w-52">Repository</TableHead>
                                 <TableHead hideOnSmallScreen>Commit</TableHead>
-                                <TableHead className="w-32" hideOnSmallScreen>
+                                <SortableTableHead
+                                    columnName={sort.sortBy}
+                                    sortOrder={sort.sortOrder}
+                                    onSort={onSort as SortCallback}
+                                    className="w-32"
+                                    hideOnSmallScreen
+                                >
                                     Triggered
-                                </TableHead>
+                                </SortableTableHead>
                                 <TableHead className="w-24">Status</TableHead>
                                 {/* Action column, loading status in header */}
                                 <TableHead className="w-24 text-right">
