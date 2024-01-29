@@ -12,6 +12,7 @@
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
 import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
+import { Sort } from "./sorting_pb.js";
 import { Commit } from "./scm_pb.js";
 
 /**
@@ -444,6 +445,11 @@ export class ListOrganizationPrebuildsRequest extends Message<ListOrganizationPr
    */
   filter?: ListOrganizationPrebuildsRequest_Filter;
 
+  /**
+   * @generated from field: gitpod.v1.Sort sort = 4;
+   */
+  sort?: Sort;
+
   constructor(data?: PartialMessage<ListOrganizationPrebuildsRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -455,6 +461,7 @@ export class ListOrganizationPrebuildsRequest extends Message<ListOrganizationPr
     { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
     { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "filter", kind: "message", T: ListOrganizationPrebuildsRequest_Filter },
+    { no: 4, name: "sort", kind: "message", T: Sort },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationPrebuildsRequest {
