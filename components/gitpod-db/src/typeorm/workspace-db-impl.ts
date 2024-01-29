@@ -1047,9 +1047,9 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
      */
     async findPrebuiltWorkspacesByOrganization(
         organizationId: string,
-        offset = 0,
-        limit = 25,
-        filter?: {
+        offset: number,
+        limit: number,
+        filter: {
             configuration?: {
                 id: string;
                 branch?: string;
@@ -1057,11 +1057,15 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             state?: "succeeded" | "failed" | "unfinished";
             searchTerm?: string;
         },
+        sort: {
+            field: string;
+            order?: "ASC" | "DESC";
+        },
     ): Promise<PrebuiltWorkspace[]> {
         const repo = await this.getPrebuiltWorkspaceRepo();
         const query = repo
             .createQueryBuilder("pws")
-            .orderBy("pws.creationTime", "DESC")
+            .orderBy("pws.creationTime", sort.order ?? "DESC")
             .innerJoinAndMapOne(
                 "pws.workspace",
                 DBWorkspace,
@@ -1072,7 +1076,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .skip(offset)
             .take(limit);
 
-        if (filter?.state) {
+        if (filter.state) {
             const { state } = filter;
             // translating API state to DB state
             switch (state) {
@@ -1116,14 +1120,14 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             }
         }
 
-        if (filter?.configuration?.id) {
+        if (filter.configuration?.id) {
             query.andWhere("pws.projectId = :projectId", { projectId: filter.configuration.id });
             if (filter.configuration.branch) {
                 query.andWhere("pws.branch = :branch", { branch: filter.configuration.branch });
             }
         }
 
-        const normalizedSearchTerm = filter?.searchTerm?.trim();
+        const normalizedSearchTerm = filter.searchTerm?.trim();
         if (normalizedSearchTerm) {
             query.innerJoinAndMapOne("pws.project", DBProject, "project", "pws.projectId = project.id");
             query.andWhere(

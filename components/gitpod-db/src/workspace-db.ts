@@ -172,15 +172,19 @@ export interface WorkspaceDB {
     findPrebuiltWorkspacesByProject(projectId: string, branch?: string, limit?: number): Promise<PrebuiltWorkspace[]>;
     findPrebuiltWorkspacesByOrganization(
         organizationId: string,
-        offset?: number,
-        limit?: number,
-        filter?: {
+        offset: number,
+        limit: number,
+        filter: {
             configuration?: {
                 id: string;
                 branch?: string;
             };
             state?: "succeeded" | "failed" | "unfinished";
             searchTerm?: string;
+        },
+        sort: {
+            field: string;
+            order?: "ASC" | "DESC";
         },
     ): Promise<PrebuiltWorkspace[]>;
     findPrebuiltWorkspaceById(prebuildId: string): Promise<PrebuiltWorkspace | undefined>;

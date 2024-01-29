@@ -30,6 +30,7 @@ import { ctxSignal, ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
+import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 
 @injectable()
 export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInterface> {
@@ -169,10 +170,17 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             configuration: filter?.configuration,
             searchTerm: filter?.searchTerm,
         };
-
+        gi;
         if (filter?.state) {
             prebuildsFilter.state = this.apiConverter.fromPrebuildFilterState(filter?.state);
         }
+
+        const sorting =
+            request.sort ??
+            new Sort({
+                field: "creationTime",
+                order: SortOrder.DESC,
+            });
 
         const prebuilds = await this.prebuildManager.listPrebuilds(
             {},
@@ -183,6 +191,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
                 offset: paginationToken.offset,
             },
             prebuildsFilter,
+            this.apiConverter.fromSort(sorting),
         );
 
         const apiPrebuilds = prebuilds.map((pb) => this.apiConverter.toPrebuild(pb));

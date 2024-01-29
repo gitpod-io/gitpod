@@ -124,9 +124,9 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         const sort = req.sort?.[0];
         // defaults to name
         const orderBy = sort?.field || "name";
-        const sortOrder = sort?.order || SortOrder.ASC;
+        const sortOrder = sort?.order ?? SortOrder.ASC;
         // defaults to ascending
-        const orderDir: "ASC" | "DESC" = sortOrder === SortOrder.DESC ? "DESC" : "ASC";
+        const orderDir = this.apiConverter.fromSortOrder(sortOrder);
 
         if (!["name", "creationTime"].includes(orderBy as string)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "orderBy must be one of 'name' or 'creationTime'");

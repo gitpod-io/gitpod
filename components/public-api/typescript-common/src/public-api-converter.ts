@@ -153,6 +153,7 @@ import { RoleOrPermission as ProtocolRoleOrPermission } from "@gitpod/gitpod-pro
 import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { GitpodServer } from "@gitpod/gitpod-protocol";
+import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -877,6 +878,24 @@ export class PublicAPIConverter {
             memberSince: Timestamp.fromDate(new Date(member.memberSince)),
             ownedByOrganization: member.ownedByOrganization,
         });
+    }
+
+    fromSort(sort: Sort) {
+        return {
+            order: this.fromSortOrder(sort.order),
+            field: sort.field
+        } as const;
+    }
+
+    fromSortOrder(order: SortOrder) {
+        switch (order) {
+            case SortOrder.ASC:
+                return "ASC";
+            case SortOrder.DESC:
+                return "DESC";
+            default:
+                return undefined;
+        }
     }
 
     toOrgMemberRole(role: OrgMemberRole): OrganizationRole {

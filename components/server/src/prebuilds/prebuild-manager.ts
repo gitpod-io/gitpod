@@ -208,13 +208,17 @@ export class PrebuildManager {
             limit: number;
             offset?: number;
         },
-        filter?: PrebuildFilter,
+        filter: PrebuildFilter,
+        sort: {
+            field: string;
+            order?: "DESC" | "ASC";
+        },
     ): Promise<PrebuildWithStatus[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_prebuild", organizationId);
 
         const prebuiltWorkspaces = await this.workspaceDB
             .trace(ctx)
-            .findPrebuiltWorkspacesByOrganization(organizationId, pagination.offset, pagination.limit, filter);
+            .findPrebuiltWorkspacesByOrganization(organizationId, pagination.offset, pagination.limit, filter, sort);
         const prebuildMap = new Map(prebuiltWorkspaces.map((prebuild) => [prebuild.id, prebuild]));
         const infos = await this.workspaceDB.trace({}).findPrebuildInfos([...prebuildMap.keys()]);
 
