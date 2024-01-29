@@ -211,7 +211,7 @@ export class PrebuildManager {
         filter: PrebuildFilter,
         sort: {
             field: string;
-            order?: "DESC" | "ASC";
+            order: "DESC" | "ASC";
         },
     ): Promise<PrebuildWithStatus[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_prebuild", organizationId);

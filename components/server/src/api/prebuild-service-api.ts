@@ -178,10 +178,15 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             prebuildsFilter.state = this.apiConverter.fromPrebuildFilterState(filter?.state);
         }
 
-        const sorting = new Sort({
-            field: sort?.field ?? "creationTime",
-            order: sort?.order ?? SortOrder.DESC,
-        });
+        const sorting = this.apiConverter.fromSort(
+            new Sort({
+                field: sort?.field ?? "creationTime",
+                order: sort?.order ?? SortOrder.DESC,
+            }),
+        );
+        if (!sorting.order) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "sort.order must have a valid value");
+        }
 
         const prebuilds = await this.prebuildManager.listPrebuilds(
             {},
@@ -192,7 +197,10 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
                 offset: paginationToken.offset,
             },
             prebuildsFilter,
-            this.apiConverter.fromSort(sorting),
+            {
+                ...sorting,
+                order: sorting.order ?? "DESC",
+            },
         );
 
         const apiPrebuilds = prebuilds.map((pb) => this.apiConverter.toPrebuild(pb));

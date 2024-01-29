@@ -186,7 +186,7 @@ export interface WorkspaceDB {
         },
         sort: {
             field: string;
-            order?: "ASC" | "DESC";
+            order: "ASC" | "DESC";
         },
     ): Promise<PrebuiltWorkspace[]>;
     findPrebuiltWorkspaceById(prebuildId: string): Promise<PrebuiltWorkspace | undefined>;

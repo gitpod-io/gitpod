@@ -1061,14 +1061,14 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         },
         sort: {
             field: string;
-            order?: "ASC" | "DESC";
+            order: "ASC" | "DESC";
         },
     ): Promise<PrebuiltWorkspace[]> {
         const repo = await this.getPrebuiltWorkspaceRepo();
         const query = repo
             .createQueryBuilder("pws")
             // todo: take sort field into account
-            .orderBy("pws.creationTime", sort.order ?? "DESC")
+            .orderBy("pws.creationTime", sort.order)
             .innerJoinAndMapOne(
                 "pws.workspace",
                 DBWorkspace,
