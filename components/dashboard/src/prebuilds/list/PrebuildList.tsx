@@ -9,7 +9,8 @@ import { useHistory } from "react-router-dom";
 import { PageHeading } from "@podkit/layout/PageHeading";
 import { useDocumentTitle } from "../../hooks/use-document-title";
 import { useQueryParams } from "../../hooks/use-query-params";
-import { PrebuildListEmptyState } from "./PrebuildEmptyListState";
+import { PrebuildListEmptyState } from "./PrebuildListEmptyState";
+import { PrebuildListErrorState } from "./PrebuildListErrorState";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { PrebuildsTable } from "./PrebuildTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
@@ -63,15 +64,24 @@ const PrebuildsListPage: FC = () => {
     }, [history, statusFilter, searchTermDebounced, configurationFilter]);
 
     // TODO: handle isError case
-    const { data, isLoading, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } =
-        useListOrganizationPrebuildsQuery({
-            filter: {
-                searchTerm: searchTermDebounced,
-                state: toApiStatus(filter.status),
-                ...(configurationFilter ? { configuration: { id: configurationFilter } } : {}),
-            },
-            pageSize: 30,
-        });
+    const {
+        data,
+        isLoading,
+        isFetching,
+        isFetchingNextPage,
+        isPreviousData,
+        hasNextPage,
+        fetchNextPage,
+        isError,
+        error,
+    } = useListOrganizationPrebuildsQuery({
+        filter: {
+            searchTerm: searchTermDebounced,
+            state: toApiStatus(filter.status),
+            ...(configurationFilter ? { configuration: { id: configurationFilter } } : {}),
+        },
+        pageSize: 30,
+    });
 
     const prebuilds = useMemo(() => {
         return data?.pages.map((page) => page.prebuilds).flat() ?? [];
@@ -109,6 +119,7 @@ const PrebuildsListPage: FC = () => {
                 )}
 
                 {!showTable && !isLoading && <PrebuildListEmptyState />}
+                {isError && <PrebuildListErrorState error={error} />}
             </div>
         </>
     );
