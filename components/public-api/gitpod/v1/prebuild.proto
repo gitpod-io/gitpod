@@ -107,6 +107,7 @@ message PrebuildStatus {
   google.protobuf.Timestamp start_time = 2;
   // message is an optional human-readable message detailing the current phase
   string message = 3;
+  string log_url = 4;
 }
 
 message PrebuildPhase {

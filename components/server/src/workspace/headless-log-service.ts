@@ -33,9 +33,11 @@ import {
 } from "@gitpod/content-service/lib/headless-log_pb";
 import { CachingHeadlessLogServiceClientProvider } from "../util/content-service-sugar";
 import { ctxIsAborted, ctxOnAbort } from "../util/request-context";
+import { PREBUILD_LOGS_PATH_PREFIX as PREBUILD_LOGS_PATH_PREFIX_common } from "@gitpod/public-api-common/lib/prebuild-utils";
 
 export const HEADLESS_LOGS_PATH_PREFIX = "/headless-logs";
 export const HEADLESS_LOG_DOWNLOAD_PATH_PREFIX = "/headless-log-download";
+export const PREBUILD_LOGS_PATH_PREFIX = PREBUILD_LOGS_PATH_PREFIX_common;
 
 export type HeadlessLogEndpoint = {
     url: string;

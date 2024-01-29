@@ -46,7 +46,11 @@ import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
-import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./workspace/headless-log-service";
+import {
+    HEADLESS_LOGS_PATH_PREFIX,
+    HEADLESS_LOG_DOWNLOAD_PATH_PREFIX,
+    PREBUILD_LOGS_PATH_PREFIX,
+} from "./workspace/headless-log-service";
 import { runWithRequestContext } from "./util/request-context";
 import { AnalyticsController } from "./analytics-controller";
 
@@ -307,6 +311,7 @@ export class Server {
         // Authorization: Session or Bearer token
         app.use(HEADLESS_LOGS_PATH_PREFIX, this.headlessLogController.headlessLogs);
         app.use(HEADLESS_LOG_DOWNLOAD_PATH_PREFIX, this.headlessLogController.headlessLogDownload);
+        app.use(PREBUILD_LOGS_PATH_PREFIX, this.headlessLogController.prebuildLogs);
 
         // Authorization: Bearer token only
         app.use("/code-sync", this.codeSyncService.apiRouter);

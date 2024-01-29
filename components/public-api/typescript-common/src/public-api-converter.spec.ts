@@ -34,6 +34,8 @@ import { WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
 
+    const testGitpodHost = "https://gitpod-test.preview.gitpod-dev.com/";
+
     describe("golden tests", () => {
         it("toWorkspaceSnapshot", async () => {
             await startFixtureTest("../fixtures/toWorkspaceSnapshot_*.json", async (input) =>
@@ -173,7 +175,9 @@ describe("PublicAPIConverter", () => {
         });
 
         it("toPrebuild", async () => {
-            await startFixtureTest("../fixtures/toPrebuild_*.json", async (input) => converter.toPrebuild(input));
+            await startFixtureTest("../fixtures/toPrebuild_*.json", async (input) =>
+                converter.toPrebuild(testGitpodHost, input),
+            );
         });
 
         it("toSCMToken", async () => {
