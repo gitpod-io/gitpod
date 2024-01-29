@@ -19,7 +19,7 @@ interface BreadcrumbPageNavProps {
     /**
      * The description of the current page.
      */
-    pageDescription?: string;
+    pageDescription?: React.ReactNode;
     /**
      * The link to the previous page.
      */
@@ -42,7 +42,7 @@ export const BreadcrumbNav: FC<BreadcrumbPageNavProps> = ({ pageTitle, pageDescr
                     </Heading3>
                 </LinkButton>
             )}
-            <MiddleDot />
+            <MiddleDot className="font-bold" />
             <p className="text-pk-content-primary text-lg">{pageDescription}</p>
         </section>
     );
