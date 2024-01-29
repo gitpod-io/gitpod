@@ -6,10 +6,12 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/go-logr/logr"
@@ -33,6 +35,7 @@ const (
 	workspaceRestoresTotal        string = "workspace_restores_total"
 	workspaceRestoresFailureTotal string = "workspace_restores_failure_total"
 	workspaceNodeUtilization      string = "workspace_node_utilization"
+	workspaceActivityTotal        string = "workspace_activity_total"
 )
 
 type StopReason string
@@ -64,6 +67,8 @@ type controllerMetrics struct {
 	timeoutSettings *timeoutSettingsVec
 
 	workspaceNodeUtilization *nodeUtilizationVec
+
+	workspaceActivityTotal *workspaceActivityVec
 
 	// used to prevent recording metrics multiple times
 	cache *lru.Cache
@@ -144,6 +149,7 @@ func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
 		workspacePhases:          newPhaseTotalVec(r),
 		timeoutSettings:          newTimeoutSettingsVec(r),
 		workspaceNodeUtilization: newNodeUtilizationVec(r),
+		workspaceActivityTotal:   newWorkspaceActivityVec(r),
 		cache:                    cache,
 	}, nil
 }
@@ -328,6 +334,7 @@ func (m *controllerMetrics) Describe(ch chan<- *prometheus.Desc) {
 	m.workspacePhases.Describe(ch)
 	m.timeoutSettings.Describe(ch)
 	m.workspaceNodeUtilization.Describe(ch)
+	m.workspaceActivityTotal.Describe(ch)
 }
 
 // Collect implements Collector.
@@ -347,6 +354,7 @@ func (m *controllerMetrics) Collect(ch chan<- prometheus.Metric) {
 	m.workspacePhases.Collect(ch)
 	m.timeoutSettings.Collect(ch)
 	m.workspaceNodeUtilization.Collect(ch)
+	m.workspaceActivityTotal.Collect(ch)
 }
 
 // phaseTotalVec returns a gauge vector counting the workspaces per phase
@@ -611,4 +619,77 @@ func (n *nodeUtilizationVec) Collect(ch chan<- prometheus.Metric) {
 			ch <- metric
 		}
 	}
+}
+
+type workspaceActivityVec struct {
+	name       string
+	desc       *prometheus.Desc
+	reconciler *WorkspaceReconciler
+}
+
+func newWorkspaceActivityVec(r *WorkspaceReconciler) *workspaceActivityVec {
+	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, workspaceActivityTotal)
+	desc := prometheus.NewDesc(
+		name,
+		"total number of active workspaces",
+		[]string{"active"},
+		prometheus.Labels(map[string]string{}),
+	)
+	return &workspaceActivityVec{
+		name:       name,
+		desc:       desc,
+		reconciler: r,
+	}
+}
+
+// Describe implements Collector. It will send exactly one Desc to the provided channel.
+func (wav *workspaceActivityVec) Describe(ch chan<- *prometheus.Desc) {
+	ch <- wav.desc
+}
+
+func (wav *workspaceActivityVec) Collect(ch chan<- prometheus.Metric) {
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	active, notActive, err := wav.getWorkspaceActivityCounts()
+	if err != nil {
+		log.FromContext(ctx).Error(err, fmt.Sprintf("cannot determine active/inactive counts - %s will be inaccurate", wav.name))
+		return
+	}
+
+	activeMetrics, err := prometheus.NewConstMetric(wav.desc, prometheus.GaugeValue, float64(active), "true")
+	if err != nil {
+		log.FromContext(ctx).Error(err, "cannot create wrokspace activity metric", "active", "true")
+		return
+	}
+	notActiveMetrics, err := prometheus.NewConstMetric(wav.desc, prometheus.GaugeValue, float64(notActive), "false")
+	if err != nil {
+		log.FromContext(ctx).Error(err, "cannot create wrokspace activity metric", "active", "false")
+		return
+	}
+
+	ch <- activeMetrics
+	ch <- notActiveMetrics
+}
+
+func (wav *workspaceActivityVec) getWorkspaceActivityCounts() (active, notActive int, err error) {
+	var workspaces workspacev1.WorkspaceList
+	if err = wav.reconciler.List(context.Background(), &workspaces, client.InNamespace(wav.reconciler.Config.Namespace)); err != nil {
+		return 0, 0, err
+	}
+
+	for _, ws := range workspaces.Items {
+		if ws.Spec.Type != workspacev1.WorkspaceTypeRegular {
+			continue
+		}
+
+		hasActivity := activity.Last(&ws) != nil
+		if hasActivity {
+			active++
+		} else {
+			notActive++
+		}
+	}
+
+	return
 }

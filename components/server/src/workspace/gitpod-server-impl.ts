@@ -2754,6 +2754,26 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.billingModes.getBillingMode(user.id, teamId);
     }
 
+    async isCustomerBillingAddressInvalid(ctx: TraceContext, attributionId: string): Promise<boolean> {
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
+
+        const user = await this.checkAndBlockUser("isCustomerBillingAddressInvalid");
+        await this.guardTeamOperation(attrId.teamId, "update");
+        await this.auth.checkPermissionOnOrganization(user.id, "write_billing", attrId.teamId);
+
+        try {
+            const customer = (await this.billingService.getStripeCustomer({ attributionId })).customer;
+            return customer?.invalidBillingAddress ?? false;
+        } catch (e) {
+            log.error(`Failed to get Stripe customer profile for '${attributionId}'`, e);
+            return false;
+        }
+    }
+
     // (SaaS) – admin
     async adminGetBillingMode(ctx: TraceContextWithSpan, attributionId: string): Promise<BillingMode> {
         traceAPIParams(ctx, { attributionId });

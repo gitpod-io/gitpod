@@ -39,6 +39,10 @@ import { ContextParser } from "../workspace/context-parser-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
+import { ctxSignal } from "../util/request-context";
+import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "../workspace/headless-log-service";
+import { onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 
 export interface StartPrebuildParams {
     user: User;
@@ -110,6 +114,50 @@ export class PrebuildManager {
                 }
             }
         }, opts);
+    }
+
+    public async *getAndWatchPrebuildStatus(
+        userId: string,
+        filter: {
+            configurationId?: string;
+            prebuildId?: string;
+        },
+        opts: { signal: AbortSignal },
+    ) {
+        if (!filter.configurationId && !filter.prebuildId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `configurationId or prebuildId is required`);
+        }
+        if (filter.prebuildId) {
+            const prebuild = await this.getPrebuild({}, userId, filter.prebuildId);
+            if (!prebuild) {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `prebuild ${filter.prebuildId} not found`);
+            }
+            if (!prebuild?.info.projectId) {
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    `prebuild ${filter.prebuildId} does not belong to any configuration`,
+                );
+            }
+            // if configurationId not match, we should not continue because we will filter by configuration id below
+            if (filter.configurationId && filter.configurationId !== prebuild.info.projectId) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    `prebuild ${filter.prebuildId} does not belong to configuration ${filter.configurationId}`,
+                );
+            }
+            filter.configurationId = prebuild.info.projectId;
+            yield prebuild;
+        }
+        const it = await this.watchPrebuildStatus(userId, filter.configurationId!, opts);
+        for await (const pb of it) {
+            if (filter.prebuildId && pb.info.id !== filter.prebuildId) {
+                continue;
+            }
+            if (pb.info.projectId !== filter.configurationId) {
+                continue;
+            }
+            yield pb;
+        }
     }
 
     async triggerPrebuild(ctx: TraceContext, user: User, projectId: string, branchName: string | null) {
@@ -573,5 +621,158 @@ export class PrebuildManager {
             return true;
         }
         return false;
+    }
+
+    public async watchPrebuildLogs(userId: string, prebuildId: string, onLog: (message: string) => void) {
+        const workspaceId = await this.waitUntilPrebuildWorkspaceCreated(userId, prebuildId);
+        if (!workspaceId) {
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "prebuild workspace not found");
+        }
+
+        const workspaceStatusIt = this.workspaceService.getAndWatchWorkspaceStatus(userId, workspaceId, {
+            signal: ctxSignal(),
+        });
+        let hasImageBuild = false;
+        for await (const itWsInfo of workspaceStatusIt) {
+            switch (itWsInfo.status?.phase?.name) {
+                case WorkspacePhase_Phase.IMAGEBUILD: {
+                    if (!hasImageBuild) {
+                        hasImageBuild = true;
+                        const imageBuildIt = this.workspaceService.getWorkspaceImageBuildLogsIterator(
+                            userId,
+                            itWsInfo.workspaceId,
+                            {
+                                signal: ctxSignal(),
+                            },
+                        );
+                        for await (const message of imageBuildIt) {
+                            onLog(message);
+                        }
+                    }
+                    break;
+                }
+                case WorkspacePhase_Phase.RUNNING:
+                case WorkspacePhase_Phase.STOPPED: {
+                    const urls = await this.workspaceService.getHeadlessLog(
+                        userId,
+                        itWsInfo.status.instanceId,
+                        async () => {},
+                    );
+                    // TODO: Only listening on first stream for now
+                    const firstUrl = Object.values(urls.streams)[0];
+                    if (!firstUrl) {
+                        throw new ApplicationError(ErrorCodes.NOT_FOUND, "no logs found");
+                    }
+
+                    const info = this.parsePrebuildLogUrl(firstUrl);
+                    if (!info) {
+                        throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "cannot parse prebuild log info");
+                    }
+                    const downloadUrl =
+                        info.type === "stopped"
+                            ? await this.workspaceService.getHeadlessLogDownloadUrl(
+                                  userId,
+                                  info.instanceId,
+                                  info.taskId,
+                              )
+                            : undefined;
+
+                    const it = generateAsyncGenerator<string>(
+                        (sink) => {
+                            try {
+                                if (info.type === "running") {
+                                    this.workspaceService
+                                        .streamWorkspaceLogs(userId, info.instanceId, info.terminalId, async (msg) =>
+                                            sink.push(msg),
+                                        )
+                                        .then(() => {
+                                            sink.stop();
+                                        })
+                                        .catch((err) => {
+                                            console.debug("error streaming running headless logs", err);
+                                            throw new ApplicationError(
+                                                ErrorCodes.INTERNAL_SERVER_ERROR,
+                                                "error streaming running headless logs",
+                                            );
+                                        });
+                                    return () => {};
+                                } else {
+                                    if (!downloadUrl) {
+                                        throw new ApplicationError(
+                                            ErrorCodes.PRECONDITION_FAILED,
+                                            "cannot fetch prebuild log",
+                                        );
+                                    }
+                                    const cancel = onDownloadPrebuildLogsUrl(
+                                        downloadUrl,
+                                        (msg: string) => sink.push(msg),
+                                        {
+                                            includeCredentials: false,
+                                            maxBackoffTimes: 3,
+                                        },
+                                    );
+                                    return () => {
+                                        cancel();
+                                    };
+                                }
+                            } catch (e) {
+                                if (e instanceof Error) {
+                                    sink.fail(e);
+                                    return;
+                                } else {
+                                    sink.fail(new Error(String(e) || "unknown"));
+                                }
+                            }
+                        },
+                        { signal: ctxSignal() },
+                    );
+
+                    for await (const message of it) {
+                        onLog(message);
+                    }
+                    // we don't care the case phase updates from `running` to `stopped` because their logs are the same
+                    // this may cause some logs lost, but better than duplicate?
+                    return;
+                }
+                case WorkspacePhase_Phase.INTERRUPTED: {
+                    return;
+                }
+                default: {
+                    break;
+                }
+            }
+        }
+    }
+
+    private async waitUntilPrebuildWorkspaceCreated(userId: string, prebuildId: string) {
+        let prebuildWorkspaceId: string | undefined;
+        const prebuildIt = this.getAndWatchPrebuildStatus(userId, { prebuildId }, { signal: ctxSignal() });
+
+        for await (const pb of prebuildIt) {
+            prebuildWorkspaceId = pb.info.buildWorkspaceId;
+            if (prebuildWorkspaceId) {
+                break;
+            }
+            if (pb.status === "aborted" || pb.status === "failed" || pb.status === "timeout") {
+                break;
+            }
+        }
+        await prebuildIt.return();
+        return prebuildWorkspaceId;
+    }
+
+    private parsePrebuildLogUrl(url: string) {
+        // url of stopped prebuild workspaces
+        const downloadRegex = new RegExp(`${HEADLESS_LOG_DOWNLOAD_PATH_PREFIX}\/(?<instanceId>.*?)\/(?<taskId>.*?)$`);
+        if (downloadRegex.test(url)) {
+            const info = downloadRegex.exec(url)!.groups!;
+            return { type: "stopped" as const, instanceId: info.instanceId, taskId: info.taskId };
+        }
+        // url of running prebuild workspaces
+        const runningRegex = new RegExp(`${HEADLESS_LOGS_PATH_PREFIX}\/(?<instanceId>.*?)\/(?<terminalId>.*?)$`);
+        if (runningRegex.test(url)) {
+            const info = runningRegex.exec(url)!.groups!;
+            return { type: "running" as const, instanceId: info.instanceId, terminalId: info.terminalId };
+        }
     }
 }

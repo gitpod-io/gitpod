@@ -255,6 +255,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getCostCenter(attributionId: string): Promise<CostCenterJSON | undefined>;
     setUsageLimit(attributionId: string, usageLimit: number): Promise<void>;
     getUsageBalance(attributionId: string): Promise<number>;
+    isCustomerBillingAddressInvalid(attributionId: string): Promise<boolean>;
 
     listUsage(req: ListUsageRequest): Promise<ListUsageResponse>;
 

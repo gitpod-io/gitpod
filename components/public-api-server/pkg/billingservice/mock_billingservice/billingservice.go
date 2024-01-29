@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -78,4 +78,18 @@ func (m *MockInterface) OnChargeDispute(ctx context.Context, disputeID string) e
 func (mr *MockInterfaceMockRecorder) OnChargeDispute(ctx, disputeID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnChargeDispute", reflect.TypeOf((*MockInterface)(nil).OnChargeDispute), ctx, disputeID)
+}
+
+// UpdateCustomerSubscriptionsTaxState mocks base method.
+func (m *MockInterface) UpdateCustomerSubscriptionsTaxState(ctx context.Context, customerID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateCustomerSubscriptionsTaxState", ctx, customerID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateCustomerSubscriptionsTaxState indicates an expected call of UpdateCustomerSubscriptionsTaxState.
+func (mr *MockInterfaceMockRecorder) UpdateCustomerSubscriptionsTaxState(ctx, customerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCustomerSubscriptionsTaxState", reflect.TypeOf((*MockInterface)(nil).UpdateCustomerSubscriptionsTaxState), ctx, customerID)
 }

@@ -79,32 +79,11 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         req: WatchWorkspaceStatusRequest,
         _: HandlerContext,
     ): AsyncIterable<WatchWorkspaceStatusResponse> {
-        if (req.workspaceId) {
-            const instance = await this.workspaceService.getCurrentInstance(ctxUserId(), req.workspaceId);
-            const status = this.apiConverter.toWorkspace(instance).status;
-            if (status) {
-                const response = new WatchWorkspaceStatusResponse();
-                response.workspaceId = instance.workspaceId;
-                response.status = status;
-                yield response;
-            }
-        }
-        const it = this.workspaceService.watchWorkspaceStatus(ctxUserId(), { signal: ctxSignal() });
-        for await (const instance of it) {
-            if (!instance) {
-                continue;
-            }
-            if (req.workspaceId && instance.workspaceId !== req.workspaceId) {
-                continue;
-            }
-            const status = this.apiConverter.toWorkspace(instance).status;
-            if (!status) {
-                continue;
-            }
-            const response = new WatchWorkspaceStatusResponse();
-            response.workspaceId = instance.workspaceId;
-            response.status = status;
-            yield response;
+        const it = this.workspaceService.getAndWatchWorkspaceStatus(ctxUserId(), req.workspaceId, {
+            signal: ctxSignal(),
+        });
+        for await (const status of it) {
+            yield status;
         }
     }
 

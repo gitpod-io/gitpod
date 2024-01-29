@@ -154,6 +154,8 @@ import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { GitpodServer } from "@gitpod/gitpod-protocol";
 import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { getPrebuildLogPath } from "./prebuild-utils";
+const URL = require("url").URL || window.URL;
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -1111,11 +1113,11 @@ export class PublicAPIConverter {
         }
     }
 
-    toPrebuilds(prebuilds: PrebuildWithStatus[]): Prebuild[] {
-        return prebuilds.map((prebuild) => this.toPrebuild(prebuild));
+    toPrebuilds(gitpodHost: string, prebuilds: PrebuildWithStatus[]): Prebuild[] {
+        return prebuilds.map((prebuild) => this.toPrebuild(gitpodHost, prebuild));
     }
 
-    toPrebuild(prebuild: PrebuildWithStatus): Prebuild {
+    toPrebuild(gitpodHost: string, prebuild: PrebuildWithStatus): Prebuild {
         return new Prebuild({
             id: prebuild.info.id,
             workspaceId: prebuild.info.buildWorkspaceId,
@@ -1135,17 +1137,18 @@ export class PublicAPIConverter {
             }),
             contextUrl: prebuild.info.changeUrl,
 
-            status: this.toPrebuildStatus(prebuild),
+            status: this.toPrebuildStatus(gitpodHost, prebuild),
         });
     }
 
-    toPrebuildStatus(prebuild: PrebuildWithStatus): PrebuildStatus {
+    toPrebuildStatus(gitpodHost: string, prebuild: PrebuildWithStatus): PrebuildStatus {
         return new PrebuildStatus({
             phase: new PrebuildPhase({
                 name: this.toPrebuildPhase(prebuild.status),
             }),
             startTime: Timestamp.fromDate(new Date(prebuild.info.startedAt)),
             message: prebuild.error,
+            logUrl: new URL(getPrebuildLogPath(prebuild.info.id), gitpodHost).toString(),
         });
     }
 

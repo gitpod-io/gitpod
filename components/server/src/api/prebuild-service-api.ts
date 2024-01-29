@@ -31,6 +31,7 @@ import { UserService } from "../user/user-service";
 import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { Config } from "../config";
 
 @injectable()
 export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInterface> {
@@ -42,6 +43,8 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
 
     @inject(PublicAPIConverter)
     private readonly apiConverter: PublicAPIConverter;
+
+    @inject(Config) private readonly config: Config;
 
     @inject(UserService)
     private readonly userService: UserService;
@@ -73,7 +76,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `prebuild ${request.prebuildId} not found`);
         }
         return new GetPrebuildResponse({
-            prebuild: this.apiConverter.toPrebuild(result),
+            prebuild: this.apiConverter.toPrebuild(this.config.hostUrl.toString(), result),
         });
     }
 
@@ -85,7 +88,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
                 const prebuild = await this.prebuildManager.getPrebuild({}, userId, pbws.id);
                 if (prebuild) {
                     return new ListPrebuildsResponse({
-                        prebuilds: [this.apiConverter.toPrebuild(prebuild)],
+                        prebuilds: [this.apiConverter.toPrebuild(this.config.hostUrl.toString(), prebuild)],
                     });
                 }
             }
@@ -104,7 +107,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
         });
         // TODO paggination
         return new ListPrebuildsResponse({
-            prebuilds: this.apiConverter.toPrebuilds(result),
+            prebuilds: this.apiConverter.toPrebuilds(this.config.hostUrl.toString(), result),
         });
     }
 
@@ -113,33 +116,16 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "scope is required");
         }
 
-        let configurationId = request.scope.value;
-        if (request.scope.case === "prebuildId") {
-            const resp = await this.getPrebuild(
-                new GetPrebuildRequest({
-                    prebuildId: request.scope.value,
-                }),
-            );
-            yield new WatchPrebuildResponse({
-                prebuild: resp.prebuild,
-            });
-            configurationId = resp.prebuild!.configurationId;
-        }
-        const it = await this.prebuildManager.watchPrebuildStatus(ctxUserId(), configurationId, {
-            signal: ctxSignal(),
-        });
+        const filter = {
+            configurationId: request.scope.case === "configurationId" ? request.scope.value : undefined,
+            prebuildId: request.scope.case === "prebuildId" ? request.scope.value : undefined,
+        };
+        const it = this.prebuildManager.getAndWatchPrebuildStatus(ctxUserId(), filter, { signal: ctxSignal() });
+
         for await (const pb of it) {
-            if (request.scope.case === "prebuildId") {
-                if (pb.info.id !== request.scope.value) {
-                    continue;
-                }
-            } else if (pb.info.projectId !== request.scope.value) {
-                continue;
-            }
-            const prebuild = this.apiConverter.toPrebuild(pb);
-            if (prebuild) {
-                yield new WatchPrebuildResponse({ prebuild });
-            }
+            yield new WatchPrebuildResponse({
+                prebuild: this.apiConverter.toPrebuild(this.config.hostUrl.toString(), pb),
+            });
         }
     }
 
@@ -203,7 +189,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             },
         );
 
-        const apiPrebuilds = prebuilds.map((pb) => this.apiConverter.toPrebuild(pb));
+        const apiPrebuilds = prebuilds.map((pb) => this.apiConverter.toPrebuild(this.config.hostUrl.toString(), pb));
         const pagedResult = apiPrebuilds.slice(0, limit);
 
         const response = new ListOrganizationPrebuildsResponse({

@@ -13,6 +13,9 @@ import { trackEvent } from "./Analytics";
 import { useUpdateCurrentUserMutation } from "./data/current-user/update-mutation";
 import { User as UserProtocol } from "@gitpod/gitpod-protocol";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { useCurrentOrg } from "./data/organizations/orgs-query";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { getGitpodService } from "./service/service";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 const PRIVACY_POLICY_LAST_UPDATED = "2023-12-20";
@@ -59,26 +62,66 @@ const UPDATED_PRIVACY_POLICY = (updateUser: (user: Partial<UserProtocol>) => Pro
     } as Notification;
 };
 
+const INVALID_BILLING_ADDRESS = () => {
+    return {
+        id: "invalid-billing-address",
+        type: "warning",
+        preventDismiss: true,
+        message: (
+            <span className="text-md">
+                Your billing address is invalid, taxes (if applicable) won't be calculated. Please update your billing
+                address.
+            </span>
+        ),
+    } as Notification;
+};
+
 export function AppNotifications() {
     const [topNotification, setTopNotification] = useState<Notification | undefined>(undefined);
     const { user, loading } = useUserLoader();
     const { mutateAsync } = useUpdateCurrentUserMutation();
 
-    useEffect(() => {
-        const notifications = [];
-        if (!loading && isGitpodIo()) {
-            if (
-                !user?.profile?.acceptedPrivacyPolicyDate ||
-                new Date(PRIVACY_POLICY_LAST_UPDATED) > new Date(user.profile.acceptedPrivacyPolicyDate)
-            ) {
-                notifications.push(UPDATED_PRIVACY_POLICY((u: Partial<UserProtocol>) => mutateAsync(u)));
-            }
-        }
+    const currentOrg = useCurrentOrg().data;
+    const attrId = currentOrg ? AttributionId.createFromOrganizationId(currentOrg.id) : undefined;
+    const attributionId = attrId && AttributionId.render(attrId);
 
-        const dismissedNotifications = getDismissedNotifications();
-        const topNotification = notifications.find((n) => !dismissedNotifications.includes(n.id));
-        setTopNotification(topNotification);
-    }, [loading, mutateAsync, user]);
+    useEffect(() => {
+        let ignore = false;
+
+        const updateNotifications = async () => {
+            const notifications = [];
+            if (!loading) {
+                if (
+                    isGitpodIo() &&
+                    (!user?.profile?.acceptedPrivacyPolicyDate ||
+                        new Date(PRIVACY_POLICY_LAST_UPDATED) > new Date(user.profile.acceptedPrivacyPolicyDate))
+                ) {
+                    notifications.push(UPDATED_PRIVACY_POLICY((u: Partial<UserProtocol>) => mutateAsync(u)));
+                }
+
+                if (attributionId) {
+                    const [subscriptionId, invalidBillingAddress] = await Promise.all([
+                        getGitpodService().server.findStripeSubscriptionId(attributionId),
+                        getGitpodService().server.isCustomerBillingAddressInvalid(attributionId),
+                    ]);
+                    if (subscriptionId && invalidBillingAddress) {
+                        notifications.push(INVALID_BILLING_ADDRESS());
+                    }
+                }
+            }
+
+            if (!ignore) {
+                const dismissedNotifications = getDismissedNotifications();
+                const topNotification = notifications.find((n) => !dismissedNotifications.includes(n.id));
+                setTopNotification(topNotification);
+            }
+        };
+        updateNotifications();
+
+        return () => {
+            ignore = true;
+        };
+    }, [loading, mutateAsync, user, attributionId]);
 
     const dismissNotification = useCallback(() => {
         if (!topNotification) {

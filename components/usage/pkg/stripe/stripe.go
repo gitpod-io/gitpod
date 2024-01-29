@@ -141,7 +141,7 @@ func (c *Client) findCustomers(ctx context.Context, query string) (customers []*
 	params := &stripe.CustomerSearchParams{
 		SearchParams: stripe.SearchParams{
 			Query:   query,
-			Expand:  []*string{stripe.String("data.subscriptions")},
+			Expand:  []*string{stripe.String("data.tax"), stripe.String("data.subscriptions")},
 			Context: ctx,
 		},
 	}
@@ -400,6 +400,25 @@ func (c *Client) CreateSubscription(ctx context.Context, customerID string, pric
 	subscription, err := c.sc.Subscriptions.New(params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get subscription with customer ID %s", customerID)
+	}
+
+	return subscription, err
+}
+
+func (c *Client) UpdateSubscriptionAutomaticTax(ctx context.Context, subscriptionID string, isAutomaticTaxSupported bool) (*stripe.Subscription, error) {
+	if subscriptionID == "" {
+		return nil, fmt.Errorf("no subscriptionID specified")
+	}
+
+	params := &stripe.SubscriptionParams{
+		AutomaticTax: &stripe.SubscriptionAutomaticTaxParams{
+			Enabled: stripe.Bool(isAutomaticTaxSupported),
+		},
+	}
+
+	subscription, err := c.sc.Subscriptions.Update(subscriptionID, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update subscription with subscription ID %s", subscriptionID)
 	}
 
 	return subscription, err
