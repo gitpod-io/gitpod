@@ -30,7 +30,7 @@ export const useListOrganizationPrebuildsQuery = ({ filter, pageSize, sort }: Ar
             const { prebuilds, pagination } = await prebuildClient.listOrganizationPrebuilds({
                 organizationId: org.id,
                 filter,
-                sort,
+                sort: [sort],
                 pagination: { pageSize, token: nextToken },
             });
             return {
