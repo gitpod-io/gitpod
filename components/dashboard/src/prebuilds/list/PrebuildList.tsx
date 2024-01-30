@@ -171,11 +171,13 @@ const toApiStatus = (status: StatusOption): ListOrganizationPrebuildsRequest_Fil
     return undefined;
 };
 
+const isStatusOption = (value: any): value is StatusOption => {
+    return STATUS_FILTER_VALUES.includes(value);
+};
 const parseStatus = (params: URLSearchParams): StatusOption => {
     const filter = params.get("prebuilds");
-    const validValues = Object.values(STATUS_FILTER_VALUES).filter((val) => !!val);
-    if (filter && validValues.includes(filter as any)) {
-        return filter as StatusOption;
+    if (filter && isStatusOption(filter)) {
+        return filter;
     }
 
     return undefined;
