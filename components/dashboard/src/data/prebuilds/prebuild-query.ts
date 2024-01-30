@@ -48,6 +48,7 @@ export function watchPrebuild(prebuildId: string, cb: (data: Prebuild) => void) 
 }
 
 export function useTriggerPrebuildQuery(configurationId?: string, gitRef?: string) {
+    // we use useQuery instead of useMutation so that we can get data (prebuildId) directly outside
     return useQuery<string, Error, string>(
         ["prebuild-trigger", configurationId, gitRef],
         async () => {
@@ -57,7 +58,7 @@ export function useTriggerPrebuildQuery(configurationId?: string, gitRef?: strin
             if (!gitRef) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "prebuild gitRef is missing");
             }
-            return prebuildClient.startPrebuild({ configurationId }).then((resp) => resp.prebuildId);
+            return prebuildClient.startPrebuild({ configurationId, gitRef }).then((resp) => resp.prebuildId);
         },
         {
             enabled: false,

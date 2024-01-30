@@ -12,7 +12,8 @@ import "xterm/css/xterm.css";
 import { ThemeContext } from "../theme-context";
 
 const darkTheme: ITheme = {
-    background: "#292524", // Tailwind's warmGray 800 https://tailwindcss.com/docs/customizing-colors
+    // What written on DevTool dark:bg-gray-800 is
+    background: "rgb(35,33,30)", // Tailwind's warmGray 800 https://tailwindcss.com/docs/customizing-colors
 };
 const lightTheme: ITheme = {
     background: "#F5F5F4", // Tailwind's warmGray 100 https://tailwindcss.com/docs/customizing-colors

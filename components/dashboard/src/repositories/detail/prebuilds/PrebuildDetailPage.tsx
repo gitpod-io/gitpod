@@ -69,6 +69,7 @@ export const PrebuildDetailPage: FC = () => {
         }
     }, [isTriggerError, triggerError, toast]);
 
+    // TODO: should reuse icon/description on prebuild list
     const prebuildPhase = useMemo(() => {
         switch (currentPrebuild?.status?.phase?.name) {
             case PrebuildPhase_Phase.QUEUED:
@@ -99,7 +100,7 @@ export const PrebuildDetailPage: FC = () => {
             case PrebuildPhase_Phase.FAILED:
                 return {
                     icon: <AlertTriangleIcon size={20} className="text-kumquat-base" />,
-                    description: "Prebuild available",
+                    description: "Prebuild failed",
                 };
 
             case PrebuildPhase_Phase.UNSPECIFIED:
@@ -157,9 +158,12 @@ export const PrebuildDetailPage: FC = () => {
                                         <div className="font-semibold text-pk-content-primary truncate">
                                             {info.prebuild.commit?.message}
                                         </div>
-                                        <div className="text-pk-content-secondary flex-none">
-                                            {"Triggered " + dayjs().add(-1.2, "days").fromNow()}
-                                        </div>
+                                        {info.prebuild.status?.startTime && (
+                                            <div className="text-pk-content-secondary flex-none">
+                                                {"Triggered " +
+                                                    dayjs(info.prebuild.status.startTime.toDate()).fromNow()}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex gap-1">
                                         <img
