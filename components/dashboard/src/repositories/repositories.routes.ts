@@ -8,6 +8,7 @@ export const repositoriesRoutes = {
     Main: () => "/repositories",
     Detail: (id: string) => `/repositories/${id}`,
     Configuration: (id: string) => `/repositories/${id}/configuration`,
-    Prebuilds: (id: string) => `/repositories/${id}/prebuilds`,
+    PrebuildsSettings: (id: string) => `/repositories/${id}/prebuilds`,
+    Prebuilds: () => `/prebuilds`,
     PrebuildDetail: (prebuildId: string) => `/prebuilds/${prebuildId}`,
 };

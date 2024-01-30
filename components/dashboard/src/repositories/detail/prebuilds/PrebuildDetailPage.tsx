@@ -126,7 +126,7 @@ export const PrebuildDetailPage: FC = () => {
                         <span className="text-pk-content-secondary">{info?.prebuild?.ref || ""}</span>
                     </>
                 }
-                backLink="/repositories"
+                backLink={repositoriesRoutes.Prebuilds()}
             />
             <div className="app-container mb-8">
                 {infoIsLoading && (
