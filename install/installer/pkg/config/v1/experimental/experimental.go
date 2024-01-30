@@ -351,7 +351,6 @@ type IDEMetricsConfig struct {
 // @deprecated
 type VSXProxyConfig struct {
 	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
-	ExtraEnvVars       map[string]string `json:"extraEnvVars"`
 }
 
 type TracingSampleType string
