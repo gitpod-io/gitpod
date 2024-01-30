@@ -81,7 +81,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				{
 					Name:  "NO_PROXY",
-					Value: proxyConfig.HttpsProxy,
+					Value: proxyConfig.NoProxy,
 				},
 			}
 
