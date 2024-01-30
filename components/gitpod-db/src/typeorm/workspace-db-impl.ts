@@ -1085,16 +1085,14 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                 case "failed":
                     query.andWhere(
                         new Brackets((qb) => {
-                            qb.where("pws.state = :failedState", { failedState: "failed" })
-                                .orWhere("pws.state = :abortedState", { abortedState: "aborted" })
-                                .orWhere("pws.state = :timeoutState", { timeoutState: "timeout" })
-                                .orWhere(
-                                    new Brackets((qbInner) => {
-                                        qbInner
-                                            .where("pws.state = :availableState", { availableState: "available" })
-                                            .andWhere("pws.error IS NOT NULL AND pws.error <> ''");
-                                    }),
-                                );
+                            const failedStates = ["failed", "aborted", "timeout"];
+                            qb.andWhere("pws.state IN (:...failedStates)", { failedStates }).orWhere(
+                                new Brackets((qbInner) => {
+                                    qbInner
+                                        .where("pws.state = :availableState", { availableState: "available" })
+                                        .andWhere("pws.error IS NOT NULL AND pws.error <> ''");
+                                }),
+                            );
                         }),
                     );
                     break;
