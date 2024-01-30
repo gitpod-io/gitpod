@@ -66,6 +66,29 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	const redisContainerName = "redis"
 
+	var proxyEnvVars []v1.EnvVar
+	if ctx.Config.Experimental != nil && ctx.Config.Experimental.WebApp != nil {
+		proxyConfig := ctx.Config.Experimental.WebApp.ProxySettings
+		if proxyConfig != nil {
+			proxyEnvVars = []v1.EnvVar{
+				{
+					Name:  "HTTP_PROXY",
+					Value: proxyConfig.HttpProxy,
+				},
+				{
+					Name:  "HTTPS_PROXY",
+					Value: proxyConfig.HttpsProxy,
+				},
+				{
+					Name:  "NO_PROXY",
+					Value: proxyConfig.HttpsProxy,
+				},
+			}
+
+		}
+
+	}
+
 	return []runtime.Object{&appsv1.StatefulSet{
 		TypeMeta: common.TypeMetaStatefulSet,
 		ObjectMeta: metav1.ObjectMeta{
@@ -136,6 +159,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
 							common.ConfigcatEnv(ctx),
+							proxyEnvVars,
 						)),
 					}, {
 						Name:  redisContainerName,
