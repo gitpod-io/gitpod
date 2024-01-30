@@ -86,7 +86,7 @@ message ListOrganizationPrebuildsRequest {
   PaginationRequest pagination = 1;
   string organization_id = 2;
   Filter filter = 3;
-  Sort sort = 4;
+  repeated Sort sort = 4;
 }
 
 message ListOrganizationPrebuildsResponse {

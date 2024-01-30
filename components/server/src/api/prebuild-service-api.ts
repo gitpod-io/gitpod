@@ -132,7 +132,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
     async listOrganizationPrebuilds(
         request: ListOrganizationPrebuildsRequest,
     ): Promise<ListOrganizationPrebuildsResponse> {
-        const { organizationId, pagination, filter, sort } = request;
+        const { organizationId, pagination, filter } = request;
         const userId = ctxUserId();
 
         const limit = pagination?.pageSize ?? 25;
@@ -164,6 +164,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             prebuildsFilter.state = this.apiConverter.fromPrebuildFilterState(filter?.state);
         }
 
+        const sort = request.sort?.[0];
         const sorting = this.apiConverter.fromSort(
             new Sort({
                 field: sort?.field ?? "creationTime",

@@ -446,9 +446,9 @@ export class ListOrganizationPrebuildsRequest extends Message<ListOrganizationPr
   filter?: ListOrganizationPrebuildsRequest_Filter;
 
   /**
-   * @generated from field: gitpod.v1.Sort sort = 4;
+   * @generated from field: repeated gitpod.v1.Sort sort = 4;
    */
-  sort?: Sort;
+  sort: Sort[] = [];
 
   constructor(data?: PartialMessage<ListOrganizationPrebuildsRequest>) {
     super();
@@ -461,7 +461,7 @@ export class ListOrganizationPrebuildsRequest extends Message<ListOrganizationPr
     { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
     { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "filter", kind: "message", T: ListOrganizationPrebuildsRequest_Filter },
-    { no: 4, name: "sort", kind: "message", T: Sort },
+    { no: 4, name: "sort", kind: "message", T: Sort, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationPrebuildsRequest {
