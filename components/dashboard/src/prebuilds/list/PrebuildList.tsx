@@ -11,7 +11,6 @@ import { useDocumentTitle } from "../../hooks/use-document-title";
 import { useQueryParams } from "../../hooks/use-query-params";
 import { PrebuildListEmptyState } from "./PrebuildListEmptyState";
 import { PrebuildListErrorState } from "./PrebuildListErrorState";
-import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { PrebuildsTable } from "./PrebuildTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { useListOrganizationPrebuildsQuery } from "../../data/prebuilds/organization-prebuilds-query";
@@ -41,15 +40,15 @@ const PrebuildsListPage: FC = () => {
 
     const params = useQueryParams();
 
-    const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") ?? "");
     const [statusFilter, setPrebuildsFilter] = useState(parseStatus(params));
-    const configurationFilter = useMemo(() => parseConfigurationId(params), [params]);
+    const [configurationFilter, setConfigurationFilter] = useState(parseConfigurationId(params));
 
     const [sortBy, setSortBy] = useState(parseSortBy(params));
     const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
 
     const handleFilterChange = useCallback((filter: Filter) => {
         setPrebuildsFilter(filter.status);
+        setConfigurationFilter(filter.configurationId);
     }, []);
     const filter = useMemo<Filter>(() => {
         return {
@@ -74,9 +73,6 @@ const PrebuildsListPage: FC = () => {
 
     useEffect(() => {
         const params = new URLSearchParams();
-        if (searchTermDebounced) {
-            params.set("search", searchTermDebounced);
-        }
 
         if (statusFilter) {
             params.set("prebuilds", statusFilter);
@@ -88,7 +84,7 @@ const PrebuildsListPage: FC = () => {
 
         params.toString();
         history.replace({ search: `?${params.toString()}` });
-    }, [history, statusFilter, searchTermDebounced, configurationFilter]);
+    }, [history, statusFilter, configurationFilter]);
 
     // TODO: handle isError case
     const {
@@ -103,7 +99,6 @@ const PrebuildsListPage: FC = () => {
         error,
     } = useListOrganizationPrebuildsQuery({
         filter: {
-            searchTerm: searchTermDebounced,
             state: toApiStatus(filter.status),
             ...(configurationFilter ? { configuration: { id: configurationFilter } } : {}),
         },
@@ -121,7 +116,7 @@ const PrebuildsListPage: FC = () => {
     const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;
 
     // This tracks any filters/search params applied
-    const hasFilters = !!searchTermDebounced || !!filter.status;
+    const hasFilters = !!filter.status || !!filter.configurationId;
 
     // Show the table once we're done loading and either have results, or have filters applied
     const showTable = !isLoading && (prebuilds.length > 0 || hasFilters);
@@ -135,7 +130,6 @@ const PrebuildsListPage: FC = () => {
 
                 {showTable && (
                     <PrebuildsTable
-                        searchTerm={searchTerm}
                         prebuilds={prebuilds}
                         // we check isPreviousData too so we don't show spinner if it's a background refresh
                         isSearching={isFetching && isPreviousData}
@@ -146,7 +140,6 @@ const PrebuildsListPage: FC = () => {
                         hasMoreThanOnePage={hasMoreThanOnePage}
                         onLoadNextPage={() => fetchNextPage()}
                         onFilterChange={handleFilterChange}
-                        onSearchTermChange={setSearchTerm}
                         onSort={handleSort}
                     />
                 )}

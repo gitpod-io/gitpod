@@ -5,7 +5,6 @@
  */
 
 import { FC } from "react";
-import { TextInput } from "../../components/forms/TextInputField";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 import { RepositoryListItem } from "./PrebuildListItem";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
@@ -17,10 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Filter, SortField, StatusOption } from "./PrebuildList";
 import { SortCallback, SortableTableHead, TableSortOrder } from "@podkit/tables/SortableTable";
+import ConfigurationDropdown from "./ConfigurationInput";
 
 type Props = {
     prebuilds: Prebuild[];
-    searchTerm: string;
     filter?: Filter;
     sort: {
         sortBy: SortField;
@@ -30,13 +29,11 @@ type Props = {
     hasMoreThanOnePage: boolean;
     isSearching: boolean;
     isFetchingNextPage: boolean;
-    onSearchTermChange: (val: string) => void;
     onFilterChange: (val: Filter) => void;
     onLoadNextPage: () => void;
     onSort: (columnName: SortField, direction: TableSortOrder) => void;
 };
 export const PrebuildsTable: FC<Props> = ({
-    searchTerm,
     prebuilds,
     hasNextPage,
     hasMoreThanOnePage,
@@ -44,7 +41,6 @@ export const PrebuildsTable: FC<Props> = ({
     isFetchingNextPage,
     filter,
     sort,
-    onSearchTermChange,
     onFilterChange,
     onLoadNextPage,
     onSort,
@@ -54,12 +50,12 @@ export const PrebuildsTable: FC<Props> = ({
             {/* Search/Filter bar */}
             <div className="flex flex-col-reverse md:flex-row flex-wrap justify-between items-center gap-2">
                 <div className="flex flex-row flex-wrap gap-2 items-center w-full md:w-auto">
-                    {/* TODO: Add search icon on left - need to revisit TextInputs for podkit - and remove global styles */}
-                    <TextInput
-                        className="w-full max-w-none md:w-60 border-pk-border-base border"
-                        value={searchTerm}
-                        onChange={onSearchTermChange}
-                        placeholder="Search prebuilds"
+                    <ConfigurationDropdown
+                        selectedConfigurationId={filter?.configurationId}
+                        onChange={(configurationId) => {
+                            console.debug("Got an onChange ID", configurationId);
+                            onFilterChange({ ...filter, configurationId });
+                        }}
                     />
                     <Select
                         value={filter?.status ?? "any"}
@@ -77,7 +73,7 @@ export const PrebuildsTable: FC<Props> = ({
                         <SelectContent>
                             <SelectItem value="any">All</SelectItem>
                             <SelectItem value="failed">Failing</SelectItem>
-                            <SelectItem value="succeeded">Successfull</SelectItem>
+                            <SelectItem value="succeeded">Successful</SelectItem>
                             <SelectItem value="unfinished">In progress</SelectItem>
                         </SelectContent>
                     </Select>
