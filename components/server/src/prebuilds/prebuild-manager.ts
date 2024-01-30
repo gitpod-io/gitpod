@@ -267,11 +267,16 @@ export class PrebuildManager {
         const prebuiltWorkspaces = await this.workspaceDB
             .trace(ctx)
             .findPrebuiltWorkspacesByOrganization(organizationId, pagination, filter, sort);
-        const prebuildMap = new Map(prebuiltWorkspaces.map((prebuild) => [prebuild.id, prebuild]));
-        const infos = await this.workspaceDB.trace({}).findPrebuildInfos([...prebuildMap.keys()]);
+        const prebuildIds = prebuiltWorkspaces.map((prebuild) => prebuild.id);
+        const infos = await this.workspaceDB.trace({}).findPrebuildInfos(prebuildIds);
+        const prebuildInfosMap = new Map(infos.map((info) => [info.id, info]));
 
-        return infos.map((info) => {
-            const prebuild = prebuildMap.get(info.id)!;
+        return prebuiltWorkspaces.map((prebuild) => {
+            const info = prebuildInfosMap.get(prebuild.id);
+            if (!info) {
+                throw new Error("Could not find prebuild info for prebuild " + prebuild.id);
+            }
+
             const fullPrebuild: PrebuildWithStatus = { info, status: prebuild.state };
             if (prebuild.error) {
                 fullPrebuild.error = prebuild.error;
