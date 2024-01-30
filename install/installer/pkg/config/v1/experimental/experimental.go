@@ -209,6 +209,15 @@ type WebAppConfig struct {
 	SpiceDB                      *SpiceDBConfig         `json:"spicedb,omitempty"`
 	CertmanagerNamespaceOverride string                 `json:"certmanagerNamespaceOverride,omitempty"`
 	Redis                        *RedisConfig           `json:"redis"`
+
+	// ProxySettings is used if the gitpod cell uses some proxy for connectivity
+	ProxySettings *ProxySettings `json:"proxySettings"`
+}
+
+type ProxySettings struct {
+	HttpProxy  string `json:"http_proxy"`
+	HttpsProxy string `json:"https_proxy"`
+	NoProxy    string `json:"no_proxy"`
 }
 
 type WorkspaceDefaults struct {
@@ -342,6 +351,7 @@ type IDEMetricsConfig struct {
 // @deprecated
 type VSXProxyConfig struct {
 	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
+	ExtraEnvVars       map[string]string `json:"extraEnvVars"`
 }
 
 type TracingSampleType string
