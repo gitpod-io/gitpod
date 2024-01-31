@@ -29,7 +29,7 @@ const ConfigurationDetailPage: FC = () => {
     useWorkspaceClasses();
 
     const { id } = useParams<PageRouteParams>();
-    let { path, url } = useRouteMatch();
+    const { path, url } = useRouteMatch();
 
     const { data, error, isLoading, refetch } = useConfiguration(id);
     const prebuildsEnabled = !!data?.prebuildSettings?.enabled;
