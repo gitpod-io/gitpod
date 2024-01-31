@@ -126,6 +126,24 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}
 		}
 
+		proxyConfig := ucfg.WebApp.ProxySettings
+		if proxyConfig != nil {
+			envvars = append(envvars, []corev1.EnvVar{
+				{
+					Name:  "HTTP_PROXY",
+					Value: proxyConfig.HttpProxy,
+				},
+				{
+					Name:  "HTTPS_PROXY",
+					Value: proxyConfig.HttpsProxy,
+				},
+				{
+					Name:  "NO_PROXY",
+					Value: proxyConfig.NoProxy,
+				},
+			}...)
+		}
+
 		return nil
 	})
 	if err != nil {
