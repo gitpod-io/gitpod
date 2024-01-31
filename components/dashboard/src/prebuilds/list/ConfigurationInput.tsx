@@ -43,8 +43,14 @@ export default function ConfigurationDropdown({
     }, [configurations, selectedConfigurationId]);
 
     const getElements = useCallback(() => {
+        const resetFilterItem: ComboboxElement = {
+            id: "",
+            element: <SuggestedRepositoryOption repo={{ name: "Show all" }} />,
+            isSelectable: true,
+        };
+
         if (!configurations) {
-            return [];
+            return [resetFilterItem];
         }
 
         const allRepositories = configurations;
@@ -61,11 +67,7 @@ export default function ConfigurationDropdown({
             } as ComboboxElement;
         });
 
-        result.unshift({
-            id: "",
-            element: <SuggestedRepositoryOption repo={{ name: "Show all" }} />,
-            isSelectable: true,
-        });
+        result.unshift(resetFilterItem);
 
         return result;
     }, [configurations, selectedConfiguration, selectedConfigurationId]);
