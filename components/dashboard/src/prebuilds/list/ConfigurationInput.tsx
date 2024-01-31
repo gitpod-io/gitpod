@@ -82,6 +82,7 @@ export default function ConfigurationDropdown({
             loading={isLoading}
             onSearchChange={setSearchTerm}
             className="h-8 w-48 bg-pk-surface-primary hover:bg-pk-surface-primary px-0 border border-pk-border-base text-sm text-pk-content-primary"
+            itemClassName="font-normal"
         >
             <ComboboxSelectedItem
                 htmlTitle="Repository"

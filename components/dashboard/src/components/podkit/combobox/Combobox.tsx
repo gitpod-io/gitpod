@@ -24,6 +24,7 @@ export interface ComboboxProps {
     disableSearch?: boolean;
     expanded?: boolean;
     className?: string;
+    itemClassName?: string;
     onSelectionChange: (id: string) => void;
     // Meant to allow consumers to react to search changes even though state is managed internally
     onSearchChange?: (searchString: string) => void;
@@ -39,6 +40,7 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
     disableSearch,
     children,
     className,
+    itemClassName,
     onSelectionChange,
     onSearchChange,
 }) => {
@@ -240,6 +242,7 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
                                         key={element.id}
                                         element={element}
                                         isActive={element.id === selectedElementTemp}
+                                        className={itemClassName}
                                         onSelected={onSelected}
                                         onFocused={setActiveElement}
                                     />
@@ -309,11 +312,12 @@ export const ComboboxSelectedItem: FC<ComboboxSelectedItemProps> = ({
 type ComboboxItemProps = {
     element: ComboboxElement;
     isActive: boolean;
+    className?: string;
     onSelected: (id: string) => void;
     onFocused: (id: string) => void;
 };
 
-export const ComboboxItem: FC<ComboboxItemProps> = ({ element, isActive, onSelected, onFocused }) => {
+export const ComboboxItem: FC<ComboboxItemProps> = ({ element, isActive, className, onSelected, onFocused }) => {
     let selectionClasses = `bg-pk-surface-tertiary/25 cursor-pointer`;
     if (isActive) {
         selectionClasses = `bg-pk-content-tertiary/10 cursor-pointer focus:outline-none focus:ring-0`;
@@ -321,10 +325,11 @@ export const ComboboxItem: FC<ComboboxItemProps> = ({ element, isActive, onSelec
     if (!element.isSelectable) {
         selectionClasses = ``;
     }
+
     return (
         <li
             id={element.id}
-            className={"h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses}
+            className={cn("h-min rounded-lg flex items-center px-2 py-1.5", selectionClasses, className)}
             onMouseDown={() => {
                 if (element.isSelectable) {
                     onSelected(element.id);
