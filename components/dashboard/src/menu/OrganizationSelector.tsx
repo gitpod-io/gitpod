@@ -25,15 +25,14 @@ export default function OrganizationSelector() {
     const hasMemberPermission = useHasRolePermission(OrganizationRole.MEMBER);
     const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
-    const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
-    const showRepoConfigMenuItem = useFeatureFlag("showRepoConfigMenuItem");
+    const configurationsAndPrebuilds = useFeatureFlag("configurationsAndPrebuilds");
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
     const canCreateOrgs = user && !isOrganizationOwned(user);
 
     const userFullName = user?.name || "...";
 
-    let activeOrgEntry = !currentOrg.data
+    const activeOrgEntry = !currentOrg.data
         ? {
               title: userFullName,
               customContent: <CurrentOrgEntry title={userFullName} subtitle="Personal Account" />,
@@ -61,13 +60,20 @@ export default function OrganizationSelector() {
         // collaborator can't access projects, members, usage and billing
         if (hasMemberPermission) {
             // Check both flags as one just controls if the menu item is present, the other if the page is accessible
-            if (repoConfigListAndDetail && showRepoConfigMenuItem) {
+            if (configurationsAndPrebuilds) {
                 linkEntries.push({
                     title: "Repositories",
                     customContent: <LinkEntry>Repositories</LinkEntry>,
                     active: false,
                     separator: false,
                     link: "/repositories",
+                });
+                linkEntries.push({
+                    title: "Prebuilds",
+                    customContent: <LinkEntry>Prebuilds</LinkEntry>,
+                    active: false,
+                    separator: false,
+                    link: "/prebuilds",
                 });
             }
             linkEntries.push({

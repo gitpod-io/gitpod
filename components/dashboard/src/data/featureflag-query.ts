@@ -27,8 +27,7 @@ const featureFlags = {
     newProjectIncrementalRepoSearchBBS: false,
     repositoryFinderSearch: false,
     createProjectModal: false,
-    repoConfigListAndDetail: false,
-    showRepoConfigMenuItem: false,
+    configurationsAndPrebuilds: false,
     /**
      * Whether to enable org-level workspace class restrictions
      */
