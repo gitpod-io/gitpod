@@ -1108,14 +1108,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                     );
                     break;
                 case "unfinished":
-                    query.andWhere(
-                        new Brackets((qb) => {
-                            qb.where("pws.state = :queuedState", { queuedState: "queued" }).orWhere(
-                                "pws.state = :buildingState",
-                                { buildingState: "building" },
-                            );
-                        }),
-                    );
+                    query.andWhere("pws.state IN (:...states)", { states: ["queued", "building"] });
                     break;
             }
         }
