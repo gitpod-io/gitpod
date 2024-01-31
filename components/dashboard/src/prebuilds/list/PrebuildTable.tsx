@@ -53,7 +53,11 @@ export const PrebuildsTable: FC<Props> = ({
                     <ConfigurationDropdown
                         selectedConfigurationId={filter?.configurationId}
                         onChange={(configurationId) => {
-                            console.debug("Got an onChange ID", configurationId);
+                            if (!configurationId) {
+                                // If the reset item is selected, we reset the filter
+                                onFilterChange({ ...filter, configurationId: undefined });
+                            }
+
                             onFilterChange({ ...filter, configurationId });
                         }}
                     />

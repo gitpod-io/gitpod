@@ -5,7 +5,6 @@
  */
 
 import { FC, useCallback, useMemo, useState } from "react";
-import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { useConfiguration, useListConfigurations } from "../../data/configurations/configuration-queries";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "@podkit/combobox/Combobox";
 
@@ -62,6 +61,12 @@ export default function ConfigurationDropdown({
             } as ComboboxElement;
         });
 
+        result.unshift({
+            id: "",
+            element: <SuggestedRepositoryOption repo={{ name: "Show all" }} />,
+            isSelectable: true,
+        });
+
         return result;
     }, [configurations, selectedConfiguration, selectedConfigurationId]);
 
@@ -89,7 +94,9 @@ export default function ConfigurationDropdown({
 }
 
 type SuggestedRepositoryOptionProps = {
-    repo: Configuration;
+    repo: {
+        name: string;
+    };
 };
 const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo }) => {
     const { name } = repo;
