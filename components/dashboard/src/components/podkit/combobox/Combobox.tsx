@@ -24,6 +24,7 @@ export interface ComboboxProps {
     disableSearch?: boolean;
     expanded?: boolean;
     className?: string;
+    dropDownClassName?: string;
     itemClassName?: string;
     onSelectionChange: (id: string) => void;
     // Meant to allow consumers to react to search changes even though state is managed internally
@@ -40,6 +41,7 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
     disableSearch,
     children,
     className,
+    dropDownClassName,
     itemClassName,
     onSelectionChange,
     onSearchChange,
@@ -207,6 +209,7 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
                         "rounded-b-lg p-2 filter drop-shadow-xl z-50 outline-none",
                         "bg-pk-surface-secondary",
                         "w-[--radix-popover-trigger-width]",
+                        dropDownClassName,
                     )}
                     onKeyDown={onKeyDown}
                 >

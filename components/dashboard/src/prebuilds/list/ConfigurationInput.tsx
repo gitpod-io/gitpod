@@ -84,7 +84,8 @@ export default function ConfigurationDropdown({
             loading={isLoading}
             onSearchChange={setSearchTerm}
             className="h-8 w-48 bg-pk-surface-primary hover:bg-pk-surface-primary px-0 border border-pk-border-base text-sm text-pk-content-primary"
-            itemClassName="font-normal"
+            dropDownClassName="text-pk-content-primary"
+            itemClassName="font-normal focus:text-accent-foreground cursor-default select-none"
         >
             <ComboboxSelectedItem
                 htmlTitle="Repository"
@@ -106,7 +107,7 @@ const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo })
 
     return (
         <div className="flex flex-row items-center overflow-hidden" aria-label={`Repository: ${name}`}>
-            {name && <span className="text-sm whitespace-nowrap font-semibold">{name}</span>}
+            {name && <span className="text-sm whitespace-nowrap">{name}</span>}
         </div>
     );
 };
