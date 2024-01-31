@@ -81,6 +81,10 @@ export const useIsDataOps = () => {
     return useFeatureFlag("dataops");
 };
 
+export const useHasConfigurationsAndPrebuildsEnabled = () => {
+    return useFeatureFlag("configurationsAndPrebuilds");
+};
+
 export const useReportDashboardLoggingTracing = () => {
     const enabled = useDedicatedFeatureFlag("dashboard_logging_tracing");
 

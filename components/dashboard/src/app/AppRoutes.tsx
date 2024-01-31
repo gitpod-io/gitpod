@@ -36,7 +36,7 @@ import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { WebsocketClients } from "./WebsocketClients";
 import { BlockedEmailDomains } from "../admin/BlockedEmailDomains";
 import { AppNotifications } from "../AppNotifications";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { useHasConfigurationsAndPrebuildsEnabled } from "../data/featureflag-query";
 import { projectsPathInstallGitHubApp } from "../projects/projects.routes";
 import { Heading1, Subheading } from "@podkit/typography/Headings";
 
@@ -85,7 +85,7 @@ const PrebuildListPage = React.lazy(() => import(/* webpackPrefetch: true */ "..
 export const AppRoutes = () => {
     const hash = getURLHash();
     const location = useLocation();
-    const configurationsAndPrebuilds = useFeatureFlag("configurationsAndPrebuilds");
+    const configurationsAndPrebuilds = useHasConfigurationsAndPrebuildsEnabled();
 
     // TODO: Add a Route for this instead of inspecting location manually
     if (location.pathname.startsWith("/blocked")) {

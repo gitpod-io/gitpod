@@ -11,7 +11,7 @@ import { useCurrentUser } from "../user-context";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useLocation } from "react-router";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { useHasConfigurationsAndPrebuildsEnabled } from "../data/featureflag-query";
 import { useIsOwner, useListOrganizationMembers, useHasRolePermission } from "../data/organizations/members-query";
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
@@ -25,7 +25,7 @@ export default function OrganizationSelector() {
     const hasMemberPermission = useHasRolePermission(OrganizationRole.MEMBER);
     const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
-    const configurationsAndPrebuilds = useFeatureFlag("configurationsAndPrebuilds");
+    const configurationsAndPrebuilds = useHasConfigurationsAndPrebuildsEnabled();
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
     const canCreateOrgs = user && !isOrganizationOwned(user);

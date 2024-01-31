@@ -62,7 +62,7 @@ export const RepositoryListItem: FC<Props> = ({ prebuild }) => {
             </TableCell>
 
             <TableCell>
-                <LinkButton href={`/repositories/${prebuild.id}`} variant="secondary">
+                <LinkButton href={`/prebuilds/${prebuild.id}`} disabled variant="secondary">
                     View
                 </LinkButton>
             </TableCell>
