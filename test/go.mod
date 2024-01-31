@@ -17,7 +17,6 @@ require (
 	github.com/google/go-github/v42 v42.0.0
 	github.com/google/nftables v0.1.0
 	github.com/google/uuid v1.3.0
-	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/helloyi/go-sshclient v1.1.1
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/prometheus/procfs v0.10.1
@@ -106,6 +105,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.7.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
