@@ -18,12 +18,14 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 )
 
 func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaStatefulSet)
 	// todo(sje): add redis
 
+	//nolint:typecheck
 	configHash, err := common.ObjectHash(configmap(ctx))
 	if err != nil {
 		return nil, err
@@ -67,8 +69,9 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	const redisContainerName = "redis"
 
 	var proxyEnvVars []v1.EnvVar
-	if ctx.Config.Experimental != nil && ctx.Config.Experimental.WebApp != nil {
-		proxyConfig := ctx.Config.Experimental.WebApp.ProxySettings
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		proxyConfig := cfg.WebApp.ProxySettings
 		if proxyConfig != nil {
 			proxyEnvVars = []v1.EnvVar{
 				{
@@ -81,13 +84,12 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				{
 					Name:  "NO_PROXY",
-					Value: proxyConfig.HttpsProxy,
+					Value: proxyConfig.NoProxy,
 				},
 			}
-
 		}
-
-	}
+		return nil
+	})
 
 	return []runtime.Object{&appsv1.StatefulSet{
 		TypeMeta: common.TypeMetaStatefulSet,

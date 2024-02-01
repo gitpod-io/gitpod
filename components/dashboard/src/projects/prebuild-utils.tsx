@@ -24,9 +24,9 @@ export const prebuildDisplayProps = (prebuild: Prebuild): { className: string; l
         case PrebuildPhase_Phase.ABORTED:
             return { className: "text-gray-500", label: "cancelled" };
         case PrebuildPhase_Phase.FAILED:
-            return { className: "text-red-500", label: "system error" };
+            return { className: "text-red-500", label: "error" };
         case PrebuildPhase_Phase.TIMEOUT:
-            return { className: "text-red-500", label: "timed out" };
+            return { className: "text-red-500", label: "timeout" };
         case PrebuildPhase_Phase.AVAILABLE:
             if (prebuild.status?.message) {
                 return { className: "text-red-500", label: "failed" };
