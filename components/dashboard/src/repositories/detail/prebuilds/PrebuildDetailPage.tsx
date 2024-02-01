@@ -9,7 +9,7 @@ import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Button } from "@podkit/buttons/Button";
 import { FC, Suspense, useEffect, useMemo, useState } from "react";
 import { Redirect, useParams } from "react-router";
-import { AlertTriangleIcon, CheckCircle2Icon, CircleSlash2Icon, Loader2Icon } from "lucide-react";
+import { CircleSlash2, Loader2Icon } from "lucide-react";
 import dayjs from "dayjs";
 import { usePrebuildLogsEmitter } from "../../../data/prebuilds/prebuild-logs-emitter";
 import React from "react";
@@ -23,6 +23,7 @@ import { LinkButton } from "@podkit/buttons/LinkButton";
 import { repositoriesRoutes } from "../../repositories.routes";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import Alert from "../../../components/Alert";
+import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../../projects/prebuild-utils";
 
 const WorkspaceLogs = React.lazy(() => import("../../../components/WorkspaceLogs"));
 
@@ -71,46 +72,36 @@ export const PrebuildDetailPage: FC = () => {
 
     // TODO: should reuse icon/description on prebuild list
     const prebuildPhase = useMemo(() => {
+        const name = currentPrebuild?.status?.phase?.name;
+        if (!name) {
+            return {
+                icon: <CircleSlash2 size={20} className="text-gray-500" />,
+                description: "Unknown prebuild status.",
+            };
+        }
+
+        const loaderIcon = <Loader2Icon size={20} className="text-gray-500 animate-spin" />;
         switch (currentPrebuild?.status?.phase?.name) {
             case PrebuildPhase_Phase.QUEUED:
                 return {
-                    icon: <Loader2Icon size={20} className="text-gray-500 animate-spin" />,
-                    description: "Prebuild queue",
+                    icon: loaderIcon,
+                    description: "Prebuild queued",
                 };
             case PrebuildPhase_Phase.BUILDING:
                 return {
-                    icon: <Loader2Icon size={20} className="text-gray-500 animate-spin" />,
-                    description: "Prebuild building",
+                    icon: loaderIcon,
+                    description: "Prebuild in progress",
                 };
-            case PrebuildPhase_Phase.ABORTED:
-                return {
-                    icon: <CircleSlash2Icon size={20} className="text-gray-500" />,
-                    description: "Prebuild aborted",
-                };
-            case PrebuildPhase_Phase.TIMEOUT:
-                return {
-                    icon: <CircleSlash2Icon size={20} className="text-gray-500" />,
-                    description: "Prebuild timeout",
-                };
-            case PrebuildPhase_Phase.AVAILABLE:
-                return {
-                    icon: <CheckCircle2Icon size={20} className="text-green-500" />,
-                    description: "Prebuild available",
-                };
-            case PrebuildPhase_Phase.FAILED:
-                return {
-                    icon: <AlertTriangleIcon size={20} className="text-kumquat-base" />,
-                    description: "Prebuild failed",
-                };
-
-            case PrebuildPhase_Phase.UNSPECIFIED:
             default:
+                const props = prebuildDisplayProps(currentPrebuild);
+                const Icon = prebuildStatusIconComponent(currentPrebuild);
+
                 return {
-                    icon: <CircleSlash2Icon size={20} className="text-gray-500" />,
-                    description: "Prebuild unknown",
+                    description: props.label,
+                    icon: <Icon className={props.className} />,
                 };
         }
-    }, [currentPrebuild?.status?.phase?.name]);
+    }, [currentPrebuild]);
 
     if (newPrebuildID) {
         return <Redirect to={repositoriesRoutes.PrebuildDetail(newPrebuildID)} />;
@@ -122,8 +113,8 @@ export const PrebuildDetailPage: FC = () => {
                 pageTitle="Prebuild history"
                 pageDescription={
                     <>
-                        <span className="font-semibold">{info?.configuration?.name || "unknown repository"}</span>{" "}
-                        <span className="text-pk-content-secondary">{info?.prebuild?.ref || ""}</span>
+                        <span className="font-semibold">{info?.configuration?.name ?? "unknown repository"}</span>{" "}
+                        <span className="text-pk-content-secondary">{info?.prebuild?.ref ?? ""}</span>
                     </>
                 }
                 backLink={repositoriesRoutes.Prebuilds()}
@@ -178,7 +169,7 @@ export const PrebuildDetailPage: FC = () => {
                                 </div>
                             </div>
                             <div className="px-6 py-4 flex flex-col gap-1">
-                                <div className="flex gap-1 items-center">
+                                <div className="flex gap-1 items-center capitalize">
                                     {prebuildPhase.icon}
                                     <span>{prebuildPhase.description}</span>
                                 </div>
