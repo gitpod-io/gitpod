@@ -14,17 +14,14 @@ import { cn } from "@podkit/lib/cn";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
 import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { Filter, SortField, StatusOption } from "./PrebuildList";
+import { Filter, Sort, SortField, StatusOption } from "./PrebuildList";
 import { SortCallback, SortableTableHead, TableSortOrder } from "@podkit/tables/SortableTable";
 import ConfigurationDropdown from "./ConfigurationInput";
 
 type Props = {
     prebuilds: Prebuild[];
     filter?: Filter;
-    sort: {
-        sortBy: SortField;
-        sortOrder: TableSortOrder;
-    };
+    sort: Sort;
     hasNextPage: boolean;
     hasMoreThanOnePage: boolean;
     isSearching: boolean;
