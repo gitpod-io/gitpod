@@ -16,6 +16,7 @@ import {
     ConfigurationEnvironmentVariable,
     EnvironmentVariableAdmission,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const BASE_KEY = "configurations";
 
@@ -83,13 +84,28 @@ export const getListConfigurationsVariablesQueryKey = (configurationId: string) 
 };
 
 export const useConfiguration = (configurationId: string) => {
-    return useQuery<Configuration | undefined, Error>(getConfigurationQueryKey(configurationId), async () => {
-        const { configuration } = await configurationClient.getConfiguration({
-            configurationId,
-        });
+    return useQuery<Configuration | undefined, Error>(
+        getConfigurationQueryKey(configurationId),
+        async () => {
+            const { configuration } = await configurationClient.getConfiguration({
+                configurationId,
+            });
 
-        return configuration;
-    });
+            return configuration;
+        },
+        {
+            retry: (failureCount, error) => {
+                if (failureCount > 3) {
+                    return false;
+                }
+
+                if (error && [ErrorCodes.NOT_FOUND, ErrorCodes.PERMISSION_DENIED].includes((error as any).code)) {
+                    return false;
+                }
+                return true;
+            },
+        },
+    );
 };
 
 type DeleteConfigurationArgs = {
