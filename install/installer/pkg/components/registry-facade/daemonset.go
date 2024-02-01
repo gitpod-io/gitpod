@@ -72,6 +72,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		hashObj = append(hashObj, objs...)
 	}
 
+	//nolint:typecheck
 	configHash, err := common.ObjectHash(hashObj, nil)
 	if err != nil {
 		return nil, err
@@ -123,6 +124,26 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 				})
+			}
+		}
+
+		if ucfg.WebApp != nil {
+			proxyConfig := ucfg.WebApp.ProxySettings
+			if proxyConfig != nil {
+				envvars = append(envvars, []corev1.EnvVar{
+					{
+						Name:  "HTTP_PROXY",
+						Value: proxyConfig.HttpProxy,
+					},
+					{
+						Name:  "HTTPS_PROXY",
+						Value: proxyConfig.HttpsProxy,
+					},
+					{
+						Name:  "NO_PROXY",
+						Value: proxyConfig.NoProxy,
+					},
+				}...)
 			}
 		}
 

@@ -4,9 +4,9 @@ go 1.21
 
 require (
 	github.com/alicebob/miniredis/v2 v2.30.4
-	github.com/containerd/containerd v1.7.11
-	github.com/docker/cli v24.0.5+incompatible
-	github.com/docker/distribution v2.8.2+incompatible
+	github.com/containerd/containerd v1.7.13
+	github.com/docker/cli v25.0.1+incompatible
+	github.com/docker/distribution v2.8.3+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/registry-facade/api v0.0.0-00010101000000-000000000000
 	github.com/go-redis/redismock/v9 v9.0.3
@@ -63,6 +63,7 @@ require (
 	github.com/dgraph-io/badger v1.6.2 // indirect
 	github.com/dgraph-io/ristretto v0.0.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
