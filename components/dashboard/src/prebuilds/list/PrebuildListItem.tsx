@@ -21,7 +21,11 @@ type Props = {
 };
 export const RepositoryListItem: FC<Props> = ({ prebuild }) => {
     const created = dayjs(prebuild.status?.startTime?.toDate()).fromNow();
-    const { data: configuration, isError: isConfigurationError } = useConfiguration(prebuild.configurationId);
+    const {
+        data: configuration,
+        isError: isConfigurationError,
+        isLoading: isConfigurationLoading,
+    } = useConfiguration(prebuild.configurationId);
     const { className: iconColorClass, label } = prebuildDisplayProps(prebuild);
     const PrebuildStatusIcon = prebuildStatusIconName(prebuild);
 
@@ -30,7 +34,9 @@ export const RepositoryListItem: FC<Props> = ({ prebuild }) => {
             <TableCell>
                 <div className="flex flex-col gap-1">
                     <Text className="text-sm text-pk-content-primary text-semibold">
-                        {isConfigurationError ? "Unknown" : configuration?.name}
+                        {!isConfigurationLoading && (isConfigurationError || configuration?.name)
+                            ? "Unknown repository"
+                            : configuration?.name}
                     </Text>
                     <TextMuted className="text-xs break-all">{prebuild.ref}</TextMuted>
                 </div>
