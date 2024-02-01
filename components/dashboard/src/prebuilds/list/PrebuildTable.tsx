@@ -86,7 +86,7 @@ export const PrebuildsTable: FC<Props> = ({
                                     columnName={sort.sortBy}
                                     sortOrder={sort.sortOrder}
                                     onSort={onSort as SortCallback}
-                                    className="w-32"
+                                    className="w-36"
                                     hideOnSmallScreen
                                 >
                                     Triggered
