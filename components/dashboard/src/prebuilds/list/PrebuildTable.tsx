@@ -103,9 +103,9 @@ export const PrebuildsTable: FC<Props> = ({
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {prebuilds.map((configuration) => {
-                                return <RepositoryListItem key={configuration.id} prebuild={configuration} />;
-                            })}
+                            {prebuilds.map((configuration) => (
+                                <RepositoryListItem key={configuration.id} prebuild={configuration} />
+                            ))}
                         </TableBody>
                     </Table>
                 ) : (
