@@ -15,6 +15,9 @@ import { prebuildDisplayProps, prebuildStatusIconName } from "../../projects/Pre
 import dayjs from "dayjs";
 import { cn } from "@podkit/lib/cn";
 import { shortCommitMessage } from "../../projects/render-utils";
+import { Link } from "react-router-dom";
+import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { LoadingState } from "@podkit/loading/LoadingState";
 
 type Props = {
     prebuild: Prebuild;
@@ -34,9 +37,11 @@ export const RepositoryListItem: FC<Props> = ({ prebuild }) => {
             <TableCell>
                 <div className="flex flex-col gap-1">
                     <Text className="text-sm text-pk-content-primary text-semibold">
-                        {!isConfigurationLoading && (isConfigurationError || configuration?.name)
-                            ? "Unknown repository"
-                            : configuration?.name}
+                        <ConfigurationField
+                            configuration={configuration}
+                            isError={isConfigurationError}
+                            isLoading={isConfigurationLoading}
+                        />
                     </Text>
                     <TextMuted className="text-xs break-all">{prebuild.ref}</TextMuted>
                 </div>
@@ -76,4 +81,21 @@ export const RepositoryListItem: FC<Props> = ({ prebuild }) => {
             </TableCell>
         </TableRow>
     );
+};
+
+type ConfigurationProps = {
+    configuration?: Configuration;
+    isLoading: boolean;
+    isError: boolean;
+};
+const ConfigurationField = ({ configuration, isLoading, isError }: ConfigurationProps) => {
+    if (isLoading) {
+        return <LoadingState size={16} />;
+    }
+
+    if (isError || !configuration?.name || !configuration.id) {
+        return <Text>Unknown repository</Text>;
+    }
+
+    return <Link to={`/repositories/${configuration.id}`}>{configuration.name}</Link>;
 };
