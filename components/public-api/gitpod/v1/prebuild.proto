@@ -4,6 +4,7 @@ package gitpod.v1;
 
 import "gitpod/v1/pagination.proto";
 import "gitpod/v1/scm.proto";
+import "gitpod/v1/sorting.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
@@ -70,7 +71,13 @@ message ListOrganizationPrebuildsRequest {
       string id = 1;
       string branch = 2;
     }
-    PrebuildPhase.Phase status = 1;
+    enum State {
+      STATE_UNSPECIFIED = 0;
+      STATE_SUCCEEDED = 1;
+      STATE_FAILED = 2;
+      STATE_UNFINISHED = 3;
+    }
+    State state = 1;
     Configuration configuration = 2;
     // Filter the search down by searching for configuration names matching the
     // query
@@ -79,6 +86,7 @@ message ListOrganizationPrebuildsRequest {
   PaginationRequest pagination = 1;
   string organization_id = 2;
   Filter filter = 3;
+  repeated Sort sort = 4;
 }
 
 message ListOrganizationPrebuildsResponse {

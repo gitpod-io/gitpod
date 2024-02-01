@@ -1040,28 +1040,33 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
     /**
      * Finds prebuilt workspaces by organization with optional filtering and pagination.
      * @param organizationId The ID of the organization.
-     * @param offset Offset for pagination.
-     * @param limit Limit for pagination.
+     * @param pagination Pagination per page size and result offset.
      * @param filter Filters for the search.
+     * @param sort Sort field and direction
      * @returns A promise that resolves to an array of PrebuiltWorkspace objects.
      */
     async findPrebuiltWorkspacesByOrganization(
         organizationId: string,
-        offset = 0,
-        limit = 25,
-        filter?: {
+        pagination: {
+            offset: number;
+            limit: number;
+        },
+        filter: {
             configuration?: {
                 id: string;
                 branch?: string;
             };
-            status: PrebuiltWorkspaceState;
+            state?: "succeeded" | "failed" | "unfinished";
             searchTerm?: string;
+        },
+        sort: {
+            field: string;
+            order: "ASC" | "DESC";
         },
     ): Promise<PrebuiltWorkspace[]> {
         const repo = await this.getPrebuiltWorkspaceRepo();
         const query = repo
             .createQueryBuilder("pws")
-            .orderBy("pws.creationTime", "DESC")
             .innerJoinAndMapOne(
                 "pws.workspace",
                 DBWorkspace,
@@ -1069,21 +1074,53 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                 "pws.buildWorkspaceId = ws.id AND ws.organizationId = :organizationId",
                 { organizationId },
             )
-            .skip(offset)
-            .take(limit);
+            .skip(pagination.offset)
+            .take(pagination.limit)
+            .orderBy("pws.creationTime", sort.order); // todo: take sort field into account
 
-        if (filter?.status) {
-            query.andWhere("pws.state = :state", { state: filter.status });
+        if (filter.state) {
+            const { state } = filter;
+            // translating API state to DB state
+            switch (state) {
+                case "failed":
+                    query.andWhere(
+                        new Brackets((qb) => {
+                            const failedStates = ["failed", "aborted", "timeout"];
+                            qb.andWhere("pws.state IN (:...failedStates)", { failedStates }).orWhere(
+                                new Brackets((qbInner) => {
+                                    qbInner
+                                        .where("pws.state = :availableState", { availableState: "available" })
+                                        .andWhere("pws.error IS NOT NULL AND pws.error <> ''");
+                                }),
+                            );
+                        }),
+                    );
+                    break;
+                case "succeeded":
+                    query.andWhere(
+                        new Brackets((qb) => {
+                            qb.where("pws.state = :state", { state: "available" }).andWhere(
+                                new Brackets((qbInner) => {
+                                    qbInner.where("pws.error IS NULL").orWhere("pws.error = ''");
+                                }),
+                            );
+                        }),
+                    );
+                    break;
+                case "unfinished":
+                    query.andWhere("pws.state IN (:...states)", { states: ["queued", "building"] });
+                    break;
+            }
         }
 
-        if (filter?.configuration?.id) {
+        if (filter.configuration?.id) {
             query.andWhere("pws.projectId = :projectId", { projectId: filter.configuration.id });
             if (filter.configuration.branch) {
                 query.andWhere("pws.branch = :branch", { branch: filter.configuration.branch });
             }
         }
 
-        const normalizedSearchTerm = filter?.searchTerm?.trim();
+        const normalizedSearchTerm = filter.searchTerm?.trim();
         if (normalizedSearchTerm) {
             query.innerJoinAndMapOne("pws.project", DBProject, "project", "pws.projectId = project.id");
             query.andWhere(

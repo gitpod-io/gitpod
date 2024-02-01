@@ -27,8 +27,7 @@ const featureFlags = {
     newProjectIncrementalRepoSearchBBS: false,
     repositoryFinderSearch: false,
     createProjectModal: false,
-    repoConfigListAndDetail: false,
-    showRepoConfigMenuItem: false,
+    configurationsAndPrebuilds: false,
     /**
      * Whether to enable org-level workspace class restrictions
      */
@@ -80,6 +79,10 @@ export const useDedicatedFeatureFlag = <K extends keyof FeatureFlags>(featureFla
 
 export const useIsDataOps = () => {
     return useFeatureFlag("dataops");
+};
+
+export const useHasConfigurationsAndPrebuildsEnabled = () => {
+    return useFeatureFlag("configurationsAndPrebuilds");
 };
 
 export const useReportDashboardLoggingTracing = () => {

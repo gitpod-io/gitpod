@@ -10,12 +10,12 @@ import { Project } from "@gitpod/gitpod-protocol";
 import { Link } from "react-router-dom";
 import { RemoveProjectModal } from "./RemoveProjectModal";
 import { toRemoteURL } from "./render-utils";
-import { prebuildStatusIcon } from "./Prebuilds";
 import { gitpodHostUrl } from "../service/service";
 import { useLatestProjectPrebuildQuery } from "../data/prebuilds/latest-project-prebuild-query";
 import Tooltip from "../components/Tooltip";
 import { DropdownActions } from "@podkit/dropdown/DropDownActions";
 import { DropdownMenuItem } from "@podkit/dropdown/DropDown";
+import { prebuildStatusIcon } from "./prebuild-utils";
 
 type ProjectListItemProps = {
     project: Project;
