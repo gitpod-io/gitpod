@@ -11,13 +11,13 @@ import { LinkButton } from "@podkit/buttons/LinkButton";
 import { TableCell, TableRow } from "@podkit/tables/Table";
 import type { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { useConfiguration } from "../../data/configurations/configuration-queries";
-import { prebuildDisplayProps, prebuildStatusIconName } from "../../projects/Prebuilds";
 import dayjs from "dayjs";
 import { cn } from "@podkit/lib/cn";
 import { shortCommitMessage } from "../../projects/render-utils";
 import { Link } from "react-router-dom";
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { LoadingState } from "@podkit/loading/LoadingState";
+import { prebuildDisplayProps, prebuildStatusIconName } from "../../projects/prebuild-utils";
 
 type Props = {
     prebuild: Prebuild;
