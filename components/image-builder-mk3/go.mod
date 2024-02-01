@@ -4,10 +4,10 @@ go 1.21
 
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20210526225647-edb03dcab7bc
-	github.com/containerd/containerd v1.7.11
-	github.com/docker/cli v24.0.5+incompatible
-	github.com/docker/distribution v2.8.2+incompatible
-	github.com/docker/docker v23.0.3+incompatible
+	github.com/containerd/containerd v1.7.13
+	github.com/docker/cli v25.0.1+incompatible
+	github.com/docker/distribution v2.8.3+incompatible
+	github.com/docker/docker v25.0.1+incompatible
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
@@ -96,6 +96,7 @@ require (
 require (
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/containerd/log v0.1.0 // indirect
+	github.com/distribution/reference v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0 // indirect

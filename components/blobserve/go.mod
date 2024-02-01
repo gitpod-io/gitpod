@@ -3,9 +3,9 @@ module github.com/gitpod-io/gitpod/blobserve
 go 1.21
 
 require (
-	github.com/containerd/containerd v1.7.11
-	github.com/docker/cli v24.0.5+incompatible
-	github.com/docker/distribution v2.8.2+incompatible
+	github.com/containerd/containerd v1.7.13
+	github.com/docker/cli v25.0.1+incompatible
+	github.com/docker/distribution v2.8.3+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/registry-facade v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.9
@@ -28,6 +28,7 @@ require (
 	github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/docker-credential-helpers v0.8.0 // indirect
 	github.com/facebookgo/atomicfile v0.0.0-20151019160806-2de1f203e7d5 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect

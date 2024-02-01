@@ -18,9 +18,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
+	"github.com/distribution/reference"
 	"github.com/docker/cli/cli/config/configfile"
-	"github.com/docker/distribution/reference"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -206,7 +206,7 @@ func (ath *ECRAuthenticator) Authenticate(ctx context.Context, registry string) 
 }
 
 // Authentication represents docker usable authentication
-type Authentication types.AuthConfig
+type Authentication registry.AuthConfig
 
 func (a *Authentication) Empty() bool {
 	if a == nil {
@@ -388,7 +388,7 @@ func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
 }
 
 // ImageBuildAuth is the format image builds needs
-type ImageBuildAuth map[string]types.AuthConfig
+type ImageBuildAuth map[string]registry.AuthConfig
 
 // GetImageBuildAuthFor produces authentication in the format an image builds needs
 func (a AllowedAuthFor) GetImageBuildAuthFor(ctx context.Context, auth RegistryAuthenticator, additionalRegistries []string, blocklist []string) (res ImageBuildAuth) {
@@ -405,7 +405,7 @@ func (a AllowedAuthFor) GetImageBuildAuthFor(ctx context.Context, auth RegistryA
 			continue
 		}
 		ath := a.additionalAuth(reg)
-		res[reg] = types.AuthConfig(*ath)
+		res[reg] = registry.AuthConfig(*ath)
 	}
 	for _, reg := range additionalRegistries {
 		ath, err := auth.Authenticate(ctx, reg)
@@ -416,7 +416,7 @@ func (a AllowedAuthFor) GetImageBuildAuthFor(ctx context.Context, auth RegistryA
 		if ath.Empty() {
 			continue
 		}
-		res[reg] = types.AuthConfig(*ath)
+		res[reg] = registry.AuthConfig(*ath)
 	}
 
 	return
