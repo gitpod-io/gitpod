@@ -39,7 +39,7 @@ kubectl label nodes ${vm_name} \
   gitpod.io/workspace_1=true \
   gitpod.io/workspace_2=true
 
-sed -i 's/docker.io/quay.io/g' /var/lib/gitpod/manifests/calico.yaml
+  sed -i 's/docker.io/quay.io/g' /var/lib/gitpod/manifests/calico.yaml
 
 kubectl apply -f /var/lib/gitpod/manifests/calico.yaml
 
