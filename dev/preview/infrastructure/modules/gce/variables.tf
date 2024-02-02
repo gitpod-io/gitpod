@@ -44,7 +44,7 @@ variable "harvester_ingress_ip" {
 variable "vm_image" {
   type        = string
   description = "The VM image"
-  default     = "gitpod-k3s-202402010208"
+  default     = "gitpod-k3s-202402020033"
 }
 
 variable "cert_issuer" {
