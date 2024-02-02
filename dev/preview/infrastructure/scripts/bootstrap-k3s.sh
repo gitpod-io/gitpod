@@ -26,8 +26,6 @@ export INSTALL_K3S_SKIP_DOWNLOAD=true
 # failing occasionally. Sleeping for a bit solves it.
 sleep 10
 
-# shellcheck disable=SC2154
-# shellcheck disable=SC2086
 kubectl label nodes ${vm_name} \
   gitpod.io/workload_meta=true \
   gitpod.io/workload_ide=true \
@@ -39,9 +37,15 @@ kubectl label nodes ${vm_name} \
   gitpod.io/workspace_1=true \
   gitpod.io/workspace_2=true
 
-  sed -i 's/docker.io/quay.io/g' /var/lib/gitpod/manifests/calico.yaml
+# apply fix from https://github.com/k3s-io/klipper-lb/issues/6 so we can use the klipper servicelb
+# this can be removed if https://github.com/gitpod-io/gitpod-packer-gcp-image/pull/20 gets merged
+cat /var/lib/gitpod/manifests/calico.yaml | sed s/__KUBERNETES_NODE_NAME__\"\,/__KUBERNETES_NODE_NAME__\",\ \"container_settings\"\:\ \{\ \"allow_ip_forwarding\"\:\ true\ \}\,/ >/var/lib/gitpod/manifests/calico2.yaml
 
-kubectl apply -f /var/lib/gitpod/manifests/calico.yaml
+sed -i 's/docker.io/quay.io/g' /var/lib/gitpod/manifests/calico2.yaml
+sed -i 's/interface=ens/interface=en/g' /var/lib/gitpod/manifests/calico2.yaml
+sed -i 's/\$CLUSTER_IP_RANGE/10.20.0.0\/16/g' /var/lib/gitpod/manifests/calico2.yaml
+
+kubectl apply -f /var/lib/gitpod/manifests/calico2.yaml
 
 kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
 kubectl apply -f /var/lib/gitpod/manifests/metrics-server.yaml
