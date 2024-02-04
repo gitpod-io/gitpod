@@ -65,13 +65,14 @@ type LaunchContext struct {
 	backendVersion *version.Version
 	wsInfo         *supervisor.WorkspaceInfoResponse
 
-	vmOptionsFile     string
-	projectDir        string
-	configDir         string
-	systemDir         string
-	projectConfigDir  string
-	projectContextDir string
-	riderSolutionFile string
+	vmOptionsFile          string
+	platformPropertiesFile string
+	projectDir             string
+	configDir              string
+	systemDir              string
+	projectConfigDir       string
+	projectContextDir      string
+	riderSolutionFile      string
 
 	env []string
 }
@@ -466,14 +467,20 @@ func launch(launchCtx *LaunchContext) {
 	launchCtx.systemDir = fmt.Sprintf("/workspace/.cache/JetBrains%s", launchCtx.qualifier)
 	launchCtx.riderSolutionFile = riderSolutionFile
 	launchCtx.projectContextDir = resolveProjectContextDir(launchCtx)
-	launchCtx.projectConfigDir = fmt.Sprintf("%s/RemoteDev-%s/%s", launchCtx.configDir, launchCtx.info.ProductCode, strings.ReplaceAll(launchCtx.projectContextDir, "/", "_"))
 
+	launchCtx.platformPropertiesFile = launchCtx.backendDir + "/bin/idea.properties"
+	err = updatePlatformProperties(launchCtx.platformPropertiesFile, launchCtx.configDir, launchCtx.systemDir)
+	if err != nil {
+		log.WithError(err).Error("failed to update platform properties file")
+	}
+
+	launchCtx.projectConfigDir = fmt.Sprintf("%s/RemoteDev-%s/%s", launchCtx.configDir, launchCtx.info.ProductCode, strings.ReplaceAll(launchCtx.projectContextDir, "/", "_"))
 	alreadySync, err := syncInitialContent(launchCtx, Options)
 	if err != nil {
 		log.WithError(err).Error("failed to sync initial options")
 	}
 
-	launchCtx.env = resolveLaunchContextEnv(launchCtx.configDir, launchCtx.systemDir, !alreadySync)
+	launchCtx.env = resolveLaunchContextEnv(!alreadySync)
 
 	_, err = syncInitialContent(launchCtx, Plugins)
 	if err != nil {
@@ -586,7 +593,7 @@ func resolveUserEnvs() (userEnvs []string, err error) {
 	return
 }
 
-func resolveLaunchContextEnv(configDir string, systemDir string, enableNewUI bool) []string {
+func resolveLaunchContextEnv(enableNewUI bool) []string {
 	var launchCtxEnv []string
 	userEnvs, err := resolveUserEnvs()
 	if err == nil {
@@ -596,19 +603,13 @@ func resolveLaunchContextEnv(configDir string, systemDir string, enableNewUI boo
 		launchCtxEnv = os.Environ()
 	}
 
-	// Set default config and system directories under /workspace to preserve between restarts
-	launchCtxEnv = append(launchCtxEnv,
-		// Set default config and system directories under /workspace to preserve between restarts
-		fmt.Sprintf("IJ_HOST_CONFIG_BASE_DIR=%s", configDir),
-		fmt.Sprintf("IJ_HOST_SYSTEM_BASE_DIR=%s", systemDir),
-	)
-
 	// instead put them into /ide-desktop/${alias}${qualifier}/backend/bin/idea64.vmoptions
 	// otherwise JB will complain to a user on each startup
 	// by default remote dev already set -Xmx2048m, see /ide-desktop/${alias}${qualifier}/backend/plugins/remote-dev-server/bin/launcher.sh
 	launchCtxEnv = append(launchCtxEnv, "JAVA_TOOL_OPTIONS=")
 
 	if enableNewUI {
+		// TODO: remove this as this option is already deleted in 2023.3.3
 		launchCtxEnv = append(launchCtxEnv, "REMOTE_DEV_NEW_UI_ENABLED=1")
 	}
 
@@ -637,6 +638,25 @@ func handleSignal() {
 	log.Info("asked IDE to terminate")
 }
 
+func updatePlatformProperties(platformOptionsPath string, configDir string, systemDir string) error {
+	buffer, err := os.ReadFile(platformOptionsPath)
+	if err != nil {
+		return err
+	}
+
+	content := string(buffer)
+
+	newContent := strings.Join([]string{
+		content,
+		fmt.Sprintf("idea.config.path=%s", configDir),
+		fmt.Sprintf("idea.plugins.path=%s", configDir+"/plugins"),
+		fmt.Sprintf("idea.system.path=%s", systemDir),
+		fmt.Sprintf("idea.log.path=%s", systemDir+"/log"),
+	}, "\n")
+
+	return os.WriteFile(platformOptionsPath, []byte(newContent), 0)
+}
+
 func configureVMOptions(config *gitpod.GitpodConfig, alias string, vmOptionsPath string) error {
 	options, err := readVMOptions(vmOptionsPath)
 	if err != nil {
@@ -647,7 +667,7 @@ func configureVMOptions(config *gitpod.GitpodConfig, alias string, vmOptionsPath
 }
 
 func readVMOptions(vmOptionsPath string) ([]string, error) {
-	content, err := ioutil.ReadFile(vmOptionsPath)
+	content, err := os.ReadFile(vmOptionsPath)
 	if err != nil {
 		return nil, err
 	}
@@ -657,7 +677,7 @@ func readVMOptions(vmOptionsPath string) ([]string, error) {
 func writeVMOptions(vmOptionsPath string, vmoptions []string) error {
 	// vmoptions file should end with a newline
 	content := strings.Join(vmoptions, "\n") + "\n"
-	return ioutil.WriteFile(vmOptionsPath, []byte(content), 0)
+	return os.WriteFile(vmOptionsPath, []byte(content), 0)
 }
 
 // deduplicateVMOption append new VMOptions onto old VMOptions and remove any duplicated leftmost options
