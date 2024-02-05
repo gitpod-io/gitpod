@@ -468,7 +468,7 @@ func launch(launchCtx *LaunchContext) {
 	launchCtx.projectContextDir = resolveProjectContextDir(launchCtx)
 
 	launchCtx.platformPropertiesFile = launchCtx.backendDir + "/bin/idea.properties"
-	err = updatePlatformProperties(launchCtx.platformPropertiesFile, launchCtx.configDir, launchCtx.systemDir)
+	_, err = updatePlatformProperties(launchCtx.platformPropertiesFile, launchCtx.configDir, launchCtx.systemDir)
 	if err != nil {
 		log.WithError(err).Error("failed to update platform properties file")
 	}
@@ -632,23 +632,43 @@ func handleSignal() {
 	log.Info("asked IDE to terminate")
 }
 
-func updatePlatformProperties(platformOptionsPath string, configDir string, systemDir string) error {
+func updatePlatformProperties(platformOptionsPath string, configDir string, systemDir string) (bool, error) {
 	buffer, err := os.ReadFile(platformOptionsPath)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	content := string(buffer)
 
-	newContent := strings.Join([]string{
-		content,
-		fmt.Sprintf("idea.config.path=%s", configDir),
-		fmt.Sprintf("idea.plugins.path=%s", configDir+"/plugins"),
-		fmt.Sprintf("idea.system.path=%s", systemDir),
-		fmt.Sprintf("idea.log.path=%s", systemDir+"/log"),
-	}, "\n")
+	lines := strings.Fields(content)
+	configMap := make(map[string]bool)
+	for _, v := range lines {
+		if !strings.HasPrefix(v, "#") {
+			key, _, found := strings.Cut(v, "=")
+			if found {
+				configMap[key] = true
+			}
+		}
+	}
 
-	return os.WriteFile(platformOptionsPath, []byte(newContent), 0)
+	updated := false
+
+	if _, found := configMap["idea.config.path"]; !found {
+		updated = true
+		content = strings.Join([]string{
+			content,
+			fmt.Sprintf("idea.config.path=%s", configDir),
+			fmt.Sprintf("idea.plugins.path=%s", configDir+"/plugins"),
+			fmt.Sprintf("idea.system.path=%s", systemDir),
+			fmt.Sprintf("idea.log.path=%s", systemDir+"/log"),
+		}, "\n")
+	}
+
+	if updated {
+		return true, os.WriteFile(platformOptionsPath, []byte(content), 0)
+	}
+
+	return false, nil
 }
 
 func configureVMOptions(config *gitpod.GitpodConfig, alias string, vmOptionsPath string) error {
@@ -978,7 +998,7 @@ func installPlugins(config *gitpod.GitpodConfig, launchCtx *LaunchContext) error
 	installErr := cmd.Run()
 
 	// delete alien_plugins.txt to suppress 3rd-party plugins consent on startup to workaround backend startup freeze
-	// err = os.Remove(launchCtx.projectConfigDir + "/alien_plugins.txt")
+	err = os.Remove(launchCtx.configDir + "/alien_plugins.txt")
 	if err != nil && !os.IsNotExist(err) && !strings.Contains(err.Error(), "no such file or directory") {
 		log.WithError(err).Error("failed to suppress 3rd-party plugins consent")
 	}
