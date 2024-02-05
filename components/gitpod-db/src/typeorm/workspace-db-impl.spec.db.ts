@@ -21,6 +21,16 @@ export class WorkspaceSpec {
     readonly org = randomUUID();
     readonly strangerOrg = randomUUID();
 
+    readonly configuration = {
+        cloneUrl: "https://github.com/gitpod-io/gitpod",
+        id: randomUUID(),
+        branch: "main",
+        commit: "3fedc3251be3f917d9e44f5f3d785e21153e067e",
+    };
+
+    readonly defaultSorting = { field: "creationTime", order: "ASC" } as const;
+    readonly defaultPagination = { limit: 10, offset: 0 };
+
     async before() {
         await this.wipeRepo();
     }
@@ -66,22 +76,25 @@ export class WorkspaceSpec {
                 type: "prebuild",
                 creationTime: now,
                 organizationId: this.org,
-                contextURL: "https://github.com/gitpod-io/gitpod",
+                contextURL: this.configuration.cloneUrl,
                 description: "Gitpod",
                 ownerId: randomUUID(),
-                projectId: randomUUID(),
+                projectId: this.configuration.id,
                 context: {
                     title: "Gitpod",
+                    ref: this.configuration.branch,
                 },
                 config: {},
             });
 
             await this.wsDB.storePrebuiltWorkspace({
                 id: prebuildId,
-                cloneURL: "https://github.com/gitpod-io/gitpod",
-                commit: "aeioufg",
+                cloneURL: this.configuration.cloneUrl,
+                commit: this.configuration.commit,
+                projectId: this.configuration.id,
                 buildWorkspaceId: ws.id,
                 creationTime: now,
+                branch: this.configuration.branch,
                 state,
                 error,
                 statusVersion: 1,
@@ -91,16 +104,16 @@ export class WorkspaceSpec {
                 teamId: this.org,
                 id: randomUUID(),
                 buildWorkspaceId: ws.id,
-                projectId: "gitpod",
-                projectName: "Gitpod",
-                cloneUrl: "https://github.com/gitpod-io/gitpod",
-                branch: "main",
+                projectId: this.configuration.id,
+                projectName: "gitpod",
+                cloneUrl: this.configuration.cloneUrl,
+                branch: this.configuration.branch,
                 startedAt: now,
                 startedBy: "me",
                 changeTitle: "Change this",
                 changeDate: now,
                 changeAuthor: "me again",
-                changeHash: "aeioufg",
+                changeHash: this.configuration.commit,
             });
         }
     }
@@ -111,48 +124,85 @@ export class WorkspaceSpec {
 
         const orgLookup = await this.wsDB.findPrebuiltWorkspacesByOrganization(
             this.org,
-            { limit: 10, offset: 0 },
+            this.defaultPagination,
             {},
-            { field: "creationTime", order: "ASC" },
+            this.defaultSorting,
         );
         expect(orgLookup).length(7);
 
         const strangerOrgLookup = await this.wsDB.findPrebuiltWorkspacesByOrganization(
             this.strangerOrg,
-            { limit: 10, offset: 0 },
+            this.defaultPagination,
             {},
-            { field: "creationTime", order: "ASC" },
+            this.defaultSorting,
         );
         expect(strangerOrgLookup).length(0);
     }
 
     @test()
-    async testPrebuildLookupByOrgWithFilters(): Promise<void> {
+    async testPrebuildLookupByOrgWithStateFilters(): Promise<void> {
         await this.setupPrebuilds();
 
         const stateUnfinished = await this.wsDB.findPrebuiltWorkspacesByOrganization(
             this.org,
-            { limit: 10, offset: 0 },
+            this.defaultPagination,
             { state: "unfinished" },
-            { field: "creationTime", order: "ASC" },
+            this.defaultSorting,
         );
         expect(stateUnfinished).length(2);
 
         const stateFailed = await this.wsDB.findPrebuiltWorkspacesByOrganization(
             this.org,
-            { limit: 10, offset: 0 },
+            this.defaultPagination,
             { state: "failed" },
-            { field: "creationTime", order: "ASC" },
+            this.defaultSorting,
         );
         expect(stateFailed).length(4);
 
         const stateSucceeded = await this.wsDB.findPrebuiltWorkspacesByOrganization(
             this.org,
-            { limit: 10, offset: 0 },
+            this.defaultPagination,
             { state: "succeeded" },
-            { field: "creationTime", order: "ASC" },
+            this.defaultSorting,
         );
         expect(stateSucceeded).length(1);
+    }
+
+    @test()
+    async testPrebuildLookupByOrgWithConfigurationFilter(): Promise<void> {
+        await this.setupPrebuilds();
+
+        const filtered = await this.wsDB.findPrebuiltWorkspacesByOrganization(
+            this.org,
+            this.defaultPagination,
+            { configuration: { id: this.configuration.id } },
+            this.defaultSorting,
+        );
+        expect(filtered).length(7);
+
+        const filteredNonExistent = await this.wsDB.findPrebuiltWorkspacesByOrganization(
+            this.org,
+            this.defaultPagination,
+            { configuration: { id: "nonexistent" } },
+            this.defaultSorting,
+        );
+        expect(filteredNonExistent).length(0);
+
+        const filteredBranch = await this.wsDB.findPrebuiltWorkspacesByOrganization(
+            this.org,
+            this.defaultPagination,
+            { configuration: { id: this.configuration.id, branch: this.configuration.branch } },
+            this.defaultSorting,
+        );
+        expect(filteredBranch).length(7);
+
+        const filteredBranchNonExistent = await this.wsDB.findPrebuiltWorkspacesByOrganization(
+            this.org,
+            this.defaultPagination,
+            { configuration: { id: this.configuration.id, branch: "nonexistent" } },
+            this.defaultSorting,
+        );
+        expect(filteredBranchNonExistent).length(0);
     }
 
     @test()
@@ -163,7 +213,7 @@ export class WorkspaceSpec {
             this.org,
             { limit: 3, offset: 0 },
             {},
-            { field: "creationTime", order: "ASC" },
+            this.defaultSorting,
         );
         expect(firstPage).length(3);
 
@@ -171,7 +221,7 @@ export class WorkspaceSpec {
             this.org,
             { limit: 3, offset: 3 },
             {},
-            { field: "creationTime", order: "ASC" },
+            this.defaultSorting,
         );
         expect(secondPage).length(3);
         expect(secondPage[0].id).not.eq(firstPage[0].id);
