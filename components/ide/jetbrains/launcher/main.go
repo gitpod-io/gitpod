@@ -70,7 +70,6 @@ type LaunchContext struct {
 	projectDir             string
 	configDir              string
 	systemDir              string
-	projectConfigDir       string
 	projectContextDir      string
 	riderSolutionFile      string
 
@@ -474,13 +473,12 @@ func launch(launchCtx *LaunchContext) {
 		log.WithError(err).Error("failed to update platform properties file")
 	}
 
-	launchCtx.projectConfigDir = fmt.Sprintf("%s/RemoteDev-%s/%s", launchCtx.configDir, launchCtx.info.ProductCode, strings.ReplaceAll(launchCtx.projectContextDir, "/", "_"))
-	alreadySync, err := syncInitialContent(launchCtx, Options)
+	_, err = syncInitialContent(launchCtx, Options)
 	if err != nil {
 		log.WithError(err).Error("failed to sync initial options")
 	}
 
-	launchCtx.env = resolveLaunchContextEnv(!alreadySync)
+	launchCtx.env = resolveLaunchContextEnv()
 
 	_, err = syncInitialContent(launchCtx, Plugins)
 	if err != nil {
@@ -488,15 +486,12 @@ func launch(launchCtx *LaunchContext) {
 	}
 
 	// install project plugins
-	version_2022_1, _ := version.NewVersion("2022.1")
-	if version_2022_1.LessThanOrEqual(launchCtx.backendVersion) {
-		err = installPlugins(gitpodConfig, launchCtx)
-		installPluginsCost := time.Now().Local().Sub(launchCtx.startTime).Milliseconds()
-		if err != nil {
-			log.WithError(err).WithField("cost", installPluginsCost).Error("installing repo plugins: done")
-		} else {
-			log.WithField("cost", installPluginsCost).Info("installing repo plugins: done")
-		}
+	err = installPlugins(gitpodConfig, launchCtx)
+	installPluginsCost := time.Now().Local().Sub(launchCtx.startTime).Milliseconds()
+	if err != nil {
+		log.WithError(err).WithField("cost", installPluginsCost).Error("installing repo plugins: done")
+	} else {
+		log.WithField("cost", installPluginsCost).Info("installing repo plugins: done")
 	}
 
 	// install gitpod plugin
@@ -593,7 +588,7 @@ func resolveUserEnvs() (userEnvs []string, err error) {
 	return
 }
 
-func resolveLaunchContextEnv(enableNewUI bool) []string {
+func resolveLaunchContextEnv() []string {
 	var launchCtxEnv []string
 	userEnvs, err := resolveUserEnvs()
 	if err == nil {
@@ -607,11 +602,6 @@ func resolveLaunchContextEnv(enableNewUI bool) []string {
 	// otherwise JB will complain to a user on each startup
 	// by default remote dev already set -Xmx2048m, see /ide-desktop/${alias}${qualifier}/backend/plugins/remote-dev-server/bin/launcher.sh
 	launchCtxEnv = append(launchCtxEnv, "JAVA_TOOL_OPTIONS=")
-
-	if enableNewUI {
-		// TODO: remove this as this option is already deleted in 2023.3.3
-		launchCtxEnv = append(launchCtxEnv, "REMOTE_DEV_NEW_UI_ENABLED=1")
-	}
 
 	// Force it to be disabled as we update platform properties file already
 	// TODO: Some ides have it enabled by default still, check pycharm and remove next release
@@ -868,7 +858,7 @@ func syncPlugin(file fs.FileInfo, srcDir, destDir string) error {
 }
 
 func ensureInitialSyncDest(launchCtx *LaunchContext, target SyncTarget) (string, error, bool) {
-	targetDestDir := launchCtx.projectConfigDir
+	targetDestDir := launchCtx.configDir
 	if target == Plugins {
 		targetDestDir = launchCtx.backendDir
 	}
@@ -988,7 +978,7 @@ func installPlugins(config *gitpod.GitpodConfig, launchCtx *LaunchContext) error
 	installErr := cmd.Run()
 
 	// delete alien_plugins.txt to suppress 3rd-party plugins consent on startup to workaround backend startup freeze
-	err = os.Remove(launchCtx.projectConfigDir + "/alien_plugins.txt")
+	// err = os.Remove(launchCtx.projectConfigDir + "/alien_plugins.txt")
 	if err != nil && !os.IsNotExist(err) && !strings.Contains(err.Error(), "no such file or directory") {
 		log.WithError(err).Error("failed to suppress 3rd-party plugins consent")
 	}
