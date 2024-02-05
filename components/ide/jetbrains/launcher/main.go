@@ -613,6 +613,9 @@ func resolveLaunchContextEnv(enableNewUI bool) []string {
 		launchCtxEnv = append(launchCtxEnv, "REMOTE_DEV_NEW_UI_ENABLED=1")
 	}
 
+	// Force it to be disabled as we update platform properties file already
+	launchCtxEnv = append(launchCtxEnv, "REMOTE_DEV_LEGACY_PER_PROJECT_CONFIGS=0")
+
 	log.WithField("env", strings.Join(launchCtxEnv, "\n")).Info("resolved launch env")
 
 	return launchCtxEnv
