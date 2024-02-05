@@ -6,7 +6,7 @@
 
 import { FC } from "react";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
-import { RepositoryListItem } from "./PrebuildListItem";
+import { PrebuildListItem } from "./PrebuildListItem";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { TextMuted } from "@podkit/typography/TextMuted";
 import { Subheading } from "@podkit/typography/Headings";
@@ -104,7 +104,7 @@ export const PrebuildsTable: FC<Props> = ({
                         </TableHeader>
                         <TableBody>
                             {prebuilds.map((configuration) => (
-                                <RepositoryListItem key={configuration.id} prebuild={configuration} />
+                                <PrebuildListItem key={configuration.id} prebuild={configuration} />
                             ))}
                         </TableBody>
                     </Table>
