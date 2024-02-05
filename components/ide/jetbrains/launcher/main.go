@@ -463,8 +463,8 @@ func launch(launchCtx *LaunchContext) {
 	}
 
 	launchCtx.projectDir = projectDir
-	launchCtx.configDir = fmt.Sprintf("/workspace/.config/JetBrains%s", launchCtx.qualifier)
-	launchCtx.systemDir = fmt.Sprintf("/workspace/.cache/JetBrains%s", launchCtx.qualifier)
+	launchCtx.configDir = fmt.Sprintf("/workspace/.config/JetBrains%s/RemoteDev-%s", launchCtx.qualifier, launchCtx.info.ProductCode)
+	launchCtx.systemDir = fmt.Sprintf("/workspace/.cache/JetBrains%s/RemoteDev-%s", launchCtx.qualifier, launchCtx.info.ProductCode)
 	launchCtx.riderSolutionFile = riderSolutionFile
 	launchCtx.projectContextDir = resolveProjectContextDir(launchCtx)
 
@@ -614,6 +614,7 @@ func resolveLaunchContextEnv(enableNewUI bool) []string {
 	}
 
 	// Force it to be disabled as we update platform properties file already
+	// TODO: Some ides have it enabled by default still, check pycharm and remove next release
 	launchCtxEnv = append(launchCtxEnv, "REMOTE_DEV_LEGACY_PER_PROJECT_CONFIGS=0")
 
 	log.WithField("env", strings.Join(launchCtxEnv, "\n")).Info("resolved launch env")
