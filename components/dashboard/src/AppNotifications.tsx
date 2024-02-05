@@ -99,7 +99,7 @@ export function AppNotifications() {
                     notifications.push(UPDATED_PRIVACY_POLICY((u: Partial<UserProtocol>) => mutateAsync(u)));
                 }
 
-                if (attributionId) {
+                if (isGitpodIo() && attributionId) {
                     const [subscriptionId, invalidBillingAddress] = await Promise.all([
                         getGitpodService().server.findStripeSubscriptionId(attributionId),
                         getGitpodService().server.isCustomerBillingAddressInvalid(attributionId),
