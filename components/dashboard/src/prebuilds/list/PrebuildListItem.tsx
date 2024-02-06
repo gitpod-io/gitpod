@@ -22,7 +22,7 @@ import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../project
 type Props = {
     prebuild: Prebuild;
 };
-export const RepositoryListItem: FC<Props> = ({ prebuild }) => {
+export const PrebuildListItem: FC<Props> = ({ prebuild }) => {
     const created = dayjs(prebuild.status?.startTime?.toDate()).fromNow();
     const {
         data: configuration,
