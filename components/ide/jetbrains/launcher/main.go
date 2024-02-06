@@ -643,8 +643,8 @@ func updatePlatformProperties(platformOptionsPath string, configDir string, syst
 	lines := strings.Split(content, "\n")
 	configMap := make(map[string]bool)
 	for _, v := range lines {
-		l := strings.TrimSpace(v)
-		if l != "" && !strings.HasPrefix(l, "#") {
+		v = strings.TrimSpace(v)
+		if v != "" && !strings.HasPrefix(v, "#") {
 			key, _, found := strings.Cut(v, "=")
 			if found {
 				configMap[key] = true
