@@ -75,3 +75,28 @@ func TestUpdateVMOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdatePlatformProperties(t *testing.T) {
+	platformProperties := `#---------------------------------------------------------------------
+	# Uncomment this option if you want to customize a path to the settings directory.
+	#---------------------------------------------------------------------
+	# idea.config.path=${user.home}/.IntelliJIdea/config
+
+
+	shared.indexes.download.auto.consent=true
+	`
+	configDir := "/workspace/.config/JetBrains/RemoteDev-IU"
+	systemDir := "/workspace/.cache/JetBrains/RemoteDev-IU"
+
+	t.Run("updatePlatformProperties multiple time should be stable", func(t *testing.T) {
+
+		updated, content := updatePlatformProperties(platformProperties, configDir, systemDir)
+		assert.Equal(t, true, updated)
+		assert.Equal(t, true, strings.Contains(content, "idea.config.path=/workspace/.config/JetBrains/RemoteDev-IU"))
+		for i := 0; i < 5; i++ {
+			updated, newContent := updatePlatformProperties(content, configDir, systemDir)
+			assert.Equal(t, false, updated)
+			assert.Equal(t, content, newContent)
+		}
+	})
+}
