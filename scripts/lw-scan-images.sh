@@ -11,8 +11,6 @@ if [[ -z "$LW_ACCESS_TOKEN" ]]; then
   exit 1
 fi
 
-EXCLUDE_DOCKER_IO="${EXCLUDE_DOCKER_IO:-"false"}"
-
 TMP=$(mktemp -d)
 echo "workdir: $TMP"
 
@@ -54,15 +52,9 @@ COUNTER=0
 FAILED=0
 while IFS= read -r IMAGE_REF; do
   ((COUNTER=COUNTER+1))
-  # TODO(gpl) Unclear why we can't access the docker.io images the GitHub workflow; it works from a workspace?
-  if [[ "$EXCLUDE_DOCKER_IO" == "true" ]]; then
-    if [[ "$IMAGE_REF" == "docker.io/"* ]]; then
-      echo "= Skipping docker.io image: $IMAGE_REF"
-      continue
-    fi
-  fi
 
-  NAME=$(echo "$IMAGE_REF" | cut -d ":" -f 1)
+  # Removing `docker.io/` and `docker.io/library/` prefix because otherwise lacework cannot pull image in a GitHub workflow for some reason.
+  NAME=$(echo "$IMAGE_REF" | cut -d ":" -f 1 | sed -e "s|^docker.io/||" | sed -e "s|^library/||")
   TAG=$(echo "$IMAGE_REF" | cut -d ":" -f 2)
   echo "= Scanning $NAME : $TAG [$COUNTER / $TOTAL_IMAGES]"
   "$SCANNER" image evaluate "$NAME" "$TAG" \

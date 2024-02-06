@@ -71,8 +71,6 @@ jobs:
         env:
           VERSION: ${{needs.configuration.outputs.version}}
           LW_ACCESS_TOKEN: "${{ steps.secrets.outputs.lacework-access-token }}"
-          # TODO(gpl) See docker.io access above
-          EXCLUDE_DOCKER_IO: true
         run: |
           $GITHUB_WORKSPACE/scripts/lw-scan-images.sh
 
