@@ -170,7 +170,7 @@ export const PrebuildDetailPage: FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="px-6 py-4 flex flex-col gap-1">
+                            <div className="px-6 py-4 flex flex-col gap-1 border-pk-border-base">
                                 <div className="flex gap-1 items-center capitalize">
                                     {prebuildPhase.icon}
                                     <span>{prebuildPhase.description}</span>
@@ -181,7 +181,7 @@ export const PrebuildDetailPage: FC = () => {
                                     </div>
                                 )}
                             </div>
-                            <div className="h-112">
+                            <div className="h-112 border-pk-border-base">
                                 <Suspense fallback={<div />}>
                                     <WorkspaceLogs
                                         classes="h-full w-full"
@@ -190,7 +190,7 @@ export const PrebuildDetailPage: FC = () => {
                                     />
                                 </Suspense>
                             </div>
-                            <div className="px-6 pt-6 flex justify-between">
+                            <div className="px-6 pt-6 flex justify-between border-pk-border-base">
                                 <LoadingButton
                                     loading={isTriggeringRefetch}
                                     disabled={
