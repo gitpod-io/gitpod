@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM eu.gcr.io/gitpod-core-dev/build/buildkit:v0.12.2-gitpod.1
+FROM eu.gcr.io/gitpod-core-dev/build/buildkit:v0.12.5-gitpod.0
 
 USER root
 RUN apk --no-cache add sudo bash \

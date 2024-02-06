@@ -217,7 +217,8 @@ type WebAppConfig struct {
 type ProxySettings struct {
 	HttpProxy  string `json:"http_proxy"`
 	HttpsProxy string `json:"https_proxy"`
-	NoProxy    string `json:"no_proxy"`
+	// NoProxy setting should be used for the CIDRs and hostnames that should be not using the proxy URLs
+	NoProxy string `json:"no_proxy"`
 }
 
 type WorkspaceDefaults struct {
