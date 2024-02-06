@@ -101,7 +101,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Options: map[string]ide_config.IDEOption{
 				"code": {
-					OrderKey:          "00",
+					OrderKey:          "010",
 					Title:             "VS Code",
 					Type:              ide_config.IDETypeBrowser,
 					Label:             "Browser",
@@ -111,8 +111,17 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImage:       resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
 					LatestImageLayers: []string{codeWebExtensionImage, codeHelperImage},
 				},
+				"code1_85": {
+					OrderKey:    "011",
+					Title:       "VS Code",
+					Type:        ide_config.IDETypeBrowser,
+					Label:       "Browser",
+					Logo:        getIdeLogoPath("vscode"),
+					Image:       ctx.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.Code1_85IDEImageStableVersion),
+					ImageLayers: []string{codeWebExtensionImage, codeHelperImage},
+				},
 				codeDesktop: {
-					OrderKey:    "02",
+					OrderKey:    "020",
 					Title:       "VS Code",
 					Type:        ide_config.IDETypeDesktop,
 					Logo:        getIdeLogoPath("vscode"),
@@ -142,7 +151,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					ImageLayers: []string{jbPluginPrevious, jbLauncherImage},
 				},
 				goland: {
-					OrderKey:          "05",
+					OrderKey:          "050",
 					Title:             "GoLand",
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("golandLogo"),
@@ -154,7 +163,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
 				},
 				pycharm: {
-					OrderKey:          "06",
+					OrderKey:          "060",
 					Title:             "PyCharm",
 					Label:             "Professional",
 					Type:              ide_config.IDETypeDesktop,
@@ -167,7 +176,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
 				},
 				phpstorm: {
-					OrderKey:          "07",
+					OrderKey:          "070",
 					Title:             "PhpStorm",
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("phpstormLogo"),
@@ -179,7 +188,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
 				},
 				rubymine: {
-					OrderKey:          "08",
+					OrderKey:          "080",
 					Title:             "RubyMine",
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("rubymineLogo"),
@@ -191,7 +200,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
 				},
 				webstorm: {
-					OrderKey:          "09",
+					OrderKey:          "090",
 					Title:             "WebStorm",
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("webstormLogo"),
@@ -203,7 +212,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
 				},
 				rider: {
-					OrderKey:          "10",
+					OrderKey:          "100",
 					Title:             "Rider",
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("riderLogo"),
@@ -215,7 +224,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
 				},
 				clion: {
-					OrderKey:          "11",
+					OrderKey:          "110",
 					Title:             "CLion",
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("clionLogo"),
@@ -227,7 +236,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
 				},
 				xterm: {
-					OrderKey: "12",
+					OrderKey: "120",
 					Title:    "Terminal",
 					Type:     ide_config.IDETypeBrowser,
 					Logo:     getIdeLogoPath("terminal"),
