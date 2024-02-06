@@ -468,7 +468,7 @@ func launch(launchCtx *LaunchContext) {
 	launchCtx.projectContextDir = resolveProjectContextDir(launchCtx)
 
 	launchCtx.platformPropertiesFile = launchCtx.backendDir + "/bin/idea.properties"
-	_, err = updatePlatformProperties(launchCtx.platformPropertiesFile, launchCtx.configDir, launchCtx.systemDir)
+	_, err = configurePlatformProperties(launchCtx.platformPropertiesFile, launchCtx.configDir, launchCtx.systemDir)
 	if err != nil {
 		log.WithError(err).Error("failed to update platform properties file")
 	}
@@ -632,7 +632,7 @@ func handleSignal() {
 	log.Info("asked IDE to terminate")
 }
 
-func updatePlatformProperties(platformOptionsPath string, configDir string, systemDir string) (bool, error) {
+func configurePlatformProperties(platformOptionsPath string, configDir string, systemDir string) (bool, error) {
 	buffer, err := os.ReadFile(platformOptionsPath)
 	if err != nil {
 		return false, err
@@ -640,6 +640,16 @@ func updatePlatformProperties(platformOptionsPath string, configDir string, syst
 
 	content := string(buffer)
 
+	updated, content := updatePlatformProperties(content, configDir, systemDir)
+
+	if updated {
+		return true, os.WriteFile(platformOptionsPath, []byte(content), 0)
+	}
+
+	return false, nil
+}
+
+func updatePlatformProperties(content string, configDir string, systemDir string) (bool, string) {
 	lines := strings.Split(content, "\n")
 	configMap := make(map[string]bool)
 	for _, v := range lines {
@@ -665,11 +675,7 @@ func updatePlatformProperties(platformOptionsPath string, configDir string, syst
 		}, "\n")
 	}
 
-	if updated {
-		return true, os.WriteFile(platformOptionsPath, []byte(content), 0)
-	}
-
-	return false, nil
+	return updated, content
 }
 
 func configureVMOptions(config *gitpod.GitpodConfig, alias string, vmOptionsPath string) error {
