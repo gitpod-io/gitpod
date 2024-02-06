@@ -51,6 +51,7 @@ echo "=== Found $TOTAL_IMAGES images to scan"
 # There, we can see the results in the "Vulnerabilities" tab, by searching for the Gitpod version
 # Note: Does not fail on CVEs!
 COUNTER=0
+FAILED=0
 while IFS= read -r IMAGE_REF; do
   ((COUNTER=COUNTER+1))
   # TODO(gpl) Unclear why we can't access the docker.io images the GitHub workflow; it works from a workspace?
@@ -71,5 +72,11 @@ while IFS= read -r IMAGE_REF; do
     --ci-build=true \
     --disable-library-package-scanning=false \
     --save=true \
-    --tags version="$VERSION" > /dev/null
+    --tags version="$VERSION" > /dev/null || ((FAILED=FAILED+1))
+  echo ""
 done < "$TMP/images.txt"
+
+echo "number of failed image scans: $FAILED of $COUNTER"
+if (( FAILED > 0 )); then
+  exit 1
+fi
