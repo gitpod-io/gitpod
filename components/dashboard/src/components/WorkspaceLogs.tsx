@@ -5,7 +5,7 @@
  */
 
 import EventEmitter from "events";
-import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
+import { useContext, useEffect, useMemo, useRef } from "react";
 import { Terminal, ITerminalOptions, ITheme } from "xterm";
 import debounce from "lodash.debounce";
 import { FitAddon } from "xterm-addon-fit";
@@ -64,22 +64,20 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const resizeTerminal = useCallback(() => {
-        debounce(
-            () => {
-                fitAddon.fit();
-            },
-            50,
-            { leading: true, trailing: true },
-        );
-    }, [fitAddon]);
+    const resizeDebounced = debounce(
+        () => {
+            fitAddon.fit();
+        },
+        50,
+        { leading: true, trailing: true },
+    );
 
     useEffect(() => {
         // Fit terminal on window resize (debounced)
-        window.addEventListener("resize", resizeTerminal);
+        window.addEventListener("resize", resizeDebounced);
 
         return () => {
-            window.removeEventListener("resize", resizeTerminal);
+            window.removeEventListener("resize", resizeDebounced);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
