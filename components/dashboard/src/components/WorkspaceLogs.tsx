@@ -11,6 +11,7 @@ import debounce from "lodash.debounce";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { ThemeContext } from "../theme-context";
+import { cn } from "@podkit/lib/cn";
 
 const darkTheme: ITheme = {
     // What written on DevTool dark:bg-gray-800 is
@@ -29,7 +30,7 @@ export interface WorkspaceLogsProps {
     xtermClasses?: string;
 }
 
-export default function WorkspaceLogs(props: WorkspaceLogsProps) {
+export default function WorkspaceLogs({ classes, xtermClasses, errorMessage, logsEmitter }: WorkspaceLogsProps) {
     const xTermParentRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal>();
     const fitAddon = useMemo(() => new FitAddon(), []);
@@ -50,7 +51,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
         terminalRef.current = terminal;
         terminal.loadAddon(fitAddon);
         terminal.open(xTermParentRef.current);
-        props.logsEmitter.on("logs", (logs) => {
+        logsEmitter.on("logs", (logs) => {
             if (terminal && logs) {
                 terminal.write(logs);
             }
@@ -84,11 +85,11 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
     }, []);
 
     useEffect(() => {
-        if (terminalRef.current && props.errorMessage) {
-            terminalRef.current.write(`\r\n\u001b[38;5;196m${props.errorMessage}\u001b[0m\r\n`);
+        if (terminalRef.current && errorMessage) {
+            terminalRef.current.write(`\r\n\u001b[38;5;196m${errorMessage}\u001b[0m\r\n`);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [terminalRef.current, props.errorMessage]);
+    }, [terminalRef.current, errorMessage]);
 
     useEffect(() => {
         if (!terminalRef.current) {
@@ -100,14 +101,12 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
 
     return (
         <div
-            className={`${
-                props.classes || "mt-6 h-72 w-11/12 lg:w-3/5 rounded-xl overflow-hidden"
-            } bg-gray-100 dark:bg-gray-800 relative`}
+            className={cn(
+                "mt-6 h-72 w-11/12 lg:w-3/5 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 relative",
+                classes,
+            )}
         >
-            <div
-                className={`${props.xtermClasses || "absolute top-0 left-0 bottom-0 right-0 m-6"}`}
-                ref={xTermParentRef}
-            ></div>
+            <div className={cn("absolute top-0 left-0 bottom-0 right-0 m-6", xtermClasses)} ref={xTermParentRef}></div>
         </div>
     );
 }
