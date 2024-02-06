@@ -46,7 +46,6 @@ export const PrebuildDetailPage: FC = () => {
         isError: isTriggerError,
         error: triggerError,
         isRefetching: isTriggeringRefetch,
-        isLoading: isTriggeringLoading,
         data: newPrebuildID,
     } = useTriggerPrebuildQuery(info?.configuration?.id, info?.prebuild?.ref);
 
@@ -193,7 +192,7 @@ export const PrebuildDetailPage: FC = () => {
                             </div>
                             <div className="px-6 pt-6 flex justify-between border-pk-border-base">
                                 <LoadingButton
-                                    loading={isTriggeringRefetch || isTriggeringLoading}
+                                    loading={isTriggeringRefetch}
                                     disabled={
                                         isTriggeringPrebuild || !info.configuration?.id || !info.prebuild.commit?.sha
                                     }
