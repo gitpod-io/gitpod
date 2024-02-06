@@ -5,8 +5,9 @@
  */
 
 import EventEmitter from "events";
-import { useContext, useEffect, useRef } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { Terminal, ITerminalOptions, ITheme } from "xterm";
+import debounce from "lodash.debounce";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { ThemeContext } from "../theme-context";
@@ -31,7 +32,7 @@ export interface WorkspaceLogsProps {
 export default function WorkspaceLogs(props: WorkspaceLogsProps) {
     const xTermParentRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal>();
-    const fitAddon = new FitAddon();
+    const fitAddon = useMemo(() => new FitAddon(), []);
     const { isDark } = useContext(ThemeContext);
 
     useEffect(() => {
@@ -55,23 +56,29 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
             }
         });
         fitAddon.fit();
-        return function cleanUp() {
+
+        return () => {
             terminal.dispose();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const resizeTerminal = useCallback(() => {
+        debounce(
+            () => {
+                fitAddon.fit();
+            },
+            50,
+            { leading: true, trailing: true },
+        );
+    }, [fitAddon]);
+
     useEffect(() => {
         // Fit terminal on window resize (debounced)
-        let timeout: NodeJS.Timeout | undefined;
-        const onWindowResize = () => {
-            clearTimeout(timeout!);
-            timeout = setTimeout(() => fitAddon.fit(), 20);
-        };
-        window.addEventListener("resize", onWindowResize);
-        return function cleanUp() {
-            clearTimeout(timeout!);
-            window.removeEventListener("resize", onWindowResize);
+        window.addEventListener("resize", resizeTerminal);
+
+        return () => {
+            window.removeEventListener("resize", resizeTerminal);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
