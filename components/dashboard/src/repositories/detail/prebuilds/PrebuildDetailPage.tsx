@@ -24,6 +24,7 @@ import { repositoriesRoutes } from "../../repositories.routes";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import Alert from "../../../components/Alert";
 import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../../projects/prebuild-utils";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 const WorkspaceLogs = React.lazy(() => import("../../../components/WorkspaceLogs"));
 
@@ -44,6 +45,7 @@ export const PrebuildDetailPage: FC = () => {
         refetch: triggerPrebuild,
         isError: isTriggerError,
         error: triggerError,
+        isRefetching: isTriggeringRefetch,
         data: newPrebuildID,
     } = useTriggerPrebuildQuery(info?.configuration?.id, info?.prebuild?.ref);
 
@@ -189,12 +191,13 @@ export const PrebuildDetailPage: FC = () => {
                                 </Suspense>
                             </div>
                             <div className="px-6 pt-6 flex justify-between">
-                                <Button
+                                <LoadingButton
+                                    loading={isTriggeringRefetch}
                                     disabled={
                                         isTriggeringPrebuild || !info.configuration?.id || !info.prebuild.commit?.sha
                                     }
                                     onClick={() => triggerPrebuild()}
-                                >{`Rerun Prebuild (${info.prebuild.ref})`}</Button>
+                                >{`Rerun Prebuild (${info.prebuild.ref})`}</LoadingButton>
                                 <LinkButton
                                     disabled={!info.configuration?.id}
                                     href={repositoriesRoutes.Detail(info.configuration!.id!)}
