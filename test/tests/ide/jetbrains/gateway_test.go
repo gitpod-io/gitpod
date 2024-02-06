@@ -171,7 +171,7 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 			Command: "bash",
 			Args: []string{
 				"-c",
-				fmt.Sprintf("/workspace/.cache/JetBrains%s/RemoteDev-IU/log/idea.log", qualifier),
+				fmt.Sprintf("test -f /workspace/.cache/JetBrains%s/RemoteDev-IU/log/idea.log", qualifier),
 			},
 		}, &resp)
 
