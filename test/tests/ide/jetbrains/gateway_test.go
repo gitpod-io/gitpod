@@ -21,6 +21,7 @@ import (
 
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/google/go-github/v42/github"
@@ -150,6 +151,39 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 		t.Fatal(err)
 	}
 
+	if ide == "intellij" {
+		t.Logf("Check idea.log file correct location")
+		rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(info.LatestInstance.ID), integration.WithWorkspacekitLift(true))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer rsa.Close()
+		integration.DeferCloser(t, closer)
+
+		qualifier := ""
+		if useLatest {
+			qualifier = "-latest"
+		}
+
+		var resp agent.ExecResponse
+		err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+			Dir:     "/",
+			Command: "bash",
+			Args: []string{
+				"-c",
+				fmt.Sprintf("/workspace/.cache/JetBrains%s/RemoteDev-IU/log/idea.log", qualifier),
+			},
+		}, &resp)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if resp.ExitCode != 0 {
+			t.Fatal("idea.log file not found in the expected location")
+		}
+	}
+
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: roboquatToken},
 	)
@@ -273,7 +307,7 @@ func TestIntellij(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "intellij", "https://github.com/gitpod-samples/spring-petclinic")
+			JetBrainsIDETest(ctx, t, cfg, "intellij", "https://github.com/jeanp413/spring-petclinic")
 			return testCtx
 		}).
 		Feature()
