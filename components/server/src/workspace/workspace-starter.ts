@@ -592,6 +592,16 @@ export class WorkspaceStarter {
                     await new Promise((resolve) => setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000));
                 }
             } catch (err) {
+                if (isGrpcError(err) && err.code === grpc.status.ALREADY_EXISTS) {
+                    // This might happen because of timing: When we did the "workspaceAlreadyExists" check above, the DB state was not updated yet.
+                    // But when calling ws-manager to start the workspace, it was already present.
+                    //
+                    // By returning we skip the current cycle and wait for the next run of the workspace-start-controller.
+                    // This gives ws-manager(-bridge) some time to emit(/digest) updates.
+                    log.info(logCtx, "workspace already exists, waiting for ws-manager to push new state", err);
+                    return;
+                }
+
                 let reason: FailedInstanceStartReason = "startOnClusterFailed";
                 if (isResourceExhaustedError(err)) {
                     reason = "resourceExhausted";
@@ -730,6 +740,8 @@ export class WorkspaceStarter {
                 if (isResourceExhaustedError(err)) {
                     throw err;
                 } else if (isClusterMaintenanceError(err)) {
+                    throw err;
+                } else if (isGrpcError(err) && err.code === grpc.status.ALREADY_EXISTS) {
                     throw err;
                 } else if ("code" in err && err.code !== grpc.status.OK && lastInstallation !== "") {
                     log.error({ instanceId: instance.id }, "cannot start workspace on cluster, might retry", err, {
