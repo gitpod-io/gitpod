@@ -32,7 +32,7 @@ export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps)
     }, [enablePersonalAccessTokens]);
 
     return (
-        <PageWithSubMenu subMenu={settingsMenu} title="User Settings" subtitle="Manage your personal account settings.">
+        <PageWithSubMenu subMenu={settingsMenu} title="User settings" subtitle="Manage your personal account settings.">
             {children}
         </PageWithSubMenu>
     );
@@ -53,17 +53,17 @@ function getSettingsMenu(enablePersonalAccessTokens?: boolean) {
             link: [settingsPathVariables],
         },
         {
-            title: "SSH Keys",
+            title: "SSH keys",
             link: [settingsPathSSHKeys],
         },
         {
-            title: "Git Providers",
+            title: "Git providers",
             link: [settingsPathIntegrations, "/access-control"],
         },
         ...(enablePersonalAccessTokens
             ? [
                   {
-                      title: "Access Tokens",
+                      title: "Access tokens",
                       link: [
                           settingsPathPersonalAccessTokens,
                           settingsPathPersonalAccessTokenCreate,

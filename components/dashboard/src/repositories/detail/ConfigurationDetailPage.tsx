@@ -63,7 +63,7 @@ const ConfigurationDetailPage: FC = () => {
                 pageDescription={data?.name ?? ""}
                 backLink="/repositories"
             />
-            <WidePageWithSubMenu subMenu={settingsMenu} navTitle="Configuration Settings">
+            <WidePageWithSubMenu subMenu={settingsMenu} navTitle="Configuration settings">
                 {isLoading && <Loader2 className="animate-spin" />}
                 {error ? (
                     <div className="gap-4">

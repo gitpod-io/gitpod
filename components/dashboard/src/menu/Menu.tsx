@@ -206,7 +206,7 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedb
                 separator: true,
             },
             {
-                title: "User Settings",
+                title: "User settings",
                 link: "/user/settings",
             },
             {

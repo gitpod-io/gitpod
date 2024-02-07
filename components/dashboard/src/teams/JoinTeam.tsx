@@ -36,7 +36,7 @@ export default function JoinTeamPage() {
         })();
     }, [history, inviteId, orgInvalidator]);
 
-    useDocumentTitle("Joining Organization");
+    useDocumentTitle("Joining organization");
 
     return joinError ? <div className="mt-16 text-center text-gitpod-red">{String(joinError)}</div> : <></>;
 }

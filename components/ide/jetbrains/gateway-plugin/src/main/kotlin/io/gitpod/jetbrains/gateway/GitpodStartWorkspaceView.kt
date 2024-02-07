@@ -93,7 +93,7 @@ class GitpodStartWorkspaceView(
                     }
                 }
             }
-            button("New Workspace") {
+            button("New workspace") {
                 if (contextUrl.component.text.isNotBlank()) {
                     backendsModel.selectedItem?.let {
                         backendToId[it]?.let { backend ->

@@ -39,7 +39,7 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
         [org.data, orgBillingMode.data, oidcServiceEnabled, orgGitAuthProviders, isOwner],
     );
 
-    const title = "Organization Settings";
+    const title = "Organization settings";
     const subtitle = "Manage your organization's settings.";
 
     // Render as much of the page as we can in a loading state to avoid content shift

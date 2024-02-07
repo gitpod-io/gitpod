@@ -86,7 +86,7 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
     return (
         <ConfigurationSettingsField>
             <form onSubmit={handleSubmit}>
-                <Heading3>Prebuild Settings</Heading3>
+                <Heading3>Prebuild settings</Heading3>
                 <Subheading className="max-w-lg">These settings will be applied on every Prebuild.</Subheading>
 
                 <InputField

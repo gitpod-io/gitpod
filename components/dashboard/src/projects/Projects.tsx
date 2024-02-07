@@ -71,9 +71,9 @@ export default function ProjectsPage() {
                         role="presentation"
                         src={isDark ? projectsEmptyDark : projectsEmpty}
                     />
-                    <Heading2 className="text-center mt-8">No Recent Projects</Heading2>
+                    <Heading2 className="text-center mt-8">No recent projects</Heading2>
                     <p className="text-center text-base text-gray-500 mt-4">
-                        Add projects to enable and manage Prebuilds.
+                        Add projects to enable and manage prebuilds.
                         <br />
                         <a
                             className="gp-link"
@@ -81,16 +81,16 @@ export default function ProjectsPage() {
                             rel="noreferrer"
                             href="https://www.gitpod.io/docs/prebuilds/"
                         >
-                            Learn more about Prebuilds
+                            Learn more about prebuilds
                         </a>
                     </p>
                     <div className="flex space-x-2 justify-center mt-7">
                         <Button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
-                            New Project
+                            New project
                         </Button>
                         {team && (
                             <LinkButton href="./members" variant="secondary">
-                                Invite Members
+                                Invite members
                             </LinkButton>
                         )}
                     </div>
@@ -117,11 +117,11 @@ export default function ProjectsPage() {
                         <div className="py-2 pl-3"></div>
                         {team && (
                             <LinkButton href="./members" variant="secondary" className="ml-2">
-                                Invite Members
+                                Invite members
                             </LinkButton>
                         )}
                         <Button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
-                            New Project
+                            New project
                         </Button>
                     </div>
                     <div className="mt-4 grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 pb-40">
@@ -139,7 +139,7 @@ export default function ProjectsPage() {
                                     className="cursor-pointer flex h-full"
                                     onClick={() => setShowCreateProjectModal(true)}
                                 >
-                                    <div className="m-auto text-gray-400 dark:text-gray-600">New Project</div>
+                                    <div className="m-auto text-gray-400 dark:text-gray-600">New project</div>
                                 </div>
                             </div>
                         )}

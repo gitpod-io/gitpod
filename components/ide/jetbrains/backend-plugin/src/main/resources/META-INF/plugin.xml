@@ -61,43 +61,43 @@
     <actions>
         <action id="io.gitpod.jetbrains.remote.actions.StopWorkspaceAction"
                 class="io.gitpod.jetbrains.remote.actions.StopWorkspaceAction"
-                text="Gitpod: Stop Workspace"
+                text="Gitpod: Stop workspace"
                 icon="AllIcons.Actions.Pause">
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
         <action id="io.gitpod.jetbrains.remote.actions.DashboardAction"
                 class="io.gitpod.jetbrains.remote.actions.DashboardAction"
-                text="Gitpod: Open Dashboard"
+                text="Gitpod: Open dashboard"
                 icon="AllIcons.General.ProjectTab">
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
         <action id="io.gitpod.jetbrains.remote.actions.ExtendWorkspaceTimeoutAction"
                 class="io.gitpod.jetbrains.remote.actions.ExtendWorkspaceTimeoutAction"
-                text="Gitpod: Extend Workspace Timeout"
+                text="Gitpod: Extend workspace timeout"
                 icon="AllIcons.Vcs.History">
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
         <action id="io.gitpod.jetbrains.remote.actions.ContextAction"
                 class="io.gitpod.jetbrains.remote.actions.ContextAction"
-                text="Gitpod: Open Context"
+                text="Gitpod: Open context"
                 icon="AllIcons.General.FitContent">
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
         <action id="io.gitpod.jetbrains.remote.actions.SettingsAction"
                 class="io.gitpod.jetbrains.remote.actions.SettingsAction"
-                text="Gitpod: Open Settings"
+                text="Gitpod: Open settings"
                 icon="AllIcons.General.Settings">
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
         <action id="io.gitpod.jetbrains.remote.actions.ShareWorkspaceSnapshotAction"
                 class="io.gitpod.jetbrains.remote.actions.ShareWorkspaceSnapshotAction"
-                text="Gitpod: Share Workspace Snapshot"
+                text="Gitpod: Share workspace snapshot"
                 icon="AllIcons.Actions.Dump">
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
         <action id="io.gitpod.jetbrains.remote.actions.AccessControlAction"
                 class="io.gitpod.jetbrains.remote.actions.AccessControlAction"
-                text="Gitpod: Open Access Control"
+                text="Gitpod: Open access control"
                 icon="AllIcons.Actions.Properties">
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
@@ -109,25 +109,25 @@
         </action>
         <action id="io.gitpod.jetbrains.remote.actions.UpgradeSubscriptionAction"
                 class="io.gitpod.jetbrains.remote.actions.UpgradeSubscriptionAction"
-                text="Gitpod: Upgrade Subscription"
+                text="Gitpod: Upgrade subscription"
                 icon="AllIcons.Actions.PreviousOccurence">
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
         <action id="io.gitpod.jetbrains.remote.actions.CommunityChatAction"
                 class="io.gitpod.jetbrains.remote.actions.CommunityChatAction"
-                text="Gitpod: Open Community Chat"
+                text="Gitpod: Open community chat"
                 icon="AllIcons.General.Balloon">
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
         <action id="io.gitpod.jetbrains.remote.actions.ReportIssueAction"
                 class="io.gitpod.jetbrains.remote.actions.ReportIssueAction"
-                text="Gitpod: Report Issue"
+                text="Gitpod: Report issue"
                 icon="AllIcons.General.ShowWarning">
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
         <action id="io.gitpod.jetbrains.remote.actions.FollowUsOnTwitterAction"
                 class="io.gitpod.jetbrains.remote.actions.FollowUsOnTwitterAction"
-                text="Gitpod: Follow Us On Twitter"
+                text="Gitpod: Follow us on Twitter"
                 icon="AllIcons.Gutter.ExtAnnotation">
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
@@ -139,7 +139,7 @@
         </action>
         <action id="io.gitpod.jetbrains.remote.actions.GitpodCopyWebUrlAction"
                 class="io.gitpod.jetbrains.remote.actions.GitpodCopyWebUrlAction"
-                text="Copy Web URL"
+                text="Copy web URL"
                 icon="AllIcons.Actions.Copy">
             <add-to-group group-id="PortForwardingPortGroup" anchor="last"/>
             <add-to-group group-id="PortForwardingSuggestionGroup" anchor="last"/>

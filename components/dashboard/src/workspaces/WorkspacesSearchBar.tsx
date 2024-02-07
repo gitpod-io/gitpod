@@ -31,7 +31,7 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
                 <input
                     type="search"
                     className="w-64 pl-9 border-0"
-                    placeholder="Filter Workspaces"
+                    placeholder="Filter workspaces"
                     value={searchTerm}
                     onChange={(v) => {
                         onSearchTermUpdated(v.target.value);
@@ -69,7 +69,7 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
             </div>
             <Link to={"/new"}>
                 <Button className="ml-2 gap-1.5">
-                    New Workspace <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
+                    New workspace <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
                 </Button>
             </Link>
         </div>

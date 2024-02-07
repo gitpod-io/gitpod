@@ -139,7 +139,7 @@ export function BlockedEmailDomainsList(props: Props) {
             <div className="flex flex-col space-y-2">
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
                     <div className="w-9/12">Domain</div>
-                    <div className="w-1/12">Block Users</div>
+                    <div className="w-1/12">Block users</div>
                     <div className="w-1/12"></div>
                 </div>
                 {searchResult.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((br) => (
@@ -224,7 +224,7 @@ function AddBlockedDomainModal(p: AddBlockedDomainModalProps) {
 
     return (
         <Modal visible={true} onClose={p.onClose} onSubmit={save}>
-            <ModalHeader>New Blocked Domain</ModalHeader>
+            <ModalHeader>New blocked domain</ModalHeader>
             <ModalBody>
                 <Alert type={"warning"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
                     Entries in this table have an immediate effect on all new users. Please use it carefully.
@@ -238,7 +238,7 @@ function AddBlockedDomainModal(p: AddBlockedDomainModalProps) {
                 <Button variant="secondary" onClick={p.onClose}>
                     Cancel
                 </Button>
-                <Button type="submit">Add Blocked Domain</Button>
+                <Button type="submit">Add blocked domain</Button>
             </ModalFooter>
         </Modal>
     );
@@ -269,7 +269,7 @@ function Details(props: {
             />
 
             <CheckboxInputField
-                label="Block Users"
+                label="Block users"
                 hint="Block any user that tries to sign up with this email domain."
                 checked={props.br.negative}
                 disabled={!props.update}

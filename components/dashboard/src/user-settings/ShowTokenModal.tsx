@@ -53,7 +53,7 @@ function ShowTokenModal(props: TokenModalProps) {
                 <div className="mt-4">
                     {props.showDateSelector && (
                         <DateSelector
-                            title="Expiration Date"
+                            title="Expiration date"
                             description={getTokenExpirationDescription(expiration.expirationDate)}
                             options={TokenExpirationDays}
                             value={TokenExpirationDays.find((i) => i.value === expiration.expirationDays)?.value}

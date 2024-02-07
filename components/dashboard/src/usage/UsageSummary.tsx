@@ -22,7 +22,7 @@ export const UsageSummaryData: FC<Props> = ({ creditsUsed }) => {
     return (
         <div className="flex flex-row">
             <div className="mt-8 p-3 flex flex-col">
-                <Subheading>Credits Consumed</Subheading>
+                <Subheading>Credits consumed</Subheading>
                 <div className="flex text-lg text-gray-600 font-semibold">
                     <span className="dark:text-gray-400">
                         {creditsUsed !== undefined ? creditsUsed.toLocaleString() : "-"}
@@ -32,7 +32,7 @@ export const UsageSummaryData: FC<Props> = ({ creditsUsed }) => {
                     <div className="flex text-xs text-gray-600">
                         <span className="dark:text-gray-500 text-gray-400">
                             <Link to="/billing" className="gp-link">
-                                View Billing →
+                                View billing →
                             </Link>
                         </span>
                     </div>

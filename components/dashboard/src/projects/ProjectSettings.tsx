@@ -285,7 +285,7 @@ export default function ProjectSettingsView() {
                 />
 
                 <Button className="mt-4" type="submit" disabled={project?.name === projectName || !!badProjectName}>
-                    Update Name
+                    Update name
                 </Button>
             </form>
             <div>
@@ -326,7 +326,7 @@ export default function ProjectSettingsView() {
                                             : "text-gray-600 dark:text-gray-100",
                                     )}
                                 >
-                                    Commit Interval
+                                    Commit interval
                                 </label>
                                 <input
                                     type="number"
@@ -414,13 +414,13 @@ export default function ProjectSettingsView() {
                 </div>
             </div>
             <div>
-                <Heading2 className="mt-12">Remove Project</Heading2>
+                <Heading2 className="mt-12">Remove project</Heading2>
                 <Subheading className="pb-4 max-w-md">
                     This will delete the project and all project-level environment variables you've set for this
                     project.
                 </Subheading>
                 <Button variant="destructive" onClick={() => setShowRemoveModal(true)}>
-                    Remove Project
+                    Remove project
                 </Button>
             </div>
             {showRemoveModal && (

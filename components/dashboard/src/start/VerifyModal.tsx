@@ -225,7 +225,7 @@ export function VerifyModal() {
         };
         return (
             <Modal onClose={continueStartWorkspace} closeable={false} onSubmit={continueStartWorkspace} visible={true}>
-                <ModalHeader>User Validation Successful</ModalHeader>
+                <ModalHeader>User validation successful</ModalHeader>
                 <ModalBody>
                     <Alert type="success" className="mt-2">
                         Your account has been successfully verified.

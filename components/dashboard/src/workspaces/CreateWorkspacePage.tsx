@@ -382,7 +382,7 @@ export function CreateWorkspacePage() {
         return (
             <div className="flex flex-col mt-32 mx-auto ">
                 <div className="flex flex-col max-h-screen max-w-xl mx-auto items-center w-full">
-                    <Heading1>New Workspace</Heading1>
+                    <Heading1>New workspace</Heading1>
                     <div className="text-gray-500 text-center text-base">
                         Start a new workspace with the following options.
                     </div>
@@ -395,7 +395,7 @@ export function CreateWorkspacePage() {
     return (
         <div className="flex flex-col mt-32 mx-auto ">
             <div className="flex flex-col max-h-screen max-w-xl mx-auto items-center w-full">
-                <Heading1>New Workspace</Heading1>
+                <Heading1>New workspace</Heading1>
                 <div className="text-gray-500 text-center text-base">
                     Create a new workspace in the{" "}
                     <span className="font-semibold text-gray-600 dark:text-gray-400">{currentOrg?.name}</span>{" "}
@@ -455,7 +455,7 @@ export function CreateWorkspacePage() {
                         loading={createWorkspaceMutation.isStarting || !!autostart}
                         disabled={continueButtonDisabled}
                     >
-                        {createWorkspaceMutation.isStarting ? "Opening Workspace ..." : "Continue"}
+                        {createWorkspaceMutation.isStarting ? "Opening workspace ..." : "Continue"}
                     </LoadingButton>
                 </div>
                 {existingWorkspaces.length > 0 && !createWorkspaceMutation.isStarting && (
@@ -681,14 +681,14 @@ export function LimitReachedModal(p: { children: React.ReactNode }) {
         <Modal visible={true} closeable={false} onClose={() => {}}>
             <ModalHeader>
                 <div className="flex">
-                    <span className="flex-grow">Limit Reached</span>
+                    <span className="flex-grow">Limit reached</span>
                     <img className="rounded-full w-8 h-8" src={user?.avatarUrl || ""} alt={user?.name || "Anonymous"} />
                 </div>
             </ModalHeader>
             <ModalBody>{p.children}</ModalBody>
             <ModalFooter>
                 <a href={gitpodHostUrl.asDashboard().toString()}>
-                    <Button variant="secondary">Go to Dashboard</Button>
+                    <Button variant="secondary">Go to dashboard</Button>
                 </a>
                 <a href={gitpodHostUrl.with({ pathname: "plans" }).toString()} className="ml-2">
                     <Button>Upgrade</Button>

@@ -170,7 +170,7 @@ function ListAccessTokensView() {
             <div className="flex items-center sm:justify-between mb-4">
                 <div>
                     <Heading2>
-                        Access Tokens{" "}
+                        Access tokens{" "}
                         <PillLabel type="warn" className="font-semibold self-center py-0.5 px-1.5">
                             <a href="https://www.gitpod.io/docs/references/gitpod-releases">
                                 <span className="text-xs">BETA</span>
@@ -199,7 +199,7 @@ function ListAccessTokensView() {
                     </Subheading>
                 </div>
                 {tokens.length > 0 && (
-                    <LinkButton href={settingsPathPersonalAccessTokenCreate}>New Access Token</LinkButton>
+                    <LinkButton href={settingsPathPersonalAccessTokenCreate}>New access token</LinkButton>
                 )}
             </div>
             {errorMsg.length > 0 && (
@@ -238,7 +238,7 @@ function ListAccessTokensView() {
                             Make sure to copy your access token — you won't be able to access it again.
                         </div>
                         <Button variant="secondary" onClick={handleCopyToken}>
-                            Copy Token to Clipboard
+                            Copy token to clipboard
                         </Button>
                     </div>
                 </div>
@@ -250,7 +250,7 @@ function ListAccessTokensView() {
                     {tokens.length === 0 ? (
                         <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center">
                             <Heading2 color="light" className="text-center pb-3">
-                                No Access Tokens
+                                No access tokens
                             </Heading2>
                             <Subheading className="text-center pb-6 w-96">
                                 Generate an access token for applications that need access to the Gitpod API.{" "}
@@ -260,7 +260,7 @@ function ListAccessTokensView() {
                     ) : (
                         <>
                             <div className="px-3 py-3 flex justify-between space-x-2 text-sm text-gray-400 mb-2 bg-gray-100 dark:bg-gray-800 rounded-xl">
-                                <Subheading className="w-4/12">Token Name</Subheading>
+                                <Subheading className="w-4/12">Token name</Subheading>
                                 <Subheading className="w-4/12">Permissions</Subheading>
                                 <Subheading className="w-3/12">Expires</Subheading>
                                 <div className="w-1/12"></div>
@@ -306,10 +306,10 @@ function ListAccessTokensView() {
             {modalData?.action === TokenAction.Delete && (
                 <ShowTokenModal
                     token={modalData.token}
-                    title="Delete Access Token"
+                    title="Delete access token"
                     description="Are you sure you want to delete this access token?"
                     descriptionImportant="Any applications using this token will no longer be able to access the Gitpod API."
-                    actionDescription="Delete Access Token"
+                    actionDescription="Delete access token"
                     onSave={() => handleDeleteToken(modalData.token.id)}
                     onClose={() => setModalData(undefined)}
                 />
@@ -317,7 +317,7 @@ function ListAccessTokensView() {
             {modalData?.action === TokenAction.Regenerate && (
                 <ShowTokenModal
                     token={modalData.token}
-                    title="Regenerate Token"
+                    title="Regenerate token"
                     description="Are you sure you want to regenerate this access token?"
                     descriptionImportant="Any applications using this token will no longer be able to access the Gitpod API."
                     actionDescription="Regenerate Token"

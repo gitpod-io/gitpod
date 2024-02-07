@@ -322,7 +322,7 @@ function GitProviders() {
 
             {editModal && (
                 <Modal visible={true} onClose={() => setEditModal(undefined)}>
-                    <ModalHeader>Edit Permissions</ModalHeader>
+                    <ModalHeader>Edit permissions</ModalHeader>
                     <ModalBody>
                         <CheckboxListField label="Configure provider permissions.">
                             {(getScopesForAuthProviderType(editModal.provider.type) || []).map((scope) => (
@@ -344,13 +344,13 @@ function GitProviders() {
                             onClick={() => updatePermissions()}
                             disabled={equals(editModal.nextScopes, editModal.prevScopes)}
                         >
-                            Update Permissions
+                            Update permissions
                         </Button>
                     </ModalFooter>
                 </Modal>
             )}
 
-            <Heading2>Git Providers</Heading2>
+            <Heading2>Git providers</Heading2>
             <Subheading>
                 Manage your permissions to the available Git provider integrations.{" "}
                 <a

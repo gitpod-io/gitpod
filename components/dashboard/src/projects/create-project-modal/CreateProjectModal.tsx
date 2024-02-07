@@ -52,7 +52,7 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleSubmit}>
-            <ModalHeader>New Project</ModalHeader>
+            <ModalHeader>New project</ModalHeader>
             <ModalBody>
                 <div className="w-112 max-w-full">
                     {needsGitAuth ? (

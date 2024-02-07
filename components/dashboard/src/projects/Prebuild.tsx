@@ -71,7 +71,7 @@ export default function PrebuildPage() {
                         <p className="mx-2 my-auto">·</p>
                         <div className="my-auto">
                             <p className="text-gray-500 dark:text-gray-50">
-                                Incremental Prebuild (
+                                Incremental prebuild (
                                 <a
                                     className="gp-link"
                                     title={prebuild.basedOnPrebuildId}
@@ -146,7 +146,7 @@ export default function PrebuildPage() {
                             {isCancellingPrebuild && (
                                 <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
                             )}
-                            <span>Cancel Prebuild</span>
+                            <span>Cancel prebuild</span>
                         </Button>
                     ) : (
                         <>
@@ -159,7 +159,7 @@ export default function PrebuildPage() {
                                 {isRerunningPrebuild && (
                                     <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
                                 )}
-                                <span>Rerun Prebuild ({prebuild?.ref})</span>
+                                <span>Rerun prebuild ({prebuild?.ref})</span>
                             </Button>
                             {prebuild?.status?.phase?.name === PrebuildPhase_Phase.AVAILABLE ? (
                                 <a
@@ -168,10 +168,10 @@ export default function PrebuildPage() {
                                         .withContext(`open-prebuild/${prebuild?.id}/${prebuild?.contextUrl}`)
                                         .toString()}
                                 >
-                                    <Button>New Workspace (with this prebuild)</Button>
+                                    <Button>New workspace (with this prebuild)</Button>
                                 </a>
                             ) : (
-                                <Button disabled={true}>New Workspace (with this prebuild)</Button>
+                                <Button disabled={true}>New workspace (with this prebuild)</Button>
                             )}
                         </>
                     )}

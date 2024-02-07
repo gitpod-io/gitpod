@@ -137,7 +137,7 @@ export default function OrganizationSelector() {
                       title: "Create a new organization",
                       customContent: (
                           <div className="w-full text-gray-500 flex items-center">
-                              <span className="flex-1">New Organization</span>
+                              <span className="flex-1">New organization</span>
                               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5">
                                   <path
                                       fill="currentColor"

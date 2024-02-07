@@ -123,7 +123,7 @@ export default function TeamSettingsPage() {
             <OrgSettingsPage>
                 <div className="space-y-4">
                     <div>
-                        <Heading2>Organization Details</Heading2>
+                        <Heading2>Organization details</Heading2>
                         <Subheading>Details of your organization within Gitpod.</Subheading>
                     </div>
                     <ConfigurationSettingsField>
@@ -168,7 +168,7 @@ export default function TeamSettingsPage() {
                     </ConfigurationSettingsField>
 
                     <ConfigurationSettingsField>
-                        <Heading3>Collaboration & Sharing</Heading3>
+                        <Heading3>Collaboration & sharing</Heading3>
 
                         {updateTeamSettings.isError && (
                             <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
@@ -178,7 +178,7 @@ export default function TeamSettingsPage() {
                         )}
 
                         <CheckboxInputField
-                            label="Workspace Sharing"
+                            label="Workspace sharing"
                             hint="Allow workspaces created within an Organization to share the workspace with any authenticated user."
                             checked={!settings?.workspaceSharingDisabled}
                             onChange={(checked) => handleUpdateTeamSettings({ workspaceSharingDisabled: !checked })}
@@ -187,7 +187,7 @@ export default function TeamSettingsPage() {
                     </ConfigurationSettingsField>
 
                     <ConfigurationSettingsField>
-                        <Heading3>Workspace Images</Heading3>
+                        <Heading3>Workspace images</Heading3>
                         <Subheading>Choose a default image for all workspaces in the organization.</Subheading>
 
                         <WorkspaceImageButton
@@ -208,7 +208,7 @@ export default function TeamSettingsPage() {
 
                     {enableOrgWorkspaceClassRestrictions && (
                         <ConfigurationSettingsField>
-                            <Heading3>Available Workspace Classes</Heading3>
+                            <Heading3>Available workspace classes</Heading3>
                             <Subheading>Limit the available workspace classes in your organization.</Subheading>
 
                             {settings && <WorkspaceClassOptions disabled={!isOwner} settings={settings} />}
@@ -217,14 +217,14 @@ export default function TeamSettingsPage() {
 
                     {user?.organizationId !== org?.id && isOwner && (
                         <ConfigurationSettingsField>
-                            <Heading3>Delete Organization</Heading3>
+                            <Heading3>Delete organization</Heading3>
                             <Subheading className="pb-4 max-w-2xl">
                                 Deleting this organization will also remove all associated data, including projects and
                                 workspaces. Deleted organizations cannot be restored!
                             </Subheading>
 
                             <Button variant="destructive" onClick={() => setModal(true)}>
-                                Delete Organization
+                                Delete organization
                             </Button>
                         </ConfigurationSettingsField>
                     )}
@@ -232,8 +232,8 @@ export default function TeamSettingsPage() {
             </OrgSettingsPage>
 
             <ConfirmationModal
-                title="Delete Organization"
-                buttonText="Delete Organization"
+                title="Delete organization"
+                buttonText="Delete organization"
                 buttonDisabled={teamNameToDelete !== org?.name}
                 visible={modal}
                 warningHead="Warning"
@@ -386,7 +386,7 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
             onClose={props.onClose}
             onSubmit={() => handleUpdateTeamSettings({ defaultWorkspaceImage })}
         >
-            <ModalHeader>Workspace Default Image</ModalHeader>
+            <ModalHeader>Workspace default image</ModalHeader>
             <ModalBody>
                 <Alert type="warning" className="mb-2">
                     <span className="font-medium">Warning:</span> You are setting a default image for all workspaces
@@ -408,7 +408,7 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
                 </div>
             </ModalBody>
             <ModalFooter>
-                <Button type="submit">Update Workspace Default Image</Button>
+                <Button type="submit">Update workspace default image</Button>
             </ModalFooter>
         </Modal>
     );

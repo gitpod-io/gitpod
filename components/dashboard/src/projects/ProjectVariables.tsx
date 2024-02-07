@@ -68,14 +68,14 @@ export default function ProjectVariablesPage() {
             )}
             <div className="mb-2 flex">
                 <div className="flex-grow">
-                    <Heading2>Environment Variables</Heading2>
+                    <Heading2>Environment variables</Heading2>
                     <Subheading>Manage project-specific environment variables.</Subheading>
                 </div>
                 {envVars.length > 0 && <Button onClick={() => setShowAddVariableModal(true)}>New Variable</Button>}
             </div>
             {envVars.length === 0 ? (
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center justify-center space-y-3">
-                    <Heading2 color="light">No Environment Variables</Heading2>
+                    <Heading2 color="light">No environment variables</Heading2>
                     <Subheading className="text-center w-96">
                         All <strong>project-specific environment variables</strong> will be visible in prebuilds and
                         optionally in workspaces for this project.
@@ -86,7 +86,7 @@ export default function ProjectVariablesPage() {
                 <ItemsList>
                     <Item header={true} className="grid grid-cols-3 items-center">
                         <ItemField>Name</ItemField>
-                        <ItemField>Visibility in Workspaces</ItemField>
+                        <ItemField>Visibility in workspaces</ItemField>
                         <ItemField></ItemField>
                     </Item>
                     {envVars.map((variable) => {
@@ -143,12 +143,12 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
 
     return (
         <Modal visible onClose={props.onClose} onSubmit={addVariable}>
-            <ModalHeader>New Variable</ModalHeader>
+            <ModalHeader>New variable</ModalHeader>
             <ModalBody>
                 <Alert type="warning">
                     <strong>Project environment variables can be exposed.</strong>
                     <br />
-                    Even if <strong>Hide Variable in Workspaces</strong> is enabled, anyone with read access to your
+                    Even if <strong>Hide variable in workspaces</strong> is enabled, anyone with read access to your
                     repository can access secret values if they are printed in the terminal, logged, or persisted to the
                     file system.
                 </Alert>
@@ -158,7 +158,7 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                 <TextInputField label="Value" value={value} type="text" name="value" onChange={setValue} />
 
                 <CheckboxInputField
-                    label="Hide Variable in Workspaces"
+                    label="Hide variable in workspaces"
                     hint="Unset this environment variable so that it's not accessible from the terminal in workspaces."
                     checked={admission === EnvironmentVariableAdmission.PREBUILD}
                     onChange={() =>
@@ -190,7 +190,7 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                     Cancel
                 </Button>
                 <LoadingButton type="submit" loading={setProjectEnvVar.isLoading}>
-                    Add Variable
+                    Add variable
                 </LoadingButton>
             </ModalFooter>
         </Modal>
