@@ -10,7 +10,6 @@ import {
     CommitInfo,
     PrebuildWithStatus,
     PrebuiltWorkspace,
-    PrebuiltWorkspaceState,
     Project,
     StartPrebuildContext,
     StartPrebuildResult,
@@ -58,7 +57,7 @@ export interface PrebuildFilter {
         id: string;
         branch?: string;
     };
-    status?: PrebuiltWorkspaceState;
+    state?: "failed" | "succeeded" | "unfinished";
     searchTerm?: string;
 }
 
@@ -255,27 +254,38 @@ export class PrebuildManager {
         organizationId: string,
         pagination: {
             limit: number;
-            offset?: number;
+            offset: number;
         },
-        filter?: PrebuildFilter,
+        filter: PrebuildFilter,
+        sort: {
+            field: string;
+            order: "DESC" | "ASC";
+        },
     ): Promise<PrebuildWithStatus[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_prebuild", organizationId);
 
         const prebuiltWorkspaces = await this.workspaceDB
             .trace(ctx)
-            .findPrebuiltWorkspacesByOrganization(organizationId, pagination.offset, pagination.limit, filter);
-        const prebuildMap = new Map(prebuiltWorkspaces.map((prebuild) => [prebuild.id, prebuild]));
-        const infos = await this.workspaceDB.trace({}).findPrebuildInfos([...prebuildMap.keys()]);
+            .findPrebuiltWorkspacesByOrganization(organizationId, pagination, filter, sort);
+        const prebuildIds = prebuiltWorkspaces.map((prebuild) => prebuild.id);
+        const infos = await this.workspaceDB.trace({}).findPrebuildInfos(prebuildIds);
+        const prebuildInfosMap = new Map(infos.map((info) => [info.id, info]));
 
-        return infos.map((info) => {
-            const prebuild = prebuildMap.get(info.id)!;
-            const fullPrebuild: PrebuildWithStatus = { info, status: prebuild.state };
-            if (prebuild.error) {
-                fullPrebuild.error = prebuild.error;
-            }
+        return prebuiltWorkspaces
+            .map((prebuild) => {
+                const info = prebuildInfosMap.get(prebuild.id);
+                if (!info) {
+                    return;
+                }
 
-            return fullPrebuild;
-        });
+                const fullPrebuild: PrebuildWithStatus = { info, status: prebuild.state };
+                if (prebuild.error) {
+                    fullPrebuild.error = prebuild.error;
+                }
+
+                return fullPrebuild;
+            })
+            .filter((prebuild): prebuild is PrebuildWithStatus => !!prebuild); // filter out potential undefined values
     }
 
     async findPrebuildByWorkspaceID(

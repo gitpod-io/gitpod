@@ -23,7 +23,7 @@ type Props = {
     searchTerm: string;
     prebuildsFilter: string;
     sortBy: string;
-    sortOrder: "asc" | "desc";
+    sortOrder: TableSortOrder;
     hasNextPage: boolean;
     hasMoreThanOnePage: boolean;
     isSearching: boolean;

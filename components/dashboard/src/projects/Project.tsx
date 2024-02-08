@@ -17,7 +17,6 @@ import NoAccess from "../icons/NoAccess.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
 import { useCurrentProject } from "./project-context";
 import { getProjectTabs } from "./projects.routes";
 import { shortCommitMessage, toRemoteURL } from "./render-utils";
@@ -26,6 +25,7 @@ import Tooltip from "../components/Tooltip";
 import { prebuildClient } from "../service/public-api";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Button } from "@podkit/buttons/Button";
+import { prebuildStatusIcon, prebuildStatusLabel } from "./prebuild-utils";
 
 export default function ProjectsPage() {
     const history = useHistory();
@@ -309,8 +309,8 @@ export default function ProjectsPage() {
                                                 alt={branch.changeAuthor}
                                             />
                                         );
-                                        const statusIcon = prebuildStatusIcon(prebuild);
-                                        const status = prebuildStatusLabel(prebuild);
+                                        const statusIcon = prebuild && prebuildStatusIcon(prebuild);
+                                        const status = prebuild && prebuildStatusLabel(prebuild);
 
                                         return (
                                             <Item

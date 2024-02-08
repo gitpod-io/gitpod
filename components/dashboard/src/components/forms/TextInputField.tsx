@@ -9,7 +9,7 @@ import { useId } from "../../hooks/useId";
 import { InputField } from "./InputField";
 import { cn } from "@podkit/lib/cn";
 
-type TextInputFieldTypes = "text" | "password" | "email" | "url";
+type TextInputFieldTypes = "text" | "password" | "email" | "url" | "search";
 
 type Props = TextInputProps & {
     label?: ReactNode;

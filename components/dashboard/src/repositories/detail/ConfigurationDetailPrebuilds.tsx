@@ -14,6 +14,7 @@ import { PrebuildSettingsForm } from "./prebuilds/PrebuildSettingsForm";
 import { useConfigurationMutation } from "../../data/configurations/configuration-queries";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { EnablePrebuildsError } from "./prebuilds/EnablePrebuildsError";
+import { Link } from "react-router-dom";
 
 type Props = {
     configuration: Configuration;
@@ -68,18 +69,25 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                         !!configuration.prebuildSettings?.enabled ? "Prebuilds are enabled" : "Prebuilds are disabled"
                     }
                     description={
-                        <TextMuted>
-                            Enabling requires permissions to configure repository webhooks.{" "}
-                            <a
-                                href="https://www.gitpod.io/docs/configure/projects/prebuilds"
-                                className="gp-link"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Learn more
-                            </a>
+                        <>
+                            <TextMuted>
+                                Enabling requires permissions to configure repository webhooks.{" "}
+                                <a
+                                    href="https://www.gitpod.io/docs/configure/projects/prebuilds"
+                                    className="gp-link"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Learn more
+                                </a>
+                                .
+                            </TextMuted>
+                            <br />
+                            <Link to={`/prebuilds?configurationId=${configuration.id}`} className="gp-link">
+                                View prebuild history
+                            </Link>
                             .
-                        </TextMuted>
+                        </>
                     }
                 />
             </ConfigurationSettingsField>

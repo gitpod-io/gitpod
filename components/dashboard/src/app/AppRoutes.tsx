@@ -36,7 +36,7 @@ import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { WebsocketClients } from "./WebsocketClients";
 import { BlockedEmailDomains } from "../admin/BlockedEmailDomains";
 import { AppNotifications } from "../AppNotifications";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { useHasConfigurationsAndPrebuildsEnabled } from "../data/featureflag-query";
 import { projectsPathInstallGitHubApp } from "../projects/projects.routes";
 import { Heading1, Subheading } from "@podkit/typography/Headings";
 
@@ -80,10 +80,12 @@ const ConfigurationDetailPage = React.lazy(
     () => import(/* webpackPrefetch: true */ "../repositories/detail/ConfigurationDetailPage"),
 );
 
+const PrebuildListPage = React.lazy(() => import(/* webpackPrefetch: true */ "../prebuilds/list/PrebuildList"));
+
 export const AppRoutes = () => {
     const hash = getURLHash();
     const location = useLocation();
-    const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
+    const configurationsAndPrebuilds = useHasConfigurationsAndPrebuildsEnabled();
 
     // TODO: Add a Route for this instead of inspecting location manually
     if (location.pathname.startsWith("/blocked")) {
@@ -206,9 +208,14 @@ export const AppRoutes = () => {
                     <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />
                     <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
 
-                    {repoConfigListAndDetail && <Route exact path="/repositories" component={ConfigurationListPage} />}
+                    {configurationsAndPrebuilds && <Route exact path={`/prebuilds`} component={PrebuildListPage} />}
+                    {configurationsAndPrebuilds && (
+                        <Route exact path="/repositories" component={ConfigurationListPage} />
+                    )}
                     {/* Handles all /repositories/:id/* routes in a nested router */}
-                    {repoConfigListAndDetail && <Route path="/repositories/:id" component={ConfigurationDetailPage} />}
+                    {configurationsAndPrebuilds && (
+                        <Route path="/repositories/:id" component={ConfigurationDetailPage} />
+                    )}
                     {/* basic redirect for old team slugs */}
                     <Route path={["/t/"]} exact>
                         <Redirect to="/projects" />

@@ -7,7 +7,7 @@
 import React, { FC, FunctionComponent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as RadixPopover from "@radix-ui/react-popover";
 import { ChevronDown, CircleDashed } from "lucide-react";
-import classNames from "classnames";
+import { cn } from "@podkit/lib/cn";
 
 export interface ComboboxElement {
     id: string;
@@ -23,6 +23,9 @@ export interface ComboboxProps {
     searchPlaceholder?: string;
     disableSearch?: boolean;
     expanded?: boolean;
+    className?: string;
+    dropDownClassName?: string;
+    itemClassName?: string;
     onSelectionChange: (id: string) => void;
     // Meant to allow consumers to react to search changes even though state is managed internally
     onSearchChange?: (searchString: string) => void;
@@ -37,6 +40,9 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
     getElements,
     disableSearch,
     children,
+    className,
+    dropDownClassName,
+    itemClassName,
     onSelectionChange,
     onSearchChange,
 }) => {
@@ -173,7 +179,7 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
         <RadixPopover.Root defaultOpen={expanded} open={showDropDown} onOpenChange={handleOpenChange}>
             <RadixPopover.Trigger
                 disabled={disabled}
-                className={classNames(
+                className={cn(
                     "w-full h-16 bg-pk-surface-secondary flex flex-row items-center justify-start px-2 text-left",
                     // when open, just have border radius on top
                     showDropDown ? "rounded-none rounded-t-lg" : "rounded-lg",
@@ -183,12 +189,13 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
                     !showDropDown && !disabled && "hover:bg-pk-surface-tertiary cursor-pointer",
                     // opacity when disabled
                     disabled && "opacity-70",
+                    className,
                 )}
             >
                 {children}
                 <div className="flex-grow" />
                 <div
-                    className={classNames(
+                    className={cn(
                         "mr-2 text-pk-content-secondary transition-transform",
                         showDropDown && "rotate-180 transition-all",
                     )}
@@ -198,10 +205,11 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
             </RadixPopover.Trigger>
             <RadixPopover.Portal>
                 <RadixPopover.Content
-                    className={classNames(
+                    className={cn(
                         "rounded-b-lg p-2 filter drop-shadow-xl z-50 outline-none",
                         "bg-pk-surface-secondary",
                         "w-[--radix-popover-trigger-width]",
+                        dropDownClassName,
                     )}
                     onKeyDown={onKeyDown}
                 >
@@ -237,6 +245,7 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
                                         key={element.id}
                                         element={element}
                                         isActive={element.id === selectedElementTemp}
+                                        className={itemClassName}
                                         onSelected={onSelected}
                                         onFocused={setActiveElement}
                                     />
@@ -256,11 +265,12 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
 
 type ComboboxSelectedItemProps = {
     // Either a string of the icon source or an element
-    icon: ReactNode;
+    icon?: ReactNode;
     loading?: boolean;
     title: ReactNode;
-    subtitle: ReactNode;
+    subtitle?: ReactNode;
     htmlTitle?: string;
+    titleClassName?: string;
 };
 
 export const ComboboxSelectedItem: FC<ComboboxSelectedItemProps> = ({
@@ -269,10 +279,11 @@ export const ComboboxSelectedItem: FC<ComboboxSelectedItemProps> = ({
     title,
     subtitle,
     htmlTitle,
+    titleClassName,
 }) => {
     return (
         <div
-            className={classNames("flex items-center truncate", loading && "animate-pulse")}
+            className={cn("flex items-center truncate", loading && "animate-pulse")}
             title={htmlTitle}
             aria-live="polite"
             aria-busy={loading}
@@ -292,7 +303,7 @@ export const ComboboxSelectedItem: FC<ComboboxSelectedItemProps> = ({
                     </div>
                 ) : (
                     <>
-                        <div className="text-pk-content-secondary font-semibold">{title}</div>
+                        <div className={cn("text-pk-content-secondary font-semibold", titleClassName)}>{title}</div>
                         <div className="text-xs text-pk-content-tertiary truncate">{subtitle}</div>
                     </>
                 )}
@@ -304,11 +315,12 @@ export const ComboboxSelectedItem: FC<ComboboxSelectedItemProps> = ({
 type ComboboxItemProps = {
     element: ComboboxElement;
     isActive: boolean;
+    className?: string;
     onSelected: (id: string) => void;
     onFocused: (id: string) => void;
 };
 
-export const ComboboxItem: FC<ComboboxItemProps> = ({ element, isActive, onSelected, onFocused }) => {
+export const ComboboxItem: FC<ComboboxItemProps> = ({ element, isActive, className, onSelected, onFocused }) => {
     let selectionClasses = `bg-pk-surface-tertiary/25 cursor-pointer`;
     if (isActive) {
         selectionClasses = `bg-pk-content-tertiary/10 cursor-pointer focus:outline-none focus:ring-0`;
@@ -316,10 +328,11 @@ export const ComboboxItem: FC<ComboboxItemProps> = ({ element, isActive, onSelec
     if (!element.isSelectable) {
         selectionClasses = ``;
     }
+
     return (
         <li
             id={element.id}
-            className={"h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses}
+            className={cn("h-min rounded-lg flex items-center px-2 py-1.5", selectionClasses, className)}
             onMouseDown={() => {
                 if (element.isSelectable) {
                     onSelected(element.id);

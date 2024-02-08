@@ -11,7 +11,7 @@ import { useCurrentUser } from "../user-context";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useLocation } from "react-router";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { useHasConfigurationsAndPrebuildsEnabled } from "../data/featureflag-query";
 import { useIsOwner, useListOrganizationMembers, useHasRolePermission } from "../data/organizations/members-query";
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
@@ -25,15 +25,14 @@ export default function OrganizationSelector() {
     const hasMemberPermission = useHasRolePermission(OrganizationRole.MEMBER);
     const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
-    const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
-    const showRepoConfigMenuItem = useFeatureFlag("showRepoConfigMenuItem");
+    const configurationsAndPrebuilds = useHasConfigurationsAndPrebuildsEnabled();
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
     const canCreateOrgs = user && !isOrganizationOwned(user);
 
     const userFullName = user?.name || "...";
 
-    let activeOrgEntry = !currentOrg.data
+    const activeOrgEntry = !currentOrg.data
         ? {
               title: userFullName,
               customContent: <CurrentOrgEntry title={userFullName} subtitle="Personal Account" />,
@@ -61,13 +60,20 @@ export default function OrganizationSelector() {
         // collaborator can't access projects, members, usage and billing
         if (hasMemberPermission) {
             // Check both flags as one just controls if the menu item is present, the other if the page is accessible
-            if (repoConfigListAndDetail && showRepoConfigMenuItem) {
+            if (configurationsAndPrebuilds) {
                 linkEntries.push({
                     title: "Repositories",
                     customContent: <LinkEntry>Repositories</LinkEntry>,
                     active: false,
                     separator: false,
                     link: "/repositories",
+                });
+                linkEntries.push({
+                    title: "Prebuilds",
+                    customContent: <LinkEntry>Prebuilds</LinkEntry>,
+                    active: false,
+                    separator: false,
+                    link: "/prebuilds",
                 });
             }
             linkEntries.push({

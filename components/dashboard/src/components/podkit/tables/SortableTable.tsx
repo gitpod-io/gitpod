@@ -11,11 +11,12 @@ import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { cn } from "@podkit/lib/cn";
 
 export type TableSortOrder = "asc" | "desc";
+export type SortCallback = (sortBy: string, sortOrder: TableSortOrder) => void;
 
 export type SortableTableHeadProps = {
     columnName: string;
     sortOrder?: TableSortOrder;
-    onSort: (sortBy: string, sortOrder: TableSortOrder) => void;
+    onSort: SortCallback;
 } & HideableCellProps;
 export const SortableTableHead = React.forwardRef<
     HTMLTableCellElement,

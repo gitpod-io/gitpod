@@ -6,7 +6,7 @@
 
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Button } from "@podkit/buttons/Button";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { FC, useMemo } from "react";
 import Alert from "../../components/Alert";
 import { WidePageWithSubMenu } from "../../components/WidePageWithSubmenu";
@@ -18,6 +18,7 @@ import { ConfigurationDetailWorkspaces } from "./ConfigurationDetailWorkspaces";
 import { ConfigurationDetailPrebuilds } from "./ConfigurationDetailPrebuilds";
 import { ConfigurationVariableList } from "./variables/ConfigurationVariableList";
 import { useWorkspaceClasses } from "../../data/workspaces/workspace-classes-query";
+import { LoadingState } from "@podkit/loading/LoadingState";
 
 type PageRouteParams = {
     id: string;
@@ -28,7 +29,7 @@ const ConfigurationDetailPage: FC = () => {
     useWorkspaceClasses();
 
     const { id } = useParams<PageRouteParams>();
-    let { path, url } = useRouteMatch();
+    const { path, url } = useRouteMatch();
 
     const { data, error, isLoading, refetch } = useConfiguration(id);
     const prebuildsEnabled = !!data?.prebuildSettings?.enabled;
@@ -40,7 +41,7 @@ const ConfigurationDetailPage: FC = () => {
                 link: [url],
             },
             {
-                title: "Prebuilds",
+                title: "Prebuild settings",
                 link: [`${url}/prebuilds`],
                 icon: !prebuildsEnabled ? <AlertTriangle size={20} /> : undefined,
             },
@@ -64,7 +65,7 @@ const ConfigurationDetailPage: FC = () => {
                 backLink="/repositories"
             />
             <WidePageWithSubMenu subMenu={settingsMenu} navTitle="Configuration Settings">
-                {isLoading && <Loader2 className="animate-spin" />}
+                {isLoading && <LoadingState />}
                 {error ? (
                     <div className="gap-4">
                         <Alert type="error">

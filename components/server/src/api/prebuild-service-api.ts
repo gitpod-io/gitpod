@@ -30,6 +30,7 @@ import { ctxSignal, ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
+import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 import { Config } from "../config";
 
 @injectable()
@@ -141,6 +142,9 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
         if (limit <= 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be greater than 0");
         }
+        if ((filter?.searchTerm || "").length > 100) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "searchTerm must be less than 100 characters");
+        }
         if (!uuidValidate(organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
@@ -155,13 +159,20 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             configuration: filter?.configuration,
             searchTerm: filter?.searchTerm,
         };
-        if (filter?.status) {
-            const parsedStatusFilter = this.apiConverter.fromPrebuildPhase(filter.status);
-            if (parsedStatusFilter) {
-                prebuildsFilter.status = parsedStatusFilter;
-            } else {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invalid prebuild status filter provided");
-            }
+
+        if (filter?.state) {
+            prebuildsFilter.state = this.apiConverter.fromPrebuildFilterState(filter?.state);
+        }
+
+        const sort = request.sort?.[0];
+        const sorting = this.apiConverter.fromSort(
+            new Sort({
+                field: sort?.field ?? "creationTime",
+                order: sort?.order ?? SortOrder.DESC,
+            }),
+        );
+        if (!sorting.order) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "sort.order must have a valid value");
         }
 
         const prebuilds = await this.prebuildManager.listPrebuilds(
@@ -173,6 +184,10 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
                 offset: paginationToken.offset,
             },
             prebuildsFilter,
+            {
+                ...sorting,
+                order: sorting.order ?? "DESC",
+            },
         );
 
         const apiPrebuilds = prebuilds.map((pb) => this.apiConverter.toPrebuild(this.config.hostUrl.toString(), pb));
