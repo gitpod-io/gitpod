@@ -1,12 +1,25 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
+FROM gitpod/openvscode-server-linux-build-agent:centos7-devtoolset8-x64 as dependencies_builder
+
+ARG CODE_COMMIT
+
+RUN mkdir /gp-code \
+    && cd /gp-code \
+    && git init \
+    && git remote add origin https://github.com/gitpod-io/openvscode-server \
+    && git fetch origin $CODE_COMMIT --depth=1 \
+    && git reset --hard FETCH_HEAD
+WORKDIR /gp-code
+RUN yarn --cwd remote --frozen-lockfile --network-timeout 180000
 
 FROM gitpod/openvscode-server-linux-build-agent:focal-x64 as code_builder
 
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
 ENV VSCODE_ARCH=x64
+ENV NPM_REGISTRY=https://registry.yarnpkg.com
 
 ARG CODE_COMMIT
 ARG CODE_QUALITY
@@ -28,6 +41,10 @@ ENV npm_config_arch=x64
 RUN mkdir -p .build \
     && yarn --cwd build --frozen-lockfile --network-timeout 180000 \
     && ./build/azure-pipelines/linux/install.sh
+
+# copy remote dependencies build in dependencies_builder image
+RUN rm -rf remote/node_modules/
+COPY --from=dependencies_builder /gp-code/remote/node_modules/ /gp-code/remote/node_modules/
 
 # check that the provided codeVersion is the correct one for the given codeCommit
 RUN commitVersion=$(cat package.json | jq -r .version) \
