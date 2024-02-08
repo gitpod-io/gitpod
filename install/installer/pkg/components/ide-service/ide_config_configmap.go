@@ -111,6 +111,15 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImage:       resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
 					LatestImageLayers: []string{codeWebExtensionImage, codeHelperImage},
 				},
+				"code1_85": {
+					OrderKey:    "011",
+					Title:       "VS Code",
+					Type:        ide_config.IDETypeBrowser,
+					Label:       "Browser",
+					Logo:        getIdeLogoPath("vscode"),
+					Image:       ctx.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.Code1_85IDEImageStableVersion),
+					ImageLayers: []string{codeWebExtensionImage, codeHelperImage},
+				},
 				codeDesktop: {
 					OrderKey:    "020",
 					Title:       "VS Code",
