@@ -38,13 +38,15 @@ import (
 type ResolverProvider func() remotes.Resolver
 
 type IDEServiceServer struct {
-	config                 *config.ServiceConfiguration
-	originIDEConfig        []byte
-	parsedIDEConfigContent string
-	ideConfig              *config.IDEConfig
-	ideConfigFileName      string
-	experimentsClient      experiments.Client
-	resolver               ResolverProvider
+	config                         *config.ServiceConfiguration
+	originIDEConfig                []byte
+	parsedIDEConfigContent         string
+	parsedCode1_85IDEConfigContent string
+	ideConfig                      *config.IDEConfig
+	code1_85IdeConfig              *config.IDEConfig
+	ideConfigFileName              string
+	experimentsClient              experiments.Client
+	resolver                       ResolverProvider
 
 	api.UnimplementedIDEServiceServer
 }
@@ -169,9 +171,23 @@ func (s *IDEServiceServer) register(grpcServer *grpc.Server) {
 }
 
 func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequest) (*api.GetConfigResponse, error) {
-	return &api.GetConfigResponse{
-		Content: s.parsedIDEConfigContent,
-	}, nil
+	attributes := experiments.Attributes{
+		UserID:    req.User.Id,
+		UserEmail: req.User.GetEmail(),
+	}
+
+	// Check flag to enable vscode for older linux distros (distros that don't support glibc 2.28)
+	enableVscodeForOlderLinuxDistros := s.experimentsClient.GetBoolValue(ctx, "enableVscodeForOlderLinuxDistros", false, attributes)
+
+	if enableVscodeForOlderLinuxDistros {
+		return &api.GetConfigResponse{
+			Content: s.parsedCode1_85IDEConfigContent,
+		}, nil
+	} else {
+		return &api.GetConfigResponse{
+			Content: s.parsedIDEConfigContent,
+		}, nil
+	}
 }
 
 func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
@@ -193,8 +209,36 @@ func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
 			return
 		}
 
-		s.ideConfig = originalIdeConfig
-		s.parsedIDEConfigContent = string(parsedConfig)
+		// Precompute the config without code 1.85
+		code1_85IdeOptions := originalIdeConfig.IdeOptions.Options
+		ideOptions := make(map[string]config.IDEOption)
+		for key, ide := range code1_85IdeOptions {
+			if key != "code1_85" {
+				ideOptions[key] = ide
+			}
+		}
+
+		ideConfig := &config.IDEConfig{
+			SupervisorImage: originalIdeConfig.SupervisorImage,
+			IdeOptions: config.IDEOptions{
+				Options:           ideOptions,
+				DefaultIde:        originalIdeConfig.IdeOptions.DefaultIde,
+				DefaultDesktopIde: originalIdeConfig.IdeOptions.DefaultDesktopIde,
+				Clients:           originalIdeConfig.IdeOptions.Clients,
+			},
+		}
+
+		parsedIdeConfig, err := json.Marshal(ideConfig)
+		if err != nil {
+			log.WithError(err).Error("cannot marshal ide config")
+			return
+		}
+
+		s.parsedCode1_85IDEConfigContent = string(parsedConfig)
+		s.code1_85IdeConfig = originalIdeConfig
+
+		s.ideConfig = ideConfig
+		s.parsedIDEConfigContent = string(parsedIdeConfig)
 
 		s.originIDEConfig = ideConfigbuffer
 
@@ -310,7 +354,7 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 	log.WithField("req", req).Debug("receive ResolveWorkspaceConfig request")
 
 	// make a copy for ref ideConfig, it's safe because we replace ref in update config
-	ideConfig := s.ideConfig
+	ideConfig := s.code1_85IdeConfig
 
 	var defaultIde *config.IDEOption
 
