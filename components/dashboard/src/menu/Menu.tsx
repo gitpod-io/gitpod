@@ -23,6 +23,7 @@ import { User, RoleOrPermission } from "@gitpod/public-api/lib/gitpod/v1/user_pb
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { useHasRolePermission } from "../data/organizations/members-query";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { ConfigurationsMigrationCoachmark } from "../repositories/coachmarks/MigrationCoachmark";
 
 interface Entry {
     title: string;
@@ -74,8 +75,10 @@ export default function Menu() {
             <header className="app-container flex flex-col pt-4" data-analytics='{"button_type":"menu"}'>
                 <div className="flex justify-between h-10 mb-3 w-full">
                     <div className="flex items-center">
-                        <OrganizationSelector />
-                        {/* hidden on smaller screens (in it's own menu below on smaller screens) */}
+                        <ConfigurationsMigrationCoachmark>
+                            <OrganizationSelector />
+                        </ConfigurationsMigrationCoachmark>
+                        {/* hidden on smaller screens (in its own menu below on smaller screens) */}
                         <div className="hidden md:block pl-2">
                             <OrgPagesNav />
                         </div>

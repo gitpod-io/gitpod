@@ -20,7 +20,7 @@ export default function OrganizationSelector() {
     const user = useCurrentUser();
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
-    const members = useListOrganizationMembers().data || [];
+    const members = useListOrganizationMembers().data ?? [];
     const owner = useIsOwner();
     const hasMemberPermission = useHasRolePermission(OrganizationRole.MEMBER);
     const { data: billingMode } = useOrgBillingMode();
