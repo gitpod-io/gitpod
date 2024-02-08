@@ -24,7 +24,7 @@ export INSTALL_K3S_SKIP_DOWNLOAD=true
 
 # Seems like this is a bit flaky now, with k3s not always being ready, and the labeling
 # failing occasionally. Sleeping for a bit solves it.
-sleep 10
+sleep 60
 
 # shellcheck disable=SC2154
 # shellcheck disable=SC2086
