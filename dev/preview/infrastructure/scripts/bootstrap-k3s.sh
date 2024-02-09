@@ -15,7 +15,6 @@ export INSTALL_K3S_SKIP_DOWNLOAD=true
   --write-kubeconfig-mode 444 \
   --disable traefik \
   --disable metrics-server \
-  --disable local-storage \
   --flannel-backend=none \
   --kubelet-arg config=/etc/kubernetes/kubelet-config.json \
   --kubelet-arg cgroup-driver=systemd \

@@ -23,6 +23,6 @@ write_files:
         password = "${dockerhub_passwd}"
       EOF
 
-      sudo systemctl restart containerd.service &
+      sudo systemctl restart containerd.service --wait
 runcmd:
  - bash /usr/local/bin/bootstrap.sh
