@@ -15,6 +15,7 @@ export INSTALL_K3S_SKIP_DOWNLOAD=true
   --write-kubeconfig-mode 444 \
   --disable traefik \
   --disable metrics-server \
+  --disable local-storage \
   --flannel-backend=none \
   --kubelet-arg config=/etc/kubernetes/kubelet-config.json \
   --kubelet-arg cgroup-driver=systemd \
@@ -24,7 +25,7 @@ export INSTALL_K3S_SKIP_DOWNLOAD=true
 
 # Seems like this is a bit flaky now, with k3s not always being ready, and the labeling
 # failing occasionally. Sleeping for a bit solves it.
-sleep 60
+sleep 10
 
 # shellcheck disable=SC2154
 # shellcheck disable=SC2086
