@@ -49,6 +49,8 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping && isDisposalFinished(workspace) {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
+
+		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionFalse))
 		return nil
 	case 1:
 		// continue below
@@ -123,6 +125,19 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 				break
 			}
 		}
+	}
+
+	var workspaceContainerRunning bool
+	for _, cs := range pod.Status.ContainerStatuses {
+		if cs.Name == "workspace" {
+			workspaceContainerRunning = cs.State.Running != nil
+			break
+		}
+	}
+	if workspaceContainerRunning {
+		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionTrue))
+	} else {
+		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionFalse))
 	}
 
 	switch {
