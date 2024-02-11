@@ -6,10 +6,12 @@ set -eo pipefail
 
 # Install k3s
 export INSTALL_K3S_SKIP_DOWNLOAD=true
+SERVICE_DNS_IP="$(hostname -I | cut -d ' ' -f1)"
+export SERVICE_DNS_IP
 
 /usr/local/bin/install-k3s.sh \
   --token "1234" \
-  --node-ip "$(hostname -I | cut -d ' ' -f1)" \
+  --node-ip "$SERVICE_DNS_IP" \
   --node-label "cloud.google.com/gke-nodepool=control-plane-pool" \
   --container-runtime-endpoint=/var/run/containerd/containerd.sock \
   --write-kubeconfig-mode 444 \
@@ -54,6 +56,8 @@ sed -i 's/interface=ens/interface=en/g' /var/lib/gitpod/manifests/calico2.yaml
 sed -i 's/\$CLUSTER_IP_RANGE/10.20.0.0\/16/g' /var/lib/gitpod/manifests/calico2.yaml
 
 kubectl apply -f /var/lib/gitpod/manifests/calico2.yaml
+kubectl apply -f /var/lib/gitpod/manifests/coredns.yaml
+kubectl apply -f /var/lib/gitpod/manifests/node-local-dns.yaml
 
 kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
 kubectl apply -f /var/lib/gitpod/manifests/metrics-server.yaml
