@@ -18,7 +18,6 @@ export SERVICE_DNS_IP
   --disable traefik \
   --disable metrics-server \
   --disable-network-policy \
-  --disable coredns \
   --disable-cloud-controller \
   --flannel-backend=none \
   --kubelet-arg config=/etc/kubernetes/kubelet-config.json \
@@ -56,9 +55,6 @@ sed -i 's/interface=ens/interface=en/g' /var/lib/gitpod/manifests/calico2.yaml
 sed -i 's/\$CLUSTER_IP_RANGE/10.20.0.0\/16/g' /var/lib/gitpod/manifests/calico2.yaml
 
 kubectl apply -f /var/lib/gitpod/manifests/calico2.yaml
-kubectl apply -f /var/lib/gitpod/manifests/coredns.yaml
-kubectl scale deployment/coredns -n kube-system --replicas 1
-kubectl apply -f /var/lib/gitpod/manifests/node-local-dns.yaml
 
 kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
 kubectl apply -f /var/lib/gitpod/manifests/metrics-server.yaml
