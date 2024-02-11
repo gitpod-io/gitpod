@@ -57,6 +57,7 @@ sed -i 's/\$CLUSTER_IP_RANGE/10.20.0.0\/16/g' /var/lib/gitpod/manifests/calico2.
 
 kubectl apply -f /var/lib/gitpod/manifests/calico2.yaml
 kubectl apply -f /var/lib/gitpod/manifests/coredns.yaml
+kubectl scale deployment/coredns -n kube-system --replicas 1
 kubectl apply -f /var/lib/gitpod/manifests/node-local-dns.yaml
 
 kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
