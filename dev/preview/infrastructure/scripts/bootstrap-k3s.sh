@@ -16,6 +16,8 @@ export INSTALL_K3S_SKIP_DOWNLOAD=true
   --disable traefik \
   --disable metrics-server \
   --disable-network-policy \
+  --disable coredns \
+  --disable-cloud-controller \
   --flannel-backend=none \
   --kubelet-arg config=/etc/kubernetes/kubelet-config.json \
   --kubelet-arg cgroup-driver=systemd \
