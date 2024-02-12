@@ -15,7 +15,6 @@ import { useCurrentProject } from "./project-context";
 import { shortCommitMessage } from "./render-utils";
 import { prebuildClient, watchPrebuild } from "../service/public-api";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { gitpodHostUrl } from "../service/service";
 import { Button } from "@podkit/buttons/Button";
 
 export default function PrebuildPage() {
@@ -157,22 +156,14 @@ export default function PrebuildPage() {
                                 onClick={rerunPrebuild}
                             >
                                 {isRerunningPrebuild && (
-                                    <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
+                                    <img
+                                        alt="loading"
+                                        className="h-4 w-4 animate-spin filter brightness-150"
+                                        src={Spinner}
+                                    />
                                 )}
                                 <span>Rerun Prebuild ({prebuild?.ref})</span>
                             </Button>
-                            {prebuild?.status?.phase?.name === PrebuildPhase_Phase.AVAILABLE ? (
-                                <a
-                                    className="my-auto"
-                                    href={gitpodHostUrl
-                                        .withContext(`open-prebuild/${prebuild?.id}/${prebuild?.contextUrl}`)
-                                        .toString()}
-                                >
-                                    <Button>New Workspace (with this prebuild)</Button>
-                                </a>
-                            ) : (
-                                <Button disabled={true}>New Workspace (with this prebuild)</Button>
-                            )}
                         </>
                     )}
                 </PrebuildLogs>
