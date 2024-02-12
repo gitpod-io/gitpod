@@ -35,6 +35,16 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
             return false;
         }
 
+        // User already knows about the feature
+        if (history.location.pathname.startsWith("/repositories")) {
+            updateUser({
+                additionalData: {
+                    profile: { coachmarksDismissals: { [COACHMARK_KEY]: dayjs().toISOString() } },
+                },
+            });
+            return false;
+        }
+
         if (configurationsAndPrebuildsEnabled) {
             if (!user.profile?.coachmarksDismissals[COACHMARK_KEY]) {
                 return true;
@@ -42,7 +52,7 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
         }
 
         return false;
-    }, [configurationsAndPrebuildsEnabled, isOpen, user]);
+    }, [configurationsAndPrebuildsEnabled, history.location.pathname, isOpen, updateUser, user]);
 
     const handleClose = useCallback(() => {
         setIsOpen(false);
@@ -66,26 +76,7 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
                 </Text>
                 <Text className="text-pk-content-secondary text-base pb-4 pt-2">
                     Projects are now called “
-                    <Link
-                        to={"/repositories"}
-                        className="gp-link"
-                        onClick={(e) => {
-                            e.preventDefault();
-
-                            updateUser(
-                                {
-                                    additionalData: {
-                                        profile: { coachmarksDismissals: { [COACHMARK_KEY]: dayjs().toISOString() } },
-                                    },
-                                },
-                                {
-                                    onSettled: () => {
-                                        history.push("/repositories");
-                                    },
-                                },
-                            );
-                        }}
-                    >
+                    <Link to={"/repositories"} className="gp-link">
                         Imported Repositories.
                     </Link>
                     ” You can find them in your organization menu.
