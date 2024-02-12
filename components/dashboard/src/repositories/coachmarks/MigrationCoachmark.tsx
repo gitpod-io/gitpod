@@ -9,7 +9,7 @@ import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@podkit/p
 import { Text } from "@podkit/typography/Text";
 import { Truck } from "lucide-react";
 import { PropsWithChildren, useCallback, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import { useHasConfigurationsAndPrebuildsEnabled } from "../../data/featureflag-query";
 import { useUserLoader } from "../../hooks/use-user-loader";
 import { useUpdateCurrentUserMutation } from "../../data/current-user/update-mutation";
@@ -23,6 +23,7 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
     const configurationsAndPrebuildsEnabled = useHasConfigurationsAndPrebuildsEnabled();
     const { user } = useUserLoader();
     const { mutate: updateUser } = useUpdateCurrentUserMutation();
+    const history = useHistory();
 
     const show = useMemo<boolean>(() => {
         if (!isOpen || !user) {
@@ -65,7 +66,26 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
                 </Text>
                 <Text className="text-pk-content-secondary text-base pb-4 pt-2">
                     Projects are now called “
-                    <Link to={"/repositories"} className="gp-link">
+                    <Link
+                        to={"/repositories"}
+                        className="gp-link"
+                        onClick={(e) => {
+                            e.preventDefault();
+
+                            updateUser(
+                                {
+                                    additionalData: {
+                                        profile: { coachmarksDismissals: { [COACHMARK_KEY]: dayjs().toISOString() } },
+                                    },
+                                },
+                                {
+                                    onSettled: () => {
+                                        history.push("/repositories");
+                                    },
+                                },
+                            );
+                        }}
+                    >
                         Imported Repositories.
                     </Link>
                     ” You can find them in your organization menu.
