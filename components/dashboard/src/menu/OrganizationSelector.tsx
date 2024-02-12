@@ -166,7 +166,7 @@ export default function OrganizationSelector() {
     const classes =
         "flex h-full text-base py-0 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700";
     return (
-        <ContextMenu customClasses="w-64 left-0" menuEntries={entries}>
+        <ContextMenu customClasses="w-64 left-0 text-left" menuEntries={entries}>
             <div className={`${classes} rounded-2xl pl-1`}>
                 <div className="py-1 pr-1 flex font-medium max-w-xs truncate">
                     <OrgIcon
