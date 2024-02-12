@@ -63,7 +63,7 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
 
     return (
         <Popover open={show}>
-            <PopoverTrigger>{children}</PopoverTrigger>
+            <PopoverTrigger onClick={handleClose}>{children}</PopoverTrigger>
             <PopoverContent align={"start"} className="border-pk-border-base relative flex flex-col">
                 <PopoverArrow asChild>
                     <div className="mb-[6px] ml-2 inline-block overflow-hidden rotate-180 relative">
