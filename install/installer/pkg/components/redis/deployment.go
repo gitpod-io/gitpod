@@ -91,7 +91,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ReadinessProbe: &corev1.Probe{
 									ProbeHandler: corev1.ProbeHandler{
 										Exec: &v1.ExecAction{
-											Command: []string{"sh", "-c", "nc -z -w 2 127.0.0.1 6379"},
+											Command: []string{"sh", "-c", "timeout 2 bash -c '</dev/tcp/127.0.0.1/6379'"},
 										},
 									},
 									InitialDelaySeconds: 5,

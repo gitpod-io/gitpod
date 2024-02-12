@@ -261,6 +261,10 @@ const (
 	VolumeMounted WorkspaceCondition = "VolumeMounted"
 	// ThroughputAdjusted is true if the throughput of the workspace volume has been adjusted
 	WorkspaceConditionThroughputAdjusted WorkspaceCondition = "ThroughputAdjusted"
+
+	// WorkspaceContainerRunning is true if the workspace container is running.
+	// Used to determine if a backup can be taken, only once the container is stopped.
+	WorkspaceConditionContainerRunning WorkspaceCondition = "WorkspaceContainerRunning"
 )
 
 func NewWorkspaceConditionDeployed() metav1.Condition {
@@ -394,6 +398,14 @@ func NewWorkspaceConditionThroughputAdjusted() metav1.Condition {
 		Type:               string(WorkspaceConditionThroughputAdjusted),
 		LastTransitionTime: metav1.Now(),
 		Status:             metav1.ConditionTrue,
+	}
+}
+
+func NewWorkspaceConditionContainerRunning(status metav1.ConditionStatus) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionContainerRunning),
+		LastTransitionTime: metav1.Now(),
+		Status:             status,
 	}
 }
 

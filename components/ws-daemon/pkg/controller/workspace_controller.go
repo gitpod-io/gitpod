@@ -253,6 +253,13 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		return ctrl.Result{}, nil
 	}
 
+	if ws.IsConditionTrue(workspacev1.WorkspaceConditionContainerRunning) {
+		// Container is still running, we need to wait for it to stop.
+		// We should get an event when the condition changes, but requeue
+		// anyways to make sure we act on it in time.
+		return ctrl.Result{RequeueAfter: 500 * time.Millisecond}, nil
+	}
+
 	if wsc.latestWorkspace(ctx, ws) != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: 100 * time.Millisecond}, nil
 	}
