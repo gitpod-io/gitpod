@@ -15,7 +15,7 @@ import { useUserLoader } from "../../hooks/use-user-loader";
 import { useUpdateCurrentUserMutation } from "../../data/current-user/update-mutation";
 import dayjs from "dayjs";
 
-const coachmarkKey = "projects_configuration_migration";
+const COACHMARK_KEY = "projects_configuration_migration";
 
 type Props = PropsWithChildren<{}>;
 export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
@@ -29,8 +29,13 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
             return false;
         }
 
+        // For the users signing up after our launch of configurations, don't show it
+        if (user.createdAt && user.createdAt.toDate() > new Date("2/15/2024")) {
+            return false;
+        }
+
         if (configurationsAndPrebuildsEnabled) {
-            if (!user.profile?.coachmarksDismissals[coachmarkKey]) {
+            if (!user.profile?.coachmarksDismissals[COACHMARK_KEY]) {
                 return true;
             }
         }
@@ -41,7 +46,7 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
     const handleClose = useCallback(() => {
         setIsOpen(false);
         updateUser({
-            additionalData: { profile: { coachmarksDismissals: { [coachmarkKey]: dayjs().toISOString() } } },
+            additionalData: { profile: { coachmarksDismissals: { [COACHMARK_KEY]: dayjs().toISOString() } } },
         });
     }, [setIsOpen, updateUser]);
 
