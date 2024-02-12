@@ -6,15 +6,19 @@ set -eo pipefail
 
 # Install k3s
 export INSTALL_K3S_SKIP_DOWNLOAD=true
+SERVICE_DNS_IP="$(hostname -I | cut -d ' ' -f1)"
+export SERVICE_DNS_IP
 
 /usr/local/bin/install-k3s.sh \
   --token "1234" \
-  --node-ip "$(hostname -I | cut -d ' ' -f1)" \
+  --node-ip "$SERVICE_DNS_IP" \
   --node-label "cloud.google.com/gke-nodepool=control-plane-pool" \
   --container-runtime-endpoint=/var/run/containerd/containerd.sock \
   --write-kubeconfig-mode 444 \
   --disable traefik \
   --disable metrics-server \
+  --disable-network-policy \
+  --disable-cloud-controller \
   --flannel-backend=none \
   --kubelet-arg config=/etc/kubernetes/kubelet-config.json \
   --kubelet-arg cgroup-driver=systemd \
