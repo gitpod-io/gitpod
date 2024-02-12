@@ -8,20 +8,45 @@ import { Button } from "@podkit/buttons/Button";
 import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@podkit/popover/Popover";
 import { Text } from "@podkit/typography/Text";
 import { Truck } from "lucide-react";
-import { PropsWithChildren, useCallback, useState } from "react";
+import { PropsWithChildren, useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useHasConfigurationsAndPrebuildsEnabled } from "../../data/featureflag-query";
+import { useUserLoader } from "../../hooks/use-user-loader";
+import { useUpdateCurrentUserMutation } from "../../data/current-user/update-mutation";
+import dayjs from "dayjs";
+
+const coachmarkKey = "projects_configuration_migration";
 
 type Props = PropsWithChildren<{}>;
 export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
     const [isOpen, setIsOpen] = useState(true);
+    const configurationsAndPrebuildsEnabled = useHasConfigurationsAndPrebuildsEnabled();
+    const { user } = useUserLoader();
+    const { mutate: updateUser } = useUpdateCurrentUserMutation();
+
+    const show = useMemo<boolean>(() => {
+        if (!isOpen || !user) {
+            return false;
+        }
+
+        if (configurationsAndPrebuildsEnabled) {
+            if (!user.profile?.coachmarksDismissals[coachmarkKey]) {
+                return true;
+            }
+        }
+
+        return false;
+    }, [configurationsAndPrebuildsEnabled, isOpen, user]);
 
     const handleClose = useCallback(() => {
         setIsOpen(false);
-        // todo: have this update db state so that the recognition persists
-    }, [setIsOpen]);
+        updateUser({
+            additionalData: { profile: { coachmarksDismissals: { [coachmarkKey]: dayjs().toISOString() } } },
+        });
+    }, [setIsOpen, updateUser]);
 
     return (
-        <Popover open={isOpen}>
+        <Popover open={show}>
             <PopoverTrigger>{children}</PopoverTrigger>
             <PopoverContent align={"start"} className="border-pk-border-base relative flex flex-col">
                 <PopoverArrow asChild>
