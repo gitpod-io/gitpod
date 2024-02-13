@@ -36,7 +36,7 @@ export const PrebuildListItem: FC<Props> = ({ prebuild }) => {
         <TableRow>
             <TableCell>
                 <div className="flex flex-col gap-1">
-                    <Text className="text-sm text-pk-content-primary text-semibold">
+                    <Text className="text-sm text-pk-content-primary text-semibold break-all">
                         <ConfigurationField
                             configuration={configuration}
                             isError={isConfigurationError}
