@@ -215,6 +215,42 @@ func getCostCenter(ctx context.Context, conn *gorm.DB, attributionId Attribution
 	return costCenter, nil
 }
 
+var ErrStripeBillingCycleOff error = errors.New("stripe billing cycle is off")
+
+func (c *CostCenterManager) IncrementBillingCycleStripe(ctx context.Context, attributionId AttributionID, invoicePeriodStart time.Time, invoicePeriodEnd time.Time) (CostCenter, error) {
+	cc, err := getCostCenter(ctx, c.conn, attributionId)
+	if err != nil {
+		return CostCenter{}, err
+	}
+	if cc.BillingStrategy != CostCenter_Stripe {
+		return CostCenter{}, fmt.Errorf("IncrementBillingCycleStripe: billing strategy not 'stripe': %s", attributionId)
+	}
+
+	now := time.Now().UTC()
+
+	if !invoicePeriodStart.Equal(cc.BillingCycleStart.Time()) || (!invoicePeriodEnd.IsZero() && !invoicePeriodEnd.Equal(cc.NextBillingTime.Time())) || now.Before(cc.BillingCycleStart.Time()) {
+		// If anything is odd in terms of times: go to Stripe, and re-build cost-centers + usage from past stripe invoices (lower bound: date of current subscription signup)
+
+		// TODO: make caller use billing.reconcileFromStripeInvoices to correct
+		return CostCenter{}, ErrStripeBillingCycleOff
+	}
+
+	// Create new cycle based on invoicePeriodEnd, without invoicePeriodStart set: this is the only thing we get as guarantee from Stripe
+	billingCycleStart := invoicePeriodEnd
+	newCostCenter := CostCenter{
+		ID:                cc.ID,
+		SpendingLimit:     cc.SpendingLimit,
+		BillingStrategy:   cc.BillingStrategy,
+		BillingCycleStart: NewVarCharTime(billingCycleStart),
+		CreationTime:      NewVarCharTime(now),
+	}
+	err = c.conn.Save(&newCostCenter).Error
+	if err != nil {
+		return CostCenter{}, fmt.Errorf("failed to store cost center ID: %s", err)
+	}
+	return newCostCenter, nil
+}
+
 func (c *CostCenterManager) IncrementBillingCycle(ctx context.Context, attributionId AttributionID) (CostCenter, error) {
 	cc, err := getCostCenter(ctx, c.conn, attributionId)
 	if err != nil {
