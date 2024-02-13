@@ -17,7 +17,7 @@ import { shortCommitMessage } from "../../projects/render-utils";
 import { Link } from "react-router-dom";
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { LoadingState } from "@podkit/loading/LoadingState";
-import { prebuildDisplayProps, prebuildStatusIconName } from "../../projects/prebuild-utils";
+import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
 
 type Props = {
     prebuild: Prebuild;
@@ -30,7 +30,7 @@ export const PrebuildListItem: FC<Props> = ({ prebuild }) => {
         isLoading: isConfigurationLoading,
     } = useConfiguration(prebuild.configurationId);
     const { className: iconColorClass, label } = prebuildDisplayProps(prebuild);
-    const PrebuildStatusIcon = prebuildStatusIconName(prebuild);
+    const PrebuildStatusIcon = prebuildStatusIconComponent(prebuild);
 
     return (
         <TableRow>
