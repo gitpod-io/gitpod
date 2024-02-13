@@ -451,7 +451,7 @@ export function CreateWorkspacePage() {
                     <LoadingButton
                         onClick={onClickCreate}
                         autoFocus={true}
-                        className="w-full justify-center"
+                        className="w-full"
                         loading={createWorkspaceMutation.isStarting || !!autostart}
                         disabled={continueButtonDisabled}
                     >
