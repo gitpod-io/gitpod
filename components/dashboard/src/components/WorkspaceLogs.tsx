@@ -93,7 +93,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
         if (!terminalRef.current) {
             return;
         }
-        terminalRef.current.options.theme = isDark ? darkTheme : lightTheme;
+        terminalRef.current.setOption("theme", isDark ? darkTheme : lightTheme);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [terminalRef.current, isDark]);
 
