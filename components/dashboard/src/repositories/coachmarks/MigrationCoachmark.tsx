@@ -20,10 +20,23 @@ const COACHMARK_KEY = "projects_configuration_migration";
 type Props = PropsWithChildren<{}>;
 export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
     const [isOpen, setIsOpen] = useState(true);
+
     const configurationsAndPrebuildsEnabled = useHasConfigurationsAndPrebuildsEnabled();
+    const history = useHistory();
+
     const { user } = useUserLoader();
     const { mutate: updateUser } = useUpdateCurrentUserMutation();
-    const history = useHistory();
+
+    const dismiss = useCallback(() => {
+        updateUser({
+            additionalData: { profile: { coachmarksDismissals: { [COACHMARK_KEY]: dayjs().toISOString() } } },
+        });
+    }, [updateUser]);
+
+    const handleClose = useCallback(() => {
+        setIsOpen(false);
+        dismiss();
+    }, [dismiss]);
 
     const show = useMemo<boolean>(() => {
         if (!isOpen || !user) {
@@ -37,29 +50,12 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
 
         // User already knows about the feature
         if (history.location.pathname.startsWith("/repositories")) {
-            updateUser({
-                additionalData: {
-                    profile: { coachmarksDismissals: { [COACHMARK_KEY]: dayjs().toISOString() } },
-                },
-            });
+            dismiss();
             return false;
         }
 
-        if (configurationsAndPrebuildsEnabled) {
-            if (!user.profile?.coachmarksDismissals[COACHMARK_KEY]) {
-                return true;
-            }
-        }
-
-        return false;
-    }, [configurationsAndPrebuildsEnabled, history.location.pathname, isOpen, updateUser, user]);
-
-    const handleClose = useCallback(() => {
-        setIsOpen(false);
-        updateUser({
-            additionalData: { profile: { coachmarksDismissals: { [COACHMARK_KEY]: dayjs().toISOString() } } },
-        });
-    }, [setIsOpen, updateUser]);
+        return configurationsAndPrebuildsEnabled && !user.profile?.coachmarksDismissals[COACHMARK_KEY];
+    }, [configurationsAndPrebuildsEnabled, dismiss, history.location.pathname, isOpen, user]);
 
     return (
         <Popover open={show}>
