@@ -36,14 +36,14 @@ export const PrebuildListItem: FC<Props> = ({ prebuild }) => {
         <TableRow>
             <TableCell>
                 <div className="flex flex-col gap-1">
-                    <Text className="text-sm text-pk-content-primary text-semibold break-all">
+                    <Text className="text-sm text-pk-content-primary text-semibold break-words">
                         <ConfigurationField
                             configuration={configuration}
                             isError={isConfigurationError}
                             isLoading={isConfigurationLoading}
                         />
                     </Text>
-                    <TextMuted className="text-xs break-all">{prebuild.ref}</TextMuted>
+                    <TextMuted className="text-xs break-words">{prebuild.ref}</TextMuted>
                 </div>
             </TableCell>
 
