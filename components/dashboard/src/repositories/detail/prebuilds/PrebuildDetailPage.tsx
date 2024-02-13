@@ -158,11 +158,11 @@ export const PrebuildDetailPage: FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex gap-1">
+                                    <div className="flex gap-1 items-center">
                                         <img
                                             className="w-5 h-5 rounded-full"
                                             src={info.prebuild.commit?.author?.avatarUrl}
-                                            alt={info.prebuild.commit?.author?.name}
+                                            alt=""
                                         />
                                         <span className="text-pk-content-secondary">
                                             {info.prebuild.commit?.author?.name}
