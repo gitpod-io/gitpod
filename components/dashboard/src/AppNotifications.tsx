@@ -62,15 +62,24 @@ const UPDATED_PRIVACY_POLICY = (updateUser: (user: Partial<UserProtocol>) => Pro
     } as Notification;
 };
 
-const INVALID_BILLING_ADDRESS = () => {
+const INVALID_BILLING_ADDRESS = (stripePortalUrl: string | undefined) => {
     return {
         id: "invalid-billing-address",
         type: "warning",
         preventDismiss: true,
         message: (
             <span className="text-md">
-                Your billing address is invalid, taxes (if applicable) won't be calculated. Please update your billing
-                address.
+                Invalid billing address: tax calculations may be affected. Ensure your address includes Country, City,
+                State, and Zip code. Update your details{" "}
+                <a
+                    href={`${stripePortalUrl}/customer/update`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="gp-link"
+                >
+                    here
+                </a>
+                .
             </span>
         ),
     } as Notification;
@@ -80,6 +89,7 @@ export function AppNotifications() {
     const [topNotification, setTopNotification] = useState<Notification | undefined>(undefined);
     const { user, loading } = useUserLoader();
     const { mutateAsync } = useUpdateCurrentUserMutation();
+    const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
 
     const currentOrg = useCurrentOrg().data;
     const attrId = currentOrg ? AttributionId.createFromOrganizationId(currentOrg.id) : undefined;
@@ -103,9 +113,10 @@ export function AppNotifications() {
                     const [subscriptionId, invalidBillingAddress] = await Promise.all([
                         getGitpodService().server.findStripeSubscriptionId(attributionId),
                         getGitpodService().server.isCustomerBillingAddressInvalid(attributionId),
+                        getGitpodService().server.getStripePortalUrl(attributionId).then(setStripePortalUrl),
                     ]);
                     if (subscriptionId && invalidBillingAddress) {
-                        notifications.push(INVALID_BILLING_ADDRESS());
+                        notifications.push(INVALID_BILLING_ADDRESS(stripePortalUrl));
                     }
                 }
             }
@@ -121,7 +132,7 @@ export function AppNotifications() {
         return () => {
             ignore = true;
         };
-    }, [loading, mutateAsync, user, attributionId]);
+    }, [stripePortalUrl, loading, mutateAsync, user, attributionId]);
 
     const dismissNotification = useCallback(() => {
         if (!topNotification) {
