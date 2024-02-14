@@ -5,7 +5,7 @@
  */
 
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { PauseCircle, LucideProps, Clock, CheckCircle2, XCircle, CircleSlash2 } from "lucide-react";
+import { PauseCircle, LucideProps, Clock, CheckCircle2, XCircle } from "lucide-react";
 import type { ForwardRefExoticComponent } from "react";
 
 import StatusDone from "../icons/StatusDone.svg";
@@ -52,7 +52,7 @@ export const prebuildStatusIconComponent = (prebuild: Prebuild): ForwardRefExoti
         case PrebuildPhase_Phase.ABORTED:
         case PrebuildPhase_Phase.TIMEOUT:
         case PrebuildPhase_Phase.FAILED:
-            return CircleSlash2;
+            return XCircle;
         case PrebuildPhase_Phase.AVAILABLE:
             if (prebuild?.status?.message) {
                 return XCircle;
@@ -60,7 +60,7 @@ export const prebuildStatusIconComponent = (prebuild: Prebuild): ForwardRefExoti
             return CheckCircle2;
     }
 
-    return CircleSlash2;
+    return XCircle;
 };
 
 export const prebuildStatusIcon = (prebuild?: Prebuild) => {

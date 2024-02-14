@@ -11,7 +11,7 @@ import { useCurrentUser } from "../user-context";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useLocation } from "react-router";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
-import { useHasConfigurationsAndPrebuildsEnabled } from "../data/featureflag-query";
+import { useFeatureFlag, useHasConfigurationsAndPrebuildsEnabled } from "../data/featureflag-query";
 import { useIsOwner, useListOrganizationMembers, useHasRolePermission } from "../data/organizations/members-query";
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
@@ -26,6 +26,7 @@ export default function OrganizationSelector() {
     const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
     const configurationsAndPrebuilds = useHasConfigurationsAndPrebuildsEnabled();
+    const showPrebuildMenuItem = useFeatureFlag("showPrebuildsMenuItem");
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
     const canCreateOrgs = user && !isOrganizationOwned(user);
@@ -68,13 +69,15 @@ export default function OrganizationSelector() {
                     separator: false,
                     link: "/repositories",
                 });
-                linkEntries.push({
-                    title: "Prebuilds",
-                    customContent: <LinkEntry>Prebuilds</LinkEntry>,
-                    active: false,
-                    separator: false,
-                    link: "/prebuilds",
-                });
+                if (showPrebuildMenuItem) {
+                    linkEntries.push({
+                        title: "Prebuilds",
+                        customContent: <LinkEntry>Prebuilds</LinkEntry>,
+                        active: false,
+                        separator: false,
+                        link: "/prebuilds",
+                    });
+                }
             }
             linkEntries.push({
                 title: "Members",

@@ -5,35 +5,23 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { configurationClient, prebuildClient, stream } from "../../service/public-api";
-import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { prebuildClient, stream } from "../../service/public-api";
 import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
-export function usePrebuildAndConfigurationQuery(prebuildId: string) {
-    return useQuery<{ prebuild?: Prebuild; configuration?: Configuration }, Error>(
-        prebuildQueryKey(prebuildId),
-        async () => {
-            const prebuild = await prebuildClient.getPrebuild({ prebuildId }).then((d) => d.prebuild);
-            let configuration: Configuration | undefined;
-            if (prebuild?.configurationId) {
-                configuration = await configurationClient
-                    .getConfiguration({ configurationId: prebuild.configurationId })
-                    .then((d) => d.configuration);
-            }
-            return {
-                prebuild,
-                configuration,
-            };
-        },
-        {
-            retry: 1,
-        },
-    );
+export function usePrebuildQuery(prebuildId: string) {
+    return useQuery<Prebuild, Error>(prebuildQueryKey(prebuildId), async () => {
+        const prebuild = await prebuildClient.getPrebuild({ prebuildId }).then((response) => response.prebuild);
+        if (!prebuild) {
+            throw new Error("Prebuild not found");
+        }
+
+        return prebuild;
+    });
 }
 
 function prebuildQueryKey(prebuildId: string) {
-    return ["prebuild-and-configuration", prebuildId];
+    return ["prebuild", prebuildId];
 }
 
 export function watchPrebuild(prebuildId: string, cb: (data: Prebuild) => void) {
