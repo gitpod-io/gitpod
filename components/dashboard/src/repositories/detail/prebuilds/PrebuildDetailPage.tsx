@@ -14,7 +14,7 @@ import dayjs from "dayjs";
 import { usePrebuildLogsEmitter } from "../../../data/prebuilds/prebuild-logs-emitter";
 import React from "react";
 import { useToast } from "../../../components/toasts/Toasts";
-import { usePrebuilQuery, useTriggerPrebuildQuery, watchPrebuild } from "../../../data/prebuilds/prebuild-query";
+import { usePrebuildQuery, useTriggerPrebuildQuery, watchPrebuild } from "../../../data/prebuilds/prebuild-query";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 import { repositoriesRoutes } from "../../repositories.routes";
 import { LoadingState } from "@podkit/loading/LoadingState";
@@ -46,8 +46,8 @@ interface Props {
 export const PrebuildDetailPage: FC = () => {
     const { prebuildId } = useParams<Props>();
 
-    const { data: prebuild, isLoading: infoIsLoading, error, refetch } = usePrebuilQuery(prebuildId);
-    const { data: configuration, isLoading: configurationIsLoading } = useConfiguration(
+    const { data: prebuild, isLoading: isInfoLoading, error, refetch } = usePrebuildQuery(prebuildId);
+    const { data: configuration, isLoading: isConfigurationLoading } = useConfiguration(
         prebuild?.configurationId ?? "",
     );
 
@@ -134,7 +134,7 @@ export const PrebuildDetailPage: FC = () => {
                 pageDescription={
                     <>
                         <span className="font-semibold">
-                            {!configurationIsLoading ? configuration?.name : "" ?? "unknown repository"}
+                            {!isConfigurationLoading ? configuration?.name : "" ?? "unknown repository"}
                         </span>{" "}
                         <span className="text-pk-content-secondary">{prebuild?.ref ?? ""}</span>
                     </>
@@ -142,7 +142,7 @@ export const PrebuildDetailPage: FC = () => {
                 backLink={repositoriesRoutes.Prebuilds()}
             />
             <div className="app-container mb-8">
-                {infoIsLoading && (
+                {isInfoLoading && (
                     <div className="flex justify-center">
                         <LoadingState />
                     </div>
