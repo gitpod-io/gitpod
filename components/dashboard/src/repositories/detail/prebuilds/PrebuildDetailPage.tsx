@@ -28,12 +28,26 @@ import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 const WorkspaceLogs = React.lazy(() => import("../../../components/WorkspaceLogs"));
 
-interface PageRouteParams {
+/**
+ * Formats a date. For today, it returns the time. For this year, it returns the month and day and time. Otherwise, it returns the full date and time.
+ */
+const formatDate = (date: dayjs.Dayjs): string => {
+    if (date.isSame(dayjs(), "day")) {
+        return date.format("[today at] h:mm A");
+    }
+
+    if (date.isSame(dayjs(), "year")) {
+        return date.format("MMM D h:mm A");
+    }
+
+    return date.format("MMM D, YYYY h:mm A");
+};
+
+interface Props {
     prebuildId: string;
 }
-
 export const PrebuildDetailPage: FC = () => {
-    const { prebuildId } = useParams<PageRouteParams>();
+    const { prebuildId } = useParams<Props>();
 
     const { data: info, isLoading: infoIsLoading, error, refetch } = usePrebuildAndConfigurationQuery(prebuildId);
     const { toast } = useToast();
@@ -48,6 +62,12 @@ export const PrebuildDetailPage: FC = () => {
         isRefetching: isTriggeringRefetch,
         data: newPrebuildID,
     } = useTriggerPrebuildQuery(info?.configuration?.id, info?.prebuild?.ref);
+
+    const triggeredDate = useMemo(
+        () => dayjs(info?.prebuild?.status?.startTime?.toDate()),
+        [info?.prebuild?.status?.startTime],
+    );
+    const triggeredString = useMemo(() => formatDate(triggeredDate), [triggeredDate]);
 
     useEffect(() => {
         watchPrebuild(prebuildId, (prebuild) => {
@@ -151,10 +171,15 @@ export const PrebuildDetailPage: FC = () => {
                                         <div className="font-semibold text-pk-content-primary truncate">
                                             {info.prebuild.commit?.message}
                                         </div>
-                                        {info.prebuild.status?.startTime && (
+                                        {triggeredString && (
                                             <div className="text-pk-content-secondary flex-none">
-                                                {"Triggered " +
-                                                    dayjs(info.prebuild.status.startTime.toDate()).fromNow()}
+                                                Triggered{" "}
+                                                <time
+                                                    dateTime={triggeredDate.toISOString()}
+                                                    title={triggeredDate.toString()}
+                                                >
+                                                    {triggeredString}
+                                                </time>
                                             </div>
                                         )}
                                     </div>
