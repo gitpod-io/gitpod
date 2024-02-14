@@ -135,7 +135,9 @@ export const PrebuildDetailPage: FC = () => {
                 pageTitle="Prebuild history"
                 pageDescription={
                     <>
-                        <span className="font-semibold">{info?.configuration?.name ?? "unknown repository"}</span>{" "}
+                        <span className="font-semibold">
+                            {!infoIsLoading ? info?.configuration?.name : "" ?? "unknown repository"}
+                        </span>{" "}
                         <span className="text-pk-content-secondary">{info?.prebuild?.ref ?? ""}</span>
                     </>
                 }
