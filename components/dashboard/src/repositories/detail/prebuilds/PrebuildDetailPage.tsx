@@ -9,7 +9,7 @@ import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Button } from "@podkit/buttons/Button";
 import { FC, Suspense, useEffect, useMemo, useState } from "react";
 import { Redirect, useParams } from "react-router";
-import { CircleSlash2, Loader2Icon } from "lucide-react";
+import { CircleSlash, Loader2Icon } from "lucide-react";
 import dayjs from "dayjs";
 import { usePrebuildLogsEmitter } from "../../../data/prebuilds/prebuild-logs-emitter";
 import React from "react";
@@ -95,7 +95,7 @@ export const PrebuildDetailPage: FC = () => {
         const name = currentPrebuild?.status?.phase?.name;
         if (!name) {
             return {
-                icon: <CircleSlash2 size={20} className="text-gray-500" />,
+                icon: <CircleSlash size={20} className="text-gray-500" />,
                 description: "Unknown prebuild status.",
             };
         }
