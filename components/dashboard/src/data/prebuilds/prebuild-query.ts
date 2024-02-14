@@ -26,9 +26,6 @@ export function usePrebuildAndConfigurationQuery(prebuildId: string) {
                 configuration,
             };
         },
-        {
-            retry: 1,
-        },
     );
 }
 

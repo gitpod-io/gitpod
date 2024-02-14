@@ -37,10 +37,10 @@ const formatDate = (date: dayjs.Dayjs): string => {
     }
 
     if (date.isSame(dayjs(), "year")) {
-        return date.format("MMM D h:mm A");
+        return date.format("MMM D [at] h:mm A");
     }
 
-    return date.format("MMM D, YYYY h:mm A");
+    return date.format("MMM D, YYYY [at] h:mm A");
 };
 
 interface Props {
