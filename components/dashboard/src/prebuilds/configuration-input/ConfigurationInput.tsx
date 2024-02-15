@@ -93,13 +93,14 @@ export const ConfigurationDropdown = ({ selectedConfigurationId, disabled, expan
 type SuggestedRepositoryOptionProps = {
     repo: {
         name: string;
+        cloneUrl?: string;
     };
 };
 const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo }) => {
-    const { name } = repo;
+    const { name, cloneUrl } = repo;
 
     return (
-        <div className="flex flex-row items-center overflow-hidden" aria-label={`Repository: ${name}`}>
+        <div className="flex flex-row items-center overflow-hidden" title={cloneUrl} aria-label={`Repository: ${name}`}>
             {name && <span className="text-sm whitespace-nowrap">{name}</span>}
         </div>
     );
