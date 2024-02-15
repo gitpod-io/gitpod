@@ -87,6 +87,10 @@ export const useConfiguration = (configurationId: string) => {
     return useQuery<Configuration | undefined, Error>(
         getConfigurationQueryKey(configurationId),
         async () => {
+            if (!configurationId) {
+                throw new Error("No configurationId provided");
+            }
+
             const { configuration } = await configurationClient.getConfiguration({
                 configurationId,
             });

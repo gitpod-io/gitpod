@@ -28,6 +28,7 @@ const featureFlags = {
     repositoryFinderSearch: false,
     createProjectModal: false,
     configurationsAndPrebuilds: false,
+    showPrebuildsMenuItem: false,
     /**
      * Whether to enable org-level workspace class restrictions
      */

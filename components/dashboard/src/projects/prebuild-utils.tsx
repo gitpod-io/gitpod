@@ -5,7 +5,7 @@
  */
 
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { PauseCircle, LucideProps, Clock, CircleSlash, CheckCircle2, HelpCircle, XCircle } from "lucide-react";
+import { PauseCircle, LucideProps, Clock, CheckCircle2, XCircle } from "lucide-react";
 import type { ForwardRefExoticComponent } from "react";
 
 import StatusDone from "../icons/StatusDone.svg";
@@ -42,7 +42,7 @@ export const prebuildStatusLabel = (prebuild: Prebuild): JSX.Element => {
     return <span className={`font-medium ${className} uppercase`}>{label}</span>;
 };
 
-export const prebuildStatusIconName = (prebuild: Prebuild): ForwardRefExoticComponent<LucideProps> => {
+export const prebuildStatusIconComponent = (prebuild: Prebuild): ForwardRefExoticComponent<LucideProps> => {
     switch (prebuild.status?.phase?.name) {
         case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
         case PrebuildPhase_Phase.QUEUED:
@@ -50,7 +50,6 @@ export const prebuildStatusIconName = (prebuild: Prebuild): ForwardRefExoticComp
         case PrebuildPhase_Phase.BUILDING:
             return Clock;
         case PrebuildPhase_Phase.ABORTED:
-            return CircleSlash;
         case PrebuildPhase_Phase.TIMEOUT:
         case PrebuildPhase_Phase.FAILED:
             return XCircle;
@@ -61,7 +60,7 @@ export const prebuildStatusIconName = (prebuild: Prebuild): ForwardRefExoticComp
             return CheckCircle2;
     }
 
-    return HelpCircle;
+    return XCircle;
 };
 
 export const prebuildStatusIcon = (prebuild?: Prebuild) => {

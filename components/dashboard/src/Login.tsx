@@ -229,6 +229,7 @@ const LoginButton: FC<LoginButtonProps> = ({ children, onClick }) => {
             className={cn(
                 "border-none bg-gray-100 hover:bg-gray-200 text-gray-500 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-600 hover:opacity-100",
                 "flex-none w-56 h-10 p-0 inline-flex rounded-xl",
+                "justify-normal",
             )}
             onClick={onClick}
         >
