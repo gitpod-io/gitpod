@@ -10,14 +10,20 @@ import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export function usePrebuildQuery(prebuildId: string) {
-    return useQuery<Prebuild, Error>(prebuildQueryKey(prebuildId), async () => {
-        const prebuild = await prebuildClient.getPrebuild({ prebuildId }).then((response) => response.prebuild);
-        if (!prebuild) {
-            throw new Error("Prebuild not found");
-        }
+    return useQuery<Prebuild, Error>(
+        prebuildQueryKey(prebuildId),
+        async () => {
+            const prebuild = await prebuildClient.getPrebuild({ prebuildId }).then((response) => response.prebuild);
+            if (!prebuild) {
+                throw new Error("Prebuild not found");
+            }
 
-        return prebuild;
-    });
+            return prebuild;
+        },
+        {
+            retry: false,
+        },
+    );
 }
 
 function prebuildQueryKey(prebuildId: string) {
