@@ -36,6 +36,7 @@ import { VerificationService } from "../auth/verification-service";
 import { SignInJWT } from "./jwt";
 import { UserService } from "../user/user-service";
 import { reportLoginCompleted } from "../prometheus-metrics";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
@@ -231,7 +232,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 expiryDate,
             });
         } catch (error) {
-            log.error(`(${this.strategyName}) Failed to refresh token!`, { error });
+            log.error(`(${this.strategyName}) Failed to refresh token!`, { error: new TrustedValue(error) });
             throw error;
         }
     }
