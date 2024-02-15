@@ -221,7 +221,7 @@ export const PrebuildDetailPage: FC = () => {
                                 >{`Rerun Prebuild (${prebuild.ref})`}</LoadingButton>
                                 <LinkButton
                                     disabled={!prebuild?.id}
-                                    href={repositoriesRoutes.Detail(prebuild!.id!)}
+                                    href={repositoriesRoutes.Detail(configuration?.id!)}
                                     variant="secondary"
                                 >
                                     View Imported Repository
