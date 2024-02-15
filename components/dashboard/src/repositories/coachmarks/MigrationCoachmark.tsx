@@ -10,7 +10,7 @@ import { Text } from "@podkit/typography/Text";
 import { Truck } from "lucide-react";
 import { PropsWithChildren, useCallback, useMemo, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
-import { useHasConfigurationsAndPrebuildsEnabled } from "../../data/featureflag-query";
+import { useFeatureFlag, useHasConfigurationsAndPrebuildsEnabled } from "../../data/featureflag-query";
 import { useUserLoader } from "../../hooks/use-user-loader";
 import { useUpdateCurrentUserMutation } from "../../data/current-user/update-mutation";
 import dayjs from "dayjs";
@@ -22,6 +22,8 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
     const [isOpen, setIsOpen] = useState(true);
 
     const configurationsAndPrebuildsEnabled = useHasConfigurationsAndPrebuildsEnabled();
+    const prebuildsInMenu = useFeatureFlag("showPrebuildsMenuItem");
+
     const history = useHistory();
 
     const { user } = useUserLoader();
@@ -54,8 +56,10 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
             return false;
         }
 
-        return configurationsAndPrebuildsEnabled && !user.profile?.coachmarksDismissals[COACHMARK_KEY];
-    }, [configurationsAndPrebuildsEnabled, dismiss, history.location.pathname, isOpen, user]);
+        return (
+            configurationsAndPrebuildsEnabled && prebuildsInMenu && !user.profile?.coachmarksDismissals[COACHMARK_KEY]
+        );
+    }, [configurationsAndPrebuildsEnabled, dismiss, history.location.pathname, isOpen, prebuildsInMenu, user]);
 
     return (
         <Popover open={show}>

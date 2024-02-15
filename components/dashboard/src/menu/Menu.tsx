@@ -24,6 +24,7 @@ import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { useHasRolePermission } from "../data/organizations/members-query";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { ConfigurationsMigrationCoachmark } from "../repositories/coachmarks/MigrationCoachmark";
+import { useFeatureFlag, useHasConfigurationsAndPrebuildsEnabled } from "../data/featureflag-query";
 
 interface Entry {
     title: string;
@@ -133,6 +134,8 @@ type OrgPagesNavProps = {
 const OrgPagesNav: FC<OrgPagesNavProps> = ({ className }) => {
     const location = useLocation();
     const hasMemberPermission = useHasRolePermission(OrganizationRole.MEMBER);
+    const configurationsEnabled = useHasConfigurationsAndPrebuildsEnabled();
+    const prebuildsInMenu = useFeatureFlag("showPrebuildsMenuItem");
 
     const leftMenu: Entry[] = useMemo(() => {
         const menus = [
@@ -142,8 +145,8 @@ const OrgPagesNav: FC<OrgPagesNavProps> = ({ className }) => {
                 alternatives: ["/"],
             },
         ];
-        // collaborator can't access projects
-        if (hasMemberPermission) {
+        // collaborators can't access projects
+        if (hasMemberPermission && !configurationsEnabled && !prebuildsInMenu) {
             menus.push({
                 title: "Projects",
                 link: `/projects`,
@@ -151,7 +154,7 @@ const OrgPagesNav: FC<OrgPagesNavProps> = ({ className }) => {
             });
         }
         return menus;
-    }, [hasMemberPermission]);
+    }, [configurationsEnabled, hasMemberPermission, prebuildsInMenu]);
 
     return (
         <div
