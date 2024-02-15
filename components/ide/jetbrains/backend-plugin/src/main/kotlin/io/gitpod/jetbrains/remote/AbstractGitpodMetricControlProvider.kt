@@ -32,14 +32,14 @@ abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
                 verticalGrid {
                     createCpuControl(this, backendDiagnosticsService, lifetime)
                     createMemoryControl(this, backendDiagnosticsService, lifetime)
-                }.withMargin { margin(0, 15, 0, 25) }
+                }.withMargin(0, 15, 0, 25)
             }
             row {
                 horizontalGrid {
                     column {
                         label("Shared Node Resources")
                     }
-                }.withMargin { margin(0, 0, 0, 15) }.withHelpTooltip("Shared Node Resources", "The shared metrics represent the used and available resources of the cluster node on which your workspace is running")
+                }.withMargin(0, 0, 0, 15).withHelpTooltip("Shared Node Resources", "The shared metrics represent the used and available resources of the cluster node on which your workspace is running")
             }
         }
     }
@@ -70,7 +70,7 @@ abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
                 column {
                     label(workspaceClass)
                 }
-            }.withMargin { margin(0, 15, 0, 0) }
+            }.withMargin(0, 15, 0, 0)
         }
     }
 
