@@ -6,11 +6,10 @@
 
 import { cn } from "@podkit/lib/cn";
 
-interface Props {
+type Props = {
     children: React.ReactNode;
     className?: string;
-}
-
+};
 export const ConfigurationSettingsField = ({ children, className }: Props) => {
     return <div className={cn("border border-pk-border-base rounded-xl p-6", className)}>{children}</div>;
 };

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -9,17 +9,12 @@ import ConfirmationModal from "../../../components/ConfirmationModal";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { useDeleteConfiguration } from "../../../data/configurations/configuration-queries";
 
-type RemoveProjectModalProps = {
+type Props = {
     configuration: Configuration;
     onClose: () => void;
     onRemoved: () => void;
 };
-
-export const RemoveConfigurationModal: FunctionComponent<RemoveProjectModalProps> = ({
-    configuration,
-    onClose,
-    onRemoved,
-}) => {
+export const RemoveConfigurationModal: FunctionComponent<Props> = ({ configuration, onClose, onRemoved }) => {
     const removeConfigMutation = useDeleteConfiguration();
 
     const removeProject = useCallback(async () => {
@@ -39,7 +34,7 @@ export const RemoveConfigurationModal: FunctionComponent<RemoveProjectModalProps
                 name: configuration.name ?? "",
                 description: configuration.cloneUrl ?? "",
             }}
-            buttonText="Remove Configuration"
+            buttonText="Remove Repository"
             buttonDisabled={removeConfigMutation.isLoading}
             onClose={onClose}
             onConfirm={removeProject}
