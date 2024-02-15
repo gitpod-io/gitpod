@@ -46,7 +46,7 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
         }
 
         // For the users signing up after our launch of configurations, don't show it
-        if (user.createdAt && user.createdAt.toDate() > new Date("2/15/2024")) {
+        if (user.createdAt && user.createdAt.toDate() > new Date("2/19/2024")) {
             return false;
         }
 
