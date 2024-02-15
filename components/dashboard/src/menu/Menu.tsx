@@ -146,7 +146,7 @@ const OrgPagesNav: FC<OrgPagesNavProps> = ({ className }) => {
             },
         ];
         // collaborators can't access projects
-        if (hasMemberPermission && !configurationsEnabled && !prebuildsInMenu) {
+        if (hasMemberPermission && (!configurationsEnabled || !prebuildsInMenu)) {
             menus.push({
                 title: "Projects",
                 link: `/projects`,
