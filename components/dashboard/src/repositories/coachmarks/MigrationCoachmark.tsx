@@ -35,11 +35,6 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
         });
     }, [updateUser]);
 
-    const handleClose = useCallback(() => {
-        setIsOpen(false);
-        dismiss();
-    }, [dismiss]);
-
     const show = useMemo<boolean>(() => {
         if (!isOpen || !user) {
             return false;
@@ -60,6 +55,14 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
             configurationsAndPrebuildsEnabled && prebuildsInMenu && !user.profile?.coachmarksDismissals[COACHMARK_KEY]
         );
     }, [configurationsAndPrebuildsEnabled, dismiss, history.location.pathname, isOpen, prebuildsInMenu, user]);
+
+    const handleClose = useCallback(() => {
+        setIsOpen(false);
+        // do not store the dismissal if the popover is not shown
+        if (show) {
+            dismiss();
+        }
+    }, [dismiss, show]);
 
     return (
         <Popover open={show}>
