@@ -20,7 +20,7 @@ abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
     override val id: String = "gitpodMetricsControl"
 
     private fun getMargin(left: Int, top: Int, right: Int, bottom: Int): BeMarginsBuilder.() -> BeMargin {
-        val result: BeMarginsBuilder.() -> BeMargin = { BeMarginsBuilder.Companion.margin(left, top, right, bottom) }
+        val result: BeMarginsBuilder.() -> BeMargin = { margin(left, top, right, bottom) }
         return result
     }
 
