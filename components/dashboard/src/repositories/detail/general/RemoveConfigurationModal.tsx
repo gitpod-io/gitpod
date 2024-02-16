@@ -28,13 +28,13 @@ export const RemoveConfigurationModal: FunctionComponent<Props> = ({ configurati
 
     return (
         <ConfirmationModal
-            title="Remove Repository"
-            areYouSureText="Are you sure you want to remove this repository from this organization? Organization members will also lose access to it."
+            title="Remove Configuration"
+            areYouSureText="Are you sure you want to remove this repository configuration from this organization? Organization members will also lose access to it."
             children={{
                 name: configuration.name ?? "",
                 description: configuration.cloneUrl ?? "",
             }}
-            buttonText="Remove Repository"
+            buttonText="Remove Configuration"
             buttonDisabled={removeConfigMutation.isLoading}
             onClose={onClose}
             onConfirm={removeProject}
