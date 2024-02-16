@@ -15,7 +15,6 @@ import { Button } from "@podkit/buttons/Button";
 interface Props {
     configuration: Configuration;
 }
-
 export const RemoveConfiguration = ({ configuration }: Props) => {
     const [showRemoveModal, setShowRemoveModal] = useState(false);
 

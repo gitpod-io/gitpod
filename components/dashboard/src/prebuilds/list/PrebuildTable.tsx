@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Filter, Sort, SortField, StatusOption } from "./PrebuildList";
 import { SortCallback, SortableTableHead, TableSortOrder } from "@podkit/tables/SortableTable";
-import ConfigurationDropdown from "./ConfigurationInput";
+import { ConfigurationDropdown } from "../configuration-input/ConfigurationInput";
 
 type Props = {
     prebuilds: Prebuild[];
