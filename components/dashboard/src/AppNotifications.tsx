@@ -109,13 +109,13 @@ export function AppNotifications() {
                 }
 
                 if (isGitpodIo() && attributionId) {
-                    const [subscriptionId, invalidBillingAddress] = await Promise.all([
+                    const [subscriptionId, invalidBillingAddress, stripePortalUrl] = await Promise.all([
                         getGitpodService().server.findStripeSubscriptionId(attributionId),
                         getGitpodService().server.isCustomerBillingAddressInvalid(attributionId),
+                        getGitpodService().server.getStripePortalUrl(attributionId),
                     ]);
-                    const stripePortalUrl = getGitpodService().server.getStripePortalUrl(attributionId);
                     if (subscriptionId && invalidBillingAddress) {
-                        notifications.push(INVALID_BILLING_ADDRESS(await stripePortalUrl));
+                        notifications.push(INVALID_BILLING_ADDRESS(stripePortalUrl));
                     }
                 }
             }
