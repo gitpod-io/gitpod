@@ -11,19 +11,19 @@ import { FC, Suspense, useEffect, useMemo, useState } from "react";
 import { Redirect, useParams } from "react-router";
 import { CircleSlash, Loader2Icon } from "lucide-react";
 import dayjs from "dayjs";
-import { usePrebuildLogsEmitter } from "../../../data/prebuilds/prebuild-logs-emitter";
+import { usePrebuildLogsEmitter } from "../../data/prebuilds/prebuild-logs-emitter";
 import React from "react";
-import { useToast } from "../../../components/toasts/Toasts";
-import { usePrebuildQuery, useTriggerPrebuildQuery, watchPrebuild } from "../../../data/prebuilds/prebuild-queries";
+import { useToast } from "../../components/toasts/Toasts";
+import { usePrebuildQuery, useTriggerPrebuildQuery, watchPrebuild } from "../../data/prebuilds/prebuild-queries";
 import { LinkButton } from "@podkit/buttons/LinkButton";
-import { repositoriesRoutes } from "../../repositories.routes";
+import { repositoriesRoutes } from "../../repositories/repositories.routes";
 import { LoadingState } from "@podkit/loading/LoadingState";
-import Alert from "../../../components/Alert";
-import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../../projects/prebuild-utils";
+import Alert from "../../components/Alert";
+import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
-import { useConfiguration } from "../../../data/configurations/configuration-queries";
+import { useConfiguration } from "../../data/configurations/configuration-queries";
 
-const WorkspaceLogs = React.lazy(() => import("../../../components/WorkspaceLogs"));
+const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
 /**
  * Formats a date. For today, it returns the time. For this year, it returns the month and day and time. Otherwise, it returns the full date and time.
@@ -90,7 +90,6 @@ export const PrebuildDetailPage: FC = () => {
         }
     }, [isTriggerError, triggerError, toast]);
 
-    // TODO: should reuse icon/description on prebuild list
     const prebuildPhase = useMemo(() => {
         const name = currentPrebuild?.status?.phase?.name;
         if (!name) {
