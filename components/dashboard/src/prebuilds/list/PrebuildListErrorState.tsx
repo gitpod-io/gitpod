@@ -12,11 +12,13 @@ type Props = {
     error: unknown;
 };
 export const PrebuildListErrorState: FC<Props> = ({ error }: Props) => {
+    const errorString = error instanceof Error ? error.message : String(error);
+
     return (
         <div className={cn("w-full flex justify-center mt-2 rounded-xl bg-pk-surface-secondary px-4 py-20")}>
             <div className="flex flex-col justify-center items-center text-center space-y-4">
                 <Heading2>Prebuilds failed to load</Heading2>
-                <Subheading className="max-w-md">Error: {error}.</Subheading>
+                <Subheading className="max-w-md">Error: {errorString}.</Subheading>
             </div>
         </div>
     );

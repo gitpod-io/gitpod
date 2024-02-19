@@ -37,7 +37,6 @@ const PrebuildsListPage: FC = () => {
     useDocumentTitle("Prebuilds");
 
     const history = useHistory();
-
     const params = useQueryParams();
 
     const [statusFilter, setPrebuildsFilter] = useState(parseStatus(params));
