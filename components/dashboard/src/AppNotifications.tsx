@@ -89,7 +89,6 @@ export function AppNotifications() {
     const [topNotification, setTopNotification] = useState<Notification | undefined>(undefined);
     const { user, loading } = useUserLoader();
     const { mutateAsync } = useUpdateCurrentUserMutation();
-    const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
 
     const currentOrg = useCurrentOrg().data;
     const attrId = currentOrg ? AttributionId.createFromOrganizationId(currentOrg.id) : undefined;
@@ -110,10 +109,10 @@ export function AppNotifications() {
                 }
 
                 if (isGitpodIo() && attributionId) {
-                    const [subscriptionId, invalidBillingAddress] = await Promise.all([
+                    const [subscriptionId, invalidBillingAddress, stripePortalUrl] = await Promise.all([
                         getGitpodService().server.findStripeSubscriptionId(attributionId),
                         getGitpodService().server.isCustomerBillingAddressInvalid(attributionId),
-                        getGitpodService().server.getStripePortalUrl(attributionId).then(setStripePortalUrl),
+                        getGitpodService().server.getStripePortalUrl(attributionId),
                     ]);
                     if (subscriptionId && invalidBillingAddress) {
                         notifications.push(INVALID_BILLING_ADDRESS(stripePortalUrl));
@@ -132,7 +131,7 @@ export function AppNotifications() {
         return () => {
             ignore = true;
         };
-    }, [stripePortalUrl, loading, mutateAsync, user, attributionId]);
+    }, [loading, mutateAsync, user, attributionId]);
 
     const dismissNotification = useCallback(() => {
         if (!topNotification) {

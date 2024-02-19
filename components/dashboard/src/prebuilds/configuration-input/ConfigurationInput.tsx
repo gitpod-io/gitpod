@@ -6,21 +6,16 @@
 
 import { FC, useCallback, useMemo, useState } from "react";
 import { useConfiguration, useListConfigurations } from "../../data/configurations/configuration-queries";
-import { Combobox, ComboboxElement, ComboboxSelectedItem } from "@podkit/combobox/Combobox";
+import { Combobox, ComboboxElement } from "./Combobox";
+import { ComboboxSelectedItem } from "./ComboboxSelectedItem";
 
-interface RepositoryFinderProps {
+type Props = {
     selectedConfigurationId?: string;
     disabled?: boolean;
     expanded?: boolean;
     onChange: (configurationId: string) => void;
-}
-
-export default function ConfigurationDropdown({
-    selectedConfigurationId,
-    disabled,
-    expanded,
-    onChange,
-}: RepositoryFinderProps) {
+};
+export const ConfigurationDropdown = ({ selectedConfigurationId, disabled, expanded, onChange }: Props) => {
     const [searchTerm, setSearchTerm] = useState("");
     const { data, isLoading } = useListConfigurations({ searchTerm, sortBy: "creationTime", sortOrder: "desc" });
     const configurations = data?.pages[0].configurations;
@@ -83,9 +78,7 @@ export default function ConfigurationDropdown({
             // Only consider the isLoading prop if we're including projects in list
             loading={isLoading}
             onSearchChange={setSearchTerm}
-            className="h-8 w-48 bg-pk-surface-primary hover:bg-pk-surface-primary px-0 border border-pk-border-base text-sm text-pk-content-primary"
             dropDownClassName="text-pk-content-primary"
-            itemClassName="font-normal focus:text-accent-foreground cursor-default select-none"
         >
             <ComboboxSelectedItem
                 htmlTitle="Repository"
@@ -95,18 +88,19 @@ export default function ConfigurationDropdown({
             />
         </Combobox>
     );
-}
+};
 
 type SuggestedRepositoryOptionProps = {
     repo: {
         name: string;
+        cloneUrl?: string;
     };
 };
 const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo }) => {
-    const { name } = repo;
+    const { name, cloneUrl } = repo;
 
     return (
-        <div className="flex flex-row items-center overflow-hidden" aria-label={`Repository: ${name}`}>
+        <div className="flex flex-row items-center overflow-hidden" title={cloneUrl} aria-label={`Repository: ${name}`}>
             {name && <span className="text-sm whitespace-nowrap">{name}</span>}
         </div>
     );

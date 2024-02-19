@@ -1553,7 +1553,17 @@ export class WorkspaceStarter {
                         spec.setTimeout(timeout);
                     } catch (err) {}
                 }
+
+                // if the user has set a timeout, then disabledClosedTimeout would be true
                 if (user.additionalData?.disabledClosedTimeout === true) {
+                    /*
+                     * If disabledClosedTimeout is true, it indicates that the user wishes to prevent the workspace
+                     * from being automatically "stopped" or terminated due to inactivity.
+                     * By setting the closed timeout to "0", we effectively disable this automatic termination feature,
+                     * ensuring that the workspace remains active until it explicitly hits the workspace timeout limits,
+                     * if any are set. This provides users with greater control over their workspace's lifecycle,
+                     * accommodating scenarios where extended activity periods are necessary.
+                     */
                     spec.setClosedTimeout("0");
                 }
             }

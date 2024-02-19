@@ -14,7 +14,7 @@ import dayjs from "dayjs";
 import { usePrebuildLogsEmitter } from "../../../data/prebuilds/prebuild-logs-emitter";
 import React from "react";
 import { useToast } from "../../../components/toasts/Toasts";
-import { usePrebuildQuery, useTriggerPrebuildQuery, watchPrebuild } from "../../../data/prebuilds/prebuild-query";
+import { usePrebuildQuery, useTriggerPrebuildQuery, watchPrebuild } from "../../../data/prebuilds/prebuild-queries";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 import { repositoriesRoutes } from "../../repositories.routes";
 import { LoadingState } from "@podkit/loading/LoadingState";

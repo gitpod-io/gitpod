@@ -20,7 +20,7 @@ import { LoadingState } from "@podkit/loading/LoadingState";
 import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
 
 /**
- * Formats a date. For today, it returns the time. For this year, it returns the month and day. Otherwise, it returns the full date.
+ * Formats a date. For today, it returns the time. For this year, it returns the month, day and time. Otherwise, it returns the full date (month, day, year).
  */
 const formatDate = (date: dayjs.Dayjs): string => {
     if (date.isSame(dayjs(), "day")) {
@@ -28,7 +28,7 @@ const formatDate = (date: dayjs.Dayjs): string => {
     }
 
     if (date.isSame(dayjs(), "year")) {
-        return date.format("MMM D");
+        return date.format("MMM D [at] h:mm A");
     }
 
     return date.format("MMM D, YYYY");

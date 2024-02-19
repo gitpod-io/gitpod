@@ -451,8 +451,13 @@ func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID st
 		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
 			DefaultPaymentMethod: stripe.String(paymentMethod.ID)},
 		Address: &stripe.AddressParams{
-			Line1:   stripe.String(paymentMethod.BillingDetails.Address.Line1),
-			Country: stripe.String(paymentMethod.BillingDetails.Address.Country)}})
+			Line1:      stripe.String(paymentMethod.BillingDetails.Address.Line1),
+			Line2:      stripe.String(paymentMethod.BillingDetails.Address.Line2),
+			City:       stripe.String(paymentMethod.BillingDetails.Address.City),
+			PostalCode: stripe.String(paymentMethod.BillingDetails.Address.PostalCode),
+			Country:    stripe.String(paymentMethod.BillingDetails.Address.Country),
+			State:      stripe.String(paymentMethod.BillingDetails.Address.State),
+		}})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to update customer with id %s", customerID)
 	}

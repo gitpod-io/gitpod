@@ -21,7 +21,6 @@ const MAX_LENGTH = 100;
 type Props = {
     configuration: Configuration;
 };
-
 export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
     const { toast } = useToast();
     const updateConfiguration = useConfigurationMutation();

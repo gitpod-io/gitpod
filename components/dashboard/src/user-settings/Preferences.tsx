@@ -61,7 +61,10 @@ export default function Preferences() {
 
             // TODO: Convert this to a mutation
             try {
-                await getGitpodService().server.updateWorkspaceTimeoutSetting({ workspaceTimeout: workspaceTimeout });
+                await getGitpodService().server.updateWorkspaceTimeoutSetting({
+                    workspaceTimeout: workspaceTimeout,
+                    disabledClosedTimeout: workspaceTimeout === "" ? false : true,
+                });
 
                 // TODO: Once current user is in react-query, we can instead invalidate the query vs. refetching here
                 const { user } = await userClient.getAuthenticatedUser({});
