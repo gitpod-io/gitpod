@@ -14,6 +14,7 @@ import { useFeatureFlag, useHasConfigurationsAndPrebuildsEnabled } from "../../d
 import { useUserLoader } from "../../hooks/use-user-loader";
 import { useUpdateCurrentUserMutation } from "../../data/current-user/update-mutation";
 import dayjs from "dayjs";
+import { trackEvent } from "../../Analytics";
 
 const COACHMARK_KEY = "projects_configuration_migration";
 
@@ -30,9 +31,19 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
     const { mutate: updateUser } = useUpdateCurrentUserMutation();
 
     const dismiss = useCallback(() => {
-        updateUser({
-            additionalData: { profile: { coachmarksDismissals: { [COACHMARK_KEY]: dayjs().toISOString() } } },
-        });
+        updateUser(
+            {
+                additionalData: { profile: { coachmarksDismissals: { [COACHMARK_KEY]: dayjs().toISOString() } } },
+            },
+            {
+                onSettled: (_, error) => {
+                    trackEvent("coachmark_dismissed", {
+                        name: COACHMARK_KEY,
+                        success: !(error instanceof Error),
+                    });
+                },
+            },
+        );
     }, [updateUser]);
 
     const show = useMemo<boolean>(() => {
