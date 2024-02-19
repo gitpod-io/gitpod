@@ -17,6 +17,7 @@ export type Event =
     | "feedback_submitted"
     | "workspace_class_changed"
     | "privacy_policy_update_accepted"
+    | "coachmark_dismissed"
     | "modal_dismiss"
     | "ide_configuration_changed"
     | "status_rendered"
@@ -93,6 +94,11 @@ export interface TrackPolicyUpdateClick {
     success: boolean;
 }
 
+export interface TrackCoachmarkDismissed {
+    name: string;
+    success: boolean;
+}
+
 interface TrackDashboardClick {
     dnt?: boolean;
     path: string;
@@ -119,6 +125,7 @@ export function trackEvent(event: "dotfile_repo_changed", properties: TrackDotfi
 export function trackEvent(event: "feedback_submitted", properties: TrackFeedback): void;
 export function trackEvent(event: "workspace_class_changed", properties: TrackWorkspaceClassChanged): void;
 export function trackEvent(event: "privacy_policy_update_accepted", properties: TrackPolicyUpdateClick): void;
+export function trackEvent(event: "coachmark_dismissed", properties: TrackCoachmarkDismissed): void;
 export function trackEvent(event: "modal_dismiss", properties: TrackModalDismiss): void;
 export function trackEvent(event: "ide_configuration_changed", properties: TrackIDEConfigurationChanged): void;
 export function trackEvent(event: "status_rendered", properties: TrackStatusRendered): void;

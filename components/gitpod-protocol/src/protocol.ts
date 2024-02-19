@@ -162,6 +162,7 @@ export namespace AdditionalUserData {
         return user;
     }
 }
+
 // The format in which we store User Profiles in
 export interface ProfileDetails {
     // when was the last time the user updated their profile information or has been nudged to do so.
@@ -186,6 +187,8 @@ export interface ProfileDetails {
     onboardedTimestamp?: string;
     // Onboarding question about a user's company size
     companySize?: string;
+    // key-value pairs of dialogs in the UI which should only appear once. The value usually is a timestamp of the last dismissal
+    coachmarksDismissals?: { [key: string]: string };
 }
 
 export interface EmailNotificationSettings {

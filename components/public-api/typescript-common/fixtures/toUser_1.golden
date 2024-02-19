@@ -48,7 +48,8 @@
             ],
             "signupGoalsOther": "",
             "onboardedTimestamp": "2023-12-04T08:54:41.326Z",
-            "companySize": ""
+            "companySize": "",
+            "coachmarksDismissals": {}
         },
         "workspaceAutostartOptions": [
             {

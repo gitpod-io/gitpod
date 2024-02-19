@@ -39,7 +39,7 @@ import { AppNotifications } from "../AppNotifications";
 import { useHasConfigurationsAndPrebuildsEnabled } from "../data/featureflag-query";
 import { projectsPathInstallGitHubApp } from "../projects/projects.routes";
 import { Heading1, Subheading } from "@podkit/typography/Headings";
-import { PrebuildDetailPage } from "../repositories/detail/prebuilds/PrebuildDetailPage";
+import { PrebuildDetailPage } from "../prebuilds/detail/PrebuildDetailPage";
 
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
@@ -210,7 +210,9 @@ export const AppRoutes = () => {
                     <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
 
                     {configurationsAndPrebuilds && <Route exact path={`/prebuilds`} component={PrebuildListPage} />}
-                    {configurationsAndPrebuilds && <Route path="/prebuilds/:prebuildId" component={PrebuildDetailPage} />}
+                    {configurationsAndPrebuilds && (
+                        <Route path="/prebuilds/:prebuildId" component={PrebuildDetailPage} />
+                    )}
                     {configurationsAndPrebuilds && (
                         <Route exact path="/repositories" component={ConfigurationListPage} />
                     )}

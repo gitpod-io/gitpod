@@ -442,6 +442,11 @@ export class UpdateUserRequest_ProfileDetails extends Message<UpdateUserRequest_
    */
   companySize?: string;
 
+  /**
+   * @generated from field: map<string, string> coachmarks_dismissals = 13;
+   */
+  coachmarksDismissals: { [key: string]: string } = {};
+
   constructor(data?: PartialMessage<UpdateUserRequest_ProfileDetails>) {
     super();
     proto3.util.initPartial(data, this);
@@ -461,6 +466,7 @@ export class UpdateUserRequest_ProfileDetails extends Message<UpdateUserRequest_
     { no: 10, name: "signup_goals_other", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 11, name: "onboarded_timestamp", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 12, name: "company_size", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 13, name: "coachmarks_dismissals", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateUserRequest_ProfileDetails {
@@ -1526,6 +1532,15 @@ export class User_ProfileDetails extends Message<User_ProfileDetails> {
    */
   companySize = "";
 
+  /**
+   * key-value pairs of dialogs in the UI which should only appear once. The value usually is a timestamp of the last dismissal
+   *
+   * +optional
+   *
+   * @generated from field: map<string, string> coachmarks_dismissals = 13;
+   */
+  coachmarksDismissals: { [key: string]: string } = {};
+
   constructor(data?: PartialMessage<User_ProfileDetails>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1545,6 +1560,7 @@ export class User_ProfileDetails extends Message<User_ProfileDetails> {
     { no: 10, name: "signup_goals_other", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 11, name: "onboarded_timestamp", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 12, name: "company_size", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 13, name: "coachmarks_dismissals", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): User_ProfileDetails {

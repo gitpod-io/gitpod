@@ -81,6 +81,7 @@ message UpdateUserRequest {
     optional string signup_goals_other = 10;
     optional string onboarded_timestamp = 11;
     optional string company_size = 12;
+    map<string, string> coachmarks_dismissals = 13;
   }
   optional string email_address = 5;
   optional EditorReference editor_settings = 6;
@@ -265,6 +266,11 @@ message User {
     //
     // +optional
     string company_size = 12;
+
+    // key-value pairs of dialogs in the UI which should only appear once. The value usually is a timestamp of the last dismissal
+    //
+    // +optional
+    map<string, string> coachmarks_dismissals = 13;
   }
 
   // remembered workspace auto start options
