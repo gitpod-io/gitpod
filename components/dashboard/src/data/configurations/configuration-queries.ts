@@ -88,7 +88,7 @@ export const useConfiguration = (configurationId: string) => {
         getConfigurationQueryKey(configurationId),
         async () => {
             if (!configurationId) {
-                throw new Error("No configurationId provided");
+                return;
             }
 
             const { configuration } = await configurationClient.getConfiguration({
