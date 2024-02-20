@@ -28,8 +28,8 @@ export const RemoveConfiguration = ({ configuration }: Props) => {
             <ConfigurationSettingsField>
                 <Heading3>Remove this repository</Heading3>
                 <Subheading className="max-w-lg">
-                    This will delete the project and all repository-level environment variables you've set for this
-                    project. It will not delete the underlying git repository.
+                    This will remove all settings and environment variables you have set for this repository. It will
+                    not delete the underlying git repository.
                 </Subheading>
 
                 <Button variant="destructive" className="mt-4" onClick={() => setShowRemoveModal(true)}>
