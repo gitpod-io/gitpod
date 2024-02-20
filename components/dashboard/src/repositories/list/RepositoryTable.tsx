@@ -61,7 +61,7 @@ export const RepositoryTable: FC<Props> = ({
                         className="w-full max-w-none md:w-80"
                         value={searchTerm}
                         onChange={onSearchTermChange}
-                        placeholder="Search imported repositories"
+                        placeholder="Search repositories"
                     />
                     <Select value={prebuildsFilter} onValueChange={onPrebuildsFilterChange}>
                         <SelectTrigger className="w-[180px]">
@@ -77,7 +77,7 @@ export const RepositoryTable: FC<Props> = ({
 
                 {/* TODO: Consider making all podkit buttons behave this way, full width on small screen */}
                 <Button className="w-full md:w-auto" onClick={onImport}>
-                    Import Repository
+                    Add Repository
                 </Button>
             </div>
             <div className="relative w-full overflow-auto mt-4">

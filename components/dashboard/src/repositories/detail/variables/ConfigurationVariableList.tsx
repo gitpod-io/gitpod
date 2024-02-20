@@ -38,7 +38,7 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
             )}
             <div className="mb-2 flex">
                 <div className="flex-grow">
-                    <Heading3>Environment Variables</Heading3>
+                    <Heading3>Environment variables</Heading3>
                     <Subheading>Manage repository-specific environment variables.</Subheading>
                 </div>
             </div>
@@ -46,7 +46,7 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                 <div className="bg-pk-surface-secondary rounded-xl w-full p-6 flex flex-col justify-center space-y-3">
                     <span className="font-semi-bold text-base">No environment variables are set</span>
                     <span className="text-sm text-pk-content-secondary">
-                        All configuration-specific environment variables will be visible in prebuilds and optionally in
+                        All repository-specific environment variables will be visible in prebuilds and optionally in
                         workspaces for this repository.
                     </span>
                 </div>

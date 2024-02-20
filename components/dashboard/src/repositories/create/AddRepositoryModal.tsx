@@ -51,7 +51,7 @@ export const ImportRepositoryModal: FC<Props> = ({ onClose, onCreated }) => {
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleSubmit}>
-            <ModalHeader>Import repository</ModalHeader>
+            <ModalHeader>Add a repository</ModalHeader>
             <ModalBody>
                 <div className="w-112 max-w-full">
                     {needsGitAuth ? (
@@ -83,7 +83,7 @@ export const ImportRepositoryModal: FC<Props> = ({ onClose, onCreated }) => {
                     Cancel
                 </Button>
                 <LoadingButton type="submit" loading={createConfiguration.isLoading}>
-                    Import
+                    Add
                 </LoadingButton>
             </ModalFooter>
         </Modal>

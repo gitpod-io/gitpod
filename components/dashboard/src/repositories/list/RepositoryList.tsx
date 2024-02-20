@@ -9,7 +9,7 @@ import { useHistory } from "react-router-dom";
 import { useListConfigurations } from "../../data/configurations/configuration-queries";
 import { PageHeading } from "@podkit/layout/PageHeading";
 import { useDocumentTitle } from "../../hooks/use-document-title";
-import { ImportRepositoryModal } from "../create/ImportRepositoryModal";
+import { ImportRepositoryModal } from "../create/AddRepositoryModal";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { useQueryParams } from "../../hooks/use-query-params";
 import { RepoListEmptyState } from "./RepoListEmptyState";
@@ -21,7 +21,7 @@ import { TableSortOrder } from "@podkit/tables/SortableTable";
 const PREBUILD_FILTERS = { all: undefined, enabled: true, disabled: false };
 
 const RepositoryListPage: FC = () => {
-    useDocumentTitle("Imported repositories");
+    useDocumentTitle("Repositories");
 
     const history = useHistory();
 
@@ -94,7 +94,7 @@ const RepositoryListPage: FC = () => {
         <>
             <div className="app-container mb-8">
                 <PageHeading
-                    title="Imported repositories"
+                    title="Repository settings"
                     subtitle="Configure and refine the experience of working with a repository in Gitpod"
                 />
 
