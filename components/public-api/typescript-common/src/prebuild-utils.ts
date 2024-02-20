@@ -19,7 +19,7 @@ export function getPrebuildLogPath(prebuildId: string): string {
 
 /** cmp. @const HEADLESS_LOG_STREAM_ERROR_REGEX */
 const PREBUILD_LOG_STREAM_ERROR = "X-Prebuild-Error";
-const PREBUILD_LOG_STREAM_ERROR_REGEX = /X-Prebuild-Error: (?<code>[0-9]{3}) (?<message>\w+)$/;
+const PREBUILD_LOG_STREAM_ERROR_REGEX = /X-Prebuild-Error#(?<code>[0-9]+)#(?<message>.*?)#X-Prebuild-Error/;
 
 export function matchPrebuildError(msg: string): undefined | ApplicationError {
     const result = PREBUILD_LOG_STREAM_ERROR_REGEX.exec(msg);
@@ -38,7 +38,7 @@ export function getPrebuildErrorMessage(err: any) {
     } else if (err instanceof Error) {
         message = err.message;
     }
-    return `${PREBUILD_LOG_STREAM_ERROR}: ${code} ${message}`;
+    return `${PREBUILD_LOG_STREAM_ERROR}#${code}#${message}#${PREBUILD_LOG_STREAM_ERROR}`;
 }
 
 const defaultBackoffTimes = 3;
