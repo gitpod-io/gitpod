@@ -214,8 +214,17 @@ export class WorkspaceService {
         return filtered;
     }
 
-    async getCurrentInstance(userId: string, workspaceId: string): Promise<WorkspaceInstance> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+    /**
+     * @param opts.skipPermissionCheck and do permission check outside
+     */
+    async getCurrentInstance(
+        userId: string,
+        workspaceId: string,
+        opts?: { skipPermissionCheck?: boolean },
+    ): Promise<WorkspaceInstance> {
+        if (!opts?.skipPermissionCheck) {
+            await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        }
         const result = await this.db.findCurrentInstance(workspaceId);
         if (!result) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "No workspace instance found.", { workspaceId });
@@ -885,10 +894,12 @@ export class WorkspaceService {
     public async *getAndWatchWorkspaceStatus(
         userId: string,
         workspaceId: string | undefined,
-        opts: { signal: AbortSignal },
+        opts: { signal: AbortSignal; skipPermissionCheck?: boolean },
     ) {
         if (workspaceId) {
-            const instance = await this.getCurrentInstance(userId, workspaceId);
+            const instance = await this.getCurrentInstance(userId, workspaceId, {
+                skipPermissionCheck: opts.skipPermissionCheck,
+            });
             const status = this.apiConverter.toWorkspace(instance).status;
             if (status) {
                 const response = new WatchWorkspaceStatusResponse();
