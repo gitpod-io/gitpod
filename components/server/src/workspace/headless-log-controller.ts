@@ -41,18 +41,11 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { WorkspaceService } from "./workspace-service";
-import {
-    ctxGet,
-    ctxIsAborted,
-    ctxOnAbort,
-    ctxSignal,
-    runWithRequestContext,
-    runWithSubSignal,
-    runWithSubjectId,
-} from "../util/request-context";
+import { ctxIsAborted, runWithSubSignal, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { validate as uuidValidate } from "uuid";
+import { getPrebuildErrorMessage } from "@gitpod/public-api-common/lib/prebuild-utils";
 
 @injectable()
 export class HeadlessLogController {
@@ -212,48 +205,48 @@ export class HeadlessLogController {
                 }
                 const logCtx = { userId: user.id, prebuildId };
 
+                const head = {
+                    "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
+                    "Transfer-Encoding": "chunked",
+                    "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
+                };
+                res.writeHead(200, head);
+
+                const abortController = new AbortController();
+                const queue = new Queue(); // Make sure we forward in the correct order
+                const writeToResponse = async (chunk: string) =>
+                    queue.enqueue(
+                        () =>
+                            new Promise<void>(async (resolve, reject) => {
+                                if (ctxIsAborted()) {
+                                    return;
+                                }
+                                const done = res.write(chunk, "utf-8", (err?: Error | null) => {
+                                    if (err) {
+                                        // we don't reject in current promise to avoid floating error throws
+                                        abortController.abort("Failed to write chunk");
+                                        return;
+                                    }
+                                });
+                                if (!done) {
+                                    res.once("drain", resolve);
+                                } else {
+                                    setImmediate(resolve);
+                                }
+                            }),
+                    );
+
                 await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
                     try {
-                        const abortController = new AbortController();
-                        ctxOnAbort(() => {
-                            abortController.abort("parent abort controller aboarted");
-                        });
-
-                        const head = {
-                            "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
-                            "Transfer-Encoding": "chunked",
-                            "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
-                        };
-                        res.writeHead(200, head);
-                        const queue = new Queue(); // Make sure we forward in the correct order
-
                         await runWithSubSignal(abortController, async () => {
-                            const writeToResponse = async (chunk: string) =>
-                                queue.enqueue(
-                                    () =>
-                                        new Promise<void>(async (resolve, reject) => {
-                                            if (ctxIsAborted()) {
-                                                return;
-                                            }
-                                            const done = res.write(chunk, "utf-8", (err?: Error | null) => {
-                                                if (err) {
-                                                    // we don't reject in current promise to avoid floating error throws
-                                                    abortController.abort("Failed to write chunk");
-                                                    return;
-                                                }
-                                            });
-                                            if (!done) {
-                                                res.once("drain", resolve);
-                                            } else {
-                                                setImmediate(resolve);
-                                            }
-                                        }),
-                                );
                             await this.prebuildManager.watchPrebuildLogs(user.id, prebuildId, writeToResponse);
                         });
                     } catch (e) {
                         log.error(logCtx, "error streaming headless logs", e);
                         TraceContext.setError({ span }, e);
+                        writeToResponse(getPrebuildErrorMessage(e))
+                            .then()
+                            .catch(() => {});
                     } finally {
                         span.finish();
                         res.end();
