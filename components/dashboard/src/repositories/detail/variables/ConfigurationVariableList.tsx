@@ -38,7 +38,7 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
             )}
             <div className="mb-2 flex">
                 <div className="flex-grow">
-                    <Heading3>Environment Variables</Heading3>
+                    <Heading3>Environment variables</Heading3>
                     <Subheading>Manage repository-specific environment variables.</Subheading>
                 </div>
             </div>

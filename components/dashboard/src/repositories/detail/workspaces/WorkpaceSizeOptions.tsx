@@ -55,7 +55,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     return (
         <ConfigurationSettingsField>
             <form onSubmit={setWorkspaceClass}>
-                <Heading3>Workspace Size Options</Heading3>
+                <Heading3>Workspace size options</Heading3>
                 <Subheading>Choose the size of your workspace based on the resources you need.</Subheading>
 
                 <WorkspaceClassOptions value={selectedValue} onChange={setSelectedValue} />

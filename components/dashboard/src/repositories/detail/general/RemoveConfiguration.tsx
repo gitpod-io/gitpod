@@ -26,7 +26,7 @@ export const RemoveConfiguration = ({ configuration }: Props) => {
     return (
         <>
             <ConfigurationSettingsField>
-                <Heading3>Remove this Repository</Heading3>
+                <Heading3>Remove this repository</Heading3>
                 <Subheading className="max-w-lg">
                     This will delete the project and all repository-level environment variables you've set for this
                     project. It will not delete the underlying git repository.
