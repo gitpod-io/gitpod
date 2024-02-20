@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
 
@@ -90,8 +91,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 								ReadinessProbe: &corev1.Probe{
 									ProbeHandler: corev1.ProbeHandler{
-										Exec: &v1.ExecAction{
-											Command: []string{"sh", "-c", "timeout 2 bash -c '</dev/tcp/127.0.0.1/6379'"},
+										TCPSocket: &corev1.TCPSocketAction{
+											Port: intstr.FromInt(Port),
 										},
 									},
 									InitialDelaySeconds: 5,
