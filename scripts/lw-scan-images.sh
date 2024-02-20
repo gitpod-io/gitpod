@@ -11,8 +11,6 @@ if [[ -z "$LW_ACCESS_TOKEN" ]]; then
   exit 1
 fi
 
-EXCLUDE_DOCKER_IO="${EXCLUDE_DOCKER_IO:-"false"}"
-
 TMP=$(mktemp -d)
 echo "workdir: $TMP"
 
@@ -33,16 +31,15 @@ if [ ! -f "$OCI_TOOL" ]; then
 fi
 
 echo "=== Gathering list of _all_ images for $VERSION"
-# TODO(gpl) If we like this approach we should think about moving this into the installer as "list-images" or similar
-#           This would also remove the dependency to our dev image (yq4)
 INSTALLER="$TMP/installer"
 "$OCI_TOOL" fetch file -o "$INSTALLER" --platform=linux-amd64 "eu.gcr.io/gitpod-core-dev/build/installer:${VERSION}" app/installer
 echo ""
 chmod +x "$INSTALLER"
-# Extract list of images from rendered YAMLs
-"$INSTALLER" config init -c "$TMP/config.yaml" --log-level=warn
-"$INSTALLER" render -c "$TMP/config.yaml" --no-validation > "$TMP/rendered.yaml"
-yq4 --no-doc '(.. | select(key == "image" and tag == "!!str"))' "$TMP/rendered.yaml" > "$TMP/images.txt"
+# Extract list of images
+echo "apiVersion: v1" > "$TMP/config.yaml"
+"$INSTALLER" mirror list --domain example.com --repository example.com -c "$TMP/config.yaml" | yq4 '.[] | .original' > "$TMP/images.txt"
+# Remove empty lines
+sed -i '/^\s*$/d' "$TMP/images.txt"
 
 # shellcheck disable=SC2002
 TOTAL_IMAGES=$(cat "$TMP/images.txt" | wc -l)
@@ -52,17 +49,12 @@ echo "=== Found $TOTAL_IMAGES images to scan"
 # There, we can see the results in the "Vulnerabilities" tab, by searching for the Gitpod version
 # Note: Does not fail on CVEs!
 COUNTER=0
+FAILED=0
 while IFS= read -r IMAGE_REF; do
   ((COUNTER=COUNTER+1))
-  # TODO(gpl) Unclear why we can't access the docker.io images the GitHub workflow; it works from a workspace?
-  if [[ "$EXCLUDE_DOCKER_IO" == "true" ]]; then
-    if [[ "$IMAGE_REF" == "docker.io/"* ]]; then
-      echo "= Skipping docker.io image: $IMAGE_REF"
-      continue
-    fi
-  fi
 
-  NAME=$(echo "$IMAGE_REF" | cut -d ":" -f 1)
+  # Removing `docker.io/` and `docker.io/library/` prefix because otherwise lacework cannot pull image in a GitHub workflow for some reason.
+  NAME=$(echo "$IMAGE_REF" | cut -d ":" -f 1 | sed -e "s|^docker.io/||" | sed -e "s|^library/||")
   TAG=$(echo "$IMAGE_REF" | cut -d ":" -f 2)
   echo "= Scanning $NAME : $TAG [$COUNTER / $TOTAL_IMAGES]"
   "$SCANNER" image evaluate "$NAME" "$TAG" \
@@ -72,5 +64,11 @@ while IFS= read -r IMAGE_REF; do
     --ci-build=true \
     --disable-library-package-scanning=false \
     --save=true \
-    --tags version="$VERSION" > /dev/null
+    --tags version="$VERSION" > /dev/null || ((FAILED=FAILED+1))
+  echo ""
 done < "$TMP/images.txt"
+
+echo "number of failed image scans: $FAILED of $COUNTER"
+if (( FAILED > 0 )); then
+  exit 1
+fi
