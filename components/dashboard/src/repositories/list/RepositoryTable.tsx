@@ -61,7 +61,7 @@ export const RepositoryTable: FC<Props> = ({
                         className="w-full max-w-none md:w-80"
                         value={searchTerm}
                         onChange={onSearchTermChange}
-                        placeholder="Search imported repositories"
+                        placeholder="Search repositories"
                     />
                     <Select value={prebuildsFilter} onValueChange={onPrebuildsFilterChange}>
                         <SelectTrigger className="w-[180px]">

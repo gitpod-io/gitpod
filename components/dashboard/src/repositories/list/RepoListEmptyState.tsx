@@ -18,8 +18,7 @@ export const RepoListEmptyState: FC<Props> = ({ onImport }) => {
             <div className="flex flex-col justify-center items-center text-center space-y-4">
                 <Heading2>No imported repositories yet</Heading2>
                 <Subheading className="max-w-md">
-                    Importing and configuring repositories allows your team members to be coding at the click of a
-                    button.
+                    Configuring repositories allows your team members to be coding at the click of a button.
                 </Subheading>
                 <Button onClick={onImport}>Add a Repository</Button>
             </div>
