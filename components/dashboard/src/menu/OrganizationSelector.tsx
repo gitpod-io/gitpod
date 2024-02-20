@@ -116,16 +116,6 @@ export default function OrganizationSelector() {
                 separator: false,
                 link: "/settings",
             });
-
-            if (configurationsAndPrebuilds) {
-                linkEntries.push({
-                    title: "Repository settings",
-                    customContent: <LinkEntry>Repository settings</LinkEntry>,
-                    active: false,
-                    separator: false,
-                    link: "/repositories",
-                });
-            }
         }
     }
 
