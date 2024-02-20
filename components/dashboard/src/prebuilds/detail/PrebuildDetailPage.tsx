@@ -22,6 +22,7 @@ import Alert from "../../components/Alert";
 import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { useConfiguration } from "../../data/configurations/configuration-queries";
+import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -81,6 +82,9 @@ export const PrebuildDetailPage: FC = () => {
             if (err?.message) {
                 toast("Failed to fetch logs: " + err.message);
             }
+        });
+        logEmitter.on("logs-error", (err: ApplicationError) => {
+            toast("Fetch logs failed: " + err.message, { autoHide: false });
         });
     }, [logEmitter, toast]);
 
