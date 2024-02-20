@@ -18,7 +18,7 @@ function repo(name: string, project?: string): SuggestedRepository {
 
 test("it should deduplicate non-project entries", () => {
     const suggestedRepos: SuggestedRepository[] = [repo("foo"), repo("foo2"), repo("foo", "project-foo")];
-    const deduplicated = deduplicateAndFilterRepositories("foo", false, suggestedRepos);
+    const deduplicated = deduplicateAndFilterRepositories("foo", false, false, suggestedRepos);
     expect(deduplicated.length).toEqual(2);
     expect(deduplicated[1].configurationName).toEqual("project-foo");
 });
@@ -29,7 +29,7 @@ test("it should not deduplicate project entries", () => {
         repo("foo2"),
         repo("foo", "project-foo"),
     ];
-    const deduplicated = deduplicateAndFilterRepositories("foo", false, suggestedRepos);
+    const deduplicated = deduplicateAndFilterRepositories("foo", false, false, suggestedRepos);
     expect(deduplicated.length).toEqual(3);
 });
 
@@ -39,7 +39,7 @@ test("it should exclude project entries", () => {
         repo("foo2"),
         repo("foo", "project-foo"),
     ];
-    const deduplicated = deduplicateAndFilterRepositories("foo", true, suggestedRepos);
+    const deduplicated = deduplicateAndFilterRepositories("foo", true, false, suggestedRepos);
     expect(deduplicated.length).toEqual(2);
     expect(deduplicated[0].repoName).toEqual("foo");
     expect(deduplicated[1].repoName).toEqual("foo2");
@@ -54,11 +54,11 @@ test("it should match entries in url as well as poject name", () => {
         repo("bar", "someFootest"),
         repo("bar", "FOOtest"),
     ];
-    var deduplicated = deduplicateAndFilterRepositories("foo", false, suggestedRepos);
+    var deduplicated = deduplicateAndFilterRepositories("foo", false, false, suggestedRepos);
     expect(deduplicated.length).toEqual(6);
-    deduplicated = deduplicateAndFilterRepositories("foot", false, suggestedRepos);
+    deduplicated = deduplicateAndFilterRepositories("foot", false, false, suggestedRepos);
     expect(deduplicated.length).toEqual(4);
-    deduplicated = deduplicateAndFilterRepositories("FOOT", false, suggestedRepos);
+    deduplicated = deduplicateAndFilterRepositories("FOOT", false, false, suggestedRepos);
     expect(deduplicated.length).toEqual(4);
 });
 
@@ -71,7 +71,7 @@ test("it keeps the order", () => {
         repo("bar", "someFootest"),
         repo("bar", "FOOtest"),
     ];
-    const deduplicated = deduplicateAndFilterRepositories("foot", false, suggestedRepos);
+    const deduplicated = deduplicateAndFilterRepositories("foot", false, false, suggestedRepos);
     expect(deduplicated[0].repoName).toEqual("somefOOtest");
     expect(deduplicated[1].repoName).toEqual("Footest");
     expect(deduplicated[2].configurationName).toEqual("someFootest");
@@ -86,7 +86,7 @@ test("it should return all repositories without duplicates when excludeProjects 
         repo("bar", "project-foo"),
         repo("bar", "project-bar"),
     ];
-    const deduplicated = deduplicateAndFilterRepositories("foo", true, suggestedRepos);
+    const deduplicated = deduplicateAndFilterRepositories("foo", true, false, suggestedRepos);
     expect(deduplicated.length).toEqual(2);
     expect(deduplicated[0].repoName).toEqual("foo");
     expect(deduplicated[1].repoName).toEqual("bar");

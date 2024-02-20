@@ -21,6 +21,7 @@ interface RepositoryFinderProps {
     disabled?: boolean;
     expanded?: boolean;
     excludeProjects?: boolean;
+    onlyProjects?: boolean;
     onChange?: (repo: SuggestedRepository) => void;
 }
 
@@ -30,6 +31,7 @@ export default function RepositoryFinder({
     disabled,
     expanded,
     excludeProjects = false,
+    onlyProjects = false,
     onChange,
 }: RepositoryFinderProps) {
     const [searchString, setSearchString] = useState("");
@@ -38,7 +40,7 @@ export default function RepositoryFinder({
         isLoading,
         isSearching,
         hasMore,
-    } = useUnifiedRepositorySearch({ searchString, excludeProjects });
+    } = useUnifiedRepositorySearch({ searchString, excludeProjects, onlyProjects });
 
     const authProviders = useAuthProviderDescriptions();
 
@@ -104,7 +106,7 @@ export default function RepositoryFinder({
                 } as ComboboxElement;
             });
             if (hasMore) {
-                // add an element that tells the user to refince the search
+                // add an element that tells the user to refine the search
                 result.push({
                     id: "more",
                     element: (
@@ -115,7 +117,8 @@ export default function RepositoryFinder({
             }
             if (
                 searchString.length >= 3 &&
-                authProviders.data?.some((p) => p.type === AuthProviderType.BITBUCKET_SERVER)
+                authProviders.data?.some((p) => p.type === AuthProviderType.BITBUCKET_SERVER) &&
+                !onlyProjects
             ) {
                 // add an element that tells the user that the Bitbucket Server does only support prefix search
                 result.push({
@@ -145,7 +148,7 @@ export default function RepositoryFinder({
             }
             return result;
         },
-        [repos, hasMore, authProviders.data],
+        [repos, hasMore, authProviders.data, onlyProjects],
     );
 
     return (

@@ -13,9 +13,15 @@ type UnifiedRepositorySearchArgs = {
     searchString: string;
     // If true, excludes projects and only shows 1 entry per repo
     excludeProjects?: boolean;
+    // If true, only shows entries with a corresponding project
+    onlyProjects?: boolean;
 };
 // Combines the suggested repositories and the search repositories query into one hook
-export const useUnifiedRepositorySearch = ({ searchString, excludeProjects = false }: UnifiedRepositorySearchArgs) => {
+export const useUnifiedRepositorySearch = ({
+    searchString,
+    excludeProjects = false,
+    onlyProjects = false,
+}: UnifiedRepositorySearchArgs) => {
     const suggestedQuery = useSuggestedRepositories();
     const searchLimit = 30;
     const searchQuery = useSearchRepositories({ searchString, limit: searchLimit });
@@ -23,8 +29,8 @@ export const useUnifiedRepositorySearch = ({ searchString, excludeProjects = fal
     const filteredRepos = useMemo(() => {
         const flattenedRepos = [suggestedQuery.data || [], searchQuery.data || []].flat();
 
-        return deduplicateAndFilterRepositories(searchString, excludeProjects, flattenedRepos);
-    }, [excludeProjects, searchQuery.data, searchString, suggestedQuery.data]);
+        return deduplicateAndFilterRepositories(searchString, excludeProjects, onlyProjects, flattenedRepos);
+    }, [excludeProjects, onlyProjects, searchQuery.data, searchString, suggestedQuery.data]);
 
     return {
         data: filteredRepos,
@@ -39,6 +45,7 @@ export const useUnifiedRepositorySearch = ({ searchString, excludeProjects = fal
 export function deduplicateAndFilterRepositories(
     searchString: string,
     excludeProjects = false,
+    onlyProjects = false,
     suggestedRepos: SuggestedRepository[],
 ): SuggestedRepository[] {
     const normalizedSearchString = searchString.trim().toLowerCase();
@@ -53,9 +60,11 @@ export function deduplicateAndFilterRepositories(
         });
     }
     for (const repo of suggestedRepos) {
-        // filter out project-less entries if an entry with a project exists
-        if (!repo.configurationId && reposWithProject.has(repo.url)) {
-            continue;
+        // filter out project-less entries if an entry with a project exists, and we're not excluding projects
+        if (!repo.configurationId) {
+            if (reposWithProject.has(repo.url) || onlyProjects) {
+                continue;
+            }
         }
         // filter out entries that don't match the search string
         if (!`${repo.url}${repo.configurationName || ""}`.toLowerCase().includes(normalizedSearchString)) {

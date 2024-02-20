@@ -13,11 +13,17 @@ import { PrebuildListEmptyState } from "./PrebuildListEmptyState";
 import { PrebuildListErrorState } from "./PrebuildListErrorState";
 import { PrebuildsTable } from "./PrebuildTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
-import { useListOrganizationPrebuildsQuery } from "../../data/prebuilds/organization-prebuilds-query";
+import {
+    getListConfigurationsPrebuildsQueryKey,
+    useListOrganizationPrebuildsQuery,
+} from "../../data/prebuilds/organization-prebuilds-query";
 import { ListOrganizationPrebuildsRequest_Filter_State } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { validate } from "uuid";
 import type { TableSortOrder } from "@podkit/tables/SortableTable";
 import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { RunPrebuildModal } from "./RunPrebuildModal";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCurrentOrg } from "../../data/organizations/orgs-query";
 
 const STATUS_FILTER_VALUES = ["succeeded", "failed", "unfinished", undefined] as const; // undefined means any status
 export type StatusOption = typeof STATUS_FILTER_VALUES[number];
@@ -33,17 +39,23 @@ export type Sort = {
     sortOrder: TableSortOrder;
 };
 
+const pageSize = 30;
+
 const PrebuildsListPage: FC = () => {
     useDocumentTitle("Prebuilds");
 
     const history = useHistory();
     const params = useQueryParams();
+    const queryClient = useQueryClient();
+    const organization = useCurrentOrg();
 
     const [statusFilter, setPrebuildsFilter] = useState(parseStatus(params));
     const [configurationFilter, setConfigurationFilter] = useState(parseConfigurationId(params));
 
     const [sortBy, setSortBy] = useState(parseSortBy(params));
     const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
+
+    const [showRunPrebuildModal, setShowRunPrebuildModal] = useState(false);
 
     const handleFilterChange = useCallback((filter: Filter) => {
         setPrebuildsFilter(filter.status);
@@ -55,11 +67,23 @@ const PrebuildsListPage: FC = () => {
             configurationId: configurationFilter,
         };
     }, [configurationFilter, statusFilter]);
+    const apiFilter = useMemo(() => {
+        return {
+            state: toApiStatus(statusFilter),
+            ...(configurationFilter ? { configuration: { id: configurationFilter } } : {}),
+        };
+    }, [statusFilter, configurationFilter]);
 
     const sort = useMemo<Sort>(() => {
         return {
             sortBy,
             sortOrder,
+        };
+    }, [sortBy, sortOrder]);
+    const apiSort = useMemo(() => {
+        return {
+            order: sortOrder === "desc" ? SortOrder.DESC : SortOrder.ASC,
+            field: sortBy,
         };
     }, [sortBy, sortOrder]);
     const handleSort = useCallback(
@@ -85,7 +109,6 @@ const PrebuildsListPage: FC = () => {
         history.replace({ search: `?${params.toString()}` });
     }, [history, statusFilter, configurationFilter]);
 
-    // TODO: handle isError case
     const {
         data,
         isLoading,
@@ -97,15 +120,9 @@ const PrebuildsListPage: FC = () => {
         isError,
         error,
     } = useListOrganizationPrebuildsQuery({
-        filter: {
-            state: toApiStatus(filter.status),
-            ...(configurationFilter ? { configuration: { id: configurationFilter } } : {}),
-        },
-        sort: {
-            order: sortOrder === "desc" ? SortOrder.DESC : SortOrder.ASC,
-            field: sortBy,
-        },
-        pageSize: 30,
+        filter: apiFilter,
+        sort: apiSort,
+        pageSize,
     });
 
     const prebuilds = useMemo(() => {
@@ -140,6 +157,21 @@ const PrebuildsListPage: FC = () => {
                         onLoadNextPage={() => fetchNextPage()}
                         onFilterChange={handleFilterChange}
                         onSort={handleSort}
+                        onTriggerPrebuild={() => setShowRunPrebuildModal(true)}
+                    />
+                )}
+
+                {showRunPrebuildModal && (
+                    <RunPrebuildModal
+                        onClose={() => setShowRunPrebuildModal(false)}
+                        onRun={() => {
+                            const queryKey = getListConfigurationsPrebuildsQueryKey(organization.data?.id ?? "", {
+                                filter: apiFilter,
+                                pageSize,
+                                sort: apiSort,
+                            });
+                            queryClient.invalidateQueries(queryKey);
+                        }}
                     />
                 )}
 
