@@ -21,7 +21,7 @@ import { TableSortOrder } from "@podkit/tables/SortableTable";
 const PREBUILD_FILTERS = { all: undefined, enabled: true, disabled: false };
 
 const RepositoryListPage: FC = () => {
-    useDocumentTitle("Imported repositories");
+    useDocumentTitle("Repositories");
 
     const history = useHistory();
 

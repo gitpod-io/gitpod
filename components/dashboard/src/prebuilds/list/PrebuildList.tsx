@@ -123,7 +123,7 @@ const PrebuildsListPage: FC = () => {
     return (
         <>
             <div className="app-container mb-8">
-                <PageHeading title="Prebuilds" subtitle="Review prebuilds of your imported repositories." />
+                <PageHeading title="Prebuilds" subtitle="Review prebuilds of your added repositories." />
 
                 {isLoading && <LoadingState />}
 
