@@ -96,6 +96,16 @@ export default function OrganizationSelector() {
                 }
             }
 
+            if (configurationsAndPrebuilds) {
+                linkEntries.push({
+                    title: "Repository settings",
+                    customContent: <LinkEntry>Repository settings</LinkEntry>,
+                    active: false,
+                    separator: false,
+                    link: "/repositories",
+                });
+            }
+
             // Org settings is available for all members, but only owner can change them
             // collaborator can read org setting via API so that other feature like restrict org workspace classes could work
             // we only hide the menu from dashboard
@@ -106,16 +116,6 @@ export default function OrganizationSelector() {
                 separator: false,
                 link: "/settings",
             });
-
-            if (configurationsAndPrebuilds) {
-                linkEntries.push({
-                    title: "Repository settings",
-                    customContent: <LinkEntry>Repository settings</LinkEntry>,
-                    active: false,
-                    separator: false,
-                    link: "/repositories",
-                });
-            }
         }
     }
 
