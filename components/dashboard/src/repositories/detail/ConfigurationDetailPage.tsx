@@ -23,7 +23,6 @@ import { LoadingState } from "@podkit/loading/LoadingState";
 type PageRouteParams = {
     id: string;
 };
-
 const ConfigurationDetailPage: FC = () => {
     // preload some data we may show
     useWorkspaceClasses();
@@ -59,17 +58,13 @@ const ConfigurationDetailPage: FC = () => {
 
     return (
         <div className="w-full">
-            <BreadcrumbNav
-                pageTitle="Imported repositories"
-                pageDescription={data?.name ?? ""}
-                backLink="/repositories"
-            />
-            <WidePageWithSubMenu subMenu={settingsMenu} navTitle="Configuration Settings">
+            <BreadcrumbNav pageTitle="Repositories" pageDescription={data?.name ?? ""} backLink="/repositories" />
+            <WidePageWithSubMenu subMenu={settingsMenu} navTitle="Repository settings">
                 {isLoading && <LoadingState />}
                 {error ? (
                     <div className="gap-4">
                         <Alert type="error">
-                            <span>Failed to load repository configuration</span>
+                            <span>Failed to load repository</span>
                             <pre>{error.message}</pre>
                         </Alert>
                         <Button
@@ -85,7 +80,7 @@ const ConfigurationDetailPage: FC = () => {
                     !isLoading &&
                     (!data ? (
                         // TODO: add a better not-found UI w/ link back to repositories
-                        <div>Sorry, we couldn't find that repository configuration.</div>
+                        <div>Sorry, we couldn't find this repository.</div>
                     ) : (
                         <div className="flex flex-col gap-4">
                             <Switch>

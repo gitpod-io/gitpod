@@ -223,7 +223,7 @@ export const PrebuildDetailPage: FC = () => {
                                     href={repositoriesRoutes.Detail(configuration?.id!)}
                                     variant="secondary"
                                 >
-                                    View Imported Repository
+                                    View Repository
                                 </LinkButton>
                             </div>
                         </div>
