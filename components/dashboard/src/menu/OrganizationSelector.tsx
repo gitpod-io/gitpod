@@ -60,24 +60,14 @@ export default function OrganizationSelector() {
     if (currentOrg.data) {
         // collaborator can't access projects, members, usage and billing
         if (hasMemberPermission) {
-            // Check both flags as one just controls if the menu item is present, the other if the page is accessible
-            if (configurationsAndPrebuilds) {
+            if (configurationsAndPrebuilds && showPrebuildMenuItem) {
                 linkEntries.push({
-                    title: "Repositories",
-                    customContent: <LinkEntry>Repositories</LinkEntry>,
+                    title: "Prebuilds",
+                    customContent: <LinkEntry>Prebuilds</LinkEntry>,
                     active: false,
                     separator: false,
-                    link: "/repositories",
+                    link: "/prebuilds",
                 });
-                if (showPrebuildMenuItem) {
-                    linkEntries.push({
-                        title: "Prebuilds",
-                        customContent: <LinkEntry>Prebuilds</LinkEntry>,
-                        active: false,
-                        separator: false,
-                        link: "/prebuilds",
-                    });
-                }
             }
             linkEntries.push({
                 title: "Members",
@@ -110,12 +100,22 @@ export default function OrganizationSelector() {
             // collaborator can read org setting via API so that other feature like restrict org workspace classes could work
             // we only hide the menu from dashboard
             linkEntries.push({
-                title: "Settings",
-                customContent: <LinkEntry>Settings</LinkEntry>,
+                title: "Organization Settings",
+                customContent: <LinkEntry>Organization Settings</LinkEntry>,
                 active: false,
                 separator: false,
                 link: "/settings",
             });
+
+            if (configurationsAndPrebuilds) {
+                linkEntries.push({
+                    title: "Repository settings",
+                    customContent: <LinkEntry>Repositories</LinkEntry>,
+                    active: false,
+                    separator: false,
+                    link: "/repositories",
+                });
+            }
         }
     }
 

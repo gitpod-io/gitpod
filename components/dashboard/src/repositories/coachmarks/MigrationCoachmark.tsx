@@ -91,7 +91,7 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
                 <Text className="text-pk-content-secondary text-base pb-4 pt-2">
                     Projects are now called “
                     <Link to={"/repositories"} className="gp-link">
-                        Imported Repositories.
+                        Repository settings.
                     </Link>
                     ” You can find them in your organization menu.
                 </Text>

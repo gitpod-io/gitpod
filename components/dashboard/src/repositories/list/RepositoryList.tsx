@@ -94,7 +94,7 @@ const RepositoryListPage: FC = () => {
         <>
             <div className="app-container mb-8">
                 <PageHeading
-                    title="Imported repositories"
+                    title="Repository settings"
                     subtitle="Configure and refine the experience of working with a repository in Gitpod"
                 />
 
