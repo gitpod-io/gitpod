@@ -203,6 +203,17 @@ export function runWithSubjectId<T>(subjectId: SubjectId | undefined, fun: () =>
     return runWithContext({ ...parent, subjectId }, fun);
 }
 
+export function runWithSubSignal<T>(abortController: AbortController, fun: () => T): T {
+    const parent = ctxTryGet();
+    if (!parent) {
+        throw new Error("runWithChildContext: No parent context available");
+    }
+    ctxOnAbort(() => {
+        abortController.abort("runWithSubSignal: Parent context signal aborted");
+    });
+    return runWithContext({ ...parent, signal: abortController.signal }, fun);
+}
+
 function runWithContext<C extends RequestContext, T>(context: C, fun: () => T): T {
     return asyncLocalStorage.run(context, fun);
 }

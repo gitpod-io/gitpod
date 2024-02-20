@@ -41,9 +41,18 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { WorkspaceService } from "./workspace-service";
-import { ctxIsAborted, runWithSubjectId } from "../util/request-context";
+import {
+    ctxGet,
+    ctxIsAborted,
+    ctxOnAbort,
+    ctxSignal,
+    runWithRequestContext,
+    runWithSubSignal,
+    runWithSubjectId,
+} from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
+import { validate as uuidValidate } from "uuid";
 
 @injectable()
 export class HeadlessLogController {
@@ -195,20 +204,30 @@ export class HeadlessLogController {
             asyncHandler(async (req: express.Request, res: express.Response) => {
                 const span = opentracing.globalTracer().startSpan(PREBUILD_LOGS_PATH_PREFIX);
                 const user = req.user as User; // verified by authenticateAndAuthorize
+
+                const prebuildId = req.params.prebuildId;
+                if (!uuidValidate(prebuildId)) {
+                    res.status(400).send("prebuildId is invalidate");
+                    return;
+                }
+                const logCtx = { userId: user.id, prebuildId };
+
                 await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
                     try {
-                        const prebuildId = req.params.prebuildId;
+                        const abortController = new AbortController();
+                        ctxOnAbort(() => {
+                            abortController.abort("parent abort controller aboarted");
+                        });
 
-                        const logCtx = { userId: user.id, prebuildId };
-                        try {
-                            const head = {
-                                "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
-                                "Transfer-Encoding": "chunked",
-                                "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
-                            };
-                            res.writeHead(200, head);
+                        const head = {
+                            "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
+                            "Transfer-Encoding": "chunked",
+                            "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
+                        };
+                        res.writeHead(200, head);
+                        const queue = new Queue(); // Make sure we forward in the correct order
 
-                            const queue = new Queue(); // Make sure we forward in the correct order
+                        await runWithSubSignal(abortController, async () => {
                             const writeToResponse = async (chunk: string) =>
                                 queue.enqueue(
                                     () =>
@@ -216,14 +235,13 @@ export class HeadlessLogController {
                                             if (ctxIsAborted()) {
                                                 return;
                                             }
-
                                             const done = res.write(chunk, "utf-8", (err?: Error | null) => {
                                                 if (err) {
-                                                    reject(err); // propagate write error to upstream
+                                                    // we don't reject in current promise to avoid floating error throws
+                                                    abortController.abort("Failed to write chunk");
                                                     return;
                                                 }
                                             });
-                                            // handle as per doc: https://nodejs.org/api/stream.html#stream_writable_write_chunk_encoding_callback
                                             if (!done) {
                                                 res.once("drain", resolve);
                                             } else {
@@ -232,19 +250,13 @@ export class HeadlessLogController {
                                         }),
                                 );
                             await this.prebuildManager.watchPrebuildLogs(user.id, prebuildId, writeToResponse);
-                            res.sendStatus(200);
-                            res.end();
-                        } catch (err) {
-                            log.debug(logCtx, "error streaming headless logs", err);
-                            res.setHeader("X-Prebuild-Error", err instanceof Error ? err.toString() : String(err));
-                            res.sendStatus(500);
-                            res.end();
-                        }
+                        });
                     } catch (e) {
+                        log.error(logCtx, "error streaming headless logs", e);
                         TraceContext.setError({ span }, e);
-                        throw e;
                     } finally {
                         span.finish();
+                        res.end();
                     }
                 });
             }),
