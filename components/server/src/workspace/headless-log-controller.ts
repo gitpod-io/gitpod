@@ -244,9 +244,7 @@ export class HeadlessLogController {
                     } catch (e) {
                         log.error(logCtx, "error streaming headless logs", e);
                         TraceContext.setError({ span }, e);
-                        writeToResponse(getPrebuildErrorMessage(e))
-                            .then()
-                            .catch(() => {});
+                        await writeToResponse(getPrebuildErrorMessage(e)).catch(() => {});
                     } finally {
                         span.finish();
                         res.end();
