@@ -120,7 +120,7 @@ export default function OrganizationSelector() {
             if (configurationsAndPrebuilds) {
                 linkEntries.push({
                     title: "Repository settings",
-                    customContent: <LinkEntry>Repositories</LinkEntry>,
+                    customContent: <LinkEntry>Repository settings</LinkEntry>,
                     active: false,
                     separator: false,
                     link: "/repositories",
