@@ -35,7 +35,7 @@ export class SessionHandler {
             }
 
             const cookies = parseCookieHeader(req.headers.cookie || "");
-            const jwtToken = cookies[this.getJWTCookieName(this.config)];
+            const jwtToken = cookies[getJWTCookieName(this.config)];
             if (!jwtToken) {
                 const cookie = await this.createJWTSessionCookie(user.id);
 
@@ -126,7 +126,7 @@ export class SessionHandler {
 
     async verifyJWTCookie(cookie: string): Promise<JwtPayload | undefined> {
         const cookies = parseCookieHeader(cookie);
-        const jwtToken = cookies[this.getJWTCookieName(this.config)];
+        const jwtToken = cookies[getJWTCookieName(this.config)];
         if (!jwtToken) {
             log.debug("No JWT session present on request");
             return undefined;
@@ -151,10 +151,10 @@ export class SessionHandler {
         const token = await this.authJWT.sign(userID, payload, options?.expirySeconds);
 
         return {
-            name: this.getJWTCookieName(this.config),
+            name: getJWTCookieName(this.config),
             value: token,
             opts: {
-                domain: this.config.hostUrl.url.hostname,
+                domain: getJWTCookieDomain(this.config),
                 maxAge: this.config.auth.session.cookie.maxAge * 1000, // express does not match the HTTP spec and uses milliseconds
                 httpOnly: this.config.auth.session.cookie.httpOnly,
                 sameSite: this.config.auth.session.cookie.sameSite,
@@ -163,13 +163,19 @@ export class SessionHandler {
         };
     }
 
-    private getJWTCookieName(config: Config) {
-        return config.auth.session.cookie.name;
-    }
-
     public clearSessionCookie(res: express.Response, config: Config): void {
-        res.clearCookie(this.getJWTCookieName(this.config));
+        res.clearCookie(getJWTCookieName(this.config), {
+            domain: getJWTCookieDomain(config),
+        });
     }
+}
+
+function getJWTCookieName(config: Config) {
+    return config.auth.session.cookie.name;
+}
+
+function getJWTCookieDomain(config: Config): string {
+    return config.hostUrl.url.hostname;
 }
 
 function parseCookieHeader(cookie: string): { [key: string]: string } {
