@@ -21,7 +21,7 @@ export const useUserLoader = () => {
 
     // For now, we're using the user context to store the user, but letting react-query handle the loading
     // In the future, we should remove the user context and use react-query to access the user
-    const { isLoading, refetch } = useQuery({
+    const { isLoading } = useQuery({
         queryKey: noPersistence(["current-user"]),
         queryFn: async () => {
             const user = (await logTracing(async () => userClient.getAuthenticatedUser({}), "on user loading")).user;
@@ -55,5 +55,5 @@ export const useUserLoader = () => {
         userLoaded = !isLoading;
     }, [isLoading]);
 
-    return { user, loading: isLoading, refetchUser: refetch };
+    return { user, loading: isLoading };
 };
