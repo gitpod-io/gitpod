@@ -16,6 +16,8 @@ import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { useCurrentOrg } from "./data/organizations/orgs-query";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { getGitpodService } from "./service/service";
+import { useOrgBillingMode } from "./data/billing-mode/org-billing-mode-query";
+import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 const PRIVACY_POLICY_LAST_UPDATED = "2023-12-20";
@@ -91,8 +93,7 @@ export function AppNotifications() {
     const { mutateAsync } = useUpdateCurrentUserMutation();
 
     const currentOrg = useCurrentOrg().data;
-    const attrId = currentOrg ? AttributionId.createFromOrganizationId(currentOrg.id) : undefined;
-    const attributionId = attrId && AttributionId.render(attrId);
+    const { data: billingMode } = useOrgBillingMode();
 
     useEffect(() => {
         let ignore = false;
@@ -108,14 +109,10 @@ export function AppNotifications() {
                     notifications.push(UPDATED_PRIVACY_POLICY((u: Partial<UserProtocol>) => mutateAsync(u)));
                 }
 
-                if (isGitpodIo() && attributionId) {
-                    const [subscriptionId, invalidBillingAddress, stripePortalUrl] = await Promise.all([
-                        getGitpodService().server.findStripeSubscriptionId(attributionId),
-                        getGitpodService().server.isCustomerBillingAddressInvalid(attributionId),
-                        getGitpodService().server.getStripePortalUrl(attributionId),
-                    ]);
-                    if (subscriptionId && invalidBillingAddress) {
-                        notifications.push(INVALID_BILLING_ADDRESS(stripePortalUrl));
+                if (isGitpodIo() && currentOrg && billingMode?.mode === "usage-based") {
+                    const notification = await checkForInvalidBillingAddress(currentOrg);
+                    if (notification) {
+                        notifications.push(notification);
                     }
                 }
             }
@@ -131,7 +128,7 @@ export function AppNotifications() {
         return () => {
             ignore = true;
         };
-    }, [loading, mutateAsync, user, attributionId]);
+    }, [loading, mutateAsync, user, currentOrg, billingMode]);
 
     const dismissNotification = useCallback(() => {
         if (!topNotification) {
@@ -169,6 +166,29 @@ export function AppNotifications() {
             </Alert>
         </div>
     );
+}
+
+async function checkForInvalidBillingAddress(org: Organization): Promise<Notification | undefined> {
+    try {
+        const attributionId = AttributionId.render(AttributionId.createFromOrganizationId(org.id));
+
+        const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
+        if (!subscriptionId) {
+            return undefined;
+        }
+
+        const invalidBillingAddress = await getGitpodService().server.isCustomerBillingAddressInvalid(attributionId);
+        if (!invalidBillingAddress) {
+            return undefined;
+        }
+
+        const stripePortalUrl = await getGitpodService().server.getStripePortalUrl(attributionId);
+        return INVALID_BILLING_ADDRESS(stripePortalUrl);
+    } catch (err) {
+        // On error we don't want to block but still would like to report against metrics
+        console.debug("failed to determine 'invalid billing address' state", err);
+        return undefined;
+    }
 }
 
 function getDismissedNotifications(): string[] {
