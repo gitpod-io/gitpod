@@ -6,7 +6,6 @@
 
 import { FC, useCallback, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
-import { SuggestedRepository } from "@gitpod/gitpod-protocol";
 import RepositoryFinder from "../../components/RepositoryFinder";
 import { InputField } from "../../components/forms/InputField";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../../components/AuthorizeGit";
@@ -14,12 +13,12 @@ import { useTemporaryState } from "../../hooks/use-temporary-value";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { Button } from "@podkit/buttons/Button";
 import { useTriggerPrebuildQuery } from "../../data/prebuilds/prebuild-queries";
+import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 
 type Props = {
     onRun: (prebuildId: string) => void;
     onClose: () => void;
 };
-
 export const RunPrebuildModal: FC<Props> = ({ onClose, onRun }) => {
     const needsGitAuth = useNeedsGitAuthorization();
     const [selectedRepo, setSelectedRepo] = useState<SuggestedRepository>();
@@ -32,7 +31,7 @@ export const RunPrebuildModal: FC<Props> = ({ onClose, onRun }) => {
         error,
         isRefetching,
         data: prebuildId,
-    } = useTriggerPrebuildQuery(selectedRepo?.projectId);
+    } = useTriggerPrebuildQuery(selectedRepo?.configurationId);
 
     const handleSubmit = useCallback(() => {
         if (!selectedRepo) {
@@ -52,7 +51,7 @@ export const RunPrebuildModal: FC<Props> = ({ onClose, onRun }) => {
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleSubmit}>
-            <ModalHeader>Add a repository</ModalHeader>
+            <ModalHeader>Run a prebuild</ModalHeader>
             <ModalBody>
                 <div className="w-112 max-w-full">
                     {needsGitAuth ? (
@@ -62,7 +61,7 @@ export const RunPrebuildModal: FC<Props> = ({ onClose, onRun }) => {
                             <InputField className="mb-8 w-full">
                                 <RepositoryFinder
                                     selectedContextURL={selectedRepo?.url}
-                                    selectedConfigurationId={selectedRepo?.projectId}
+                                    selectedConfigurationId={selectedRepo?.configurationId}
                                     onChange={setSelectedRepo}
                                     onlyProjects
                                 />
