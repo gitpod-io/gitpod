@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import { TokenProvider } from "./token-provider";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class TokenService implements TokenProvider {
@@ -50,13 +51,29 @@ export class TokenService implements TokenProvider {
         if (!token) {
             return undefined;
         }
+
         const aboutToExpireTime = new Date();
         aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
         if (token.expiryDate && token.expiryDate < aboutToExpireTime.toISOString()) {
+            // We attempt to get a token three times
             const { authProvider } = this.hostContextProvider.get(host)!;
+
             if (authProvider.refreshToken) {
-                await authProvider.refreshToken(user);
-                token = (await this.userDB.findTokenForIdentity(identity))!;
+                const errors: Error[] = [];
+                for (let i = 0; i < 3; i++) {
+                    try {
+                        await authProvider.refreshToken(user);
+                        token = (await this.userDB.findTokenForIdentity(identity))!;
+                        if (token) {
+                            return token;
+                        }
+                    } catch (e) {
+                        errors.push(e as Error);
+                        log.error(`Failed to refresh token on attempt ${i}/3.`, e, { userId: user.id });
+                    }
+                }
+                log.error(`Failed to refresh token after 3 attempts.`, errors, { userId: user.id });
+                throw new Error(`Failed to refresh token after 3 attempts: ${errors.join(", ")}`);
             }
         }
         return token;
