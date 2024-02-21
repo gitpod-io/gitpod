@@ -87,19 +87,12 @@ const INVALID_BILLING_ADDRESS = (stripePortalUrl: string | undefined) => {
 
 export function AppNotifications() {
     const [topNotification, setTopNotification] = useState<Notification | undefined>(undefined);
-    const { user, loading, refetchUser } = useUserLoader();
+    const { user, loading } = useUserLoader();
     const { mutateAsync } = useUpdateCurrentUserMutation();
 
     const currentOrg = useCurrentOrg().data;
     const attrId = currentOrg ? AttributionId.createFromOrganizationId(currentOrg.id) : undefined;
     const attributionId = attrId && AttributionId.render(attrId);
-
-    // Workaround to get people to login again in case of cert rotation
-    useEffect(() => {
-        setInterval(() => {
-            refetchUser({});
-        }, 33 * 1000);
-    }, [refetchUser]);
 
     useEffect(() => {
         let ignore = false;
