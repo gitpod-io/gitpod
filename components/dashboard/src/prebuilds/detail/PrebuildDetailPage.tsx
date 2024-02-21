@@ -55,7 +55,7 @@ export const PrebuildDetailPage: FC = () => {
     const { toast } = useToast();
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
 
-    const { emitter: logEmitter } = usePrebuildLogsEmitter(prebuildId);
+    const { emitter: logEmitter, isLoading: isStreamingLogs } = usePrebuildLogsEmitter(prebuildId);
     const {
         isFetching: isTriggeringPrebuild,
         refetch: triggerPrebuild,
@@ -213,6 +213,7 @@ export const PrebuildDetailPage: FC = () => {
                                         classes="h-full w-full"
                                         xtermClasses="absolute top-0 left-0 bottom-0 right-0 mx-6 my-0"
                                         logsEmitter={logEmitter}
+                                        isLoading={isStreamingLogs}
                                     />
                                 </Suspense>
                             </div>

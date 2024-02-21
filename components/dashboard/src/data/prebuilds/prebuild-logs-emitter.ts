@@ -11,6 +11,7 @@ import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-ap
 
 export function usePrebuildLogsEmitter(prebuildId: string) {
     const [emitter] = useState(new EventEmitter());
+    const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
         const controller = new AbortController();
         const watch = async () => {
@@ -35,6 +36,9 @@ export function usePrebuildLogsEmitter(prebuildId: string) {
                 {
                     includeCredentials: true,
                     maxBackoffTimes: 3,
+                    onEnd: () => {
+                        setIsLoading(false);
+                    },
                 },
             );
         };
@@ -47,5 +51,5 @@ export function usePrebuildLogsEmitter(prebuildId: string) {
             controller.abort();
         };
     }, [emitter, prebuildId]);
-    return { emitter };
+    return { emitter, isLoading };
 }

@@ -717,6 +717,9 @@ export class PrebuildManager {
                                         {
                                             includeCredentials: false,
                                             maxBackoffTimes: 3,
+                                            onEnd: () => {
+                                                sink.stop();
+                                            },
                                         },
                                     );
                                     return () => {

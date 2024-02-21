@@ -45,6 +45,7 @@ const defaultBackoffTimes = 3;
 interface Options {
     includeCredentials: boolean;
     maxBackoffTimes?: number;
+    onEnd?: () => void;
 }
 
 /**
@@ -141,6 +142,9 @@ export function onDownloadPrebuildLogsUrl(
             await retryBackoff("error while listening to stream", err);
         } finally {
             reader?.cancel().catch(console.debug);
+            if (options.onEnd) {
+                options.onEnd();
+            }
         }
     };
     startWatchingLogs().catch(console.error);
