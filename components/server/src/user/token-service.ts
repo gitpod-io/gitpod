@@ -60,6 +60,10 @@ export class TokenService implements TokenProvider {
 
             if (authProvider.refreshToken) {
                 const errors: Error[] = [];
+
+                // There is a race condition where multiple requests may each need to use the refresh_token to get a new access token.
+                // When the `authProvider.refreshToken` is called, it will refresh the token and store it in the database.
+                // However, the token may have already been refreshed by another request, so we need to check the database again.
                 for (let i = 0; i < 3; i++) {
                     try {
                         await authProvider.refreshToken(user);
