@@ -6,12 +6,15 @@ package apiv1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	connect "github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/common-go/experiments"
+	"github.com/gitpod-io/gitpod/common-go/experiments/experimentstest"
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
@@ -239,7 +242,11 @@ func TestGetIDToken(t *testing.T) {
 			rsa256, err := jws.NewRSA256(keyset)
 			require.NoError(t, err)
 
-			svc := NewIdentityProviderService(&FakeServerConnPool{api: serverMock}, test.TokenSource(t))
+			svc := NewIdentityProviderService(&FakeServerConnPool{api: serverMock}, test.TokenSource(t), &experimentstest.Client{
+				StringMatcher: func(ctx context.Context, experimentName, defaultValue string, attributes experiments.Attributes) string {
+					return ""
+				},
+			})
 			_, handler := v1connect.NewIdentityProviderServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor(config.SessionConfig{
 				Issuer: "unitetest.com",
 				Cookie: config.CookieConfig{
@@ -274,4 +281,53 @@ type functionIDTokenSource func(ctx context.Context, org string, audience []stri
 
 func (f functionIDTokenSource) IDToken(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
 	return f(ctx, org, audience, userInfo)
+}
+
+func TestGetOIDCSubject(t *testing.T) {
+	contextUrl := "https://github.com/gitpod-io/gitpod"
+	tests := []struct {
+		Name    string
+		Keys    string
+		Claims  map[string]interface{}
+		Subject string
+	}{
+		{
+			Name:    "happy path",
+			Keys:    "",
+			Claims:  map[string]interface{}{},
+			Subject: contextUrl,
+		},
+		{
+			Name:    "with custom keys",
+			Keys:    "key1;key3;key2",
+			Claims:  map[string]interface{}{"key1": 1, "key2": "hello"},
+			Subject: "key1:1:key3::key2:hello",
+		},
+		{
+			Name:    "with custom keys",
+			Keys:    "key1;key3;key2",
+			Claims:  map[string]interface{}{"key1": 1, "key3": errors.New("test")},
+			Subject: "key1:1:key3:test:key2:",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			svc := NewIdentityProviderService(nil, nil, &experimentstest.Client{
+				StringMatcher: func(ctx context.Context, experimentName string, defaultValue string, attributes experiments.Attributes) string {
+					return test.Keys
+				},
+			})
+			userinfo := oidc.NewUserInfo()
+			for k, v := range test.Claims {
+				userinfo.AppendClaims(k, v)
+			}
+			act := svc.getOIDCSubject(context.Background(), userinfo, &protocol.User{}, &protocol.WorkspaceInfo{
+				Workspace: &protocol.Workspace{ContextURL: contextUrl},
+			})
+			if diff := cmp.Diff(test.Subject, act); diff != "" {
+				t.Errorf("getOIDCSubject() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
 }

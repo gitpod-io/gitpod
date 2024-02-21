@@ -7,11 +7,14 @@ package apiv1
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	connect "github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
+	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/zitadel/oidc/pkg/oidc"
 )
@@ -20,16 +23,18 @@ type IDTokenSource interface {
 	IDToken(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error)
 }
 
-func NewIdentityProviderService(serverConnPool proxy.ServerConnectionPool, source IDTokenSource) *IdentityProviderService {
+func NewIdentityProviderService(serverConnPool proxy.ServerConnectionPool, source IDTokenSource, expClient experiments.Client) *IdentityProviderService {
 	return &IdentityProviderService{
 		connectionPool: serverConnPool,
 		idTokenSource:  source,
+		expClient:      expClient,
 	}
 }
 
 type IdentityProviderService struct {
 	connectionPool proxy.ServerConnectionPool
 	idTokenSource  IDTokenSource
+	expClient      experiments.Client
 
 	v1connect.UnimplementedWorkspacesServiceHandler
 }
@@ -84,16 +89,19 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
 	}
 
-	subject := workspace.Workspace.ContextURL
 	userInfo := oidc.NewUserInfo()
 	userInfo.SetName(user.Name)
-	userInfo.SetSubject(subject)
 	userInfo.AppendClaims("user_id", user.ID)
 	userInfo.AppendClaims("org_id", workspace.Workspace.OrganizationId)
+	userInfo.AppendClaims("context", workspace.Workspace.ContextURL)
+	userInfo.AppendClaims("workspace_id", workspaceID)
 
 	if email != "" {
 		userInfo.SetEmail(email, user.OrganizationId != "")
+		userInfo.AppendClaims("email", email)
 	}
+
+	userInfo.SetSubject(srv.getOIDCSubject(ctx, userInfo, user, workspace))
 
 	token, err := srv.idTokenSource.IDToken(ctx, "gitpod", req.Msg.Audience, userInfo)
 	if err != nil {
@@ -105,4 +113,24 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 			Token: token,
 		},
 	}, nil
+}
+
+func (srv *IdentityProviderService) getOIDCSubject(ctx context.Context, userInfo oidc.UserInfoSetter, user *protocol.User, workspace *protocol.WorkspaceInfo) string {
+	claimKeys := experiments.GetIdPClaimKeys(ctx, srv.expClient, experiments.Attributes{
+		UserID: user.ID,
+		TeamID: workspace.Workspace.OrganizationId,
+	})
+	subject := workspace.Workspace.ContextURL
+	if len(claimKeys) != 0 {
+		subArr := []string{}
+		for _, key := range claimKeys {
+			value := userInfo.GetClaim(key)
+			if value == nil {
+				value = ""
+			}
+			subArr = append(subArr, fmt.Sprintf("%s:%+v", key, value))
+		}
+		subject = strings.Join(subArr, ":")
+	}
+	return subject
 }
