@@ -217,7 +217,7 @@ export class HeadlessLogController {
                 const writeToResponse = async (chunk: string) =>
                     queue.enqueue(
                         () =>
-                            new Promise<void>(async (resolve, reject) => {
+                            new Promise<void>((resolve) => {
                                 if (ctxIsAborted()) {
                                     return;
                                 }
