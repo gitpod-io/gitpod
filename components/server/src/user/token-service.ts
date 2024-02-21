@@ -13,6 +13,7 @@ import { TokenProvider } from "./token-provider";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class TokenService implements TokenProvider {
@@ -59,25 +60,35 @@ export class TokenService implements TokenProvider {
             const { authProvider } = this.hostContextProvider.get(host)!;
 
             if (authProvider.refreshToken) {
-                const errors: Error[] = [];
+                const shouldRetryRefreshTokenExchange = await getExperimentsClientForBackend().getValueAsync(
+                    "retry_refresh_token_exchange",
+                    false,
+                    {},
+                );
+                if (shouldRetryRefreshTokenExchange) {
+                    const errors: Error[] = [];
 
-                // There is a race condition where multiple requests may each need to use the refresh_token to get a new access token.
-                // When the `authProvider.refreshToken` is called, it will refresh the token and store it in the database.
-                // However, the token may have already been refreshed by another request, so we need to check the database again.
-                for (let i = 0; i < 3; i++) {
-                    try {
-                        await authProvider.refreshToken(user);
-                        token = (await this.userDB.findTokenForIdentity(identity))!;
-                        if (token) {
-                            return token;
+                    // There is a race condition where multiple requests may each need to use the refresh_token to get a new access token.
+                    // When the `authProvider.refreshToken` is called, it will refresh the token and store it in the database.
+                    // However, the token may have already been refreshed by another request, so we need to check the database again.
+                    for (let i = 0; i < 3; i++) {
+                        try {
+                            await authProvider.refreshToken(user);
+                            token = (await this.userDB.findTokenForIdentity(identity))!;
+                            if (token) {
+                                return token;
+                            }
+                        } catch (e) {
+                            errors.push(e as Error);
+                            log.error(`Failed to refresh token on attempt ${i}/3.`, e, { userId: user.id });
                         }
-                    } catch (e) {
-                        errors.push(e as Error);
-                        log.error(`Failed to refresh token on attempt ${i}/3.`, e, { userId: user.id });
                     }
+                    log.error(`Failed to refresh token after 3 attempts.`, errors, { userId: user.id });
+                    throw new Error(`Failed to refresh token after 3 attempts: ${errors.join(", ")}`);
+                } else {
+                    await authProvider.refreshToken(user);
+                    token = (await this.userDB.findTokenForIdentity(identity))!;
                 }
-                log.error(`Failed to refresh token after 3 attempts.`, errors, { userId: user.id });
-                throw new Error(`Failed to refresh token after 3 attempts: ${errors.join(", ")}`);
             }
         }
         return token;
