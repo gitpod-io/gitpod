@@ -36,7 +36,7 @@ export function getPrebuildErrorMessage(err: any) {
         code = err.code;
         message = err.message;
     } else if (err instanceof Error) {
-        message = err.message;
+        message = "unexpected error";
     }
     return `${PREBUILD_LOG_STREAM_ERROR}#${code}#${message}#${PREBUILD_LOG_STREAM_ERROR}`;
 }

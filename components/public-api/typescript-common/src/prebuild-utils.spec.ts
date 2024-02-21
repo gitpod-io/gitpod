@@ -40,7 +40,7 @@ describe("PrebuildUtils", () => {
                 const result = matchPrebuildError(msg);
                 expect(result).to.not.undefined;
                 expect(result?.code).to.equal(ErrorCodes.INTERNAL_SERVER_ERROR);
-                expect(result?.message).to.equal(err.message);
+                expect(result?.message).to.equal("unexpected error");
             }
         });
 

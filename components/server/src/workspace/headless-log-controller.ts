@@ -209,7 +209,7 @@ export class HeadlessLogController {
 
                     const prebuildId = req.params.prebuildId;
                     if (!uuidValidate(prebuildId)) {
-                        res.status(400).send("prebuildId is invalidate");
+                        res.status(400).send("prebuildId is invalid");
                         return;
                     }
                     const logCtx = { userId: user.id, prebuildId };
