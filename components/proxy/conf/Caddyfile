@@ -172,6 +172,15 @@ api.{$GITPOD_DOMAIN} {
 		allowed_origins https://{$GITPOD_DOMAIN}
 	}
 
+	@to_server path /auth/github/callback
+	handle @to_server {
+		import compression
+
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_connection
+		}
+	}
+
 	handle /gitpod.v1.* {
 		import server_public_api
 	}

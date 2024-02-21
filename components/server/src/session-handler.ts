@@ -154,6 +154,7 @@ export class SessionHandler {
             name: this.getJWTCookieName(this.config),
             value: token,
             opts: {
+                domain: this.config.hostUrl.url.hostname,
                 maxAge: this.config.auth.session.cookie.maxAge * 1000, // express does not match the HTTP spec and uses milliseconds
                 httpOnly: this.config.auth.session.cookie.httpOnly,
                 sameSite: this.config.auth.session.cookie.sameSite,
