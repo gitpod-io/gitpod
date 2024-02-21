@@ -88,6 +88,7 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 	userInfo := oidc.NewUserInfo()
 	userInfo.SetName(user.Name)
 	userInfo.SetSubject(subject)
+	userInfo.AppendClaims("user_id", user.ID)
 	userInfo.AppendClaims("org_id", workspace.Workspace.OrganizationId)
 
 	if email != "" {
