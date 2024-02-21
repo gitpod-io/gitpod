@@ -172,6 +172,7 @@ const PrebuildsListPage: FC = () => {
                             });
                             queryClient.invalidateQueries(queryKey);
                         }}
+                        defaultRepositoryId={configurationFilter}
                     />
                 )}
 
@@ -185,7 +186,7 @@ const PrebuildsListPage: FC = () => {
 const toApiStatus = (status: StatusOption): ListOrganizationPrebuildsRequest_Filter_State | undefined => {
     switch (status) {
         case "failed":
-            return ListOrganizationPrebuildsRequest_Filter_State.FAILED; // todo: adjust to needs of proper status
+            return ListOrganizationPrebuildsRequest_Filter_State.FAILED;
         case "succeeded":
             return ListOrganizationPrebuildsRequest_Filter_State.SUCCEEDED;
         case "unfinished":
