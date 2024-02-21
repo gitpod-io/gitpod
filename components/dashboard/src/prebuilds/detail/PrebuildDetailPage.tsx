@@ -84,7 +84,7 @@ export const PrebuildDetailPage: FC = () => {
             }
         });
         logEmitter.on("logs-error", (err: ApplicationError) => {
-            toast("Fetch logs failed: " + err.message, { autoHide: false });
+            toast("Fetching logs failed: " + err.message, { autoHide: false });
         });
     }, [logEmitter, toast]);
 
