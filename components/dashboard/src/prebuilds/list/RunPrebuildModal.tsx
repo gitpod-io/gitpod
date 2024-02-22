@@ -53,7 +53,9 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
                 setCreateErrorMsg(
                     <>
                         Prebuilds have to be enabled for this repository. Enable them in the{" "}
-                        <Link to={repositoriesRoutes.PrebuildsSettings(configuration.id)}>Prebuild settings</Link>{" "}
+                        <Link className="underline" to={repositoriesRoutes.PrebuildsSettings(configuration.id)}>
+                            Prebuild settings
+                        </Link>{" "}
                         first.
                     </>,
                 );
