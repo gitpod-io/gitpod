@@ -78,13 +78,20 @@ func (i *Interceptor) tokenFromHeaders(ctx context.Context, headers http.Header)
 	}
 
 	// Extract the JWT token from Cookies
-	cookie, err := cookieFromString(rawCookie, i.sessionCfg.Cookie.Name)
-	if err != nil {
+	cookies := cookiesFromString(rawCookie, i.sessionCfg.Cookie.Name)
+	if len(cookies) == 0 {
 		return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No cookie credentials present on request."))
 	}
 
-	_, err = VerifySessionJWT(cookie.Value, i.verifier, i.sessionCfg.Issuer)
-	if err != nil {
+	var cookie *http.Cookie
+	for _, c := range cookies {
+		_, err := VerifySessionJWT(c.Value, i.verifier, i.sessionCfg.Issuer)
+		if err == nil {
+			cookie = c
+			break
+		}
+	}
+	if cookie == nil {
 		return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("JWT session could not be verified."))
 	}
 
@@ -98,12 +105,18 @@ func NewClientInterceptor(accessToken string) connect.Interceptor {
 	}
 }
 
-func cookieFromString(rawCookieHeader, name string) (*http.Cookie, error) {
+func cookiesFromString(rawCookieHeader, name string) []*http.Cookie {
 	// To access the cookie as an http.Cookie, we sadly have to construct a request with the appropriate header such
 	// that we can then extract the cookie.
 	header := http.Header{}
 	header.Add("Cookie", rawCookieHeader)
 	req := http.Request{Header: header}
 
-	return req.Cookie(name)
+	var cookies []*http.Cookie
+	for _, c := range req.Cookies() {
+		if c.Name == name {
+			cookies = append(cookies, c)
+		}
+	}
+	return cookies
 }

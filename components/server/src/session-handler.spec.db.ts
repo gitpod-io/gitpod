@@ -14,6 +14,7 @@ import { v4 } from "uuid";
 import { SessionHandler } from "./session-handler";
 import { createTestContainer } from "./test/service-testing-container-module";
 import { UserService } from "./user/user-service";
+import { fail } from "assert";
 
 describe("SessionHandler", () => {
     let container: Container;
@@ -102,6 +103,48 @@ describe("SessionHandler", () => {
             expect(user).to.be.undefined;
         });
     });
+
+    describe("verifyJWTCookie", () => {
+        it("should return undefined for an empty cookie", async () => {
+            const claims = await sessionHandler.verifyJWTCookie("");
+            expect(claims).to.be.undefined;
+        });
+        it("should return undefined for an invalid cookie", async () => {
+            const claims = await sessionHandler.verifyJWTCookie("invalid");
+            expect(claims).to.be.undefined;
+        });
+        it("should return claims for a valid JWT with correct 'sub' claim", async () => {
+            const cookie = await sessionHandler.createJWTSessionCookie(existingUser.id);
+            const claims = await sessionHandler.verifyJWTCookie(`${cookie.name}=${cookie.value}`);
+            expect(claims?.sub).to.be.equal(existingUser.id);
+        });
+        it("should return undefined for a valid JWT with incorrect 'sub' claim", async () => {
+            const unexisingUserId = v4();
+            const cookie = await sessionHandler.createJWTSessionCookie(unexisingUserId);
+            const claims = await sessionHandler.verifyJWTCookie(`${cookie.name}=${cookie.value}`);
+            expect(claims).to.not.be.undefined;
+            expect(claims?.sub).to.be.equal(unexisingUserId);
+        });
+        it("should return claims for the first valid JWT with correct 'sub' claim", async () => {
+            const validCookie = await sessionHandler.createJWTSessionCookie(existingUser.id);
+            const claims = await sessionHandler.verifyJWTCookie(
+                `${validCookie.name}=invalid_value_1; ${validCookie.name}=${validCookie.value}; ${validCookie.name}=invalid_value_2;`,
+            );
+            expect(claims?.sub).to.be.equal(existingUser.id);
+        });
+        it("should throw if there are only invalid JWTs", async () => {
+            const validCookie = await sessionHandler.createJWTSessionCookie(existingUser.id);
+            try {
+                await sessionHandler.verifyJWTCookie(
+                    `${validCookie.name}=invalid_value_1; ${validCookie.name}=invalid_value_2;`,
+                );
+                fail("Expected an error to be thrown");
+            } catch (err) {
+                expect(err).to.not.be.undefined;
+            }
+        });
+    });
+
     describe("createJWTSessionCookie", () => {
         it("should create a valid JWT token with correct attributes and cookie options", async () => {
             const maxAge = 7 * 24 * 60 * 60;
