@@ -84,9 +84,22 @@ export const PrebuildDetailPage: FC = () => {
             }
         });
         logEmitter.on("logs-error", (err: ApplicationError) => {
+            const phase = prebuild?.status?.phase?.name;
+            if (
+                phase &&
+                ([PrebuildPhase_Phase.FAILED, PrebuildPhase_Phase.TIMEOUT].includes(phase) ||
+                    (phase === PrebuildPhase_Phase.AVAILABLE && prebuild.status?.message))
+            ) {
+                logEmitter.emit(
+                    "logs",
+                    "Logs of failed prebuilds are inaccessible. Use `gp validate --prebuild --headless` in a workspace to see logs and debug prebuild issues.",
+                );
+                return;
+            }
+
             toast("Fetching logs failed: " + err.message, { autoHide: false });
         });
-    }, [logEmitter, toast]);
+    }, [logEmitter, prebuild, toast]);
 
     useEffect(() => {
         if (isTriggerError && triggerError?.message) {

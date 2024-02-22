@@ -105,7 +105,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             branch: request.gitRef || undefined,
             limit: request.pagination?.pageSize || undefined,
         });
-        // TODO paggination
+        // TODO pagination
         return new ListPrebuildsResponse({
             prebuilds: this.apiConverter.toPrebuilds(this.config.hostUrl.toString(), result),
         });
