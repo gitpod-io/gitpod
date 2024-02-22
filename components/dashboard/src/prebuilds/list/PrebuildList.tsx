@@ -176,7 +176,9 @@ const PrebuildsListPage: FC = () => {
                     />
                 )}
 
-                {!showTable && !isLoading && <PrebuildListEmptyState />}
+                {!showTable && !isLoading && (
+                    <PrebuildListEmptyState onTriggerPrebuild={() => setShowRunPrebuildModal(true)} />
+                )}
                 {isError && <PrebuildListErrorState error={error} />}
             </div>
         </>
