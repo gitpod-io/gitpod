@@ -298,14 +298,20 @@ func TestGetOIDCSubject(t *testing.T) {
 			Subject: contextUrl,
 		},
 		{
+			Name:    "happy path 2",
+			Keys:    "undefined",
+			Claims:  map[string]interface{}{},
+			Subject: contextUrl,
+		},
+		{
 			Name:    "with custom keys",
-			Keys:    "key1;key3;key2",
+			Keys:    "key1,key3,key2",
 			Claims:  map[string]interface{}{"key1": 1, "key2": "hello"},
 			Subject: "key1:1:key3::key2:hello",
 		},
 		{
 			Name:    "with custom keys",
-			Keys:    "key1;key3;key2",
+			Keys:    "key1,key3,key2",
 			Claims:  map[string]interface{}{"key1": 1, "key3": errors.New("test")},
 			Subject: "key1:1:key3:test:key2:",
 		},

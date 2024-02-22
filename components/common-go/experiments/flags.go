@@ -27,7 +27,7 @@ func GetIdPClaimKeys(ctx context.Context, client Client, attributes Attributes) 
 	if value == "" || value == "undefined" {
 		return []string{}
 	}
-	return strings.Split(value, ";")
+	return strings.Split(value, ",")
 }
 
 func IsOIDCServiceEnabled(ctx context.Context, client Client, attributes Attributes) bool {
