@@ -5,7 +5,7 @@
  */
 
 import { Disposable, DisposableCollection, HEADLESS_LOG_STREAM_STATUS_CODE_REGEX } from "@gitpod/gitpod-protocol";
-import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 /**
  * new entry for the stream prebuild logs, contains logs of imageBuild (if it has) and prebuild tasks(first task only for now) logs
@@ -17,10 +17,35 @@ export function getPrebuildLogPath(prebuildId: string): string {
     return PREBUILD_LOGS_PATH_PREFIX + "/" + prebuildId;
 }
 
+/** cmp. @const HEADLESS_LOG_STREAM_ERROR_REGEX */
+const PREBUILD_LOG_STREAM_ERROR = "X-Prebuild-Error";
+const PREBUILD_LOG_STREAM_ERROR_REGEX = /X-Prebuild-Error#(?<code>[0-9]+)#(?<message>.*?)#X-Prebuild-Error/;
+
+export function matchPrebuildError(msg: string): undefined | ApplicationError {
+    const result = PREBUILD_LOG_STREAM_ERROR_REGEX.exec(msg);
+    if (!result || !result.groups) {
+        return;
+    }
+    return new ApplicationError(Number(result.groups.code) as ErrorCode, result.groups.message);
+}
+
+export function getPrebuildErrorMessage(err: any) {
+    let code: ErrorCode = ErrorCodes.INTERNAL_SERVER_ERROR;
+    let message = "unknown error";
+    if (err instanceof ApplicationError) {
+        code = err.code;
+        message = err.message;
+    } else if (err instanceof Error) {
+        message = "unexpected error";
+    }
+    return `${PREBUILD_LOG_STREAM_ERROR}#${code}#${message}#${PREBUILD_LOG_STREAM_ERROR}`;
+}
+
 const defaultBackoffTimes = 3;
 interface Options {
     includeCredentials: boolean;
     maxBackoffTimes?: number;
+    onEnd?: () => void;
 }
 
 /**
@@ -117,6 +142,9 @@ export function onDownloadPrebuildLogsUrl(
             await retryBackoff("error while listening to stream", err);
         } finally {
             reader?.cancel().catch(console.debug);
+            if (options.onEnd) {
+                options.onEnd();
+            }
         }
     };
     startWatchingLogs().catch(console.error);

@@ -631,13 +631,14 @@ export class PrebuildManager {
     }
 
     public async watchPrebuildLogs(userId: string, prebuildId: string, onLog: (message: string) => void) {
-        const workspaceId = await this.waitUntilPrebuildWorkspaceCreated(userId, prebuildId);
-        if (!workspaceId) {
+        const { workspaceId, organizationId } = await this.waitUntilPrebuildWorkspaceCreated(userId, prebuildId);
+        if (!workspaceId || !organizationId) {
             throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "prebuild workspace not found");
         }
-
+        await this.auth.checkPermissionOnOrganization(userId, "read_prebuild", organizationId);
         const workspaceStatusIt = this.workspaceService.getAndWatchWorkspaceStatus(userId, workspaceId, {
             signal: ctxSignal(),
+            skipPermissionCheck: true,
         });
         let hasImageBuild = false;
         for await (const itWsInfo of workspaceStatusIt) {
@@ -716,6 +717,9 @@ export class PrebuildManager {
                                         {
                                             includeCredentials: false,
                                             maxBackoffTimes: 3,
+                                            onEnd: () => {
+                                                sink.stop();
+                                            },
                                         },
                                     );
                                     return () => {
@@ -752,12 +756,14 @@ export class PrebuildManager {
     }
 
     private async waitUntilPrebuildWorkspaceCreated(userId: string, prebuildId: string) {
-        let prebuildWorkspaceId: string | undefined;
+        let workspaceId: string | undefined;
+        let organizationId: string | undefined;
         const prebuildIt = this.getAndWatchPrebuildStatus(userId, { prebuildId }, { signal: ctxSignal() });
 
         for await (const pb of prebuildIt) {
-            prebuildWorkspaceId = pb.info.buildWorkspaceId;
-            if (prebuildWorkspaceId) {
+            workspaceId = pb.info.buildWorkspaceId;
+            organizationId = pb.info.teamId;
+            if (workspaceId) {
                 break;
             }
             if (pb.status === "aborted" || pb.status === "failed" || pb.status === "timeout") {
@@ -765,7 +771,7 @@ export class PrebuildManager {
             }
         }
         await prebuildIt.return();
-        return prebuildWorkspaceId;
+        return { workspaceId, organizationId };
     }
 
     private parsePrebuildLogUrl(url: string) {

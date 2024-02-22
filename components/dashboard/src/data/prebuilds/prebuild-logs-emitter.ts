@@ -7,10 +7,16 @@
 import EventEmitter from "events";
 import { prebuildClient } from "../../service/public-api";
 import { useEffect, useState } from "react";
-import { onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
+import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 
 export function usePrebuildLogsEmitter(prebuildId: string) {
     const [emitter] = useState(new EventEmitter());
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        setIsLoading(true);
+    }, [prebuildId]);
+
     useEffect(() => {
         const controller = new AbortController();
         const watch = async () => {
@@ -25,11 +31,19 @@ export function usePrebuildLogsEmitter(prebuildId: string) {
             dispose = onDownloadPrebuildLogsUrl(
                 prebuild.prebuild.status.logUrl,
                 (msg) => {
-                    emitter.emit("logs", msg);
+                    const error = matchPrebuildError(msg);
+                    if (!error) {
+                        emitter.emit("logs", msg);
+                    } else {
+                        emitter.emit("logs-error", error);
+                    }
                 },
                 {
                     includeCredentials: true,
                     maxBackoffTimes: 3,
+                    onEnd: () => {
+                        setIsLoading(false);
+                    },
                 },
             );
         };
@@ -42,5 +56,5 @@ export function usePrebuildLogsEmitter(prebuildId: string) {
             controller.abort();
         };
     }, [emitter, prebuildId]);
-    return { emitter };
+    return { emitter, isLoading };
 }

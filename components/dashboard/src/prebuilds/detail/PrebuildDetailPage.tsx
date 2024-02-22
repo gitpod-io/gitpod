@@ -22,6 +22,7 @@ import Alert from "../../components/Alert";
 import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { useConfiguration } from "../../data/configurations/configuration-queries";
+import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -54,7 +55,7 @@ export const PrebuildDetailPage: FC = () => {
     const { toast } = useToast();
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
 
-    const { emitter: logEmitter } = usePrebuildLogsEmitter(prebuildId);
+    const { emitter: logEmitter, isLoading: isStreamingLogs } = usePrebuildLogsEmitter(prebuildId);
     const {
         isFetching: isTriggeringPrebuild,
         refetch: triggerPrebuild,
@@ -81,6 +82,9 @@ export const PrebuildDetailPage: FC = () => {
             if (err?.message) {
                 toast("Failed to fetch logs: " + err.message);
             }
+        });
+        logEmitter.on("logs-error", (err: ApplicationError) => {
+            toast("Fetching logs failed: " + err.message, { autoHide: false });
         });
     }, [logEmitter, toast]);
 
@@ -209,6 +213,7 @@ export const PrebuildDetailPage: FC = () => {
                                         classes="h-full w-full"
                                         xtermClasses="absolute top-0 left-0 bottom-0 right-0 mx-6 my-0"
                                         logsEmitter={logEmitter}
+                                        isLoading={isStreamingLogs}
                                     />
                                 </Suspense>
                             </div>
