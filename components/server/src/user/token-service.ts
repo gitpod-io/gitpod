@@ -80,8 +80,11 @@ export class TokenService implements TokenProvider {
                             }
                         } catch (e) {
                             errors.push(e as Error);
-                            log.error(`Failed to refresh token on attempt ${i}/3.`, e, { userId: user.id });
+                            log.error(`Faiis sled to refresh token on attempt ${i}/3.`, e, { userId: user.id });
                         }
+
+                        const backoff = 250 + 250 * Math.random(); // 250ms + 0-250ms
+                        await new Promise((f) => setTimeout(f, backoff));
                     }
                     log.error(`Failed to refresh token after 3 attempts.`, errors, { userId: user.id });
                     throw new Error(`Failed to refresh token after 3 attempts: ${errors.join(", ")}`);
