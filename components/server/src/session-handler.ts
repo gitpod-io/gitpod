@@ -35,8 +35,19 @@ export class SessionHandler {
             }
 
             const cookies = parseCookieHeader(req.headers.cookie || "");
-            const jwtToken = cookies[getJWTCookieName(this.config)];
-            if (!jwtToken) {
+            const jwtTokens = cookies[getJWTCookieName(this.config)];
+
+            let decoded: JwtPayload | undefined = undefined;
+            try {
+                // will throw if the token is expired
+                decoded = await this.verifyFirstValidJwt(jwtTokens);
+            } catch (err) {
+                res.status(401);
+                res.send("JWT Session is invalid");
+                return;
+            }
+
+            if (!decoded) {
                 const cookie = await this.createJWTSessionCookie(user.id);
 
                 res.cookie(cookie.name, cookie.value, cookie.opts);
@@ -45,32 +56,23 @@ export class SessionHandler {
                 res.status(200);
                 res.send("New JWT cookie issued.");
             } else {
-                try {
-                    // will throw if the token is expired
-                    const decoded = await this.authJWT.verify(jwtToken);
+                const issuedAtMs = (decoded.iat || 0) * 1000;
+                const now = new Date();
 
-                    const issuedAtMs = (decoded.iat || 0) * 1000;
-                    const now = new Date();
+                // Was the token issued more than threshold ago?
+                if (issuedAtMs + SessionHandler.JWT_REFRESH_THRESHOLD < now.getTime()) {
+                    // issue a new one, to refresh it
+                    const cookie = await this.createJWTSessionCookie(user.id);
+                    res.cookie(cookie.name, cookie.value, cookie.opts);
 
-                    // Was the token issued more than threshold ago?
-                    if (issuedAtMs + SessionHandler.JWT_REFRESH_THRESHOLD < now.getTime()) {
-                        // issue a new one, to refresh it
-                        const cookie = await this.createJWTSessionCookie(user.id);
-                        res.cookie(cookie.name, cookie.value, cookie.opts);
-
-                        reportJWTCookieIssued();
-                        res.status(200);
-                        res.send("Refreshed JWT cookie issued.");
-                        return;
-                    }
-
+                    reportJWTCookieIssued();
                     res.status(200);
-                    res.send("User session already has a valid JWT session.");
-                } catch (err) {
-                    res.status(401);
-                    res.send("JWT Session is invalid");
+                    res.send("Refreshed JWT cookie issued.");
                     return;
                 }
+
+                res.status(200);
+                res.send("User session already has a valid JWT session.");
             }
         };
     }
@@ -124,16 +126,55 @@ export class SessionHandler {
         }
     }
 
+    /**
+     * Parses the given cookie string, and looks out for cookies with our session JWT cookie name (getJWTCookieName).
+     * It iterates over the found values, and returns the first valid session cookie it finds.
+     * Edge cases:
+     *  - If there is no cookie, undefined is returned
+     *  - If there is no valid cookie, throws the error of the first verification attempt.
+     * @param cookie
+     * @returns
+     */
     async verifyJWTCookie(cookie: string): Promise<JwtPayload | undefined> {
         const cookies = parseCookieHeader(cookie);
-        const jwtToken = cookies[getJWTCookieName(this.config)];
-        if (!jwtToken) {
+        const cookieValues = cookies[getJWTCookieName(this.config)];
+
+        return this.verifyFirstValidJwt(cookieValues);
+    }
+
+    /**
+     * Returns the first valid session token it finds.
+     * Edge cases:
+     *  - If there is no token, undefined is returned
+     *  - If there is no valid token, throws the error of the first verification attempt.
+     * @param tokenCandidates to verify
+     * @returns
+     */
+    private async verifyFirstValidJwt(tokenCandidates: string[] | undefined): Promise<JwtPayload | undefined> {
+        if (!tokenCandidates || tokenCandidates.length === 0) {
             log.debug("No JWT session present on request");
             return undefined;
         }
-        const claims = await this.authJWT.verify(jwtToken);
-        log.debug("JWT Session token verified", { claims });
-        return claims;
+
+        let firstVerifyError: any;
+        for (const jwtToken of tokenCandidates) {
+            try {
+                const claims = await this.authJWT.verify(jwtToken);
+                log.debug("JWT Session token verified", { claims });
+                return claims;
+            } catch (err) {
+                if (!firstVerifyError) {
+                    firstVerifyError = err;
+                }
+                log.debug("Found invalid JWT session token, skipping.", err);
+            }
+        }
+        if (firstVerifyError) {
+            throw firstVerifyError;
+        }
+
+        // Just here to please the compiler, this should never happen
+        return undefined;
     }
 
     public async createJWTSessionCookie(
@@ -178,13 +219,18 @@ function getJWTCookieDomain(config: Config): string {
     return config.hostUrl.url.hostname;
 }
 
-function parseCookieHeader(cookie: string): { [key: string]: string } {
-    return cookie
+function parseCookieHeader(c: string): { [key: string]: string[] } {
+    return c
         .split("; ")
         .map((keypair) => keypair.split("="))
-        .reduce<{ [key: string]: string }>((aggregator, vals) => {
+        .reduce<{ [key: string]: string[] }>((aggregator, vals) => {
             const [key, value] = vals;
-            aggregator[key] = value;
+            let l = aggregator[key];
+            if (!l) {
+                l = [];
+                aggregator[key] = l;
+            }
+            l.push(value);
             return aggregator;
         }, {});
 }
