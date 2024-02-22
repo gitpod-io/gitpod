@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
+import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import Header from "../components/Header";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { ItemsList } from "../components/ItemsList";
@@ -18,9 +18,6 @@ import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-i
 import { useToast } from "../components/toasts/Toasts";
 import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { Button } from "@podkit/buttons/Button";
-import { StartPage } from "../start/StartPage";
-import WorkspaceLogs from "../components/WorkspaceLogs";
-import EventEmitter from "events";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -82,26 +79,6 @@ const WorkspacesPage: FunctionComponent = () => {
             toast("Your workspace was deleted");
         } catch (e) {}
     }, [deleteInactiveWorkspaces, inactiveWorkspaces, toast]);
-
-    const [logsEmitter] = useState(new EventEmitter());
-
-    useEffect(() => {
-        setInterval(() => {
-            logsEmitter.emit("logs", `hello ${new Date()}\n\r`);
-        }, 400);
-    }, [logsEmitter]);
-
-    const isTesting = () => {
-        return true;
-    };
-
-    if (isTesting()) {
-        return (
-            <StartPage title="Building Image" phase={1} workspaceId={"aaa"}>
-                <WorkspaceLogs logsEmitter={logsEmitter} />
-            </StartPage>
-        );
-    }
 
     return (
         <>
