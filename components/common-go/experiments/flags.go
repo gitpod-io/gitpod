@@ -4,7 +4,10 @@
 
 package experiments
 
-import "context"
+import (
+	"context"
+	"strings"
+)
 
 const (
 	PersonalAccessTokensEnabledFlag                = "personalAccessTokensEnabled"
@@ -12,10 +15,19 @@ const (
 	SupervisorPersistServerAPIChannelWhenStartFlag = "supervisor_persist_serverapi_channel_when_start"
 	SupervisorUsePublicAPIFlag                     = "supervisor_experimental_publicapi"
 	ServiceWaiterSkipComponentsFlag                = "service_waiter_skip_components"
+	IdPClaimKeysFlag                               = "idp_claim_keys"
 )
 
 func IsPersonalAccessTokensEnabled(ctx context.Context, client Client, attributes Attributes) bool {
 	return client.GetBoolValue(ctx, PersonalAccessTokensEnabledFlag, false, attributes)
+}
+
+func GetIdPClaimKeys(ctx context.Context, client Client, attributes Attributes) []string {
+	value := client.GetStringValue(ctx, IdPClaimKeysFlag, "undefined", attributes)
+	if value == "" || value == "undefined" {
+		return []string{}
+	}
+	return strings.Split(value, ",")
 }
 
 func IsOIDCServiceEnabled(ctx context.Context, client Client, attributes Attributes) bool {
