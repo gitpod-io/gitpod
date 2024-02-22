@@ -17,6 +17,7 @@ import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Filter, Sort, SortField, StatusOption } from "./PrebuildList";
 import { SortCallback, SortableTableHead, TableSortOrder } from "@podkit/tables/SortableTable";
 import { ConfigurationDropdown } from "../configuration-input/ConfigurationInput";
+import { Button } from "@podkit/buttons/Button";
 
 type Props = {
     prebuilds: Prebuild[];
@@ -29,6 +30,7 @@ type Props = {
     onFilterChange: (val: Filter) => void;
     onLoadNextPage: () => void;
     onSort: (columnName: SortField, direction: TableSortOrder) => void;
+    onTriggerPrebuild: () => void;
 };
 export const PrebuildsTable: FC<Props> = ({
     prebuilds,
@@ -41,6 +43,7 @@ export const PrebuildsTable: FC<Props> = ({
     onFilterChange,
     onLoadNextPage,
     onSort,
+    onTriggerPrebuild,
 }) => {
     return (
         <>
@@ -74,6 +77,9 @@ export const PrebuildsTable: FC<Props> = ({
                         </SelectContent>
                     </Select>
                 </div>
+                <Button className="w-full md:w-auto" onClick={onTriggerPrebuild}>
+                    Run prebuild
+                </Button>
             </div>
             <div className="relative w-full overflow-auto mt-4">
                 {prebuilds.length > 0 ? (

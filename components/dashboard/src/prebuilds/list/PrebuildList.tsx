@@ -18,6 +18,7 @@ import { ListOrganizationPrebuildsRequest_Filter_State } from "@gitpod/public-ap
 import { validate } from "uuid";
 import type { TableSortOrder } from "@podkit/tables/SortableTable";
 import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { RunPrebuildModal } from "./RunPrebuildModal";
 
 const STATUS_FILTER_VALUES = ["succeeded", "failed", "unfinished", undefined] as const; // undefined means any status
 export type StatusOption = typeof STATUS_FILTER_VALUES[number];
@@ -33,6 +34,8 @@ export type Sort = {
     sortOrder: TableSortOrder;
 };
 
+const pageSize = 30;
+
 const PrebuildsListPage: FC = () => {
     useDocumentTitle("Prebuilds");
 
@@ -45,6 +48,8 @@ const PrebuildsListPage: FC = () => {
     const [sortBy, setSortBy] = useState(parseSortBy(params));
     const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
 
+    const [showRunPrebuildModal, setShowRunPrebuildModal] = useState(false);
+
     const handleFilterChange = useCallback((filter: Filter) => {
         setPrebuildsFilter(filter.status);
         setConfigurationFilter(filter.configurationId);
@@ -55,11 +60,23 @@ const PrebuildsListPage: FC = () => {
             configurationId: configurationFilter,
         };
     }, [configurationFilter, statusFilter]);
+    const apiFilter = useMemo(() => {
+        return {
+            state: toApiStatus(statusFilter),
+            ...(configurationFilter ? { configuration: { id: configurationFilter } } : {}),
+        };
+    }, [statusFilter, configurationFilter]);
 
     const sort = useMemo<Sort>(() => {
         return {
             sortBy,
             sortOrder,
+        };
+    }, [sortBy, sortOrder]);
+    const apiSort = useMemo(() => {
+        return {
+            order: sortOrder === "desc" ? SortOrder.DESC : SortOrder.ASC,
+            field: sortBy,
         };
     }, [sortBy, sortOrder]);
     const handleSort = useCallback(
@@ -85,7 +102,6 @@ const PrebuildsListPage: FC = () => {
         history.replace({ search: `?${params.toString()}` });
     }, [history, statusFilter, configurationFilter]);
 
-    // TODO: handle isError case
     const {
         data,
         isLoading,
@@ -93,19 +109,14 @@ const PrebuildsListPage: FC = () => {
         isFetchingNextPage,
         isPreviousData,
         hasNextPage,
+        refetch: refetchPrebuilds,
         fetchNextPage,
         isError,
         error,
     } = useListOrganizationPrebuildsQuery({
-        filter: {
-            state: toApiStatus(filter.status),
-            ...(configurationFilter ? { configuration: { id: configurationFilter } } : {}),
-        },
-        sort: {
-            order: sortOrder === "desc" ? SortOrder.DESC : SortOrder.ASC,
-            field: sortBy,
-        },
-        pageSize: 30,
+        filter: apiFilter,
+        sort: apiSort,
+        pageSize,
     });
 
     const prebuilds = useMemo(() => {
@@ -140,10 +151,23 @@ const PrebuildsListPage: FC = () => {
                         onLoadNextPage={() => fetchNextPage()}
                         onFilterChange={handleFilterChange}
                         onSort={handleSort}
+                        onTriggerPrebuild={() => setShowRunPrebuildModal(true)}
                     />
                 )}
 
-                {!showTable && !isLoading && <PrebuildListEmptyState />}
+                {showRunPrebuildModal && (
+                    <RunPrebuildModal
+                        onClose={() => setShowRunPrebuildModal(false)}
+                        onRun={() => {
+                            refetchPrebuilds();
+                        }}
+                        defaultRepositoryId={configurationFilter}
+                    />
+                )}
+
+                {!showTable && !isLoading && (
+                    <PrebuildListEmptyState onTriggerPrebuild={() => setShowRunPrebuildModal(true)} />
+                )}
                 {isError && <PrebuildListErrorState error={error} />}
             </div>
         </>
@@ -153,7 +177,7 @@ const PrebuildsListPage: FC = () => {
 const toApiStatus = (status: StatusOption): ListOrganizationPrebuildsRequest_Filter_State | undefined => {
     switch (status) {
         case "failed":
-            return ListOrganizationPrebuildsRequest_Filter_State.FAILED; // todo: adjust to needs of proper status
+            return ListOrganizationPrebuildsRequest_Filter_State.FAILED;
         case "succeeded":
             return ListOrganizationPrebuildsRequest_Filter_State.SUCCEEDED;
         case "unfinished":

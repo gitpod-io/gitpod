@@ -49,9 +49,7 @@ export function useTriggerPrebuildQuery(configurationId?: string, gitRef?: strin
             if (!configurationId) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "prebuild configurationId is missing");
             }
-            if (!gitRef) {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "prebuild gitRef is missing");
-            }
+
             return prebuildClient.startPrebuild({ configurationId, gitRef }).then((resp) => resp.prebuildId);
         },
         {
