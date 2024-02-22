@@ -61,14 +61,20 @@ export class SessionHandler {
 
                 // Was the token issued more than threshold ago?
                 if (issuedAtMs + SessionHandler.JWT_REFRESH_THRESHOLD < now.getTime()) {
-                    // issue a new one, to refresh it
-                    const cookie = await this.createJWTSessionCookie(user.id);
-                    res.cookie(cookie.name, cookie.value, cookie.opts);
+                    try {
+                        // issue a new one, to refresh it
+                        const cookie = await this.createJWTSessionCookie(user.id);
+                        res.cookie(cookie.name, cookie.value, cookie.opts);
 
-                    reportJWTCookieIssued();
-                    res.status(200);
-                    res.send("Refreshed JWT cookie issued.");
-                    return;
+                        reportJWTCookieIssued();
+                        res.status(200);
+                        res.send("Refreshed JWT cookie issued.");
+                        return;
+                    } catch (err) {
+                        res.status(401);
+                        res.send("JWT Session can't be signed");
+                        return;
+                    }
                 }
 
                 res.status(200);
