@@ -23,8 +23,8 @@ func IsPersonalAccessTokensEnabled(ctx context.Context, client Client, attribute
 }
 
 func GetIdPClaimKeys(ctx context.Context, client Client, attributes Attributes) []string {
-	value := client.GetStringValue(ctx, IdPClaimKeysFlag, "", attributes)
-	if value == "" {
+	value := client.GetStringValue(ctx, IdPClaimKeysFlag, "undefined", attributes)
+	if value == "" || value == "undefined" {
 		return []string{}
 	}
 	return strings.Split(value, ";")
