@@ -13,17 +13,12 @@ import { PrebuildListEmptyState } from "./PrebuildListEmptyState";
 import { PrebuildListErrorState } from "./PrebuildListErrorState";
 import { PrebuildsTable } from "./PrebuildTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
-import {
-    getListConfigurationsPrebuildsQueryKey,
-    useListOrganizationPrebuildsQuery,
-} from "../../data/prebuilds/organization-prebuilds-query";
+import { useListOrganizationPrebuildsQuery } from "../../data/prebuilds/organization-prebuilds-query";
 import { ListOrganizationPrebuildsRequest_Filter_State } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { validate } from "uuid";
 import type { TableSortOrder } from "@podkit/tables/SortableTable";
 import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 import { RunPrebuildModal } from "./RunPrebuildModal";
-import { useQueryClient } from "@tanstack/react-query";
-import { useCurrentOrg } from "../../data/organizations/orgs-query";
 
 const STATUS_FILTER_VALUES = ["succeeded", "failed", "unfinished", undefined] as const; // undefined means any status
 export type StatusOption = typeof STATUS_FILTER_VALUES[number];
@@ -46,8 +41,6 @@ const PrebuildsListPage: FC = () => {
 
     const history = useHistory();
     const params = useQueryParams();
-    const queryClient = useQueryClient();
-    const organization = useCurrentOrg();
 
     const [statusFilter, setPrebuildsFilter] = useState(parseStatus(params));
     const [configurationFilter, setConfigurationFilter] = useState(parseConfigurationId(params));
@@ -116,6 +109,7 @@ const PrebuildsListPage: FC = () => {
         isFetchingNextPage,
         isPreviousData,
         hasNextPage,
+        refetch: refetchPrebuilds,
         fetchNextPage,
         isError,
         error,
@@ -165,12 +159,7 @@ const PrebuildsListPage: FC = () => {
                     <RunPrebuildModal
                         onClose={() => setShowRunPrebuildModal(false)}
                         onRun={() => {
-                            const queryKey = getListConfigurationsPrebuildsQueryKey(organization.data?.id ?? "", {
-                                filter: apiFilter,
-                                pageSize,
-                                sort: apiSort,
-                            });
-                            queryClient.invalidateQueries(queryKey);
+                            refetchPrebuilds();
                         }}
                         defaultRepositoryId={configurationFilter}
                     />
