@@ -103,7 +103,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
         <div
             className={cn(
                 props.classes || "mt-6 h-72 w-11/12 lg:w-3/5 rounded-xl overflow-hidden",
-                "bg-gray-100 dark:bg-gray-800 relative",
+                "bg-gray-100 dark:bg-gray-800 relative text-left",
             )}
         >
             {props.isLoading && (

@@ -517,7 +517,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 if (isPrebuild) {
                     return (
                         <StartPage title="Prebuild in Progress" workspaceId={this.props.workspaceId}>
-                            <div className="mt-6 w-11/12 lg:w-3/5 text-left">
+                            <div className="mt-6 w-11/12 lg:w-3/5">
                                 {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
                                 <PrebuildLogs workspaceId={this.props.workspaceId} />
                             </div>
@@ -644,7 +644,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 if (isPrebuild) {
                     return (
                         <StartPage title="Prebuild in Progress" workspaceId={this.props.workspaceId}>
-                            <div className="mt-6 w-11/12 lg:w-3/5 text-left">
+                            <div className="mt-6 w-11/12 lg:w-3/5">
                                 {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
                                 <PrebuildLogs workspaceId={this.props.workspaceId} />
                             </div>
@@ -794,9 +794,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
     return (
         <StartPage title="Building Image" phase={props.phase} workspaceId={props.workspaceId}>
             <Suspense fallback={<div />}>
-                <div className="text-left">
-                    <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
-                </div>
+                <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
             </Suspense>
             {!!props.onStartWithDefaultImage && (
                 <>
