@@ -81,7 +81,10 @@ export class WorkspaceFactory {
 
         try {
             if (!CommitContext.is(context.actual)) {
-                throw new Error("Can only prebuild workspaces with a commit context");
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    "Can only prebuild workspaces with a commit context",
+                );
             }
 
             const { project, branch } = context;
@@ -102,7 +105,7 @@ export class WorkspaceFactory {
                 });
                 const wsInstance = await this.db.trace({ span }).findRunningInstance(existingPWS.buildWorkspaceId);
                 if (wsInstance) {
-                    throw new Error("A prebuild is already running for this commit.");
+                    throw new ApplicationError(ErrorCodes.CONFLICT, "A prebuild is already running for this commit.");
                 }
             };
 
