@@ -54,6 +54,7 @@ export const PrebuildDetailPage: FC = () => {
 
     const { toast } = useToast();
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
+    const [logNotFound, setLogNotFound] = useState(false);
 
     const { emitter: logEmitter, isLoading: isStreamingLogs } = usePrebuildLogsEmitter(prebuildId);
     const {
@@ -90,11 +91,14 @@ export const PrebuildDetailPage: FC = () => {
                 ([PrebuildPhase_Phase.FAILED, PrebuildPhase_Phase.TIMEOUT].includes(phase) ||
                     (phase === PrebuildPhase_Phase.AVAILABLE && prebuild.status?.message))
             ) {
-                logEmitter.emit("clear");
-                logEmitter.emit(
-                    "logs",
-                    "Logs of failed prebuilds are inaccessible. Use `gp validate --prebuild --headless` in a workspace to see logs and debug prebuild issues.",
-                );
+                if (logNotFound) {
+                    logEmitter.emit(
+                        "logs",
+                        "Logs of failed prebuilds are inaccessible. Use `gp validate --prebuild --headless` in a workspace to see logs and debug prebuild issues.",
+                    );
+                }
+                setLogNotFound(true);
+
                 return;
             }
 

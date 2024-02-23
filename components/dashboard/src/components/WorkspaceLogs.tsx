@@ -58,9 +58,6 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
                 terminal.write(logs);
             }
         });
-        props.logsEmitter.on("clear", () => {
-            terminal.clear();
-        });
         fitAddon.fit();
 
         return () => {
