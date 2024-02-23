@@ -91,7 +91,7 @@ export const PrebuildDetailPage: FC = () => {
                 ([PrebuildPhase_Phase.FAILED, PrebuildPhase_Phase.TIMEOUT].includes(phase) ||
                     (phase === PrebuildPhase_Phase.AVAILABLE && prebuild.status?.message))
             ) {
-                if (logNotFound) {
+                if (!logNotFound) {
                     logEmitter.emit(
                         "logs",
                         "Logs of failed prebuilds are inaccessible. Use `gp validate --prebuild --headless` in a workspace to see logs and debug prebuild issues.",
