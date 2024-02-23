@@ -207,11 +207,11 @@ export const AppRoutes = () => {
                     <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />
                     <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
 
-                    {/* Handles all /repositories/:id/* routes in a nested router */}
-                    <Route path="/repositories/:id" component={ConfigurationDetailPage} />
                     <Route exact path={`/prebuilds`} component={PrebuildListPage} />
                     <Route path="/prebuilds/:prebuildId" component={PrebuildDetailPage} />
                     <Route exact path="/repositories" component={ConfigurationListPage} />
+                    {/* Handles all /repositories/:id/* routes in a nested router */}
+                    <Route path="/repositories/:id" component={ConfigurationDetailPage} />
 
                     {/* basic redirect for old team slugs */}
                     <Route path={["/t/"]} exact>
