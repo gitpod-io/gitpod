@@ -10,10 +10,7 @@ import Modal, { ModalHeader, ModalBody, ModalFooter, ModalFooterAlert } from "..
 import { CheckboxInputField } from "../../../components/forms/CheckboxInputField";
 import { Button } from "@podkit/buttons/Button";
 import { EnvironmentVariableAdmission } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
-import {
-    useCreateConfigurationVariable,
-    useUpdateConfigurationVariable,
-} from "../../../data/configurations/configuration-queries";
+import { useCreateConfigurationVariable } from "../../../data/configurations/configuration-queries";
 import { useToast } from "../../../components/toasts/Toasts";
 import { TextInputField } from "../../../components/forms/TextInputField";
 
@@ -21,14 +18,13 @@ type Props = {
     configurationId: string;
     onClose: () => void;
 };
-export const ModifyVariableModal = ({ configurationId, onClose }: Props) => {
+export const AddVariableModal = ({ configurationId, onClose }: Props) => {
     const { toast } = useToast();
 
     const [name, setName] = useState("");
     const [value, setValue] = useState("");
     const [admission, setAdmission] = useState<EnvironmentVariableAdmission>(EnvironmentVariableAdmission.EVERYWHERE);
     const createVariable = useCreateConfigurationVariable();
-    const updateVariable = useUpdateConfigurationVariable();
 
     const addVariable = useCallback(() => {
         createVariable.mutateAsync(
@@ -87,12 +83,9 @@ export const ModifyVariableModal = ({ configurationId, onClose }: Props) => {
             </ModalBody>
             <ModalFooter
                 alert={
-                    createVariable.isError || updateVariable.isError ? (
+                    createVariable.isError ? (
                         <ModalFooterAlert type="danger">
-                            {String(createVariable.error || updateVariable.error).replace(
-                                /Error: Request \w+ failed with message: /,
-                                "",
-                            )}
+                            {String(createVariable.error).replace(/Error: Request \w+ failed with message: /, "")}
                         </ModalFooterAlert>
                     ) : null
                 }
