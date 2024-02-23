@@ -6,6 +6,7 @@
 
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
+import { Text } from "@podkit/typography/Text";
 import { Button } from "@podkit/buttons/Button";
 import { FC, Suspense, useEffect, useMemo, useState } from "react";
 import { Redirect, useParams } from "react-router";
@@ -86,19 +87,13 @@ export const PrebuildDetailPage: FC = () => {
         });
         logEmitter.on("logs-error", (err: ApplicationError) => {
             const phase = prebuild?.status?.phase?.name;
+            // An overcomplicated check for getting a "failed" prebuild state, for which we do not store logs.
             if (
                 phase &&
                 ([PrebuildPhase_Phase.FAILED, PrebuildPhase_Phase.TIMEOUT].includes(phase) ||
                     (phase === PrebuildPhase_Phase.AVAILABLE && prebuild.status?.message))
             ) {
-                if (!logNotFound) {
-                    setLogNotFound(true);
-                    logEmitter.emit(
-                        "logs",
-                        "Logs of failed prebuilds are inaccessible. Use `gp validate --prebuild --headless` in a workspace to see logs and debug prebuild issues.",
-                    );
-                }
-
+                setLogNotFound(true);
                 return;
             }
 
@@ -228,12 +223,22 @@ export const PrebuildDetailPage: FC = () => {
                             </div>
                             <div className="h-112 border-pk-border-base">
                                 <Suspense fallback={<div />}>
-                                    <WorkspaceLogs
-                                        classes="h-full w-full"
-                                        xtermClasses="absolute top-0 left-0 bottom-0 right-0 mx-6 my-0"
-                                        logsEmitter={logEmitter}
-                                        isLoading={isStreamingLogs}
-                                    />
+                                    {logNotFound ? (
+                                        <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
+                                            <Text className="w-[22rem] text-center">
+                                                Logs of failed prebuilds are inaccessible. Use{" "}
+                                                <code>gp validate --prebuild --headless</code> in a workspace to see
+                                                logs and debug prebuild issues.
+                                            </Text>
+                                        </div>
+                                    ) : (
+                                        <WorkspaceLogs
+                                            classes="h-full w-full"
+                                            xtermClasses="absolute top-0 left-0 bottom-0 right-0 mx-6 my-0"
+                                            logsEmitter={logEmitter}
+                                            isLoading={isStreamingLogs}
+                                        />
+                                    )}
                                 </Suspense>
                             </div>
                             <div className="px-6 pt-6 flex justify-between border-pk-border-base">
