@@ -698,6 +698,11 @@ export class Prebuild extends Message<Prebuild> {
    */
   status?: PrebuildStatus;
 
+  /**
+   * @generated from field: string configuration_name = 9;
+   */
+  configurationName = "";
+
   constructor(data?: PartialMessage<Prebuild>) {
     super();
     proto3.util.initPartial(data, this);
@@ -714,6 +719,7 @@ export class Prebuild extends Message<Prebuild> {
     { no: 6, name: "commit", kind: "message", T: Commit },
     { no: 7, name: "context_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 8, name: "status", kind: "message", T: PrebuildStatus },
+    { no: 9, name: "configuration_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Prebuild {
