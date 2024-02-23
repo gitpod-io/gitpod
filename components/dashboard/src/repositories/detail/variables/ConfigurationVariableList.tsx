@@ -8,7 +8,7 @@ import { useState } from "react";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { Button } from "@podkit/buttons/Button";
-import { ModifyVariableModal } from "./ConfigurationModifyVariableModal";
+import { AddVariableModal } from "./ConfigurationAddVariableModal";
 import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 import { useListConfigurationVariables } from "../../../data/configurations/configuration-queries";
@@ -29,7 +29,7 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
     return (
         <ConfigurationSettingsField>
             {showAddVariableModal && (
-                <ModifyVariableModal
+                <AddVariableModal
                     configurationId={configuration.id}
                     onClose={() => {
                         setShowAddVariableModal(false);
