@@ -10,13 +10,11 @@ import { Text } from "@podkit/typography/Text";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 import { TableCell, TableRow } from "@podkit/tables/Table";
 import type { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { useConfiguration } from "../../data/configurations/configuration-queries";
 import dayjs from "dayjs";
 import { cn } from "@podkit/lib/cn";
 import { shortCommitMessage } from "../../projects/render-utils";
 import { Link } from "react-router-dom";
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { LoadingState } from "@podkit/loading/LoadingState";
 import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
 
 /**
@@ -41,11 +39,6 @@ export const PrebuildListItem: FC<Props> = ({ prebuild }) => {
     const triggeredDate = useMemo(() => dayjs(prebuild.status?.startTime?.toDate()), [prebuild.status?.startTime]);
     const triggeredString = useMemo(() => formatDate(triggeredDate), [triggeredDate]);
 
-    const {
-        data: configuration,
-        isError: isConfigurationError,
-        isLoading: isConfigurationLoading,
-    } = useConfiguration(prebuild.configurationId);
     const { className: iconColorClass, label } = prebuildDisplayProps(prebuild);
     const PrebuildStatusIcon = prebuildStatusIconComponent(prebuild);
 
@@ -55,9 +48,7 @@ export const PrebuildListItem: FC<Props> = ({ prebuild }) => {
                 <div className="flex flex-col gap-1 w-52">
                     <Text className="text-sm text-pk-content-primary text-semibold break-words">
                         <ConfigurationField
-                            configuration={configuration}
-                            isError={isConfigurationError}
-                            isLoading={isConfigurationLoading}
+                            configuration={{ id: prebuild.configurationId, name: prebuild.configurationName }}
                         />
                     </Text>
                     <TextMuted className="text-xs break-words">{prebuild.ref}</TextMuted>
@@ -108,16 +99,10 @@ export const PrebuildListItem: FC<Props> = ({ prebuild }) => {
 };
 
 type ConfigurationProps = {
-    configuration?: Configuration;
-    isLoading: boolean;
-    isError: boolean;
+    configuration?: Pick<Configuration, "id" | "name">;
 };
-const ConfigurationField = ({ configuration, isLoading, isError }: ConfigurationProps) => {
-    if (isLoading) {
-        return <LoadingState size={16} />;
-    }
-
-    if (isError || !configuration?.name || !configuration.id) {
+const ConfigurationField = ({ configuration }: ConfigurationProps) => {
+    if (!configuration?.name || !configuration.id) {
         return <Text>Unknown repository</Text>;
     }
 
