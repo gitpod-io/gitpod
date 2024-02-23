@@ -108,6 +108,8 @@ message Prebuild {
   string context_url = 7;
 
   PrebuildStatus status = 8;
+
+  string configuration_name = 9;
 }
 
 message PrebuildStatus {

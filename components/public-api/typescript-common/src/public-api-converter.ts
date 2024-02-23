@@ -1125,6 +1125,7 @@ export class PublicAPIConverter {
             basedOnPrebuildId: prebuild.info.basedOnPrebuildId,
 
             configurationId: prebuild.info.projectId,
+            configurationName: prebuild.info.projectName,
             ref: prebuild.info.branch,
             commit: new Commit({
                 message: prebuild.info.changeTitle,
