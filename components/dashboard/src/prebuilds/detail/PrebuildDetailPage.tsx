@@ -221,10 +221,10 @@ export const PrebuildDetailPage: FC = () => {
                                 >{`Rerun Prebuild (${prebuild.ref})`}</LoadingButton>
                                 <LinkButton
                                     disabled={!prebuild?.id}
-                                    href={repositoriesRoutes.Detail(prebuild.configurationId)}
+                                    href={repositoriesRoutes.PrebuildsSettings(prebuild.configurationId)}
                                     variant="secondary"
                                 >
-                                    View Repository
+                                    View Prebuild Settings
                                 </LinkButton>
                             </div>
                         </div>
