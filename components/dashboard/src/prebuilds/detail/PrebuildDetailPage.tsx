@@ -21,7 +21,6 @@ import { LoadingState } from "@podkit/loading/LoadingState";
 import Alert from "../../components/Alert";
 import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
-import { useConfiguration } from "../../data/configurations/configuration-queries";
 import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
@@ -48,9 +47,6 @@ export const PrebuildDetailPage: FC = () => {
     const { prebuildId } = useParams<Props>();
 
     const { data: prebuild, isLoading: isInfoLoading, error, refetch } = usePrebuildQuery(prebuildId);
-    const { data: configuration, isLoading: isConfigurationLoading } = useConfiguration(
-        prebuild?.configurationId ?? "",
-    );
 
     const { toast } = useToast();
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
@@ -63,7 +59,7 @@ export const PrebuildDetailPage: FC = () => {
         error: triggerError,
         isRefetching: isTriggeringRefetch,
         data: newPrebuildID,
-    } = useTriggerPrebuildQuery(configuration?.id, prebuild?.ref);
+    } = useTriggerPrebuildQuery(prebuild?.configurationId, prebuild?.ref);
 
     const triggeredDate = useMemo(() => dayjs(prebuild?.status?.startTime?.toDate()), [prebuild?.status?.startTime]);
     const triggeredString = useMemo(() => formatDate(triggeredDate), [triggeredDate]);
@@ -136,9 +132,7 @@ export const PrebuildDetailPage: FC = () => {
                 pageTitle="Prebuild history"
                 pageDescription={
                     <>
-                        <span className="font-semibold">
-                            {!isConfigurationLoading ? configuration?.name : "" ?? "unknown repository"}
-                        </span>{" "}
+                        <span className="font-semibold">{prebuild?.configurationName ?? "unknown repository"}</span>{" "}
                         <span className="text-pk-content-secondary">{prebuild?.ref ?? ""}</span>
                     </>
                 }
@@ -220,12 +214,14 @@ export const PrebuildDetailPage: FC = () => {
                             <div className="px-6 pt-6 flex justify-between border-pk-border-base">
                                 <LoadingButton
                                     loading={isTriggeringRefetch}
-                                    disabled={isTriggeringPrebuild || !configuration?.id || !prebuild.commit?.sha}
+                                    disabled={
+                                        isTriggeringPrebuild || !prebuild.configurationId || !prebuild.commit?.sha
+                                    }
                                     onClick={() => triggerPrebuild()}
                                 >{`Rerun Prebuild (${prebuild.ref})`}</LoadingButton>
                                 <LinkButton
                                     disabled={!prebuild?.id}
-                                    href={repositoriesRoutes.Detail(configuration?.id!)}
+                                    href={repositoriesRoutes.Detail(prebuild.configurationId)}
                                     variant="secondary"
                                 >
                                     View Repository
