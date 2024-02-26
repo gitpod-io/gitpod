@@ -172,7 +172,7 @@ api.{$GITPOD_DOMAIN} {
 		allowed_origins https://{$GITPOD_DOMAIN}
 	}
 
-	@to_server path /auth/github/callback
+	@to_server path /auth/*/callback
 	handle @to_server {
 		import compression
 
