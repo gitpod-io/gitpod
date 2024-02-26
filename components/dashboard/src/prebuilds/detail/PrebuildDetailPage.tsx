@@ -6,6 +6,7 @@
 
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
+import { Text } from "@podkit/typography/Text";
 import { Button } from "@podkit/buttons/Button";
 import { FC, Suspense, useEffect, useMemo, useState } from "react";
 import { Redirect, useParams } from "react-router";
@@ -21,7 +22,7 @@ import { LoadingState } from "@podkit/loading/LoadingState";
 import Alert from "../../components/Alert";
 import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
-import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -50,6 +51,7 @@ export const PrebuildDetailPage: FC = () => {
 
     const { toast } = useToast();
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
+    const [logNotFound, setLogNotFound] = useState(false);
 
     const { emitter: logEmitter, isLoading: isStreamingLogs } = usePrebuildLogsEmitter(prebuildId);
     const {
@@ -80,6 +82,11 @@ export const PrebuildDetailPage: FC = () => {
             }
         });
         logEmitter.on("logs-error", (err: ApplicationError) => {
+            if (err.code === ErrorCodes.NOT_FOUND) {
+                setLogNotFound(true);
+                return;
+            }
+
             toast("Fetching logs failed: " + err.message, { autoHide: false });
         });
     }, [logEmitter, toast]);
@@ -203,12 +210,31 @@ export const PrebuildDetailPage: FC = () => {
                             </div>
                             <div className="h-112 border-pk-border-base">
                                 <Suspense fallback={<div />}>
-                                    <WorkspaceLogs
-                                        classes="h-full w-full"
-                                        xtermClasses="absolute top-0 left-0 bottom-0 right-0 mx-6 my-0"
-                                        logsEmitter={logEmitter}
-                                        isLoading={isStreamingLogs}
-                                    />
+                                    {logNotFound ? (
+                                        <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
+                                            <Text className="w-80 text-center">
+                                                Logs of this prebuild are inaccessible. Use{" "}
+                                                <code>gp validate --prebuild --headless</code> in a workspace to see
+                                                logs and debug prebuild issues.{" "}
+                                                <a
+                                                    href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
+                                                    target="_blank"
+                                                    rel="noreferrer noopener"
+                                                    className="gp-link"
+                                                >
+                                                    Learn more
+                                                </a>
+                                                .
+                                            </Text>
+                                        </div>
+                                    ) : (
+                                        <WorkspaceLogs
+                                            classes="h-full w-full"
+                                            xtermClasses="absolute top-0 left-0 bottom-0 right-0 mx-6 my-0"
+                                            logsEmitter={logEmitter}
+                                            isLoading={isStreamingLogs}
+                                        />
+                                    )}
                                 </Suspense>
                             </div>
                             <div className="px-6 pt-6 flex justify-between border-pk-border-base">
