@@ -649,6 +649,10 @@ export class WorkspaceStarter {
             if (isGrpcError(err) && (err.code === grpc.status.UNAVAILABLE || err.code === grpc.status.ALREADY_EXISTS)) {
                 // fall-through: we don't want to fail but retry/wait for future updates to resolve this
                 log.warn(logCtx, "cannot start workspace instance due to temporary error", err);
+            } else if (ScmStartError.isScmStartError(err)) {
+                // user does not have access to SCM
+                await this.failInstanceStart({ span }, err, workspace, instance);
+                err = new StartInstanceError("scmAccessFailed", err);
             } else if (!(err instanceof StartInstanceError)) {
                 // fallback in case we did not already handle this error
                 await this.failInstanceStart({ span }, err, workspace, instance);
@@ -1672,12 +1676,12 @@ export class WorkspaceStarter {
         const host = context.repository.host;
         const hostContext = this.hostContextProvider.get(host);
         if (!hostContext) {
-            throw new Error(`Cannot authorize with host: ${host}`);
+            throw new ScmStartError(host, `Cannot authorize with host`);
         }
         const authProviderId = hostContext.authProvider.authProviderId;
         const identity = User.getIdentity(user, authProviderId);
         if (!identity) {
-            throw new Error("User is unauthorized!");
+            throw new ScmStartError(host, "User not connected with host");
         }
 
         const gitSpec = new GitSpec();
@@ -1817,12 +1821,12 @@ export class WorkspaceStarter {
         const host = context.repository.host;
         const hostContext = this.hostContextProvider.get(host);
         if (!hostContext) {
-            throw new Error(`Cannot authorize with host: ${host}`);
+            throw new ScmStartError(host, `Cannot authorize with host`);
         }
         const authProviderId = hostContext.authProvider.authProviderId;
         const identity = user.identities.find((i) => i.authProviderId === authProviderId);
         if (!identity) {
-            throw new Error("User is unauthorized!");
+            throw new ScmStartError(host, "User not connected with host");
         }
 
         const cloneUrl = context.repository.cloneUrl;
@@ -1963,4 +1967,14 @@ export async function isWorkspaceClassDiscoveryEnabled(user: { id: string }): Pr
     return getExperimentsClientForBackend().getValueAsync("workspace_class_discovery_enabled", false, {
         user: user,
     });
+}
+
+export class ScmStartError extends Error {
+    constructor(public readonly host: string, msg: string) {
+        super(`${host}: ` + msg);
+    }
+
+    static isScmStartError(o: any): o is ScmStartError {
+        return !!o && o["host"];
+    }
 }
