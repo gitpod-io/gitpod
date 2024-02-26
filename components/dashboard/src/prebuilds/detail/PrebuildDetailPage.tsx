@@ -67,6 +67,7 @@ export const PrebuildDetailPage: FC = () => {
     const triggeredString = useMemo(() => formatDate(triggeredDate), [triggeredDate]);
 
     useEffect(() => {
+        setLogNotFound(false);
         watchPrebuild(prebuildId, (prebuild) => {
             setCurrentPrebuild(prebuild);
         });
