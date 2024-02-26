@@ -14,6 +14,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { RedisMutex } from "../redis/mutex";
 
 @injectable()
 export class TokenService implements TokenProvider {
@@ -21,6 +22,7 @@ export class TokenService implements TokenProvider {
 
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(UserDB) protected readonly userDB: UserDB;
+    @inject(RedisMutex) private readonly redisMutex: RedisMutex;
 
     // Introducing GC to token cache to guard from potentialy stale fetch requests. This is setting
     // a hard limit at 10s (+5s) after which after which compteting request will trigger a new request,
@@ -29,6 +31,17 @@ export class TokenService implements TokenProvider {
 
     async getTokenForHost(user: User | string, host: string): Promise<Token | undefined> {
         const userId = User.is(user) ? user.id : user;
+
+        // EXPERIMENT(sync_refresh_token_exchange)
+        const syncRefreshTokenExchange = await getExperimentsClientForBackend().getValueAsync(
+            "sync_refresh_token_exchange",
+            false,
+            {},
+        );
+        if (syncRefreshTokenExchange) {
+            return this.doGetTokenForHostSync(userId, host);
+        }
+
         // (AT) when it comes to token renewal, the awaited http requests may
         // cause "parallel" calls to repeat the renewal, which will fail.
         // Caching for pending operations should solve this issue.
@@ -40,6 +53,54 @@ export class TokenService implements TokenProvider {
             promise = promise.finally(() => this.getTokenForHostCache.delete(key));
         }
         return promise;
+    }
+
+    // EXPERIMENT(sync_refresh_token_exchange)
+    private async doGetTokenForHostSync(userId: string, host: string): Promise<Token | undefined> {
+        const user = await this.userDB.findUserById(userId);
+        if (!user) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${userId}) not found.`);
+        }
+        const identity = this.getIdentityForHost(user, host);
+
+        const doRefreshToken = async () => {
+            // Check: Current token so we can actually refresh?
+            const token = await this.userDB.findTokenForIdentity(identity);
+            if (!token) {
+                return undefined;
+            }
+
+            const aboutToExpireTime = new Date();
+            aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
+            if (!token.expiryDate || token.expiryDate >= aboutToExpireTime.toISOString()) {
+                return token;
+            }
+
+            // Can we refresh these kind of tokens?
+            const { authProvider } = this.hostContextProvider.get(host)!;
+            if (!authProvider.refreshToken) {
+                return undefined;
+            }
+
+            await authProvider.refreshToken(user);
+            return await this.userDB.findTokenForIdentity(identity);
+        };
+
+        try {
+            const refreshedToken = await this.redisMutex.using(
+                [`token-refresh-${host}-${userId}`],
+                2000, // After 2s without extension the lock is released
+                doRefreshToken,
+                { retryCount: 10, retryDelay: 500 }, // We wait at most 10s until we give up, and conclude that we can't refresh the token now.
+            );
+            return refreshedToken;
+        } catch (err) {
+            if (RedisMutex.isLockedError(err)) {
+                log.error({ userId }, `Failed to refresh token (timeout waiting on lock)`, err, { host });
+                throw new Error(`Failed to refresh token (timeout waiting on lock)`);
+            }
+            throw err;
+        }
     }
 
     private async doGetTokenForHost(userId: string, host: string): Promise<Token | undefined> {
