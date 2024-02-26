@@ -216,7 +216,16 @@ export const PrebuildDetailPage: FC = () => {
                                             <Text className="w-80 text-center">
                                                 Logs of this prebuild are inaccessible. Use{" "}
                                                 <code>gp validate --prebuild --headless</code> in a workspace to see
-                                                logs and debug prebuild issues.
+                                                logs and debug prebuild issues.{" "}
+                                                <a
+                                                    href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
+                                                    target="_blank"
+                                                    rel="noreferrer noopener"
+                                                    className="gp-link"
+                                                >
+                                                    Learn more
+                                                </a>
+                                                .
                                             </Text>
                                         </div>
                                     ) : (
