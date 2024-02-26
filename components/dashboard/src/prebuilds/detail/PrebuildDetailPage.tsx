@@ -89,8 +89,7 @@ export const PrebuildDetailPage: FC = () => {
 
             toast("Fetching logs failed: " + err.message, { autoHide: false });
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [prebuild, toast]);
+    }, [logEmitter, toast]);
 
     useEffect(() => {
         if (isTriggerError && triggerError?.message) {
