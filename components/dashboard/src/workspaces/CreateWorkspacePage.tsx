@@ -51,6 +51,8 @@ import { converter } from "../service/public-api";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { useOrgWorkspaceClassesQuery } from "../data/organizations/org-workspace-classes-query";
 
+type NextLoadOption = "searchParams" | "autoStart" | "allDone";
+
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
@@ -69,16 +71,15 @@ export function CreateWorkspacePage() {
             ? props.ideSettings.useLatestVersion
             : user?.editorSettings?.version === "latest";
     const [useLatestIde, setUseLatestIde] = useState(defaultLatestIde);
-    const defaultIde =
-        props.ideSettings?.defaultIde !== undefined ? props.ideSettings.defaultIde : user?.editorSettings?.name;
+    const defaultIde = user?.editorSettings?.name;
     const [selectedIde, setSelectedIde, selectedIdeIsDirty] = useDirtyState(defaultIde);
-    const defaultWorkspaceClass = props.workspaceClass ?? orgWorkspaceClasses?.find((e) => e.isDefault)?.id;
+    const defaultWorkspaceClass = orgWorkspaceClasses?.find((e) => e.isDefault)?.id;
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
     const [errorWsClass, setErrorWsClass] = useState<string | undefined>(undefined);
     const [contextURL, setContextURL] = useState<string | undefined>(
         StartWorkspaceOptions.parseContextUrl(location.hash),
     );
-    const [optionsLoaded, setOptionsLoaded] = useState(false);
+    const [nextLoadOption, setNextLoadOption] = useState<NextLoadOption>("searchParams");
     // Currently this tracks if the user has selected a project from the dropdown
     // Need to make sure we initialize this to a project if the url hash value maps to a project's repo url
     // Will need to handle multiple projects w/ same repo url
@@ -275,11 +276,24 @@ export function CreateWorkspacePage() {
 
     // listen on auto start changes
     useEffect(() => {
-        if (!autostart || !optionsLoaded) {
+        if (!autostart || nextLoadOption !== "allDone") {
             return;
         }
         createWorkspace();
-    }, [autostart, optionsLoaded, createWorkspace]);
+    }, [autostart, nextLoadOption, createWorkspace]);
+
+    useEffect(() => {
+        if (nextLoadOption !== "searchParams") {
+            return;
+        }
+        if (props.ideSettings?.defaultIde) {
+            setSelectedIde(props.ideSettings.defaultIde);
+        }
+        if (props.workspaceClass) {
+            setSelectedWsClass(props.workspaceClass);
+        }
+        setNextLoadOption("autoStart");
+    }, [props, setSelectedIde, setSelectedWsClass, nextLoadOption, setNextLoadOption]);
 
     // when workspaceContext is available, we look up if options are remembered
     useEffect(() => {
@@ -289,6 +303,9 @@ export function CreateWorkspacePage() {
         const cloneURL = workspaceContext.data.cloneUrl;
         if (!cloneURL) {
             return undefined;
+        }
+        if (nextLoadOption !== "autoStart") {
+            return;
         }
         const rememberedOptions = (user?.workspaceAutostartOptions || []).find(
             (e) => e.cloneUrl === cloneURL && e.organizationId === currentOrg?.id,
@@ -313,10 +330,10 @@ export function CreateWorkspacePage() {
                 setSelectedWsClass(projectWsClass || defaultWorkspaceClass, false);
             }
         }
-        setOptionsLoaded(true);
+        setNextLoadOption("allDone");
         // we only update the remembered options when the workspaceContext changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [workspaceContext.data, setOptionsLoaded, project]);
+    }, [workspaceContext.data, nextLoadOption, setNextLoadOption, project]);
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
@@ -335,7 +352,7 @@ export function CreateWorkspacePage() {
     useEffect(() => {
         if (workspaceContext.error || createWorkspaceMutation.error) {
             setAutostart(false);
-            setOptionsLoaded(true);
+            setNextLoadOption("allDone");
         }
     }, [workspaceContext.error, createWorkspaceMutation.error]);
 
