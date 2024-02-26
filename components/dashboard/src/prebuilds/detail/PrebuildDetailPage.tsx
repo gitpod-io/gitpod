@@ -22,7 +22,7 @@ import { LoadingState } from "@podkit/loading/LoadingState";
 import Alert from "../../components/Alert";
 import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
-import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -82,13 +82,7 @@ export const PrebuildDetailPage: FC = () => {
             }
         });
         logEmitter.on("logs-error", (err: ApplicationError) => {
-            const phase = prebuild?.status?.phase?.name;
-            // An overcomplicated check for getting a "failed" prebuild state, for which we do not store logs.
-            if (
-                phase &&
-                ([PrebuildPhase_Phase.FAILED, PrebuildPhase_Phase.TIMEOUT].includes(phase) ||
-                    (phase === PrebuildPhase_Phase.AVAILABLE && prebuild.status?.message))
-            ) {
+            if (err.code === ErrorCodes.NOT_FOUND) {
                 setLogNotFound(true);
                 return;
             }
@@ -220,7 +214,7 @@ export const PrebuildDetailPage: FC = () => {
                                     {logNotFound ? (
                                         <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
                                             <Text className="w-[22rem] text-center">
-                                                Logs of failed prebuilds are inaccessible. Use{" "}
+                                                Logs of this prebuild are inaccessible. Use{" "}
                                                 <code>gp validate --prebuild --headless</code> in a workspace to see
                                                 logs and debug prebuild issues.
                                             </Text>
