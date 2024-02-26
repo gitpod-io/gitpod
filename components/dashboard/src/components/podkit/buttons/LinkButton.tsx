@@ -9,6 +9,7 @@ import { Button, ButtonProps } from "@podkit/buttons/Button";
 import React from "react";
 
 export interface LinkButtonProps extends ButtonProps {
+    asChild?: false;
     href: string;
 }
 
@@ -18,11 +19,9 @@ export interface LinkButtonProps extends ButtonProps {
 export const LinkButton = React.forwardRef<HTMLButtonElement, LinkButtonProps>(
     ({ asChild, children, href, ...props }, ref) => {
         return (
-            <Link to={href}>
-                <Button ref={ref} {...props}>
-                    {children}
-                </Button>
-            </Link>
+            <Button ref={ref} {...props} asChild>
+                <Link to={href}>{children}</Link>
+            </Button>
         );
     },
 );
