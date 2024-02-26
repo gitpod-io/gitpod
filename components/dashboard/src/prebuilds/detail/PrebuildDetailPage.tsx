@@ -213,7 +213,7 @@ export const PrebuildDetailPage: FC = () => {
                                 <Suspense fallback={<div />}>
                                     {logNotFound ? (
                                         <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
-                                            <Text className="w-[22rem] text-center">
+                                            <Text className="w-80 text-center">
                                                 Logs of this prebuild are inaccessible. Use{" "}
                                                 <code>gp validate --prebuild --headless</code> in a workspace to see
                                                 logs and debug prebuild issues.
