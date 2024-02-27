@@ -71,7 +71,7 @@ export const PrebuildDetailPage: FC = () => {
         watchPrebuild(prebuildId, (prebuild) => {
             setCurrentPrebuild(prebuild);
         });
-    }, [prebuildId, setCurrentPrebuild]);
+    }, [prebuildId]);
 
     useEffect(() => {
         logEmitter.on("error", (err: Error) => {
