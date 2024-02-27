@@ -68,9 +68,13 @@ export const PrebuildDetailPage: FC = () => {
 
     useEffect(() => {
         setLogNotFound(false);
-        watchPrebuild(prebuildId, (prebuild) => {
+        const disposable = watchPrebuild(prebuildId, (prebuild) => {
             setCurrentPrebuild(prebuild);
         });
+
+        return () => {
+            disposable.dispose();
+        };
     }, [prebuildId]);
 
     useEffect(() => {
