@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -221,6 +221,8 @@ export class BuildRequest extends jspb.Message {
     setTriggeredBy(value: string): BuildRequest;
     getSupervisorRef(): string;
     setSupervisorRef(value: string): BuildRequest;
+    getBaseImageNameResolved(): string;
+    setBaseImageNameResolved(value: string): BuildRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): BuildRequest.AsObject;
@@ -239,6 +241,7 @@ export namespace BuildRequest {
         forceRebuild: boolean,
         triggeredBy: string,
         supervisorRef: string,
+        baseImageNameResolved: string,
     }
 }
 
