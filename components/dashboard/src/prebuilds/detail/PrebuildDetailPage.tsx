@@ -67,10 +67,15 @@ export const PrebuildDetailPage: FC = () => {
     const triggeredString = useMemo(() => formatDate(triggeredDate), [triggeredDate]);
 
     useEffect(() => {
-        watchPrebuild(prebuildId, (prebuild) => {
+        setLogNotFound(false);
+        const disposable = watchPrebuild(prebuildId, (prebuild) => {
             setCurrentPrebuild(prebuild);
         });
-    }, [prebuildId, setCurrentPrebuild]);
+
+        return () => {
+            disposable.dispose();
+        };
+    }, [prebuildId]);
 
     useEffect(() => {
         logEmitter.on("error", (err: Error) => {
