@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -19,6 +20,8 @@ import (
 
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/types"
+	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/logs"
 	"github.com/moby/buildkit/client"
 	"golang.org/x/xerrors"
 )
@@ -66,7 +69,7 @@ func (b *Builder) Build() error {
 	if err != nil {
 		return err
 	}
-	err = b.buildWorkspaceImage(ctx, cl)
+	err = b.buildWorkspaceImage(ctx)
 	if err != nil {
 		return err
 	}
@@ -83,20 +86,13 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 	return buildImage(ctx, b.Config.ContextDir, b.Config.Dockerfile, b.Config.WorkspaceLayerAuth, b.Config.BaseRef)
 }
 
-func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (err error) {
+func (b *Builder) buildWorkspaceImage(ctx context.Context) (err error) {
 	log.Info("building workspace image")
 
-	contextDir, err := os.MkdirTemp("", "wsimg-*")
-	if err != nil {
-		return err
-	}
+	logs.Warn.SetOutput(os.Stderr)
+	logs.Progress.SetOutput(os.Stderr)
 
-	err = ioutil.WriteFile(filepath.Join(contextDir, "Dockerfile"), []byte(fmt.Sprintf("FROM %v", b.Config.BaseRef)), 0644)
-	if err != nil {
-		return xerrors.Errorf("unexpected error creating temporal directory: %w", err)
-	}
-
-	return buildImage(ctx, contextDir, filepath.Join(contextDir, "Dockerfile"), b.Config.WorkspaceLayerAuth, b.Config.TargetRef)
+	return crane.Copy(b.Config.BaseRef, b.Config.TargetRef, crane.Insecure, crane.WithJobs(runtime.GOMAXPROCS(0)))
 }
 
 func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target string) (err error) {
