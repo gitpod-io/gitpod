@@ -35,7 +35,7 @@ spec:
 
     - alert: InstanceStartFailures
       # Reasoning: 1 failure every 120s should not trigger an incident: 1/120 = 0.00833.. => 0.01
-      expr: sum(irate(gitpod_server_instance_starts_failed_total{reason!~"imageBuildFailed|imageBuildFailedUser"}[2m])) by (reason) > 0.01
+      expr: sum(irate(gitpod_server_instance_starts_failed_total{reason!~"imageBuildFailed|imageBuildFailedUser|scmAccessFailed"}[2m])) by (reason) > 0.01
       for: 30s
       labels:
         severity: critical

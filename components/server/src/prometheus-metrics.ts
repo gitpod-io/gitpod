@@ -203,6 +203,7 @@ export type FailedInstanceStartReason =
     | "startOnClusterFailed"
     | "imageBuildFailed"
     | "imageBuildFailedUser"
+    | "scmAccessFailed"
     | "resourceExhausted"
     | "workspaceClusterMaintenance"
     | "other";
