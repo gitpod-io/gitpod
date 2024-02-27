@@ -369,7 +369,7 @@ export namespace WorkspaceTimeoutDuration {
         ) {
             throw new Error("Workspace inactivity timeout cannot exceed 24h");
         }
-        return duration;
+        return value + unit;
     }
 }
 
