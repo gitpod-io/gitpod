@@ -381,3 +381,27 @@ type AuthorizerSubjectIdMatch = "ctx-user-id-missing" | "passed-subject-id-missi
 export function reportAuthorizerSubjectId(match: AuthorizerSubjectIdMatch) {
     authorizerSubjectId.labels(match).inc();
 }
+
+export const scmTokenRefreshRequestsTotal = new prometheusClient.Counter({
+    name: "gitpod_scm_token_refresh_requests_total",
+    help: "Counter for the number of token refresh requests we issue against SCM systems",
+    labelNames: ["host", "result"],
+});
+export type ScmTokenRefreshResult =
+    | "success"
+    | "timeout"
+    | "error"
+    | "still_valid"
+    | "no_token"
+    | "not_refreshable"
+    | "success_after_timeout";
+export function reportScmTokenRefreshRequest(host: string, result: ScmTokenRefreshResult) {
+    scmTokenRefreshRequestsTotal.labels(host, result).inc();
+}
+
+export const scmTokenRefreshLatencyHistogram = new prometheusClient.Histogram({
+    name: "gitpod_scm_token_refresh_latency_seconds",
+    help: "SCM token refresh latency in seconds",
+    labelNames: ["host"],
+    buckets: [0.01, 0.1, 0.2, 0.5, 1, 2, 5, 10],
+});
