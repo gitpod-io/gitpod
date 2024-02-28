@@ -57,6 +57,7 @@ message PrebuildSettings {
 message WorkspaceSettings {
   bool enable_persistent_volume_claim = 1;
   WorkspaceClassSettings workspace_class = 2;
+  repeated string restricted_workspace_classes = 3;
 }
 
 message WorkspaceClassSettings {
