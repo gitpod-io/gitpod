@@ -147,7 +147,7 @@ export class WorkspaceService {
             if (project.settings.restrictedWorkspaceClasses.includes(workspaceClass)) {
                 throw new ApplicationError(
                     ErrorCodes.PRECONDITION_FAILED,
-                    "Selected workspace class is restricted in current configuration.",
+                    "Selected workspace class is restricted in current repository.",
                 );
             }
         }
