@@ -51,23 +51,26 @@ export interface SwitchInputFieldProps extends React.ComponentPropsWithoutRef<ty
     id?: string;
     label: ReactNode;
     description?: ReactNode;
+    labelLayout?: "row" | "column";
 }
 
 export const SwitchInputField = React.forwardRef<React.ElementRef<typeof SwitchPrimitives.Root>, SwitchInputFieldProps>(
-    ({ className, checked, onCheckedChange, title, label, id, description, ...props }, ref) => {
+    ({ className, checked, onCheckedChange, title, label, id, description, labelLayout, ...props }, ref) => {
         const disabledClassName = props.disabled ? "text-pk-content-disabled" : "";
+        const centerItemsClassName = labelLayout === "row" ? "items-center" : "";
+        const labelLayoutClassName = labelLayout === "row" ? "flex-row" : "flex-col";
         const switchProps = {
             ...props,
             className: "",
         };
         return (
-            <div className={cn("flex gap-4", className)} title={title}>
+            <div className={cn("flex gap-4", centerItemsClassName, className)} title={title}>
                 <Switch checked={checked} onCheckedChange={onCheckedChange} id={id} {...switchProps} ref={ref} />
-                <div className="flex flex-col">
-                    <label className={cn("font-semibold cursor-pointer", disabledClassName)} htmlFor={id}>
+                <div className={cn("flex", labelLayoutClassName, centerItemsClassName, disabledClassName)}>
+                    <label className={cn("flex flex-row items-center font-semibold cursor-pointer")} htmlFor={id}>
                         {label}
                     </label>
-                    <TextMuted className={disabledClassName}>{description}</TextMuted>
+                    {typeof description === "string" ? <TextMuted>{description}</TextMuted> : description}
                 </div>
             </div>
         );

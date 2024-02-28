@@ -37,6 +37,7 @@ message OrganizationSettings {
   string default_workspace_image = 2;
   repeated string allowed_workspace_classes = 3;
   repeated string restricted_editor_names = 4;
+  map<string, string> pinned_editor_versions = 5;
 }
 
 service OrganizationService {
@@ -131,6 +132,12 @@ message UpdateOrganizationSettingsRequest {
 
   // Specifies whether restricted_workspace_classes should be updated.
   optional bool update_restricted_editor_names = 7;
+
+  // pinned_editor_versions updates the pinned version for the corresponding editor.
+  map<string, string> pinned_editor_versions = 8;
+
+  // Specifies whether pinned_editor_versions should be updated.
+  optional bool update_pinned_editor_versions = 9;
 }
 
 message UpdateOrganizationSettingsResponse {

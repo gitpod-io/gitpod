@@ -86,7 +86,7 @@ import { ContextParser } from "./context-parser-service";
 import { isClusterMaintenanceError } from "./workspace-starter";
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { ProjectsService } from "../projects/projects-service";
-import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import {
     PartialProject,
     OrganizationSettings,
@@ -137,6 +137,7 @@ import { SubjectId } from "../auth/subject-id";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { AnalyticsController } from "../analytics-controller";
 import { ClientHeaderFields } from "../express-util";
+import { filter } from "../util/objects";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2397,7 +2398,25 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkUser("identifyUser");
         const email = getPrimaryEmail(user);
         const ideConfig = await this.ideService.getIDEConfig({ user: { id: user.id, email } });
-        return ideConfig.ideOptions;
+
+        const updatedOptions: Record<string, IDEOption> = {};
+        for (const [key, value] of Object.entries(ideConfig.ideOptions.options)) {
+            const opt = filter(value, (key) => key !== "versions") as IDEOption;
+            opt.pinnable = !!value.versions && value.versions.length > 0;
+            updatedOptions[key] = opt;
+        }
+        const clonedIdeOptions = {
+            ...ideConfig.ideOptions,
+            options: updatedOptions,
+        };
+
+        return clonedIdeOptions;
+    }
+
+    async getIDEVersions(ctx: TraceContext, ide: string): Promise<string[] | undefined> {
+        const user = await this.checkUser("identifyUser");
+        const email = getPrimaryEmail(user);
+        return this.ideService.getIDEVersions(ide, { user: { id: user.id, email } });
     }
 
     async getSupportedWorkspaceClasses(ctx: TraceContext): Promise<SupportedWorkspaceClass[]> {

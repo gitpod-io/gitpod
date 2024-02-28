@@ -572,6 +572,14 @@ export class WorkspaceService {
             options.clientRegionCode,
         );
 
+        const orgSettings = await this.orgService.getSettings(user.id, workspace.organizationId);
+        if (orgSettings.pinnedEditorVersions) {
+            if (!options.ideSettings) {
+                options.ideSettings = {};
+            }
+            options.ideSettings.pinnedIDEversions = orgSettings.pinnedEditorVersions;
+        }
+
         // at this point we're about to actually start a new workspace
         const result = await this.workspaceStarter.startWorkspace(ctx, workspace, user, await projectPromise, options);
         return result;

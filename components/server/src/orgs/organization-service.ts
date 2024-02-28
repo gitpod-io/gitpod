@@ -26,6 +26,7 @@ import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-c
 import { InstallationService } from "../auth/installation-service";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { runWithSubjectId } from "../util/request-context";
+import { IDEService } from "../ide-service";
 
 @injectable()
 export class OrganizationService {
@@ -37,6 +38,7 @@ export class OrganizationService {
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(InstallationService) private readonly installationService: InstallationService,
+        @inject(IDEService) private readonly ideService: IDEService,
         @inject(DefaultWorkspaceImageValidator)
         private readonly validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator,
     ) {}
@@ -437,6 +439,17 @@ export class OrganizationService {
                 }
             }
         }
+        if (settings.pinnedEditorVersions) {
+            const ideConfig = await this.ideService.getIDEConfig({ user: { id: userId } });
+            for (const [key, version] of Object.entries(settings.pinnedEditorVersions)) {
+                if (
+                    !ideConfig.ideOptions.options[key] ||
+                    !ideConfig.ideOptions.options[key].versions?.find((v) => v.version === version)
+                ) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invalid ide or ide version.");
+                }
+            }
+        }
         return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
     }
 
@@ -451,6 +464,7 @@ export class OrganizationService {
         if (settings.allowedWorkspaceClasses) {
             result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
         }
+        result.pinnedEditorVersions = settings.pinnedEditorVersions;
         return result;
     }
 

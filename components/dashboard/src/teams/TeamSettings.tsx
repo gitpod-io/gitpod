@@ -36,6 +36,8 @@ import {
     WorkspaceClassesOptions,
 } from "../components/WorkspaceClassesOptions";
 import { useMutation } from "@tanstack/react-query";
+import { useIDEOptions } from "../data/ide-options/ide-options-query";
+import { IdeOptions, IdeOptionsModifyModal, IdeOptionsModifyModalProps } from "../components/IdeOptions";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -208,6 +210,12 @@ export default function TeamSettingsPage() {
                     )}
 
                     <OrgWorkspaceClassesOptions
+                        isOwner={isOwner}
+                        settings={settings}
+                        handleUpdateTeamSettings={handleUpdateTeamSettings}
+                    />
+
+                    <EditorOptions
                         isOwner={isOwner}
                         settings={settings}
                         handleUpdateTeamSettings={handleUpdateTeamSettings}
@@ -490,6 +498,65 @@ const OrgWorkspaceClassesOptions = ({
                     showSwitchTitle={false}
                     restrictedWorkspaceClasses={restrictedWorkspaceClasses}
                     allowedClasses={allowedClassesInInstallation}
+                    updateMutation={updateMutation}
+                    onClose={() => setShowModal(false)}
+                />
+            )}
+        </ConfigurationSettingsField>
+    );
+};
+
+interface EditorOptionsProps {
+    settings: OrganizationSettings | undefined;
+    isOwner: boolean;
+    handleUpdateTeamSettings: (
+        newSettings: Partial<OrganizationSettings>,
+        options?: { throwMutateError?: boolean },
+    ) => Promise<void>;
+}
+const EditorOptions = ({ isOwner, settings, handleUpdateTeamSettings }: EditorOptionsProps) => {
+    const [showModal, setShowModal] = useState(false);
+    const { data: ideOptions, isLoading } = useIDEOptions();
+
+    const updateMutation: IdeOptionsModifyModalProps["updateMutation"] = useMutation({
+        mutationFn: async ({ restrictedEditors, pinnedEditorVersions }) => {
+            const updatedRestrictedEditors = [...restrictedEditors.keys()];
+            const updatedPinnedEditorVersions = Object.fromEntries(pinnedEditorVersions.entries());
+
+            await handleUpdateTeamSettings(
+                { restrictedEditorNames: updatedRestrictedEditors, pinnedEditorVersions: updatedPinnedEditorVersions },
+                { throwMutateError: true },
+            );
+        },
+    });
+
+    const restrictedEditors = new Set<string>(settings?.restrictedEditorNames || []);
+    const pinnedEditorVersions = new Map<string, string>(Object.entries(settings?.pinnedEditorVersions || {}));
+
+    return (
+        <ConfigurationSettingsField>
+            <Heading3>Available editors</Heading3>
+            <Subheading>Limit the available editors in your organization.</Subheading>
+
+            <IdeOptions
+                isLoading={isLoading}
+                className="mt-4"
+                ideOptions={ideOptions}
+                pinnedEditorVersions={pinnedEditorVersions}
+            />
+
+            {isOwner && (
+                <Button className="mt-6" onClick={() => setShowModal(true)}>
+                    Manage Editors
+                </Button>
+            )}
+
+            {showModal && (
+                <IdeOptionsModifyModal
+                    isLoading={isLoading}
+                    ideOptions={ideOptions}
+                    restrictedEditors={restrictedEditors}
+                    pinnedEditorVersions={pinnedEditorVersions}
                     updateMutation={updateMutation}
                     onClose={() => setShowModal(false)}
                 />
