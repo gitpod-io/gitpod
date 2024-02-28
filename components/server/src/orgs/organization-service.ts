@@ -454,18 +454,6 @@ export class OrganizationService {
         return result;
     }
 
-    public async hasAllowedWorkspaceClassesInInstallation(userId: string, orgId: string): Promise<boolean> {
-        const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
-        const settings = await this.getSettings(userId, orgId);
-        if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
-            return (
-                settings.allowedWorkspaceClasses.filter((e) => allClasses.findIndex((cls) => cls.id === e) !== -1)
-                    .length > 0
-            );
-        }
-        return allClasses.length > 0;
-    }
-
     public async listWorkspaceClasses(userId: string, orgId: string): Promise<SupportedWorkspaceClass[]> {
         const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
         const settings = await this.getSettings(userId, orgId);

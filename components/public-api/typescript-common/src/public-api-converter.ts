@@ -113,7 +113,6 @@ import {
     WithPrebuild,
     WorkspaceContext,
     WorkspaceInfo,
-    WorkspaceClasses,
     UserEnvVarValue,
     ProjectEnvVar,
     PrebuiltWorkspaceState,
@@ -135,6 +134,7 @@ import {
     PrebuildSettings as PrebuildSettingsProtocol,
     PrebuildWithStatus,
     Project,
+    ProjectSettings,
     Organization as ProtocolOrganization,
 } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import {
@@ -885,7 +885,7 @@ export class PublicAPIConverter {
     fromSort(sort: Sort) {
         return {
             order: this.fromSortOrder(sort.order),
-            field: sort.field
+            field: sort.field,
         } as const;
     }
 
@@ -926,10 +926,16 @@ export class PublicAPIConverter {
         }
     }
 
-    fromWorkspaceSettings(workspaceClass?: string): WorkspaceClasses {
-        const result: WorkspaceClasses = {};
-        if (workspaceClass) {
-            result.regular = workspaceClass;
+    fromWorkspaceSettings(settings?: DeepPartial<WorkspaceSettings>) {
+        const result: Partial<Pick<ProjectSettings, "workspaceClasses" | "restrictedWorkspaceClasses">> = {};
+        if (settings?.workspaceClass) {
+            result.workspaceClasses = {
+                regular: settings.workspaceClass,
+            };
+        }
+
+        if (settings?.restrictedWorkspaceClasses) {
+            result.restrictedWorkspaceClasses = settings.restrictedWorkspaceClasses.filter((e) => !!e) as string[];
         }
         return result;
     }
@@ -970,20 +976,27 @@ export class PublicAPIConverter {
 
     fromPartialConfiguration(configuration: PartialConfiguration): PartialProject {
         const prebuilds = this.fromPartialPrebuildSettings(configuration.prebuildSettings);
-        const workspaceClasses = this.fromWorkspaceSettings(configuration.workspaceSettings?.workspaceClass);
+        const { workspaceClasses, restrictedWorkspaceClasses } = this.fromWorkspaceSettings(
+            configuration.workspaceSettings,
+        );
+
         const result: PartialProject = {
             id: configuration.id,
+            settings: {},
         };
 
         if (configuration.name !== undefined) {
             result.name = configuration.name;
         }
 
-        if (Object.keys(prebuilds).length > 0 || Object.keys(workspaceClasses).length > 0) {
-            result.settings = {
-                prebuilds,
-                workspaceClasses,
-            };
+        if (Object.keys(prebuilds).length > 0) {
+            result.settings!.prebuilds = prebuilds;
+        }
+        if (workspaceClasses && Object.keys(workspaceClasses).length > 0) {
+            result.settings!.workspaceClasses = workspaceClasses;
+        }
+        if (restrictedWorkspaceClasses) {
+            result.settings!.restrictedWorkspaceClasses = restrictedWorkspaceClasses;
         }
 
         return result;
@@ -1004,7 +1017,7 @@ export class PublicAPIConverter {
         result.name = project.name;
         result.cloneUrl = project.cloneUrl;
         result.creationTime = Timestamp.fromDate(new Date(project.creationTime));
-        result.workspaceSettings = this.toWorkspaceSettings(project.settings?.workspaceClasses?.regular);
+        result.workspaceSettings = this.toWorkspaceSettings(project.settings);
         result.prebuildSettings = this.toPrebuildSettings(project.settings?.prebuilds);
         return result;
     }
@@ -1033,10 +1046,13 @@ export class PublicAPIConverter {
         return BranchMatchingStrategy.DEFAULT_BRANCH;
     }
 
-    toWorkspaceSettings(workspaceClass?: string): WorkspaceSettings {
+    toWorkspaceSettings(projectSettings: ProjectSettings | undefined): WorkspaceSettings {
         const result = new WorkspaceSettings();
-        if (workspaceClass) {
-            result.workspaceClass = workspaceClass;
+        if (projectSettings?.workspaceClasses?.regular) {
+            result.workspaceClass = projectSettings.workspaceClasses.regular;
+        }
+        if (projectSettings?.restrictedWorkspaceClasses) {
+            result.restrictedWorkspaceClasses = projectSettings.restrictedWorkspaceClasses;
         }
         return result;
     }

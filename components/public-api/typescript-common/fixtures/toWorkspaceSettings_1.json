@@ -1,1 +1,3 @@
-"dev"
+{
+  "workspaceClasses": { "regular": "dev" }
+}

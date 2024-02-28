@@ -1,6 +1,7 @@
 {
     "result": {
         "id": "123",
+        "settings": {},
         "name": "My Config"
     },
     "err": ""

@@ -1,0 +1,10 @@
+{
+    "result": {
+        "workspaceClass": "test",
+        "restrictedWorkspaceClasses": [
+            "g1",
+            "g2"
+        ]
+    },
+    "err": ""
+}

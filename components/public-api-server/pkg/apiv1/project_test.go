@@ -341,6 +341,7 @@ func newProject(p *protocol.Project) *protocol.Project {
 				Regular:  "default",
 				Prebuild: "default",
 			},
+			RestrictedWorkspaceClasses: &[]string{"default"},
 			PrebuildSettings: &protocol.PrebuildSettings{
 				Enable: &b_false,
 			},

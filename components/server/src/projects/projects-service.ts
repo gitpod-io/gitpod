@@ -32,6 +32,7 @@ import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/time
 import deepmerge from "deepmerge";
 import { ScmService } from "../scm/scm-service";
 import { runWithSubjectId } from "../util/request-context";
+import { InstallationService } from "../auth/installation-service";
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
@@ -44,6 +45,8 @@ export class ProjectsService {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(ScmService) private readonly scmService: ScmService,
+
+        @inject(InstallationService) private readonly installationService: InstallationService,
     ) {}
 
     async getProject(userId: string, projectId: string): Promise<Project> {
@@ -400,15 +403,39 @@ export class ProjectsService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${partialProject.id} not found.`);
         }
 
-        if (!partialProject.settings?.prebuilds && !partialProject.settings?.workspaceClasses) {
-            // No nested settings update, just update the project partially
-            return this.projectDB.updateProject(partialProject);
+        // Merge settings so that clients don't need to pass previous value all the time
+        // (not update setting field if undefined)
+        if (partialProject.settings) {
+            const toBeMerged: ProjectSettings = existingProject.settings ?? {};
+            if (partialProject.settings.restrictedWorkspaceClasses) {
+                // deepmerge will try append array, so once data is defined, ignore previous value
+                toBeMerged.restrictedWorkspaceClasses = undefined;
+            }
+            partialProject.settings = deepmerge(toBeMerged, partialProject.settings);
+            await this.checkProjectSettings(user.id, partialProject.settings);
         }
-
-        const update = deepmerge(existingProject, partialProject);
-
-        await this.handleEnablePrebuild(user, update);
-        return this.projectDB.updateProject(update);
+        await this.handleEnablePrebuild(user, partialProject);
+        return this.projectDB.updateProject(partialProject);
+    }
+    private async checkProjectSettings(userId: string, settings?: PartialProject["settings"]) {
+        if (!settings) {
+            return;
+        }
+        if (settings.restrictedWorkspaceClasses) {
+            const classList = settings.restrictedWorkspaceClasses.filter((cls) => !!cls) as string[];
+            if (classList.length > 0) {
+                // We don't check organization-level workspace classes since the field `restrictedWorkspaceClasses` in repository-level is a NOT ALLOW LIST
+                const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
+                const notAllowedList = classList.filter((cls) => !allClasses.find((i) => i.id === cls));
+                if (notAllowedList.length > 0) {
+                    throw new ApplicationError(
+                        ErrorCodes.BAD_REQUEST,
+                        `Workspace classes ${notAllowedList.join(", ")} not allowed in installation`,
+                    );
+                }
+            }
+            settings.restrictedWorkspaceClasses = classList;
+        }
     }
 
     private async handleEnablePrebuild(user: User, partialProject: PartialProject): Promise<void> {
