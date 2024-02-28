@@ -63,6 +63,19 @@ export class TokenService implements TokenProvider {
         }
         const identity = this.getIdentityForHost(user, host);
 
+        function isValid(t: Token): boolean {
+            if (!t.expiryDate) {
+                return true;
+            }
+
+            const aboutToExpireTime = new Date();
+            aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
+            if (t.expiryDate >= aboutToExpireTime.toISOString()) {
+                return true;
+            }
+            return false;
+        }
+
         const doRefreshToken = async () => {
             // Check: Current token so we can actually refresh?
             const token = await this.userDB.findTokenForIdentity(identity);
@@ -70,9 +83,7 @@ export class TokenService implements TokenProvider {
                 return undefined;
             }
 
-            const aboutToExpireTime = new Date();
-            aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
-            if (!token.expiryDate || token.expiryDate >= aboutToExpireTime.toISOString()) {
+            if (isValid(token)) {
                 return token;
             }
 
@@ -89,13 +100,21 @@ export class TokenService implements TokenProvider {
         try {
             const refreshedToken = await this.redisMutex.using(
                 [`token-refresh-${host}-${userId}`],
-                2000, // After 2s without extension the lock is released
+                3000, // After 3s without extension the lock is released
                 doRefreshToken,
-                { retryCount: 10, retryDelay: 500 }, // We wait at most 10s until we give up, and conclude that we can't refresh the token now.
+                { retryCount: 20, retryDelay: 500 }, // We wait at most 10s until we give up, and conclude that we can't refresh the token now.
             );
             return refreshedToken;
         } catch (err) {
             if (RedisMutex.isLockedError(err)) {
+                // In this case we already timed-out. BUT there is a high chance we are waiting on somebody else, who might already done the work for us.
+                // So just checking again here
+                const token = await this.userDB.findTokenForIdentity(identity);
+                if (token && isValid(token)) {
+                    log.debug({ userId }, `Token refresh timed out, but still successful`, { host });
+                    return token;
+                }
+
                 log.error({ userId }, `Failed to refresh token (timeout waiting on lock)`, err, { host });
                 throw new Error(`Failed to refresh token (timeout waiting on lock)`);
             }
