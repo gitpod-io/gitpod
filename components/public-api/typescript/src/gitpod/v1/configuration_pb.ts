@@ -189,6 +189,11 @@ export class WorkspaceSettings extends Message<WorkspaceSettings> {
    */
   workspaceClass = "";
 
+  /**
+   * @generated from field: repeated string restricted_workspace_classes = 2;
+   */
+  restrictedWorkspaceClasses: string[] = [];
+
   constructor(data?: PartialMessage<WorkspaceSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -198,6 +203,7 @@ export class WorkspaceSettings extends Message<WorkspaceSettings> {
   static readonly typeName = "gitpod.v1.WorkspaceSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "restricted_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSettings {
@@ -610,6 +616,22 @@ export class UpdateConfigurationRequest_WorkspaceSettings extends Message<Update
    */
   workspaceClass?: string;
 
+  /**
+   * restricted_workspace_classes specifies the workspace classes that are NOT allowed to be used in this configuration.
+   * If empty, all workspace classes are allowed.
+   * Only updates if update_restricted_workspace_classes is true.
+   *
+   * @generated from field: repeated string restricted_workspace_classes = 2;
+   */
+  restrictedWorkspaceClasses: string[] = [];
+
+  /**
+   * Specifies whether restricted_workspace_classes should be updated.
+   *
+   * @generated from field: optional bool update_restricted_workspace_classes = 3;
+   */
+  updateRestrictedWorkspaceClasses?: boolean;
+
   constructor(data?: PartialMessage<UpdateConfigurationRequest_WorkspaceSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -619,6 +641,8 @@ export class UpdateConfigurationRequest_WorkspaceSettings extends Message<Update
   static readonly typeName = "gitpod.v1.UpdateConfigurationRequest.WorkspaceSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 2, name: "restricted_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 3, name: "update_restricted_workspace_classes", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateConfigurationRequest_WorkspaceSettings {
