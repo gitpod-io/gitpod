@@ -19,7 +19,6 @@ import {
     ListConfigurationsResponse,
     PrebuildSettings,
     UpdateConfigurationRequest,
-    WorkspaceSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -187,7 +186,18 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         }
 
         if (req.workspaceSettings !== undefined) {
-            update.workspaceSettings = buildUpdateObject<DeepPartial<WorkspaceSettings>>(req.workspaceSettings);
+            update.workspaceSettings = {};
+            if (req.workspaceSettings.workspaceClass !== undefined) {
+                update.workspaceSettings.workspaceClass = req.workspaceSettings.workspaceClass;
+            }
+            if (req.workspaceSettings.updateRestrictedWorkspaceClasses) {
+                update.workspaceSettings.restrictedWorkspaceClasses = req.workspaceSettings.restrictedWorkspaceClasses;
+            } else if (req.workspaceSettings.restrictedWorkspaceClasses.length > 0) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    "updateRestrictedWorkspaceClasses is required to be true to update restrictedWorkspaceClasses",
+                );
+            }
         }
 
         if (Object.keys(update).length <= 1) {

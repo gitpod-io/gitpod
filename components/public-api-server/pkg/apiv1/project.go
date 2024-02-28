@@ -180,6 +180,9 @@ func projectSettingsToAPIResponse(s *protocol.ProjectSettings) *v1.ProjectSettin
 		settings.Prebuild.PrebuildInterval = s.PrebuildSettings.PrebuildInterval
 		settings.Prebuild.WorkspaceClass = s.PrebuildSettings.WorkspaceClass
 	}
+	if s.RestrictedWorkspaceClasses != nil {
+		settings.Workspace.RestrictedWorkspaceClasses = *s.RestrictedWorkspaceClasses
+	}
 
 	return settings
 }
