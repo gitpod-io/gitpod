@@ -15,6 +15,7 @@ import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { RedisMutex } from "../redis/mutex";
+import { reportScmTokenRefreshRequest, scmTokenRefreshLatencyHistogram } from "../prometheus-metrics";
 
 @injectable()
 export class TokenService implements TokenProvider {
@@ -63,42 +64,76 @@ export class TokenService implements TokenProvider {
         }
         const identity = this.getIdentityForHost(user, host);
 
-        const doRefreshToken = async () => {
-            // Check: Current token so we can actually refresh?
-            const token = await this.userDB.findTokenForIdentity(identity);
-            if (!token) {
-                return undefined;
+        function isValid(t: Token): boolean {
+            if (!t.expiryDate) {
+                return true;
             }
 
             const aboutToExpireTime = new Date();
             aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
-            if (!token.expiryDate || token.expiryDate >= aboutToExpireTime.toISOString()) {
+            if (t.expiryDate >= aboutToExpireTime.toISOString()) {
+                return true;
+            }
+            return false;
+        }
+
+        const doRefreshToken = async () => {
+            // Check: Current token so we can actually refresh?
+            const token = await this.userDB.findTokenForIdentity(identity);
+            if (!token) {
+                reportScmTokenRefreshRequest(host, "no_token");
+                return undefined;
+            }
+
+            if (isValid(token)) {
+                reportScmTokenRefreshRequest(host, "still_valid");
                 return token;
             }
 
             // Can we refresh these kind of tokens?
             const { authProvider } = this.hostContextProvider.get(host)!;
             if (!authProvider.refreshToken) {
+                reportScmTokenRefreshRequest(host, "not_refreshable");
                 return undefined;
             }
 
-            await authProvider.refreshToken(user);
-            return await this.userDB.findTokenForIdentity(identity);
+            // Perform actual refresh
+            const stopTimer = scmTokenRefreshLatencyHistogram.startTimer({ host });
+            try {
+                await authProvider.refreshToken(user);
+            } finally {
+                stopTimer({ host });
+            }
+
+            const freshToken = await this.userDB.findTokenForIdentity(identity);
+            reportScmTokenRefreshRequest(host, "success");
+            return freshToken;
         };
 
         try {
             const refreshedToken = await this.redisMutex.using(
                 [`token-refresh-${host}-${userId}`],
-                2000, // After 2s without extension the lock is released
+                3000, // After 3s without extension the lock is released
                 doRefreshToken,
-                { retryCount: 10, retryDelay: 500 }, // We wait at most 10s until we give up, and conclude that we can't refresh the token now.
+                { retryCount: 20, retryDelay: 500 }, // We wait at most 10s until we give up, and conclude that we can't refresh the token now.
             );
             return refreshedToken;
         } catch (err) {
             if (RedisMutex.isLockedError(err)) {
+                // In this case we already timed-out. BUT there is a high chance we are waiting on somebody else, who might already done the work for us.
+                // So just checking again here
+                const token = await this.userDB.findTokenForIdentity(identity);
+                if (token && isValid(token)) {
+                    log.debug({ userId }, `Token refresh timed out, but still successful`, { host });
+                    reportScmTokenRefreshRequest(host, "success_after_timeout");
+                    return token;
+                }
+
                 log.error({ userId }, `Failed to refresh token (timeout waiting on lock)`, err, { host });
+                reportScmTokenRefreshRequest(host, "timeout");
                 throw new Error(`Failed to refresh token (timeout waiting on lock)`);
             }
+            reportScmTokenRefreshRequest(host, "error");
             throw err;
         }
     }
