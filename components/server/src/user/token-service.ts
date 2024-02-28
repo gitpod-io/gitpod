@@ -104,9 +104,10 @@ export class TokenService implements TokenProvider {
             } finally {
                 stopTimer({ host });
             }
-            reportScmTokenRefreshRequest(host, "success");
 
-            return await this.userDB.findTokenForIdentity(identity);
+            const freshToken = await this.userDB.findTokenForIdentity(identity);
+            reportScmTokenRefreshRequest(host, "success");
+            return freshToken;
         };
 
         try {
