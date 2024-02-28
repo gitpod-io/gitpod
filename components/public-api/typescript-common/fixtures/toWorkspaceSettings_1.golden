@@ -1,6 +1,6 @@
 {
     "result": {
-        "workspaceClass": "",
+        "workspaceClass": "dev",
         "restrictedWorkspaceClasses": []
     },
     "err": ""

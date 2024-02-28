@@ -1,0 +1,4 @@
+{
+  "workspaceClasses": { "regular": "test" },
+  "restrictedWorkspaceClasses": ["g1", "g2"]
+}
