@@ -936,9 +936,9 @@ type UpdateConfigurationRequest_WorkspaceSettings struct {
 	WorkspaceClass *string `protobuf:"bytes,1,opt,name=workspace_class,json=workspaceClass,proto3,oneof" json:"workspace_class,omitempty"`
 	// restricted_workspace_classes specifies the workspace classes that are NOT allowed to be used in this configuration.
 	// If empty, all workspace classes are allowed.
-	// Only update if update_restricted_workspace_classes is true.
+	// Only updates if update_restricted_workspace_classes is true.
 	RestrictedWorkspaceClasses []string `protobuf:"bytes,2,rep,name=restricted_workspace_classes,json=restrictedWorkspaceClasses,proto3" json:"restricted_workspace_classes,omitempty"`
-	// update_restricted_workspace_classes specifies whether restricted_workspace_classes should be updated.
+	// Specifies whether restricted_workspace_classes should be updated.
 	UpdateRestrictedWorkspaceClasses *bool `protobuf:"varint,3,opt,name=update_restricted_workspace_classes,json=updateRestrictedWorkspaceClasses,proto3,oneof" json:"update_restricted_workspace_classes,omitempty"`
 }
 
