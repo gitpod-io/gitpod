@@ -643,14 +643,14 @@ export class UpdateConfigurationRequest_WorkspaceSettings extends Message<Update
    * If empty, all editors are allowed.
    * Only updates if update_restricted_editor_names is true.
    *
-   * @generated from field: repeated string restricted_editor_names = 5;
+   * @generated from field: repeated string restricted_editor_names = 4;
    */
   restrictedEditorNames: string[] = [];
 
   /**
    * Specifies whether restricted_editor_names should be updated.
    *
-   * @generated from field: optional bool update_restricted_editor_names = 6;
+   * @generated from field: optional bool update_restricted_editor_names = 5;
    */
   updateRestrictedEditorNames?: boolean;
 
@@ -665,8 +665,8 @@ export class UpdateConfigurationRequest_WorkspaceSettings extends Message<Update
     { no: 1, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 2, name: "restricted_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 3, name: "update_restricted_workspace_classes", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 5, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 6, name: "update_restricted_editor_names", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 4, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 5, name: "update_restricted_editor_names", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateConfigurationRequest_WorkspaceSettings {
