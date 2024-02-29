@@ -49,7 +49,7 @@ const ConfigurationDetailPage: FC = () => {
                 link: [`${url}/variables`],
             },
             {
-                title: "Workspace defaults",
+                title: "Workspace classes",
                 link: [`${url}/workspaces`],
             },
         ];

@@ -49,14 +49,13 @@ import { User_WorkspaceAutostartOption } from "@gitpod/public-api/lib/gitpod/v1/
 import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
 import { converter } from "../service/public-api";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
-import { useOrgWorkspaceClassesQuery } from "../data/organizations/org-workspace-classes-query";
+import { useAllowedWorkspaceClassesMemo } from "../data/workspaces/workspace-classes-query";
 
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
-    const { data: orgWorkspaceClasses } = useOrgWorkspaceClassesQuery();
     const currentOrg = useCurrentOrg().data;
     const projects = useListAllProjectsQuery();
     const workspaces = useListWorkspacesQuery({ limit: 50 });
@@ -66,6 +65,11 @@ export function CreateWorkspacePage() {
     const [autostart, setAutostart] = useState<boolean | undefined>(props.autostart);
     const createWorkspaceMutation = useCreateWorkspaceMutation();
 
+    // Currently this tracks if the user has selected a project from the dropdown
+    // Need to make sure we initialize this to a project if the url hash value maps to a project's repo url
+    // Will need to handle multiple projects w/ same repo url
+    const [selectedProjectID, setSelectedProjectID] = useState<string | undefined>(undefined);
+
     const defaultLatestIde =
         props.ideSettings?.useLatestVersion !== undefined
             ? props.ideSettings.useLatestVersion
@@ -73,17 +77,14 @@ export function CreateWorkspacePage() {
     const [useLatestIde, setUseLatestIde] = useState(defaultLatestIde);
     const defaultIde = user?.editorSettings?.name;
     const [selectedIde, setSelectedIde, selectedIdeIsDirty] = useDirtyState(defaultIde);
-    const defaultWorkspaceClass = orgWorkspaceClasses?.find((e) => e.isDefault)?.id;
+    const { computedDefaultClass, data: allowedWorkspaceClasses } = useAllowedWorkspaceClassesMemo(selectedProjectID);
+    const defaultWorkspaceClass = props.workspaceClass ?? computedDefaultClass;
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
-    const [errorWsClass, setErrorWsClass] = useState<string | undefined>(undefined);
+    const [errorWsClass, setErrorWsClass] = useState<React.ReactNode | undefined>(undefined);
     const [contextURL, setContextURL] = useState<string | undefined>(
         StartWorkspaceOptions.parseContextUrl(location.hash),
     );
     const [nextLoadOption, setNextLoadOption] = useState<NextLoadOption>("searchParams");
-    // Currently this tracks if the user has selected a project from the dropdown
-    // Need to make sure we initialize this to a project if the url hash value maps to a project's repo url
-    // Will need to handle multiple projects w/ same repo url
-    const [selectedProjectID, setSelectedProjectID] = useState<string | undefined>(undefined);
     const workspaceContext = useWorkspaceContext(contextURL);
     const needsGitAuthorization = useNeedsGitAuthorization();
 
@@ -317,7 +318,13 @@ export function CreateWorkspacePage() {
             }
 
             if (!selectedWsClassIsDirty) {
-                setSelectedWsClass(rememberedOptions.workspaceClass, false);
+                if (
+                    allowedWorkspaceClasses.some(
+                        (cls) => cls.id === rememberedOptions.workspaceClass && !cls.isDisabledInScope,
+                    )
+                ) {
+                    setSelectedWsClass(rememberedOptions.workspaceClass, false);
+                }
             }
         } else {
             // reset the ide settings to the user's default IF they haven't changed it manually
@@ -327,7 +334,10 @@ export function CreateWorkspacePage() {
             }
             if (!selectedWsClassIsDirty) {
                 const projectWsClass = project?.settings?.workspaceClasses?.regular;
-                setSelectedWsClass(projectWsClass || defaultWorkspaceClass, false);
+                const targetClass = projectWsClass || defaultWorkspaceClass;
+                if (allowedWorkspaceClasses.some((cls) => cls.id === targetClass && !cls.isDisabledInScope)) {
+                    setSelectedWsClass(targetClass, false);
+                }
             }
         }
         setNextLoadOption("allDone");
@@ -456,6 +466,7 @@ export function CreateWorkspacePage() {
 
                     <InputField error={errorWsClass}>
                         <SelectWorkspaceClassComponent
+                            selectedConfigurationId={selectedProjectID}
                             onSelectionChange={setSelectedWsClass}
                             setError={setErrorWsClass}
                             selectedWorkspaceClass={selectedWsClass}
