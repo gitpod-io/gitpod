@@ -98,11 +98,13 @@ export const WorkspaceClassesModifyModal = ({
         if (leftOptions.length === 0) {
             return "At least one workspace class has to be selected.";
         }
-        if (!defaultClass || !leftOptions.find((cls) => cls.id === defaultClass)) {
-            return "A default workspace class is required.";
+        if (showSetDefaultButton) {
+            if (!defaultClass || !leftOptions.find((cls) => cls.id === defaultClass)) {
+                return "A default workspace class is required.";
+            }
         }
         return;
-    }, [restrictedClasses, allowedClasses, defaultClass]);
+    }, [restrictedClasses, allowedClasses, defaultClass, showSetDefaultButton]);
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleUpdate}>
@@ -160,6 +162,7 @@ interface WorkspaceClassSwitchProps {
     checked: boolean;
     isDefault: boolean;
     showSetDefaultButton?: boolean;
+    showSwitchTitle?: boolean;
     onSetDefault: () => void;
     onCheckedChange: (checked: boolean) => void;
 }
@@ -225,7 +228,7 @@ const WorkspaceClassSwitch = ({
                 checked={checked}
                 disabled={wsClass.isDisabledInScope}
                 onCheckedChange={onCheckedChange}
-                title={computedState.switchDescription}
+                title={props.showSwitchTitle ? computedState.switchDescription : ""}
             />
             {!props.showSetDefaultButton ? undefined : (
                 <Button

@@ -29,10 +29,6 @@ const featureFlags = {
     createProjectModal: false,
     configurationsAndPrebuilds: false,
     showPrebuildsMenuItem: false,
-    /**
-     * Whether to enable org-level workspace class restrictions
-     */
-    org_workspace_class_restrictions: false,
     // Whether to enable workspace class restrictions for configurations
     configuration_workspace_class_restrictions: false,
     // dummy specified dataops feature, default false
