@@ -36,6 +36,7 @@ message OrganizationSettings {
   bool workspace_sharing_disabled = 1;
   string default_workspace_image = 2;
   repeated string allowed_workspace_classes = 3;
+  repeated string restricted_editor_names = 4;
 }
 
 service OrganizationService {
@@ -122,6 +123,14 @@ message UpdateOrganizationSettingsRequest {
   // allowed_workspace_classes are the IDs of classes, which can be used by workspaces in an organization.
   // Pass an empty array to allow all workspace classes
   repeated string allowed_workspace_classes = 5;
+
+  // restricted_editor_names updates the list of restricted editor names that are not allowed to be used by workspaces in an organization.
+  // If empty, all editors are allowed.
+  // Only updates if update_restricted_editor_names is true.
+  repeated string restricted_editor_names = 6;
+
+  // Specifies whether restricted_workspace_classes should be updated.
+  optional bool update_restricted_editor_names = 7;
 }
 
 message UpdateOrganizationSettingsResponse {

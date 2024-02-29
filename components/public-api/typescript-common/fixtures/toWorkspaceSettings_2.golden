@@ -1,7 +1,8 @@
 {
     "result": {
         "workspaceClass": "",
-        "restrictedWorkspaceClasses": []
+        "restrictedWorkspaceClasses": [],
+        "restrictedEditorNames": []
     },
     "err": ""
 }

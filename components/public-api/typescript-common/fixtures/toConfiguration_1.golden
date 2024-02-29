@@ -14,7 +14,8 @@
         },
         "workspaceSettings": {
             "workspaceClass": "dev",
-            "restrictedWorkspaceClasses": []
+            "restrictedWorkspaceClasses": [],
+            "restrictedEditorNames": []
         }
     },
     "err": ""

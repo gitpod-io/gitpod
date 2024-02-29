@@ -220,6 +220,11 @@ export class WorkspaceSettings extends Message<WorkspaceSettings> {
    */
   restrictedWorkspaceClasses: string[] = [];
 
+  /**
+   * @generated from field: repeated string restricted_editor_names = 4;
+   */
+  restrictedEditorNames: string[] = [];
+
   constructor(data?: PartialMessage<WorkspaceSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -231,6 +236,7 @@ export class WorkspaceSettings extends Message<WorkspaceSettings> {
     { no: 1, name: "enable_persistent_volume_claim", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 2, name: "workspace_class", kind: "message", T: WorkspaceClassSettings },
     { no: 3, name: "restricted_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 4, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSettings {

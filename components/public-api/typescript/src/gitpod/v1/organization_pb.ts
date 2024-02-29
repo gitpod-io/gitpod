@@ -193,6 +193,11 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
    */
   allowedWorkspaceClasses: string[] = [];
 
+  /**
+   * @generated from field: repeated string restricted_editor_names = 4;
+   */
+  restrictedEditorNames: string[] = [];
+
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -204,6 +209,7 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
     { no: 1, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 2, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 4, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {
@@ -428,6 +434,22 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
    */
   allowedWorkspaceClasses: string[] = [];
 
+  /**
+   * restricted_editor_names updates the list of restricted editor names that are not allowed to be used by workspaces in an organization.
+   * If empty, all editors are allowed.
+   * Only updates if update_restricted_editor_names is true.
+   *
+   * @generated from field: repeated string restricted_editor_names = 6;
+   */
+  restrictedEditorNames: string[] = [];
+
+  /**
+   * Specifies whether restricted_workspace_classes should be updated.
+   *
+   * @generated from field: optional bool update_restricted_editor_names = 7;
+   */
+  updateRestrictedEditorNames?: boolean;
+
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -440,6 +462,8 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
     { no: 3, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 4, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 5, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 6, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 7, name: "update_restricted_editor_names", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {
