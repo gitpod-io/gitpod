@@ -36,6 +36,7 @@ enum BranchMatchingStrategy {
 message WorkspaceSettings {
   string workspace_class = 1;
   repeated string restricted_workspace_classes = 2;
+  repeated string restricted_editor_names = 3;
 }
 
 service ConfigurationService {
@@ -106,6 +107,13 @@ message UpdateConfigurationRequest {
 
     // Specifies whether restricted_workspace_classes should be updated.
     optional bool update_restricted_workspace_classes = 3;
+
+    // restricted_editor_names specifies the editor names that are NOT allowed to be used in this configuration.
+    // If empty, all editors are allowed.
+    // Only updates if update_restricted_editor_names is true.
+    repeated string restricted_editor_names = 4;
+    // Specifies whether restricted_editor_names should be updated.
+    optional bool update_restricted_editor_names = 5;
   }
   string configuration_id = 1;
   optional string name = 2;

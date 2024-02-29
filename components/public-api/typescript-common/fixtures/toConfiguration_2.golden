@@ -17,7 +17,8 @@
             "restrictedWorkspaceClasses": [
                 "cls-1",
                 "cls-2"
-            ]
+            ],
+            "restrictedEditorNames": []
         }
     },
     "err": ""

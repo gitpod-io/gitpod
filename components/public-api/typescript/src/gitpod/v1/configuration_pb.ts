@@ -194,6 +194,11 @@ export class WorkspaceSettings extends Message<WorkspaceSettings> {
    */
   restrictedWorkspaceClasses: string[] = [];
 
+  /**
+   * @generated from field: repeated string restricted_editor_names = 3;
+   */
+  restrictedEditorNames: string[] = [];
+
   constructor(data?: PartialMessage<WorkspaceSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -204,6 +209,7 @@ export class WorkspaceSettings extends Message<WorkspaceSettings> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "restricted_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 3, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSettings {
@@ -632,6 +638,22 @@ export class UpdateConfigurationRequest_WorkspaceSettings extends Message<Update
    */
   updateRestrictedWorkspaceClasses?: boolean;
 
+  /**
+   * restricted_editor_names specifies the editor names that are NOT allowed to be used in this configuration.
+   * If empty, all editors are allowed.
+   * Only updates if update_restricted_editor_names is true.
+   *
+   * @generated from field: repeated string restricted_editor_names = 4;
+   */
+  restrictedEditorNames: string[] = [];
+
+  /**
+   * Specifies whether restricted_editor_names should be updated.
+   *
+   * @generated from field: optional bool update_restricted_editor_names = 5;
+   */
+  updateRestrictedEditorNames?: boolean;
+
   constructor(data?: PartialMessage<UpdateConfigurationRequest_WorkspaceSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -643,6 +665,8 @@ export class UpdateConfigurationRequest_WorkspaceSettings extends Message<Update
     { no: 1, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 2, name: "restricted_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 3, name: "update_restricted_workspace_classes", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 4, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 5, name: "update_restricted_editor_names", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateConfigurationRequest_WorkspaceSettings {
