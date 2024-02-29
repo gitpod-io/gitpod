@@ -213,6 +213,16 @@ export const ModalFooter: FC<ModalFooterProps> = ({ className, alert, children }
     );
 };
 
+export const ModalBaseFooter: FC<{ className?: string; children: ReactNode }> = ({ className, children }) => {
+    return (
+        <div
+            className={classNames("flex items-start space-x-2 pt-6 bg-white dark:bg-gray-900 rounded-b-xl", className)}
+        >
+            {children}
+        </div>
+    );
+};
+
 // Wrapper around Alert to ensure it's used correctly in a Modal
 export const ModalFooterAlert: FC<AlertProps> = ({
     closable = true,

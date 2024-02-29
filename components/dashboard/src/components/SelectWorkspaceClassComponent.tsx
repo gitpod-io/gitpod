@@ -8,24 +8,35 @@ import { FC, useCallback, useEffect, useMemo } from "react";
 import WorkspaceClassIcon from "../icons/WorkspaceClass.svg";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import { WorkspaceClass } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { useOrgWorkspaceClassesQuery } from "../data/organizations/org-workspace-classes-query";
+import { useAllowedWorkspaceClassesMemo } from "../data/workspaces/workspace-classes-query";
+import { PlainMessage } from "@bufbuild/protobuf";
+import { Link } from "react-router-dom";
+import { repositoriesRoutes } from "../repositories/repositories.routes";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 interface SelectWorkspaceClassProps {
+    selectedConfigurationId?: string;
     selectedWorkspaceClass?: string;
     onSelectionChange: (workspaceClass: string) => void;
-    setError?: (error?: string) => void;
+    setError?: (error?: React.ReactNode) => void;
     disabled?: boolean;
     loading?: boolean;
 }
 
 export default function SelectWorkspaceClassComponent({
+    selectedConfigurationId,
     selectedWorkspaceClass,
     disabled,
     loading,
     setError,
     onSelectionChange,
 }: SelectWorkspaceClassProps) {
-    const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useOrgWorkspaceClassesQuery();
+    const enabledWorkspaceClassRestrictionOnConfiguration = useFeatureFlag(
+        "configuration_workspace_class_restrictions",
+    );
+    const { data: workspaceClasses } = useAllowedWorkspaceClassesMemo(selectedConfigurationId, {
+        filterOutDisabled: true,
+    });
 
     const getElements = useCallback((): ComboboxElement[] => {
         return (workspaceClasses || [])?.map((c) => ({
@@ -39,9 +50,27 @@ export default function SelectWorkspaceClassComponent({
         if (!workspaceClasses) {
             return;
         }
+
         if (workspaceClasses.length === 0) {
+            const repoWorkspaceSettingsLink =
+                selectedConfigurationId && repositoriesRoutes.WorkspaceSettings(selectedConfigurationId);
+            const teamSettingsLink = "/settings";
             setError?.(
-                "No allowed workspace classes available. Please contact an admin to update organization settings.",
+                <>
+                    No allowed workspace classes available. Please contact an admin to update{" "}
+                    <Link className="underline" to={teamSettingsLink}>
+                        organization settings
+                    </Link>
+                    {enabledWorkspaceClassRestrictionOnConfiguration && repoWorkspaceSettingsLink && (
+                        <>
+                            {" or "}
+                            <Link className="underline" to={repoWorkspaceSettingsLink}>
+                                configuration settings
+                            </Link>
+                        </>
+                    )}
+                    .
+                </>,
             );
             return;
         }
@@ -49,7 +78,13 @@ export default function SelectWorkspaceClassComponent({
         if (selectedWorkspaceClass && !workspaceClasses?.find((c) => c.id === selectedWorkspaceClass)) {
             setError?.(`The workspace class '${selectedWorkspaceClass}' is not supported.`);
         }
-    }, [workspaceClasses, selectedWorkspaceClass, setError]);
+    }, [
+        workspaceClasses,
+        selectedWorkspaceClass,
+        setError,
+        enabledWorkspaceClassRestrictionOnConfiguration,
+        selectedConfigurationId,
+    ]);
     const internalOnSelectionChange = useCallback(
         (id: string) => {
             onSelectionChange(id);
@@ -73,18 +108,15 @@ export default function SelectWorkspaceClassComponent({
             searchPlaceholder="Select class"
             disableSearch={true}
             initialValue={selectedWsClass?.id}
-            disabled={workspaceClassesLoading || loading || disabled}
+            disabled={workspaceClasses.length === 0 || loading || disabled}
         >
-            <WorkspaceClassDropDownElementSelected
-                wsClass={selectedWsClass}
-                loading={workspaceClassesLoading || loading}
-            />
+            <WorkspaceClassDropDownElementSelected wsClass={selectedWsClass} loading={loading} />
         </Combobox>
     );
 }
 
 type WorkspaceClassDropDownElementSelectedProps = {
-    wsClass?: WorkspaceClass;
+    wsClass?: PlainMessage<WorkspaceClass>;
     loading?: boolean;
 };
 
@@ -112,7 +144,7 @@ const WorkspaceClassDropDownElementSelected: FC<WorkspaceClassDropDownElementSel
     );
 };
 
-function WorkspaceClassDropDownElement(props: { wsClass: WorkspaceClass }): JSX.Element {
+function WorkspaceClassDropDownElement(props: { wsClass: PlainMessage<WorkspaceClass> }): JSX.Element {
     const c = props.wsClass;
     return (
         <div className="flex ml-1 mt-1 flex-grow">
