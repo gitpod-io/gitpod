@@ -23,6 +23,8 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const AnnotationImageName = "gitpod.io/image_name"
+
 var componentCmdOpt struct {
 	image          string
 	namespace      string
@@ -81,7 +83,7 @@ func checkPodsImage(ctx context.Context, k8sClient *kubernetes.Clientset) (bool,
 	for _, pod := range pods.Items {
 		for _, container := range pod.Spec.Containers {
 			if container.Name == componentCmdOpt.component {
-				if container.Image != componentCmdOpt.image {
+				if container.Image != componentCmdOpt.image && pod.Annotations[AnnotationImageName] != componentCmdOpt.image {
 					return false, fmt.Errorf("image is not the same: %s != %s", container.Image, componentCmdOpt.image)
 				}
 				for _, condition := range pod.Status.Conditions {

@@ -58,6 +58,7 @@ const (
 	DBCaPath                    = DBCaBasePath + "/" + DBCaFileName
 	WorkspaceSecretsNamespace   = "workspace-secrets"
 	AnnotationConfigChecksum    = "gitpod.io/checksum_config"
+	AnnotationImageName         = "gitpod.io/image_name"
 	DatabaseConfigMountPath     = "/secrets/database-config"
 	AuthPKISecretName           = "auth-pki"
 	IDEServiceComponent         = "ide-service"

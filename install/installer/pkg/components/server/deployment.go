@@ -285,6 +285,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	volumes = append(volumes, authVolumes...)
 	volumeMounts = append(volumeMounts, authMounts...)
 
+	imageName := ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Server.Version)
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -306,6 +308,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
 							return map[string]string{
 								common.AnnotationConfigChecksum: configHash,
+								common.AnnotationImageName:      imageName,
 							}
 						}),
 					},
@@ -336,7 +339,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 						Containers: []corev1.Container{{
 							Name:            Component,
-							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Server.Version),
+							Image:           imageName,
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
