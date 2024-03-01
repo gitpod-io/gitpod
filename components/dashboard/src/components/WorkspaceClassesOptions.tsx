@@ -15,14 +15,23 @@ import { AllowedWorkspaceClass, DEFAULT_WS_CLASS } from "../data/workspaces/work
 import { MiddleDot } from "./typography/MiddleDot";
 import { useToast } from "./toasts/Toasts";
 import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "./Modal";
+import { LoadingState } from "@podkit/loading/LoadingState";
 
 interface WorkspaceClassesOptionsProps {
     classes: AllowedWorkspaceClass[];
     defaultClass?: string;
     className?: string;
+    emptyState?: React.ReactNode;
+    isLoading?: boolean;
 }
 
 export const WorkspaceClassesOptions = (props: WorkspaceClassesOptionsProps) => {
+    if (props.isLoading) {
+        return <LoadingState />;
+    }
+    if (props.classes.length === 0 && props.emptyState) {
+        return <>{props.emptyState}</>;
+    }
     return (
         <div className={cn("space-y-2", props.className)}>
             {props.classes.map((cls) => (
@@ -46,6 +55,7 @@ export const WorkspaceClassesOptions = (props: WorkspaceClassesOptionsProps) => 
 };
 
 export interface WorkspaceClassesModifyModalProps {
+    isLoading: boolean;
     defaultClass?: string;
     restrictedWorkspaceClasses: string[];
     showSetDefaultButton: boolean;
@@ -98,26 +108,30 @@ export const WorkspaceClassesModifyModal = ({
         <Modal visible onClose={onClose} onSubmit={handleUpdate}>
             <ModalHeader>Available workspace classes</ModalHeader>
             <ModalBody>
-                {allowedClasses.map((wsClass) => (
-                    <WorkspaceClassSwitch
-                        showSetDefaultButton={showSetDefaultButton}
-                        restrictedClasses={restrictedClasses}
-                        wsClass={wsClass}
-                        isDefault={defaultClass === wsClass.id}
-                        checked={!restrictedClasses.includes(wsClass.id)}
-                        onSetDefault={() => {
-                            setDefaultClass(wsClass.id);
-                        }}
-                        onCheckedChange={(checked) => {
-                            const newVal = !checked
-                                ? restrictedClasses.includes(wsClass.id)
-                                    ? [...restrictedClasses]
-                                    : [...restrictedClasses, wsClass.id]
-                                : restrictedClasses.filter((id) => id !== wsClass.id);
-                            setRestrictedClasses(newVal);
-                        }}
-                    />
-                ))}
+                {props.isLoading ? (
+                    <LoadingState />
+                ) : (
+                    allowedClasses.map((wsClass) => (
+                        <WorkspaceClassSwitch
+                            showSetDefaultButton={showSetDefaultButton}
+                            restrictedClasses={restrictedClasses}
+                            wsClass={wsClass}
+                            isDefault={defaultClass === wsClass.id}
+                            checked={!restrictedClasses.includes(wsClass.id)}
+                            onSetDefault={() => {
+                                setDefaultClass(wsClass.id);
+                            }}
+                            onCheckedChange={(checked) => {
+                                const newVal = !checked
+                                    ? restrictedClasses.includes(wsClass.id)
+                                        ? [...restrictedClasses]
+                                        : [...restrictedClasses, wsClass.id]
+                                    : restrictedClasses.filter((id) => id !== wsClass.id);
+                                setRestrictedClasses(newVal);
+                            }}
+                        />
+                    ))
+                )}
             </ModalBody>
             <ModalBaseFooter className="justify-between">
                 <div className="text-red-500">
@@ -127,7 +141,11 @@ export const WorkspaceClassesModifyModal = ({
                     <Button variant="secondary" onClick={onClose}>
                         Cancel
                     </Button>
-                    <LoadingButton disabled={!!computedError} type="submit" loading={updateMutation.isLoading}>
+                    <LoadingButton
+                        disabled={!!computedError || props.isLoading}
+                        type="submit"
+                        loading={updateMutation.isLoading}
+                    >
                         Save
                     </LoadingButton>
                 </div>

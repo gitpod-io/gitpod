@@ -34,9 +34,12 @@ export default function SelectWorkspaceClassComponent({
     const enabledWorkspaceClassRestrictionOnConfiguration = useFeatureFlag(
         "configuration_workspace_class_restrictions",
     );
-    const { data: workspaceClasses } = useAllowedWorkspaceClassesMemo(selectedConfigurationId, {
-        filterOutDisabled: true,
-    });
+    const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useAllowedWorkspaceClassesMemo(
+        selectedConfigurationId,
+        {
+            filterOutDisabled: true,
+        },
+    );
 
     const getElements = useCallback((): ComboboxElement[] => {
         return (workspaceClasses || [])?.map((c) => ({
@@ -47,7 +50,7 @@ export default function SelectWorkspaceClassComponent({
     }, [workspaceClasses]);
 
     useEffect(() => {
-        if (!workspaceClasses) {
+        if (!workspaceClasses || loading || disabled || workspaceClassesLoading) {
             return;
         }
 
@@ -79,6 +82,9 @@ export default function SelectWorkspaceClassComponent({
             setError?.(`The workspace class '${selectedWorkspaceClass}' is not supported.`);
         }
     }, [
+        loading,
+        workspaceClassesLoading,
+        disabled,
         workspaceClasses,
         selectedWorkspaceClass,
         setError,
@@ -108,9 +114,12 @@ export default function SelectWorkspaceClassComponent({
             searchPlaceholder="Select class"
             disableSearch={true}
             initialValue={selectedWsClass?.id}
-            disabled={workspaceClasses.length === 0 || loading || disabled}
+            disabled={workspaceClassesLoading || loading || disabled}
         >
-            <WorkspaceClassDropDownElementSelected wsClass={selectedWsClass} loading={loading} />
+            <WorkspaceClassDropDownElementSelected
+                wsClass={selectedWsClass}
+                loading={workspaceClassesLoading || loading}
+            />
         </Combobox>
     );
 }

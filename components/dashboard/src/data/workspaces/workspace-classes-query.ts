@@ -116,12 +116,14 @@ export const useAllowedWorkspaceClassesMemo = (
     configurationId?: Configuration["id"],
     options?: { filterOutDisabled: boolean; ignoreScope?: DisableScope[] },
 ) => {
-    const { data: orgSettings } = useOrgSettingsQuery();
-    const { data: installationClasses } = useWorkspaceClasses();
+    const { data: orgSettings, isLoading: isLoadingOrgSettings } = useOrgSettingsQuery();
+    const { data: installationClasses, isLoading: isLoadingInstallationCls } = useWorkspaceClasses();
     // empty configurationId will return undefined
-    const { data: configuration } = useConfiguration(configurationId ?? "");
+    const { data: configuration, isLoading: isLoadingConfiguration } = useConfiguration(configurationId ?? "");
 
-    return useMemo(() => {
+    const isLoading = isLoadingOrgSettings || isLoadingInstallationCls || isLoadingConfiguration;
+
+    const data = useMemo(() => {
         return getAllowedWorkspaceClasses(
             installationClasses,
             orgSettings,
@@ -136,4 +138,5 @@ export const useAllowedWorkspaceClassesMemo = (
         configuration?.workspaceSettings?.restrictedWorkspaceClasses,
         configuration?.workspaceSettings?.workspaceClass,
     ]);
+    return { ...data, isLoading };
 };
