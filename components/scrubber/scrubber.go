@@ -100,11 +100,15 @@ var Default Scrubber = newScrubberImpl()
 
 func newScrubberImpl() *scrubberImpl {
 	var (
-		lowerSanitiseHash   []string
-		lowerSanitiseRedact []string
+		lowerSanitiseHash         []string
+		lowerSanitiseHashURLPaths []string
+		lowerSanitiseRedact       []string
 	)
 	for _, v := range HashedFieldNames {
 		lowerSanitiseHash = append(lowerSanitiseHash, strings.ToLower(v))
+	}
+	for _, v := range HashedURLPathsFieldNames {
+		lowerSanitiseHashURLPaths = append(lowerSanitiseHashURLPaths, strings.ToLower(v))
 	}
 	for _, v := range RedactedFieldNames {
 		lowerSanitiseRedact = append(lowerSanitiseRedact, strings.ToLower(v))
@@ -116,9 +120,10 @@ func newScrubberImpl() *scrubberImpl {
 	}
 
 	res := &scrubberImpl{
-		LowerSanitiseHash:   lowerSanitiseHash,
-		LowerSanitiseRedact: lowerSanitiseRedact,
-		KeySanitiserCache:   cache,
+		LowerSanitiseHash:         lowerSanitiseHash,
+		LowerSanitiseHashURLPaths: lowerSanitiseHashURLPaths,
+		LowerSanitiseRedact:       lowerSanitiseRedact,
+		KeySanitiserCache:         cache,
 	}
 	res.Walker = &structScrubber{Parent: res}
 
@@ -126,10 +131,11 @@ func newScrubberImpl() *scrubberImpl {
 }
 
 type scrubberImpl struct {
-	Walker              *structScrubber
-	LowerSanitiseHash   []string
-	LowerSanitiseRedact []string
-	KeySanitiserCache   *lru.Cache
+	Walker                    *structScrubber
+	LowerSanitiseHash         []string
+	LowerSanitiseHashURLPaths []string
+	LowerSanitiseRedact       []string
+	KeySanitiserCache         *lru.Cache
 }
 
 // JSON implements Scrubber
@@ -164,9 +170,10 @@ type keySanitiser struct {
 }
 
 var (
-	sanitiseIgnore keySanitiser = keySanitiser{s: nil}
-	sanitiseHash   keySanitiser = keySanitiser{s: SanitiseHash}
-	sanitiseRedact keySanitiser = keySanitiser{s: SanitiseRedact}
+	sanitiseIgnore              keySanitiser = keySanitiser{s: nil}
+	sanitiseHash                keySanitiser = keySanitiser{s: SanitiseHash}
+	sanitiseHashURLPathSegments keySanitiser = keySanitiser{s: SanitiseHashURLPathSegments}
+	sanitiseRedact              keySanitiser = keySanitiser{s: SanitiseRedact}
 )
 
 // getSanitisatiser implements
@@ -188,6 +195,12 @@ func (s *scrubberImpl) getSanitisatiser(key string) Sanitisatiser {
 		if strings.Contains(lower, f) {
 			s.KeySanitiserCache.Add(lower, sanitiseHash)
 			return SanitiseHash
+		}
+	}
+	for _, f := range s.LowerSanitiseHashURLPaths {
+		if strings.Contains(lower, f) {
+			s.KeySanitiserCache.Add(lower, sanitiseHashURLPathSegments)
+			return SanitiseHashURLPathSegments
 		}
 	}
 
