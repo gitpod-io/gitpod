@@ -50,7 +50,7 @@ export default function SelectWorkspaceClassComponent({
     }, [workspaceClasses]);
 
     useEffect(() => {
-        if (!workspaceClasses) {
+        if (!workspaceClasses || loading || disabled || workspaceClassesLoading) {
             return;
         }
 
@@ -82,6 +82,9 @@ export default function SelectWorkspaceClassComponent({
             setError?.(`The workspace class '${selectedWorkspaceClass}' is not supported.`);
         }
     }, [
+        loading,
+        workspaceClassesLoading,
+        disabled,
         workspaceClasses,
         selectedWorkspaceClass,
         setError,
