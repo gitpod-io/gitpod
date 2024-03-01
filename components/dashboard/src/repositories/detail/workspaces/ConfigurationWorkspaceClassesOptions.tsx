@@ -23,13 +23,19 @@ export const ConfigurationWorkspaceClassesOptions = ({ configuration }: { config
     const [showModal, setShowModal] = useState(false);
     const configurationMutation = useConfigurationMutation();
 
-    const { data: allowedClassesInConfiguration } = useAllowedWorkspaceClassesMemo(configuration.id, {
-        filterOutDisabled: true,
-    });
-    const { data: allowedClassesInOrganization } = useAllowedWorkspaceClassesMemo(undefined, {
-        filterOutDisabled: false,
-        ignoreScope: ["configuration"],
-    });
+    const { data: allowedClassesInConfiguration, isLoading: isLoadingInConfig } = useAllowedWorkspaceClassesMemo(
+        configuration.id,
+        {
+            filterOutDisabled: true,
+        },
+    );
+    const { data: allowedClassesInOrganization, isLoading: isLoadingInOrg } = useAllowedWorkspaceClassesMemo(
+        undefined,
+        {
+            filterOutDisabled: false,
+            ignoreScope: ["configuration"],
+        },
+    );
 
     const updateMutation: WorkspaceClassesModifyModalProps["updateMutation"] = useMutation({
         mutationFn: async ({ restrictedWorkspaceClasses, defaultClass }) => {
@@ -50,21 +56,22 @@ export const ConfigurationWorkspaceClassesOptions = ({ configuration }: { config
             <Subheading>Limit the available workspace classes for this repository.</Subheading>
 
             <div className="mt-4">
-                {allowedClassesInConfiguration.length === 0 ? (
-                    <div className="font-semibold text-pk-content-primary flex gap-2 items-center">
-                        <AlertTriangleIcon size={20} className="text-red-500" />
-                        <span>This repository doesn't have any available workspace classes.</span>
-                    </div>
-                ) : (
-                    <WorkspaceClassesOptions
-                        classes={allowedClassesInConfiguration}
-                        defaultClass={configuration.workspaceSettings?.workspaceClass}
-                    />
-                )}
+                <WorkspaceClassesOptions
+                    isLoading={isLoadingInConfig}
+                    emptyState={
+                        <div className="font-semibold text-pk-content-primary flex gap-2 items-center">
+                            <AlertTriangleIcon size={20} className="text-red-500" />
+                            <span>This repository doesn't have any available workspace classes.</span>
+                        </div>
+                    }
+                    classes={allowedClassesInConfiguration}
+                    defaultClass={configuration.workspaceSettings?.workspaceClass}
+                />
             </div>
 
             {showModal && (
                 <WorkspaceClassesModifyModal
+                    isLoading={isLoadingInOrg}
                     showSetDefaultButton
                     defaultClass={configuration.workspaceSettings?.workspaceClass}
                     restrictedWorkspaceClasses={configuration.workspaceSettings?.restrictedWorkspaceClasses ?? []}
