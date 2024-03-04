@@ -103,6 +103,13 @@ export const PrebuildDetailPage: FC = () => {
     }, [isTriggerError, triggerError, toast]);
 
     const prebuildPhase = useMemo(() => {
+        if (!currentPrebuild) {
+            return {
+                icon: <></>,
+                description: "",
+            };
+        }
+
         const name = currentPrebuild?.status?.phase?.name;
         if (!name) {
             return {
@@ -112,7 +119,7 @@ export const PrebuildDetailPage: FC = () => {
         }
 
         const loaderIcon = <Loader2Icon size={20} className="text-gray-500 animate-spin" />;
-        switch (currentPrebuild?.status?.phase?.name) {
+        switch (name) {
             case PrebuildPhase_Phase.QUEUED:
                 return {
                     icon: loaderIcon,
