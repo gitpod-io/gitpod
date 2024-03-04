@@ -110,7 +110,7 @@ export const PrebuildDetailPage: FC = () => {
             };
         }
 
-        const name = currentPrebuild?.status?.phase?.name;
+        const name = currentPrebuild.status?.phase?.name;
         if (!name) {
             return {
                 icon: <CircleSlash size={20} className="text-gray-500" />,
