@@ -59,6 +59,7 @@ export interface WorkspaceClassesModifyModalProps {
     defaultClass?: string;
     restrictedWorkspaceClasses: string[];
     showSetDefaultButton: boolean;
+    showSwitchTitle: boolean;
 
     allowedClasses: AllowedWorkspaceClass[];
     updateMutation: UseMutationResult<void, Error, { restrictedWorkspaceClasses: string[]; defaultClass?: string }>;
@@ -71,6 +72,7 @@ export const WorkspaceClassesModifyModal = ({
     updateMutation,
     allowedClasses,
     showSetDefaultButton,
+    showSwitchTitle,
     ...props
 }: WorkspaceClassesModifyModalProps) => {
     const [defaultClass, setDefaultClass] = useState(props.defaultClass || DEFAULT_WS_CLASS);
@@ -98,11 +100,13 @@ export const WorkspaceClassesModifyModal = ({
         if (leftOptions.length === 0) {
             return "At least one workspace class has to be selected.";
         }
-        if (!defaultClass || !leftOptions.find((cls) => cls.id === defaultClass)) {
-            return "A default workspace class is required.";
+        if (showSetDefaultButton) {
+            if (!defaultClass || !leftOptions.find((cls) => cls.id === defaultClass)) {
+                return "A default workspace class is required.";
+            }
         }
         return;
-    }, [restrictedClasses, allowedClasses, defaultClass]);
+    }, [restrictedClasses, allowedClasses, defaultClass, showSetDefaultButton]);
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleUpdate}>
@@ -113,6 +117,7 @@ export const WorkspaceClassesModifyModal = ({
                 ) : (
                     allowedClasses.map((wsClass) => (
                         <WorkspaceClassSwitch
+                            showSwitchTitle={showSwitchTitle}
                             showSetDefaultButton={showSetDefaultButton}
                             restrictedClasses={restrictedClasses}
                             wsClass={wsClass}
@@ -160,6 +165,7 @@ interface WorkspaceClassSwitchProps {
     checked: boolean;
     isDefault: boolean;
     showSetDefaultButton?: boolean;
+    showSwitchTitle?: boolean;
     onSetDefault: () => void;
     onCheckedChange: (checked: boolean) => void;
 }
@@ -225,7 +231,7 @@ const WorkspaceClassSwitch = ({
                 checked={checked}
                 disabled={wsClass.isDisabledInScope}
                 onCheckedChange={onCheckedChange}
-                title={computedState.switchDescription}
+                title={props.showSwitchTitle ? computedState.switchDescription : ""}
             />
             {!props.showSetDefaultButton ? undefined : (
                 <Button

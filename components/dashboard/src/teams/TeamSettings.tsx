@@ -28,13 +28,14 @@ import { OrgSettingsPage } from "./OrgSettingsPage";
 import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Button } from "@podkit/buttons/Button";
 import { useInstallationDefaultWorkspaceImageQuery } from "../data/installation/default-workspace-image-query";
-import { useToast } from "../components/toasts/Toasts";
-import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
-import { LoadingState } from "@podkit/loading/LoadingState";
-import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { useAllowedWorkspaceClassesMemo } from "../data/workspaces/workspace-classes-query";
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
-import { SwitchInputField } from "@podkit/switch/Switch";
-import { useFeatureFlag } from "../data/featureflag-query";
+import {
+    WorkspaceClassesModifyModal,
+    WorkspaceClassesModifyModalProps,
+    WorkspaceClassesOptions,
+} from "../components/WorkspaceClassesOptions";
+import { useMutation } from "@tanstack/react-query";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -46,8 +47,6 @@ export default function TeamSettingsPage() {
     const [teamName, setTeamName] = useState(org?.name || "");
     const [updated, setUpdated] = useState(false);
     const updateOrg = useUpdateOrgMutation();
-
-    const enableOrgWorkspaceClassRestrictions = useFeatureFlag("org_workspace_class_restrictions");
 
     const close = () => setModal(false);
 
@@ -99,7 +98,7 @@ export default function TeamSettingsPage() {
     const [showImageEditModal, setShowImageEditModal] = useState(false);
 
     const handleUpdateTeamSettings = useCallback(
-        async (newSettings: Partial<OrganizationSettings>) => {
+        async (newSettings: Partial<OrganizationSettings>, options?: { throwMutateError?: boolean }) => {
             if (!org?.id) {
                 throw new Error("no organization selected");
             }
@@ -112,6 +111,9 @@ export default function TeamSettingsPage() {
                     ...newSettings,
                 });
             } catch (error) {
+                if (options?.throwMutateError) {
+                    throw error;
+                }
                 console.error(error);
             }
         },
@@ -140,7 +142,6 @@ export default function TeamSettingsPage() {
                         )}
                         <TextInputField
                             label="Display Name"
-                            hint="The name of your company or organization"
                             value={teamName}
                             error={teamNameError.message}
                             onChange={setTeamName}
@@ -168,7 +169,7 @@ export default function TeamSettingsPage() {
                     </ConfigurationSettingsField>
 
                     <ConfigurationSettingsField>
-                        <Heading3>Collaboration & Sharing</Heading3>
+                        <Heading3>Collaboration and sharing</Heading3>
 
                         {updateTeamSettings.isError && (
                             <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
@@ -187,7 +188,7 @@ export default function TeamSettingsPage() {
                     </ConfigurationSettingsField>
 
                     <ConfigurationSettingsField>
-                        <Heading3>Workspace Images</Heading3>
+                        <Heading3>Workspace images</Heading3>
                         <Subheading>Choose a default image for all workspaces in the organization.</Subheading>
 
                         <WorkspaceImageButton
@@ -206,18 +207,15 @@ export default function TeamSettingsPage() {
                         />
                     )}
 
-                    {enableOrgWorkspaceClassRestrictions && (
-                        <ConfigurationSettingsField>
-                            <Heading3>Available Workspace Classes</Heading3>
-                            <Subheading>Limit the available workspace classes in your organization.</Subheading>
-
-                            {settings && <WorkspaceClassOptions disabled={!isOwner} settings={settings} />}
-                        </ConfigurationSettingsField>
-                    )}
+                    <OrgWorkspaceClassesOptions
+                        isOwner={isOwner}
+                        settings={settings}
+                        handleUpdateTeamSettings={handleUpdateTeamSettings}
+                    />
 
                     {user?.organizationId !== org?.id && isOwner && (
                         <ConfigurationSettingsField>
-                            <Heading3>Delete Organization</Heading3>
+                            <Heading3>Delete organization</Heading3>
                             <Subheading className="pb-4 max-w-2xl">
                                 Deleting this organization will also remove all associated data, including projects and
                                 workspaces. Deleted organizations cannot be restored!
@@ -414,92 +412,88 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
     );
 }
 
-interface WorkspaceClassOptionsProps {
-    settings: OrganizationSettings | undefined;
-    disabled: boolean;
+interface OrgWorkspaceClassesOptionsProps {
+    isOwner: boolean;
+    settings?: OrganizationSettings;
+    handleUpdateTeamSettings: (
+        newSettings: Partial<OrganizationSettings>,
+        options?: { throwMutateError?: boolean },
+    ) => Promise<void>;
 }
-const WorkspaceClassOptions = (props: WorkspaceClassOptionsProps) => {
-    const [validateError, setValidateError] = useState("");
-    const [selectedValue, setSelectedValue] = useState(props.settings?.allowedWorkspaceClasses ?? []);
-    const [isChanged, setIsChanged] = useState(false);
-    const updateTeamSettings = useUpdateOrgSettingsMutation();
-    const { data: classes, isError, isLoading } = useWorkspaceClasses();
-
-    const { toast } = useToast();
-    const handleUpdateTeamSettings = useCallback(
-        async (classes: string[]) => {
-            await updateTeamSettings.mutateAsync(
-                {
-                    ...props.settings,
-                    allowedWorkspaceClasses: classes,
-                },
-                {
-                    onSuccess: () => {
-                        toast({ message: "Available workspace classes updated." });
-                    },
-                },
-            );
+const OrgWorkspaceClassesOptions = ({
+    isOwner,
+    settings,
+    handleUpdateTeamSettings,
+}: OrgWorkspaceClassesOptionsProps) => {
+    const [showModal, setShowModal] = useState(false);
+    const { data: allowedClassesInOrganization, isLoading: isLoadingClsInOrg } = useAllowedWorkspaceClassesMemo(
+        undefined,
+        {
+            filterOutDisabled: true,
+            ignoreScope: ["configuration"],
         },
-        [updateTeamSettings, props.settings, toast],
+    );
+    const { data: allowedClassesInInstallation, isLoading: isLoadingClsInInstall } = useAllowedWorkspaceClassesMemo(
+        undefined,
+        {
+            filterOutDisabled: true,
+            ignoreScope: ["organization", "configuration"],
+        },
     );
 
-    const noClassesSelected = useMemo(() => {
-        return (props.settings?.allowedWorkspaceClasses.length ?? 0) === 0;
-    }, [props.settings?.allowedWorkspaceClasses]);
+    const restrictedWorkspaceClasses = useMemo(() => {
+        const allowedList = settings?.allowedWorkspaceClasses ?? [];
+        if (allowedList.length === 0) {
+            return [];
+        }
+        return allowedClassesInInstallation.filter((cls) => !allowedList.includes(cls.id)).map((cls) => cls.id);
+    }, [settings?.allowedWorkspaceClasses, allowedClassesInInstallation]);
 
-    if (isError || !classes) {
-        return <div>Something went wrong</div>;
-    }
-
-    if (isLoading) {
-        return <LoadingState />;
-    }
+    const updateMutation: WorkspaceClassesModifyModalProps["updateMutation"] = useMutation({
+        mutationFn: async ({ restrictedWorkspaceClasses }) => {
+            let allowedWorkspaceClasses = allowedClassesInInstallation.map((e) => e.id);
+            if (restrictedWorkspaceClasses.length > 0) {
+                allowedWorkspaceClasses = allowedWorkspaceClasses.filter(
+                    (e) => !restrictedWorkspaceClasses.includes(e),
+                );
+            }
+            const allAllowed = allowedClassesInInstallation.every((e) => allowedWorkspaceClasses.includes(e.id));
+            if (allAllowed) {
+                // empty means allow all classes
+                allowedWorkspaceClasses = [];
+            }
+            await handleUpdateTeamSettings({ allowedWorkspaceClasses }, { throwMutateError: true });
+        },
+    });
 
     return (
-        <div className="space-y-4">
-            <div>
-                {classes.map((wsClass) => (
-                    <SwitchInputField
-                        className="mt-2"
-                        key={wsClass.id}
-                        id={wsClass.id}
-                        label={wsClass.displayName}
-                        description={wsClass.description}
-                        checked={(!isChanged && noClassesSelected) || selectedValue.includes(wsClass.id)}
-                        onCheckedChange={(checked) => {
-                            const previousValue =
-                                !isChanged && noClassesSelected ? classes.map((e) => e.id) : selectedValue;
-                            setIsChanged(true);
-                            const newVal = (
-                                checked ? [...previousValue, wsClass.id] : previousValue.filter((e) => e !== wsClass.id)
-                            ).filter((id) => classes.find((cls) => cls.id === id));
-                            setValidateError(
-                                newVal.length === 0 ? "At least one workspace class has to be selected." : "",
-                            );
-                            setSelectedValue(newVal);
-                        }}
-                        disabled={props.disabled || updateTeamSettings.isLoading}
-                    />
-                ))}
-            </div>
+        <ConfigurationSettingsField>
+            <Heading3>Available workspace classes</Heading3>
+            <Subheading>Limit the available workspace classes in your organization.</Subheading>
 
-            <div className="flex gap-2 items-center">
-                {!props.disabled && (
-                    <LoadingButton
-                        disabled={props.disabled || !isChanged || validateError.length > 0}
-                        loading={updateTeamSettings.isLoading}
-                        onClick={() => {
-                            handleUpdateTeamSettings(selectedValue);
-                        }}
-                    >
-                        Save
-                    </LoadingButton>
-                )}
-                {validateError.length > 0 && <span className="text-red-600 dark:text-red-400">{validateError}</span>}
-                {updateTeamSettings.isError && updateTeamSettings.error.message.length > 0 && (
-                    <span className="text-red-600 dark:text-red-400">{updateTeamSettings.error.message}</span>
-                )}
-            </div>
-        </div>
+            <WorkspaceClassesOptions
+                isLoading={isLoadingClsInOrg}
+                className="mt-4"
+                classes={allowedClassesInOrganization}
+            />
+
+            {isOwner && (
+                <Button className="mt-6" onClick={() => setShowModal(true)}>
+                    Manage Classes
+                </Button>
+            )}
+
+            {showModal && (
+                <WorkspaceClassesModifyModal
+                    isLoading={isLoadingClsInInstall}
+                    showSetDefaultButton={false}
+                    showSwitchTitle={false}
+                    restrictedWorkspaceClasses={restrictedWorkspaceClasses}
+                    allowedClasses={allowedClassesInInstallation}
+                    updateMutation={updateMutation}
+                    onClose={() => setShowModal(false)}
+                />
+            )}
+        </ConfigurationSettingsField>
     );
 };
