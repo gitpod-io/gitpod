@@ -33,5 +33,5 @@ spec:
           summary: Desired number of replicas for node-labeler are not available in cluster {{ $labels.cluster }}
           description: The mismatch is {{ printf "%.2f" $value }}
         expr: |
-          kube_deployment_spec_replicas{container="node-labeler", cluster!~"ephemeral.*"} != kube_deployment_status_replicas_available{container="node-labeler", cluster!~"ephemeral.*"}
+          kube_deployment_spec_replicas{deployment="node-labeler", cluster!~"ephemeral.*"} != kube_deployment_status_replicas_available{deployment="node-labeler", cluster!~"ephemeral.*"}
         for: 3m
