@@ -105,7 +105,7 @@ export const PrebuildDetailPage: FC = () => {
     const prebuildPhase = useMemo(() => {
         if (!currentPrebuild) {
             return {
-                icon: <></>,
+                icon: <LoadingState size={20} delay={false} />,
                 description: "",
             };
         }
