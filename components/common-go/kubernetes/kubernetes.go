@@ -78,6 +78,9 @@ const (
 
 	// workspacePressureStallInfo indicates if pressure stall information should be retrieved for the workspace
 	WorkspacePressureStallInfoAnnotation = "gitpod.io/psi"
+
+	// ImageNameAnnotation indicates the original format of the main image of the pod
+	ImageNameAnnotation = "gitpod.io/image_name"
 )
 
 // GetOWIFromObject finds the owner, workspace and instance information on a Kubernetes object using labels

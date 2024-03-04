@@ -22,6 +22,7 @@ import (
 	wsmanagerbridge "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-bridge"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
+	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -308,7 +309,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
 							return map[string]string{
 								common.AnnotationConfigChecksum: configHash,
-								common.AnnotationImageName:      imageName,
+								kubernetes.ImageNameAnnotation:  imageName,
 							}
 						}),
 					},

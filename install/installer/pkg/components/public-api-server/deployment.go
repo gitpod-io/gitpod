@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -110,7 +111,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
 							return map[string]string{
 								common.AnnotationConfigChecksum: configHash,
-								common.AnnotationImageName:      imageName,
+								kubernetes.ImageNameAnnotation:  imageName,
 							}
 						}),
 					},
