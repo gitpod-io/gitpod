@@ -426,14 +426,20 @@ const OrgWorkspaceClassesOptions = ({
     handleUpdateTeamSettings,
 }: OrgWorkspaceClassesOptionsProps) => {
     const [showModal, setShowModal] = useState(false);
-    const { data: allowedClassesInOrganization } = useAllowedWorkspaceClassesMemo(undefined, {
-        filterOutDisabled: true,
-        ignoreScope: ["configuration"],
-    });
-    const { data: allowedClassesInInstallation } = useAllowedWorkspaceClassesMemo(undefined, {
-        filterOutDisabled: true,
-        ignoreScope: ["organization", "configuration"],
-    });
+    const { data: allowedClassesInOrganization, isLoading: isLoadingClsInOrg } = useAllowedWorkspaceClassesMemo(
+        undefined,
+        {
+            filterOutDisabled: true,
+            ignoreScope: ["configuration"],
+        },
+    );
+    const { data: allowedClassesInInstallation, isLoading: isLoadingClsInInstall } = useAllowedWorkspaceClassesMemo(
+        undefined,
+        {
+            filterOutDisabled: true,
+            ignoreScope: ["organization", "configuration"],
+        },
+    );
 
     const restrictedWorkspaceClasses = useMemo(() => {
         const allowedList = settings?.allowedWorkspaceClasses ?? [];
@@ -465,7 +471,11 @@ const OrgWorkspaceClassesOptions = ({
             <Heading3>Available workspace classes</Heading3>
             <Subheading>Limit the available workspace classes in your organization.</Subheading>
 
-            <WorkspaceClassesOptions className="mt-4" classes={allowedClassesInOrganization} />
+            <WorkspaceClassesOptions
+                isLoading={isLoadingClsInOrg}
+                className="mt-4"
+                classes={allowedClassesInOrganization}
+            />
 
             {isOwner && (
                 <Button className="mt-6" onClick={() => setShowModal(true)}>
@@ -475,7 +485,9 @@ const OrgWorkspaceClassesOptions = ({
 
             {showModal && (
                 <WorkspaceClassesModifyModal
+                    isLoading={isLoadingClsInInstall}
                     showSetDefaultButton={false}
+                    showSwitchTitle={false}
                     restrictedWorkspaceClasses={restrictedWorkspaceClasses}
                     allowedClasses={allowedClassesInInstallation}
                     updateMutation={updateMutation}

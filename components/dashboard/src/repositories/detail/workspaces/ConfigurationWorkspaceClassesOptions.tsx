@@ -73,6 +73,7 @@ export const ConfigurationWorkspaceClassesOptions = ({ configuration }: { config
                 <WorkspaceClassesModifyModal
                     isLoading={isLoadingInOrg}
                     showSetDefaultButton
+                    showSwitchTitle={true}
                     defaultClass={configuration.workspaceSettings?.workspaceClass}
                     restrictedWorkspaceClasses={configuration.workspaceSettings?.restrictedWorkspaceClasses ?? []}
                     allowedClasses={allowedClassesInOrganization}

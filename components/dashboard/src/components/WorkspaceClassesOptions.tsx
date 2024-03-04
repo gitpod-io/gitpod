@@ -59,6 +59,7 @@ export interface WorkspaceClassesModifyModalProps {
     defaultClass?: string;
     restrictedWorkspaceClasses: string[];
     showSetDefaultButton: boolean;
+    showSwitchTitle: boolean;
 
     allowedClasses: AllowedWorkspaceClass[];
     updateMutation: UseMutationResult<void, Error, { restrictedWorkspaceClasses: string[]; defaultClass?: string }>;
@@ -71,6 +72,7 @@ export const WorkspaceClassesModifyModal = ({
     updateMutation,
     allowedClasses,
     showSetDefaultButton,
+    showSwitchTitle,
     ...props
 }: WorkspaceClassesModifyModalProps) => {
     const [defaultClass, setDefaultClass] = useState(props.defaultClass || DEFAULT_WS_CLASS);
@@ -115,6 +117,7 @@ export const WorkspaceClassesModifyModal = ({
                 ) : (
                     allowedClasses.map((wsClass) => (
                         <WorkspaceClassSwitch
+                            showSwitchTitle={showSwitchTitle}
                             showSetDefaultButton={showSetDefaultButton}
                             restrictedClasses={restrictedClasses}
                             wsClass={wsClass}
