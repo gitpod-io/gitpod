@@ -11,9 +11,7 @@ import { UserDB } from "@gitpod/gitpod-db/lib";
 import { v4 as uuidv4 } from "uuid";
 import { TokenProvider } from "./token-provider";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { RedisMutex } from "../redis/mutex";
 import { reportScmTokenRefreshRequest, scmTokenRefreshLatencyHistogram } from "../prometheus-metrics";
 
@@ -25,39 +23,13 @@ export class TokenService implements TokenProvider {
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(RedisMutex) private readonly redisMutex: RedisMutex;
 
-    // Introducing GC to token cache to guard from potentialy stale fetch requests. This is setting
-    // a hard limit at 10s (+5s) after which after which compteting request will trigger a new request,
-    // if applicable.
-    private readonly getTokenForHostCache = new GarbageCollectedCache<Promise<Token | undefined>>(10, 5);
-
     async getTokenForHost(user: User | string, host: string): Promise<Token | undefined> {
         const userId = User.is(user) ? user.id : user;
 
-        // EXPERIMENT(sync_refresh_token_exchange)
-        const syncRefreshTokenExchange = await getExperimentsClientForBackend().getValueAsync(
-            "sync_refresh_token_exchange",
-            false,
-            {},
-        );
-        if (syncRefreshTokenExchange) {
-            return this.doGetTokenForHostSync(userId, host);
-        }
-
-        // (AT) when it comes to token renewal, the awaited http requests may
-        // cause "parallel" calls to repeat the renewal, which will fail.
-        // Caching for pending operations should solve this issue.
-        const key = `${host}-${userId}`;
-        let promise = this.getTokenForHostCache.get(key);
-        if (!promise) {
-            promise = this.doGetTokenForHost(userId, host);
-            this.getTokenForHostCache.set(key, promise);
-            promise = promise.finally(() => this.getTokenForHostCache.delete(key));
-        }
-        return promise;
+        return this.doGetTokenForHost(userId, host);
     }
 
-    // EXPERIMENT(sync_refresh_token_exchange)
-    private async doGetTokenForHostSync(userId: string, host: string): Promise<Token | undefined> {
+    private async doGetTokenForHost(userId: string, host: string): Promise<Token | undefined> {
         const user = await this.userDB.findUserById(userId);
         if (!user) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${userId}) not found.`);
@@ -136,61 +108,6 @@ export class TokenService implements TokenProvider {
             reportScmTokenRefreshRequest(host, "error");
             throw err;
         }
-    }
-
-    private async doGetTokenForHost(userId: string, host: string): Promise<Token | undefined> {
-        const user = await this.userDB.findUserById(userId);
-        if (!user) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${userId}) not found.`);
-        }
-        const identity = this.getIdentityForHost(user, host);
-        let token = await this.userDB.findTokenForIdentity(identity);
-        if (!token) {
-            return undefined;
-        }
-
-        const aboutToExpireTime = new Date();
-        aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
-        if (token.expiryDate && token.expiryDate < aboutToExpireTime.toISOString()) {
-            // We attempt to get a token three times
-            const { authProvider } = this.hostContextProvider.get(host)!;
-
-            if (authProvider.refreshToken) {
-                const shouldRetryRefreshTokenExchange = await getExperimentsClientForBackend().getValueAsync(
-                    "retry_refresh_token_exchange",
-                    false,
-                    {},
-                );
-                if (shouldRetryRefreshTokenExchange) {
-                    const errors: Error[] = [];
-
-                    // There is a race condition where multiple requests may each need to use the refresh_token to get a new access token.
-                    // When the `authProvider.refreshToken` is called, it will refresh the token and store it in the database.
-                    // However, the token may have already been refreshed by another request, so we need to check the database again.
-                    for (let i = 0; i < 3; i++) {
-                        try {
-                            await authProvider.refreshToken(user);
-                            token = (await this.userDB.findTokenForIdentity(identity))!;
-                            if (token) {
-                                return token;
-                            }
-                        } catch (e) {
-                            errors.push(e as Error);
-                            log.error(`Failed to refresh token on attempt ${i + 1}/3.`, e, { userId: user.id });
-                        }
-
-                        const backoff = 250 + 250 * Math.random(); // 250ms + 0-250ms
-                        await new Promise((f) => setTimeout(f, backoff));
-                    }
-                    log.error(`Failed to refresh token after 3 attempts.`, errors, { userId: user.id });
-                    throw new Error(`Failed to refresh token after 3 attempts: ${errors.join(", ")}`);
-                } else {
-                    await authProvider.refreshToken(user);
-                    token = (await this.userDB.findTokenForIdentity(identity))!;
-                }
-            }
-        }
-        return token;
     }
 
     async getOrCreateGitpodIdentity(user: User): Promise<Identity> {
