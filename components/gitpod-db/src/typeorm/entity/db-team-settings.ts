@@ -24,6 +24,9 @@ export class DBOrgSettings implements OrganizationSettings {
     @Column("json", { nullable: true })
     allowedWorkspaceClasses?: string[] | null;
 
+    @Column("json", { nullable: true })
+    pinnedEditorVersions?: { [key: string]: string } | null;
+
     @Column()
     deleted: boolean;
 }
