@@ -22,10 +22,7 @@ RUN mkdir -p /tmp/helm/ \
     && helm completion bash > /usr/share/bash-completion/completions/helm
 
 ### kubectl ###
-RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
-    # really 'xenial'
-    && add-apt-repository -yu "deb https://apt.kubernetes.io/ kubernetes-xenial main" \
-    && install-packages kubectl=1.27.1-00 \
+RUN curl -fsSL -o /usr/bin/kubectl "https://dl.k8s.io/release/v1.27.11/bin/linux/amd64/kubectl" && chmod +x /usr/bin/kubectl \
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl
 
 RUN curl -fsSL -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
