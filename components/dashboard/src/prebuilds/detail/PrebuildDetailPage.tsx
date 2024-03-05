@@ -110,8 +110,8 @@ export const PrebuildDetailPage: FC = () => {
             };
         }
 
-        const name = currentPrebuild.status?.phase?.name;
-        if (!name) {
+        const phase = currentPrebuild.status?.phase?.name;
+        if (!phase) {
             return {
                 icon: <CircleSlash size={20} className="text-gray-500" />,
                 description: "Unknown prebuild status.",
@@ -119,7 +119,7 @@ export const PrebuildDetailPage: FC = () => {
         }
 
         const loaderIcon = <Loader2Icon size={20} className="text-gray-500 animate-spin" />;
-        switch (name) {
+        switch (phase) {
             case PrebuildPhase_Phase.QUEUED:
                 return {
                     icon: loaderIcon,
@@ -150,10 +150,12 @@ export const PrebuildDetailPage: FC = () => {
             <BreadcrumbNav
                 pageTitle="Prebuild history"
                 pageDescription={
-                    <>
-                        <span className="font-semibold">{prebuild?.configurationName ?? "unknown repository"}</span>{" "}
-                        <span className="text-pk-content-secondary">{prebuild?.ref ?? ""}</span>
-                    </>
+                    !isInfoLoading && (
+                        <>
+                            <span className="font-semibold">{prebuild?.configurationName ?? "unknown repository"}</span>{" "}
+                            <span className="text-pk-content-secondary">{prebuild?.ref ?? ""}</span>
+                        </>
+                    )
                 }
                 backLink={repositoriesRoutes.Prebuilds()}
             />
