@@ -33,5 +33,5 @@ spec:
           summary: Desired number of replicas for ws-proxy are not available in cluster {{ $labels.cluster }}
           description: The mismatch is {{ printf "%.2f" $value }}
         expr: |
-          kube_deployment_spec_replicas{container="ws-proxy", cluster!~"ephemeral.*"} != kube_deployment_status_replicas_available{container="ws-proxy", cluster!~"ephemeral.*"}
+          kube_deployment_spec_replicas{deployment="ws-proxy", cluster!~"ephemeral.*"} != kube_deployment_status_replicas_available{deployment="ws-proxy", cluster!~"ephemeral.*"}
         for: 3m

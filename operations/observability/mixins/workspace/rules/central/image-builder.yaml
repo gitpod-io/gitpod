@@ -49,5 +49,5 @@ spec:
           summary: Desired number of replicas for image-builder-mk3 are not available in cluster {{ $labels.cluster }}
           description: The mismatch is {{ printf "%.2f" $value }}
         expr: |
-          kube_deployment_spec_replicas{container="image-builder-mk3", cluster!~"ephemeral.*"} != kube_deployment_status_replicas_available{container="image-builder-mk3", cluster!~"ephemeral.*"}
+          kube_deployment_spec_replicas{deployment="image-builder-mk3", cluster!~"ephemeral.*"} != kube_deployment_status_replicas_available{deployment="image-builder-mk3", cluster!~"ephemeral.*"}
         for: 3m

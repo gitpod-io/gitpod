@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/gitpod-io/gitpod/common-go/experiments"
+	k8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/service-waiter/pkg/metrics"
 	corev1 "k8s.io/api/core/v1"
@@ -79,19 +80,15 @@ func checkPodsImage(ctx context.Context, k8sClient *kubernetes.Clientset) (bool,
 	}
 	readyCount := 0
 	for _, pod := range pods.Items {
-		for _, container := range pod.Spec.Containers {
-			if container.Name == componentCmdOpt.component {
-				if container.Image != componentCmdOpt.image {
-					return false, fmt.Errorf("image is not the same: %s != %s", container.Image, componentCmdOpt.image)
-				}
-				for _, condition := range pod.Status.Conditions {
-					if condition.Type == corev1.PodReady {
-						if condition.Status == corev1.ConditionTrue {
-							readyCount += 1
-						} else {
-							return false, fmt.Errorf("pod is not ready")
-						}
-					}
+		if pod.Annotations[k8s.ImageNameAnnotation] != componentCmdOpt.image {
+			return false, fmt.Errorf("image is not the same: %s != %s", pod.Annotations[k8s.ImageNameAnnotation], componentCmdOpt.image)
+		}
+		for _, condition := range pod.Status.Conditions {
+			if condition.Type == corev1.PodReady {
+				if condition.Status == corev1.ConditionTrue {
+					readyCount += 1
+				} else {
+					return false, fmt.Errorf("pod is not ready")
 				}
 			}
 		}
