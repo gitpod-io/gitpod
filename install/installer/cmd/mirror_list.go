@@ -225,6 +225,10 @@ func generateMirrorList(cfgVersion string, cfg *configv1.Config) ([]mirrorListRe
 		if img == common.GitpodContainerRegistry {
 			continue
 		}
+		// Ignore empty image
+		if img == "" {
+			continue
+		}
 		// Dedupe
 		if _, ok := allImages[img]; ok {
 			continue
