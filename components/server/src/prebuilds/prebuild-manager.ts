@@ -630,7 +630,7 @@ export class PrebuildManager {
         return false;
     }
 
-    public async watchPrebuildLogs(userId: string, prebuildId: string, onLog: (message: string) => void) {
+    public async watchPrebuildLogs(userId: string, prebuildId: string, onLog: (message: string) => Promise<void>) {
         const { workspaceId, organizationId } = await this.waitUntilPrebuildWorkspaceCreated(userId, prebuildId);
         if (!workspaceId || !organizationId) {
             throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "prebuild workspace not found");
@@ -654,7 +654,7 @@ export class PrebuildManager {
                             },
                         );
                         for await (const message of imageBuildIt) {
-                            onLog(message);
+                            await onLog(message);
                         }
                     }
                     break;
@@ -739,7 +739,7 @@ export class PrebuildManager {
                     );
 
                     for await (const message of it) {
-                        onLog(message);
+                        await onLog(message);
                     }
                     // we don't care the case phase updates from `running` to `stopped` because their logs are the same
                     // this may cause some logs lost, but better than duplicate?
