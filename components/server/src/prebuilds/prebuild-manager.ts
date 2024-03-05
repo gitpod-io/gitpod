@@ -165,17 +165,21 @@ export class PrebuildManager {
 
         const project = await this.projectService.getProject(user.id, projectId);
 
-        const branchDetails = !!branchName
-            ? await this.projectService.getBranchDetails(user, project, branchName)
-            : (await this.projectService.getBranchDetails(user, project)).filter((b) => b.isDefault);
-        if (branchDetails.length !== 1) {
-            log.debug({ userId: user.id }, "Cannot find branch details.", { project, branchName });
-            throw new ApplicationError(
-                ErrorCodes.NOT_FOUND,
-                `Could not find ${!branchName ? "a default branch" : `branch '${branchName}'`} in repository ${
-                    project.cloneUrl
-                }`,
-            );
+        let branchDetails: Project.BranchDetails[] = [];
+        try {
+            branchDetails = branchName
+                ? await this.projectService.getBranchDetails(user, project, branchName)
+                : (await this.projectService.getBranchDetails(user, project)).filter((b) => b.isDefault);
+        } finally {
+            if (branchDetails.length !== 1) {
+                log.debug({ userId: user.id }, "Cannot find branch details.", { project, branchName });
+                throw new ApplicationError(
+                    ErrorCodes.NOT_FOUND,
+                    `Could not find ${!branchName ? "a default branch" : `branch '${branchName}'`} in repository ${
+                        project.cloneUrl
+                    }`,
+                );
+            }
         }
         const contextURL = branchDetails[0].url;
 
