@@ -16,6 +16,7 @@ import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { useConfiguration } from "../../data/configurations/configuration-queries";
 import { Link } from "react-router-dom";
 import { repositoriesRoutes } from "../../repositories/repositories.routes";
+import { TextInputField } from "../../components/forms/TextInputField";
 
 type Props = {
     defaultRepositoryId?: string;
@@ -25,6 +26,8 @@ type Props = {
 export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfigurationId, onClose, onRun }) => {
     const needsGitAuth = useNeedsGitAuthorization();
     const [selectedRepo, setSelectedRepo] = useState<SuggestedRepository>();
+    const [branchName, setBranchName] = useState<string>();
+
     const [createErrorMsg, setCreateErrorMsg] = useState<JSX.Element | undefined>();
     const configurationId = useMemo(
         () => selectedRepo?.configurationId ?? defaultConfigurationId,
@@ -38,7 +41,7 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
         error,
         isRefetching,
         data: prebuildId,
-    } = useTriggerPrebuildQuery(configurationId);
+    } = useTriggerPrebuildQuery(configurationId, branchName);
 
     const { data: configuration } = useConfiguration(configurationId ?? "");
 
@@ -76,12 +79,12 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
         <Modal visible onClose={onClose} onSubmit={handleSubmit}>
             <ModalHeader>Run a prebuild</ModalHeader>
             <ModalBody>
-                <div className="w-112 max-w-full">
+                <div className="w-112 max-w-full flex flex-col">
                     {needsGitAuth ? (
                         <AuthorizeGit />
                     ) : (
                         <>
-                            <InputField className="mb-8 w-full">
+                            <InputField className="w-full">
                                 <RepositoryFinder
                                     selectedContextURL={selectedRepo?.url}
                                     selectedConfigurationId={configurationId}
@@ -89,6 +92,18 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
                                     onlyProjects
                                 />
                             </InputField>
+                            <TextInputField
+                                label="Branch"
+                                hint={
+                                    <>
+                                        Leaving this blank will result in running your prebuild on the repository's
+                                        default branch.
+                                    </>
+                                }
+                                value={branchName}
+                                onChange={setBranchName}
+                                disabled={isFetching || isRefetching}
+                            />
                         </>
                     )}
                 </div>

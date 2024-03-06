@@ -38,7 +38,13 @@ export const InputWithCopy: FC<Props> = ({ value, tip = "Click to copy", classNa
             />
 
             <Tooltip content={tip} className="absolute top-0 right-0">
-                <Button variant="ghost" size={"icon"} onClick={handleCopyToClipboard} className="ring-inset">
+                <Button
+                    variant="ghost"
+                    size={"icon"}
+                    onClick={handleCopyToClipboard}
+                    type="button"
+                    className="ring-inset"
+                >
                     {copied ? <CheckIcon className="text-green-500 w-5 h-5" /> : <CopyIcon className="w-3.5 h-3.5" />}
                 </Button>
             </Tooltip>

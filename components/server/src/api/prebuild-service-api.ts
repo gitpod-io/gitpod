@@ -56,6 +56,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
         const userId = ctxUserId();
         const user = await this.userService.findUserById(userId, userId);
         const prebuild = await this.prebuildManager.triggerPrebuild({}, user, request.configurationId, request.gitRef);
+
         return new StartPrebuildResponse({
             prebuildId: prebuild.prebuildId,
         });
