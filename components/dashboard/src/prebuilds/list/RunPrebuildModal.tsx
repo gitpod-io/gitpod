@@ -79,7 +79,7 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
         <Modal visible onClose={onClose} onSubmit={handleSubmit}>
             <ModalHeader>Run a prebuild</ModalHeader>
             <ModalBody>
-                <div className="w-112 max-w-full flex flex-col gap-8">
+                <div className="w-112 max-w-full flex flex-col">
                     {needsGitAuth ? (
                         <AuthorizeGit />
                     ) : (

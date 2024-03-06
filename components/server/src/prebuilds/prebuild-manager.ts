@@ -170,6 +170,8 @@ export class PrebuildManager {
             branchDetails = branchName
                 ? await this.projectService.getBranchDetails(user, project, branchName)
                 : (await this.projectService.getBranchDetails(user, project)).filter((b) => b.isDefault);
+        } catch (e) {
+            log.error(e);
         } finally {
             if (branchDetails.length !== 1) {
                 log.debug({ userId: user.id }, "Cannot find branch details.", { project, branchName });
