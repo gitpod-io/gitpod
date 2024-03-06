@@ -230,7 +230,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MinAgePrebuildDays:         7,
 			ChunkLimit:                 1000,
 			ContentRetentionPeriodDays: 21,
-			ContentChunkLimit:          100,
+			ContentChunkLimit:          3000,
 			PurgeRetentionPeriodDays:   365,
 			PurgeChunkLimit:            5000,
 		},
