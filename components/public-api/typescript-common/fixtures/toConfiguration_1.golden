@@ -15,7 +15,8 @@
         "workspaceSettings": {
             "workspaceClass": "dev",
             "restrictedWorkspaceClasses": [],
-            "restrictedEditorNames": []
+            "restrictedEditorNames": [],
+            "defaultEditorName": ""
         }
     },
     "err": ""

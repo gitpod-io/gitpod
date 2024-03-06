@@ -18,7 +18,8 @@
                 "cls-1",
                 "cls-2"
             ],
-            "restrictedEditorNames": []
+            "restrictedEditorNames": [],
+            "defaultEditorName": ""
         }
     },
     "err": ""

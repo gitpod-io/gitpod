@@ -5,7 +5,8 @@
             "g1",
             "g2"
         ],
-        "restrictedEditorNames": []
+        "restrictedEditorNames": [],
+        "defaultEditorName": ""
     },
     "err": ""
 }
