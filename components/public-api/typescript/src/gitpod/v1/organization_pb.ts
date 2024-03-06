@@ -198,6 +198,11 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
    */
   restrictedEditorNames: string[] = [];
 
+  /**
+   * @generated from field: string default_editor_name = 5;
+   */
+  defaultEditorName = "";
+
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -210,6 +215,7 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
     { no: 2, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 4, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 5, name: "default_editor_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {
@@ -435,7 +441,8 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   allowedWorkspaceClasses: string[] = [];
 
   /**
-   * restricted_editor_names updates the list of restricted editor names that are not allowed to be used by workspaces in an organization.
+   * restricted_editor_names updates the list of restricted editor names that are NOT allowed to be used by workspaces in an organization.
+   * Only applies to UX, the backend does not enforce this.
    * If empty, all editors are allowed.
    * Only updates if update_restricted_editor_names is true.
    *
@@ -449,6 +456,13 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
    * @generated from field: optional bool update_restricted_editor_names = 7;
    */
   updateRestrictedEditorNames?: boolean;
+
+  /**
+   * Specifies the default editor name for workspaces in the organization.
+   *
+   * @generated from field: optional string default_editor_name = 8;
+   */
+  defaultEditorName?: string;
 
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
@@ -464,6 +478,7 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
     { no: 5, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 6, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 7, name: "update_restricted_editor_names", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 8, name: "default_editor_name", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {

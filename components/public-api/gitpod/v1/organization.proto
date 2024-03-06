@@ -37,6 +37,7 @@ message OrganizationSettings {
   string default_workspace_image = 2;
   repeated string allowed_workspace_classes = 3;
   repeated string restricted_editor_names = 4;
+  string default_editor_name = 5;
 }
 
 service OrganizationService {
@@ -124,13 +125,17 @@ message UpdateOrganizationSettingsRequest {
   // Pass an empty array to allow all workspace classes
   repeated string allowed_workspace_classes = 5;
 
-  // restricted_editor_names updates the list of restricted editor names that are not allowed to be used by workspaces in an organization.
+  // restricted_editor_names updates the list of restricted editor names that are NOT allowed to be used by workspaces in an organization.
+  // Only applies to UX, the backend does not enforce this.
   // If empty, all editors are allowed.
   // Only updates if update_restricted_editor_names is true.
   repeated string restricted_editor_names = 6;
 
   // Specifies whether restricted_workspace_classes should be updated.
   optional bool update_restricted_editor_names = 7;
+
+  // Specifies the default editor name for workspaces in the organization.
+  optional string default_editor_name = 8;
 }
 
 message UpdateOrganizationSettingsResponse {
