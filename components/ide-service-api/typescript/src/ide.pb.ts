@@ -1,11 +1,11 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
 
 /* eslint-disable */
-import { CallContext, CallOptions } from "nice-grpc-common";
+import type { CallContext, CallOptions } from "nice-grpc-common";
 import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "ide_service_api";
@@ -109,19 +109,24 @@ export const GetConfigRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GetConfigRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetConfigRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.user = User.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -132,10 +137,15 @@ export const GetConfigRequest = {
 
   toJSON(message: GetConfigRequest): unknown {
     const obj: any = {};
-    message.user !== undefined && (obj.user = message.user ? User.toJSON(message.user) : undefined);
+    if (message.user !== undefined) {
+      obj.user = User.toJSON(message.user);
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<GetConfigRequest>): GetConfigRequest {
+    return GetConfigRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<GetConfigRequest>): GetConfigRequest {
     const message = createBaseGetConfigRequest();
     message.user = (object.user !== undefined && object.user !== null) ? User.fromPartial(object.user) : undefined;
@@ -156,19 +166,24 @@ export const GetConfigResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GetConfigResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetConfigResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.content = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -179,10 +194,15 @@ export const GetConfigResponse = {
 
   toJSON(message: GetConfigResponse): unknown {
     const obj: any = {};
-    message.content !== undefined && (obj.content = message.content);
+    if (message.content !== "") {
+      obj.content = message.content;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<GetConfigResponse>): GetConfigResponse {
+    return GetConfigResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<GetConfigResponse>): GetConfigResponse {
     const message = createBaseGetConfigResponse();
     message.content = object.content ?? "";
@@ -206,22 +226,31 @@ export const EnvironmentVariable = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): EnvironmentVariable {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseEnvironmentVariable();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.name = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.value = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -235,11 +264,18 @@ export const EnvironmentVariable = {
 
   toJSON(message: EnvironmentVariable): unknown {
     const obj: any = {};
-    message.name !== undefined && (obj.name = message.name);
-    message.value !== undefined && (obj.value = message.value);
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<EnvironmentVariable>): EnvironmentVariable {
+    return EnvironmentVariable.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<EnvironmentVariable>): EnvironmentVariable {
     const message = createBaseEnvironmentVariable();
     message.name = object.name ?? "";
@@ -264,22 +300,31 @@ export const User = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): User {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseUser();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.id = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.email = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -293,11 +338,18 @@ export const User = {
 
   toJSON(message: User): unknown {
     const obj: any = {};
-    message.id !== undefined && (obj.id = message.id);
-    message.email !== undefined && (obj.email = message.email);
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.email !== undefined) {
+      obj.email = message.email;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<User>): User {
+    return User.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<User>): User {
     const message = createBaseUser();
     message.id = object.id ?? "";
@@ -331,31 +383,52 @@ export const ResolveWorkspaceConfigRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): ResolveWorkspaceConfigRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResolveWorkspaceConfigRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 8) {
+            break;
+          }
+
           message.type = workspaceTypeFromJSON(reader.int32());
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.context = reader.string();
-          break;
+          continue;
         case 3:
+          if (tag !== 26) {
+            break;
+          }
+
           message.ideSettings = reader.string();
-          break;
+          continue;
         case 4:
+          if (tag !== 34) {
+            break;
+          }
+
           message.workspaceConfig = reader.string();
-          break;
+          continue;
         case 5:
+          if (tag !== 42) {
+            break;
+          }
+
           message.user = User.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -372,14 +445,27 @@ export const ResolveWorkspaceConfigRequest = {
 
   toJSON(message: ResolveWorkspaceConfigRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = workspaceTypeToJSON(message.type));
-    message.context !== undefined && (obj.context = message.context);
-    message.ideSettings !== undefined && (obj.ideSettings = message.ideSettings);
-    message.workspaceConfig !== undefined && (obj.workspaceConfig = message.workspaceConfig);
-    message.user !== undefined && (obj.user = message.user ? User.toJSON(message.user) : undefined);
+    if (message.type !== WorkspaceType.REGULAR) {
+      obj.type = workspaceTypeToJSON(message.type);
+    }
+    if (message.context !== "") {
+      obj.context = message.context;
+    }
+    if (message.ideSettings !== "") {
+      obj.ideSettings = message.ideSettings;
+    }
+    if (message.workspaceConfig !== "") {
+      obj.workspaceConfig = message.workspaceConfig;
+    }
+    if (message.user !== undefined) {
+      obj.user = User.toJSON(message.user);
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<ResolveWorkspaceConfigRequest>): ResolveWorkspaceConfigRequest {
+    return ResolveWorkspaceConfigRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<ResolveWorkspaceConfigRequest>): ResolveWorkspaceConfigRequest {
     const message = createBaseResolveWorkspaceConfigRequest();
     message.type = object.type ?? WorkspaceType.REGULAR;
@@ -430,37 +516,66 @@ export const ResolveWorkspaceConfigResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): ResolveWorkspaceConfigResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResolveWorkspaceConfigResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.envvars.push(EnvironmentVariable.decode(reader, reader.uint32()));
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.supervisorImage = reader.string();
-          break;
+          continue;
         case 3:
+          if (tag !== 26) {
+            break;
+          }
+
           message.webImage = reader.string();
-          break;
+          continue;
         case 4:
+          if (tag !== 34) {
+            break;
+          }
+
           message.ideImageLayers.push(reader.string());
-          break;
+          continue;
         case 5:
+          if (tag !== 42) {
+            break;
+          }
+
           message.refererIde = reader.string();
-          break;
+          continue;
         case 6:
+          if (tag !== 50) {
+            break;
+          }
+
           message.tasks = reader.string();
-          break;
+          continue;
         case 7:
+          if (tag !== 58) {
+            break;
+          }
+
           message.ideSettings = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -479,24 +594,33 @@ export const ResolveWorkspaceConfigResponse = {
 
   toJSON(message: ResolveWorkspaceConfigResponse): unknown {
     const obj: any = {};
-    if (message.envvars) {
-      obj.envvars = message.envvars.map((e) => e ? EnvironmentVariable.toJSON(e) : undefined);
-    } else {
-      obj.envvars = [];
+    if (message.envvars?.length) {
+      obj.envvars = message.envvars.map((e) => EnvironmentVariable.toJSON(e));
     }
-    message.supervisorImage !== undefined && (obj.supervisorImage = message.supervisorImage);
-    message.webImage !== undefined && (obj.webImage = message.webImage);
-    if (message.ideImageLayers) {
-      obj.ideImageLayers = message.ideImageLayers.map((e) => e);
-    } else {
-      obj.ideImageLayers = [];
+    if (message.supervisorImage !== "") {
+      obj.supervisorImage = message.supervisorImage;
     }
-    message.refererIde !== undefined && (obj.refererIde = message.refererIde);
-    message.tasks !== undefined && (obj.tasks = message.tasks);
-    message.ideSettings !== undefined && (obj.ideSettings = message.ideSettings);
+    if (message.webImage !== "") {
+      obj.webImage = message.webImage;
+    }
+    if (message.ideImageLayers?.length) {
+      obj.ideImageLayers = message.ideImageLayers;
+    }
+    if (message.refererIde !== "") {
+      obj.refererIde = message.refererIde;
+    }
+    if (message.tasks !== "") {
+      obj.tasks = message.tasks;
+    }
+    if (message.ideSettings !== "") {
+      obj.ideSettings = message.ideSettings;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<ResolveWorkspaceConfigResponse>): ResolveWorkspaceConfigResponse {
+    return ResolveWorkspaceConfigResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<ResolveWorkspaceConfigResponse>): ResolveWorkspaceConfigResponse {
     const message = createBaseResolveWorkspaceConfigResponse();
     message.envvars = object.envvars?.map((e) => EnvironmentVariable.fromPartial(e)) || [];
@@ -534,7 +658,7 @@ export const IDEServiceDefinition = {
   },
 } as const;
 
-export interface IDEServiceServiceImplementation<CallContextExt = {}> {
+export interface IDEServiceImplementation<CallContextExt = {}> {
   getConfig(request: GetConfigRequest, context: CallContext & CallContextExt): Promise<DeepPartial<GetConfigResponse>>;
   resolveWorkspaceConfig(
     request: ResolveWorkspaceConfigRequest,

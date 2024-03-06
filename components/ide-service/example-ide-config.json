@@ -9,7 +9,17 @@
         "logo": "https://ide.gitpod.io/image/ide-logo/vscode.svg",
         "label": "Browser",
         "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9",
-        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly@sha256:8669f6ab8dceefde11138bf4bc0ee73b934b2cc47e6135426f05fb4343ec5ab1"
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly@sha256:8669f6ab8dceefde11138bf4bc0ee73b934b2cc47e6135426f05fb4343ec5ab1",
+        "versions": [
+          {
+            "version": "1.87.0",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-82dc424633bdc7266b46302042dd98af201fa8f8"
+          },
+          {
+            "version": "1.86.2",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d86f6aa033943c9650d06339915e68063b0cf142"
+          }
+        ]
       },
       "code-desktop": {
         "orderKey": "02",

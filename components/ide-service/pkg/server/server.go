@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -183,11 +184,11 @@ func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequ
 		return &api.GetConfigResponse{
 			Content: s.parsedCode1_85IDEConfigContent,
 		}, nil
-	} else {
-		return &api.GetConfigResponse{
-			Content: s.parsedIDEConfigContent,
-		}, nil
 	}
+
+	return &api.GetConfigResponse{
+		Content: s.parsedIDEConfigContent,
+	}, nil
 }
 
 func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
@@ -300,8 +301,9 @@ func grpcProbe(cfg baseserver.ServerConfiguration) func() error {
 }
 
 type IDESettings struct {
-	DefaultIde       string `json:"defaultIde,omitempty"`
-	UseLatestVersion bool   `json:"useLatestVersion,omitempty"`
+	DefaultIde        string            `json:"defaultIde,omitempty"`
+	UseLatestVersion  bool              `json:"useLatestVersion,omitempty"`
+	PinnedIDEversions map[string]string `json:"pinnedIDEversions,omitempty"`
 }
 
 type WorkspaceContext struct {
@@ -356,20 +358,17 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 	// make a copy for ref ideConfig, it's safe because we replace ref in update config
 	ideConfig := s.code1_85IdeConfig
 
-	var defaultIde *config.IDEOption
-
-	if ide, ok := ideConfig.IdeOptions.Options[ideConfig.IdeOptions.DefaultIde]; !ok {
+	defaultIdeOption, ok := ideConfig.IdeOptions.Options[ideConfig.IdeOptions.DefaultIde]
+	if !ok {
 		// I think it never happen, we have a check to make sure all DefaultIDE should be in Options
 		log.WithError(err).WithField("defaultIDE", ideConfig.IdeOptions.DefaultIde).Error("IDE configuration corrupt, cannot found defaultIDE")
 		return nil, fmt.Errorf("IDE configuration corrupt")
-	} else {
-		defaultIde = &ide
 	}
 
 	resp = &api.ResolveWorkspaceConfigResponse{
 		SupervisorImage: ideConfig.SupervisorImage,
-		WebImage:        defaultIde.Image,
-		IdeImageLayers:  defaultIde.ImageLayers,
+		WebImage:        defaultIdeOption.Image,
+		IdeImageLayers:  defaultIdeOption.ImageLayers,
 	}
 
 	if os.Getenv("CONFIGCAT_SDK_KEY") != "" {
@@ -405,26 +404,41 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 
 		userIdeName := ""
 		useLatest := false
+		pinnedIDEversions := make(map[string]string)
 		resultingIdeName := ideConfig.IdeOptions.DefaultIde
+		chosenIDE := ideConfig.IdeOptions.Options[resultingIdeName]
 
 		if ideSettings != nil {
 			userIdeName = ideSettings.DefaultIde
 			useLatest = ideSettings.UseLatestVersion
+			pinnedIDEversions = ideSettings.PinnedIDEversions
 		}
 
-		chosenIDE := defaultIde
-
-		getUserIDEImage := func(ideOption *config.IDEOption) string {
+		getUserIDEImage := func(ide string) string {
+			ideOption := ideConfig.IdeOptions.Options[ide]
 			if useLatest && ideOption.LatestImage != "" {
 				return ideOption.LatestImage
+			}
+
+			if version, ok := pinnedIDEversions[ide]; ok {
+				if idx := slices.IndexFunc(ideOption.Versions, func(v config.IDEVersion) bool { return v.Version == version }); idx >= 0 {
+					return ideOption.Versions[idx].Image
+				}
 			}
 
 			return ideOption.Image
 		}
 
-		getUserImageLayers := func(ideOption *config.IDEOption) []string {
+		getUserImageLayers := func(ide string) []string {
+			ideOption := ideConfig.IdeOptions.Options[ide]
 			if useLatest {
 				return ideOption.LatestImageLayers
+			}
+
+			if version, ok := pinnedIDEversions[ide]; ok {
+				if idx := slices.IndexFunc(ideOption.Versions, func(v config.IDEVersion) bool { return v.Version == version }); idx >= 0 {
+					return ideOption.Versions[idx].ImageLayers
+				}
 			}
 
 			return ideOption.ImageLayers
@@ -432,8 +446,8 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 
 		if userIdeName != "" {
 			if ide, ok := ideConfig.IdeOptions.Options[userIdeName]; ok {
-				chosenIDE = &ide
 				resultingIdeName = userIdeName
+				chosenIDE = ide
 				// TODO: Currently this variable reflects the IDE selected in
 				// user's settings for backward compatibility but in the future
 				// we want to make it represent the actual IDE.
@@ -446,26 +460,26 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 		}
 
 		// we always need WebImage for when the user chooses a desktop ide
-		resp.WebImage = getUserIDEImage(defaultIde)
-		resp.IdeImageLayers = getUserImageLayers(defaultIde)
+		resp.WebImage = getUserIDEImage(ideConfig.IdeOptions.DefaultIde)
+		resp.IdeImageLayers = getUserImageLayers(ideConfig.IdeOptions.DefaultIde)
 
 		var desktopImageLayer string
 		var desktopUserImageLayers []string
 		if chosenIDE.Type == config.IDETypeDesktop {
-			desktopImageLayer = getUserIDEImage(chosenIDE)
-			desktopUserImageLayers = getUserImageLayers(chosenIDE)
+			desktopImageLayer = getUserIDEImage(resultingIdeName)
+			desktopUserImageLayers = getUserImageLayers(resultingIdeName)
 		} else {
-			resp.WebImage = getUserIDEImage(chosenIDE)
-			resp.IdeImageLayers = getUserImageLayers(chosenIDE)
+			resp.WebImage = getUserIDEImage(resultingIdeName)
+			resp.IdeImageLayers = getUserImageLayers(resultingIdeName)
 		}
 
 		// TODO (se) this should be handled on the surface (i.e. server or even dashboard) and not passed as a special workspace context down here.
-		ideName, referrer := s.resolveReferrerIDE(ideConfig, wsContext, userIdeName)
+		ideName, _ := s.resolveReferrerIDE(ideConfig, wsContext, userIdeName)
 		if ideName != "" {
 			resp.RefererIde = ideName
 			resultingIdeName = ideName
-			desktopImageLayer = getUserIDEImage(referrer)
-			desktopUserImageLayers = getUserImageLayers(referrer)
+			desktopImageLayer = getUserIDEImage(ideName)
+			desktopUserImageLayers = getUserImageLayers(ideName)
 		}
 
 		if desktopImageLayer != "" {
