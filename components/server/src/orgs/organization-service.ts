@@ -464,7 +464,9 @@ export class OrganizationService {
         if (settings.allowedWorkspaceClasses) {
             result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
         }
-        result.pinnedEditorVersions = settings.pinnedEditorVersions;
+        if (settings.pinnedEditorVersions) {
+            result.pinnedEditorVersions = settings.pinnedEditorVersions;
+        }
         return result;
     }
 
