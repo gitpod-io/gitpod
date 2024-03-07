@@ -204,6 +204,8 @@ export interface OrganizationSettings {
 
     // empty array to allow all kind of workspace classes
     allowedWorkspaceClasses?: string[] | null;
+
+    pinnedEditorVersions?: { [key: string]: string } | null;
 }
 
 export type TeamMemberRole = OrgMemberRole;
