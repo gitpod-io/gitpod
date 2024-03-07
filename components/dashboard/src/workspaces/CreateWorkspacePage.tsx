@@ -438,6 +438,7 @@ export function CreateWorkspacePage() {
                             }
                             setSelectAccountError={setSelectAccountError}
                             reset={() => {
+                                workspaceContext.refetch();
                                 createWorkspaceMutation.reset();
                             }}
                         />
@@ -557,9 +558,10 @@ const ErrorMessage: FunctionComponent<ErrorMessageProps> = ({ error, reset, setS
                     title="You are not authenticated."
                     linkText={`Authorize with ${error.data?.host}`}
                     linkOnClick={() => {
-                        tryAuthorize(error.data?.host, error.data?.scopes).then((payload) =>
-                            setSelectAccountError(payload),
-                        );
+                        tryAuthorize(error.data?.host, error.data?.scopes).then((payload) => {
+                            setSelectAccountError(payload);
+                            reset();
+                        });
                     }}
                 />
             );
