@@ -438,8 +438,8 @@ export function CreateWorkspacePage() {
                             }
                             setSelectAccountError={setSelectAccountError}
                             reset={() => {
-                                createWorkspaceMutation.reset();
                                 workspaceContext.refetch();
+                                createWorkspaceMutation.reset();
                             }}
                         />
                     ) : null}
