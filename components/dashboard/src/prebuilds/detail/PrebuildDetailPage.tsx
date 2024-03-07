@@ -9,7 +9,7 @@ import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Text } from "@podkit/typography/Text";
 import { Button } from "@podkit/buttons/Button";
 import { FC, Suspense, useEffect, useMemo, useState } from "react";
-import { Redirect, useParams } from "react-router";
+import { Redirect, useHistory, useParams } from "react-router";
 import { CircleSlash, Loader2Icon } from "lucide-react";
 import dayjs from "dayjs";
 import { usePrebuildLogsEmitter } from "../../data/prebuilds/prebuild-logs-emitter";
@@ -41,6 +41,8 @@ const formatDate = (date: dayjs.Dayjs): string => {
     return date.format("MMM D, YYYY [at] h:mm A");
 };
 
+const PersistedToastID = "prebuild-logs-error";
+
 interface Props {
     prebuildId: string;
 }
@@ -49,7 +51,8 @@ export const PrebuildDetailPage: FC = () => {
 
     const { data: prebuild, isLoading: isInfoLoading, error, refetch } = usePrebuildQuery(prebuildId);
 
-    const { toast } = useToast();
+    const history = useHistory();
+    const { toast, dismissToast } = useToast();
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
     const [logNotFound, setLogNotFound] = useState(false);
 
@@ -78,6 +81,13 @@ export const PrebuildDetailPage: FC = () => {
     }, [prebuildId]);
 
     useEffect(() => {
+        history.listen(() => {
+            dismissToast(PersistedToastID);
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
         logEmitter.on("error", (err: Error) => {
             if (err?.name === "AbortError") {
                 return;
@@ -92,7 +102,7 @@ export const PrebuildDetailPage: FC = () => {
                 return;
             }
 
-            toast("Fetching logs failed: " + err.message, { autoHide: false });
+            toast("Fetching logs failed: " + err.message, { autoHide: false, id: PersistedToastID });
         });
     }, [logEmitter, toast]);
 
