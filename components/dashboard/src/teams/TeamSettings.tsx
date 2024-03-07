@@ -38,6 +38,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useIDEOptions } from "../data/ide-options/ide-options-query";
 import { IdeOptions, IdeOptionsModifyModal, IdeOptionsModifyModalProps } from "../components/IdeOptions";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -49,6 +50,7 @@ export default function TeamSettingsPage() {
     const [teamName, setTeamName] = useState(org?.name || "");
     const [updated, setUpdated] = useState(false);
     const updateOrg = useUpdateOrgMutation();
+    const orgLevelEditorRestrictionEnabled = useFeatureFlag("org_level_editor_restriction_enabled");
 
     const close = () => setModal(false);
 
@@ -215,11 +217,13 @@ export default function TeamSettingsPage() {
                         handleUpdateTeamSettings={handleUpdateTeamSettings}
                     />
 
-                    <EditorOptions
-                        isOwner={isOwner}
-                        settings={settings}
-                        handleUpdateTeamSettings={handleUpdateTeamSettings}
-                    />
+                    {orgLevelEditorRestrictionEnabled && (
+                        <EditorOptions
+                            isOwner={isOwner}
+                            settings={settings}
+                            handleUpdateTeamSettings={handleUpdateTeamSettings}
+                        />
+                    )}
 
                     {user?.organizationId !== org?.id && isOwner && (
                         <ConfigurationSettingsField>
