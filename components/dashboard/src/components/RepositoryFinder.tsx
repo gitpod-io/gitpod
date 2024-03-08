@@ -94,6 +94,18 @@ export default function RepositoryFinder({
         return match;
     }, [repos, selectedContextURL, selectedProjectID]);
 
+    const displayName = useMemo(() => {
+        if (!selectedSuggestion) {
+            return;
+        }
+
+        if (excludeProjects || !selectedSuggestion?.configurationName) {
+            return displayContextUrl(selectedSuggestion?.repoName || selectedSuggestion?.url);
+        }
+
+        return selectedSuggestion?.configurationName;
+    }, [excludeProjects, selectedSuggestion]);
+
     const getElements = useCallback(
         // searchString ignore here as list is already pre-filtered against it
         // w/ mirrored state via useUnifiedRepositorySearch
@@ -166,15 +178,7 @@ export default function RepositoryFinder({
             <ComboboxSelectedItem
                 icon={RepositorySVG}
                 htmlTitle={displayContextUrl(selectedContextURL) || "Repository"}
-                title={
-                    <div className="truncate">
-                        {displayContextUrl(
-                            selectedSuggestion?.configurationName ||
-                                selectedSuggestion?.repoName ||
-                                selectedSuggestion?.url,
-                        ) || "Select a repository"}
-                    </div>
-                }
+                title={<div className="truncate">{displayName || "Select a repository"}</div>}
                 subtitle={
                     // Only show the url if we have a project or repo name, otherwise it's redundant w/ the title
                     selectedSuggestion?.configurationName || selectedSuggestion?.repoName
