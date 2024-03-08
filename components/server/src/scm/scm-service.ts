@@ -227,8 +227,7 @@ export class ScmService {
                         suggestionFromRecentWorkspace(
                             {
                                 url: repoUrl,
-                                projectId: ws.workspace.projectId,
-                                repositoryName: repoName || "",
+                                repositoryName: repoName ?? "",
                             },
                             lastUse,
                         ),

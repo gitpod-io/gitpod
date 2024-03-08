@@ -89,7 +89,7 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
                                     selectedContextURL={selectedRepo?.url}
                                     selectedConfigurationId={configurationId}
                                     onChange={setSelectedRepo}
-                                    onlyProjects
+                                    onlyConfigurations
                                 />
                             </InputField>
                             <TextInputField

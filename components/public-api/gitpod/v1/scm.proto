@@ -49,8 +49,9 @@ message SearchRepositoriesResponse {
 
 message ListSuggestedRepositoriesRequest {
   PaginationRequest pagination = 1;
+  bool exclude_configurations = 2;
 
-  string organization_id = 2;
+  string organization_id = 3;
 }
 message ListSuggestedRepositoriesResponse {
   PaginationResponse pagination = 1;

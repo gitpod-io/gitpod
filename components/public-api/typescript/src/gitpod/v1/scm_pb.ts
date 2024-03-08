@@ -269,7 +269,12 @@ export class ListSuggestedRepositoriesRequest extends Message<ListSuggestedRepos
   pagination?: PaginationRequest;
 
   /**
-   * @generated from field: string organization_id = 2;
+   * @generated from field: bool exclude_configurations = 2;
+   */
+  excludeConfigurations = false;
+
+  /**
+   * @generated from field: string organization_id = 3;
    */
   organizationId = "";
 
@@ -282,7 +287,8 @@ export class ListSuggestedRepositoriesRequest extends Message<ListSuggestedRepos
   static readonly typeName = "gitpod.v1.ListSuggestedRepositoriesRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
-    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "exclude_configurations", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListSuggestedRepositoriesRequest {
