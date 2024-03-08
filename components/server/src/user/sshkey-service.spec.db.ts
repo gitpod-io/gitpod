@@ -10,14 +10,13 @@ import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-s
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx, withTestCtxProxy } from "../test/service-testing-container-module";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { SSHKeyService } from "./sshkey-service";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "./user-service";
 import { expectError } from "../test/expect-utils";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { SYSTEM_USER } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -48,9 +47,19 @@ describe("SSHKeyService", async () => {
 
         const orgService = container.get<OrganizationService>(OrganizationService);
         org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
-        const invite = await orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
+        const invite = await withTestCtx(BUILTIN_INSTLLATION_ADMIN_USER_ID, () =>
+            orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id),
+        );
 
         const userService = container.get<UserService>(UserService);
+        const owner = await userService.createUser({
+            identity: {
+                authId: "foo",
+                authName: "bar",
+                authProviderId: "github",
+                primaryEmail: "yolo@yolo.com",
+            },
+        });
         member = await userService.createUser({
             organizationId: org.id,
             identity: {
@@ -60,7 +69,8 @@ describe("SSHKeyService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
-        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, invite.id));
+        await withTestCtx(owner, () => orgService.joinOrganization(owner.id, invite.id));
+        await withTestCtx(member, () => orgService.joinOrganization(member.id, invite.id));
         stranger = await userService.createUser({
             identity: {
                 authId: "foo2",
@@ -69,7 +79,10 @@ describe("SSHKeyService", async () => {
             },
         });
 
-        ss = container.get(SSHKeyService);
+        const realSs = container.get(SSHKeyService);
+        ss = withTestCtxProxy(realSs, {
+            0: ["hasSSHPublicKey", "getSSHPublicKeys", "addSSHPublicKey", "deleteSSHPublicKey"],
+        });
     });
 
     afterEach(async () => {

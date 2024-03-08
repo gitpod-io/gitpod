@@ -179,7 +179,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
         const ws1 = await withTestCtx(userA, () => createTestWorkspace(org1, userA));
 
         expect(
-            await withTestCtx(SYSTEM_USER, () => authorizer.hasPermissionOnWorkspace(userA.id, "read_info", ws1.id)),
+            await withTestCtx(userA, () => authorizer.hasPermissionOnWorkspace(userA.id, "read_info", ws1.id)),
             "userA should have read_info after removal of userB",
         ).to.be.true;
         expect(

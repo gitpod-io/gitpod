@@ -817,35 +817,42 @@ export class WorkspaceStarter {
      * failInstanceStart properly fails a workspace instance if something goes wrong before the instance ever reaches
      * workspace manager. In this case we need to make sure we also fulfil the tasks of the bridge (e.g. for prebulds).
      */
-    private async failInstanceStart(ctx: TraceContext, err: any, workspace: Workspace, instance: WorkspaceInstance) {
+    private async failInstanceStart(
+        ctx: TraceContext,
+        err: any,
+        workspace: Workspace,
+        instance: WorkspaceInstance | undefined,
+    ) {
         if (ctxIsAborted()) {
             return;
         }
 
         const span = TraceContext.startSpan("failInstanceStart", ctx);
         try {
-            // We may have never actually started the workspace which means that ws-manager-bridge never set a workspace status.
-            // We have to set that status ourselves.
-            instance.status.phase = "stopped";
-            const now = new Date().toISOString();
-            instance.stoppingTime = now;
-            instance.stoppedTime = now;
+            if (instance) {
+                // We may have never actually started the workspace which means that ws-manager-bridge never set a workspace status.
+                // We have to set that status ourselves.
+                instance.status.phase = "stopped";
+                const now = new Date().toISOString();
+                instance.stoppingTime = now;
+                instance.stoppedTime = now;
 
-            instance.status.conditions.failed = err.toString();
-            instance.status.message = `Workspace cannot be started: ${err}`;
-            await this.workspaceDb.trace({ span }).storeInstance(instance);
-            await this.publisher.publishInstanceUpdate({
-                instanceID: instance.id,
-                ownerID: workspace.ownerId,
-                workspaceID: workspace.id,
-            });
+                instance.status.conditions.failed = err.toString();
+                instance.status.message = `Workspace cannot be started: ${err}`;
+                await this.workspaceDb.trace({ span }).storeInstance(instance);
+                await this.publisher.publishInstanceUpdate({
+                    instanceID: instance.id,
+                    ownerID: workspace.ownerId,
+                    workspaceID: workspace.id,
+                });
+            }
 
             // If we just attempted to start a workspace for a prebuild - and that failed, we have to fail the prebuild itself.
             await this.failPrebuildWorkspace({ span }, err, workspace);
         } catch (err) {
             TraceContext.setError({ span }, err);
             log.error(
-                { workspaceId: workspace.id, instanceId: instance.id, userId: workspace.ownerId },
+                { workspaceId: workspace.id, instanceId: instance?.id, userId: workspace.ownerId },
                 "cannot properly fail workspace instance during start",
                 err,
             );

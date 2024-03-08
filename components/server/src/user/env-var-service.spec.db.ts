@@ -18,7 +18,7 @@ import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-s
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx, withTestCtxProxy } from "../test/service-testing-container-module";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "./user-service";
@@ -26,7 +26,6 @@ import { expectError } from "../test/expect-utils";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { EnvVarService } from "./env-var-service";
 import { ProjectsService } from "../projects/projects-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -95,11 +94,22 @@ describe("EnvVarService", async () => {
         });
 
         const userService = container.get<UserService>(UserService);
-        owner = await userService.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID, BUILTIN_INSTLLATION_ADMIN_USER_ID);
+        // owner = await userService.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID, BUILTIN_INSTLLATION_ADMIN_USER_ID);
 
         const orgService = container.get<OrganizationService>(OrganizationService);
         org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
-        const invite = await orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
+        const invite = await withTestCtx(BUILTIN_INSTLLATION_ADMIN_USER_ID, () =>
+            orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id),
+        );
+
+        owner = await userService.createUser({
+            identity: {
+                authId: "foo",
+                authName: "bar",
+                authProviderId: "github",
+                primaryEmail: "yolo@yolo.com",
+            },
+        });
 
         member = await userService.createUser({
             organizationId: org.id,
@@ -110,7 +120,10 @@ describe("EnvVarService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
-        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, invite.id));
+        // first joined user will be owner and remove BUILT IN user
+        await withTestCtx(owner.id, () => orgService.joinOrganization(owner.id, invite.id));
+        await withTestCtx(member.id, () => orgService.joinOrganization(member.id, invite.id));
+
         stranger = await userService.createUser({
             identity: {
                 authId: "foo2",
@@ -120,18 +133,34 @@ describe("EnvVarService", async () => {
         });
 
         const projectsService = container.get<ProjectsService>(ProjectsService);
-        project = await projectsService.createProject(
-            {
-                name: "my-project",
-                slug: "my-project",
-                teamId: org.id,
-                cloneUrl: "https://github.com/gitpod-io/gitpod.git",
-                appInstallationId: "noid",
-            },
-            member,
+        project = await withTestCtx(member, () =>
+            projectsService.createProject(
+                {
+                    name: "my-project",
+                    slug: "my-project",
+                    teamId: org.id,
+                    cloneUrl: "https://github.com/gitpod-io/gitpod.git",
+                    appInstallationId: "noid",
+                },
+                member,
+            ),
         );
 
-        es = container.get(EnvVarService);
+        const realEs = container.get(EnvVarService);
+        es = withTestCtxProxy(realEs, {
+            0: [
+                "listUserEnvVars",
+                "addUserEnvVar",
+                "updateUserEnvVar",
+                "deleteUserEnvVar",
+                "listProjectEnvVars",
+                "getProjectEnvVarById",
+                "addProjectEnvVar",
+                "updateProjectEnvVar",
+                "deleteProjectEnvVar",
+                "resolveEnvVariables",
+            ],
+        });
     });
 
     afterEach(async () => {

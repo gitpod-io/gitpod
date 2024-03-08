@@ -22,12 +22,11 @@ import { Container } from "inversify";
 import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
 import { expectError } from "../test/expect-utils";
-import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx, withTestCtxProxy } from "../test/service-testing-container-module";
 import { WorkspaceService } from "./workspace-service";
 import { ProjectsService } from "../projects/projects-service";
 import { ConfigProvider } from "./config-provider";
 import { UserService } from "../user/user-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -38,6 +37,8 @@ describe("WorkspaceService", async () => {
     let stranger: User;
     let org: Organization;
     let project: Project;
+    let workspaceService: WorkspaceService;
+    let svc: WorkspaceService;
 
     beforeEach(async () => {
         container = createTestContainer();
@@ -65,7 +66,8 @@ describe("WorkspaceService", async () => {
 
         // create the org
         const orgService = container.get(OrganizationService);
-        org = await orgService.createOrganization(owner.id, "my-org");
+
+        org = await withTestCtx(owner, () => orgService.createOrganization(owner.id, "my-org"));
 
         // create and add a member
         member = await userService.createUser({
@@ -75,20 +77,23 @@ describe("WorkspaceService", async () => {
                 authProviderId: "Public-GitHub",
             },
         });
-        const invite = await orgService.getOrCreateInvite(owner.id, org.id);
-        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, invite.id));
+        const invite = await withTestCtx(owner, () => orgService.getOrCreateInvite(owner.id, org.id));
+        await withTestCtx(member, () => orgService.joinOrganization(member.id, invite.id));
 
         // create a project
         const projectService = container.get(ProjectsService);
-        project = await projectService.createProject(
-            {
-                name: "my-project",
-                slug: "my-project",
-                teamId: org.id,
-                cloneUrl: "https://github.com/gitpod-io/gitpod",
-                appInstallationId: "noid",
-            },
-            owner,
+
+        project = await withTestCtx(owner, () =>
+            projectService.createProject(
+                {
+                    name: "my-project",
+                    slug: "my-project",
+                    teamId: org.id,
+                    cloneUrl: "https://github.com/gitpod-io/gitpod",
+                    appInstallationId: "noid",
+                },
+                owner,
+            ),
         );
 
         // create a stranger
@@ -99,6 +104,33 @@ describe("WorkspaceService", async () => {
                 authProviderId: "Public-GitHub",
             },
         });
+
+        const realWorkspaceService = container.get(WorkspaceService);
+        const proxySvc = withTestCtxProxy(realWorkspaceService, {
+            0: [
+                "controlAdmission",
+                "getWorkspace",
+                "getWorkspaces",
+                "stopWorkspace",
+                "deleteWorkspace",
+                "hardDeleteWorkspace",
+                "setPinned",
+                "setDescription",
+                "getOpenPorts",
+                "openPort",
+                "closePort",
+                "updateGitStatus",
+                "getWorkspaceTimeout",
+                "setWorkspaceTimeout",
+                "watchWorkspaceImageBuildLogs",
+                "getSupportedWorkspaceClasses",
+                "getIDECredentials",
+                "getOwnerToken",
+            ],
+            1: ["startWorkspace", "createWorkspace"],
+        });
+        workspaceService = proxySvc;
+        svc = proxySvc;
     });
 
     afterEach(async () => {
@@ -109,17 +141,14 @@ describe("WorkspaceService", async () => {
     });
 
     it("should createWorkspace", async () => {
-        const svc = container.get(WorkspaceService);
-
         // Owner can create a workspace in our org
-        await createTestWorkspace(svc, org, owner, project);
+        await createTestWorkspace(workspaceService, org, owner, project);
 
         // Stranger can't create a workspace in our org
-        await expectError(ErrorCodes.NOT_FOUND, createTestWorkspace(svc, org, stranger, project));
+        await expectError(ErrorCodes.NOT_FOUND, createTestWorkspace(workspaceService, org, stranger, project));
     });
 
     it("owner can start own workspace", async () => {
-        const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, owner, project);
 
         const result = await workspaceService.startWorkspace({}, owner, workspace.id);
@@ -127,7 +156,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("owner can start own workspace - shared", async () => {
-        const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, owner, project);
         await workspaceService.controlAdmission(owner.id, workspace.id, "everyone");
 
@@ -136,52 +164,44 @@ describe("WorkspaceService", async () => {
     });
 
     it("stanger cannot start owner workspace", async () => {
-        const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, owner, project);
         await expectError(ErrorCodes.NOT_FOUND, workspaceService.startWorkspace({}, stranger, workspace.id));
     });
 
     it("stanger cannot start owner workspace - shared", async () => {
-        const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, owner, project);
         await workspaceService.controlAdmission(owner.id, workspace.id, "everyone");
         await expectError(ErrorCodes.PERMISSION_DENIED, workspaceService.startWorkspace({}, stranger, workspace.id));
     });
 
     it("org member cannot start owner workspace", async () => {
-        const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, owner, project);
         await expectError(ErrorCodes.PERMISSION_DENIED, workspaceService.startWorkspace({}, member, workspace.id));
     });
 
     it("org member cannot start owner workspace - shared", async () => {
-        const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, owner, project);
         await workspaceService.controlAdmission(owner.id, workspace.id, "everyone");
         await expectError(ErrorCodes.PERMISSION_DENIED, workspaceService.startWorkspace({}, member, workspace.id));
     });
 
     it("org member can start own workspace", async () => {
-        const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, member, project);
         const result = await workspaceService.startWorkspace({}, member, workspace.id);
         expect(result.instanceID).to.not.be.undefined;
     });
 
     it("stanger cannot start org member workspace", async () => {
-        const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, member, project);
         await expectError(ErrorCodes.NOT_FOUND, workspaceService.startWorkspace({}, stranger, workspace.id));
     });
 
     it("owner cannot start org member workspace", async () => {
-        const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, member, project);
         await expectError(ErrorCodes.PERMISSION_DENIED, workspaceService.startWorkspace({}, owner, workspace.id));
     });
 
     it("should getWorkspace", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         const { workspace: ownerWs } = await svc.getWorkspace(owner.id, ws.id);
@@ -192,7 +212,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should getWorkspace - shared", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await svc.controlAdmission(owner.id, ws.id, "everyone");
@@ -208,7 +227,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should getWorkspaces", async () => {
-        const svc = container.get(WorkspaceService);
         await createTestWorkspace(svc, org, owner, project);
 
         const ownerResult = await svc.getWorkspaces(owner.id, {});
@@ -222,7 +240,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should getWorkspaces - shared", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await svc.controlAdmission(owner.id, ws.id, "everyone");
@@ -239,7 +256,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should getOwnerToken", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await expectError(
@@ -262,7 +278,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should getIDECredentials", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         const ideCredentials = await svc.getIDECredentials(owner.id, ws.id);
@@ -276,7 +291,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should getIDECredentials - shared", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await svc.controlAdmission(owner.id, ws.id, "everyone");
@@ -289,7 +303,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should stopWorkspace", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await svc.stopWorkspace(owner.id, ws.id, "test");
@@ -301,7 +314,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should stopWorkspace - shared", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await svc.controlAdmission(owner.id, ws.id, "everyone");
@@ -315,7 +327,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should deleteWorkspace", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await expectError(
@@ -336,7 +347,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should hardDeleteWorkspace", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await expectError(
@@ -354,7 +364,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should hardDeleteWorkspace - shared", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await svc.controlAdmission(owner.id, ws.id, "everyone");
@@ -380,7 +389,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should setPinned", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await expectError(ErrorCodes.NOT_FOUND, svc.setPinned(stranger.id, ws.id, true));
@@ -390,7 +398,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should setDescription", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
         const desc = "Some description";
 
@@ -402,7 +409,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should getOpenPorts", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await expectError(
@@ -413,7 +419,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should openPort", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         const port: WorkspaceInstancePort = {
@@ -427,7 +432,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should closePort", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await expectError(
@@ -438,7 +442,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should updateGitStatus", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await expectError(
@@ -458,7 +461,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should getWorkspaceTimeout", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         const actual = await svc.getWorkspaceTimeout(owner.id, ws.id);
@@ -466,7 +468,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should setWorkspaceTimeout", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await expectError(
@@ -477,7 +478,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should getHeadlessLog", async () => {
-        const svc = container.get(WorkspaceService);
         await createTestWorkspace(svc, org, owner, project);
 
         await expectError(
@@ -488,7 +488,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should watchWorkspaceImageBuildLogs", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
         const client = {
             onWorkspaceImageBuildLogs: (
@@ -513,7 +512,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should watchWorkspaceImageBuildLogs - shared", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
         const client = {
             onWorkspaceImageBuildLogs: (
@@ -530,7 +528,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should sendHeartBeat", async () => {
-        const svc = container.get(WorkspaceService);
         await createTestWorkspace(svc, org, owner, project);
 
         await expectError(
@@ -543,7 +540,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should controlAdmission - owner", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         // owner can share workspace
@@ -553,7 +549,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should controlAdmission - non-owner", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await expectError(
@@ -577,8 +572,6 @@ describe("WorkspaceService", async () => {
     });
 
     it("should return supported workspace classes", async () => {
-        const svc = container.get(WorkspaceService);
-
         Experiments.configureTestingClient({
             workspace_class_discovery_enabled: true,
         });
@@ -592,11 +585,10 @@ describe("WorkspaceService", async () => {
     });
 
     it("should controlAdmission - sharing disabled on org", async () => {
-        const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         const orgService = container.get(OrganizationService);
-        await orgService.updateSettings(owner.id, org.id, { workspaceSharingDisabled: true });
+        await withTestCtx(owner, () => orgService.updateSettings(owner.id, org.id, { workspaceSharingDisabled: true }));
 
         await expectError(
             ErrorCodes.PERMISSION_DENIED,

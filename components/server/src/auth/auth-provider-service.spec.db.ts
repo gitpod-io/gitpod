@@ -10,7 +10,7 @@ import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-s
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx, withTestCtxProxy } from "../test/service-testing-container-module";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { UserService } from "../user/user-service";
 import { AuthProviderService } from "./auth-provider-service";
@@ -113,7 +113,16 @@ describe("AuthProviderService", async () => {
         Experiments.configureTestingClient({
             centralizedPermissions: true,
         });
-        service = container.get(AuthProviderService);
+        const realService = container.get(AuthProviderService);
+        service = withTestCtxProxy(realService, {
+            0: [
+                "createOrgAuthProvider",
+                "getAuthProvider",
+                "createAuthProviderOfUser",
+                "updateOrgAuthProvider",
+                "updateAuthProviderOfUser",
+            ],
+        });
         userService = container.get<UserService>(UserService);
         currentUser = await userService.createUser({
             identity: {
@@ -122,7 +131,10 @@ describe("AuthProviderService", async () => {
                 authProviderId: "public-github",
             },
         });
-        orgService = container.get<OrganizationService>(OrganizationService);
+        const realOrgService = container.get<OrganizationService>(OrganizationService);
+        orgService = withTestCtxProxy(realOrgService, {
+            0: ["getOrCreateInvite"],
+        });
         org = await orgService.createOrganization(currentUser.id, "myorg");
     });
 

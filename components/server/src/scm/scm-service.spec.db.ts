@@ -10,7 +10,7 @@ import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-s
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { createTestContainer } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtxProxy } from "../test/service-testing-container-module";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { UserService } from "../user/user-service";
 import { Config } from "../config";
@@ -43,7 +43,10 @@ describe("ScmService", async () => {
         Experiments.configureTestingClient({
             centralizedPermissions: true,
         });
-        service = container.get(ScmService);
+        const realService = container.get(ScmService);
+        service = withTestCtxProxy(realService, {
+            0: ["getToken"],
+        });
         userService = container.get<UserService>(UserService);
         currentUser = await userService.createUser({
             identity: {
