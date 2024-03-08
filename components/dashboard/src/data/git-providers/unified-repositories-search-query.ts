@@ -66,6 +66,11 @@ export function deduplicateAndFilterRepositories(
                 continue;
             }
         }
+
+        if (excludeProjects && repo.configurationId) {
+            continue;
+        }
+
         // filter out entries that don't match the search string
         if (!`${repo.url}${repo.configurationName || ""}`.toLowerCase().includes(normalizedSearchString)) {
             continue;
