@@ -113,7 +113,7 @@ export default function RepositoryFinder({
             const result = repos.map((repo) => {
                 return {
                     id: repo.configurationId || repo.url,
-                    element: <SuggestedRepositoryOption repo={repo} />,
+                    element: <SuggestedRepositoryOption repo={repo} forceRepository={excludeProjects} />,
                     isSelectable: true,
                 } as ComboboxElement;
             });
@@ -160,7 +160,7 @@ export default function RepositoryFinder({
             }
             return result;
         },
-        [repos, hasMore, authProviders.data, onlyProjects],
+        [repos, hasMore, authProviders.data, onlyProjects, excludeProjects],
     );
 
     return (
@@ -193,9 +193,10 @@ export default function RepositoryFinder({
 
 type SuggestedRepositoryOptionProps = {
     repo: SuggestedRepository;
+    forceRepository?: boolean;
 };
-const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo }) => {
-    const name = repo.configurationName || repo.repoName;
+const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo, forceRepository }) => {
+    const name = forceRepository ? repo.repoName : repo.configurationName || repo.repoName;
     const repoPath = stripOffProtocol(repo.url);
 
     return (
