@@ -529,7 +529,7 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 		log.WithError(err).WithFields(log.OWI("", "", workspaceID)).Warn("was unable to update status")
 	}
 
-	// We do however maintain the the "closed" flag as condition on the workspace. This flag should not change
+	// We do however maintain the "closed" flag as condition on the workspace. This flag should not change
 	// very often and provides a better UX if it persists across ws-manager restarts.
 	isMarkedClosed := ws.IsConditionTrue(workspacev1.WorkspaceConditionClosed)
 	if req.Closed && !isMarkedClosed {

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Provides SSH access to the the VM where your preview environment is installed.
+# Provides SSH access to the VM where your preview environment is installed.
 #
 
 set -euo pipefail
