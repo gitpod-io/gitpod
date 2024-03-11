@@ -216,6 +216,19 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								RunAsNonRoot: pointer.Bool(true),
 								RunAsUser:    pointer.Int64(65532),
 							},
+							LivenessProbe: &corev1.Probe{
+								InitialDelaySeconds: int32(5),
+								PeriodSeconds:       int32(5),
+								FailureThreshold:    int32(10),
+								SuccessThreshold:    int32(1),
+								TimeoutSeconds:      int32(2),
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/live",
+										Port: intstr.IntOrString{IntVal: ReadinessPort},
+									},
+								},
+							},
 						}, {
 							Name:            Component,
 							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Proxy.Version),
@@ -259,19 +272,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								TimeoutSeconds:      1,
 								SuccessThreshold:    1,
 								FailureThreshold:    3,
-							},
-							LivenessProbe: &corev1.Probe{
-								InitialDelaySeconds: int32(5),
-								PeriodSeconds:       int32(5),
-								FailureThreshold:    int32(10),
-								SuccessThreshold:    int32(1),
-								TimeoutSeconds:      int32(2),
-								ProbeHandler: corev1.ProbeHandler{
-									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/live",
-										Port: intstr.IntOrString{IntVal: ReadinessPort},
-									},
-								},
 							},
 							VolumeMounts: volumeMounts,
 							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
