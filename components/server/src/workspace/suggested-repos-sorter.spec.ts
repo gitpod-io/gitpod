@@ -72,12 +72,18 @@ class TestSuggestedReposSorter {
         });
         const repo2 = suggestionFromUserRepo({
             url: "https://github.com/repo2",
-            projectId: "2",
-            projectName: "Project B",
+            projectId: "2a",
+            projectName: "Project B1",
         });
-        const sortedRepos = sortSuggestedRepositories([entry, repo2]);
+        const repo3 = suggestionFromUserRepo({
+            url: "https://github.com/repo2",
+            projectId: "2b",
+            projectName: "Project B2",
+        });
+        const sortedRepos = sortSuggestedRepositories([entry, repo2, repo3]);
         expect(sortedRepos[0].url).equals(entry.url);
         expect(sortedRepos[1].url).equals(repo2.url);
+        expect(sortedRepos.length).equals(3);
     }
 
     @test
@@ -143,9 +149,18 @@ class TestSuggestedReposSorter {
             },
             "2023-08-13T04:00:00Z",
         );
-        const repos = sortSuggestedRepositories([entry1, entry2, entry3, entry4]);
+        const entry5 = suggestionFromRecentWorkspace(
+            {
+                url: "https://github.com/repo1",
+                repositoryName: "Repo 5",
+                projectId: "1",
+            },
+            "2023-08-13T04:00:00Z",
+        );
+        const repos = sortSuggestedRepositories([entry1, entry2, entry3, entry4, entry5]);
         expect(repos).lengthOf(3);
         expect(repos[0].url).equals(entry1.url);
+        expect(repos[0].projectName).equals(entry1.projectName);
         expect(repos[1].url).equals(entry4.url);
         expect(repos[2].url).equals(entry2.url);
     }

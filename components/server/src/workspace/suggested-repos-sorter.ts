@@ -27,7 +27,7 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
         const sameURLEntries = uniqueRepositories.filter((r) => r.url === repo.url);
 
         // If this is a project look for non-project entries and merge in priority/lastUse
-        if (repo.projectId) {
+        if (repo.projectId && repo.projectName) {
             // keep track of any urls that have at least one project so we can filter out non-project entries later
             projectURLs.push(repo.url);
             const projectEntry = { ...repo };
