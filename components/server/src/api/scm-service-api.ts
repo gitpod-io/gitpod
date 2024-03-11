@@ -82,7 +82,7 @@ export class ScmServiceAPI implements ServiceImpl<typeof ScmServiceInterface> {
 
         const projectsPromise: Promise<Project[]> = !excludeConfigurations
             ? this.projectService.getProjects(userId, organizationId)
-            : new Promise((r) => r([]));
+            : Promise.resolve([]);
         const workspacesPromise = this.workspaceService.getWorkspaces(userId, { organizationId });
         const repos = await this.scmService.listSuggestedRepositories(userId, { projectsPromise, workspacesPromise });
         return new ListSuggestedRepositoriesResponse({
