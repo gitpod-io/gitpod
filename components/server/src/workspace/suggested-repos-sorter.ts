@@ -27,7 +27,7 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
         const sameURLEntries = uniqueRepositories.filter((r) => r.url === repo.url);
 
         // If this is a project look for non-project entries and merge in priority/lastUse
-        if (repo.projectId && repo.projectName) {
+        if (repo.projectId) {
             // keep track of any urls that have at least one project so we can filter out non-project entries later
             projectURLs.push(repo.url);
             const projectEntry = { ...repo };
@@ -35,6 +35,17 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
             for (const entry of sameURLEntries) {
                 // Don't consider other projects
                 if (entry.projectId) {
+                    if (entry.projectId === projectEntry.projectId) {
+                        // If we find the same project, update the priority, lastUse, projectName, and remove the duplicate entry
+                        if ((entry.lastUse ?? 0) > (projectEntry.lastUse ?? 0)) {
+                            projectEntry.lastUse = entry.lastUse;
+                        }
+
+                        projectEntry.priority += entry.priority;
+                        projectEntry.projectName = entry.projectName || projectEntry.projectName;
+
+                        uniqueRepositories = uniqueRepositories.filter((r) => r.projectId !== entry.projectId);
+                    }
                     continue;
                 }
 
@@ -73,12 +84,22 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
         }
     }
 
-    // Filter out any non-projects that already have a project entry for their url
+    // Clean up orphaned project entries by treating them as non-projects again.
+    uniqueRepositories = uniqueRepositories.map((repo) => {
+        if (repo.projectId && !repo.projectName) {
+            delete repo.projectId;
+            delete projectURLs[projectURLs.indexOf(repo.url)];
+        }
+
+        return repo;
+    });
+
     uniqueRepositories = uniqueRepositories.filter((repo) => {
-        // Keep any project entries
-        if (repo.projectId) {
+        // Keep any project entries.
+        if (repo.projectId && repo.projectName) {
             return true;
         }
+
         // Exclude any non-projects that already have a project entry for their url
         if (projectURLs.includes(repo.url)) {
             return false;
