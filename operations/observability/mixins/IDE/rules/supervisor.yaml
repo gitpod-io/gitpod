@@ -23,7 +23,7 @@ spec:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/SupervisorIncomingFailuresRatioTooHigh.md
         summary: Supervisor is returning higher number of errors. This can prevent workspace usability.
       expr: |
-          sum(rate(grpc_server_handled_total{grpc_code!~"OK|Canceled", grpc_service=~"supervisor.*"}[5m])) by(cluster) / sum(rate(grpc_server_handled_total{grpc_service=~"supervisor.*"}[5m])) by(cluster) > 0.01
+sum by(grpc_code, grpc_method, grpc_service, grpc_type) (rate(grpc_server_handled_total{grpc_code!~"OK|Canceled", grpc_service=~"supervisor.*")) > 0.01
 
     - alert: SupervisorOutgoingFailuresRatioTooHigh
       labels:
