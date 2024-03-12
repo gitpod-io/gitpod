@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -91,11 +92,14 @@ type WorkspaceReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
-func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
+	span, ctx := tracing.FromContext(ctx, "WorkspaceReconciler.Reconcile")
+	defer tracing.FinishSpan(span, &err)
 	log := log.FromContext(ctx)
 
 	var workspace workspacev1.Workspace
-	if err := r.Get(ctx, req.NamespacedName, &workspace); err != nil {
+	err = r.Get(ctx, req.NamespacedName, &workspace)
+	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			log.Error(err, "unable to fetch workspace")
 		}
@@ -140,7 +144,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return errorResultLogConflict(log, fmt.Errorf("failed to update workspace status: %w", err))
 	}
 
-	result, err := r.actOnStatus(ctx, &workspace, workspacePods)
+	result, err = r.actOnStatus(ctx, &workspace, workspacePods)
 	if err != nil {
 		return errorResultLogConflict(log, fmt.Errorf("failed to act on status: %w", err))
 	}
@@ -148,9 +152,12 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	return result, nil
 }
 
-func (r *WorkspaceReconciler) listWorkspacePods(ctx context.Context, ws *workspacev1.Workspace) (*corev1.PodList, error) {
+func (r *WorkspaceReconciler) listWorkspacePods(ctx context.Context, ws *workspacev1.Workspace) (list *corev1.PodList, err error) {
+	span, ctx := tracing.FromContext(ctx, "listWorkspacePods")
+	defer tracing.FinishSpan(span, &err)
+
 	var workspacePods corev1.PodList
-	err := r.List(ctx, &workspacePods, client.InNamespace(ws.Namespace), client.MatchingFields{wsOwnerKey: ws.Name})
+	err = r.List(ctx, &workspacePods, client.InNamespace(ws.Namespace), client.MatchingFields{wsOwnerKey: ws.Name})
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +165,9 @@ func (r *WorkspaceReconciler) listWorkspacePods(ctx context.Context, ws *workspa
 	return &workspacePods, nil
 }
 
-func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods *corev1.PodList) (ctrl.Result, error) {
+func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods *corev1.PodList) (result ctrl.Result, err error) {
+	span, ctx := tracing.FromContext(ctx, "actOnStatus")
+	defer tracing.FinishSpan(span, &err)
 	log := log.FromContext(ctx)
 
 	if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped && !r.metrics.containsWorkspace(workspace) {
@@ -409,10 +418,13 @@ func (r *WorkspaceReconciler) emitPhaseEvents(ctx context.Context, ws *workspace
 	}
 }
 
-func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev1.Pod, reason string) (ctrl.Result, error) {
+func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev1.Pod, reason string) (result ctrl.Result, err error) {
+	span, ctx := tracing.FromContext(ctx, "deleteWorkspacePod")
+	defer tracing.FinishSpan(span, &err)
+
 	// Workspace was requested to be deleted, propagate by deleting the Pod.
 	// The Pod deletion will then trigger workspace disposal steps.
-	err := r.Client.Delete(ctx, pod)
+	err = r.Client.Delete(ctx, pod)
 	if apierrors.IsNotFound(err) {
 		// pod is gone - nothing to do here
 	} else {
@@ -422,13 +434,15 @@ func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev
 	return ctrl.Result{}, nil
 }
 
-func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *workspacev1.Workspace) error {
+func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *workspacev1.Workspace) (err error) {
+	span, ctx := tracing.FromContext(ctx, "deleteWorkspaceSecrets")
+	defer tracing.FinishSpan(span, &err)
 	log := log.FromContext(ctx)
 
 	// if a secret cannot be deleted we do not return early because we want to attempt
 	// the deletion of the remaining secrets
 	var errs []string
-	err := r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "env"), r.Config.Namespace)
+	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "env"), r.Config.Namespace)
 	if err != nil {
 		errs = append(errs, err.Error())
 		log.Error(err, "could not delete environment secret", "workspace", ws.Name)
