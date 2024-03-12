@@ -112,6 +112,14 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImageLayers: []string{codeWebExtensionImage, codeHelperImage},
 					Versions: []ide_config.IDEVersion{
 						{
+							Version: "1.87.1",
+							Image:   ctx.ImageName(ctx.Config.Repository, ide.CodeIDEImage, "commit-aaa9aeb1a12870ab8c19ca8a928d76849bc24c84"),
+							ImageLayers: []string{
+								ctx.ImageName(ctx.Config.Repository, ide.CodeWebExtensionImage, "commit-4e069a6195f3926ba8b84725bc806228f4cb94ec"),
+								ctx.ImageName(ctx.Config.Repository, ide.CodeHelperIDEImage, "commit-4f921cd94dfe046097167e177a6e781f3aa00d70"),
+							},
+						},
+						{
 							Version: "1.87.0",
 							Image:   ctx.ImageName(ctx.Config.Repository, ide.CodeIDEImage, "commit-82dc424633bdc7266b46302042dd98af201fa8f8"),
 							ImageLayers: []string{
