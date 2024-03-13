@@ -142,7 +142,7 @@ export const IdeOptionsModifyModal = ({
                             checked={!restrictedEditors.has(ide.id)}
                             onPinnedIdeVersionChange={(version) => {
                                 const updatedVal = new Map(pinnedEditorVersions);
-                                !!version ? updatedVal.set(ide.id, version) : updatedVal.delete(ide.id);
+                                version ? updatedVal.set(ide.id, version) : updatedVal.delete(ide.id);
                                 setPinnedEditorVersions(updatedVal);
                             }}
                             onCheckedChange={(checked) => {
@@ -190,7 +190,6 @@ const IdeOptionSwitch = ({
     checked,
     onCheckedChange,
     onPinnedIdeVersionChange,
-    ...props
 }: IdeOptionSwitchProps) => {
     const label = (
         <>
@@ -244,18 +243,16 @@ const IdeOptionSwitch = ({
                 onCheckedChange={onCheckedChange}
                 title={ideOption.title}
             />
-            {ideOption.pinnable && ideVersions ? (
+            {ideOption.pinnable && !!ideVersions && (
                 <Button
                     type="button"
-                    onClick={(e) => {
-                        onPinnedIdeVersionChange(pinnedIdeVersion ? undefined : ideVersions[0]);
-                    }}
+                    onClick={() => onPinnedIdeVersionChange(pinnedIdeVersion ? undefined : ideVersions[0])}
                     variant="ghost"
-                    className={cn("text-sm select-none font-normal", "cursor-pointer text-blue-500")}
+                    className={cn("text-sm select-none font-normal", "text-blue-500")}
                 >
-                    {`${pinnedIdeVersion ? "Unpin" : "Pin"} version`}
+                    {`${pinnedIdeVersion ? "Unpin" : "Pin a"} version`}
                 </Button>
-            ) : undefined}
+            )}
         </div>
     );
 };
