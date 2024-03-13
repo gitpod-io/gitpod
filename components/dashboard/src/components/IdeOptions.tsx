@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { Button } from "@podkit/buttons/Button";
 import { SwitchInputField } from "@podkit/switch/Switch";
+import { PinIcon } from "lucide-react";
 import { cn } from "@podkit/lib/cn";
 import { UseMutationResult } from "@tanstack/react-query";
 import { MiddleDot } from "./typography/MiddleDot";
@@ -39,6 +40,7 @@ export const IdeOptions = (props: IdeOptionsProps) => {
                         {ide.imageVersion && (
                             <>
                                 <MiddleDot />
+                                {props.pinnedEditorVersions.get(ide.id) && <PinIcon size={18} />}
                                 <span className="text-pk-content-primary">
                                     {props.pinnedEditorVersions.get(ide.id) || ide.imageVersion}
                                 </span>
@@ -217,6 +219,7 @@ const IdeOptionSwitch = ({
             {versionSelector ? (
                 <>
                     <MiddleDot />
+                    <PinIcon size={18} />
                     {versionSelector}
                 </>
             ) : (
