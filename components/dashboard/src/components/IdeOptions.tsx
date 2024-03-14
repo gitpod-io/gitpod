@@ -40,7 +40,9 @@ export const IdeOptions = (props: IdeOptionsProps) => {
                         {ide.imageVersion && (
                             <>
                                 <MiddleDot />
-                                {props.pinnedEditorVersions.get(ide.id) && <PinIcon size={18} />}
+                                {props.pinnedEditorVersions.get(ide.id) && (
+                                    <PinIcon size={16} className="inline align-text-bottom" />
+                                )}
                                 <span className="text-pk-content-primary">
                                     {props.pinnedEditorVersions.get(ide.id) || ide.imageVersion}
                                 </span>
@@ -215,11 +217,11 @@ const IdeOptionSwitch = ({
         </select>
     );
     const description = (
-        <div className="inline-flex text-pk-content-primary">
+        <div className="inline-flex items-center text-pk-content-primary">
             {versionSelector ? (
                 <>
                     <MiddleDot />
-                    <PinIcon size={18} />
+                    <PinIcon size={16} />
                     {versionSelector}
                 </>
             ) : (
@@ -251,7 +253,7 @@ const IdeOptionSwitch = ({
                     type="button"
                     onClick={() => onPinnedIdeVersionChange(pinnedIdeVersion ? undefined : ideVersions[0])}
                     variant="ghost"
-                    className={cn("text-sm select-none font-normal", "text-blue-500")}
+                    className={cn("text-sm select-none font-normal p-0", "text-blue-500")}
                 >
                     {`${pinnedIdeVersion ? "Unpin" : "Pin a"} version`}
                 </Button>
