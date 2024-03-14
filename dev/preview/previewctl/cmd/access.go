@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+
 	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -28,7 +29,7 @@ func newHasAccessCmd(logger *logrus.Logger) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringSliceVar(&clusters, "clusters", []string{"dev", "harvester"}, "Comma separated list of cluster to check access for")
+	cmd.PersistentFlags().StringSliceVar(&clusters, "clusters", []string{"dev"}, "Comma separated list of cluster to check access for")
 
 	return cmd
 }

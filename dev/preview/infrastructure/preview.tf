@@ -1,41 +1,19 @@
 module "preview_gce" {
-  count  = var.infra_provider == "gce" ? 1 : 0
+  count  = 1
   source = "./modules/gce"
 
-  preview_name      = var.preview_name
-  cert_issuer       = var.cert_issuer
-  preview_namespace = kubernetes_namespace.preview_namespace.metadata[0].name
-  ssh_key           = local.ssh_key
-  use_spot          = var.gce_use_spot
-  with_large_vm     = var.with_large_vm
-  vm_type           = var.vm_type
+  preview_name  = var.preview_name
+  cert_issuer   = var.cert_issuer
+  ssh_key       = local.ssh_key
+  use_spot      = var.gce_use_spot
+  with_large_vm = var.with_large_vm
+  vm_type       = var.vm_type
 
   providers = {
     google           = google,
     acme.letsencrypt = acme.letsencrypt,
     acme.zerossl     = acme.zerossl,
     k8s.dev          = k8s.dev
-    k8s.harvester    = k8s.harvester
-  }
-}
-
-module "preview_harvester" {
-  count  = var.infra_provider == "harvester" ? 1 : 0
-  source = "./modules/harvester"
-
-  preview_name      = var.preview_name
-  cert_issuer       = var.cert_issuer
-  preview_namespace = kubernetes_namespace.preview_namespace.metadata[0].name
-  ssh_key           = local.ssh_key
-  with_large_vm     = var.with_large_vm
-
-  providers = {
-    google              = google,
-    acme.letsencrypt    = acme.letsencrypt,
-    acme.zerossl        = acme.zerossl,
-    k8s.dev             = k8s.dev
-    k8s.harvester       = k8s.harvester
-    harvester.harvester = harvester.harvester
   }
 }
 
@@ -45,21 +23,9 @@ module "dns" {
   preview_name = var.preview_name
 
   # a bit of a hack to choose the correct ip for the dns records, based on whichever module gets created
-  preview_ip = join(
-    "",
-    [
-      length(module.preview_gce) > 0 ? module.preview_gce[0].preview_ip : "",
-      length(module.preview_harvester) > 0 ? module.preview_harvester[0].preview_ip : ""
-    ],
-  )
+  preview_ip = module.preview_gce[0].preview_ip
 
-  workspace_ip = join(
-    "",
-    [
-      length(module.preview_gce) > 0 ? module.preview_gce[0].workspace_ip : "",
-      length(module.preview_harvester) > 0 ? module.preview_harvester[0].workspace_ip : ""
-    ],
-  )
+  workspace_ip = module.preview_gce[0].workspace_ip
 
   cert_issuer     = var.cert_issuer
   gcp_project_dns = var.gcp_project_dns
