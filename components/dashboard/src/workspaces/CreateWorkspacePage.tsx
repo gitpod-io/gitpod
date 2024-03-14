@@ -486,7 +486,7 @@ export function CreateWorkspacePage() {
                                 useLatest={useLatestIde}
                                 disabled={createWorkspaceMutation.isStarting}
                                 loading={workspaceContext.isLoading}
-                                ignoreRestrictionScope={[]}
+                                ignoreRestrictionScopes={[]}
                             />
                         </InputField>
 

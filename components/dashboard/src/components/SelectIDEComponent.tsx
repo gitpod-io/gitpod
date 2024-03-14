@@ -20,7 +20,7 @@ interface SelectIDEComponentProps {
     setError?: (error?: string) => void;
     disabled?: boolean;
     loading?: boolean;
-    ignoreRestrictionScope: DisableScope[];
+    ignoreRestrictionScopes: DisableScope[];
 }
 
 function filteredIdeOptions(ideOptions: IDEOptions) {
@@ -39,11 +39,11 @@ export default function SelectIDEComponent({
     loading = false,
     setError,
     onSelectionChange,
-    ignoreRestrictionScope,
+    ignoreRestrictionScopes,
 }: SelectIDEComponentProps) {
     const { data: ideOptions, isLoading: ideOptionsLoading } = useAllowedWorkspaceEditorsMemo({
         filterOutDisabled: true,
-        ignoreScope: ignoreRestrictionScope,
+        ignoreScope: ignoreRestrictionScopes,
     });
 
     const options = useMemo(() => (ideOptions ? sortedIdeOptions(ideOptions) : undefined), [ideOptions]);

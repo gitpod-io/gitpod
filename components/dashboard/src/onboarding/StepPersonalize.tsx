@@ -40,7 +40,7 @@ export const StepPersonalize: FC<Props> = ({ user, onComplete }) => {
                     setIDE(ide);
                     setUseLatest(latest);
                 }}
-                ignoreRestrictionScope={["configuration", "organization"]}
+                ignoreRestrictionScopes={["configuration", "organization"]}
                 selectedIdeOption={ide}
                 useLatest={useLatest}
             />
