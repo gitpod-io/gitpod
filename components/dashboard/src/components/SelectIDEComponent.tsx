@@ -8,8 +8,9 @@ import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol"
 import { FC, useCallback, useEffect, useMemo } from "react";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import Editor from "../icons/Editor.svg";
-import { useIDEOptions } from "../data/ide-options/ide-options-query";
+import { IdeOptionsSorter, useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
 import { MiddleDot } from "./typography/MiddleDot";
+import { DisableScope } from "../data/workspaces/workspace-classes-query";
 
 interface SelectIDEComponentProps {
     selectedIdeOption?: string;
@@ -19,6 +20,7 @@ interface SelectIDEComponentProps {
     setError?: (error?: string) => void;
     disabled?: boolean;
     loading?: boolean;
+    ignoreRestrictionScope: DisableScope[];
 }
 
 function filteredIdeOptions(ideOptions: IDEOptions) {
@@ -26,21 +28,7 @@ function filteredIdeOptions(ideOptions: IDEOptions) {
 }
 
 function sortedIdeOptions(ideOptions: IDEOptions) {
-    return filteredIdeOptions(ideOptions).sort((a, b) => {
-        // Prefer experimental options
-        if (a.experimental && !b.experimental) {
-            return -1;
-        }
-        if (!a.experimental && b.experimental) {
-            return 1;
-        }
-
-        if (!a.orderKey || !b.orderKey) {
-            return 0;
-        }
-
-        return parseInt(a.orderKey, 10) - parseInt(b.orderKey, 10);
-    });
+    return filteredIdeOptions(ideOptions).sort(IdeOptionsSorter);
 }
 
 export default function SelectIDEComponent({
@@ -51,8 +39,12 @@ export default function SelectIDEComponent({
     loading = false,
     setError,
     onSelectionChange,
+    ignoreRestrictionScope,
 }: SelectIDEComponentProps) {
-    const { data: ideOptions, isLoading: ideOptionsLoading } = useIDEOptions();
+    const { data: ideOptions, isLoading: ideOptionsLoading } = useAllowedWorkspaceEditorsMemo({
+        filterOutDisabled: true,
+        ignoreScope: ignoreRestrictionScope,
+    });
 
     const options = useMemo(() => (ideOptions ? sortedIdeOptions(ideOptions) : undefined), [ideOptions]);
 

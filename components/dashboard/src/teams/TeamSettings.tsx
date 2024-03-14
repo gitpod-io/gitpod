@@ -36,7 +36,7 @@ import {
     WorkspaceClassesOptions,
 } from "../components/WorkspaceClassesOptions";
 import { useMutation } from "@tanstack/react-query";
-import { useIDEOptions } from "../data/ide-options/ide-options-query";
+import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
 import { IdeOptions, IdeOptionsModifyModal, IdeOptionsModifyModalProps } from "../components/IdeOptions";
 import { useFeatureFlag } from "../data/featureflag-query";
 
@@ -520,7 +520,14 @@ interface EditorOptionsProps {
 }
 const EditorOptions = ({ isOwner, settings, handleUpdateTeamSettings }: EditorOptionsProps) => {
     const [showModal, setShowModal] = useState(false);
-    const { data: ideOptions, isLoading } = useIDEOptions();
+    const { data: installationOptions, isLoading: installationOptionsIsLoading } = useAllowedWorkspaceEditorsMemo({
+        filterOutDisabled: true,
+        ignoreScope: ["organization", "configuration"],
+    });
+    const { data: orgOptions, isLoading: orgOptionsIsLoading } = useAllowedWorkspaceEditorsMemo({
+        filterOutDisabled: true,
+        ignoreScope: ["configuration"],
+    });
 
     const updateMutation: IdeOptionsModifyModalProps["updateMutation"] = useMutation({
         mutationFn: async ({ restrictedEditors, pinnedEditorVersions }) => {
@@ -543,9 +550,9 @@ const EditorOptions = ({ isOwner, settings, handleUpdateTeamSettings }: EditorOp
             <Subheading>Limit the available editors in your organization.</Subheading>
 
             <IdeOptions
-                isLoading={isLoading}
+                isLoading={orgOptionsIsLoading}
                 className="mt-4"
-                ideOptions={ideOptions}
+                ideOptions={orgOptions}
                 pinnedEditorVersions={pinnedEditorVersions}
             />
 
@@ -557,8 +564,8 @@ const EditorOptions = ({ isOwner, settings, handleUpdateTeamSettings }: EditorOp
 
             {showModal && (
                 <IdeOptionsModifyModal
-                    isLoading={isLoading}
-                    ideOptions={ideOptions}
+                    isLoading={installationOptionsIsLoading}
+                    ideOptions={installationOptions}
                     restrictedEditors={restrictedEditors}
                     pinnedEditorVersions={pinnedEditorVersions}
                     updateMutation={updateMutation}

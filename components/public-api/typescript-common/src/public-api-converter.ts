@@ -1007,7 +1007,8 @@ export class PublicAPIConverter {
             workspaceSharingDisabled: !!settings.workspaceSharingDisabled,
             defaultWorkspaceImage: settings.defaultWorkspaceImage || undefined,
             allowedWorkspaceClasses: settings.allowedWorkspaceClasses || [],
-            pinnedEditorVersions: settings.pinnedEditorVersions || {}
+            pinnedEditorVersions: settings.pinnedEditorVersions || {},
+            restrictedEditorNames: settings.restrictedEditorNames || [],
         });
     }
 

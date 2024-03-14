@@ -52,6 +52,7 @@ import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutati
 import { useAllowedWorkspaceClassesMemo } from "../data/workspaces/workspace-classes-query";
 import Menu from "../menu/Menu";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
+import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
 
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
 
@@ -77,8 +78,12 @@ export function CreateWorkspacePage() {
             ? props.ideSettings.useLatestVersion
             : user?.editorSettings?.version === "latest";
     const [useLatestIde, setUseLatestIde] = useState(defaultLatestIde);
-    const defaultIde = user?.editorSettings?.name;
-    const [selectedIde, setSelectedIde, selectedIdeIsDirty] = useDirtyState(defaultIde);
+    const { computedDefault: computedDefaultEditor } = useAllowedWorkspaceEditorsMemo({
+        userDefault: user?.editorSettings?.name,
+        filterOutDisabled: true,
+    });
+    const defaultIde = computedDefaultEditor;
+    const [selectedIde, setSelectedIde, selectedIdeIsDirty] = useDirtyState<string | undefined>(defaultIde);
     const { computedDefaultClass, data: allowedWorkspaceClasses } = useAllowedWorkspaceClassesMemo(selectedProjectID);
     const defaultWorkspaceClass = props.workspaceClass ?? computedDefaultClass;
     const { data: orgSettings } = useOrgSettingsQuery();
@@ -481,6 +486,7 @@ export function CreateWorkspacePage() {
                                 useLatest={useLatestIde}
                                 disabled={createWorkspaceMutation.isStarting}
                                 loading={workspaceContext.isLoading}
+                                ignoreRestrictionScope={[]}
                             />
                         </InputField>
 

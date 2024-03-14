@@ -78,6 +78,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                     onSelectionChange={actuallySetDefaultIde}
                     selectedIdeOption={defaultIde}
                     useLatest={useLatestVersion}
+                    ignoreRestrictionScope={["configuration", "organization"]}
                 />
             </div>
 

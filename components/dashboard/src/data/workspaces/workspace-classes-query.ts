@@ -28,8 +28,8 @@ export const useWorkspaceClasses = () => {
     });
 };
 
-type Scope = "organization" | "configuration" | "installation";
-type DisableScope = "organization" | "configuration";
+export type Scope = "organization" | "configuration" | "installation";
+export type DisableScope = "organization" | "configuration";
 export type AllowedWorkspaceClass = PlainMessage<WorkspaceClass> & {
     isDisabledInScope?: boolean;
     disableScope?: DisableScope;
