@@ -450,6 +450,12 @@ export class OrganizationService {
                 }
             }
         }
+
+        if (settings.restrictedEditorNames) {
+            if (settings.restrictedEditorNames.length > 0) {
+                await this.ideService.checkEditorsAllowed(userId, settings.restrictedEditorNames);
+            }
+        }
         return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
     }
 
@@ -466,6 +472,9 @@ export class OrganizationService {
         }
         if (settings.pinnedEditorVersions) {
             result.pinnedEditorVersions = settings.pinnedEditorVersions;
+        }
+        if (settings.restrictedEditorNames) {
+            result.restrictedEditorNames = settings.restrictedEditorNames;
         }
         return result;
     }

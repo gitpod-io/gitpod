@@ -15,6 +15,7 @@ import {
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { inject, injectable } from "inversify";
 import { AuthorizationService } from "./user/authorization-service";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 interface IDEVersion {
     version: string;
@@ -139,5 +140,25 @@ export class IDEService {
         }
 
         return ideOption.versions.map((v) => v.version);
+    }
+
+    async checkEditorsAllowed(userId: string, editorNames: string[]) {
+        const allEditors = await this.getIDEConfig({ user: { id: userId } }).then((d) =>
+            Object.keys(d.ideOptions.options),
+        );
+        const notAllowedList = editorNames.filter((e) => !allEditors.includes(e as string));
+        if (notAllowedList.length > 0) {
+            if (notAllowedList.length === 1) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    `editor ${notAllowedList[0]} is not allowed in installation`,
+                );
+            } else {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    `editors ${notAllowedList.join(",")} are not allowed in installation`,
+                );
+            }
+        }
     }
 }
