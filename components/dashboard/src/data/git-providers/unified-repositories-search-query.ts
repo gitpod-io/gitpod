@@ -11,26 +11,31 @@ import { useMemo } from "react";
 
 type UnifiedRepositorySearchArgs = {
     searchString: string;
-    // If true, excludes projects and only shows 1 entry per repo
-    excludeProjects?: boolean;
-    // If true, only shows entries with a corresponding project
-    onlyProjects?: boolean;
+    // If true, excludes configurations and only shows 1 entry per repo
+    excludeConfigurations?: boolean;
+    // If true, only shows entries with a corresponding configuration
+    onlyConfigurations?: boolean;
 };
 // Combines the suggested repositories and the search repositories query into one hook
 export const useUnifiedRepositorySearch = ({
     searchString,
-    excludeProjects = false,
-    onlyProjects = false,
+    excludeConfigurations = false,
+    onlyConfigurations = false,
 }: UnifiedRepositorySearchArgs) => {
-    const suggestedQuery = useSuggestedRepositories();
+    const suggestedQuery = useSuggestedRepositories({ excludeConfigurations });
     const searchLimit = 30;
     const searchQuery = useSearchRepositories({ searchString, limit: searchLimit });
 
     const filteredRepos = useMemo(() => {
         const flattenedRepos = [suggestedQuery.data || [], searchQuery.data || []].flat();
 
-        return deduplicateAndFilterRepositories(searchString, excludeProjects, onlyProjects, flattenedRepos);
-    }, [excludeProjects, onlyProjects, searchQuery.data, searchString, suggestedQuery.data]);
+        return deduplicateAndFilterRepositories(
+            searchString,
+            excludeConfigurations,
+            onlyConfigurations,
+            flattenedRepos,
+        );
+    }, [excludeConfigurations, onlyConfigurations, searchQuery.data, searchString, suggestedQuery.data]);
 
     return {
         data: filteredRepos,
@@ -44,34 +49,35 @@ export const useUnifiedRepositorySearch = ({
 
 export function deduplicateAndFilterRepositories(
     searchString: string,
-    excludeProjects = false,
-    onlyProjects = false,
+    excludeConfigurations = false,
+    onlyConfigurations = false,
     suggestedRepos: SuggestedRepository[],
 ): SuggestedRepository[] {
     const normalizedSearchString = searchString.trim().toLowerCase();
     const collected = new Set<string>();
     const results: SuggestedRepository[] = [];
-    const reposWithProject = new Set<string>();
-    if (!excludeProjects) {
+    const reposWithConfiguration = new Set<string>();
+    if (!excludeConfigurations) {
         suggestedRepos.forEach((r) => {
             if (r.configurationId) {
-                reposWithProject.add(r.url);
+                reposWithConfiguration.add(r.url);
             }
         });
     }
     for (const repo of suggestedRepos) {
-        // filter out project-less entries if an entry with a project exists, and we're not excluding projects
+        // filter out configuration-less entries if an entry with a configuration exists, and we're not excluding configurations
         if (!repo.configurationId) {
-            if (reposWithProject.has(repo.url) || onlyProjects) {
+            if (reposWithConfiguration.has(repo.url) || onlyConfigurations) {
                 continue;
             }
         }
+
         // filter out entries that don't match the search string
         if (!`${repo.url}${repo.configurationName || ""}`.toLowerCase().includes(normalizedSearchString)) {
             continue;
         }
         // filter out duplicates
-        const key = `${repo.url}:${excludeProjects ? "" : repo.configurationId || "no-project"}`;
+        const key = `${repo.url}:${excludeConfigurations ? "" : repo.configurationId || "no-configuration"}`;
         if (collected.has(key)) {
             continue;
         }

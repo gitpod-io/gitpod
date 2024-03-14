@@ -227,8 +227,8 @@ export class ScmService {
                         suggestionFromRecentWorkspace(
                             {
                                 url: repoUrl,
+                                repositoryName: repoName ?? "",
                                 projectId: ws.workspace.projectId,
-                                repositoryName: repoName || "",
                             },
                             lastUse,
                         ),
@@ -245,7 +245,7 @@ export class ScmService {
         ]);
 
         const sortedRepos = sortSuggestedRepositories(
-            repoResults.map((r) => (r.status === "fulfilled" ? r.value || [] : [])).flat(),
+            repoResults.flatMap((r) => (r.status === "fulfilled" ? r.value || [] : [])),
         );
 
         // Convert to SuggestedRepository (drops sorting props)

@@ -51,6 +51,7 @@ message ListSuggestedRepositoriesRequest {
   PaginationRequest pagination = 1;
 
   string organization_id = 2;
+  bool exclude_configurations = 3;
 }
 message ListSuggestedRepositoriesResponse {
   PaginationResponse pagination = 1;

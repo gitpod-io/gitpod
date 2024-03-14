@@ -25,6 +25,7 @@ import { validate as uuidValidate } from "uuid";
 import { ProjectsService } from "../projects/projects-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
+import { Project } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class ScmServiceAPI implements ServiceImpl<typeof ScmServiceInterface> {
@@ -73,13 +74,15 @@ export class ScmServiceAPI implements ServiceImpl<typeof ScmServiceInterface> {
         _: HandlerContext,
     ): Promise<ListSuggestedRepositoriesResponse> {
         const userId = ctxUserId();
-        const { organizationId } = request;
+        const { organizationId, excludeConfigurations } = request;
 
         if (!uuidValidate(organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId must be a valid UUID");
         }
 
-        const projectsPromise = this.projectService.getProjects(userId, organizationId);
+        const projectsPromise: Promise<Project[]> = !excludeConfigurations
+            ? this.projectService.getProjects(userId, organizationId)
+            : Promise.resolve([]);
         const workspacesPromise = this.workspaceService.getWorkspaces(userId, { organizationId });
         const repos = await this.scmService.listSuggestedRepositories(userId, { projectsPromise, workspacesPromise });
         return new ListSuggestedRepositoriesResponse({
