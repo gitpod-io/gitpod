@@ -20,7 +20,7 @@ interface SelectIDEComponentProps {
     setError?: (error?: string) => void;
     disabled?: boolean;
     loading?: boolean;
-    ignoreRestrictionScopes: DisableScope[];
+    ignoreRestrictionScopes: DisableScope[] | undefined;
 }
 
 function filteredIdeOptions(ideOptions: IDEOptions) {
