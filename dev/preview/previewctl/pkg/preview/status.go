@@ -33,11 +33,11 @@ func (c *Config) GetStatus(ctx context.Context) (Status, error) {
 
 	if c.creationTime.After(time.Now().Add(-time.Duration(HOURS_UNTIL_STALE) * time.Hour)) {
 		c.status.Active = true
-		c.status.Reason = fmt.Sprintf("VM created in the past %d hours, assuming active: [%v]", HOURS_UNTIL_STALE, c.creationTime.Time)
+		c.status.Reason = fmt.Sprintf("VM created in the past %d hours, assuming active: [%v]", HOURS_UNTIL_STALE, c.creationTime)
 		return c.status, nil
 	}
 
 	c.status.Active = false
-	c.status.Reason = fmt.Sprintf("VM has existed for more than %d hours, assuming stale: [%v]", HOURS_UNTIL_STALE, c.creationTime.Time)
+	c.status.Reason = fmt.Sprintf("VM has existed for more than %d hours, assuming stale: [%v]", HOURS_UNTIL_STALE, c.creationTime)
 	return c.status, nil
 }

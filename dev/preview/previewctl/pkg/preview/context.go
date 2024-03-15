@@ -17,8 +17,6 @@ import (
 	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s/context/k3s"
 )
 
-const harvesterContextName = "harvester"
-
 type InstallCtxOpts struct {
 	Retry        bool
 	RetryTimeout time.Duration
@@ -46,7 +44,6 @@ func (c *Config) InstallContext(ctx context.Context, opts *InstallCtxOpts) error
 		configLoader, err := k3s.New(ctx, k3s.ConfigLoaderOpts{
 			Logger:            c.logger.Logger,
 			PreviewName:       c.name,
-			PreviewNamespace:  c.namespace,
 			SSHPrivateKeyPath: opts.SSHPrivateKeyPath,
 			SSHUser:           "ubuntu",
 		})
