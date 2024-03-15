@@ -96,7 +96,7 @@ export const AuthorizeGit = ({ className, refetch }: Props) => {
                                     key={"button" + ap.host}
                                     className="mt-3 btn-login flex-none w-56 px-0 py-0.5 inline-flex"
                                 >
-                                    <div className="flex relative -left-4 w-56">
+                                    <div className="flex relative w-56">
                                         {iconForAuthProvider(ap.type)}
                                         <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                             Continue with {simplifyProviderName(ap.host)}
