@@ -13,6 +13,7 @@ import { MiddleDot } from "./typography/MiddleDot";
 
 interface SelectIDEComponentProps {
     selectedIdeOption?: string;
+    pinnedEditorVersions?: Map<string, string>;
     useLatest?: boolean;
     onSelectionChange: (ide: string, latest: boolean) => void;
     setError?: (error?: string) => void;
@@ -44,6 +45,7 @@ function sortedIdeOptions(ideOptions: IDEOptions) {
 
 export default function SelectIDEComponent({
     selectedIdeOption,
+    pinnedEditorVersions,
     useLatest,
     disabled = false,
     loading = false,
@@ -66,7 +68,13 @@ export default function SelectIDEComponent({
                 if (!useLatest) {
                     result.push({
                         id: ide.id,
-                        element: <IdeOptionElementInDropDown option={ide} useLatest={false} />,
+                        element: (
+                            <IdeOptionElementInDropDown
+                                option={ide}
+                                pinnedIdeVersion={pinnedEditorVersions?.get(ide.id)}
+                                useLatest={false}
+                            />
+                        ),
                         isSelectable: true,
                     });
                 } else if (ide.latestImage) {
@@ -79,7 +87,7 @@ export default function SelectIDEComponent({
             }
             return result;
         },
-        [options, useLatest],
+        [options, useLatest, pinnedEditorVersions],
     );
     const internalOnSelectionChange = (id: string) => {
         const { ide, useLatest } = parseId(id);
@@ -108,6 +116,7 @@ export default function SelectIDEComponent({
         >
             <IdeOptionElementSelected
                 option={ideOptions?.options[ide]}
+                pinnedIdeVersion={pinnedEditorVersions?.get(ide)}
                 useLatest={!!useLatest}
                 loading={ideOptionsLoading || loading}
             />
@@ -123,6 +132,7 @@ function parseId(id: string): { ide: string; useLatest: boolean } {
 
 interface IdeOptionElementProps {
     option: IDEOption | undefined;
+    pinnedIdeVersion?: string;
     useLatest: boolean;
     loading?: boolean;
 }
@@ -131,12 +141,17 @@ function capitalize(label?: string) {
     return label && label[0].toLocaleUpperCase() + label.slice(1);
 }
 
-const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest, loading = false }) => {
+const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({
+    option,
+    pinnedIdeVersion,
+    useLatest,
+    loading = false,
+}) => {
     let version: string | undefined, label: string | undefined, title: string;
     if (!option) {
         title = "Select Editor";
     } else {
-        version = useLatest ? option.latestImageVersion : option.imageVersion;
+        version = useLatest ? option.latestImageVersion : pinnedIdeVersion ?? option.imageVersion;
         label = option.type;
         title = option.title;
     }
@@ -177,7 +192,7 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
     if (!option) {
         return <></>;
     }
-    const version = useLatest ? option.latestImageVersion : option.imageVersion;
+    const version = useLatest ? option.latestImageVersion : p.pinnedIdeVersion ?? option.imageVersion;
     const label = capitalize(option.type);
 
     return (

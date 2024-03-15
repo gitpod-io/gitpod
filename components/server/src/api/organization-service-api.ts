@@ -261,6 +261,9 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             update.defaultWorkspaceImage = req.defaultWorkspaceImage;
         }
         update.allowedWorkspaceClasses = req.allowedWorkspaceClasses;
+        if (req.updatePinnedEditorVersions) {
+            update.pinnedEditorVersions = req.pinnedEditorVersions;
+        }
 
         if (Object.keys(update).length === 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");

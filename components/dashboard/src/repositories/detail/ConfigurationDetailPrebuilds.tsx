@@ -67,25 +67,23 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                     onCheckedChange={updateEnabled}
                     label={configuration.prebuildSettings?.enabled ? "Prebuilds are enabled" : "Prebuilds are disabled"}
                     description={
-                        <>
-                            <TextMuted>
-                                Enabling requires permissions to configure repository webhooks.{" "}
-                                <a
-                                    href="https://www.gitpod.io/docs/configure/repositories/prebuilds"
-                                    className="gp-link"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    Learn more
-                                </a>
-                                .
-                            </TextMuted>
+                        <TextMuted>
+                            Enabling requires permissions to configure repository webhooks.{" "}
+                            <a
+                                href="https://www.gitpod.io/docs/configure/repositories/prebuilds"
+                                className="gp-link"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Learn more
+                            </a>
+                            .
                             <br />
                             <Link to={`/prebuilds?configurationId=${configuration.id}`} className="gp-link">
                                 View prebuild history
                             </Link>
                             .
-                        </>
+                        </TextMuted>
                     }
                 />
             </ConfigurationSettingsField>
