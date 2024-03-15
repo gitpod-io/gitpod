@@ -119,151 +119,157 @@ export const AppRoutes = () => {
 
     return (
         <Route>
-            <div className="container">
-                <Menu />
-                <AppNotifications />
-                <Switch>
-                    <Route path="/new" exact component={CreateWorkspacePage} />
-                    <Route path="/open">
-                        <Redirect to="/new" />
-                    </Route>
-                    {/* TODO(gpl): Remove once we don't need the redirect anymore */}
-                    <Route
-                        path={[
-                            switchToPAYGPathMain,
-                            settingsPathPlans,
-                            "/old-team-plans",
-                            "/teams",
-                            "/subscription",
-                            "/upgrade-subscription",
-                            "/plans",
-                        ]}
-                        exact
-                    >
-                        <Redirect to={"/billing"} />
-                    </Route>
-                    <Route path={workspacesPathMain} exact component={Workspaces} />
-                    <Route path={settingsPathAccount} exact component={Account} />
-                    <Route path={usagePathMain} exact component={Usage} />
-                    <Route path={settingsPathIntegrations} exact component={Integrations} />
-                    <Route path={settingsPathNotifications} exact component={Notifications} />
-                    <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
-                    <Route path={settingsPathSSHKeys} exact component={SSHKeys} />
-                    <Route path={settingsPathPersonalAccessTokens} exact component={PersonalAccessTokens} />
-                    <Route
-                        path={settingsPathPersonalAccessTokenCreate}
-                        exact
-                        component={PersonalAccessTokenCreateView}
-                    />
-                    <Route
-                        path={settingsPathPersonalAccessTokenEdit + "/:tokenId"}
-                        exact
-                        component={PersonalAccessTokenCreateView}
-                    />
-                    <Route path={settingsPathPreferences} exact component={Preferences} />
-                    <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
-                    <Route path="/from-referrer" exact component={FromReferrer} />
+            <Switch>
+                <Route path="/new" exact component={CreateWorkspacePage} />
+                <Route path="*">
+                    <div className="container">
+                        <Menu />
+                        <AppNotifications />
+                        <Switch>
+                            <Route path="/open">
+                                <Redirect to="/new" />
+                            </Route>
+                            {/* TODO(gpl): Remove once we don't need the redirect anymore */}
+                            <Route
+                                path={[
+                                    switchToPAYGPathMain,
+                                    settingsPathPlans,
+                                    "/old-team-plans",
+                                    "/teams",
+                                    "/subscription",
+                                    "/upgrade-subscription",
+                                    "/plans",
+                                ]}
+                                exact
+                            >
+                                <Redirect to={"/billing"} />
+                            </Route>
+                            <Route path={workspacesPathMain} exact component={Workspaces} />
+                            <Route path={settingsPathAccount} exact component={Account} />
+                            <Route path={usagePathMain} exact component={Usage} />
+                            <Route path={settingsPathIntegrations} exact component={Integrations} />
+                            <Route path={settingsPathNotifications} exact component={Notifications} />
+                            <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
+                            <Route path={settingsPathSSHKeys} exact component={SSHKeys} />
+                            <Route path={settingsPathPersonalAccessTokens} exact component={PersonalAccessTokens} />
+                            <Route
+                                path={settingsPathPersonalAccessTokenCreate}
+                                exact
+                                component={PersonalAccessTokenCreateView}
+                            />
+                            <Route
+                                path={settingsPathPersonalAccessTokenEdit + "/:tokenId"}
+                                exact
+                                component={PersonalAccessTokenCreateView}
+                            />
+                            <Route path={settingsPathPreferences} exact component={Preferences} />
+                            <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
+                            <Route path="/from-referrer" exact component={FromReferrer} />
 
-                    <AdminRoute path="/admin/users" component={UserSearch} />
-                    <AdminRoute path="/admin/orgs" component={TeamsSearch} />
-                    <AdminRoute path="/admin/workspaces" component={WorkspacesSearch} />
-                    <AdminRoute path="/admin/projects" component={ProjectsSearch} />
-                    <AdminRoute path="/admin/blocked-repositories" component={BlockedRepositories} />
-                    <AdminRoute path="/admin/blocked-email-domains" component={BlockedEmailDomains} />
+                            <AdminRoute path="/admin/users" component={UserSearch} />
+                            <AdminRoute path="/admin/orgs" component={TeamsSearch} />
+                            <AdminRoute path="/admin/workspaces" component={WorkspacesSearch} />
+                            <AdminRoute path="/admin/projects" component={ProjectsSearch} />
+                            <AdminRoute path="/admin/blocked-repositories" component={BlockedRepositories} />
+                            <AdminRoute path="/admin/blocked-email-domains" component={BlockedEmailDomains} />
 
-                    <Route path={["/", "/login", "/login/:orgSlug"]} exact>
-                        <Redirect to={workspacesPathMain} />
-                    </Route>
-                    <Route path={[settingsPathMain]} exact>
-                        <Redirect to={settingsPathAccount} />
-                    </Route>
-                    <Route path={["/access-control"]} exact>
-                        <Redirect to={settingsPathIntegrations} />
-                    </Route>
-                    <Route path={["/admin"]} exact>
-                        <Redirect to="/admin/users" />
-                    </Route>
-                    <Route path="/sorry" exact>
-                        <div className="mt-48 text-center">
-                            <Heading1>Oh, no! Something went wrong!</Heading1>
-                            <Subheading className="mt-4 text-gitpod-red">{decodeURIComponent(getURLHash())}</Subheading>
-                        </div>
-                    </Route>
-                    <Route exact path="/orgs/new" component={NewTeam} />
-                    <Route exact path="/orgs/join" component={JoinTeam} />
-                    <Route exact path="/projects" component={Projects} />
-
-                    {/* These routes that require a selected organization, otherwise they redirect to "/" */}
-                    <Route exact path="/members" component={Members} />
-                    <Route exact path="/settings" component={TeamSettings} />
-                    <Route exact path="/settings/git" component={TeamGitIntegrations} />
-                    {/* TODO: migrate other org settings pages underneath /settings prefix so we can utilize nested routes */}
-                    <Route exact path="/billing" component={TeamUsageBasedBilling} />
-                    <Route exact path="/sso" component={SSO} />
-
-                    <Route exact path={`/projects/:projectSlug`} component={Project} />
-                    <Route exact path={`/projects/:projectSlug/prebuilds`} component={Prebuilds} />
-                    <Route exact path={`/projects/:projectSlug/settings`} component={ProjectSettings} />
-                    <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />
-                    <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
-
-                    <Route exact path={`/prebuilds`} component={PrebuildListPage} />
-                    <Route path="/prebuilds/:prebuildId" component={PrebuildDetailPage} />
-                    <Route exact path="/repositories" component={ConfigurationListPage} />
-                    {/* Handles all /repositories/:id/* routes in a nested router */}
-                    <Route path="/repositories/:id" component={ConfigurationDetailPage} />
-
-                    {/* basic redirect for old team slugs */}
-                    <Route path={["/t/"]} exact>
-                        <Redirect to="/projects" />
-                    </Route>
-                    {/* redirect for old user settings slugs */}
-                    <Route path="/account" exact>
-                        <Redirect to={settingsPathAccount} />
-                    </Route>
-                    <Route path="/integrations" exact>
-                        <Redirect to={settingsPathIntegrations} />
-                    </Route>
-                    <Route path="/notifications" exact>
-                        <Redirect to={settingsPathNotifications} />
-                    </Route>
-                    <Route path="/user/billing" exact>
-                        <Redirect to={"/billing"} />
-                    </Route>
-                    <Route path="/preferences" exact>
-                        <Redirect to={settingsPathPreferences} />
-                    </Route>
-                    <Route path="/variables" exact>
-                        <Redirect to={settingsPathVariables} />
-                    </Route>
-                    <Route path="/tokens" exact>
-                        <Redirect to={settingsPathPersonalAccessTokens} />
-                    </Route>
-                    <Route path="/tokens/create" exact>
-                        <Redirect to={settingsPathPersonalAccessTokenCreate} />
-                    </Route>
-                    <Route path="/keys" exact>
-                        <Redirect to={settingsPathSSHKeys} />
-                    </Route>
-                    <Route
-                        path="*"
-                        render={(_match) => {
-                            // delegate to our website to handle the request
-                            if (isGitpodIo()) {
-                                window.location.host = "www.gitpod.io";
-                            }
-
-                            return (
+                            <Route path={["/", "/login", "/login/:orgSlug"]} exact>
+                                <Redirect to={workspacesPathMain} />
+                            </Route>
+                            <Route path={[settingsPathMain]} exact>
+                                <Redirect to={settingsPathAccount} />
+                            </Route>
+                            <Route path={["/access-control"]} exact>
+                                <Redirect to={settingsPathIntegrations} />
+                            </Route>
+                            <Route path={["/admin"]} exact>
+                                <Redirect to="/admin/users" />
+                            </Route>
+                            <Route path="/sorry" exact>
                                 <div className="mt-48 text-center">
-                                    <Heading1>404</Heading1>
-                                    <Subheading className="mt-4">Page not found.</Subheading>
+                                    <Heading1>Oh, no! Something went wrong!</Heading1>
+                                    <Subheading className="mt-4 text-gitpod-red">
+                                        {decodeURIComponent(getURLHash())}
+                                    </Subheading>
                                 </div>
-                            );
-                        }}
-                    />
-                </Switch>
-            </div>
-            <WebsocketClients />
+                            </Route>
+                            <Route exact path="/orgs/new" component={NewTeam} />
+                            <Route exact path="/orgs/join" component={JoinTeam} />
+                            <Route exact path="/projects" component={Projects} />
+
+                            {/* These routes that require a selected organization, otherwise they redirect to "/" */}
+                            <Route exact path="/members" component={Members} />
+                            <Route exact path="/settings" component={TeamSettings} />
+                            <Route exact path="/settings/git" component={TeamGitIntegrations} />
+                            {/* TODO: migrate other org settings pages underneath /settings prefix so we can utilize nested routes */}
+                            <Route exact path="/billing" component={TeamUsageBasedBilling} />
+                            <Route exact path="/sso" component={SSO} />
+
+                            <Route exact path={`/projects/:projectSlug`} component={Project} />
+                            <Route exact path={`/projects/:projectSlug/prebuilds`} component={Prebuilds} />
+                            <Route exact path={`/projects/:projectSlug/settings`} component={ProjectSettings} />
+                            <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />
+                            <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
+
+                            <Route exact path={`/prebuilds`} component={PrebuildListPage} />
+                            <Route path="/prebuilds/:prebuildId" component={PrebuildDetailPage} />
+                            <Route exact path="/repositories" component={ConfigurationListPage} />
+                            {/* Handles all /repositories/:id/* routes in a nested router */}
+                            <Route path="/repositories/:id" component={ConfigurationDetailPage} />
+
+                            {/* basic redirect for old team slugs */}
+                            <Route path={["/t/"]} exact>
+                                <Redirect to="/projects" />
+                            </Route>
+                            {/* redirect for old user settings slugs */}
+                            <Route path="/account" exact>
+                                <Redirect to={settingsPathAccount} />
+                            </Route>
+                            <Route path="/integrations" exact>
+                                <Redirect to={settingsPathIntegrations} />
+                            </Route>
+                            <Route path="/notifications" exact>
+                                <Redirect to={settingsPathNotifications} />
+                            </Route>
+                            <Route path="/user/billing" exact>
+                                <Redirect to={"/billing"} />
+                            </Route>
+                            <Route path="/preferences" exact>
+                                <Redirect to={settingsPathPreferences} />
+                            </Route>
+                            <Route path="/variables" exact>
+                                <Redirect to={settingsPathVariables} />
+                            </Route>
+                            <Route path="/tokens" exact>
+                                <Redirect to={settingsPathPersonalAccessTokens} />
+                            </Route>
+                            <Route path="/tokens/create" exact>
+                                <Redirect to={settingsPathPersonalAccessTokenCreate} />
+                            </Route>
+                            <Route path="/keys" exact>
+                                <Redirect to={settingsPathSSHKeys} />
+                            </Route>
+                            <Route
+                                path="*"
+                                render={(_match) => {
+                                    // delegate to our website to handle the request
+                                    if (isGitpodIo()) {
+                                        window.location.host = "www.gitpod.io";
+                                    }
+
+                                    return (
+                                        <div className="mt-48 text-center">
+                                            <Heading1>404</Heading1>
+                                            <Subheading className="mt-4">Page not found.</Subheading>
+                                        </div>
+                                    );
+                                }}
+                            />
+                        </Switch>
+                    </div>
+                    <WebsocketClients />
+                </Route>
+            </Switch>
         </Route>
     );
 };
