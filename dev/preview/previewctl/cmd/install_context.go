@@ -56,7 +56,7 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 			return nil
 		}
 
-		p, err := preview.New(branch, logger)
+		p, err := preview.New(branch, logger, preview.WithServiceAccountPath(opts.getCredentialsOpts.serviceAccountPath))
 		if err != nil {
 			return err
 		}

@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { SuggestedRepository } from "@gitpod/gitpod-protocol";
+import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
@@ -153,7 +153,7 @@ export function CreateWorkspacePage() {
             setAutostart(false);
             // TODO: consider storing SuggestedRepository as state vs. discrete props
             setContextURL(repo?.url);
-            setSelectedProjectID(repo?.projectId);
+            setSelectedProjectID(repo?.configurationId);
             // TOOD: consider dropping this - it's a lossy conversion
             history.replace(`#${repo?.url}`);
         },

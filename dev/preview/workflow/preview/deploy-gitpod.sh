@@ -304,6 +304,9 @@ then
       key=$(echo "${row}" | base64 -d | jq -r '.key')
       providerId=$(echo "$row" | base64 -d | jq -r '.value.id | ascii_downcase')
       data=$(echo "$row" | base64 -d | yq r - value --prettyPrint)
+
+      data="${data//preview.gitpod-dev.com/${DOMAIN}}"
+
       yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].kind "secret"
       yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].name "$providerId"
 
