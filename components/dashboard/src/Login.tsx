@@ -9,9 +9,6 @@ import { useContext, useEffect, useState, useMemo, useCallback, FC } from "react
 import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "./provider-utils";
-import gitpod from "./images/gitpod.svg";
-import gitpodDark from "./images/gitpod-dark.svg";
-import gitpodIcon from "./icons/gitpod.svg";
 import exclamation from "./images/exclamation.svg";
 import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
@@ -24,6 +21,8 @@ import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authpr
 import { Button, ButtonProps } from "@podkit/buttons/Button";
 import { cn } from "@podkit/lib/cn";
 import { userClient } from "./service/public-api";
+import { ProductLogo } from "./components/ProductLogo";
+import { useIsDataOps } from "./data/featureflag-query";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -38,6 +37,7 @@ type LoginProps = {
 };
 export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     const { setUser } = useContext(UserContext);
+    const isDataOps = useIsDataOps();
 
     const urlHash = useMemo(() => getURLHash(), []);
 
@@ -133,20 +133,13 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                         <div className="flex-grow h-100 flex flex-row items-center justify-center">
                             <div className="rounded-xl px-10 py-10 mx-auto">
                                 <div className="mx-auto pb-8">
-                                    <img
-                                        src={providerFromContext ? gitpod : gitpodIcon}
-                                        className="h-14 mx-auto block dark:hidden"
-                                        alt="Gitpod's logo"
-                                    />
-                                    <img
-                                        src={providerFromContext ? gitpodDark : gitpodIcon}
-                                        className="h-14 hidden mx-auto dark:block"
-                                        alt="Gitpod dark theme logo"
-                                    />
+                                    <ProductLogo className="h-14 mx-auto block" />
                                 </div>
 
                                 <div className="mx-auto text-center pb-8 space-y-2">
-                                    {providerFromContext ? (
+                                    {isDataOps ? (
+                                        <Heading1>Log in to DataOps.live Develop</Heading1>
+                                    ) : providerFromContext ? (
                                         <>
                                             <Heading2>Open a cloud development environment</Heading2>
                                             <Subheading>for the repository {repoPathname?.slice(1)}</Subheading>
