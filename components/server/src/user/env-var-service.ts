@@ -66,11 +66,11 @@ export class EnvVarService {
         variable: UserEnvVarValue,
         oldPermissionCheck?: (envvar: UserEnvVar) => Promise<void>, // @deprecated
     ): Promise<UserEnvVarValue> {
-        await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId);
         const validationError = UserEnvVar.validate(variable);
         if (validationError) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, validationError);
         }
+        await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId);
 
         variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
 
@@ -102,11 +102,11 @@ export class EnvVarService {
         variable: UserEnvVarValue,
         oldPermissionCheck?: (envvar: UserEnvVar) => Promise<void>, // @deprecated
     ): Promise<UserEnvVarValue> {
-        await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId);
         const validationError = UserEnvVar.validate(variable);
         if (validationError) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, validationError);
         }
+        await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId);
 
         variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
 
@@ -180,18 +180,8 @@ export class EnvVarService {
         projectId: string,
         envVar: ProjectEnvVarWithValue,
     ): Promise<ProjectEnvVar> {
+        this.validateProjectEnvVar(envVar);
         await this.auth.checkPermissionOnProject(requestorId, "write_env_var", projectId);
-
-        if (!envVar.name) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Variable name cannot be empty");
-        }
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(envVar.name)) {
-            throw new ApplicationError(
-                ErrorCodes.BAD_REQUEST,
-                "Please choose a variable name containing only letters, numbers, or _, and which doesn't start with a number",
-            );
-        }
-
         const existingVar = await this.projectDB.findProjectEnvironmentVariable(projectId, envVar);
         if (existingVar) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Project env var ${envVar.name} already exists`);
@@ -200,15 +190,12 @@ export class EnvVarService {
         return await this.projectDB.addProjectEnvironmentVariable(projectId, envVar);
     }
 
-    async updateProjectEnvVar(
-        requestorId: string,
-        projectId: string,
-        envVar: Partial<ProjectEnvVarWithValue>,
-    ): Promise<ProjectEnvVar> {
-        await this.auth.checkPermissionOnProject(requestorId, "write_env_var", projectId);
-
+    validateProjectEnvVar(envVar: Partial<ProjectEnvVarWithValue>) {
         if (!envVar.name) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Variable name cannot be empty");
+        }
+        if (envVar.name.startsWith("GITPOD_")) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Variable name with prefix 'GITPOD_' is reserved");
         }
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(envVar.name)) {
             throw new ApplicationError(
@@ -216,7 +203,15 @@ export class EnvVarService {
                 "Please choose a variable name containing only letters, numbers, or _, and which doesn't start with a number",
             );
         }
+    }
 
+    async updateProjectEnvVar(
+        requestorId: string,
+        projectId: string,
+        envVar: Partial<ProjectEnvVarWithValue>,
+    ): Promise<ProjectEnvVar> {
+        this.validateProjectEnvVar(envVar);
+        await this.auth.checkPermissionOnProject(requestorId, "write_env_var", projectId);
         const result = await this.projectDB.updateProjectEnvironmentVariable(projectId, envVar);
         if (!result) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Project env var ${envVar.name} does not exists`);
