@@ -34,8 +34,8 @@ export const ConfigurationDropdown = ({ selectedConfigurationId, disabled, expan
             return config.id === selectedConfigurationId;
         });
 
-        return match;
-    }, [configurations, selectedConfigurationId]);
+        return match ?? selectedConfiguration;
+    }, [configurations, selectedConfiguration, selectedConfigurationId]);
 
     const getElements = useCallback(() => {
         const resetFilterItem: ComboboxElement = {
