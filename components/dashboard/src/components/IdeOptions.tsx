@@ -17,6 +17,7 @@ import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "./Modal";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { getGitpodService } from "../service/service";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 interface IdeOptionsProps {
     ideOptions: IDEOptions | undefined;
@@ -76,8 +77,13 @@ export const IdeOptionsModifyModal = ({
     ideOptions,
     ...props
 }: IdeOptionsModifyModalProps) => {
+    const orgLevelEditorVersionPinningEnabled = useFeatureFlag("org_level_editor_version_pinning_enabled");
+
     const ideOptionsArr = useMemo(() => (ideOptions ? sortedIdeOptions(ideOptions) : undefined), [ideOptions]);
-    const pinnableIdes = useMemo(() => ideOptionsArr?.filter((i) => !!i.pinnable), [ideOptionsArr]);
+    const pinnableIdes = useMemo(
+        () => ideOptionsArr?.filter((i) => orgLevelEditorVersionPinningEnabled && !!i.pinnable),
+        [ideOptionsArr, orgLevelEditorVersionPinningEnabled],
+    );
 
     const [restrictedEditors, setEditors] = useState(props.restrictedEditors);
     const [pinnedEditorVersions, setPinnedEditorVersions] = useState(props.pinnedEditorVersions);
