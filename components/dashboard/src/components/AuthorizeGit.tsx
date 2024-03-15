@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useContext } from "react";
+import { useCallback, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { openAuthorizeWindow } from "../provider-utils";
@@ -26,7 +26,11 @@ export function useNeedsGitAuthorization() {
     return !authProviders.some((ap) => user.identities.some((i) => ap.id === i.authProviderId));
 }
 
-export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
+type Props = {
+    className?: string;
+    refetch?: () => void;
+};
+export const AuthorizeGit = ({ className, refetch }: Props) => {
     const { setUser } = useContext(UserContext);
     const owner = useIsOwner();
     const { data: authProviders } = useAuthProviderDescriptions();
@@ -35,7 +39,9 @@ export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
         if (response.user) {
             setUser(response.user);
         }
-    }, [setUser]);
+
+        refetch?.();
+    }, [refetch, setUser]);
 
     const connect = useCallback(
         (ap: AuthProviderDescription) => {

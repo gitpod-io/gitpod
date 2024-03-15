@@ -413,7 +413,10 @@ export function CreateWorkspacePage() {
                     <div className="text-gray-500 text-center text-base">
                         Start a new workspace with the following options.
                     </div>
-                    <AuthorizeGit className="mt-12 border-2 border-gray-100 dark:border-gray-800 rounded-lg" />
+                    <AuthorizeGit
+                        refetch={workspaceContext.refetch}
+                        className="mt-12 border-2 border-gray-100 dark:border-gray-800 rounded-lg"
+                    />
                 </div>
             </div>
         );
