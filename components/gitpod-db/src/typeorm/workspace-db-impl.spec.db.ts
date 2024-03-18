@@ -12,11 +12,13 @@ import { resetDB } from "../test/reset-db";
 import { WorkspaceDB } from "../workspace-db";
 import { randomUUID } from "crypto";
 import { PrebuiltWorkspaceState } from "@gitpod/gitpod-protocol";
+import { ProjectDB } from "../project-db";
 const expect = chai.expect;
 
 @suite(timeout(10000))
 export class WorkspaceSpec {
     private readonly wsDB = testContainer.get<WorkspaceDB>(WorkspaceDB);
+    private readonly projectDB = testContainer.get<ProjectDB>(ProjectDB);
 
     readonly org = randomUUID();
     readonly strangerOrg = randomUUID();
@@ -63,6 +65,15 @@ export class WorkspaceSpec {
             "failed",
         ];
         const errors = [undefined, undefined, undefined, undefined, "failed", undefined, undefined];
+
+        await this.projectDB.storeProject({
+            id: this.configuration.id,
+            name: "gitpod",
+            cloneUrl: this.configuration.cloneUrl,
+            teamId: this.org,
+            appInstallationId: randomUUID(),
+            creationTime: now,
+        });
 
         // Mock all possible states (including two possible states for "available" with and without an error value)
         for (let i = 0; i < states.length; i++) {
