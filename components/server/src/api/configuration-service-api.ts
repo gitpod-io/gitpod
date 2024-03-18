@@ -67,8 +67,8 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         if (!req.organizationId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organization_id is required");
         }
-        if (!req.cloneUrl) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "clone_url is required");
+        if (!req.contextUrl) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "context_url is required");
         }
 
         const installer = await this.userService.findUserById(ctxUserId(), ctxUserId());
@@ -76,7 +76,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "user not found");
         }
 
-        const cloneUrl = await this.contextService.parseContextUrlAsCloneUrl(installer, req.cloneUrl);
+        const cloneUrl = await this.contextService.parseContextUrlAsCloneUrl(installer, req.contextUrl);
         if (!cloneUrl) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "clone_url is not valid");
         }
