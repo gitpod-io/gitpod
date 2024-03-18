@@ -11,6 +11,7 @@ import { DisableScope, Scope } from "../workspaces/workspace-classes-query";
 import { useOrgSettingsQuery } from "../organizations/org-settings-query";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useMemo } from "react";
+import { useCurrentOrg } from "../organizations/orgs-query";
 
 const DEFAULT_WS_EDITOR = "code";
 
@@ -40,11 +41,13 @@ interface FilterOptions {
     ignoreScope?: DisableScope[];
 }
 export const useAllowedWorkspaceEditorsMemo = (options?: FilterOptions) => {
+    const organizationId = useCurrentOrg().data?.id;
     const { data: orgSettings, isLoading: isLoadingOrgSettings } = useOrgSettingsQuery();
     const { data: installationOptions, isLoading: isLoadingInstallationCls } = useIDEOptions();
     // TODO: repo-level
-
-    const isLoading = isLoadingOrgSettings || isLoadingInstallationCls;
+    // If there's no orgID set (i.e. User onboarding page), isLoadingOrgSettings will always be true
+    // So we will filter it out
+    const isLoading = organizationId ? isLoadingOrgSettings || isLoadingInstallationCls : isLoadingInstallationCls;
     const data = useMemo(() => {
         const result = getAllowedWorkspaceEditors(installationOptions, orgSettings, options);
         return {
