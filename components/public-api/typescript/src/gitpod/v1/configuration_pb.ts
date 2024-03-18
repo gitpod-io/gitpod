@@ -244,9 +244,9 @@ export class CreateConfigurationRequest extends Message<CreateConfigurationReque
   name = "";
 
   /**
-   * @generated from field: string context_url = 3;
+   * @generated from field: string clone_url = 3;
    */
-  contextUrl = "";
+  cloneUrl = "";
 
   constructor(data?: PartialMessage<CreateConfigurationRequest>) {
     super();
@@ -258,7 +258,7 @@ export class CreateConfigurationRequest extends Message<CreateConfigurationReque
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "context_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "clone_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateConfigurationRequest {

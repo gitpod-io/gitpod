@@ -36,7 +36,7 @@ export const ImportRepositoryModal: FC<Props> = ({ onClose, onCreated }) => {
         const newProjectArgs: CreateConfigurationArgs = {
             // leave the name empty to let the backend generate the name
             name: "",
-            contextUrl: selectedRepo.url,
+            cloneUrl: selectedRepo.url,
         };
 
         createConfiguration.mutate(newProjectArgs, {

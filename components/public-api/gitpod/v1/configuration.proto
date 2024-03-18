@@ -59,7 +59,7 @@ service ConfigurationService {
 message CreateConfigurationRequest {
   string organization_id = 1;
   string name = 2;
-  string context_url = 3;
+  string clone_url = 3;
 }
 
 message CreateConfigurationResponse {
