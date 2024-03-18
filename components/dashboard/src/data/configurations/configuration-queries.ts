@@ -177,7 +177,7 @@ export const getConfigurationVariableQueryKey = (variableId: string) => {
 
 export type CreateConfigurationArgs = {
     name: string;
-    cloneUrl: string;
+    contextUrl: string;
 };
 
 export const useCreateConfiguration = () => {
@@ -185,14 +185,14 @@ export const useCreateConfiguration = () => {
     const queryClient = useQueryClient();
 
     return useMutation<Configuration, Error, CreateConfigurationArgs>({
-        mutationFn: async ({ name, cloneUrl }) => {
+        mutationFn: async ({ name, contextUrl }) => {
             if (!org) {
                 throw new Error("No org currently selected");
             }
 
             const response = await configurationClient.createConfiguration({
                 name,
-                cloneUrl,
+                contextUrl,
                 organizationId: org.id,
             });
             if (!response.configuration) {
