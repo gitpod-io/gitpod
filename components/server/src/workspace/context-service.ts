@@ -107,6 +107,16 @@ export class ContextService {
         }
     }
 
+    public async parseContextUrlAsCloneUrl(user: User, contextUrl: string): Promise<string | undefined> {
+        const normalizedContextUrl = this.contextParser.normalizeContextURL(contextUrl);
+        const context = await this.contextParser.handle({}, user, normalizedContextUrl);
+        if (CommitContext.is(context)) {
+            return context.repository.cloneUrl;
+        }
+
+        return undefined;
+    }
+
     public async parseContext(
         user: User,
         contextUrl: string,

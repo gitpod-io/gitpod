@@ -7,17 +7,17 @@ defaultArgs:
   publishToNPM: true
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: 65bcfaa1136f4ea1111c9ba4277c194478004e43
-  codeVersion: 1.87.0
+  codeCommit: 0ab7db2c7269dc6711fee21bb9a4c2cc7c08142d
+  codeVersion: 1.87.1
   codeQuality: stable
   noVerifyJBPlugin: false
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2023.3.4.tar.gz"
-  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2023.3.4.tar.gz"
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2023.3.5.tar.gz"
+  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2023.3.5.tar.gz"
   pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2023.3.4.tar.gz"
-  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2023.3.4.tar.gz"
-  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2023.3.4.tar.gz"
+  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2023.3.5.tar.gz"
+  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2023.3.5.tar.gz"
   webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2023.3.4.tar.gz"
-  riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2023.3.3.tar.gz"
+  riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2023.3.4.tar.gz"
   clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2023.3.4.tar.gz"
   jbBackendVersion: "latest"
   dockerVersion: "20.10.24"

@@ -111,7 +111,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { EntitlementService } from "../billing/entitlement-service";
 import { Config } from "../config";
-import { IDEService } from "../ide-service";
+import { ExtendedIDESettings, IDEService } from "../ide-service";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import {
     FailedInstanceStartReason,
@@ -135,8 +135,9 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { ctxIsAborted, runWithRequestContext, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
 
-export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
+export interface StartWorkspaceOptions extends Omit<GitpodServer.StartWorkspaceOptions, "ideSettings"> {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
+    ideSettings?: ExtendedIDESettings;
 }
 
 const MAX_INSTANCE_START_RETRIES = 2;
@@ -232,7 +233,7 @@ export class WorkspaceStarter {
         workspace: Workspace,
         user: User,
         project: Project | undefined,
-        options?: StartWorkspaceOptions,
+        options: StartWorkspaceOptions,
     ): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
         span.setTag("workspaceId", workspace.id);
@@ -245,7 +246,6 @@ export class WorkspaceStarter {
                 .catch((err) => log.error("cannot update project usage", err));
         }
 
-        options = options || {};
         let instanceId: string | undefined = undefined;
         try {
             await this.checkBlockedRepository(user, workspace.contextURL);
@@ -302,6 +302,7 @@ export class WorkspaceStarter {
                 const ideConfig = lastValidWorkspaceInstance.configuration?.ideConfig;
                 if (ideConfig?.ide) {
                     ideSettings = {
+                        ...ideSettings,
                         defaultIde: ideConfig.ide,
                         useLatestVersion: !!ideConfig.useLatest,
                     };
@@ -415,7 +416,7 @@ export class WorkspaceStarter {
         ctx: TraceContext,
         workspace: Workspace,
         user: User,
-        userSelectedIdeSettings?: IDESettings,
+        userSelectedIdeSettings?: ExtendedIDESettings,
     ) {
         const span = TraceContext.startSpan("resolveIDEConfiguration", ctx);
         try {

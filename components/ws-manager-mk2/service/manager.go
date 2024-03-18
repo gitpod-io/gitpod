@@ -491,7 +491,6 @@ func (m *WorkspaceManagerServer) Subscribe(req *wsmanapi.SubscribeRequest, srv w
 
 // MarkActive records a workspace as being active which prevents it from timing out
 func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi.MarkActiveRequest) (res *wsmanapi.MarkActiveResponse, err error) {
-	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "MarkActive")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
@@ -591,13 +590,17 @@ func (wsm *WorkspaceManagerServer) SetTimeout(ctx context.Context, req *wsmanapi
 	return &wsmanapi.SetTimeoutResponse{}, nil
 }
 
-func (wsm *WorkspaceManagerServer) ControlPort(ctx context.Context, req *wsmanapi.ControlPortRequest) (*wsmanapi.ControlPortResponse, error) {
+func (wsm *WorkspaceManagerServer) ControlPort(ctx context.Context, req *wsmanapi.ControlPortRequest) (res *wsmanapi.ControlPortResponse, err error) {
+	span, ctx := tracing.FromContext(ctx, "ControlPort")
+	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
+	defer tracing.FinishSpan(span, &err)
+
 	if req.Spec == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "missing spec")
 	}
 
 	port := req.Spec.Port
-	err := wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
+	err = wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
 		n := 0
 		for _, x := range ws.Spec.Ports {
 			if x.Port != port {
@@ -763,9 +766,10 @@ func (wsm *WorkspaceManagerServer) UpdateSSHKey(ctx context.Context, req *wsmana
 	return &wsmanapi.UpdateSSHKeyResponse{}, err
 }
 
-func (wsm *WorkspaceManagerServer) DescribeCluster(ctx context.Context, req *wsmanapi.DescribeClusterRequest) (*wsmanapi.DescribeClusterResponse, error) {
-	span, _ := tracing.FromContext(ctx, "DescribeCluster")
-	defer tracing.FinishSpan(span, nil)
+func (wsm *WorkspaceManagerServer) DescribeCluster(ctx context.Context, req *wsmanapi.DescribeClusterRequest) (res *wsmanapi.DescribeClusterResponse, err error) {
+	//nolint:ineffassign
+	span, ctx := tracing.FromContext(ctx, "DescribeCluster")
+	defer tracing.FinishSpan(span, &err)
 
 	classes := make([]*wsmanapi.WorkspaceClass, 0, len(wsm.Config.WorkspaceClasses))
 	for id, class := range wsm.Config.WorkspaceClasses {
@@ -804,10 +808,17 @@ func (wsm *WorkspaceManagerServer) DescribeCluster(ctx context.Context, req *wsm
 
 // modifyWorkspace modifies a workspace object using the mod function. If the mod function returns a gRPC status error, that error
 // is returned directly. If mod returns a non-gRPC error it is turned into one.
-func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id string, updateStatus bool, mod func(ws *workspacev1.Workspace) error) error {
-	err := retry.RetryOnConflict(retryParams, func() error {
+func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id string, updateStatus bool, mod func(ws *workspacev1.Workspace) error) (err error) {
+	span, ctx := tracing.FromContext(ctx, "modifyWorkspace")
+	tracing.ApplyOWI(span, log.OWI("", "", id))
+	defer tracing.FinishSpan(span, &err)
+
+	err = retry.RetryOnConflict(retryParams, func() (err error) {
+		span, ctx := tracing.FromContext(ctx, "modifyWorkspaceRetryFn")
+		defer tracing.FinishSpan(span, &err)
+
 		var ws workspacev1.Workspace
-		err := wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: id}, &ws)
+		err = wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: id}, &ws)
 		if err != nil {
 			return err
 		}

@@ -12,6 +12,11 @@ export interface IDEServer {
      * Returns the IDE preferences.
      */
     getIDEOptions(): Promise<IDEOptions>;
+
+    /**
+     * Returns the IDE versions.
+     */
+    getIDEVersions(ide: string): Promise<string[] | undefined>;
 }
 
 export interface IDEOptions {
@@ -149,4 +154,9 @@ export interface IDEOption {
      * LatestImageVersion the semantic version of the latest IDE image.
      */
     latestImageVersion?: string;
+
+    /**
+     * Wether is possible to pin a specific IDE version.
+     */
+    pinnable?: boolean;
 }
