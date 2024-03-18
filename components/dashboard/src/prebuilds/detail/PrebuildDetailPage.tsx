@@ -152,6 +152,8 @@ export const PrebuildDetailPage: FC = () => {
         }
     }, [currentPrebuild]);
 
+    const notFoundError = error instanceof ApplicationError && error.code === ErrorCodes.NOT_FOUND;
+
     if (newPrebuildID) {
         return <Redirect to={repositoriesRoutes.PrebuildDetail(newPrebuildID)} />;
     }
@@ -177,20 +179,29 @@ export const PrebuildDetailPage: FC = () => {
                     </div>
                 )}
                 {error ? (
-                    <div className="flex flex-col gap-4">
-                        <Alert type="error">
-                            <span>Failed to load prebuild</span>
-                            <pre>{error.message}</pre>
-                        </Alert>
-                        <Button
-                            variant="destructive"
-                            onClick={() => {
-                                refetch();
-                            }}
-                        >
-                            Retry
-                        </Button>
-                    </div>
+                    notFoundError ? (
+                        <div className="flex flex-col gap-4">
+                            <Alert type="error">
+                                <span>Failed to load prebuild</span>
+                                <pre>Prebuild not found</pre>
+                            </Alert>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-4">
+                            <Alert type="error">
+                                <span>Failed to load prebuild</span>
+                                <pre>{error.message}</pre>
+                            </Alert>
+                            <Button
+                                variant="destructive"
+                                onClick={() => {
+                                    refetch();
+                                }}
+                            >
+                                Retry
+                            </Button>
+                        </div>
+                    )
                 ) : (
                     prebuild && (
                         <div className={"border border-pk-border-base rounded-xl py-6 divide-y"}>
