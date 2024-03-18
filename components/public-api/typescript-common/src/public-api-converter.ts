@@ -408,10 +408,10 @@ export class PublicAPIConverter {
         return metadata;
     }
 
-    toWorkspaceConditions(conditions: WorkspaceInstanceConditions): WorkspaceStatus_WorkspaceConditions {
+    toWorkspaceConditions(conditions: WorkspaceInstanceConditions | undefined): WorkspaceStatus_WorkspaceConditions {
         const result = new WorkspaceStatus_WorkspaceConditions({
-            failed: conditions.failed,
-            timeout: conditions.timeout,
+            failed: conditions?.failed,
+            timeout: conditions?.timeout,
         });
         // TODO: failedReason
         return result;
