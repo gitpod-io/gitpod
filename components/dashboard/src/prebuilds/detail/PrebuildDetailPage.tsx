@@ -87,9 +87,15 @@ export const PrebuildDetailPage: FC = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const notFoundError = error instanceof ApplicationError && error.code === ErrorCodes.NOT_FOUND;
+
     useEffect(() => {
         logEmitter.on("error", (err: Error) => {
             if (err?.name === "AbortError") {
+                return;
+            }
+            if (err instanceof ApplicationError && err.code === ErrorCodes.NOT_FOUND) {
+                // We don't want to show a toast for this error, because it's handled by `notFoundError`.
                 return;
             }
             if (err?.message) {
@@ -151,8 +157,6 @@ export const PrebuildDetailPage: FC = () => {
                 };
         }
     }, [currentPrebuild]);
-
-    const notFoundError = error instanceof ApplicationError && error.code === ErrorCodes.NOT_FOUND;
 
     if (newPrebuildID) {
         return <Redirect to={repositoriesRoutes.PrebuildDetail(newPrebuildID)} />;
