@@ -144,10 +144,7 @@ const toIDEOptions = (
     }
     return {
         ...installationOptions,
-        options: allowedList.reduce((acc, cur) => {
-            acc[cur.id] = cur;
-            return acc;
-        }, {} as { [key: string]: AllowedWorkspaceEditor }),
+        options: Object.fromEntries(allowedList.map((e) => [e.id, e])),
     };
 };
 
