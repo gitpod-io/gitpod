@@ -183,19 +183,12 @@ export const PrebuildDetailPage: FC = () => {
                     </div>
                 )}
                 {error ? (
-                    notFoundError ? (
-                        <div className="flex flex-col gap-4">
-                            <Alert type="error">
-                                <span>Failed to load prebuild</span>
-                                <pre>Prebuild not found</pre>
-                            </Alert>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-4">
-                            <Alert type="error">
-                                <span>Failed to load prebuild</span>
-                                <pre>{error.message}</pre>
-                            </Alert>
+                    <div className="flex flex-col gap-4">
+                        <Alert type="error">
+                            <span>Failed to load prebuild</span>
+                            <pre>{notFoundError ? "Prebuild not found" : error.message}</pre>
+                        </Alert>
+                        {!notFoundError && (
                             <Button
                                 variant="destructive"
                                 onClick={() => {
@@ -204,8 +197,8 @@ export const PrebuildDetailPage: FC = () => {
                             >
                                 Retry
                             </Button>
-                        </div>
-                    )
+                        )}
+                    </div>
                 ) : (
                     prebuild && (
                         <div className={"border border-pk-border-base rounded-xl py-6 divide-y"}>
