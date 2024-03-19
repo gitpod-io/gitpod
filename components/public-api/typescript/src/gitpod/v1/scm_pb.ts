@@ -273,6 +273,11 @@ export class ListSuggestedRepositoriesRequest extends Message<ListSuggestedRepos
    */
   organizationId = "";
 
+  /**
+   * @generated from field: bool exclude_configurations = 3;
+   */
+  excludeConfigurations = false;
+
   constructor(data?: PartialMessage<ListSuggestedRepositoriesRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -283,6 +288,7 @@ export class ListSuggestedRepositoriesRequest extends Message<ListSuggestedRepos
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
     { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "exclude_configurations", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListSuggestedRepositoriesRequest {

@@ -34,8 +34,8 @@ spec:
         description: Server has accumulated {{ printf "%.2f" $value }}s event loop lag.
 
     - alert: InstanceStartFailures
-      # Reasoning: 1 failure every 120s should not trigger an incident: 1/120 = 0.00833.. => 0.01
-      expr: sum(irate(gitpod_server_instance_starts_failed_total{reason!~"imageBuildFailed|imageBuildFailedUser|scmAccessFailed"}[2m])) by (reason) > 0.01
+      # Reasoning: 10% failure rate over 5m
+      expr: sum(increase(gitpod_server_instance_starts_failed_total{reason!~"imageBuildFailed|imageBuildFailedUser|scmAccessFailed"}[5m])) / (sum(increase(gitpod_server_instance_starts_failed_total{reason!~"imageBuildFailed|imageBuildFailedUser|scmAccessFailed"}[5m])) + sum(increase(gitpod_server_instance_starts_success_total[5m]))) > 0.1
       for: 30s
       labels:
         severity: critical

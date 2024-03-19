@@ -83,7 +83,7 @@ users:
 					},
 					Clusters: map[string]*api.Cluster{
 						"k3s": {
-							Server:                   "https://k3s.kube.gitpod-dev.com:6443",
+							Server:                   "https://k3s.preview.gitpod-dev.com:6443",
 							CertificateAuthorityData: []byte("test_data"),
 							Extensions:               map[string]runtime.Object{},
 						},

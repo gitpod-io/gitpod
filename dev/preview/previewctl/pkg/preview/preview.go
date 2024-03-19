@@ -6,37 +6,52 @@ package preview
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
 
-	"github.com/cockroachdb/errors"
+	"cloud.google.com/go/storage"
 	"github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"google.golang.org/api/option"
 
 	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
 	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s/context/k3s"
 )
 
+const TFStateBucket = "3f4745df-preview-tf-state"
+
 type Config struct {
-	branch    string
-	name      string
-	namespace string
+	branch string
+	name   string
 
 	status Status
 
-	previewClient   *k8s.Config
-	harvesterClient *k8s.Config
-	configLoader    *k3s.ConfigLoader
+	previewClient *k8s.Config
+	storageClient *storage.Client
+	configLoader  *k3s.ConfigLoader
 
 	logger *logrus.Entry
 
-	creationTime *metav1.Time
+	creationTime *time.Time
 }
 
-func New(branch string, logger *logrus.Logger) (*Config, error) {
+type Option func(opts *Config)
+
+func WithServiceAccountPath(serviceAccountPath string) Option {
+	return func(config *Config) {
+		if serviceAccountPath == "" {
+			return
+		}
+		storageClient, err := storage.NewClient(context.Background(), option.WithCredentialsFile(serviceAccountPath))
+		if err != nil {
+			return
+		}
+		config.storageClient = storageClient
+	}
+}
+
+func New(branch string, logger *logrus.Logger, opts ...Option) (*Config, error) {
 	branch, err := GetName(branch)
 	if err != nil {
 		return nil, err
@@ -44,22 +59,27 @@ func New(branch string, logger *logrus.Logger) (*Config, error) {
 
 	logEntry := logger.WithFields(logrus.Fields{"branch": branch})
 
-	harvesterConfig, err := k8s.NewFromDefaultConfigWithContext(logEntry.Logger, harvesterContextName)
-	if err != nil {
-		return nil, errors.Wrap(err, "couldn't instantiate a k8s config")
-	}
-
-	return &Config{
-		branch:    branch,
-		namespace: fmt.Sprintf("preview-%s", branch),
-		name:      branch,
+	config := &Config{
+		branch: branch,
+		name:   branch,
 		status: Status{
 			Name: branch,
 		},
-		harvesterClient: harvesterConfig,
-		logger:          logEntry,
-		creationTime:    nil,
-	}, nil
+		logger:       logEntry,
+		creationTime: nil,
+	}
+	for _, o := range opts {
+		o(config)
+	}
+	if config.storageClient == nil {
+		config.storageClient, err = storage.NewClient(context.Background())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return config, nil
+
 }
 
 // Same compares two preview environments
@@ -79,7 +99,7 @@ func (c *Config) Same(newPreview *Config) bool {
 		return false
 	}
 
-	return c.creationTime.Equal(newPreview.creationTime)
+	return c.creationTime.Equal(*newPreview.creationTime)
 }
 
 // ensureCreationTime best-effort guess on when the preview got created, based on the creation timestamp of the service
@@ -88,29 +108,13 @@ func (c *Config) ensureCreationTime() {
 	defer cancel()
 
 	if c.creationTime == nil {
-		creationTime, err := c.harvesterClient.GetSVCCreationTimestamp(ctx, c.name, c.namespace)
-		c.creationTime = creationTime
+		attr, err := c.storageClient.Bucket(TFStateBucket).Object("preview/" + c.name + ".tfstate").Attrs(ctx)
 		if err != nil {
 			c.logger.WithFields(logrus.Fields{"err": err}).Infof("Failed to get creation time")
+			return
 		}
+		c.creationTime = &attr.Created
 	}
-}
-
-func (c *Config) ListAllPreviews(ctx context.Context) error {
-	previews, err := c.harvesterClient.GetVMs(ctx)
-	if err != nil {
-		return err
-	}
-
-	for _, preview := range previews {
-		fmt.Printf("%v\n", preview)
-	}
-
-	return nil
-}
-
-func (c *Config) GetPreviewEnvironments(ctx context.Context) ([]string, error) {
-	return c.harvesterClient.GetVMs(ctx)
 }
 
 func (c *Config) GetName() string {

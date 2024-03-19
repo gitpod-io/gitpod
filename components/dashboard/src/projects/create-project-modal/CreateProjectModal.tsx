@@ -64,7 +64,7 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
                                     selectedContextURL={selectedRepo?.url}
                                     selectedConfigurationId={selectedRepo?.configurationId}
                                     onChange={setSelectedRepo}
-                                    excludeProjects
+                                    excludeConfigurations
                                 />
                             </InputField>
                         </>

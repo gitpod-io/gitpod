@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import RepositorySVG from "../icons/Repository.svg";
 import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.svg";
@@ -20,18 +20,18 @@ interface RepositoryFinderProps {
     selectedConfigurationId?: string;
     disabled?: boolean;
     expanded?: boolean;
-    excludeProjects?: boolean;
-    onlyProjects?: boolean;
+    excludeConfigurations?: boolean;
+    onlyConfigurations?: boolean;
     onChange?: (repo: SuggestedRepository) => void;
 }
 
 export default function RepositoryFinder({
     selectedContextURL,
-    selectedConfigurationId: selectedProjectID,
+    selectedConfigurationId,
     disabled,
     expanded,
-    excludeProjects = false,
-    onlyProjects = false,
+    excludeConfigurations = false,
+    onlyConfigurations = false,
     onChange,
 }: RepositoryFinderProps) {
     const [searchString, setSearchString] = useState("");
@@ -40,13 +40,17 @@ export default function RepositoryFinder({
         isLoading,
         isSearching,
         hasMore,
-    } = useUnifiedRepositorySearch({ searchString, excludeProjects, onlyProjects });
+    } = useUnifiedRepositorySearch({
+        searchString,
+        excludeConfigurations: excludeConfigurations,
+        onlyConfigurations: onlyConfigurations,
+    });
 
     const authProviders = useAuthProviderDescriptions();
 
     const handleSelectionChange = useCallback(
         (selectedID: string) => {
-            // selectedId is either projectId or repo url
+            // selectedId is either configurationId or repo url
             const matchingSuggestion = repos?.find((repo) => {
                 if (repo.configurationId) {
                     return repo.configurationId === selectedID;
@@ -68,11 +72,13 @@ export default function RepositoryFinder({
         [onChange, repos],
     );
 
-    // Resolve the selected context url & project id props to a suggestion entry
-    const selectedSuggestion = useMemo(() => {
+    const [selectedSuggestion, setSelectedSuggestion] = useState<SuggestedRepository | undefined>(undefined);
+
+    // Resolve the selected context url & configurationId id props to a suggestion entry
+    useEffect(() => {
         let match = repos?.find((repo) => {
-            if (selectedProjectID) {
-                return repo.configurationId === selectedProjectID;
+            if (selectedConfigurationId) {
+                return repo.configurationId === selectedConfigurationId;
             }
 
             return repo.url === selectedContextURL;
@@ -85,14 +91,40 @@ export default function RepositoryFinder({
             });
         }
 
-        // This means we found a matching project, but the context url is different
-        // user may be using a pr or branch url, so we want to make sure and use that w/ the matching project
+        // This means we found a matching configuration, but the context url is different
+        // user may be using a pr or branch url, so we want to make sure and use that w/ the matching configuration
         if (match && match.configurationId && selectedContextURL && match.url !== selectedContextURL) {
             match.url = selectedContextURL;
         }
 
-        return match;
-    }, [repos, selectedContextURL, selectedProjectID]);
+        // Do not update the selected suggestion if it already has a name and the context url matches
+        // If the configurationId changes, we want to update the selected suggestion with it
+        if (selectedSuggestion) {
+            const name = selectedSuggestion.configurationName || selectedSuggestion.repoName;
+            if (name && selectedSuggestion.url === selectedContextURL) {
+                if (selectedSuggestion.configurationId === selectedConfigurationId) {
+                    return;
+                }
+            }
+        }
+
+        setSelectedSuggestion(match);
+
+        // If we put the selectedSuggestion in the dependency array, it will cause an infinite loop
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [repos, selectedContextURL, selectedConfigurationId]);
+
+    const displayName = useMemo(() => {
+        if (!selectedSuggestion) {
+            return;
+        }
+
+        if (!selectedSuggestion?.configurationName) {
+            return displayContextUrl(selectedSuggestion?.repoName || selectedSuggestion?.url);
+        }
+
+        return selectedSuggestion?.configurationName;
+    }, [selectedSuggestion]);
 
     const getElements = useCallback(
         // searchString ignore here as list is already pre-filtered against it
@@ -118,7 +150,7 @@ export default function RepositoryFinder({
             if (
                 searchString.length >= 3 &&
                 authProviders.data?.some((p) => p.type === AuthProviderType.BITBUCKET_SERVER) &&
-                !onlyProjects
+                !onlyConfigurations
             ) {
                 // add an element that tells the user that the Bitbucket Server does only support prefix search
                 result.push({
@@ -148,7 +180,7 @@ export default function RepositoryFinder({
             }
             return result;
         },
-        [repos, hasMore, authProviders.data, onlyProjects],
+        [repos, hasMore, authProviders.data, onlyConfigurations],
     );
 
     return (
@@ -166,15 +198,7 @@ export default function RepositoryFinder({
             <ComboboxSelectedItem
                 icon={RepositorySVG}
                 htmlTitle={displayContextUrl(selectedContextURL) || "Repository"}
-                title={
-                    <div className="truncate">
-                        {displayContextUrl(
-                            selectedSuggestion?.configurationName ||
-                                selectedSuggestion?.repoName ||
-                                selectedSuggestion?.url,
-                        ) || "Select a repository"}
-                    </div>
-                }
+                title={<div className="truncate">{displayName || "Select a repository"}</div>}
                 subtitle={
                     // Only show the url if we have a project or repo name, otherwise it's redundant w/ the title
                     selectedSuggestion?.configurationName || selectedSuggestion?.repoName

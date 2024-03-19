@@ -190,13 +190,9 @@ export const useCreateConfiguration = () => {
                 throw new Error("No org currently selected");
             }
 
-            // TODO: Should we push this into the api?
-            // ensure a .git suffix
-            const normalizedCloneURL = cloneUrl.endsWith(".git") ? cloneUrl : `${cloneUrl}.git`;
-
             const response = await configurationClient.createConfiguration({
                 name,
-                cloneUrl: normalizedCloneURL,
+                cloneUrl,
                 organizationId: org.id,
             });
             if (!response.configuration) {

@@ -16,6 +16,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
 import { UserService } from "../user/user-service";
 import { Config } from "../config";
+import { IDEService } from "../ide-service";
 
 const expect = chai.expect;
 
@@ -37,6 +38,24 @@ describe("OrganizationService", async () => {
             container = testContainer.createChild();
             container.bind(Config).toConstantValue({} as any as Config);
             container.bind(UserService).toConstantValue({} as any as UserService);
+            container.bind(IDEService).toConstantValue({
+                getIDEConfig: async () => ({
+                    supervisorImage: "foo",
+                    ideOptions: {
+                        options: {
+                            code: {
+                                orderKey: "00",
+                                title: "VS Code",
+                                type: "browser",
+                                logo: "https://ide.gitpod.io/image/ide-logo/vscode.svg",
+                                label: "Browser",
+                                image: "bar",
+                                latestImage: "baz",
+                            },
+                        },
+                    },
+                }),
+            } as any as IDEService);
             container.bind(OrganizationService).toSelf().inSingletonScope();
             container.bind(ProjectsService).toConstantValue({} as any as ProjectsService);
             container.bind(Authorizer).toConstantValue({

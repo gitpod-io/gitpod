@@ -83,7 +83,7 @@ export interface StartPageProps {
     title?: string;
     children?: React.ReactNode;
     showLatestIdeWarning?: boolean;
-    workspaceId: string;
+    workspaceId?: string;
 }
 
 export interface StartWorkspaceError {
