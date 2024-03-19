@@ -290,7 +290,7 @@ export const PrebuildDetailPage: FC = () => {
                             </div>
                             <div className="px-6 pt-6 flex justify-between border-pk-border-base">
                                 {[PrebuildPhase_Phase.BUILDING, PrebuildPhase_Phase.QUEUED].includes(
-                                    prebuild?.status?.phase?.name ?? PrebuildPhase_Phase.UNSPECIFIED,
+                                    currentPrebuild?.status?.phase?.name ?? PrebuildPhase_Phase.UNSPECIFIED,
                                 ) ? (
                                     <LoadingButton
                                         loading={cancelPrebuildMutation.isLoading}
