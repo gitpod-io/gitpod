@@ -83,7 +83,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                     onSelectionChange={actuallySetDefaultIde}
                     pinnedEditorVersions={
                         isOrgOwnedUser && orgSettings?.pinnedEditorVersions
-                            ? new Map<string, string>(Object.entries(orgSettings.pinnedEditorVersions))
+                            ? new Map(Object.entries(orgSettings.pinnedEditorVersions))
                             : undefined
                     }
                     selectedIdeOption={defaultIde}
