@@ -12,6 +12,7 @@ import PillLabel from "../components/PillLabel";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { converter } from "../service/public-api";
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
+import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -21,6 +22,7 @@ interface SelectIDEProps {
 export default function SelectIDE(props: SelectIDEProps) {
     const { user, setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
+    const { data: orgSettings } = useOrgSettingsQuery();
 
     const [defaultIde, setDefaultIde] = useState<string>(user?.editorSettings?.name || "code");
     const [useLatestVersion, setUseLatestVersion] = useState<boolean>(user?.editorSettings?.version === "latest");
@@ -79,6 +81,11 @@ export default function SelectIDE(props: SelectIDEProps) {
             <div className="w-112 max-w-full my-4">
                 <SelectIDEComponent
                     onSelectionChange={actuallySetDefaultIde}
+                    pinnedEditorVersions={
+                        isOrgOwnedUser && orgSettings?.pinnedEditorVersions
+                            ? new Map<string, string>(Object.entries(orgSettings.pinnedEditorVersions))
+                            : undefined
+                    }
                     selectedIdeOption={defaultIde}
                     useLatest={useLatestVersion}
                     ignoreRestrictionScopes={isOrgOwnedUser ? ["configuration"] : ["configuration", "organization"]}
