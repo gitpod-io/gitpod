@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { Button } from "@podkit/buttons/Button";
 import { SwitchInputField } from "@podkit/switch/Switch";
@@ -16,8 +16,8 @@ import { useToast } from "./toasts/Toasts";
 import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "./Modal";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { getGitpodService } from "../service/service";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { useIDEVersionsQuery } from "../data/ide-options/ide-options-query";
 
 interface IdeOptionsProps {
     ideOptions: IDEOptions | undefined;
@@ -87,25 +87,9 @@ export const IdeOptionsModifyModal = ({
 
     const [restrictedEditors, setEditors] = useState(props.restrictedEditors);
     const [pinnedEditorVersions, setPinnedEditorVersions] = useState(props.pinnedEditorVersions);
-    const [editorVersions, setEditorVersions] = useState(new Map<string, string[]>());
-
-    useEffect(() => {
-        async function fetchData() {
-            if (!pinnableIdes) {
-                return;
-            }
-            const ideVersionsResult = await Promise.all(
-                pinnableIdes.map((ide) => getGitpodService().server.getIDEVersions(ide.id)),
-            );
-            const updatedVal = new Map<string, string[]>();
-            for (let i = 0; i < pinnableIdes.length; i++) {
-                const versions = ideVersionsResult[i]!;
-                updatedVal.set(pinnableIdes[i].id, versions);
-            }
-            setEditorVersions(updatedVal);
-        }
-        fetchData();
-    }, [pinnableIdes]);
+    const { data: editorVersions, isLoading: isLoadingEditorVersions } = useIDEVersionsQuery(
+        pinnableIdes?.map((e) => e.id),
+    );
 
     const { toast } = useToast();
 
@@ -134,7 +118,7 @@ export const IdeOptionsModifyModal = ({
         }
     }, [restrictedEditors, ideOptionsArr]);
 
-    const isLoading = props.isLoading || !pinnableIdes || pinnableIdes.length !== editorVersions.size;
+    const isLoading = props.isLoading || isLoadingEditorVersions;
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleUpdate}>
@@ -147,7 +131,7 @@ export const IdeOptionsModifyModal = ({
                         <IdeOptionSwitch
                             key={ide.id}
                             ideOption={ide}
-                            ideVersions={editorVersions.get(ide.id)}
+                            ideVersions={editorVersions?.get(ide.id)}
                             pinnedIdeVersion={pinnedEditorVersions.get(ide.id)}
                             checked={!restrictedEditors.has(ide.id)}
                             onPinnedIdeVersionChange={(version) => {

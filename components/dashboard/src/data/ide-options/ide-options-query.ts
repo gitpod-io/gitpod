@@ -28,6 +28,30 @@ export const useIDEOptions = () => {
     );
 };
 
+export const useIDEVersionsQuery = (pinnableIdeIdList?: string[]) => {
+    return useQuery(
+        ["ide-versions", pinnableIdeIdList?.join(",")],
+        async () => {
+            const updatedVal = new Map<string, string[]>();
+            if (!pinnableIdeIdList) {
+                return updatedVal;
+            }
+            const ideVersionsResult = await Promise.all(
+                pinnableIdeIdList.map((ide) => getGitpodService().server.getIDEVersions(ide)),
+            );
+            for (let i = 0; i < pinnableIdeIdList.length; i++) {
+                const versions = ideVersionsResult[i]!;
+                updatedVal.set(pinnableIdeIdList[i], versions);
+            }
+            return updatedVal;
+        },
+        {
+            staleTime: 1000 * 60 * 10, // 10m
+            cacheTime: 1000 * 60 * 10, // 10m
+        },
+    );
+};
+
 export type AllowedWorkspaceEditor = IDEOption & {
     id: string;
     isDisabledInScope?: boolean;
