@@ -18,8 +18,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -99,11 +97,7 @@ func eventFilter(nodeName string) predicate.Predicate {
 		},
 
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			old := e.ObjectOld.(*workspacev1.Workspace)
-			new := e.ObjectNew.(*workspacev1.Workspace)
-			hasChanged := !cmp.Equal(old.Status, new.Status, cmpopts.IgnoreFields(workspacev1.WorkspaceStatus{}, "LastActivity"))
-
-			return hasChanged && workspaceFilter(e.ObjectNew, nodeName)
+			return workspaceFilter(e.ObjectNew, nodeName)
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			return false
