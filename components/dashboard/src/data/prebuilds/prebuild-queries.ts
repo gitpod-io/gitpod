@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { prebuildClient, stream } from "../../service/public-api";
 import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -39,6 +39,14 @@ export function watchPrebuild(prebuildId: string, cb: (data: Prebuild) => void) 
             }
         },
     );
+}
+
+export function useCancelPrebuildMutation() {
+    return useMutation({
+        mutationFn: async (prebuildId: string) => {
+            await prebuildClient.cancelPrebuild({ prebuildId });
+        },
+    });
 }
 
 export function useTriggerPrebuildQuery(configurationId?: string, gitRef?: string) {
