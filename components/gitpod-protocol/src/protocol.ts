@@ -308,6 +308,9 @@ export namespace UserEnvVar {
     export function validate(variable: UserEnvVarValue): string | undefined {
         const name = variable.name;
         const pattern = variable.repositoryPattern;
+        if (name.startsWith("GITPOD_")) {
+            return "Name with prefix 'GITPOD_' is reserved.";
+        }
         if (name.trim() === "") {
             return "Name must not be empty.";
         }
