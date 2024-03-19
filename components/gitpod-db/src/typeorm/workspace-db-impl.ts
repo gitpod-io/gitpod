@@ -1074,6 +1074,9 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                 "pws.buildWorkspaceId = ws.id AND ws.organizationId = :organizationId",
                 { organizationId },
             )
+            .innerJoinAndMapOne("pws.project", DBProject, "project", "pws.projectId = project.id")
+            .where("project.markedDeleted = false")
+            .andWhere("project.id IS NOT NULL")
             .skip(pagination.offset)
             .take(pagination.limit)
             .orderBy("pws.creationTime", sort.order); // todo: take sort field into account
@@ -1122,7 +1125,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
 
         const normalizedSearchTerm = filter.searchTerm?.trim();
         if (normalizedSearchTerm) {
-            query.innerJoinAndMapOne("pws.project", DBProject, "project", "pws.projectId = project.id");
             query.andWhere(
                 new Brackets((qb) => {
                     qb.where("project.cloneUrl LIKE :searchTerm", {

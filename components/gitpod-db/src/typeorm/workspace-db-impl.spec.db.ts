@@ -12,11 +12,13 @@ import { resetDB } from "../test/reset-db";
 import { WorkspaceDB } from "../workspace-db";
 import { randomUUID } from "crypto";
 import { PrebuiltWorkspaceState } from "@gitpod/gitpod-protocol";
+import { ProjectDB } from "../project-db";
 const expect = chai.expect;
 
 @suite(timeout(10000))
 export class WorkspaceSpec {
     private readonly wsDB = testContainer.get<WorkspaceDB>(WorkspaceDB);
+    private readonly projectDB = testContainer.get<ProjectDB>(ProjectDB);
 
     readonly org = randomUUID();
     readonly strangerOrg = randomUUID();
@@ -64,57 +66,75 @@ export class WorkspaceSpec {
         ];
         const errors = [undefined, undefined, undefined, undefined, "failed", undefined, undefined];
 
-        // Mock all possible states (including two possible states for "available" with and without an error value)
-        for (let i = 0; i < states.length; i++) {
-            const prebuildId = randomUUID();
-            const workspaceId = randomUUID();
-            const state = states[i];
-            const error = errors[i];
+        await this.projectDB.storeProject({
+            id: this.configuration.id,
+            name: "gitpod",
+            cloneUrl: this.configuration.cloneUrl,
+            teamId: this.org,
+            appInstallationId: randomUUID(),
+            creationTime: now,
+        });
 
-            const ws = await this.wsDB.store({
-                id: workspaceId,
-                type: "prebuild",
-                creationTime: now,
-                organizationId: this.org,
-                contextURL: this.configuration.cloneUrl,
-                description: "Gitpod",
-                ownerId: randomUUID(),
-                projectId: this.configuration.id,
-                context: {
-                    title: "Gitpod",
-                    ref: this.configuration.branch,
-                },
-                config: {},
-            });
+        const fakeConfiguration = {
+            id: randomUUID(),
+            cloneUrl: "https://github.com/gitpod-io/gitpod",
+            branch: "main",
+            commit: "1676c9001cdf291d27f48bd18b40b773dd24748b",
+        };
 
-            await this.wsDB.storePrebuiltWorkspace({
-                id: prebuildId,
-                cloneURL: this.configuration.cloneUrl,
-                commit: this.configuration.commit,
-                projectId: this.configuration.id,
-                buildWorkspaceId: ws.id,
-                creationTime: now,
-                branch: this.configuration.branch,
-                state,
-                error,
-                statusVersion: 1,
-            });
+        for (const configuration of [this.configuration, fakeConfiguration]) {
+            // Mock all possible states (including two possible states for "available" with and without an error value)
+            for (let i = 0; i < states.length; i++) {
+                const prebuildId = randomUUID();
+                const workspaceId = randomUUID();
+                const state = states[i];
+                const error = errors[i];
 
-            await this.wsDB.storePrebuildInfo({
-                teamId: this.org,
-                id: randomUUID(),
-                buildWorkspaceId: ws.id,
-                projectId: this.configuration.id,
-                projectName: "gitpod",
-                cloneUrl: this.configuration.cloneUrl,
-                branch: this.configuration.branch,
-                startedAt: now,
-                startedBy: "me",
-                changeTitle: "Change this",
-                changeDate: now,
-                changeAuthor: "me again",
-                changeHash: this.configuration.commit,
-            });
+                const ws = await this.wsDB.store({
+                    id: workspaceId,
+                    type: "prebuild",
+                    creationTime: now,
+                    organizationId: this.org,
+                    contextURL: configuration.cloneUrl,
+                    description: "Gitpod",
+                    ownerId: randomUUID(),
+                    projectId: configuration.id,
+                    context: {
+                        title: "Gitpod",
+                        ref: configuration.branch,
+                    },
+                    config: {},
+                });
+
+                await this.wsDB.storePrebuiltWorkspace({
+                    id: prebuildId,
+                    cloneURL: configuration.cloneUrl,
+                    commit: configuration.commit,
+                    projectId: configuration.id,
+                    buildWorkspaceId: ws.id,
+                    creationTime: now,
+                    branch: configuration.branch,
+                    state,
+                    error,
+                    statusVersion: 1,
+                });
+
+                await this.wsDB.storePrebuildInfo({
+                    teamId: this.org,
+                    id: randomUUID(),
+                    buildWorkspaceId: ws.id,
+                    projectId: configuration.id,
+                    projectName: "gitpod",
+                    cloneUrl: configuration.cloneUrl,
+                    branch: configuration.branch,
+                    startedAt: now,
+                    startedBy: "me",
+                    changeTitle: "Change this",
+                    changeDate: now,
+                    changeAuthor: "me again",
+                    changeHash: configuration.commit,
+                });
+            }
         }
     }
 
