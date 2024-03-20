@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { Button } from "@podkit/buttons/Button";
 import { SwitchInputField } from "@podkit/switch/Switch";
@@ -16,8 +16,8 @@ import { useToast } from "./toasts/Toasts";
 import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "./Modal";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { getGitpodService } from "../service/service";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { useIDEVersionsQuery } from "../data/ide-options/ide-options-query";
 
 interface IdeOptionsProps {
     ideOptions: IDEOptions | undefined;
@@ -87,25 +87,11 @@ export const IdeOptionsModifyModal = ({
 
     const [restrictedEditors, setEditors] = useState(props.restrictedEditors);
     const [pinnedEditorVersions, setPinnedEditorVersions] = useState(props.pinnedEditorVersions);
-    const [editorVersions, setEditorVersions] = useState(new Map<string, string[]>());
-
-    useEffect(() => {
-        async function fetchData() {
-            if (!pinnableIdes) {
-                return;
-            }
-            const ideVersionsResult = await Promise.all(
-                pinnableIdes.map((ide) => getGitpodService().server.getIDEVersions(ide.id)),
-            );
-            const updatedVal = new Map<string, string[]>();
-            for (let i = 0; i < pinnableIdes.length; i++) {
-                const versions = ideVersionsResult[i]!;
-                updatedVal.set(pinnableIdes[i].id, versions);
-            }
-            setEditorVersions(updatedVal);
-        }
-        fetchData();
-    }, [pinnableIdes]);
+    const {
+        data: editorVersions,
+        isLoading: isLoadingEditorVersions,
+        ...editorVersionsQuery
+    } = useIDEVersionsQuery(pinnableIdes?.map((e) => e.id));
 
     const { toast } = useToast();
 
@@ -134,7 +120,26 @@ export const IdeOptionsModifyModal = ({
         }
     }, [restrictedEditors, ideOptionsArr]);
 
-    const isLoading = props.isLoading || !pinnableIdes || pinnableIdes.length !== editorVersions.size;
+    const errMessage = useMemo(() => {
+        if (computedError) {
+            return computedError;
+        }
+        if (updateMutation.isError) {
+            return String(updateMutation.error);
+        }
+        if (editorVersionsQuery.isError) {
+            return String(editorVersionsQuery.error);
+        }
+        return undefined;
+    }, [
+        computedError,
+        updateMutation.isError,
+        updateMutation.error,
+        editorVersionsQuery.isError,
+        editorVersionsQuery.error,
+    ]);
+
+    const isLoading = props.isLoading || isLoadingEditorVersions;
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleUpdate}>
@@ -147,7 +152,7 @@ export const IdeOptionsModifyModal = ({
                         <IdeOptionSwitch
                             key={ide.id}
                             ideOption={ide}
-                            ideVersions={editorVersions.get(ide.id)}
+                            ideVersions={editorVersions?.[ide.id]}
                             pinnedIdeVersion={pinnedEditorVersions.get(ide.id)}
                             checked={!restrictedEditors.has(ide.id)}
                             onPinnedIdeVersionChange={(version) => {
@@ -165,9 +170,7 @@ export const IdeOptionsModifyModal = ({
                 )}
             </ModalBody>
             <ModalBaseFooter className="justify-between">
-                <div className="text-red-500">
-                    {(computedError || updateMutation.isError) && (computedError || String(updateMutation.error))}
-                </div>
+                <div className="text-red-500">{errMessage}</div>
                 <div className="flex gap-2">
                     <Button variant="secondary" onClick={onClose}>
                         Cancel

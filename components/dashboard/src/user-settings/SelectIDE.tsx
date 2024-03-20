@@ -11,6 +11,7 @@ import SelectIDEComponent from "../components/SelectIDEComponent";
 import PillLabel from "../components/PillLabel";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { converter } from "../service/public-api";
+import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -23,6 +24,8 @@ export default function SelectIDE(props: SelectIDEProps) {
 
     const [defaultIde, setDefaultIde] = useState<string>(user?.editorSettings?.name || "code");
     const [useLatestVersion, setUseLatestVersion] = useState<boolean>(user?.editorSettings?.version === "latest");
+
+    const isOrgOwnedUser = user && isOrganizationOwned(user);
 
     const actualUpdateUserIDEInfo = useCallback(
         async (selectedIde: string, useLatestVersion: boolean) => {
@@ -78,6 +81,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                     onSelectionChange={actuallySetDefaultIde}
                     selectedIdeOption={defaultIde}
                     useLatest={useLatestVersion}
+                    ignoreRestrictionScopes={isOrgOwnedUser ? ["configuration"] : ["configuration", "organization"]}
                 />
             </div>
 

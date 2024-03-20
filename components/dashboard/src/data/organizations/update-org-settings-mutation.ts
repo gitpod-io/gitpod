@@ -15,7 +15,11 @@ import { useOrgWorkspaceClassesQueryInvalidator } from "./org-workspace-classes-
 type UpdateOrganizationSettingsArgs = Partial<
     Pick<
         OrganizationSettings,
-        "workspaceSharingDisabled" | "defaultWorkspaceImage" | "allowedWorkspaceClasses" | "pinnedEditorVersions"
+        | "workspaceSharingDisabled"
+        | "defaultWorkspaceImage"
+        | "allowedWorkspaceClasses"
+        | "pinnedEditorVersions"
+        | "restrictedEditorNames"
     >
 >;
 
@@ -31,6 +35,7 @@ export const useUpdateOrgSettingsMutation = () => {
             defaultWorkspaceImage,
             allowedWorkspaceClasses,
             pinnedEditorVersions,
+            restrictedEditorNames,
         }) => {
             const settings = await organizationClient.updateOrganizationSettings({
                 organizationId: teamId,
@@ -39,6 +44,8 @@ export const useUpdateOrgSettingsMutation = () => {
                 allowedWorkspaceClasses,
                 updatePinnedEditorVersions: !!pinnedEditorVersions,
                 pinnedEditorVersions,
+                restrictedEditorNames,
+                updateRestrictedEditorNames: !!restrictedEditorNames,
             });
             return settings.settings!;
         },
