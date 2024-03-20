@@ -36,6 +36,8 @@ import (
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/go-logr/logr"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -519,25 +521,7 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			MaxConcurrentReconciles: r.Config.WorkspaceMaxConcurrentReconciles,
 		}).
 		For(&workspacev1.Workspace{}).
-		WithEventFilter(predicate.NewPredicateFuncs(func(object client.Object) bool {
-			_, ok := object.(*corev1.Node)
-			if ok {
-				return true
-			}
-
-			for k, v := range object.GetLabels() {
-				if k == wsk8s.WorkspaceManagedByLabel {
-					switch v {
-					case constants.ManagedBy:
-						return true
-					default:
-						return false
-					}
-				}
-			}
-
-			return true
-		})).
+		WithEventFilter(eventFilter()).
 		Owns(&corev1.Pod{}).
 		// Add a watch for Nodes, so that they're cached in memory and don't require calling the k8s API
 		// when reconciling workspaces.
@@ -567,6 +551,47 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			},
 		}).
 		Complete(r)
+}
+
+func eventFilter() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return workspaceFilter(e.Object, nil)
+		},
+
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return workspaceFilter(e.ObjectNew, e.ObjectOld)
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return workspaceFilter(e.Object, nil)
+		},
+	}
+}
+
+func workspaceFilter(object client.Object, otherObject client.Object) bool {
+	_, ok := object.(*corev1.Node)
+	if ok {
+		return true
+	}
+
+	for k, v := range object.GetLabels() {
+		if k == wsk8s.WorkspaceManagedByLabel {
+			switch v {
+			case constants.ManagedBy:
+				return true
+			default:
+				return false
+			}
+		}
+	}
+
+	objWorkspace, objOk := object.(*workspacev1.Workspace)
+	otherObjWorkspace, otherObjOk := otherObject.(*workspacev1.Workspace)
+	if objOk && otherObjOk {
+		return !cmp.Equal(objWorkspace.Status, otherObjWorkspace.Status, cmpopts.IgnoreFields(workspacev1.WorkspaceStatus{}, "LastActivity"))
+	}
+
+	return true
 }
 
 func SetupIndexer(mgr ctrl.Manager) error {
