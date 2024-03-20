@@ -233,6 +233,14 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
             allowedWorkspaceClasses: request?.allowedWorkspaceClasses,
             restrictedEditorNames: request?.restrictedEditorNames,
         };
+        if (request.updatePinnedEditorVersions) {
+            update.pinnedEditorVersions = request.pinnedEditorVersions;
+        } else if (request.pinnedEditorVersions && Object.keys(request.pinnedEditorVersions).length > 0) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "updatePinnedEditorVersions is required to be true to update pinnedEditorVersions",
+            );
+        }
         if (request.updateRestrictedEditorNames) {
             update.restrictedEditorNames = request.restrictedEditorNames;
         } else if (request.restrictedEditorNames && request.restrictedEditorNames.length > 0) {
