@@ -11,13 +11,16 @@ import Editor from "../icons/Editor.svg";
 import { IdeOptionsSorter, useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
 import { MiddleDot } from "./typography/MiddleDot";
 import { DisableScope } from "../data/workspaces/workspace-classes-query";
+import { Link } from "react-router-dom";
+import { repositoriesRoutes } from "../repositories/repositories.routes";
 
 interface SelectIDEComponentProps {
     selectedIdeOption?: string;
+    selectedConfigurationId?: string;
     pinnedEditorVersions?: Map<string, string>;
     useLatest?: boolean;
     onSelectionChange: (ide: string, latest: boolean) => void;
-    setError?: (error?: string) => void;
+    setError?: (error?: React.ReactNode) => void;
     disabled?: boolean;
     loading?: boolean;
     ignoreRestrictionScopes: DisableScope[] | undefined;
@@ -33,6 +36,7 @@ function sortedIdeOptions(ideOptions: IDEOptions) {
 
 export default function SelectIDEComponent({
     selectedIdeOption,
+    selectedConfigurationId,
     pinnedEditorVersions,
     useLatest,
     disabled = false,
@@ -41,7 +45,11 @@ export default function SelectIDEComponent({
     onSelectionChange,
     ignoreRestrictionScopes,
 }: SelectIDEComponentProps) {
-    const { data: ideOptions, isLoading: ideOptionsLoading } = useAllowedWorkspaceEditorsMemo({
+    const {
+        data: ideOptions,
+        isLoading: ideOptionsLoading,
+        availableOptions,
+    } = useAllowedWorkspaceEditorsMemo(selectedConfigurationId, {
         filterOutDisabled: true,
         ignoreScope: ignoreRestrictionScopes,
     });
@@ -90,14 +98,39 @@ export default function SelectIDEComponent({
     };
     const ide = selectedIdeOption || ideOptions?.defaultIde || "";
     useEffect(() => {
-        if (!ideOptions) {
+        if (!availableOptions || loading || disabled || ideOptionsLoading) {
             return;
         }
-        const option = ideOptions.options[ide];
-        if (!option) {
-            setError?.(`The editor '${ide}' is not supported.`);
+        if (availableOptions.length === 0) {
+            const settingLink = selectedConfigurationId && repositoriesRoutes.EditorSettings(selectedConfigurationId);
+            const teamSettingsLink = "/settings";
+            setError?.(
+                <>
+                    No available editors for this repository.
+                    {settingLink && (
+                        <>
+                            {" "}
+                            Please contact an admin to update{" "}
+                            <Link className="underline" to={teamSettingsLink}>
+                                organization settings
+                            </Link>
+                            {" or "}
+                            <Link className="underline" to={settingLink}>
+                                repository settings
+                            </Link>
+                            .
+                        </>
+                    )}
+                </>,
+            );
+            return;
         }
-    }, [ide, ideOptions, setError]);
+        if (!availableOptions.includes(ide)) {
+            setError?.(`The editor '${ide}' is not supported.`);
+        } else {
+            setError?.(undefined);
+        }
+    }, [ide, availableOptions, setError, selectedConfigurationId, loading, disabled, ideOptionsLoading]);
     return (
         <Combobox
             getElements={getElements}

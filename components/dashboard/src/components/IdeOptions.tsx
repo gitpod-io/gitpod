@@ -15,12 +15,12 @@ import { MiddleDot } from "./typography/MiddleDot";
 import { useToast } from "./toasts/Toasts";
 import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "./Modal";
 import { LoadingState } from "@podkit/loading/LoadingState";
-import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { useIDEVersionsQuery } from "../data/ide-options/ide-options-query";
+import { useFeatureFlag } from "../data/featureflag-query";
+import { AllowedWorkspaceEditor, IdeOptionsSorter, LocalIDEOptions } from "../data/ide-options/ide-options-query";
 
 interface IdeOptionsProps {
-    ideOptions: IDEOptions | undefined;
+    ideOptions: LocalIDEOptions | undefined;
     pinnedEditorVersions: Map<string, string>;
     className?: string;
     emptyState?: React.ReactNode;
@@ -28,12 +28,21 @@ interface IdeOptionsProps {
 }
 
 export const IdeOptions = (props: IdeOptionsProps) => {
+    const options = useMemo(() => {
+        return Object.values(props.ideOptions?.options ?? [])
+            .filter((x) => !x.hidden)
+            .sort(IdeOptionsSorter);
+    }, [props.ideOptions]);
+
     if (props.isLoading) {
         return <LoadingState />;
     }
+    if (options.length === 0 && props.emptyState) {
+        return <>{props.emptyState}</>;
+    }
     return (
         <div className={cn("space-y-2", props.className)}>
-            {sortedIdeOptions(props.ideOptions!).map((ide) => (
+            {options.map((ide) => (
                 <div key={ide.id} className="flex gap-2 items-center">
                     <img className="w-8 h-8 self-center" src={ide.logo} alt="" />
                     <span>
@@ -60,8 +69,9 @@ export const IdeOptions = (props: IdeOptionsProps) => {
 
 export interface IdeOptionsModifyModalProps {
     isLoading: boolean;
-    ideOptions: IDEOptions | undefined;
+    ideOptions: LocalIDEOptions | undefined;
     restrictedEditors: Set<string>;
+    hidePinEditorInputs?: boolean;
     pinnedEditorVersions: Map<string, string>;
     updateMutation: UseMutationResult<
         void,
@@ -75,11 +85,20 @@ export const IdeOptionsModifyModal = ({
     onClose,
     updateMutation,
     ideOptions,
+    hidePinEditorInputs,
     ...props
 }: IdeOptionsModifyModalProps) => {
     const orgLevelEditorVersionPinningEnabled = useFeatureFlag("org_level_editor_version_pinning_enabled");
 
-    const ideOptionsArr = useMemo(() => (ideOptions ? sortedIdeOptions(ideOptions) : undefined), [ideOptions]);
+    const ideOptionsArr = useMemo(
+        () =>
+            ideOptions?.options
+                ? Object.values(ideOptions.options)
+                      .filter((x) => !x.hidden)
+                      .sort(IdeOptionsSorter)
+                : undefined,
+        [ideOptions],
+    );
     const pinnableIdes = useMemo(
         () => ideOptionsArr?.filter((i) => orgLevelEditorVersionPinningEnabled && !!i.pinnable),
         [ideOptionsArr, orgLevelEditorVersionPinningEnabled],
@@ -153,6 +172,7 @@ export const IdeOptionsModifyModal = ({
                             key={ide.id}
                             ideOption={ide}
                             ideVersions={editorVersions?.[ide.id]}
+                            hidePinEditorInputs={hidePinEditorInputs}
                             pinnedIdeVersion={pinnedEditorVersions.get(ide.id)}
                             checked={!restrictedEditors.has(ide.id)}
                             onPinnedIdeVersionChange={(version) => {
@@ -189,8 +209,9 @@ export const IdeOptionsModifyModal = ({
 };
 
 interface IdeOptionSwitchProps {
-    ideOption: IDEOption & { id: string };
+    ideOption: AllowedWorkspaceEditor;
     ideVersions: string[] | undefined;
+    hidePinEditorInputs?: boolean;
     pinnedIdeVersion: string | undefined;
     checked: boolean;
     onPinnedIdeVersionChange: (version: string | undefined) => void;
@@ -199,19 +220,21 @@ interface IdeOptionSwitchProps {
 const IdeOptionSwitch = ({
     ideOption,
     ideVersions,
+    hidePinEditorInputs,
     pinnedIdeVersion,
     checked,
     onCheckedChange,
     onPinnedIdeVersionChange,
 }: IdeOptionSwitchProps) => {
+    const contentColor = ideOption.isDisabledInScope ? "text-pk-content-disabled" : "text-pk-content-primary";
     const label = (
         <>
             <img className="w-8 h-8 self-center mr-2" src={ideOption.logo} alt="" />
-            <span className="font-medium text-pk-content-primary">{ideOption.title}</span>
+            <span className={cn("font-medium", contentColor)}>{ideOption.title}</span>
         </>
     );
 
-    const versionSelector = !!pinnedIdeVersion && !!ideVersions && (
+    let versionSelector = !!pinnedIdeVersion && !!ideVersions && (
         <select
             className="py-0 pl-2 pr-7 w-auto"
             name="Editor version"
@@ -225,8 +248,11 @@ const IdeOptionSwitch = ({
             ))}
         </select>
     );
+    if (versionSelector && hidePinEditorInputs) {
+        versionSelector = <span>{pinnedIdeVersion}</span>;
+    }
     const description = (
-        <div className="inline-flex items-center text-pk-content-primary">
+        <div className={cn("inline-flex items-center", contentColor)}>
             {versionSelector ? (
                 <>
                     <MiddleDot />
@@ -237,27 +263,43 @@ const IdeOptionSwitch = ({
                 ideOption.imageVersion && (
                     <>
                         <MiddleDot />
-                        <span className="text-pk-content-primary">{ideOption.imageVersion}</span>
+                        <span>{ideOption.imageVersion}</span>
                     </>
                 )
             )}
             <MiddleDot />
-            <span className="text-pk-content-primary capitalize">{ideOption.type}</span>
+            <span className="capitalize">{ideOption.type}</span>
         </div>
     );
+
+    const computedState = useMemo(() => {
+        if (ideOption.isDisabledInScope && ideOption.disableScope === "organization") {
+            return {
+                title: "Your organization has disabled this editor",
+                classes: "cursor-not-allowed",
+            };
+        }
+        return {
+            title: ideOption.title,
+            classes: "",
+        };
+    }, [ideOption]);
+
     return (
-        <div className="flex w-full justify-between items-center mt-2">
+        <div className={cn("flex w-full justify-between items-center mt-2", contentColor, computedState.classes)}>
             <SwitchInputField
                 key={ideOption.id}
                 id={ideOption.id}
                 label={label}
+                disabled={ideOption.isDisabledInScope}
                 description={description}
                 labelLayout="row"
-                checked={checked}
+                checked={!ideOption.isDisabledInScope && checked}
                 onCheckedChange={onCheckedChange}
-                title={ideOption.title}
+                title={computedState.title}
+                className={computedState.classes}
             />
-            {ideOption.pinnable && !!ideVersions && (
+            {!hidePinEditorInputs && ideOption.pinnable && !!ideVersions && (
                 <Button
                     type="button"
                     onClick={() => onPinnedIdeVersionChange(pinnedIdeVersion ? undefined : ideVersions[0])}
@@ -270,25 +312,3 @@ const IdeOptionSwitch = ({
         </div>
     );
 };
-
-function filteredIdeOptions(ideOptions: IDEOptions) {
-    return IDEOptions.asArray(ideOptions).filter((x) => !x.hidden);
-}
-
-function sortedIdeOptions(ideOptions: IDEOptions) {
-    return filteredIdeOptions(ideOptions).sort((a, b) => {
-        // Prefer experimental options
-        if (a.experimental && !b.experimental) {
-            return -1;
-        }
-        if (!a.experimental && b.experimental) {
-            return 1;
-        }
-
-        if (!a.orderKey || !b.orderKey) {
-            return 0;
-        }
-
-        return parseInt(a.orderKey, 10) - parseInt(b.orderKey, 10);
-    });
-}

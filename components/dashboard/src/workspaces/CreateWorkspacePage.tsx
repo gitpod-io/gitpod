@@ -78,7 +78,7 @@ export function CreateWorkspacePage() {
             ? props.ideSettings.useLatestVersion
             : user?.editorSettings?.version === "latest";
     const [useLatestIde, setUseLatestIde] = useState(defaultLatestIde);
-    const { computedDefault: computedDefaultEditor } = useAllowedWorkspaceEditorsMemo({
+    const { computedDefault: computedDefaultEditor } = useAllowedWorkspaceEditorsMemo(selectedProjectID, {
         userDefault: user?.editorSettings?.name,
         filterOutDisabled: true,
     });
@@ -89,6 +89,7 @@ export function CreateWorkspacePage() {
     const { data: orgSettings } = useOrgSettingsQuery();
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
     const [errorWsClass, setErrorWsClass] = useState<React.ReactNode | undefined>(undefined);
+    const [errorIde, setErrorIde] = useState<React.ReactNode | undefined>(undefined);
     const [contextURL, setContextURL] = useState<string | undefined>(
         StartWorkspaceOptions.parseContextUrl(location.hash),
     );
@@ -175,7 +176,6 @@ export function CreateWorkspacePage() {
         },
         [setSelectedIde, setUseLatestIde],
     );
-    const [errorIde, setErrorIde] = useState<string | undefined>(undefined);
 
     const existingWorkspaces = useMemo(() => {
         if (!workspaces.data || !workspaceContext.data) {
@@ -479,6 +479,7 @@ export function CreateWorkspacePage() {
                                 onSelectionChange={onSelectEditorChange}
                                 setError={setErrorIde}
                                 selectedIdeOption={selectedIde}
+                                selectedConfigurationId={selectedProjectID}
                                 pinnedEditorVersions={
                                     orgSettings?.pinnedEditorVersions &&
                                     new Map<string, string>(Object.entries(orgSettings.pinnedEditorVersions))

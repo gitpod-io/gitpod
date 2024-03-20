@@ -206,6 +206,14 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
                     "updateRestrictedWorkspaceClasses is required to be true to update restrictedWorkspaceClasses",
                 );
             }
+            if (req.workspaceSettings.updateRestrictedEditorNames) {
+                update.workspaceSettings.restrictedEditorNames = req.workspaceSettings.restrictedEditorNames;
+            } else if (req.workspaceSettings.restrictedEditorNames.length > 0) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    "updateRestrictedEditorNames is required to be true to update restrictedEditorNames",
+                );
+            }
         }
 
         if (Object.keys(update).length <= 1) {

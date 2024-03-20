@@ -520,11 +520,14 @@ interface EditorOptionsProps {
 }
 const EditorOptions = ({ isOwner, settings, handleUpdateTeamSettings }: EditorOptionsProps) => {
     const [showModal, setShowModal] = useState(false);
-    const { data: installationOptions, isLoading: installationOptionsIsLoading } = useAllowedWorkspaceEditorsMemo({
-        filterOutDisabled: true,
-        ignoreScope: ["organization", "configuration"],
-    });
-    const { data: orgOptions, isLoading: orgOptionsIsLoading } = useAllowedWorkspaceEditorsMemo({
+    const { data: installationOptions, isLoading: installationOptionsIsLoading } = useAllowedWorkspaceEditorsMemo(
+        undefined,
+        {
+            filterOutDisabled: true,
+            ignoreScope: ["organization", "configuration"],
+        },
+    );
+    const { data: orgOptions, isLoading: orgOptionsIsLoading } = useAllowedWorkspaceEditorsMemo(undefined, {
         filterOutDisabled: true,
         ignoreScope: ["configuration"],
     });
