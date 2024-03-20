@@ -24,6 +24,7 @@ interface SelectIDEComponentProps {
     disabled?: boolean;
     loading?: boolean;
     ignoreRestrictionScopes: DisableScope[] | undefined;
+    availableOptions?: string[];
 }
 
 function filteredIdeOptions(ideOptions: IDEOptions) {
@@ -44,12 +45,9 @@ export default function SelectIDEComponent({
     setError,
     onSelectionChange,
     ignoreRestrictionScopes,
+    availableOptions,
 }: SelectIDEComponentProps) {
-    const {
-        data: ideOptions,
-        isLoading: ideOptionsLoading,
-        availableOptions,
-    } = useAllowedWorkspaceEditorsMemo(selectedConfigurationId, {
+    const { data: ideOptions, isLoading: ideOptionsLoading } = useAllowedWorkspaceEditorsMemo(selectedConfigurationId, {
         filterOutDisabled: true,
         ignoreScope: ignoreRestrictionScopes,
     });
@@ -99,6 +97,7 @@ export default function SelectIDEComponent({
     const ide = selectedIdeOption || ideOptions?.defaultIde || "";
     useEffect(() => {
         if (!availableOptions || loading || disabled || ideOptionsLoading) {
+            setError?.(undefined);
             return;
         }
         if (availableOptions.length === 0) {

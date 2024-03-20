@@ -94,7 +94,7 @@ export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefin
         orgSettings,
         configuration?.workspaceSettings?.restrictedEditorNames,
     ]);
-    return { ...data, isLoading };
+    return { ...data, isLoading, usingConfigurationId: configuration?.id };
 };
 
 const getAllowedWorkspaceEditors = (
@@ -149,7 +149,7 @@ const getAllowedWorkspaceEditors = (
     }
 
     let computedDefault = options?.userDefault;
-    const allowedList = data.filter((d) => !d.isDisabledInScope);
+    const allowedList = data.filter((e) => !e.isDisabledInScope);
     if (!allowedList.some((d) => d.id === options?.userDefault && !d.isDisabledInScope)) {
         computedDefault = allowedList.length > 0 ? allowedList[0].id : baseDefault;
     }
@@ -159,9 +159,9 @@ const getAllowedWorkspaceEditors = (
         }
         return e;
     });
-    const availableOptions = data.filter((e) => !e.isDisabledInScope).map((e) => e.id);
+    const availableOptions = allowedList.map((e) => e.id);
     if (options?.filterOutDisabled) {
-        return { data: data.filter((e) => !e.isDisabledInScope), scope, computedDefault, availableOptions };
+        return { data: allowedList, scope, computedDefault, availableOptions };
     }
     return { data, scope, computedDefault, availableOptions };
 };
