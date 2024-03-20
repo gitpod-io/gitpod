@@ -206,6 +206,8 @@ export interface OrganizationSettings {
     allowedWorkspaceClasses?: string[] | null;
 
     pinnedEditorVersions?: { [key: string]: string } | null;
+
+    restrictedEditorNames?: string[] | null;
 }
 
 export type TeamMemberRole = OrgMemberRole;

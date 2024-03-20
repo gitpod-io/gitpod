@@ -28,6 +28,7 @@ import {
     ListOrganizationWorkspaceClassesResponse,
     ListOrganizationsRequest,
     ListOrganizationsResponse,
+    OrganizationSettings,
     ResetOrganizationInvitationRequest,
     ResetOrganizationInvitationResponse,
     UpdateOrganizationMemberRequest,
@@ -226,11 +227,29 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         if (!request.organizationId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
-        await getGitpodService().server.updateOrgSettings(request.organizationId, {
+        const update: Partial<OrganizationSettings> = {
             workspaceSharingDisabled: request?.workspaceSharingDisabled,
             defaultWorkspaceImage: request?.defaultWorkspaceImage,
             allowedWorkspaceClasses: request?.allowedWorkspaceClasses,
-        });
+            restrictedEditorNames: request?.restrictedEditorNames,
+        };
+        if (request.updatePinnedEditorVersions) {
+            update.pinnedEditorVersions = request.pinnedEditorVersions;
+        } else if (request.pinnedEditorVersions && Object.keys(request.pinnedEditorVersions).length > 0) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "updatePinnedEditorVersions is required to be true to update pinnedEditorVersions",
+            );
+        }
+        if (request.updateRestrictedEditorNames) {
+            update.restrictedEditorNames = request.restrictedEditorNames;
+        } else if (request.restrictedEditorNames && request.restrictedEditorNames.length > 0) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "updateRestrictedEditorNames is required to be true to update restrictedEditorNames",
+            );
+        }
+        await getGitpodService().server.updateOrgSettings(request.organizationId, update);
         return new UpdateOrganizationSettingsResponse();
     }
 }
