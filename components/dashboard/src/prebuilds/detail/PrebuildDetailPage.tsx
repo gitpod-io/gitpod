@@ -23,6 +23,8 @@ import Alert from "../../components/Alert";
 import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { MiddleDot } from "../../components/typography/MiddleDot";
+import { TextMuted } from "@podkit/typography/TextMuted";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -219,9 +221,14 @@ export const PrebuildDetailPage: FC = () => {
                                 </div>
                             </div>
                             <div className="px-6 py-4 flex flex-col gap-1 border-pk-border-base">
-                                <div className="flex gap-1 items-center capitalize">
+                                <div className="flex gap-1 items-center">
                                     {prebuildPhase.icon}
-                                    <span>{prebuildPhase.description}</span>
+                                    <span className="capitalize">{prebuildPhase.description}</span>{" "}
+                                    {isStreamingLogs && (
+                                        <TextMuted>
+                                            <MiddleDot /> Fetching logs...
+                                        </TextMuted>
+                                    )}
                                 </div>
                                 {prebuild.status?.message && (
                                     <div className="text-pk-content-secondary truncate">{prebuild.status.message}</div>
@@ -251,7 +258,6 @@ export const PrebuildDetailPage: FC = () => {
                                             classes="h-full w-full"
                                             xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0"
                                             logsEmitter={logEmitter}
-                                            isLoading={isStreamingLogs}
                                         />
                                     )}
                                 </Suspense>
