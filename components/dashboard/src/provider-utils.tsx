@@ -163,7 +163,7 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
         searchParamsReturn.append(key, value);
     }
     const returnTo = gitpodHostUrl
-        .with({ pathname: "/", searchParams: searchParamsReturn, hash: window.location.hash })
+        .with({ pathname: "/", search: searchParamsReturn.toString(), hash: window.location.hash })
         .toString();
     const searchParams = new URLSearchParams({ returnTo });
     if (orgSlug) {
