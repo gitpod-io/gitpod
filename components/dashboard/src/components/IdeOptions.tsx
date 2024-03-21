@@ -234,19 +234,12 @@ const IdeOptionSwitch = ({
     );
     const description = (
         <div className={cn("inline-flex items-center", contentColor)}>
-            {versionSelector ? (
+            {(ideOption.imageVersion || pinnedIdeVersion || versionSelector) && (
                 <>
                     <MiddleDot />
-                    <PinIcon size={16} />
-                    {versionSelector}
+                    {(pinnedIdeVersion || versionSelector) && <PinIcon size={16} />}
+                    {versionSelector || <span>{pinnedIdeVersion || ideOption.imageVersion}</span>}
                 </>
-            ) : (
-                (pinnedIdeVersion || ideOption.imageVersion) && (
-                    <>
-                        <MiddleDot />
-                        <span>{pinnedIdeVersion || ideOption.imageVersion}</span>
-                    </>
-                )
             )}
             <MiddleDot />
             <span className="capitalize">{ideOption.type}</span>
