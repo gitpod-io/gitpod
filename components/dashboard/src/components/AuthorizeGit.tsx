@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { openAuthorizeWindow, redirectToAuthorize } from "../provider-utils";
@@ -44,26 +44,32 @@ export const AuthorizeGit = ({ className, refetch }: Props) => {
     }, [refetch, setUser]);
 
     const connect = useCallback(
-        (ap: AuthProviderDescription) => {
-            const searchParams = new URLSearchParams(window.location.search);
+        (ap: AuthProviderDescription, redirect = false) => {
             const openArgs = {
                 host: ap.host,
                 overrideScopes: true,
                 onSuccess: updateUser,
             } as const;
 
-            const message = searchParams.get("message");
-            if (message) {
-                if (message.startsWith("success:")) {
-                    redirectToAuthorize(openArgs);
-                    return;
-                }
+            if (redirect) {
+                redirectToAuthorize(openArgs);
+                return;
             }
 
             openAuthorizeWindow(openArgs);
         },
         [updateUser],
     );
+
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const message = searchParams.get("message");
+        if (message?.startsWith("success:")) {
+            if (authProviders) {
+                connect(authProviders[0], true);
+            }
+        }
+    }, [authProviders, connect]);
 
     if (authProviders === undefined) {
         return <></>;
