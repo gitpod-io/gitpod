@@ -77,16 +77,12 @@ export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefin
         isLoading = isLoadingInstallationCls || isLoadingConfiguration;
     }
     const data = useMemo(() => {
-        const result = getAllowedWorkspaceEditors(
+        return getAllowedWorkspaceEditors(
             installationOptions,
             orgSettings,
             configuration?.workspaceSettings?.restrictedEditorNames,
             options,
         );
-        return {
-            ...result,
-            data: toIDEOptions(installationOptions, result.data),
-        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
         installationOptions,
@@ -166,22 +162,7 @@ const getAllowedWorkspaceEditors = (
     return { data, scope, computedDefault, availableOptions };
 };
 
-export type LocalIDEOptions = Omit<IDEOptions, "options"> & { options: { [key: string]: AllowedWorkspaceEditor } };
-
-const toIDEOptions = (
-    installationOptions: IDEOptions | undefined,
-    allowedList: AllowedWorkspaceEditor[],
-): LocalIDEOptions | undefined => {
-    if (!installationOptions) {
-        return undefined;
-    }
-    return {
-        ...installationOptions,
-        options: Object.fromEntries(allowedList.map((e) => [e.id, e])),
-    };
-};
-
-export function IdeOptionsSorter(
+function IdeOptionsSorter(
     a: Pick<IDEOption, "experimental" | "orderKey">,
     b: Pick<IDEOption, "experimental" | "orderKey">,
 ) {

@@ -17,10 +17,10 @@ import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "./Modal";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { useIDEVersionsQuery } from "../data/ide-options/ide-options-query";
 import { useFeatureFlag } from "../data/featureflag-query";
-import { AllowedWorkspaceEditor, IdeOptionsSorter, LocalIDEOptions } from "../data/ide-options/ide-options-query";
+import { AllowedWorkspaceEditor } from "../data/ide-options/ide-options-query";
 
 interface IdeOptionsProps {
-    ideOptions: LocalIDEOptions | undefined;
+    ideOptions: AllowedWorkspaceEditor[] | undefined;
     pinnedEditorVersions: Map<string, string>;
     className?: string;
     emptyState?: React.ReactNode;
@@ -28,48 +28,43 @@ interface IdeOptionsProps {
 }
 
 export const IdeOptions = (props: IdeOptionsProps) => {
-    const options = useMemo(() => {
-        return Object.values(props.ideOptions?.options ?? [])
-            .filter((x) => !x.hidden)
-            .sort(IdeOptionsSorter);
-    }, [props.ideOptions]);
-
     if (props.isLoading) {
         return <LoadingState />;
     }
-    if (options.length === 0 && props.emptyState) {
+    if ((!props.ideOptions || props.ideOptions.length === 0) && props.emptyState) {
         return <>{props.emptyState}</>;
     }
     return (
         <div className={cn("space-y-2", props.className)}>
-            {options.map((ide) => (
-                <div key={ide.id} className="flex gap-2 items-center">
-                    <img className="w-8 h-8 self-center" src={ide.logo} alt="" />
-                    <span>
-                        <span className="font-medium text-pk-content-primary">{ide.title}</span>
-                        {ide.imageVersion && (
-                            <>
-                                <MiddleDot />
-                                {props.pinnedEditorVersions.get(ide.id) && (
-                                    <PinIcon size={16} className="inline align-text-bottom" />
-                                )}
-                                <span className="text-pk-content-primary">
-                                    {props.pinnedEditorVersions.get(ide.id) || ide.imageVersion}
-                                </span>
-                            </>
-                        )}
-                        <MiddleDot />
-                        <span className="text-pk-content-primary capitalize">{ide.type}</span>
-                    </span>
-                </div>
-            ))}
+            {props.ideOptions &&
+                props.ideOptions.map((ide) => (
+                    <div key={ide.id} className="flex gap-2 items-center">
+                        <img className="w-8 h-8 self-center" src={ide.logo} alt="" />
+                        <span>
+                            <span className="font-medium text-pk-content-primary">{ide.title}</span>
+                            {ide.imageVersion && (
+                                <>
+                                    <MiddleDot />
+                                    {props.pinnedEditorVersions.get(ide.id) && (
+                                        <PinIcon size={16} className="inline align-text-bottom" />
+                                    )}
+                                    <span className="text-pk-content-primary">
+                                        {props.pinnedEditorVersions.get(ide.id) || ide.imageVersion}
+                                    </span>
+                                </>
+                            )}
+                            <MiddleDot />
+                            <span className="text-pk-content-primary capitalize">{ide.type}</span>
+                        </span>
+                    </div>
+                ))}
         </div>
     );
 };
 
 export interface IdeOptionsModifyModalProps {
     isLoading: boolean;
-    ideOptions: LocalIDEOptions | undefined;
+    ideOptions: AllowedWorkspaceEditor[] | undefined;
     restrictedEditors: Set<string>;
     hidePinEditorInputs?: boolean;
     pinnedEditorVersions: Map<string, string>;
@@ -90,15 +85,7 @@ export const IdeOptionsModifyModal = ({
 }: IdeOptionsModifyModalProps) => {
     const orgLevelEditorVersionPinningEnabled = useFeatureFlag("org_level_editor_version_pinning_enabled");
 
-    const ideOptionsArr = useMemo(
-        () =>
-            ideOptions?.options
-                ? Object.values(ideOptions.options)
-                      .filter((x) => !x.hidden)
-                      .sort(IdeOptionsSorter)
-                : undefined,
-        [ideOptions],
-    );
+    const ideOptionsArr = ideOptions;
     const pinnableIdes = useMemo(
         () => ideOptionsArr?.filter((i) => orgLevelEditorVersionPinningEnabled && !!i.pinnable),
         [ideOptionsArr, orgLevelEditorVersionPinningEnabled],
@@ -234,7 +221,7 @@ const IdeOptionSwitch = ({
         </>
     );
 
-    let versionSelector = !!pinnedIdeVersion && !!ideVersions && (
+    const versionSelector = !!pinnedIdeVersion && !!ideVersions && (
         <select
             className="py-0 pl-2 pr-7 w-auto"
             name="Editor version"
@@ -248,16 +235,13 @@ const IdeOptionSwitch = ({
             ))}
         </select>
     );
-    if (versionSelector && hidePinEditorInputs) {
-        versionSelector = <span>{pinnedIdeVersion}</span>;
-    }
     const description = (
         <div className={cn("inline-flex items-center", contentColor)}>
             {versionSelector ? (
                 <>
                     <MiddleDot />
                     <PinIcon size={16} />
-                    {versionSelector}
+                    {hidePinEditorInputs ? <span>{pinnedIdeVersion}</span> : versionSelector}
                 </>
             ) : (
                 ideOption.imageVersion && (

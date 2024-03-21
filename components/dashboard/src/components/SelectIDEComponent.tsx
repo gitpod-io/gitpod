@@ -4,11 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { FC, useCallback, useEffect, useMemo } from "react";
+import { FC, useCallback, useEffect } from "react";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import Editor from "../icons/Editor.svg";
-import { IdeOptionsSorter, useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
+import { AllowedWorkspaceEditor, useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
 import { MiddleDot } from "./typography/MiddleDot";
 import { DisableScope } from "../data/workspaces/workspace-classes-query";
 import { Link } from "react-router-dom";
@@ -27,14 +26,6 @@ interface SelectIDEComponentProps {
     availableOptions?: string[];
 }
 
-function filteredIdeOptions(ideOptions: IDEOptions) {
-    return IDEOptions.asArray(ideOptions).filter((x) => !x.hidden);
-}
-
-function sortedIdeOptions(ideOptions: IDEOptions) {
-    return filteredIdeOptions(ideOptions).sort(IdeOptionsSorter);
-}
-
 export default function SelectIDEComponent({
     selectedIdeOption,
     selectedConfigurationId,
@@ -47,12 +38,16 @@ export default function SelectIDEComponent({
     ignoreRestrictionScopes,
     availableOptions,
 }: SelectIDEComponentProps) {
-    const { data: ideOptions, isLoading: ideOptionsLoading } = useAllowedWorkspaceEditorsMemo(selectedConfigurationId, {
+    const {
+        data: ideOptions,
+        isLoading: ideOptionsLoading,
+        computedDefault,
+    } = useAllowedWorkspaceEditorsMemo(selectedConfigurationId, {
         filterOutDisabled: true,
         ignoreScope: ignoreRestrictionScopes,
     });
 
-    const options = useMemo(() => (ideOptions ? sortedIdeOptions(ideOptions) : undefined), [ideOptions]);
+    const options = ideOptions;
 
     const getElements = useCallback(
         (search: string) => {
@@ -94,7 +89,7 @@ export default function SelectIDEComponent({
             setError(undefined);
         }
     };
-    const ide = selectedIdeOption || ideOptions?.defaultIde || "";
+    const ide = selectedIdeOption || computedDefault || "";
     useEffect(() => {
         if (!availableOptions || loading || disabled || ideOptionsLoading) {
             setError?.(undefined);
@@ -139,7 +134,7 @@ export default function SelectIDEComponent({
             disabled={disabled || ideOptionsLoading || loading}
         >
             <IdeOptionElementSelected
-                option={ideOptions?.options[ide]}
+                option={ideOptions.find((e) => e.id === ide)}
                 pinnedIdeVersion={pinnedEditorVersions?.get(ide)}
                 useLatest={!!useLatest}
                 loading={ideOptionsLoading || loading}
@@ -155,7 +150,7 @@ function parseId(id: string): { ide: string; useLatest: boolean } {
 }
 
 interface IdeOptionElementProps {
-    option: IDEOption | undefined;
+    option: AllowedWorkspaceEditor | undefined;
     pinnedIdeVersion?: string;
     useLatest: boolean;
     loading?: boolean;
