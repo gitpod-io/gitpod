@@ -173,6 +173,8 @@ export function CreateWorkspacePage() {
             setSelectedProjectID(repo?.configurationId);
             // TOOD: consider dropping this - it's a lossy conversion
             history.replace(`#${repo?.url}`);
+            // reset load options
+            setNextLoadOption("searchParams");
         },
         [history],
     );
