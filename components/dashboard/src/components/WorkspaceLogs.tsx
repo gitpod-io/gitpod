@@ -107,8 +107,9 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
             )}
         >
             {props.isLoading && (
-                <div className="absolute top-2 right-2">
+                <div className="absolute top-2 right-8 flex items-center gap-1 z-10 text-pk-content-tertiary">
                     <LoadingState delay={false} size={16} />
+                    <span>Fetching logs</span>
                 </div>
             )}
             <div
