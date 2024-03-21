@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "@podkit/buttons/Button";
 import { TextInputField } from "../components/forms/TextInputField";
@@ -29,10 +29,12 @@ function getOrgSlugFromPath(path: string) {
 
 export const SSOLoginForm = ({ singleOrgMode, onSuccess }: Props) => {
     const location = useLocation();
+
     const [orgSlug, setOrgSlug] = useState(
         getOrgSlugFromPath(location.pathname) || window.localStorage.getItem("sso-org-slug") || "",
     );
     const [error, setError] = useState("");
+
     const oidcServiceEnabled = useFeatureFlag("oidcServiceEnabled");
     const isDataops = useFeatureFlag("dataops");
 
@@ -67,15 +69,15 @@ export const SSOLoginForm = ({ singleOrgMode, onSuccess }: Props) => {
         orgSlug.trim().length <= 63,
     );
 
+    useEffect(() => {
+        if (isDataops) {
+            openLoginWithSSO();
+        }
+    }, [isDataops, openLoginWithSSO]);
+
     // Don't render anything if not enabled
     if (!oidcServiceEnabled) {
         return null;
-    }
-
-    if (isDataops) {
-        openLoginWithSSO();
-
-        return <>popping up...</>;
     }
 
     return (
