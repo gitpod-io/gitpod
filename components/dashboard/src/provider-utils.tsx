@@ -97,6 +97,36 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     attachMessageListener(successKey, params);
 }
 
+async function redirectToAuthorize(params: OpenAuthorizeWindowParams) {
+    const { login, host, scopes, overrideScopes } = params;
+    const successKey = getUniqueSuccessKey();
+    const searchParamsReturn = new URLSearchParams({ message: successKey });
+    for (const [key, value] of new URLSearchParams(window.location.search)) {
+        searchParamsReturn.append(key, value);
+    }
+    const returnTo = gitpodHostUrl
+        .with({ pathname: window.location.pathname, search: searchParamsReturn.toString(), hash: window.location.hash })
+        .toString();
+    const requestedScopes = scopes ?? [];
+    const url = login
+        ? gitpodHostUrl
+              .withApi({
+                  pathname: "/login",
+                  search: `host=${host}&returnTo=${encodeURIComponent(returnTo)}`,
+              })
+              .toString()
+        : gitpodHostUrl
+              .withApi({
+                  pathname: "/authorize",
+                  search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}${
+                      overrideScopes ? "&override=true" : ""
+                  }&scopes=${requestedScopes.join(",")}`,
+              })
+              .toString();
+
+    window.location.href = url;
+}
+
 function openModalWindow(url: string) {
     const width = 800;
     const height = 800;
@@ -179,15 +209,13 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
     }
 
     const url = gitpodHostUrl
-        .with((url) => ({
+        .with(() => ({
             pathname: `/iam/oidc/start`,
             search: searchParams.toString(),
         }))
         .toString();
 
     window.location.href = url;
-
-    //attachMessageListener(successKey, params);
 }
 
 // Used to ensure each callback is handled uniquely
@@ -196,4 +224,4 @@ const getUniqueSuccessKey = () => {
     return `success:${counter++}`;
 };
 
-export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, openOIDCStartWindow };
+export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, openOIDCStartWindow, redirectToAuthorize };

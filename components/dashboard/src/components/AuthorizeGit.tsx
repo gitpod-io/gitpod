@@ -7,7 +7,7 @@
 import { useCallback, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
-import { openAuthorizeWindow } from "../provider-utils";
+import { openAuthorizeWindow, redirectToAuthorize } from "../provider-utils";
 import { userClient } from "../service/public-api";
 import { UserContext, useCurrentUser } from "../user-context";
 import { Button } from "@podkit/buttons/Button";
@@ -45,11 +45,22 @@ export const AuthorizeGit = ({ className, refetch }: Props) => {
 
     const connect = useCallback(
         (ap: AuthProviderDescription) => {
-            openAuthorizeWindow({
+            const searchParams = new URLSearchParams(window.location.search);
+            const openArgs = {
                 host: ap.host,
                 overrideScopes: true,
                 onSuccess: updateUser,
-            });
+            } as const;
+
+            const message = searchParams.get("message");
+            if (message) {
+                if (message.startsWith("success:")) {
+                    redirectToAuthorize(openArgs);
+                    return;
+                }
+            }
+
+            openAuthorizeWindow(openArgs);
         },
         [updateUser],
     );
