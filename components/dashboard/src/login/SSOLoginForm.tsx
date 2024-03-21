@@ -34,10 +34,11 @@ export const SSOLoginForm = ({ singleOrgMode, onSuccess }: Props) => {
     );
     const [error, setError] = useState("");
     const oidcServiceEnabled = useFeatureFlag("oidcServiceEnabled");
+    const isDataops = useFeatureFlag("dataops");
 
     const openLoginWithSSO = useCallback(
-        async (e) => {
-            e.preventDefault();
+        async (e?: React.FormEvent<HTMLFormElement>) => {
+            e?.preventDefault();
             window.localStorage.setItem("sso-org-slug", orgSlug.trim());
 
             try {
@@ -69,6 +70,12 @@ export const SSOLoginForm = ({ singleOrgMode, onSuccess }: Props) => {
     // Don't render anything if not enabled
     if (!oidcServiceEnabled) {
         return null;
+    }
+
+    if (isDataops) {
+        openLoginWithSSO();
+
+        return <>popping up...</>;
     }
 
     return (
