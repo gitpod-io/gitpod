@@ -180,9 +180,9 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
         }))
         .toString();
 
-    openModalWindow(url);
+    window.location.href = url;
 
-    attachMessageListener(successKey, params);
+    //attachMessageListener(successKey, params);
 }
 
 // Used to ensure each callback is handled uniquely
