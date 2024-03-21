@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "@podkit/buttons/Button";
 import { TextInputField } from "../components/forms/TextInputField";
@@ -27,7 +27,7 @@ function getOrgSlugFromPath(path: string) {
     return pathSegments[2];
 }
 
-export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
+export const SSOLoginForm = ({ singleOrgMode, onSuccess }: Props) => {
     const location = useLocation();
     const [orgSlug, setOrgSlug] = useState(
         getOrgSlugFromPath(location.pathname) || window.localStorage.getItem("sso-org-slug") || "",
