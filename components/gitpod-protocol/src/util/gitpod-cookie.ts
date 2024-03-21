@@ -23,8 +23,8 @@ export function options(domain: string): cookie.CookieSerializeOptions {
         httpOnly: false,
         secure: false,
         maxAge: 60 * 60 * 24 * 365, // 1 year
-        sameSite: "lax", // default: true. "Lax" needed to ensure we see cookies from users that neavigate to gitpod.io from external sites
-        domain: `.${domain}`, // explicilty include subdomains to not only cover "gitpod.io", but also "www.gitpod.io" or workspaces
+        sameSite: "lax", // default: true. "Lax" needed to ensure we see cookies from users that navigate to gitpod.io from external sites
+        domain: `.${domain}`, // explicitly include subdomains to not only cover "gitpod.io", but also "www.gitpod.io" or workspaces
     };
 }
 

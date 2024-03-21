@@ -159,7 +159,7 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
     const { orgSlug, configId, activate = false, verify = false } = params;
     const successKey = getUniqueSuccessKey();
     let search = `message=${successKey}`;
-    const returnTo = gitpodHostUrl.with({ pathname: "complete-auth", search }).toString();
+    const returnTo = gitpodHostUrl.with({ pathname: "/workspaces", search }).toString();
     const searchParams = new URLSearchParams({ returnTo });
     if (orgSlug) {
         searchParams.append("orgSlug", orgSlug);
