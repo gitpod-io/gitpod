@@ -158,8 +158,13 @@ interface OpenOIDCStartWindowParams extends WindowMessageHandler {
 async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
     const { orgSlug, configId, activate = false, verify = false } = params;
     const successKey = getUniqueSuccessKey();
-    let search = `message=${successKey}`;
-    const returnTo = gitpodHostUrl.with({ pathname: "/workspaces", search }).toString();
+    const searchParamsReturn = new URLSearchParams({ message: successKey });
+    for (const [key, value] of new URLSearchParams(window.location.search)) {
+        searchParamsReturn.append(key, value);
+    }
+    const returnTo = gitpodHostUrl
+        .with({ pathname: "/", searchParams: searchParamsReturn, hash: window.location.hash })
+        .toString();
     const searchParams = new URLSearchParams({ returnTo });
     if (orgSlug) {
         searchParams.append("orgSlug", orgSlug);
