@@ -80,7 +80,7 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 	}
 
 	log.Info("building base image")
-	return buildImage(ctx, b.Config.ContextDir, b.Config.Dockerfile, b.Config.WorkspaceLayerAuth, b.Config.BaseRef)
+	return buildImage(ctx, b.Config.ContextDir, b.Config.Dockerfile, b.Config.WorkspaceLayerAuth, b.Config.BaseRef, false)
 }
 
 func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (err error) {
@@ -96,10 +96,10 @@ func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (e
 		return xerrors.Errorf("unexpected error creating temporal directory: %w", err)
 	}
 
-	return buildImage(ctx, contextDir, filepath.Join(contextDir, "Dockerfile"), b.Config.WorkspaceLayerAuth, b.Config.TargetRef)
+	return buildImage(ctx, contextDir, filepath.Join(contextDir, "Dockerfile"), b.Config.WorkspaceLayerAuth, b.Config.TargetRef, true)
 }
 
-func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target string) (err error) {
+func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target string, push bool) (err error) {
 	log.Info("waiting for build context")
 	waitctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
@@ -140,7 +140,7 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 		// "--debug",
 		"build",
 		"--progress=plain",
-		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true",
+		fmt.Sprintf("--output=type=image,name=%s,push=%v,oci-mediatypes=true", target, push),
 		//"--export-cache=type=inline",
 		"--local=context=" + contextdir,
 		//"--export-cache=type=registry,ref=" + target + "-cache",
