@@ -158,8 +158,7 @@ export const IdeOptionsModifyModal = ({
                         <IdeOptionSwitch
                             key={ide.id}
                             ideOption={ide}
-                            ideVersions={editorVersions?.[ide.id]}
-                            hidePinEditorInputs={hidePinEditorInputs}
+                            ideVersions={hidePinEditorInputs ? undefined : editorVersions?.[ide.id]}
                             pinnedIdeVersion={pinnedEditorVersions.get(ide.id)}
                             checked={!restrictedEditors.has(ide.id)}
                             onPinnedIdeVersionChange={(version) => {
@@ -198,7 +197,6 @@ export const IdeOptionsModifyModal = ({
 interface IdeOptionSwitchProps {
     ideOption: AllowedWorkspaceEditor;
     ideVersions: string[] | undefined;
-    hidePinEditorInputs?: boolean;
     pinnedIdeVersion: string | undefined;
     checked: boolean;
     onPinnedIdeVersionChange: (version: string | undefined) => void;
@@ -207,7 +205,6 @@ interface IdeOptionSwitchProps {
 const IdeOptionSwitch = ({
     ideOption,
     ideVersions,
-    hidePinEditorInputs,
     pinnedIdeVersion,
     checked,
     onCheckedChange,
@@ -221,7 +218,7 @@ const IdeOptionSwitch = ({
         </>
     );
 
-    const versionSelector = !!pinnedIdeVersion && !!ideVersions && (
+    const versionSelector = !!pinnedIdeVersion && !!ideVersions && ideVersions.length > 0 && (
         <select
             className="py-0 pl-2 pr-7 w-auto"
             name="Editor version"
@@ -241,13 +238,13 @@ const IdeOptionSwitch = ({
                 <>
                     <MiddleDot />
                     <PinIcon size={16} />
-                    {hidePinEditorInputs ? <span>{pinnedIdeVersion}</span> : versionSelector}
+                    {versionSelector}
                 </>
             ) : (
-                ideOption.imageVersion && (
+                (pinnedIdeVersion || ideOption.imageVersion) && (
                     <>
                         <MiddleDot />
-                        <span>{ideOption.imageVersion}</span>
+                        <span>{pinnedIdeVersion || ideOption.imageVersion}</span>
                     </>
                 )
             )}
@@ -283,7 +280,7 @@ const IdeOptionSwitch = ({
                 title={computedState.title}
                 className={computedState.classes}
             />
-            {!hidePinEditorInputs && ideOption.pinnable && !!ideVersions && (
+            {ideOption.pinnable && !!ideVersions && ideVersions.length > 0 && (
                 <Button
                     type="button"
                     onClick={() => onPinnedIdeVersionChange(pinnedIdeVersion ? undefined : ideVersions[0])}
