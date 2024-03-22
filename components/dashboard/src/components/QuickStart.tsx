@@ -7,7 +7,6 @@
 import { FC, useEffect, useState } from "react";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { parseError, redirectToAuthorize, redirectToOIDC } from "../provider-utils";
-import { useNeedsGitAuthorization } from "./AuthorizeGit";
 import { useCurrentUser } from "../user-context";
 import { useHistory } from "react-router";
 import { AppLoading } from "../app/AppLoading";
@@ -27,30 +26,43 @@ const parseErrorFromSearch = (search: string): string => {
 const QuickStart: FC = () => {
     const [error, setError] = useState(parseErrorFromSearch(window.location.search));
     const { data: authProviders, isLoading: authProvidersLoading } = useAuthProviderDescriptions();
-    const needsScmAuth = useNeedsGitAuthorization();
     const user = useCurrentUser();
     const history = useHistory();
 
     useEffect(() => {
-        if (authProvidersLoading || !authProviders || error) {
+        if (authProvidersLoading || error) {
             return;
         }
 
+        const hash = window.location.hash.slice(1);
+        let contextUrl: URL;
+        try {
+            contextUrl = new URL(hash);
+        } catch {
+            setError("Invalid context URL");
+            return;
+        }
+        const relevantAuthProvider = authProviders?.find((provider) => provider.host === contextUrl.host);
+
         if (!user) {
+            if (relevantAuthProvider) {
+                void redirectToAuthorize({
+                    host: relevantAuthProvider.host,
+                    overrideScopes: true,
+                });
+
+                return;
+            }
             void redirectToOIDC({
                 orgSlug: "",
             });
-        } else if (needsScmAuth) {
-            const hash = window.location.hash.slice(1);
-            let contextUrl: URL;
-            try {
-                contextUrl = new URL(hash);
-            } catch {
-                setError("Invalid context URL");
-                return;
-            }
 
-            const relevantAuthProvider = authProviders.find((provider) => provider.host === contextUrl.host);
+            return;
+        }
+
+        const needsScmAuth =
+            !authProviders?.some((ap) => user.identities.some((i) => ap.id === i.authProviderId)) ?? false;
+        if (needsScmAuth) {
             if (!relevantAuthProvider) {
                 setError("No relevant auth provider found");
                 return;
@@ -60,13 +72,15 @@ const QuickStart: FC = () => {
                 host: relevantAuthProvider.host,
                 overrideScopes: true,
             });
-        } else {
-            const searchParams = new URLSearchParams(window.location.search);
-            searchParams.delete("message");
 
-            history.push(`/new/?${searchParams}${window.location.hash}`);
+            return;
         }
-    }, [authProviders, history, authProvidersLoading, needsScmAuth, user, error]);
+
+        const searchParams = new URLSearchParams(window.location.search);
+        searchParams.delete("message");
+
+        history.push(`/new/?${searchParams}${window.location.hash}`);
+    }, [authProviders, history, authProvidersLoading, user, error]);
 
     if (error) {
         return (
