@@ -141,6 +141,20 @@ function openModalWindow(url: string) {
     );
 }
 
+function parseError(data: string) {
+    let error: string | { error: string; description?: string } = atob(data.substring("error:".length));
+    try {
+        const payload = JSON.parse(error);
+        if (typeof payload === "object" && payload.error) {
+            error = { ...payload };
+        }
+    } catch (error) {
+        console.log(error);
+    }
+
+    return error;
+}
+
 function attachMessageListener(successKey: string, { onSuccess, onError }: WindowMessageHandler) {
     const eventListener = (event: MessageEvent) => {
         if (event?.origin !== document.location.origin) {
@@ -161,15 +175,7 @@ function attachMessageListener(successKey: string, { onSuccess, onError }: Windo
             onSuccess && onSuccess(event.data);
         }
         if (typeof event.data === "string" && event.data.startsWith("error:")) {
-            let error: string | { error: string; description?: string } = atob(event.data.substring("error:".length));
-            try {
-                const payload = JSON.parse(error);
-                if (typeof payload === "object" && payload.error) {
-                    error = { ...payload };
-                }
-            } catch (error) {
-                console.log(error);
-            }
+            const error = parseError(event.data);
 
             killAuthWindow();
             onError && onError(error);
@@ -261,4 +267,5 @@ export {
     openOIDCStartWindow,
     redirectToAuthorize,
     redirectToOIDC,
+    parseError,
 };

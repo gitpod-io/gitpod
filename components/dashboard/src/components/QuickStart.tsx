@@ -6,73 +6,77 @@
 
 import { FC, useEffect, useState } from "react";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
-import { useFeatureFlag } from "../data/featureflag-query";
-import { redirectToAuthorize, redirectToOIDC } from "../provider-utils";
+import { parseError, redirectToAuthorize, redirectToOIDC } from "../provider-utils";
 import { useNeedsGitAuthorization } from "./AuthorizeGit";
 import { useCurrentUser } from "../user-context";
 import { useHistory } from "react-router";
+import { AppLoading } from "../app/AppLoading";
+import { Link } from "react-router-dom";
 
-const messageFromSearch = (): string => {
+const errorFromSearch = (): string => {
     const searchParams = new URLSearchParams(window.location.search);
-    return searchParams.get("message") ?? "";
+    const message = searchParams.get("message");
+    if (message?.startsWith("error:")) {
+        const parsed = parseError(message);
+        return typeof parsed === "string" ? parsed : `${parsed.error}: ${parsed.description}`;
+    }
+
+    return "";
 };
 
-const Auth = () => {
-    const { data: authProviders, isLoading } = useAuthProviderDescriptions();
+const QuickStart: FC = () => {
+    const [error, setError] = useState(errorFromSearch());
+    const { data: authProviders, isLoading: authProvidersLoading } = useAuthProviderDescriptions();
     const needsScmAuth = useNeedsGitAuthorization();
     const user = useCurrentUser();
     const history = useHistory();
 
     useEffect(() => {
-        if (isLoading) {
+        if (authProvidersLoading || !authProviders) {
             return;
         }
 
+        const contextUrl = new URL(window.location.hash.slice(1));
+        const relevantAuthProvider = authProviders.find((provider) => provider.host === contextUrl.host);
+
         if (!user) {
-            void redirectToOIDC({
-                orgSlug: "",
-            });
-        } else if (needsScmAuth) {
-            if (authProviders && !(authProviders.length === 0)) {
-                const provider = authProviders.at(0)!;
+            if (relevantAuthProvider) {
                 void redirectToAuthorize({
-                    host: provider.host,
+                    host: relevantAuthProvider.host,
                     overrideScopes: true,
                 });
+            } else {
+                void redirectToOIDC({
+                    orgSlug: "",
+                });
             }
+        } else if (needsScmAuth) {
+            if (!relevantAuthProvider) {
+                setError("No relevant auth provider found");
+                return;
+            }
+
+            void redirectToAuthorize({
+                host: relevantAuthProvider.host,
+                overrideScopes: true,
+            });
         } else {
             history.push(`/new/${window.location.search}${window.location.hash}`);
         }
-    }, [authProviders, history, isLoading, needsScmAuth, user]);
+    }, [authProviders, history, authProvidersLoading, needsScmAuth, user]);
 
-    return <div></div>;
-};
-
-const QuickStart: FC = () => {
-    const oidcServiceEnabled = useFeatureFlag("oidcServiceEnabled");
-    const authProviders = useAuthProviderDescriptions();
-    const [error, setError] = useState("");
-    const [message] = useState(messageFromSearch());
-
-    useEffect(() => {
-        if (!oidcServiceEnabled) {
-            setError("OIDC Service is not enabled");
-            return;
-        }
-    }, [oidcServiceEnabled]);
-
-    if (message.startsWith("error:")) {
-        setError(message);
+    if (error) {
+        return (
+            <>
+                Login failed: {error}.{" "}
+                <Link className="gp-link" to={`/new/${window.location.search}${window.location.hash}`}>
+                    Try again.
+                </Link>
+            </>
+        );
     }
 
-    return (
-        <div>
-            <h1>Quick Start</h1>
-            <pre>{JSON.stringify(authProviders, null, 2)}</pre>
-            Error: <pre>{error}</pre>
-            {oidcServiceEnabled && <Auth />}
-        </div>
-    );
+    return <AppLoading />;
 };
 
 export default QuickStart;
