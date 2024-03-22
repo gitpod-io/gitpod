@@ -23,6 +23,13 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: "1.19"
+      - name: Clear action cache
+        run: |
+          # As suggested by GitHub to prevent low disk space: https://github.com/actions/runner-images/issues/2840#issuecomment-790492173
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
       - name: Download leeway
         run: cd /usr/local/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.7.3/leeway_0.7.3_Linux_x86_64.tar.gz | tar xz
       - name: Download golangci-lint
