@@ -36,21 +36,14 @@ const QuickStart: FC = () => {
             return;
         }
 
-        const contextUrl = new URL(window.location.hash.slice(1));
-        const relevantAuthProvider = authProviders.find((provider) => provider.host === contextUrl.host);
-
         if (!user) {
-            if (relevantAuthProvider) {
-                void redirectToAuthorize({
-                    host: relevantAuthProvider.host,
-                    overrideScopes: true,
-                });
-            } else {
-                void redirectToOIDC({
-                    orgSlug: "",
-                });
-            }
+            void redirectToOIDC({
+                orgSlug: "",
+            });
         } else if (needsScmAuth) {
+            const contextUrl = new URL(window.location.hash.slice(1));
+            const relevantAuthProvider = authProviders.find((provider) => provider.host === contextUrl.host);
+
             if (!relevantAuthProvider) {
                 setError("No relevant auth provider found");
                 return;
