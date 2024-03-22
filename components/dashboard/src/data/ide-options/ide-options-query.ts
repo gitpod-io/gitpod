@@ -12,6 +12,7 @@ import { useOrgSettingsQuery } from "../organizations/org-settings-query";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useMemo } from "react";
 import { useCurrentOrg } from "../organizations/orgs-query";
+import { useConfiguration } from "../configurations/configuration-queries";
 
 const DEFAULT_WS_EDITOR = "code";
 
@@ -64,27 +65,38 @@ interface FilterOptions {
     userDefault?: string;
     ignoreScope?: DisableScope[];
 }
-export const useAllowedWorkspaceEditorsMemo = (options?: FilterOptions) => {
+export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefined, options?: FilterOptions) => {
     const organizationId = useCurrentOrg().data?.id;
     const { data: orgSettings, isLoading: isLoadingOrgSettings } = useOrgSettingsQuery();
     const { data: installationOptions, isLoading: isLoadingInstallationCls } = useIDEOptions();
-    // TODO: repo-level
-    // If there's no orgID set (i.e. User onboarding page), isLoadingOrgSettings will always be true
-    // So we will filter it out
-    const isLoading = organizationId ? isLoadingOrgSettings || isLoadingInstallationCls : isLoadingInstallationCls;
+    const { data: configuration, isLoading: isLoadingConfiguration } = useConfiguration(configurationId ?? "");
+    let isLoading = isLoadingOrgSettings || isLoadingInstallationCls || isLoadingConfiguration;
+    if (!organizationId) {
+        // If there's no orgID set (i.e. User onboarding page), isLoadingOrgSettings will always be true
+        // So we will filter it out
+        isLoading = isLoadingInstallationCls || isLoadingConfiguration;
+    }
     const data = useMemo(() => {
-        const result = getAllowedWorkspaceEditors(installationOptions, orgSettings, options);
-        return {
-            ...result,
-            data: toIDEOptions(installationOptions, result.data),
-        };
-    }, [installationOptions, orgSettings, options]);
-    return { ...data, isLoading };
+        return getAllowedWorkspaceEditors(
+            installationOptions,
+            orgSettings,
+            configuration?.workspaceSettings?.restrictedEditorNames,
+            options,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        installationOptions,
+        options?.ignoreScope,
+        orgSettings,
+        configuration?.workspaceSettings?.restrictedEditorNames,
+    ]);
+    return { ...data, isLoading, usingConfigurationId: configuration?.id };
 };
 
 const getAllowedWorkspaceEditors = (
     installationOptions: IDEOptions | undefined,
     orgSettings: Pick<OrganizationSettings, "restrictedEditorNames"> | undefined,
+    repoRestrictedEditorNames: string[] | undefined,
     options?: FilterOptions,
 ) => {
     let data: AllowedWorkspaceEditor[] = [];
@@ -100,7 +112,7 @@ const getAllowedWorkspaceEditors = (
     }
     let scope: Scope = "installation";
     if (data.length === 0) {
-        return { data, scope, computedDefault: baseDefault };
+        return { data, scope, computedDefault: baseDefault, availableOptions: [] };
     }
     if (
         !options?.ignoreScope?.includes("organization") &&
@@ -114,10 +126,26 @@ const getAllowedWorkspaceEditors = (
         }));
         scope = "organization";
     }
-    // TODO: repo-level
+    if (
+        !options?.ignoreScope?.includes("configuration") &&
+        repoRestrictedEditorNames &&
+        repoRestrictedEditorNames.length > 0
+    ) {
+        data = data.map((d) => {
+            if (d.isDisabledInScope) {
+                return d;
+            }
+            return {
+                ...d,
+                isDisabledInScope: repoRestrictedEditorNames.includes(d.id),
+                disableScope: "configuration",
+            };
+        });
+        scope = "configuration";
+    }
 
     let computedDefault = options?.userDefault;
-    const allowedList = data.filter((d) => !d.isDisabledInScope);
+    const allowedList = data.filter((e) => !e.isDisabledInScope);
     if (!allowedList.some((d) => d.id === options?.userDefault && !d.isDisabledInScope)) {
         computedDefault = allowedList.length > 0 ? allowedList[0].id : baseDefault;
     }
@@ -127,28 +155,14 @@ const getAllowedWorkspaceEditors = (
         }
         return e;
     });
+    const availableOptions = allowedList.map((e) => e.id);
     if (options?.filterOutDisabled) {
-        return { data: data.filter((e) => !e.isDisabledInScope), scope, computedDefault };
+        return { data: allowedList, scope, computedDefault, availableOptions };
     }
-    return { data, scope, computedDefault };
+    return { data, scope, computedDefault, availableOptions };
 };
 
-export type LocalIDEOptions = Omit<IDEOptions, "options"> & { options: { [key: string]: AllowedWorkspaceEditor } };
-
-const toIDEOptions = (
-    installationOptions: IDEOptions | undefined,
-    allowedList: AllowedWorkspaceEditor[],
-): LocalIDEOptions | undefined => {
-    if (!installationOptions) {
-        return undefined;
-    }
-    return {
-        ...installationOptions,
-        options: Object.fromEntries(allowedList.map((e) => [e.id, e])),
-    };
-};
-
-export function IdeOptionsSorter(
+function IdeOptionsSorter(
     a: Pick<IDEOption, "experimental" | "orderKey">,
     b: Pick<IDEOption, "experimental" | "orderKey">,
 ) {

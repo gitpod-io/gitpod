@@ -12,7 +12,6 @@ import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { ThemeContext } from "../theme-context";
 import { cn } from "@podkit/lib/cn";
-import { LoadingState } from "@podkit/loading/LoadingState";
 
 const darkTheme: ITheme = {
     // What written on DevTool dark:bg-gray-800 is
@@ -29,7 +28,6 @@ export interface WorkspaceLogsProps {
     errorMessage?: string;
     classes?: string;
     xtermClasses?: string;
-    isLoading?: boolean;
 }
 
 export default function WorkspaceLogs(props: WorkspaceLogsProps) {
@@ -106,11 +104,6 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
                 "bg-gray-100 dark:bg-gray-800 relative text-left",
             )}
         >
-            {props.isLoading && (
-                <div className="absolute top-2 right-2">
-                    <LoadingState delay={false} size={16} />
-                </div>
-            )}
             <div
                 className={cn(props.xtermClasses || "absolute top-0 left-0 bottom-0 right-0 m-6")}
                 ref={xTermParentRef}

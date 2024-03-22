@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Text } from "@podkit/typography/Text";
 import { Button } from "@podkit/buttons/Button";
@@ -23,6 +23,8 @@ import Alert from "../../components/Alert";
 import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { MiddleDot } from "../../components/typography/MiddleDot";
+import { TextMuted } from "@podkit/typography/TextMuted";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -128,34 +130,20 @@ export const PrebuildDetailPage: FC = () => {
             };
         }
 
-        const phase = currentPrebuild.status?.phase?.name;
-        if (!phase) {
+        if (!currentPrebuild.status?.phase?.name) {
             return {
                 icon: <CircleSlash size={20} className="text-gray-500" />,
                 description: "Unknown prebuild status.",
             };
         }
 
-        switch (phase) {
-            case PrebuildPhase_Phase.QUEUED:
-                return {
-                    icon: loaderIcon,
-                    description: "Prebuild queued",
-                };
-            case PrebuildPhase_Phase.BUILDING:
-                return {
-                    icon: loaderIcon,
-                    description: "Prebuild in progress",
-                };
-            default:
-                const props = prebuildDisplayProps(currentPrebuild);
-                const Icon = prebuildStatusIconComponent(currentPrebuild);
+        const props = prebuildDisplayProps(currentPrebuild);
+        const Icon = prebuildStatusIconComponent(currentPrebuild);
 
-                return {
-                    description: props.label,
-                    icon: <Icon className={props.className} />,
-                };
-        }
+        return {
+            description: props.label,
+            icon: <Icon className={props.className} />,
+        };
     }, [currentPrebuild]);
 
     if (newPrebuildID) {
@@ -233,9 +221,14 @@ export const PrebuildDetailPage: FC = () => {
                                 </div>
                             </div>
                             <div className="px-6 py-4 flex flex-col gap-1 border-pk-border-base">
-                                <div className="flex gap-1 items-center capitalize">
+                                <div className="flex gap-1 items-center">
                                     {prebuildPhase.icon}
-                                    <span>{prebuildPhase.description}</span>
+                                    <span className="capitalize">{prebuildPhase.description}</span>{" "}
+                                    {isStreamingLogs && (
+                                        <TextMuted>
+                                            <MiddleDot /> Fetching logs...
+                                        </TextMuted>
+                                    )}
                                 </div>
                                 {prebuild.status?.message && (
                                     <div className="text-pk-content-secondary truncate">{prebuild.status.message}</div>
@@ -263,9 +256,8 @@ export const PrebuildDetailPage: FC = () => {
                                     ) : (
                                         <WorkspaceLogs
                                             classes="h-full w-full"
-                                            xtermClasses="absolute top-0 left-0 bottom-0 right-0 mx-6 my-0"
+                                            xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0"
                                             logsEmitter={logEmitter}
-                                            isLoading={isStreamingLogs}
                                         />
                                     )}
                                 </Suspense>

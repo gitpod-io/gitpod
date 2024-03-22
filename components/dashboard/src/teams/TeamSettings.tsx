@@ -481,7 +481,10 @@ const OrgWorkspaceClassesOptions = ({
     return (
         <ConfigurationSettingsField>
             <Heading3>Available workspace classes</Heading3>
-            <Subheading>Limit the available workspace classes in your organization.</Subheading>
+            <Subheading>
+                Limit the available workspace classes in your organization. Requires{" "}
+                <span className="font-medium">Owner</span> permissions to change.
+            </Subheading>
 
             <WorkspaceClassesOptions
                 isLoading={isLoadingClsInOrg}
@@ -520,11 +523,14 @@ interface EditorOptionsProps {
 }
 const EditorOptions = ({ isOwner, settings, handleUpdateTeamSettings }: EditorOptionsProps) => {
     const [showModal, setShowModal] = useState(false);
-    const { data: installationOptions, isLoading: installationOptionsIsLoading } = useAllowedWorkspaceEditorsMemo({
-        filterOutDisabled: true,
-        ignoreScope: ["organization", "configuration"],
-    });
-    const { data: orgOptions, isLoading: orgOptionsIsLoading } = useAllowedWorkspaceEditorsMemo({
+    const { data: installationOptions, isLoading: installationOptionsIsLoading } = useAllowedWorkspaceEditorsMemo(
+        undefined,
+        {
+            filterOutDisabled: true,
+            ignoreScope: ["organization", "configuration"],
+        },
+    );
+    const { data: orgOptions, isLoading: orgOptionsIsLoading } = useAllowedWorkspaceEditorsMemo(undefined, {
         filterOutDisabled: true,
         ignoreScope: ["configuration"],
     });
@@ -547,7 +553,10 @@ const EditorOptions = ({ isOwner, settings, handleUpdateTeamSettings }: EditorOp
     return (
         <ConfigurationSettingsField>
             <Heading3>Available editors</Heading3>
-            <Subheading>Limit the available editors in your organization.</Subheading>
+            <Subheading>
+                Limit the available editors in your organization. Requires <span className="font-medium">Owner</span>{" "}
+                permissions to change.
+            </Subheading>
 
             <IdeOptions
                 isLoading={orgOptionsIsLoading}

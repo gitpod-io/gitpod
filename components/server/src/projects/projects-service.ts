@@ -33,6 +33,7 @@ import deepmerge from "deepmerge";
 import { ScmService } from "../scm/scm-service";
 import { runWithSubjectId } from "../util/request-context";
 import { InstallationService } from "../auth/installation-service";
+import { IDEService } from "../ide-service";
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
@@ -45,6 +46,7 @@ export class ProjectsService {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(ScmService) private readonly scmService: ScmService,
+        @inject(IDEService) private readonly ideService: IDEService,
 
         @inject(InstallationService) private readonly installationService: InstallationService,
     ) {}
@@ -411,6 +413,10 @@ export class ProjectsService {
                 // deepmerge will try append array, so once data is defined, ignore previous value
                 toBeMerged.restrictedWorkspaceClasses = undefined;
             }
+            if (partialProject.settings.restrictedEditorNames) {
+                // deepmerge will try append array, so once data is defined, ignore previous value
+                toBeMerged.restrictedEditorNames = undefined;
+            }
             partialProject.settings = deepmerge(toBeMerged, partialProject.settings);
             await this.checkProjectSettings(user.id, partialProject.settings);
         }
@@ -435,6 +441,11 @@ export class ProjectsService {
                 }
             }
             settings.restrictedWorkspaceClasses = classList;
+        }
+        if (settings.restrictedEditorNames) {
+            const options = settings.restrictedEditorNames.filter((e) => !!e) as string[];
+            await this.ideService.checkEditorsAllowed(userId, options);
+            settings.restrictedEditorNames = options;
         }
     }
 
