@@ -79,7 +79,6 @@ const ConfigurationListPage = React.lazy(
 const ConfigurationDetailPage = React.lazy(
     () => import(/* webpackPrefetch: true */ "../repositories/detail/ConfigurationDetailPage"),
 );
-const QuickStartPage = React.lazy(() => import(/* webpackPrefetch: true */ "../components/QuickStart"));
 
 const PrebuildListPage = React.lazy(() => import(/* webpackPrefetch: true */ "../prebuilds/list/PrebuildList"));
 
@@ -217,8 +216,6 @@ export const AppRoutes = () => {
                             <Route exact path="/repositories" component={ConfigurationListPage} />
                             {/* Handles all /repositories/:id/* routes in a nested router */}
                             <Route path="/repositories/:id" component={ConfigurationDetailPage} />
-
-                            <Route path="/quickstart" component={QuickStartPage} />
 
                             {/* basic redirect for old team slugs */}
                             <Route path={["/t/"]} exact>
