@@ -185,7 +185,7 @@ interface OpenOIDCStartWindowParams extends WindowMessageHandler {
     verify?: boolean;
 }
 
-async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
+async function redirectToOIDC(params: OpenOIDCStartWindowParams) {
     const { orgSlug, configId, activate = false, verify = false } = params;
     const successKey = getUniqueSuccessKey();
     const searchParamsReturn = new URLSearchParams({ message: successKey });
@@ -193,7 +193,7 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
         searchParamsReturn.append(key, value);
     }
     const returnTo = gitpodHostUrl
-        .with({ pathname: "/", search: searchParamsReturn.toString(), hash: window.location.hash })
+        .with({ pathname: "/quickstart", search: searchParamsReturn.toString(), hash: window.location.hash })
         .toString();
     const searchParams = new URLSearchParams({ returnTo });
     if (orgSlug) {
@@ -218,10 +218,47 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
     window.location.href = url;
 }
 
+async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
+    const { orgSlug, configId, activate = false, verify = false } = params;
+    const successKey = getUniqueSuccessKey();
+    let search = `message=${successKey}`;
+    const returnTo = gitpodHostUrl.with({ pathname: "complete-auth", search }).toString();
+    const searchParams = new URLSearchParams({ returnTo });
+    if (orgSlug) {
+        searchParams.append("orgSlug", orgSlug);
+    }
+    if (configId) {
+        searchParams.append("id", configId);
+    }
+    if (activate) {
+        searchParams.append("activate", "true");
+    } else if (verify) {
+        searchParams.append("verify", "true");
+    }
+
+    const url = gitpodHostUrl
+        .with((url) => ({
+            pathname: `/iam/oidc/start`,
+            search: searchParams.toString(),
+        }))
+        .toString();
+
+    openModalWindow(url);
+
+    attachMessageListener(successKey, params);
+}
+
 // Used to ensure each callback is handled uniquely
 let counter = 0;
 const getUniqueSuccessKey = () => {
     return `success:${counter++}`;
 };
 
-export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, openOIDCStartWindow, redirectToAuthorize };
+export {
+    iconForAuthProvider,
+    simplifyProviderName,
+    openAuthorizeWindow,
+    openOIDCStartWindow,
+    redirectToAuthorize,
+    redirectToOIDC,
+};
