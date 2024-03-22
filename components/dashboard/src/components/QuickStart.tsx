@@ -13,8 +13,8 @@ import { useHistory } from "react-router";
 import { AppLoading } from "../app/AppLoading";
 import { Link } from "react-router-dom";
 
-const errorFromSearch = (): string => {
-    const searchParams = new URLSearchParams(window.location.search);
+const parseErrorFromSearch = (search: string): string => {
+    const searchParams = new URLSearchParams(search);
     const message = searchParams.get("message");
     if (message?.startsWith("error:")) {
         const parsed = parseError(message);
@@ -31,7 +31,7 @@ const clearMessageFromSearch = () => {
 };
 
 const QuickStart: FC = () => {
-    const [error, setError] = useState(errorFromSearch());
+    const [error, setError] = useState(parseErrorFromSearch(window.location.search));
     const { data: authProviders, isLoading: authProvidersLoading } = useAuthProviderDescriptions();
     const needsScmAuth = useNeedsGitAuthorization();
     const user = useCurrentUser();
