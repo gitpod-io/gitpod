@@ -47,6 +47,7 @@ const QuickStart: FC = () => {
         if (!user) {
             if (relevantAuthProvider) {
                 void redirectToAuthorize({
+                    login: true,
                     host: relevantAuthProvider.host,
                     overrideScopes: true,
                 });
