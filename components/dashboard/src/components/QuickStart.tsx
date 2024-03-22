@@ -24,12 +24,6 @@ const parseErrorFromSearch = (search: string): string => {
     return "";
 };
 
-const clearMessageFromSearch = () => {
-    const searchParams = new URLSearchParams(window.location.search);
-    searchParams.delete("message");
-    window.history.replaceState(null, "", `${window.location.pathname}?${searchParams}${window.location.hash}`);
-};
-
 const QuickStart: FC = () => {
     const [error, setError] = useState(parseErrorFromSearch(window.location.search));
     const { data: authProviders, isLoading: authProvidersLoading } = useAuthProviderDescriptions();
@@ -41,8 +35,6 @@ const QuickStart: FC = () => {
         if (authProvidersLoading || !authProviders || error) {
             return;
         }
-
-        clearMessageFromSearch();
 
         if (!user) {
             void redirectToOIDC({
@@ -70,7 +62,10 @@ const QuickStart: FC = () => {
                 overrideScopes: true,
             });
         } else {
-            history.push(`/new/${window.location.search}${window.location.hash}`);
+            const searchParams = new URLSearchParams(window.location.search);
+            searchParams.delete("message");
+
+            history.push(`/new/?${searchParams}${window.location.hash}`);
         }
     }, [authProviders, history, authProvidersLoading, needsScmAuth, user, error]);
 

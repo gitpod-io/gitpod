@@ -102,10 +102,13 @@ async function redirectToAuthorize(params: OpenAuthorizeWindowParams) {
     const successKey = getUniqueSuccessKey();
     const searchParamsReturn = new URLSearchParams({ message: successKey });
     for (const [key, value] of new URLSearchParams(window.location.search)) {
+        if (key === "message") {
+            continue;
+        }
         searchParamsReturn.append(key, value);
     }
     const returnTo = gitpodHostUrl
-        .with({ pathname: "/new", search: searchParamsReturn.toString(), hash: window.location.hash })
+        .with({ pathname: "/quickstart", search: searchParamsReturn.toString(), hash: window.location.hash })
         .toString();
     const requestedScopes = scopes ?? [];
     const url = login
@@ -196,6 +199,9 @@ async function redirectToOIDC(params: OpenOIDCStartWindowParams) {
     const successKey = getUniqueSuccessKey();
     const searchParamsReturn = new URLSearchParams({ message: successKey });
     for (const [key, value] of new URLSearchParams(window.location.search)) {
+        if (key === "message") {
+            continue;
+        }
         searchParamsReturn.append(key, value);
     }
     const returnTo = gitpodHostUrl
