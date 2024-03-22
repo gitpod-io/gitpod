@@ -51,7 +51,6 @@ const QuickStart: FC = () => {
             }
 
             const relevantAuthProvider = authProviders.find((provider) => provider.host === contextUrl.host);
-
             if (!relevantAuthProvider) {
                 setError("No relevant auth provider found");
                 return;
