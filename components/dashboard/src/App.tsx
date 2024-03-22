@@ -17,6 +17,7 @@ import { ErrorPages } from "./error-pages/ErrorPages";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
 import { useQueryParams } from "./hooks/use-query-params";
 import { useTheme } from "./theme-context";
+import QuickStart from "./components/QuickStart";
 
 export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl﹢"}O`;
 
@@ -55,6 +56,11 @@ const App: FC = () => {
 
     if (loading) {
         return <AppLoading />;
+    }
+
+    // Page can be loaded even if user is not authenticated
+    if (window.location.pathname === "/quickstart") {
+        return <QuickStart />;
     }
 
     // Technically this should get handled in the QueryErrorBoundary, but having it here doesn't hurt

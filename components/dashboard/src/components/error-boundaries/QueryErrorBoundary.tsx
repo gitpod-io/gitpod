@@ -72,7 +72,7 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
         }
 
         // Page can be loaded even if user is not authenticated
-        if (window.location.pathname === "quickstart") {
+        if (window.location.pathname === "/quickstart") {
             return <QuickStart />;
         }
 
