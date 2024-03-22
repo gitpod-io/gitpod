@@ -41,7 +41,7 @@ const Auth = () => {
                 });
             }
         } else {
-            history.push(`/new/#${window.location.hash}?${window.location.search}`);
+            history.push(`/new/${window.location.search}${window.location.hash}`);
         }
     }, [authProviders, history, isLoading, needsScmAuth, user]);
 

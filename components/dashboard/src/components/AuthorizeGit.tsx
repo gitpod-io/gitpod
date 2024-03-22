@@ -4,10 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
-import { openAuthorizeWindow, redirectToAuthorize } from "../provider-utils";
+import { openAuthorizeWindow } from "../provider-utils";
 import { userClient } from "../service/public-api";
 import { UserContext, useCurrentUser } from "../user-context";
 import { Button } from "@podkit/buttons/Button";
@@ -44,32 +44,15 @@ export const AuthorizeGit = ({ className, refetch }: Props) => {
     }, [refetch, setUser]);
 
     const connect = useCallback(
-        (ap: AuthProviderDescription, redirect = false) => {
-            const openArgs = {
+        (ap: AuthProviderDescription) => {
+            openAuthorizeWindow({
                 host: ap.host,
                 overrideScopes: true,
                 onSuccess: updateUser,
-            } as const;
-
-            if (redirect) {
-                redirectToAuthorize(openArgs);
-                return;
-            }
-
-            openAuthorizeWindow(openArgs);
+            });
         },
         [updateUser],
     );
-
-    useEffect(() => {
-        const searchParams = new URLSearchParams(window.location.search);
-        const message = searchParams.get("message");
-        if (message?.startsWith("success:")) {
-            if (authProviders) {
-                connect(authProviders[0], true);
-            }
-        }
-    }, [authProviders, connect]);
 
     if (authProviders === undefined) {
         return <></>;

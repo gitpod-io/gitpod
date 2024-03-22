@@ -105,7 +105,7 @@ async function redirectToAuthorize(params: OpenAuthorizeWindowParams) {
         searchParamsReturn.append(key, value);
     }
     const returnTo = gitpodHostUrl
-        .with({ pathname: window.location.pathname, search: searchParamsReturn.toString(), hash: window.location.hash })
+        .with({ pathname: "/new", search: searchParamsReturn.toString(), hash: window.location.hash })
         .toString();
     const requestedScopes = scopes ?? [];
     const url = login
