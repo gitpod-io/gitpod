@@ -4,35 +4,31 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { FC, useCallback, useEffect, useMemo } from "react";
+import { FC, useCallback, useEffect } from "react";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import Editor from "../icons/Editor.svg";
-import { IdeOptionsSorter, useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
+import { AllowedWorkspaceEditor, useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
 import { MiddleDot } from "./typography/MiddleDot";
 import { DisableScope } from "../data/workspaces/workspace-classes-query";
+import { Link } from "react-router-dom";
+import { repositoriesRoutes } from "../repositories/repositories.routes";
 
 interface SelectIDEComponentProps {
     selectedIdeOption?: string;
+    selectedConfigurationId?: string;
     pinnedEditorVersions?: Map<string, string>;
     useLatest?: boolean;
     onSelectionChange: (ide: string, latest: boolean) => void;
-    setError?: (error?: string) => void;
+    setError?: (error?: React.ReactNode) => void;
     disabled?: boolean;
     loading?: boolean;
     ignoreRestrictionScopes: DisableScope[] | undefined;
-}
-
-function filteredIdeOptions(ideOptions: IDEOptions) {
-    return IDEOptions.asArray(ideOptions).filter((x) => !x.hidden);
-}
-
-function sortedIdeOptions(ideOptions: IDEOptions) {
-    return filteredIdeOptions(ideOptions).sort(IdeOptionsSorter);
+    availableOptions?: string[];
 }
 
 export default function SelectIDEComponent({
     selectedIdeOption,
+    selectedConfigurationId,
     pinnedEditorVersions,
     useLatest,
     disabled = false,
@@ -40,13 +36,18 @@ export default function SelectIDEComponent({
     setError,
     onSelectionChange,
     ignoreRestrictionScopes,
+    availableOptions,
 }: SelectIDEComponentProps) {
-    const { data: ideOptions, isLoading: ideOptionsLoading } = useAllowedWorkspaceEditorsMemo({
+    const {
+        data: ideOptions,
+        isLoading: ideOptionsLoading,
+        computedDefault,
+    } = useAllowedWorkspaceEditorsMemo(selectedConfigurationId, {
         filterOutDisabled: true,
         ignoreScope: ignoreRestrictionScopes,
     });
 
-    const options = useMemo(() => (ideOptions ? sortedIdeOptions(ideOptions) : undefined), [ideOptions]);
+    const options = ideOptions;
 
     const getElements = useCallback(
         (search: string) => {
@@ -88,16 +89,42 @@ export default function SelectIDEComponent({
             setError(undefined);
         }
     };
-    const ide = selectedIdeOption || ideOptions?.defaultIde || "";
+    const ide = selectedIdeOption || computedDefault || "";
     useEffect(() => {
-        if (!ideOptions) {
+        if (!availableOptions || loading || disabled || ideOptionsLoading) {
+            setError?.(undefined);
             return;
         }
-        const option = ideOptions.options[ide];
-        if (!option) {
-            setError?.(`The editor '${ide}' is not supported.`);
+        if (availableOptions.length === 0) {
+            const settingLink = selectedConfigurationId && repositoriesRoutes.EditorSettings(selectedConfigurationId);
+            const teamSettingsLink = "/settings";
+            setError?.(
+                <>
+                    No available editors for this repository.
+                    {settingLink && (
+                        <>
+                            {" "}
+                            Please contact an admin to update{" "}
+                            <Link className="underline" to={teamSettingsLink}>
+                                organization settings
+                            </Link>
+                            {" or "}
+                            <Link className="underline" to={settingLink}>
+                                repository settings
+                            </Link>
+                            .
+                        </>
+                    )}
+                </>,
+            );
+            return;
         }
-    }, [ide, ideOptions, setError]);
+        if (!availableOptions.includes(ide)) {
+            setError?.(`The editor '${ide}' is not supported.`);
+        } else {
+            setError?.(undefined);
+        }
+    }, [ide, availableOptions, setError, selectedConfigurationId, loading, disabled, ideOptionsLoading]);
     return (
         <Combobox
             getElements={getElements}
@@ -107,7 +134,7 @@ export default function SelectIDEComponent({
             disabled={disabled || ideOptionsLoading || loading}
         >
             <IdeOptionElementSelected
-                option={ideOptions?.options[ide]}
+                option={ideOptions.find((e) => e.id === ide)}
                 pinnedIdeVersion={pinnedEditorVersions?.get(ide)}
                 useLatest={!!useLatest}
                 loading={ideOptionsLoading || loading}
@@ -123,7 +150,7 @@ function parseId(id: string): { ide: string; useLatest: boolean } {
 }
 
 interface IdeOptionElementProps {
-    option: IDEOption | undefined;
+    option: AllowedWorkspaceEditor | undefined;
     pinnedIdeVersion?: string;
     useLatest: boolean;
     loading?: boolean;
