@@ -63,13 +63,8 @@ const QuickStart: FC = () => {
         const needsScmAuth =
             !authProviders?.some((ap) => user.identities.some((i) => ap.id === i.authProviderId)) ?? false;
         if (needsScmAuth) {
-            if (!relevantAuthProvider) {
-                setError("No relevant auth provider found");
-                return;
-            }
-
             void redirectToAuthorize({
-                host: relevantAuthProvider.host,
+                host: contextUrl.host,
                 overrideScopes: true,
             });
 
