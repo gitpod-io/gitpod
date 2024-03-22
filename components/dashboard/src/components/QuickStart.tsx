@@ -27,7 +27,7 @@ const parseErrorFromSearch = (search: string): string => {
 const clearMessageFromSearch = () => {
     const searchParams = new URLSearchParams(window.location.search);
     searchParams.delete("message");
-    window.history.replaceState(null, "", `${window.location.pathname}?${searchParams}`);
+    window.history.replaceState(null, "", `${window.location.pathname}?${searchParams}${window.location.hash}`);
 };
 
 const QuickStart: FC = () => {
@@ -49,18 +49,23 @@ const QuickStart: FC = () => {
                 orgSlug: "",
             });
         } else if (needsScmAuth) {
-            const contextUrl = new URL(window.location.hash.slice(1));
-            const relevantAuthProvider = authProviders.find((provider) => provider.host === contextUrl.host);
+            const hash = window.location.hash.slice(1);
+            if (URL.canParse(hash)) {
+                const contextUrl = new URL(hash);
+                const relevantAuthProvider = authProviders.find((provider) => provider.host === contextUrl.host);
 
-            if (!relevantAuthProvider) {
-                setError("No relevant auth provider found");
-                return;
+                if (!relevantAuthProvider) {
+                    setError("No relevant auth provider found");
+                    return;
+                }
+
+                void redirectToAuthorize({
+                    host: relevantAuthProvider.host,
+                    overrideScopes: true,
+                });
+            } else {
+                setError("Invalid context URL");
             }
-
-            void redirectToAuthorize({
-                host: relevantAuthProvider.host,
-                overrideScopes: true,
-            });
         } else {
             history.push(`/new/${window.location.search}${window.location.hash}`);
         }
