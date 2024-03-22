@@ -61,7 +61,11 @@ export const PrebuildDetailPage: FC = () => {
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
     const [logNotFound, setLogNotFound] = useState(false);
 
-    const { emitter: logEmitter, isLoading: isStreamingLogs } = usePrebuildLogsEmitter(prebuildId);
+    const {
+        emitter: logEmitter,
+        isLoading: isStreamingLogs,
+        disposable: disposeStreamingLogs,
+    } = usePrebuildLogsEmitter(prebuildId);
     const {
         isFetching: isTriggeringPrebuild,
         refetch: triggerPrebuild,
@@ -78,13 +82,16 @@ export const PrebuildDetailPage: FC = () => {
     useEffect(() => {
         setLogNotFound(false);
         const disposable = watchPrebuild(prebuildId, (prebuild) => {
+            if (prebuild.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
+                disposeStreamingLogs?.dispose();
+            }
             setCurrentPrebuild(prebuild);
         });
 
         return () => {
             disposable.dispose();
         };
-    }, [prebuildId]);
+    }, [prebuildId, disposeStreamingLogs]);
 
     useEffect(() => {
         history.listen(() => {

@@ -8,10 +8,12 @@ import EventEmitter from "events";
 import { prebuildClient } from "../../service/public-api";
 import { useEffect, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
+import { Disposable } from "@gitpod/gitpod-protocol";
 
 export function usePrebuildLogsEmitter(prebuildId: string) {
     const [emitter] = useState(new EventEmitter());
     const [isLoading, setIsLoading] = useState(true);
+    const [disposable, setDisposable] = useState<Disposable | undefined>();
 
     useEffect(() => {
         setIsLoading(true);
@@ -52,9 +54,14 @@ export function usePrebuildLogsEmitter(prebuildId: string) {
             .catch((err) => {
                 emitter.emit("error", err);
             });
+        setDisposable(
+            Disposable.create(() => {
+                controller.abort();
+            }),
+        );
         return () => {
             controller.abort();
         };
     }, [emitter, prebuildId]);
-    return { emitter, isLoading };
+    return { emitter, isLoading, disposable };
 }
