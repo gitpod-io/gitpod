@@ -120,7 +120,9 @@ export const IdeOptionsModifyModal = ({
         if (!ideOptionsArr) {
             return;
         }
-        const leftOptions = ideOptionsArr.filter((i) => !restrictedEditors.has(i.id));
+        const leftOptions = ideOptionsArr
+            .filter((e) => !e.isDisabledInScope)
+            .filter((i) => !restrictedEditors.has(i.id));
         if (leftOptions.length === 0) {
             return "At least one Editor has to be selected.";
         }

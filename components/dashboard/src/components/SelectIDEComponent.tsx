@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useEffect } from "react";
+import { FC, useCallback, useEffect, useMemo } from "react";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import Editor from "../icons/Editor.svg";
 import { AllowedWorkspaceEditor, useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
@@ -89,6 +89,28 @@ export default function SelectIDEComponent({
             setError(undefined);
         }
     };
+    const helpMessage = useMemo(() => {
+        const repoSetting = selectedConfigurationId && repositoriesRoutes.EditorSettings(selectedConfigurationId);
+        const orgSetting = "/settings";
+        return (
+            <>
+                Please contact an admin to update{" "}
+                <Link className="underline" to={orgSetting}>
+                    organization settings
+                </Link>
+                {repoSetting && (
+                    <>
+                        {" or "}
+                        <Link className="underline" to={repoSetting}>
+                            repository settings
+                        </Link>
+                    </>
+                )}
+                .
+            </>
+        );
+    }, [selectedConfigurationId]);
+
     const ide = selectedIdeOption || computedDefault || "";
     useEffect(() => {
         if (!availableOptions || loading || disabled || ideOptionsLoading) {
@@ -96,35 +118,20 @@ export default function SelectIDEComponent({
             return;
         }
         if (availableOptions.length === 0) {
-            const settingLink = selectedConfigurationId && repositoriesRoutes.EditorSettings(selectedConfigurationId);
-            const teamSettingsLink = "/settings";
-            setError?.(
-                <>
-                    No available editors for this repository.
-                    {settingLink && (
-                        <>
-                            {" "}
-                            Please contact an admin to update{" "}
-                            <Link className="underline" to={teamSettingsLink}>
-                                organization settings
-                            </Link>
-                            {" or "}
-                            <Link className="underline" to={settingLink}>
-                                repository settings
-                            </Link>
-                            .
-                        </>
-                    )}
-                </>,
-            );
+            setError?.(<>No available editors for this repository. {helpMessage}</>);
             return;
         }
         if (!availableOptions.includes(ide)) {
-            setError?.(`The editor '${ide}' is not supported.`);
+            setError?.(
+                <>
+                    The editor '{ide}' is not supported. {helpMessage}
+                </>,
+            );
         } else {
             setError?.(undefined);
         }
-    }, [ide, availableOptions, setError, selectedConfigurationId, loading, disabled, ideOptionsLoading]);
+    }, [ide, availableOptions, setError, loading, disabled, ideOptionsLoading, helpMessage]);
+
     return (
         <Combobox
             getElements={getElements}

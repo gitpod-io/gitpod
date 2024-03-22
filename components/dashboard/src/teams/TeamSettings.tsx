@@ -481,7 +481,10 @@ const OrgWorkspaceClassesOptions = ({
     return (
         <ConfigurationSettingsField>
             <Heading3>Available workspace classes</Heading3>
-            <Subheading>Limit the available workspace classes in your organization.</Subheading>
+            <Subheading>
+                Limit the available workspace classes in your organization. Requires{" "}
+                <span className="font-medium">Owner</span> permissions to change.
+            </Subheading>
 
             <WorkspaceClassesOptions
                 isLoading={isLoadingClsInOrg}
@@ -550,7 +553,10 @@ const EditorOptions = ({ isOwner, settings, handleUpdateTeamSettings }: EditorOp
     return (
         <ConfigurationSettingsField>
             <Heading3>Available editors</Heading3>
-            <Subheading>Limit the available editors in your organization.</Subheading>
+            <Subheading>
+                Limit the available editors in your organization. Requires <span className="font-medium">Owner</span>{" "}
+                permissions to change.
+            </Subheading>
 
             <IdeOptions
                 isLoading={orgOptionsIsLoading}
