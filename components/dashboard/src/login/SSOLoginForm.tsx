@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "@podkit/buttons/Button";
 import { TextInputField } from "../components/forms/TextInputField";
@@ -36,11 +36,10 @@ export const SSOLoginForm = ({ singleOrgMode, onSuccess }: Props) => {
     const [error, setError] = useState("");
 
     const oidcServiceEnabled = useFeatureFlag("oidcServiceEnabled");
-    const isDataops = useFeatureFlag("dataops");
 
     const openLoginWithSSO = useCallback(
-        async (e?: React.FormEvent<HTMLFormElement>) => {
-            e?.preventDefault();
+        async (e: React.FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
             window.localStorage.setItem("sso-org-slug", orgSlug.trim());
 
             try {
@@ -68,12 +67,6 @@ export const SSOLoginForm = ({ singleOrgMode, onSuccess }: Props) => {
         "Organization slug must not be longer than 63 characters.",
         orgSlug.trim().length <= 63,
     );
-
-    useEffect(() => {
-        if (isDataops) {
-            openLoginWithSSO();
-        }
-    }, [isDataops, openLoginWithSSO]);
 
     // Don't render anything if not enabled
     if (!oidcServiceEnabled) {
