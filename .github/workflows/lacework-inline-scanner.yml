@@ -51,7 +51,7 @@ jobs:
     needs: [configuration,create-runner]
     if: ${{ needs.configuration.outputs.skip == 'false' }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
     steps:
       # Most of this is taken over from the Build workflow/preview-env-check-regressions workflow
       - uses: actions/checkout@v4
