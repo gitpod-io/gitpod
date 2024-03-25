@@ -5,14 +5,11 @@
  */
 
 import { FC, useEffect, useState } from "react";
-import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { parseError, redirectToAuthorize, redirectToOIDC } from "../provider-utils";
 import { useHistory, useLocation } from "react-router";
 import { AppLoading } from "../app/AppLoading";
 import { Link } from "react-router-dom";
-import { userClient } from "../service/public-api";
-import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
-import { useQuery } from "@tanstack/react-query";
+import { authProviderClient, userClient } from "../service/public-api";
 
 const parseErrorFromSearch = (search: string): string => {
     const searchParams = new URLSearchParams(search);
@@ -25,86 +22,76 @@ const parseErrorFromSearch = (search: string): string => {
     return "";
 };
 
-// We make a special query instead of reusing the one in authenticated-user-query.ts because we need to ensure the data is always fresh. Otherwise, the identities on a user might be out of date and we might auth the user again when we don't need to.
-const useAuthenticatedUser = () => {
-    return useQuery<User | undefined>({
-        queryKey: ["authenticated-user", {}],
-        queryFn: async () => {
-            const response = await userClient.getAuthenticatedUser({});
-            return response.user;
-        },
-        retry: false,
-        // Do not cache
-        cacheTime: 0,
-        staleTime: 0,
-    });
-};
-
 const QuickStart: FC = () => {
     const [error, setError] = useState(parseErrorFromSearch(window.location.search));
-    const {
-        data: authProviders,
-        isLoading: authProvidersLoading,
-        refetch: refetchAuthProviders,
-    } = useAuthProviderDescriptions();
-    const { isLoading: isUserLoading, data: user, remove: removeUserCache } = useAuthenticatedUser();
     const history = useHistory();
     const { hash } = useLocation();
 
     useEffect(() => {
-        if (authProvidersLoading || isUserLoading || error) {
+        if (error) {
             return;
         }
 
-        const hashValue = hash.slice(1);
-        let contextUrl: URL;
-        try {
-            contextUrl = new URL(hashValue);
-        } catch {
-            setError("Invalid context URL");
-            return;
-        }
-        const relevantAuthProvider = authProviders?.find((provider) => provider.host === contextUrl.host);
-        if (!user) {
-            if (relevantAuthProvider) {
+        const fetchData = async () => {
+            const user = (await userClient.getAuthenticatedUser({}).catch(() => undefined))?.user;
+            const authProviderDescriptions = await authProviderClient
+                .listAuthProviderDescriptions({})
+                .catch(() => undefined)
+                .then((r) => r?.descriptions);
+
+            const hashValue = hash.slice(1);
+            let contextUrl: URL;
+            try {
+                contextUrl = new URL(hashValue);
+            } catch {
+                setError("Invalid context URL");
+                return;
+            }
+            const relevantAuthProvider = authProviderDescriptions?.find(
+                (provider) => provider.host === contextUrl.host,
+            );
+            if (!user) {
+                if (relevantAuthProvider) {
+                    void redirectToAuthorize({
+                        login: true,
+                        host: relevantAuthProvider.host,
+                        overrideScopes: true,
+                    });
+
+                    return;
+                }
+                void redirectToOIDC({});
+
+                return;
+            }
+
+            if (authProviderDescriptions?.length === 0) {
+                setError("No Git integrations setup");
+                return;
+            }
+
+            const needsScmAuth =
+                !authProviderDescriptions?.some((ap) => user.identities.some((i) => ap.id === i.authProviderId)) ??
+                false;
+            if (needsScmAuth) {
                 void redirectToAuthorize({
-                    login: true,
-                    host: relevantAuthProvider.host,
+                    host: contextUrl.host,
                     overrideScopes: true,
                 });
 
                 return;
             }
-            void redirectToOIDC({});
+
+            const searchParams = new URLSearchParams(window.location.search);
+            searchParams.delete("message");
+
+            history.push(`/new/?${searchParams}${window.location.hash}`);
 
             return;
-        }
+        };
 
-        if (authProviders?.length === 0) {
-            setError("No Git integrations setup");
-            refetchAuthProviders();
-            return;
-        }
-
-        const needsScmAuth =
-            !authProviders?.some((ap) => user.identities.some((i) => ap.id === i.authProviderId)) ?? false;
-        if (needsScmAuth) {
-            removeUserCache();
-            void redirectToAuthorize({
-                host: contextUrl.host,
-                overrideScopes: true,
-            });
-
-            return;
-        }
-
-        const searchParams = new URLSearchParams(window.location.search);
-        searchParams.delete("message");
-
-        history.push(`/new/?${searchParams}${window.location.hash}`);
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [authProviders, history, authProvidersLoading, user, hash, isUserLoading]);
+        fetchData();
+    }, [history, hash, error]);
 
     if (error) {
         return (
