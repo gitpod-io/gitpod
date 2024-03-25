@@ -5,6 +5,7 @@ package gitpod.v1;
 import "gitpod/v1/pagination.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+option java_package = "io.gitpod.publicapi.v1";
 
 service AuthProviderService {
   // CreateAuthProvider creates a new auth provider.

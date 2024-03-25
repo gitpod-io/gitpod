@@ -7,6 +7,7 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
+option java_package = "io.gitpod.publicapi.experimental.v1";
 
 service WorkspacesService {
   // ListWorkspaces enumerates all workspaces belonging to the authenticated user.

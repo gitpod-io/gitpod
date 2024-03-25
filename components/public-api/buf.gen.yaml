@@ -26,3 +26,8 @@ plugins:
     out: typescript/src
     opt: target=ts
     path: typescript/node_modules/.bin/protoc-gen-connect-es
+
+  - plugin: buf.build/connectrpc/kotlin
+    out: java/src/main/java
+  - plugin: buf.build/protocolbuffers/java
+    out: java/src/main/java

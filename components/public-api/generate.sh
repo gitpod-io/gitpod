@@ -30,6 +30,7 @@ buf breaking --against "https://github.com/gitpod-io/gitpod.git#branch=main,subd
 
 # Remove generated files, so they are re-created
 rm -rf go/experimental
+rm -rf java/src/main/java
 
 protoc_buf_generate
 

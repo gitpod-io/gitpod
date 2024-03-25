@@ -6,6 +6,7 @@ import "gitpod/v1/pagination.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+option java_package = "io.gitpod.publicapi.v1";
 
 service SCMService {
   // SearchSCMTokens allows clients to retrieve SCM tokens based on the

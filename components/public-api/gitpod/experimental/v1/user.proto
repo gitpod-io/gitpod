@@ -5,6 +5,7 @@ package gitpod.experimental.v1;
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
+option java_package = "io.gitpod.publicapi.experimental.v1";
 
 message User {
   // id is a UUID of the user
