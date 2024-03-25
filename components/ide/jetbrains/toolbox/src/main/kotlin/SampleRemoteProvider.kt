@@ -1,8 +1,10 @@
 package toolbox.gateway.sample
 
+import com.connectrpc.ResponseMessage
 import com.jetbrains.toolbox.gateway.ProviderVisibilityState
 import com.jetbrains.toolbox.gateway.RemoteEnvironmentConsumer
 import com.jetbrains.toolbox.gateway.RemoteProvider
+import io.gitpod.publicapi.v1.WorkspaceOuterClass
 import io.gitpod.publicapi.v1.WorkspaceOuterClass.ListWorkspacesRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -22,10 +24,10 @@ class SampleRemoteProvider(
     init {
         coroutineScope.launch {
             val workspaceList = publicApi.workspaceApi.listWorkspaces(ListWorkspacesRequest.newBuilder().setOrganizationId(publicApi.getCurrentOrganizationId()).build())
-            workspaceList.success {list ->
+            workspaceList.success {list: ResponseMessage.Success<WorkspaceOuterClass.ListWorkspacesResponse> ->
                 consumer.consumeEnvironments(list.message.workspacesList.map { GitpodRemoteEnvironment(it) })
             }
-            workspaceList.failure { error ->
+            workspaceList.failure { error: ResponseMessage.Failure<WorkspaceOuterClass.ListWorkspacesResponse> ->
                 logger.error("Failed to retrieve workspaces: ${error.toString()}")
             }
         }

@@ -9,6 +9,7 @@
 plugins {
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
+    id("org.jetbrains.kotlin.jvm") version "1.9.0"
 }
 
 repositories {
@@ -29,6 +30,7 @@ dependencies {
     // Java specific dependencies.
     implementation("com.connectrpc:connect-kotlin-google-java-ext:0.6.0")
     implementation("com.google.protobuf:protobuf-java:4.26.0")
+    implementation(kotlin("stdlib-jdk8"))
 
 }
 
