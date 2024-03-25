@@ -54,14 +54,14 @@ const App: FC = () => {
         return <LinkedInCallback />;
     }
 
-    if (loading) {
-        return <AppLoading />;
-    }
-
     // Page can be loaded even if user is not authenticated
     // RegEx is used for accounting for trailing slash /
     if (window.location.pathname.replace(/\/$/, "") === "/quickstart") {
         return <QuickStart />;
+    }
+
+    if (loading) {
+        return <AppLoading />;
     }
 
     // Technically this should get handled in the QueryErrorBoundary, but having it here doesn't hurt
