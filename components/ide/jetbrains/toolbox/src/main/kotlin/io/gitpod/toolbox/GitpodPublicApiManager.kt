@@ -12,12 +12,12 @@ import com.connectrpc.protocols.NetworkProtocol
 import io.gitpod.publicapi.v1.WorkspaceServiceClient
 
 class GitpodPublicApiManager {
-    private val sharedClient = createClient("gitpod.io", "aaa")
+    private val sharedClient = createClient("gitpod.io", System.getenv("GP_PAT_TOKEN"))
 
     val workspaceApi = WorkspaceServiceClient(sharedClient)
 
     fun getCurrentOrganizationId(): String {
-        return "c5895528-23ac-4ebd-9d8b-464228d5755f"
+        return "c5895528-23ac-4ebd-9d8b-464228d5755f" // id of gitpod.io/Gitpod
     }
 
     companion object {
@@ -42,15 +42,11 @@ class AuthorizationInterceptor(private val token: String) : Interceptor {
     }
 
     override fun unaryFunction(): UnaryFunction {
-        // add authorization header
         return UnaryFunction(
             requestFunction = { request ->
-                if (request.url.host != "demo.connectrpc.com") {
-                    return@UnaryFunction request
-                }
                 val headers = mutableMapOf<String, List<String>>()
                 headers.putAll(request.headers)
-                headers.put("Authorization", listOf("Bearer $token"))
+                headers["Authorization"] = listOf("Bearer $token")
                 return@UnaryFunction request.clone(headers = headers)
             },
             responseFunction = { resp ->

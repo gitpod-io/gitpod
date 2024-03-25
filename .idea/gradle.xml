@@ -32,6 +32,14 @@
           </set>
         </option>
       </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/components/public-api/java" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/components/public-api/java" />
+          </set>
+        </option>
+      </GradleProjectSettings>
     </option>
   </component>
 </project>
