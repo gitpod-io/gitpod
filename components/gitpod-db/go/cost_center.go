@@ -119,7 +119,7 @@ func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributi
 }
 
 // computeDefaultSpendingLimit computes the spending limit for a new Organization.
-// If the first joined member has not already granted credits to another org, we grant them the the free credits allowance.
+// If the first joined member has not already granted credits to another org, we grant them the free credits allowance.
 func (c *CostCenterManager) getSpendingLimitForNewCostCenter(attributionID AttributionID) int32 {
 	_, orgId := attributionID.Values()
 	orgUUID, err := uuid.Parse(orgId)

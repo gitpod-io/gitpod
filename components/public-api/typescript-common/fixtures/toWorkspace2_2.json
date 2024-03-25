@@ -30,7 +30,7 @@
     },
     "cloneUrl": "https://github.com/gitpod-io/gitpod.git",
     "config": {
-      "image": "eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954",
+      "image": "eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879",
       "workspaceLocation": "gitpod/gitpod-ws.code-workspace",
       "checkoutLocation": "gitpod",
       "ports": [
@@ -77,7 +77,7 @@
       "ideCredentials": "ideCredentials"
     },
     "imageSource": {
-      "baseImageResolved": "eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954"
+      "baseImageResolved": "eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879"
     },
     "imageNameResolved": "877922613839.dkr.ecr.eu-central-1.amazonaws.com/image-build/workspace-images:adb73357f7e48abcb1210a0fad039618a8156bb5de667a2ae7acb98ff5244b5e",
     "baseImageNameResolved": "eu.gcr.io/gitpod-core-dev/dev/dev-environment@sha256:1107ae38187802fd784467529d9cc0b98e720f0980e3ec2fcbcecb4d7916da5e",
