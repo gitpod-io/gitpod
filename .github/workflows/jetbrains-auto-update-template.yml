@@ -14,13 +14,17 @@ on:
         required: true
       slackWebhook:
         required: true
+      gcp_credentials:
+        required: true
+      runner_token:
+        required: true
 
 jobs:
   create-runner:
     uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@main
     secrets:
-      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
-      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+      runner_token: ${{ secrets.runner_token }}
+      gcp_credentials: ${{ secrets.gcp_credentials }}
 
   update-jetbrains:
     runs-on: ${{ needs.create-runner.outputs.label }}
@@ -87,7 +91,7 @@ jobs:
       - update-jetbrains
     uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@main
     secrets:
-      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+      gcp_credentials: ${{ secrets.gcp_credentials }}
     with:
       runner-label: ${{ needs.create-runner.outputs.label }}
       machine-zone: ${{ needs.create-runner.outputs.machine-zone }}
