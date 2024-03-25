@@ -297,6 +297,8 @@ export namespace UserEnvVar {
     const WILDCARD_SHARP = "#"; // TODO(gpl) Where does this come from? Bc we have/had patterns as part of URLs somewhere, maybe...?
     const MIN_PATTERN_SEGMENTS = 2;
 
+    export const WhiteListFromReserved = ["GITPOD_IMAGE_AUTH"];
+
     function isWildcard(c: string): boolean {
         return c === WILDCARD_ASTERISK || c === WILDCARD_SHARP;
     }
@@ -308,7 +310,7 @@ export namespace UserEnvVar {
     export function validate(variable: UserEnvVarValue): string | undefined {
         const name = variable.name;
         const pattern = variable.repositoryPattern;
-        if (name.startsWith("GITPOD_")) {
+        if (!WhiteListFromReserved.includes(name) && name.startsWith("GITPOD_")) {
             return "Name with prefix 'GITPOD_' is reserved.";
         }
         if (name.trim() === "") {

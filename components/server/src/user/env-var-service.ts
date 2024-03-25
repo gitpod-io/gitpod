@@ -194,7 +194,7 @@ export class EnvVarService {
         if (!envVar.name) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Variable name cannot be empty");
         }
-        if (envVar.name.startsWith("GITPOD_")) {
+        if (!UserEnvVar.WhiteListFromReserved.includes(envVar.name) && envVar.name.startsWith("GITPOD_")) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Variable name with prefix 'GITPOD_' is reserved");
         }
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(envVar.name)) {
