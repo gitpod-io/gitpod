@@ -8,7 +8,7 @@ import { FC, useEffect, useState } from "react";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { parseError, redirectToAuthorize, redirectToOIDC } from "../provider-utils";
 import { useCurrentUser } from "../user-context";
-import { useHistory } from "react-router";
+import { useHistory, useLocation } from "react-router";
 import { AppLoading } from "../app/AppLoading";
 import { Link } from "react-router-dom";
 
@@ -28,13 +28,14 @@ const QuickStart: FC = () => {
     const { data: authProviders, isLoading: authProvidersLoading } = useAuthProviderDescriptions();
     const user = useCurrentUser();
     const history = useHistory();
+    const { hash } = useLocation();
 
     useEffect(() => {
         if (authProvidersLoading || error) {
             return;
         }
 
-        const hashValue = window.location.hash.slice(1);
+        const hashValue = hash.slice(1);
         let contextUrl: URL;
         try {
             contextUrl = new URL(hashValue);
@@ -74,7 +75,7 @@ const QuickStart: FC = () => {
         searchParams.delete("message");
 
         history.push(`/new/?${searchParams}${window.location.hash}`);
-    }, [authProviders, history, authProvidersLoading, user, error]);
+    }, [authProviders, history, authProvidersLoading, user, error, hash]);
 
     if (error) {
         return (
