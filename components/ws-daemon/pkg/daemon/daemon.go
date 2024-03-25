@@ -10,7 +10,6 @@ import (
 	"os"
 	"time"
 
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"golang.org/x/xerrors"
@@ -24,6 +23,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cgroup"
@@ -36,11 +37,11 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/netlimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
 var (
 	scheme = runtime.NewScheme()
-	// setupLog = ctrl.Log.WithName("setup")
 )
 
 func init() {
@@ -169,11 +170,17 @@ func NewDaemon(config Config) (*Daemon, error) {
 
 	mgr, err = ctrl.NewManager(restCfg, ctrl.Options{
 		Scheme:                 scheme,
-		Port:                   9443,
-		Namespace:              config.Runtime.KubernetesNamespace,
 		HealthProbeBindAddress: "0",
-		MetricsBindAddress:     "0", // Metrics are exposed through baseserver.
-		NewCache:               cache.MultiNamespacedCacheBuilder([]string{config.Runtime.KubernetesNamespace, config.Runtime.SecretsNamespace}),
+		Metrics:                metricsserver.Options{BindAddress: ":0"}, // Metrics are exposed through baseserver.
+		Cache: cache.Options{
+			DefaultNamespaces: map[string]cache.Config{
+				config.Runtime.KubernetesNamespace: {},
+				config.Runtime.SecretsNamespace:    {},
+			},
+		},
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port: 9443,
+		}),
 	})
 	if err != nil {
 		return nil, err
