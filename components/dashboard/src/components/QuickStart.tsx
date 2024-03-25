@@ -43,7 +43,7 @@ const useAuthenticatedUser = () => {
 const QuickStart: FC = () => {
     const [error, setError] = useState(parseErrorFromSearch(window.location.search));
     const { data: authProviders, isLoading: authProvidersLoading } = useAuthProviderDescriptions();
-    const { isLoading: isUserLoading, data: user } = useAuthenticatedUser();
+    const { isLoading: isUserLoading, data: user, remove: removeUserCache } = useAuthenticatedUser();
     const history = useHistory();
     const { hash } = useLocation();
 
@@ -80,6 +80,7 @@ const QuickStart: FC = () => {
         const needsScmAuth =
             !authProviders?.some((ap) => user.identities.some((i) => ap.id === i.authProviderId)) ?? false;
         if (needsScmAuth) {
+            removeUserCache();
             void redirectToAuthorize({
                 host: contextUrl.host,
                 overrideScopes: true,
@@ -92,7 +93,9 @@ const QuickStart: FC = () => {
         searchParams.delete("message");
 
         history.push(`/new/?${searchParams}${window.location.hash}`);
-    }, [authProviders, history, authProvidersLoading, user, error, hash, isUserLoading]);
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authProviders, history, authProvidersLoading, user, hash, isUserLoading]);
 
     if (error) {
         return (
