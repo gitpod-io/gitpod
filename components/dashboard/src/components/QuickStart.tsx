@@ -61,7 +61,6 @@ const QuickStart: FC = () => {
             return;
         }
         const relevantAuthProvider = authProviders?.find((provider) => provider.host === contextUrl.host);
-
         if (!user) {
             if (relevantAuthProvider) {
                 void redirectToAuthorize({
@@ -74,6 +73,11 @@ const QuickStart: FC = () => {
             }
             void redirectToOIDC({});
 
+            return;
+        }
+
+        if (authProviders?.length === 0) {
+            setError("No Git integrations setup");
             return;
         }
 
