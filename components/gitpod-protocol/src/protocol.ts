@@ -297,6 +297,9 @@ export namespace UserEnvVar {
     const WILDCARD_SHARP = "#"; // TODO(gpl) Where does this come from? Bc we have/had patterns as part of URLs somewhere, maybe...?
     const MIN_PATTERN_SEGMENTS = 2;
 
+    /**
+     * - GITPOD_IMAGE_AUTH is documented https://www.gitpod.io/docs/configure/workspaces/workspace-image#use-a-private-docker-image
+     */
     export const WhiteListFromReserved = ["GITPOD_IMAGE_AUTH"];
 
     function isWildcard(c: string): boolean {
