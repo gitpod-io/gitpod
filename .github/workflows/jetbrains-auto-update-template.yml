@@ -43,7 +43,6 @@ jobs:
         if: ${{ steps.ide-version.outputs.ideBuildVersion }}
         env:
           LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: "8388608"
-          LEEWAY_REMOTE_CACHE_BUCKET: '${{ needs.configuration.outputs.leeway_cache_bucket }}'
         run: |
           leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DbuildNumber=${{ steps.ide-version.outputs.ideBuildVersion }} components/ide/jetbrains/image:${{ inputs.productId }}-latest -DjbBackendVersion=${{ steps.ide-version.outputs.ideVersion }}
       - name: Get previous job's status
