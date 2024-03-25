@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey
 
-go 1.21
+go 1.22
 
 require github.com/caddyserver/caddy/v2 v2.7.6
 
