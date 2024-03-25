@@ -29,14 +29,16 @@ function getOrgSlugFromPath(path: string) {
 
 export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
     const location = useLocation();
+
     const [orgSlug, setOrgSlug] = useState(
         getOrgSlugFromPath(location.pathname) || window.localStorage.getItem("sso-org-slug") || "",
     );
     const [error, setError] = useState("");
+
     const oidcServiceEnabled = useFeatureFlag("oidcServiceEnabled");
 
     const openLoginWithSSO = useCallback(
-        async (e) => {
+        async (e: React.FormEvent<HTMLFormElement>) => {
             e.preventDefault();
             window.localStorage.setItem("sso-org-slug", orgSlug.trim());
 

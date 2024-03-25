@@ -17,6 +17,7 @@ import { ErrorPages } from "./error-pages/ErrorPages";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
 import { useQueryParams } from "./hooks/use-query-params";
 import { useTheme } from "./theme-context";
+import QuickStart from "./components/QuickStart";
 
 export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl﹢"}O`;
 
@@ -51,6 +52,12 @@ const App: FC = () => {
 
     if (location.pathname === "/linkedin" && search.get("code") && search.get("state")) {
         return <LinkedInCallback />;
+    }
+
+    // Page can be loaded even if user is not authenticated
+    // RegEx is used for accounting for trailing slash /
+    if (window.location.pathname.replace(/\/$/, "") === "/quickstart") {
+        return <QuickStart />;
     }
 
     if (loading) {

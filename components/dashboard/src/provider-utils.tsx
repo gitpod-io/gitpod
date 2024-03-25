@@ -97,6 +97,39 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     attachMessageListener(successKey, params);
 }
 
+async function redirectToAuthorize(params: OpenAuthorizeWindowParams) {
+    const { login, host, scopes, overrideScopes } = params;
+    const successKey = getUniqueSuccessKey();
+    const searchParamsReturn = new URLSearchParams({ message: successKey });
+    for (const [key, value] of new URLSearchParams(window.location.search)) {
+        if (key === "message") {
+            continue;
+        }
+        searchParamsReturn.append(key, value);
+    }
+    const returnTo = gitpodHostUrl
+        .with({ pathname: window.location.pathname, search: searchParamsReturn.toString(), hash: window.location.hash })
+        .toString();
+    const requestedScopes = scopes ?? [];
+    const url = login
+        ? gitpodHostUrl
+              .withApi({
+                  pathname: "/login",
+                  search: `host=${host}&returnTo=${encodeURIComponent(returnTo)}`,
+              })
+              .toString()
+        : gitpodHostUrl
+              .withApi({
+                  pathname: "/authorize",
+                  search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}${
+                      overrideScopes ? "&override=true" : ""
+                  }&scopes=${requestedScopes.join(",")}`,
+              })
+              .toString();
+
+    window.location.href = url;
+}
+
 function openModalWindow(url: string) {
     const width = 800;
     const height = 800;
@@ -109,6 +142,20 @@ function openModalWindow(url: string) {
         "gitpod-auth-window",
         `width=${width},height=${height},top=${top},left=${left},status=yes,scrollbars=yes,resizable=yes`,
     );
+}
+
+function parseError(data: string) {
+    let error: string | { error: string; description?: string } = atob(data.substring("error:".length));
+    try {
+        const payload = JSON.parse(error);
+        if (typeof payload === "object" && payload.error) {
+            error = { ...payload };
+        }
+    } catch (error) {
+        console.log(error);
+    }
+
+    return error;
 }
 
 function attachMessageListener(successKey: string, { onSuccess, onError }: WindowMessageHandler) {
@@ -131,15 +178,7 @@ function attachMessageListener(successKey: string, { onSuccess, onError }: Windo
             onSuccess && onSuccess(event.data);
         }
         if (typeof event.data === "string" && event.data.startsWith("error:")) {
-            let error: string | { error: string; description?: string } = atob(event.data.substring("error:".length));
-            try {
-                const payload = JSON.parse(error);
-                if (typeof payload === "object" && payload.error) {
-                    error = { ...payload };
-                }
-            } catch (error) {
-                console.log(error);
-            }
+            const error = parseError(event.data);
 
             killAuthWindow();
             onError && onError(error);
@@ -153,6 +192,44 @@ interface OpenOIDCStartWindowParams extends WindowMessageHandler {
     configId?: string;
     activate?: boolean;
     verify?: boolean;
+}
+
+/**
+ * @param orgSlug when empty, tries to log in the user using the SSO for a single-org setup
+ */
+async function redirectToOIDC({ orgSlug = "", configId, activate = false, verify = false }: OpenOIDCStartWindowParams) {
+    const successKey = getUniqueSuccessKey();
+    const searchParamsReturn = new URLSearchParams({ message: successKey });
+    for (const [key, value] of new URLSearchParams(window.location.search)) {
+        if (key === "message") {
+            continue;
+        }
+        searchParamsReturn.append(key, value);
+    }
+    const returnTo = gitpodHostUrl
+        .with({ pathname: window.location.pathname, search: searchParamsReturn.toString(), hash: window.location.hash })
+        .toString();
+    const searchParams = new URLSearchParams({ returnTo });
+    if (orgSlug) {
+        searchParams.append("orgSlug", orgSlug);
+    }
+    if (configId) {
+        searchParams.append("id", configId);
+    }
+    if (activate) {
+        searchParams.append("activate", "true");
+    } else if (verify) {
+        searchParams.append("verify", "true");
+    }
+
+    const url = gitpodHostUrl
+        .with(() => ({
+            pathname: `/iam/oidc/start`,
+            search: searchParams.toString(),
+        }))
+        .toString();
+
+    window.location.href = url;
 }
 
 async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
@@ -191,4 +268,12 @@ const getUniqueSuccessKey = () => {
     return `success:${counter++}`;
 };
 
-export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, openOIDCStartWindow };
+export {
+    iconForAuthProvider,
+    simplifyProviderName,
+    openAuthorizeWindow,
+    openOIDCStartWindow,
+    redirectToAuthorize,
+    redirectToOIDC,
+    parseError,
+};
