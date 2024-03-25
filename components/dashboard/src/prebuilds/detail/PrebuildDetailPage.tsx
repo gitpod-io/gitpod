@@ -4,18 +4,23 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Text } from "@podkit/typography/Text";
 import { Button } from "@podkit/buttons/Button";
-import { FC, Suspense, useEffect, useMemo, useState } from "react";
+import { FC, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
 import { CircleSlash, Loader2Icon } from "lucide-react";
 import dayjs from "dayjs";
 import { usePrebuildLogsEmitter } from "../../data/prebuilds/prebuild-logs-emitter";
 import React from "react";
 import { useToast } from "../../components/toasts/Toasts";
-import { usePrebuildQuery, useTriggerPrebuildQuery, watchPrebuild } from "../../data/prebuilds/prebuild-queries";
+import {
+    useCancelPrebuildMutation,
+    usePrebuildQuery,
+    useTriggerPrebuildQuery,
+    watchPrebuild,
+} from "../../data/prebuilds/prebuild-queries";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 import { repositoriesRoutes } from "../../repositories/repositories.routes";
 import { LoadingState } from "@podkit/loading/LoadingState";
@@ -58,7 +63,11 @@ export const PrebuildDetailPage: FC = () => {
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
     const [logNotFound, setLogNotFound] = useState(false);
 
-    const { emitter: logEmitter, isLoading: isStreamingLogs } = usePrebuildLogsEmitter(prebuildId);
+    const {
+        emitter: logEmitter,
+        isLoading: isStreamingLogs,
+        disposable: disposeStreamingLogs,
+    } = usePrebuildLogsEmitter(prebuildId);
     const {
         isFetching: isTriggeringPrebuild,
         refetch: triggerPrebuild,
@@ -67,6 +76,7 @@ export const PrebuildDetailPage: FC = () => {
         isRefetching: isTriggeringRefetch,
         data: newPrebuildID,
     } = useTriggerPrebuildQuery(prebuild?.configurationId, prebuild?.ref);
+    const cancelPrebuildMutation = useCancelPrebuildMutation();
 
     const triggeredDate = useMemo(() => dayjs(prebuild?.status?.startTime?.toDate()), [prebuild?.status?.startTime]);
     const triggeredString = useMemo(() => formatDate(triggeredDate), [triggeredDate]);
@@ -74,13 +84,16 @@ export const PrebuildDetailPage: FC = () => {
     useEffect(() => {
         setLogNotFound(false);
         const disposable = watchPrebuild(prebuildId, (prebuild) => {
+            if (prebuild.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
+                disposeStreamingLogs?.dispose();
+            }
             setCurrentPrebuild(prebuild);
         });
 
         return () => {
             disposable.dispose();
         };
-    }, [prebuildId]);
+    }, [prebuildId, disposeStreamingLogs]);
 
     useEffect(() => {
         history.listen(() => {
@@ -119,6 +132,18 @@ export const PrebuildDetailPage: FC = () => {
             toast("Failed to trigger prebuild: " + triggerError.message);
         }
     }, [isTriggerError, triggerError, toast]);
+
+    const cancelPrebuild = useCallback(async () => {
+        if (!prebuild) {
+            return;
+        }
+
+        try {
+            await cancelPrebuildMutation.mutateAsync(prebuild.id);
+        } catch (error) {
+            console.error("Could not cancel prebuild", error);
+        }
+    }, [prebuild, cancelPrebuildMutation]);
 
     const prebuildPhase = useMemo(() => {
         const loaderIcon = <Loader2Icon size={20} className="text-gray-500 animate-spin" />;
@@ -263,13 +288,26 @@ export const PrebuildDetailPage: FC = () => {
                                 </Suspense>
                             </div>
                             <div className="px-6 pt-6 flex justify-between border-pk-border-base">
-                                <LoadingButton
-                                    loading={isTriggeringRefetch}
-                                    disabled={
-                                        isTriggeringPrebuild || !prebuild.configurationId || !prebuild.commit?.sha
-                                    }
-                                    onClick={() => triggerPrebuild()}
-                                >{`Rerun Prebuild (${prebuild.ref})`}</LoadingButton>
+                                {[PrebuildPhase_Phase.BUILDING, PrebuildPhase_Phase.QUEUED].includes(
+                                    currentPrebuild?.status?.phase?.name ?? PrebuildPhase_Phase.UNSPECIFIED,
+                                ) ? (
+                                    <LoadingButton
+                                        loading={cancelPrebuildMutation.isLoading}
+                                        disabled={cancelPrebuildMutation.isLoading}
+                                        onClick={cancelPrebuild}
+                                        variant={"destructive"}
+                                    >
+                                        Cancel Prebuild
+                                    </LoadingButton>
+                                ) : (
+                                    <LoadingButton
+                                        loading={isTriggeringRefetch}
+                                        disabled={
+                                            isTriggeringPrebuild || !prebuild.configurationId || !prebuild.commit?.sha
+                                        }
+                                        onClick={() => triggerPrebuild()}
+                                    >{`Rerun Prebuild (${prebuild.ref})`}</LoadingButton>
+                                )}
                                 <LinkButton
                                     disabled={!prebuild?.id}
                                     href={repositoriesRoutes.PrebuildsSettings(prebuild.configurationId)}

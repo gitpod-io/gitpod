@@ -704,18 +704,23 @@ export class PrebuildManager {
                                         })
                                         .catch((err) => {
                                             console.debug("error streaming running headless logs", err);
-                                            throw new ApplicationError(
-                                                ErrorCodes.INTERNAL_SERVER_ERROR,
-                                                "error streaming running headless logs",
+                                            sink.fail(
+                                                new ApplicationError(
+                                                    ErrorCodes.INTERNAL_SERVER_ERROR,
+                                                    "error streaming running headless logs",
+                                                ),
                                             );
                                         });
                                     return () => {};
                                 } else {
                                     if (!downloadUrl) {
-                                        throw new ApplicationError(
-                                            ErrorCodes.PRECONDITION_FAILED,
-                                            "cannot fetch prebuild log",
+                                        sink.fail(
+                                            new ApplicationError(
+                                                ErrorCodes.PRECONDITION_FAILED,
+                                                "cannot fetch prebuild log",
+                                            ),
                                         );
+                                        return;
                                     }
                                     const cancel = onDownloadPrebuildLogsUrl(
                                         downloadUrl,
