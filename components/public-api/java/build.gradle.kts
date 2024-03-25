@@ -22,16 +22,12 @@ dependencies {
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation("com.google.guava:guava:32.1.1-jre")
-}
 
-testing {
-    suites {
-        // Configure the built-in test suite
-        val test by getting(JvmTestSuite::class) {
-            // Use JUnit4 test framework
-            useJUnit("4.13.2")
-        }
-    }
+    // gRPC dependencies
+    implementation("com.google.api.grpc:proto-google-common-protos:2.37.1")
+    implementation("io.grpc:grpc-core:1.62.2")
+    implementation("io.grpc:grpc-protobuf:1.62.2")
+    implementation("io.grpc:grpc-stub:1.62.2")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

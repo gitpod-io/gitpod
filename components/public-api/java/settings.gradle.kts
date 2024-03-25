@@ -12,4 +12,3 @@ plugins {
 }
 
 rootProject.name = "gitpod-public-api"
-include("lib")
