@@ -23,11 +23,13 @@ dependencies {
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation("com.google.guava:guava:32.1.1-jre")
 
-    // gRPC dependencies
-    implementation("com.google.api.grpc:proto-google-common-protos:2.37.1")
-    implementation("io.grpc:grpc-core:1.62.2")
-    implementation("io.grpc:grpc-protobuf:1.62.2")
-    implementation("io.grpc:grpc-stub:1.62.2")
+    // connect rpc dependencies
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.connectrpc:connect-kotlin-okhttp:0.6.0")
+    // Java specific dependencies.
+    implementation("com.connectrpc:connect-kotlin-google-java-ext:0.6.0")
+    implementation("com.google.protobuf:protobuf-java:4.26.0")
+
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
