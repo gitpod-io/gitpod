@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/proxy/plugins/frontend_dev
 
-go 1.22
+go 1.21
 
 require github.com/caddyserver/caddy/v2 v2.7.6
 
