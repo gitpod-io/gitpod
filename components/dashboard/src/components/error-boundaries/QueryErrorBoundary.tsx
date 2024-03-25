@@ -12,7 +12,6 @@ import { hasLoggedInBefore, Login } from "../../Login";
 import { isGitpodIo } from "../../utils";
 import { CaughtError } from "./ReloadPageErrorBoundary";
 import { gitpodHostUrl } from "../../service/service";
-import QuickStart from "../QuickStart";
 
 // Error boundary intended to catch and handle expected errors from api calls
 export const QueryErrorBoundary: FC = ({ children }) => {
@@ -69,11 +68,6 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
                 window.location.href = `https://www.gitpod.io`;
                 return <div></div>;
             }
-        }
-
-        // Page can be loaded even if user is not authenticated
-        if (window.location.pathname === "/quickstart") {
-            return <QuickStart />;
         }
 
         return <Login onLoggedIn={resetErrorBoundary} />;
