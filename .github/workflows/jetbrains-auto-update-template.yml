@@ -7,40 +7,28 @@ on:
       productCode:
         type: string
         required: true
-    secrets:
-      projectId:
-        required: true
-      serviceAccountKey:
-        required: true
-      slackWebhook:
-        required: true
 
 jobs:
+  create-runner:
+    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@main
+    secrets:
+      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+    with:
+      task: ${{ inputs.productId }}
+
   update-jetbrains:
-    runs-on: ubuntu-latest
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    container:
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
+    needs: [ create-runner ]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
         with:
-          go-version: "1.19"
-      - name: Download leeway
-        run: cd /usr/local/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.7.3/leeway_0.7.3_Linux_x86_64.tar.gz | tar xz
-      - name: Download golangci-lint
-        run: cd /usr/local && curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.49.0
-      - name: Download GoKart
-        run: cd /usr/local/bin && curl -L https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv gokart
-      - name: Auth Google Cloud SDK
-        uses: google-github-actions/auth@v0
-        with:
-          credentials_json: ${{ secrets.serviceAccountKey }}
-      - uses: actions/setup-java@v2
-        with:
-          distribution: zulu
-          java-version: "11"
-      - name: Setup Google Cloud
-        uses: google-github-actions/setup-gcloud@v0
-        with:
-          project_id: ${{ secrets.projectId }}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Find IDE version to download
         id: ide-version
         run: |
@@ -55,12 +43,8 @@ jobs:
         if: ${{ steps.ide-version.outputs.ideBuildVersion }}
         env:
           LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: "8388608"
-          LEEWAY_REMOTE_CACHE_BUCKET: '${{ needs.configuration.outputs.leeway_cache_bucket }}'
         run: |
-          gcloud auth configure-docker --quiet
-          export LEEWAY_WORKSPACE_ROOT=$(pwd)
-          cd components/ide/jetbrains/image
-          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DbuildNumber=${{ steps.ide-version.outputs.ideBuildVersion }} .:${{ inputs.productId }}-latest -DjbBackendVersion=${{ steps.ide-version.outputs.ideVersion }}
+          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DbuildNumber=${{ steps.ide-version.outputs.ideBuildVersion }} components/ide/jetbrains/image:${{ inputs.productId }}-latest -DjbBackendVersion=${{ steps.ide-version.outputs.ideVersion }}
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
@@ -68,7 +52,19 @@ jobs:
         if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
+          SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
           SLACK_TITLE: ${{ inputs.productId }}
           SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
+
+  delete-runner:
+    if: always()
+    needs:
+      - create-runner
+      - update-jetbrains
+    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@main
+    secrets:
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+    with:
+      runner-label: ${{ needs.create-runner.outputs.label }}
+      machine-zone: ${{ needs.create-runner.outputs.machine-zone }}
