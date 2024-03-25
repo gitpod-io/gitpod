@@ -131,7 +131,7 @@ func (rs *PresignedS3Storage) DeleteObject(ctx context.Context, bucket string, q
 		Bucket: &rs.Config.Bucket,
 		Delete: &types.Delete{
 			Objects: objects,
-			Quiet:   true,
+			Quiet:   aws.Bool(true),
 		},
 	})
 	if err != nil {
@@ -159,7 +159,7 @@ func (rs *PresignedS3Storage) DiskUsage(ctx context.Context, bucket string, pref
 	}
 
 	for _, r := range resp.Contents {
-		size += int64(r.Size)
+		size += *r.Size
 	}
 	return
 }
@@ -241,7 +241,7 @@ func (rs *PresignedS3Storage) SignDownload(ctx context.Context, bucket string, o
 		Meta: ObjectMeta{
 			// TODO(cw): implement this if we need to support FWB with S3
 		},
-		Size: resp.ObjectSize,
+		Size: *resp.ObjectSize,
 		URL:  req.URL,
 	}, nil
 }
@@ -367,7 +367,7 @@ func (s3st *s3Storage) ListObjects(ctx context.Context, prefix string) ([]string
 		}
 
 		listParams.ContinuationToken = objs.NextContinuationToken
-		fetchObjects = objs.IsTruncated
+		fetchObjects = *objs.IsTruncated
 	}
 
 	return res, nil

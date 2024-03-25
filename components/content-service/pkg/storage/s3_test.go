@@ -36,11 +36,11 @@ func TestS3PresignedHappyPath(t *testing.T) {
 	s3c := mock.NewMockS3Client(ctrl)
 	s3c.EXPECT().GetObjectAttributes(gomock.Any(), gomock.Any()).Return(&s3.GetObjectAttributesOutput{
 		ETag:       aws.String("foobar"),
-		ObjectSize: 100,
+		ObjectSize: aws.Int64(100),
 	}, nil).AnyTimes()
 	s3c.EXPECT().ListObjectsV2(gomock.Any(), gomock.Any()).Return(&s3.ListObjectsV2Output{
 		Contents: []types.Object{
-			{Size: 100},
+			{Size: aws.Int64(100)},
 		},
 	}, nil)
 
