@@ -21,9 +21,6 @@ jobs:
     secrets:
       runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
       gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
-    concurrency:
-      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-create-runner
-      cancel-in-progress: false
 
   update-jetbrains:
     runs-on: ${{ needs.create-runner.outputs.label }}
