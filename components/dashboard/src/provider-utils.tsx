@@ -108,7 +108,7 @@ async function redirectToAuthorize(params: OpenAuthorizeWindowParams) {
         searchParamsReturn.append(key, value);
     }
     const returnTo = gitpodHostUrl
-        .with({ pathname: "/quickstart", search: searchParamsReturn.toString(), hash: window.location.hash })
+        .with({ pathname: window.location.pathname, search: searchParamsReturn.toString(), hash: window.location.hash })
         .toString();
     const requestedScopes = scopes ?? [];
     const url = login
@@ -205,7 +205,7 @@ async function redirectToOIDC(params: OpenOIDCStartWindowParams) {
         searchParamsReturn.append(key, value);
     }
     const returnTo = gitpodHostUrl
-        .with({ pathname: "/quickstart", search: searchParamsReturn.toString(), hash: window.location.hash })
+        .with({ pathname: window.location.pathname, search: searchParamsReturn.toString(), hash: window.location.hash })
         .toString();
     const searchParams = new URLSearchParams({ returnTo });
     if (orgSlug) {
