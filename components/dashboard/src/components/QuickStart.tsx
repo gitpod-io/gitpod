@@ -42,7 +42,11 @@ const useAuthenticatedUser = () => {
 
 const QuickStart: FC = () => {
     const [error, setError] = useState(parseErrorFromSearch(window.location.search));
-    const { data: authProviders, isLoading: authProvidersLoading } = useAuthProviderDescriptions();
+    const {
+        data: authProviders,
+        isLoading: authProvidersLoading,
+        refetch: refetchAuthProviders,
+    } = useAuthProviderDescriptions();
     const { isLoading: isUserLoading, data: user, remove: removeUserCache } = useAuthenticatedUser();
     const history = useHistory();
     const { hash } = useLocation();
@@ -78,6 +82,7 @@ const QuickStart: FC = () => {
 
         if (authProviders?.length === 0) {
             setError("No Git integrations setup");
+            refetchAuthProviders();
             return;
         }
 
