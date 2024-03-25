@@ -59,7 +59,8 @@ const App: FC = () => {
     }
 
     // Page can be loaded even if user is not authenticated
-    if (window.location.pathname === "/quickstart") {
+    // RegEx is used for accounting for trailing slash /
+    if (window.location.pathname.replace(/\/$/, "") === "/quickstart") {
         return <QuickStart />;
     }
 
