@@ -606,7 +606,7 @@ func checkPrebuildLogExist(t *testing.T, cfg *envconf.Config, rsa *integration.R
 	t.Logf("cannot found the prebuild message %s in %s, err:%v, exitCode:%d, stdout:%s", prebuildLog, prebuildLogPath, err, grepResp.ExitCode, grepResp.Stdout)
 
 	// somehow, the prebuild log message '🍊 This task ran as a workspace prebuild' does not exists
-	// we fall back to check the the init task message within the /workspace/.gitpod/prebuild-log-* or not
+	// we fall back to check the init task message within the /workspace/.gitpod/prebuild-log-* or not
 	var grepResp1 agent.ExecResponse
 	var checkInitTaskMsg bool
 	err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{

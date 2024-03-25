@@ -19,6 +19,8 @@ import { ConfigurationDetailPrebuilds } from "./ConfigurationDetailPrebuilds";
 import { ConfigurationVariableList } from "./variables/ConfigurationVariableList";
 import { useWorkspaceClasses } from "../../data/workspaces/workspace-classes-query";
 import { LoadingState } from "@podkit/loading/LoadingState";
+import { ConfigurationDetailEditors } from "./ConfigurationDetailEditors";
+import { useFeatureFlag } from "../../data/featureflag-query";
 
 type PageRouteParams = {
     id: string;
@@ -32,6 +34,7 @@ const ConfigurationDetailPage: FC = () => {
 
     const { data, error, isLoading, refetch } = useConfiguration(id);
     const prebuildsEnabled = !!data?.prebuildSettings?.enabled;
+    const orgLevelEditorRestrictionEnabled = useFeatureFlag("org_level_editor_restriction_enabled");
 
     const settingsMenu = useMemo(() => {
         const menu: SubmenuItemProps[] = [
@@ -53,8 +56,14 @@ const ConfigurationDetailPage: FC = () => {
                 link: [`${url}/workspaces`],
             },
         ];
+        if (orgLevelEditorRestrictionEnabled) {
+            menu.push({
+                title: "Workspace editors",
+                link: [`${url}/editors`],
+            });
+        }
         return menu;
-    }, [prebuildsEnabled, url]);
+    }, [prebuildsEnabled, url, orgLevelEditorRestrictionEnabled]);
 
     return (
         <div className="w-full">
@@ -89,6 +98,9 @@ const ConfigurationDetailPage: FC = () => {
                                 </Route>
                                 <Route exact path={`${path}/workspaces`}>
                                     <ConfigurationDetailWorkspaces configuration={data} />
+                                </Route>
+                                <Route exact path={`${path}/editors`}>
+                                    <ConfigurationDetailEditors configuration={data} />
                                 </Route>
                                 <Route exact path={`${path}/prebuilds`}>
                                     <ConfigurationDetailPrebuilds configuration={data} />

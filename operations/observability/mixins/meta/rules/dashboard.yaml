@@ -24,7 +24,7 @@ spec:
         dashboard_url: https://grafana.gitpod.io/d/6581e46e4e5c7ba40a07646395ef7b23/kubernetes-compute-resources-pod?var-cluster={{ $labels.cluster }}&var-namespace=default
     - alert: DashboardPodsAreNotAllInReadyState
       expr: sum(kube_deployment_status_replicas_unavailable{deployment="dashboard"}) > 0
-      for: 5m
+      for: 10m
       labels:
         severity: critical
         team: webapp
@@ -32,4 +32,4 @@ spec:
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/DashboardStuckInPodInitState.md
         summary: Dashboard stuck in PodInitializing state {{ $labels.cluster }}.
-        description: Dashboard is stuck in PodInitializing for at least 5 minutes
+        description: Dashboard is stuck in PodInitializing for at least 10 minutes

@@ -78,7 +78,15 @@ export function CreateWorkspacePage() {
             ? props.ideSettings.useLatestVersion
             : user?.editorSettings?.version === "latest";
     const [useLatestIde, setUseLatestIde] = useState(defaultLatestIde);
-    const { computedDefault: computedDefaultEditor } = useAllowedWorkspaceEditorsMemo({
+    // Note: it has data fetching and UI rendering race between the updating of `selectedProjectId` and `selectedIde`
+    // We have to stored the using repositoryId locally so that we can know selectedIde is updated because if which repo
+    // so that it doesn't show ide error messages in middle state
+    const [defaultIdeSource, setDefaultIdeSource] = useState<string | undefined>(selectedProjectID);
+    const {
+        computedDefault: computedDefaultEditor,
+        usingConfigurationId,
+        availableOptions: availableEditorOptions,
+    } = useAllowedWorkspaceEditorsMemo(selectedProjectID, {
         userDefault: user?.editorSettings?.name,
         filterOutDisabled: true,
     });
@@ -89,6 +97,7 @@ export function CreateWorkspacePage() {
     const { data: orgSettings } = useOrgSettingsQuery();
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
     const [errorWsClass, setErrorWsClass] = useState<React.ReactNode | undefined>(undefined);
+    const [errorIde, setErrorIde] = useState<React.ReactNode | undefined>(undefined);
     const [contextURL, setContextURL] = useState<string | undefined>(
         StartWorkspaceOptions.parseContextUrl(location.hash),
     );
@@ -164,6 +173,8 @@ export function CreateWorkspacePage() {
             setSelectedProjectID(repo?.configurationId);
             // TOOD: consider dropping this - it's a lossy conversion
             history.replace(`#${repo?.url}`);
+            // reset load options
+            setNextLoadOption("searchParams");
         },
         [history],
     );
@@ -175,7 +186,6 @@ export function CreateWorkspacePage() {
         },
         [setSelectedIde, setUseLatestIde],
     );
-    const [errorIde, setErrorIde] = useState<string | undefined>(undefined);
 
     const existingWorkspaces = useMemo(() => {
         if (!workspaces.data || !workspaceContext.data) {
@@ -348,6 +358,7 @@ export function CreateWorkspacePage() {
                 }
             }
         }
+        setDefaultIdeSource(usingConfigurationId);
         setNextLoadOption("allDone");
         // we only update the remembered options when the workspaceContext changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -477,8 +488,12 @@ export function CreateWorkspacePage() {
                         <InputField error={errorIde}>
                             <SelectIDEComponent
                                 onSelectionChange={onSelectEditorChange}
+                                availableOptions={
+                                    defaultIdeSource === selectedProjectID ? availableEditorOptions : undefined
+                                }
                                 setError={setErrorIde}
                                 selectedIdeOption={selectedIde}
+                                selectedConfigurationId={selectedProjectID}
                                 pinnedEditorVersions={
                                     orgSettings?.pinnedEditorVersions &&
                                     new Map<string, string>(Object.entries(orgSettings.pinnedEditorVersions))

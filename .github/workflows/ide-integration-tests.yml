@@ -31,7 +31,7 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
     outputs:
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
@@ -101,7 +101,7 @@ jobs:
     needs: [configuration, infrastructure, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
