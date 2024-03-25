@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Text } from "@podkit/typography/Text";
 import { Button } from "@podkit/buttons/Button";
