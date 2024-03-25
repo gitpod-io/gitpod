@@ -7,10 +7,10 @@
 import { FC, useEffect, useState } from "react";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { parseError, redirectToAuthorize, redirectToOIDC } from "../provider-utils";
-import { useCurrentUser } from "../user-context";
 import { useHistory, useLocation } from "react-router";
 import { AppLoading } from "../app/AppLoading";
 import { Link } from "react-router-dom";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 const parseErrorFromSearch = (search: string): string => {
     const searchParams = new URLSearchParams(search);
@@ -26,12 +26,12 @@ const parseErrorFromSearch = (search: string): string => {
 const QuickStart: FC = () => {
     const [error, setError] = useState(parseErrorFromSearch(window.location.search));
     const { data: authProviders, isLoading: authProvidersLoading } = useAuthProviderDescriptions();
-    const user = useCurrentUser();
+    const { isLoading: isUserLoading, data: user } = useAuthenticatedUser();
     const history = useHistory();
     const { hash } = useLocation();
 
     useEffect(() => {
-        if (authProvidersLoading || error) {
+        if (authProvidersLoading || isUserLoading || error) {
             return;
         }
 
@@ -75,7 +75,7 @@ const QuickStart: FC = () => {
         searchParams.delete("message");
 
         history.push(`/new/?${searchParams}${window.location.hash}`);
-    }, [authProviders, history, authProvidersLoading, user, error, hash]);
+    }, [authProviders, history, authProvidersLoading, user, error, hash, isUserLoading]);
 
     if (error) {
         return (
