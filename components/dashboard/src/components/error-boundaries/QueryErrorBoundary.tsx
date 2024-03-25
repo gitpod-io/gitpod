@@ -57,16 +57,16 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
         return <div></div>;
     }
 
-    // Page can be loaded even if user is not authenticated
-    // RegEx is used for accounting for trailing slash /
-    if (window.location.pathname.replace(/\/$/, "") === "/quickstart") {
-        return <QuickStart />;
-    }
-
     // User needs to Login
     if (caughtError.code === ErrorCodes.NOT_AUTHENTICATED) {
         console.log("clearing query cache for unauthenticated user");
         client.clear();
+
+        // Page can be loaded even if user is not authenticated
+        // RegEx is used for accounting for trailing slash /
+        if (window.location.pathname.replace(/\/$/, "") === "/quickstart") {
+            return <QuickStart />;
+        }
 
         // Before we show a Login screen, check to see if we need to redirect to www site
         // Redirects if it's the root, no user, and no gp cookie present (has logged in recently)
