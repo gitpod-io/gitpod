@@ -54,9 +54,7 @@ const QuickStart: FC = () => {
 
                 return;
             }
-            void redirectToOIDC({
-                orgSlug: "",
-            });
+            void redirectToOIDC({});
 
             return;
         }

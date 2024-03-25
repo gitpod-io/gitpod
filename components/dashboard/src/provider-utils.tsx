@@ -194,8 +194,10 @@ interface OpenOIDCStartWindowParams extends WindowMessageHandler {
     verify?: boolean;
 }
 
-async function redirectToOIDC(params: OpenOIDCStartWindowParams) {
-    const { orgSlug, configId, activate = false, verify = false } = params;
+/**
+ * @param orgSlug when empty, tries to log in the user using the SSO for a single-org setup
+ */
+async function redirectToOIDC({ orgSlug = "", configId, activate = false, verify = false }: OpenOIDCStartWindowParams) {
     const successKey = getUniqueSuccessKey();
     const searchParamsReturn = new URLSearchParams({ message: successKey });
     for (const [key, value] of new URLSearchParams(window.location.search)) {
