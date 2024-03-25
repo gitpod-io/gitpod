@@ -26,6 +26,14 @@ repositories {
 dependencies {
     implementation(project(":supervisor-api"))
     implementation(project(":gitpod-publicapi"))
+
+    // connect rpc dependencies
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.connectrpc:connect-kotlin-okhttp:0.6.0")
+    // Java specific dependencies.
+    implementation("com.connectrpc:connect-kotlin-google-java-ext:0.6.0")
+    implementation("com.google.protobuf:protobuf-java:4.26.0")
+
     implementation(libs.gateway.api)
     implementation(libs.slf4j)
     implementation(libs.bundles.serialization)
