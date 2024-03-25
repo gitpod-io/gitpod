@@ -16,7 +16,6 @@ export const useAuthenticatedUser = () => {
             const response = await userClient.getAuthenticatedUser(params);
             return response.user!;
         },
-        retry: false,
     });
     return query;
 };

@@ -10,7 +10,9 @@ import { parseError, redirectToAuthorize, redirectToOIDC } from "../provider-uti
 import { useHistory, useLocation } from "react-router";
 import { AppLoading } from "../app/AppLoading";
 import { Link } from "react-router-dom";
-import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
+import { userClient } from "../service/public-api";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { useQuery } from "@tanstack/react-query";
 
 const parseErrorFromSearch = (search: string): string => {
     const searchParams = new URLSearchParams(search);
@@ -21,6 +23,21 @@ const parseErrorFromSearch = (search: string): string => {
     }
 
     return "";
+};
+
+// We make a special query instead of reusing the one in authenticated-user-query.ts because we need to ensure the data is always fresh. Otherwise, the identities on a user might be out of date and we might auth the user again when we don't need to.
+const useAuthenticatedUser = () => {
+    return useQuery<User | undefined>({
+        queryKey: ["authenticated-user", {}],
+        queryFn: async () => {
+            const response = await userClient.getAuthenticatedUser({});
+            return response.user;
+        },
+        retry: false,
+        // Do not cache
+        cacheTime: 0,
+        staleTime: 0,
+    });
 };
 
 const QuickStart: FC = () => {
