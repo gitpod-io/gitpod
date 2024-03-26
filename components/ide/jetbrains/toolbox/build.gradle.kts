@@ -58,6 +58,7 @@ tasks.shadowJar {
         "com.squareup.okhttp3",
         "org.slf4j",
         "org.jetbrains.intellij",
+        "com.squareup.okio",
         "kotlin."
     )
 
@@ -94,6 +95,7 @@ val restartToolbox by tasks.creating {
                 exec {
                     commandLine("sh", "-c", "pkill -f 'JetBrains Toolbox' || true")
                 }
+                Thread.sleep(3000)
                 exec {
                     commandLine("open", "/Applications/JetBrains Toolbox.app")
                 }
@@ -167,6 +169,6 @@ val uploadPlugin by tasks.creating {
         // instance.uploader.uploadNewPlugin(pluginZip.outputs.files.singleFile, listOf("toolbox", "gateway"), LicenseUrl.APACHE_2_0, ProductFamily.TOOLBOX)
 
         // subsequent updates
-        instance.uploader.upload("io.gitpod.toolbox.gateway", pluginZip.outputs.files.singleFile)
+        instance.uploader.upload(pluginId, pluginZip.outputs.files.singleFile)
     }
 }

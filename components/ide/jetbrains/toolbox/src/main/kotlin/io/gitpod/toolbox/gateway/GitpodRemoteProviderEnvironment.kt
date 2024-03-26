@@ -1,19 +1,20 @@
-package toolbox.gateway.sample
+package io.gitpod.toolbox.gateway
 
 import com.jetbrains.toolbox.gateway.EnvironmentVisibilityState
 import com.jetbrains.toolbox.gateway.RemoteProviderEnvironment
 import com.jetbrains.toolbox.gateway.environments.EnvironmentContentsView
 import com.jetbrains.toolbox.gateway.states.EnvironmentStateConsumer
 import com.jetbrains.toolbox.gateway.ui.ActionListener
+import io.gitpod.publicapi.v1.WorkspaceOuterClass
 import java.util.concurrent.CompletableFuture
 
-class SampleRemoteEnvironment(
-    private val environment: EnvironmentDTO
+class GitpodRemoteProviderEnvironment(
+    private val workspace: WorkspaceOuterClass.Workspace
 ) : RemoteProviderEnvironment {
     private val stateListeners = mutableSetOf<EnvironmentStateConsumer>()
     private val actionListeners = mutableSetOf<ActionListener>()
-    override fun getId(): String = environment.id
-    override fun getName(): String = environment.name
+    override fun getId(): String = workspace.id
+    override fun getName(): String = workspace.id
     override fun addStateListener(p0: EnvironmentStateConsumer?): Boolean {
        return if (p0 != null) {
            stateListeners += p0
@@ -28,7 +29,7 @@ class SampleRemoteEnvironment(
     }
 
     override fun getContentsView(): CompletableFuture<EnvironmentContentsView> {
-        return CompletableFuture.completedFuture(SampleEnvironmentContentsView())
+        return CompletableFuture.completedFuture(GitpodEnvironmentContentsView())
     }
 
     override fun setVisible(visibilityState: EnvironmentVisibilityState) {

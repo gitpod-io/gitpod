@@ -1,1 +1,1 @@
-toolbox.gateway.sample.SampleGatewayExtension
+io.gitpod.toolbox.gateway.GitpodGatewayExtension

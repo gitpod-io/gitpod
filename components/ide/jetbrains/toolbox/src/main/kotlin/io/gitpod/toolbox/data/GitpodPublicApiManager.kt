@@ -1,4 +1,4 @@
-package toolbox.gateway.sample.io.gitpod.toolbox
+package io.gitpod.toolbox.data
 
 import com.connectrpc.Interceptor
 import com.connectrpc.ProtocolClientConfig
@@ -12,7 +12,7 @@ import com.connectrpc.protocols.NetworkProtocol
 import io.gitpod.publicapi.v1.WorkspaceServiceClient
 
 class GitpodPublicApiManager {
-    private val sharedClient = createClient("gitpod.io", "aaaa")
+    private val sharedClient = createClient("gitpod.io", "TODO: input your pat token here WITHOUT push to repo")
 
     val workspaceApi = WorkspaceServiceClient(sharedClient)
 
@@ -38,7 +38,14 @@ class GitpodPublicApiManager {
 
 class AuthorizationInterceptor(private val token: String) : Interceptor {
     override fun streamFunction(): StreamFunction {
-        TODO("Not yet implemented")
+        return StreamFunction(
+            requestFunction = { request ->
+                val headers = mutableMapOf<String, List<String>>()
+                headers.putAll(request.headers)
+                headers["Authorization"] = listOf("Bearer $token")
+                return@StreamFunction request.clone(headers = headers)
+            },
+        )
     }
 
     override fun unaryFunction(): UnaryFunction {

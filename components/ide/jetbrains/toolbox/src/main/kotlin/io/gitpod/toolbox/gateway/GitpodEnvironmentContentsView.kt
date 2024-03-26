@@ -1,8 +1,8 @@
-package toolbox.gateway.sample
+package io.gitpod.toolbox.gateway
 
 import com.jetbrains.toolbox.gateway.environments.ManualEnvironmentContentsView
 
-class SampleEnvironmentContentsView : ManualEnvironmentContentsView {
+class GitpodEnvironmentContentsView : ManualEnvironmentContentsView {
     override fun addEnvironmentContentsListener(listener: ManualEnvironmentContentsView.Listener) {
     }
 

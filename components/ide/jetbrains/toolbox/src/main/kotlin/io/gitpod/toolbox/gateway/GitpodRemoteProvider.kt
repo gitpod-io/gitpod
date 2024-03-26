@@ -1,4 +1,4 @@
-package toolbox.gateway.sample
+package io.gitpod.toolbox.gateway
 
 import com.connectrpc.ResponseMessage
 import com.jetbrains.toolbox.gateway.ProviderVisibilityState
@@ -6,15 +6,13 @@ import com.jetbrains.toolbox.gateway.RemoteEnvironmentConsumer
 import com.jetbrains.toolbox.gateway.RemoteProvider
 import io.gitpod.publicapi.v1.WorkspaceOuterClass
 import io.gitpod.publicapi.v1.WorkspaceOuterClass.ListWorkspacesRequest
+import io.gitpod.toolbox.data.GitpodPublicApiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
 import org.slf4j.LoggerFactory
-import toolbox.gateway.sample.io.gitpod.toolbox.GitpodPublicApiManager
 import java.net.URI
 
-class SampleRemoteProvider(
-    private val httpClient: OkHttpClient,
+class GitpodRemoteProvider(
     private val consumer: RemoteEnvironmentConsumer,
     coroutineScope: CoroutineScope,
 ) : RemoteProvider {
@@ -25,7 +23,7 @@ class SampleRemoteProvider(
         coroutineScope.launch {
             val workspaceList = publicApi.workspaceApi.listWorkspaces(ListWorkspacesRequest.newBuilder().setOrganizationId(publicApi.getCurrentOrganizationId()).build())
             workspaceList.success {list: ResponseMessage.Success<WorkspaceOuterClass.ListWorkspacesResponse> ->
-                consumer.consumeEnvironments(list.message.workspacesList.map { GitpodRemoteEnvironment(it) })
+                consumer.consumeEnvironments(list.message.workspacesList.map { GitpodRemoteProviderEnvironment(it) })
             }
             workspaceList.failure { error: ResponseMessage.Failure<WorkspaceOuterClass.ListWorkspacesResponse> ->
                 logger.error("Failed to retrieve workspaces: ${error.toString()}")
