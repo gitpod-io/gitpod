@@ -41,7 +41,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				AccessModes: []v1.PersistentVolumeAccessMode{
 					v1.ReadWriteOnce,
 				},
-				Resources: v1.ResourceRequirements{
+				Resources: v1.VolumeResourceRequirements{
 					Requests: v1.ResourceList{
 						"storage": resource.MustParse("8Gi"),
 					},
