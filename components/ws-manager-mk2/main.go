@@ -126,7 +126,7 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:  scheme,
-		Metrics: metricsserver.Options{BindAddress: ":0"}, // Metrics are exposed through baseserver.
+		Metrics: metricsserver.Options{BindAddress: "00"},
 		Cache: cache.Options{
 			DefaultNamespaces: map[string]cache.Config{
 				cfg.Manager.Namespace:        {},

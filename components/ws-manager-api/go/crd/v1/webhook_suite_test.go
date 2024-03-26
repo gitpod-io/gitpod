@@ -81,7 +81,7 @@ var _ = BeforeSuite(func() {
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:                 scheme,
 		HealthProbeBindAddress: "0",
-		Metrics:                metricsserver.Options{BindAddress: ":0"},
+		Metrics:                metricsserver.Options{BindAddress: "0"},
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port:    webhookInstallOptions.LocalServingPort,
 			Host:    webhookInstallOptions.LocalServingHost,
