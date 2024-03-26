@@ -44,9 +44,12 @@ dependencies {
 }
 
 
+val pluginId = "io.gitpod.toolbox.gateway"
+val pluginVersion = "0.0.1"
+
 tasks.shadowJar {
-    archiveBaseName.set("io.gitpod.toolbox.gateway")
-    archiveVersion.set("0.0.1")
+    archiveBaseName.set(pluginId)
+    archiveVersion.set(pluginVersion)
 
     val excludedGroups = listOf(
         "com.jetbrains.toolbox.gateway",
@@ -80,16 +83,33 @@ tasks.compileKotlin {
     )
 }
 
-val pluginId = "io.gitpod.toolbox.gateway"
-val pluginVersion = "0.0.1"
+val restartToolbox by tasks.creating {
+    group = "01.Gitpod"
+    description = "Restarts the JetBrains Toolbox app."
 
-val assemblePlugin by tasks.registering(Jar::class) {
-    archiveBaseName.set(pluginId)
-    from(sourceSets.main.get().output)
+    doLast {
+        val osName = System.getProperty("os.name").lowercase()
+        when {
+            "mac" in osName -> {
+                exec {
+                    commandLine("sh", "-c", "pkill -f 'JetBrains Toolbox' || true")
+                }
+                exec {
+                    commandLine("open", "/Applications/JetBrains Toolbox.app")
+                }
+            }
+            else -> {
+                println("restart Toolbox to make plugin works.")
+            }
+        }
+    }
 }
 
 val copyPlugin by tasks.creating(Sync::class.java) {
-    dependsOn(assemblePlugin)
+    group = "01.Gitpod"
+
+    dependsOn(tasks.named("shadowJar"))
+    from(tasks.named("shadowJar").get().outputs.files)
 
     val userHome = System.getProperty("user.home").let { Path.of(it) }
     val toolboxCachesDir = when {
@@ -108,8 +128,6 @@ val copyPlugin by tasks.creating(Sync::class.java) {
 
     val targetDir = pluginsDir / pluginId
 
-    from(assemblePlugin.get().outputs.files)
-
     from("src/main/resources") {
         include("extension.json")
         include("dependencies.json")
@@ -117,12 +135,14 @@ val copyPlugin by tasks.creating(Sync::class.java) {
     }
 
     into(targetDir)
+
+    finalizedBy(restartToolbox)
 }
 
 val pluginZip by tasks.creating(Zip::class) {
-    dependsOn(assemblePlugin)
+    dependsOn(tasks.named("shadowJar"))
+    from(tasks.named("shadowJar").get().outputs.files)
 
-    from(assemblePlugin.get().outputs.files)
     from("src/main/resources") {
         include("extension.json")
         include("dependencies.json")
