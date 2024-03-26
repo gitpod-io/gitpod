@@ -9,7 +9,7 @@ RUN go get -u github.com/go-delve/delve/cmd/dlv
 FROM cgr.dev/chainguard/wolfi-base:latest@sha256:a7db49b55bd97c12cd686272325bbac236830111db336e084b89f5c816ab0537 as dl
 WORKDIR /dl
 RUN apk add --no-cache curl file \
-  && curl -OsSL https://github.com/opencontainers/runc/releases/download/v1.1.10/runc.amd64 \
+  && curl -OsSL https://github.com/opencontainers/runc/releases/download/v1.1.12/runc.amd64 \
   && chmod +x runc.amd64 \
   && if ! file runc.amd64 | grep -iq "ELF 64-bit LSB pie executable"; then echo "runc.amd64 is not a binary file"; exit 1;fi
 
@@ -19,7 +19,7 @@ FROM ubuntu:22.10
 ENV TRIGGER_REBUILD=1
 
 ## Installing coreutils is super important here as otherwise the loopback device creation fails!
-ARG CLOUD_SDK_VERSION=402.0.0
+ARG CLOUD_SDK_VERSION=467.0.0
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
 ENV CLOUDSDK_CORE_DISABLE_PROMPTS=1
 
