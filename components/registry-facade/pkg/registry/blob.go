@@ -22,6 +22,7 @@ import (
 	"github.com/gorilla/handlers"
 	files "github.com/ipfs/boxo/files"
 	icorepath "github.com/ipfs/boxo/path"
+	"github.com/ipfs/go-cid"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
@@ -441,14 +442,14 @@ func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst
 		return
 	}
 
-	path, err := icorepath.NewPath(ipfsCID)
+	c, err := cid.Decode(ipfsCID)
 	if err != nil {
-		log.WithError(err).Error("unable to buikd IPFS path")
+		log.WithError(err).Error("unable to decode CID")
 		err = distv2.ErrorCodeBlobUnknown
 		return
 	}
 
-	ipfsFile, err := sbs.source.IPFS.Unixfs().Get(ctx, path)
+	ipfsFile, err := sbs.source.IPFS.Unixfs().Get(ctx, icorepath.FromCid(c))
 	if err != nil {
 		log.WithError(err).Error("unable to get blob from IPFS")
 		err = distv2.ErrorCodeBlobUnknown
