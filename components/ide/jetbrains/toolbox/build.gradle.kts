@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.serialization)
     `java-library`
     alias(libs.plugins.dependency.license.report)
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 buildscript {
@@ -30,6 +31,7 @@ dependencies {
     // connect rpc dependencies
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.connectrpc:connect-kotlin-okhttp:0.6.0")
+    implementation("com.connectrpc:connect-kotlin:0.6.0")
     // Java specific dependencies.
     implementation("com.connectrpc:connect-kotlin-google-java-ext:0.6.0")
     implementation("com.google.protobuf:protobuf-java:4.26.0")
@@ -39,6 +41,30 @@ dependencies {
     implementation(libs.bundles.serialization)
     implementation(libs.coroutines.core)
     implementation(libs.okhttp)
+}
+
+
+tasks.shadowJar {
+    archiveBaseName.set("io.gitpod.toolbox.gateway")
+    archiveVersion.set("0.0.1")
+
+    val excludedGroups = listOf(
+        "com.jetbrains.toolbox.gateway",
+        "com.jetbrains",
+        "org.jetbrains",
+        "com.squareup.okhttp3",
+        "org.slf4j",
+        "org.jetbrains.intellij",
+        "kotlin."
+    )
+
+    dependencies {
+        exclude {
+            excludedGroups.any { group ->
+                it.name.startsWith(group)
+            }
+        }
+    }
 }
 
 licenseReport {
@@ -112,12 +138,15 @@ val uploadPlugin by tasks.creating {
     dependsOn(pluginZip)
 
     doLast {
-        val instance = PluginRepositoryFactory.create("https://plugins.jetbrains.com", project.property("pluginMarketplaceToken").toString())
+        val instance = PluginRepositoryFactory.create(
+            "https://plugins.jetbrains.com",
+            project.property("pluginMarketplaceToken").toString()
+        )
 
         // first upload
         // instance.uploader.uploadNewPlugin(pluginZip.outputs.files.singleFile, listOf("toolbox", "gateway"), LicenseUrl.APACHE_2_0, ProductFamily.TOOLBOX)
 
         // subsequent updates
-        instance.uploader.upload("dev.kropp.toolbox.sample", pluginZip.outputs.files.singleFile)
+        instance.uploader.upload("io.gitpod.toolbox.gateway", pluginZip.outputs.files.singleFile)
     }
 }

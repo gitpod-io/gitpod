@@ -12,7 +12,7 @@ import com.connectrpc.protocols.NetworkProtocol
 import io.gitpod.publicapi.v1.WorkspaceServiceClient
 
 class GitpodPublicApiManager {
-    private val sharedClient = createClient("gitpod.io", System.getenv("GP_PAT_TOKEN"))
+    private val sharedClient = createClient("gitpod.io", "aaaa")
 
     val workspaceApi = WorkspaceServiceClient(sharedClient)
 
