@@ -24,8 +24,10 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	runtime_client "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -58,13 +60,17 @@ var runCmd = &cobra.Command{
 
 		opts := ctrl.Options{
 			Scheme:                 scheme,
-			Namespace:              cfg.Namespace,
 			HealthProbeBindAddress: cfg.ReadinessProbeAddr,
 			LeaderElection:         false,
+			Cache: cache.Options{
+				DefaultNamespaces: map[string]cache.Config{
+					cfg.Namespace: {},
+				},
+			},
 		}
 
 		if cfg.PrometheusAddr != "" {
-			opts.MetricsBindAddress = cfg.PrometheusAddr
+			opts.Metrics = metricsserver.Options{BindAddress: cfg.PrometheusAddr}
 		}
 
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), opts)

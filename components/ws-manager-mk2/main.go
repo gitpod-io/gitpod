@@ -18,7 +18,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 
 	"github.com/bombsimon/logrusr/v4"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -33,22 +32,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/components/scrubber"
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
-	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
-	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
-
-	"github.com/gitpod-io/gitpod/components/scrubber"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	imgproxy "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/service"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -125,17 +125,24 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                        scheme,
-		MetricsBindAddress:            cfg.Prometheus.Addr,
-		Port:                          9443,
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			// Disable the metrics server. We already expose metrics
+			BindAddress: "0",
+		},
+		Cache: cache.Options{
+			DefaultNamespaces: map[string]cache.Config{
+				cfg.Manager.Namespace:        {},
+				cfg.Manager.SecretsNamespace: {},
+			},
+		},
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port: 9443,
+		}),
 		HealthProbeBindAddress:        cfg.Health.Addr,
 		LeaderElection:                true,
 		LeaderElectionID:              "ws-manager-mk2-leader.gitpod.io",
 		LeaderElectionReleaseOnCancel: true,
-		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
-			opts.Namespaces = []string{cfg.Manager.Namespace, cfg.Manager.SecretsNamespace}
-			return cache.New(config, opts)
-		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
