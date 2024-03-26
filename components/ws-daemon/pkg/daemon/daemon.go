@@ -171,7 +171,11 @@ func NewDaemon(config Config) (*Daemon, error) {
 	mgr, err = ctrl.NewManager(restCfg, ctrl.Options{
 		Scheme:                 scheme,
 		HealthProbeBindAddress: "0",
-		Metrics:                metricsserver.Options{BindAddress: "0"},
+		Metrics: metricsserver.Options{
+			// Disable the metrics server.
+			// We only need access to the reconciliation loop feature.
+			BindAddress: "0",
+		},
 		Cache: cache.Options{
 			DefaultNamespaces: map[string]cache.Config{
 				config.Runtime.KubernetesNamespace: {},
