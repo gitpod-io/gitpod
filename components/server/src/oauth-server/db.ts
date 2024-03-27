@@ -144,7 +144,7 @@ const desktopClient: OAuthClient = {
 const toolbox: OAuthClient = {
     id: "toolbox-gateway-gitpod-plugin",
     name: "JetBrains Toolbox Gitpod Plugin",
-    redirectUris: ["jetbrains://gateway/io.gitpod.toolbox.gateway/complete-oauth"],
+    redirectUris: ["jetbrains://gateway/io.gitpod.toolbox.gateway/auth"],
     allowedGrants: ["authorization_code"],
     scopes: [
         // We scope all so that it can work in papi like a PAT
