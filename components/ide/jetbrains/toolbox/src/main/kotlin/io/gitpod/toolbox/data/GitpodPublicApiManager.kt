@@ -14,7 +14,7 @@ import org.slf4j.Logger
 class GitpodPublicApiManager(
         private val logger: Logger
 ) {
-    private val sharedClient = createClient("gitpod.io", "gitpod_pat_exkVQL6k4PoF_CP3C9L3w1rfVsXz-Nd8bzB53FoTwWo.H262fe9va3EHngxflNp8wIYWUDatJ3cbtJLQIs9V")
+    private val sharedClient = createClient("gitpod.io", "bar")
 
     private val workspaceApi = WorkspaceServiceClient(sharedClient)
 

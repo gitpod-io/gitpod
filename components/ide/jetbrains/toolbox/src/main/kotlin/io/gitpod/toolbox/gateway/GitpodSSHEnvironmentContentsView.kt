@@ -36,6 +36,9 @@ class GitpodWorkspaceSshConnectionInfo(private val username: String, private val
     override fun getShouldAskForPassword(): Boolean {
         return false
     }
+    override fun getShouldUseSystemSshAgent(): Boolean {
+        return false
+    }
 
     override fun getPrivateKeys(): MutableList<ByteArray>? {
         return arrayListOf(sshKey)
