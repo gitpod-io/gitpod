@@ -10,9 +10,10 @@ import okhttp3.OkHttpClient
 class GitpodGatewayExtension : GatewayExtension {
     override fun createRemoteProviderPluginInstance(serviceLocator: ToolboxServiceLocator): RemoteProvider {
         return GitpodRemoteProvider(
-                serviceLocator.getService(OkHttpClient::class.java),
-                serviceLocator.getService(RemoteEnvironmentConsumer::class.java),
-                serviceLocator.getService(CoroutineScope::class.java),
+            serviceLocator,
+            serviceLocator.getService(OkHttpClient::class.java),
+            serviceLocator.getService(RemoteEnvironmentConsumer::class.java),
+            serviceLocator.getService(CoroutineScope::class.java),
         )
     }
 }
