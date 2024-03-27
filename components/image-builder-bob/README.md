@@ -4,11 +4,11 @@
 
 Bob is a CLI responsible for building and pushing workspace images during workspace startup.
 
-For each image build, a headless workspace gets created in the meta cluster by `image-builder-mk3` ([#7845](https://github.com/gitpod-io/gitpod/issues/7845) will move the headless workspace and image-builder to the workspace cluster), in this headless workspace runs:
+For each image build, a headless workspace gets created in the workspace cluster by `image-builder-mk3` in this headless workspace runs:
 - `bob proxy`, which gets started by workspacekit in ring1, and receives credentials for pushing images to a docker registry. It proxies and authenticates the image pushes from `bob build`.
 - `bob build` as a workspace task, which builds the
   - **base layer**, if a custom Dockerfile is specified in `.gitpod.yaml`. If this base image has already been built for the workspace, this step is skipped, and the reference of the previously built image is used instead to build the workspace image next.
-  - **workspace image**, which builds an image from the base layer, where the base layer is either a previously built custom Dockerfile or a public image.
+  - **workspace image**, which using crane to copy the image from the base layer, where the base layer is either a previously built custom Dockerfile or a public image.
   These images get pushed over `localhost` to `bob proxy`, as `bob build` does not receive the credentials to push to private registries.
 
   The built images do not include e.g. `supervisor` or the IDE, these layers will get added by [`registry-facade`](../registry-facade/README.md) during image pull.
