@@ -1,21 +1,19 @@
 package io.gitpod.toolbox.auth
 
 import com.jetbrains.toolbox.gateway.ToolboxServiceLocator
-import com.jetbrains.toolbox.gateway.auth.Account
-import com.jetbrains.toolbox.gateway.auth.AuthConfiguration
-import com.jetbrains.toolbox.gateway.auth.ContentType
-import com.jetbrains.toolbox.gateway.auth.OAuthToken
-import com.jetbrains.toolbox.gateway.auth.PluginAuthManager
-import com.jetbrains.toolbox.gateway.auth.RefreshConfiguration
-import okhttp3.internal.wait
+import com.jetbrains.toolbox.gateway.auth.*
+import io.gitpod.toolbox.data.GitpodPublicApiManager
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
+import okhttp3.EventListener
 import org.slf4j.LoggerFactory
 import java.net.URI
 import java.util.concurrent.Future
-import java.util.concurrent.FutureTask
 
-class GitpodAuthManager(serviceLocator: ToolboxServiceLocator) {
+class GitpodAuthManager(serviceLocator: ToolboxServiceLocator, val publicApi: GitpodPublicApiManager) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val manager: PluginAuthManager<GitpodAccount, GitpodLoginConfiguration>
+    private var loginListeners: MutableList<() -> Unit> = mutableListOf()
 
     init {
         manager = serviceLocator.getAuthManager(
@@ -23,16 +21,12 @@ class GitpodAuthManager(serviceLocator: ToolboxServiceLocator) {
             GitpodAccount::class.java,
             { it.toStoredData() },
             { GitpodAccount.fromStoredData(it) },
-            { oauthToken, authCfg ->
-                getAuthenticatedUser(authCfg.baseUrl, oauthToken)
-            },
-            { oauthToken, gpAccount ->
-                getAuthenticatedUser(gpAccount.getHost(), oauthToken)
-            },
+            { oauthToken, authCfg -> getAuthenticatedUser(authCfg.baseUrl, oauthToken) },
+            { oauthToken, gpAccount -> getAuthenticatedUser(gpAccount.getHost(), oauthToken) },
             { gpLoginCfg ->
                 val authParams = mapOf(
+                    "response_type" to "code",
                     "client_id" to "toolbox-gateway-gitpod-plugin",
-                    "redirect_uri" to "jetbrains://gateway/io.gitpod.toolbox.gateway/complete-oauth",
                     "scope" to "function:*",
                 )
                 val tokenParams =
@@ -41,22 +35,37 @@ class GitpodAuthManager(serviceLocator: ToolboxServiceLocator) {
                     authParams,
                     tokenParams,
                     gpLoginCfg.host,
-                    gpLoginCfg.host+"/api/oauth/authorize",
-                    gpLoginCfg.host+"/api/oauth/token",
+                    gpLoginCfg.host + "/api/oauth/authorize",
+                    gpLoginCfg.host + "/api/oauth/token",
                     "code_challenge",
                     "S256",
                     "code_verifier",
                     "Bearer"
                 )
             },
-            { account ->
-                RefreshConfiguration("", mapOf(), "", ContentType.JSON)
-            },
+            { RefreshConfiguration("", mapOf(), "", ContentType.JSON) },
         )
 
         manager.addEventListener {
-            logger.info("============hwen.login.managerEvent${it.accountId} ${it.type.name}")
+            when (it.type) {
+                AuthEvent.Type.LOGIN -> {
+                    loginListeners.forEach { it() }
+                    logger.info("============hwen.login ${it.accountId}")
+                }
+
+                AuthEvent.Type.LOGOUT -> {
+                    logger.info("============hwen.logout ${it.accountId}")
+                }
+            }
         }
+    }
+
+    fun getCurrentAccount(): GitpodAccount? {
+        return manager.accountsWithStatus.firstOrNull()?.account
+    }
+
+    fun logout() {
+        getCurrentAccount()?.let { manager.logout(it.id) }
     }
 
     fun getLoginUrl(gitpodHost: String): String {
@@ -64,27 +73,42 @@ class GitpodAuthManager(serviceLocator: ToolboxServiceLocator) {
         return manager.initiateLogin(GitpodLoginConfiguration(gitpodHost))
     }
 
-    fun getAuthenticatedUser(gitpodHost: String, oAuthToken: OAuthToken): Future<GitpodAccount> {
-        logger.info("=================hwen.login $gitpodHost : ${oAuthToken.authorizationHeader}")
-        return FutureTask {
-            GitpodAccount(oAuthToken.authorizationHeader, "", "hwen-test", gitpodHost)
-        }
-    }
-
     fun tryHandle(uri: URI): Boolean {
         if (!this.manager.canHandle(uri)) {
             return false
         }
-        val t = this.manager.handle(uri)
-        val t2 = t.wait()
-        logger.info("============hwen.login.tryHandle ${t2} ${uri.path}")
+        this.manager.handle(uri)
         return true
+    }
+
+    fun addLoginListener(listener: () -> Unit) {
+        loginListeners.add(listener)
+    }
+
+    private fun getAuthenticatedUser(gitpodHost: String, oAuthToken: OAuthToken): Future<GitpodAccount> {
+        // TODO: how to remove GlobalScope?
+        return GlobalScope.future {
+
+            publicApi.setAccount(gitpodHost, oAuthToken.authorizationHeader)
+            try {
+                val user = publicApi.getAuthenticatedUser()
+                GitpodAccount(oAuthToken.authorizationHeader, user.id, user.name, gitpodHost)
+            } catch (e: Exception) {
+                throw IllegalStateException("Failed to get authenticated user", e)
+            }
+        }
     }
 }
 
-class GitpodLoginConfiguration(public val host: String)
+class GitpodLoginConfiguration(val host: String)
 
-class GitpodAccount(private val credentials: String, private val id: String, private val name: String, private val host: String) : Account {
+// TODO: improve
+class GitpodAccount(
+    private val credentials: String,
+    private val id: String,
+    private val name: String,
+    private val host: String
+) : Account {
     override fun getId(): String {
         return id
     }
