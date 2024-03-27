@@ -92,7 +92,11 @@ export function CreateWorkspacePage() {
     });
     const defaultIde = computedDefaultEditor;
     const [selectedIde, setSelectedIde, selectedIdeIsDirty] = useDirtyState<string | undefined>(defaultIde);
-    const { computedDefaultClass, data: allowedWorkspaceClasses } = useAllowedWorkspaceClassesMemo(selectedProjectID);
+    const {
+        computedDefaultClass,
+        data: allowedWorkspaceClasses,
+        isLoading: isLoadingWorkspaceClasses,
+    } = useAllowedWorkspaceClassesMemo(selectedProjectID);
     const defaultWorkspaceClass = props.workspaceClass ?? computedDefaultClass;
     const { data: orgSettings } = useOrgSettingsQuery();
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
@@ -326,6 +330,9 @@ export function CreateWorkspacePage() {
         if (nextLoadOption !== "autoStart") {
             return;
         }
+        if (isLoadingWorkspaceClasses) {
+            return;
+        }
         const rememberedOptions = user.workspaceAutostartOptions.find(
             (e) => e.cloneUrl === cloneURL && e.organizationId === currentOrg?.id,
         );
@@ -362,7 +369,14 @@ export function CreateWorkspacePage() {
         setNextLoadOption("allDone");
         // we only update the remembered options when the workspaceContext changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [workspaceContext.data, nextLoadOption, project, user?.workspaceAutostartOptions]);
+    }, [
+        workspaceContext.data,
+        nextLoadOption,
+        project,
+        user?.workspaceAutostartOptions,
+        isLoadingWorkspaceClasses,
+        allowedWorkspaceClasses,
+    ]);
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
