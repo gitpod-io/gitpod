@@ -11,7 +11,7 @@ ROOT_DIR="$(dirname "$0")/../.."
 source "$ROOT_DIR/dev/preview/workflow/lib/ensure-gcloud-auth.sh"
 ensure_gcloud_auth
 
-# This script builds the supervisor and updates the IDE config map.
+# This script builds the image-builder-bob, patches the image-builder-mk3 configmap to use the new bob, and restarts image-builder-mk3
 
 version="dev-$(date +%F_T"%H-%M-%S")"
 echo "Image Version: $version"

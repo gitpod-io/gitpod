@@ -128,7 +128,7 @@ type WorkspaceConfig struct {
 	ImageBuilderMk3 struct {
 		BaseImageRepositoryName      string `json:"baseImageRepositoryName"`
 		WorkspaceImageRepositoryName string `json:"workspaceImageRepositoryName"`
-	} `json:"ImageBuilderMk3"`
+	} `json:"imageBuilderMk3"`
 }
 
 type WorkspaceClass struct {
