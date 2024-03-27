@@ -89,7 +89,6 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 func (b *Builder) buildWorkspaceImage(ctx context.Context) (err error) {
 	log.Info("building workspace image")
 
-	logs.Warn.SetOutput(os.Stderr)
 	logs.Progress.SetOutput(os.Stderr)
 
 	return crane.Copy(b.Config.BaseRef, b.Config.TargetRef, crane.Insecure, crane.WithJobs(runtime.GOMAXPROCS(0)))
