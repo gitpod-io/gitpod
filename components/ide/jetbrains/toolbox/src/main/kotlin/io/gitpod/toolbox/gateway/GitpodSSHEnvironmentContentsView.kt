@@ -20,7 +20,7 @@ import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import okio.Buffer
 
-class GitpodWorkspaceSshConnectionInfo(private val username: String, private val host:String, private val sshKey:ByteArray): SshConnectionInfo{
+class GitpodWorkspaceSshConnectionInfo(private val username: String, private val host: String, private val sshKey: ByteArray) : SshConnectionInfo {
     override fun getHost(): String {
         return host
     }
@@ -43,7 +43,7 @@ class GitpodWorkspaceSshConnectionInfo(private val username: String, private val
 }
 
 class GitpodSSHEnvironmentContentsView(
-        private val workspaceId:String,
+        private val workspaceId: String,
         private val publicApi: GitpodPublicApiManager,
         private val httpClient: OkHttpClient,
         private val coroutineScope: CoroutineScope,
@@ -61,11 +61,11 @@ class GitpodSSHEnvironmentContentsView(
             val workspaceSSHHost = "${workspaceId}.ssh.${workspaceHost}"
 
             val sshResp = createSSHKeyPair(actualWorkspaceUrl, ConnectParams("https://gitpod.io", workspaceId), ownerTokenResp.ownerToken)
-            if (sshResp == null){
+            if (sshResp == null) {
                 throw Exception("Couldn't generate sshkeypair")
             }
 
-            return@future GitpodWorkspaceSshConnectionInfo(sshResp.userName!!,workspaceSSHHost,sshResp.privateKey.toByteArray(Charsets.UTF_8) )
+            return@future GitpodWorkspaceSshConnectionInfo(workspaceId, workspaceSSHHost, sshResp.privateKey.toByteArray(Charsets.UTF_8))
         }
     }
 
@@ -83,8 +83,8 @@ class GitpodSSHEnvironmentContentsView(
         try {
             val source = Buffer()
             source.write(value.toByteArray(Charsets.UTF_8));
-            return Json.decodeFromBufferedSource(CreateSSHKeyPairResponse.serializer(),  source)
-        } catch  (e: Exception) {
+            return Json.decodeFromBufferedSource(CreateSSHKeyPairResponse.serializer(), source)
+        } catch (e: Exception) {
             logger.error("Failed to sshkeypair response: ${e.message}")
             return null
         }
