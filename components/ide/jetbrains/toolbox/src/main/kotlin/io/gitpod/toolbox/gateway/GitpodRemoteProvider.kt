@@ -5,7 +5,10 @@ import com.jetbrains.toolbox.gateway.RemoteEnvironmentConsumer
 import com.jetbrains.toolbox.gateway.RemoteProvider
 import com.jetbrains.toolbox.gateway.ToolboxServiceLocator
 import com.jetbrains.toolbox.gateway.deploy.DiagnosticInfoCollector
+import com.jetbrains.toolbox.gateway.ui.ToolboxUi
+import com.jetbrains.toolbox.gateway.ui.UiPage
 import io.gitpod.toolbox.auth.GitpodAuthManager
+import io.gitpod.toolbox.auth.GitpodLoginPage
 import io.gitpod.toolbox.data.GitpodPublicApiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -17,20 +20,28 @@ class GitpodRemoteProvider(
         private val serviceLocator: ToolboxServiceLocator,
         private val httpClient: OkHttpClient,
         private val consumer: RemoteEnvironmentConsumer,
-        coroutineScope: CoroutineScope,
+        private val coroutineScope: CoroutineScope,
 ) : RemoteProvider {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val publicApi = GitpodPublicApiManager(logger)
-    private val authManger = GitpodAuthManager(serviceLocator)
+    private val publicApi = GitpodPublicApiManager()
+    private val authManger = GitpodAuthManager(serviceLocator, publicApi)
+    private val loginPage = GitpodLoginPage(serviceLocator, authManger)
 
     init {
+        authManger.addLoginListener {
+            watchWorkspaceList()
+        }
+    }
+
+    override fun getOverrideUiPage(): UiPage? {
+        authManger.getCurrentAccount() ?: return loginPage
+        return null
+    }
+
+    private fun watchWorkspaceList() {
         coroutineScope.launch {
-
-            logger.info("============hwen.2.${authManger.getLoginUrl("https://exp-migration.preview.gitpod-dev.com")}")
-
             val resp = publicApi.listWorkspaces(publicApi.getCurrentOrganizationId())
             consumer.consumeEnvironments(resp.workspacesList.map { GitpodRemoteProviderEnvironment(it, publicApi, httpClient, coroutineScope, logger) })
-
         }
     }
 
@@ -50,8 +61,9 @@ class GitpodRemoteProvider(
     override fun removeEnvironmentsListener(listener: RemoteEnvironmentConsumer) {}
 
     override fun handleUri(uri: URI) {
+        logger.info("============hwen.1 ${uri.path}")
         when (uri.path) {
-            "/complete-oauth" -> {
+            "/io.gitpod.toolbox.gateway/auth" -> {
                 authManger.tryHandle(uri)
             }
             else -> {
