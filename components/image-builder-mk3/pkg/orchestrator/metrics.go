@@ -30,7 +30,7 @@ const (
 
 type metrics struct {
 	imageBuildsDoneTotal    *prometheus.CounterVec
-	imageBuildsStartedTotal *prometheus.CounterVec
+	imageBuildsStartedTotal prometheus.Counter
 }
 
 func newMetrics() *metrics {
@@ -40,11 +40,11 @@ func newMetrics() *metrics {
 			Subsystem: metricsSubsystem,
 			Name:      "builds_done_total",
 		}, []string{"success"}),
-		imageBuildsStartedTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+		imageBuildsStartedTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
 			Name:      "builds_started_total",
-		}, []string{"success"}),
+		}),
 	}
 }
 
@@ -52,6 +52,6 @@ func (m *metrics) BuildDone(success bool) {
 	m.imageBuildsDoneTotal.WithLabelValues(strconv.FormatBool(success)).Inc()
 }
 
-func (m *metrics) BuildStarted(success bool) {
-	m.imageBuildsStartedTotal.WithLabelValues(strconv.FormatBool(success)).Inc()
+func (m *metrics) BuildStarted() {
+	m.imageBuildsStartedTotal.Inc()
 }
