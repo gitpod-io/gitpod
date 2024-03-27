@@ -1,33 +1,28 @@
 package io.gitpod.toolbox.gateway
 
-import com.connectrpc.ResponseMessage
 import com.jetbrains.toolbox.gateway.ProviderVisibilityState
 import com.jetbrains.toolbox.gateway.RemoteEnvironmentConsumer
 import com.jetbrains.toolbox.gateway.RemoteProvider
-import io.gitpod.publicapi.v1.WorkspaceOuterClass
-import io.gitpod.publicapi.v1.WorkspaceOuterClass.ListWorkspacesRequest
+import com.jetbrains.toolbox.gateway.deploy.DiagnosticInfoCollector
 import io.gitpod.toolbox.data.GitpodPublicApiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import java.net.URI
+import okhttp3.OkHttpClient
 
 class GitpodRemoteProvider(
-    private val consumer: RemoteEnvironmentConsumer,
-    coroutineScope: CoroutineScope,
+        private val httpClient: OkHttpClient,
+        private val consumer: RemoteEnvironmentConsumer,
+        coroutineScope: CoroutineScope,
 ) : RemoteProvider {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val publicApi = GitpodPublicApiManager()
+    private val publicApi = GitpodPublicApiManager(logger)
 
     init {
         coroutineScope.launch {
-            val workspaceList = publicApi.workspaceApi.listWorkspaces(ListWorkspacesRequest.newBuilder().setOrganizationId(publicApi.getCurrentOrganizationId()).build())
-            workspaceList.success {list: ResponseMessage.Success<WorkspaceOuterClass.ListWorkspacesResponse> ->
-                consumer.consumeEnvironments(list.message.workspacesList.map { GitpodRemoteProviderEnvironment(it) })
-            }
-            workspaceList.failure { error: ResponseMessage.Failure<WorkspaceOuterClass.ListWorkspacesResponse> ->
-                logger.error("Failed to retrieve workspaces: ${error.toString()}")
-            }
+            val resp = publicApi.listWorkspaces(publicApi.getCurrentOrganizationId())
+            consumer.consumeEnvironments(resp.workspacesList.map { GitpodRemoteProviderEnvironment(it, publicApi, httpClient, coroutineScope, logger) })
         }
     }
 
@@ -48,5 +43,9 @@ class GitpodRemoteProvider(
 
     override fun handleUri(uri: URI) {
         logger.debug("External request: {}", uri)
+    }
+
+    override fun getDiagnosticInfoCollector(): DiagnosticInfoCollector? {
+        return GitpodLogger(logger)
     }
 }

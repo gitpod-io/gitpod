@@ -2,7 +2,7 @@ package io.gitpod.toolbox.gateway
 
 import com.jetbrains.toolbox.gateway.environments.ManualEnvironmentContentsView
 
-class GitpodEnvironmentContentsView : ManualEnvironmentContentsView {
+class GitpodEmptyEnvironmentContentsView : ManualEnvironmentContentsView {
     override fun addEnvironmentContentsListener(listener: ManualEnvironmentContentsView.Listener) {
     }
 
