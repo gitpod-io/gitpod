@@ -223,6 +223,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	tracing.LogRequestSafe(span, req)
 
 	if req.Source == nil {
+		o.metrics.BuildStarted(false)
 		return status.Errorf(codes.InvalidArgument, "build source is missing")
 	}
 
@@ -231,16 +232,19 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	if req.BaseImageNameResolved != "" && !req.GetForceRebuild() {
 		wsrefstr, err := o.getWorkspaceImageRef(ctx, req.BaseImageNameResolved)
 		if err != nil {
+			o.metrics.BuildStarted(false)
 			return status.Errorf(codes.Internal, "cannot produce workspace image ref: %q", err)
 		}
 		wsrefAuth, err := auth.AllowedAuthForAll().GetAuthFor(ctx, o.Auth, wsrefstr)
 		if err != nil {
+			o.metrics.BuildStarted(false)
 			return status.Errorf(codes.Internal, "cannot get workspace image authentication: %q", err)
 		}
 
 		// check if needs build -> early return
 		exists, err := o.checkImageExists(ctx, wsrefstr, wsrefAuth)
 		if err != nil {
+			o.metrics.BuildStarted(false)
 			return status.Errorf(codes.Internal, "cannot check if image is already built: %q", err)
 		}
 		if exists {
@@ -250,6 +254,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				BaseRef: req.BaseImageNameResolved,
 			})
 			if err != nil {
+				o.metrics.BuildStarted(false)
 				return err
 			}
 			return nil
@@ -266,24 +271,29 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
 	if _, ok := status.FromError(err); err != nil && ok {
+		o.metrics.BuildStarted(false)
 		return err
 	}
 	if err != nil {
+		o.metrics.BuildStarted(false)
 		return status.Errorf(codes.Internal, "cannot resolve base image: %s", err.Error())
 	}
 
 	wsrefstr, err := o.getWorkspaceImageRef(ctx, baseref)
 	if err != nil {
+		o.metrics.BuildStarted(false)
 		return status.Errorf(codes.Internal, "cannot produce workspace image ref: %q", err)
 	}
 	wsrefAuth, err := auth.AllowedAuthForAll().GetAuthFor(ctx, o.Auth, wsrefstr)
 	if err != nil {
+		o.metrics.BuildStarted(false)
 		return status.Errorf(codes.Internal, "cannot get workspace image authentication: %q", err)
 	}
 
 	// check if needs build -> early return
 	exists, err := o.checkImageExists(ctx, wsrefstr, wsrefAuth)
 	if err != nil {
+		o.metrics.BuildStarted(false)
 		return status.Errorf(codes.Internal, "cannot check if image is already built: %q", err)
 	}
 	if exists && !req.GetForceRebuild() {
@@ -294,12 +304,13 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 			BaseRef: baseref,
 		})
 		if err != nil {
+			o.metrics.BuildStarted(false)
 			return err
 		}
 		return nil
 	}
 
-	o.metrics.BuildStarted()
+	o.metrics.BuildStarted(true)
 
 	// Once a build is running we don't want it cancelled becuase the server disconnected i.e. during deployment.
 	// Instead we want to impose our own timeout/lifecycle on the build. Using context.WithTimeout does not shadow its parent's
