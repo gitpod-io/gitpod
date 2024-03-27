@@ -330,7 +330,7 @@ export function CreateWorkspacePage() {
         if (nextLoadOption !== "autoStart") {
             return;
         }
-        if (isLoadingWorkspaceClasses) {
+        if (isLoadingWorkspaceClasses || allowedWorkspaceClasses.length === 0) {
             return;
         }
         const rememberedOptions = user.workspaceAutostartOptions.find(
@@ -369,14 +369,7 @@ export function CreateWorkspacePage() {
         setNextLoadOption("allDone");
         // we only update the remembered options when the workspaceContext changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        workspaceContext.data,
-        nextLoadOption,
-        project,
-        user?.workspaceAutostartOptions,
-        isLoadingWorkspaceClasses,
-        allowedWorkspaceClasses,
-    ]);
+    }, [workspaceContext.data, nextLoadOption, project, isLoadingWorkspaceClasses, allowedWorkspaceClasses]);
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
