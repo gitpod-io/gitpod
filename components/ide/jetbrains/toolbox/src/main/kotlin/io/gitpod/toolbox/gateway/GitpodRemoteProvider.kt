@@ -5,7 +5,9 @@ import com.jetbrains.toolbox.gateway.RemoteEnvironmentConsumer
 import com.jetbrains.toolbox.gateway.RemoteProvider
 import com.jetbrains.toolbox.gateway.ToolboxServiceLocator
 import com.jetbrains.toolbox.gateway.deploy.DiagnosticInfoCollector
+import com.jetbrains.toolbox.gateway.ui.LabelField
 import com.jetbrains.toolbox.gateway.ui.ToolboxUi
+import com.jetbrains.toolbox.gateway.ui.UiField
 import com.jetbrains.toolbox.gateway.ui.UiPage
 import io.gitpod.toolbox.auth.GitpodAuthManager
 import io.gitpod.toolbox.auth.GitpodLoginPage
@@ -52,6 +54,19 @@ class GitpodRemoteProvider(
         return this::class.java.getResourceAsStream("/icon.svg")?.readAllBytes() ?: byteArrayOf()
     }
 
+    override fun getNewEnvironmentUiPage(): UiPage {
+        return object: UiPage {
+            override fun getFields(): MutableList<UiField> {
+                return mutableListOf(LabelField("Welcome to Gitpod! ${authManger.getCurrentAccount()?.fullName}"))
+            }
+
+            override fun getTitle(): String {
+                return "Gitpod New Env"
+            }
+
+        }
+    }
+
     override fun canCreateNewEnvironments(): Boolean = true
     override fun isSingleEnvironment(): Boolean = false
 
@@ -61,7 +76,6 @@ class GitpodRemoteProvider(
     override fun removeEnvironmentsListener(listener: RemoteEnvironmentConsumer) {}
 
     override fun handleUri(uri: URI) {
-        logger.info("============hwen.1 ${uri.path}")
         when (uri.path) {
             "/io.gitpod.toolbox.gateway/auth" -> {
                 authManger.tryHandle(uri)

@@ -5,9 +5,14 @@ import com.jetbrains.toolbox.gateway.auth.*
 import io.gitpod.toolbox.data.GitpodPublicApiManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.EventListener
 import org.slf4j.LoggerFactory
 import java.net.URI
+import java.util.*
 import java.util.concurrent.Future
 
 class GitpodAuthManager(serviceLocator: ToolboxServiceLocator, val publicApi: GitpodPublicApiManager) {
@@ -88,15 +93,29 @@ class GitpodAuthManager(serviceLocator: ToolboxServiceLocator, val publicApi: Gi
     private fun getAuthenticatedUser(gitpodHost: String, oAuthToken: OAuthToken): Future<GitpodAccount> {
         // TODO: how to remove GlobalScope?
         return GlobalScope.future {
-
-            publicApi.setAccount(gitpodHost, oAuthToken.authorizationHeader)
+            val realToken = "Bearer " + decodeJWT(oAuthToken.authorizationHeader.replace("Bearer ", "")).get("jti")
+            publicApi.setAccount(gitpodHost, realToken)
             try {
                 val user = publicApi.getAuthenticatedUser()
-                GitpodAccount(oAuthToken.authorizationHeader, user.id, user.name, gitpodHost)
+                GitpodAccount(realToken, user.id, user.name, gitpodHost)
             } catch (e: Exception) {
                 throw IllegalStateException("Failed to get authenticated user", e)
             }
         }
+    }
+
+    // TODO: improve
+    private fun decodeJWT(jwt: String): Map<String, String> {
+        val parts = jwt.split(".")
+        if (parts.size != 3) {
+            throw IllegalArgumentException("Invalid JWT")
+        }
+        val decoded = String(Base64.getUrlDecoder().decode(parts[1].toByteArray()))
+        val jsonElement = Json.parseToJsonElement(decoded)
+        val payloadMap = jsonElement.jsonObject.mapValues {
+            it.value.jsonPrimitive.content
+        }
+        return payloadMap
     }
 }
 

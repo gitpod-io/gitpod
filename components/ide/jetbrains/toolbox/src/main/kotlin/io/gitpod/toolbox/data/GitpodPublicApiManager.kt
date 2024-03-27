@@ -101,7 +101,7 @@ class GitpodPublicApiManager {
             return ProtocolClient(
                     httpClient = ConnectOkHttpClient(),
                     ProtocolClientConfig(
-                            host = "https://$gitpodHost/public-api",
+                            host = "$gitpodHost/public-api",
                             serializationStrategy = GoogleJavaProtobufStrategy(), // Or GoogleJavaJSONStrategy for JSON.
                             networkProtocol = NetworkProtocol.CONNECT,
                             interceptors = listOf { authInterceptor }
@@ -117,7 +117,7 @@ class AuthorizationInterceptor(private val token: String) : Interceptor {
                 requestFunction = { request ->
                     val headers = mutableMapOf<String, List<String>>()
                     headers.putAll(request.headers)
-                    headers["Authorization"] = listOf("Bearer $token")
+                    headers["Authorization"] = listOf(token)
                     return@StreamFunction request.clone(headers = headers)
                 },
         )
@@ -128,7 +128,7 @@ class AuthorizationInterceptor(private val token: String) : Interceptor {
                 requestFunction = { request ->
                     val headers = mutableMapOf<String, List<String>>()
                     headers.putAll(request.headers)
-                    headers["Authorization"] = listOf("Bearer $token")
+                    headers["Authorization"] = listOf(token)
                     return@UnaryFunction request.clone(headers = headers)
                 },
                 responseFunction = { resp ->
