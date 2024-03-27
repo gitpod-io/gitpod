@@ -1,5 +1,6 @@
 package io.gitpod.toolbox.gateway
 
+import com.jetbrains.toolbox.gateway.environments.ManualEnvironmentContentsView
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.okio.decodeFromBufferedSource
 import com.jetbrains.toolbox.gateway.environments.SshEnvironmentContentsView
@@ -51,7 +52,7 @@ class GitpodSSHEnvironmentContentsView(
         private val httpClient: OkHttpClient,
         private val coroutineScope: CoroutineScope,
         private val logger: Logger
-) : SshEnvironmentContentsView {
+) : SshEnvironmentContentsView, ManualEnvironmentContentsView {
     override fun getConnectionInfo(): CompletableFuture<SshConnectionInfo> {
         return coroutineScope.future {
             val workspaceResp = publicApi.getWorkspace(workspaceId)
@@ -136,6 +137,12 @@ class GitpodSSHEnvironmentContentsView(
                 requestTimeout = maxRequestTimeout
             }
         }
+    }
+
+    override fun addEnvironmentContentsListener(p0: ManualEnvironmentContentsView.Listener) {
+    }
+
+    override fun removeEnvironmentContentsListener(p0: ManualEnvironmentContentsView.Listener) {
     }
 }
 

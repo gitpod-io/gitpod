@@ -50,11 +50,7 @@ class GitpodRemoteProviderEnvironment(
     }
 
     override fun getContentsView(): CompletableFuture<EnvironmentContentsView> {
-        var view: EnvironmentContentsView = GitpodEmptyEnvironmentContentsView()
-        if (workspace.status.phase.nameValue == WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_RUNNING_VALUE) {
-            view = GitpodSSHEnvironmentContentsView(workspace.id, publicApi, httpClient, coroutineScope, logger)
-        }
-        return CompletableFuture.completedFuture(view)
+        return CompletableFuture.completedFuture(GitpodSSHEnvironmentContentsView(workspace.id, publicApi, httpClient, coroutineScope, logger))
     }
 
     override fun setVisible(visibilityState: EnvironmentVisibilityState) {
