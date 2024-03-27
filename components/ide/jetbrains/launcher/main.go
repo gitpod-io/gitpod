@@ -1146,7 +1146,7 @@ func configureToolboxCliProperties(backendDir string) error {
 		return err
 	}
 
-	toolboxCliPropertiesFilePath := fmt.Sprintf("%s/Creenvironment.json", toolboxCliPropertiesDir)
+	toolboxCliPropertiesFilePath := fmt.Sprintf("%s/environment.json", toolboxCliPropertiesDir)
 
 	content := fmt.Sprintf(`{
     "tools": {
