@@ -57,7 +57,7 @@ import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
 
 export function CreateWorkspacePage() {
-    const { setUser, user } = useContext(UserContext);
+    const { user, setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
     const currentOrg = useCurrentOrg().data;
     const projects = useListAllProjectsQuery();
