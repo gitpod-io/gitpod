@@ -57,7 +57,7 @@ import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
 
 export function CreateWorkspacePage() {
-    const { user, setUser } = useContext(UserContext);
+    const { setUser, user } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
     const currentOrg = useCurrentOrg().data;
     const projects = useListAllProjectsQuery();
@@ -316,7 +316,7 @@ export function CreateWorkspacePage() {
 
     // when workspaceContext is available, we look up if options are remembered
     useEffect(() => {
-        if (!workspaceContext.data || !user || !currentOrg) {
+        if (!workspaceContext.data || !user?.workspaceAutostartOptions || !currentOrg) {
             return;
         }
         const cloneURL = workspaceContext.data.cloneUrl;
@@ -326,7 +326,7 @@ export function CreateWorkspacePage() {
         if (nextLoadOption !== "autoStart") {
             return;
         }
-        const rememberedOptions = (user?.workspaceAutostartOptions || []).find(
+        const rememberedOptions = user.workspaceAutostartOptions.find(
             (e) => e.cloneUrl === cloneURL && e.organizationId === currentOrg?.id,
         );
         if (rememberedOptions) {
@@ -362,7 +362,7 @@ export function CreateWorkspacePage() {
         setNextLoadOption("allDone");
         // we only update the remembered options when the workspaceContext changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [workspaceContext.data, nextLoadOption, setNextLoadOption, project]);
+    }, [workspaceContext.data, nextLoadOption, project, user?.workspaceAutostartOptions]);
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
