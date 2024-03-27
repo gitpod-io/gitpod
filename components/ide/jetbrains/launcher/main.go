@@ -169,6 +169,13 @@ func main() {
 		launch(launchCtx)
 		return
 	}
+
+	err = configureToolboxCliProperties(backendDir)
+	if err != nil {
+		log.WithError(err).Error("failed to write toolbox cli config file")
+		return
+	}
+
 	// we should start serving immediately and postpone launch
 	// in order to enable a JB Gateway to connect as soon as possible
 	go launch(launchCtx)
@@ -1121,4 +1128,38 @@ func resolveProjectContextDir(launchCtx *LaunchContext) string {
 	}
 
 	return launchCtx.projectDir
+}
+
+func configureToolboxCliProperties(backendDir string) error {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	toolboxCliPropertiesDir := fmt.Sprintf("%s/.local/share/JetBrains/Toolbox", userHomeDir)
+	_, err = os.Stat(toolboxCliPropertiesDir)
+	if !os.IsNotExist(err) {
+		return err
+	}
+	err = os.MkdirAll(toolboxCliPropertiesDir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	toolboxCliPropertiesFilePath := fmt.Sprintf("%s/Creenvironment.json", toolboxCliPropertiesDir)
+
+	content := fmt.Sprintf(`{
+    "tools": {
+        "allowInstallation": false,
+        "allowUpdate": false,
+        "allowUninstallation": false,
+        "location": [
+            {
+                "path": "%s"
+            }
+        ]
+    }
+}`, backendDir)
+
+	return os.WriteFile(toolboxCliPropertiesFilePath, []byte(content), 0o644)
 }
