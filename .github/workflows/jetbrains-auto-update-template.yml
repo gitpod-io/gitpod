@@ -20,7 +20,7 @@ jobs:
   update-jetbrains:
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
     needs: [ create-runner ]
     steps:
       - uses: actions/checkout@v2
