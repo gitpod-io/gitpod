@@ -237,6 +237,13 @@
                 "displayName": "Vitest"
             }
         },
+        "cortex-debug.svd-viewer": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "eclipse-cdt.peripheral-inspector",
+                "displayName": "Eclipse CDT Cloud"
+            }
+        },
         "iocave.customize-ui": true,
         "iocave.monkey-patch": true,
         "pranaygp.vscode-css-peek": true,
