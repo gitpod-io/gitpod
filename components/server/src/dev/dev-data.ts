@@ -73,6 +73,13 @@ export namespace DevData {
         return result;
     }
 
+    export function createGiteaTestToken(): Token {
+        return {
+            ...getTokenFromEnv("GITPOD_TEST_TOKEN_GITEA"),
+            scopes: [],
+        };
+    }
+
     function getTokenFromEnv(varname: string): Token {
         const secret = process.env[varname];
         if (!secret) {

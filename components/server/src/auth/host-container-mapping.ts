@@ -9,6 +9,7 @@ import { githubContainerModule } from "../github/github-container-module";
 import { gitlabContainerModule } from "../gitlab/gitlab-container-module";
 import { genericAuthContainerModule } from "./oauth-container-module";
 import { bitbucketContainerModule } from "../bitbucket/bitbucket-container-module";
+import { giteaContainerModule } from "../gitea/gitea-container-module";
 import { bitbucketServerContainerModule } from "../bitbucket-server/bitbucket-server-container-module";
 
 @injectable()
@@ -19,6 +20,8 @@ export class HostContainerMapping {
                 return [githubContainerModule];
             case "GitLab":
                 return [gitlabContainerModule];
+            case "Gitea":
+                return [giteaContainerModule];
             case "OAuth":
                 return [genericAuthContainerModule];
             case "Bitbucket":
