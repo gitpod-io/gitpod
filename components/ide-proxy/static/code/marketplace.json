@@ -106,16 +106,10 @@
             }
         },
         "CoenraadS.bracket-pair-colorizer-2": {
-            "settings": [
-                "editor.bracketPairColorization.enabled",
-                "editor.guides.bracketPairs"
-            ]
+            "settings": ["editor.bracketPairColorization.enabled", "editor.guides.bracketPairs"]
         },
         "CoenraadS.bracket-pair-colorizer": {
-            "settings": [
-                "editor.bracketPairColorization.enabled",
-                "editor.guides.bracketPairs"
-            ]
+            "settings": ["editor.bracketPairColorization.enabled", "editor.guides.bracketPairs"]
         },
         "idleberg.innosetup": {
             "disallowInstall": true,
@@ -185,6 +179,34 @@
             "extension": {
                 "id": "snyk-security.snyk-vulnerability-scanner",
                 "displayName": "Snyk Security - Code, Open Source Dependencies, IaC Configurations"
+            }
+        },
+        "wingrunr21.vscode-ruby": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "Shopify.ruby-lsp",
+                "displayName": "Ruby LSP"
+            }
+        },
+        "rebornix.Ruby": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "Shopify.ruby-lsp",
+                "displayName": "Ruby LSP"
+            }
+        },
+        "Esri.arcgis-jsapi-snippets": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "Esri.arcgis-maps-sdk-js-snippets",
+                "displayName": "ArcGIS Maps SDK for JavaScript Snippets"
+            }
+        },
+        "ligolang-publish.ligo-debugger-vscode": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "ligolang-publish.ligo-vscode",
+                "displayName": "ligo-vscode"
             }
         },
         "iocave.customize-ui": true,
