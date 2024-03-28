@@ -209,6 +209,13 @@
                 "displayName": "ligo-vscode"
             }
         },
+        "Equinusocio.vsc-community-material-theme": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "Equinusocio.vsc-material-theme",
+                "displayName": "Material Theme"
+            }
+        },
         "iocave.customize-ui": true,
         "iocave.monkey-patch": true,
         "pranaygp.vscode-css-peek": true,
