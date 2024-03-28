@@ -3,31 +3,26 @@ package io.gitpod.toolbox.gateway
 import com.jetbrains.toolbox.gateway.ProviderVisibilityState
 import com.jetbrains.toolbox.gateway.RemoteEnvironmentConsumer
 import com.jetbrains.toolbox.gateway.RemoteProvider
-import com.jetbrains.toolbox.gateway.ToolboxServiceLocator
 import com.jetbrains.toolbox.gateway.deploy.DiagnosticInfoCollector
-import com.jetbrains.toolbox.gateway.ui.LabelField
-import com.jetbrains.toolbox.gateway.ui.ToolboxUi
-import com.jetbrains.toolbox.gateway.ui.UiField
 import com.jetbrains.toolbox.gateway.ui.UiPage
 import io.gitpod.toolbox.auth.GitpodAuthManager
 import io.gitpod.toolbox.auth.GitpodLoginPage
-import io.gitpod.toolbox.data.GitpodPublicApiManager
-import kotlinx.coroutines.CoroutineScope
+import io.gitpod.toolbox.components.GitpodIcon
+import io.gitpod.toolbox.service.GitpodPublicApiManager
+import io.gitpod.toolbox.service.Utils
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import org.slf4j.LoggerFactory
 import java.net.URI
-import okhttp3.OkHttpClient
 
 class GitpodRemoteProvider(
-        private val serviceLocator: ToolboxServiceLocator,
         private val httpClient: OkHttpClient,
         private val consumer: RemoteEnvironmentConsumer,
-        private val coroutineScope: CoroutineScope,
 ) : RemoteProvider {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val publicApi = GitpodPublicApiManager()
-    private val authManger = GitpodAuthManager(serviceLocator, publicApi)
-    private val loginPage = GitpodLoginPage(serviceLocator, authManger)
+    private val authManger = GitpodAuthManager()
+    private val publicApi = GitpodPublicApiManager(authManger)
+    private val loginPage = GitpodLoginPage(authManger)
 
     init {
         authManger.addLoginListener {
@@ -41,9 +36,10 @@ class GitpodRemoteProvider(
     }
 
     private fun watchWorkspaceList() {
-        coroutineScope.launch {
+        logger.info("start watch workspace list")
+        Utils.coroutineScope.launch {
             val resp = publicApi.listWorkspaces(publicApi.getCurrentOrganizationId())
-            consumer.consumeEnvironments(resp.workspacesList.map { GitpodRemoteProviderEnvironment(it, publicApi, httpClient, coroutineScope, logger) })
+            consumer.consumeEnvironments(resp.workspacesList.map { GitpodRemoteProviderEnvironment(it, publicApi, httpClient) })
         }
     }
 
@@ -51,20 +47,11 @@ class GitpodRemoteProvider(
 
     override fun getName(): String = "Gitpod"
     override fun getSvgIcon(): ByteArray {
-        return this::class.java.getResourceAsStream("/icon.svg")?.readAllBytes() ?: byteArrayOf()
+        return GitpodIcon()
     }
 
     override fun getNewEnvironmentUiPage(): UiPage {
-        return object: UiPage {
-            override fun getFields(): MutableList<UiField> {
-                return mutableListOf(LabelField("Welcome to Gitpod! ${authManger.getCurrentAccount()?.fullName}"))
-            }
-
-            override fun getTitle(): String {
-                return "Gitpod New Env"
-            }
-
-        }
+        return GitpodNewEnvironmentPage()
     }
 
     override fun canCreateNewEnvironments(): Boolean = true
@@ -76,10 +63,11 @@ class GitpodRemoteProvider(
     override fun removeEnvironmentsListener(listener: RemoteEnvironmentConsumer) {}
 
     override fun handleUri(uri: URI) {
+        if (authManger.tryHandle(uri)) {
+            return
+        }
         when (uri.path) {
-            "/io.gitpod.toolbox.gateway/auth" -> {
-                authManger.tryHandle(uri)
-            }
+            // TODO:
             else -> {
                 logger.warn("Unknown request: {}", uri)
             }

@@ -1,31 +1,34 @@
 package io.gitpod.toolbox.auth
 
-import com.jetbrains.toolbox.gateway.ToolboxServiceLocator
 import com.jetbrains.toolbox.gateway.auth.*
-import io.gitpod.toolbox.data.GitpodPublicApiManager
-import kotlinx.coroutines.GlobalScope
+import io.gitpod.publicapi.v1.UserServiceClient
+import io.gitpod.toolbox.service.GitpodPublicApiManager
+import io.gitpod.toolbox.service.Utils
 import kotlinx.coroutines.future.future
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.EventListener
 import org.slf4j.LoggerFactory
 import java.net.URI
 import java.util.*
 import java.util.concurrent.Future
 
-class GitpodAuthManager(serviceLocator: ToolboxServiceLocator, val publicApi: GitpodPublicApiManager) {
+class GitpodAuthManager {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val manager: PluginAuthManager<GitpodAccount, GitpodLoginConfiguration>
     private var loginListeners: MutableList<() -> Unit> = mutableListOf()
+    private var logoutListeners: MutableList<() -> Unit> = mutableListOf()
 
     init {
-        manager = serviceLocator.getAuthManager(
+        manager = Utils.sharedServiceLocator.getAuthManager(
             "gitpod",
             GitpodAccount::class.java,
-            { it.toStoredData() },
-            { GitpodAccount.fromStoredData(it) },
+            { it.encode() },
+            { GitpodAccount.decode(it) },
             { oauthToken, authCfg -> getAuthenticatedUser(authCfg.baseUrl, oauthToken) },
             { oauthToken, gpAccount -> getAuthenticatedUser(gpAccount.getHost(), oauthToken) },
             { gpLoginCfg ->
@@ -54,12 +57,12 @@ class GitpodAuthManager(serviceLocator: ToolboxServiceLocator, val publicApi: Gi
         manager.addEventListener {
             when (it.type) {
                 AuthEvent.Type.LOGIN -> {
+                    logger.debug("account ${it.accountId} logged in")
                     loginListeners.forEach { it() }
-                    logger.info("============hwen.login ${it.accountId}")
                 }
-
                 AuthEvent.Type.LOGOUT -> {
-                    logger.info("============hwen.logout ${it.accountId}")
+                    logger.debug("account ${it.accountId} logged out")
+                    logoutListeners.forEach { it() }
                 }
             }
         }
@@ -73,7 +76,7 @@ class GitpodAuthManager(serviceLocator: ToolboxServiceLocator, val publicApi: Gi
         getCurrentAccount()?.let { manager.logout(it.id) }
     }
 
-    fun getLoginUrl(gitpodHost: String): String {
+    fun getOAuthLoginUrl(gitpodHost: String): String {
         logger.info("get oauth url of $gitpodHost")
         return manager.initiateLogin(GitpodLoginConfiguration(gitpodHost))
     }
@@ -90,23 +93,22 @@ class GitpodAuthManager(serviceLocator: ToolboxServiceLocator, val publicApi: Gi
         loginListeners.add(listener)
     }
 
+    fun addLogoutListener(listener: () -> Unit) {
+        logoutListeners.add(listener)
+    }
+
     private fun getAuthenticatedUser(gitpodHost: String, oAuthToken: OAuthToken): Future<GitpodAccount> {
-        // TODO: how to remove GlobalScope?
-        return GlobalScope.future {
-            val realToken = "Bearer " + decodeJWT(oAuthToken.authorizationHeader.replace("Bearer ", "")).get("jti")
-            publicApi.setAccount(gitpodHost, realToken)
-            try {
-                val user = publicApi.getAuthenticatedUser()
-                GitpodAccount(realToken, user.id, user.name, gitpodHost)
-            } catch (e: Exception) {
-                throw IllegalStateException("Failed to get authenticated user", e)
-            }
+        return Utils.coroutineScope.future {
+            val bearerToken = getBearerToken(oAuthToken)
+            val client = GitpodPublicApiManager.createClient(gitpodHost, bearerToken)
+            val user = GitpodPublicApiManager.tryGetAuthenticatedUser(UserServiceClient(client))
+            GitpodAccount(bearerToken, user.id, user.name, gitpodHost)
         }
     }
 
-    // TODO: improve
-    private fun decodeJWT(jwt: String): Map<String, String> {
-        val parts = jwt.split(".")
+    private fun getBearerToken(oAuthToken: OAuthToken): String {
+        val parts = oAuthToken.authorizationHeader.replace("Bearer ", "").split(".")
+        // We don't validate jwt token
         if (parts.size != 3) {
             throw IllegalArgumentException("Invalid JWT")
         }
@@ -115,13 +117,14 @@ class GitpodAuthManager(serviceLocator: ToolboxServiceLocator, val publicApi: Gi
         val payloadMap = jsonElement.jsonObject.mapValues {
             it.value.jsonPrimitive.content
         }
-        return payloadMap
+        return payloadMap["jti"] ?: throw IllegalArgumentException("Failed to parse JWT token")
     }
+
 }
 
 class GitpodLoginConfiguration(val host: String)
 
-// TODO: improve
+@Serializable
 class GitpodAccount(
     private val credentials: String,
     private val id: String,
@@ -136,19 +139,21 @@ class GitpodAccount(
         return name
     }
 
+    fun getCredentials(): String {
+        return credentials
+    }
+
     fun getHost(): String {
         return host
     }
 
-    fun toStoredData(): String {
-        return "${credentials}:${host}:${id}:${name}"
+    fun encode(): String {
+        return Json.encodeToString(this)
     }
 
     companion object {
-        fun fromStoredData(str: String): GitpodAccount {
-            val arr = str.split(":")
-            if (arr.size != 4) throw IllegalArgumentException("Invalid stored data")
-            return GitpodAccount(arr[0], arr[1], arr[2], arr[3])
+        fun decode(str: String): GitpodAccount {
+            return Json.decodeFromString<GitpodAccount>(str)
         }
     }
 }

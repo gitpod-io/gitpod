@@ -7,21 +7,18 @@ import com.jetbrains.toolbox.gateway.states.EnvironmentStateConsumer
 import com.jetbrains.toolbox.gateway.states.StandardRemoteEnvironmentState
 import com.jetbrains.toolbox.gateway.ui.ActionListener
 import io.gitpod.publicapi.v1.WorkspaceOuterClass
-import io.gitpod.toolbox.data.GitpodPublicApiManager
-import kotlinx.coroutines.CoroutineScope
+import io.gitpod.toolbox.service.GitpodPublicApiManager
 import okhttp3.OkHttpClient
-import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
 
 class GitpodRemoteProviderEnvironment(
         private val workspace: WorkspaceOuterClass.Workspace,
         private val publicApi: GitpodPublicApiManager,
         private val httpClient: OkHttpClient,
-        private val coroutineScope: CoroutineScope,
-        private val logger: Logger
 ) : RemoteProviderEnvironment {
+    private val logger = LoggerFactory.getLogger(javaClass)
     private var viewState = StandardRemoteEnvironmentState.Inactive
-
     private val stateListeners = mutableSetOf<EnvironmentStateConsumer>()
     private val actionListeners = mutableSetOf<ActionListener>()
 
@@ -50,7 +47,7 @@ class GitpodRemoteProviderEnvironment(
     }
 
     override fun getContentsView(): CompletableFuture<EnvironmentContentsView> {
-        return CompletableFuture.completedFuture(GitpodSSHEnvironmentContentsView(workspace.id, publicApi, httpClient, coroutineScope, logger))
+        return CompletableFuture.completedFuture(GitpodSSHEnvironmentContentsView(workspace.id, publicApi, httpClient, logger))
     }
 
     override fun setVisible(visibilityState: EnvironmentVisibilityState) {

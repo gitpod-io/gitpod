@@ -1,25 +1,24 @@
 package io.gitpod.toolbox.gateway
 
 import com.jetbrains.toolbox.gateway.environments.ManualEnvironmentContentsView
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.okio.decodeFromBufferedSource
 import com.jetbrains.toolbox.gateway.environments.SshEnvironmentContentsView
 import com.jetbrains.toolbox.gateway.ssh.SshConnectionInfo
-import io.gitpod.toolbox.data.GitpodPublicApiManager
+import io.gitpod.toolbox.service.GitpodPublicApiManager
+import io.gitpod.toolbox.service.Utils
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlin.coroutines.coroutineContext
-import java.util.concurrent.CompletableFuture
-import kotlinx.coroutines.future.*
-import kotlinx.coroutines.*
-import org.slf4j.Logger
-import java.net.URI
-import java.net.URL
-import okhttp3.Request
-import java.time.Duration
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.future.future
+import kotlinx.coroutines.job
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.okio.decodeFromBufferedSource
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import okio.Buffer
+import org.slf4j.Logger
+import java.net.URL
+import java.util.concurrent.CompletableFuture
+import kotlin.coroutines.coroutineContext
 
 class GitpodWorkspaceSshConnectionInfo(private val username: String, private val host: String, private val sshKey: ByteArray) : SshConnectionInfo {
     override fun getHost(): String {
@@ -37,6 +36,7 @@ class GitpodWorkspaceSshConnectionInfo(private val username: String, private val
     override fun getShouldAskForPassword(): Boolean {
         return false
     }
+
     override fun getShouldUseSystemSshAgent(): Boolean {
         return false
     }
@@ -50,24 +50,21 @@ class GitpodSSHEnvironmentContentsView(
         private val workspaceId: String,
         private val publicApi: GitpodPublicApiManager,
         private val httpClient: OkHttpClient,
-        private val coroutineScope: CoroutineScope,
         private val logger: Logger
 ) : SshEnvironmentContentsView, ManualEnvironmentContentsView {
     override fun getConnectionInfo(): CompletableFuture<SshConnectionInfo> {
-        return coroutineScope.future {
+        return Utils.coroutineScope.future {
             val workspaceResp = publicApi.getWorkspace(workspaceId)
             val ownerTokenResp = publicApi.getWorkspaceOwnerToken(workspaceId)
 
             // TODO: take into account debug- workspaces
-            var actualWorkspaceUrl = URL(workspaceResp.workspace.status.workspaceUrl)
+            val actualWorkspaceUrl = URL(workspaceResp.workspace.status.workspaceUrl)
 
             val workspaceHost = actualWorkspaceUrl.host.substring(actualWorkspaceUrl.host.indexOf('.') + 1)
             val workspaceSSHHost = "${workspaceId}.ssh.${workspaceHost}"
 
             val sshResp = createSSHKeyPair(actualWorkspaceUrl, ConnectParams("https://gitpod.io", workspaceId), ownerTokenResp.ownerToken)
-            if (sshResp == null) {
-                throw Exception("Couldn't generate sshkeypair")
-            }
+                    ?: throw Exception("Couldn't generate sshkeypair")
 
             return@future GitpodWorkspaceSshConnectionInfo(workspaceId, workspaceSSHHost, sshResp.privateKey.toByteArray(Charsets.UTF_8))
         }
@@ -108,7 +105,6 @@ class GitpodSSHEnvironmentContentsView(
                 var httpRequestBuilder = Request.Builder()
                         .get()
                         .url(endpointUrl)
-//                readTimeout(Duration.ofMillis(requestTimeout))
 
                 if (!ownerToken.isNullOrBlank()) {
                     httpRequestBuilder = httpRequestBuilder.header("x-gitpod-owner-token", ownerToken)

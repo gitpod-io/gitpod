@@ -1,4 +1,4 @@
-package io.gitpod.toolbox.data
+package io.gitpod.toolbox.service
 
 import com.connectrpc.*
 import com.connectrpc.extensions.GoogleJavaProtobufStrategy
@@ -7,33 +7,29 @@ import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.NetworkProtocol
 import io.gitpod.publicapi.v1.*
-import io.gitpod.toolbox.auth.GitpodAccount
 import io.gitpod.toolbox.auth.GitpodAuthManager
-import io.gitpod.toolbox.gateway.GitpodRemoteProviderEnvironment
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class GitpodPublicApiManager {
+class GitpodPublicApiManager(authManger: GitpodAuthManager) {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private var sharedClient: ProtocolClient? = null
     private var workspaceApi: WorkspaceServiceClientInterface? = null
     private var userApi: UserServiceClientInterface? = null
 
-    private var tmpKey: String = ""
+    init {
+        authManger.addLoginListener {
+            val account = authManger.getCurrentAccount() ?: return@addLoginListener
+            val client = createClient(account.getHost(), account.getCredentials())
+            workspaceApi = WorkspaceServiceClient(client)
+            userApi = UserServiceClient(client)
+        }
+        authManger.addLogoutListener {
+            workspaceApi = null
+            userApi = null
+        }
+    }
 
     fun getCurrentOrganizationId(): String {
         return "c5895528-23ac-4ebd-9d8b-464228d5755f"
-    }
-
-    fun setAccount(host: String, authHeader: String) {
-        val key = "$host:$authHeader"
-        if (tmpKey == key) {
-            return
-        }
-        tmpKey = key
-        sharedClient = createClient(host, authHeader)
-        workspaceApi = WorkspaceServiceClient(sharedClient!!)
-        userApi = UserServiceClient(sharedClient!!)
     }
 
     suspend fun listWorkspaces(organizationId: String): WorkspaceOuterClass.ListWorkspacesResponse {
@@ -85,14 +81,7 @@ class GitpodPublicApiManager {
     }
 
     suspend fun getAuthenticatedUser(): UserOuterClass.User {
-        val userApi = userApi ?: throw IllegalStateException("No client")
-        val resp = userApi.getAuthenticatedUser(UserOuterClass.GetAuthenticatedUserRequest.newBuilder().build())
-        val user = resp.success { it.message.user }
-        val err = resp.failure {
-            logger.error("Failed calling getAuthenticatedUser: $it")
-            it.cause
-        }
-        return user ?: throw err!!
+        return tryGetAuthenticatedUser(userApi)
     }
 
     companion object {
@@ -108,6 +97,20 @@ class GitpodPublicApiManager {
                     ),
             )
         }
+
+        /**
+         * Tries to get the authenticated user from the given API client.
+         * Used in GitpodAuthManager
+         */
+        suspend fun tryGetAuthenticatedUser(api: UserServiceClientInterface?): UserOuterClass.User {
+            val userApi = api ?: throw IllegalStateException("No client")
+            val resp = userApi.getAuthenticatedUser(UserOuterClass.GetAuthenticatedUserRequest.newBuilder().build())
+            val user = resp.success { it.message.user }
+            val err = resp.failure {
+                it.cause
+            }
+            return user ?: throw err!!
+        }
     }
 }
 
@@ -117,7 +120,7 @@ class AuthorizationInterceptor(private val token: String) : Interceptor {
                 requestFunction = { request ->
                     val headers = mutableMapOf<String, List<String>>()
                     headers.putAll(request.headers)
-                    headers["Authorization"] = listOf(token)
+                    headers["Authorization"] = listOf("Bearer $token")
                     return@StreamFunction request.clone(headers = headers)
                 },
         )
@@ -128,7 +131,7 @@ class AuthorizationInterceptor(private val token: String) : Interceptor {
                 requestFunction = { request ->
                     val headers = mutableMapOf<String, List<String>>()
                     headers.putAll(request.headers)
-                    headers["Authorization"] = listOf(token)
+                    headers["Authorization"] = listOf("Bearer $token")
                     return@UnaryFunction request.clone(headers = headers)
                 },
                 responseFunction = { resp ->
@@ -137,3 +140,5 @@ class AuthorizationInterceptor(private val token: String) : Interceptor {
         )
     }
 }
+
+// TODO: logger interceptor
