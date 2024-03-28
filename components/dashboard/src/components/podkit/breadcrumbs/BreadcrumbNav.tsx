@@ -43,7 +43,7 @@ export const BreadcrumbNav: FC<BreadcrumbPageNavProps> = ({ pageTitle, pageDescr
                 </LinkButton>
             )}
             <MiddleDot className="font-bold" />
-            <p className="text-pk-content-primary text-lg">{pageDescription}</p>
+            <p className="text-pk-content-primary text-lg pl-1">{pageDescription}</p>
         </section>
     );
 };
