@@ -216,6 +216,13 @@
                 "displayName": "Material Theme"
             }
         },
+        "jetmartin.apicurio": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "apicurio.apicurio-registry-explorer",
+                "displayName": "Inline SQL"
+            }
+        },
         "iocave.customize-ui": true,
         "iocave.monkey-patch": true,
         "pranaygp.vscode-css-peek": true,
