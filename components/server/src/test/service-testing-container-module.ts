@@ -350,3 +350,26 @@ export function withTestCtx<T>(subject: Subject | User, p: () => Promise<T>): Pr
         p,
     );
 }
+
+export function withTestCtxProxy<T extends object>(
+    realTarget: T,
+    subjectLocation: { [location: number]: (keyof T)[] },
+) {
+    const locationMap = new Map<keyof T, number>();
+    for (const location in subjectLocation) {
+        for (const name of subjectLocation[location]) {
+            locationMap.set(name, parseInt(location));
+        }
+    }
+    return new Proxy(realTarget, {
+        get: (target, prop) => {
+            const has = locationMap.has(prop as keyof T);
+            if (!has) {
+                return realTarget[prop as keyof T];
+            }
+            const location = locationMap.get(prop as keyof T)!;
+            return (...args: any) =>
+                withTestCtx(args[location] as string, () => (realTarget[prop as keyof T] as any)(...args));
+        },
+    });
+}

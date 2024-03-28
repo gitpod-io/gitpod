@@ -20,7 +20,7 @@ import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { Mock } from "../test/mocks/mock";
-import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx, withTestCtxProxy } from "../test/service-testing-container-module";
 import { OrganizationService } from "./organization-service";
 import { UsageService } from "./usage-service";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
@@ -47,7 +47,10 @@ describe("UsageService", async () => {
         Experiments.configureTestingClient({
             centralizedPermissions: true,
         });
-        os = container.get(OrganizationService);
+        const realOs = container.get(OrganizationService);
+        os = withTestCtxProxy(realOs, {
+            0: ["getOrCreateInvite", "joinOrganization", "createOrganization"],
+        });
         const userService = container.get<UserService>(UserService);
         owner = await userService.createUser({
             identity: {
@@ -83,14 +86,26 @@ describe("UsageService", async () => {
                 authId: "1234",
             },
         });
-        await userService.updateRoleOrPermission(BUILTIN_INSTLLATION_ADMIN_USER_ID, admin.id, [
-            {
-                role: "admin",
-                add: true,
-            },
-        ]);
+        await withTestCtx(BUILTIN_INSTLLATION_ADMIN_USER_ID, () =>
+            userService.updateRoleOrPermission(BUILTIN_INSTLLATION_ADMIN_USER_ID, admin.id, [
+                {
+                    role: "admin",
+                    add: true,
+                },
+            ]),
+        );
 
-        us = container.get<UsageService>(UsageService);
+        const realUs = container.get<UsageService>(UsageService);
+        us = withTestCtxProxy(realUs, {
+            0: [
+                "getCostCenter",
+                "setUsageLimit",
+                "listUsage",
+                "getCurrentBalance",
+                "addCreditNote",
+                "checkUsageLimitReached",
+            ],
+        });
         await us.getCostCenter(owner.id, org.id);
         usageServiceMock = container.get(UsageServiceDefinition.name);
     });

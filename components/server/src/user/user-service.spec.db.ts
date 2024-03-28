@@ -8,11 +8,11 @@ import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-s
 import * as chai from "chai";
 import "mocha";
 import { Container } from "inversify";
-import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx, withTestCtxProxy } from "../test/service-testing-container-module";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM } from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { OrganizationService } from "../orgs/organization-service";
-import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
+import { Authorizer } from "../authorization/authorizer";
 import { UserService } from "./user-service";
 import { Organization, User } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -36,11 +36,24 @@ describe("UserService", async () => {
         Experiments.configureTestingClient({
             centralizedPermissions: true,
         });
-        userService = container.get<UserService>(UserService);
+        const realUserService = container.get<UserService>(UserService);
+        userService = withTestCtxProxy(realUserService, {
+            0: [
+                "updateUser",
+                "updateWorkspaceTimeoutSetting",
+                "updateRoleOrPermission",
+                "findUserById",
+                "deleteUser",
+                "listUsers",
+            ],
+        });
         auth = container.get(Authorizer);
         orgService = container.get<OrganizationService>(OrganizationService);
         org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
-        const invite = await orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
+
+        const invite = await withTestCtx(BUILTIN_INSTLLATION_ADMIN_USER_ID, () =>
+            orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id),
+        );
         // first not builtin user join an org will be an owner
         owner = await userService.createUser({
             organizationId: org.id,
@@ -51,7 +64,7 @@ describe("UserService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
-        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(owner.id, invite.id));
+        await withTestCtx(owner, () => orgService.joinOrganization(owner.id, invite.id));
 
         user = await userService.createUser({
             organizationId: org.id,
@@ -62,7 +75,7 @@ describe("UserService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
-        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(user.id, invite.id));
+        await withTestCtx(user, () => orgService.joinOrganization(user.id, invite.id));
 
         user2 = await userService.createUser({
             organizationId: org.id,
@@ -73,7 +86,7 @@ describe("UserService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
-        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(user2.id, invite.id));
+        await withTestCtx(user2, () => orgService.joinOrganization(user2.id, invite.id));
 
         nonOrgUser = await userService.createUser({
             identity: {
@@ -93,17 +106,28 @@ describe("UserService", async () => {
     });
 
     it("createUser", async () => {
-        expect(await auth.hasPermissionOnUser(user.id, "read_info", user.id)).to.be.true;
-        expect(await auth.hasPermissionOnUser(user.id, "write_info", user.id)).to.be.true;
+        expect(await withTestCtx(user.id, () => auth.hasPermissionOnUser(user.id, "read_info", user.id))).to.be.true;
+        expect(await withTestCtx(user.id, () => auth.hasPermissionOnUser(user.id, "write_info", user.id))).to.be.true;
 
-        expect(await auth.hasPermissionOnUser(user2.id, "read_info", user.id)).to.be.true;
-        expect(await auth.hasPermissionOnUser(user2.id, "write_info", user.id)).to.be.false;
+        expect(await withTestCtx(user2.id, () => auth.hasPermissionOnUser(user2.id, "read_info", user.id))).to.be.true;
+        expect(await withTestCtx(user2.id, () => auth.hasPermissionOnUser(user2.id, "write_info", user.id))).to.be
+            .false;
 
-        expect(await auth.hasPermissionOnUser(nonOrgUser.id, "read_info", user.id)).to.be.false;
-        expect(await auth.hasPermissionOnUser(nonOrgUser.id, "write_info", user.id)).to.be.false;
+        expect(await withTestCtx(nonOrgUser.id, () => auth.hasPermissionOnUser(nonOrgUser.id, "read_info", user.id))).to
+            .be.false;
+        expect(await withTestCtx(nonOrgUser.id, () => auth.hasPermissionOnUser(nonOrgUser.id, "write_info", user.id)))
+            .to.be.false;
 
-        expect(await auth.hasPermissionOnUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, "read_info", user.id)).to.be.true;
-        expect(await auth.hasPermissionOnUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, "write_info", user.id)).to.be.false;
+        expect(
+            await withTestCtx(BUILTIN_INSTLLATION_ADMIN_USER_ID, () =>
+                auth.hasPermissionOnUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, "read_info", user.id),
+            ),
+        ).to.be.true;
+        expect(
+            await withTestCtx(BUILTIN_INSTLLATION_ADMIN_USER_ID, () =>
+                auth.hasPermissionOnUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, "write_info", user.id),
+            ),
+        ).to.be.false;
     });
 
     it("updateLoggedInUser_avatarUrlNotUpdatable", async () => {
@@ -239,7 +263,7 @@ describe("UserService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
-        await orgService.addOrUpdateMember(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id, orgOwner.id, "owner");
+        await withTestCtx(owner, () => orgService.addOrUpdateMember(owner.id, org.id, orgOwner.id, "owner"));
 
         await expectError(ErrorCodes.NOT_FOUND, userService.deleteUser(orgOwner.id, nonOrgUser.id));
         await userService.deleteUser(orgOwner.id, user2.id);

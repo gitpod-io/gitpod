@@ -14,7 +14,7 @@ import { Container } from "inversify";
 import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
 import { expectError } from "../test/expect-utils";
-import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx, withTestCtxProxy } from "../test/service-testing-container-module";
 import { OldProjectSettings, ProjectsService } from "./projects-service";
 import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { SYSTEM_USER } from "../authorization/authorizer";
@@ -28,6 +28,7 @@ describe("ProjectsService", async () => {
     let stranger: User;
     let org: Organization;
     let anotherOrg: Organization;
+    let ps: ProjectsService;
 
     beforeEach(async () => {
         container = createTestContainer();
@@ -41,16 +42,32 @@ describe("ProjectsService", async () => {
 
         // create the org
         const orgService = container.get(OrganizationService);
-        org = await orgService.createOrganization(owner.id, "my-org");
-        anotherOrg = await orgService.createOrganization(owner.id, "another-org");
+
+        org = await withTestCtx(owner.id, () => orgService.createOrganization(owner.id, "my-org"));
+
+        anotherOrg = await withTestCtx(owner.id, () => orgService.createOrganization(owner.id, "another-org"));
 
         // create and add a member
         member = await userDB.newUser();
-        const invite = await orgService.getOrCreateInvite(owner.id, org.id);
+        const invite = await withTestCtx(owner.id, () => orgService.getOrCreateInvite(owner.id, org.id));
         await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, invite.id));
 
-        const anotherInvite = await orgService.getOrCreateInvite(owner.id, anotherOrg.id);
+        const anotherInvite = await withTestCtx(owner.id, () => orgService.getOrCreateInvite(owner.id, anotherOrg.id));
         await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, anotherInvite.id));
+
+        const realPs = container.get(ProjectsService);
+        ps = withTestCtxProxy(realPs, {
+            0: [
+                "getProject",
+                "getProjects",
+                "deleteProject",
+                "updateProject",
+                "findProjects",
+                "findProjectsByCloneUrl",
+                "setVisibility",
+            ],
+            1: ["createProject"],
+        });
 
         // create a stranger
         stranger = await userDB.newUser();
@@ -64,7 +81,6 @@ describe("ProjectsService", async () => {
     });
 
     it("should getProject and getProjects", async () => {
-        const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
 
         let foundProject = await ps.getProject(owner.id, project.id);
@@ -84,7 +100,6 @@ describe("ProjectsService", async () => {
     });
 
     it("should setVisibility", async () => {
-        const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
 
         await expectError(ErrorCodes.NOT_FOUND, () => ps.getProject(stranger.id, project.id));
@@ -98,7 +113,6 @@ describe("ProjectsService", async () => {
     });
 
     it("should deleteProject", async () => {
-        const ps = container.get(ProjectsService);
         const project1 = await createTestProject(ps, org, owner);
 
         await ps.deleteProject(member.id, project1.id);
@@ -114,7 +128,6 @@ describe("ProjectsService", async () => {
     });
 
     it("should updateProject", async () => {
-        const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
 
         await ps.updateProject(owner, {
@@ -173,7 +186,6 @@ describe("ProjectsService", async () => {
         it("should install webhook on new projects", async () => {
             const webhooks = container.get<Set<String>>("webhooks");
             webhooks.clear();
-            const ps = container.get(ProjectsService);
             const project = await createTestProject(ps, org, owner); // using new default settings
             await ps.updateProject(owner, {
                 id: project.id,
@@ -188,7 +200,6 @@ describe("ProjectsService", async () => {
             const webhooks = container.get<Set<String>>("webhooks");
             webhooks.clear();
             const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
-            const ps = container.get(ProjectsService);
             const project = await createTestProject(ps, org, owner, {
                 name: "test-pro",
                 cloneUrl,
@@ -205,7 +216,6 @@ describe("ProjectsService", async () => {
     });
 
     it("should findProjects", async () => {
-        const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
         await createTestProject(ps, org, owner, { name: "my-project-2", cloneUrl: "https://host/account/repo.git" });
         await createTestProject(ps, org, member, { name: "my-project-3", cloneUrl: "https://host/account/repo.git" });
@@ -226,7 +236,6 @@ describe("ProjectsService", async () => {
     });
 
     it("prebuild settings migration / old and inactive project / uses defaults", async () => {
-        const ps = container.get(ProjectsService);
         const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
         const oldProject = await createTestProject(ps, org, owner, {
             name: "my-project",
@@ -251,7 +260,6 @@ describe("ProjectsService", async () => {
     });
 
     it("prebuild settings migration / inactive project / uses defaults", async () => {
-        const ps = container.get(ProjectsService);
         const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
         const oldProject = await createTestProject(ps, org, owner, {
             name: "my-project",
@@ -276,7 +284,6 @@ describe("ProjectsService", async () => {
     });
 
     it("prebuild settings migration / new and active project / updated settings", async () => {
-        const ps = container.get(ProjectsService);
         const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
         const oldProject = await createTestProject(ps, org, owner, {
             name: "my-project",
@@ -305,7 +312,6 @@ describe("ProjectsService", async () => {
     });
 
     it("should find projects by clone url", async () => {
-        const ps = container.get(ProjectsService);
         const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
 
         await createTestProject(ps, org, owner, { name: "my-project", cloneUrl });

@@ -22,7 +22,7 @@ import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
-import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx, withTestCtxProxy } from "../test/service-testing-container-module";
 import { WorkspaceService } from "./workspace-service";
 import { ProjectsService } from "../projects/projects-service";
 import { UserService } from "../user/user-service";
@@ -35,7 +35,6 @@ import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { AuthProvider } from "../auth/auth-provider";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { SYSTEM_USER } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -72,6 +71,7 @@ describe("ContextService", async () => {
     let snapshot: Snapshot;
     let snapshot_stranger: Snapshot;
     let prebuild: StartPrebuildResult;
+    let svc: ContextService;
 
     beforeEach(async () => {
         container = createTestContainer();
@@ -86,6 +86,7 @@ describe("ContextService", async () => {
                     },
                 };
             },
+            getDefaultImage: () => "gitpod/workspace-base",
         } as any as ConfigProvider);
 
         const bindContextParser = () => {
@@ -196,28 +197,31 @@ describe("ContextService", async () => {
                     authProviderId: "Public-GitHub",
                 },
             });
-            const invite = await orgService.getOrCreateInvite(owner.id, org.id);
-            await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, invite.id));
+            const invite = await withTestCtx(owner, () => orgService.getOrCreateInvite(owner.id, org.id));
+            await withTestCtx(member, () => orgService.joinOrganization(member.id, invite.id));
 
             // create a project
             const projectService = container.get(ProjectsService);
-            project = await projectService.createProject(
-                {
-                    name: "my-project",
-                    slug: "my-project",
-                    teamId: org.id,
-                    cloneUrl: "https://github.com/gitpod-io/empty",
-                    appInstallationId: "noid",
-                },
-                owner,
-                {
-                    prebuilds: {
-                        enable: true,
-                        branchMatchingPattern: "**",
-                        prebuildInterval: 20,
-                        branchStrategy: "all-branches",
+
+            project = await withTestCtx(owner, () =>
+                projectService.createProject(
+                    {
+                        name: "my-project",
+                        slug: "my-project",
+                        teamId: org.id,
+                        cloneUrl: "https://github.com/gitpod-io/empty",
+                        appInstallationId: "noid",
                     },
-                },
+                    owner,
+                    {
+                        prebuilds: {
+                            enable: true,
+                            branchMatchingPattern: "**",
+                            prebuildInterval: 20,
+                            branchStrategy: "all-branches",
+                        },
+                    },
+                ),
             );
 
             // create a stranger
@@ -231,7 +235,10 @@ describe("ContextService", async () => {
             org2 = await orgService.createOrganization(stranger.id, "stranger-org");
 
             // create a workspace
-            const workspaceService = container.get(WorkspaceService);
+            const realWorkspaceService = container.get(WorkspaceService);
+            const workspaceService = withTestCtxProxy(realWorkspaceService, {
+                1: ["createWorkspace"],
+            });
             workspace = await createTestWorkspace(workspaceService, org, owner, project);
 
             // take a snapshot
@@ -240,7 +247,8 @@ describe("ContextService", async () => {
 
             // trigger prebuild
             const prebuildManager = container.get(PrebuildManager);
-            prebuild = await prebuildManager.triggerPrebuild({}, owner, project.id, "main");
+
+            prebuild = await withTestCtx(owner, () => prebuildManager.triggerPrebuild({}, owner, project.id, "main"));
 
             // create a workspace and snapshot for another user
             const anotherWorkspace = await createTestWorkspace(workspaceService, org2, stranger, project);
@@ -253,6 +261,11 @@ describe("ContextService", async () => {
         await dataInit();
 
         bindContextParser();
+
+        const realSvc = container.get(ContextService);
+        svc = withTestCtxProxy(realSvc, {
+            0: ["parseContext"],
+        });
     });
 
     afterEach(async () => {
@@ -261,8 +274,6 @@ describe("ContextService", async () => {
     });
 
     it("should parse normal context", async () => {
-        const svc = container.get(ContextService);
-
         const ctx = await svc.parseContext(owner, "https://github.com/gitpod-io/empty", {
             projectId: project.id,
             organizationId: org.id,
@@ -276,7 +287,6 @@ describe("ContextService", async () => {
     });
 
     it("should parse prebuild context", async () => {
-        const svc = container.get(ContextService);
         const ctx = await svc.parseContext(
             owner,
             `open-prebuild/${prebuild.prebuildId}/https://github.com/gitpod-io/empty/tree/main`,
@@ -291,7 +301,6 @@ describe("ContextService", async () => {
     });
 
     it("should parse snapshot context", async () => {
-        const svc = container.get(ContextService);
         const ctx = await svc.parseContext(owner, `snapshot/${snapshot.id}`, {
             projectId: project.id,
             organizationId: org.id,
@@ -302,7 +311,6 @@ describe("ContextService", async () => {
     });
 
     it("it can start workspace base on stranger's snapshot", async () => {
-        const svc = container.get(ContextService);
         const ctx = await svc.parseContext(owner, `snapshot/${snapshot_stranger.id}`, {
             projectId: project.id,
             organizationId: org.id,

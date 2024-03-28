@@ -11,7 +11,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx, withTestCtxProxy } from "../test/service-testing-container-module";
 import { OrganizationService } from "./organization-service";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { expectError } from "../test/expect-utils";
@@ -48,7 +48,21 @@ describe("OrganizationService", async () => {
                     await validateDefaultWorkspaceImage(userId, imageRef);
                 }
             });
-        os = container.get(OrganizationService);
+        const realOs = container.get(OrganizationService);
+        os = withTestCtxProxy(realOs, {
+            0: [
+                "getSettings",
+                "updateSettings",
+                "listMembers",
+                "getOrganization",
+                "addOrUpdateMember",
+                "getOrCreateInvite",
+                "listOrganizations",
+                "removeOrganizationMember",
+                "resetInvite",
+                "deleteOrganization",
+            ],
+        });
         userService = container.get<UserService>(UserService);
         owner = await userService.createUser({
             identity: {

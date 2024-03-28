@@ -26,6 +26,7 @@ import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-c
 import { InstallationService } from "../auth/installation-service";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { runWithSubjectId } from "../util/request-context";
+import { SubjectId } from "../auth/subject-id";
 import { IDEService } from "../ide-service";
 
 @injectable()
@@ -319,7 +320,9 @@ export class OrganizationService {
                 // we can remove the built-in installation admin if we have added an owner
                 if (!hasOtherRegularOwners && members.some((m) => m.userId === BUILTIN_INSTLLATION_ADMIN_USER_ID)) {
                     try {
-                        await this.removeOrganizationMember(memberId, orgId, BUILTIN_INSTLLATION_ADMIN_USER_ID, txCtx);
+                        await runWithSubjectId(SubjectId.fromUserId(memberId), () =>
+                            this.removeOrganizationMember(memberId, orgId, BUILTIN_INSTLLATION_ADMIN_USER_ID, txCtx),
+                        );
                     } catch (error) {
                         log.warn("Failed to remove built-in installation admin from organization.", error);
                     }
