@@ -223,6 +223,20 @@
                 "displayName": "Apicurio registry"
             }
         },
+        "biomejs.biome-nightly": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "biomejs.biome",
+                "displayName": "Biome"
+            }
+        },
+        "ZixuanChen.vitest-explorer": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "vitest.explorer",
+                "displayName": "Vitest"
+            }
+        },
         "iocave.customize-ui": true,
         "iocave.monkey-patch": true,
         "pranaygp.vscode-css-peek": true,
