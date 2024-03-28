@@ -39,7 +39,7 @@ export const IdeOptions = (props: IdeOptionsProps) => {
             {props.ideOptions &&
                 props.ideOptions.map((ide) => (
                     <div key={ide.id} className="flex gap-2 items-center">
-                        <img className="w-8 h-8 self-center" src={ide.logo} alt="" />
+                        <img className="w-5 h-5 self-center" src={ide.logo} alt="" />
                         <span>
                             <span className="font-medium text-pk-content-primary">{ide.title}</span>
                             {ide.imageVersion && (
@@ -215,7 +215,7 @@ const IdeOptionSwitch = ({
     const contentColor = ideOption.isDisabledInScope ? "text-pk-content-disabled" : "text-pk-content-primary";
     const label = (
         <>
-            <img className="w-8 h-8 self-center mr-2" src={ideOption.logo} alt="" />
+            <img className="w-5 h-5 self-center mr-2" src={ideOption.logo} alt="" />
             <span className={cn("font-medium", contentColor)}>{ideOption.title}</span>
         </>
     );
