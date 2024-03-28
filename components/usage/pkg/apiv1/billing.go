@@ -421,21 +421,16 @@ func (s *BillingService) ReconcileStripeCustomers(ctx context.Context) error {
 
 	for _, costCenter := range costCenters {
 		log.Infof("Reconciling stripe invoices for cost center %s", costCenter.ID)
-		err := s.reconcileStripeInvoices(ctx, costCenter.ID)
+		err := s.reconcileFromStripeInvoices(ctx, costCenter.ID)
 		if err != nil {
 			log.WithError(err).Errorf("Failed to reconcile stripe invoices for cost center %s", costCenter.ID)
 			continue
-		}
-		_, err = s.ccManager.IncrementBillingCycle(ctx, costCenter.ID)
-		if err != nil {
-			// we are just logging at this point, so that we don't see the event again as the usage has been recorded.
-			log.WithError(err).Errorf("Failed to increment billing cycle.")
 		}
 	}
 	return nil
 }
 
-func (s *BillingService) reconcileStripeInvoices(ctx context.Context, id db.AttributionID) error {
+func (s *BillingService) reconcileFromStripeInvoices(ctx context.Context, id db.AttributionID) error {
 	cust, err := s.stripeClient.GetCustomerByAttributionID(ctx, string(id))
 	if err != nil {
 		return err
@@ -446,6 +441,8 @@ func (s *BillingService) reconcileStripeInvoices(ctx context.Context, id db.Attr
 	}
 	for _, invoice := range invoices {
 		if invoice.Status == "paid" {
+			// TODO: make it part of reconcileStripeInvoices to also update CostCenters
+
 			usage, err := InternalComputeInvoiceUsage(ctx, invoice, cust)
 			if err != nil {
 				return err
@@ -493,10 +490,16 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 	}
 	logger.WithField("usage_id", usage.ID).Infof("Inserted usage record into database for %f credits against %s attribution", usage.CreditCents.ToCredits(), usage.AttributionID)
 
-	_, err = s.ccManager.IncrementBillingCycle(ctx, usage.AttributionID)
-	if err != nil {
-		// we are just logging at this point, so that we don't see the event again as the usage has been recorded.
-		logger.WithError(err).Errorf("Failed to increment billing cycle.")
+	if invoice.BillingReason == "subscription_cycle" {
+		// Increment billing cycle
+		periodStart := time.Unix(invoice.PeriodStart, 0)
+		periodEnd := time.Unix(invoice.PeriodEnd, 0)
+
+		_, err = s.ccManager.IncrementBillingCycleStripe(ctx, usage.AttributionID, periodStart, periodEnd)
+		if err != nil {
+			// we are just logging at this point, so that we don't see the event again as the usage has been recorded.
+			logger.WithError(err).Errorf("Failed to increment billing cycle.")
+		}
 	}
 
 	// update stripe with current usage immediately, so that invoices created between now and the next reconcile are correct.
