@@ -220,7 +220,7 @@
             "disallowInstall": true,
             "extension": {
                 "id": "apicurio.apicurio-registry-explorer",
-                "displayName": "Inline SQL"
+                "displayName": "Apicurio registry"
             }
         },
         "iocave.customize-ui": true,
