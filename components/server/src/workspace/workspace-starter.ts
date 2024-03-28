@@ -1038,32 +1038,6 @@ export class WorkspaceStarter {
         const span = TraceContext.startSpan("prepareBuildRequest", ctx);
 
         try {
-            // if our workspace ever had its base image built, we do not want to build it again. In this case we use a build source reference
-            // and dismiss the original image source.
-            if (workspace.baseImageNameResolved && !ignoreBaseImageresolvedAndRebuildBase) {
-                span.setTag("hasBaseImageNameResolved", true);
-                span.log({ baseImageNameResolved: workspace.baseImageNameResolved });
-
-                const ref = new BuildSourceReference();
-                ref.setRef(workspace.baseImageNameResolved);
-
-                const src = new BuildSource();
-                src.setRef(ref);
-
-                // It doesn't matter what registries the user has access to at this point.
-                // All they need access to is the base image repository, as we're building the Gitpod layer only.
-                const nauth = new BuildRegistryAuthSelective();
-                nauth.setAllowBaserep(true);
-                // The base image is not neccesarily stored on the Gitpod registry, but might also come
-                // from a private whitelisted registry also. Hence allowBaserep is not enough, and we also
-                // need to explicitly allow all whitelisted registry when resolving the base image.
-                nauth.setAnyOfList(this.config.defaultBaseImageRegistryWhitelist);
-                const auth = new BuildRegistryAuth();
-                auth.setSelective(nauth);
-
-                return { src, auth };
-            }
-
             const auth = new BuildRegistryAuth();
             const userHasRegistryAccess = this.authService.hasPermission(user, Permission.REGISTRY_ACCESS);
             if (userHasRegistryAccess) {
@@ -1183,6 +1157,9 @@ export class WorkspaceStarter {
             req.setAuth(auth);
             req.setForceRebuild(forceRebuild);
             req.setTriggeredBy(user.id);
+            if (!ignoreBaseImageresolvedAndRebuildBase && !forceRebuild && workspace.baseImageNameResolved) {
+                req.setBaseImageNameResolved(workspace.baseImageNameResolved);
+            }
             const supervisorImage = instance.configuration?.supervisorImage;
             if (supervisorImage) {
                 req.setSupervisorRef(supervisorImage);

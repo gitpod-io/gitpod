@@ -228,6 +228,42 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 
 	// resolve build request authentication
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
+	if req.BaseImageNameResolved != "" && !req.GetForceRebuild() {
+		wsrefstr, err := o.getWorkspaceImageRef(ctx, req.BaseImageNameResolved)
+		if err != nil {
+			return status.Errorf(codes.Internal, "cannot produce workspace image ref: %q", err)
+		}
+		wsrefAuth, err := auth.AllowedAuthForAll().GetAuthFor(ctx, o.Auth, wsrefstr)
+		if err != nil {
+			return status.Errorf(codes.Internal, "cannot get workspace image authentication: %q", err)
+		}
+
+		// check if needs build -> early return
+		exists, err := o.checkImageExists(ctx, wsrefstr, wsrefAuth)
+		if err != nil {
+			return status.Errorf(codes.Internal, "cannot check if image is already built: %q", err)
+		}
+		if exists {
+			err = resp.Send(&protocol.BuildResponse{
+				Status:  protocol.BuildStatus_done_success,
+				Ref:     wsrefstr,
+				BaseRef: req.BaseImageNameResolved,
+			})
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		baseref, err := o.getAbsoluteImageRef(ctx, req.BaseImageNameResolved, auth.AllowedAuthForAll())
+		if err == nil {
+			req.Source.From = &protocol.BuildSource_Ref{
+				Ref: &protocol.BuildSourceReference{
+					Ref: baseref,
+				},
+			}
+		}
+	}
+
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
 	if _, ok := status.FromError(err); err != nil && ok {
 		return err
@@ -235,6 +271,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot resolve base image: %s", err.Error())
 	}
+
 	wsrefstr, err := o.getWorkspaceImageRef(ctx, baseref)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot produce workspace image ref: %q", err)
@@ -250,18 +287,11 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		return status.Errorf(codes.Internal, "cannot check if image is already built: %q", err)
 	}
 	if exists && !req.GetForceRebuild() {
-		// If the workspace image exists, so should the baseimage if we've built it.
-		// If we didn't build it and the base image doesn't exist anymore, getWorkspaceImageRef will have failed to resolve the baseref.
-		baserefAbsolute, err := o.getAbsoluteImageRef(ctx, baseref, auth.AllowedAuthForAll())
-		if err != nil {
-			return err
-		}
-
 		// image has already been built - no need for us to start building
 		err = resp.Send(&protocol.BuildResponse{
 			Status:  protocol.BuildStatus_done_success,
 			Ref:     wsrefstr,
-			BaseRef: baserefAbsolute,
+			BaseRef: baseref,
 		})
 		if err != nil {
 			return err
