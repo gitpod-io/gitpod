@@ -19,14 +19,10 @@ import com.jetbrains.rdserver.unattendedHost.customization.controlCenter.perform
 abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
     override val id: String = "gitpodMetricsControl"
 
-    private fun getMargin(left: Int, top: Int, right: Int, bottom: Int): BeMarginsBuilder.() -> BeMargin {
-        val result: BeMarginsBuilder.() -> BeMargin = { margin(left, top, right, bottom) }
-        return result
-    }
+    abstract fun setMargin(element: BeControl, left: Int, top: Int, right: Int, bottom: Int): BeControl;
 
     override fun getControl(lifetime: Lifetime): BeControl {
         val backendDiagnosticsService = BackendDiagnosticsService.Companion.getInstance()
-        val self = this
         return verticalGrid {
             row {
                 horizontalGrid {
@@ -37,17 +33,18 @@ abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
             }
             createWorkspaceHeaderRow(this, backendDiagnosticsService, lifetime)
             row {
-                verticalGrid {
+                setMargin(verticalGrid {
                     createCpuControl(this, backendDiagnosticsService, lifetime)
                     createMemoryControl(this, backendDiagnosticsService, lifetime)
-                }.withMargin(self.getMargin(0, 15, 0, 25))
+                }, 0, 15, 0, 25)
             }
+
             row {
-                horizontalGrid {
+                setMargin(horizontalGrid {
                     column {
                         label("Shared Node Resources")
                     }
-                }.withMargin(self.getMargin(0, 0, 0, 15)).withHelpTooltip("Shared Node Resources", "The shared metrics represent the used and available resources of the cluster node on which your workspace is running")
+                }, 0, 0, 0, 15).withHelpTooltip("Shared Node Resources", "The shared metrics represent the used and available resources of the cluster node on which your workspace is running")
             }
         }
     }
@@ -72,13 +69,12 @@ abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
         if (workspaceClass == "") {
             return
         }
-        val self = this
         return ctx.row {
-            horizontalGrid {
+            setMargin(horizontalGrid {
                 column {
                     label(workspaceClass)
                 }
-            }.withMargin(self.getMargin(0, 15, 0, 0))
+            },0, 15, 0, 0)
         }
     }
 

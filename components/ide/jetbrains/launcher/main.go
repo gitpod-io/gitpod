@@ -1067,7 +1067,7 @@ func getProductConfig(config *gitpod.GitpodConfig, alias string) *gitpod.Jetbrai
 }
 
 func linkRemotePlugin(launchCtx *LaunchContext) error {
-	remotePluginDir := launchCtx.backendDir + "/plugins/gitpod-remote"
+	remotePluginDir := launchCtx.configDir + "/plugins/gitpod-remote"
 	_, err := os.Stat(remotePluginDir)
 	if err == nil || !errors.Is(err, os.ErrNotExist) {
 		return nil
