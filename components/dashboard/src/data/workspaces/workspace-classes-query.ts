@@ -123,6 +123,13 @@ export const useAllowedWorkspaceClassesMemo = (
 
     const isLoading = isLoadingOrgSettings || isLoadingInstallationCls || isLoadingConfiguration;
 
+    const depItem = {
+        t1: installationClasses,
+        t2: orgSettings,
+        t3: options,
+        t4: configuration?.workspaceSettings?.restrictedWorkspaceClasses,
+        t5: configuration?.workspaceSettings?.workspaceClass,
+    };
     const data = useMemo(() => {
         return getAllowedWorkspaceClasses(
             installationClasses,
@@ -131,12 +138,11 @@ export const useAllowedWorkspaceClassesMemo = (
             configuration?.workspaceSettings?.workspaceClass,
             options,
         );
-    }, [
-        installationClasses,
-        orgSettings,
-        options,
-        configuration?.workspaceSettings?.restrictedWorkspaceClasses,
-        configuration?.workspaceSettings?.workspaceClass,
-    ]);
+        // react useMemo is using `Object.is` to compare dependencies so array / object will cause re-render here
+        // see also https://react.dev/reference/react/useMemo#every-time-my-component-renders-the-calculation-in-usememo-re-runs
+        // we only use basic types like string here
+        //
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [JSON.stringify(depItem)]);
     return { ...data, isLoading };
 };

@@ -76,6 +76,12 @@ export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefin
         // So we will filter it out
         isLoading = isLoadingInstallationCls || isLoadingConfiguration;
     }
+    const depItem = {
+        t1: installationOptions,
+        t2: options?.ignoreScope,
+        t3: orgSettings,
+        t4: configuration?.workspaceSettings?.restrictedEditorNames,
+    };
     const data = useMemo(() => {
         return getAllowedWorkspaceEditors(
             installationOptions,
@@ -83,13 +89,13 @@ export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefin
             configuration?.workspaceSettings?.restrictedEditorNames,
             options,
         );
+
+        // react useMemo is using `Object.is` to compare dependencies so array / object will cause re-render here
+        // see also https://react.dev/reference/react/useMemo#every-time-my-component-renders-the-calculation-in-usememo-re-runs
+        // we only use basic types like string here
+        //
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        installationOptions,
-        options?.ignoreScope,
-        orgSettings,
-        configuration?.workspaceSettings?.restrictedEditorNames,
-    ]);
+    }, [JSON.stringify(depItem)]);
     return { ...data, isLoading, usingConfigurationId: configuration?.id };
 };
 
