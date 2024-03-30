@@ -138,7 +138,7 @@ export const useAllowedWorkspaceClassesMemo = (
             configuration?.workspaceSettings?.workspaceClass,
             options,
         );
-        // react useMemo is using `Object.is` to compare dependencies so array / object will cause re-render here
+        // react useMemo is using `Object.is` to compare dependencies so array / object will make re-render re-call useMemo,
         // see also https://react.dev/reference/react/useMemo#every-time-my-component-renders-the-calculation-in-usememo-re-runs
         // we only use basic types like string here
         //
