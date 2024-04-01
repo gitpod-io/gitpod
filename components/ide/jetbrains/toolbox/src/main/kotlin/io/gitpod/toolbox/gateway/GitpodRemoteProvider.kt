@@ -24,11 +24,12 @@ class GitpodRemoteProvider(
     private val logger = LoggerFactory.getLogger(javaClass)
     private val authManger = GitpodAuthManager()
     private val publicApi = GitpodPublicApiManager(authManger)
+    private val loginPage = GitpodLoginPage(authManger)
     private val router = PageRouter()
 
     init {
         router.addRoutes(object : Route {
-            override val page = GitpodLoginPage(authManger)
+            override val page = loginPage
             override val path = ROUTE_LOGIN
         })
 
@@ -60,7 +61,7 @@ class GitpodRemoteProvider(
 //        return router.getCurrentPage().let { (page, isNotFound) ->
 //            if (isNotFound) null else page
 //        }
-        authManger.getCurrentAccount() ?: return GitpodLoginPage(authManger)
+        authManger.getCurrentAccount() ?: return loginPage
         return null
     }
 
