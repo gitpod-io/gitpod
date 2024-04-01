@@ -69,6 +69,22 @@ class GitpodPublicApiManager(val authManger: GitpodAuthManager) {
         return workspace
     }
 
+    suspend fun watchWorkspace(workspaceId: String?, consumer: (String, WorkspaceOuterClass.WorkspaceStatus) -> Unit) {
+        val workspaceApi = workspaceApi ?: throw IllegalStateException("No client")
+        val req = WorkspaceOuterClass.WatchWorkspaceStatusRequest.newBuilder()
+        if (!workspaceId.isNullOrEmpty()) {
+            req.setWorkspaceId(workspaceId)
+        }
+        logger.info("==============watch $workspaceId")
+        val stream = workspaceApi.watchWorkspaceStatus()
+        stream.sendAndClose(req.build())
+        for (response in stream.responseChannel()) {
+            logger.info("==============watch $workspaceId ${response.status.phase.name.name}")
+            consumer(response.workspaceId, response.status)
+        }
+        logger.info("==============watch $workspaceId stop")
+    }
+
     suspend fun listWorkspaces(): WorkspaceOuterClass.ListWorkspacesResponse {
         val workspaceApi = workspaceApi ?: throw IllegalStateException("No client")
         val resp = workspaceApi.listWorkspaces(

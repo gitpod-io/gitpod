@@ -3,6 +3,7 @@ package io.gitpod.toolbox.gateway
 import com.jetbrains.toolbox.gateway.environments.ManualEnvironmentContentsView
 import com.jetbrains.toolbox.gateway.environments.SshEnvironmentContentsView
 import com.jetbrains.toolbox.gateway.ssh.SshConnectionInfo
+import io.gitpod.toolbox.auth.GitpodAuthManager
 import io.gitpod.toolbox.service.GitpodPublicApiManager
 import io.gitpod.toolbox.service.Utils
 import kotlinx.coroutines.CancellationException
@@ -47,6 +48,7 @@ class GitpodWorkspaceSshConnectionInfo(private val username: String, private val
 }
 
 class GitpodSSHEnvironmentContentsView(
+        private val authManager: GitpodAuthManager,
         private val workspaceId: String,
         private val publicApi: GitpodPublicApiManager,
         private val httpClient: OkHttpClient,
@@ -62,10 +64,9 @@ class GitpodSSHEnvironmentContentsView(
 
             val workspaceHost = actualWorkspaceUrl.host.substring(actualWorkspaceUrl.host.indexOf('.') + 1)
             val workspaceSSHHost = "${workspaceId}.ssh.${workspaceHost}"
-
-            val sshResp = createSSHKeyPair(actualWorkspaceUrl, ConnectParams("https://gitpod.io", workspaceId), ownerTokenResp.ownerToken)
+            val account = authManager.getCurrentAccount() ?: throw Exception("No account found")
+            val sshResp = createSSHKeyPair(actualWorkspaceUrl, ConnectParams(account.getHost(), workspaceId), ownerTokenResp.ownerToken)
                     ?: throw Exception("Couldn't generate sshkeypair")
-
             return@future GitpodWorkspaceSshConnectionInfo(workspaceId, workspaceSSHHost, sshResp.privateKey.toByteArray(Charsets.UTF_8))
         }
     }

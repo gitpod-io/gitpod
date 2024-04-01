@@ -7,24 +7,45 @@ import com.jetbrains.toolbox.gateway.states.EnvironmentStateConsumer
 import com.jetbrains.toolbox.gateway.states.StandardRemoteEnvironmentState
 import com.jetbrains.toolbox.gateway.ui.ActionListener
 import io.gitpod.publicapi.v1.WorkspaceOuterClass
+import io.gitpod.toolbox.auth.GitpodAuthManager
 import io.gitpod.toolbox.service.GitpodPublicApiManager
+import io.gitpod.toolbox.service.Utils
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
 
 class GitpodRemoteProviderEnvironment(
-        private val workspace: WorkspaceOuterClass.Workspace,
-        private val publicApi: GitpodPublicApiManager,
-        private val httpClient: OkHttpClient,
+    private val authManager: GitpodAuthManager,
+    private val workspace: WorkspaceOuterClass.Workspace,
+    private val publicApi: GitpodPublicApiManager,
+    private val httpClient: OkHttpClient,
 ) : RemoteProviderEnvironment {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private var viewState = StandardRemoteEnvironmentState.Inactive
     private val stateListeners = mutableSetOf<EnvironmentStateConsumer>()
     private val actionListeners = mutableSetOf<ActionListener>()
 
     init {
-        if (workspace.status.phase.nameValue == WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_RUNNING_VALUE) {
-            viewState = StandardRemoteEnvironmentState.Active
+        Utils.coroutineScope.launch {
+            publicApi.watchWorkspace(workspace.id) { _, status ->
+                var state = StandardRemoteEnvironmentState.Inactive
+                when (status.phase.nameValue) {
+                    WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_IMAGEBUILD_VALUE,
+                    WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_INITIALIZING_VALUE,
+                    WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_PENDING_VALUE,
+                    WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_CREATING_VALUE -> {
+                        state = StandardRemoteEnvironmentState.Unreachable
+                    }
+                    WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_STOPPING_VALUE,
+                    WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_STOPPED_VALUE -> {
+                        state = StandardRemoteEnvironmentState.Inactive
+                    }
+                    WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_RUNNING_VALUE -> {
+                        state = StandardRemoteEnvironmentState.Active
+                    }
+                }
+                stateListeners.forEach { it.consume(state) }
+            }
         }
     }
 
@@ -34,8 +55,6 @@ class GitpodRemoteProviderEnvironment(
     override fun addStateListener(p0: EnvironmentStateConsumer?): Boolean {
         return if (p0 != null) {
             stateListeners += p0
-
-            p0.consume(viewState)
             true
         } else false
     }
@@ -47,7 +66,15 @@ class GitpodRemoteProviderEnvironment(
     }
 
     override fun getContentsView(): CompletableFuture<EnvironmentContentsView> {
-        return CompletableFuture.completedFuture(GitpodSSHEnvironmentContentsView(workspace.id, publicApi, httpClient, logger))
+        return CompletableFuture.completedFuture(
+            GitpodSSHEnvironmentContentsView(
+                authManager,
+                workspace.id,
+                publicApi,
+                httpClient,
+                logger
+            )
+        )
     }
 
     override fun setVisible(visibilityState: EnvironmentVisibilityState) {

@@ -76,6 +76,7 @@ class GitpodRemoteProvider(
             val resp = publicApi.listWorkspaces()
             consumer.consumeEnvironments(resp.workspacesList.map {
                 GitpodRemoteProviderEnvironment(
+                    authManger,
                     it,
                     publicApi,
                     httpClient
