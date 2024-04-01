@@ -89,13 +89,15 @@ val restartToolbox by tasks.creating {
     description = "Restarts the JetBrains Toolbox app."
 
     doLast {
-        val osName = System.getProperty("os.name").lowercase()
         when {
-            "mac" in osName -> {
+            SystemInfoRt.isMac -> {
                 exec {
                     commandLine("sh", "-c", "pkill -f 'JetBrains Toolbox' || true")
                 }
                 Thread.sleep(3000)
+                exec {
+                    commandLine("sh", "-c", "echo debugClean > ~/Library/Logs/JetBrains/Toolbox/toolbox.log")
+                }
                 exec {
                     commandLine("open", "/Applications/JetBrains Toolbox.app")
                 }

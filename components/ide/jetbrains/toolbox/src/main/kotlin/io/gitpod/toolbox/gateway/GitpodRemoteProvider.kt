@@ -11,7 +11,10 @@ import io.gitpod.toolbox.auth.GitpodAuthManager
 import io.gitpod.toolbox.auth.GitpodLoginPage
 import io.gitpod.toolbox.components.GitpodIcon
 import io.gitpod.toolbox.components.SimpleButton
-import io.gitpod.toolbox.service.*
+import io.gitpod.toolbox.service.GitpodPublicApiManager
+import io.gitpod.toolbox.service.PageRouter
+import io.gitpod.toolbox.service.Route
+import io.gitpod.toolbox.service.Utils
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import org.slf4j.LoggerFactory
@@ -25,6 +28,7 @@ class GitpodRemoteProvider(
     private val authManger = GitpodAuthManager()
     private val publicApi = GitpodPublicApiManager(authManger)
     private val loginPage = GitpodLoginPage(authManger)
+    private val newEnvPage = GitpodNewEnvironmentPage(authManger, publicApi)
     private val router = PageRouter()
 
     init {
@@ -54,6 +58,7 @@ class GitpodRemoteProvider(
         authManger.getCurrentAccount()?.onOrgSelected {
             watchWorkspaceList()
         }
+        Utils.dataManager.addWorkspaceListDataListener { watchWorkspaceList() }
     }
 
     override fun getOverrideUiPage(): UiPage? {
@@ -84,7 +89,7 @@ class GitpodRemoteProvider(
     override fun getName(): String = "Gitpod"
     override fun getSvgIcon() = GitpodIcon()
 
-    override fun getNewEnvironmentUiPage() = GitpodNewEnvironmentPage(publicApi)
+    override fun getNewEnvironmentUiPage() = newEnvPage
 
     override fun getAccountDropDown(): AccountDropdownField? {
         val account = authManger.getCurrentAccount() ?: return null

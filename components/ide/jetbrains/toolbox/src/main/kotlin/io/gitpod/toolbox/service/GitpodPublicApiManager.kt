@@ -50,6 +50,25 @@ class GitpodPublicApiManager(val authManger: GitpodAuthManager) {
         return this.handleResp("listOrganizations", resp).organizationsList
     }
 
+    suspend fun createAndStartWorkspace(contextUrl: String, editor: String, workspaceClass: String, configurationId: String?): WorkspaceOuterClass.Workspace {
+        val workspaceApi = workspaceApi ?: throw IllegalStateException("No client")
+        val meta = WorkspaceOuterClass.WorkspaceMetadata.newBuilder().setOrganizationId(orgId)
+        if (configurationId != null) {
+            meta.setConfigurationId(configurationId)
+        }
+        val contextInfo = WorkspaceOuterClass.CreateAndStartWorkspaceRequest.ContextURL.newBuilder()
+            .setUrl(contextUrl)
+            .setWorkspaceClass(workspaceClass)
+            .setEditor(Editor.EditorReference.newBuilder().setName(editor).build())
+        val req = WorkspaceOuterClass.CreateAndStartWorkspaceRequest.newBuilder()
+            .setMetadata(meta)
+            .setContextUrl(contextInfo)
+        val resp = workspaceApi.createAndStartWorkspace(req.build())
+        val workspace = this.handleResp("createWorkspace", resp).workspace
+        Utils.dataManager.stealWorkspaceListData()
+        return workspace
+    }
+
     suspend fun listWorkspaces(): WorkspaceOuterClass.ListWorkspacesResponse {
         val workspaceApi = workspaceApi ?: throw IllegalStateException("No client")
         val resp = workspaceApi.listWorkspaces(
@@ -78,7 +97,7 @@ class GitpodPublicApiManager(val authManger: GitpodAuthManager) {
         return tryGetAuthenticatedUser(userApi, logger)
     }
 
-    private fun <T>handleResp(method: String, resp: ResponseMessage<T>): T {
+    private fun <T> handleResp(method: String, resp: ResponseMessage<T>): T {
         val data = resp.success { it.message }
         val error = resp.failure {
             logger.error("failed to call papi.${method} $it")

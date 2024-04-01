@@ -14,6 +14,7 @@ abstract class AbstractUiPage : UiPage {
 
     @Suppress("UNCHECKED_CAST")
     fun <T> getFieldValue(field: UiField) = stateGetter?.apply(field) as T?
+    fun setFieldValue(field: UiField, value: Any) = stateSetter?.accept(field, value)
     fun setActionResultMessage(result: Any) = resultSetter?.accept(result)
     fun setActionErrorMessage(error: String) = errorSetter?.accept(error)
 

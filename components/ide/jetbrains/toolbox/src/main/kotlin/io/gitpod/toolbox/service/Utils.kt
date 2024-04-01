@@ -12,6 +12,7 @@ object Utils {
     lateinit var coroutineScope: CoroutineScope private set
     lateinit var settingStore: PluginSettingsStore private set
 
+    lateinit var dataManager: DataManager private set
 
     private lateinit var toolboxUi: ToolboxUi
 
@@ -23,6 +24,7 @@ object Utils {
         coroutineScope = serviceLocator.getService(CoroutineScope::class.java)
         toolboxUi = serviceLocator.getService(ToolboxUi::class.java)
         settingStore = serviceLocator.getService(PluginSettingsStore::class.java)
+        dataManager = DataManager()
     }
 
     fun openUrl(url: String) {
