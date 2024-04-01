@@ -9,7 +9,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.slf4j.LoggerFactory
@@ -57,11 +56,11 @@ class GitpodAuthManager {
         manager.addEventListener {
             when (it.type) {
                 AuthEvent.Type.LOGIN -> {
-                    logger.debug("account ${it.accountId} logged in")
+                    logger.info("account ${it.accountId} logged in")
                     loginListeners.forEach { it() }
                 }
                 AuthEvent.Type.LOGOUT -> {
-                    logger.debug("account ${it.accountId} logged out")
+                    logger.info("account ${it.accountId} logged out")
                     logoutListeners.forEach { it() }
                 }
             }
@@ -101,7 +100,7 @@ class GitpodAuthManager {
         return Utils.coroutineScope.future {
             val bearerToken = getBearerToken(oAuthToken)
             val client = GitpodPublicApiManager.createClient(gitpodHost, bearerToken)
-            val user = GitpodPublicApiManager.tryGetAuthenticatedUser(UserServiceClient(client))
+            val user = GitpodPublicApiManager.tryGetAuthenticatedUser(UserServiceClient(client), logger)
             GitpodAccount(bearerToken, user.id, user.name, gitpodHost)
         }
     }
@@ -131,20 +130,46 @@ class GitpodAccount(
     private val name: String,
     private val host: String
 ) : Account {
-    override fun getId(): String {
-        return id
-    }
+    private val orgSelectedListeners: MutableList<(String) -> Unit> = mutableListOf()
+    private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun getFullName(): String {
-        return name
-    }
+    override fun getId() = id
+    override fun getFullName() = name
+    fun getCredentials() = credentials
+    fun getHost() = host
 
-    fun getCredentials(): String {
-        return credentials
-    }
+    private fun getStoreKey(key: String) = "USER:${id}:${key}"
 
-    fun getHost(): String {
-        return host
+    var organizationId: String?
+        get() = Utils.settingStore[getStoreKey("ORG")]
+        set(value){
+            if (value == null) {
+                return
+            }
+            Utils.settingStore[getStoreKey("ORG")] = value
+            orgSelectedListeners.forEach { it(value) }
+        }
+
+    var preferEditor: String?
+        get() = Utils.settingStore[getStoreKey("EDITOR")]
+        set(value){
+            if (value == null) {
+                return
+            }
+            Utils.settingStore[getStoreKey("EDITOR")] = value
+        }
+
+    var preferWorkspaceClass: String?
+        get() = Utils.settingStore[getStoreKey("WS_CLS")]
+        set(value){
+            if (value == null) {
+                return
+            }
+            Utils.settingStore[getStoreKey("WS_CLS")] = value
+        }
+
+    fun onOrgSelected(listener: (String) -> Unit) {
+        orgSelectedListeners.add(listener)
     }
 
     fun encode(): String {

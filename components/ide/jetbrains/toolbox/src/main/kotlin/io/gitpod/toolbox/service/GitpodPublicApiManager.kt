@@ -7,94 +7,97 @@ import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.NetworkProtocol
 import io.gitpod.publicapi.v1.*
+import io.gitpod.toolbox.auth.GitpodAccount
 import io.gitpod.toolbox.auth.GitpodAuthManager
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class GitpodPublicApiManager(authManger: GitpodAuthManager) {
-    private val logger = LoggerFactory.getLogger(javaClass)
+class GitpodPublicApiManager(val authManger: GitpodAuthManager) {
     private var workspaceApi: WorkspaceServiceClientInterface? = null
+    private var organizationApi: OrganizationServiceClientInterface? = null
     private var userApi: UserServiceClientInterface? = null
+    private var account: GitpodAccount? = null
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     init {
+        setup()
         authManger.addLoginListener {
-            val account = authManger.getCurrentAccount() ?: return@addLoginListener
-            val client = createClient(account.getHost(), account.getCredentials())
-            workspaceApi = WorkspaceServiceClient(client)
-            userApi = UserServiceClient(client)
+            setup()
         }
         authManger.addLogoutListener {
             workspaceApi = null
+            organizationApi = null
             userApi = null
+            account = null
         }
     }
 
-    fun getCurrentOrganizationId(): String {
-        return "c5895528-23ac-4ebd-9d8b-464228d5755f"
+    fun setup() {
+        val account = authManger.getCurrentAccount() ?: return
+        this.account = account
+        val client = createClient(account.getHost(), account.getCredentials())
+        workspaceApi = WorkspaceServiceClient(client)
+        organizationApi = OrganizationServiceClient(client)
+        userApi = UserServiceClient(client)
     }
 
-    suspend fun listWorkspaces(organizationId: String): WorkspaceOuterClass.ListWorkspacesResponse {
+    private val orgId: String
+        get() = account?.organizationId ?: throw IllegalStateException("Organization not selected")
+
+    suspend fun listOrganizations(): List<OrganizationOuterClass.Organization> {
+        val organizationApi = organizationApi ?: throw IllegalStateException("No client")
+        val resp = organizationApi.listOrganizations(OrganizationOuterClass.ListOrganizationsRequest.newBuilder().build())
+        return this.handleResp("listOrganizations", resp).organizationsList
+    }
+
+    suspend fun listWorkspaces(): WorkspaceOuterClass.ListWorkspacesResponse {
         val workspaceApi = workspaceApi ?: throw IllegalStateException("No client")
-        val respMessage = workspaceApi.listWorkspaces(WorkspaceOuterClass.ListWorkspacesRequest.newBuilder().setOrganizationId(organizationId).build())
-        val resp = respMessage.success { list: ResponseMessage.Success<WorkspaceOuterClass.ListWorkspacesResponse> ->
-            list.message
-        }
-        val error = respMessage.failure { error: ResponseMessage.Failure<WorkspaceOuterClass.ListWorkspacesResponse> ->
-            logger.error("Failed calling listWorkspaces: ${error.toString()}")
-            error.cause
-        }
-        if (resp != null) {
-            return resp
-        }
-        throw error!!
+        val resp = workspaceApi.listWorkspaces(
+            WorkspaceOuterClass.ListWorkspacesRequest.newBuilder().setOrganizationId(orgId).build()
+        )
+        return this.handleResp("listWorkspaces", resp)
     }
 
     suspend fun getWorkspace(workspaceId: String): WorkspaceOuterClass.GetWorkspaceResponse {
         val workspaceApi = workspaceApi ?: throw IllegalStateException("No client")
-        val respMessage = workspaceApi.getWorkspace(WorkspaceOuterClass.GetWorkspaceRequest.newBuilder().setWorkspaceId(workspaceId).build())
-        val resp = respMessage.success { list: ResponseMessage.Success<WorkspaceOuterClass.GetWorkspaceResponse> ->
-            list.message
-        }
-        val error = respMessage.failure { error: ResponseMessage.Failure<WorkspaceOuterClass.GetWorkspaceResponse> ->
-            logger.error("Failed calling getWorkspace: ${error.toString()}")
-            error.cause
-        }
-        if (resp != null) {
-            return resp
-        }
-        throw error!!
+        val resp = workspaceApi.getWorkspace(
+            WorkspaceOuterClass.GetWorkspaceRequest.newBuilder().setWorkspaceId(workspaceId).build()
+        )
+        return this.handleResp("getWorkspace", resp)
     }
 
     suspend fun getWorkspaceOwnerToken(workspaceId: String): WorkspaceOuterClass.GetWorkspaceOwnerTokenResponse {
         val workspaceApi = workspaceApi ?: throw IllegalStateException("No client")
-        val respMessage = workspaceApi.getWorkspaceOwnerToken(WorkspaceOuterClass.GetWorkspaceOwnerTokenRequest.newBuilder().setWorkspaceId(workspaceId).build())
-        val resp = respMessage.success { list: ResponseMessage.Success<WorkspaceOuterClass.GetWorkspaceOwnerTokenResponse> ->
-            list.message
-        }
-        val error = respMessage.failure { error: ResponseMessage.Failure<WorkspaceOuterClass.GetWorkspaceOwnerTokenResponse> ->
-            logger.error("Failed calling getWorkspaceOwnerToken: ${error.toString()}")
-            error.cause
-        }
-        if (resp != null) {
-            return resp
-        }
-        throw error!!
+        val resp = workspaceApi.getWorkspaceOwnerToken(
+            WorkspaceOuterClass.GetWorkspaceOwnerTokenRequest.newBuilder().setWorkspaceId(workspaceId).build()
+        )
+        return this.handleResp("getWorkspaceOwnerToken", resp)
     }
 
     suspend fun getAuthenticatedUser(): UserOuterClass.User {
-        return tryGetAuthenticatedUser(userApi)
+        return tryGetAuthenticatedUser(userApi, logger)
+    }
+
+    private fun <T>handleResp(method: String, resp: ResponseMessage<T>): T {
+        val data = resp.success { it.message }
+        val error = resp.failure {
+            logger.error("failed to call papi.${method} $it")
+            it.cause
+        }
+        return data ?: throw error!!
     }
 
     companion object {
         fun createClient(gitpodHost: String, token: String): ProtocolClient {
             val authInterceptor = AuthorizationInterceptor(token)
             return ProtocolClient(
-                    httpClient = ConnectOkHttpClient(),
-                    ProtocolClientConfig(
-                            host = "$gitpodHost/public-api",
-                            serializationStrategy = GoogleJavaProtobufStrategy(), // Or GoogleJavaJSONStrategy for JSON.
-                            networkProtocol = NetworkProtocol.CONNECT,
-                            interceptors = listOf { authInterceptor }
-                    ),
+                httpClient = ConnectOkHttpClient(),
+                ProtocolClientConfig(
+                    host = "$gitpodHost/public-api",
+                    serializationStrategy = GoogleJavaProtobufStrategy(), // Or GoogleJavaJSONStrategy for JSON.
+                    networkProtocol = NetworkProtocol.CONNECT,
+                    interceptors = listOf { authInterceptor }
+                ),
             )
         }
 
@@ -102,11 +105,12 @@ class GitpodPublicApiManager(authManger: GitpodAuthManager) {
          * Tries to get the authenticated user from the given API client.
          * Used in GitpodAuthManager
          */
-        suspend fun tryGetAuthenticatedUser(api: UserServiceClientInterface?): UserOuterClass.User {
+        suspend fun tryGetAuthenticatedUser(api: UserServiceClientInterface?, logger: Logger): UserOuterClass.User {
             val userApi = api ?: throw IllegalStateException("No client")
             val resp = userApi.getAuthenticatedUser(UserOuterClass.GetAuthenticatedUserRequest.newBuilder().build())
             val user = resp.success { it.message.user }
             val err = resp.failure {
+                logger.error("failed to call papi.getAuthenticatedUser $it")
                 it.cause
             }
             return user ?: throw err!!
@@ -115,30 +119,21 @@ class GitpodPublicApiManager(authManger: GitpodAuthManager) {
 }
 
 class AuthorizationInterceptor(private val token: String) : Interceptor {
-    override fun streamFunction(): StreamFunction {
-        return StreamFunction(
-                requestFunction = { request ->
-                    val headers = mutableMapOf<String, List<String>>()
-                    headers.putAll(request.headers)
-                    headers["Authorization"] = listOf("Bearer $token")
-                    return@StreamFunction request.clone(headers = headers)
-                },
-        )
-    }
+    override fun streamFunction() = StreamFunction({
+        val headers = mutableMapOf<String, List<String>>()
+        headers.putAll(it.headers)
+        headers["Authorization"] = listOf("Bearer $token")
+        return@StreamFunction it.clone(headers = headers)
+    })
 
-    override fun unaryFunction(): UnaryFunction {
-        return UnaryFunction(
-                requestFunction = { request ->
-                    val headers = mutableMapOf<String, List<String>>()
-                    headers.putAll(request.headers)
-                    headers["Authorization"] = listOf("Bearer $token")
-                    return@UnaryFunction request.clone(headers = headers)
-                },
-                responseFunction = { resp ->
-                    resp
-                },
-        )
-    }
+    override fun unaryFunction() = UnaryFunction(
+        {
+            val headers = mutableMapOf<String, List<String>>()
+            headers.putAll(it.headers)
+            headers["Authorization"] = listOf("Bearer $token")
+            return@UnaryFunction it.clone(headers = headers)
+        },
+    )
 }
 
 // TODO: logger interceptor

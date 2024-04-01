@@ -1,9 +1,6 @@
 package io.gitpod.toolbox.auth
 
-import com.jetbrains.toolbox.gateway.ui.ActionDescription
-import com.jetbrains.toolbox.gateway.ui.TextField
-import com.jetbrains.toolbox.gateway.ui.UiField
-import com.jetbrains.toolbox.gateway.ui.ValidationResult
+import com.jetbrains.toolbox.gateway.ui.*
 import io.gitpod.toolbox.components.AbstractUiPage
 import io.gitpod.toolbox.components.GitpodIcon
 import io.gitpod.toolbox.components.SimpleButton
@@ -21,7 +18,7 @@ class GitpodLoginPage(private val authManager: GitpodAuthManager) : AbstractUiPa
     }
 
     override fun getFields(): MutableList<UiField> {
-        return mutableListOf(hostField)
+        return mutableListOf(hostField, LinkField("Learn more", "https://gitpod.io/docs"))
     }
 
     override fun getActionButtons(): MutableList<ActionDescription> {
@@ -32,13 +29,9 @@ class GitpodLoginPage(private val authManager: GitpodAuthManager) : AbstractUiPa
         })
     }
 
-    override fun getTitle(): String {
-        return "Login to Gitpod"
-    }
+    override fun getTitle() = "Login to Gitpod"
 
-    override fun getDescription(): String? {
-        return "Always ready to code."
-    }
+    override fun getDescription() = "Always ready to code."
 
     override fun getSvgIcon(): ByteArray {
         return GitpodIcon()
