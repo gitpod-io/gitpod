@@ -1,5 +1,5 @@
 {
-    "malicious": [],
+    "malicious": ["kyntrack.log-matrix"],
     "deprecated": {
         "msjsdiag.debugger-for-chrome": {
             "disallowInstall": true,
@@ -106,16 +106,10 @@
             }
         },
         "CoenraadS.bracket-pair-colorizer-2": {
-            "settings": [
-                "editor.bracketPairColorization.enabled",
-                "editor.guides.bracketPairs"
-            ]
+            "settings": ["editor.bracketPairColorization.enabled", "editor.guides.bracketPairs"]
         },
         "CoenraadS.bracket-pair-colorizer": {
-            "settings": [
-                "editor.bracketPairColorization.enabled",
-                "editor.guides.bracketPairs"
-            ]
+            "settings": ["editor.bracketPairColorization.enabled", "editor.guides.bracketPairs"]
         },
         "idleberg.innosetup": {
             "disallowInstall": true,
@@ -185,6 +179,69 @@
             "extension": {
                 "id": "snyk-security.snyk-vulnerability-scanner",
                 "displayName": "Snyk Security - Code, Open Source Dependencies, IaC Configurations"
+            }
+        },
+        "wingrunr21.vscode-ruby": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "Shopify.ruby-lsp",
+                "displayName": "Ruby LSP"
+            }
+        },
+        "rebornix.Ruby": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "Shopify.ruby-lsp",
+                "displayName": "Ruby LSP"
+            }
+        },
+        "Esri.arcgis-jsapi-snippets": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "Esri.arcgis-maps-sdk-js-snippets",
+                "displayName": "ArcGIS Maps SDK for JavaScript Snippets"
+            }
+        },
+        "ligolang-publish.ligo-debugger-vscode": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "ligolang-publish.ligo-vscode",
+                "displayName": "ligo-vscode"
+            }
+        },
+        "Equinusocio.vsc-community-material-theme": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "Equinusocio.vsc-material-theme",
+                "displayName": "Material Theme"
+            }
+        },
+        "jetmartin.apicurio": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "apicurio.apicurio-registry-explorer",
+                "displayName": "Apicurio registry"
+            }
+        },
+        "biomejs.biome-nightly": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "biomejs.biome",
+                "displayName": "Biome"
+            }
+        },
+        "ZixuanChen.vitest-explorer": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "vitest.explorer",
+                "displayName": "Vitest"
+            }
+        },
+        "cortex-debug.svd-viewer": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "eclipse-cdt.peripheral-inspector",
+                "displayName": "Eclipse CDT Cloud"
             }
         },
         "iocave.customize-ui": true,
