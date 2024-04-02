@@ -29,26 +29,24 @@ class GitpodRemoteProvider(
     private val publicApi = GitpodPublicApiManager(authManger)
     private val loginPage = GitpodLoginPage(authManger)
     private val newEnvPage = GitpodNewEnvironmentPage(authManger, publicApi)
-    private val router = PageRouter()
 
     init {
-        router.addRoutes(object : Route {
-            override val page = loginPage
-            override val path = ROUTE_LOGIN
-        })
-
         startup()
         authManger.addLoginListener {
+            logger.info("user logged in ${authManger.getCurrentAccount()?.id}")
             startup()
+            // TODO: showPluginEnvironmentsPage not working
+            Utils.toolboxUi.showPluginEnvironmentsPage()
+        }
+        authManger.addLogoutListener {
+            logger.info("user logged out ${authManger.getCurrentAccount()?.id}")
+            // TODO: showPluginEnvironmentsPage not working
+            Utils.toolboxUi.showPluginEnvironmentsPage()
         }
     }
 
     private fun startup() {
-        val account = authManger.getCurrentAccount()
-        if (account == null) {
-            router.goTo(ROUTE_LOGIN)
-            return
-        }
+        val account = authManger.getCurrentAccount() ?: return
         publicApi.setup()
         val orgId = account.organizationId
         logger.info("user logged in, selected org: $orgId")
@@ -62,10 +60,7 @@ class GitpodRemoteProvider(
     }
 
     override fun getOverrideUiPage(): UiPage? {
-        // TODO: How to let it knows the page needs to be updated?
-//        return router.getCurrentPage().let { (page, isNotFound) ->
-//            if (isNotFound) null else page
-//        }
+        logger.info("getOverrideUiPage")
         authManger.getCurrentAccount() ?: return loginPage
         return null
     }
@@ -131,5 +126,6 @@ class GitpodRemoteProvider(
 
     companion object {
         const val ROUTE_LOGIN = "/login"
+        const val HOME_PAGE = "/home"
     }
 }

@@ -36,10 +36,12 @@ class GitpodRemoteProviderEnvironment(
                     WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_CREATING_VALUE -> {
                         state = StandardRemoteEnvironmentState.Unreachable
                     }
+
                     WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_STOPPING_VALUE,
                     WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_STOPPED_VALUE -> {
                         state = StandardRemoteEnvironmentState.Inactive
                     }
+
                     WorkspaceOuterClass.WorkspacePhase.Phase.PHASE_RUNNING_VALUE -> {
                         state = StandardRemoteEnvironmentState.Active
                     }
@@ -50,7 +52,7 @@ class GitpodRemoteProviderEnvironment(
     }
 
     override fun getId(): String = workspace.id
-    override fun getName(): String = workspace.id
+    override fun getName(): String = workspace.metadata.name
 
     override fun addStateListener(p0: EnvironmentStateConsumer?): Boolean {
         return if (p0 != null) {
@@ -72,7 +74,6 @@ class GitpodRemoteProviderEnvironment(
                 workspace.id,
                 publicApi,
                 httpClient,
-                logger
             )
         )
     }

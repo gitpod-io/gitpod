@@ -14,7 +14,7 @@ object Utils {
 
     lateinit var dataManager: DataManager private set
 
-    private lateinit var toolboxUi: ToolboxUi
+    lateinit var toolboxUi: ToolboxUi private set
 
     fun initialize(serviceLocator: ToolboxServiceLocator) {
         if (!isInitialized.compareAndSet(false, true)) {

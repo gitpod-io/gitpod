@@ -35,6 +35,12 @@ dependencies {
     // Java specific dependencies.
     implementation("com.connectrpc:connect-kotlin-google-java-ext:0.6.0")
     implementation("com.google.protobuf:protobuf-java:4.26.0")
+    // WebSocket
+    compileOnly("javax.websocket:javax.websocket-api:1.1")
+    compileOnly("org.eclipse.jetty.websocket:websocket-api:9.4.54.v20240208")
+    implementation("org.eclipse.jetty.websocket:javax-websocket-client-impl:9.4.54.v20240208")
+    // RD-Core
+    implementation("com.jetbrains.rd:rd-core:2024.1.1")
 
     implementation(libs.gateway.api)
     implementation(libs.slf4j)
@@ -62,9 +68,16 @@ tasks.shadowJar {
         "kotlin."
     )
 
+    val includeGroups = listOf(
+        "com.jetbrains.rd"
+    )
+
     dependencies {
         exclude {
             excludedGroups.any { group ->
+                if (includeGroups.any { includeGroup -> it.name.startsWith(includeGroup) }) {
+                    return@any false
+                }
                 it.name.startsWith(group)
             }
         }
