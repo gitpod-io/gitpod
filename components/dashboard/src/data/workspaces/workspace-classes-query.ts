@@ -123,13 +123,13 @@ export const useAllowedWorkspaceClassesMemo = (
 
     const isLoading = isLoadingOrgSettings || isLoadingInstallationCls || isLoadingConfiguration;
 
-    const depItem = {
-        t1: installationClasses,
-        t2: orgSettings,
-        t3: options,
-        t4: configuration?.workspaceSettings?.restrictedWorkspaceClasses,
-        t5: configuration?.workspaceSettings?.workspaceClass,
-    };
+    const depItems = [
+        installationClasses,
+        orgSettings,
+        options,
+        configuration?.workspaceSettings?.restrictedWorkspaceClasses,
+        configuration?.workspaceSettings?.workspaceClass,
+    ];
     const data = useMemo(() => {
         return getAllowedWorkspaceClasses(
             installationClasses,
@@ -143,6 +143,6 @@ export const useAllowedWorkspaceClassesMemo = (
         // we only use basic types like string here
         //
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [JSON.stringify(depItem)]);
+    }, [JSON.stringify(depItems)]);
     return { ...data, isLoading };
 };
