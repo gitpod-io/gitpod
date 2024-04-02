@@ -46,6 +46,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	*/
 	intellijPrevious := "intellij-previous"
 	jbPluginPrevious := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-e7eb44545510a8293c5c6aa814a0ad4e81852e5f")
+	jbLauncherPrevious := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, "commit-b6bd8411cbb5682eb18ef60a3b9fa8cdbb2b64d9")
 
 	intellij := "intellij"
 	goland := "goland"
@@ -174,7 +175,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:        ide_config.IDETypeDesktop,
 					Logo:        getIdeLogoPath("intellijIdeaLogo"),
 					Image:       ctx.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, "2022.3.3"),
-					ImageLayers: []string{jbPluginPrevious, jbLauncherImage},
+					ImageLayers: []string{jbPluginPrevious, jbLauncherPrevious},
 				},
 				goland: {
 					OrderKey:          "050",

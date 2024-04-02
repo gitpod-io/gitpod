@@ -12,7 +12,7 @@ import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.application
 import com.jediterm.terminal.ui.TerminalWidget
 import com.jediterm.terminal.ui.TerminalWidgetListener
-import com.jetbrains.rd.framework.util.launch
+import com.jetbrains.rd.util.lifetime.Lifetime
 import io.gitpod.supervisor.api.Status
 import io.gitpod.supervisor.api.StatusServiceGrpc
 import io.gitpod.supervisor.api.TerminalOuterClass
@@ -20,11 +20,12 @@ import io.gitpod.supervisor.api.TerminalServiceGrpc
 import io.grpc.StatusRuntimeException
 import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.guava.await
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 
@@ -38,11 +39,13 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
         start()
     }
 
+    protected abstract fun runJob(lifetime: Lifetime, block: suspend CoroutineScope.() -> Unit): Job;
+
     override fun dispose() = Unit
     protected fun start() {
         if (application.isHeadlessEnvironment) return
 
-        lifetime.launch {
+        runJob(lifetime) {
             val terminals = getSupervisorTerminalsList()
             val tasks = getSupervisorTasksList()
 
@@ -167,7 +170,7 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
     private fun listenForTaskTerminationAndTitleChanges(
             supervisorTerminal: TerminalOuterClass.Terminal,
             shellTerminalWidget: ShellTerminalWidget
-    ) = lifetime.launch {
+    ) = runJob(lifetime) {
         var hasOpenSessions = true
 
         while (hasOpenSessions) {
@@ -244,13 +247,13 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
         @Suppress("ObjectLiteralToLambda")
         shellTerminalWidget.addListener(object : TerminalWidgetListener {
             override fun allSessionsClosed(widget: TerminalWidget) {
-                lifetime.launch {
+                runJob(lifetime) {
                     delay(5000)
                     try {
                         terminalServiceFutureStub.shutdown(
-                                TerminalOuterClass.ShutdownTerminalRequest.newBuilder()
-                                        .setAlias(supervisorTerminal.alias)
-                                        .build()
+                            TerminalOuterClass.ShutdownTerminalRequest.newBuilder()
+                                .setAlias(supervisorTerminal.alias)
+                                .build()
                         )
                     } catch (throwable: Throwable) {
                         thisLogger().error("gitpod: Got an error while shutting down " +

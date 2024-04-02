@@ -1,8 +1,8 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.remote.internal
+package io.gitpod.jetbrains.remote
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
@@ -10,29 +10,23 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.ui.RowIcon
 import com.intellij.util.application
-import com.jetbrains.rd.framework.util.launch
 import com.jetbrains.rd.platform.codeWithMe.portForwarding.*
 import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
-import io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService
-import io.gitpod.jetbrains.remote.GitpodManager
-import io.gitpod.jetbrains.remote.GitpodPortForwardingService
+import com.jetbrains.rd.util.threading.coroutines.launch
 import io.gitpod.supervisor.api.Status
 import io.gitpod.supervisor.api.Status.PortsStatus
 import io.gitpod.supervisor.api.StatusServiceGrpc
 import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
-import io.ktor.utils.io.*
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.isActive
 import org.apache.http.client.utils.URIBuilder
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @Suppress("UnstableApiUsage")
-class GitpodPortForwardingServiceImpl : GitpodPortForwardingService {
+abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService {
     companion object {
         const val FORWARDED_PORT_LABEL = "ForwardedByGitpod"
         const val EXPOSED_PORT_LABEL = "ExposedByGitpod"
@@ -50,7 +44,9 @@ class GitpodPortForwardingServiceImpl : GitpodPortForwardingService {
         observePortsListWhileProjectIsOpen()
     }
 
-    private fun observePortsListWhileProjectIsOpen() = lifetime.launch {
+    protected abstract fun runJob(lifetime: Lifetime, block: suspend CoroutineScope.() -> Unit): Job;
+
+    private fun observePortsListWhileProjectIsOpen() = runJob(lifetime) {
         while (isActive) {
             try {
                 observePortsList().asDeferred().await()
@@ -59,11 +55,12 @@ class GitpodPortForwardingServiceImpl : GitpodPortForwardingService {
                     is InterruptedException, is CancellationException -> {
                         cancel("gitpod: Stopped observing ports list due to an expected interruption.")
                     }
+
                     else -> {
                         thisLogger().warn(
-                                "gitpod: Got an error while trying to get ports list from Supervisor. " +
-                                        "Going to try again in a second.",
-                                throwable
+                            "gitpod: Got an error while trying to get ports list from Supervisor. " +
+                                    "Going to try again in a second.",
+                            throwable
                         )
                         delay(1000)
                     }

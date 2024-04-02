@@ -1067,10 +1067,17 @@ func getProductConfig(config *gitpod.GitpodConfig, alias string) *gitpod.Jetbrai
 }
 
 func linkRemotePlugin(launchCtx *LaunchContext) error {
-	remotePluginDir := launchCtx.backendDir + "/plugins/gitpod-remote"
+	remotePluginsFolder := launchCtx.configDir + "/plugins"
+	remotePluginDir := remotePluginsFolder + "/gitpod-remote"
 	_, err := os.Stat(remotePluginDir)
 	if err == nil || !errors.Is(err, os.ErrNotExist) {
 		return nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		// plugins parent folder must exists, if not, return error
+		if err := os.Mkdir(remotePluginsFolder, 0755); err != nil {
+			return err
+		}
 	}
 
 	// added for backwards compatibility, can be removed in the future
