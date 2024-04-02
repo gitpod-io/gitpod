@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
