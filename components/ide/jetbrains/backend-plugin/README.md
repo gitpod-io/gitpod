@@ -35,7 +35,7 @@ To use the script, from your gitpod's workspace:
   cd components/ide/jetbrains/backend-plugin
   ./launch-dev-server.sh
   ```
-2. Connect the IDE to the test backend instance. Find the `Gitpod gateway link` in the logs and open it, e.g:
+2. Connect the IDE to the test backend instance. Find the `Gitpod gateway link` in the logs and open it (if there's no such log, backend-plugin may not load), e.g:
   ```console
   *********************************************************
 
