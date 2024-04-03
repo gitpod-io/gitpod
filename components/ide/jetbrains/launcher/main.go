@@ -1073,11 +1073,8 @@ func linkRemotePlugin(launchCtx *LaunchContext) error {
 	if err == nil || !errors.Is(err, os.ErrNotExist) {
 		return nil
 	}
-	if errors.Is(err, os.ErrNotExist) {
-		// plugins parent folder must exists, if not, return error
-		if err := os.Mkdir(remotePluginsFolder, 0755); err != nil {
-			return err
-		}
+	if err := os.MkdirAll(remotePluginsFolder, 0755); err != nil {
+		return err
 	}
 
 	// added for backwards compatibility, can be removed in the future
