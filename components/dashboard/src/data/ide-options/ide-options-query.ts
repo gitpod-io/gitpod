@@ -13,6 +13,7 @@ import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organizat
 import { useMemo } from "react";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { useConfiguration } from "../configurations/configuration-queries";
+import { useDeepCompareMemoize } from "use-deep-compare-effect";
 
 const DEFAULT_WS_EDITOR = "code";
 
@@ -91,10 +92,9 @@ export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefin
         );
         // react useMemo is using `Object.is` to compare dependencies so array / object will make re-render re-call useMemo,
         // see also https://react.dev/reference/react/useMemo#every-time-my-component-renders-the-calculation-in-usememo-re-runs
-        // we only use basic types like string here
         //
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [JSON.stringify(depItems)]);
+    }, [useDeepCompareMemoize(depItems)]);
     return { ...data, isLoading, usingConfigurationId: configuration?.id };
 };
 
