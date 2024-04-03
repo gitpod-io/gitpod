@@ -232,6 +232,8 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 			log.WithError(err).Error("checking registry-facade")
 			return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
 		}
+
+		time.Sleep(1 * time.Second)
 	}
 
 	err = updateLabel(labelToUpdate, true, nodeName, r)
