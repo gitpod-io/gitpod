@@ -246,7 +246,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Port: intstr.IntOrString{IntVal: ReadinessPort},
 								},
 							},
-							InitialDelaySeconds: 5,
+							InitialDelaySeconds: 10,
 							PeriodSeconds:       5,
 							TimeoutSeconds:      2,
 							SuccessThreshold:    2,
