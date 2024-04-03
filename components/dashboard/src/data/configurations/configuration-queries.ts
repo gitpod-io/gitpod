@@ -108,6 +108,8 @@ export const useConfiguration = (configurationId: string) => {
                 }
                 return true;
             },
+            cacheTime: 1000 * 60 * 5, // 5m
+            staleTime: 1000 * 30, // 30s
         },
     );
 };

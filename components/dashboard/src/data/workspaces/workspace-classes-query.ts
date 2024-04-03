@@ -13,6 +13,7 @@ import { useMemo } from "react";
 import { PlainMessage } from "@bufbuild/protobuf";
 import { useConfiguration } from "../configurations/configuration-queries";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { useDeepCompareMemoize } from "use-deep-compare-effect";
 
 export const DEFAULT_WS_CLASS = "g1-standard";
 
@@ -123,6 +124,13 @@ export const useAllowedWorkspaceClassesMemo = (
 
     const isLoading = isLoadingOrgSettings || isLoadingInstallationCls || isLoadingConfiguration;
 
+    const depItems = [
+        installationClasses,
+        orgSettings,
+        options,
+        configuration?.workspaceSettings?.restrictedWorkspaceClasses,
+        configuration?.workspaceSettings?.workspaceClass,
+    ];
     const data = useMemo(() => {
         return getAllowedWorkspaceClasses(
             installationClasses,
@@ -131,12 +139,10 @@ export const useAllowedWorkspaceClassesMemo = (
             configuration?.workspaceSettings?.workspaceClass,
             options,
         );
-    }, [
-        installationClasses,
-        orgSettings,
-        options,
-        configuration?.workspaceSettings?.restrictedWorkspaceClasses,
-        configuration?.workspaceSettings?.workspaceClass,
-    ]);
+        // react useMemo is using `Object.is` to compare dependencies so array / object will make re-render re-call useMemo,
+        // see also https://react.dev/reference/react/useMemo#every-time-my-component-renders-the-calculation-in-usememo-re-runs
+        //
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [useDeepCompareMemoize(depItems)]);
     return { ...data, isLoading };
 };

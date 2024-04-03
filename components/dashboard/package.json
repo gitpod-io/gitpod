@@ -57,6 +57,7 @@
     "tailwind-merge": "^1.14.0",
     "tailwindcss-animate": "^1.0.7",
     "url": "^0.11.1",
+    "use-deep-compare-effect": "^1.8.1",
     "util": "^0.11.1",
     "validator": "^13.9.0",
     "xterm": "^5.4.0-beta.37",

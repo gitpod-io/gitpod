@@ -80,6 +80,8 @@ export default function SelectWorkspaceClassComponent({
         // if the selected workspace class is not supported, we set an error and ask the user to pick one
         if (selectedWorkspaceClass && !workspaceClasses?.find((c) => c.id === selectedWorkspaceClass)) {
             setError?.(`The workspace class '${selectedWorkspaceClass}' is not supported.`);
+        } else {
+            setError?.(undefined);
         }
     }, [
         loading,

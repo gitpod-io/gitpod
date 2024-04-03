@@ -13,6 +13,7 @@ import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organizat
 import { useMemo } from "react";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { useConfiguration } from "../configurations/configuration-queries";
+import { useDeepCompareMemoize } from "use-deep-compare-effect";
 
 const DEFAULT_WS_EDITOR = "code";
 
@@ -76,6 +77,12 @@ export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefin
         // So we will filter it out
         isLoading = isLoadingInstallationCls || isLoadingConfiguration;
     }
+    const depItems = [
+        installationOptions,
+        options?.ignoreScope,
+        orgSettings,
+        configuration?.workspaceSettings?.restrictedEditorNames,
+    ];
     const data = useMemo(() => {
         return getAllowedWorkspaceEditors(
             installationOptions,
@@ -83,13 +90,11 @@ export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefin
             configuration?.workspaceSettings?.restrictedEditorNames,
             options,
         );
+        // react useMemo is using `Object.is` to compare dependencies so array / object will make re-render re-call useMemo,
+        // see also https://react.dev/reference/react/useMemo#every-time-my-component-renders-the-calculation-in-usememo-re-runs
+        //
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        installationOptions,
-        options?.ignoreScope,
-        orgSettings,
-        configuration?.workspaceSettings?.restrictedEditorNames,
-    ]);
+    }, [useDeepCompareMemoize(depItems)]);
     return { ...data, isLoading, usingConfigurationId: configuration?.id };
 };
 
