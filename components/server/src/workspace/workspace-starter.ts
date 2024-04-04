@@ -134,6 +134,7 @@ import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ctxIsAborted, runWithRequestContext, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export interface StartWorkspaceOptions extends Omit<GitpodServer.StartWorkspaceOptions, "ideSettings"> {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -509,7 +510,7 @@ export class WorkspaceStarter {
                 log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });
             }
         }
-        throw new Error(`${contextURL} is blocklisted on Gitpod.`);
+        throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, `${contextURL} is blocklisted on Gitpod.`);
     }
 
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself.
