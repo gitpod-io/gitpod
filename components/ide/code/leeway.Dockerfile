@@ -37,10 +37,20 @@ RUN mkdir /gp-code \
     && git fetch origin $CODE_COMMIT --depth=1 \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
+
+RUN apt-get install -y pkg-config dbus xvfb libgtk-3-0 libxkbfile-dev libkrb5-dev libgbm1 rpm \
+    && cp build/azure-pipelines/linux/xvfb.init /etc/init.d/xvfb \
+    && chmod +x /etc/init.d/xvfb \
+    && update-rc.d xvfb defaults \
+    && service xvfb start \
+    # Start dbus session
+    && mkdir -p /var/run/dbus
+
 ENV npm_config_arch=x64
 RUN mkdir -p .build \
-    && yarn --cwd build --frozen-lockfile --network-timeout 180000 \
-    && ./build/azure-pipelines/linux/install.sh
+    && yarn config set registry "$NPM_REGISTRY" \
+    && yarn --cwd build --frozen-lockfile --check-files --network-timeout 180000 \
+    && yarn --frozen-lockfile --check-files --network-timeout 180000
 
 # copy remote dependencies build in dependencies_builder image
 RUN rm -rf remote/node_modules/
