@@ -83,10 +83,7 @@ export function VerifyModal() {
                     discourage and reduce abuse on Gitpod infrastructure.
                 </Alert>
                 <div className="text-gray-600 dark:text-gray-400 mt-2">
-                    Enter a mobile phone number you would like to use to verify your account. Having trouble?{" "}
-                    <a className="gp-link" href="https://www.gitpod.io/contact/support">
-                        Contact support
-                    </a>
+                    Enter a mobile phone number you would like to use to verify your account. If you encounter issues, retry later or use a different number.
                 </div>
                 {state.message ? (
                     <Alert type={state.message.type} className="mt-4 py-3">
