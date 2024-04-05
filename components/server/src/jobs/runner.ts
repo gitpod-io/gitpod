@@ -20,6 +20,7 @@ import { RelationshipUpdateJob } from "../authorization/relationship-updater-job
 import { WorkspaceStartController } from "../workspace/workspace-start-controller";
 import { runWithRequestContext } from "../util/request-context";
 import { SYSTEM_USER } from "../authorization/authorizer";
+import { InstallationAdminCleanup } from "./installation-admin-cleanup";
 
 export const Job = Symbol("Job");
 
@@ -42,6 +43,7 @@ export class JobRunner {
         @inject(SnapshotsJob) private readonly snapshotsJob: SnapshotsJob,
         @inject(RelationshipUpdateJob) private readonly relationshipUpdateJob: RelationshipUpdateJob,
         @inject(WorkspaceStartController) private readonly workspaceStartController: WorkspaceStartController,
+        @inject(InstallationAdminCleanup) private readonly installationAdminCleanup: InstallationAdminCleanup,
     ) {}
 
     public start(): DisposableCollection {
@@ -56,6 +58,7 @@ export class JobRunner {
             this.snapshotsJob,
             this.relationshipUpdateJob,
             this.workspaceStartController,
+            this.installationAdminCleanup,
         ];
 
         for (const job of jobs) {
