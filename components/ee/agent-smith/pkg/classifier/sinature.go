@@ -300,7 +300,7 @@ func (s *Signature) matchAny(in *SignatureReadCache) (bool, error) {
 	return false, nil
 }
 
-// matchesString checks if the signature matches a string (respects and caches regexp)
+// matches checks if the signature matches a string (respects and caches regexp)
 func (s *Signature) matches(v []byte) (bool, error) {
 	if s.Regexp {
 		if s.compiledRegexp == nil {

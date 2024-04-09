@@ -31,7 +31,7 @@ func (basePath CgroupV1CFSController) Usage() (usage CPUTime, err error) {
 	return CPUTime(cputime), nil
 }
 
-// SetQuota sets a new CFS quota on the cgroup
+// SetLimit sets a new CFS limit on the cgroup
 func (basePath CgroupV1CFSController) SetLimit(limit Bandwidth) (changed bool, err error) {
 	period, err := basePath.readCfsPeriod()
 	if err != nil {

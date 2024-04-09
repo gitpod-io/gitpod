@@ -196,7 +196,7 @@ func (ws InfringingWorkspace) VID() string {
 	return fmt.Sprintf("%s/%s", ws.Pod, strings.Join(vt, ":"))
 }
 
-// DescibeInfringements returns a string representation of all infringements of this workspace
+// DescribeInfringements returns a string representation of all infringements of this workspace
 func (ws InfringingWorkspace) DescribeInfringements(charCount int) string {
 	res := make([]string, len(ws.Infringements))
 	for i, v := range ws.Infringements {

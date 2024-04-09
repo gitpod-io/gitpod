@@ -218,7 +218,7 @@ func (l *shutdownLoggerImpl) TerminateSync(ctx context.Context, pid int) {
 	}
 }
 
-// extractFailureFromLogs attempts to extract the last error message from `supervisor run` command
+// extractFailureFromRun attempts to extract the last error message from `supervisor run` command
 func extractFailureFromRun() string {
 	logs, err := os.ReadFile("/dev/termination-log")
 	if err != nil {
