@@ -117,7 +117,17 @@ export class UserAuthentication {
         await this.userDb.storeUser(user);
     }
 
-    async asserNoTwinAccount(currentUser: User, authHost: string, authProviderId: string, candidate: Identity) {
+    async assertNoTwinAccount(currentUser: User, authHost: string, authProviderId: string, candidate: Identity) {
+        if (User.isOrganizationOwned(currentUser)) {
+            /**
+             * The restriction of SCM identities doesn't apply to organization owned accounts which were
+             * created through OIDC SSO because this identity is not used to create/find the account of a user.
+             *
+             * Hint: with this restriction lifted, the subsequent call to `#updateUserOnLogin` would always add/update
+             * the SCM identity for the given `currentUser` if it's owned by an organization.
+             */
+            return;
+        }
         if (currentUser.identities.some((i) => Identity.equals(i, candidate))) {
             return; // same user => OK
         }
