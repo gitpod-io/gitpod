@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -35,7 +36,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
-	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 
 	clog "github.com/gitpod-io/gitpod/common-go/log"
@@ -97,7 +97,6 @@ type WorkspaceReconciler struct {
 func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	span, ctx := tracing.FromContext(ctx, "WorkspaceReconciler.Reconcile")
 	defer tracing.FinishSpan(span, &err)
-	log := log.FromContext(ctx)
 
 	var workspace workspacev1.Workspace
 	err = r.Get(ctx, req.NamespacedName, &workspace)
@@ -116,11 +115,11 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	owi := clog.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name)
-	clog.WithFields(owi).Info("reconciling workspace", "phase", workspace.Status.Phase)
+	clog.WithFields(owi).WithField("phase", workspace.Status.Phase).Info("reconciling workspace")
 
 	workspacePods, err := r.listWorkspacePods(ctx, &workspace)
 	if err != nil {
-		log.Error(err, "unable to list workspace pods")
+		clog.WithFields(owi).Error(err, "unable to list workspace pods")
 		return ctrl.Result{}, fmt.Errorf("failed to list workspace pods: %w", err)
 	}
 
@@ -139,17 +138,17 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if !equality.Semantic.DeepDerivative(oldStatus, workspace.Status) {
-		clog.WithFields(owi).Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus)
+		clog.WithFields(owi).WithField("status", workspace.Status).WithField("podStatus", podStatus).Info("updating workspace status")
 	}
 
 	err = r.Status().Update(ctx, &workspace)
 	if err != nil {
-		return errorResultLogConflict(log, fmt.Errorf("failed to update workspace status: %w", err))
+		return errorResultLogConflict(fmt.Errorf("failed to update workspace status: %w", err))
 	}
 
 	result, err = r.actOnStatus(ctx, &workspace, workspacePods)
 	if err != nil {
-		return errorResultLogConflict(log, fmt.Errorf("failed to act on status: %w", err))
+		return errorResultLogConflict(fmt.Errorf("failed to act on status: %w", err))
 	}
 
 	return result, nil
@@ -203,7 +202,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			if apierrors.IsAlreadyExists(err) {
 				// pod exists, we're good
 			} else if err != nil {
-				clog.WithFields(owi).Error(err, "unable to create Pod for Workspace", "pod", pod)
+				clog.WithFields(owi).WithField("pod", pod).Error(err, "unable to create Pod for Workspace")
 				return ctrl.Result{Requeue: true}, err
 			} else {
 				// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
@@ -216,7 +215,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				patch := client.MergeFrom(workspace.DeepCopy())
 				workspace.Status.PodStarts++
 				if err := r.Status().Patch(ctx, workspace, patch); err != nil {
-					clog.WithFields(owi).Error(err, "Failed to patch PodStarts in workspace status")
+					clog.WithFields(owi).WithError(err).Error("Failed to patch PodStarts in workspace status")
 					return ctrl.Result{}, err
 				}
 
@@ -307,7 +306,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 	case workspace.Status.Phase == workspacev1.WorkspacePhaseRunning:
 		err := r.deleteWorkspaceSecrets(ctx, workspace)
 		if err != nil {
-			clog.WithFields(owi).Error(err, "could not delete workspace secrets")
+			clog.WithFields(owi).WithError(err).Error("could not delete workspace secrets")
 		}
 
 	// we've disposed already - try to remove the finalizer and call it a day
@@ -450,13 +449,13 @@ func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *wo
 	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "env"), r.Config.Namespace)
 	if err != nil {
 		errs = append(errs, err.Error())
-		clog.Error(err, "could not delete environment secret", "workspace", ws.Name)
+		clog.WithFields(owi).WithError(err).Error("could not delete environment secret")
 	}
 
 	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "tokens"), r.Config.SecretsNamespace)
 	if err != nil {
 		errs = append(errs, err.Error())
-		clog.Error(err, "could not delete token secret", "workspace", ws.Name)
+		clog.WithFields(owi).WithError(err).Error("could not delete token secret")
 	}
 
 	if len(errs) != 0 {
@@ -481,13 +480,13 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 		}
 
 		if err != nil {
-			clog.Error(err, "cannot retrieve secret scheduled for deletion", "secret", name)
+			clog.WithField("secret", name).WithError(err).Error("cannot retrieve secret scheduled for deletion")
 			return false, nil
 		}
 
 		err = r.Client.Delete(ctx, &secret)
 		if err != nil && !apierrors.IsNotFound(err) {
-			clog.Error(err, "cannot delete secret", "secret", name)
+			clog.WithError(err).WithField("secret", name).Error("cannot delete secret")
 			return false, nil
 		}
 
@@ -501,7 +500,7 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 // This is to reduce noise in our error logging, as conflicts are to be expected.
 // For conflicts, instead a result with `Requeue: true` is returned, which has the same requeuing
 // behaviour as returning an error.
-func errorResultLogConflict(log logr.Logger, err error) (ctrl.Result, error) {
+func errorResultLogConflict(err error) (ctrl.Result, error) {
 	if apierrors.IsConflict(err) {
 		return ctrl.Result{RequeueAfter: 100 * time.Millisecond}, nil
 	} else {
@@ -555,7 +554,7 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				var wsList workspacev1.WorkspaceList
 				err := r.List(ctx, &wsList)
 				if err != nil {
-					clog.Error(err, "cannot list workspaces")
+					clog.WithError(err).Error("cannot list workspaces")
 					return
 				}
 				for _, ws := range wsList.Items {
