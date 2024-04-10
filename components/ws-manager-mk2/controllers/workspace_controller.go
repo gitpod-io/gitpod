@@ -37,6 +37,8 @@ import (
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
+
+	clog "github.com/gitpod-io/gitpod/common-go/log"
 )
 
 const (
@@ -135,8 +137,9 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		podStatus = &workspacePods.Items[0].Status
 	}
 
+	owi := clog.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name)
 	if !equality.Semantic.DeepDerivative(oldStatus, workspace.Status) {
-		log.Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus)
+		log.Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus, "owi", owi)
 	}
 
 	err = r.Status().Update(ctx, &workspace)
