@@ -119,7 +119,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	workspacePods, err := r.listWorkspacePods(ctx, &workspace)
 	if err != nil {
-		clog.WithFields(owi).Error(err, "unable to list workspace pods")
+		clog.WithFields(owi).WithError(err).Error("unable to list workspace pods")
 		return ctrl.Result{}, fmt.Errorf("failed to list workspace pods: %w", err)
 	}
 
@@ -184,13 +184,13 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		case workspace.Status.PodStarts == 0:
 			sctx, err := newStartWorkspaceContext(ctx, r.Config, workspace)
 			if err != nil {
-				clog.WithFields(owi).Error(err, "unable to create startWorkspace context")
+				clog.WithFields(owi).WithError(err).Error("unable to create startWorkspace context")
 				return ctrl.Result{Requeue: true}, err
 			}
 
 			pod, err := r.createWorkspacePod(sctx)
 			if err != nil {
-				clog.WithFields(owi).Error(err, "unable to produce workspace pod")
+				clog.WithFields(owi).WithError(err).Error("unable to produce workspace pod")
 				return ctrl.Result{}, err
 			}
 
@@ -202,7 +202,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			if apierrors.IsAlreadyExists(err) {
 				// pod exists, we're good
 			} else if err != nil {
-				clog.WithFields(owi).WithField("pod", pod).Error(err, "unable to create Pod for Workspace")
+				clog.WithFields(owi).WithField("pod", pod).WithError(err).Error("unable to create Pod for Workspace")
 				return ctrl.Result{Requeue: true}, err
 			} else {
 				// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
