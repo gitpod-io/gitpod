@@ -103,7 +103,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err = r.Get(ctx, req.NamespacedName, &workspace)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
-			log.Error(err, "unable to fetch workspace")
+			clog.Error(err, "unable to fetch workspace")
 		}
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
@@ -115,7 +115,8 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		workspace.Status.Conditions = []metav1.Condition{}
 	}
 
-	log.V(2).Info("reconciling workspace", "workspace", req.NamespacedName, "phase", workspace.Status.Phase)
+	owi := clog.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name)
+	clog.WithFields(owi).Info("reconciling workspace", "phase", workspace.Status.Phase)
 
 	workspacePods, err := r.listWorkspacePods(ctx, &workspace)
 	if err != nil {
@@ -137,9 +138,8 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		podStatus = &workspacePods.Items[0].Status
 	}
 
-	owi := clog.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name)
 	if !equality.Semantic.DeepDerivative(oldStatus, workspace.Status) {
-		log.Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus, "owi", owi)
+		clog.WithFields(owi).Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus)
 	}
 
 	err = r.Status().Update(ctx, &workspace)
@@ -170,8 +170,9 @@ func (r *WorkspaceReconciler) listWorkspacePods(ctx context.Context, ws *workspa
 
 func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods *corev1.PodList) (result ctrl.Result, err error) {
 	span, ctx := tracing.FromContext(ctx, "actOnStatus")
+	owi := clog.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name)
+	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
-	log := log.FromContext(ctx)
 
 	if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped && !r.metrics.containsWorkspace(workspace) {
 		// If the workspace hasn't stopped yet, and we don't know about this workspace yet, remember it.
@@ -184,13 +185,13 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		case workspace.Status.PodStarts == 0:
 			sctx, err := newStartWorkspaceContext(ctx, r.Config, workspace)
 			if err != nil {
-				log.Error(err, "unable to create startWorkspace context")
+				clog.WithFields(owi).Error(err, "unable to create startWorkspace context")
 				return ctrl.Result{Requeue: true}, err
 			}
 
 			pod, err := r.createWorkspacePod(sctx)
 			if err != nil {
-				log.Error(err, "unable to produce workspace pod")
+				clog.WithFields(owi).Error(err, "unable to produce workspace pod")
 				return ctrl.Result{}, err
 			}
 
@@ -202,7 +203,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			if apierrors.IsAlreadyExists(err) {
 				// pod exists, we're good
 			} else if err != nil {
-				log.Error(err, "unable to create Pod for Workspace", "pod", pod)
+				clog.WithFields(owi).Error(err, "unable to create Pod for Workspace", "pod", pod)
 				return ctrl.Result{Requeue: true}, err
 			} else {
 				// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
@@ -215,7 +216,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				patch := client.MergeFrom(workspace.DeepCopy())
 				workspace.Status.PodStarts++
 				if err := r.Status().Patch(ctx, workspace, patch); err != nil {
-					log.Error(err, "Failed to patch PodStarts in workspace status")
+					clog.WithFields(owi).Error(err, "Failed to patch PodStarts in workspace status")
 					return ctrl.Result{}, err
 				}
 
@@ -306,7 +307,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 	case workspace.Status.Phase == workspacev1.WorkspacePhaseRunning:
 		err := r.deleteWorkspaceSecrets(ctx, workspace)
 		if err != nil {
-			log.Error(err, "could not delete workspace secrets")
+			clog.WithFields(owi).Error(err, "could not delete workspace secrets")
 		}
 
 	// we've disposed already - try to remove the finalizer and call it a day
@@ -439,8 +440,9 @@ func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev
 
 func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *workspacev1.Workspace) (err error) {
 	span, ctx := tracing.FromContext(ctx, "deleteWorkspaceSecrets")
+	owi := clog.OWI(ws.Spec.Ownership.Owner, ws.Spec.Ownership.WorkspaceID, ws.Name)
+	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
-	log := log.FromContext(ctx)
 
 	// if a secret cannot be deleted we do not return early because we want to attempt
 	// the deletion of the remaining secrets
@@ -448,13 +450,13 @@ func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *wo
 	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "env"), r.Config.Namespace)
 	if err != nil {
 		errs = append(errs, err.Error())
-		log.Error(err, "could not delete environment secret", "workspace", ws.Name)
+		clog.Error(err, "could not delete environment secret", "workspace", ws.Name)
 	}
 
 	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "tokens"), r.Config.SecretsNamespace)
 	if err != nil {
 		errs = append(errs, err.Error())
-		log.Error(err, "could not delete token secret", "workspace", ws.Name)
+		clog.Error(err, "could not delete token secret", "workspace", ws.Name)
 	}
 
 	if len(errs) != 0 {
@@ -465,8 +467,6 @@ func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *wo
 }
 
 func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace string) error {
-	log := log.FromContext(ctx)
-
 	err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 		Duration: 100 * time.Millisecond,
 		Factor:   1.5,
@@ -481,13 +481,13 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 		}
 
 		if err != nil {
-			log.Error(err, "cannot retrieve secret scheduled for deletion", "secret", name)
+			clog.Error(err, "cannot retrieve secret scheduled for deletion", "secret", name)
 			return false, nil
 		}
 
 		err = r.Client.Delete(ctx, &secret)
 		if err != nil && !apierrors.IsNotFound(err) {
-			log.Error(err, "cannot delete secret", "secret", name)
+			clog.Error(err, "cannot delete secret", "secret", name)
 			return false, nil
 		}
 
@@ -555,7 +555,7 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				var wsList workspacev1.WorkspaceList
 				err := r.List(ctx, &wsList)
 				if err != nil {
-					log.FromContext(ctx).Error(err, "cannot list workspaces")
+					clog.Error(err, "cannot list workspaces")
 					return
 				}
 				for _, ws := range wsList.Items {
