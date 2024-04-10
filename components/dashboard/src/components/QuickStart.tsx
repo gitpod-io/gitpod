@@ -42,7 +42,9 @@ const QuickStart: FC = () => {
             const hashValue = hash.slice(1);
             let contextUrl: URL;
             try {
-                contextUrl = new URL(hashValue);
+                // We have to account for the case where environment variables are provided through the hash, so we search it for the URL.
+                const toParse = hashValue.match(/^https?:/) ? hashValue : hashValue.slice(hashValue.indexOf("/") + 1);
+                contextUrl = new URL(toParse);
             } catch {
                 setError("Invalid context URL");
                 return;
