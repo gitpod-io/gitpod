@@ -45,6 +45,14 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
 
+	oldPhase := workspace.Status.Phase
+
+	defer func() {
+		if oldPhase != workspace.Status.Phase {
+			log.WithFields(owi).WithField("oldPhase", oldPhase).WithField("phase", workspace.Status.Phase).Info("workspace phase updated")
+		}
+	}()
+
 	switch len(pods.Items) {
 	case 0:
 		if workspace.Status.Phase == "" {
