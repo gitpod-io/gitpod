@@ -236,7 +236,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		workspace.Status.Phase = workspacev1.WorkspacePhaseUnknown
 
 	default:
-		log.WithFields(owi).Info("cannot determine workspace phase", "podStatus", pod.Status)
+		log.WithFields(owi).WithField("podStatus", pod.Status).Info("cannot determine workspace phase")
 		workspace.Status.Phase = workspacev1.WorkspacePhaseUnknown
 
 	}
@@ -268,7 +268,7 @@ func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspac
 
 	if !isDisposalFinished(workspace) {
 		// Node disappeared before a backup could be taken, mark it with a backup failure.
-		log.WithFields(owi).Error(nil, "workspace node disappeared while disposal has not finished yet", "node", pod.Spec.NodeName)
+		log.WithFields(owi).WithField("node", pod.Spec.NodeName).Error("workspace node disappeared while disposal has not finished yet")
 		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionBackupFailure("workspace node disappeared before backup was taken"))
 	}
 
