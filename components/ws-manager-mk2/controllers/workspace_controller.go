@@ -30,6 +30,7 @@ import (
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/components/scrubber"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -136,7 +137,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if !equality.Semantic.DeepDerivative(oldStatus, workspace.Status) {
-		log.WithFields(owi).WithField("status", workspace.Status).WithField("podStatus", podStatus).Info("updating workspace status")
+		log.WithFields(owi).WithField("status", scrubber.Default.DeepCopyStruct(workspace.Status)).WithField("podStatus", &log.TrustedValueWrap{Value: podStatus}).Info("updating workspace status")
 	}
 
 	err = r.Status().Update(ctx, &workspace)
