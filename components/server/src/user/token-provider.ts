@@ -12,6 +12,7 @@ export interface TokenProvider {
      * Returns a valid authentication token for the given host and user
      * @param user
      * @param host
+     * @param forceRefresh
      */
-    getTokenForHost(user: User | string, host: string): Promise<Token | undefined>;
+    getTokenForHost(user: User | string, host: string, forceRefresh?: boolean): Promise<Token | undefined>;
 }

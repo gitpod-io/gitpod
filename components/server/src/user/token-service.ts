@@ -23,13 +23,13 @@ export class TokenService implements TokenProvider {
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(RedisMutex) private readonly redisMutex: RedisMutex;
 
-    async getTokenForHost(user: User | string, host: string): Promise<Token | undefined> {
+    async getTokenForHost(user: User | string, host: string, forceRefresh?: boolean): Promise<Token | undefined> {
         const userId = User.is(user) ? user.id : user;
 
-        return this.doGetTokenForHost(userId, host);
+        return this.doGetTokenForHost(userId, host, forceRefresh);
     }
 
-    private async doGetTokenForHost(userId: string, host: string): Promise<Token | undefined> {
+    private async doGetTokenForHost(userId: string, host: string, forceRefresh?: boolean): Promise<Token | undefined> {
         const user = await this.userDB.findUserById(userId);
         if (!user) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${userId}) not found.`);
@@ -57,7 +57,7 @@ export class TokenService implements TokenProvider {
                 return undefined;
             }
 
-            if (isValid(token)) {
+            if (!forceRefresh && isValid(token)) {
                 reportScmTokenRefreshRequest(host, "still_valid");
                 return token;
             }
