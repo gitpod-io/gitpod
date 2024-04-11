@@ -83,20 +83,6 @@ type WorkspaceReconciler struct {
 //+kubebuilder:rbac:groups=core,resources=pod,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pod/status,verbs=get
 
-type TrustedControllersFields struct {
-	workspaceStatus workspacev1.WorkspaceStatus
-	podStatus       *corev1.PodStatus
-}
-
-func (TrustedControllersFields) IsTrustedValue() {}
-
-func convertTo(podStatus *corev1.PodStatus, workspaceStatus workspacev1.WorkspaceStatus) *TrustedControllersFields {
-	return &TrustedControllersFields{
-		podStatus:       podStatus,
-		workspaceStatus: workspaceStatus,
-	}
-}
-
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // Modify the Reconcile function to compare the state specified by
@@ -148,10 +134,9 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if len(workspacePods.Items) > 0 {
 		podStatus = &workspacePods.Items[0].Status
 	}
-	trusted := convertTo(podStatus, workspace.Status)
 
 	if !equality.Semantic.DeepDerivative(oldStatus, workspace.Status) {
-		log.WithFields(owi).WithField("status", trusted.workspaceStatus).WithField("podStatus", trusted.podStatus).Info("updating workspace status")
+		log.WithFields(owi).WithField("status", workspace.Status).WithField("podStatus", podStatus).Info("updating workspace status")
 	}
 
 	err = r.Status().Update(ctx, &workspace)
