@@ -1828,7 +1828,7 @@ export class WorkspaceStarter {
             targetMode = CloneTargetMode.REMOTE_HEAD;
         }
 
-        const gitToken = await this.tokenProvider.getTokenForHost(user, host, true);
+        const gitToken = await this.tokenProvider.getTokenForHost(user, host, 30);
         if (!gitToken) {
             throw new Error(`No token for host: ${host}`);
         }
