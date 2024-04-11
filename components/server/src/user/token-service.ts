@@ -41,6 +41,10 @@ export class TokenService implements TokenProvider {
                 return true;
             }
 
+            if (forceRefresh) {
+                return false;
+            }
+
             const aboutToExpireTime = new Date();
             aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
             if (t.expiryDate >= aboutToExpireTime.toISOString()) {
@@ -57,7 +61,7 @@ export class TokenService implements TokenProvider {
                 return undefined;
             }
 
-            if (!forceRefresh && isValid(token)) {
+            if (isValid(token)) {
                 reportScmTokenRefreshRequest(host, "still_valid");
                 return token;
             }
