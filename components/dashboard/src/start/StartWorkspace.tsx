@@ -20,7 +20,7 @@ import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
 import { workspaceClient } from "../service/public-api";
-import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
+import { watchWorkspaceStatusInOrder } from "../data/workspaces/listen-to-workspace-ws-messages";
 import { Button } from "@podkit/buttons/Button";
 import {
     GetWorkspaceRequest,
@@ -130,7 +130,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
 
         try {
-            const watchDispose = watchWorkspaceStatus(this.state.workspace?.id, (resp) => {
+            const watchDispose = watchWorkspaceStatusInOrder(this.state.workspace?.id, 99, (resp) => {
                 if (resp.workspaceId !== this.state.workspace?.id || !resp.status) {
                     return;
                 }

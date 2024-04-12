@@ -23,7 +23,7 @@ import { getExperimentsClient } from "../experiments/client";
 import { instrumentWebSocket } from "./metrics";
 import { LotsOfRepliesResponse } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_pb";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
-import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
+import { watchWorkspaceStatusInOrder } from "../data/workspaces/listen-to-workspace-ws-messages";
 import { Workspace, WorkspaceSpec_WorkspaceType, WorkspaceStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { sendTrackEvent } from "../Analytics";
 
@@ -243,7 +243,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             this.sendInfoUpdate(this.latestInfo);
         };
         reconcile();
-        watchWorkspaceStatus(this.workspaceID, (response) => {
+        watchWorkspaceStatusInOrder(this.workspaceID, 0, (response) => {
             if (response.status) {
                 reconcile(response.status);
             }

@@ -51,12 +51,45 @@ export const useListenToWorkspacesWSMessages = () => {
     }, [organizationId, queryClient]);
 };
 
-export function watchWorkspaceStatus(
-    workspaceId: string | undefined,
-    cb: (response: WatchWorkspaceStatusResponse) => void,
-): Disposable {
+type WatchWorkspaceStatusCallback = (response: WatchWorkspaceStatusResponse) => void;
+
+export function watchWorkspaceStatus(workspaceId: string | undefined, cb: WatchWorkspaceStatusCallback): Disposable {
     return stream<WatchWorkspaceStatusRequest>(
         (options) => workspaceClient.watchWorkspaceStatus({ workspaceId }, options),
         cb,
     );
+}
+
+const cachedCallbackInfoMap = new Map<string, { cb: WatchWorkspaceStatusCallback; priority: number }[]>();
+const cachedDisposables = new Map<string, Disposable>();
+
+// watchWorkspaceStatusInOrder watches the workspace status locally in order of priority.
+export function watchWorkspaceStatusInOrder(
+    workspaceId: string | undefined,
+    priority: number,
+    callback: WatchWorkspaceStatusCallback,
+): Disposable {
+    const wsID = workspaceId || "ALL_WORKSPACES";
+    const newInfo = { cb: callback, priority };
+    const callbacks = cachedCallbackInfoMap.get(wsID) || [];
+    callbacks.push(newInfo);
+    callbacks.sort((a, b) => b.priority - a.priority);
+
+    if (!cachedDisposables.has(wsID)) {
+        const disposable = watchWorkspaceStatus(wsID, (response) => {
+            cachedCallbackInfoMap.get(wsID)?.forEach((info) => info.cb(response));
+        });
+        cachedDisposables.set(wsID, disposable);
+    }
+    cachedCallbackInfoMap.set(wsID, callbacks);
+    return Disposable.create(() => {
+        const currentCallbacks = cachedCallbackInfoMap.get(wsID)?.filter((info) => info !== newInfo) ?? [];
+        cachedCallbackInfoMap.set(wsID, currentCallbacks);
+        // Dispose the watcher if no more callbacks are registered
+        if (currentCallbacks.length === 0) {
+            cachedDisposables.get(wsID)?.dispose();
+            cachedDisposables.delete(wsID);
+            cachedCallbackInfoMap.delete(wsID);
+        }
+    });
 }
