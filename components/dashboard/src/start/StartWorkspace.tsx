@@ -130,8 +130,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
 
         try {
-            const watchDispose = watchWorkspaceStatusInOrder(this.state.workspace?.id, 99, (resp) => {
-                if (resp.workspaceId !== this.state.workspace?.id || !resp.status) {
+            const watchDispose = watchWorkspaceStatusInOrder(this.props.workspaceId, 99, (resp) => {
+                if (resp.workspaceId !== this.props.workspaceId || !resp.status) {
                     return;
                 }
                 this.onWorkspaceUpdate(

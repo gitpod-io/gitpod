@@ -24,7 +24,12 @@ import { instrumentWebSocket } from "./metrics";
 import { LotsOfRepliesResponse } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_pb";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { watchWorkspaceStatusInOrder } from "../data/workspaces/listen-to-workspace-ws-messages";
-import { Workspace, WorkspaceSpec_WorkspaceType, WorkspaceStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import {
+    Workspace,
+    WorkspacePhase_Phase,
+    WorkspaceSpec_WorkspaceType,
+    WorkspaceStatus,
+} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { sendTrackEvent } from "../Analytics";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
@@ -243,10 +248,27 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             this.sendInfoUpdate(this.latestInfo);
         };
         reconcile();
-        watchWorkspaceStatusInOrder(this.workspaceID, 0, (response) => {
-            if (response.status) {
-                reconcile(response.status);
+        const processStatus = (status: WorkspaceStatus) => {
+            if (this.latestInfo?.statusPhase === "running" && status.phase?.name === WorkspacePhase_Phase.STOPPING) {
+                return new Promise<void>((resolve) => {
+                    // Fix one frame starting on workspace stopping page - race between supervisor-frontend render and stopping page render
+                    // But this will not lead a bad UX to users, hope 300ms is enough for StartWorkspace.tsx to render
+                    setTimeout(() => {
+                        reconcile(status);
+                        resolve();
+                    }, 300);
+                });
             }
+            reconcile(status);
+            return Promise.resolve();
+        };
+
+        let queue = Promise.resolve();
+        watchWorkspaceStatusInOrder(this.workspaceID, 0, (response) => {
+            if (!response.status) {
+                return;
+            }
+            queue = queue.then(() => processStatus(response.status!));
         });
     }
 
