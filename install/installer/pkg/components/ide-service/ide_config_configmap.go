@@ -377,24 +377,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
-					Versions: []ide_config.IDEVersion{
-						{
-							Version: "2024.1",
-							Image:   ctx.ImageName(ctx.Config.Repository, ide.CLionDesktopIdeImage, "commit-ef400309563b040b84d9588862805ce2f26d688a"),
-							ImageLayers: []string{
-								ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-ef400309563b040b84d9588862805ce2f26d688a"),
-								ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, "commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"),
-							},
-						},
-						{
-							Version: "2023.3.4",
-							Image:   ctx.ImageName(ctx.Config.Repository, ide.CLionDesktopIdeImage, "commit-dc860e22fa7c07401c6dce62360589ff36e36bba"),
-							ImageLayers: []string{
-								ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-dc860e22fa7c07401c6dce62360589ff36e36bba"),
-								ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, "commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"),
-							},
-						},
-					},
 				},
 				xterm: {
 					OrderKey: "120",
