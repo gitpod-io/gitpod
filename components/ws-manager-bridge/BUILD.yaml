@@ -13,12 +13,13 @@ packages:
       - components/ws-daemon-api/typescript:lib
       - components/ws-manager-api/typescript:lib
       - components/ws-manager-bridge-api/typescript:lib
+      - dev/mochaw:lib
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
       commands:
-        test: ["yarn", "test"]
+        test: ["yarn", "test:leeway"]
   - name: docker
     type: docker
     deps:

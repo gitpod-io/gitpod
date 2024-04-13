@@ -8,6 +8,8 @@ components/supervisor/frontend/lib/
 src-gen/
 css-gen/
 node_modules/
+coverage/
+.nyc_output/
 yarn-error.log
 lerna-debug.log
 **/telepresence.log

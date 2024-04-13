@@ -9,6 +9,7 @@ packages:
     deps:
       - components/gitpod-protocol:lib
       - components/public-api/typescript:lib
+      - dev/mochaw:lib
     config:
       packaging: library
       commands:

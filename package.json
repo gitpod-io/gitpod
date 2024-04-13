@@ -19,6 +19,7 @@
     },
     "workspaces": {
         "packages": [
+            "dev/mochaw",
             "components/*",
             "components/*/typescript",
             "components/*/typescript-*",

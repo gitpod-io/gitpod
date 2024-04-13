@@ -10,6 +10,7 @@
         "src"
     ],
     "devDependencies": {
+        "@gitpod/mochaw": "0.1.5",
         "@grpc/grpc-js": "1.9.1",
         "@testdeck/mocha": "^0.3.3",
         "@types/analytics-node": "^3.1.9",
@@ -41,7 +42,7 @@
         "build:clean": "yarn clean && yarn lint && yarn build",
         "lint": "yarn eslint src/*.ts src/**/*.ts",
         "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
-        "test": "mocha './**/*.spec.js' --exclude './node_modules/**' --exit",
+        "test": "mochaw",
         "test:leeway": "yarn build && yarn test",
         "test-debug": "mocha --inspect-brk './**/*.spec.js' --exclude './node_modules/**' --exit",
         "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"

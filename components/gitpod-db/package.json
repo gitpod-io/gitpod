@@ -10,9 +10,10 @@
     "rebuild": "yarn build:clean",
     "build:watch": "watch 'yarn build' .",
     "test": "yarn db-test",
+    "test:leeway": "yarn build && yarn test",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
     "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env); yarn db-test-run; };r",
-    "db-test-run": "mocha '**/*.spec.db.ts' --exclude './node_modules/**' --exit",
+    "db-test-run": "mochaw db",
     "wait-for-db": "node ./lib/wait-for-db.js",
     "typeorm": "typeorm -f lib/typeorm/ormconfig",
     "migrate-migrations": "node ./lib/migrate-migrations.js",
@@ -47,6 +48,7 @@
     "prom-client": "^14.2.0"
   },
   "devDependencies": {
+    "@gitpod/mochaw": "0.1.5",
     "@testdeck/mocha": "^0.3.3",
     "@types/chai": "^4.2.2",
     "@types/mocha": "^10.0.1",

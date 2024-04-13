@@ -19,8 +19,8 @@
     "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
     "test:leeway": "yarn build && yarn test",
     "test": "yarn test:unit && yarn test:db",
-    "test:unit": "mocha './**/*.spec.js' --exclude './node_modules/**' --exit",
-    "test:db": "cleanup() { echo 'Cleanup started'; yarn stop-services; }; trap cleanup EXIT; . $(leeway run components/gitpod-db:db-test-env) && yarn start-services && mocha './**/*.spec.db.js'  --exclude './node_modules/**' --exit",
+    "test:unit": "mochaw",
+    "test:db": "cleanup() { echo 'Cleanup started'; yarn stop-services; }; trap cleanup EXIT; . $(leeway run components/gitpod-db:db-test-env) && yarn start-services && mochaw db",
     "start-services": "yarn start-testdb && yarn start-redis && yarn start-spicedb",
     "stop-services": "yarn stop-redis && yarn stop-spicedb",
     "start-testdb": "leeway run components/gitpod-db:init-testdb",
@@ -110,6 +110,7 @@
     "ws": "^7.4.6"
   },
   "devDependencies": {
+    "@gitpod/mochaw": "0.1.5",
     "@testdeck/mocha": "^0.3.3",
     "@types/assert": "^1.5.6",
     "@types/base-64": "^1.0.0",

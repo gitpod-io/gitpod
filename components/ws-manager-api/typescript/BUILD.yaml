@@ -4,6 +4,7 @@ packages:
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-protocol:lib
+      - dev/mochaw:lib
     srcs:
       - "src/*.ts"
       - "src/*.js"
@@ -13,6 +14,7 @@ packages:
       packaging: library
       dontTest: false
       commands:
-        build: ["yarn", "build"]
+        # leeway executes the build and test step in the wrong order, so we need to call a special script that builds before testing
+        test: ["yarn", "test:leeway"]
       yarnLock: ${coreYarnLockBase}/../yarn.lock
       tsconfig: tsconfig.json

@@ -5,7 +5,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "start": "node ./dist/index.js",
-    "test": "mocha './**/*.spec.ts' --exclude './node_modules/**' --exit",
+    "test": "mochaw",
+    "test:leeway": "yarn build && yarn test",
     "lint": "yarn eslint src/*.ts src/**/*.ts",
     "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
     "build": "yarn lint && npx tsc",
@@ -46,6 +47,7 @@
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
+    "@gitpod/mochaw": "0.1.5",
     "@testdeck/mocha": "^0.3.3",
     "@types/chai": "^4.2.21",
     "@types/express": "^4.17.13",

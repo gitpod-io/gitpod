@@ -10,8 +10,9 @@
   "scripts": {
     "build": "mkdir -p lib && cp -f src/*.js src/*d.ts lib && tsc",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
-    "test": "mocha './**/*.spec.ts' --exclude './node_modules/**' --exit",
-    "test:brk": "yarn test --inspect-brk"
+    "test": "mochaw",
+    "test:brk": "yarn test --inspect-brk",
+    "test:leeway": "yarn build && yarn test"
   },
   "mocha": {
     "require": [
@@ -33,6 +34,7 @@
     "opentracing": "^0.14.4"
   },
   "devDependencies": {
+    "@gitpod/mochaw": "0.1.5",
     "@testdeck/mocha": "^0.3.3",
     "@types/chai": "^4.1.2",
     "@types/google-protobuf": "^3.15.5",

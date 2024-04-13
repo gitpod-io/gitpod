@@ -1,0 +1,17 @@
+{
+  "name": "@gitpod/mochaw",
+  "version": "0.1.5",
+  "license": "UNLICENSED",
+  "files": [
+    "mochaw.sh"
+  ],
+  "bin": {
+    "mochaw": "mochaw.sh"
+  },
+  "scripts": {
+    "build": "echo 'nothing to build'"
+  },
+  "dependencies": {
+    "nyc": "^15.1.0"
+  }
+}

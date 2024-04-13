@@ -9,6 +9,7 @@ packages:
     deps:
       - :dbtest
       - components/gitpod-protocol:lib
+      - dev/mochaw:lib
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock
@@ -55,8 +56,8 @@ packages:
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
       commands:
-        test: ["yarn", "db-test"]
-        build: ["yarn", "build"]
+        # leeway executes the build and test step in the wrong order, so we need to call a special script that builds before testing
+        test: ["yarn", "test:leeway"]
   - name: dbtest-init
     type: generic
     srcs:

@@ -21,6 +21,7 @@ packages:
       - components/gitpod-db:dbtest-init
       - components/spicedb:lib
       - components/spicedb/typescript:lib
+      - dev/mochaw:lib
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock

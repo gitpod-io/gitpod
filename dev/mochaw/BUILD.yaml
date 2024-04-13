@@ -1,0 +1,10 @@
+packages:
+  - name: lib
+    type: yarn
+    srcs:
+      - mochaw.sh
+      - package.json
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      dontTest: true
