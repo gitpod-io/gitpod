@@ -18,6 +18,7 @@ import { LoadingState } from "@podkit/loading/LoadingState";
 import { useIDEVersionsQuery } from "../data/ide-options/ide-options-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { AllowedWorkspaceEditor } from "../data/ide-options/ide-options-query";
+import { isJetbrains } from "./SelectIDEComponent";
 
 interface IdeOptionsProps {
     ideOptions: AllowedWorkspaceEditor[] | undefined;
@@ -234,6 +235,9 @@ const IdeOptionSwitch = ({
             ))}
         </select>
     );
+
+    // For JetBrains, we don't show the type because it is always Desktop and hence redundant
+    const type = !isJetbrains(ideOption.id) && ideOption.type;
     const description = (
         <div className={cn("inline-flex items-center", contentColor)}>
             {(ideOption.imageVersion || pinnedIdeVersion || versionSelector) && (
@@ -243,8 +247,12 @@ const IdeOptionSwitch = ({
                     {versionSelector || <span>{pinnedIdeVersion || ideOption.imageVersion}</span>}
                 </>
             )}
-            <MiddleDot />
-            <span className="capitalize">{ideOption.type}</span>
+            {type && (
+                <>
+                    <MiddleDot />
+                    <span className="capitalize">{type}</span>
+                </>
+            )}
         </div>
     );
 
