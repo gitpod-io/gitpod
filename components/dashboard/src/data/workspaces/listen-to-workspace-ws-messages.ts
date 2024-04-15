@@ -51,7 +51,7 @@ export const useListenToWorkspacesWSMessages = () => {
     }, [organizationId, queryClient]);
 };
 
-type WatchWorkspaceStatusCallback = (response: WatchWorkspaceStatusResponse) => void;
+type WatchWorkspaceStatusCallback = (response: WatchWorkspaceStatusResponse) => Promise<void> | void;
 
 export function watchWorkspaceStatus(workspaceId: string | undefined, cb: WatchWorkspaceStatusCallback): Disposable {
     return stream<WatchWorkspaceStatusRequest>(
@@ -60,7 +60,7 @@ export function watchWorkspaceStatus(workspaceId: string | undefined, cb: WatchW
     );
 }
 
-const cachedCallbackInfoMap = new Map<string, { cb: WatchWorkspaceStatusCallback; priority: number }[]>();
+const cachedCallbackInfoMap = new Map<string, { complete: WatchWorkspaceStatusCallback; priority: number }[]>();
 const cachedDisposables = new Map<string, Disposable>();
 
 // watchWorkspaceStatusInOrder watches the workspace status locally in order of priority.
@@ -70,14 +70,20 @@ export function watchWorkspaceStatusInOrder(
     callback: WatchWorkspaceStatusCallback,
 ): Disposable {
     const wsID = workspaceId || "ALL_WORKSPACES";
-    const newInfo = { cb: callback, priority };
+    const newInfo = { complete: callback, priority };
     const callbacks = cachedCallbackInfoMap.get(wsID) || [];
     callbacks.push(newInfo);
     callbacks.sort((a, b) => b.priority - a.priority);
 
     if (!cachedDisposables.has(wsID)) {
-        const disposable = watchWorkspaceStatus(wsID, (response) => {
-            cachedCallbackInfoMap.get(wsID)?.forEach((info) => info.cb(response));
+        const disposable = watchWorkspaceStatus(wsID, async (response) => {
+            const list = cachedCallbackInfoMap.get(wsID);
+            if (!list) {
+                return;
+            }
+            for (const info of list) {
+                await info.complete(response);
+            }
         });
         cachedDisposables.set(wsID, disposable);
     }

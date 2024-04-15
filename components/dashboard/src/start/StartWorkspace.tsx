@@ -130,16 +130,18 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
 
         try {
-            const watchDispose = watchWorkspaceStatusInOrder(this.props.workspaceId, 99, (resp) => {
+            const watchDispose = watchWorkspaceStatusInOrder(this.props.workspaceId, 99, async (resp) => {
                 if (resp.workspaceId !== this.props.workspaceId || !resp.status) {
                     return;
                 }
-                this.onWorkspaceUpdate(
+                await this.onWorkspaceUpdate(
                     new Workspace({
                         ...this.state.workspace,
                         status: resp.status,
                     }),
                 );
+                // wait for next frame
+                await new Promise((resolve) => setTimeout(resolve, 0));
             });
             this.toDispose.push(watchDispose);
             this.toDispose.push(
