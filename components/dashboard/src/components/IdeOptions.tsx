@@ -62,7 +62,7 @@ export const IdeOptions = (props: IdeOptionsProps) => {
                                 {type && (
                                     <>
                                         <MiddleDot />
-                                        <span className="text-pk-content-primary  capitalize">{type}</span>
+                                        <span className="text-pk-content-primary capitalize">{type}</span>
                                     </>
                                 )}
                             </span>
