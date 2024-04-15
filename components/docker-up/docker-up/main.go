@@ -248,11 +248,13 @@ func adaptSubid(oldfile string, id int) error {
 	if err != nil {
 		return err
 	}
-
+	defer uid.Close()
+	
 	newfile, err := os.Create(oldfile + ".new")
 	if err != nil {
 		return err
 	}
+	defer newfile.Close()
 
 	mappingFmt := func(username string, id int, size int) string { return fmt.Sprintf("%s:%d:%d\n", username, id, size) }
 
