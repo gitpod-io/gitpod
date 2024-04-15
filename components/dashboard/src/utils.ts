@@ -54,8 +54,13 @@ export function isGitpodIo() {
     return (
         window.location.hostname === "gitpod.io" ||
         window.location.hostname === "gitpod-staging.com" ||
-        window.location.hostname.endsWith("gitpod-dev.com") ||
-        window.location.hostname.endsWith("gitpod-io-dev.com")
+        isPreviewEnvironment()
+    );
+}
+
+export function isPreviewEnvironment() {
+    return (
+        window.location.hostname.endsWith("gitpod-dev.com") || window.location.hostname.endsWith("gitpod-io-dev.com")
     );
 }
 
