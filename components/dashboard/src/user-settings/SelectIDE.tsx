@@ -12,6 +12,7 @@ import PillLabel from "../components/PillLabel";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { converter } from "../service/public-api";
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
+import Alert from "../components/Alert";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -77,6 +78,12 @@ export default function SelectIDE(props: SelectIDEProps) {
 
     return (
         <>
+            {ideWarning && (
+                <Alert type="warning" className="my-2 max-w-md">
+                    <span className="text-sm">{ideWarning}</span>
+                </Alert>
+            )}
+
             <div className="w-112 max-w-full my-4">
                 <SelectIDEComponent
                     onSelectionChange={actuallySetDefaultIde}
@@ -86,8 +93,6 @@ export default function SelectIDE(props: SelectIDEProps) {
                     ignoreRestrictionScopes={isOrgOwnedUser ? ["configuration"] : ["configuration", "organization"]}
                 />
             </div>
-
-            {ideWarning && <p className="text-left w-full text-gray-400 dark:text-gray-500 my-2">{ideWarning}</p>}
 
             {shouldShowJetbrainsNotice && (
                 <p className="text-left w-full text-gray-400 dark:text-gray-500">
