@@ -55,7 +55,7 @@ var benchmarkCommand = &cobra.Command{
 		}
 
 		var load loadgen.LoadGenerator
-		load = loadgen.NewFixedLoadGenerator(500*time.Millisecond, 200*time.Millisecond)
+		load = loadgen.NewFixedLoadGenerator(800*time.Millisecond, 300*time.Millisecond)
 		load = loadgen.NewWorkspaceCountLimitingGenerator(load, scenario.Workspaces)
 
 		template := &api.StartWorkspaceRequest{
