@@ -1,12 +1,12 @@
 ## start with
 ##    loadgen benchmark prod-benchmark.yaml
 
-workspaces: 100
+workspaces: 1000
 ideImage: eu.gcr.io/gitpod-core-dev/build/ide/code:commit-ff263e14024f00d0ed78386b4417dfa6bcd4ae2f
 # wait 30s longer than the CPU and memory timeouts
-waitForRunning: "630s"
+waitForRunning: "3000s"
 # wait 30s longer than the CPU and memory timeouts
-waitForStopping: "630s"
+waitForStopping: "3000s"
 successRate: 1
 environment:
   - name: "THEIA_SUPERVISOR_TOKENS"
@@ -73,14 +73,14 @@ repos:
     # tasks
     - name: "GITPOD_TASKS"
       value: "[{\"name\":\"Setup\",\"init\":\"sudo install-packages stress-ng fio && gp sync-done setup\"},{\"name\":\"start cpu stress\",\"init\":\"gp sync-await setup\",\"command\":\"stress-ng --cpu ${CPU_COUNT:-3} --backoff ${CPU_BACKOFF:-10000000} --timeout ${CPU_TIMEOUT:-600s}\"},{\"name\":\"start io stress\",\"init\":\"gp sync-await setup\",\"command\":\"fio --name io-stress --eta-newline=5s --filename=/workspace/gitpod.temp --rw=${DISK_IO_MODE} --size=${DISK_IO_FILE_SIZE:-2g} --io_size=${DISK_IO_TOTAL:-50g} --blocksize=${DISK_IO_BLOCKSIZE} --ioengine=libaio --fsync=${DISK_IO_FSYNC} --iodepth=${DISK_IO_DEPTH} --direct=1 --numjobs=${DISK_IO_JOBS} --runtime=${DISK_IO_TIMEOUT:-600}\"},{\"name\":\"start memory stress\",\"init\":\"gp sync-await setup\",\"command\":\"stress-ng --vm 1 --vm-keep --vm-bytes ${MEMORY_BYTES:-6G} --timeout ${MEMORY_TIMEOUT:-600s}\"},{\"name\":\"create backup file\",\"init\":\"gp sync-await setup\",\"command\":\"dd if=/dev/zero of=/workspace/benchmark-backup bs=1000M count=${BACKUP_SIZE:-2}\"},{\"name\":\"start network stress\",\"init\":\"gp sync-await setup\",\"command\":\"stress-ng --class network --all ${NETWORK_WORKERS:-4}\"}]"
-  - cloneURL: https://github.com/gitpod-io/template-typescript-node
-    cloneTarget: master
-    score: 20
-    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
-    workspaceClass: "g1-large"
-    environment:
-    - name: "GITPOD_TASKS"
-      value: "[{\"name\":\"Open port 1\",\"command\":\"gp ports visibility 6879:private\"},{\"name\":\"Open port 2\",\"command\":\"gp ports visibility 7869:private\"}]"
+  # - cloneURL: https://github.com/gitpod-io/template-typescript-node
+  #   cloneTarget: master
+  #   score: 20
+  #   workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
+  #   workspaceClass: "g1-large"
+  #   environment:
+  #   - name: "GITPOD_TASKS"
+  #     value: "[{\"name\":\"Open port 1\",\"command\":\"gp ports visibility 6879:private\"},{\"name\":\"Open port 2\",\"command\":\"gp ports visibility 7869:private\"}]"
   - cloneURL: https://github.com/gitpod-io/template-typescript-react
     cloneTarget: main
     score: 20
@@ -89,14 +89,14 @@ repos:
     environment:
     - name: "GITPOD_TASKS"
       value: "[{\"name\":\"Open port 1\",\"command\":\"gp ports visibility 6879:private\"},{\"name\":\"Open port 2\",\"command\":\"gp ports visibility 7869:private\"}]"
-  - cloneURL: https://github.com/gitpod-io/template-python-django
-    cloneTarget: main
-    score: 20
-    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
-    workspaceClass: "gitpodio-internal-xl"
-    environment:
-    - name: "GITPOD_TASKS"
-      value: "[{\"name\":\"Open port 1\",\"command\":\"gp ports visibility 6879:private\"},{\"name\":\"Open port 2\",\"command\":\"gp ports visibility 7869:private\"}]"
+  # - cloneURL: https://github.com/gitpod-io/template-python-django
+  #   cloneTarget: main
+  #   score: 20
+  #   workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
+  #   workspaceClass: "gitpodio-internal-xl"
+  #   environment:
+  #   - name: "GITPOD_TASKS"
+  #     value: "[{\"name\":\"Open port 1\",\"command\":\"gp ports visibility 6879:private\"},{\"name\":\"Open port 2\",\"command\":\"gp ports visibility 7869:private\"}]"
   - cloneURL: https://github.com/gitpod-io/non-gitpodified-repo
     score: 20
     cloneTarget: main
