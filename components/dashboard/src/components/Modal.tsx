@@ -82,7 +82,7 @@ export const Modal: FC<Props> = ({
                 tabIndex={0}
             >
                 {/* Modal outer-container for positioning */}
-                <div className="pointer-events-none relative h-[calc(100%-1rem)] w-auto min-[576px]:mx-auto min-[576px]:mt-7 min-[576px]:h-[calc(100%-3.5rem)] min-[576px]:max-w-[550px]">
+                <div className="pointer-events-none relative h-[calc(100%-1rem)] w-auto min-[576px]:mx-auto min-[576px]:mt-7 min-[576px]:h-[calc(100%-3.5rem)] min-[576px]:max-w-[500px]">
                     <FocusOn
                         autoFocus={autoFocus}
                         onClickOutside={handleClickOutside}

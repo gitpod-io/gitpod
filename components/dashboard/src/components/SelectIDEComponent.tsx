@@ -213,13 +213,18 @@ const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({
     );
 };
 
+export const isJetbrains = (editor: string) => {
+    //todo(ft): find a better way to group IDEs by vendor
+    return !["code", "code-desktop", "xterm"].includes(editor); // a really hacky way to get just JetBrains IDEs
+};
+
 function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
     const { option, useLatest } = p;
     if (!option) {
         return <></>;
     }
     const version = useLatest ? option.latestImageVersion : p.pinnedIdeVersion ?? option.imageVersion;
-    const label = capitalize(option.type);
+    const label = !isJetbrains(option.id) && capitalize(option.type);
 
     return (
         <div className="flex" title={option.title}>
