@@ -12,6 +12,7 @@ import { MiddleDot } from "./typography/MiddleDot";
 import { DisableScope } from "../data/workspaces/workspace-classes-query";
 import { Link } from "react-router-dom";
 import { repositoriesRoutes } from "../repositories/repositories.routes";
+import { isGitpodIo } from "../utils";
 
 interface SelectIDEComponentProps {
     selectedIdeOption?: string;
@@ -20,6 +21,7 @@ interface SelectIDEComponentProps {
     useLatest?: boolean;
     onSelectionChange: (ide: string, latest: boolean) => void;
     setError?: (error?: React.ReactNode) => void;
+    setWarning?: (warning?: React.ReactNode) => void;
     disabled?: boolean;
     loading?: boolean;
     ignoreRestrictionScopes: DisableScope[] | undefined;
@@ -34,6 +36,7 @@ export default function SelectIDEComponent({
     disabled = false,
     loading = false,
     setError,
+    setWarning,
     onSelectionChange,
     ignoreRestrictionScopes,
     availableOptions,
@@ -131,6 +134,24 @@ export default function SelectIDEComponent({
             setError?.(undefined);
         }
     }, [ide, availableOptions, setError, loading, disabled, ideOptionsLoading, helpMessage]);
+
+    useEffect(() => {
+        const shouldShowDeprecationNotice = isGitpodIo() && ["intellij-previous"].includes(ide);
+        if (shouldShowDeprecationNotice) {
+            setWarning?.(
+                <>
+                    <span className="font-semibold">IntelliJ IDEA 2022.3.3 is deprecated</span>. <br />
+                    Please use version 2024.1 or pin a different one in the{" "}
+                    <Link className="gp-link" to={"/settings"}>
+                        Organization settings
+                    </Link>
+                    .
+                </>,
+            );
+        } else {
+            setWarning?.(undefined);
+        }
+    }, [setError, setWarning, ide]);
 
     return (
         <Combobox

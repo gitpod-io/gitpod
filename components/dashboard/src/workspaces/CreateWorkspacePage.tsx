@@ -8,7 +8,7 @@ import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
-import { FC, FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { FC, FunctionComponent, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import { useHistory, useLocation } from "react-router";
 import Alert from "../components/Alert";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
@@ -100,8 +100,9 @@ export function CreateWorkspacePage() {
     const defaultWorkspaceClass = props.workspaceClass ?? computedDefaultClass;
     const { data: orgSettings } = useOrgSettingsQuery();
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
-    const [errorWsClass, setErrorWsClass] = useState<React.ReactNode | undefined>(undefined);
-    const [errorIde, setErrorIde] = useState<React.ReactNode | undefined>(undefined);
+    const [errorWsClass, setErrorWsClass] = useState<ReactNode | undefined>(undefined);
+    const [errorIde, setErrorIde] = useState<ReactNode | undefined>(undefined);
+    const [warningIde, setWarningIde] = useState<ReactNode | undefined>(undefined);
     const [contextURL, setContextURL] = useState<string | undefined>(
         StartWorkspaceOptions.parseContextUrl(location.hash),
     );
@@ -481,6 +482,11 @@ export function CreateWorkspacePage() {
                                 }}
                             />
                         ) : null}
+                        {warningIde && (
+                            <Alert type="warning">
+                                <span className="text-sm">{warningIde}</span>
+                            </Alert>
+                        )}
 
                         <InputField>
                             <RepositoryFinder
@@ -499,6 +505,7 @@ export function CreateWorkspacePage() {
                                     defaultIdeSource === selectedProjectID ? availableEditorOptions : undefined
                                 }
                                 setError={setErrorIde}
+                                setWarning={setWarningIde}
                                 selectedIdeOption={selectedIde}
                                 selectedConfigurationId={selectedProjectID}
                                 pinnedEditorVersions={
@@ -752,7 +759,7 @@ export function LimitReachedParallelWorkspacesModal() {
     );
 }
 
-export function LimitReachedModal(p: { children: React.ReactNode }) {
+export function LimitReachedModal(p: { children: ReactNode }) {
     const user = useCurrentUser();
     return (
         // TODO: Use title and buttons props

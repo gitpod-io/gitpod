@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useContext, useState } from "react";
+import { ReactNode, useCallback, useContext, useState } from "react";
 import { UserContext } from "../user-context";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import SelectIDEComponent from "../components/SelectIDEComponent";
@@ -24,6 +24,7 @@ export default function SelectIDE(props: SelectIDEProps) {
 
     const [defaultIde, setDefaultIde] = useState<string>(user?.editorSettings?.name || "code");
     const [useLatestVersion, setUseLatestVersion] = useState<boolean>(user?.editorSettings?.version === "latest");
+    const [ideWarning, setIdeWarning] = useState<ReactNode | undefined>(undefined);
 
     const isOrgOwnedUser = user && isOrganizationOwned(user);
 
@@ -81,9 +82,12 @@ export default function SelectIDE(props: SelectIDEProps) {
                     onSelectionChange={actuallySetDefaultIde}
                     selectedIdeOption={defaultIde}
                     useLatest={useLatestVersion}
+                    setWarning={setIdeWarning}
                     ignoreRestrictionScopes={isOrgOwnedUser ? ["configuration"] : ["configuration", "organization"]}
                 />
             </div>
+
+            {ideWarning && <p className="text-left w-full text-gray-400 dark:text-gray-500 my-2">{ideWarning}</p>}
 
             {shouldShowJetbrainsNotice && (
                 <p className="text-left w-full text-gray-400 dark:text-gray-500">
