@@ -35,30 +35,40 @@ export const IdeOptions = (props: IdeOptionsProps) => {
     if ((!props.ideOptions || props.ideOptions.length === 0) && props.emptyState) {
         return <>{props.emptyState}</>;
     }
+
     return (
         <div className={cn("space-y-2", props.className)}>
             {props.ideOptions &&
-                props.ideOptions.map((ide) => (
-                    <div key={ide.id} className="flex gap-2 items-center">
-                        <img className="w-5 h-5 self-center" src={ide.logo} alt="" />
-                        <span>
-                            <span className="font-medium text-pk-content-primary">{ide.title}</span>
-                            {ide.imageVersion && (
-                                <>
-                                    <MiddleDot />
-                                    {props.pinnedEditorVersions.get(ide.id) && (
-                                        <PinIcon size={16} className="inline align-text-bottom" />
-                                    )}
-                                    <span className="text-pk-content-primary">
-                                        {props.pinnedEditorVersions.get(ide.id) || ide.imageVersion}
-                                    </span>
-                                </>
-                            )}
-                            <MiddleDot />
-                            <span className="text-pk-content-primary capitalize">{ide.type}</span>
-                        </span>
-                    </div>
-                ))}
+                props.ideOptions.map((ide) => {
+                    const type = !isJetbrains(ide.id) && ide.type;
+
+                    return (
+                        <div key={ide.id} className="flex gap-2 items-center">
+                            <img className="w-5 h-5 self-center" src={ide.logo} alt="" />
+                            <span>
+                                <span className="font-medium text-pk-content-primary">{ide.title}</span>
+                                {ide.imageVersion && (
+                                    <>
+                                        <MiddleDot />
+                                        {props.pinnedEditorVersions.get(ide.id) && (
+                                            <PinIcon size={16} className="inline align-text-bottom" />
+                                        )}
+                                        <span className="text-pk-content-primary">
+                                            {props.pinnedEditorVersions.get(ide.id) || ide.imageVersion}
+                                        </span>
+                                    </>
+                                )}
+
+                                {type && (
+                                    <>
+                                        <MiddleDot />
+                                        <span className="text-pk-content-primary  capitalize">{type}</span>
+                                    </>
+                                )}
+                            </span>
+                        </div>
+                    );
+                })}
         </div>
     );
 };
