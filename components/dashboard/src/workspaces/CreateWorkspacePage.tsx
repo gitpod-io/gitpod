@@ -483,7 +483,7 @@ export function CreateWorkspacePage() {
                             />
                         ) : null}
                         {warningIde && (
-                            <Alert type="warning">
+                            <Alert type="warning" className="my-4">
                                 <span className="text-sm">{warningIde}</span>
                             </Alert>
                         )}
