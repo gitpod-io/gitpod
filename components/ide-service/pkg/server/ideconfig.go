@@ -92,6 +92,26 @@ func ParseConfig(ctx context.Context, res remotes.Resolver, b []byte) (*config.I
 			}
 		}
 		cfg.IdeOptions.Options[id] = option
+
+		if len(option.Versions) > 0 && option.ImageVersion != "" {
+			found := false
+			for _, version := range option.Versions {
+				if version.Version == option.ImageVersion {
+					found = true
+					break
+				}
+			}
+			if !found {
+				var versions []config.IDEVersion
+				versions = append(versions, config.IDEVersion{
+					Version:     option.ImageVersion,
+					Image:       option.Image,
+					ImageLayers: option.ImageLayers,
+				})
+				versions = append(versions, option.Versions...)
+				option.Versions = versions
+			}
+		}
 	}
 
 	return &cfg, nil
