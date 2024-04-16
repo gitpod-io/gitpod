@@ -139,7 +139,6 @@ func unmountMark(instanceID string) error {
 	path := fromPartialMount(filepath.Join(dir, "mark"), mounts)
 	// empty path means no mount found
 	if len(path) == 0 {
-		log.WithFields(log.OWI("", "", instanceID)).Info("no mount found")
 		return nil
 	}
 

@@ -123,8 +123,6 @@ func (n *ConnLimiter) GetConnectionDropCounter(pid uint64) (*nftables.CounterObj
 }
 
 func (c *ConnLimiter) limitWorkspace(ctx context.Context, ws *dispatch.Workspace) error {
-	log.WithFields(ws.OWI()).Infof("will limit network connections")
-
 	disp := dispatch.GetFromContext(ctx)
 	if disp == nil {
 		return fmt.Errorf("no dispatch available")
