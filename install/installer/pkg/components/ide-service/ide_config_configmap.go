@@ -41,7 +41,8 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Repository  string
 		IdeLogoBase string
 
-		ResolvedLatestCodeBrowserImage string
+		CodeBrowserVersionStable       string
+		ResolvedCodeBrowserImageLatest string
 		CodeHelperImage                string
 		CodeWebExtensionImage          string
 
@@ -50,13 +51,16 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		JetBrainsLauncherImage         string
 		JetBrainsPluginImagePrevious   string
 		JetBrainsLauncherImagePrevious string
+
+		WorkspaceVersions versions.Components
 	}
 
 	configTmpl := ConfigTemplate{
 		Repository:  ctx.Config.Repository,
 		IdeLogoBase: fmt.Sprintf("https://ide.%s/image/ide-logo", ctx.Config.Domain),
 
-		ResolvedLatestCodeBrowserImage: resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
+		CodeBrowserVersionStable:       ide.CodeIDEImageStableVersion,
+		ResolvedCodeBrowserImageLatest: resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
 		CodeHelperImage:                ctx.ImageName(ctx.Config.Repository, ide.CodeHelperIDEImage, ctx.VersionManifest.Components.Workspace.CodeHelperImage.Version),
 		CodeWebExtensionImage:          ctx.ImageName(ctx.Config.Repository, ide.CodeWebExtensionImage, ide.CodeWebExtensionVersion),
 
@@ -65,6 +69,8 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		JetBrainsLauncherImage:         ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsLauncherImage.Version),
 		JetBrainsPluginImagePrevious:   ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-e7eb44545510a8293c5c6aa814a0ad4e81852e5f"),
 		JetBrainsLauncherImagePrevious: ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, "commit-b6bd8411cbb5682eb18ef60a3b9fa8cdbb2b64d9"),
+
+		WorkspaceVersions: ctx.VersionManifest.Components,
 	}
 
 	tmpl, err := template.New("configmap").Parse(ideConfigFile)

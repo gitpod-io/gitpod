@@ -1,5 +1,5 @@
 {
-  "supervisorImage": "{{.Repository}}/supervisor:commit-d1fc093e2b0cf3a7db3a35d6e7dbc6d742c3f956",
+  "supervisorImage": "{{.Repository}}/supervisor:{{.WorkspaceVersions.Workspace.Supervisor.Version}}",
   "ideOptions": {
     "options": {
       "code": {
@@ -8,8 +8,8 @@
         "type": "browser",
         "logo": "{{.IdeLogoBase}}/vscode.svg",
         "label": "Browser",
-        "image": "{{.Repository}}/ide/code:commit-7721fe825201d4d8d53975f81de0b063d94383cc",
-        "latestImage": "{{.ResolvedLatestCodeBrowserImage}}",
+        "image": "{{.Repository}}/ide/code:{{.CodeBrowserVersionStable}}",
+        "latestImage": "{{.ResolvedCodeBrowserImageLatest}}",
         "imageLayers": [
           "{{.CodeWebExtensionImage}}",
           "{{.CodeHelperImage}}"
@@ -70,8 +70,8 @@
         "title": "VS Code",
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/vscode.svg",
-        "image": "{{.Repository}}/ide/code-desktop:commit-9d4bc72a7ffeb47ff083aabb9747a7f67c459592",
-        "latestImage": "{{.Repository}}/ide/code-desktop-insiders:commit-9d4bc72a7ffeb47ff083aabb9747a7f67c459592"
+        "image": "{{.Repository}}/ide/code-desktop:{{.WorkspaceVersions.Workspace.DesktopIdeImages.CodeDesktopImage.Version}}",
+        "latestImage": "{{.Repository}}/ide/code-desktop-insiders:{{.WorkspaceVersions.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version}}"
       },
       "intellij": {
         "orderKey": "040",
@@ -79,7 +79,7 @@
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/intellijIdeaLogo.svg",
         "label": "Ultimate",
-        "image": "{{.Repository}}/ide/intellij:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "image": "{{.Repository}}/ide/intellij:{{.WorkspaceVersions.Workspace.DesktopIdeImages.IntelliJImage.Version}}",
         "latestImage": "{{.Repository}}/ide/intellij:latest",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
@@ -127,7 +127,7 @@
         "title": "GoLand",
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/golandLogo.svg",
-        "image": "{{.Repository}}/ide/goland:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "image": "{{.Repository}}/ide/goland:{{.WorkspaceVersions.Workspace.DesktopIdeImages.GoLandImage.Version}}",
         "latestImage": "{{.Repository}}/ide/goland:latest",
         "pluginImage": "{{.Repository}}/ide/jb-backend-plugin:commit-51866638eaee0cf51bd11e46ef6e1cecf54d23c4",
         "pluginLatestImage": "{{.Repository}}/ide/jb-backend-plugin:commit-51866638eaee0cf51bd11e46ef6e1cecf54d23c4-latest",
@@ -164,7 +164,7 @@
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/pycharmLogo.svg",
         "label": "Professional",
-        "image": "{{.Repository}}/ide/pycharm:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "image": "{{.Repository}}/ide/pycharm:{{.WorkspaceVersions.Workspace.DesktopIdeImages.PyCharmImage.Version}}",
         "latestImage": "{{.Repository}}/ide/pycharm:latest",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
@@ -200,7 +200,7 @@
         "title": "PhpStorm",
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/phpstormLogo.svg",
-        "image": "{{.Repository}}/ide/phpstorm:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "image": "{{.Repository}}/ide/phpstorm:{{.WorkspaceVersions.Workspace.DesktopIdeImages.PhpStormImage.Version}}",
         "latestImage": "{{.Repository}}/ide/phpstorm:latest",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
@@ -236,7 +236,7 @@
         "title": "RubyMine",
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/rubymineLogo.svg",
-        "image": "{{.Repository}}/ide/rubymine:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "image": "{{.Repository}}/ide/rubymine:{{.WorkspaceVersions.Workspace.DesktopIdeImages.RubyMineImage.Version}}",
         "latestImage": "{{.Repository}}/ide/rubymine:latest",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
@@ -272,7 +272,7 @@
         "title": "WebStorm",
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/webstormLogo.svg",
-        "image": "{{.Repository}}/ide/webstorm:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "image": "{{.Repository}}/ide/webstorm:{{.WorkspaceVersions.Workspace.DesktopIdeImages.WebStormImage.Version}}",
         "latestImage": "{{.Repository}}/ide/webstorm:latest",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
@@ -308,7 +308,7 @@
         "title": "Rider",
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/riderLogo.svg",
-        "image": "{{.Repository}}/ide/rider:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "image": "{{.Repository}}/ide/rider:{{.WorkspaceVersions.Workspace.DesktopIdeImages.RiderImage.Version}}",
         "latestImage": "{{.Repository}}/ide/rider:latest",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
@@ -326,7 +326,7 @@
         "title": "CLion",
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/clionLogo.svg",
-        "image": "{{.Repository}}/ide/clion:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "image": "{{.Repository}}/ide/clion:{{.WorkspaceVersions.Workspace.DesktopIdeImages.CLionImage.Version}}",
         "latestImage": "{{.Repository}}/ide/clion:latest",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
