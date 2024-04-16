@@ -7,7 +7,7 @@
 import { ReactNode, useCallback, useContext, useState } from "react";
 import { UserContext } from "../user-context";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
-import SelectIDEComponent from "../components/SelectIDEComponent";
+import SelectIDEComponent, { isJetbrains } from "../components/SelectIDEComponent";
 import PillLabel from "../components/PillLabel";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { converter } from "../service/public-api";
@@ -73,8 +73,7 @@ export default function SelectIDE(props: SelectIDEProps) {
         [actualUpdateUserIDEInfo, defaultIde],
     );
 
-    //todo(ft): find a better way to group IDEs by vendor
-    const shouldShowJetbrainsNotice = !["code", "code-desktop", "xterm"].includes(defaultIde); // a really hacky way to get just JetBrains IDEs
+    const shouldShowJetbrainsNotice = isJetbrains(defaultIde);
 
     return (
         <>
