@@ -43,14 +43,13 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	span, ctx := tracing.FromContext(ctx, "updateWorkspaceStatus")
 	owi := log.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name)
 	tracing.ApplyOWI(span, owi)
-	log := log.Extract(ctx)
 	defer tracing.FinishSpan(span, &err)
 
 	oldPhase := workspace.Status.Phase
 
 	defer func() {
 		if oldPhase != workspace.Status.Phase {
-			log.WithField("oldPhase", oldPhase).WithField("phase", workspace.Status.Phase).Info("workspace phase updated")
+			log.Extract(ctx).WithField("oldPhase", oldPhase).WithField("phase", workspace.Status.Phase).Info("workspace phase updated")
 		}
 	}()
 
@@ -127,7 +126,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 
 	if failure != "" && !workspace.IsConditionTrue(workspacev1.WorkspaceConditionFailed) {
 		// workspaces can fail only once - once there is a failed condition set, stick with it
-		log.WithField("reason", failure).Info("workspace failed")
+		log.Extract(ctx).WithField("reason", failure).Info("workspace failed")
 		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionFailed(failure))
 		r.Recorder.Event(workspace, corev1.EventTypeWarning, "Failed", failure)
 	}
@@ -237,7 +236,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		workspace.Status.Phase = workspacev1.WorkspacePhaseUnknown
 
 	default:
-		log.WithField("podStatus", pod.Status).Info("cannot determine workspace phase")
+		log.Extract(ctx).WithField("podStatus", pod.Status).Info("cannot determine workspace phase")
 		workspace.Status.Phase = workspacev1.WorkspacePhaseUnknown
 
 	}
@@ -249,7 +248,6 @@ func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspac
 	span, ctx := tracing.FromContext(ctx, "checkNodeDisappeared")
 	owi := log.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name)
 	tracing.ApplyOWI(span, owi)
-	log := log.Extract(ctx)
 	defer tracing.FinishSpan(span, &err)
 
 	if pod.Spec.NodeName == "" {
@@ -270,7 +268,7 @@ func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspac
 
 	if !isDisposalFinished(workspace) {
 		// Node disappeared before a backup could be taken, mark it with a backup failure.
-		log.WithField("node", pod.Spec.NodeName).Error("workspace node disappeared while disposal has not finished yet")
+		log.Extract(ctx).WithField("node", pod.Spec.NodeName).Error("workspace node disappeared while disposal has not finished yet")
 		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionBackupFailure("workspace node disappeared before backup was taken"))
 	}
 
