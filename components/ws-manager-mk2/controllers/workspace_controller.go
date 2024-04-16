@@ -113,7 +113,8 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		workspace.Status.Conditions = []metav1.Condition{}
 	}
 
-	log.AddFields(ctx, log.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name))
+	// avoid logging the workspace name (in this context, workspace.Name is actually the instanceId)
+	log.Log.Data = log.OWI(workspace.Spec.Ownership.Owner, "", workspace.Name)
 	log.WithField("phase", workspace.Status.Phase).Debug("reconciling workspace")
 
 	workspacePods, err := r.listWorkspacePods(ctx, &workspace)
