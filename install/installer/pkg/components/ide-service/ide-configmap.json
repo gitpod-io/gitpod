@@ -53,14 +53,6 @@
           }
         ]
       },
-      "code-desktop": {
-        "orderKey": "020",
-        "title": "VS Code",
-        "type": "desktop",
-        "logo": "{{.IdeLogoBase}}/vscode.svg",
-        "image": "{{.Repository}}/ide/code-desktop:commit-9d4bc72a7ffeb47ff083aabb9747a7f67c459592",
-        "latestImage": "{{.Repository}}/ide/code-desktop-insiders:commit-9d4bc72a7ffeb47ff083aabb9747a7f67c459592"
-      },
       "code1_85": {
         "orderKey": "011",
         "title": "VS Code",
@@ -72,6 +64,14 @@
           "{{.CodeWebExtensionImage}}",
           "{{.CodeHelperImage}}"
         ]
+      },
+      "code-desktop": {
+        "orderKey": "020",
+        "title": "VS Code",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/vscode.svg",
+        "image": "{{.Repository}}/ide/code-desktop:commit-9d4bc72a7ffeb47ff083aabb9747a7f67c459592",
+        "latestImage": "{{.Repository}}/ide/code-desktop-insiders:commit-9d4bc72a7ffeb47ff083aabb9747a7f67c459592"
       },
       "intellij": {
         "orderKey": "040",
