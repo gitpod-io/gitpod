@@ -100,14 +100,18 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
 
     protected normalizeScopes(scopes: string[]) {
         const set = new Set(scopes);
-        if (set.has("issue:write")) {
-            set.add("repository:write");
+        if (set.has(BitbucketOAuthScopes.REPOSITORY_WRITE)) {
+            set.add(BitbucketOAuthScopes.REPOSITORY_READ);
         }
-        if (set.has("repository:write")) {
-            set.add("repository");
+        if (set.has(BitbucketOAuthScopes.PULL_REQUEST_READ)) {
+            // https://developer.atlassian.com/cloud/bitbucket/bitbucket-cloud-rest-api-scopes/#pullrequest
+            set.add(BitbucketOAuthScopes.REPOSITORY_READ);
         }
-        if (set.has("pullrequest:write")) {
-            set.add("pullrequest");
+        if (set.has(BitbucketOAuthScopes.PULL_REQUEST_WRITE)) {
+            // https://developer.atlassian.com/cloud/bitbucket/bitbucket-cloud-rest-api-scopes/#pullrequest-write
+            set.add(BitbucketOAuthScopes.REPOSITORY_WRITE);
+            set.add(BitbucketOAuthScopes.REPOSITORY_READ);
+            set.add(BitbucketOAuthScopes.PULL_REQUEST_READ);
         }
         for (const item of set.values()) {
             if (!BitbucketOAuthScopes.Requirements.DEFAULT.includes(item)) {
