@@ -11,7 +11,7 @@ import (
 	"time"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	"github.com/gitpod-io/gitpod/common-go/log"
+	clog "github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -153,9 +153,10 @@ func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
 	}, nil
 }
 
-func (m *controllerMetrics) recordWorkspaceStartupTime(ws *workspacev1.Workspace) {
+func (m *controllerMetrics) recordWorkspaceStartupTime(ctx context.Context, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
+	log := clog.Extract(ctx)
 
 	hist, err := m.startupTimeHistVec.GetMetricWithLabelValues(tpe, class)
 	if err != nil {
@@ -166,9 +167,10 @@ func (m *controllerMetrics) recordWorkspaceStartupTime(ws *workspacev1.Workspace
 	hist.Observe(float64(duration.Seconds()))
 }
 
-func (m *controllerMetrics) recordWorkspacePendingTime(ws *workspacev1.Workspace, pendingTs time.Time) {
+func (m *controllerMetrics) recordWorkspacePendingTime(ctx context.Context, ws *workspacev1.Workspace, pendingTs time.Time) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
+	log := clog.Extract(ctx)
 
 	hist, err := m.pendingTimeHistVec.GetMetricWithLabelValues(tpe, class)
 	if err != nil {
@@ -178,9 +180,10 @@ func (m *controllerMetrics) recordWorkspacePendingTime(ws *workspacev1.Workspace
 	hist.Observe(time.Since(pendingTs).Seconds())
 }
 
-func (m *controllerMetrics) recordWorkspaceCreatingTime(ws *workspacev1.Workspace, creatingTs time.Time) {
+func (m *controllerMetrics) recordWorkspaceCreatingTime(ctx context.Context, ws *workspacev1.Workspace, creatingTs time.Time) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
+	log := clog.Extract(ctx)
 
 	hist, err := m.creatingTimeHistVec.GetMetricWithLabelValues(tpe, class)
 	if err != nil {
@@ -537,7 +540,7 @@ func (n *nodeUtilizationVec) Collect(ch chan<- prometheus.Metric) {
 	var nodes corev1.NodeList
 	err := n.reconciler.List(ctx, &nodes)
 	if err != nil {
-		log.WithError(err).Error("cannot list nodes for node utilization metric")
+		clog.WithError(err).Error("cannot list nodes for node utilization metric")
 		return
 	}
 
@@ -566,7 +569,7 @@ func (n *nodeUtilizationVec) Collect(ch chan<- prometheus.Metric) {
 
 	var workspaces workspacev1.WorkspaceList
 	if err = n.reconciler.List(ctx, &workspaces, client.InNamespace(n.reconciler.Config.Namespace)); err != nil {
-		log.WithError(err).Error("cannot list workspaces for node utilization metric")
+		clog.WithError(err).Error("cannot list workspaces for node utilization metric")
 		return
 	}
 
@@ -575,7 +578,7 @@ func (n *nodeUtilizationVec) Collect(ch chan<- prometheus.Metric) {
 		// This list is indexed and reads from memory, so it's not that expensive to do this for every workspace.
 		pods, err := n.reconciler.listWorkspacePods(ctx, &ws)
 		if err != nil {
-			log.WithField("workspace", ws.Name).WithError(err).Error("cannot list workspace pods for node utilization metric")
+			clog.WithField("workspace", ws.Name).WithError(err).Error("cannot list workspace pods for node utilization metric")
 			continue
 		}
 
@@ -611,7 +614,7 @@ func (n *nodeUtilizationVec) Collect(ch chan<- prometheus.Metric) {
 			nodeType := nodeTypes[nodeName]
 			metric, err := prometheus.NewConstMetric(n.desc, prometheus.GaugeValue, value, nodeName, resource.String(), nodeType)
 			if err != nil {
-				log.WithError(err).WithField("node", nodeName).WithField("resource", resource.String()).WithField("type", nodeType).Error("cannot create node utilization metric")
+				clog.WithError(err).WithField("node", nodeName).WithField("resource", resource.String()).WithField("type", nodeType).Error("cannot create node utilization metric")
 				continue
 			}
 
@@ -649,18 +652,18 @@ func (wav *workspaceActivityVec) Describe(ch chan<- *prometheus.Desc) {
 func (wav *workspaceActivityVec) Collect(ch chan<- prometheus.Metric) {
 	active, notActive, err := wav.getWorkspaceActivityCounts()
 	if err != nil {
-		log.WithError(err).Error(fmt.Sprintf("cannot determine active/inactive counts - %s will be inaccurate", wav.name))
+		clog.WithError(err).Error(fmt.Sprintf("cannot determine active/inactive counts - %s will be inaccurate", wav.name))
 		return
 	}
 
 	activeMetrics, err := prometheus.NewConstMetric(wav.desc, prometheus.GaugeValue, float64(active), "true")
 	if err != nil {
-		log.WithError(err).WithField("active", "true").Error("cannot create wrokspace activity metric")
+		clog.WithError(err).WithField("active", "true").Error("cannot create wrokspace activity metric")
 		return
 	}
 	notActiveMetrics, err := prometheus.NewConstMetric(wav.desc, prometheus.GaugeValue, float64(notActive), "false")
 	if err != nil {
-		log.WithError(err).WithField("active", "false").Error("cannot create wrokspace activity metric")
+		clog.WithError(err).WithField("active", "false").Error("cannot create wrokspace activity metric")
 		return
 	}
 

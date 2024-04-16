@@ -37,7 +37,7 @@ import (
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
+	clog "github.com/gitpod-io/gitpod/common-go/log"
 )
 
 const (
@@ -101,7 +101,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err = r.Get(ctx, req.NamespacedName, &workspace)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
-			log.Error(err, "unable to fetch workspace")
+			clog.Error(err, "unable to fetch workspace")
 		}
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
@@ -114,7 +114,9 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// avoid logging the workspace name (in this context, workspace.Name is actually the instanceId)
-	log.Log.Data = log.OWI(workspace.Spec.Ownership.Owner, "", workspace.Name)
+	clog.AddFields(ctx, clog.OWI(workspace.Spec.Ownership.Owner, "", workspace.Name))
+	// shadow the package and use fields we put on the context
+	log := clog.Extract(ctx)
 	log.WithField("phase", workspace.Status.Phase).Debug("reconciling workspace")
 
 	workspacePods, err := r.listWorkspacePods(ctx, &workspace)
@@ -139,9 +141,9 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	if !equality.Semantic.DeepDerivative(oldStatus, workspace.Status) {
 		// allow the top level object, and rely on its annotations to redact at the field level
-		log.WithField("workspaceStatus", &log.TrustedValueWrap{Value: scrubber.Default.DeepCopyStruct(workspace.Status)}).
+		log.WithField("workspaceStatus", &clog.TrustedValueWrap{Value: scrubber.Default.DeepCopyStruct(workspace.Status)}).
 			// we don't own the corev1.PodStatus type, so we trust the whole thing
-			WithField("podStatus", &log.TrustedValueWrap{Value: podStatus}).
+			WithField("podStatus", &clog.TrustedValueWrap{Value: podStatus}).
 			Info("updating workspace status")
 	}
 
@@ -173,9 +175,10 @@ func (r *WorkspaceReconciler) listWorkspacePods(ctx context.Context, ws *workspa
 
 func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods *corev1.PodList) (result ctrl.Result, err error) {
 	span, ctx := tracing.FromContext(ctx, "actOnStatus")
-	owi := log.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name)
+	owi := clog.OWI(workspace.Spec.Ownership.Owner, "", workspace.Name)
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
+	log := clog.Extract(ctx)
 
 	if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped && !r.metrics.containsWorkspace(workspace) {
 		// If the workspace hasn't stopped yet, and we don't know about this workspace yet, remember it.
@@ -349,14 +352,14 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	if lastState.pendingStartTime.IsZero() && workspace.Status.Phase == workspacev1.WorkspacePhasePending {
 		lastState.pendingStartTime = time.Now()
 	} else if !lastState.pendingStartTime.IsZero() && workspace.Status.Phase != workspacev1.WorkspacePhasePending {
-		r.metrics.recordWorkspacePendingTime(workspace, lastState.pendingStartTime)
+		r.metrics.recordWorkspacePendingTime(ctx, workspace, lastState.pendingStartTime)
 		lastState.pendingStartTime = time.Time{}
 	}
 
 	if lastState.creatingStartTime.IsZero() && workspace.Status.Phase == workspacev1.WorkspacePhaseCreating {
 		lastState.creatingStartTime = time.Now()
 	} else if !lastState.creatingStartTime.IsZero() && workspace.Status.Phase != workspacev1.WorkspacePhaseCreating {
-		r.metrics.recordWorkspaceCreatingTime(workspace, lastState.creatingStartTime)
+		r.metrics.recordWorkspaceCreatingTime(ctx, workspace, lastState.creatingStartTime)
 		lastState.creatingStartTime = time.Time{}
 	}
 
@@ -377,7 +380,7 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	}
 
 	if !lastState.recordedStartTime && workspace.Status.Phase == workspacev1.WorkspacePhaseRunning {
-		r.metrics.recordWorkspaceStartupTime(workspace)
+		r.metrics.recordWorkspaceStartupTime(ctx, workspace)
 		lastState.recordedStartTime = true
 	}
 
@@ -441,8 +444,9 @@ func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev
 
 func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *workspacev1.Workspace) (err error) {
 	span, ctx := tracing.FromContext(ctx, "deleteWorkspaceSecrets")
-	owi := log.OWI(ws.Spec.Ownership.Owner, ws.Spec.Ownership.WorkspaceID, ws.Name)
+	owi := clog.OWI(ws.Spec.Ownership.Owner, "", ws.Name)
 	tracing.ApplyOWI(span, owi)
+	log := clog.Extract(ctx)
 	defer tracing.FinishSpan(span, &err)
 
 	// if a secret cannot be deleted we do not return early because we want to attempt
@@ -468,6 +472,7 @@ func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *wo
 }
 
 func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace string) error {
+	log := clog.Extract(ctx)
 	err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 		Duration: 100 * time.Millisecond,
 		Factor:   1.5,
@@ -556,7 +561,7 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				var wsList workspacev1.WorkspaceList
 				err := r.List(ctx, &wsList)
 				if err != nil {
-					log.WithError(err).Error("cannot list workspaces")
+					clog.WithError(err).Error("cannot list workspaces")
 					return
 				}
 				for _, ws := range wsList.Items {

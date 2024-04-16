@@ -43,6 +43,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	span, ctx := tracing.FromContext(ctx, "updateWorkspaceStatus")
 	owi := log.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name)
 	tracing.ApplyOWI(span, owi)
+	log := log.Extract(ctx)
 	defer tracing.FinishSpan(span, &err)
 
 	oldPhase := workspace.Status.Phase
@@ -248,6 +249,7 @@ func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspac
 	span, ctx := tracing.FromContext(ctx, "checkNodeDisappeared")
 	owi := log.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name)
 	tracing.ApplyOWI(span, owi)
+	log := log.Extract(ctx)
 	defer tracing.FinishSpan(span, &err)
 
 	if pod.Spec.NodeName == "" {
