@@ -129,15 +129,15 @@
         "logo": "{{.IdeLogoBase}}/golandLogo.svg",
         "image": "{{.Repository}}/ide/goland:{{.WorkspaceVersions.Workspace.DesktopIdeImages.GoLandImage.Version}}",
         "latestImage": "{{.Repository}}/ide/goland:latest",
-        "pluginImage": "{{.Repository}}/ide/jb-backend-plugin:commit-51866638eaee0cf51bd11e46ef6e1cecf54d23c4",
-        "pluginLatestImage": "{{.Repository}}/ide/jb-backend-plugin:commit-51866638eaee0cf51bd11e46ef6e1cecf54d23c4-latest",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
+        "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
-          "{{.Repository}}/ide/jb-backend-plugin:commit-51866638eaee0cf51bd11e46ef6e1cecf54d23c4",
-          "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsLauncherImage}}"
         ],
         "latestImageLayers": [
-          "{{.Repository}}/ide/jb-backend-plugin:commit-51866638eaee0cf51bd11e46ef6e1cecf54d23c4-latest",
-          "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+          "{{.JetBrainsPluginLatestImage}}",
+          "{{.JetBrainsLauncherImage}}"
         ],
         "versions": [
           {
