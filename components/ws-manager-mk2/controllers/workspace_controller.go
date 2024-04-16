@@ -113,12 +113,12 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		workspace.Status.Conditions = []metav1.Condition{}
 	}
 
-	owi := log.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name)
-	log.WithFields(owi).WithField("phase", workspace.Status.Phase).Info("reconciling workspace")
+	log.AddFields(ctx, log.OWI(workspace.Spec.Ownership.Owner, workspace.Spec.Ownership.WorkspaceID, workspace.Name))
+	log.WithField("phase", workspace.Status.Phase).Debug("reconciling workspace")
 
 	workspacePods, err := r.listWorkspacePods(ctx, &workspace)
 	if err != nil {
-		log.WithFields(owi).WithError(err).Error("unable to list workspace pods")
+		log.WithError(err).Error("unable to list workspace pods")
 		return ctrl.Result{}, fmt.Errorf("failed to list workspace pods: %w", err)
 	}
 
@@ -137,9 +137,8 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if !equality.Semantic.DeepDerivative(oldStatus, workspace.Status) {
-		log.WithFields(owi).
-			// allow the top level object, and rely on its annotations to redact at the field level
-			WithField("workspaceStatus", &log.TrustedValueWrap{Value: scrubber.Default.DeepCopyStruct(workspace.Status)}).
+		// allow the top level object, and rely on its annotations to redact at the field level
+		log.WithField("workspaceStatus", &log.TrustedValueWrap{Value: scrubber.Default.DeepCopyStruct(workspace.Status)}).
 			// we don't own the corev1.PodStatus type, so we trust the whole thing
 			WithField("podStatus", &log.TrustedValueWrap{Value: podStatus}).
 			Info("updating workspace status")
@@ -188,13 +187,13 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		case workspace.Status.PodStarts == 0:
 			sctx, err := newStartWorkspaceContext(ctx, r.Config, workspace)
 			if err != nil {
-				log.WithFields(owi).WithError(err).Error("unable to create startWorkspace context")
+				log.WithError(err).Error("unable to create startWorkspace context")
 				return ctrl.Result{Requeue: true}, err
 			}
 
 			pod, err := r.createWorkspacePod(sctx)
 			if err != nil {
-				log.WithFields(owi).WithError(err).Error("unable to produce workspace pod")
+				log.WithError(err).Error("unable to produce workspace pod")
 				return ctrl.Result{}, err
 			}
 
@@ -206,7 +205,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			if apierrors.IsAlreadyExists(err) {
 				// pod exists, we're good
 			} else if err != nil {
-				log.WithFields(owi).WithField("pod", pod).WithError(err).Error("unable to create Pod for Workspace")
+				log.WithField("pod", pod).WithError(err).Error("unable to create Pod for Workspace")
 				return ctrl.Result{Requeue: true}, err
 			} else {
 				// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
@@ -219,7 +218,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				patch := client.MergeFrom(workspace.DeepCopy())
 				workspace.Status.PodStarts++
 				if err := r.Status().Patch(ctx, workspace, patch); err != nil {
-					log.WithFields(owi).WithError(err).Error("Failed to patch PodStarts in workspace status")
+					log.WithError(err).Error("Failed to patch PodStarts in workspace status")
 					return ctrl.Result{}, err
 				}
 
@@ -310,7 +309,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 	case workspace.Status.Phase == workspacev1.WorkspacePhaseRunning:
 		err := r.deleteWorkspaceSecrets(ctx, workspace)
 		if err != nil {
-			log.WithFields(owi).WithError(err).Error("could not delete workspace secrets")
+			log.WithError(err).Error("could not delete workspace secrets")
 		}
 
 	// we've disposed already - try to remove the finalizer and call it a day
@@ -451,13 +450,13 @@ func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *wo
 	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "env"), r.Config.Namespace)
 	if err != nil {
 		errs = append(errs, err.Error())
-		log.WithFields(owi).WithError(err).Error("could not delete environment secret")
+		log.WithError(err).Error("could not delete environment secret")
 	}
 
 	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "tokens"), r.Config.SecretsNamespace)
 	if err != nil {
 		errs = append(errs, err.Error())
-		log.WithFields(owi).WithError(err).Error("could not delete token secret")
+		log.WithError(err).Error("could not delete token secret")
 	}
 
 	if len(errs) != 0 {
