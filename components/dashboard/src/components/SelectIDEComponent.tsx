@@ -141,10 +141,10 @@ export default function SelectIDEComponent({
             setWarning?.(
                 <>
                     <span className="font-semibold">
-                        IntelliJ IDEA 2022.3.3 will be removed on May 31<sup>st</sup>
+                        Support for IntelliJ IDEA 2022.3.3 will be discontinued on May 31<sup>st</sup>
                     </span>
                     . <br />
-                    Please use version 2024.1 or pin a different one in your{" "}
+                    Please use version 2024.1 or pin to another version in your{" "}
                     <Link className="gp-link" to={"/settings"}>
                         Organization settings
                     </Link>
