@@ -1,0 +1,392 @@
+{
+  "supervisorImage": "{{.Repository}}/supervisor:commit-d1fc093e2b0cf3a7db3a35d6e7dbc6d742c3f956",
+  "ideOptions": {
+    "options": {
+      "code": {
+        "orderKey": "010",
+        "title": "VS Code",
+        "type": "browser",
+        "logo": "{{.IdeLogoBase}}/vscode.svg",
+        "label": "Browser",
+        "image": "{{.Repository}}/ide/code:commit-7721fe825201d4d8d53975f81de0b063d94383cc",
+        "latestImage": "{{.ResolvedLatestCodeBrowserImage}}",
+        "imageLayers": [
+          "{{.CodeWebExtensionImage}}",
+          "{{.CodeHelperImage}}"
+        ],
+        "latestImageLayers": [
+          "{{.CodeWebExtensionImage}}",
+          "{{.CodeHelperImage}}"
+        ],
+        "versions": [
+          {
+            "version": "1.88.0",
+            "image": "{{.Repository}}/ide/code:commit-7721fe825201d4d8d53975f81de0b063d94383cc",
+            "imageLayers": [
+              "{{.CodeWebExtensionImage}}",
+              "{{.CodeHelperImage}}"
+            ]
+          },
+          {
+            "version": "1.87.1",
+            "image": "{{.Repository}}/ide/code:commit-aaa9aeb1a12870ab8c19ca8a928d76849bc24c84",
+            "imageLayers": [
+              "{{.CodeWebExtensionImage}}",
+              "{{.CodeHelperImage}}"
+            ]
+          },
+          {
+            "version": "1.87.0",
+            "image": "{{.Repository}}/ide/code:commit-82dc424633bdc7266b46302042dd98af201fa8f8",
+            "imageLayers": [
+              "{{.CodeWebExtensionImage}}",
+              "{{.CodeHelperImage}}"
+            ]
+          },
+          {
+            "version": "1.86.2",
+            "image": "{{.Repository}}/ide/code:commit-d86f6aa033943c9650d06339915e68063b0cf142",
+            "imageLayers": [
+              "{{.CodeWebExtensionImage}}",
+              "{{.CodeHelperImage}}"
+            ]
+          }
+        ]
+      },
+      "code-desktop": {
+        "orderKey": "020",
+        "title": "VS Code",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/vscode.svg",
+        "image": "{{.Repository}}/ide/code-desktop:commit-9d4bc72a7ffeb47ff083aabb9747a7f67c459592",
+        "latestImage": "{{.Repository}}/ide/code-desktop-insiders:commit-9d4bc72a7ffeb47ff083aabb9747a7f67c459592"
+      },
+      "code1_85": {
+        "orderKey": "011",
+        "title": "VS Code",
+        "type": "browser",
+        "logo": "{{.IdeLogoBase}}/vscode.svg",
+        "label": "Browser",
+        "image": "{{.Repository}}/ide/code:commit-cb1173f2a457633550a7fdc89af86d8d4da51876",
+        "imageLayers": [
+          "{{.CodeWebExtensionImage}}",
+          "{{.CodeHelperImage}}"
+        ]
+      },
+      "intellij": {
+        "orderKey": "040",
+        "title": "IntelliJ IDEA",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/intellijIdeaLogo.svg",
+        "label": "Ultimate",
+        "image": "{{.Repository}}/ide/intellij:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "latestImage": "{{.Repository}}/ide/intellij:latest",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
+        "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
+        "imageLayers": [
+          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "latestImageLayers": [
+          "{{.JetBrainsPluginLatestImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "versions": [
+          {
+            "version": "2024.1",
+            "image": "{{.Repository}}/ide/intellij:commit-ef400309563b040b84d9588862805ce2f26d688a",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          },
+          {
+            "version": "2023.3.6",
+            "image": "{{.Repository}}/ide/intellij:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          }
+        ]
+      },
+      "intellij-previous": {
+        "orderKey": "041",
+        "title": "IntelliJ IDEA",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/intellijIdeaLogo.svg",
+        "label": "Ultimate",
+        "image": "{{.Repository}}/ide/intellij:2022.3.3",
+        "imageLayers": [
+          "{{.JetBrainsPluginImagePrevious}}",
+          "{{.JetBrainsLauncherImagePrevious}}"
+        ]
+      },
+      "goland": {
+        "orderKey": "050",
+        "title": "GoLand",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/golandLogo.svg",
+        "image": "{{.Repository}}/ide/goland:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "latestImage": "{{.Repository}}/ide/goland:latest",
+        "pluginImage": "{{.Repository}}/ide/jb-backend-plugin:commit-51866638eaee0cf51bd11e46ef6e1cecf54d23c4",
+        "pluginLatestImage": "{{.Repository}}/ide/jb-backend-plugin:commit-51866638eaee0cf51bd11e46ef6e1cecf54d23c4-latest",
+        "imageLayers": [
+          "{{.Repository}}/ide/jb-backend-plugin:commit-51866638eaee0cf51bd11e46ef6e1cecf54d23c4",
+          "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+        ],
+        "latestImageLayers": [
+          "{{.Repository}}/ide/jb-backend-plugin:commit-51866638eaee0cf51bd11e46ef6e1cecf54d23c4-latest",
+          "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+        ],
+        "versions": [
+          {
+            "version": "2024.1",
+            "image": "{{.Repository}}/ide/goland:commit-ef400309563b040b84d9588862805ce2f26d688a",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          },
+          {
+            "version": "2023.3.6",
+            "image": "{{.Repository}}/ide/goland:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          }
+        ]
+      },
+      "pycharm": {
+        "orderKey": "060",
+        "title": "PyCharm",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/pycharmLogo.svg",
+        "label": "Professional",
+        "image": "{{.Repository}}/ide/pycharm:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "latestImage": "{{.Repository}}/ide/pycharm:latest",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
+        "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
+        "imageLayers": [
+          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "latestImageLayers": [
+          "{{.JetBrainsPluginLatestImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "versions": [
+          {
+            "version": "2024.1",
+            "image": "{{.Repository}}/ide/pycharm:commit-ef400309563b040b84d9588862805ce2f26d688a",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          },
+          {
+            "version": "2023.3.5",
+            "image": "{{.Repository}}/ide/pycharm:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          }
+        ]
+      },
+      "phpstorm": {
+        "orderKey": "070",
+        "title": "PhpStorm",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/phpstormLogo.svg",
+        "image": "{{.Repository}}/ide/phpstorm:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "latestImage": "{{.Repository}}/ide/phpstorm:latest",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
+        "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
+        "imageLayers": [
+          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "latestImageLayers": [
+          "{{.JetBrainsPluginLatestImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "versions": [
+          {
+            "version": "2024.1",
+            "image": "{{.Repository}}/ide/phpstorm:commit-ef400309563b040b84d9588862805ce2f26d688a",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          },
+          {
+            "version": "2023.3.6",
+            "image": "{{.Repository}}/ide/phpstorm:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          }
+        ]
+      },
+      "rubymine": {
+        "orderKey": "080",
+        "title": "RubyMine",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/rubymineLogo.svg",
+        "image": "{{.Repository}}/ide/rubymine:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "latestImage": "{{.Repository}}/ide/rubymine:latest",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
+        "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
+        "imageLayers": [
+          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "latestImageLayers": [
+          "{{.JetBrainsPluginLatestImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "versions": [
+          {
+            "version": "2024.1",
+            "image": "{{.Repository}}/ide/rubymine:commit-ef400309563b040b84d9588862805ce2f26d688a",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          },
+          {
+            "version": "2023.3.6",
+            "image": "{{.Repository}}/ide/rubymine:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          }
+        ]
+      },
+      "webstorm": {
+        "orderKey": "090",
+        "title": "WebStorm",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/webstormLogo.svg",
+        "image": "{{.Repository}}/ide/webstorm:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "latestImage": "{{.Repository}}/ide/webstorm:latest",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
+        "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
+        "imageLayers": [
+          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "latestImageLayers": [
+          "{{.JetBrainsPluginLatestImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "versions": [
+          {
+            "version": "2024.1",
+            "image": "{{.Repository}}/ide/webstorm:commit-ef400309563b040b84d9588862805ce2f26d688a",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          },
+          {
+            "version": "2023.3.6",
+            "image": "{{.Repository}}/ide/webstorm:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          }
+        ]
+      },
+      "rider": {
+        "orderKey": "100",
+        "title": "Rider",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/riderLogo.svg",
+        "image": "{{.Repository}}/ide/rider:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "latestImage": "{{.Repository}}/ide/rider:latest",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
+        "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
+        "imageLayers": [
+          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "latestImageLayers": [
+          "{{.JetBrainsPluginLatestImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ]
+      },
+      "clion": {
+        "orderKey": "110",
+        "title": "CLion",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/clionLogo.svg",
+        "image": "{{.Repository}}/ide/clion:commit-ef400309563b040b84d9588862805ce2f26d688a",
+        "latestImage": "{{.Repository}}/ide/clion:latest",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
+        "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
+        "imageLayers": [
+          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "latestImageLayers": [
+          "{{.JetBrainsPluginLatestImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ]
+      },
+      "xterm": {
+        "orderKey": "120",
+        "title": "Terminal",
+        "type": "browser",
+        "logo": "{{.IdeLogoBase}}/terminal.svg",
+        "label": "Insiders",
+        "image": "{{.Repository}}/ide/xterm-web:latest",
+        "latestImage": "{{.Repository}}/ide/xterm-web:latest",
+        "resolveImageDigest": true
+      }
+    },
+    "defaultIde": "code",
+    "defaultDesktopIde": "code-desktop",
+    "clients": {
+      "jetbrains-gateway": {
+        "defaultDesktopIDE": "intellij",
+        "desktopIDEs": [
+          "intellij",
+          "goland",
+          "pycharm",
+          "phpstorm",
+          "rubymine",
+          "webstorm",
+          "rider",
+          "clion"
+        ],
+        "installationSteps": [
+          "If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below."
+        ]
+      },
+      "vscode": {
+        "defaultDesktopIDE": "code-desktop",
+        "desktopIDEs": [
+          "code-desktop"
+        ],
+        "installationSteps": [
+          "If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/download'>VS Code</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below."
+        ]
+      },
+      "vscode-insiders": {
+        "defaultDesktopIDE": "code-desktop",
+        "desktopIDEs": [
+          "code-desktop"
+        ],
+        "installationSteps": [
+          "If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'>VS Code Insiders</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below."
+        ]
+      }
+    }
+  }
+}
