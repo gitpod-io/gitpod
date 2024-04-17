@@ -71,7 +71,7 @@ export function watchWorkspaceStatusInOrder(
 ): Disposable {
     const wsID = workspaceId || "ALL_WORKSPACES";
     const newInfo = { complete: callback, priority };
-    const callbacks = cachedCallbackInfoMap.get(wsID) || [];
+    const callbacks = cachedCallbackInfoMap.get(wsID) ?? [];
     callbacks.push(newInfo);
     callbacks.sort((a, b) => b.priority - a.priority);
 
