@@ -20,7 +20,10 @@ import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
 import { workspaceClient } from "../service/public-api";
-import { watchWorkspaceStatusInOrder } from "../data/workspaces/listen-to-workspace-ws-messages";
+import {
+    WatchWorkspaceStatusPriority,
+    watchWorkspaceStatusInOrder,
+} from "../data/workspaces/listen-to-workspace-ws-messages";
 import { Button } from "@podkit/buttons/Button";
 import {
     GetWorkspaceRequest,
@@ -130,19 +133,23 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
 
         try {
-            const watchDispose = watchWorkspaceStatusInOrder(this.props.workspaceId, 99, async (resp) => {
-                if (resp.workspaceId !== this.props.workspaceId || !resp.status) {
-                    return;
-                }
-                await this.onWorkspaceUpdate(
-                    new Workspace({
-                        ...this.state.workspace,
-                        status: resp.status,
-                    }),
-                );
-                // wait for next frame
-                await new Promise((resolve) => setTimeout(resolve, 0));
-            });
+            const watchDispose = watchWorkspaceStatusInOrder(
+                this.props.workspaceId,
+                WatchWorkspaceStatusPriority.StartWorkspacePage,
+                async (resp) => {
+                    if (resp.workspaceId !== this.props.workspaceId || !resp.status) {
+                        return;
+                    }
+                    await this.onWorkspaceUpdate(
+                        new Workspace({
+                            ...this.state.workspace,
+                            status: resp.status,
+                        }),
+                    );
+                    // wait for next frame
+                    await new Promise((resolve) => setTimeout(resolve, 0));
+                },
+            );
             this.toDispose.push(watchDispose);
             this.toDispose.push(
                 getGitpodService().registerClient({

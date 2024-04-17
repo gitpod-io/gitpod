@@ -63,10 +63,21 @@ export function watchWorkspaceStatus(workspaceId: string | undefined, cb: WatchW
 const cachedCallbackInfoMap = new Map<string, { complete: WatchWorkspaceStatusCallback; priority: number }[]>();
 const cachedDisposables = new Map<string, Disposable>();
 
-// watchWorkspaceStatusInOrder watches the workspace status locally in order of priority.
+export enum WatchWorkspaceStatusPriority {
+    StartWorkspacePage = 100,
+    SupervisorService = 50,
+}
+
+/**
+ * Registers multiple callbacks to receive the same workspace status update in order of priority.
+ *
+ * @param workspaceId The workspace ID to watch. If undefined, all workspaces are watched.
+ * @param priority The priority of the callback. Higher priority callbacks are executed and waited first.
+ * @param callback The callback to execute when a workspace status update is received. Only executed after previous callbacks.
+ */
 export function watchWorkspaceStatusInOrder(
     workspaceId: string | undefined,
-    priority: number,
+    priority: WatchWorkspaceStatusPriority,
     callback: WatchWorkspaceStatusCallback,
 ): Disposable {
     const wsID = workspaceId || "ALL_WORKSPACES";
