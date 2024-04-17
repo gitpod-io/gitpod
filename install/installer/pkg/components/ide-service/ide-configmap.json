@@ -319,6 +319,16 @@
         "latestImageLayers": [
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
+        ],
+        "versions": [
+          {
+            "version": "2024.1",
+            "image": "{{.Repository}}/ide/rider:commit-ef400309563b040b84d9588862805ce2f26d688a",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          }
         ]
       },
       "clion": {
@@ -337,6 +347,16 @@
         "latestImageLayers": [
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
+        ],
+        "versions": [
+          {
+            "version": "2024.1",
+            "image": "{{.Repository}}/ide/clion:commit-ef400309563b040b84d9588862805ce2f26d688a",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
+              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+            ]
+          }
         ]
       },
       "xterm": {
