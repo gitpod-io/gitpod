@@ -1218,6 +1218,7 @@ export class PublicAPIConverter {
             id: repo.id,
             urlRegexp: repo.urlRegexp,
             blockUser: repo.blockUser,
+            blockFreeUsage: repo.blockFreeUsage,
             creationTime: Timestamp.fromDate(new Date(repo.createdAt)),
             updateTime: Timestamp.fromDate(new Date(repo.updatedAt)),
         });

@@ -249,7 +249,7 @@ export class WorkspaceStarter {
 
         let instanceId: string | undefined = undefined;
         try {
-            await this.checkBlockedRepository(user, workspace.contextURL);
+            await this.checkBlockedRepository(user, workspace);
 
             // Some workspaces do not have an image source.
             // Workspaces without image source are not only legacy, but also happened due to what looks like a bug.
@@ -496,7 +496,7 @@ export class WorkspaceStarter {
         await client.stopWorkspace(ctx, req);
     }
 
-    private async checkBlockedRepository(user: User, contextURL: string) {
+    private async checkBlockedRepository(user: User, { contextURL, organizationId }: Workspace) {
         const blockedRepository = await this.blockedRepositoryDB.findBlockedRepositoryByURL(contextURL);
         if (!blockedRepository) return;
 
@@ -510,7 +510,18 @@ export class WorkspaceStarter {
                 log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });
             }
         }
-        throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, `${contextURL} is blocklisted on Gitpod.`);
+        if (blockedRepository.blockFreeUsage) {
+            const tier = await this.entitlementService.getBillingTier(user.id, organizationId);
+            if (tier === "free") {
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    `${contextURL} requires a paid plan on Gitpod.`,
+                );
+            }
+        }
+        if (!blockedRepository.blockFreeUsage) {
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, `${contextURL} is blocklisted on Gitpod.`);
+        }
     }
 
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself.

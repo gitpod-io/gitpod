@@ -94,6 +94,7 @@ export class InstallationServiceAPI implements ServiceImpl<typeof InstallationSe
         const blockedRepository = await this.installationService.adminCreateBlockedRepository(ctxUserId(), {
             urlRegexp: req.urlRegexp,
             blockUser: req.blockUser ?? false,
+            blockFreeUsage: req.blockFreeUsage ?? false,
         });
         return new CreateBlockedRepositoryResponse({
             blockedRepository: this.apiConverter.toBlockedRepository(blockedRepository),

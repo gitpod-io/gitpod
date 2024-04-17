@@ -1831,6 +1831,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         ctx: TraceContext,
         urlRegexp: string,
         blockUser: boolean,
+        blockFreeUsage: boolean,
     ): Promise<BlockedRepository> {
         traceAPIParams(ctx, { urlRegexp, blockUser });
 
@@ -1843,6 +1844,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return await this.installationService.adminCreateBlockedRepository(admin.id, {
             urlRegexp,
             blockUser,
+            blockFreeUsage,
         });
     }
 
