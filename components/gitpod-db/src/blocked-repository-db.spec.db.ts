@@ -30,6 +30,7 @@ class BlockedRepositoryDBSpec {
         const blockedRepository = await this.blockedRepositoryDb.createBlockedRepository(
             "github.com/bob/some-repo",
             true,
+            false,
         );
         expect(blockedRepository.urlRegexp).eq("github.com/bob/some-repo");
         expect(blockedRepository.blockUser).eq(true);
@@ -37,7 +38,7 @@ class BlockedRepositoryDBSpec {
 
     @test(timeout(10000))
     public async checkRepositoryIsBlocked() {
-        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true);
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true, false);
 
         const blockedRepository = await this.blockedRepositoryDb.findBlockedRepositoryByURL("github.com/bob/some-repo");
 
@@ -48,7 +49,7 @@ class BlockedRepositoryDBSpec {
 
     @test(timeout(10000))
     public async checkRepositoryIsNotBlocked() {
-        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true);
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true, false);
 
         const blockedRepository = await this.blockedRepositoryDb.findBlockedRepositoryByURL(
             "github.com/alice/some-repo",
@@ -59,8 +60,8 @@ class BlockedRepositoryDBSpec {
 
     @test(timeout(10000))
     public async canFindAllRepositoriesWithoutSearchTerm() {
-        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true);
-        await this.blockedRepositoryDb.createBlockedRepository("github.com/alice/.*", true);
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true, false);
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/alice/.*", true, false);
 
         const blockedRepositories = await this.blockedRepositoryDb.findAllBlockedRepositories(0, 1, "id", "ASC");
 
@@ -69,8 +70,8 @@ class BlockedRepositoryDBSpec {
 
     @test(timeout(10000))
     public async canFindAllRepositoriesWithSearchTerm() {
-        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true);
-        await this.blockedRepositoryDb.createBlockedRepository("github.com/alice/.*", true);
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/bob/.*", true, false);
+        await this.blockedRepositoryDb.createBlockedRepository("github.com/alice/.*", true, false);
 
         const blockedRepositories = await this.blockedRepositoryDb.findAllBlockedRepositories(0, 1, "id", "ASC", "bob");
 

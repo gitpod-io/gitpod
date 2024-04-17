@@ -74,6 +74,9 @@ message CreateBlockedRepositoryRequest {
   // block_user indicates if the user should be blocked from accessing the
   // repository
   bool block_user = 2;
+
+  // block_free_usage indicates if a free tier user may not start a workspace on that repository URL
+  bool block_free_usage = 3;
 }
 
 message CreateBlockedRepositoryResponse {
@@ -126,6 +129,9 @@ message BlockedRepository {
 
   google.protobuf.Timestamp creation_time = 4;
   google.protobuf.Timestamp update_time = 5;
+
+  // block_free_usage indicates if a free tier user may not start a workspace on that repository URL
+  bool block_free_usage = 6;
 }
 
 message BlockedEmailDomain {
