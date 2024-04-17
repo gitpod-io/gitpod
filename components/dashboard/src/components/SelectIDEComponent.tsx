@@ -13,6 +13,7 @@ import { DisableScope } from "../data/workspaces/workspace-classes-query";
 import { Link } from "react-router-dom";
 import { repositoriesRoutes } from "../repositories/repositories.routes";
 import { isGitpodIo } from "../utils";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 interface SelectIDEComponentProps {
     selectedIdeOption?: string;
@@ -49,6 +50,7 @@ export default function SelectIDEComponent({
         filterOutDisabled: true,
         ignoreScope: ignoreRestrictionScopes,
     });
+    const isEditorVersionPinningEnabled = useFeatureFlag("org_level_editor_version_pinning_enabled");
 
     const options = ideOptions;
 
@@ -144,17 +146,24 @@ export default function SelectIDEComponent({
                         Support for IntelliJ IDEA 2022.3.3 will be discontinued on May 31<sup>st</sup>
                     </span>
                     . <br />
-                    Please use version 2024.1 or pin to another version in your{" "}
-                    <Link className="gp-link" to={"/settings"}>
-                        Organization settings
-                    </Link>
+                    Please use version 2024.1{" "}
+                    {isEditorVersionPinningEnabled ? (
+                        <>
+                            or pin to another version in your{" "}
+                            <Link className="gp-link" to={"/settings"}>
+                                Organization settings
+                            </Link>
+                        </>
+                    ) : (
+                        "instead"
+                    )}
                     .
                 </>,
             );
         } else {
             setWarning?.(undefined);
         }
-    }, [setError, setWarning, ide]);
+    }, [setError, setWarning, ide, isEditorVersionPinningEnabled]);
 
     return (
         <Combobox
