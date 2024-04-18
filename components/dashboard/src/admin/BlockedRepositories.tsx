@@ -28,8 +28,8 @@ export function BlockedRepositories() {
     );
 }
 
-type NewBlockedRepository = Pick<BlockedRepository, "urlRegexp" | "blockUser">;
-type ExistingBlockedRepository = Pick<BlockedRepository, "id" | "urlRegexp" | "blockUser">;
+type NewBlockedRepository = Pick<BlockedRepository, "urlRegexp" | "blockUser" | "blockFreeUsage">;
+type ExistingBlockedRepository = Pick<BlockedRepository, "id" | "urlRegexp" | "blockUser" | "blockFreeUsage">;
 
 interface Props {}
 
@@ -50,6 +50,7 @@ export function BlockedRepositoriesList(props: Props) {
             id: 0,
             urlRegexp: "",
             blockUser: false,
+            blockFreeUsage: false,
         }),
     );
 
@@ -86,6 +87,7 @@ export function BlockedRepositoriesList(props: Props) {
                 id: 0,
                 urlRegexp: "",
                 blockUser: false,
+                blockFreeUsage: false,
             }),
         );
         setAddModalVisible(true);
@@ -95,6 +97,7 @@ export function BlockedRepositoriesList(props: Props) {
         await installationClient.createBlockedRepository({
             urlRegexp: blockedRepository.urlRegexp ?? "",
             blockUser: blockedRepository.blockUser ?? false,
+            blockFreeUsage: blockedRepository.blockFreeUsage ?? false,
         });
         setAddModalVisible(false);
         search();
@@ -174,6 +177,7 @@ export function BlockedRepositoriesList(props: Props) {
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
                     <div className="w-9/12">Repository URL (RegEx)</div>
                     <div className="w-1/12">Block Users</div>
+                    <div className="w-2/12">Block Free Usage</div>
                     <div className="w-1/12"></div>
                 </div>
                 {searchResult.blockedRepositories.map((br) => (
@@ -199,6 +203,9 @@ function BlockedRepositoryEntry(props: { br: BlockedRepository; confirmedDelete:
             </div>
             <div className="flex flex-col self-center w-1/12">
                 <span className="mr-3 text-lg text-gray-600 truncate">{props.br.blockUser ? "Yes" : "No"}</span>
+            </div>
+            <div className="flex flex-col self-center w-2/12">
+                <span className="mr-3 text-lg text-gray-600 truncate">{props.br.blockFreeUsage ? "Yes" : " "}</span>
             </div>
             <div className="flex flex-col w-1/12">
                 <ItemFieldContextMenu menuEntries={menuEntries} />
@@ -315,6 +322,18 @@ function Details(props: {
                 onChange={(checked) => {
                     if (!!props.update) {
                         props.update({ blockUser: checked });
+                    }
+                }}
+            />
+
+            <CheckboxInputField
+                label="Block Free Usage"
+                hint="Block workspace start for a repository URL that matches this RegEx if user is on free tier."
+                checked={props.br.blockFreeUsage}
+                disabled={!props.update}
+                onChange={(checked) => {
+                    if (!!props.update) {
+                        props.update({ blockFreeUsage: checked });
                     }
                 }}
             />

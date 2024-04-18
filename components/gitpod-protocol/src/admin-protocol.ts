@@ -22,7 +22,11 @@ export interface AdminServer {
     adminModifyRoleOrPermission(req: AdminModifyRoleOrPermissionRequest): Promise<User>;
     adminModifyPermanentWorkspaceFeatureFlag(req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User>;
 
-    adminCreateBlockedRepository(urlRegexp: string, blockUser: boolean): Promise<BlockedRepository>;
+    adminCreateBlockedRepository(
+        urlRegexp: string,
+        blockUser: boolean,
+        blockFreeUsage: boolean,
+    ): Promise<BlockedRepository>;
     adminDeleteBlockedRepository(id: number): Promise<void>;
     adminGetBlockedRepositories(
         req: AdminGetListRequest<BlockedRepository>,

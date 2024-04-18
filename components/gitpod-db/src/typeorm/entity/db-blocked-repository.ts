@@ -19,6 +19,9 @@ export class DBBlockedRepository implements BlockedRepository {
     @Column()
     blockUser: boolean;
 
+    @Column()
+    blockFreeUsage: boolean;
+
     @Column({
         type: "timestamp",
         precision: 6,
