@@ -25,10 +25,13 @@ jobs:
             - name: Detect file changes
               id: changes
               run: |
-                echo "::set-output name=gradle-stable::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep backend-plugin/gradle-stable.properties$ | xargs)"
-                echo "::set-output name=workspaceYaml::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep WORKSPACE.yaml$ | xargs)"
+                if [ $(git status --porcelain | wc -l) -gt 0 ]; then
+                  echo "dirty=true" >> $GITHUB_OUTPUT
+                else
+                  echo "dirty=false" >> $GITHUB_OUTPUT
+                fi
             - name: Create Pull Request
-              if: ${{steps.changes.outputs.gradle-stable || steps.changes.outputs.workspaceYaml}}
+              if: ${{steps.changes.outputs.dirty}}
               uses: peter-evans/create-pull-request@v4
               with:
                   title: "[JetBrains] Update IDE images to new build version"
