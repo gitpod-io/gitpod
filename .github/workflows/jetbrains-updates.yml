@@ -10,12 +10,17 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - name: Install dependencies
+              run: |
+                cd ./components/ide/jetbrains/image/gha-update-image
+                yarn
+                npm i -g bun
             - name: Check for updates
               run: |
-                  cd ./components/ide/jetbrains/image/gha-update-image
-                  yarn install
-                  node index.js
-                  git diff
+                cd ./components/ide/jetbrains/image/gha-update-image
+                node index.js
+                bun run update-versions.ts
+                git diff
 
             - name: Detect file changes
               id: changes
