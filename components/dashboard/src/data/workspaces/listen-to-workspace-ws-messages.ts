@@ -51,10 +51,9 @@ export const useListenToWorkspacesWSMessages = () => {
     }, [organizationId, queryClient]);
 };
 
-export function watchWorkspaceStatus(
-    workspaceId: string | undefined,
-    cb: (response: WatchWorkspaceStatusResponse) => void,
-): Disposable {
+export type WatchWorkspaceStatusCallback = (response: WatchWorkspaceStatusResponse) => Promise<void> | void;
+
+export function watchWorkspaceStatus(workspaceId: string | undefined, cb: WatchWorkspaceStatusCallback): Disposable {
     return stream<WatchWorkspaceStatusRequest>(
         (options) => workspaceClient.watchWorkspaceStatus({ workspaceId }, options),
         cb,
