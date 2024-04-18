@@ -1,5 +1,5 @@
 import { $ } from "bun";
-import yaml from "js-yaml";
+import yaml from "yaml";
 import { z } from "zod";
 
 $.nothrow(); // git likes to respond with non-zero codes, but it is alright for us
@@ -32,15 +32,13 @@ const installationVersion =
 const versionData =
     await $`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${installationVersion.trim()} cat /versions.yaml`.text();
 
-const parsed = versionManifest.parse(yaml.load(versionData));
+const parsed = versionManifest.parse(yaml.parse(versionData));
 
 const pathToConfigmap = "../../../../../install/installer/pkg/components/ide-service/ide-configmap.json"; // this is insane
 const pathToWorkspaceYaml = "../../../../../WORKSPACE.yaml";
 
 const configmap = JSON.parse(await Bun.file(pathToConfigmap).text());
-const workspace = workspaceYaml.parse(yaml.load(await Bun.file(pathToWorkspaceYaml).text()));
-
-// const versionRegex = new RegExp(/commit-.{1,40}/);
+const workspace = workspaceYaml.parse(yaml.parse(await Bun.file(pathToWorkspaceYaml).text()));
 
 const getIDEVersion = function (ide: string) {
     const url = workspace.defaultArgs[`${ide}DownloadUrl`];
