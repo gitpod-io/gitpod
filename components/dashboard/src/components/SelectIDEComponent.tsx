@@ -12,7 +12,6 @@ import { MiddleDot } from "./typography/MiddleDot";
 import { DisableScope } from "../data/workspaces/workspace-classes-query";
 import { Link } from "react-router-dom";
 import { repositoriesRoutes } from "../repositories/repositories.routes";
-import { isGitpodIo } from "../utils";
 import { useFeatureFlag } from "../data/featureflag-query";
 
 interface SelectIDEComponentProps {
@@ -138,7 +137,7 @@ export default function SelectIDEComponent({
     }, [ide, availableOptions, setError, loading, disabled, ideOptionsLoading, helpMessage]);
 
     useEffect(() => {
-        const shouldShowDeprecationNotice = isGitpodIo() && ["intellij-previous"].includes(ide);
+        const shouldShowDeprecationNotice = ["intellij-previous"].includes(ide);
         if (shouldShowDeprecationNotice) {
             setWarning?.(
                 <>
