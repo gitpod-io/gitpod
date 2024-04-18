@@ -80,6 +80,7 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		// backoff.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	log = log.WithValues("owi", workspace.OWI())
 
 	if workspace.IsConditionTrue(workspacev1.WorkspaceConditionTimeout) {
 		// Workspace has already been marked as timed out.
