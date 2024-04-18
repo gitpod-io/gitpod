@@ -168,7 +168,7 @@ func (r *WorkspaceReconciler) listWorkspacePods(ctx context.Context, ws *workspa
 func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods *corev1.PodList) (result ctrl.Result, err error) {
 	span, ctx := tracing.FromContext(ctx, "actOnStatus")
 	defer tracing.FinishSpan(span, &err)
-	log := log.FromContext(ctx).WithValues(workspace.OWI())
+	log := log.FromContext(ctx).WithValues("owi", workspace.OWI())
 
 	if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped && !r.metrics.containsWorkspace(workspace) {
 		// If the workspace hasn't stopped yet, and we don't know about this workspace yet, remember it.
@@ -324,7 +324,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 }
 
 func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *workspacev1.Workspace) {
-	log := log.FromContext(ctx).WithValues(workspace.OWI())
+	log := log.FromContext(ctx).WithValues("owi", workspace.OWI())
 
 	ok, lastState := r.metrics.getWorkspace(&log, workspace)
 	if !ok {
@@ -437,7 +437,7 @@ func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev
 func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *workspacev1.Workspace) (err error) {
 	span, ctx := tracing.FromContext(ctx, "deleteWorkspaceSecrets")
 	defer tracing.FinishSpan(span, &err)
-	log := log.FromContext(ctx).WithValues(ws.OWI())
+	log := log.FromContext(ctx).WithValues("owi", ws.OWI())
 
 	// if a secret cannot be deleted we do not return early because we want to attempt
 	// the deletion of the remaining secrets
