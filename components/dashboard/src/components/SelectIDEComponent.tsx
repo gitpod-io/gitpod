@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import Editor from "../icons/Editor.svg";
 import { AllowedWorkspaceEditor, useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
@@ -14,20 +14,20 @@ import { Link } from "react-router-dom";
 import { repositoriesRoutes } from "../repositories/repositories.routes";
 import { useFeatureFlag } from "../data/featureflag-query";
 
-interface SelectIDEComponentProps {
+type Props = {
     selectedIdeOption?: string;
     selectedConfigurationId?: string;
     pinnedEditorVersions?: Map<string, string>;
     useLatest?: boolean;
-    onSelectionChange: (ide: string, latest: boolean) => void;
-    setError?: (error?: React.ReactNode) => void;
-    setWarning?: (warning?: React.ReactNode) => void;
     disabled?: boolean;
     loading?: boolean;
     ignoreRestrictionScopes: DisableScope[] | undefined;
     availableOptions?: string[];
-}
-
+    hideVersions?: boolean;
+    setError?: (error?: React.ReactNode) => void;
+    setWarning?: (warning?: React.ReactNode) => void;
+    onSelectionChange: (ide: string, latest: boolean) => void;
+};
 export default function SelectIDEComponent({
     selectedIdeOption,
     selectedConfigurationId,
@@ -35,12 +35,13 @@ export default function SelectIDEComponent({
     useLatest,
     disabled = false,
     loading = false,
+    ignoreRestrictionScopes,
+    availableOptions,
+    hideVersions,
     setError,
     setWarning,
     onSelectionChange,
-    ignoreRestrictionScopes,
-    availableOptions,
-}: SelectIDEComponentProps) {
+}: Props) {
     const {
         data: ideOptions,
         isLoading: ideOptionsLoading,
@@ -51,15 +52,13 @@ export default function SelectIDEComponent({
     });
     const isEditorVersionPinningEnabled = useFeatureFlag("org_level_editor_version_pinning_enabled");
 
-    const options = ideOptions;
-
     const getElements = useCallback(
         (search: string) => {
-            if (!options) {
+            if (!ideOptions) {
                 return [];
             }
             const result: ComboboxElement[] = [];
-            for (const ide of options.filter((ide) =>
+            for (const ide of ideOptions.filter((ide) =>
                 `${ide.label}${ide.title}${ide.notes}${ide.id}`.toLowerCase().includes(search.toLowerCase()),
             )) {
                 if (!useLatest) {
@@ -70,6 +69,7 @@ export default function SelectIDEComponent({
                                 option={ide}
                                 pinnedIdeVersion={pinnedEditorVersions?.get(ide.id)}
                                 useLatest={false}
+                                hideVersion={hideVersions}
                             />
                         ),
                         isSelectable: true,
@@ -77,14 +77,16 @@ export default function SelectIDEComponent({
                 } else if (ide.latestImage) {
                     result.push({
                         id: ide.id + "-latest",
-                        element: <IdeOptionElementInDropDown option={ide} useLatest={true} />,
+                        element: (
+                            <IdeOptionElementInDropDown option={ide} useLatest={true} hideVersion={hideVersions} />
+                        ),
                         isSelectable: true,
                     });
                 }
             }
             return result;
         },
-        [options, useLatest, pinnedEditorVersions],
+        [ideOptions, useLatest, pinnedEditorVersions, hideVersions],
     );
     const internalOnSelectionChange = (id: string) => {
         const { ide, useLatest } = parseId(id);
@@ -177,6 +179,7 @@ export default function SelectIDEComponent({
                 pinnedIdeVersion={pinnedEditorVersions?.get(ide)}
                 useLatest={!!useLatest}
                 loading={ideOptionsLoading || loading}
+                hideVersion={hideVersions}
             />
         </Combobox>
     );
@@ -188,23 +191,20 @@ function parseId(id: string): { ide: string; useLatest: boolean } {
     return { ide, useLatest };
 }
 
-interface IdeOptionElementProps {
+type IdeOptionProps = {
     option: AllowedWorkspaceEditor | undefined;
     pinnedIdeVersion?: string;
     useLatest: boolean;
     loading?: boolean;
-}
-
-function capitalize(label?: string) {
-    return label && label[0].toLocaleUpperCase() + label.slice(1);
-}
-
-const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({
+    hideVersion?: boolean;
+};
+const IdeOptionElementSelected = ({
     option,
     pinnedIdeVersion,
     useLatest,
     loading = false,
-}) => {
+    hideVersion = false,
+}: IdeOptionProps) => {
     let version: string | undefined, label: string | undefined, title: string;
     if (!option) {
         title = "Select Editor";
@@ -221,8 +221,13 @@ const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({
             htmlTitle={title}
             title={
                 <div>
-                    {title} <MiddleDot className="text-pk-content-tertiary" />{" "}
-                    <span className="font-normal">{version}</span>{" "}
+                    {title}
+                    {!hideVersion && (
+                        <>
+                            <MiddleDot className="text-pk-content-tertiary" />{" "}
+                            <span className="font-normal">{version}</span>{" "}
+                        </>
+                    )}
                     {useLatest && (
                         <div className="ml-1 rounded-xl bg-pk-content-tertiary/10 px-2 py-1 inline text-sm font-normal">
                             Latest
@@ -236,7 +241,7 @@ const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({
                     {label && (
                         <>
                             <MiddleDot />
-                            <div>{capitalize(label)}</div>
+                            <div className="capitalize">{label}</div>
                         </>
                     )}
                 </div>
@@ -250,13 +255,13 @@ export const isJetbrains = (editor: string) => {
     return !["code", "code-desktop", "xterm"].includes(editor); // a really hacky way to get just JetBrains IDEs
 };
 
-function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
-    const { option, useLatest } = p;
+function IdeOptionElementInDropDown({ option, useLatest, pinnedIdeVersion, hideVersion = false }: IdeOptionProps) {
     if (!option) {
         return <></>;
     }
-    const version = useLatest ? option.latestImageVersion : p.pinnedIdeVersion ?? option.imageVersion;
-    const label = !isJetbrains(option.id) && capitalize(option.type);
+
+    const version = useLatest ? option.latestImageVersion : pinnedIdeVersion ?? option.imageVersion;
+    const label = !isJetbrains(option.id) && option.type;
 
     return (
         <div className="flex" title={option.title}>
@@ -265,16 +270,16 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
             </div>
             <div className="flex self-center text-gray-500">
                 <div className="font-semibold text-gray-700 dark:text-gray-300">{option.title}</div>
-                {version && (
+                {!hideVersion && version && (
                     <>
-                        <div className="mx-1">&middot;</div>
-                        <div>{version}</div>
+                        <MiddleDot />
+                        <span>{version}</span>
                     </>
                 )}
                 {label && (
                     <>
-                        <div className="mx-1">&middot;</div>
-                        <div>{label}</div>
+                        <MiddleDot />
+                        <span className="capitalize">{label}</span>
                     </>
                 )}
                 {useLatest && <div className="ml-2 rounded-xl bg-gray-200 px-2">Latest</div>}
