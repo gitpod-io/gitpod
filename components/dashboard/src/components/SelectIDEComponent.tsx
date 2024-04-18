@@ -12,6 +12,7 @@ import { MiddleDot } from "./typography/MiddleDot";
 import { DisableScope } from "../data/workspaces/workspace-classes-query";
 import { Link } from "react-router-dom";
 import { repositoriesRoutes } from "../repositories/repositories.routes";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 interface SelectIDEComponentProps {
     selectedIdeOption?: string;
@@ -20,6 +21,7 @@ interface SelectIDEComponentProps {
     useLatest?: boolean;
     onSelectionChange: (ide: string, latest: boolean) => void;
     setError?: (error?: React.ReactNode) => void;
+    setWarning?: (warning?: React.ReactNode) => void;
     disabled?: boolean;
     loading?: boolean;
     ignoreRestrictionScopes: DisableScope[] | undefined;
@@ -34,6 +36,7 @@ export default function SelectIDEComponent({
     disabled = false,
     loading = false,
     setError,
+    setWarning,
     onSelectionChange,
     ignoreRestrictionScopes,
     availableOptions,
@@ -46,6 +49,7 @@ export default function SelectIDEComponent({
         filterOutDisabled: true,
         ignoreScope: ignoreRestrictionScopes,
     });
+    const isEditorVersionPinningEnabled = useFeatureFlag("org_level_editor_version_pinning_enabled");
 
     const options = ideOptions;
 
@@ -131,6 +135,34 @@ export default function SelectIDEComponent({
             setError?.(undefined);
         }
     }, [ide, availableOptions, setError, loading, disabled, ideOptionsLoading, helpMessage]);
+
+    useEffect(() => {
+        const shouldShowDeprecationNotice = ["intellij-previous"].includes(ide);
+        if (shouldShowDeprecationNotice) {
+            setWarning?.(
+                <>
+                    <span className="font-semibold">
+                        Support for IntelliJ IDEA 2022.3.3 will be discontinued on May 31<sup>st</sup>
+                    </span>
+                    . <br />
+                    Please use version 2024.1{" "}
+                    {isEditorVersionPinningEnabled ? (
+                        <>
+                            or pin to another version in your{" "}
+                            <Link className="gp-link" to={"/settings"}>
+                                Organization settings
+                            </Link>
+                        </>
+                    ) : (
+                        "instead"
+                    )}
+                    .
+                </>,
+            );
+        } else {
+            setWarning?.(undefined);
+        }
+    }, [setError, setWarning, ide, isEditorVersionPinningEnabled]);
 
     return (
         <Combobox
