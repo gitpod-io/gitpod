@@ -23,7 +23,7 @@ import { workspaceClient } from "../service/public-api";
 import {
     WatchWorkspaceStatusPriority,
     watchWorkspaceStatusInOrder,
-} from "../data/workspaces/listen-to-workspace-ws-messages";
+} from "../data/workspaces/listen-to-workspace-ws-messages2";
 import { Button } from "@podkit/buttons/Button";
 import {
     GetWorkspaceRequest,

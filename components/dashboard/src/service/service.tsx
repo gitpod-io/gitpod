@@ -26,7 +26,7 @@ import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import {
     WatchWorkspaceStatusPriority,
     watchWorkspaceStatusInOrder,
-} from "../data/workspaces/listen-to-workspace-ws-messages";
+} from "../data/workspaces/listen-to-workspace-ws-messages2";
 import { Workspace, WorkspaceSpec_WorkspaceType, WorkspaceStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { sendTrackEvent } from "../Analytics";
 

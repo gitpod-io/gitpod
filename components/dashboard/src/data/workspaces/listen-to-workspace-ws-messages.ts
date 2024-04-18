@@ -51,62 +51,11 @@ export const useListenToWorkspacesWSMessages = () => {
     }, [organizationId, queryClient]);
 };
 
-type WatchWorkspaceStatusCallback = (response: WatchWorkspaceStatusResponse) => Promise<void> | void;
+export type WatchWorkspaceStatusCallback = (response: WatchWorkspaceStatusResponse) => Promise<void> | void;
 
 export function watchWorkspaceStatus(workspaceId: string | undefined, cb: WatchWorkspaceStatusCallback): Disposable {
     return stream<WatchWorkspaceStatusRequest>(
         (options) => workspaceClient.watchWorkspaceStatus({ workspaceId }, options),
         cb,
     );
-}
-
-const cachedCallbackInfoMap = new Map<string, { complete: WatchWorkspaceStatusCallback; priority: number }[]>();
-const cachedDisposables = new Map<string, Disposable>();
-
-export enum WatchWorkspaceStatusPriority {
-    StartWorkspacePage = 100,
-    SupervisorService = 50,
-}
-
-/**
- * Registers multiple callbacks to receive the same workspace status update in order of priority.
- *
- * @param workspaceId The workspace ID to watch. If undefined, all workspaces are watched.
- * @param priority The priority of the callback. Higher priority callbacks are executed and waited first.
- * @param callback The callback to execute when a workspace status update is received. Only executed after previous callbacks.
- */
-export function watchWorkspaceStatusInOrder(
-    workspaceId: string | undefined,
-    priority: WatchWorkspaceStatusPriority,
-    callback: WatchWorkspaceStatusCallback,
-): Disposable {
-    const wsID = workspaceId || "ALL_WORKSPACES";
-    const newInfo = { complete: callback, priority };
-    const callbacks = cachedCallbackInfoMap.get(wsID) ?? [];
-    callbacks.push(newInfo);
-    callbacks.sort((a, b) => b.priority - a.priority);
-
-    if (!cachedDisposables.has(wsID)) {
-        const disposable = watchWorkspaceStatus(wsID, async (response) => {
-            const list = cachedCallbackInfoMap.get(wsID);
-            if (!list) {
-                return;
-            }
-            for (const info of list) {
-                await info.complete(response);
-            }
-        });
-        cachedDisposables.set(wsID, disposable);
-    }
-    cachedCallbackInfoMap.set(wsID, callbacks);
-    return Disposable.create(() => {
-        const currentCallbacks = cachedCallbackInfoMap.get(wsID)?.filter((info) => info !== newInfo) ?? [];
-        cachedCallbackInfoMap.set(wsID, currentCallbacks);
-        // Dispose the watcher if no more callbacks are registered
-        if (currentCallbacks.length === 0) {
-            cachedDisposables.get(wsID)?.dispose();
-            cachedDisposables.delete(wsID);
-            cachedCallbackInfoMap.delete(wsID);
-        }
-    });
 }
