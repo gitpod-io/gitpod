@@ -113,6 +113,8 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		workspace.Status.Conditions = []metav1.Condition{}
 	}
 
+	log = log.WithValues("owi", workspace.OWI())
+	ctx = logr.NewContext(ctx, log)
 	log.V(2).Info("reconciling workspace", "workspace", req.NamespacedName, "phase", workspace.Status.Phase)
 
 	workspacePods, err := r.listWorkspacePods(ctx, &workspace)
@@ -437,7 +439,7 @@ func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev
 func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *workspacev1.Workspace) (err error) {
 	span, ctx := tracing.FromContext(ctx, "deleteWorkspaceSecrets")
 	defer tracing.FinishSpan(span, &err)
-	log := log.FromContext(ctx)
+	log := log.FromContext(ctx).WithValues("owi", ws.OWI())
 
 	// if a secret cannot be deleted we do not return early because we want to attempt
 	// the deletion of the remaining secrets
