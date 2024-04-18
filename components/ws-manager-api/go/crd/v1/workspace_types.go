@@ -498,7 +498,7 @@ func (w *Workspace) IsConditionTrue(condition WorkspaceCondition) bool {
 // OWI produces the owner, workspace, instance log metadata from the information
 // of this workspace.
 func (w *Workspace) OWI() logrus.Fields {
-	return log.OWI(w.Spec.Ownership.Owner, w.Spec.Ownership.WorkspaceID, w.Name)
+	return log.OWI(w.Spec.Ownership.Owner, "", w.Name)
 }
 
 func init() {

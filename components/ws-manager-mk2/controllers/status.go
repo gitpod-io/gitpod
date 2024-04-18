@@ -41,7 +41,15 @@ const (
 func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods *corev1.PodList, cfg *config.Configuration) (err error) {
 	span, ctx := tracing.FromContext(ctx, "updateWorkspaceStatus")
 	defer tracing.FinishSpan(span, &err)
-	log := log.FromContext(ctx)
+	owi := workspace.OWI()
+	log := log.FromContext(ctx).WithValues(owi)
+
+	oldPhase := workspace.Status.Phase
+	defer func() {
+		if oldPhase != workspace.Status.Phase {
+			log.Info("workspace phase updated", "oldPhase", oldPhase, "phase", workspace.Status.Phase)
+		}
+	}()
 
 	switch len(pods.Items) {
 	case 0:
@@ -256,7 +264,8 @@ func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspac
 
 	if !isDisposalFinished(workspace) {
 		// Node disappeared before a backup could be taken, mark it with a backup failure.
-		log.FromContext(ctx).Error(nil, "workspace node disappeared while disposal has not finished yet", "node", pod.Spec.NodeName)
+		owi := workspace.OWI()
+		log.FromContext(ctx).WithValues(owi).Error(nil, "workspace node disappeared while disposal has not finished yet", "node", pod.Spec.NodeName)
 		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionBackupFailure("workspace node disappeared before backup was taken"))
 	}
 
