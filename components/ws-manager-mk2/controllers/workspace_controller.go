@@ -113,6 +113,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		workspace.Status.Conditions = []metav1.Condition{}
 	}
 
+	log = log.WithValues("owi", workspace.OWI())
 	log.V(2).Info("reconciling workspace", "workspace", req.NamespacedName, "phase", workspace.Status.Phase)
 
 	workspacePods, err := r.listWorkspacePods(ctx, &workspace)
