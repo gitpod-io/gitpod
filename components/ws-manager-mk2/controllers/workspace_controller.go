@@ -114,6 +114,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	log = log.WithValues("owi", workspace.OWI())
+	ctx = logr.NewContext(ctx, log)
 	log.V(2).Info("reconciling workspace", "workspace", req.NamespacedName, "phase", workspace.Status.Phase)
 
 	workspacePods, err := r.listWorkspacePods(ctx, &workspace)
@@ -169,7 +170,7 @@ func (r *WorkspaceReconciler) listWorkspacePods(ctx context.Context, ws *workspa
 func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods *corev1.PodList) (result ctrl.Result, err error) {
 	span, ctx := tracing.FromContext(ctx, "actOnStatus")
 	defer tracing.FinishSpan(span, &err)
-	log := log.FromContext(ctx).WithValues("owi", workspace.OWI())
+	log := log.FromContext(ctx)
 
 	if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped && !r.metrics.containsWorkspace(workspace) {
 		// If the workspace hasn't stopped yet, and we don't know about this workspace yet, remember it.
@@ -325,7 +326,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 }
 
 func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *workspacev1.Workspace) {
-	log := log.FromContext(ctx).WithValues("owi", workspace.OWI())
+	log := log.FromContext(ctx)
 
 	ok, lastState := r.metrics.getWorkspace(&log, workspace)
 	if !ok {

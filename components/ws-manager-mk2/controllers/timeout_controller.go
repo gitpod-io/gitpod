@@ -27,6 +27,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"github.com/go-logr/logr"
 )
 
 func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg config.Configuration, maintenance maintenance.Maintenance) (*TimeoutReconciler, error) {
@@ -81,6 +82,7 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	log = log.WithValues("owi", workspace.OWI())
+	ctx = logr.NewContext(ctx, log)
 
 	if workspace.IsConditionTrue(workspacev1.WorkspaceConditionTimeout) {
 		// Workspace has already been marked as timed out.

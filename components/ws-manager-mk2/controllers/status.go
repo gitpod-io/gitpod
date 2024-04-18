@@ -15,6 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"github.com/go-logr/logr"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -42,6 +43,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	span, ctx := tracing.FromContext(ctx, "updateWorkspaceStatus")
 	defer tracing.FinishSpan(span, &err)
 	log := log.FromContext(ctx).WithValues("owi", workspace.OWI())
+	ctx = logr.NewContext(ctx, log)
 
 	oldPhase := workspace.Status.Phase
 	defer func() {
@@ -263,7 +265,7 @@ func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspac
 
 	if !isDisposalFinished(workspace) {
 		// Node disappeared before a backup could be taken, mark it with a backup failure.
-		log.FromContext(ctx).WithValues("owi", workspace.OWI()).Error(nil, "workspace node disappeared while disposal has not finished yet", "node", pod.Spec.NodeName)
+		log.FromContext(ctx).Error(nil, "workspace node disappeared while disposal has not finished yet", "node", pod.Spec.NodeName)
 		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionBackupFailure("workspace node disappeared before backup was taken"))
 	}
 
