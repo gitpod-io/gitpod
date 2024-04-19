@@ -111,7 +111,9 @@ export function CreateWorkspacePage() {
     const needsGitAuthorization = useNeedsGitAuthorization();
 
     useEffect(() => {
+        setAutostart(false);
         setContextURL(StartWorkspaceOptions.parseContextUrl(location.hash));
+        setNextLoadOption("searchParams");
     }, [location.hash]);
 
     const storeAutoStartOptions = useCallback(async () => {
