@@ -191,6 +191,15 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 
 	githubClient := github.NewClient(tc)
 
+	if os.Getenv("TEST_IN_WORKSPACE") == "true" {
+		t.Logf("run test in workspace")
+		err = testWithoutGithubAction(ctx, t, gatewayLink, oauthToken, strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"), useLatest)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+
 	t.Logf("trigger github action")
 	_, err = githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, "gitpod-io", "gitpod", "jetbrains-integration-test.yml", github.CreateWorkflowDispatchEventRequest{
 		Ref: os.Getenv("TEST_BUILD_REF"),
