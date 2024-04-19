@@ -17,3 +17,19 @@ scripts:
     script: |
         cp $COMPONENTS_IDE_JETBRAINS_GATEWAY_PLUGIN__PUBLISH_LATEST/build/distributions/gitpod-gateway.zip gitpod-gateway.zip
         ./test.sh
+  - name: install-gui-dependencies
+    script: |
+      sudo install-packages \
+        tigervnc-standalone-server tigervnc-xorg-extension \
+        dbus dbus-x11 gnome-keyring xfce4 xfce4-terminal \
+      xdg-utils x11-xserver-utils pip
+      git clone --depth 1 https://github.com/novnc/noVNC.git /opt/novnc \
+        && git clone --depth 1 https://github.com/novnc/websockify /opt/novnc/utils/websockify \
+        && find /opt/novnc -type d -name '.git' -exec rm -rf '{}' + \
+        && sudo -H pip3 install numpy
+      wget https://raw.githubusercontent.com/gitpod-io/workspace-images/main/chunks/tool-vnc/.xinitrc -O ~/.xinitrc
+      sudo wget https://raw.githubusercontent.com/gitpod-io/workspace-images/main/chunks/tool-vnc/gp-vncsession -O /usr/bin/gp-vncsession
+      sudo wget https://raw.githubusercontent.com/gitpod-io/workspace-images/main/chunks/tool-vnc/novnc-index.html -O /opt/novnc/index.html
+      sudo chmod +x /usr/bin/gp-vncsession
+      export DISPLAY=:0
+      gp-vncsession

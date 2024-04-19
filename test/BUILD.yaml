@@ -43,3 +43,14 @@ packages:
       image:
         - ${imageRepoBase}/integration-tests:${version}
         - ${imageRepoBase}/integration-tests:commit-${__git_commit}
+scripts:
+  - name: dev-intellij
+    description: Start IntelliJ IDEA intergration tests in workspace.
+    script: |
+      echo -e "💡 install GUI dependencies with command: leeway run dev/jetbrains-test:install-gui-dependencies\nAccess GUI on $(gp url 6080)\n\n"
+      [ "$(git rev-parse --abbrev-ref HEAD)" = "main" ] && echo "Please create an preview env to test with. (large vm)" && exit 1
+      previewUrl=$(previewctl get url)
+      curl -s -o /dev/null -w "%{http_code}" "$previewUrl/api/version" | grep -q "200" || { echo "Preview env is not ready yet"; exit 1; }
+      [ -z "$USER_TOKEN" ] && echo "USER_TOKEN is not set or is empty. Create one $previewUrl/user/tokens" && exit 1;
+      [ -z "$USERNAME" ] && echo "USERNAME is not set" && exit 1;
+      TEST_IN_WORKSPACE=true ROBOQUAT_TOKEN=skip go test -v -run ^TestIntellij ./tests/ide/jetbrains -kubeconfig=/home/gitpod/.kube/config -namespace=default -username=$USERNAME

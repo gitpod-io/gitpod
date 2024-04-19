@@ -35,8 +35,8 @@ func testWithoutGithubAction(ctx context.Context, t *testing.T, gatewayLink, git
 	}
 	cmd := exec.CommandContext(ctx, "leeway", "run", scriptName, "-Dversion=integration-test", "-DpublishToJBMarketplace=false")
 	cmd.Env = cmdEnv
-	writer := &testLogWriter{t: t}
-	cmd.Stdout = writer
-	cmd.Stderr = writer
+	// writer := &testLogWriter{t: t}
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
 	return cmd.Run()
 }
