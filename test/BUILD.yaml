@@ -47,7 +47,7 @@ scripts:
   - name: dev-intellij
     description: Start IntelliJ IDEA intergration tests in workspace.
     script: |
-      which gp-vncsession &>/dev/null || leeway run dev/jetbrains-test:install-gui-dependencie
+      which gp-vncsession &>/dev/null || leeway run dev/jetbrains-test:install-gui-dependencies
       echo -e "📣 Access GUI on $(gp url 6080)\n\n"
       [ "$(git rev-parse --abbrev-ref HEAD)" = "main" ] && echo "❌ Please create new branch" && exit 1
 
