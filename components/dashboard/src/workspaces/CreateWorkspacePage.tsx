@@ -113,6 +113,7 @@ export function CreateWorkspacePage() {
     useEffect(() => {
         setAutostart(false);
         setContextURL(StartWorkspaceOptions.parseContextUrl(location.hash));
+        setSelectedProjectID(undefined);
         setNextLoadOption("searchParams");
     }, [location.hash]);
 
