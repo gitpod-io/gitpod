@@ -28,6 +28,16 @@ go test -v ./... -kubeconfig=/home/gitpod/.kube/config -namespace=default -usern
 TF_VAR_infra_provider="gce"
 TF_VAR_with_large_vm=true leeway run dev:preview
 ```
+- Install GUI dependencies
+```sh
+sudo apt-get update
+sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1
+wget https://raw.githubusercontent.com/gitpod-io/openvscode-server/main/build/azure-pipelines/linux/xvfb.init
+sudo mv ./xvfb.init /etc/init.d/xvfb
+sudo chmod +x /etc/init.d/xvfb
+sudo update-rc.d xvfb defaults
+sudo service xvfb start
+```
 - Create A PAT token
 - Start tests
 ```sh
