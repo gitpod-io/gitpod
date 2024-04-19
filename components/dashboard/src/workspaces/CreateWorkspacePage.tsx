@@ -110,6 +110,13 @@ export function CreateWorkspacePage() {
     const workspaceContext = useWorkspaceContext(contextURL);
     const needsGitAuthorization = useNeedsGitAuthorization();
 
+    useEffect(() => {
+        setAutostart(false);
+        setContextURL(StartWorkspaceOptions.parseContextUrl(location.hash));
+        setSelectedProjectID(undefined);
+        setNextLoadOption("searchParams");
+    }, [location.hash]);
+
     const storeAutoStartOptions = useCallback(async () => {
         if (!workspaceContext.data || !user || !currentOrg) {
             return;
