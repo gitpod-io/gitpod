@@ -112,7 +112,7 @@
       },
       "intellij-previous": {
         "orderKey": "041",
-        "title": "IntelliJ IDEA",
+        "title": "IntelliJ IDEA 2022.3.3",
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/intellijIdeaLogo.svg",
         "label": "Ultimate",
