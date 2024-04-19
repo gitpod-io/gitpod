@@ -228,7 +228,7 @@ const IdeOptionElementSelected = ({
                             <span className="font-normal">{version}</span>{" "}
                         </>
                     )}
-                    {useLatest && (
+                    {useLatest && !hideVersion && (
                         <div className="ml-1 rounded-xl bg-pk-content-tertiary/10 px-2 py-1 inline text-sm font-normal">
                             Latest
                         </div>
@@ -282,7 +282,7 @@ function IdeOptionElementInDropDown({ option, useLatest, pinnedIdeVersion, hideV
                         <span className="capitalize">{label}</span>
                     </>
                 )}
-                {useLatest && <div className="ml-2 rounded-xl bg-gray-200 px-2">Latest</div>}
+                {useLatest && !hideVersion && <div className="ml-2 rounded-xl bg-gray-200 px-2">Latest</div>}
             </div>
         </div>
     );
