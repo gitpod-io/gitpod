@@ -51,15 +51,14 @@ scripts:
       echo -e "📣 Access GUI on $(gp url 6080)\n\n"
       [ "$(git rev-parse --abbrev-ref HEAD)" = "main" ] && echo "❌ Please create new branch" && exit 1
 
+      export DISPLAY=:0
       previewUrl=$(previewctl get url)
       ok=true
       useLatest=false
       curl -s -o /dev/null -w "%{http_code}" "$previewUrl/api/version" --max-time 1 | grep -q "200" || { echo -e "❌ Preview env is not ready yet, try create one:\nTF_VAR_infra_provider="gce" TF_VAR_with_large_vm=true leeway run dev:preview\n"; exit 1; }
       echo "✅ Preview env $previewUrl/workspaces is ready"
-      [ -z "$USER_TOKEN" ] && echo "❌ env USER_TOKEN is not set or is empty. Create one PAT $previewUrl/user/tokens" && ok=false
-      echo "✅ PAT is set"
-      [ -z "$USERNAME" ] && echo "❌ env USERNAME is not set" && ok=false;
-      echo "✅ User is set"
+      [ -z "$USER_TOKEN" ] && echo "❌ env USER_TOKEN is not set or is empty. Create one PAT $previewUrl/user/tokens" && ok=false || echo "✅ PAT is set"
+      [ -z "$USERNAME" ] && echo "❌ env USERNAME is not set" && ok=false || echo "✅ User is set"
       $ok || exit 1;
 
       options=("latest" "stable")
