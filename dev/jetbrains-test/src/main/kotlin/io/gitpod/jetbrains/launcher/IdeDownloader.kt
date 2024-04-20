@@ -11,7 +11,7 @@ import java.nio.file.StandardOpenOption
 class IdeDownloader @JvmOverloads constructor(private val httpClient: OkHttpClient = OkHttpClient()) {
 
     private companion object {
-        const val ROBOT_PLUGIN_VERSION_DEFAULT = "0.11.9"
+        const val ROBOT_PLUGIN_VERSION_DEFAULT = "0.11.22"
 
         fun getRobotServerPluginDownloadUrl(version: String): String =
             "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/intellij/remoterobot/robot-server-plugin/$version/robot-server-plugin-$version.zip"
