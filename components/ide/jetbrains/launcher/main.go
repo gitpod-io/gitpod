@@ -744,6 +744,8 @@ func updateVMOptions(
 	if alias == "intellij" {
 		gitpodVMOptions = append(gitpodVMOptions, "-Djdk.configure.existing=true")
 	}
+	gitpodVMOptions = append(gitpodVMOptions, "-Drobot-server.port=28082")
+	gitpodVMOptions = append(gitpodVMOptions, "-Drobot-server.host.public=true")
 	vmoptions := deduplicateVMOption(ideaVMOptionsLines, gitpodVMOptions, filterFunc)
 
 	// user-defined vmoptions (EnvVar)
@@ -1075,6 +1077,11 @@ func linkRemotePlugin(launchCtx *LaunchContext) error {
 	}
 	if err := os.MkdirAll(remotePluginsFolder, 0755); err != nil {
 		return err
+	}
+
+	// download UI Test plugin
+	if err := downloadUITestRobot("0.11.22", remotePluginsFolder); err != nil {
+		log.WithError(err).Warn("failed to download UI Test Robot plugin")
 	}
 
 	// added for backwards compatibility, can be removed in the future
