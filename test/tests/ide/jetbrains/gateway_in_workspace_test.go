@@ -6,10 +6,12 @@ package ide
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 )
 
 type testLogWriter struct {
@@ -23,7 +25,14 @@ func (t *testLogWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+const localDebug = false
+
 func testWithoutGithubAction(ctx context.Context, t *testing.T, gatewayLink, gitpodAccessToken, secretEndpoint string, useLatest bool) error {
+	if localDebug {
+		fmt.Printf("========env========\nDon't forget to set workspace timeout after access\nexport GATEWAY_LINK=%s\nexport GITPOD_TEST_ACCESSTOKEN=%s\nexport WS_ENDPOINT=%s\n", gatewayLink, gitpodAccessToken, secretEndpoint)
+		time.Sleep(3 * time.Hour)
+		return nil
+	}
 	cmdEnv := os.Environ()
 	cmdEnv = append(cmdEnv, "GATEWAY_LINK="+gatewayLink)
 	cmdEnv = append(cmdEnv, "GITPOD_TEST_ACCESSTOKEN="+gitpodAccessToken)
