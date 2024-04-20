@@ -1,3 +1,4 @@
+#sudo su
 # this file makes this a leeway workspace
 defaultTarget: components:all
 defaultArgs:
