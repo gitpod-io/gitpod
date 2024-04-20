@@ -33,6 +33,7 @@ class GatewayLauncherTest {
         private var gatewayProcess: Process? = null
         private var tmpDir: Path = Files.createTempDirectory("launcher")
         private lateinit var remoteRobot: RemoteRobot
+        private lateinit var mainWindowRemoteRobot: RemoteRobot
 
         @AfterAll
         @JvmStatic
@@ -69,6 +70,7 @@ class GatewayLauncherTest {
 
         val gatewayLink = System.getProperty("gateway_link")
         val gatewayPluginPath = System.getProperty("gateway_plugin_path")
+        val workspaceEndpoint = System.getProperty("ws_endpoint")
         if (gatewayPluginPath == null || gatewayPluginPath == "") {
             fail("please provider gateway plugin path")
         }
@@ -79,6 +81,7 @@ class GatewayLauncherTest {
 
         val client = OkHttpClient()
         remoteRobot = RemoteRobot("http://localhost:8082", client)
+        mainWindowRemoteRobot = RemoteRobot("https://28082-$workspaceEndpoint", client)
         val ideDownloader = IdeDownloader(client)
 
         val useLatest = System.getenv("TEST_USE_LATEST")?.toBoolean() ?: false
