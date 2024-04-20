@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"testing"
-	"time"
 )
 
 type testLogWriter struct {
@@ -25,14 +24,13 @@ func (t *testLogWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-const localDebug = false
+// TODO: make it false
+const localDebug = true
 
 func testWithoutGithubAction(ctx context.Context, t *testing.T, gatewayLink, gitpodAccessToken, secretEndpoint string, useLatest bool) error {
 	if localDebug {
-		fmt.Printf("========env========\nDon't forget to set workspace timeout after access\nexport GATEWAY_LINK=%s\nexport GITPOD_TEST_ACCESSTOKEN=%s\nexport WS_ENDPOINT=%s\n", gatewayLink, gitpodAccessToken, secretEndpoint)
-		// Make test timeout (10m)
-		time.Sleep(11 * time.Minute)
-		return nil
+		fmt.Printf("========env========\n\ncd /workspace/gitpod/dev/jetbrains-test\nexport GATEWAY_LINK=%s\nexport GITPOD_TEST_ACCESSTOKEN=\"%s\"\nexport WS_ENDPOINT=%s\n./test.sh\n\nAccess https://28082-%s to see JetBrains UI", gatewayLink, gitpodAccessToken, secretEndpoint, secretEndpoint)
+		os.Exit(1)
 	}
 	cmdEnv := os.Environ()
 	cmdEnv = append(cmdEnv, "GATEWAY_LINK="+gatewayLink)

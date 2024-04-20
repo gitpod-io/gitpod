@@ -98,14 +98,27 @@ class GatewayLauncherTest {
             listOf(gatewayLink)
         )
         waitFor(Duration.ofSeconds(90), Duration.ofSeconds(5)) {
-            remoteRobot.isAvailable()
+            val ok1 = remoteRobot.isAvailable()
+            // TODO: INACCESSIBLE
+            val ok2 = mainWindowRemoteRobot.isAvailable()
+            log.atInfo().log("isAvailable========================================== gateway=$ok1 main=$ok2")
+            ok1 && ok2
+        }
+
+        val taskAttached = mainWindowRemoteRobot.findAll(ComponentFixture::class.java, byXpath("//div[@class='ContentTabLabel' and starts-with(@text, 'Run PetClinic app')]"))
+        if (taskAttached.size != 1) {
+            fail("Task Run PetClinic app is not attached")
+        } else {
+            log.atInfo().log("Task found")
         }
 
         log.atInfo().log("remoteRobot available")
-        Thread.sleep(1000 * 120)
+        Thread.sleep(1000 * 60 * 10)
     }
 }
 
 fun RemoteRobot.isAvailable(): Boolean = runCatching {
     callJs<Boolean>("true")
 }.getOrDefault(false)
+
+// ssh -L 28082:127.0.0.1:28082 -N ...
