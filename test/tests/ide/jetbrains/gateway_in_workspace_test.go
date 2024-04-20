@@ -30,7 +30,8 @@ const localDebug = false
 func testWithoutGithubAction(ctx context.Context, t *testing.T, gatewayLink, gitpodAccessToken, secretEndpoint string, useLatest bool) error {
 	if localDebug {
 		fmt.Printf("========env========\nDon't forget to set workspace timeout after access\nexport GATEWAY_LINK=%s\nexport GITPOD_TEST_ACCESSTOKEN=%s\nexport WS_ENDPOINT=%s\n", gatewayLink, gitpodAccessToken, secretEndpoint)
-		time.Sleep(3 * time.Hour)
+		// Make test timeout (10m)
+		time.Sleep(11 * time.Minute)
 		return nil
 	}
 	cmdEnv := os.Environ()
