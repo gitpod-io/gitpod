@@ -61,9 +61,9 @@ export function BrowserExtensionBanner() {
     }
 
     return (
-        <section className="sm:flex justify-between border-2 rounded-xl m-4 hidden p-4 mt-4">
-            <div className="flex flex-col gap-1 p-4 justify-center">
-                <span className="text-lg font-semibold"> Open from Github</span>
+        <section className="sm:flex justify-between border-2 rounded-xl m-4 hidden max-w-xl mt-4">
+            <div className="flex flex-col gap-1 py-4 px-2 justify-center">
+                <span className="text-lg font-semibold">Open from Github</span>
                 <span>
                     <a href={browserOption.url} className="gp-link">
                         Install the Gitpod extension
