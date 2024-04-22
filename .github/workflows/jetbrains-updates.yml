@@ -18,8 +18,7 @@ jobs:
             - name: Check for updates
               run: |
                 cd ./components/ide/jetbrains/image/gha-update-image
-                node index.js
-                bun run update-versions.ts
+                bun run index.ts
                 git diff
 
             - name: Detect file changes
