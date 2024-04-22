@@ -1,4 +1,5 @@
 import { $ } from "bun";
+import path from "path";
 import yaml from "yaml";
 import { z } from "zod";
 
@@ -26,16 +27,26 @@ const workspaceYaml = z.object({
 });
 
 const tagInfo =
-    await $`git ls-remote --tags --sort=-v:refname https://github.com/gitpod-io/gitpod | grep 'main-gha.' | head -n1`.text();
+    await $`git ls-remote --tags --sort=-v:refname https://github.com/gitpod-io/gitpod | grep 'main-gha.' | head -n1`.text()
+    .catch((e) => {
+        throw new Error("Failed to fetch the latest main-gha. git tag", e);
+    })
 const installationVersion =
-    await $`echo ${tagInfo} | awk '{ print $2 }' | grep -o 'main-gha.[0-9]*' | cut -d'/' -f3`.text();
+    await $`echo ${tagInfo} | awk '{ print $2 }' | grep -o 'main-gha.[0-9]*' | cut -d'/' -f3`.text().catch(e => {
+        throw new Error("Failed to parse installer version from git tag", e);
+    })
 const versionData =
-    await $`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${installationVersion.trim()} cat /versions.yaml`.text();
+    await $`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${installationVersion.trim()} cat /versions.yaml`.text().catch(e => {
+        throw new Error("Failed to fetch versions.yaml from latest installer", e);
+    })
 
-const parsed = versionManifest.parse(yaml.parse(versionData));
+const parsed = versionManifest.safeParse(yaml.parse(versionData));
+if (!parsed.success) {
+    throw new Error("The versions.yaml file does not match the expected format", parsed.error)
+}
 
-const pathToConfigmap = "../../../../../install/installer/pkg/components/ide-service/ide-configmap.json"; // this is insane
-const pathToWorkspaceYaml = "../../../../../WORKSPACE.yaml";
+const pathToConfigmap = path.resolve(__dirname, "../../../../../", "install/installer/pkg/components/ide-service/ide-configmap.json");
+const pathToWorkspaceYaml = path.resolve(__dirname, "../../../../../", "WORKSPACE.yaml");
 
 const configmap = JSON.parse(await Bun.file(pathToConfigmap).text());
 const workspace = workspaceYaml.parse(yaml.parse(await Bun.file(pathToWorkspaceYaml).text()));
@@ -51,7 +62,7 @@ const getIDEVersion = function (ide: string) {
 };
 
 const currentVersions = {};
-for (const [ide, versionObject] of Object.entries(parsed.components.workspace.desktopIdeImages)) {
+for (const [ide, versionObject] of Object.entries(parsed.data.components.workspace.desktopIdeImages)) {
     if (
         ide.includes("Latest") ||
         ["codeDesktop", "codeDesktopInsiders", "jbLauncher", "jbBackendPlugin"].includes(ide)
@@ -73,8 +84,8 @@ for (const [ide, versionObject] of Object.entries(parsed.components.workspace.de
             version: ideVersion,
             image: `{{.Repository}}/ide/${ide}:${installerImageVersion}`,
             imageLayers: [
-                `{{.Repository}}/ide/jb-backend-plugin:${parsed.components.workspace.desktopIdeImages.jbBackendPlugin.version}`,
-                `{{.Repository}}/ide/jb-launcher:${parsed.components.workspace.desktopIdeImages.jbLauncher.version}`,
+                `{{.Repository}}/ide/jb-backend-plugin:${parsed.data.components.workspace.desktopIdeImages.jbBackendPlugin.version}`,
+                `{{.Repository}}/ide/jb-launcher:${parsed.data.components.workspace.desktopIdeImages.jbLauncher.version}`,
             ],
         };
 

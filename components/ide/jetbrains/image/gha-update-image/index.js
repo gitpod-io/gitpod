@@ -95,11 +95,13 @@ const IDEs = [
             code: IDE.productCode,
             "release.type": IDE.productType,
             fields: ["distributions", "link", "name", "releases"].join(","),
-            _: Date.now(),
+            _: Date.now().toString(),
         });
 
-        const url = [JB_PRODUCTS_DATA_URL, "?", params].join("");
-        requests.push(axios(url));
+        const url = new URL(JB_PRODUCTS_DATA_URL)
+        url.search = params.toString()
+        console.log(url)
+        requests.push(axios(url.toString()));
     }
 
     const responses = await Promise.all(requests);
