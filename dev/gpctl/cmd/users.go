@@ -81,3 +81,23 @@ func blockUser(ctx context.Context, args []string, block bool) {
 	}
 	log.Fatal("no args")
 }
+
+func verifyUser(ctx context.Context, args []string) {
+	client, err := newLegacyAPIConn()
+	if err != nil {
+		log.WithError(err).Fatal("cannot connect")
+	}
+	defer client.Close()
+
+	for _, uid := range args {
+		err = client.AdminVerifyUser(ctx, uid)
+		if err != nil {
+			log.WithField("uid", uid).Errorf("AdminVerifyUser failed with: %v", err)
+			return
+		} else {
+			log.WithField("uid", uid).Info("AdminVerifyUser")
+			return
+		}
+	}
+	log.Fatal("no args")
+}
