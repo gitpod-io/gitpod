@@ -52,6 +52,7 @@ export const StepPersonalize: FC<Props> = ({ user, onComplete }) => {
                 ignoreRestrictionScopes={["configuration", "organization"]}
                 selectedIdeOption={ide}
                 useLatest={useLatest}
+                hideVersions
             />
 
             <ThemeSelector className="mt-4" />
