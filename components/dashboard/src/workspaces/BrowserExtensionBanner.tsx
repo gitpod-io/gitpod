@@ -6,14 +6,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import UAParser from "ua-parser-js";
-import flashIcon from "../icons/Flash.svg";
-import { ReactComponent as CloseIcon } from "../images/x.svg";
-import classNames from "classnames";
 
-interface BrowserOption {
+type BrowserOption = {
     aliases?: string[];
     url: string;
-}
+};
 
 const installationOptions: Record<string, BrowserOption> = {
     firefox: {
@@ -27,26 +24,28 @@ const installationOptions: Record<string, BrowserOption> = {
 
 export function BrowserExtensionBanner() {
     const parser = useMemo(() => new UAParser(), []);
+    const browserName = useMemo(() => parser.getBrowser().name?.toLowerCase(), [parser]);
+
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        const persistedDisabled =
+        const installedOrDismissed =
             sessionStorage.getItem("browser-extension-installed") ||
             localStorage.getItem("browser-extension-banner-dismissed");
 
-        setIsVisible(!persistedDisabled);
+        setIsVisible(!installedOrDismissed);
     }, []);
 
-    const handleClose = () => {
-        localStorage.setItem("browser-extension-banner-dismissed", "true");
-        setIsVisible(false);
-    };
+    // Todo: Implement the x button
+    // const handleClose = () => {
+    //     localStorage.setItem("browser-extension-banner-dismissed", "true");
+    //     setIsVisible(false);
+    // };
 
     if (!isVisible) {
         return null;
     }
 
-    const browserName = parser.getBrowser().name?.toLowerCase();
     if (!browserName) {
         return null;
     }
@@ -62,42 +61,17 @@ export function BrowserExtensionBanner() {
     }
 
     return (
-        <section className="hidden p-4 sm:block sm:absolute sm:bottom-2 sm:left-2">
-            <div className="grid h-28 w-72 grid-cols-12 items-end content-center gap-x-2 rounded-xl border-2 border-dashed border-[#dadada] bg-[#fafaf9] dark:bg-gray-800 dark:border-gray-600 p-4">
-                <div className="col-span-2 self-center">
-                    <img src={flashIcon} alt="" className="h-8 w-8" />
-                </div>
-
-                <div className="col-span-9">
-                    <p className="text-sm font-medium leading-5 text-[#666564]">
-                        Open workspaces directly from your source control repository.
-                    </p>
-                </div>
-                <div className="col-span-1 flex justify-end items-start h-full pt-1">
-                    <button
-                        className={classNames(
-                            "cursor-pointer p-2 ml-2 -mt-1",
-                            "bg-transparent hover:bg-transparent",
-                            "text-gray-500 hover:text-gray-300 dark:text-gray-200 dark:hover:text-gray-600",
-                        )}
-                        onClick={handleClose}
-                    >
-                        <CloseIcon />
-                    </button>
-                </div>
-                <div className="col-span-2"></div>
-
-                <div className="col-span-10">
-                    <a
-                        href={browserOption.url}
-                        className="text-sm font-semibold text-blue-500"
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        Try the browser extension →
-                    </a>
-                </div>
+        <section className="sm:flex justify-between border-2 rounded-xl m-4 hidden p-4 mt-4">
+            <div className="flex flex-col gap-1 p-4 justify-center">
+                <span className="text-lg font-semibold"> Open from Github</span>
+                <span>
+                    <a href={browserOption.url} className="gp-link">
+                        Install the Gitpod extension{" "}
+                    </a>{" "}
+                    to launch workspaces from Github.
+                </span>
             </div>
+            <img alt="A button that says Gitpod" src="https://picsum.photos/151/88" />
         </section>
     );
 }
