@@ -66,8 +66,8 @@ export function BrowserExtensionBanner() {
                 <span className="text-lg font-semibold"> Open from Github</span>
                 <span>
                     <a href={browserOption.url} className="gp-link">
-                        Install the Gitpod extension{" "}
-                    </a>{" "}
+                        Install the Gitpod extension
+                    </a>
                     to launch workspaces from Github.
                 </span>
             </div>
