@@ -128,10 +128,10 @@ const getIDEVersion = function (ide: string) {
 
 const updateLatestVersionsInWorkspaceaAndGradle = async () => {
     const requests: Promise<any>[] = [];
-    for (const IDE of ides) {
+    for (const ide of ides) {
         const params = new URLSearchParams({
-            code: IDE.productCode,
-            "release.type": IDE.productType,
+            code: ide.productCode,
+            "release.type": ide.productType,
             fields: ["distributions", "link", "name", "releases"].join(","),
             _: Date.now().toString(),
         });
