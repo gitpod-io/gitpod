@@ -1,3 +1,4 @@
+#sudo su
 apiVersion: v1
 authProviders: []
 blockNewUsers:
