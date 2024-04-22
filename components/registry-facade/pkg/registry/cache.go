@@ -15,9 +15,9 @@ import (
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	ipfs "github.com/ipfs/boxo/coreiface"
-	"github.com/ipfs/boxo/coreiface/options"
 	files "github.com/ipfs/boxo/files"
+	ipfs "github.com/ipfs/kubo/core/coreiface"
+	"github.com/ipfs/kubo/core/coreiface/options"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	redis "github.com/redis/go-redis/v9"
@@ -64,14 +64,14 @@ func (store *IPFSBlobCache) Store(ctx context.Context, dgst digest.Digest, conte
 	}
 
 	res := store.Redis.MSet(ctx,
-		dgst.String(), p.Cid().String(),
+		dgst.String(), p.RootCid().String(),
 		mediaTypeKeyFromDigest(dgst), mediaType,
 	)
 	if err := res.Err(); err != nil {
 		return err
 	}
 
-	log.WithField("digest", dgst.String()).WithField("cid", p.Cid().String()).Debug("pushed to IPFS")
+	log.WithField("digest", dgst.String()).WithField("cid", p.RootCid().String()).Debug("pushed to IPFS")
 
 	return nil
 }

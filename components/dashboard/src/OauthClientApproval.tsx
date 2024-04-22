@@ -4,7 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { Button } from "@podkit/buttons/Button";
 import gitpodIcon from "./icons/gitpod.svg";
+import { Heading1, Subheading } from "@podkit/typography/Headings";
 
 export default function OAuthClientApproval() {
     const params = new URLSearchParams(window.location.search);
@@ -35,19 +37,19 @@ export default function OAuthClientApproval() {
                                 <img src={gitpodIcon} className="h-16 mx-auto" alt="Gitpod's logo" />
                             </div>
                             <div className="mx-auto text-center pb-8 space-y-2">
-                                <h1 className="text-3xl">Authorize {clientName}</h1>
-                                <h4>
+                                <Heading1>Authorize {clientName}</Heading1>
+                                <Subheading>
                                     You are about to authorize {clientName} to access your Gitpod account including data
                                     for all workspaces.
-                                </h4>
+                                </Subheading>
                             </div>
                             <div className="flex justify-center mt-6">
-                                <button className="secondary" onClick={() => updateClientApproval(false)}>
+                                <Button variant="secondary" onClick={() => updateClientApproval(false)}>
                                     Cancel
-                                </button>
-                                <button key={"button-yes"} className="ml-2" onClick={() => updateClientApproval(true)}>
+                                </Button>
+                                <Button key={"button-yes"} className="ml-2" onClick={() => updateClientApproval(true)}>
                                     Authorize
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>

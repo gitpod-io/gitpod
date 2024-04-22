@@ -4,26 +4,27 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { UserContext } from "../user-context";
-import { getGitpodService } from "../service/service";
 import { trackLocation } from "../Analytics";
 import { useQuery } from "@tanstack/react-query";
 import { noPersistence } from "../data/setup";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { useFeatureFlag, useReportDashboardLoggingTracing } from "../data/featureflag-query";
+import { userClient } from "../service/public-api";
 
+export let userLoaded = false;
 export const useUserLoader = () => {
     const { user, setUser } = useContext(UserContext);
     const doRetryUserLoader = useFeatureFlag("doRetryUserLoader");
+    const logTracing = useReportDashboardLoggingTracing();
 
     // For now, we're using the user context to store the user, but letting react-query handle the loading
     // In the future, we should remove the user context and use react-query to access the user
     const { isLoading } = useQuery({
         queryKey: noPersistence(["current-user"]),
         queryFn: async () => {
-            const user = await getGitpodService().server.getLoggedInUser();
-
+            const user = (await logTracing(async () => userClient.getAuthenticatedUser({}), "on user loading")).user;
             return user || null;
         },
         // We'll let an ErrorBoundary catch the error
@@ -33,7 +34,7 @@ export const useUserLoader = () => {
             if (!doRetryUserLoader) {
                 return false;
             }
-            return error.code !== ErrorCodes.NOT_AUTHENTICATED;
+            return error.code !== ErrorCodes.NOT_AUTHENTICATED && error.code !== ErrorCodes.USER_DELETED;
         },
         // docs: https://tanstack.com/query/v4/docs/react/guides/query-retries
         // backoff by doubling, max. 10s
@@ -41,12 +42,18 @@ export const useUserLoader = () => {
         cacheTime: 1000 * 60 * 60 * 1, // 1 hour
         staleTime: 1000 * 60 * 60 * 1, // 1 hour
         onSuccess: (loadedUser) => {
-            setUser(loadedUser);
+            if (loadedUser) {
+                setUser(loadedUser);
+            }
         },
         onSettled: (loadedUser) => {
             trackLocation(!!loadedUser);
         },
     });
+
+    useEffect(() => {
+        userLoaded = !isLoading;
+    }, [isLoading]);
 
     return { user, loading: isLoading };
 };

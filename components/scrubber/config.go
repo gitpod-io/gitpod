@@ -21,9 +21,14 @@ var (
 
 	// HashedFieldNames name fields whose values we'll hash
 	HashedFieldNames = []string{
-		"contextURL",
+		"metaID",
 		"workspaceID",
 		"username",
+	}
+
+	// HashedURLPathsFieldNames name fields with URLS whose paths we'll hash
+	HashedURLPathsFieldNames = []string{
+		"contextURL",
 	}
 
 	// HashedValues are regular expressions which - when matched - cause the entire value to be hashed

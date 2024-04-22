@@ -5,43 +5,40 @@
  */
 
 import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { AsyncLocalStorage } from "node:async_hooks";
-import { v4 } from "uuid";
+import { performance } from "node:perf_hooks";
+import { RequestContext, ctxTryGet } from "./request-context";
+
+export type LogContextOptions = LogContext & {
+    [p: string]: any;
+};
+
+function mapToLogContext(ctx: RequestContext): LogContextOptions {
+    return {
+        requestId: ctx.requestId,
+        requestKind: ctx.requestKind,
+        requestMethod: ctx.requestMethod,
+        traceId: ctx.traceId,
+        subjectId: ctx.subjectId?.toString(),
+        userId: ctx.subjectId?.userId(),
+        contextTimeMs: ctx?.startTime ? performance.now() - ctx.startTime : undefined,
+    };
+}
 
 // we are installing a special augmenter that enhances the log context if executed within `runWithContext`
 // with a contextId and a contextTimeMs, which denotes the amount of milliseconds since the context was created.
-type EnhancedLogContext = LogContext & {
-    contextId?: string;
-    contextTimeMs: number;
-    contextKind: string;
-};
-
-const asyncLocalStorage = new AsyncLocalStorage<EnhancedLogContext>();
-const augmenter: LogContext.Augmenter = (ctx) => {
-    const globalContext = asyncLocalStorage.getStore();
-    const contextTimeMs = globalContext?.contextTimeMs ? Date.now() - globalContext.contextTimeMs : undefined;
-    const result = {
-        ...globalContext,
-        contextTimeMs,
-        ...ctx,
+export function installCtxLogAugmenter() {
+    const augmenter: LogContext.Augmenter = (ctx) => {
+        const requestContext = ctxTryGet();
+        let derivedContext: LogContextOptions = {};
+        if (requestContext) {
+            derivedContext = mapToLogContext(requestContext);
+        }
+        const result = {
+            ...derivedContext,
+            ...ctx,
+        };
+        // if its an empty object return undefined
+        return Object.keys(result).length === 0 ? undefined : result;
     };
-    // if its an empty object return undefined
-    return Object.keys(result).length === 0 ? undefined : result;
-};
-LogContext.setAugmenter(augmenter);
-
-export async function runWithContext<T>(
-    contextKind: string,
-    context: LogContext & { contextId?: string } & any,
-    fun: () => T,
-): Promise<T> {
-    return asyncLocalStorage.run(
-        {
-            ...context,
-            contextKind,
-            contextId: context.contextId || v4(),
-            contextTimeMs: Date.now(),
-        },
-        fun,
-    );
+    LogContext.setAugmenter(augmenter);
 }

@@ -30,7 +30,7 @@ func newSSHServer(ctx context.Context, cfg *Config, envvars []string) (*sshServe
 
 	sshkey := filepath.Join(filepath.Dir(bin), "ssh", "sshkey")
 	if _, err := os.Stat(sshkey); err != nil {
-		err := prepareSSHKey(ctx, sshkey, int(cfg.WorkspaceLinuxUID), int(cfg.WorkspaceLinuxGID))
+		err := prepareSSHKey(ctx, sshkey)
 		if err != nil {
 			return nil, xerrors.Errorf("unexpected error creating SSH key: %w", err)
 		}
@@ -39,12 +39,24 @@ func newSSHServer(ctx context.Context, cfg *Config, envvars []string) (*sshServe
 	if err != nil {
 		return nil, xerrors.Errorf("unexpected error creating SSH dir: %w", err)
 	}
+	caPath := filepath.Join(filepath.Dir(bin), "ssh", "ca.pem")
+
+	err = ensureSSHCAFile(cfg, caPath)
+	if err != nil {
+		return nil, xerrors.Errorf("unexpected error creating SSH ca pem: %w", err)
+	}
+
+	err = ensurePrivsepDir()
+	if err != nil {
+		return nil, xerrors.Errorf("unexpected error creating privsep path: %w", err)
+	}
 
 	return &sshServer{
 		ctx:     ctx,
 		cfg:     cfg,
 		sshkey:  sshkey,
 		envvars: envvars,
+		caPath:  caPath,
 	}, nil
 }
 
@@ -54,6 +66,7 @@ type sshServer struct {
 	envvars []string
 
 	sshkey string
+	caPath string
 }
 
 // ListenAndServe listens on the TCP network address laddr and then handle packets on incoming connections.
@@ -94,7 +107,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		"-oAllowUsers gitpod",
 		"-oPasswordAuthentication no",
 		"-oChallengeResponseAuthentication no",
-		"-oPermitRootLogin no",
+		"-oPermitRootLogin yes",
 		"-oLoginGraceTime 20",
 		"-oPrintLastLog no",
 		"-oPermitUserEnvironment yes",
@@ -103,6 +116,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		"-oUseDNS no", // Disable DNS lookups.
 		"-oSubsystem sftp internal-sftp",
 		"-oStrictModes no", // don't care for home directory and file permissions
+		"-oTrustedUserCAKeys "+s.caPath,
 	)
 	// can be configured with gp env LOG_LEVEL=DEBUG to see SSH sessions/channels
 	sshdLogLevel := "ERROR"
@@ -145,7 +159,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 
 	log.WithField("args", args).Debug("sshd flags")
 	cmd := exec.CommandContext(ctx, openssh, args...)
-	cmd = runAsUser(cmd, s.cfg.WorkspaceLinuxUID, s.cfg.WorkspaceLinuxGID)
+	cmd = runAsGitpodUser(cmd)
 	cmd.Env = s.envvars
 	cmd.ExtraFiles = []*os.File{socketFD}
 	cmd.Stderr = os.Stderr
@@ -183,7 +197,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 	}
 }
 
-func prepareSSHKey(ctx context.Context, sshkey string, uid, gid int) error {
+func prepareSSHKey(ctx context.Context, sshkey string) error {
 	bin, err := os.Executable()
 	if err != nil {
 		return xerrors.Errorf("cannot find executable path: %w", err)
@@ -219,7 +233,7 @@ func prepareSSHKey(ctx context.Context, sshkey string, uid, gid int) error {
 		return xerrors.Errorf("cannot create SSH hostkey file: %w", err)
 	}
 
-	err = os.Chown(sshkey, uid, gid)
+	err = os.Chown(sshkey, gitpodUID, gitpodGID)
 	if err != nil {
 		return xerrors.Errorf("cannot chown SSH hostkey file: %w", err)
 	}
@@ -235,8 +249,32 @@ func ensureSSHDir(cfg *Config) error {
 	if err != nil {
 		return xerrors.Errorf("cannot create $HOME/.ssh: %w", err)
 	}
-	_ = exec.Command("chown", "-R", fmt.Sprintf("%d:%d", cfg.WorkspaceLinuxUID, cfg.WorkspaceLinuxGID), d).Run()
+	_ = exec.Command("chown", "-R", fmt.Sprintf("%d:%d", gitpodUID, gitpodGID), d).Run()
 
+	return nil
+}
+
+func ensurePrivsepDir() error {
+	// Privilege separation, or privsep, is method in OpenSSH by which
+	// operations that require root privilege are performed by a separate
+	// privileged monitor process.
+	// see detail: https://github.com/openssh/openssh-portable/blob/master/README.privsep
+	privsepPath := "/var/empty"
+	err := os.MkdirAll(privsepPath, 0o755)
+	if err != nil {
+		return xerrors.Errorf("cannot create privsep path: %w", err)
+	}
+	return nil
+}
+
+func ensureSSHCAFile(cfg *Config, caPath string) error {
+	if cfg.SSHGatewayCAPublicKey == "" {
+		return nil
+	}
+	err := os.WriteFile(caPath, []byte(cfg.SSHGatewayCAPublicKey), 0o644)
+	if err != nil {
+		return xerrors.Errorf("cannot write ssh ca pem: %w", err)
+	}
 	return nil
 }
 

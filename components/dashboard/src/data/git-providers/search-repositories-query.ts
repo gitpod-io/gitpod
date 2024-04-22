@@ -5,24 +5,25 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { useDebounce } from "../../hooks/use-debounce";
 import { useFeatureFlag } from "../featureflag-query";
+import { scmClient } from "../../service/public-api";
 
-export const useSearchRepositories = ({ searchString }: { searchString: string }) => {
+export const useSearchRepositories = ({ searchString, limit }: { searchString: string; limit: number }) => {
     // This disables the search behavior when flag is disabled
     const repositoryFinderSearchEnabled = useFeatureFlag("repositoryFinderSearch");
     const { data: org } = useCurrentOrg();
     const debouncedSearchString = useDebounce(searchString);
 
     return useQuery(
-        ["search-repositories", { organizationId: org?.id || "", searchString: debouncedSearchString }],
+        ["search-repositories", { organizationId: org?.id || "", searchString: debouncedSearchString, limit }],
         async () => {
-            return await getGitpodService().server.searchRepositories({
+            const { repositories } = await scmClient.searchRepositories({
                 searchString,
-                organizationId: org?.id ?? "",
+                limit,
             });
+            return repositories;
         },
         {
             enabled: repositoryFinderSearchEnabled && !!org && debouncedSearchString.length >= 3,

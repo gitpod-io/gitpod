@@ -4,10 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { createContext, useState, useContext, useMemo, useCallback } from "react";
 import { updateCommonErrorDetails } from "./service/metrics";
+import { updateUserForExperiments } from "./service/public-api";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 const UserContext = createContext<{
     user?: User;
@@ -19,16 +21,17 @@ const UserContext = createContext<{
 const UserContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User>();
 
-    const updateErrorUserDetails = (user?: User) => {
+    const updateServiceUser = (user?: User) => {
         updateCommonErrorDetails({ userId: user?.id });
+        updateUserForExperiments(!!user ? { id: user.id, email: getPrimaryEmail(user) } : undefined);
     };
-    updateErrorUserDetails(user);
+    updateServiceUser(user);
 
     const client = useQueryClient();
 
     const doSetUser = useCallback(
         (updatedUser: User) => {
-            updateErrorUserDetails(updatedUser);
+            updateServiceUser(updatedUser);
             // If user has changed clear cache
             // Ignore the case where user hasn't been set yet - initial load
             if (user && user?.id !== updatedUser.id) {

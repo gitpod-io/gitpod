@@ -4,30 +4,44 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { FC, useCallback, useEffect, useMemo } from "react";
-import WorkspaceClass from "../icons/WorkspaceClass.svg";
-import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
-import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
+import WorkspaceClassIcon from "../icons/WorkspaceClass.svg";
+import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
+import { WorkspaceClass } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { useAllowedWorkspaceClassesMemo } from "../data/workspaces/workspace-classes-query";
+import { PlainMessage } from "@bufbuild/protobuf";
+import { Link } from "react-router-dom";
+import { repositoriesRoutes } from "../repositories/repositories.routes";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 interface SelectWorkspaceClassProps {
+    selectedConfigurationId?: string;
     selectedWorkspaceClass?: string;
     onSelectionChange: (workspaceClass: string) => void;
-    setError?: (error?: string) => void;
+    setError?: (error?: React.ReactNode) => void;
     disabled?: boolean;
     loading?: boolean;
 }
 
 export default function SelectWorkspaceClassComponent({
+    selectedConfigurationId,
     selectedWorkspaceClass,
     disabled,
     loading,
     setError,
     onSelectionChange,
 }: SelectWorkspaceClassProps) {
-    const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useWorkspaceClasses();
+    const enabledWorkspaceClassRestrictionOnConfiguration = useFeatureFlag(
+        "configuration_workspace_class_restrictions",
+    );
+    const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useAllowedWorkspaceClassesMemo(
+        selectedConfigurationId,
+        {
+            filterOutDisabled: true,
+        },
+    );
 
-    const getElements = useCallback((): DropDown2Element[] => {
+    const getElements = useCallback((): ComboboxElement[] => {
         return (workspaceClasses || [])?.map((c) => ({
             id: c.id,
             element: <WorkspaceClassDropDownElement wsClass={c} />,
@@ -36,14 +50,49 @@ export default function SelectWorkspaceClassComponent({
     }, [workspaceClasses]);
 
     useEffect(() => {
-        if (!workspaceClasses) {
+        if (!workspaceClasses || loading || disabled || workspaceClassesLoading) {
+            return;
+        }
+
+        if (workspaceClasses.length === 0) {
+            const repoWorkspaceSettingsLink =
+                selectedConfigurationId && repositoriesRoutes.WorkspaceSettings(selectedConfigurationId);
+            const teamSettingsLink = "/settings";
+            setError?.(
+                <>
+                    No allowed workspace classes available. Please contact an admin to update{" "}
+                    <Link className="underline" to={teamSettingsLink}>
+                        organization settings
+                    </Link>
+                    {enabledWorkspaceClassRestrictionOnConfiguration && repoWorkspaceSettingsLink && (
+                        <>
+                            {" or "}
+                            <Link className="underline" to={repoWorkspaceSettingsLink}>
+                                configuration settings
+                            </Link>
+                        </>
+                    )}
+                    .
+                </>,
+            );
             return;
         }
         // if the selected workspace class is not supported, we set an error and ask the user to pick one
         if (selectedWorkspaceClass && !workspaceClasses?.find((c) => c.id === selectedWorkspaceClass)) {
             setError?.(`The workspace class '${selectedWorkspaceClass}' is not supported.`);
+        } else {
+            setError?.(undefined);
         }
-    }, [workspaceClasses, selectedWorkspaceClass, setError]);
+    }, [
+        loading,
+        workspaceClassesLoading,
+        disabled,
+        workspaceClasses,
+        selectedWorkspaceClass,
+        setError,
+        enabledWorkspaceClassRestrictionOnConfiguration,
+        selectedConfigurationId,
+    ]);
     const internalOnSelectionChange = useCallback(
         (id: string) => {
             onSelectionChange(id);
@@ -61,24 +110,24 @@ export default function SelectWorkspaceClassComponent({
         return workspaceClasses.find((ws) => ws.id === (selectedWorkspaceClass || defaultClassId));
     }, [selectedWorkspaceClass, workspaceClasses]);
     return (
-        <DropDown2
+        <Combobox
             getElements={getElements}
             onSelectionChange={internalOnSelectionChange}
             searchPlaceholder="Select class"
             disableSearch={true}
-            allOptions={selectedWsClass?.id}
+            initialValue={selectedWsClass?.id}
             disabled={workspaceClassesLoading || loading || disabled}
         >
             <WorkspaceClassDropDownElementSelected
                 wsClass={selectedWsClass}
                 loading={workspaceClassesLoading || loading}
             />
-        </DropDown2>
+        </Combobox>
     );
 }
 
 type WorkspaceClassDropDownElementSelectedProps = {
-    wsClass?: SupportedWorkspaceClass;
+    wsClass?: PlainMessage<WorkspaceClass>;
     loading?: boolean;
 };
 
@@ -89,22 +138,24 @@ const WorkspaceClassDropDownElementSelected: FC<WorkspaceClassDropDownElementSel
     const title = wsClass?.displayName ?? "Select class";
 
     return (
-        <DropDown2SelectedElement
-            icon={WorkspaceClass}
+        <ComboboxSelectedItem
+            icon={WorkspaceClassIcon}
             loading={loading}
             htmlTitle={title}
-            title={<div className="truncate w-80">{title}</div>}
+            title={<div className="truncate">{title}</div>}
             subtitle={
-                <div className="font-semibold">
+                <div className="font-semibold truncate">
                     Class <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
-                    <span className="text-gray-500 dark:text-gray-400 font-normal">{wsClass?.description ?? ""}</span>
+                    <span className="text-gray-500 dark:text-gray-400 font-normal truncate">
+                        {wsClass?.description ?? ""}
+                    </span>
                 </div>
             }
         />
     );
 };
 
-function WorkspaceClassDropDownElement(props: { wsClass: SupportedWorkspaceClass }): JSX.Element {
+function WorkspaceClassDropDownElement(props: { wsClass: PlainMessage<WorkspaceClass> }): JSX.Element {
     const c = props.wsClass;
     return (
         <div className="flex ml-1 mt-1 flex-grow">

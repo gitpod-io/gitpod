@@ -1,0 +1,9 @@
+{
+  "userId": "456",
+  "fullName": "John Doe",
+  "primaryEmail": "john.doe@example.com",
+  "avatarUrl": "https://example.com/avatar.jpg",
+  "role": "owner",
+  "memberSince": "2022-01-01T00:00:00.000Z",
+  "ownedByOrganization": true
+}

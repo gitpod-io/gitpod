@@ -4,6 +4,6 @@ packages:
     config:
       dockerfile: leeway.Dockerfile
       buildArgs:
-        VERSION: 1.0.4
+        VERSION: v1.0.8
       image:
-        - ${imageRepoBase}/ipfs/ipfs-cluster:v1.0.4
+        - ${imageRepoBase}/ipfs/ipfs-cluster:v1.0.8

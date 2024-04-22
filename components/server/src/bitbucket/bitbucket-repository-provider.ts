@@ -11,6 +11,7 @@ import { URL } from "url";
 import { RepoURL } from "../repohost/repo-url";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { BitbucketApiFactory } from "./bitbucket-api-factory";
+import asyncBatch from "async-batch";
 
 @injectable()
 export class BitbucketRepositoryProvider implements RepositoryProvider {
@@ -157,8 +158,63 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         return commits.map((v: Schema.Commit) => v.hash!);
     }
 
-    // TODO: implement repo search
-    public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
-        return [];
+    //
+    // Searching Bitbucket requires a workspace to be specified
+    // This results in a two step process:
+    // 1. Get all workspaces for the user
+    // 2. Fan out and search each workspace for the repos
+    //
+    public async searchRepos(user: User, searchString: string, limit: number): Promise<RepositoryInfo[]> {
+        const api = await this.apiFactory.create(user);
+
+        const workspaces = await api.workspaces.getWorkspaces({ pagelen: limit });
+
+        const workspaceSlugs: string[] = (
+            workspaces.data.values?.map((w) => {
+                return w.slug || "";
+            }) ?? []
+        ).filter(Boolean);
+
+        if (workspaceSlugs.length === 0) {
+            return [];
+        }
+
+        // Batch our requests to the api so we only make up to 5 calls in parallel
+        const results = await asyncBatch(
+            workspaceSlugs,
+            async (workspaceSlug) => {
+                return api.repositories.list({
+                    workspace: workspaceSlug,
+                    // name includes searchString
+                    q: `name ~ "${searchString}"`,
+                    // sort by most recently updatd first
+                    sort: "-updated_on",
+                    // limit to the first 10 results per workspace
+                    pagelen: 10,
+                });
+            },
+            // 5 calls in parallel
+            5,
+        );
+
+        // Convert into RepositoryInfo
+        const repos: RepositoryInfo[] = [];
+
+        results
+            .map((result) => {
+                return result.data.values ?? [];
+            })
+            // flatten out the array of arrays
+            .flat()
+            // convert into the format we want to return
+            .forEach((repo) => {
+                const name = repo.name;
+                const url = repo.links?.html?.href;
+                if (name && url) {
+                    repos.push({ name, url });
+                }
+            });
+
+        return repos;
     }
 }

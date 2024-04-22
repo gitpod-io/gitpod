@@ -11,6 +11,7 @@ packages:
       - "pkg/components/**/*.key"
       - "pkg/components/**/*.pem"
       - "pkg/components/**/*.sql"
+      - "pkg/components/**/*.json"
       - "pkg/components/spicedb/data/*.yaml"
       - "scripts/*.sh"
       - "third_party/charts/*/Chart.yaml"

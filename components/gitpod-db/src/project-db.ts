@@ -10,24 +10,21 @@ import { TransactionalDB } from "./typeorm/transactional-db-impl";
 export const ProjectDB = Symbol("ProjectDB");
 export interface ProjectDB extends TransactionalDB<ProjectDB> {
     findProjectById(projectId: string): Promise<Project | undefined>;
-    findProjectsByCloneUrl(cloneUrl: string): Promise<Project[]>;
+    findProjectsByCloneUrl(cloneUrl: string, organizationId?: string): Promise<Project[]>;
     findProjects(orgID: string): Promise<Project[]>;
-    findProjectsBySearchTerm(
-        offset: number,
-        limit: number,
-        orderBy: keyof Project,
-        orderDir: "ASC" | "DESC",
-        searchTerm: string,
-    ): Promise<{ total: number; rows: Project[] }>;
+    findProjectsBySearchTerm(args: FindProjectsBySearchTermArgs): Promise<{ total: number; rows: Project[] }>;
     storeProject(project: Project): Promise<Project>;
-    updateProject(partialProject: PartialProject): Promise<void>;
+    updateProject(partialProject: PartialProject): Promise<Project>;
     markDeleted(projectId: string): Promise<void>;
     findProjectEnvironmentVariable(
         projectId: string,
         envVar: ProjectEnvVarWithValue,
     ): Promise<ProjectEnvVar | undefined>;
-    addProjectEnvironmentVariable(projectId: string, envVar: ProjectEnvVarWithValue): Promise<void>;
-    updateProjectEnvironmentVariable(projectId: string, envVar: Required<ProjectEnvVarWithValue>): Promise<void>;
+    addProjectEnvironmentVariable(projectId: string, envVar: ProjectEnvVarWithValue): Promise<ProjectEnvVar>;
+    updateProjectEnvironmentVariable(
+        projectId: string,
+        envVar: Partial<ProjectEnvVarWithValue>,
+    ): Promise<ProjectEnvVar | undefined>;
     getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
     getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
@@ -37,3 +34,13 @@ export interface ProjectDB extends TransactionalDB<ProjectDB> {
     getProjectUsage(projectId: string): Promise<ProjectUsage | undefined>;
     updateProjectUsage(projectId: string, usage: Partial<ProjectUsage>): Promise<void>;
 }
+
+export type FindProjectsBySearchTermArgs = {
+    offset: number;
+    limit: number;
+    orderBy: keyof Project;
+    orderDir: "ASC" | "DESC";
+    searchTerm?: string;
+    organizationId?: string;
+    prebuildsEnabled?: boolean;
+};

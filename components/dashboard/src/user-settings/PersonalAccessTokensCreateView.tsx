@@ -5,27 +5,33 @@
  */
 
 import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
-import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
-import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
-import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import DateSelector from "../components/DateSelector";
 import { SpinnerOverlayLoader } from "../components/Loader";
 import { personalAccessTokensService } from "../service/public-api";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
-import { AllPermissions, TokenAction, TokenExpirationDays, TokenInfo } from "./PersonalAccessTokens";
+import {
+    AllPermissions,
+    TokenAction,
+    getTokenExpirationDays,
+    TokenInfo,
+    getTokenExpirationDescription,
+} from "./PersonalAccessTokens";
 import { settingsPathPersonalAccessTokens } from "./settings.routes";
 import ShowTokenModal from "./ShowTokenModal";
 import { Timestamp } from "@bufbuild/protobuf";
 import arrowDown from "../images/sort-arrow.svg";
 import { Heading2, Subheading } from "../components/typography/headings";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { useFeatureFlag, useIsDataOps } from "../data/featureflag-query";
+import { LinkButton } from "@podkit/buttons/LinkButton";
+import { Button } from "@podkit/buttons/Button";
+import { TextInputField } from "../components/forms/TextInputField";
 
 interface EditPATData {
     name: string;
-    expirationDays: string;
+    expirationValue: string;
     expirationDate: Date;
     scopes: Set<string>;
 }
@@ -43,9 +49,9 @@ function PersonalAccessTokenCreateView() {
     const [editToken, setEditToken] = useState<PersonalAccessToken>();
     const [token, setToken] = useState<EditPATData>({
         name: "",
-        expirationDays: "30",
-        expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        scopes: new Set<string>(),
+        expirationValue: "30 Days",
+        expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // default option 30 days
+        scopes: new Set<string>(AllPermissions[0].scopes), // default to all permissions
     });
     const [modalData, setModalData] = useState<{ token: PersonalAccessToken }>();
 
@@ -57,6 +63,9 @@ function PersonalAccessTokenCreateView() {
             state: tokenInfo,
         });
     }
+
+    const isDataOps = useIsDataOps();
+    const TokenExpirationDays = useMemo(() => getTokenExpirationDays(isDataOps), [isDataOps]);
 
     useEffect(() => {
         (async () => {
@@ -83,8 +92,9 @@ function PersonalAccessTokenCreateView() {
     }, []);
 
     const update = (change: Partial<EditPATData>, addScopes?: string[], removeScopes?: string[]) => {
-        if (change.expirationDays) {
-            change.expirationDate = new Date(Date.now() + Number(change.expirationDays) * 24 * 60 * 60 * 1000);
+        if (change.expirationValue) {
+            const found = TokenExpirationDays.find((e) => e.value === change.expirationValue);
+            change.expirationDate = found?.getDate();
         }
         const data = { ...token, ...change };
         if (addScopes) {
@@ -152,26 +162,25 @@ function PersonalAccessTokenCreateView() {
         <div>
             <PageWithSettingsSubMenu>
                 <div className="mb-4 flex gap-2">
-                    <Link to={settingsPathPersonalAccessTokens}>
-                        <button className="secondary">
-                            <div className="flex place-content-center">
-                                <img src={arrowDown} className="w-4 mr-2 transform rotate-90 mb-0" alt="Back arrow" />
-                                <span>Back to list</span>
-                            </div>
-                        </button>
-                    </Link>
+                    <LinkButton variant="secondary" href={settingsPathPersonalAccessTokens}>
+                        <img src={arrowDown} className="w-4 mr-2 transform rotate-90 mb-0" alt="Back arrow" />
+                        <span>Back to list</span>
+                    </LinkButton>
                     {editToken && (
-                        <button
-                            className="danger bg-red-50 dark:bg-red-600 text-red-600 dark:text-red-50"
-                            onClick={() => setModalData({ token: editToken })}
-                        >
+                        <Button variant="destructive" onClick={() => setModalData({ token: editToken })}>
                             Regenerate
-                        </button>
+                        </Button>
                     )}
                 </div>
                 {errorMsg.length > 0 && (
                     <Alert type="error" className="mb-2 max-w-md">
                         {errorMsg}
+                    </Alert>
+                )}
+                {!editToken && (
+                    <Alert type={"warning"} closable={false} showIcon={true} className="my-4 max-w-lg">
+                        This token will have complete read / write access to the API. Use it responsibly and revoke it
+                        if necessary.
                     </Alert>
                 )}
                 {modalData && (
@@ -199,72 +208,44 @@ function PersonalAccessTokenCreateView() {
                             )}
                         </div>
                         <div className="flex flex-col gap-4">
-                            <div>
-                                <h4>Token Name</h4>
-                                <input
-                                    className="max-w-md"
-                                    value={token.name}
-                                    onChange={(e) => update({ name: e.target.value })}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            handleConfirm();
-                                        }
-                                    }}
-                                    type="text"
-                                    placeholder="Token Name"
-                                />
-                                <p className="text-gray-500 dark:text-gray-400 mt-2">
-                                    The application name using the token or the purpose of the token.
-                                </p>
-                            </div>
+                            <TextInputField
+                                label="Token Name"
+                                placeholder="Token Name"
+                                hint="The application name using the token or the purpose of the token."
+                                value={token.name}
+                                type="text"
+                                className="max-w-md"
+                                onChange={(val) => update({ name: val })}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        handleConfirm();
+                                    }
+                                }}
+                            />
+
                             {!isEditing && (
                                 <DateSelector
                                     title="Expiration Date"
-                                    description={`The token will expire on ${dayjs(token.expirationDate).format(
-                                        "MMM D, YYYY",
-                                    )}`}
+                                    description={getTokenExpirationDescription(token.expirationDate)}
                                     options={TokenExpirationDays}
-                                    value={TokenExpirationDays.find((i) => i.value === token.expirationDays)?.value}
+                                    value={TokenExpirationDays.find((i) => i.value === token.expirationValue)?.value}
                                     onChange={(value) => {
-                                        update({ expirationDays: value });
+                                        update({ expirationValue: value });
                                     }}
                                 />
                             )}
-                            <div>
-                                <CheckboxListField label="Permission">
-                                    {AllPermissions.map((item) => (
-                                        <CheckboxInputField
-                                            key={item.name}
-                                            value={item.name}
-                                            label={item.name}
-                                            hint={item.description}
-                                            checked={item.scopes.every((s) => token.scopes.has(s))}
-                                            topMargin={false}
-                                            onChange={(checked) => {
-                                                if (checked) {
-                                                    update({}, item.scopes);
-                                                } else {
-                                                    update({}, undefined, item.scopes);
-                                                }
-                                            }}
-                                        />
-                                    ))}
-                                </CheckboxListField>
-                            </div>
                         </div>
                     </div>
                     <div className="flex gap-2">
                         {isEditing && (
-                            <Link to={settingsPathPersonalAccessTokens}>
-                                <button className="secondary" onClick={handleConfirm}>
-                                    Cancel
-                                </button>
-                            </Link>
+                            <LinkButton variant="secondary" href={settingsPathPersonalAccessTokens}>
+                                Cancel
+                            </LinkButton>
                         )}
-                        <button onClick={handleConfirm} disabled={isEditing && !editToken}>
+                        <Button onClick={handleConfirm} disabled={isEditing && !editToken}>
                             {isEditing ? "Update" : "Create"} Access Token
-                        </button>
+                        </Button>
                     </div>
                 </SpinnerOverlayLoader>
             </PageWithSettingsSubMenu>

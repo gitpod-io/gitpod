@@ -22,11 +22,12 @@ import { Container } from "inversify";
 import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
 import { expectError } from "../test/expect-utils";
-import { createTestContainer } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
 import { WorkspaceService } from "./workspace-service";
 import { ProjectsService } from "../projects/projects-service";
 import { ConfigProvider } from "./config-provider";
 import { UserService } from "../user/user-service";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -75,7 +76,7 @@ describe("WorkspaceService", async () => {
             },
         });
         const invite = await orgService.getOrCreateInvite(owner.id, org.id);
-        await orgService.joinOrganization(member.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, invite.id));
 
         // create a project
         const projectService = container.get(ProjectsService);
@@ -104,7 +105,7 @@ describe("WorkspaceService", async () => {
         // Clean-up database
         await resetDB(container.get(TypeORM));
         // Deactivate all services
-        container.unbindAll();
+        await container.unbindAllAsync();
     });
 
     it("should createWorkspace", async () => {
@@ -575,6 +576,21 @@ describe("WorkspaceService", async () => {
         expect(!!wsActual.shareable, "shareable should still be false").to.equal(false);
     });
 
+    it("should return supported workspace classes", async () => {
+        const svc = container.get(WorkspaceService);
+
+        Experiments.configureTestingClient({
+            workspace_class_discovery_enabled: true,
+        });
+
+        const workspaceClasses = await svc.getSupportedWorkspaceClasses(owner);
+        expect(workspaceClasses).to.not.be.undefined;
+        expect(workspaceClasses.length).to.be.greaterThan(0);
+
+        expect(workspaceClasses.filter((c) => c.id === "basic").length).to.equal(1);
+        expect(workspaceClasses.filter((c) => c.id === "nextgen-basic").length).to.equal(1);
+    });
+
     it("should controlAdmission - sharing disabled on org", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
@@ -617,6 +633,7 @@ async function createTestWorkspace(svc: WorkspaceService, org: Organization, own
             revision: "asdf",
         },
         "github.com/gitpod-io/gitpod",
+        undefined,
     );
     return ws;
 }

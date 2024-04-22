@@ -27,7 +27,8 @@ type Config struct {
 	GitpodInstallation *GitpodInstallation `json:"gitpodInstallation"`
 	WorkspacePodConfig *WorkspacePodConfig `json:"workspacePodConfig"`
 
-	BuiltinPages BuiltinPagesConfig `json:"builtinPages"`
+	BuiltinPages        BuiltinPagesConfig `json:"builtinPages"`
+	SSHGatewayCAKeyFile string             `json:"sshCAKeyFile"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime.

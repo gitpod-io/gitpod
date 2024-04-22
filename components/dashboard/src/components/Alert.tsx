@@ -11,7 +11,7 @@ import { ReactComponent as InfoSvg } from "../images/info.svg";
 import { ReactComponent as XSvg } from "../images/x.svg";
 import { ReactComponent as Check } from "../images/check-circle.svg";
 import classNames from "classnames";
-import { Button } from "./Button";
+import { Button } from "@podkit/buttons/Button";
 
 export type AlertType =
     // Green
@@ -46,6 +46,7 @@ interface AlertInfo {
     txtCls: string;
     icon: React.ReactNode;
     iconColor?: string;
+    closeIconColor?: string;
 }
 
 const infoMap: Record<AlertType, AlertInfo> = {
@@ -84,6 +85,7 @@ const infoMap: Record<AlertType, AlertInfo> = {
         txtCls: "text-white",
         icon: <Exclamation className="w-4 h-4"></Exclamation>,
         iconColor: "filter-brightness-10",
+        closeIconColor: "text-white",
     },
 };
 
@@ -111,7 +113,7 @@ export default function Alert(props: AlertProps) {
     return (
         <div
             className={classNames(
-                "flex relative whitespace-pre-wrap p-4",
+                "flex items-center relative whitespace-pre-wrap p-4",
                 info.txtCls,
                 props.className,
                 light ? "" : info.bgCls,
@@ -121,15 +123,20 @@ export default function Alert(props: AlertProps) {
             {showIcon && <span className={`mt-1 mr-4 h-4 w-4 ${info.iconColor}`}>{props.icon ?? info.icon}</span>}
             <span className="flex-1 text-left">{props.children}</span>
             {props.closable && (
-                <span className={`mt-1 ml-4`}>
+                <span className={`ml-4`}>
                     {/* Use an IconButton component once we make it */}
                     <Button
-                        type="secondary"
-                        className="bg-transparent hover:bg-transparent"
+                        variant="ghost"
+                        className="hover:bg-transparent"
                         onClick={handleClose}
                         autoFocus={autoFocusClose}
                     >
-                        <XSvg className="w-3 h-4 cursor-pointer" />
+                        <XSvg
+                            className={classNames(
+                                "w-3 h-4 cursor-pointer dark:text-white",
+                                info.closeIconColor || "text-gray-700",
+                            )}
+                        />
                     </Button>
                 </span>
             )}

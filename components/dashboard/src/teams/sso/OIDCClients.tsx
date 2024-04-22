@@ -6,7 +6,7 @@
 
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { FC, useCallback, useState } from "react";
-import { Button } from "../../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import { EmptyMessage } from "../../components/EmptyMessage";
 import { Item, ItemField, ItemFieldIcon, ItemsList } from "../../components/ItemsList";
 import { SpinnerLoader } from "../../components/Loader";

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -107,6 +107,10 @@ export class SubassemblyStatus extends jspb.Message {
     setDigest(value: string): SubassemblyStatus;
     getUrl(): string;
     setUrl(value: string): SubassemblyStatus;
+    getManifest(): Uint8Array | string;
+    getManifest_asU8(): Uint8Array;
+    getManifest_asB64(): string;
+    setManifest(value: Uint8Array | string): SubassemblyStatus;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SubassemblyStatus.AsObject;
@@ -124,6 +128,7 @@ export namespace SubassemblyStatus {
         message: string,
         digest: string,
         url: string,
+        manifest: Uint8Array | string,
     }
 }
 

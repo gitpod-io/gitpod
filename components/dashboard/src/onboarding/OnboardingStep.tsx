@@ -6,8 +6,9 @@
 
 import { FC, FormEvent, useCallback } from "react";
 import Alert from "../components/Alert";
-import { Button, ButtonProps } from "../components/Button";
+import { Button, ButtonProps } from "@podkit/buttons/Button";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 type Props = {
     title: string;
@@ -17,10 +18,10 @@ type Props = {
     error?: string;
     onSubmit(): void;
     submitButtonText?: string;
-    submitButtonType?: ButtonProps["type"];
+    submitButtonType?: ButtonProps["variant"];
     onCancel?(): void;
     cancelButtonText?: string;
-    cancelButtonType?: ButtonProps["type"];
+    cancelButtonType?: ButtonProps["variant"];
 };
 export const OnboardingStep: FC<Props> = ({
     title,
@@ -63,24 +64,23 @@ export const OnboardingStep: FC<Props> = ({
                 <div className={"mt-4" + (onCancel ? " flex space-x-2" : "")}>
                     {onCancel && (
                         <Button
-                            htmlType="button"
-                            type={cancelButtonType || "secondary"}
+                            type="button"
+                            variant={cancelButtonType || "secondary"}
                             disabled={isSaving}
-                            size="block"
                             onClick={onCancel}
                         >
                             {cancelButtonText || "Cancel"}
                         </Button>
                     )}
-                    <Button
-                        htmlType="submit"
-                        type={submitButtonType || "primary"}
+                    <LoadingButton
+                        type="submit"
+                        variant={submitButtonType || "default"}
                         disabled={!isValid || isSaving}
-                        size="block"
+                        className="w-full"
                         loading={isSaving}
                     >
                         {submitButtonText || "Continue"}
-                    </Button>
+                    </LoadingButton>
                 </div>
             </form>
         </div>

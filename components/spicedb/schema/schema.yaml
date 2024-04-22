@@ -13,7 +13,7 @@ schema: |-
     // permissions
     permission read_info = self + organization->member + organization->owner + installation->admin
     permission write_info = self
-    permission delete = self
+    permission delete = self + organization->owner + installation->admin
 
     permission make_admin = installation->admin + organization->installation_admin
 
@@ -28,6 +28,11 @@ schema: |-
 
     permission read_env_var = self
     permission write_env_var = self
+
+    // only used in specified cell, check EXP-1084
+    permission write_temporary_token = organization->installation_admin
+
+    permission code_sync = self
   }
 
   // There's only one global installation
@@ -53,6 +58,9 @@ schema: |-
     relation owner: user
     // users who can snapshot workspaces
     relation snapshoter: organization#member
+    // Some users in an organization may additionally have the `collaborator` role
+    // collaborator can't access members, projects and usage
+    relation collaborator: user
 
 
     // synthetic permission for installation->admin (because https://github.com/authzed/spicedb/issues/15)
@@ -60,29 +68,31 @@ schema: |-
     permission installation_member = installation->member
 
     // General operations on organization
-    permission read_info = member + owner + installation->admin
+    permission read_info = member + owner + collaborator + installation->admin
     permission write_info = owner + installation->admin
     permission delete = owner + installation->admin
 
-    permission read_settings = member + owner + installation->admin
+    permission read_settings = member + owner + collaborator + installation->admin
     permission write_settings = owner + installation->admin
 
     // Operations on Organization's Members
     permission read_members = member + owner + installation->admin
     permission invite_members = member + owner + installation->admin
     permission write_members = owner + installation->admin
-    permission leave = owner + member + installation->admin
+    permission leave = owner + member + collaborator + installation->admin
 
     // Permissions on (sub-)resources
     permission create_project = member + owner + installation->admin
 
-    permission read_git_provider = owner + member + installation->admin
+    permission read_git_provider = owner + member + collaborator + installation->admin
     permission write_git_provider = owner + installation->admin
 
     permission read_billing = member + owner + installation->admin
     permission write_billing = owner + installation->admin
 
-    permission create_workspace = member
+    permission read_prebuild = member + owner + installation->admin
+
+    permission create_workspace = member + collaborator
 
     // can add credit notes and change the spending limits even for free users
     permission write_billing_admin = installation->admin
@@ -149,6 +159,9 @@ relationships: |-
   organization:org_1#owner@user:user_0
   organization:org_1#member@user:user_1
   organization:org_1#member@user:user_2
+  user:user_0#organization@organization:org_1
+  user:user_1#organization@organization:org_1
+  user:user_2#organization@organization:org_1
 
   // org_1 has a project
   project:project_1#org@organization:org_1
@@ -160,6 +173,9 @@ relationships: |-
   organization:org_2#owner@user:user_0
   organization:org_2#member@user:user_1
   organization:org_2#member@user:user_10
+  // user_2 is a collaborator of org_2
+  organization:org_2#collaborator@user:user_2
+  user:user_10#organization@organization:org_2
 
   // org_2 has a project project_2
   project:project_2#org@organization:org_2
@@ -233,6 +249,10 @@ assertions:
     - workspace:workspace_2_shared#access@user:user_1
     # stranger can access other's workspaces
     - workspace:workspace_2_shared#access@user:user_2
+    # installation admin can create temp token
+    - user:user_0#write_temporary_token@user:user_admin
+    - user:user_1#write_temporary_token@user:user_admin
+    - user:user_2#write_temporary_token@user:user_admin
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
@@ -251,3 +271,13 @@ assertions:
     - organization:org_1#delete@user:user_1
     # stranger can't access other's non-shared workspace
     - workspace:workspace_1#access@user:user_2
+    # collaborator(user_2) can't access members, projects, usage
+    - organization:org_2#read_members@user:user_2
+    - project:project_2#read_info@user:user_2
+    - project:project_2#write_info@user:user_2
+    - project:project_2#delete@user:user_2
+    - organization:org_2#read_billing@user:user_2
+    # org owner cant write_temporary_token, because they are not installation admin
+    - user:user_1#write_temporary_token@user:user_0
+    # org_2 is not belong to installation_0
+    - user:user_10#write_temporary_token@user:user_admin

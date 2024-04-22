@@ -4,81 +4,89 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { FC, useCallback, useEffect, useMemo } from "react";
-import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
+import { useCallback, useEffect, useMemo } from "react";
+import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import Editor from "../icons/Editor.svg";
-import { useIDEOptions } from "../data/ide-options/ide-options-query";
+import { AllowedWorkspaceEditor, useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
+import { MiddleDot } from "./typography/MiddleDot";
+import { DisableScope } from "../data/workspaces/workspace-classes-query";
+import { Link } from "react-router-dom";
+import { repositoriesRoutes } from "../repositories/repositories.routes";
+import { useFeatureFlag } from "../data/featureflag-query";
 
-interface SelectIDEComponentProps {
+type Props = {
     selectedIdeOption?: string;
+    selectedConfigurationId?: string;
+    pinnedEditorVersions?: Map<string, string>;
     useLatest?: boolean;
-    onSelectionChange: (ide: string, latest: boolean) => void;
-    setError?: (error?: string) => void;
     disabled?: boolean;
     loading?: boolean;
-}
-
-function filteredIdeOptions(ideOptions: IDEOptions) {
-    return IDEOptions.asArray(ideOptions).filter((x) => !x.hidden);
-}
-
-function sortedIdeOptions(ideOptions: IDEOptions) {
-    return filteredIdeOptions(ideOptions).sort((a, b) => {
-        // Prefer experimental options
-        if (a.experimental && !b.experimental) {
-            return -1;
-        }
-        if (!a.experimental && b.experimental) {
-            return 1;
-        }
-
-        if (!a.orderKey || !b.orderKey) {
-            return 0;
-        }
-
-        return parseInt(a.orderKey, 10) - parseInt(b.orderKey, 10);
-    });
-}
-
+    ignoreRestrictionScopes: DisableScope[] | undefined;
+    availableOptions?: string[];
+    hideVersions?: boolean;
+    setError?: (error?: React.ReactNode) => void;
+    setWarning?: (warning?: React.ReactNode) => void;
+    onSelectionChange: (ide: string, latest: boolean) => void;
+};
 export default function SelectIDEComponent({
     selectedIdeOption,
+    selectedConfigurationId,
+    pinnedEditorVersions,
     useLatest,
     disabled = false,
     loading = false,
+    ignoreRestrictionScopes,
+    availableOptions,
+    hideVersions,
     setError,
+    setWarning,
     onSelectionChange,
-}: SelectIDEComponentProps) {
-    const { data: ideOptions, isLoading: ideOptionsLoading } = useIDEOptions();
-
-    const options = useMemo(() => (ideOptions ? sortedIdeOptions(ideOptions) : undefined), [ideOptions]);
+}: Props) {
+    const {
+        data: ideOptions,
+        isLoading: ideOptionsLoading,
+        computedDefault,
+    } = useAllowedWorkspaceEditorsMemo(selectedConfigurationId, {
+        filterOutDisabled: true,
+        ignoreScope: ignoreRestrictionScopes,
+    });
+    const isEditorVersionPinningEnabled = useFeatureFlag("org_level_editor_version_pinning_enabled");
 
     const getElements = useCallback(
         (search: string) => {
-            if (!options) {
+            if (!ideOptions) {
                 return [];
             }
-            const result: DropDown2Element[] = [];
-            for (const ide of options.filter((ide) =>
+            const result: ComboboxElement[] = [];
+            for (const ide of ideOptions.filter((ide) =>
                 `${ide.label}${ide.title}${ide.notes}${ide.id}`.toLowerCase().includes(search.toLowerCase()),
             )) {
                 if (!useLatest) {
                     result.push({
                         id: ide.id,
-                        element: <IdeOptionElementInDropDown option={ide} useLatest={false} />,
+                        element: (
+                            <IdeOptionElementInDropDown
+                                option={ide}
+                                pinnedIdeVersion={pinnedEditorVersions?.get(ide.id)}
+                                useLatest={false}
+                                hideVersion={hideVersions}
+                            />
+                        ),
                         isSelectable: true,
                     });
                 } else if (ide.latestImage) {
                     result.push({
                         id: ide.id + "-latest",
-                        element: <IdeOptionElementInDropDown option={ide} useLatest={true} />,
+                        element: (
+                            <IdeOptionElementInDropDown option={ide} useLatest={true} hideVersion={hideVersions} />
+                        ),
                         isSelectable: true,
                     });
                 }
             }
             return result;
         },
-        [options, useLatest],
+        [ideOptions, useLatest, pinnedEditorVersions, hideVersions],
     );
     const internalOnSelectionChange = (id: string) => {
         const { ide, useLatest } = parseId(id);
@@ -87,30 +95,93 @@ export default function SelectIDEComponent({
             setError(undefined);
         }
     };
-    const ide = selectedIdeOption || ideOptions?.defaultIde || "";
+    const helpMessage = useMemo(() => {
+        const repoSetting = selectedConfigurationId && repositoriesRoutes.EditorSettings(selectedConfigurationId);
+        const orgSetting = "/settings";
+        return (
+            <>
+                Please contact an admin to update{" "}
+                <Link className="underline" to={orgSetting}>
+                    organization settings
+                </Link>
+                {repoSetting && (
+                    <>
+                        {" or "}
+                        <Link className="underline" to={repoSetting}>
+                            repository settings
+                        </Link>
+                    </>
+                )}
+                .
+            </>
+        );
+    }, [selectedConfigurationId]);
+
+    const ide = selectedIdeOption || computedDefault || "";
     useEffect(() => {
-        if (!ideOptions) {
+        if (!availableOptions || loading || disabled || ideOptionsLoading) {
+            setError?.(undefined);
             return;
         }
-        const option = ideOptions.options[ide];
-        if (!option) {
-            setError?.(`The editor '${ide}' is not supported.`);
+        if (availableOptions.length === 0) {
+            setError?.(<>No available editors for this repository. {helpMessage}</>);
+            return;
         }
-    }, [ide, ideOptions, setError]);
+        if (!availableOptions.includes(ide)) {
+            setError?.(
+                <>
+                    The editor '{ide}' is not supported. {helpMessage}
+                </>,
+            );
+        } else {
+            setError?.(undefined);
+        }
+    }, [ide, availableOptions, setError, loading, disabled, ideOptionsLoading, helpMessage]);
+
+    useEffect(() => {
+        const shouldShowDeprecationNotice = ["intellij-previous"].includes(ide);
+        if (shouldShowDeprecationNotice) {
+            setWarning?.(
+                <>
+                    <span className="font-semibold">
+                        Support for IntelliJ IDEA 2022.3.3 will be discontinued on May 31<sup>st</sup>
+                    </span>
+                    . <br />
+                    Please use version 2024.1{" "}
+                    {isEditorVersionPinningEnabled ? (
+                        <>
+                            or pin to another version in your{" "}
+                            <Link className="gp-link" to={"/settings"}>
+                                Organization settings
+                            </Link>
+                        </>
+                    ) : (
+                        "instead"
+                    )}
+                    .
+                </>,
+            );
+        } else {
+            setWarning?.(undefined);
+        }
+    }, [setError, setWarning, ide, isEditorVersionPinningEnabled]);
+
     return (
-        <DropDown2
+        <Combobox
             getElements={getElements}
             onSelectionChange={internalOnSelectionChange}
             searchPlaceholder={"Select Editor"}
-            allOptions={ide}
+            initialValue={ide}
             disabled={disabled || ideOptionsLoading || loading}
         >
             <IdeOptionElementSelected
-                option={ideOptions?.options[ide]}
+                option={ideOptions.find((e) => e.id === ide)}
+                pinnedIdeVersion={pinnedEditorVersions?.get(ide)}
                 useLatest={!!useLatest}
                 loading={ideOptionsLoading || loading}
+                hideVersion={hideVersions}
             />
-        </DropDown2>
+        </Combobox>
     );
 }
 
@@ -120,49 +191,57 @@ function parseId(id: string): { ide: string; useLatest: boolean } {
     return { ide, useLatest };
 }
 
-interface IdeOptionElementProps {
-    option: IDEOption | undefined;
+type IdeOptionProps = {
+    option: AllowedWorkspaceEditor | undefined;
+    pinnedIdeVersion?: string;
     useLatest: boolean;
     loading?: boolean;
-}
-
-function capitalize(label?: string) {
-    return label && label[0].toLocaleUpperCase() + label.slice(1);
-}
-
-const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest, loading = false }) => {
+    hideVersion?: boolean;
+};
+const IdeOptionElementSelected = ({
+    option,
+    pinnedIdeVersion,
+    useLatest,
+    loading = false,
+    hideVersion = false,
+}: IdeOptionProps) => {
     let version: string | undefined, label: string | undefined, title: string;
     if (!option) {
         title = "Select Editor";
     } else {
-        version = useLatest ? option.latestImageVersion : option.imageVersion;
+        version = useLatest ? option.latestImageVersion : pinnedIdeVersion ?? option.imageVersion;
         label = option.type;
         title = option.title;
     }
 
     return (
-        <DropDown2SelectedElement
+        <ComboboxSelectedItem
             icon={Editor}
             loading={loading}
             htmlTitle={title}
             title={
                 <div>
-                    {title} <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
-                    <span className="text-gray-400 dark:text-gray-500 font-normal">{version}</span>{" "}
-                    {useLatest && (
-                        <div className="ml-1 rounded-xl bg-gray-200 dark:bg-gray-600 px-2 inline text-sm text-gray-500 dark:text-gray-400 font-normal">
+                    {title}
+                    {!hideVersion && (
+                        <>
+                            <MiddleDot className="text-pk-content-tertiary" />{" "}
+                            <span className="font-normal">{version}</span>{" "}
+                        </>
+                    )}
+                    {useLatest && !hideVersion && (
+                        <div className="ml-1 rounded-xl bg-pk-content-tertiary/10 px-2 py-1 inline text-sm font-normal">
                             Latest
                         </div>
                     )}
                 </div>
             }
             subtitle={
-                <div className="flex">
+                <div className="flex gap-0.5">
                     <div className="font-semibold">Editor</div>
                     {label && (
                         <>
-                            <div className="mx-1">&middot;</div>
-                            <div>{capitalize(label)}</div>
+                            <MiddleDot />
+                            <div className="capitalize">{label}</div>
                         </>
                     )}
                 </div>
@@ -171,13 +250,18 @@ const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest
     );
 };
 
-function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
-    const { option, useLatest } = p;
+export const isJetbrains = (editor: string) => {
+    //todo(ft): find a better way to group IDEs by vendor
+    return !["code", "code-desktop", "xterm"].includes(editor); // a really hacky way to get just JetBrains IDEs
+};
+
+function IdeOptionElementInDropDown({ option, useLatest, pinnedIdeVersion, hideVersion = false }: IdeOptionProps) {
     if (!option) {
         return <></>;
     }
-    const version = useLatest ? option.latestImageVersion : option.imageVersion;
-    const label = capitalize(option.type);
+
+    const version = useLatest ? option.latestImageVersion : pinnedIdeVersion ?? option.imageVersion;
+    const label = !isJetbrains(option.id) && option.type;
 
     return (
         <div className="flex" title={option.title}>
@@ -186,19 +270,19 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
             </div>
             <div className="flex self-center text-gray-500">
                 <div className="font-semibold text-gray-700 dark:text-gray-300">{option.title}</div>
-                {version && (
+                {!hideVersion && version && (
                     <>
-                        <div className="mx-1">&middot;</div>
-                        <div>{version}</div>
+                        <MiddleDot />
+                        <span>{version}</span>
                     </>
                 )}
                 {label && (
                     <>
-                        <div className="mx-1">&middot;</div>
-                        <div>{label}</div>
+                        <MiddleDot />
+                        <span className="capitalize">{label}</span>
                     </>
                 )}
-                {useLatest && <div className="ml-2 rounded-xl bg-gray-200 px-2">Latest</div>}
+                {useLatest && !hideVersion && <div className="ml-2 rounded-xl bg-gray-200 px-2">Latest</div>}
             </div>
         </div>
     );

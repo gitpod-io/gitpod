@@ -18,7 +18,11 @@ export class DBAuthProviderEntry implements AuthProviderEntry {
     @Column()
     ownerId: string;
 
-    @Column()
+    @Column({
+        ...TypeORM.UUID_COLUMN_TYPE,
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
     organizationId?: string;
 
     @Column("varchar")
@@ -45,7 +49,4 @@ export class DBAuthProviderEntry implements AuthProviderEntry {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     oauthRevision?: string;
-
-    @Column()
-    deleted?: boolean;
 }

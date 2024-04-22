@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { GitpodServer, Snapshot } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export interface WaitForSnapshotOptions {
     workspaceOwner: string;
@@ -35,7 +36,11 @@ export class SnapshotService {
     }
 
     public async waitForSnapshot(opts: WaitForSnapshotOptions): Promise<void> {
-        return await this.driveSnapshot(opts);
+        try {
+            return await this.driveSnapshot(opts);
+        } catch (err) {
+            throw new ApplicationError(ErrorCodes.SNAPSHOT_ERROR, String(err));
+        }
     }
 
     public async driveSnapshot(opts: WaitForSnapshotOptions): Promise<void> {

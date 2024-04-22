@@ -20,7 +20,8 @@ const (
 )
 
 var idpLoginVaultOpts struct {
-	Role string
+	Role     string
+	Audience []string
 }
 
 var idpLoginVaultCmd = &cobra.Command{
@@ -32,7 +33,7 @@ var idpLoginVaultCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
-		tkn, err := idpToken(ctx, []string{idpAudienceVault})
+		tkn, err := idpToken(ctx, idpLoginVaultOpts.Audience)
 		if err != nil {
 			return err
 		}
@@ -63,5 +64,6 @@ var idpLoginVaultCmd = &cobra.Command{
 func init() {
 	idpLoginCmd.AddCommand(idpLoginVaultCmd)
 
+	idpLoginVaultCmd.Flags().StringArrayVar(&idpLoginVaultOpts.Audience, "audience", []string{idpAudienceVault}, "audience of the ID token")
 	idpLoginVaultCmd.Flags().StringVar(&idpLoginVaultOpts.Role, "role", os.Getenv("IDP_VAULT_ROLE"), "Vault role to assume (defaults to IDP_VAULT_ROLE env var)")
 }

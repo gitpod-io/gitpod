@@ -10,49 +10,125 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { v4 as uuidv4 } from "uuid";
 import { TokenProvider } from "./token-provider";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { RedisMutex } from "../redis/mutex";
+import { reportScmTokenRefreshRequest, scmTokenRefreshLatencyHistogram } from "../prometheus-metrics";
 
 @injectable()
 export class TokenService implements TokenProvider {
     static readonly GITPOD_AUTH_PROVIDER_ID = "Gitpod";
-    static readonly GITPOD_PORT_AUTH_TOKEN_EXPIRY_MILLIS = 30 * 60 * 1000;
+    static readonly DEFAULT_EXPIRY_THRESHOLD = 5;
 
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(UserDB) protected readonly userDB: UserDB;
+    @inject(RedisMutex) private readonly redisMutex: RedisMutex;
 
-    protected getTokenForHostCache = new Map<string, Promise<Token>>();
+    async getTokenForHost(user: User | string, host: string, expiryThreshold?: number): Promise<Token | undefined> {
+        const userId = User.is(user) ? user.id : user;
 
-    async getTokenForHost(user: User, host: string): Promise<Token> {
-        // (AT) when it comes to token renewal, the awaited http requests may
-        // cause "parallel" calls to repeat the renewal, which will fail.
-        // Caching for pending operations should solve this issue.
-        const key = `${host}-${user.id}`;
-        let promise = this.getTokenForHostCache.get(key);
-        if (!promise) {
-            promise = this.doGetTokenForHost(user, host);
-            this.getTokenForHostCache.set(key, promise);
-            promise = promise.finally(() => this.getTokenForHostCache.delete(key));
-        }
-        return promise;
+        return this.doGetTokenForHost(userId, host, expiryThreshold);
     }
 
-    async doGetTokenForHost(user: User, host: string): Promise<Token> {
+    private async doGetTokenForHost(
+        userId: string,
+        host: string,
+        expiryThreshold = TokenService.DEFAULT_EXPIRY_THRESHOLD,
+    ): Promise<Token | undefined> {
+        const user = await this.userDB.findUserById(userId);
+        if (!user) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${userId}) not found.`);
+        }
         const identity = this.getIdentityForHost(user, host);
-        let token = await this.userDB.findTokenForIdentity(identity);
-        if (!token) {
-            throw new Error(
-                `No token found for user ${identity.authProviderId}/${identity.authId}/${identity.authName}!`,
-            );
-        }
-        const aboutToExpireTime = new Date();
-        aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
-        if (token.expiryDate && token.expiryDate < aboutToExpireTime.toISOString()) {
-            const { authProvider } = this.hostContextProvider.get(host)!;
-            if (authProvider.refreshToken) {
-                await authProvider.refreshToken(user);
-                token = (await this.userDB.findTokenForIdentity(identity))!;
+
+        function isValid(t: Token): boolean {
+            if (!t.expiryDate) {
+                return true;
             }
+
+            const aboutToExpireTime = new Date();
+            aboutToExpireTime.setTime(aboutToExpireTime.getTime() + expiryThreshold * 60 * 1000);
+            if (t.expiryDate >= aboutToExpireTime.toISOString()) {
+                return true;
+            }
+
+            // This is to help us understand whether extending the default expiration tolerance actually helped or not and can be removed after verifying the changes.
+            const defaultAboutToExpireTime = new Date();
+            aboutToExpireTime.setTime(
+                defaultAboutToExpireTime.getTime() + TokenService.DEFAULT_EXPIRY_THRESHOLD * 60 * 1000,
+            );
+            if (
+                expiryThreshold !== TokenService.DEFAULT_EXPIRY_THRESHOLD &&
+                t.expiryDate >= defaultAboutToExpireTime.toISOString()
+            ) {
+                log.debug({ userId }, `Token refreshed with an extended threshold not covered by the default one`, {
+                    host,
+                    expiryThreshold,
+                });
+            }
+
+            return false;
         }
-        return token;
+
+        const doRefreshToken = async () => {
+            // Check: Current token so we can actually refresh?
+            const token = await this.userDB.findTokenForIdentity(identity);
+            if (!token) {
+                reportScmTokenRefreshRequest(host, "no_token");
+                return undefined;
+            }
+
+            if (isValid(token)) {
+                reportScmTokenRefreshRequest(host, "still_valid");
+                return token;
+            }
+
+            // Can we refresh these kind of tokens?
+            const { authProvider } = this.hostContextProvider.get(host)!;
+            if (!authProvider.refreshToken) {
+                reportScmTokenRefreshRequest(host, "not_refreshable");
+                return undefined;
+            }
+
+            // Perform actual refresh
+            const stopTimer = scmTokenRefreshLatencyHistogram.startTimer({ host });
+            try {
+                await authProvider.refreshToken(user);
+            } finally {
+                stopTimer({ host });
+            }
+
+            const freshToken = await this.userDB.findTokenForIdentity(identity);
+            reportScmTokenRefreshRequest(host, "success");
+            return freshToken;
+        };
+
+        try {
+            const refreshedToken = await this.redisMutex.using(
+                [`token-refresh-${host}-${userId}`],
+                3000, // After 3s without extension the lock is released
+                doRefreshToken,
+                { retryCount: 20, retryDelay: 500 }, // We wait at most 10s until we give up, and conclude that we can't refresh the token now.
+            );
+            return refreshedToken;
+        } catch (err) {
+            if (RedisMutex.isLockedError(err)) {
+                // In this case we already timed-out. BUT there is a high chance we are waiting on somebody else, who might already done the work for us.
+                // So just checking again here
+                const token = await this.userDB.findTokenForIdentity(identity);
+                if (token && isValid(token)) {
+                    log.debug({ userId }, `Token refresh timed out, but still successful`, { host });
+                    reportScmTokenRefreshRequest(host, "success_after_timeout");
+                    return token;
+                }
+
+                log.error({ userId }, `Failed to refresh token (timeout waiting on lock)`, err, { host });
+                reportScmTokenRefreshRequest(host, "timeout");
+                throw new Error(`Failed to refresh token (timeout waiting on lock)`);
+            }
+            reportScmTokenRefreshRequest(host, "error");
+            throw err;
+        }
     }
 
     async getOrCreateGitpodIdentity(user: User): Promise<Identity> {
@@ -84,16 +160,16 @@ export class TokenService implements TokenProvider {
         return await this.userDB.addToken(identity, token);
     }
 
-    protected getIdentityForHost(user: User, host: string): Identity {
+    private getIdentityForHost(user: User, host: string): Identity {
         const authProviderId = this.getAuthProviderId(host);
         const hostIdentity = authProviderId && User.getIdentity(user, authProviderId);
         if (!hostIdentity) {
-            throw new Error(`User ${user.name} has no identity for host: ${host}!`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${user.id}) has no identity for host: ${host}.`);
         }
         return hostIdentity;
     }
 
-    protected getAuthProviderId(host: string): string | undefined {
+    private getAuthProviderId(host: string): string | undefined {
         const hostContext = this.hostContextProvider.get(host);
         if (!hostContext) {
             return undefined;

@@ -24,8 +24,10 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	runtime_client "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -58,13 +60,17 @@ var runCmd = &cobra.Command{
 
 		opts := ctrl.Options{
 			Scheme:                 scheme,
-			Namespace:              cfg.Namespace,
 			HealthProbeBindAddress: cfg.ReadinessProbeAddr,
 			LeaderElection:         false,
+			Cache: cache.Options{
+				DefaultNamespaces: map[string]cache.Config{
+					cfg.Namespace: {},
+				},
+			},
 		}
 
 		if cfg.PrometheusAddr != "" {
-			opts.MetricsBindAddress = cfg.PrometheusAddr
+			opts.Metrics = metricsserver.Options{BindAddress: cfg.PrometheusAddr}
 		}
 
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), opts)
@@ -131,7 +137,28 @@ var runCmd = &cobra.Command{
 		}
 
 		// SSH Gateway
+
+		var caKey ssh.Signer
+		readCAKeyFile := func() {
+			caPrivateKeyB, err := os.ReadFile(cfg.Proxy.SSHGatewayCAKeyFile)
+			if err != nil {
+				log.WithError(err).Error("cannot read SSH Gateway CA key")
+				return
+			}
+			c, err := ssh.ParsePrivateKey(caPrivateKeyB)
+			if err != nil {
+				log.WithError(err).Error("cannot parse SSH Gateway CA key")
+				return
+			}
+			caKey = c
+		}
+
+		if cfg.Proxy.SSHGatewayCAKeyFile != "" {
+			readCAKeyFile()
+		}
+
 		var signers []ssh.Signer
+		var sshGatewayServer *sshproxy.Server
 		flist, err := os.ReadDir("/mnt/host-key")
 		if err == nil && len(flist) > 0 {
 			for _, f := range flist {
@@ -149,12 +176,12 @@ var runCmd = &cobra.Command{
 				signers = append(signers, hostSigner)
 			}
 			if len(signers) > 0 {
-				server := sshproxy.New(signers, infoprov, heartbeat)
+				sshGatewayServer = sshproxy.New(signers, infoprov, heartbeat, caKey)
 				l, err := net.Listen("tcp", ":2200")
 				if err != nil {
 					panic(err)
 				}
-				go server.Serve(l)
+				go sshGatewayServer.Serve(l)
 				log.Info("SSHGateway is up and running")
 			}
 		}
@@ -163,7 +190,7 @@ var runCmd = &cobra.Command{
 
 		go func() {
 			log.Infof("startint proxying on %s", cfg.Ingress.HTTPAddress)
-			proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), infoprov, signers).MustServe(ctrlCtx)
+			proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), infoprov, sshGatewayServer).MustServe(ctrlCtx)
 		}()
 
 		log.Info("🚪 ws-proxy is up and running")

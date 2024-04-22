@@ -4,53 +4,42 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Organization, OrgMemberInfo, User } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useLocation } from "react-router";
-import { publicApiTeamMembersToProtocol, publicApiTeamToProtocol, teamsService } from "../../service/public-api";
+import { organizationClient } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
 import { noPersistence } from "../setup";
-
-export interface OrganizationInfo extends Organization {
-    members: OrgMemberInfo[];
-    isOwner: boolean;
-    invitationId?: string;
-}
+import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { useReportDashboardLoggingTracing } from "../featureflag-query";
 
 export function useOrganizationsInvalidator() {
     const user = useCurrentUser();
+
     const queryClient = useQueryClient();
     return useCallback(() => {
-        console.log("Invalidating orgs... " + JSON.stringify(getQueryKey(user)));
-        queryClient.invalidateQueries(getQueryKey(user));
-    }, [user, queryClient]);
+        console.log("Invalidating orgs... " + JSON.stringify(getQueryKey(user?.id)));
+        queryClient.invalidateQueries(getQueryKey(user?.id));
+    }, [user?.id, queryClient]);
 }
 
+export let orgsLoaded = false;
 export function useOrganizations() {
     const user = useCurrentUser();
-    const query = useQuery<OrganizationInfo[], Error>(
-        getQueryKey(user),
+    const logTracing = useReportDashboardLoggingTracing();
+    const query = useQuery<Organization[], Error>(
+        getQueryKey(user?.id),
         async () => {
-            console.log("Fetching orgs... " + JSON.stringify(getQueryKey(user)));
+            console.log("Fetching orgs... " + JSON.stringify(getQueryKey(user?.id)));
             if (!user) {
                 console.log("useOrganizations with empty user");
                 return [];
             }
-
-            const response = await teamsService.listTeams({});
-            const result: OrganizationInfo[] = [];
-            for (const org of response.teams) {
-                const members = publicApiTeamMembersToProtocol(org.members || []);
-                const isOwner = members.some((m) => m.role === "owner" && m.userId === user?.id);
-                result.push({
-                    ...publicApiTeamToProtocol(org),
-                    members,
-                    isOwner,
-                    invitationId: org.teamInvitation?.id,
-                });
-            }
-            return result;
+            const response = await logTracing(
+                async () => organizationClient.listOrganizations({}),
+                "on organization loading",
+            );
+            return response.organizations;
         },
         {
             enabled: !!user,
@@ -60,15 +49,18 @@ export function useOrganizations() {
             useErrorBoundary: true,
         },
     );
+    useEffect(() => {
+        orgsLoaded = !query.isLoading;
+    }, [query.isLoading]);
     return query;
 }
 
-function getQueryKey(user?: User) {
-    return noPersistence(["organizations", user?.id]);
+function getQueryKey(userId?: string) {
+    return noPersistence(["organizations", userId]);
 }
 
 // Custom hook to return the current org if one is selected
-export function useCurrentOrg(): { data?: OrganizationInfo; isLoading: boolean } {
+export function useCurrentOrg(): { data?: Organization; isLoading: boolean } {
     const location = useLocation();
     const orgs = useOrganizations();
     const user = useCurrentUser();

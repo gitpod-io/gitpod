@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -59,6 +59,16 @@ func (s *ProxyTeamsServiceHandler) DeleteTeam(ctx context.Context, req *connect_
 	return connect_go.NewResponse(resp), nil
 }
 
+func (s *ProxyTeamsServiceHandler) GetTeamInvitation(ctx context.Context, req *connect_go.Request[v1.GetTeamInvitationRequest]) (*connect_go.Response[v1.GetTeamInvitationResponse], error) {
+	resp, err := s.Client.GetTeamInvitation(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
 func (s *ProxyTeamsServiceHandler) JoinTeam(ctx context.Context, req *connect_go.Request[v1.JoinTeamRequest]) (*connect_go.Response[v1.JoinTeamResponse], error) {
 	resp, err := s.Client.JoinTeam(ctx, req.Msg)
 	if err != nil {
@@ -71,6 +81,16 @@ func (s *ProxyTeamsServiceHandler) JoinTeam(ctx context.Context, req *connect_go
 
 func (s *ProxyTeamsServiceHandler) ResetTeamInvitation(ctx context.Context, req *connect_go.Request[v1.ResetTeamInvitationRequest]) (*connect_go.Response[v1.ResetTeamInvitationResponse], error) {
 	resp, err := s.Client.ResetTeamInvitation(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyTeamsServiceHandler) ListTeamMembers(ctx context.Context, req *connect_go.Request[v1.ListTeamMembersRequest]) (*connect_go.Response[v1.ListTeamMembersResponse], error) {
+	resp, err := s.Client.ListTeamMembers(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err

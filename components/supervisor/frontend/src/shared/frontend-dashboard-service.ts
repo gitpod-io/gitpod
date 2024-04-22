@@ -21,6 +21,9 @@ export class FrontendDashboardServiceClient implements IDEFrontendDashboardServi
     private readonly onOpenBrowserIDEEmitter = new Emitter<void>();
     readonly onOpenBrowserIDE = this.onOpenBrowserIDEEmitter.event;
 
+    private readonly onWillRedirectEmitter = new Emitter<void>();
+    readonly onWillRedirect = this.onWillRedirectEmitter.event;
+
     private resolveInit!: () => void;
     private initPromise = new Promise<void>((resolve) => (this.resolveInit = resolve));
 
@@ -50,6 +53,7 @@ export class FrontendDashboardServiceClient implements IDEFrontendDashboardServi
                 this.onDidChangeEmitter.fire(this.latestInfo);
             }
             if (IDEFrontendDashboardService.isRelocateEventData(event.data)) {
+                this.onWillRedirectEmitter.fire();
                 window.location.href = event.data.url;
             }
             if (IDEFrontendDashboardService.isOpenBrowserIDE(event.data)) {

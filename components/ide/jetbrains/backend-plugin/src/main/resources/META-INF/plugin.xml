@@ -26,9 +26,6 @@
         <applicationService serviceImplementation="io.gitpod.jetbrains.remote.services.HeartbeatService"
                             preload="true"/>
         <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodManager" preload="true"/>
-        <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodPortForwardingService"
-                            serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodPortForwardingServiceImpl"
-                            client="controller" preload="true"/>
 
         <notificationGroup id="Gitpod Notifications" displayType="BALLOON" isLogByDefault="false"/>
 
@@ -46,12 +43,6 @@
                      description="Disable the forced update of Maven projects when IDE opens."
                      restartRequired="true"/>
 
-
-        <gateway.customization.performance id="gitpodMetricsControl" order="before cpuControl"
-                                           implementation="io.gitpod.jetbrains.remote.internal.GitpodMetricControlProvider"/>
-
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodTerminalService" client="controller"
-                        preload="true"/>
 
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService"
                             serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodIgnoredPortsForNotificationServiceImpl"

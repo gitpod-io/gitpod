@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamDB } from "@gitpod/gitpod-db/lib";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import express from "express";
@@ -16,7 +16,6 @@ import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
 import { UserService } from "../user/user-service";
 import { AuthFlow, AuthProvider } from "./auth-provider";
-import { AuthProviderService } from "./auth-provider-service";
 import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
 
@@ -29,7 +28,6 @@ export class Authenticator {
     @inject(TeamDB) protected teamDb: TeamDB;
     @inject(HostContextProvider) protected hostContextProvider: HostContextProvider;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
-    @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(UserAuthentication) protected readonly userAuthentication: UserAuthentication;
     @inject(SignInJWT) protected readonly signInJWT: SignInJWT;
 
@@ -223,6 +221,13 @@ export class Authenticator {
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
+        if (user.id === BUILTIN_INSTLLATION_ADMIN_USER_ID) {
+            log.info(`Authorization is not permitted for admin user.`);
+            res.redirect(
+                this.getSorryUrl(`Authorization is not permitted for admin user. Please login with a user account.`),
+            );
+            return;
+        }
         const returnTo: string | undefined = req.query.returnTo?.toString();
         const host: string | undefined = req.query.host?.toString();
         const scopes: string = req.query.scopes?.toString() || "";
@@ -295,23 +300,25 @@ export class Authenticator {
         const state = await this.signInJWT.sign({ host, returnTo, overrideScopes: override });
         authProvider.authorize(req, res, next, this.deriveAuthState(state), wantedScopes);
     }
-    protected mergeScopes(a: string[], b: string[]) {
+    private mergeScopes(a: string[], b: string[]) {
         const set = new Set(a);
         b.forEach((s) => set.add(s));
         return Array.from(set).sort();
     }
-    protected async getCurrentScopes(user: any, authProvider: AuthProvider) {
+    private async getCurrentScopes(user: any, authProvider: AuthProvider) {
         if (User.is(user)) {
             try {
                 const token = await this.tokenProvider.getTokenForHost(user, authProvider.params.host);
-                return token.scopes;
+                if (token) {
+                    return token.scopes;
+                }
             } catch {
                 // no token
             }
         }
         return [];
     }
-    protected getSorryUrl(message: string) {
+    private getSorryUrl(message: string) {
         return this.config.hostUrl.asSorry(message).toString();
     }
 }

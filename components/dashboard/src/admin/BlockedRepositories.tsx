@@ -4,11 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AdminGetListResult } from "@gitpod/gitpod-protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getGitpodService } from "../service/service";
 import { AdminPageHeader } from "./AdminPageHeader";
-import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import ConfirmationModal from "../components/ConfirmationModal";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
@@ -17,7 +14,11 @@ import { ContextMenuEntry } from "../components/ContextMenu";
 import Alert from "../components/Alert";
 import { SpinnerLoader } from "../components/Loader";
 import searchIcon from "../icons/search.svg";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
+import { installationClient } from "../service/public-api";
+import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { BlockedRepository, ListBlockedRepositoriesResponse } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
+import { TextInputField } from "../components/forms/TextInputField";
 
 export function BlockedRepositories() {
     return (
@@ -27,33 +28,47 @@ export function BlockedRepositories() {
     );
 }
 
-type NewBlockedRepository = Pick<BlockedRepository, "urlRegexp" | "blockUser">;
-type ExistingBlockedRepository = Pick<BlockedRepository, "id" | "urlRegexp" | "blockUser">;
+type NewBlockedRepository = Pick<BlockedRepository, "urlRegexp" | "blockUser" | "blockFreeUsage">;
+type ExistingBlockedRepository = Pick<BlockedRepository, "id" | "urlRegexp" | "blockUser" | "blockFreeUsage">;
 
 interface Props {}
 
 export function BlockedRepositoriesList(props: Props) {
-    const [searchResult, setSearchResult] = useState<AdminGetListResult<BlockedRepository>>({ rows: [], total: 0 });
+    const [searchResult, setSearchResult] = useState<ListBlockedRepositoriesResponse>(
+        new ListBlockedRepositoriesResponse({
+            blockedRepositories: [],
+        }),
+    );
     const [queryTerm, setQueryTerm] = useState("");
     const [searching, setSearching] = useState(false);
 
     const [isAddModalVisible, setAddModalVisible] = useState(false);
     const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
 
-    const [currentBlockedRepository, setCurrentBlockedRepository] = useState<ExistingBlockedRepository>({
-        id: 0,
-        urlRegexp: "",
-        blockUser: false,
-    });
+    const [currentBlockedRepository, setCurrentBlockedRepository] = useState<BlockedRepository>(
+        new BlockedRepository({
+            id: 0,
+            urlRegexp: "",
+            blockUser: false,
+            blockFreeUsage: false,
+        }),
+    );
 
     const search = async () => {
         setSearching(true);
         try {
-            const result = await getGitpodService().server.adminGetBlockedRepositories({
-                limit: 100,
-                orderBy: "urlRegexp",
-                offset: 0,
-                orderDir: "asc",
+            const result = await installationClient.listBlockedRepositories({
+                // Don't need, added it in json-rpc implement to make life easier.
+                // pagination: new PaginationRequest({
+                //     token: Buffer.from(JSON.stringify({ offset: 0 })).toString("base64"),
+                //     pageSize: 100,
+                // }),
+                sort: [
+                    new Sort({
+                        field: "urlRegexp",
+                        order: SortOrder.ASC,
+                    }),
+                ],
                 searchTerm: queryTerm,
             });
             setSearchResult(result);
@@ -67,19 +82,23 @@ export function BlockedRepositoriesList(props: Props) {
     }, []);
 
     const add = () => {
-        setCurrentBlockedRepository({
-            id: 0,
-            urlRegexp: "",
-            blockUser: false,
-        });
+        setCurrentBlockedRepository(
+            new BlockedRepository({
+                id: 0,
+                urlRegexp: "",
+                blockUser: false,
+                blockFreeUsage: false,
+            }),
+        );
         setAddModalVisible(true);
     };
 
     const save = async (blockedRepository: NewBlockedRepository) => {
-        await getGitpodService().server.adminCreateBlockedRepository(
-            blockedRepository.urlRegexp,
-            blockedRepository.blockUser,
-        );
+        await installationClient.createBlockedRepository({
+            urlRegexp: blockedRepository.urlRegexp ?? "",
+            blockUser: blockedRepository.blockUser ?? false,
+            blockFreeUsage: blockedRepository.blockFreeUsage ?? false,
+        });
         setAddModalVisible(false);
         search();
     };
@@ -91,11 +110,13 @@ export function BlockedRepositoriesList(props: Props) {
     };
 
     const deleteBlockedRepository = async (blockedRepository: ExistingBlockedRepository) => {
-        await getGitpodService().server.adminDeleteBlockedRepository(blockedRepository.id);
+        await installationClient.deleteBlockedRepository({
+            blockedRepositoryId: blockedRepository.id,
+        });
         search();
     };
 
-    const confirmDeleteBlockedRepository = (blockedRepository: ExistingBlockedRepository) => {
+    const confirmDeleteBlockedRepository = (blockedRepository: BlockedRepository) => {
         setCurrentBlockedRepository(blockedRepository);
         setAddModalVisible(false);
         setDeleteModalVisible(true);
@@ -144,7 +165,7 @@ export function BlockedRepositoriesList(props: Props) {
                         />
                     </div>
                     <div className="flex space-x-2">
-                        <button onClick={add}>New Blocked Repository</button>
+                        <Button onClick={add}>New Blocked Repository</Button>
                     </div>
                 </div>
             </div>
@@ -156,9 +177,10 @@ export function BlockedRepositoriesList(props: Props) {
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
                     <div className="w-9/12">Repository URL (RegEx)</div>
                     <div className="w-1/12">Block Users</div>
+                    <div className="w-2/12">Block Free Usage</div>
                     <div className="w-1/12"></div>
                 </div>
-                {searchResult.rows.map((br) => (
+                {searchResult.blockedRepositories.map((br) => (
                     <BlockedRepositoryEntry br={br} confirmedDelete={confirmDeleteBlockedRepository} />
                 ))}
             </div>
@@ -181,6 +203,9 @@ function BlockedRepositoryEntry(props: { br: BlockedRepository; confirmedDelete:
             </div>
             <div className="flex flex-col self-center w-1/12">
                 <span className="mr-3 text-lg text-gray-600 truncate">{props.br.blockUser ? "Yes" : "No"}</span>
+            </div>
+            <div className="flex flex-col self-center w-2/12">
+                <span className="mr-3 text-lg text-gray-600 truncate">{props.br.blockFreeUsage ? "Yes" : " "}</span>
             </div>
             <div className="flex flex-col w-1/12">
                 <ItemFieldContextMenu menuEntries={menuEntries} />
@@ -235,10 +260,10 @@ function AddBlockedRepositoryModal(p: AddBlockedRepositoryModalProps) {
                 <Details br={br} update={update} error={error} />
             </ModalBody>
             <ModalFooter>
-                <Button type="secondary" onClick={p.onClose}>
+                <Button variant="secondary" onClick={p.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit">Add Blocked Repository</Button>
+                <Button type="submit">Add Blocked Repository</Button>
             </ModalFooter>
         </Modal>
     );
@@ -275,22 +300,19 @@ function Details(props: {
             {props.error ? (
                 <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{props.error}</div>
             ) : null}
-            <div>
-                <h4>Repository URL RegEx</h4>
-                <input
-                    autoFocus
-                    className="w-full"
-                    type="text"
-                    value={props.br.urlRegexp}
-                    placeholder={'e.g. "https://github.com/malicious-user/*"'}
-                    disabled={!props.update}
-                    onChange={(v) => {
-                        if (!!props.update) {
-                            props.update({ urlRegexp: v.target.value });
-                        }
-                    }}
-                />
-            </div>
+            <TextInputField
+                label="Repository URL RegEx"
+                autoFocus
+                type="text"
+                value={props.br.urlRegexp}
+                placeholder={'e.g. "https://github.com/malicious-user/*"'}
+                disabled={!props.update}
+                onChange={(val) => {
+                    if (!!props.update) {
+                        props.update({ urlRegexp: val });
+                    }
+                }}
+            />
 
             <CheckboxInputField
                 label="Block Users"
@@ -300,6 +322,18 @@ function Details(props: {
                 onChange={(checked) => {
                     if (!!props.update) {
                         props.update({ blockUser: checked });
+                    }
+                }}
+            />
+
+            <CheckboxInputField
+                label="Block Free Usage"
+                hint="Block workspace start for a repository URL that matches this RegEx if user is on free tier."
+                checked={props.br.blockFreeUsage}
+                disabled={!props.update}
+                onChange={(checked) => {
+                    if (!!props.update) {
+                        props.update({ blockFreeUsage: checked });
                     }
                 }}
             />

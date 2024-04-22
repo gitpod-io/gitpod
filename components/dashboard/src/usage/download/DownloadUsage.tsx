@@ -5,7 +5,6 @@
  */
 
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "../../components/Button";
 import { useDownloadUsageCSV } from "./download-usage-csv";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Dayjs } from "dayjs";
@@ -18,6 +17,7 @@ import { saveAs } from "file-saver";
 import prettyBytes from "pretty-bytes";
 import { ProgressBar } from "../../components/ProgressBar";
 import { useTemporaryState } from "../../hooks/use-temporary-value";
+import { Button } from "@podkit/buttons/Button";
 
 type Props = {
     attributionId: AttributionId;
@@ -50,14 +50,10 @@ export const DownloadUsage: FC<Props> = ({ attributionId, startDate, endDate }) 
     }, [attributionId, endDate, org, setDownloadDisabled, startDate, toast]);
 
     return (
-        <Button
-            type="secondary"
-            onClick={handleDownload}
-            className="flex flex-row"
-            icon={<DownloadIcon />}
-            disabled={downloadDisabled}
-        >
-            Export as CSV
+        // TODO: Convert this to use an IconButton when we add one to podkit
+        <Button variant="secondary" onClick={handleDownload} className="gap-1" disabled={downloadDisabled}>
+            <DownloadIcon />
+            <span>Export as CSV</span>
         </Button>
     );
 };

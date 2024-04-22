@@ -29,7 +29,8 @@ import {
 } from "../prometheus-metrics";
 import { Redis } from "ioredis";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { runWithContext } from "../util/log-context";
+import { runWithRequestContext } from "../util/request-context";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 const UNDEFINED_KEY = "undefined";
 
@@ -55,7 +56,13 @@ export class RedisSubscriber {
         }
 
         this.redis.on("message", async (channel: string, message: string) => {
-            await runWithContext("redis-subscriber", {}, async () => {
+            const ctx = {
+                signal: new AbortController().signal,
+                requestKind: "redis-subscriber",
+                requestMethod: channel,
+                subjectId: SYSTEM_USER,
+            };
+            await runWithRequestContext(ctx, async () => {
                 reportRedisUpdateReceived(channel);
 
                 let err: Error | undefined;
@@ -146,11 +153,10 @@ export class RedisSubscriber {
             try {
                 l(ctx, prebuildWithStatus);
             } catch (err) {
-                log.error(
-                    "Failed to broadcast workspace instance update.",
-                    { projectId: update.projectID, workspaceId: update.workspaceID },
-                    err,
-                );
+                log.error("Failed to broadcast workspace instance update.", err, {
+                    projectId: update.projectID,
+                    workspaceId: update.workspaceID,
+                });
             }
         }
     }
@@ -172,7 +178,7 @@ export class RedisSubscriber {
             try {
                 l(ctx, update);
             } catch (err) {
-                log.error("Failed to broadcast headless update.", update, err);
+                log.error("Failed to broadcast headless update.", err, update);
             }
         }
     }

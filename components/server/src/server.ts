@@ -17,7 +17,7 @@ import { UserController } from "./user/user-controller";
 import { EventEmitter } from "events";
 import { createWebSocketConnection, toIWebSocket } from "@gitpod/gitpod-protocol/lib/messaging/node/connection";
 import { WsExpressHandler, WsRequestHandler } from "./express/ws-handler";
-import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from "./express-util";
+import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError, toHeaders } from "./express-util";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AddressInfo } from "net";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
@@ -46,8 +46,13 @@ import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
-import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./workspace/headless-log-service";
-import { runWithContext } from "./util/log-context";
+import {
+    HEADLESS_LOGS_PATH_PREFIX,
+    HEADLESS_LOG_DOWNLOAD_PATH_PREFIX,
+    PREBUILD_LOGS_PATH_PREFIX,
+} from "./workspace/headless-log-service";
+import { runWithRequestContext } from "./util/request-context";
+import { AnalyticsController } from "./analytics-controller";
 
 @injectable()
 export class Server {
@@ -94,6 +99,7 @@ export class Server {
         @inject(IamSessionApp) private readonly iamSessionAppCreator: IamSessionApp,
         @inject(API) private readonly api: API,
         @inject(RedisSubscriber) private readonly redisSubscriber: RedisSubscriber,
+        @inject(AnalyticsController) private readonly analyticsController: AnalyticsController,
     ) {}
 
     public async init(app: express.Application) {
@@ -112,7 +118,7 @@ export class Server {
             const startTime = Date.now();
             req.on("end", () => {
                 const method = req.method;
-                const route = req.route?.path || req.baseUrl || "unknown";
+                const route = String(req.route?.path || req.baseUrl || "unknown");
                 observeHttpRequestDuration(method, route, res.statusCode, (Date.now() - startTime) / 1000);
                 increaseHttpRequestCounter(method, route, res.statusCode);
             });
@@ -140,14 +146,20 @@ export class Server {
         // Install passport
         await this.authenticator.init(app);
 
-        // log context
-        app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            try {
-                const userId = req.user ? req.user.id : undefined;
-                await runWithContext("http", { userId, requestPath: req.path }, () => next());
-            } catch (err) {
-                next(err);
-            }
+        // Use RequestContext for authorization
+        app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+            const abortController = new AbortController();
+            req.on("abort", () => abortController.abort());
+            runWithRequestContext(
+                {
+                    requestKind: "http",
+                    requestMethod: req.path,
+                    signal: abortController.signal,
+                    subjectId: undefined, // Don't use req.user, as that would elevate permissions once we rollout scope-based API tokens
+                    headers: toHeaders(req.headers),
+                },
+                () => next(),
+            );
         });
 
         // Ensure that host contexts of dynamic auth providers are initialized.
@@ -162,6 +174,7 @@ export class Server {
             // We rely on the origin header being set correctly (needed by regular clients to use Gitpod:
             // CORS allows subdomains to access gitpod.io)
             const verifyOrigin = (origin: string) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 let allowedRequest = isAllowedWebsocketDomain(origin, this.config.hostUrl.url.hostname);
                 if (!allowedRequest && this.config.insecureNoDomain) {
                     log.warn("Websocket connection CSRF guard disabled");
@@ -185,7 +198,7 @@ export class Server {
                     }
 
                     try {
-                        await this.bearerAuth.auth(info.req as express.Request);
+                        await this.bearerAuth.authExpressRequest(info.req as express.Request);
                         authenticatedUsingBearerToken = true;
                     } catch (e) {
                         if (isBearerAuthError(e)) {
@@ -217,6 +230,7 @@ export class Server {
             );
 
             const wsPingPongHandler = new WsConnectionHandler();
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             const wsHandler = new WsExpressHandler(httpServer, verifyClient);
             this.disposables.push(wsHandler);
             wsHandler.ws(
@@ -229,6 +243,7 @@ export class Server {
                 ...initSessionHandlers,
                 wsPingPongHandler.handler(),
                 (ws: WebSocket, req: express.Request) => {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     websocketConnectionHandler.onConnection((req as any).wsConnection, req);
                 },
             );
@@ -240,6 +255,7 @@ export class Server {
                 },
                 wsPingPongHandler.handler(),
                 (ws: WebSocket, req: express.Request) => {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     websocketConnectionHandler.onConnection((req as any).wsConnection, req);
                 },
             );
@@ -286,19 +302,29 @@ export class Server {
     }
 
     protected async registerRoutes(app: express.Application) {
+        // Authorization: Session only
         app.use(this.userController.apiRouter);
-        app.use(this.oneTimeSecretServer.apiRouter);
         app.use("/workspace-download", this.workspaceDownloadService.apiRouter);
-        app.use("/code-sync", this.codeSyncService.apiRouter);
+        app.use(this.oauthController.oauthRouter);
+        app.use("/_analytics", this.analyticsController.router);
+
+        // Authorization: Session or Bearer token
         app.use(HEADLESS_LOGS_PATH_PREFIX, this.headlessLogController.headlessLogs);
         app.use(HEADLESS_LOG_DOWNLOAD_PATH_PREFIX, this.headlessLogController.headlessLogDownload);
-        app.use("/live", this.livenessController.apiRouter);
+        app.use(PREBUILD_LOGS_PATH_PREFIX, this.headlessLogController.prebuildLogs);
+
+        // Authorization: Bearer token only
+        app.use("/code-sync", this.codeSyncService.apiRouter);
+
+        // Authorization: none
+        app.use(this.oneTimeSecretServer.apiRouter);
         app.use(this.newsletterSubscriptionController.apiRouter);
+        app.use("/live", this.livenessController.apiRouter);
         app.use("/version", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             res.send(this.config.version);
         });
-        app.use(this.oauthController.oauthRouter);
 
+        // Authorization: Custom
         if (this.config.githubApp?.enabled && this.githubApp.server) {
             log.info("Registered GitHub app at /apps/github");
             app.use("/apps/github/", this.githubApp.server?.expressApp);

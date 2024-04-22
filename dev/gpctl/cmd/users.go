@@ -5,11 +5,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	api "github.com/gitpod-io/gitpod/gitpod-protocol"
+	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -55,4 +57,47 @@ func newLegacyAPIConn() (*api.APIoverJSONRPC, error) {
 	}
 
 	return conn, nil
+}
+
+func blockUser(ctx context.Context, args []string, block bool) {
+	client, err := newLegacyAPIConn()
+	if err != nil {
+		log.WithError(err).Fatal("cannot connect")
+	}
+	defer client.Close()
+
+	for _, uid := range args {
+		err = client.AdminBlockUser(ctx, &protocol.AdminBlockUserRequest{
+			UserID:    uid,
+			IsBlocked: block,
+		})
+		if err != nil {
+			log.WithField("uid", uid).WithField("block", block).Errorf("AdminBlockUser failed with: %v", err)
+			return
+		} else {
+			log.WithField("uid", uid).WithField("block", block).Info("AdminBlockUser")
+			return
+		}
+	}
+	log.Fatal("no args")
+}
+
+func verifyUser(ctx context.Context, args []string) {
+	client, err := newLegacyAPIConn()
+	if err != nil {
+		log.WithError(err).Fatal("cannot connect")
+	}
+	defer client.Close()
+
+	for _, uid := range args {
+		err = client.AdminVerifyUser(ctx, uid)
+		if err != nil {
+			log.WithField("uid", uid).Errorf("AdminVerifyUser failed with: %v", err)
+			return
+		} else {
+			log.WithField("uid", uid).Info("AdminVerifyUser")
+			return
+		}
+	}
+	log.Fatal("no args")
 }

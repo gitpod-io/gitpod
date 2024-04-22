@@ -11,6 +11,10 @@ inputs:
         description: "Whether to use a larger VM for the env"
         required: true
         default: false
+    preemptible:
+        description: "Whether to use preemptible VMs for the env"
+        required: true
+        default: true
     sa_key:
         description: "The service account key to use when authenticating with GCP"
         required: true

@@ -5,182 +5,209 @@
  */
 
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { getGitpodService } from "../service/service";
-import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
+import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import RepositorySVG from "../icons/Repository.svg";
 import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.svg";
-import { useFeatureFlag } from "../data/featureflag-query";
-import { SuggestedRepository } from "@gitpod/gitpod-protocol";
 import { MiddleDot } from "./typography/MiddleDot";
-import { filterRepos, useUnifiedRepositorySearch } from "../data/git-providers/unified-repositories-search-query";
-
-// TODO: Remove this once we've fully enabled `includeProjectsOnCreateWorkspace`
-// flag (caches w/ react-query instead of local storage)
-const LOCAL_STORAGE_KEY = "open-in-gitpod-search-data";
+import { useUnifiedRepositorySearch } from "../data/git-providers/unified-repositories-search-query";
+import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
+import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
+import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 
 interface RepositoryFinderProps {
     selectedContextURL?: string;
-    selectedProjectID?: string;
-    maxDisplayItems?: number;
-    setSelection: (repoUrl: string, projectID?: string) => void;
-    onError?: (error: string) => void;
+    selectedConfigurationId?: string;
     disabled?: boolean;
+    expanded?: boolean;
+    excludeConfigurations?: boolean;
+    onlyConfigurations?: boolean;
+    onChange?: (repo: SuggestedRepository) => void;
 }
 
-export default function RepositoryFinder(props: RepositoryFinderProps) {
-    const includeProjectsOnCreateWorkspace = useFeatureFlag("includeProjectsOnCreateWorkspace");
-
-    const [suggestedContextURLs, setSuggestedContextURLs] = useState<string[]>(loadSearchData());
-
+export default function RepositoryFinder({
+    selectedContextURL,
+    selectedConfigurationId,
+    disabled,
+    expanded,
+    excludeConfigurations = false,
+    onlyConfigurations = false,
+    onChange,
+}: RepositoryFinderProps) {
     const [searchString, setSearchString] = useState("");
-    const { data: repos, isLoading, isSearching } = useUnifiedRepositorySearch({ searchString });
+    const {
+        data: repos,
+        isLoading,
+        isSearching,
+        hasMore,
+    } = useUnifiedRepositorySearch({
+        searchString,
+        excludeConfigurations: excludeConfigurations,
+        onlyConfigurations: onlyConfigurations,
+    });
 
-    // TODO: remove this once includeProjectsOnCreateWorkspace is fully enabled
-    const normalizedRepos = useMemo(() => {
-        // If the flag is disabled continue to use suggestedContextURLs, but convert into SuggestedRepository objects
-        if (!includeProjectsOnCreateWorkspace) {
-            return suggestedContextURLs.map(
-                (url): SuggestedRepository => ({
-                    url,
-                }),
-            );
-        }
-
-        return repos;
-    }, [includeProjectsOnCreateWorkspace, repos, suggestedContextURLs]);
-
-    // TODO: remove this once includeProjectsOnCreateWorkspace is fully enabled
-    useEffect(() => {
-        getGitpodService()
-            .server.getSuggestedContextURLs()
-            .then((urls) => {
-                setSuggestedContextURLs(urls);
-                saveSearchData(urls);
-            });
-    }, []);
+    const authProviders = useAuthProviderDescriptions();
 
     const handleSelectionChange = useCallback(
         (selectedID: string) => {
-            // selectedId is either projectId or repo url
-            const matchingSuggestion = normalizedRepos?.find((repo) => {
-                if (repo.projectId) {
-                    return repo.projectId === selectedID;
+            // selectedId is either configurationId or repo url
+            const matchingSuggestion = repos?.find((repo) => {
+                if (repo.configurationId) {
+                    return repo.configurationId === selectedID;
                 }
 
                 return repo.url === selectedID;
             });
             if (matchingSuggestion) {
-                props.setSelection(matchingSuggestion.url, matchingSuggestion.projectId);
+                onChange?.(matchingSuggestion);
                 return;
             }
 
-            // If we have no matching suggestion, it's a context URL they typed/pasted in, so just use that as the url
-            props.setSelection(selectedID);
+            onChange?.(
+                new SuggestedRepository({
+                    url: selectedID,
+                }),
+            );
         },
-        [props, normalizedRepos],
+        [onChange, repos],
     );
 
-    // Resolve the selected context url & project id props to a suggestion entry
-    const selectedSuggestion = useMemo(() => {
-        let match = normalizedRepos?.find((repo) => {
-            if (props.selectedProjectID) {
-                return repo.projectId === props.selectedProjectID;
+    const [selectedSuggestion, setSelectedSuggestion] = useState<SuggestedRepository | undefined>(undefined);
+
+    // Resolve the selected context url & configurationId id props to a suggestion entry
+    useEffect(() => {
+        let match = repos?.find((repo) => {
+            if (selectedConfigurationId) {
+                return repo.configurationId === selectedConfigurationId;
             }
 
-            return repo.url === props.selectedContextURL;
+            return repo.url === selectedContextURL;
         });
 
         // If no match, it's a context url that was typed/pasted in, so treat it like a suggestion w/ just a url
-        if (!match && props.selectedContextURL) {
-            match = {
-                url: props.selectedContextURL,
-            };
+        if (!match && selectedContextURL) {
+            match = new SuggestedRepository({
+                url: selectedContextURL,
+            });
         }
 
-        // This means we found a matching project, but the context url is different
-        // user may be using a pr or branch url, so we want to make sure and use that w/ the matching project
-        if (match && match.projectId && props.selectedContextURL && match.url !== props.selectedContextURL) {
-            match = {
-                ...match,
-                url: props.selectedContextURL,
-            };
+        // This means we found a matching configuration, but the context url is different
+        // user may be using a pr or branch url, so we want to make sure and use that w/ the matching configuration
+        if (match && match.configurationId && selectedContextURL && match.url !== selectedContextURL) {
+            match.url = selectedContextURL;
         }
 
-        return match;
-    }, [normalizedRepos, props.selectedContextURL, props.selectedProjectID]);
+        // Do not update the selected suggestion if it already has a name and the context url matches
+        // If the configurationId changes, we want to update the selected suggestion with it
+        if (selectedSuggestion) {
+            const name = selectedSuggestion.configurationName || selectedSuggestion.repoName;
+            if (name && selectedSuggestion.url === selectedContextURL) {
+                if (selectedSuggestion.configurationId === selectedConfigurationId) {
+                    return;
+                }
+            }
+        }
+
+        setSelectedSuggestion(match);
+
+        // If we put the selectedSuggestion in the dependency array, it will cause an infinite loop
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [repos, selectedContextURL, selectedConfigurationId]);
+
+    const displayName = useMemo(() => {
+        if (!selectedSuggestion) {
+            return;
+        }
+
+        if (!selectedSuggestion?.configurationName) {
+            return displayContextUrl(selectedSuggestion?.repoName || selectedSuggestion?.url);
+        }
+
+        return selectedSuggestion?.configurationName;
+    }, [selectedSuggestion]);
 
     const getElements = useCallback(
+        // searchString ignore here as list is already pre-filtered against it
+        // w/ mirrored state via useUnifiedRepositorySearch
         (searchString: string) => {
-            // TODO: remove once includeProjectsOnCreateWorkspace is fully enabled
-            // With the flag off, we only want to show the suggestedContextURLs
-            if (!includeProjectsOnCreateWorkspace) {
-                // w/o the flag on we still need to filter the repo as the search string changes
-                const filteredResults = filterRepos(searchString, normalizedRepos);
-                return filteredResults.map(
-                    (repo) =>
-                        ({
-                            id: repo.url,
-                            element: (
-                                <div className="flex-col ml-1 mt-1 flex-grow">
-                                    <div className="flex">
-                                        <div className="text-gray-700 dark:text-gray-300 font-semibold">
-                                            {stripOffProtocol(repo.url)}
-                                        </div>
-                                        <div className="ml-1 text-gray-400">{}</div>
-                                    </div>
-                                    <div className="flex text-xs text-gray-400">{}</div>
-                                </div>
-                            ),
-                            isSelectable: true,
-                        } as DropDown2Element),
-                );
-            }
-
-            // Otherwise we show the suggestedRepos (already filtered)
-            return normalizedRepos.map((repo) => {
+            const result = repos.map((repo) => {
                 return {
-                    id: repo.projectId || repo.url,
+                    id: repo.configurationId || repo.url,
                     element: <SuggestedRepositoryOption repo={repo} />,
                     isSelectable: true,
-                } as DropDown2Element;
+                } as ComboboxElement;
             });
+            if (hasMore) {
+                // add an element that tells the user to refine the search
+                result.push({
+                    id: "more",
+                    element: (
+                        <div className="text-sm text-pk-content-tertiary">Repo missing? Try refining your search.</div>
+                    ),
+                    isSelectable: false,
+                } as ComboboxElement);
+            }
+            if (
+                searchString.length >= 3 &&
+                authProviders.data?.some((p) => p.type === AuthProviderType.BITBUCKET_SERVER) &&
+                !onlyConfigurations
+            ) {
+                // add an element that tells the user that the Bitbucket Server does only support prefix search
+                result.push({
+                    id: "bitbucket-server",
+                    element: (
+                        <div className="text-sm text-pk-content-tertiary">
+                            <div className="flex items-center">
+                                <Exclamation2 className="w-4 h-4"></Exclamation2>
+                                <span className="ml-2">Bitbucket Server only supports searching by prefix.</span>
+                            </div>
+                        </div>
+                    ),
+                    isSelectable: false,
+                } as ComboboxElement);
+            }
+            if (searchString.length < 3) {
+                // add an element that tells the user to type more
+                result.push({
+                    id: "not-searched",
+                    element: (
+                        <div className="text-sm text-pk-content-tertiary">
+                            Please type at least 3 characters to search.
+                        </div>
+                    ),
+                    isSelectable: false,
+                } as ComboboxElement);
+            }
+            return result;
         },
-        [includeProjectsOnCreateWorkspace, normalizedRepos],
+        [repos, hasMore, authProviders.data, onlyConfigurations],
     );
 
     return (
-        <DropDown2
+        <Combobox
             getElements={getElements}
-            expanded={!props.selectedContextURL}
-            // we use this to track the search string so we can search for repos via the api
+            expanded={expanded}
+            // we use this to track the search string so we can search for repos via the api and filter in useUnifiedRepositorySearch
             onSelectionChange={handleSelectionChange}
-            disabled={props.disabled}
+            disabled={disabled}
             // Only consider the isLoading prop if we're including projects in list
-            loading={(isLoading || isSearching) && includeProjectsOnCreateWorkspace}
+            loading={isLoading || isSearching}
             searchPlaceholder="Paste repository URL or type to find suggestions"
             onSearchChange={setSearchString}
         >
-            <DropDown2SelectedElement
+            <ComboboxSelectedItem
                 icon={RepositorySVG}
-                htmlTitle={displayContextUrl(props.selectedContextURL) || "Repository"}
-                title={
-                    <div className="truncate w-80">
-                        {displayContextUrl(
-                            selectedSuggestion?.projectName ||
-                                selectedSuggestion?.repositoryName ||
-                                selectedSuggestion?.url,
-                        ) || "Select a repository"}
-                    </div>
-                }
+                htmlTitle={displayContextUrl(selectedContextURL) || "Repository"}
+                title={<div className="truncate">{displayName || "Select a repository"}</div>}
                 subtitle={
                     // Only show the url if we have a project or repo name, otherwise it's redundant w/ the title
-                    selectedSuggestion?.projectName || selectedSuggestion?.repositoryName
+                    selectedSuggestion?.configurationName || selectedSuggestion?.repoName
                         ? displayContextUrl(selectedSuggestion?.url)
                         : undefined
                 }
-                loading={isLoading && includeProjectsOnCreateWorkspace}
+                loading={isLoading}
             />
-        </DropDown2>
+        </Combobox>
     );
 }
 
@@ -188,26 +215,30 @@ type SuggestedRepositoryOptionProps = {
     repo: SuggestedRepository;
 };
 const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo }) => {
-    const name = repo.projectName || repo.repositoryName;
+    const name = repo.configurationName || repo.repoName;
+    const repoPath = stripOffProtocol(repo.url);
 
     return (
         <div
             className="flex flex-row items-center overflow-hidden"
-            aria-label={`${repo.projectId ? "Project" : "Repo"}: ${repo.url}`}
+            aria-label={`${repo.configurationId ? "Project" : "Repo"}: ${repo.url}`}
         >
             <span className={"pr-2"}>
-                <RepositoryIcon className={"w-5 h-5 text-gray-400"} />
+                <RepositoryIcon className={`w-5 h-5 text-pk-content-tertiary`} />
             </span>
 
             {name && (
                 <>
                     <span className="text-sm whitespace-nowrap font-semibold">{name}</span>
-                    <MiddleDot className="px-0.5 text-gray-300 dark:text-gray-500" />
+                    <MiddleDot className="px-0.5 text-pk-content-tertiary" />
                 </>
             )}
 
-            <span className="text-sm whitespace-nowrap truncate overflow-ellipsis text-gray-500 dark:text-gray-400">
-                {stripOffProtocol(repo.url)}
+            <span
+                className="text-sm whitespace-nowrap truncate overflow-ellipsis text-pk-content-secondary"
+                title={repoPath}
+            >
+                {repoPath}
             </span>
         </div>
     );
@@ -218,28 +249,6 @@ function displayContextUrl(contextUrl?: string) {
         return undefined;
     }
     return stripOffProtocol(contextUrl);
-}
-
-function loadSearchData(): string[] {
-    const string = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!string) {
-        return [];
-    }
-    try {
-        const data = JSON.parse(string);
-        return data;
-    } catch (error) {
-        console.warn("Could not load search data from local storage", error);
-        return [];
-    }
-}
-
-function saveSearchData(searchData: string[]): void {
-    try {
-        window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(searchData));
-    } catch (error) {
-        console.warn("Could not save search data into local storage", error);
-    }
 }
 
 function stripOffProtocol(url: string): string {

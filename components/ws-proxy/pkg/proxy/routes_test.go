@@ -28,6 +28,8 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
 )
 
 const (
@@ -38,7 +40,7 @@ const (
 
 var (
 	debugWorkspaceURL = "https://debug-amaranth-smelt-9ba20cc1.test-domain.com/"
-	workspaces        = []WorkspaceInfo{
+	workspaces        = []common.WorkspaceInfo{
 		{
 			IDEImage:        "gitpod-io/ide:latest",
 			SupervisorImage: "gitpod-io/supervisor:latest",
@@ -238,6 +240,17 @@ func TestRoutes(t *testing.T) {
 					"Vary": {"Accept-Encoding"},
 				},
 				Body: "<a href=\"https://ide.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/favicon.ico\">See Other</a>.\n\n",
+			},
+		},
+		{
+			Desc: "/health",
+			Request: modifyRequest(httptest.NewRequest("GET", "/health", nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: nil,
+				Body:   "",
 			},
 		},
 		{
@@ -834,11 +847,11 @@ func TestRoutes(t *testing.T) {
 }
 
 type fakeWsInfoProvider struct {
-	infos []WorkspaceInfo
+	infos []common.WorkspaceInfo
 }
 
 // GetWsInfoByID returns the workspace for the given ID.
-func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
+func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *common.WorkspaceInfo {
 	for _, nfo := range p.infos {
 		if nfo.WorkspaceID == workspaceID {
 			return &nfo
@@ -849,10 +862,10 @@ func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
 }
 
 // WorkspaceCoords returns the workspace coords for a public port.
-func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *WorkspaceCoords {
+func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *common.WorkspaceCoords {
 	for _, info := range p.infos {
 		if info.IDEPublicPort == wsProxyPort {
-			return &WorkspaceCoords{
+			return &common.WorkspaceCoords{
 				ID:   info.WorkspaceID,
 				Port: "",
 			}
@@ -860,7 +873,7 @@ func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *WorkspaceCoord
 
 		for _, portInfo := range info.Ports {
 			if fmt.Sprint(portInfo.Port) == wsProxyPort {
-				return &WorkspaceCoords{
+				return &common.WorkspaceCoords{
 					ID:   info.WorkspaceID,
 					Port: strconv.Itoa(int(portInfo.Port)),
 				}
@@ -905,7 +918,7 @@ func TestSSHGatewayRouter(t *testing.T) {
 				Header:       "",
 			}
 
-			proxy := NewWorkspaceProxy(ingress, config, router, &fakeWsInfoProvider{infos: workspaces}, test.Input)
+			proxy := NewWorkspaceProxy(ingress, config, router, &fakeWsInfoProvider{infos: workspaces}, &sshproxy.Server{HostKeys: test.Input})
 			handler, err := proxy.Handler()
 			if err != nil {
 				t.Fatalf("cannot create proxy handler: %q", err)

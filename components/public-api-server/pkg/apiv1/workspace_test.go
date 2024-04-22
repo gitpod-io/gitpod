@@ -771,7 +771,7 @@ func TestConvertWorkspaceInfo(t *testing.T) {
 				act Expectation
 				err error
 			)
-			act.Result, err = convertWorkspaceInfo(&test.Input, false)
+			act.Result, err = convertWorkspaceInfo(&test.Input)
 			if err != nil {
 				act.Error = err.Error()
 			}
@@ -792,7 +792,7 @@ func FuzzConvertWorkspaceInfo(f *testing.F) {
 		}
 
 		// we really just care for panics
-		_, _ = convertWorkspaceInfo(&nfo, false)
+		_, _ = convertWorkspaceInfo(&nfo)
 	})
 }
 

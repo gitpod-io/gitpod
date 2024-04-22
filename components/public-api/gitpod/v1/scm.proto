@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "gitpod/v1/pagination.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+service SCMService {
+  // SearchSCMTokens allows clients to retrieve SCM tokens based on the
+  // specified host.
+  rpc SearchSCMTokens(SearchSCMTokensRequest) returns (SearchSCMTokensResponse) {}
+  // GuessTokenScopes allows clients to retrieve scopes their SCM token would
+  // require for the specified git command.
+  rpc GuessTokenScopes(GuessTokenScopesRequest) returns (GuessTokenScopesResponse) {}
+  // SearchRepositories allows clients to search for suggested repositories of
+  // SCM providers they are connected with.
+  rpc SearchRepositories(SearchRepositoriesRequest) returns (SearchRepositoriesResponse) {}
+  // ListSuggestedRepositories allows clients to list suggested repositories
+  // based on recent workspaces and accessible repo configurations.
+  rpc ListSuggestedRepositories(ListSuggestedRepositoriesRequest) returns (ListSuggestedRepositoriesResponse) {}
+}
+
+message SearchSCMTokensRequest {
+  string host = 1;
+}
+message SearchSCMTokensResponse {
+  repeated SCMToken tokens = 1;
+}
+
+message GuessTokenScopesRequest {
+  string host = 1;
+  string repo_url = 2;
+  string git_command = 3;
+}
+message GuessTokenScopesResponse {
+  repeated string scopes = 1;
+  string message = 2;
+}
+
+message SearchRepositoriesRequest {
+  string search_string = 1;
+  int32 limit = 2;
+}
+message SearchRepositoriesResponse {
+  repeated SuggestedRepository repositories = 1;
+}
+
+message ListSuggestedRepositoriesRequest {
+  PaginationRequest pagination = 1;
+
+  string organization_id = 2;
+  bool exclude_configurations = 3;
+}
+message ListSuggestedRepositoriesResponse {
+  PaginationResponse pagination = 1;
+
+  repeated SuggestedRepository repositories = 2;
+}
+
+message SCMToken {
+  string username = 1;
+  string value = 2;
+  string id_token = 3;
+  string refresh_token = 4;
+  repeated string scopes = 5;
+  google.protobuf.Timestamp update_date = 6;
+  google.protobuf.Timestamp expiry_date = 7;
+}
+
+message SuggestedRepository {
+  string url = 1;
+  string repo_name = 2;
+  string configuration_id = 3;
+  string configuration_name = 4;
+}
+
+message Author {
+  string name = 1;
+  string avatar_url = 2;
+}
+
+message Commit {
+  string message = 1;
+  Author author = 2;
+  google.protobuf.Timestamp author_date = 3;
+  string sha = 4;
+}

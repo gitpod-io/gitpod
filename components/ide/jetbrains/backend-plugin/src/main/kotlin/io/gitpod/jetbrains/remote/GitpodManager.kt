@@ -97,15 +97,15 @@ class GitpodManager : Disposable {
             // Heap usage at any time in the last 5 minutes:
             // max_over_time(gitpod_jb_backend_memory_used_bytes[5m:])/max_over_time(gitpod_jb_backend_memory_max_bytes[5m:])
             val allocatedGauge = Gauge.build()
-                    .name("gitpod_jb_backend_memory_max_bytes")
-                    .help("Total allocated memory of JB backend in bytes.")
-                    .labelNames("product", "qualifier")
-                    .register(registry)
+                .name("gitpod_jb_backend_memory_max_bytes")
+                .help("Total allocated memory of JB backend in bytes.")
+                .labelNames("product", "qualifier")
+                .register(registry)
             val usedGauge = Gauge.build()
-                    .name("gitpod_jb_backend_memory_used_bytes")
-                    .help("Used memory of JB backend in bytes.")
-                    .labelNames("product", "qualifier")
-                    .register(registry)
+                .name("gitpod_jb_backend_memory_used_bytes")
+                .help("Used memory of JB backend in bytes.")
+                .labelNames("product", "qualifier")
+                .register(registry)
 
             while (isActive) {
                 val totalMemory = Runtime.getRuntime().totalMemory()

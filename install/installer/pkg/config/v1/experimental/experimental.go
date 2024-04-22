@@ -107,7 +107,8 @@ type WorkspaceConfig struct {
 		} `json:"runtime"`
 	} `json:"wsDaemon"`
 
-	WorkspaceClasses map[string]WorkspaceClass `json:"classes,omitempty"`
+	WorkspaceClasses        map[string]WorkspaceClass `json:"classes,omitempty"`
+	PreferredWorkspaceClass string                    `json:"preferredWorkspaceClass,omitempty"`
 
 	WSProxy struct {
 		IngressHeader                              string `json:"ingressHeader"`
@@ -123,12 +124,18 @@ type WorkspaceConfig struct {
 	} `json:"contentService"`
 
 	EnableProtectedSecrets *bool `json:"enableProtectedSecrets"`
+
+	ImageBuilderMk3 struct {
+		BaseImageRepositoryName      string `json:"baseImageRepositoryName"`
+		WorkspaceImageRepositoryName string `json:"workspaceImageRepositoryName"`
+	} `json:"imageBuilderMk3"`
 }
 
 type WorkspaceClass struct {
-	Name      string             `json:"name" validate:"required"`
-	Resources WorkspaceResources `json:"resources" validate:"required"`
-	Templates WorkspaceTemplates `json:"templates,omitempty"`
+	Name        string             `json:"name" validate:"required"`
+	Description string             `json:"description"`
+	Resources   WorkspaceResources `json:"resources" validate:"required"`
+	Templates   WorkspaceTemplates `json:"templates,omitempty"`
 }
 
 type WorkspaceResources struct {
@@ -207,6 +214,16 @@ type WebAppConfig struct {
 	SpiceDB                      *SpiceDBConfig         `json:"spicedb,omitempty"`
 	CertmanagerNamespaceOverride string                 `json:"certmanagerNamespaceOverride,omitempty"`
 	Redis                        *RedisConfig           `json:"redis"`
+
+	// ProxySettings is used if the gitpod cell uses some proxy for connectivity
+	ProxySettings *ProxySettings `json:"proxySettings"`
+}
+
+type ProxySettings struct {
+	HttpProxy  string `json:"http_proxy"`
+	HttpsProxy string `json:"https_proxy"`
+	// NoProxy setting should be used for the CIDRs and hostnames that should be not using the proxy URLs
+	NoProxy string `json:"no_proxy"`
 }
 
 type WorkspaceDefaults struct {

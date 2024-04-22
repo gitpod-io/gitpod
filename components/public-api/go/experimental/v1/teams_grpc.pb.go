@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -34,10 +34,14 @@ type TeamsServiceClient interface {
 	ListTeams(ctx context.Context, in *ListTeamsRequest, opts ...grpc.CallOption) (*ListTeamsResponse, error)
 	// DeleteTeam deletes the specified team.
 	DeleteTeam(ctx context.Context, in *DeleteTeamRequest, opts ...grpc.CallOption) (*DeleteTeamResponse, error)
+	// GetTeamInvitation retrieves the invitation for a Team.
+	GetTeamInvitation(ctx context.Context, in *GetTeamInvitationRequest, opts ...grpc.CallOption) (*GetTeamInvitationResponse, error)
 	// JoinTeam makes the caller a TeamMember of the Team.
 	JoinTeam(ctx context.Context, in *JoinTeamRequest, opts ...grpc.CallOption) (*JoinTeamResponse, error)
 	// ResetTeamInvitation resets the invitation_id for a Team.
 	ResetTeamInvitation(ctx context.Context, in *ResetTeamInvitationRequest, opts ...grpc.CallOption) (*ResetTeamInvitationResponse, error)
+	// ListTeamMembers lists the members of a Team.
+	ListTeamMembers(ctx context.Context, in *ListTeamMembersRequest, opts ...grpc.CallOption) (*ListTeamMembersResponse, error)
 	// UpdateTeamMember updates team membership properties.
 	UpdateTeamMember(ctx context.Context, in *UpdateTeamMemberRequest, opts ...grpc.CallOption) (*UpdateTeamMemberResponse, error)
 	// DeleteTeamMember removes a TeamMember from the Team.
@@ -88,6 +92,15 @@ func (c *teamsServiceClient) DeleteTeam(ctx context.Context, in *DeleteTeamReque
 	return out, nil
 }
 
+func (c *teamsServiceClient) GetTeamInvitation(ctx context.Context, in *GetTeamInvitationRequest, opts ...grpc.CallOption) (*GetTeamInvitationResponse, error) {
+	out := new(GetTeamInvitationResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.TeamsService/GetTeamInvitation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *teamsServiceClient) JoinTeam(ctx context.Context, in *JoinTeamRequest, opts ...grpc.CallOption) (*JoinTeamResponse, error) {
 	out := new(JoinTeamResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.TeamsService/JoinTeam", in, out, opts...)
@@ -100,6 +113,15 @@ func (c *teamsServiceClient) JoinTeam(ctx context.Context, in *JoinTeamRequest, 
 func (c *teamsServiceClient) ResetTeamInvitation(ctx context.Context, in *ResetTeamInvitationRequest, opts ...grpc.CallOption) (*ResetTeamInvitationResponse, error) {
 	out := new(ResetTeamInvitationResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.TeamsService/ResetTeamInvitation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *teamsServiceClient) ListTeamMembers(ctx context.Context, in *ListTeamMembersRequest, opts ...grpc.CallOption) (*ListTeamMembersResponse, error) {
+	out := new(ListTeamMembersResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.TeamsService/ListTeamMembers", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -136,10 +158,14 @@ type TeamsServiceServer interface {
 	ListTeams(context.Context, *ListTeamsRequest) (*ListTeamsResponse, error)
 	// DeleteTeam deletes the specified team.
 	DeleteTeam(context.Context, *DeleteTeamRequest) (*DeleteTeamResponse, error)
+	// GetTeamInvitation retrieves the invitation for a Team.
+	GetTeamInvitation(context.Context, *GetTeamInvitationRequest) (*GetTeamInvitationResponse, error)
 	// JoinTeam makes the caller a TeamMember of the Team.
 	JoinTeam(context.Context, *JoinTeamRequest) (*JoinTeamResponse, error)
 	// ResetTeamInvitation resets the invitation_id for a Team.
 	ResetTeamInvitation(context.Context, *ResetTeamInvitationRequest) (*ResetTeamInvitationResponse, error)
+	// ListTeamMembers lists the members of a Team.
+	ListTeamMembers(context.Context, *ListTeamMembersRequest) (*ListTeamMembersResponse, error)
 	// UpdateTeamMember updates team membership properties.
 	UpdateTeamMember(context.Context, *UpdateTeamMemberRequest) (*UpdateTeamMemberResponse, error)
 	// DeleteTeamMember removes a TeamMember from the Team.
@@ -163,11 +189,17 @@ func (UnimplementedTeamsServiceServer) ListTeams(context.Context, *ListTeamsRequ
 func (UnimplementedTeamsServiceServer) DeleteTeam(context.Context, *DeleteTeamRequest) (*DeleteTeamResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteTeam not implemented")
 }
+func (UnimplementedTeamsServiceServer) GetTeamInvitation(context.Context, *GetTeamInvitationRequest) (*GetTeamInvitationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTeamInvitation not implemented")
+}
 func (UnimplementedTeamsServiceServer) JoinTeam(context.Context, *JoinTeamRequest) (*JoinTeamResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method JoinTeam not implemented")
 }
 func (UnimplementedTeamsServiceServer) ResetTeamInvitation(context.Context, *ResetTeamInvitationRequest) (*ResetTeamInvitationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResetTeamInvitation not implemented")
+}
+func (UnimplementedTeamsServiceServer) ListTeamMembers(context.Context, *ListTeamMembersRequest) (*ListTeamMembersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListTeamMembers not implemented")
 }
 func (UnimplementedTeamsServiceServer) UpdateTeamMember(context.Context, *UpdateTeamMemberRequest) (*UpdateTeamMemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateTeamMember not implemented")
@@ -260,6 +292,24 @@ func _TeamsService_DeleteTeam_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TeamsService_GetTeamInvitation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTeamInvitationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamsServiceServer).GetTeamInvitation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.TeamsService/GetTeamInvitation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamsServiceServer).GetTeamInvitation(ctx, req.(*GetTeamInvitationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TeamsService_JoinTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(JoinTeamRequest)
 	if err := dec(in); err != nil {
@@ -292,6 +342,24 @@ func _TeamsService_ResetTeamInvitation_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TeamsServiceServer).ResetTeamInvitation(ctx, req.(*ResetTeamInvitationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TeamsService_ListTeamMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTeamMembersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamsServiceServer).ListTeamMembers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.TeamsService/ListTeamMembers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamsServiceServer).ListTeamMembers(ctx, req.(*ListTeamMembersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -356,12 +424,20 @@ var TeamsService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TeamsService_DeleteTeam_Handler,
 		},
 		{
+			MethodName: "GetTeamInvitation",
+			Handler:    _TeamsService_GetTeamInvitation_Handler,
+		},
+		{
 			MethodName: "JoinTeam",
 			Handler:    _TeamsService_JoinTeam_Handler,
 		},
 		{
 			MethodName: "ResetTeamInvitation",
 			Handler:    _TeamsService_ResetTeamInvitation_Handler,
+		},
+		{
+			MethodName: "ListTeamMembers",
+			Handler:    _TeamsService_ListTeamMembers_Handler,
 		},
 		{
 			MethodName: "UpdateTeamMember",

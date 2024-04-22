@@ -63,8 +63,6 @@ const defaultFunctions: FunctionsConfig = {
     getWorkspaces: { group: "default", points: 1 },
     getWorkspaceOwner: { group: "default", points: 1 },
     getWorkspaceUsers: { group: "default", points: 1 },
-    getFeaturedRepositories: { group: "default", points: 1 },
-    getSuggestedContextURLs: { group: "default", points: 1 },
     getSuggestedRepositories: { group: "default", points: 1 },
     searchRepositories: { group: "default", points: 1 },
     getWorkspace: { group: "default", points: 1 },
@@ -112,6 +110,7 @@ const defaultFunctions: FunctionsConfig = {
     deleteTeam: { group: "default", points: 1 },
     getOrgSettings: { group: "default", points: 1 },
     updateOrgSettings: { group: "default", points: 1 },
+    getOrgWorkspaceClasses: { group: "default", points: 1 },
     getDefaultWorkspaceImage: { group: "default", points: 1 },
     getProviderRepositoriesForUser: { group: "default", points: 1 },
     createProject: { group: "default", points: 1 },
@@ -134,6 +133,7 @@ const defaultFunctions: FunctionsConfig = {
     getSnapshots: { group: "default", points: 1 },
     guessGitTokenScopes: { group: "default", points: 1 },
     getUsageBalance: { group: "default", points: 1 },
+    isCustomerBillingAddressInvalid: { group: "default", points: 1 },
     resolveContext: { group: "default", points: 1 },
 
     adminGetUsers: { group: "default", points: 1 },
@@ -187,7 +187,7 @@ const defaultFunctions: FunctionsConfig = {
     trackLocation: { group: "default", points: 1 },
     identifyUser: { group: "default", points: 1 },
     getIDEOptions: { group: "default", points: 1 },
-    getPrebuildEvents: { group: "default", points: 1 },
+    getIDEVersions: { group: "default", points: 1 },
     getCostCenter: { group: "default", points: 1 },
     setUsageLimit: { group: "default", points: 1 },
     getSupportedWorkspaceClasses: { group: "default", points: 1 },
@@ -195,6 +195,9 @@ const defaultFunctions: FunctionsConfig = {
     getIDToken: { group: "default", points: 1 },
     reportErrorBoundary: { group: "default", points: 1 },
     getOnboardingState: { group: "default", points: 1 },
+    getAuthProvider: { group: "default", points: 1 },
+    deleteAuthProvider: { group: "default", points: 1 },
+    updateAuthProvider: { group: "default", points: 1 },
 };
 
 function getConfig(config: RateLimiterConfig): RateLimiterConfig {

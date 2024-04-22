@@ -35,6 +35,8 @@ import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { UserService } from "./user-service";
 import { WorkspaceService } from "../workspace/workspace-service";
+import { runWithSubjectId } from "../util/request-context";
+import { SubjectId } from "../auth/subject-id";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -104,7 +106,9 @@ export class UserController {
                         throw new ApplicationError(401, "Invalid OTS key");
                     }
 
-                    const user = await this.userService.findUserById(userId, userId);
+                    const user = await runWithSubjectId(SubjectId.fromUserId(userId), () =>
+                        this.userService.findUserById(userId, userId),
+                    );
                     if (!user) {
                         throw new ApplicationError(404, "User not found");
                     }
@@ -245,16 +249,18 @@ export class UserController {
 
             // stop all running workspaces
             const user = req.user as User;
-            if (user) {
-                this.workspaceService
-                    .stopRunningWorkspacesForUser({}, user.id, user.id, "logout", StopWorkspacePolicy.NORMALLY)
-                    .catch((error) =>
-                        log.error(logContext, "cannot stop workspaces on logout", { error, ...logPayload }),
-                    );
-            }
+            await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
+                if (user) {
+                    this.workspaceService
+                        .stopRunningWorkspacesForUser({}, user.id, user.id, "logout", StopWorkspacePolicy.NORMALLY)
+                        .catch((error) =>
+                            log.error(logContext, "cannot stop workspaces on logout", { error, ...logPayload }),
+                        );
+                }
 
-            // reset the FGA state
-            await this.userService.resetFgaVersion(user.id, user.id);
+                // reset the FGA state
+                await this.userService.resetFgaVersion(user.id, user.id);
+            });
 
             const redirectToUrl = this.getSafeReturnToParam(req) || this.config.hostUrl.toString();
 
@@ -395,39 +401,44 @@ export class UserController {
                     return;
                 }
                 const sessionId = req.body.sessionId;
-                const resourceGuard = new FGAResourceAccessGuard(user.id, new OwnerResourceGuard(user.id));
-                const server = this.createGitpodServer(user, resourceGuard);
-                try {
-                    await server.sendHeartBeat({}, { wasClosed: true, instanceId: instanceID });
-                    /** no await */ server
-                        .trackEvent(
-                            {},
-                            {
-                                event: "ide_close_signal",
-                                properties: {
-                                    sessionId,
-                                    instanceId: instanceID,
-                                    clientKind: "supervisor-frontend",
+
+                await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
+                    const resourceGuard = new FGAResourceAccessGuard(user.id, new OwnerResourceGuard(user.id));
+                    const server = this.createGitpodServer(user, resourceGuard);
+                    try {
+                        await server.sendHeartBeat({}, { wasClosed: true, instanceId: instanceID });
+                        /** no await */ server
+                            .trackEvent(
+                                {},
+                                {
+                                    event: "ide_close_signal",
+                                    properties: {
+                                        sessionId,
+                                        instanceId: instanceID,
+                                        clientKind: "supervisor-frontend",
+                                    },
                                 },
-                            },
-                        )
-                        .catch((err) => log.warn(logCtx, "workspacePageClose: failed to track ide close signal", err));
-                    res.sendStatus(200);
-                } catch (e) {
-                    if (ApplicationError.hasErrorCode(e)) {
-                        res.status(e.code).send(e.message);
-                        log.warn(
-                            logCtx,
-                            `workspacePageClose: server sendHeartBeat respond with code: ${e.code}, message: ${e.message}`,
-                        );
+                            )
+                            .catch((err) =>
+                                log.warn(logCtx, "workspacePageClose: failed to track ide close signal", err),
+                            );
+                        res.sendStatus(200);
+                    } catch (e) {
+                        if (ApplicationError.hasErrorCode(e)) {
+                            res.status(e.code).send(e.message);
+                            log.warn(
+                                logCtx,
+                                `workspacePageClose: server sendHeartBeat respond with code: ${e.code}, message: ${e.message}`,
+                            );
+                            return;
+                        }
+                        log.error(logCtx, "workspacePageClose failed", e);
+                        res.sendStatus(500);
                         return;
+                    } finally {
+                        server.dispose();
                     }
-                    log.error(logCtx, "workspacePageClose failed", e);
-                    res.sendStatus(500);
-                    return;
-                } finally {
-                    server.dispose();
-                }
+                });
             },
         );
         if (this.config.enableLocalApp) {
@@ -643,6 +654,7 @@ export class UserController {
             throw err;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return new AdminCredentials(payload.tokenHash, payload.expiresAt, payload.algo);
     }
 }

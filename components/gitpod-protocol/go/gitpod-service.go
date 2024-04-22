@@ -41,8 +41,6 @@ type APIInterface interface {
 	GetWorkspaces(ctx context.Context, options *GetWorkspacesOptions) (res []*WorkspaceInfo, err error)
 	GetWorkspaceOwner(ctx context.Context, workspaceID string) (res *UserInfo, err error)
 	GetWorkspaceUsers(ctx context.Context, workspaceID string) (res []*WorkspaceInstanceUser, err error)
-	GetFeaturedRepositories(ctx context.Context) (res []*WhitelistedRepository, err error)
-	GetSuggestedContextURLs(ctx context.Context) (res []*string, err error)
 	GetWorkspace(ctx context.Context, id string) (res *WorkspaceInfo, err error)
 	GetIDEOptions(ctx context.Context) (res *IDEOptions, err error)
 	IsWorkspaceOwner(ctx context.Context, workspaceID string) (res bool, err error)
@@ -145,10 +143,6 @@ const (
 	FunctionGetWorkspaceOwner FunctionName = "getWorkspaceOwner"
 	// FunctionGetWorkspaceUsers is the name of the getWorkspaceUsers function
 	FunctionGetWorkspaceUsers FunctionName = "getWorkspaceUsers"
-	// FunctionGetFeaturedRepositories is the name of the getFeaturedRepositories function
-	FunctionGetFeaturedRepositories FunctionName = "getFeaturedRepositories"
-	// FunctionGetSuggestedContextURLs is the name of the getSuggestedContextURLs function
-	FunctionGetSuggestedContextURLs FunctionName = "getSuggestedContextURLs"
 	// FunctionGetWorkspace is the name of the getWorkspace function
 	FunctionGetWorkspace FunctionName = "getWorkspace"
 	// FunctionGetIDEOptions is the name of the getIDEOptions function
@@ -427,6 +421,23 @@ func (gp *APIoverJSONRPC) AdminBlockUser(ctx context.Context, message *AdminBloc
 	return
 }
 
+// AdminVerifyUser calls adminVerifyUser on the server
+func (gp *APIoverJSONRPC) AdminVerifyUser(ctx context.Context, userId string) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+	_params = append(_params, userId)
+
+	var _result interface{}
+	err = gp.C.Call(ctx, "adminVerifyUser", _params, &_result)
+	if err != nil {
+		return err
+	}
+	return
+}
+
 // GetLoggedInUser calls getLoggedInUser on the server
 func (gp *APIoverJSONRPC) GetLoggedInUser(ctx context.Context) (res *User, err error) {
 	if gp == nil {
@@ -681,24 +692,6 @@ func (gp *APIoverJSONRPC) GetWorkspaceUsers(ctx context.Context, workspaceID str
 
 	var result []*WorkspaceInstanceUser
 	err = gp.C.Call(ctx, "getWorkspaceUsers", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
-
-	return
-}
-
-// GetFeaturedRepositories calls getFeaturedRepositories on the server
-func (gp *APIoverJSONRPC) GetFeaturedRepositories(ctx context.Context) (res []*WhitelistedRepository, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	var result []*WhitelistedRepository
-	err = gp.C.Call(ctx, "getFeaturedRepositories", _params, &result)
 	if err != nil {
 		return
 	}
@@ -1053,24 +1046,6 @@ func (gp *APIoverJSONRPC) ClosePort(ctx context.Context, workspaceID string, por
 	if err != nil {
 		return
 	}
-
-	return
-}
-
-// GetSuggestedContextURLs calls getSuggestedContextURLs on the server
-func (gp *APIoverJSONRPC) GetSuggestedContextURLs(ctx context.Context) (res []*string, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	var result []*string
-	err = gp.C.Call(ctx, "getSuggestedContextURLs", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
 
 	return
 }
@@ -1678,19 +1653,9 @@ type Repository struct {
 
 // WorkspaceCreationResult is the WorkspaceCreationResult message type
 type WorkspaceCreationResult struct {
-	CreatedWorkspaceID         string                    `json:"createdWorkspaceId,omitempty"`
-	ExistingWorkspaces         []*WorkspaceInfo          `json:"existingWorkspaces,omitempty"`
-	RunningPrebuildWorkspaceID string                    `json:"runningPrebuildWorkspaceID,omitempty"`
-	RunningWorkspacePrebuild   *RunningWorkspacePrebuild `json:"runningWorkspacePrebuild,omitempty"`
-	WorkspaceURL               string                    `json:"workspaceURL,omitempty"`
-}
-
-// RunningWorkspacePrebuild is the RunningWorkspacePrebuild message type
-type RunningWorkspacePrebuild struct {
-	PrebuildID  string `json:"prebuildID,omitempty"`
-	SameCluster bool   `json:"sameCluster,omitempty"`
-	Starting    string `json:"starting,omitempty"`
-	WorkspaceID string `json:"workspaceID,omitempty"`
+	CreatedWorkspaceID string           `json:"createdWorkspaceId,omitempty"`
+	ExistingWorkspaces []*WorkspaceInfo `json:"existingWorkspaces,omitempty"`
+	WorkspaceURL       string           `json:"workspaceURL,omitempty"`
 }
 
 // Workspace is the Workspace message type
@@ -1845,7 +1810,6 @@ type WorkspaceInstanceStatus struct {
 	NodeName     string                       `json:"nodeName,omitempty"`
 	OwnerToken   string                       `json:"ownerToken,omitempty"`
 	Phase        string                       `json:"phase,omitempty"`
-	Repo         *WorkspaceInstanceRepoStatus `json:"repo,omitempty"`
 	Timeout      string                       `json:"timeout,omitempty"`
 	Version      int                          `json:"version,omitempty"`
 }
@@ -1939,14 +1903,6 @@ type Configuration struct {
 	GarbageCollectionStartDate  float64 `json:"garbageCollectionStartDate,omitempty"`
 }
 
-// WhitelistedRepository is the WhitelistedRepository message type
-type WhitelistedRepository struct {
-	Avatar      string `json:"avatar,omitempty"`
-	Description string `json:"description,omitempty"`
-	Name        string `json:"name,omitempty"`
-	URL         string `json:"url,omitempty"`
-}
-
 // EnvVar is the EnvVar message type
 type EnvVar struct {
 	ID    string `json:"id,omitempty"`
@@ -2026,10 +1982,10 @@ type CreateWorkspaceOptions struct {
 	StartWorkspaceOptions
 	ContextURL                         string `json:"contextUrl,omitempty"`
 	OrganizationId                     string `json:"organizationId,omitempty"`
-	IgnoreRunningWorkspaceOnSameCommit bool   `json:"ignoreRunningWorkspaceOnSameCommit,omitemopty"`
-	IgnoreRunningPrebuild              bool   `json:"ignoreRunningPrebuild,omitemopty"`
-	AllowUsingPreviousPrebuilds        bool   `json:"allowUsingPreviousPrebuilds,omitemopty"`
-	ForceDefaultConfig                 bool   `json:"forceDefaultConfig,omitemopty"`
+	IgnoreRunningWorkspaceOnSameCommit bool   `json:"ignoreRunningWorkspaceOnSameCommit,omitempty"`
+	ForceDefaultConfig                 bool   `json:"forceDefaultConfig,omitempty"`
+	IgnoreRunningPrebuild              bool   `json:"ignoreRunningPrebuild,omitempty"`
+	AllowUsingPreviousPrebuilds        bool   `json:"allowUsingPreviousPrebuilds,omitempty"`
 }
 
 // DeleteOwnAuthProviderParams is the DeleteOwnAuthProviderParams message type
@@ -2291,15 +2247,17 @@ type Project struct {
 }
 
 type ProjectSettings struct {
-	EnablePrebuilds              *bool                     `json:"enablePrebuilds,omitempty"`
-	PrebuildDefaultBranchOnly    *bool                     `json:"prebuildDefaultBranchOnly,omitempty"`
-	PrebuildBranchPattern        *string                   `json:"prebuildBranchPattern,omitempty"`
-	UseIncrementalPrebuilds      bool                      `json:"useIncrementalPrebuilds,omitempty"`
-	UsePersistentVolumeClaim     bool                      `json:"usePersistentVolumeClaim,omitempty"`
-	KeepOutdatedPrebuildsRunning bool                      `json:"keepOutdatedPrebuildsRunning,omitempty"`
-	AllowUsingPreviousPrebuilds  bool                      `json:"allowUsingPreviousPrebuilds,omitempty"`
-	PrebuildEveryNthCommit       int                       `json:"prebuildEveryNthCommit,omitempty"`
-	WorkspaceClasses             *WorkspaceClassesSettings `json:"workspaceClasses,omitempty"`
+	UsePersistentVolumeClaim   bool                      `json:"usePersistentVolumeClaim,omitempty"`
+	WorkspaceClasses           *WorkspaceClassesSettings `json:"workspaceClasses,omitempty"`
+	PrebuildSettings           *PrebuildSettings         `json:"prebuilds,omitempty"`
+	RestrictedWorkspaceClasses *[]string                 `json:"restrictedWorkspaceClasses,omitempty"`
+}
+type PrebuildSettings struct {
+	Enable                *bool   `json:"enable,omitempty"`
+	PrebuildInterval      *int32  `json:"prebuildInterval,omitempty"`
+	BranchStrategy        *string `json:"branchStrategy,omitempty"`
+	BranchMatchingPattern *string `json:"branchMatchingPattern,omitempty"`
+	WorkspaceClass        *string `json:"workspaceClass,omitempty"`
 }
 
 type WorkspaceClassesSettings struct {

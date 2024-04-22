@@ -9,7 +9,8 @@ import { injectable, multiInject, inject } from "inversify";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { IPrefixContextParser, IContextParser } from "./context-parser";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { ConfigProvider, InvalidGitpodYMLError } from "./config-provider";
+import { ConfigProvider } from "./config-provider";
+import { InvalidGitpodYMLError } from "@gitpod/public-api-common/lib/public-api-errors";
 
 @injectable()
 export class ContextParser {
@@ -128,9 +129,9 @@ export class ContextParser {
                     config.config.mainConfiguration,
                 );
                 if (!CommitContext.is(mainRepoContext)) {
-                    throw new InvalidGitpodYMLError([
-                        `Cannot find main repository '${config.config.mainConfiguration}'.`,
-                    ]);
+                    throw new InvalidGitpodYMLError({
+                        violations: [`Cannot find main repository '${config.config.mainConfiguration}'.`],
+                    });
                 }
                 // Note: we only care about repo related stuff in this function.
                 // Fields like `config.image` will not be exposed, so we don't pass organizationId here
@@ -146,7 +147,9 @@ export class ContextParser {
                         subRepo.url,
                     )) as CommitContext;
                     if (!CommitContext.is(subContext)) {
-                        throw new InvalidGitpodYMLError([`Cannot find sub-repository '${subRepo.url}'.`]);
+                        throw new InvalidGitpodYMLError({
+                            violations: [`Cannot find sub-repository '${subRepo.url}'.`],
+                        });
                     }
                     if (context.repository.cloneUrl === subContext.repository.cloneUrl) {
                         // if it's the repo from the original context we want to use that commit.

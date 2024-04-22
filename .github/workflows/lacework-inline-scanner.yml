@@ -51,7 +51,7 @@ jobs:
     needs: [configuration,create-runner]
     if: ${{ needs.configuration.outputs.skip == 'false' }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-update-image-gha.17642
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
     steps:
       # Most of this is taken over from the Build workflow/preview-env-check-regressions workflow
       - uses: actions/checkout@v4
@@ -71,8 +71,6 @@ jobs:
         env:
           VERSION: ${{needs.configuration.outputs.version}}
           LW_ACCESS_TOKEN: "${{ steps.secrets.outputs.lacework-access-token }}"
-          # TODO(gpl) See docker.io access above
-          EXCLUDE_DOCKER_IO: true
         run: |
           $GITHUB_WORKSPACE/scripts/lw-scan-images.sh
 

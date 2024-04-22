@@ -123,8 +123,6 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	glog.WithFields(workspace.OWI()).WithField("workspace", req.NamespacedName).WithField("phase", workspace.Status.Phase).Info("reconciling workspace")
-
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseCreating ||
 		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing {
 
@@ -138,7 +136,6 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping {
-
 		result, err = wsc.handleWorkspaceStop(ctx, &workspace, req)
 		return result, err
 	}
@@ -170,6 +167,8 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 		if wsc.latestWorkspace(ctx, ws) != nil {
 			return ctrl.Result{Requeue: true, RequeueAfter: 100 * time.Millisecond}, nil
 		}
+
+		glog.WithFields(ws.OWI()).WithField("workspace", req.NamespacedName).WithField("phase", ws.Status.Phase).Info("handle workspace init")
 
 		init, err := wsc.prepareInitializer(ctx, ws)
 		if err != nil {
@@ -220,9 +219,6 @@ func (wsc *WorkspaceController) handleWorkspaceRunning(ctx context.Context, ws *
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceRunning")
 	defer tracing.FinishSpan(span, &err)
 
-	log := log.FromContext(ctx)
-	log.Info("handling running workspace")
-
 	return ctrl.Result{}, wsc.operations.SetupWorkspace(ctx, ws.Name)
 }
 
@@ -253,9 +249,18 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		return ctrl.Result{}, nil
 	}
 
+	if ws.IsConditionTrue(workspacev1.WorkspaceConditionContainerRunning) {
+		// Container is still running, we need to wait for it to stop.
+		// We should get an event when the condition changes, but requeue
+		// anyways to make sure we act on it in time.
+		return ctrl.Result{RequeueAfter: 500 * time.Millisecond}, nil
+	}
+
 	if wsc.latestWorkspace(ctx, ws) != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: 100 * time.Millisecond}, nil
 	}
+
+	glog.WithFields(ws.OWI()).WithField("workspace", req.NamespacedName).WithField("phase", ws.Status.Phase).Info("handle workspace stop")
 
 	disposeStart := time.Now()
 	var snapshotName string

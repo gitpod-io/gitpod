@@ -304,6 +304,9 @@ then
       key=$(echo "${row}" | base64 -d | jq -r '.key')
       providerId=$(echo "$row" | base64 -d | jq -r '.value.id | ascii_downcase')
       data=$(echo "$row" | base64 -d | yq r - value --prettyPrint)
+
+      data="${data//preview.gitpod-dev.com/${DOMAIN}}"
+
       yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].kind "secret"
       yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].name "$providerId"
 
@@ -369,9 +372,19 @@ kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" --namesp
 diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" host-key.yaml
 rm -f host-key.yaml
 
+kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" --namespace keys get secret ssh-ca -o yaml \
+| yq w - metadata.namespace ${PREVIEW_NAMESPACE} \
+| yq d - metadata.uid \
+| yq d - metadata.resourceVersion \
+| yq d - metadata.creationTimestamp > ssh-ca.yaml
+diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" ssh-ca.yaml
+rm -f ssh-ca.yaml
+
 yq w -i "${INSTALLER_CONFIG_PATH}" sshGatewayHostKey.kind "secret"
 yq w -i "${INSTALLER_CONFIG_PATH}" sshGatewayHostKey.name "host-key"
 
+yq w -i "${INSTALLER_CONFIG_PATH}" sshGatewayCAKey.kind "secret"
+yq w -i "${INSTALLER_CONFIG_PATH}" sshGatewayCAKey.name "ssh-ca"
 #
 # configureUsage
 #

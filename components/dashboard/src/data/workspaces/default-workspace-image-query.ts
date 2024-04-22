@@ -5,15 +5,15 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
-import { GetDefaultWorkspaceImageResult } from "@gitpod/gitpod-protocol";
+import { GetWorkspaceDefaultImageResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { workspaceClient } from "../../service/public-api";
 
-export const useDefaultWorkspaceImageQuery = (workspaceId?: string) => {
-    return useQuery<GetDefaultWorkspaceImageResult>({
-        queryKey: ["default-workspace-image", { workspaceId }],
+export const useWorkspaceDefaultImageQuery = (workspaceId: string) => {
+    return useQuery<GetWorkspaceDefaultImageResponse>({
+        queryKey: ["default-workspace-image-v2", { workspaceId }],
         staleTime: 1000 * 60 * 10, // 10 minute
         queryFn: async () => {
-            return await getGitpodService().server.getDefaultWorkspaceImage({ workspaceId });
+            return await workspaceClient.getWorkspaceDefaultImage({ workspaceId });
         },
     });
 };

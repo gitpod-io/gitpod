@@ -19,6 +19,7 @@ packages:
       - components/supervisor-api/go:lib
       - components/ws-manager-api/go:lib
       - components/ide-service-api/go:lib
+      - components/public-api/go:lib
     prep:
       - ["go", "get", "-v", "./..."]
       - ["sh", "-c", "echo package main > main.go"]

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
@@ -35,6 +36,7 @@ import { VerificationService } from "../auth/verification-service";
 import { SignInJWT } from "./jwt";
 import { UserService } from "../user/user-service";
 import { reportLoginCompleted } from "../prometheus-metrics";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
@@ -112,7 +114,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
             disallowLogin,
             description,
             scopes,
-            settingsUrl: this.oauthConfig.settingsUrl,
+            settingsUrl: this.oauthConfig.settingsUrl, // unused
             requirements: {
                 default: scopes,
                 publicRepo: scopes,
@@ -230,7 +232,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 expiryDate,
             });
         } catch (error) {
-            log.error(`(${this.strategyName}) Failed to refresh token!`, { error });
+            log.error(`(${this.strategyName}) Failed to refresh token!`, { error: new TrustedValue(error) });
             throw error;
         }
     }
@@ -371,7 +373,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
          */
 
         const context = LogContext.from({
-            user: User.is(userOrIdentity) ? { userId: userOrIdentity.id } : undefined,
+            userId: User.is(userOrIdentity) ? userOrIdentity.id : undefined,
             request,
         });
 
@@ -488,7 +490,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     isDateSmaller(authUser.created_at, daysBefore(new Date().toISOString(), 30))
                 ) {
                     // people with an account older than 30 days are treated as trusted
-                    this.verificationService.markVerified(newUser);
+                    newUser.lastVerificationTime = new Date().toISOString();
                 }
             },
         });
@@ -585,7 +587,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
 
                 // we need to check current provider authorizations first...
                 try {
-                    await this.userAuthentication.asserNoTwinAccount(
+                    await this.userAuthentication.assertNoTwinAccount(
                         currentGitpodUser,
                         this.host,
                         this.authProviderId,

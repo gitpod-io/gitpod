@@ -2,17 +2,12 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:0f5ba4905ca6ea9c43660cca233e663eb9bb21cbc6993656936d2aef80c43310 as dl
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:c6064a4b8a3ee16cf99084aa4071057ba2cb168fe83252b493dddf8e72d96b48 as dl
 WORKDIR /dl
 RUN apk add --no-cache curl file \
-  && curl -OsSL https://github.com/opencontainers/runc/releases/download/v1.1.9/runc.amd64 \
+  && curl -OsSL https://github.com/opencontainers/runc/releases/download/v1.1.12/runc.amd64 \
   && chmod +x runc.amd64 \
   && if ! file runc.amd64 | grep -iq "ELF 64-bit LSB pie executable"; then echo "runc.amd64 is not a binary file"; exit 1;fi
-
-RUN curl -OsSL https://github.com/peak/s5cmd/releases/download/v2.2.2/s5cmd_2.2.2_Linux-64bit.tar.gz \
- && tar -xzvf s5cmd_2.2.2_Linux-64bit.tar.gz s5cmd \
- && chmod +x s5cmd \
- && if ! file s5cmd | grep -iq "ELF 64-bit LSB executable"; then echo "s5cmd is not a binary file"; exit 1;fi
 
 FROM ubuntu:22.04
 
@@ -20,7 +15,7 @@ FROM ubuntu:22.04
 ENV TRIGGER_REBUILD=1
 
 ## Installing coreutils is super important here as otherwise the loopback device creation fails!
-ARG CLOUD_SDK_VERSION=437.0.1
+ARG CLOUD_SDK_VERSION=467.0.0
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
 ENV CLOUDSDK_CORE_DISABLE_PROMPTS=1
 
@@ -51,7 +46,6 @@ RUN apt update \
     /var/tmp/*
 
 COPY --from=dl /dl/runc.amd64 /usr/bin/runc
-COPY --from=dl /dl/s5cmd /usr/bin/s5cmd
 
 # Add gitpod user for operations (e.g. checkout because of the post-checkout hook!)
 RUN groupadd -r -g 33333 gitpod \

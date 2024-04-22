@@ -5,7 +5,6 @@
   "version": "0.0.0",
   "dependencies": {
     "@gitpod/gitpod-protocol": "0.1.5",
-    "@gitpod/public-api": "0.1.5",
     "@gitpod/supervisor-api-grpc": "0.1.5",
     "buffer": "^4.3.0",
     "crypto-browserify": "3.12.0",

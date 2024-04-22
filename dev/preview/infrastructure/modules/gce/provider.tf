@@ -5,7 +5,7 @@ terraform {
     k8s = {
       source                = "hashicorp/kubernetes"
       version               = ">= 2.0"
-      configuration_aliases = [k8s.dev, k8s.harvester]
+      configuration_aliases = [k8s.dev]
     }
     google = {
       source                = "hashicorp/google"

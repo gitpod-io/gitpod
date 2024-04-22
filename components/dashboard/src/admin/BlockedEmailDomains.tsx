@@ -13,10 +13,12 @@ import { ItemFieldContextMenu } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import searchIcon from "../icons/search.svg";
-import { getGitpodService } from "../service/service";
 import { AdminPageHeader } from "./AdminPageHeader";
 import Pagination from "../Pagination/Pagination";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
+import { installationClient } from "../service/public-api";
+import { ListBlockedEmailDomainsResponse } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
+import { TextInputField } from "../components/forms/TextInputField";
 
 export function BlockedEmailDomains() {
     return (
@@ -27,7 +29,7 @@ export function BlockedEmailDomains() {
 }
 
 function useBlockedEmailDomains() {
-    return useQuery(["blockedEmailDomains"], () => getGitpodService().server.adminGetBlockedEmailDomains(), {
+    return useQuery(["blockedEmailDomains"], () => installationClient.listBlockedEmailDomains({}), {
         staleTime: 1000 * 60 * 5, // 5min
     });
 }
@@ -37,19 +39,21 @@ function useUpdateBlockedEmailDomainMutation() {
     const blockedEmailDomains = useBlockedEmailDomains();
     return useMutation(
         async (blockedDomain: EmailDomainFilterEntry) => {
-            await getGitpodService().server.adminSaveBlockedEmailDomain(blockedDomain);
+            await installationClient.createBlockedEmailDomain({
+                domain: blockedDomain.domain,
+                negative: blockedDomain.negative ?? false,
+            });
         },
         {
             onSuccess: (_, blockedDomain) => {
-                const updated = [];
-                for (const entry of blockedEmailDomains.data || []) {
+                const data = new ListBlockedEmailDomainsResponse(blockedEmailDomains.data);
+                data.blockedEmailDomains.map((entry) => {
                     if (entry.domain !== blockedDomain.domain) {
-                        updated.push(entry);
-                    } else {
-                        updated.push(blockedDomain);
+                        return entry;
                     }
-                }
-                queryClient.setQueryData(["blockedEmailDomains"], updated);
+                    return blockedDomain;
+                });
+                queryClient.setQueryData(["blockedEmailDomains"], data);
                 blockedEmailDomains.refetch();
             },
         },
@@ -74,7 +78,7 @@ export function BlockedEmailDomainsList(props: Props) {
         if (!blockedEmailDomains.data) {
             return [];
         }
-        return blockedEmailDomains.data.filter((entry) =>
+        return blockedEmailDomains.data.blockedEmailDomains.filter((entry) =>
             entry.domain.toLowerCase().includes(searchTerm.toLowerCase()),
         );
     }, [blockedEmailDomains.data, searchTerm]);
@@ -127,7 +131,7 @@ export function BlockedEmailDomainsList(props: Props) {
                         />
                     </div>
                     <div className="flex space-x-2">
-                        <button onClick={add}>Add Domain</button>
+                        <Button onClick={add}>Add Domain</Button>
                     </div>
                 </div>
             </div>
@@ -231,10 +235,10 @@ function AddBlockedDomainModal(p: AddBlockedDomainModalProps) {
                 <Details br={br} update={update} error={error} />
             </ModalBody>
             <ModalFooter>
-                <Button type="secondary" onClick={p.onClose}>
+                <Button variant="secondary" onClick={p.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit">Add Blocked Domain</Button>
+                <Button type="submit">Add Blocked Domain</Button>
             </ModalFooter>
         </Modal>
     );
@@ -250,22 +254,19 @@ function Details(props: {
             {props.error ? (
                 <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{props.error}</div>
             ) : null}
-            <div>
-                <h4>Domain (may contain '%' as wild card)</h4>
-                <input
-                    autoFocus
-                    className="w-full"
-                    type="text"
-                    value={props.br.domain}
-                    placeholder={'e.g. "mailicous-domain.com"'}
-                    disabled={!props.update}
-                    onChange={(v) => {
-                        if (!!props.update) {
-                            props.update({ domain: v.target.value });
-                        }
-                    }}
-                />
-            </div>
+            <TextInputField
+                label="Domain (may contain '%' as wild card)"
+                autoFocus
+                type="text"
+                value={props.br.domain}
+                placeholder={'e.g. "mailicous-domain.com"'}
+                disabled={!props.update}
+                onChange={(val) => {
+                    if (!!props.update) {
+                        props.update({ domain: val });
+                    }
+                }}
+            />
 
             <CheckboxInputField
                 label="Block Users"

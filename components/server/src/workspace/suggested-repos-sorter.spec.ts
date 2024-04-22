@@ -65,39 +65,55 @@ class TestSuggestedReposSorter {
 
     @test
     public testProjectsOnly() {
-        const entry = suggestionFromUserRepo({
+        const entry = suggestionFromProject({
             url: "https://github.com/repo1",
+            projectId: "1",
+            projectName: "Project A",
         });
         const repo2 = suggestionFromUserRepo({
             url: "https://github.com/repo2",
+            projectId: "2a",
+            projectName: "Project B1",
         });
-        const sortedRepos = sortSuggestedRepositories([entry, repo2]);
+        const repo3 = suggestionFromUserRepo({
+            url: "https://github.com/repo2",
+            projectId: "2b",
+            projectName: "Project B2",
+        });
+        const sortedRepos = sortSuggestedRepositories([entry, repo2, repo3]);
         expect(sortedRepos[0].url).equals(entry.url);
         expect(sortedRepos[1].url).equals(repo2.url);
+        expect(sortedRepos.length).equals(3);
     }
 
     @test
     public testAlphaSortingWithNames() {
         const repo1 = suggestionFromProject({
             url: "https://github.com/repo1",
+            projectId: "1",
             projectName: "Project A",
             repositoryName: "Repo 1",
         });
         const repo2 = suggestionFromProject({
             url: "https://github.com/repo2",
+            projectId: "2",
             projectName: "Project B",
             repositoryName: "Repo 2",
         });
         const repo3 = suggestionFromProject({
             url: "https://github.com/repo3",
+            projectId: "3",
             projectName: "Project C",
         });
         const repo4 = suggestionFromProject({
             url: "https://github.com/repo4",
-            repositoryName: "A Great Repo",
+            projectId: "4",
+            projectName: "A Great Repo",
         });
         const repo5 = suggestionFromProject({
             url: "https://github.com/repo5",
+            projectId: "5",
+            projectName: "B Project",
         });
         const repos = sortSuggestedRepositories([repo1, repo2, repo3, repo4, repo5]);
         expect(repos[0].url).equals(repo4.url);
@@ -109,8 +125,17 @@ class TestSuggestedReposSorter {
 
     @test
     public testWithAllEntryTypes() {
+        const entry0 = suggestionFromRecentWorkspace(
+            {
+                url: "https://github.com/repo1",
+                repositoryName: "Repo 5",
+                projectId: "1",
+            },
+            "2022-08-13T04:00:00Z",
+        );
         const entry1 = suggestionFromProject({
             url: "https://github.com/repo1",
+            projectId: "1",
             projectName: "Project A",
         });
         const entry2 = suggestionFromUserRepo({
@@ -124,7 +149,6 @@ class TestSuggestedReposSorter {
             },
             "2023-08-13T01:00:00Z",
         );
-
         const entry4 = suggestionFromRecentWorkspace(
             {
                 url: "https://github.com/repo4",
@@ -132,11 +156,31 @@ class TestSuggestedReposSorter {
             },
             "2023-08-13T04:00:00Z",
         );
-        const repos = sortSuggestedRepositories([entry1, entry2, entry3, entry4]);
-        expect(repos).lengthOf(3);
+        const entry5 = suggestionFromRecentWorkspace(
+            {
+                url: "https://github.com/repo1",
+                repositoryName: "Repo 1",
+                projectId: "1",
+            },
+            "2024-08-13T04:00:00Z",
+        );
+        const orphanedProjectEntry = suggestionFromRecentWorkspace(
+            {
+                url: "https://github.com/repo6",
+                repositoryName: "Repo 6",
+                projectId: "no-longer-exists",
+            },
+            "2023-02-13T04:00:00Z",
+        );
+        const repos = sortSuggestedRepositories([entry0, entry1, entry2, entry5, entry3, entry4, orphanedProjectEntry]);
+        expect(repos).lengthOf(4);
+
         expect(repos[0].url).equals(entry1.url);
+        expect(repos[0].priority).equals(17); // 7 from project, 2*5 from workspaces
+        expect(repos[0].lastUse).equals(entry5.lastUse); // make sure lastUse is taken from latest workspace
+
         expect(repos[1].url).equals(entry4.url);
-        expect(repos[2].url).equals(entry2.url);
+        expect(repos[3].url).equals(entry2.url);
     }
 
     @test
@@ -144,11 +188,13 @@ class TestSuggestedReposSorter {
         // represents a project
         const entry1 = suggestionFromProject({
             url: "https://github.com/repo1",
+            projectId: "1",
             projectName: "Project A",
         });
         // represents another project
         const entry2 = suggestionFromProject({
             url: "https://github.com/repo2",
+            projectId: "2",
             projectName: "Project B",
         });
         // represents a workspace started for project2 (same url)
@@ -170,10 +216,12 @@ class TestSuggestedReposSorter {
     public testRecentWorkspaceEntryBeforeUnusedProjects() {
         const entry1 = suggestionFromProject({
             url: "https://github.com/repo1",
+            projectId: "1",
             projectName: "Project A",
         });
         const entry2 = suggestionFromProject({
             url: "https://github.com/repo2",
+            projectId: "2",
             projectName: "Project B",
         });
 

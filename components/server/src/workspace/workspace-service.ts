@@ -16,6 +16,7 @@ import {
     PortVisibility,
     Project,
     SetWorkspaceTimeoutResult,
+    Snapshot,
     StartWorkspaceResult,
     User,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
@@ -30,6 +31,7 @@ import {
     WorkspaceTimeoutDuration,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { Authorizer } from "../authorization/authorizer";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceFactory } from "./workspace-factory";
@@ -44,8 +46,14 @@ import {
     MarkActiveRequest,
     AdmissionLevel,
     ControlAdmissionRequest,
+    TakeSnapshotRequest,
 } from "@gitpod/ws-manager/lib";
-import { WorkspaceStarter, StartWorkspaceOptions as StarterStartWorkspaceOptions } from "./workspace-starter";
+import {
+    WorkspaceStarter,
+    StartWorkspaceOptions as StarterStartWorkspaceOptions,
+    isClusterMaintenanceError,
+    getWorkspaceClassForInstance,
+} from "./workspace-starter";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import * as crypto from "crypto";
@@ -61,6 +69,11 @@ import { HeadlessLogEndpoint, HeadlessLogService } from "./headless-log-service"
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { OrganizationService } from "../orgs/organization-service";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { RedisSubscriber } from "../messaging/redis-subscriber";
+import { SnapshotService } from "./snapshot-service";
+import { InstallationService } from "../auth/installation-service";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
+import { WatchWorkspaceStatusResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
@@ -82,10 +95,63 @@ export class WorkspaceService {
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(OrganizationService) private readonly orgService: OrganizationService,
+        @inject(SnapshotService) private readonly snapshotService: SnapshotService,
+        @inject(InstallationService) private readonly installationService: InstallationService,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
         @inject(Authorizer) private readonly auth: Authorizer,
+
+        @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
+        @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter,
     ) {}
+
+    /**
+     * workspaceClassChecking checks if user can create workspace with specified class
+     */
+    private async workspaceClassChecking(
+        ctx: TraceContext,
+        userId: string,
+        organizationId: string,
+        previousInstance: Pick<WorkspaceInstance, "workspaceClass"> | undefined,
+        project: Project | undefined,
+        workspaceClassOverride: string | undefined,
+    ) {
+        const workspaceClass = await getWorkspaceClassForInstance(
+            ctx,
+            { type: "regular" },
+            previousInstance,
+            project,
+            workspaceClassOverride,
+            this.config.workspaceClasses,
+        );
+        const settings = await this.orgService.getSettings(userId, organizationId);
+        const allAllowedClsInInstallation = await this.installationService.getInstallationWorkspaceClasses(userId);
+        const checkHasOtherOptions = (allowedCls: string[]) =>
+            allowedCls.filter((e) => allAllowedClsInInstallation.findIndex((cls) => cls.id === e) !== -1).length > 0;
+        if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
+            if (!settings.allowedWorkspaceClasses.includes(workspaceClass)) {
+                const hasOtherOptions = checkHasOtherOptions(settings.allowedWorkspaceClasses);
+                if (!hasOtherOptions) {
+                    throw new ApplicationError(
+                        ErrorCodes.PRECONDITION_FAILED,
+                        "No allowed workspace classes available. Please contact an admin to update organization settings.",
+                    );
+                }
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    "Selected workspace class is not allowed in current organization.",
+                );
+            }
+        }
+        if (project?.settings?.restrictedWorkspaceClasses && project.settings.restrictedWorkspaceClasses.length > 0) {
+            if (project.settings.restrictedWorkspaceClasses.includes(workspaceClass)) {
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    "Selected workspace class is restricted in current repository.",
+                );
+            }
+        }
+    }
 
     async createWorkspace(
         ctx: TraceContext,
@@ -94,8 +160,13 @@ export class WorkspaceService {
         project: Project | undefined,
         context: WorkspaceContext,
         normalizedContextURL: string,
+        workspaceClass: string | undefined,
     ): Promise<Workspace> {
+        await this.mayStartWorkspace(ctx, user, organizationId, this.db.findRegularRunningInstances(user.id));
+
         await this.auth.checkPermissionOnOrganization(user.id, "create_workspace", organizationId);
+
+        await this.workspaceClassChecking(ctx, user.id, organizationId, undefined, project, workspaceClass);
 
         // We don't want to be doing this in a transaction, because it calls out to external systems.
         // TODO(gpl) Would be great to sepearate workspace creation from external calls
@@ -151,8 +222,17 @@ export class WorkspaceService {
         return filtered;
     }
 
-    async getCurrentInstance(userId: string, workspaceId: string): Promise<WorkspaceInstance> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+    /**
+     * @param opts.skipPermissionCheck and do permission check outside
+     */
+    async getCurrentInstance(
+        userId: string,
+        workspaceId: string,
+        opts?: { skipPermissionCheck?: boolean },
+    ): Promise<WorkspaceInstance> {
+        if (!opts?.skipPermissionCheck) {
+            await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        }
         const result = await this.db.findCurrentInstance(workspaceId);
         if (!result) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "No workspace instance found.", { workspaceId });
@@ -349,21 +429,26 @@ export class WorkspaceService {
             log.debug({ userId, workspaceId }, "Cannot open port for workspace with no running instance", {
                 port,
             });
-            return;
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "workspace is not running");
         }
 
         const req = new ControlPortRequest();
         req.setId(instance.id);
         const spec = new PortSpec();
         spec.setPort(port.port);
-        spec.setVisibility(this.portVisibilityToProto(port.visibility));
-        spec.setProtocol(this.portProtocolToProto(port.protocol));
+        if (port.visibility) {
+            spec.setVisibility(this.portVisibilityToProto(port.visibility));
+        }
+        if (port.protocol) {
+            spec.setProtocol(this.portProtocolToProto(port.protocol));
+        }
         req.setSpec(spec);
         req.setExpose(true);
 
         try {
             const client = await this.clientProvider.get(instance.region);
             await client.controlPort({}, req);
+            return undefined;
         } catch (e) {
             throw mapGrpcError(e);
         }
@@ -487,20 +572,27 @@ export class WorkspaceService {
             options.clientRegionCode,
         );
 
+        const orgSettings = await this.orgService.getSettings(user.id, workspace.organizationId);
+        if (orgSettings.pinnedEditorVersions) {
+            if (!options.ideSettings) {
+                options.ideSettings = {};
+            }
+            options.ideSettings.pinnedIDEversions = orgSettings.pinnedEditorVersions;
+        }
+
         // at this point we're about to actually start a new workspace
         const result = await this.workspaceStarter.startWorkspace(ctx, workspace, user, await projectPromise, options);
         return result;
     }
 
     /**
-     * @deprecated TODO (gpl) This should be private, but in favor of smaller PRs, will be public for now.
      * @param ctx
      * @param user
      * @param organizationId
      * @param runningInstances
      * @returns
      */
-    public async mayStartWorkspace(
+    private async mayStartWorkspace(
         ctx: TraceContext,
         user: User,
         organizationId: string,
@@ -613,17 +705,8 @@ export class WorkspaceService {
         });
     }
 
-    public async getSupportedWorkspaceClasses(userId: string): Promise<SupportedWorkspaceClass[]> {
-        // No access check required, valid session/user is enough
-        const classes = this.config.workspaceClasses.map((c) => ({
-            id: c.id,
-            category: c.category,
-            displayName: c.displayName,
-            description: c.description,
-            powerups: c.powerups,
-            isDefault: c.isDefault,
-        }));
-        return classes;
+    public async getSupportedWorkspaceClasses(user: { id: string }): Promise<SupportedWorkspaceClass[]> {
+        return this.installationService.getInstallationWorkspaceClasses(user.id);
     }
 
     /**
@@ -706,7 +789,7 @@ export class WorkspaceService {
     ): Promise<HeadlessLogUrls> {
         const workspace = await this.db.findByInstanceId(instanceId);
         if (!workspace) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Prebuild for instanceId ${instanceId} not found`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace for instanceId ${instanceId} not found`);
         }
         if (workspace.type !== "prebuild" || !workspace.projectId) {
             throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is not a prebuild`);
@@ -728,6 +811,136 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
         }
         return urls;
+    }
+
+    // TODO(gpl) We probably want to change this method to take a workspaceId instead once we migrate the API
+    public async getHeadlessLogDownloadUrl(
+        userId: string,
+        instanceId: string,
+        taskId: string,
+        check: () => Promise<void> = async () => {},
+    ): Promise<string> {
+        const workspace = await this.db.findByInstanceId(instanceId);
+        if (!workspace) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace for instanceId ${instanceId} not found`);
+        }
+        if (workspace.type !== "prebuild" || !workspace.projectId) {
+            throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is not a prebuild, or missing projectId`);
+        }
+
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
+        const wsiPromise = this.db.findInstanceById(instanceId);
+        await check();
+
+        const instance = await wsiPromise;
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace instance ${instanceId} not found`);
+        }
+
+        const downloadUrl = await this.headlessLogService.getHeadlessLogDownloadUrl(
+            userId,
+            instance,
+            workspace.ownerId,
+            taskId,
+        );
+        return downloadUrl;
+    }
+
+    // TODO(gpl) We probably want to change this method to take a workspaceId instead once we migrate the API
+    public async streamWorkspaceLogs(
+        userId: string,
+        instanceId: string,
+        terminalId: string,
+        sink: (chunk: string) => Promise<void>,
+        check: () => Promise<void> = async () => {},
+    ) {
+        const workspace = await this.db.findByInstanceId(instanceId);
+        if (!workspace) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace for instanceId ${instanceId} not found`);
+        }
+        if (!workspace.projectId) {
+            throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is missing projectId`);
+        }
+
+        // TODO Use doGetworkspace for this after we switched to workspaceId!
+        if (workspace?.type === "prebuild" && workspace.projectId) {
+            await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
+        } else {
+            await this.auth.checkPermissionOnWorkspace(userId, "access", workspace.id);
+        }
+
+        const wsiPromise = this.db.findInstanceById(instanceId);
+        await check();
+
+        const instance = await wsiPromise;
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace instance ${instanceId} not found`);
+        }
+
+        const logEndpoint = HeadlessLogEndpoint.fromWithOwnerToken(instance);
+        await this.headlessLogService.streamWorkspaceLogWhileRunning(
+            { userId, instanceId, workspaceId: workspace!.id },
+            logEndpoint,
+            instanceId,
+            terminalId,
+            sink,
+        );
+    }
+
+    public watchWorkspaceStatus(userId: string, opts: { signal: AbortSignal }): AsyncIterable<WorkspaceInstance> {
+        return generateAsyncGenerator<WorkspaceInstance>((sink) => {
+            try {
+                const dispose = this.subscriber.listenForWorkspaceInstanceUpdates(userId, (_ctx, instance) => {
+                    sink.push(instance);
+                });
+                return () => {
+                    dispose.dispose();
+                };
+            } catch (e) {
+                if (e instanceof Error) {
+                    sink.fail(e);
+                    return;
+                } else {
+                    sink.fail(new Error(String(e) || "unknown"));
+                }
+            }
+        }, opts);
+    }
+
+    public async *getAndWatchWorkspaceStatus(
+        userId: string,
+        workspaceId: string | undefined,
+        opts: { signal: AbortSignal; skipPermissionCheck?: boolean },
+    ) {
+        if (workspaceId) {
+            const instance = await this.getCurrentInstance(userId, workspaceId, {
+                skipPermissionCheck: opts.skipPermissionCheck,
+            });
+            const status = this.apiConverter.toWorkspace(instance).status;
+            if (status) {
+                const response = new WatchWorkspaceStatusResponse();
+                response.workspaceId = instance.workspaceId;
+                response.status = status;
+                yield response;
+            }
+        }
+        const it = this.watchWorkspaceStatus(userId, opts);
+        for await (const instance of it) {
+            if (!instance) {
+                continue;
+            }
+            if (workspaceId && instance.workspaceId !== workspaceId) {
+                continue;
+            }
+            const status = this.apiConverter.toWorkspace(instance).status;
+            if (!status) {
+                continue;
+            }
+            const response = new WatchWorkspaceStatusResponse();
+            response.workspaceId = instance.workspaceId;
+            response.status = status;
+            yield response;
+        }
     }
 
     public async watchWorkspaceImageBuildLogs(
@@ -779,30 +992,26 @@ export class WorkspaceService {
                 headers: logInfo.headers,
             };
             let lineCount = 0;
-            await this.headlessLogService.streamImageBuildLog(
-                logCtx,
-                logEndpoint,
-                async (chunk) => {
-                    if (aborted.isResolved) {
-                        return;
-                    }
+            await this.headlessLogService.streamImageBuildLog(logCtx, logEndpoint, async (chunk) => {
+                if (aborted.isResolved) {
+                    return;
+                }
 
-                    try {
-                        chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
-                        lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
+                try {
+                    chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
+                    lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
 
-                        client.onWorkspaceImageBuildLogs(undefined as any, {
-                            text: chunk,
-                            isDiff: true,
-                            upToLine: lineCount,
-                        });
-                    } catch (err) {
-                        log.error("error while streaming imagebuild logs", err);
-                        aborted.resolve(true);
-                    }
-                },
-                aborted,
-            );
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                    client.onWorkspaceImageBuildLogs(undefined as any, {
+                        text: chunk,
+                        isDiff: true,
+                        upToLine: lineCount,
+                    });
+                } catch (err) {
+                    log.error("error while streaming imagebuild logs", err);
+                    aborted.resolve(true);
+                }
+            });
         } catch (err) {
             // This error is most likely a temporary one (too early). We defer to the client whether they want to keep on trying or not.
             log.debug(logCtx, "cannot watch imagebuild logs for workspaceId", err);
@@ -813,6 +1022,30 @@ export class WorkspaceService {
         } finally {
             aborted.resolve(false);
         }
+    }
+
+    public getWorkspaceImageBuildLogsIterator(userId: string, workspaceId: string, opts: { signal: AbortSignal }) {
+        return generateAsyncGenerator<string>((sink) => {
+            this.watchWorkspaceImageBuildLogs(userId, workspaceId, {
+                onWorkspaceImageBuildLogs: (_info, content) => {
+                    if (content?.text) {
+                        sink.push(content.text);
+                    }
+                },
+            })
+                .then(() => {
+                    sink.stop();
+                })
+                .catch((err) => {
+                    if (err instanceof Error) {
+                        sink.fail(err);
+                        return;
+                    } else {
+                        sink.fail(new Error(String(err) || "unknown"));
+                    }
+                });
+            return () => {};
+        }, opts);
     }
 
     public async sendHeartBeat(
@@ -899,19 +1132,113 @@ export class WorkspaceService {
         });
     }
 
-    public async resolveBaseImage(ctx: TraceContext, user: User, imageRef: string) {
+    public async validateImageRef(ctx: TraceContext, user: User, imageRef: string) {
         try {
             return await this.workspaceStarter.resolveBaseImage(ctx, user, imageRef);
         } catch (e) {
-            // we could map proper response message according to e.code
-            // see https://github.com/gitpod-io/gitpod/blob/ef95e6f3ca0bf314c40da1b83251423c2208d175/components/image-builder-mk3/pkg/orchestrator/orchestrator_test.go#L178
-            throw ApplicationError.fromGRPCError(e);
+            // see https://github.com/gitpod-io/gitpod/blob/f3e41f8d86234e4101edff2199c54f50f8cbb656/components/image-builder-mk3/pkg/orchestrator/orchestrator.go#L561
+            // TODO(ak) ideally we won't check a message (subject to change)
+            // but ws-manager does not return INTERNAL for invalid image refs provided by a user
+            // otherwise we report it as internal error in observability
+            const code = e["code"];
+            const details = e["details"];
+            if (
+                typeof details === "string" &&
+                (code === grpc.status.INVALID_ARGUMENT || details.includes("cannot resolve image"))
+            ) {
+                let message = details;
+                // strip confusing prefix
+                if (details.startsWith("cannt resolve base image ref: ")) {
+                    message = details.substring("cannt resolve base image ref: ".length);
+                }
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, message);
+            }
+            throw e;
         }
+    }
+
+    public async getWorkspaceDefaultImage(
+        userId: string,
+        workspaceId: string,
+    ): Promise<{ source: "organization" | "installation"; image: string }> {
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        const settings = await this.orgService.getSettings(userId, workspace.organizationId);
+        if (settings.defaultWorkspaceImage) {
+            return {
+                source: "organization",
+                image: settings.defaultWorkspaceImage,
+            };
+        }
+        return {
+            source: "installation",
+            image: this.config.workspaceDefaults.workspaceImage,
+        };
+    }
+
+    public async takeSnapshot(userId: string, options: GitpodServer.TakeSnapshotOptions): Promise<Snapshot> {
+        const { workspaceId, dontWait } = options;
+        await this.auth.checkPermissionOnWorkspace(userId, "create_snapshot", workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        const instance = await this.db.findRunningInstance(workspaceId);
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
+        }
+        const client = await this.clientProvider.get(instance.region);
+        const request = new TakeSnapshotRequest();
+        request.setId(instance.id);
+        request.setReturnImmediately(true);
+
+        // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
+        let snapshotUrl;
+        try {
+            const resp = await client.takeSnapshot({}, request);
+            snapshotUrl = resp.getUrl();
+        } catch (err) {
+            if (isClusterMaintenanceError(err)) {
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    "Cannot take a snapshot because the workspace cluster is under maintenance. Please try again in a few minutes",
+                );
+            }
+            throw err;
+        }
+        const snapshot = await this.snapshotService.createSnapshot(options, snapshotUrl);
+
+        // to be backwards compatible during rollout, we require new clients to explicitly pass "dontWait: true"
+        // TODO: remove wait option after migrate to gRPC
+        const waitOpts = { workspaceOwner: workspace.ownerId, snapshot };
+        if (!dontWait) {
+            await this.snapshotService.waitForSnapshot(waitOpts);
+        } else {
+            this.snapshotService
+                .waitForSnapshot(waitOpts)
+                .catch((err) => log.error({ userId, workspaceId }, "internalDoWaitForWorkspace", err));
+        }
+        return snapshot;
+    }
+
+    /**
+     * @throws ApplicationError with either NOT_FOUND or SNAPSHOT_ERROR in case the snapshot is not done yet.
+     */
+    public async waitForSnapshot(userId: string, snapshotId: string): Promise<void> {
+        const snapshot = await this.db.findSnapshotById(snapshotId);
+        if (!snapshot) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `No snapshot with id '${snapshotId}' found.`);
+        }
+        await this.auth.checkPermissionOnWorkspace(userId, "create_snapshot", snapshot.originalWorkspaceId);
+        const workspace = await this.doGetWorkspace(userId, snapshot.originalWorkspaceId);
+        await this.snapshotService.waitForSnapshot({ workspaceOwner: workspace.ownerId, snapshot });
+    }
+
+    async listSnapshots(userId: string, workspaceId: string): Promise<Snapshot[]> {
+        // guard if user has workspace get permission
+        await this.doGetWorkspace(userId, workspaceId);
+        return await this.db.findSnapshotsByWorkspaceId(workspaceId);
     }
 }
 
 // TODO(gpl) Make private after FGA rollout
-export function mapGrpcError(err: Error): Error {
+export function mapGrpcError(err: any): Error {
     if (!isGrpcError(err)) {
         return err;
     }

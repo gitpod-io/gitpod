@@ -481,13 +481,14 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 		}
 
 		userId = userUuid.String()
-		_, err = db.Exec(`INSERT IGNORE INTO d_b_user (id, creationDate, avatarUrl, name, fullName, featureFlags) VALUES (?, ?, ?, ?, ?, ?)`,
+		_, err = db.Exec(`INSERT IGNORE INTO d_b_user (id, creationDate, avatarUrl, name, fullName, featureFlags, lastVerificationTime) VALUES (?, ?, ?, ?, ?, ?, ?)`,
 			userId,
 			time.Now().Format(time.RFC3339),
 			"",
 			username,
 			username,
 			"{\"permanentWSFeatureFlags\":[]}",
+			time.Now().Format(time.RFC3339),
 		)
 		if err != nil {
 			return "", err
@@ -495,7 +496,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	}
 
 	var authId string
-	err = db.QueryRow(`SELECT authId FROM d_b_identity WHERE userId = ? and deleted != 1`, userId).Scan(&authId)
+	err = db.QueryRow(`SELECT authId FROM d_b_identity WHERE userId = ?`, userId).Scan(&authId)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return "", err
 	}
@@ -513,7 +514,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	}
 
 	var cnt int
-	err = db.QueryRow(`SELECT COUNT(1) AS cnt FROM d_b_token_entry WHERE authId = ? and deleted != 1`, authId).Scan(&cnt)
+	err = db.QueryRow(`SELECT COUNT(1) AS cnt FROM d_b_token_entry WHERE authId = ?`, authId).Scan(&cnt)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return "", err
 	}

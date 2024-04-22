@@ -342,21 +342,6 @@ func (mr *MockAPIInterfaceMockRecorder) GetEnvVars(ctx interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvVars", reflect.TypeOf((*MockAPIInterface)(nil).GetEnvVars), ctx)
 }
 
-// GetFeaturedRepositories mocks base method.
-func (m *MockAPIInterface) GetFeaturedRepositories(ctx context.Context) ([]*WhitelistedRepository, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFeaturedRepositories", ctx)
-	ret0, _ := ret[0].([]*WhitelistedRepository)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetFeaturedRepositories indicates an expected call of GetFeaturedRepositories.
-func (mr *MockAPIInterfaceMockRecorder) GetFeaturedRepositories(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeaturedRepositories", reflect.TypeOf((*MockAPIInterface)(nil).GetFeaturedRepositories), ctx)
-}
-
 // GetGenericInvite mocks base method.
 func (m *MockAPIInterface) GetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error) {
 	m.ctrl.T.Helper()
@@ -519,21 +504,6 @@ func (m *MockAPIInterface) GetSnapshots(ctx context.Context, workspaceID string)
 func (mr *MockAPIInterfaceMockRecorder) GetSnapshots(ctx, workspaceID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSnapshots", reflect.TypeOf((*MockAPIInterface)(nil).GetSnapshots), ctx, workspaceID)
-}
-
-// GetSuggestedContextURLs mocks base method.
-func (m *MockAPIInterface) GetSuggestedContextURLs(ctx context.Context) ([]*string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSuggestedContextURLs", ctx)
-	ret0, _ := ret[0].([]*string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSuggestedContextURLs indicates an expected call of GetSuggestedContextURLs.
-func (mr *MockAPIInterfaceMockRecorder) GetSuggestedContextURLs(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSuggestedContextURLs", reflect.TypeOf((*MockAPIInterface)(nil).GetSuggestedContextURLs), ctx)
 }
 
 // GetSupportedWorkspaceClasses mocks base method.

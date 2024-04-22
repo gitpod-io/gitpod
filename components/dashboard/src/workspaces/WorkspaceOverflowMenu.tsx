@@ -4,22 +4,22 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInfo, WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { ItemFieldContextMenu } from "../components/ItemsList";
 import { useStopWorkspaceMutation } from "../data/workspaces/stop-workspace-mutation";
-import { useToggleWorkspacedPinnedMutation } from "../data/workspaces/toggle-workspace-pinned-mutation";
-import { useToggleWorkspaceSharedMutation } from "../data/workspaces/toggle-workspace-shared-mutation";
-import { getGitpodService } from "../service/service";
 import ConnectToSSHModal from "./ConnectToSSHModal";
 import { DeleteWorkspaceModal } from "./DeleteWorkspaceModal";
 import { useToast } from "../components/toasts/Toasts";
 import { RenameWorkspaceModal } from "./RenameWorkspaceModal";
+import { AdmissionLevel, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { workspaceClient } from "../service/public-api";
+import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
+import { useUpdateWorkspaceMutation } from "../data/workspaces/update-workspace-mutation";
 
 type WorkspaceEntryOverflowMenuProps = {
-    info: WorkspaceInfo;
+    info: Workspace;
     changeMenuState: (state: boolean) => void;
 };
 
@@ -32,18 +32,18 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     const [isSSHModalVisible, setSSHModalVisible] = useState(false);
     const [ownerToken, setOwnerToken] = useState("");
     const { toast } = useToast();
+    const { data: settings } = useOrgSettingsQuery();
 
     const stopWorkspace = useStopWorkspaceMutation();
-    const toggleWorkspaceShared = useToggleWorkspaceSharedMutation();
-    const toggleWorkspacePinned = useToggleWorkspacedPinnedMutation();
+    const updateWorkspace = useUpdateWorkspaceMutation();
 
-    const workspace = info.workspace;
-    const state: WorkspaceInstancePhase = info.latestInstance?.status?.phase || "stopped";
+    const workspace = info;
+    const state: WorkspacePhase_Phase = info?.status?.phase?.name || WorkspacePhase_Phase.STOPPED;
 
     //TODO: shift this into ConnectToSSHModal
     const handleConnectViaSSHClick = useCallback(async () => {
-        const ot = await getGitpodService().server.getOwnerToken(workspace.id);
-        setOwnerToken(ot);
+        const response = await workspaceClient.getWorkspaceOwnerToken({ workspaceId: workspace.id });
+        setOwnerToken(response.ownerToken);
         setSSHModalVisible(true);
     }, [workspace.id]);
 
@@ -59,19 +59,25 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     }, [toast, stopWorkspace, workspace.id]);
 
     const toggleShared = useCallback(() => {
-        const newLevel = workspace.shareable ? "owner" : "everyone";
+        const newLevel =
+            workspace.spec?.admission === AdmissionLevel.EVERYONE ? AdmissionLevel.OWNER_ONLY : AdmissionLevel.EVERYONE;
 
-        toggleWorkspaceShared.mutate({
+        updateWorkspace.mutate({
             workspaceId: workspace.id,
-            level: newLevel,
+            spec: {
+                admission: newLevel,
+            }
         });
-    }, [toggleWorkspaceShared, workspace.id, workspace.shareable]);
+    }, [updateWorkspace, workspace.id, workspace.spec?.admission]);
 
     const togglePinned = useCallback(() => {
-        toggleWorkspacePinned.mutate({
+        updateWorkspace.mutate({
             workspaceId: workspace.id,
+            metadata: {
+                pinned: !workspace.metadata?.pinned
+            }
         });
-    }, [toggleWorkspacePinned, workspace.id]);
+    }, [updateWorkspace, workspace.id, workspace.metadata?.pinned]);
 
     // Can we use `/start#${workspace.id}` instead?
     const startUrl = useMemo(
@@ -106,7 +112,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         },
     ];
 
-    if (state === "running") {
+    if (state === WorkspacePhase_Phase.RUNNING) {
         menuEntries.push({
             title: "Stop",
             onClick: handleStopWorkspace,
@@ -123,15 +129,26 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         download: `${workspace.id}.tar`,
     });
 
+    // Push the Workspace share menu entry based on the current organization settings for workspace sharing
+    if (settings && !settings.workspaceSharingDisabled) {
+        menuEntries.push({
+            title: "Share",
+            active: workspace.spec?.admission === AdmissionLevel.EVERYONE,
+            onClick: toggleShared,
+        });
+    } else {
+        menuEntries.push({
+            title: "Workspace sharing is disabled for this organization. Contact your org. owner to enable it.",
+            active: false,
+            customContent: "Share",
+            customFontStyle: "text-gray-400 dark:text-gray-500 opacity-50 cursor-not-allowed",
+        });
+    }
+
     menuEntries.push(
         {
-            title: "Share",
-            active: !!workspace.shareable,
-            onClick: toggleShared,
-        },
-        {
             title: "Pin",
-            active: !!workspace.pinned,
+            active: !!workspace.metadata?.pinned,
             separator: true,
             onClick: togglePinned,
         },
@@ -151,11 +168,11 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
             {isRenameModalVisible && (
                 <RenameWorkspaceModal workspace={workspace} onClose={() => setRenameModalVisible(false)} />
             )}
-            {isSSHModalVisible && info.latestInstance && ownerToken !== "" && (
+            {isSSHModalVisible && info.status && ownerToken !== "" && (
                 <ConnectToSSHModal
                     workspaceId={workspace.id}
                     ownerToken={ownerToken}
-                    ideUrl={info.latestInstance.ideUrl.replaceAll("https://", "")}
+                    ideUrl={info.status.workspaceUrl.replaceAll("https://", "")}
                     onClose={() => {
                         setSSHModalVisible(false);
                         setOwnerToken("");

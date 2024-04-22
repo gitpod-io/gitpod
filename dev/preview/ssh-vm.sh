@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Provides SSH access to the the VM where your preview environment is installed.
+# Provides SSH access to the VM where your preview environment is installed.
 #
 
 set -euo pipefail
@@ -9,16 +9,15 @@ THIS_DIR="$(dirname "$0")"
 
 PRIVATE_KEY=$HOME/.ssh/vm_id_rsa
 PUBLIC_KEY=$HOME/.ssh/vm_id_rsa.pub
-PORT=8022
+PORT=2222
 USER="ubuntu"
 COMMAND=""
 BRANCH=""
 
-while getopts c:n:p:u:b: flag
+while getopts c:p:u:b: flag
 do
     case "${flag}" in
         c) COMMAND="${OPTARG}";;
-        n) NAMESPACE="${OPTARG}";;
         p) PORT="${OPTARG}";;
         u) USER="${OPTARG}";;
         b) BRANCH="${2}";;
@@ -33,8 +32,6 @@ if [ -z "${VM_NAME:-}" ]; then
       VM_NAME="$(previewctl get name --branch "$BRANCH")"
   fi
 fi
-
-NAMESPACE="preview-${VM_NAME}"
 
 function log {
     echo "[$(date)] $*"
@@ -58,11 +55,10 @@ fi
 
 set-up-ssh
 
-ssh "$USER"@127.0.0.1 \
+ssh "$USER@$VM_NAME.preview.gitpod-dev.com" \
     -o UserKnownHostsFile=/dev/null \
     -o StrictHostKeyChecking=no \
     -o LogLevel=ERROR \
-    -o "ProxyCommand=$THIS_DIR/util/ssh-proxy-command.sh -p $PORT -n $NAMESPACE -v $VM_NAME" \
     -i "$HOME/.ssh/vm_id_rsa" \
     -p "$PORT" \
     "$COMMAND"

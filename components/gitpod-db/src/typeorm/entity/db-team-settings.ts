@@ -21,6 +21,15 @@ export class DBOrgSettings implements OrganizationSettings {
     @Column("varchar", { nullable: true })
     defaultWorkspaceImage?: string | null;
 
+    @Column("json", { nullable: true })
+    allowedWorkspaceClasses?: string[] | null;
+
+    @Column("json", { nullable: true })
+    pinnedEditorVersions?: { [key: string]: string } | null;
+
+    @Column("json", { nullable: true })
+    restrictedEditorNames?: string[] | null;
+
     @Column()
     deleted: boolean;
 }

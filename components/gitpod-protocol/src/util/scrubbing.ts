@@ -115,7 +115,7 @@ function doScrub(obj: any, depth: number, nested: boolean): any {
     }
     const objType = typeof obj;
     if (objType === "string") {
-        return scrubber.scrubValue(obj);
+        return scrubber.scrubValue(obj as string);
     }
     if (objType === "boolean" || objType === "number") {
         return obj;
@@ -131,7 +131,7 @@ function doScrub(obj: any, depth: number, nested: boolean): any {
     }
     if (objType === "object") {
         const result: any = {};
-        for (const [key, value] of Object.entries(obj)) {
+        for (const [key, value] of Object.entries(obj as object)) {
             if (typeof value === "string") {
                 result[key] = scrubber.scrubKeyValue(key, value);
             } else {

@@ -4,32 +4,59 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { OrganizationSettings } from "@gitpod/gitpod-protocol";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
-import { getOrgSettingsQueryKey, OrgSettingsResult } from "./org-settings-query";
+import { useMutation } from "@tanstack/react-query";
+import { useOrgSettingsQueryInvalidator } from "./org-settings-query";
 import { useCurrentOrg } from "./orgs-query";
+import { organizationClient } from "../../service/public-api";
+import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { useOrgWorkspaceClassesQueryInvalidator } from "./org-workspace-classes-query";
 
 type UpdateOrganizationSettingsArgs = Partial<
-    Pick<OrganizationSettings, "workspaceSharingDisabled" | "defaultWorkspaceImage">
+    Pick<
+        OrganizationSettings,
+        | "workspaceSharingDisabled"
+        | "defaultWorkspaceImage"
+        | "allowedWorkspaceClasses"
+        | "pinnedEditorVersions"
+        | "restrictedEditorNames"
+    >
 >;
 
 export const useUpdateOrgSettingsMutation = () => {
-    const queryClient = useQueryClient();
-    const team = useCurrentOrg().data;
-    const teamId = team?.id || "";
+    const org = useCurrentOrg().data;
+    const invalidateOrgSettings = useOrgSettingsQueryInvalidator();
+    const invalidateWorkspaceClasses = useOrgWorkspaceClassesQueryInvalidator();
+    const teamId = org?.id || "";
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
-        mutationFn: async ({ workspaceSharingDisabled, defaultWorkspaceImage }) => {
-            return await getGitpodService().server.updateOrgSettings(teamId, {
-                workspaceSharingDisabled,
+        mutationFn: async ({
+            workspaceSharingDisabled,
+            defaultWorkspaceImage,
+            allowedWorkspaceClasses,
+            pinnedEditorVersions,
+            restrictedEditorNames,
+        }) => {
+            const settings = await organizationClient.updateOrganizationSettings({
+                organizationId: teamId,
+                workspaceSharingDisabled: workspaceSharingDisabled || false,
                 defaultWorkspaceImage,
+                allowedWorkspaceClasses,
+                updatePinnedEditorVersions: !!pinnedEditorVersions,
+                pinnedEditorVersions,
+                restrictedEditorNames,
+                updateRestrictedEditorNames: !!restrictedEditorNames,
             });
+            return settings.settings!;
         },
-        onSuccess: (newData, _) => {
-            const queryKey = getOrgSettingsQueryKey(teamId);
-            queryClient.setQueryData<OrgSettingsResult>(queryKey, newData);
-            queryClient.invalidateQueries({ queryKey });
+        onSuccess: () => {
+            invalidateOrgSettings();
+            invalidateWorkspaceClasses();
+        },
+        onError: (err) => {
+            if (!ErrorCode.isUserError((err as any)?.["code"])) {
+                console.error(err);
+            }
         },
     });
 };

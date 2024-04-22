@@ -62,6 +62,8 @@ type WorkspaceSpec struct {
 
 	// the XFS quota to enforce on the workspace's /workspace folder
 	StorageQuota int `json:"storageQuota,omitempty"`
+
+	SSHGatewayCAPublicKey string `json:"sshGatewayCAPublicKey,omitempty"`
 }
 
 type Ownership struct {
@@ -169,7 +171,7 @@ func (ps PortSpec) Equal(other PortSpec) bool {
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	PodStarts  int    `json:"podStarts"`
-	URL        string `json:"url,omitempty"`
+	URL        string `json:"url,omitempty" scrub:"redact"`
 	OwnerToken string `json:"ownerToken,omitempty" scrub:"redact"`
 
 	// +kubebuilder:default=Unknown
@@ -188,6 +190,8 @@ type WorkspaceStatus struct {
 	// +kubebuilder:validation:Optional
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 
+	Storage StorageStatus `json:"storage,omitempty"`
+
 	LastActivity *metav1.Time `json:"lastActivity,omitempty"`
 }
 
@@ -195,7 +199,13 @@ func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {
 	s.Conditions = wsk8s.AddUniqueCondition(s.Conditions, cond)
 }
 
-// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;EverReady;BackupComplete;BackupFailure;Refresh;NodeDisappeared
+type StorageStatus struct {
+	VolumeName     string `json:"volumeName"`
+	AttachedDevice string `json:"attachedDevice"`
+	MountPath      string `json:"mountPath"`
+}
+
+// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;EverReady;BackupComplete;BackupFailure;Refresh;NodeDisappeared;ThroughputAdjusted
 type WorkspaceCondition string
 
 const (
@@ -243,6 +253,18 @@ const (
 
 	// NodeDisappeared is true if the workspace's node disappeared before the workspace was stopped
 	WorkspaceConditionNodeDisappeared WorkspaceCondition = "NodeDisappeared"
+
+	VolumeAttachRequest WorkspaceCondition = "VolumeAttachRequest"
+	// VolumeAttached is true if the workspace's volume has been attached to the node
+	VolumeAttached WorkspaceCondition = "VolumeAttached"
+	// VolumeMounted is true if the workspace's volume has been mounted on the node
+	VolumeMounted WorkspaceCondition = "VolumeMounted"
+	// ThroughputAdjusted is true if the throughput of the workspace volume has been adjusted
+	WorkspaceConditionThroughputAdjusted WorkspaceCondition = "ThroughputAdjusted"
+
+	// WorkspaceContainerRunning is true if the workspace container is running.
+	// Used to determine if a backup can be taken, only once the container is stopped.
+	WorkspaceConditionContainerRunning WorkspaceCondition = "WorkspaceContainerRunning"
 )
 
 func NewWorkspaceConditionDeployed() metav1.Condition {
@@ -368,6 +390,22 @@ func NewWorkspaceConditionNodeDisappeared() metav1.Condition {
 		Type:               string(WorkspaceConditionNodeDisappeared),
 		LastTransitionTime: metav1.Now(),
 		Status:             metav1.ConditionTrue,
+	}
+}
+
+func NewWorkspaceConditionThroughputAdjusted() metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionThroughputAdjusted),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+	}
+}
+
+func NewWorkspaceConditionContainerRunning(status metav1.ConditionStatus) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionContainerRunning),
+		LastTransitionTime: metav1.Now(),
+		Status:             status,
 	}
 }
 

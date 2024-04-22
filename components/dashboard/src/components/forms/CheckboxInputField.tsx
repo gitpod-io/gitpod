@@ -11,7 +11,7 @@ import { InputField } from "./InputField";
 import { InputFieldHint } from "./InputFieldHint";
 
 type CheckboxListFieldProps = {
-    label: string;
+    label?: string;
     error?: ReactNode;
     className?: string;
     topMargin?: boolean;
@@ -63,11 +63,11 @@ export const CheckboxInputField: FC<CheckboxInputFieldProps> = ({
     return (
         // Intentionally not passing label and hint to InputField because we want to render them differently for checkboxes.
         <InputField error={error} topMargin={topMargin} className={containerClassName}>
-            <label className="flex space-x-2 justify-start items-start max-w-lg" htmlFor={elementId}>
+            <label className="flex space-x-2 cursor-pointer justify-start items-start max-w-lg" htmlFor={elementId}>
                 <input
                     type="checkbox"
                     className={classNames(
-                        "h-4 w-4 mt-0.5 rounded cursor-pointer border-2 dark:filter-invert",
+                        "h-4 w-4 mt-0.5 rounded border-2 dark:filter-invert",
                         "focus:ring-2 ring-blue-400",
                         "border-gray-600 dark:border-gray-900 bg-transparent",
                         "checked:bg-gray-600 dark:checked:bg-gray-900",
@@ -79,14 +79,14 @@ export const CheckboxInputField: FC<CheckboxInputFieldProps> = ({
                     onChange={handleChange}
                 />
                 <div className="flex flex-col">
-                    <span
+                    <div
                         className={classNames(
                             "text-sm font-semibold cursor-pointer",
                             disabled ? "text-gray-400 dark:text-gray-400" : "text-gray-600 dark:text-gray-100",
                         )}
                     >
                         {label}
-                    </span>
+                    </div>
 
                     {hint && <InputFieldHint disabled={disabled}>{hint}</InputFieldHint>}
                 </div>

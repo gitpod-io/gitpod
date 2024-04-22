@@ -4,23 +4,25 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { useContext, useEffect, useState, useMemo, useCallback, FC } from "react";
 import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "./provider-utils";
-import gitpod from "./images/gitpod.svg";
-import gitpodDark from "./images/gitpod-dark.svg";
-import gitpodIcon from "./icons/gitpod.svg";
 import exclamation from "./images/exclamation.svg";
 import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
 import { SSOLoginForm } from "./login/SSOLoginForm";
-import { useAuthProviders } from "./data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "./data/auth-providers/auth-provider-descriptions-query";
 import { SetupPending } from "./login/SetupPending";
 import { useNeedsSetup } from "./dedicated-setup/use-needs-setup";
+import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { Button, ButtonProps } from "@podkit/buttons/Button";
+import { cn } from "@podkit/lib/cn";
+import { userClient } from "./service/public-api";
+import { ProductLogo } from "./components/ProductLogo";
+import { useIsDataOps } from "./data/featureflag-query";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -35,10 +37,11 @@ type LoginProps = {
 };
 export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     const { setUser } = useContext(UserContext);
+    const isDataOps = useIsDataOps();
 
     const urlHash = useMemo(() => getURLHash(), []);
 
-    const authProviders = useAuthProviders();
+    const authProviders = useAuthProviderDescriptions();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [hostFromContext, setHostFromContext] = useState<string | undefined>();
     const [repoPathname, setRepoPathname] = useState<string | undefined>();
@@ -58,16 +61,18 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
         }
     }, [urlHash]);
 
-    let providerFromContext: AuthProviderInfo | undefined;
+    let providerFromContext: AuthProviderDescription | undefined;
     if (hostFromContext && authProviders.data) {
         providerFromContext = authProviders.data.find((provider) => provider.host === hostFromContext);
     }
 
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
-        const user = await getGitpodService().server.getLoggedInUser();
-        setUser(user);
-        markLoggedIn();
+        const { user } = await userClient.getAuthenticatedUser({});
+        if (user) {
+            setUser(user);
+            markLoggedIn();
+        }
     }, [setUser]);
 
     const authorizeSuccessful = useCallback(async () => {
@@ -128,20 +133,13 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                         <div className="flex-grow h-100 flex flex-row items-center justify-center">
                             <div className="rounded-xl px-10 py-10 mx-auto">
                                 <div className="mx-auto pb-8">
-                                    <img
-                                        src={providerFromContext ? gitpod : gitpodIcon}
-                                        className="h-14 mx-auto block dark:hidden"
-                                        alt="Gitpod's logo"
-                                    />
-                                    <img
-                                        src={providerFromContext ? gitpodDark : gitpodIcon}
-                                        className="h-14 hidden mx-auto dark:block"
-                                        alt="Gitpod dark theme logo"
-                                    />
+                                    <ProductLogo className="h-14 mx-auto block" />
                                 </div>
 
                                 <div className="mx-auto text-center pb-8 space-y-2">
-                                    {providerFromContext ? (
+                                    {isDataOps ? (
+                                        <Heading1>Log in to DataOps.live Develop</Heading1>
+                                    ) : providerFromContext ? (
                                         <>
                                             <Heading2>Open a cloud development environment</Heading2>
                                             <Subheading>for the repository {repoPathname?.slice(1)}</Subheading>
@@ -153,28 +151,23 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
                                 <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
                                     {providerFromContext ? (
-                                        <button
+                                        <LoginButton
                                             key={"button" + providerFromContext.host}
-                                            className="btn-login flex-none w-56 h-10 p-0 inline-flex rounded-xl"
                                             onClick={() => openLogin(providerFromContext!.host)}
                                         >
-                                            {iconForAuthProvider(providerFromContext.authProviderType)}
+                                            {iconForAuthProvider(providerFromContext.type)}
                                             <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                                 Continue with {simplifyProviderName(providerFromContext.host)}
                                             </span>
-                                        </button>
+                                        </LoginButton>
                                     ) : (
                                         authProviders.data?.map((ap) => (
-                                            <button
-                                                key={"button" + ap.host}
-                                                className="btn-login flex-none w-56 h-10 p-0 inline-flex rounded-xl"
-                                                onClick={() => openLogin(ap.host)}
-                                            >
-                                                {iconForAuthProvider(ap.authProviderType)}
+                                            <LoginButton key={"button" + ap.host} onClick={() => openLogin(ap.host)}>
+                                                {iconForAuthProvider(ap.type)}
                                                 <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                                     Continue with {simplifyProviderName(ap.host)}
                                                 </span>
-                                            </button>
+                                            </LoginButton>
                                         ))
                                     )}
                                     <SSOLoginForm
@@ -213,5 +206,27 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                 </div>
             </div>
         </div>
+    );
+};
+
+// TODO: Do we really want a different style button for the login page, or could we use our normal secondary variant?
+type LoginButtonProps = {
+    onClick: ButtonProps["onClick"];
+};
+const LoginButton: FC<LoginButtonProps> = ({ children, onClick }) => {
+    return (
+        <Button
+            // Using ghost here to avoid the default button styles
+            variant="ghost"
+            // TODO: Determine if we want this one-off style of button
+            className={cn(
+                "border-none bg-gray-100 hover:bg-gray-200 text-gray-500 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-600 hover:opacity-100",
+                "flex-none w-56 h-10 p-0 inline-flex rounded-xl",
+                "justify-normal",
+            )}
+            onClick={onClick}
+        >
+            {children}
+        </Button>
     );
 };

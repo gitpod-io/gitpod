@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"net/http"
 	"net/url"
@@ -329,34 +330,7 @@ type WorkspaceConfig struct {
 	// ConfigcatEnabled controls whether configcat is enabled
 	ConfigcatEnabled bool `env:"GITPOD_CONFIGCAT_ENABLED"`
 
-	WorkspaceLinuxUID uint32 `env:"GITPOD_WORKSPACE_LINUX_UID,default=33333"`
-	WorkspaceLinuxGID uint32 `env:"GITPOD_WORKSPACE_LINUX_GID,default=33333"`
-
-	// ContentInitializer - if set - will run the content initializer instead of waiting for the ready file
-	ContentInitializer string `env:"SUPERVISOR_CONTENT_INITIALIZER"`
-
-	// WorkspaceRuntime configures the runtime supervisor is running in
-	WorkspaceRuntime WorkspaceRuntime `env:"SUPERVISOR_WORKSPACE_RUNTIME,default=container"`
-}
-
-type WorkspaceRuntime string
-
-const (
-	WorkspaceRuntimeContainer WorkspaceRuntime = "container"
-	WorkspaceRuntimeNextgen   WorkspaceRuntime = "nextgen"
-	WorkspaceRuntimeRunGP     WorkspaceRuntime = "rungp"
-)
-
-func (rt *WorkspaceRuntime) UnmarshalEnvironmentValue(data string) error {
-	switch WorkspaceRuntime(data) {
-	case WorkspaceRuntimeContainer, WorkspaceRuntimeNextgen, WorkspaceRuntimeRunGP:
-		// everything's fine
-	default:
-		return fmt.Errorf("unknown workspace runtime: %s", data)
-	}
-
-	*rt = WorkspaceRuntime(data)
-	return nil
+	SSHGatewayCAPublicKey string `env:"GITPOD_SSH_CA_PUBLIC_KEY"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.
@@ -615,7 +589,7 @@ func loadDesktopIDEs(static *StaticConfig) ([]*IDEConfig, error) {
 		uniqueDesktopIDEs[desktopIDE.Name] = struct{}{}
 	}
 
-	files, err := os.ReadDir(static.DesktopIDERoot)
+	files, err := ioutil.ReadDir(static.DesktopIDERoot)
 	if err != nil {
 		return nil, err
 	}

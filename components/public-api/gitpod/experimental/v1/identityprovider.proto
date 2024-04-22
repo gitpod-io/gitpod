@@ -6,14 +6,14 @@ option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experi
 
 service IdentityProviderService {
   // GetIDToken produces a new OIDC ID token (https://openid.net/specs/openid-connect-core-1_0.html#ImplicitIDToken)
-  rpc GetIDToken(GetIDTokenRequest) returns (GetIDTokenResponse) {};
+  rpc GetIDToken(GetIDTokenRequest) returns (GetIDTokenResponse) {}
 }
 
 message GetIDTokenRequest {
-    string workspace_id = 1;
-    repeated string audience = 2;
+  string workspace_id = 1;
+  repeated string audience = 2;
 }
 
 message GetIDTokenResponse {
-    string token = 1;
+  string token = 1;
 }

@@ -42,6 +42,9 @@ const (
 	// ServiceTypeLabel help differentiate between port service and IDE service
 	ServiceTypeLabel = "serviceType"
 
+	// WorkspaceManaged indicates which component is responsible for managing the workspace
+	WorkspaceManagedByLabel = "gitpod.io/managed-by"
+
 	// CPULimitAnnotation enforces a strict CPU limit on a workspace by virtue of ws-daemon
 	CPULimitAnnotation = "gitpod.io/cpuLimit"
 
@@ -75,6 +78,9 @@ const (
 
 	// workspacePressureStallInfo indicates if pressure stall information should be retrieved for the workspace
 	WorkspacePressureStallInfoAnnotation = "gitpod.io/psi"
+
+	// ImageNameAnnotation indicates the original format of the main image of the pod
+	ImageNameAnnotation = "gitpod.io/image_name"
 )
 
 // GetOWIFromObject finds the owner, workspace and instance information on a Kubernetes object using labels

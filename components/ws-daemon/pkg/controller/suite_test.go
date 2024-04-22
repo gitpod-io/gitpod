@@ -72,8 +72,7 @@ var _ = BeforeSuite(func() {
 	Expect(k8sClient).NotTo(BeNil())
 
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme:             scheme.Scheme,
-		MetricsBindAddress: ":0",
+		Scheme: scheme.Scheme,
 	})
 	Expect(err).ToNot(HaveOccurred())
 	ctx, cancel = context.WithCancel(context.Background())

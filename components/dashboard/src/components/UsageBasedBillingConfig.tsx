@@ -17,10 +17,12 @@ import { getGitpodService } from "../service/service";
 import Alert from "./Alert";
 import { Subheading } from "./typography/headings";
 import { AddPaymentMethodModal } from "./billing/AddPaymentMethodModal";
-import { Button } from "./Button";
 import { useCreateHoldPaymentIntentMutation } from "../data/billing/create-hold-payment-intent-mutation";
 import { useToast } from "./toasts/Toasts";
 import { ProgressBar } from "./ProgressBar";
+import { useListOrganizationMembers } from "../data/organizations/members-query";
+import { Button } from "@podkit/buttons/Button";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -33,8 +35,9 @@ let didAlreadyCallSubscribe = false;
 
 export default function UsageBasedBillingConfig({ hideSubheading = false }: Props) {
     const currentOrg = useCurrentOrg().data;
-    const attrId = currentOrg ? AttributionId.create(currentOrg) : undefined;
+    const attrId = currentOrg ? AttributionId.createFromOrganizationId(currentOrg.id) : undefined;
     const attributionId = attrId && AttributionId.render(attrId);
+    const members = useListOrganizationMembers().data;
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [isLoadingStripeSubscription, setIsLoadingStripeSubscription] = useState<boolean>(true);
@@ -155,7 +158,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                 // FIXME: Should we ask the customer to confirm or edit this default limit?
                 let limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS;
                 if (attrId?.kind === "team" && currentOrg) {
-                    limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * currentOrg.members.length;
+                    limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * (members?.length || 0);
                 }
                 const newLimit = await getGitpodService().server.subscribeToStripe(
                     attributionId,
@@ -190,7 +193,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                 );
             }
         },
-        [attrId?.kind, attributionId, currentOrg, location.pathname, refreshSubscriptionDetails],
+        [members, attrId?.kind, attributionId, currentOrg, location.pathname, refreshSubscriptionDetails],
     );
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || isCreatingSubscription;
@@ -291,7 +294,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                                         "YYYY-MM-DD",
                                     )}`}
                                 >
-                                    <button className="secondary">View Usage →</button>
+                                    <Button variant="secondary">View Usage →</Button>
                                 </Link>
                             </div>
                         </div>
@@ -329,14 +332,14 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                             <div className="flex justify-end mt-6 space-x-2">
                                 {stripePortalUrl && (
                                     <a href={stripePortalUrl}>
-                                        <button className="secondary" disabled={!stripePortalUrl}>
+                                        <Button variant="secondary" disabled={!stripePortalUrl}>
                                             View Past Invoices ↗
-                                        </button>
+                                        </Button>
                                     </a>
                                 )}
-                                <Button loading={createPaymentIntent.isLoading} onClick={handleAddPaymentMethod}>
+                                <LoadingButton loading={createPaymentIntent.isLoading} onClick={handleAddPaymentMethod}>
                                     Upgrade Plan
-                                </Button>
+                                </LoadingButton>
                             </div>
                         </div>
                     </>
@@ -356,9 +359,9 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                             </div>
 
                             <a className="mt-5 self-end" href={stripePortalUrl}>
-                                <button className="secondary" disabled={!stripePortalUrl}>
+                                <Button variant="secondary" disabled={!stripePortalUrl}>
                                     Manage Billing Settings ↗
-                                </button>
+                                </Button>
                             </a>
                         </div>
                     </div>
@@ -443,12 +446,12 @@ function UpdateLimitModal(props: {
                 </label>
             </ModalBody>
             <ModalFooter>
-                <Button type="secondary" onClick={props.onClose}>
+                <Button variant="secondary" onClick={props.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit" loading={isSaving}>
+                <LoadingButton type="submit" loading={isSaving}>
                     Update
-                </Button>
+                </LoadingButton>
             </ModalFooter>
         </Modal>
     );

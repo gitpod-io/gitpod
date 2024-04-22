@@ -12,7 +12,6 @@ import (
 
 	configcat "github.com/configcat/go-sdk/v7"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/sirupsen/logrus"
 )
 
 type Client interface {
@@ -33,6 +32,10 @@ type Attributes struct {
 	VSCodeClientID string
 
 	GitpodHost string
+
+	// Component is using in components/service-waiter
+	// Feature Flag key is `service_waiter_skip_component`
+	Component string
 }
 
 type ClientOpt func(o *options)
@@ -45,10 +48,25 @@ func WithGitpodProxy(gitpodHost string) ClientOpt {
 	}
 }
 
+func WithPollInterval(interval time.Duration) ClientOpt {
+	return func(o *options) {
+		o.pollInterval = interval
+	}
+}
+
+func WithDefaultClient(defaultClient Client) ClientOpt {
+	return func(o *options) {
+		o.defaultClient = defaultClient
+		o.hasDefaultClient = true
+	}
+}
+
 type options struct {
-	pollInterval time.Duration
-	baseURL      string
-	sdkKey       string
+	pollInterval     time.Duration
+	baseURL          string
+	sdkKey           string
+	defaultClient    Client
+	hasDefaultClient bool
 }
 
 // NewClient constructs a new experiments.Client. This is NOT A SINGLETON.
@@ -66,15 +84,16 @@ func NewClient(opts ...ClientOpt) Client {
 	}
 
 	if opt.sdkKey == "" {
+		if opt.hasDefaultClient {
+			return opt.defaultClient
+		}
 		return NewAlwaysReturningDefaultValueClient()
 	}
-	logger := log.Log.Dup()
-	logger.Level = logrus.ErrorLevel
 	return newConfigCatClient(configcat.Config{
 		SDKKey:       opt.sdkKey,
 		BaseURL:      opt.baseURL,
 		PollInterval: opt.pollInterval,
 		HTTPTimeout:  3 * time.Second,
-		Logger:       &configCatLogger{logger},
+		Logger:       &configCatLogger{log.Log},
 	})
 }

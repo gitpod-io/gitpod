@@ -5,10 +5,9 @@
  */
 
 import { scrubber } from "../util/scrubbing";
-import { Status } from "nice-grpc-common";
 
 export class ApplicationError extends Error {
-    constructor(public readonly code: ErrorCode, message: string, public readonly data?: any) {
+    constructor(readonly code: ErrorCode, readonly message: string, readonly data?: any) {
         super(message);
         this.data = scrubber.scrub(this.data, true);
     }
@@ -24,7 +23,7 @@ export class ApplicationError extends Error {
 
 export namespace ApplicationError {
     export function hasErrorCode(e: any): e is Error & { code: ErrorCode; data?: any } {
-        return e && e.code !== undefined;
+        return ErrorCode.is(e["code"]);
     }
 
     export async function notFoundToUndefined<T>(p: Promise<T>): Promise<T | undefined> {
@@ -37,38 +36,17 @@ export namespace ApplicationError {
             throw e;
         }
     }
-
-    export function fromGRPCError(e: any & Error, data?: any): ApplicationError {
-        // Argument e should be ServerErrorResponse
-        // But to reduce dependency requirement, we use Error here
-        return new ApplicationError(categorizeRPCError(e.code), e.message, data);
-    }
-
-    export function categorizeRPCError(code?: Status): ErrorCode {
-        // Mostly align to https://github.com/gitpod-io/gitpod/blob/ef95e6f3ca0bf314c40da1b83251423c2208d175/components/public-api-server/pkg/proxy/errors.go#L25
-        switch (code) {
-            case Status.INVALID_ARGUMENT:
-                return ErrorCodes.BAD_REQUEST;
-            case Status.UNAUTHENTICATED:
-                return ErrorCodes.NOT_AUTHENTICATED;
-            case Status.PERMISSION_DENIED:
-                return ErrorCodes.PERMISSION_DENIED; // or UserBlocked
-            case Status.NOT_FOUND:
-                return ErrorCodes.NOT_FOUND;
-            case Status.ALREADY_EXISTS:
-                return ErrorCodes.CONFLICT;
-            case Status.FAILED_PRECONDITION:
-                return ErrorCodes.PRECONDITION_FAILED;
-            case Status.RESOURCE_EXHAUSTED:
-                return ErrorCodes.TOO_MANY_REQUESTS;
-        }
-        return ErrorCodes.INTERNAL_SERVER_ERROR;
-    }
 }
 
 export namespace ErrorCode {
     export function isUserError(code: number | ErrorCode) {
         return code >= 400 && code < 500;
+    }
+    export function is(code: any): code is ErrorCode {
+        if (typeof code !== "number") {
+            return false;
+        }
+        return Object.values(ErrorCodes).includes(code as ErrorCode);
     }
 }
 
@@ -132,11 +110,20 @@ export const ErrorCodes = {
     // 490 Too Many Running Workspace
     TOO_MANY_RUNNING_WORKSPACES: 490 as const,
 
+    // 498 The operation was cancelled, typically by the caller.
+    CANCELLED: 498 as const,
+
+    // 4981 The deadline expired before the operation could complete.
+    DEADLINE_EXCEEDED: 4981 as const,
+
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR: 500 as const,
 
     // 501 EE Feature
     EE_FEATURE: 501 as const,
+
+    // 521 Unimplemented
+    UNIMPLEMENTED: 521 as const,
 
     // 555 EE License Required
     EE_LICENSE_REQUIRED: 555 as const,

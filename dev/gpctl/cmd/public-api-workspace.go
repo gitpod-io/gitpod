@@ -9,8 +9,9 @@ import (
 )
 
 var publicApiWorkspacesCmd = &cobra.Command{
-	Use:   "workspaces",
-	Short: "Interact with workspaces through the public-API",
+	Use:     "workspaces",
+	Aliases: []string{"ws"},
+	Short:   "Interact with workspaces through the public-API",
 }
 
 func init() {

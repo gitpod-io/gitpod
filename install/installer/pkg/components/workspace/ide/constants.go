@@ -5,22 +5,23 @@
 package ide
 
 const (
-	CodeIDEImage                = "ide/code"
-	CodeIDEImageStableVersion   = "commit-9205b24a4c5c4f394a05b7186dac119e6c8b7cd9" // stable version that will be updated manually on demand
-	CodeHelperIDEImage          = "ide/code-codehelper"
-	CodeWebExtensionImage       = "ide/gitpod-code-web"
-	CodeWebExtensionVersion     = "commit-1de61b5711089287b7f27bc1223c57d6d9bb3144" // gitpod-web extension version comes from https://github.com/gitpod-io/gitpod-code
-	CodeDesktopIDEImage         = "ide/code-desktop"
-	CodeDesktopInsidersIDEImage = "ide/code-desktop-insiders"
-	XtermIDEImage               = "ide/xterm-web"
-	IntelliJDesktopIDEImage     = "ide/intellij"
-	GoLandDesktopIdeImage       = "ide/goland"
-	PyCharmDesktopIdeImage      = "ide/pycharm"
-	PhpStormDesktopIdeImage     = "ide/phpstorm"
-	RubyMineDesktopIdeImage     = "ide/rubymine"
-	WebStormDesktopIdeImage     = "ide/webstorm"
-	RiderDesktopIdeImage        = "ide/rider"
-	CLionDesktopIdeImage        = "ide/clion"
-	JetBrainsBackendPluginImage = "ide/jb-backend-plugin"
-	JetBrainsLauncherImage      = "ide/jb-launcher"
+	CodeIDEImage                  = "ide/code"
+	CodeIDEImageStableVersion     = "commit-7721fe825201d4d8d53975f81de0b063d94383cc" // stable version that will be updated manually on demand
+	Code1_85IDEImageStableVersion = "commit-cb1173f2a457633550a7fdc89af86d8d4da51876"
+	CodeHelperIDEImage            = "ide/code-codehelper"
+	CodeWebExtensionImage         = "ide/gitpod-code-web"
+	CodeWebExtensionVersion       = "commit-4e069a6195f3926ba8b84725bc806228f4cb94ec" // gitpod-web extension version comes from https://github.com/gitpod-io/gitpod-code
+	CodeDesktopIDEImage           = "ide/code-desktop"
+	CodeDesktopInsidersIDEImage   = "ide/code-desktop-insiders"
+	XtermIDEImage                 = "ide/xterm-web"
+	IntelliJDesktopIDEImage       = "ide/intellij"
+	GoLandDesktopIdeImage         = "ide/goland"
+	PyCharmDesktopIdeImage        = "ide/pycharm"
+	PhpStormDesktopIdeImage       = "ide/phpstorm"
+	RubyMineDesktopIdeImage       = "ide/rubymine"
+	WebStormDesktopIdeImage       = "ide/webstorm"
+	RiderDesktopIdeImage          = "ide/rider"
+	CLionDesktopIdeImage          = "ide/clion"
+	JetBrainsBackendPluginImage   = "ide/jb-backend-plugin"
+	JetBrainsLauncherImage        = "ide/jb-launcher"
 )

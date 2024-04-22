@@ -55,15 +55,19 @@ import express from "express";
 import { Container } from "inversify";
 import { Server } from "./server";
 import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { installLogCountMetric } from "@gitpod/gitpod-protocol/lib/util/logging-node";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { dbConnectionsEnqueued, dbConnectionsFree, dbConnectionsTotal } from "./prometheus-metrics";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { installCtxLogAugmenter } from "./util/log-context";
 if (process.env.NODE_ENV === "development") {
     require("longjohn");
 }
 
 log.enableJSONLogging("server", process.env.VERSION, LogrusLogLevel.getFromEnv());
+installCtxLogAugmenter();
+installLogCountMetric();
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
@@ -108,8 +112,8 @@ export async function start(container: Container) {
         const pool: any = (connection.driver as any).pool;
         interval = setInterval(async () => {
             try {
-                const activeConnections = pool._allConnections.length;
-                const freeConnections = pool._freeConnections.length;
+                const activeConnections = pool._allConnections.length as number;
+                const freeConnections = pool._freeConnections.length as number;
 
                 dbConnectionsTotal.set(activeConnections);
                 dbConnectionsFree.set(freeConnections);

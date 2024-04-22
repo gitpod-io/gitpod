@@ -7,36 +7,53 @@
 import { PrebuiltWorkspaceState, WorkspaceClasses } from "./protocol";
 import { v4 as uuidv4 } from "uuid";
 import { DeepPartial } from "./util/deep-partial";
-import { WebhookEvent } from "./webhook-event";
 
 export interface ProjectConfig {
     ".gitpod.yml": string;
 }
 
 export interface ProjectSettings {
-    enablePrebuilds?: boolean;
     /**
-     * Wether prebuilds (if enabled) should only be started on the default branch.
-     * Defaults to `true` on project creation.
+     * Controls settings of prebuilds for this project.
      */
-    prebuildDefaultBranchOnly?: boolean;
-    /**
-     * Use this pattern to match branch names to run prebuilds on.
-     * The pattern matching will only be applied if prebuilds are enabled and
-     * they are not limited to the default branch.
-     */
-    prebuildBranchPattern?: string;
-    useIncrementalPrebuilds?: boolean;
-    keepOutdatedPrebuildsRunning?: boolean;
-    // whether new workspaces can start on older prebuilds and incrementally update
-    allowUsingPreviousPrebuilds?: boolean;
-    // how many commits in the commit history a prebuild is good (undefined and 0 means every commit is prebuilt)
-    prebuildEveryNthCommit?: number;
+    prebuilds?: PrebuildSettings;
+
     // preferred workspace classes
     workspaceClasses?: WorkspaceClasses;
+
+    /**
+     * Controls workspace class restriction for this project, the list is a NOT ALLOW LIST. Empty array to allow all kind of workspace classes
+     */
+    restrictedWorkspaceClasses?: string[];
+
+    restrictedEditorNames?: string[];
 }
-export namespace ProjectSettings {
-    export type PrebuildBranchStrategy = "defaultBranch" | "allBranches" | "selectedBranches";
+export namespace PrebuildSettings {
+    export type BranchStrategy = "default-branch" | "all-branches" | "matched-branches";
+}
+
+export interface PrebuildSettings {
+    enable?: boolean;
+
+    /**
+     * Defines an interval of commits to run new prebuilds for. Defaults to 20
+     */
+    prebuildInterval?: number;
+
+    /**
+     * Which branches to consider to run new prebuilds on. Default to "all-branches"
+     */
+    branchStrategy?: PrebuildSettings.BranchStrategy;
+    /**
+     * If `branchStrategy` s set to "matched-branches", this should define a glob-pattern to be used
+     * to match the branch to run new prebuilds on. Defaults to "**"
+     */
+    branchMatchingPattern?: string;
+
+    /**
+     * Preferred workspace class for prebuilds.
+     */
+    workspaceClass?: string;
 }
 
 export interface Project {
@@ -47,8 +64,6 @@ export interface Project {
     appInstallationId: string;
     settings?: ProjectSettings;
     creationTime: string;
-    /** This is a flag that triggers the HARD DELETION of this entity */
-    deleted?: boolean;
     markedDeleted?: boolean;
 }
 
@@ -65,50 +80,33 @@ export namespace Project {
         };
     };
 
-    export function slug(p: Project): string {
-        return p.name + "-" + p.id;
-    }
+    export type PrebuildSettingsWithDefaults = Required<Pick<PrebuildSettings, "prebuildInterval">> & PrebuildSettings;
+
+    export const PREBUILD_SETTINGS_DEFAULTS: PrebuildSettingsWithDefaults = {
+        enable: false,
+        branchMatchingPattern: "**",
+        prebuildInterval: 20,
+        branchStrategy: "all-branches",
+    };
 
     /**
-     * If *no settings* are present on pre-existing projects, this defaults to `true` (enabled) for
-     * backwards compatibility. This allows to do any explicit migration of data or adjustment of
-     * the default behavior at a later point in time.
-     *
-     * Otherwise this returns the value of the `enablePrebuilds` settings persisted in the given
-     * project.
+     * Returns effective prebuild settings for the given project. The resulting settings
+     * contain default values for properties which are not set explicitly for this project.
      */
-    export function isPrebuildsEnabled(project: Project): boolean {
-        // Defaulting to `true` for backwards compatibility. Ignoring non-boolean for `enablePrebuilds`
-        // for evaluation here allows to do any explicit migration of data or adjustment of the default
-        // behavior at a later point in time.
-        if (!hasPrebuildSettings(project)) {
-            return true;
-        }
+    export function getPrebuildSettings(project: Project): PrebuildSettingsWithDefaults {
+        // ignoring persisted properties with `undefined` values to exclude them from the override.
+        const overrides = Object.fromEntries(
+            Object.entries(project.settings?.prebuilds ?? {}).filter(([_, value]) => value !== undefined),
+        );
 
-        return !!project.settings?.enablePrebuilds;
+        return {
+            ...PREBUILD_SETTINGS_DEFAULTS,
+            ...overrides,
+        };
     }
 
     export function hasPrebuildSettings(project: Project) {
-        return !(typeof project.settings?.enablePrebuilds === "undefined");
-    }
-
-    export function getPrebuildBranchStrategy(project: Project): ProjectSettings.PrebuildBranchStrategy {
-        if (!hasPrebuildSettings(project)) {
-            // returning "all branches" to mimic the default value of projects which were added
-            // before introduction of persisted settings for prebuilds.
-            return "allBranches";
-        }
-        if (typeof project.settings?.prebuildDefaultBranchOnly === "undefined") {
-            return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
-        }
-        if (project.settings?.prebuildDefaultBranchOnly) {
-            return "defaultBranch";
-        }
-        const prebuildBranchPattern = project.settings?.prebuildBranchPattern?.trim();
-        if (typeof prebuildBranchPattern === "string" && prebuildBranchPattern.length > 1) {
-            return "selectedBranches";
-        }
-        return "allBranches";
+        return !(typeof project.settings?.prebuilds === "undefined");
     }
 
     export interface Overview {
@@ -199,21 +197,27 @@ export interface Organization {
     slug?: string;
     creationTime: string;
     markedDeleted?: boolean;
-    /** This is a flag that triggers the HARD DELETION of this entity */
-    deleted?: boolean;
 }
 
 export interface OrganizationSettings {
     workspaceSharingDisabled?: boolean;
+    // null or empty string to reset to default
     defaultWorkspaceImage?: string | null;
+
+    // empty array to allow all kind of workspace classes
+    allowedWorkspaceClasses?: string[] | null;
+
+    pinnedEditorVersions?: { [key: string]: string } | null;
+
+    restrictedEditorNames?: string[] | null;
 }
 
 export type TeamMemberRole = OrgMemberRole;
-export type OrgMemberRole = "owner" | "member";
+export type OrgMemberRole = "owner" | "member" | "collaborator";
 
 export namespace TeamMemberRole {
     export function isValid(role: any): role is TeamMemberRole {
-        return role === "owner" || role === "member";
+        return role === "owner" || role === "member" || role === "collaborator";
     }
 }
 
@@ -238,16 +242,4 @@ export interface TeamMembershipInvite {
 
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;
-}
-
-export interface PrebuildEvent {
-    id: string;
-    creationTime: string;
-    status: WebhookEvent.Status | WebhookEvent.PrebuildStatus;
-    message?: string;
-    prebuildId?: string;
-    projectId?: string;
-    cloneUrl?: string;
-    branch?: string;
-    commit?: string;
 }

@@ -382,7 +382,6 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 		resp, err = server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
 			ContextURL:                         opts.ContextURL,
 			OrganizationId:                     orgId,
-			IgnoreRunningPrebuild:              true,
 			IgnoreRunningWorkspaceOnSameCommit: true,
 			StartWorkspaceOptions: protocol.StartWorkspaceOptions{
 				IdeSettings: opts.IDESettings,

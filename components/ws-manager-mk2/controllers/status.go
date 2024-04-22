@@ -12,8 +12,10 @@ import (
 	"strings"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"github.com/go-logr/logr"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -37,8 +39,18 @@ const (
 	headlessTaskFailedPrefix = "headless task failed: "
 )
 
-func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods corev1.PodList, cfg *config.Configuration) error {
-	log := log.FromContext(ctx)
+func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods *corev1.PodList, cfg *config.Configuration) (err error) {
+	span, ctx := tracing.FromContext(ctx, "updateWorkspaceStatus")
+	defer tracing.FinishSpan(span, &err)
+	log := log.FromContext(ctx).WithValues("owi", workspace.OWI())
+	ctx = logr.NewContext(ctx, log)
+
+	oldPhase := workspace.Status.Phase
+	defer func() {
+		if oldPhase != workspace.Status.Phase {
+			log.Info("workspace phase updated", "oldPhase", oldPhase, "phase", workspace.Status.Phase)
+		}
+	}()
 
 	switch len(pods.Items) {
 	case 0:
@@ -49,6 +61,8 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping && isDisposalFinished(workspace) {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
+
+		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionFalse))
 		return nil
 	case 1:
 		// continue below
@@ -123,6 +137,19 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 				break
 			}
 		}
+	}
+
+	var workspaceContainerRunning bool
+	for _, cs := range pod.Status.ContainerStatuses {
+		if cs.Name == "workspace" {
+			workspaceContainerRunning = cs.State.Running != nil
+			break
+		}
+	}
+	if workspaceContainerRunning {
+		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionTrue))
+	} else {
+		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionFalse))
 	}
 
 	switch {
@@ -216,14 +243,17 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	return nil
 }
 
-func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspace *workspacev1.Workspace, pod *corev1.Pod) error {
+func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspace *workspacev1.Workspace, pod *corev1.Pod) (err error) {
+	span, ctx := tracing.FromContext(ctx, "checkNodeDisappeared")
+	defer tracing.FinishSpan(span, &err)
+
 	if pod.Spec.NodeName == "" {
 		// Not yet scheduled.
 		return nil
 	}
 
 	var node corev1.Node
-	err := r.Get(ctx, types.NamespacedName{Namespace: "", Name: pod.Spec.NodeName}, &node)
+	err = r.Get(ctx, types.NamespacedName{Namespace: "", Name: pod.Spec.NodeName}, &node)
 	if err == nil || !errors.IsNotFound(err) {
 		return err
 	}

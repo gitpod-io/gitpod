@@ -157,6 +157,8 @@ spec:
                   type: object
                 minItems: 0
                 type: array
+              sshGatewayCAPublicKey:
+                type: string
               sshPublicKeys:
                 items:
                   type: string
@@ -557,6 +559,19 @@ spec:
                   prior to shutting the workspace down. This condition is only used
                   for headless workspaces.
                 type: string
+              storage:
+                properties:
+                  attachedDevice:
+                    type: string
+                  mountPath:
+                    type: string
+                  volumeName:
+                    type: string
+                required:
+                - attachedDevice
+                - mountPath
+                - volumeName
+                type: object
               url:
                 type: string
             required:

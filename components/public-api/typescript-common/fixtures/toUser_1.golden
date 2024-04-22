@@ -1,0 +1,76 @@
+{
+    "result": {
+        "id": "007a807f-f2a7-436b-a77f-66ed11ee7828",
+        "organizationId": "6f5b2707-c83f-4e04-a37c-23d1b1d385ae",
+        "name": "Gitpod Tester",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/37021919?v=4",
+        "createdAt": "2023-12-04T08:54:31.686Z",
+        "identities": [
+            {
+                "authProviderId": "Public-GitHub",
+                "authId": "37021919",
+                "authName": "GitpodTester",
+                "primaryEmail": "tester@gitpod.io"
+            }
+        ],
+        "blocked": false,
+        "lastVerificationTime": "2023-12-04T08:54:31.700Z",
+        "verificationPhoneNumber": "+49150-111111111",
+        "workspaceTimeoutSettings": {
+            "inactivity": "3600s",
+            "disabledDisconnected": true
+        },
+        "emailNotificationSettings": {
+            "allowsChangelogMail": true,
+            "allowsDevxMail": true,
+            "allowsOnboardingMail": true
+        },
+        "editorSettings": {
+            "name": "code",
+            "version": "latest"
+        },
+        "dotfileRepo": "https://github.com/gitpod-samples/demo-dotfiles-with-gitpod",
+        "workspaceClass": "XXXL",
+        "profile": {
+            "lastUpdatedDetailsNudge": "2023-12-04T08:54:34.831Z",
+            "acceptedPrivacyPolicyDate": "2023-12-04T08:54:31.700Z",
+            "companyName": "",
+            "emailAddress": "tester@gitpod.io",
+            "jobRole": "other",
+            "jobRoleOther": "",
+            "explorationReasons": [
+                "replace-remote-dev",
+                "replace-remote-dev"
+            ],
+            "signupGoals": [
+                "other",
+                "other"
+            ],
+            "signupGoalsOther": "",
+            "onboardedTimestamp": "2023-12-04T08:54:41.326Z",
+            "companySize": "",
+            "coachmarksDismissals": {}
+        },
+        "workspaceAutostartOptions": [
+            {
+                "cloneUrl": "https://github.com/gitpod-io/gitpod",
+                "organizationId": "6f5b2707-c83f-4e04-a37c-23d1b1d385ae",
+                "workspaceClass": "XXXL",
+                "editorSettings": {
+                    "name": "code",
+                    "version": "stable"
+                },
+                "region": ""
+            }
+        ],
+        "usageAttributionId": "",
+        "workspaceFeatureFlags": [
+            "USER_FEATURE_FLAG_FULL_WORKSPACE_BACKUP"
+        ],
+        "rolesOrPermissions": [
+            "ROLE_OR_PERMISSION_ADMIN",
+            "ROLE_OR_PERMISSION_DEVELOPER"
+        ]
+    },
+    "err": ""
+}

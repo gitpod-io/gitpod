@@ -18,12 +18,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
+	k8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"github.com/go-logr/logr"
 )
 
 func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg config.Configuration, maintenance maintenance.Maintenance) (*TimeoutReconciler, error) {
@@ -77,6 +81,8 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		// backoff.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	log = log.WithValues("owi", workspace.OWI())
+	ctx = logr.NewContext(ctx, log)
 
 	if workspace.IsConditionTrue(workspacev1.WorkspaceConditionTimeout) {
 		// Workspace has already been marked as timed out.
@@ -254,5 +260,19 @@ func (r *TimeoutReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Named("timeout").
 		WithOptions(controller.Options{MaxConcurrentReconciles: maxConcurrentReconciles}).
 		For(&workspacev1.Workspace{}).
+		WithEventFilter(predicate.NewPredicateFuncs(func(object client.Object) bool {
+			for k, v := range object.GetLabels() {
+				if k == k8s.WorkspaceManagedByLabel {
+					switch v {
+					case constants.ManagedBy:
+						return true
+					default:
+						return false
+					}
+				}
+			}
+
+			return true
+		})).
 		Complete(r)
 }

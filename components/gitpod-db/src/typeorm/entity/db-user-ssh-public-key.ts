@@ -49,8 +49,4 @@ export class DBUserSshPublicKey implements UserSSHPublicKey {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     lastUsedTime?: string;
-
-    // This column triggers the periodic deleter deletion mechanism. It's not intended for public consumption.
-    @Column()
-    deleted: boolean;
 }

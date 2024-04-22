@@ -92,7 +92,7 @@ func (p *GitTokenProvider) openAccessControl() error {
 		return err
 	}
 	gpCmd := exec.Command(gpPath, "preview", "--external", p.workspaceConfig.GitpodHost+"/access-control")
-	runAsUser(gpCmd, p.workspaceConfig.WorkspaceLinuxUID, p.workspaceConfig.WorkspaceLinuxGID)
+	runAsGitpodUser(gpCmd)
 	if b, err := gpCmd.CombinedOutput(); err != nil {
 		log.WithField("Stdout", string(b)).WithError(err).Error("failed to exec gp preview to open access control")
 		return err
@@ -182,12 +182,6 @@ func (s *GitStatusService) Run(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (s *GitStatusService) update(ctx context.Context, updateContext *gitStatusUpdateContext) {
-	liveGitStatus := experiments.SupervisorLiveGitStatus(ctx, s.experiments, experiments.Attributes{
-		UserID: s.cfg.OwnerId,
-	})
-	if !liveGitStatus {
-		return
-	}
 	status, err := s.git.Status(ctx)
 	if err != nil {
 		log.WithError(err).Error("git: error getting status")

@@ -18,11 +18,11 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 
-	"github.com/bombsimon/logrusr/v2"
+	"github.com/bombsimon/logrusr/v4"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -32,21 +32,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/components/scrubber"
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
-	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
-	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
-
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	imgproxy "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/service"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -77,7 +79,12 @@ func main() {
 	flag.Parse()
 
 	log.Init(ServiceName, Version, jsonLog, verbose)
-	baseLogger := logrusr.New(log.Log)
+
+	l := log.WithFields(logrus.Fields{})
+	l.Logger.SetReportCaller(false)
+	baseLogger := logrusr.New(l, logrusr.WithFormatter(func(i interface{}) interface{} {
+		return &log.TrustedValueWrap{Value: scrubber.Default.DeepCopyStruct(i)}
+	}))
 	ctrl.SetLogger(baseLogger)
 	// Set the logger used by k8s (e.g. client-go).
 	klog.SetLogger(baseLogger)
@@ -118,17 +125,21 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                        scheme,
-		MetricsBindAddress:            cfg.Prometheus.Addr,
-		Port:                          9443,
+		Scheme:  scheme,
+		Metrics: metricsserver.Options{BindAddress: cfg.Prometheus.Addr},
+		Cache: cache.Options{
+			DefaultNamespaces: map[string]cache.Config{
+				cfg.Manager.Namespace:        {},
+				cfg.Manager.SecretsNamespace: {},
+			},
+		},
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port: 9443,
+		}),
 		HealthProbeBindAddress:        cfg.Health.Addr,
 		LeaderElection:                true,
 		LeaderElectionID:              "ws-manager-mk2-leader.gitpod.io",
 		LeaderElectionReleaseOnCancel: true,
-		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
-			opts.Namespaces = []string{cfg.Manager.Namespace, cfg.Manager.SecretsNamespace}
-			return cache.New(config, opts)
-		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -317,5 +328,13 @@ func getConfig(fn string) (*config.ServiceConfiguration, error) {
 		return nil, fmt.Errorf("cannot decode configuration from %s: %w", fn, err)
 	}
 
+	if cfg.Manager.SSHGatewayCAPublicKeyFile != "" {
+		ca, err := os.ReadFile(cfg.Manager.SSHGatewayCAPublicKeyFile)
+		if err != nil {
+			log.WithError(err).Error("cannot read SSH Gateway CA public key")
+			return &cfg, nil
+		}
+		cfg.Manager.SSHGatewayCAPublicKey = string(ca)
+	}
 	return &cfg, nil
 }

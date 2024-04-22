@@ -7,7 +7,6 @@
 import { FC, lazy } from "react";
 import { useShowDedicatedSetup } from "../dedicated-setup/use-show-dedicated-setup";
 import { useCurrentUser } from "../user-context";
-import { MigrationPage, useShouldSeeMigrationPage } from "../whatsnew/MigrationPage";
 import { useShowUserOnboarding } from "../onboarding/use-show-user-onboarding";
 import { useHistory } from "react-router";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
@@ -22,18 +21,12 @@ export const AppBlockingFlows: FC = ({ children }) => {
     const history = useHistory();
     const user = useCurrentUser();
     const org = useCurrentOrg();
-    const shouldSeeMigrationPage = useShouldSeeMigrationPage();
     const showDedicatedSetup = useShowDedicatedSetup();
     const showUserOnboarding = useShowUserOnboarding();
 
     // This shouldn't happen, but if it does don't render anything yet
     if (!user) {
         return <></>;
-    }
-
-    // If orgOnlyAttribution is enabled and the user hasn't been migrated, yet, we need to show the migration page
-    if (shouldSeeMigrationPage) {
-        return <MigrationPage />;
     }
 
     // Handle dedicated setup if necessary

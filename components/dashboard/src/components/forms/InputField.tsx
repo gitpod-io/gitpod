@@ -4,9 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import classNames from "classnames";
 import { FunctionComponent, memo, ReactNode } from "react";
 import { InputFieldHint } from "./InputFieldHint";
+import { cn } from "@podkit/lib/cn";
 
 type Props = {
     label?: ReactNode;
@@ -21,10 +21,10 @@ type Props = {
 export const InputField: FunctionComponent<Props> = memo(
     ({ label, id, hint, error, topMargin = true, className, children, disabled = false }) => {
         return (
-            <div className={classNames("flex flex-col space-y-2", { "mt-4": topMargin }, className)}>
+            <div className={cn("flex flex-col space-y-2", { "mt-4": topMargin }, className)}>
                 {label && (
                     <label
-                        className={classNames(
+                        className={cn(
                             "text-md font-semibold",
                             disabled
                                 ? "text-gray-400 dark:text-gray-400"

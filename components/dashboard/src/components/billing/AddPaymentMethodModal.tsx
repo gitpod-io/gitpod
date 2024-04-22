@@ -5,12 +5,12 @@
  */
 
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { Elements, PaymentElement, AddressElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { FC, useCallback, useMemo } from "react";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../Modal";
 import { ReactComponent as Spinner } from "../../icons/Spinner.svg";
 import { useStripePromise } from "./use-stripe-promise";
-import { Button } from "../Button";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { useMutation } from "@tanstack/react-query";
 import { useStripeAppearance } from "./use-stripe-appearance";
 import DropDown from "../DropDown";
@@ -101,6 +101,7 @@ function AddPaymentMethodForm({ attributionId }: { attributionId: string }) {
                     release in order to verify your payment method.
                 </Alert>
                 <PaymentElement id="payment-element" />
+                <AddressElement id="address-element" options={{ mode: "billing", display: { name: "organization" } }} />
             </ModalBody>
             <ModalFooter
                 className="justify-between"
@@ -130,9 +131,9 @@ function AddPaymentMethodForm({ attributionId }: { attributionId: string }) {
                         ]}
                     />
                 </div>
-                <Button htmlType="submit" disabled={!stripe} loading={confirmPayment.isLoading}>
+                <LoadingButton type="submit" disabled={!stripe} loading={confirmPayment.isLoading}>
                     Confirm
-                </Button>
+                </LoadingButton>
             </ModalFooter>
         </form>
     );

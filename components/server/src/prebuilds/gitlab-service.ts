@@ -8,68 +8,95 @@ import { RepositoryService } from "../repohost/repo-service";
 import { User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { GitLabApi, GitLab } from "../gitlab/api";
-import { AuthProviderParams } from "../auth/auth-provider";
 import { GitLabApp } from "./gitlab-app";
 import { Config } from "../config";
 import { TokenService } from "../user/token-service";
 import { GitlabContextParser } from "../gitlab/gitlab-context-parser";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { RepoURL } from "../repohost";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { UnauthorizedRepositoryAccessError } from "@gitpod/public-api-common/lib/public-api-errors";
+import { UnauthorizedError } from "../errors";
+import { GitLabScope } from "../gitlab/scopes";
+import { containsScopes } from "./token-scopes-inclusion";
 
 @injectable()
 export class GitlabService extends RepositoryService {
     static PREBUILD_TOKEN_SCOPE = "prebuilds";
 
-    @inject(GitLabApi) protected api: GitLabApi;
-    @inject(Config) protected readonly config: Config;
-    @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
-    @inject(TokenService) protected tokenService: TokenService;
-    @inject(GitlabContextParser) protected gitlabContextParser: GitlabContextParser;
-
-    async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
-        const { host, owner, repoName } = await this.gitlabContextParser.parseURL(user, cloneUrl);
-        if (host !== this.authProviderConfig.host) {
-            return false;
-        }
-        const api = await this.api.create(user);
-        const response = (await api.Projects.show(`${owner}/${repoName}`)) as unknown as GitLab.Project;
-        if (GitLab.ApiError.is(response)) {
-            throw response;
-        }
-        // one need to have at least the access level of a maintainer (40) in order to install webhooks on a project
-        // cf. https://docs.gitlab.com/ee/api/members.html#valid-access-levels
-        return GitLab.Permissions.hasMaintainerAccess(response);
+    constructor(
+        @inject(GitLabApi) protected api: GitLabApi,
+        @inject(Config) private readonly config: Config,
+        @inject(TokenService) private readonly tokenService: TokenService,
+        @inject(GitlabContextParser) private readonly gitlabContextParser: GitlabContextParser,
+    ) {
+        super();
     }
 
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
-        const api = await this.api.create(user);
-        const { owner, repoName } = await this.gitlabContextParser.parseURL(user, cloneUrl);
-        const gitlabProjectId = `${owner}/${repoName}`;
-        const hooks = (await api.ProjectHooks.all(gitlabProjectId)) as unknown as GitLab.ProjectHook[];
-        if (GitLab.ApiError.is(hooks)) {
-            throw hooks;
+        const parsedRepoUrl = RepoURL.parseRepoUrl(cloneUrl);
+        if (!parsedRepoUrl) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Clone URL not parseable.`);
         }
-        let existingProps: any = {};
-        for (const hook of hooks) {
-            if (hook.url === this.getHookUrl()) {
-                log.info("Deleting existing hook");
-                existingProps = hook;
-                await api.ProjectHooks.remove(gitlabProjectId, hook.id);
+
+        let api;
+        try {
+            api = await this.api.create(user); // throw UnauthorizedError
+        } catch (error) {
+            if (error instanceof UnauthorizedRepositoryAccessError) {
+                error.info.host = parsedRepoUrl.host;
+                error.info.providerIsConnected = false;
+                error.info.isMissingScopes = true;
+                error.info.providerType = "GitLab";
             }
+            throw error;
         }
-        const tokenEntry = await this.tokenService.createGitpodToken(
-            user,
-            GitlabService.PREBUILD_TOKEN_SCOPE,
-            cloneUrl,
-        );
-        await api.ProjectHooks.add(gitlabProjectId, this.getHookUrl(), <Partial<GitLab.ProjectHook>>{
-            ...existingProps,
-            push_events: true,
-            token: user.id + "|" + tokenEntry.token.value,
-        });
-        log.info("Installed Webhook for " + cloneUrl, { cloneUrl, userId: user.id });
+
+        let tokenEntry;
+        try {
+            // throws GitLabApiError 404
+            const { owner, repoName } = await this.gitlabContextParser.parseURL(user, cloneUrl);
+            const gitlabProjectId = `${owner}/${repoName}`;
+            // throws GitLabApiError 403
+            const hooks = (await api.ProjectHooks.all(gitlabProjectId)) as unknown as GitLab.ProjectHook[];
+            if (GitLab.ApiError.is(hooks)) {
+                throw hooks;
+            }
+            let existingProps: any = {};
+            for (const hook of hooks) {
+                if (hook.url === this.getHookUrl()) {
+                    log.info("Deleting existing hook");
+                    existingProps = hook;
+                    // throws GitLabApiError 403
+                    await api.ProjectHooks.remove(gitlabProjectId, hook.id);
+                }
+            }
+            tokenEntry = await this.tokenService.createGitpodToken(user, GitlabService.PREBUILD_TOKEN_SCOPE, cloneUrl);
+            // throws GitLabApiError 403
+            await api.ProjectHooks.add(gitlabProjectId, this.getHookUrl(), <Partial<GitLab.ProjectHook>>{
+                ...existingProps,
+                push_events: true,
+                token: user.id + "|" + tokenEntry.token.value,
+            });
+            log.info("Installed Webhook for " + cloneUrl, { cloneUrl, userId: user.id });
+        } catch (error) {
+            if (GitLab.ApiError.is(error)) {
+                // TODO check for `error.code`
+
+                throw UnauthorizedError.create({
+                    host: parsedRepoUrl.host,
+                    providerType: "GitLab",
+                    repoName: parsedRepoUrl.repo,
+                    requiredScopes: GitLabScope.Requirements.REPO,
+                    providerIsConnected: true,
+                    isMissingScopes: containsScopes(tokenEntry?.token?.scopes, GitLabScope.Requirements.REPO),
+                });
+            }
+            throw error;
+        }
     }
 
-    protected getHookUrl() {
+    private getHookUrl() {
         return this.config.hostUrl
             .asPublicServices()
             .with({

@@ -85,7 +85,7 @@ func (s *Workspace) OWI() logrus.Fields {
 type WorkspaceState string
 
 const (
-	// WorkspaceInitializing means the workspace content is is currently being initialized
+	// WorkspaceInitializing means the workspace content is currently being initialized
 	WorkspaceInitializing WorkspaceState = "initializing"
 	// WorkspaceReady means the workspace content is available on disk
 	WorkspaceReady WorkspaceState = "ready"

@@ -28,12 +28,15 @@ import (
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
@@ -57,15 +60,22 @@ var runCmd = &cobra.Command{
 
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 			Scheme:                 scheme,
-			MetricsBindAddress:     "127.0.0.1:9500",
 			HealthProbeBindAddress: ":8086",
-			LeaderElection:         true,
-			LeaderElectionID:       "node-labeler.gitpod.io",
-			Namespace:              namespace,
-			// default sync period is 10h.
-			// in case node-labeler is restarted and not change happens, we could waste (at least) 20m in a node
-			// that never will run workspaces and the additional nodes cluster-autoscaler adds to compensate
-			SyncPeriod: pointer.Duration(2 * time.Minute),
+			Metrics:                metricsserver.Options{BindAddress: "127.0.0.1:9500"},
+			Cache: cache.Options{
+				DefaultNamespaces: map[string]cache.Config{
+					namespace: {},
+				},
+				// default sync period is 10h.
+				// in case node-labeler is restarted and not change happens, we could waste (at least) 20m in a node
+				// that never will run workspaces and the additional nodes cluster-autoscaler adds to compensate
+				SyncPeriod: pointer.Duration(2 * time.Minute),
+			},
+			WebhookServer: webhook.NewServer(webhook.Options{
+				Port: 9443,
+			}),
+			LeaderElection:   true,
+			LeaderElectionID: "node-labeler.gitpod.io",
 		})
 		if err != nil {
 			log.WithError(err).Fatal("unable to start node-labeber")
@@ -222,6 +232,8 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 			log.WithError(err).Error("checking registry-facade")
 			return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
 		}
+
+		time.Sleep(1 * time.Second)
 	}
 
 	err = updateLabel(labelToUpdate, true, nodeName, r)

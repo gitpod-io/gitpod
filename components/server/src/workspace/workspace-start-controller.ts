@@ -10,7 +10,6 @@ import { Job } from "../jobs/runner";
 import { DBWithTracing, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { durationLongerThanSeconds } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { WorkspaceStarter } from "./workspace-starter";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
@@ -51,18 +50,6 @@ export class WorkspaceStartController implements Job {
                         const user = await this.userDB.findUserById(workspace.ownerId);
                         if (!user) {
                             throw new Error("cannot find owner for workspace");
-                        }
-
-                        const isEnabled = await getExperimentsClientForBackend().getValueAsync(
-                            "workspace_start_controller",
-                            false,
-                            {
-                                user,
-                                projectId: workspace.projectId,
-                            },
-                        );
-                        if (!isEnabled) {
-                            continue;
                         }
 
                         await this.workspaceStarter.reconcileWorkspaceStart(ctx, instance.id, user, workspace);

@@ -14,7 +14,7 @@ import { AuthProvider, AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider, HostContextProviderFactory } from "../auth/host-context-provider";
 import { HostContextProviderImpl } from "../auth/host-context-provider-impl";
 import { SpiceDBClientProvider } from "../authorization/spicedb";
-import { Config } from "../config";
+import { AuthConfig, Config } from "../config";
 import { StorageClient } from "../storage/storage-client";
 import { testContainer } from "@gitpod/gitpod-db/lib";
 import { productionContainerModule } from "../container-module";
@@ -36,6 +36,58 @@ import { IWorkspaceManagerClient, StartWorkspaceResponse } from "@gitpod/ws-mana
 import { TokenProvider } from "../user/token-provider";
 import { GitHubScope } from "../github/scopes";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
+import * as crypto from "crypto";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { Subject, SubjectId } from "../auth/subject-id";
+import { User } from "@gitpod/gitpod-protocol";
+import { runWithRequestContext } from "../util/request-context";
+
+const signingKeyPair = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+const validatingKeyPair1 = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+const validatingKeyPair2 = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+
+export const mockAuthConfig: AuthConfig = {
+    pki: {
+        signing: toKeyPair("0001", signingKeyPair),
+        validating: [toKeyPair("0002", validatingKeyPair1), toKeyPair("0003", validatingKeyPair2)],
+    },
+    session: {
+        issuer: "https://mp-server-d7650ec945.preview.gitpod-dev.com",
+        lifetimeSeconds: 7 * 24 * 60 * 60,
+        cookie: {
+            name: "_gitpod_dev_jwt_",
+            secure: true,
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60,
+            sameSite: "strict",
+        },
+    },
+};
+
+function toKeyPair(
+    id: string,
+    kp: crypto.KeyPairKeyObjectResult,
+): {
+    id: string;
+    privateKey: string;
+    publicKey: string;
+} {
+    return {
+        id,
+        privateKey: kp.privateKey
+            .export({
+                type: "pkcs1",
+                format: "pem",
+            })
+            .toString(),
+        publicKey: kp.publicKey
+            .export({
+                type: "pkcs1",
+                format: "pem",
+            })
+            .toString(),
+    };
+}
 
 /**
  * Expects a fully configured production container and
@@ -59,11 +111,13 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
                 },
                 services: {
                     repositoryService: {
-                        installAutomatedPrebuilds: async (user: any, cloneUrl: any) => {
+                        installAutomatedPrebuilds: async (user: any, cloneUrl: string) => {
                             webhooks.add(cloneUrl);
                         },
-                        canInstallAutomatedPrebuilds: async () => {
-                            throw "not expected to be called";
+                    },
+                    repositoryProvider: {
+                        hasReadAccess: async (user: any, owner: string, repo: string) => {
+                            return true;
                         },
                     },
                 },
@@ -71,7 +125,10 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
         },
     });
     rebind(TokenProvider).toConstantValue(<TokenProvider>{
-        getTokenForHost: async () => {
+        getTokenForHost: async (user, host) => {
+            if (host != "github.com") {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `SCM Token not found.`);
+            }
             return {
                 value: "test",
                 scopes: [GitHubScope.EMAIL, GitHubScope.PUBLIC, GitHubScope.PRIVATE],
@@ -90,6 +147,49 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
                 maxScore: 100,
                 score: 100,
                 govern: true,
+                availableWorkspaceClasses: [
+                    {
+                        creditsPerMinute: 1,
+                        description: "2vCPU / 4GB RAM",
+                        id: "basic",
+                        displayName: "Basic",
+                    },
+                    {
+                        creditsPerMinute: 2,
+                        description: "4vCPU / 8GB RAM",
+                        id: "pro",
+                        displayName: "Pro",
+                    },
+                ],
+            },
+            {
+                name: "eu-central-1-nextgen",
+                region: "europe",
+                url: "https://ws.gitpod.io",
+                state: "available",
+                maxScore: 100,
+                score: 100,
+                govern: true,
+                availableWorkspaceClasses: [
+                    {
+                        creditsPerMinute: 1,
+                        description: "2vCPU / 4GB RAM",
+                        id: "basic",
+                        displayName: "Basic",
+                    },
+                    {
+                        creditsPerMinute: 1,
+                        description: "2vCPU / 4GB RAM",
+                        id: "nextgen-basic",
+                        displayName: "NextGen Basic",
+                    },
+                    {
+                        creditsPerMinute: 2,
+                        description: "4vCPU / 8GB RAM",
+                        id: "nextgen-pro",
+                        displayName: "NextGen Pro",
+                    },
+                ],
             },
         ];
         return <WorkspaceManagerClientProviderSource>{
@@ -195,6 +295,13 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
         ],
         authProviderConfigs: [],
         installationShortname: "gitpod",
+        auth: mockAuthConfig,
+        prebuildLimiter: {
+            "*": {
+                limit: 50,
+                period: 50,
+            },
+        },
     });
     rebind(IAnalyticsWriter).toConstantValue(NullAnalyticsWriter);
     rebind(HostContextProviderFactory)
@@ -224,4 +331,22 @@ export function createTestContainer() {
     container.load(productionContainerModule);
     container.load(mockApplyingContainerModule);
     return container;
+}
+
+export function withTestCtx<T>(subject: Subject | User, p: () => Promise<T>): Promise<T> {
+    let subjectId: SubjectId | undefined = undefined;
+    if (SubjectId.is(subject)) {
+        subjectId = subject;
+    } else if (subject !== undefined) {
+        subjectId = SubjectId.fromUserId(User.is(subject) ? subject.id : subject);
+    }
+    return runWithRequestContext(
+        {
+            requestKind: "testContext",
+            requestMethod: "testMethod",
+            signal: new AbortController().signal,
+            subjectId,
+        },
+        p,
+    );
 }

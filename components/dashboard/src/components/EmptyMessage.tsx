@@ -6,7 +6,7 @@
 
 import classNames from "classnames";
 import { FC, ReactNode, useCallback } from "react";
-import { Button } from "./Button";
+import { Button } from "@podkit/buttons/Button";
 import { Heading2, Subheading } from "./typography/headings";
 
 type Props = {

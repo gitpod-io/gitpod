@@ -16,18 +16,31 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
-import { Authorizer } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { ProjectsService } from "../projects/projects-service";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
+import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
+import { UserService } from "../user/user-service";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
+import { InstallationService } from "../auth/installation-service";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { runWithSubjectId } from "../util/request-context";
+import { IDEService } from "../ide-service";
 
 @injectable()
 export class OrganizationService {
     constructor(
         @inject(TeamDB) private readonly teamDB: TeamDB,
         @inject(UserDB) private readonly userDB: UserDB,
+        @inject(UserService) private readonly userService: UserService,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(InstallationService) private readonly installationService: InstallationService,
+        @inject(IDEService) private readonly ideService: IDEService,
+        @inject(DefaultWorkspaceImageValidator)
+        private readonly validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator,
     ) {}
 
     async listOrganizations(
@@ -39,7 +52,39 @@ export class OrganizationService {
             orderDir?: "asc" | "desc";
             searchTerm?: string;
         },
+        scope?: "member" | "installation",
     ): Promise<{ total: number; rows: Organization[] }> {
+        if (scope !== "installation") {
+            let result = await this.listOrganizationsByMember(userId, userId);
+            result = result.filter((o) => o.name.toLowerCase().includes((req.searchTerm || "").toLowerCase()));
+            // apply ordering
+            if (req.orderBy) {
+                result.sort((a, b) => {
+                    const aVal = a[req.orderBy!];
+                    const bVal = b[req.orderBy!];
+                    if (!aVal && !bVal) {
+                        return 0;
+                    }
+                    if (!aVal) {
+                        return req.orderDir === "asc" ? -1 : 1;
+                    }
+                    if (!bVal) {
+                        return req.orderDir === "asc" ? 1 : -1;
+                    }
+                    if (aVal < bVal) {
+                        return req.orderDir === "asc" ? -1 : 1;
+                    }
+                    if (aVal > bVal) {
+                        return req.orderDir === "asc" ? 1 : -1;
+                    }
+                    return 0;
+                });
+            }
+            return {
+                total: result.length,
+                rows: result.slice(req.offset || 0, (req.offset || 0) + (req.limit || 50)),
+            };
+        }
         const result = await this.teamDB.findTeams(
             req.offset || 0,
             req.limit || 50,
@@ -62,7 +107,7 @@ export class OrganizationService {
     }
 
     async listOrganizationsByMember(userId: string, memberId: string): Promise<Organization[]> {
-        //TODO check if user has access to member
+        await this.auth.checkPermissionOnUser(userId, "read_info", memberId);
         const orgs = await this.teamDB.findTeamsByUser(memberId);
         const result: Organization[] = [];
         for (const org of orgs) {
@@ -162,7 +207,17 @@ export class OrganizationService {
 
     public async listMembers(userId: string, orgId: string): Promise<OrgMemberInfo[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_members", orgId);
-        return this.teamDB.findMembersByTeam(orgId);
+        const members = await this.teamDB.findMembersByTeam(orgId);
+
+        // TODO(at) remove this workaround once email addresses are persisted under `User.emails`.
+        // For now we're avoiding adding `getPrimaryEmail` as dependency to `gitpod-db` module.
+        for (const member of members) {
+            const user = await this.userDB.findUserById(member.userId);
+            if (user) {
+                member.primaryEmail = getPrimaryEmail(user);
+            }
+        }
+        return members;
     }
 
     public async getOrCreateInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {
@@ -194,31 +249,38 @@ export class OrganizationService {
         if (await this.teamDB.hasActiveSSO(invite.teamId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
-        try {
-            return await this.teamDB.transaction(async (db) => {
-                await this.teamDB.addMemberToTeam(userId, invite.teamId);
-                await this.auth.addOrganizationRole(invite.teamId, userId, invite.role);
-                this.analytics.track({
-                    userId: userId,
-                    event: "team_joined",
-                    properties: {
-                        team_id: invite.teamId,
-                        invite_id: inviteId,
-                    },
-                });
-                return invite.teamId;
-            });
-        } catch (err) {
-            await this.auth.removeOrganizationRole(invite.teamId, userId, "member");
-            throw err;
-        }
+        // set skipRoleUpdate=true to avoid member/owner click join link again cause role change
+        await runWithSubjectId(SYSTEM_USER, () =>
+            this.addOrUpdateMember(SYSTEM_USER_ID, invite.teamId, userId, invite.role, {
+                flexibleRole: true,
+                skipRoleUpdate: true,
+            }),
+        );
+        this.analytics.track({
+            userId: userId,
+            event: "team_joined",
+            properties: {
+                team_id: invite.teamId,
+                invite_id: inviteId,
+            },
+        });
+
+        return invite.teamId;
     }
 
+    /**
+     * Add or update member to an organization, if there's no `owner` in the organization, target role will be owner
+     *
+     * @param opts.flexibleRole when target role is not owner, target role is flexible. Is affected by:
+     *     - `dataops` feature
+     * @param opts.notUpdate don't update role
+     */
     public async addOrUpdateMember(
         userId: string,
         orgId: string,
         memberId: string,
         role: OrgMemberRole,
+        opts?: { flexibleRole?: boolean; skipRoleUpdate?: true },
         txCtx?: TransactionalContext,
     ): Promise<void> {
         await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
@@ -239,7 +301,19 @@ export class OrganizationService {
                     log.info({ userId: memberId }, "First member of organization, setting role to owner.");
                 }
 
-                await teamDB.addMemberToTeam(memberId, orgId);
+                const result = await teamDB.addMemberToTeam(memberId, orgId);
+                if (result === "already_member" && opts?.skipRoleUpdate) {
+                    return;
+                }
+
+                if (role !== "owner" && opts?.flexibleRole) {
+                    const isDataOps = await getExperimentsClientForBackend().getValueAsync("dataops", false, {
+                        teamId: orgId,
+                    });
+                    if (isDataOps) {
+                        role = "collaborator";
+                    }
+                }
                 await teamDB.setTeamMemberRole(memberId, orgId, role);
                 await this.auth.addOrganizationRole(orgId, memberId, role);
                 // we can remove the built-in installation admin if we have added an owner
@@ -252,11 +326,12 @@ export class OrganizationService {
                 }
             });
         } catch (err) {
-            await this.auth.removeOrganizationRole(
-                orgId,
-                memberId,
-                members.find((m) => m.userId === memberId)?.role || "member",
-            );
+            // remove target role and add old role back
+            await this.auth.removeOrganizationRole(orgId, memberId, role);
+            const oldRole = members.find((m) => m.userId === memberId)?.role;
+            if (oldRole) {
+                await this.auth.addOrganizationRole(orgId, memberId, oldRole);
+            }
             throw err;
         }
     }
@@ -298,14 +373,10 @@ export class OrganizationService {
                 }
                 // Only invited members can be removed from the Org, but organizational accounts cannot.
                 if (userToBeRemoved.organizationId && orgId === userToBeRemoved.organizationId) {
-                    throw new ApplicationError(
-                        ErrorCodes.PERMISSION_DENIED,
-                        `User's account '${memberId}' belongs to the organization '${orgId}'`,
-                    );
+                    await this.userService.deleteUser(userId, memberId);
                 }
-
                 await db.removeMemberFromTeam(userToBeRemoved.id, orgId);
-                await this.auth.removeOrganizationRole(orgId, memberId, "member");
+                await this.auth.removeOrganizationRole(orgId, memberId, membership.role);
             });
         } catch (err) {
             if (membership) {
@@ -313,7 +384,8 @@ export class OrganizationService {
                 await this.auth.addOrganizationRole(orgId, memberId, membership.role);
             }
             const code = ApplicationError.hasErrorCode(err) ? err.code : ErrorCodes.INTERNAL_SERVER_ERROR;
-            throw new ApplicationError(code, err);
+            const message = ApplicationError.hasErrorCode(err) ? err.message : "" + err;
+            throw new ApplicationError(code, message);
         }
         this.analytics.track({
             userId,
@@ -327,13 +399,106 @@ export class OrganizationService {
 
     async getSettings(userId: string, orgId: string): Promise<OrganizationSettings> {
         await this.auth.checkPermissionOnOrganization(userId, "read_settings", orgId);
-        const settings = (await this.teamDB.findOrgSettings(orgId)) || {};
-        return settings;
+        const settings = await this.teamDB.findOrgSettings(orgId);
+        return this.toSettings(settings);
     }
 
-    async updateSettings(userId: string, orgId: string, settings: OrganizationSettings): Promise<OrganizationSettings> {
+    async updateSettings(
+        userId: string,
+        orgId: string,
+        settings: Partial<OrganizationSettings>,
+    ): Promise<OrganizationSettings> {
         await this.auth.checkPermissionOnOrganization(userId, "write_settings", orgId);
-        await this.teamDB.setOrgSettings(orgId, settings);
-        return settings;
+        if (typeof settings.defaultWorkspaceImage === "string") {
+            const defaultWorkspaceImage = settings.defaultWorkspaceImage.trim();
+            if (defaultWorkspaceImage) {
+                await this.validateDefaultWorkspaceImage(userId, defaultWorkspaceImage);
+                settings = { ...settings, defaultWorkspaceImage };
+            } else {
+                settings = { ...settings, defaultWorkspaceImage: null };
+            }
+        }
+        if (settings.allowedWorkspaceClasses) {
+            if (settings.allowedWorkspaceClasses.length === 0) {
+                // Pass an empty array to allow all workspace classes
+                settings.allowedWorkspaceClasses = null;
+            } else {
+                const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
+                const availableClasses = allClasses.filter((e) => settings.allowedWorkspaceClasses!.includes(e.id));
+                if (availableClasses.length !== settings.allowedWorkspaceClasses.length) {
+                    throw new ApplicationError(
+                        ErrorCodes.BAD_REQUEST,
+                        `items in allowedWorkspaceClasses are not all allowed`,
+                    );
+                }
+                if (availableClasses.length === 0) {
+                    throw new ApplicationError(
+                        ErrorCodes.BAD_REQUEST,
+                        "at least one workspace class has to be selected.",
+                    );
+                }
+            }
+        }
+        if (settings.pinnedEditorVersions) {
+            const ideConfig = await this.ideService.getIDEConfig({ user: { id: userId } });
+            for (const [key, version] of Object.entries(settings.pinnedEditorVersions)) {
+                if (
+                    !ideConfig.ideOptions.options[key] ||
+                    !ideConfig.ideOptions.options[key].versions?.find((v) => v.version === version)
+                ) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invalid ide or ide version.");
+                }
+            }
+        }
+
+        if (settings.restrictedEditorNames) {
+            if (settings.restrictedEditorNames.length > 0) {
+                await this.ideService.checkEditorsAllowed(userId, settings.restrictedEditorNames);
+            }
+        }
+        return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
+    }
+
+    private async toSettings(settings: OrganizationSettings = {}): Promise<OrganizationSettings> {
+        const result: OrganizationSettings = {};
+        if (settings.workspaceSharingDisabled) {
+            result.workspaceSharingDisabled = settings.workspaceSharingDisabled;
+        }
+        if (typeof settings.defaultWorkspaceImage === "string") {
+            result.defaultWorkspaceImage = settings.defaultWorkspaceImage;
+        }
+        if (settings.allowedWorkspaceClasses) {
+            result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
+        }
+        if (settings.pinnedEditorVersions) {
+            result.pinnedEditorVersions = settings.pinnedEditorVersions;
+        }
+        if (settings.restrictedEditorNames) {
+            result.restrictedEditorNames = settings.restrictedEditorNames;
+        }
+        return result;
+    }
+
+    public async listWorkspaceClasses(userId: string, orgId: string): Promise<SupportedWorkspaceClass[]> {
+        const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
+        const settings = await this.getSettings(userId, orgId);
+        if (settings && !!settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
+            const availableClasses = allClasses.filter((e) => settings.allowedWorkspaceClasses!.includes(e.id));
+            const defaultIndexInScope = availableClasses.findIndex((e) => e.isDefault);
+            if (defaultIndexInScope !== -1) {
+                return availableClasses;
+            }
+            const defaultIndexInAll = allClasses.findIndex((e) => e.isDefault);
+            const sortedClasses = [
+                ...allClasses.slice(0, defaultIndexInAll).reverse(),
+                ...allClasses.slice(defaultIndexInAll, allClasses.length),
+            ];
+            const nextDefault = sortedClasses.find((e) => settings.allowedWorkspaceClasses!.includes(e.id));
+            if (nextDefault) {
+                nextDefault.isDefault = true;
+            }
+            return availableClasses;
+        }
+        return allClasses;
     }
 }

@@ -25,6 +25,9 @@ import {
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { Subject, SubjectId } from "../auth/subject-id";
+import { ctxTrySubjectId } from "../util/request-context";
+import { reportAuthorizerSubjectId } from "../prometheus-metrics";
 
 export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorizer): Authorizer {
     const target = new Authorizer(spiceDbAuthorizer);
@@ -52,61 +55,69 @@ export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorize
  * We need to call our internal API with system permissions in some cases.
  * As we don't have other ways to represent that (e.g. ServiceAccounts), we use this magic constant to designated it.
  */
-export const SYSTEM_USER = "SYSTEM_USER";
+export const SYSTEM_USER_ID = "SYSTEM_USER";
+export const SYSTEM_USER = SubjectId.fromUserId(SYSTEM_USER_ID);
+export function isSystemUser(subjectId: SubjectId): boolean {
+    return subjectId.equals(SYSTEM_USER);
+}
 
 export class Authorizer {
     constructor(private authorizer: SpiceDBAuthorizer) {}
 
-    async hasPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+    async hasPermissionOnInstallation(passed: Subject, permission: InstallationPermission): Promise<boolean> {
+        const subjectId = await getSubjectFromCtx(passed);
+        if (isSystemUser(subjectId)) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: sub(subjectId),
             permission,
             resource: object("installation", InstallationID),
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId: getUserId(subjectId) });
     }
 
-    async checkPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<void> {
-        if (await this.hasPermissionOnInstallation(userId, permission)) {
+    async checkPermissionOnInstallation(passed: Subject, permission: InstallationPermission): Promise<void> {
+        const subjectId = await getSubjectFromCtx(passed);
+        if (await this.hasPermissionOnInstallation(subjectId, permission)) {
             return;
         }
         throw new ApplicationError(
             ErrorCodes.PERMISSION_DENIED,
-            `User ${userId} does not have permission '${permission}' on the installation.`,
+            `Subject ${subjectId.toString()} does not have permission '${permission}' on the installation.`,
         );
     }
 
     async hasPermissionOnOrganization(
-        userId: string,
+        passed: Subject,
         permission: OrganizationPermission,
         orgId: string,
     ): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+        const subjectId = await getSubjectFromCtx(passed);
+        if (isSystemUser(subjectId)) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: sub(subjectId),
             permission,
             resource: object("organization", orgId),
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId: getUserId(subjectId) });
     }
 
-    async checkPermissionOnOrganization(userId: string, permission: OrganizationPermission, orgId: string) {
-        if (await this.hasPermissionOnOrganization(userId, permission, orgId)) {
+    async checkPermissionOnOrganization(passed: Subject, permission: OrganizationPermission, orgId: string) {
+        const subjectId = await getSubjectFromCtx(passed);
+        if (await this.hasPermissionOnOrganization(subjectId, permission, orgId)) {
             return;
         }
         // check if the user has read permission
-        if ("read_info" === permission || !(await this.hasPermissionOnOrganization(userId, "read_info", orgId))) {
+        if ("read_info" === permission || !(await this.hasPermissionOnOrganization(subjectId, "read_info", orgId))) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found.`);
         }
 
@@ -116,27 +127,29 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+    async hasPermissionOnProject(passed: Subject, permission: ProjectPermission, projectId: string): Promise<boolean> {
+        const subjectId = await getSubjectFromCtx(passed);
+        if (isSystemUser(subjectId)) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: sub(subjectId),
             permission,
             resource: object("project", projectId),
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId: getUserId(subjectId) });
     }
 
-    async checkPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string) {
-        if (await this.hasPermissionOnProject(userId, permission, projectId)) {
+    async checkPermissionOnProject(passed: Subject, permission: ProjectPermission, projectId: string) {
+        const subjectId = await getSubjectFromCtx(passed);
+        if (await this.hasPermissionOnProject(subjectId, permission, projectId)) {
             return;
         }
         // check if the user has read permission
-        if ("read_info" === permission || !(await this.hasPermissionOnProject(userId, "read_info", projectId))) {
+        if ("read_info" === permission || !(await this.hasPermissionOnProject(subjectId, "read_info", projectId))) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
         }
 
@@ -146,26 +159,28 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+    async hasPermissionOnUser(passed: Subject, permission: UserPermission, resourceUserId: string): Promise<boolean> {
+        const subjectId = await getSubjectFromCtx(passed);
+        if (isSystemUser(subjectId)) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: sub(subjectId),
             permission,
             resource: object("user", resourceUserId),
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId: getUserId(subjectId) });
     }
 
-    async checkPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string) {
-        if (await this.hasPermissionOnUser(userId, permission, resourceUserId)) {
+    async checkPermissionOnUser(passed: Subject, permission: UserPermission, resourceUserId: string) {
+        const subjectId = await getSubjectFromCtx(passed);
+        if (await this.hasPermissionOnUser(subjectId, permission, resourceUserId)) {
             return;
         }
-        if ("read_info" === permission || !(await this.hasPermissionOnUser(userId, "read_info", resourceUserId))) {
+        if ("read_info" === permission || !(await this.hasPermissionOnUser(subjectId, "read_info", resourceUserId))) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `User ${resourceUserId} not found.`);
         }
 
@@ -176,30 +191,32 @@ export class Authorizer {
     }
 
     async hasPermissionOnWorkspace(
-        userId: string,
+        passed: Subject,
         permission: WorkspacePermission,
         workspaceId: string,
         forceEnablement?: boolean, // temporary to find an issue with workspace sharing
     ): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+        const subjectId = await getSubjectFromCtx(passed);
+        if (isSystemUser(subjectId)) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: sub(subjectId),
             permission,
             resource: object("workspace", workspaceId),
             consistency,
         });
 
-        return this.authorizer.check(req, { userId }, forceEnablement);
+        return await this.authorizer.check(req, { userId: getUserId(subjectId) }, forceEnablement);
     }
 
-    async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
-        if (await this.hasPermissionOnWorkspace(userId, permission, workspaceId)) {
+    async checkPermissionOnWorkspace(passed: Subject, permission: WorkspacePermission, workspaceId: string) {
+        const subjectId = await getSubjectFromCtx(passed);
+        if (await this.hasPermissionOnWorkspace(subjectId, permission, workspaceId)) {
             return;
         }
-        if ("read_info" === permission || !(await this.hasPermissionOnWorkspace(userId, "read_info", workspaceId))) {
+        if ("read_info" === permission || !(await this.hasPermissionOnWorkspace(subjectId, "read_info", workspaceId))) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} not found.`);
         }
 
@@ -282,11 +299,27 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
-        const updates = [set(rel.organization(orgID).member.user(userID))];
+        const updates = [];
         if (role === "owner") {
-            updates.push(set(rel.organization(orgID).owner.user(userID)));
-        } else {
-            updates.push(remove(rel.organization(orgID).owner.user(userID)));
+            updates.push(
+                set(rel.organization(orgID).owner.user(userID)),
+                // TODO: owner has all permission member's permission should define in schema
+                // we should remove member but since old code was not, keep it to avoid breaking
+                set(rel.organization(orgID).member.user(userID)),
+                remove(rel.organization(orgID).collaborator.user(userID)),
+            );
+        } else if (role === "member") {
+            updates.push(
+                remove(rel.organization(orgID).owner.user(userID)),
+                set(rel.organization(orgID).member.user(userID)),
+                remove(rel.organization(orgID).collaborator.user(userID)),
+            );
+        } else if (role === "collaborator") {
+            updates.push(
+                remove(rel.organization(orgID).owner.user(userID)),
+                remove(rel.organization(orgID).member.user(userID)),
+                set(rel.organization(orgID).collaborator.user(userID)),
+            );
         }
         await this.authorizer.writeRelationships(...updates);
     }
@@ -295,9 +328,20 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
-        const updates = [remove(rel.organization(orgID).owner.user(userID))];
-        if (role === "member") {
-            updates.push(remove(rel.organization(orgID).member.user(userID)));
+        const updates = [];
+        if (role === "owner") {
+            updates.push(remove(rel.organization(orgID).owner.user(userID)));
+        } else if (role === "member") {
+            updates.push(
+                remove(rel.organization(orgID).owner.user(userID)),
+                remove(rel.organization(orgID).member.user(userID)),
+            );
+        } else if (role === "collaborator") {
+            updates.push(
+                remove(rel.organization(orgID).owner.user(userID)),
+                remove(rel.organization(orgID).member.user(userID)),
+                remove(rel.organization(orgID).collaborator.user(userID)),
+            );
         }
         await this.authorizer.writeRelationships(...updates);
     }
@@ -423,51 +467,6 @@ export class Authorizer {
             rels.push(set(rel.workspace(workspaceID).shared.anyUser));
         }
         await this.authorizer.writeRelationships(...rels);
-
-        (async () => {
-            //TODO(se) remove this double checking once we're confident that the above works
-            // check if the relationships were written
-            try {
-                const wsToOrgRel = await this.find(rel.workspace(workspaceID).org.organization(orgID));
-                if (!wsToOrgRel) {
-                    log.error("Failed to write workspace to org relationship", {
-                        orgID,
-                        userID,
-                        workspaceID,
-
-                        shared,
-                    });
-                }
-                const wsToOwnerRel = await this.find(rel.workspace(workspaceID).owner.user(userID));
-                if (!wsToOwnerRel) {
-                    log.error("Failed to write workspace to owner relationship", {
-                        orgID,
-                        userID,
-                        workspaceID,
-                        shared,
-                    });
-                }
-                if (shared) {
-                    const wsSharedRel = await this.find(rel.workspace(workspaceID).shared.anyUser);
-                    if (!wsSharedRel) {
-                        log.error("Failed to write workspace shared relationship", {
-                            orgID,
-                            userID,
-                            workspaceID,
-                            shared,
-                        });
-                    }
-                }
-            } catch (error) {
-                log.error("Failed to check workspace relationships", {
-                    orgID,
-                    userID,
-                    workspaceID,
-                    shared,
-                    error,
-                });
-            }
-        })().catch((error) => log.error({ userId: userID }, "Failed to check workspace relationships", { error }));
     }
 
     async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
@@ -485,8 +484,19 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
-        const op = shared ? set : remove;
-        await this.authorizer.writeRelationships(op(rel.workspace(workspaceID).shared.anyUser));
+        if (shared) {
+            await this.authorizer.writeRelationships(set(rel.workspace(workspaceID).shared.anyUser));
+
+            // verify the relationship is there
+            const rs = await this.find(rel.workspace(workspaceID).shared.anyUser);
+            if (!rs) {
+                log.error("Failed to set workspace as shared", { workspaceID, userID });
+            } else {
+                log.info("Successfully set workspace as shared", { workspaceID, userID });
+            }
+        } else {
+            await this.authorizer.writeRelationships(remove(rel.workspace(workspaceID).shared.anyUser));
+        }
     }
 
     public async find(relation: v1.Relationship): Promise<v1.Relationship | undefined> {
@@ -537,21 +547,99 @@ export class Authorizer {
     }
 }
 
-export async function isFgaChecksEnabled(userId: string): Promise<boolean> {
+export async function getSubjectFromCtx(passed: Subject): Promise<SubjectId> {
+    const ctxSubjectId = ctxTrySubjectId();
+    const ctxUserId = ctxSubjectId?.userId();
+
+    const passedSubjectId = !!passed ? Subject.toId(passed) : undefined;
+    const passedUserId = passedSubjectId?.userId();
+
+    // Check: Do the subjectIds match?
+    function matchSubjectIds(ctxUserId: string | undefined, passedSubjectId: string | undefined) {
+        if (!ctxUserId) {
+            return "ctx-user-id-missing";
+        }
+        if (!passedSubjectId) {
+            return "passed-subject-id-missing";
+        }
+        return ctxUserId === passedUserId ? "match" : "mismatch";
+    }
+    const match = matchSubjectIds(ctxUserId, passedUserId);
+    reportAuthorizerSubjectId(match);
+    if (match === "mismatch" || match === "ctx-user-id-missing") {
+        try {
+            // Get hold of the stack trace
+            throw new Error("Authorizer: SubjectId mismatch");
+        } catch (err) {
+            log.error("Authorizer: SubjectId mismatch", err, {
+                match,
+                ctxUserId,
+                passedUserId,
+            });
+        }
+    }
+
+    // Check feature flag, based on the passed subjectId
+    const authViaContext = await getExperimentsClientForBackend().getValueAsync("authWithRequestContext", false, {
+        user: ctxUserId
+            ? {
+                  id: ctxUserId,
+              }
+            : undefined,
+    });
+    if (!authViaContext) {
+        if (!passedSubjectId) {
+            const err = new ApplicationError(ErrorCodes.PERMISSION_DENIED, `Cannot authorize request`);
+            log.error("Authorizer: Cannot authorize request: missing SubjectId", err, {
+                match,
+                ctxSubjectId,
+                ctxUserId,
+                passedUserId,
+            });
+            throw err;
+        }
+        return passedSubjectId;
+    }
+
+    if (!ctxSubjectId || match === "mismatch") {
+        const err = new ApplicationError(ErrorCodes.PERMISSION_DENIED, `Cannot authorize request`);
+        log.error("Authorizer: Cannot authorize request", err, { match, ctxSubjectId, ctxUserId, passedUserId });
+        throw err;
+    }
+    return ctxSubjectId;
+}
+
+function getUserId(subjectId: SubjectId): string {
+    const userId = subjectId.userId();
+    if (!userId) {
+        throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `No userId available`);
+    }
+    return userId;
+}
+
+export async function isFgaChecksEnabled(subject: Subject): Promise<boolean> {
+    const subjectId = Subject.toId(subject);
+    const userId = subjectId.userId();
     return getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
-        user: {
-            id: userId,
-        },
+        user: userId
+            ? {
+                  id: userId,
+              }
+            : undefined,
     });
 }
 
-export async function isFgaWritesEnabled(userId: string): Promise<boolean> {
+export async function isFgaWritesEnabled(subject: Subject): Promise<boolean> {
+    const subjectId = Subject.toId(subject);
+    const userId = subjectId.userId();
     const result = await getExperimentsClientForBackend().getValueAsync("spicedb_relationship_updates", false, {
-        user: {
-            id: userId,
-        },
+        user: userId
+            ? {
+                  id: userId,
+              }
+            : undefined,
     });
-    return result || (await isFgaChecksEnabled(userId));
+    return result || (await isFgaChecksEnabled(subjectId));
 }
 
 function set(rs: v1.Relationship): v1.RelationshipUpdate {
@@ -575,9 +663,10 @@ function object(type: ResourceType, id?: string): v1.ObjectReference {
     });
 }
 
-function subject(type: ResourceType, id?: string, relation?: Relation | Permission): v1.SubjectReference {
+function sub(subject: Subject, relation?: Relation | Permission): v1.SubjectReference {
+    const subjectId = Subject.toId(subject);
     return v1.SubjectReference.create({
-        object: object(type, id),
+        object: object(subjectId.kind, subjectId.value),
         optionalRelation: relation,
     });
 }

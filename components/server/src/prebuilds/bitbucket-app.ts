@@ -19,6 +19,9 @@ import { UserService } from "../user/user-service";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
 import { ProjectsService } from "../projects/projects-service";
+import { SubjectId } from "../auth/subject-id";
+import { runWithSubjectId } from "../util/request-context";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 
 @injectable()
 export class BitbucketApp {
@@ -62,6 +65,7 @@ export class BitbucketApp {
                         return;
                     }
                     try {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                         const data = toData(req.body);
                         if (data) {
                             await this.handlePushHook({ span }, data, user, event);
@@ -119,7 +123,9 @@ export class BitbucketApp {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
             const cloneURL = data.gitCloneUrl;
-            const projects = await this.projectService.findProjectsByCloneUrl(user.id, cloneURL);
+            const projects = await runWithSubjectId(SYSTEM_USER, () =>
+                this.projectService.findProjectsByCloneUrl(SYSTEM_USER_ID, cloneURL),
+            );
             for (const project of projects) {
                 try {
                     const projectOwner = await this.findProjectOwner(project, user);
@@ -150,36 +156,38 @@ export class BitbucketApp {
                         continue;
                     }
 
-                    log.info("Starting prebuild.", { contextURL });
-                    const { host, owner, repo } = RepoURL.parseRepoUrl(data.repoUrl)!;
-                    const hostCtx = this.hostCtxProvider.get(host);
-                    let commitInfo: CommitInfo | undefined;
-                    if (hostCtx?.services?.repositoryProvider) {
-                        commitInfo = await hostCtx.services.repositoryProvider.getCommitInfo(
-                            user,
-                            owner,
-                            repo,
-                            data.commitHash,
+                    await runWithSubjectId(SubjectId.fromUserId(projectOwner.id), async () => {
+                        log.info("Starting prebuild.", { contextURL });
+                        const { host, owner, repo } = RepoURL.parseRepoUrl(data.repoUrl)!;
+                        const hostCtx = this.hostCtxProvider.get(host);
+                        let commitInfo: CommitInfo | undefined;
+                        if (hostCtx?.services?.repositoryProvider) {
+                            commitInfo = await hostCtx.services.repositoryProvider.getCommitInfo(
+                                user,
+                                owner,
+                                repo,
+                                data.commitHash,
+                            );
+                        }
+                        const ws = await this.prebuildManager.startPrebuild(
+                            { span },
+                            {
+                                user: projectOwner,
+                                project,
+                                context,
+                                commitInfo,
+                            },
                         );
-                    }
-                    const ws = await this.prebuildManager.startPrebuild(
-                        { span },
-                        {
-                            user: projectOwner,
-                            project,
-                            context,
-                            commitInfo,
-                        },
-                    );
-                    if (!ws.done) {
-                        await this.webhookEvents.updateEvent(event.id, {
-                            prebuildStatus: "prebuild_triggered",
-                            status: "processed",
-                            prebuildId: ws.prebuildId,
-                        });
-                    }
+                        if (!ws.done) {
+                            await this.webhookEvents.updateEvent(event.id, {
+                                prebuildStatus: "prebuild_triggered",
+                                status: "processed",
+                                prebuildId: ws.prebuildId,
+                            });
+                        }
+                    });
                 } catch (error) {
-                    log.error("Error processing Bitbucket Server webhook event", error);
+                    log.error("Error processing Bitbucket webhook event", error);
                 }
             }
         } catch (e) {
@@ -217,7 +225,9 @@ export class BitbucketApp {
             const hostContext = this.hostCtxProvider.get(new URL(project.cloneUrl).host);
             const authProviderId = hostContext?.authProvider.authProviderId;
             for (const teamMember of teamMembers) {
-                const user = await this.userService.findUserById(teamMember.userId, teamMember.userId);
+                const user = await runWithSubjectId(SubjectId.fromUserId(teamMember.userId), () =>
+                    this.userService.findUserById(teamMember.userId, teamMember.userId),
+                );
                 if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
                     return user;
                 }

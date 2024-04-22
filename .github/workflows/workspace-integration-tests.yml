@@ -45,7 +45,7 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-update-image-gha.17642
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
     outputs:
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
@@ -85,7 +85,7 @@ jobs:
               } >> $GITHUB_OUTPUT
           else
               # Find the most recent successful build on main. Look back up to 10 builds.
-              RUNID=$(gh run list --repo gitpod-io/gitpod --branch main --workflow Build --limit 10 --json createdAt,conclusion,databaseId --jq 'map(select(.conclusion == "success")) | sort_by(.createdAt) | .[-1] | .databaseId')
+              RUNID=$(gh run list --repo gitpod-io/gitpod --branch main --workflow build.yml --limit 10 --json createdAt,conclusion,databaseId --jq 'map(select(.conclusion == "success")) | sort_by(.createdAt) | .[-1] | .databaseId')
               if [ "$RUNID" == "" ]; then
                 echo no successful build found on main branch in the last 10 commits, see https://github.com/gitpod-io/gitpod/actions/workflows/build.yml for details | tee -a $GITHUB_STEP_SUMMARY
                 exit 1
@@ -121,6 +121,7 @@ jobs:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: gce
           large_vm: true
+          preemptible: true
       - name: Deploy Gitpod to the preview environment
         if: inputs.skip_deploy != 'true'
         id: deploy-gitpod
@@ -135,7 +136,7 @@ jobs:
     needs: [configuration, infrastructure, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-update-image-gha.17642
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
     steps:
       - uses: actions/checkout@v4
       - id: auth
@@ -166,7 +167,7 @@ jobs:
     if: inputs.skip_delete != 'true' && always()
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-update-image-gha.17642
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
     steps:
       - uses: actions/checkout@v4
       - name: Delete preview environment

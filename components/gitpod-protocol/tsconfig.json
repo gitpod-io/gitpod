@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "incremental": true,
         "strict": true,
         "noEmitOnError": false,
         "noUnusedLocals": true,
@@ -21,7 +22,6 @@
         "declaration": true,
         "declarationMap": true,
         "skipLibCheck": true,
-        "rootDir": "src",
         "outDir": "lib",
         "useUnknownInCatchVariables": false,
         "esModuleInterop": true

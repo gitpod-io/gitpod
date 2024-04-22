@@ -47,21 +47,19 @@ import { HostContextProviderImpl } from "./auth/host-context-provider-impl";
 import { AuthJWT, SignInJWT } from "./auth/jwt";
 import { LoginCompletionHandler } from "./auth/login-completion-handler";
 import { VerificationService } from "./auth/verification-service";
+import { InstallationService } from "./auth/installation-service";
 import { Authorizer, createInitializingAuthorizer } from "./authorization/authorizer";
 import { RelationshipUpdater } from "./authorization/relationship-updater";
 import { RelationshipUpdateJob } from "./authorization/relationship-updater-job";
 import { SpiceDBClientProvider, spiceDBConfigFromEnv } from "./authorization/spicedb";
-import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
+import { createSpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
 import { StripeService } from "./billing/stripe-service";
-import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
 import { CodeSyncService } from "./code-sync/code-sync-service";
 import { Config, ConfigFile } from "./config";
 import { ConfigurationService } from "./config/configuration-service";
-import { GitHubAppSupport } from "./github/github-app-support";
-import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { IDEService } from "./ide-service";
 import { DatabaseGarbageCollector } from "./jobs/database-gc";
@@ -85,11 +83,10 @@ import { GithubApp } from "./prebuilds/github-app";
 import { GithubAppRules } from "./prebuilds/github-app-rules";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { GitLabApp } from "./prebuilds/gitlab-app";
-import { IncrementalPrebuildsService } from "./prebuilds/incremental-prebuilds-service";
+import { IncrementalWorkspaceService } from "./prebuilds/incremental-workspace-service";
 import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { ProjectsService } from "./projects/projects-service";
-import { ScmService } from "./projects/scm-service";
 import { RedisMutex } from "./redis/mutex";
 import { Server } from "./server";
 import { SessionHandler } from "./session-handler";
@@ -129,6 +126,13 @@ import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { WorkspaceService } from "./workspace/workspace-service";
 import { WorkspaceStartController } from "./workspace/workspace-start-controller";
 import { WorkspaceStarter } from "./workspace/workspace-starter";
+import { DefaultWorkspaceImageValidator } from "./orgs/default-workspace-image-validator";
+import { ContextAwareAnalyticsWriter } from "./analytics";
+import { ScmService } from "./scm/scm-service";
+import { ContextService } from "./workspace/context-service";
+import { RateLimitter } from "./rate-limitter";
+import { AnalyticsController } from "./analytics-controller";
+import { InstallationAdminCleanup } from "./jobs/installation-admin-cleanup";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -171,6 +175,8 @@ export const productionContainerModule = new ContainerModule(
 
         bind(ServerFactory).toAutoFactory(GitpodServerImpl);
         bind(UserController).toSelf().inSingletonScope();
+
+        bind(ContextService).toSelf().inSingletonScope();
 
         bind(GitpodServerImpl).toSelf();
         bind(WebsocketConnectionManager)
@@ -248,7 +254,12 @@ export const productionContainerModule = new ContainerModule(
 
         bind(CodeSyncService).toSelf().inSingletonScope();
 
-        bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
+        bind(IAnalyticsWriter)
+            .toDynamicValue((ctx) => {
+                const writer = newAnalyticsWriterFromEnv();
+                return new ContextAwareAnalyticsWriter(writer);
+            })
+            .inSingletonScope();
 
         bind(OAuthController).toSelf().inSingletonScope();
 
@@ -296,6 +307,8 @@ export const productionContainerModule = new ContainerModule(
 
         bind(VerificationService).toSelf().inSingletonScope();
 
+        bind(InstallationService).toSelf().inSingletonScope();
+
         bind(UsageService).toSelf().inSingletonScope();
 
         bind(LinkedInService).toSelf().inSingletonScope();
@@ -317,10 +330,10 @@ export const productionContainerModule = new ContainerModule(
                 );
             })
             .inSingletonScope();
-        bind(SpiceDBAuthorizer).toSelf().inSingletonScope();
         bind(Authorizer)
             .toDynamicValue((ctx) => {
-                const authorizer = ctx.container.get<SpiceDBAuthorizer>(SpiceDBAuthorizer);
+                const clientProvider = ctx.container.get<SpiceDBClientProvider>(SpiceDBClientProvider);
+                const authorizer = createSpiceDBAuthorizer(clientProvider);
                 return createInitializingAuthorizer(authorizer);
             })
             .inSingletonScope();
@@ -334,16 +347,13 @@ export const productionContainerModule = new ContainerModule(
 
         bind(PrebuildManager).toSelf().inSingletonScope();
         bind(GithubApp).toSelf().inSingletonScope();
-        bind(GitHubAppSupport).toSelf().inSingletonScope();
         bind(GithubAppRules).toSelf().inSingletonScope();
         bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
         bind(GitLabApp).toSelf().inSingletonScope();
-        bind(GitLabAppSupport).toSelf().inSingletonScope();
         bind(BitbucketApp).toSelf().inSingletonScope();
-        bind(BitbucketAppSupport).toSelf().inSingletonScope();
         bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
         bind(BitbucketServerApp).toSelf().inSingletonScope();
-        bind(IncrementalPrebuildsService).toSelf().inSingletonScope();
+        bind(IncrementalWorkspaceService).toSelf().inSingletonScope();
 
         // payment/billing
         bind(StripeService).toSelf().inSingletonScope();
@@ -362,6 +372,7 @@ export const productionContainerModule = new ContainerModule(
         bind(SnapshotsJob).toSelf().inSingletonScope();
         bind(JobRunner).toSelf().inSingletonScope();
         bind(RelationshipUpdateJob).toSelf().inSingletonScope();
+        bind(InstallationAdminCleanup).toSelf().inSingletonScope();
 
         // Redis
         bind(Redis).toDynamicValue((ctx) => {
@@ -375,5 +386,18 @@ export const productionContainerModule = new ContainerModule(
         bind(RedisMutex).toSelf().inSingletonScope();
         bind(RedisSubscriber).toSelf().inSingletonScope();
         bind(RedisPublisher).toSelf().inSingletonScope();
+
+        bind<DefaultWorkspaceImageValidator>(DefaultWorkspaceImageValidator)
+            .toDynamicValue((ctx) =>
+                // lazy load to avoid circular dependency
+                async (userId: string, imageRef: string) => {
+                    const user = await ctx.container.get(UserService).findUserById(userId, userId);
+                    await ctx.container.get(WorkspaceService).validateImageRef({}, user, imageRef);
+                },
+            )
+            .inSingletonScope();
+
+        bind(RateLimitter).toSelf().inSingletonScope();
+        bind(AnalyticsController).toSelf().inSingletonScope();
     },
 );

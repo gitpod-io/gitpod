@@ -54,6 +54,8 @@ func Init(service, version string, json, verbose bool) {
 	Log = log.WithFields(ServiceContext(service, version))
 	log.SetReportCaller(true)
 
+	log.AddHook(NewLogHook(DefaultMetrics))
+
 	if json {
 		Log.Logger.SetFormatter(newGcpFormatter(false))
 	} else {
@@ -230,4 +232,16 @@ type jsonEntry struct {
 	Message string       `json:"message,omitempty"`
 	Msg     string       `json:"msg,omitempty"`
 	Time    *time.Time   `json:"time,omitempty"`
+}
+
+// TrustedValueWrap is a simple wrapper that treats the entire value as trusted, which are not processed by the scrubber.
+// During JSON marshal, only the Value itself will be processed, without including Wrap.
+type TrustedValueWrap struct {
+	Value any
+}
+
+func (TrustedValueWrap) IsTrustedValue() {}
+
+func (t TrustedValueWrap) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Value)
 }

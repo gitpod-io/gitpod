@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM alpine:3.16 as docker_cli_builder
+FROM alpine:3.19 as docker_cli_builder
 
 RUN apk add wget tar
 

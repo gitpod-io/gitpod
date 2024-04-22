@@ -2,114 +2,118 @@ syntax = "proto3";
 
 package gitpod.experimental.v1;
 
+import "gitpod/experimental/v1/pagination.proto";
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
 
-import "google/protobuf/timestamp.proto";
-import "gitpod/experimental/v1/pagination.proto";
-
-
 message Project {
-    // ID is the unique identifier for the project.
-    // Read only.
-    string id = 1;
+  // ID is the unique identifier for the project.
+  // Read only.
+  string id = 1;
 
-    // Team ID is the Team this Project belongs to.
-    // team_id will be empty if the Project belongs to a User, in which case user_id will be set.
-    string team_id = 2;
+  // Team ID is the Team this Project belongs to.
+  // team_id will be empty if the Project belongs to a User, in which case user_id will be set.
+  string team_id = 2;
 
-    reserved 3;
+  reserved 3;
 
-    // Name is the name of the Project.
-    // Required.
-    string name = 4;
+  // Name is the name of the Project.
+  // Required.
+  string name = 4;
 
-    reserved 5;
+  reserved 5;
 
-    // Clone URL is the clone URL on which this Project is based.
-    // Required.
-    string clone_url = 6;
+  // Clone URL is the clone URL on which this Project is based.
+  // Required.
+  string clone_url = 6;
 
-    // Time when the Project was created.
-    // Read-only.
-    google.protobuf.Timestamp creation_time = 7;
+  // Time when the Project was created.
+  // Read-only.
+  google.protobuf.Timestamp creation_time = 7;
 
-    // Settings are configuration options for a Project.
-    ProjectSettings settings = 8;
+  // Settings are configuration options for a Project.
+  ProjectSettings settings = 8;
 }
 
 message ProjectSettings {
-    PrebuildSettings prebuild = 1;
-    WorkspaceSettings workspace = 2;
+  PrebuildSettings prebuild = 1;
+  WorkspaceSettings workspace = 2;
 }
 
 message PrebuildSettings {
-    bool enable_incremental_prebuilds = 1;
-    bool keep_outdated_prebuilds_running = 2;
-    bool use_previous_prebuilds = 3;
-    int32 prebuild_every_nth = 4;
-    optional bool enable_prebuilds = 5;
-    optional bool prebuild_default_branch_only = 6;
-    optional string prebuild_branch_pattern = 7;
+  reserved 1; // enable_incremental_prebuilds
+  reserved 2; // keep_outdated_prebuilds_running
+  reserved 3; // use_previous_prebuilds
+  reserved 4; // was prebuild_every_nth
+  optional bool enable_prebuilds = 5;
+  reserved 6; // was prebuild_default_branch_only
+  optional string branch_matching_pattern = 7;
+  optional string branch_strategy = 8;
+  optional int32 prebuild_interval = 9;
+  optional string workspace_class = 10;
 }
 
 message WorkspaceSettings {
-    bool enable_persistent_volume_claim = 1;
-    WorkspaceClassSettings workspace_class = 2;
+  bool enable_persistent_volume_claim = 1;
+  WorkspaceClassSettings workspace_class = 2;
+  repeated string restricted_workspace_classes = 3;
+  repeated string restricted_editor_names = 4;
 }
 
 message WorkspaceClassSettings {
-    string regular = 1;
-    string prebuild = 2;
+  string regular = 1;
+  string prebuild = 2;
 }
 
 service ProjectsService {
-    // Creates a new project.
-    rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {};
+  // Creates a new project.
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {}
 
-    // Retrieves a project.
-    rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {};
+  // Retrieves a project.
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {}
 
-    // Lists projects.
-    rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {};
+  // Lists projects.
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {}
 
-    // Deletes a project.
-    rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse) {};
+  // Deletes a project.
+  rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse) {}
 }
 
 message CreateProjectRequest {
-    Project project = 1;
+  Project project = 1;
 }
 
 message CreateProjectResponse {
-    Project project = 1;
+  Project project = 1;
 }
 
 message GetProjectRequest {
-    string project_id = 1;
+  string project_id = 1;
 }
 
 message GetProjectResponse {
-    Project project = 1;
+  Project project = 1;
 }
 
 message ListProjectsRequest {
-    reserved 1;
+  reserved 1;
 
-    // Team ID filters Projects owned by team_id
-    string team_id = 2;
+  // Team ID filters Projects owned by team_id
+  string team_id = 2;
 
-    // Page information
-    Pagination pagination = 3;
+  // Page information
+  Pagination pagination = 3;
 }
 
 message ListProjectsResponse {
-    repeated Project projects = 1;
+  repeated Project projects = 1;
 
-    int32 total_results = 2;
+  int32 total_results = 2;
 }
 
 message DeleteProjectRequest {
-    string project_id = 1;
+  string project_id = 1;
 }
 
 message DeleteProjectResponse {}

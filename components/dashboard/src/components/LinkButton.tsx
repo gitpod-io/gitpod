@@ -7,16 +7,18 @@
 import classNames from "classnames";
 import { FC, MouseEvent, useCallback } from "react";
 import { invertable } from "../theme-context";
-import { ButtonProps } from "./Button";
+import type { ButtonProps } from "@podkit/buttons/Button";
 
 type Props = {
     className?: string;
-    htmlType?: ButtonProps["htmlType"];
+    htmlType?: ButtonProps["type"];
     inverted?: boolean;
     onClick: () => void;
 };
 
-// A button that looks like a link
+/**
+ * A button that looks like a link
+ **/
 export const LinkButton: FC<Props> = ({ className, htmlType = "button", inverted = false, children, onClick }) => {
     const handleClick = useCallback(
         (e: MouseEvent<HTMLButtonElement>) => {

@@ -1,0 +1,25 @@
+{
+    "result": {
+        "id": "123",
+        "organizationId": "456",
+        "name": "My Project",
+        "cloneUrl": "https://github.com/myorg/myproject.git",
+        "creationTime": "2023-11-29T17:52:27.467Z",
+        "prebuildSettings": {
+            "enabled": true,
+            "branchMatchingPattern": "main",
+            "branchStrategy": "BRANCH_MATCHING_STRATEGY_DEFAULT_BRANCH",
+            "prebuildInterval": 20,
+            "workspaceClass": "dev"
+        },
+        "workspaceSettings": {
+            "workspaceClass": "dev",
+            "restrictedWorkspaceClasses": [
+                "cls-1",
+                "cls-2"
+            ],
+            "restrictedEditorNames": []
+        }
+    },
+    "err": ""
+}

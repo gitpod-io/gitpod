@@ -140,6 +140,8 @@ type Config struct {
 
 	SSHGatewayHostKey *ObjectRef `json:"sshGatewayHostKey,omitempty"`
 
+	SSHGatewayCAKey *ObjectRef `json:"sshGatewayCAKey,omitempty"`
+
 	DisableDefinitelyGP bool `json:"disableDefinitelyGp"`
 
 	CustomCACert *ObjectRef `json:"customCACert,omitempty"`
@@ -255,6 +257,8 @@ type ContainerRegistry struct {
 
 	PrivateBaseImageAllowList []string `json:"privateBaseImageAllowList"`
 	EnableAdditionalECRAuth   bool     `json:"enableAdditionalECRAuth"`
+
+	SubassemblyBucket string `json:"subassemblyBucket"`
 }
 
 type ContainerRegistryExternal struct {

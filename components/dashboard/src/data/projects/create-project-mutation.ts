@@ -7,35 +7,36 @@
 import { useMutation } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { useCurrentOrg } from "../organizations/orgs-query";
-import { useRefreshProjects } from "./list-projects-query";
+import { useRefreshAllProjects } from "./list-all-projects-query";
 import { CreateProjectParams, Project } from "@gitpod/gitpod-protocol";
 
 export type CreateProjectArgs = Omit<CreateProjectParams, "teamId">;
 
 export const useCreateProject = () => {
-    const refreshProjects = useRefreshProjects();
+    const refreshProjects = useRefreshAllProjects();
     const { data: org } = useCurrentOrg();
 
-    return useMutation<Project, Error, CreateProjectArgs>(
-        async ({ name, slug, cloneUrl, appInstallationId }) => {
-            if (!org) {
-                throw new Error("No org currently selected");
-            }
+    return useMutation<Project, Error, CreateProjectArgs>(async ({ name, slug, cloneUrl, appInstallationId }) => {
+        if (!org) {
+            throw new Error("No org currently selected");
+        }
 
-            return await getGitpodService().server.createProject({
-                name,
-                slug,
-                cloneUrl,
-                teamId: org.id,
-                appInstallationId,
-            });
-        },
-        {
-            onSuccess: (project) => {
-                if (org) {
-                    refreshProjects(org.id);
-                }
-            },
-        },
-    );
+        // ensure a .git suffix
+        const normalizedCloneURL = cloneUrl.endsWith(".git") ? cloneUrl : `${cloneUrl}.git`;
+
+        const newProject = await getGitpodService().server.createProject({
+            name,
+            slug,
+            cloneUrl: normalizedCloneURL,
+            teamId: org.id,
+            appInstallationId,
+        });
+
+        // TODO: remove this once we delete ProjectContext
+        // wait for projects to refresh before returning
+        // this ensures that the new project is included in the list before we navigate to it
+        await refreshProjects(org.id);
+
+        return newProject;
+    });
 };

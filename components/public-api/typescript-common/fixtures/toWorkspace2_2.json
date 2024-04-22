@@ -1,0 +1,182 @@
+{
+  "workspace": {
+    "id": "gitpodio-gitpod-ve5gs3cb32j",
+    "creationTime": "2023-12-01T04:53:27.228Z",
+    "organizationId": "ce36c2f8-5d43-4b1d-92f2-08cb6f0e0869",
+    "ownerId": "b49148ed-6e1f-4eae-927f-1e62a3c9dab9",
+    "contextURL": "https://github.com/gitpod-io/gitpod",
+    "projectId": "1fffcdbd-f716-4185-a14f-a689bd52cd2d",
+    "description": "gitpod-io/gitpod - main",
+    "context": {
+      "isFile": false,
+      "path": "",
+      "title": "gitpod-io/gitpod - main",
+      "ref": "main",
+      "refType": "branch",
+      "revision": "eb6a504011d82fe87d0746012c75b4916ce54480",
+      "repository": {
+        "cloneUrl": "https://github.com/gitpod-io/gitpod.git",
+        "host": "github.com",
+        "defaultBranch": "main",
+        "name": "gitpod",
+        "owner": "gitpod-io",
+        "private": false
+      },
+      "normalizedContextURL": "https://github.com/gitpod-io/gitpod",
+      "checkoutLocation": "gitpod",
+      "snapshotBucketId": "bbbbucketID",
+      "prebuildWorkspaceId": "68da9714-93c0-4b7c-8579-dee70b1fbc3a",
+      "wasPrebuilt": true
+    },
+    "cloneUrl": "https://github.com/gitpod-io/gitpod.git",
+    "config": {
+      "image": "eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879",
+      "workspaceLocation": "gitpod/gitpod-ws.code-workspace",
+      "checkoutLocation": "gitpod",
+      "ports": [
+        {
+          "port": 1337,
+          "onOpen": "open-preview"
+        },
+        {
+          "port": 3000,
+          "onOpen": "ignore"
+        }
+      ],
+      "tasks": [
+        {
+          "name": "Install `gitpod` CLI",
+          "command": "leeway run components/local-app:install-cli\nleeway run components/local-app:cli-completion\nexit 0\n"
+        }
+      ],
+      "vscode": {
+        "extensions": [
+          "EditorConfig.EditorConfig",
+          "golang.go",
+          "hashicorp.terraform",
+          "ms-azuretools.vscode-docker",
+          "ms-kubernetes-tools.vscode-kubernetes-tools",
+          "stkb.rewrap",
+          "zxh404.vscode-proto3",
+          "matthewpi.caddyfile-support",
+          "heptio.jsonnet",
+          "timonwong.shellcheck",
+          "fwcd.kotlin",
+          "dbaeumer.vscode-eslint",
+          "esbenp.prettier-vscode",
+          "akosyakov.gitpod-monitor",
+          "hbenl.vscode-mocha-test-adapter"
+        ]
+      },
+      "jetbrains": {
+        "intellij": {
+          "vmoptions": "-Xmx4g"
+        }
+      },
+      "_origin": "repo",
+      "ideCredentials": "ideCredentials"
+    },
+    "imageSource": {
+      "baseImageResolved": "eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879"
+    },
+    "imageNameResolved": "877922613839.dkr.ecr.eu-central-1.amazonaws.com/image-build/workspace-images:adb73357f7e48abcb1210a0fad039618a8156bb5de667a2ae7acb98ff5244b5e",
+    "baseImageNameResolved": "eu.gcr.io/gitpod-core-dev/dev/dev-environment@sha256:1107ae38187802fd784467529d9cc0b98e720f0980e3ec2fcbcecb4d7916da5e",
+    "shareable": true,
+    "type": "regular",
+    "softDeleted": null,
+    "deleted": false,
+    "pinned": true,
+    "basedOnPrebuildId": "68da9714-93c0-4b7c-8579-dee70b1fbc3a"
+  },
+  "latestInstance": {
+    "id": "4b1ef455-e04c-43d3-bf5d-0d67f168c9f3",
+    "workspaceId": "gitpodio-gitpod-ve5gs3cb32j",
+    "region": "workspace",
+    "creationTime": "2023-12-01T04:53:27.295Z",
+    "startedTime": "2023-12-01T04:53:41.918Z",
+    "ideUrl": "https://gitpodio-gitpod-ve5gs3cb32j.ws.gitpod.io",
+    "workspaceImage": "877922613839.dkr.ecr.eu-central-1.amazonaws.com/image-build/workspace-images:adb73357f7e48abcb1210a0fad039618a8156bb5de667a2ae7acb98ff5244b5e",
+    "status": {
+      "phase": "running",
+      "nodeIp": "100.64.35.212",
+      "message": "",
+      "podName": "ws-4b1ef455-e04c-43d3-bf5d-0d67f168c9f3",
+      "timeout": "1h2m2s",
+      "version": 113206859,
+      "nodeName": "ip-100-64-35-212.eu-central-1.compute.internal",
+      "conditions": {
+        "failed": "",
+        "timeout": "",
+        "deployed": true,
+        "pullingImages": false,
+        "stoppedByRequest": false,
+        "firstUserActivity": "2023-12-01T04:53:43.000Z",
+        "headlessTaskFailed": ""
+      },
+      "ownerToken": "ownerToken22",
+      "exposedPorts": [
+        {
+          "url": "https://3000-gitpodio-gitpod-ve5gs3cb32j.ws.gitpod.io",
+          "port": 3000,
+          "protocol": "http",
+          "visibility": "private"
+        },
+        {
+          "url": "https://3306-gitpodio-gitpod-ve5gs3cb32j.ws.gitpod.io",
+          "port": 3306,
+          "protocol": "http",
+          "visibility": "public"
+        }
+      ]
+    },
+    "gitStatus": {
+      "branch": "hw/papi-refine-ws",
+      "latestCommit": "3da336cde4a9a29e9e4dd6424bd4b791d616c735",
+      "uncommitedFiles": [
+        "components/public-api/generate.sh",
+        "components/public-api/typescript-common/fixtures/toWorkspace_1.golden",
+        "components/public-api/typescript-common/fixtures/toWorkspace_1.json",
+        "components/public-api/typescript-common/fixtures/toWorkspace_2.golden",
+        "components/public-api/typescript-common/fixtures/toWorkspace_2.json",
+        "components/public-api/typescript-common/fixtures/toWorkspace_3.golden",
+        "components/public-api/typescript-common/fixtures/toWorkspace_3.json",
+        "components/public-api/typescript-common/fixtures/toWorkspace_4.golden",
+        "components/public-api/typescript-common/fixtures/toWorkspace_4.json",
+        "components/public-api/typescript-common/src/public-api-converter.spec.ts"
+      ],
+      "unpushedCommits": [
+        "3da336cde: Revert \"Revert \"Refine workspace API (#19138)\" (#19172)\""
+      ],
+      "totalUncommitedFiles": 10,
+      "totalUnpushedCommits": 1
+    },
+    "phasePersisted": "running",
+    "deleted": false,
+    "configuration": {
+      "ideImage": "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/ide/code:commit-3bb09152fc5248f5b99b33b4d8a7f101aa082441",
+      "ideImageLayers": [
+        "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/ide/gitpod-code-web:commit-49bb715b599dce2356dd02a6ede7ae8cf10d8d12",
+        "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/ide/code-codehelper:commit-a96456ae29513e367719ff1c720adb2c59a0bd49"
+      ],
+      "supervisorImage": "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/supervisor:commit-be35ce16a80342b0e57d85d486544e9608044d9a",
+      "ideConfig": {
+        "useLatest": false,
+        "ide": "code"
+      },
+      "ideSetup": {
+        "envvars": [
+          {
+            "name": "GITPOD_IDE_ALIAS",
+            "value": "code"
+          }
+        ],
+        "tasks": []
+      },
+      "regionPreference": "",
+      "fromBackup": false
+    },
+    "imageBuildInfo": null,
+    "workspaceClass": "g1-xlarge",
+    "usageAttributionId": "team:ce36c2f8-5d43-4b1d-92f2-08cb6f0e0869"
+  }
+}

@@ -17,8 +17,10 @@ import { WebhookEventGarbageCollector } from "./webhook-gc";
 import { WorkspaceGarbageCollector } from "./workspace-gc";
 import { SnapshotsJob } from "./snapshots";
 import { RelationshipUpdateJob } from "../authorization/relationship-updater-job";
-import { runWithContext } from "../util/log-context";
 import { WorkspaceStartController } from "../workspace/workspace-start-controller";
+import { runWithRequestContext } from "../util/request-context";
+import { SYSTEM_USER } from "../authorization/authorizer";
+import { InstallationAdminCleanup } from "./installation-admin-cleanup";
 
 export const Job = Symbol("Job");
 
@@ -41,6 +43,7 @@ export class JobRunner {
         @inject(SnapshotsJob) private readonly snapshotsJob: SnapshotsJob,
         @inject(RelationshipUpdateJob) private readonly relationshipUpdateJob: RelationshipUpdateJob,
         @inject(WorkspaceStartController) private readonly workspaceStartController: WorkspaceStartController,
+        @inject(InstallationAdminCleanup) private readonly installationAdminCleanup: InstallationAdminCleanup,
     ) {}
 
     public start(): DisposableCollection {
@@ -55,6 +58,7 @@ export class JobRunner {
             this.snapshotsJob,
             this.relationshipUpdateJob,
             this.workspaceStartController,
+            this.installationAdminCleanup,
         ];
 
         for (const job of jobs) {
@@ -81,8 +85,14 @@ export class JobRunner {
 
         try {
             await this.mutex.using([job.name, ...(job.lockedResources || [])], job.frequencyMs, async (signal) => {
-                await runWithContext(job.name, {}, async () => {
-                    log.info(`Acquired lock for job ${job.name}.`, logCtx);
+                const ctx = {
+                    signal,
+                    requestKind: "job",
+                    requestMethod: job.name,
+                    subjectId: SYSTEM_USER,
+                };
+                await runWithRequestContext(ctx, async () => {
+                    log.debug(`Acquired lock for job ${job.name}.`, logCtx);
                     // we want to hold the lock for the entire duration of the job, so we return earliest after frequencyMs
                     const timeout = new Promise<void>((resolve) => setTimeout(resolve, job.frequencyMs));
                     const timer = jobsDurationSeconds.startTimer({ name: job.name });
@@ -90,7 +100,7 @@ export class JobRunner {
                     const now = new Date().getTime();
                     try {
                         await job.run();
-                        log.info(`Successfully finished job ${job.name}`, {
+                        log.debug(`Successfully finished job ${job.name}`, {
                             ...logCtx,
                             jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
                         });

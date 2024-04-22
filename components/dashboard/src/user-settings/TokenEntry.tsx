@@ -10,7 +10,9 @@ import { ContextMenuEntry } from "../components/ContextMenu";
 import { ItemFieldContextMenu } from "../components/ItemsList";
 import Tooltip from "../components/Tooltip";
 import { ReactComponent as ExclamationIcon } from "../images/exclamation.svg";
-import { AllPermissions } from "./PersonalAccessTokens";
+import { ReactComponent as WarningIcon } from "../images/exclamation2.svg";
+import { AllPermissions, isNeverExpired } from "./PersonalAccessTokens";
+import { useMemo } from "react";
 
 interface TokenEntryProps {
     token: PersonalAccessToken;
@@ -18,9 +20,31 @@ interface TokenEntryProps {
 }
 
 function TokenEntry(props: TokenEntryProps) {
-    const expirationDay = dayjs(props.token.expirationTime!.toDate());
-    const expired = expirationDay.isBefore(dayjs());
-    const expirationDateString = expirationDay.format("MMM D, YYYY, hh:mm A");
+    const expiredInfo = useMemo(() => {
+        const expiration = props.token.expirationTime!.toDate();
+        if (isNeverExpired(expiration)) {
+            return {
+                expired: false,
+                content: "Never expires!",
+                tooltip: {
+                    content: "The token will never expire!",
+                    icon: <WarningIcon className="h-4 w-4" />,
+                },
+            };
+        }
+        const expirationTime = dayjs(expiration);
+        const expired = expirationTime.isBefore(dayjs());
+        return {
+            expired,
+            content: expirationTime.format("MMM D, YYYY"),
+            tooltip: expired
+                ? {
+                      content: expirationTime.format("MMM D, YYYY, hh:mm A"),
+                      icon: <ExclamationIcon fill="#D97706" className="h-4 w-4" />,
+                  }
+                : undefined,
+        };
+    }, [props.token.expirationTime]);
 
     const getScopes = () => {
         if (!props.token.scopes) {
@@ -43,13 +67,11 @@ function TokenEntry(props: TokenEntryProps) {
                 <span className="truncate whitespace-pre-line">{getScopes()}</span>
             </div>
             <div className="flex items-center w-3/12 text-gray-400">
-                <span className={"flex items-center gap-1 truncate" + (expired ? " text-orange-600" : "")}>
-                    <span>{expirationDay.format("MMM D, YYYY")}</span>
-                    {expired && (
-                        <Tooltip content={expirationDateString}>
-                            <ExclamationIcon fill="#D97706" className="h-4 w-4" />
-                        </Tooltip>
+                <span className={"flex items-center gap-2 truncate" + (expiredInfo.expired ? " text-orange-600" : "")}>
+                    {expiredInfo.tooltip && (
+                        <Tooltip content={expiredInfo.tooltip.content}>{expiredInfo.tooltip.icon}</Tooltip>
                     )}
+                    <span>{expiredInfo.content}</span>
                 </span>
             </div>
             <div className="flex items-center justify-end w-1/12">

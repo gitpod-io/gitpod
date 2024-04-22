@@ -328,6 +328,7 @@ func setupProjectsService(t *testing.T) (*protocol.MockAPIInterface, v1connect.P
 
 func newProject(p *protocol.Project) *protocol.Project {
 	r := rand.Int()
+	b_false := false
 	result := &protocol.Project{
 		ID:                uuid.New().String(),
 		Name:              fmt.Sprintf("team-%d", r),
@@ -335,14 +336,14 @@ func newProject(p *protocol.Project) *protocol.Project {
 		CloneURL:          "https://github.com/easyCZ/foobar",
 		AppInstallationID: "1337",
 		Settings: &protocol.ProjectSettings{
-			UseIncrementalPrebuilds:      true,
-			UsePersistentVolumeClaim:     true,
-			KeepOutdatedPrebuildsRunning: true,
-			AllowUsingPreviousPrebuilds:  true,
-			PrebuildEveryNthCommit:       5,
+			UsePersistentVolumeClaim: true,
 			WorkspaceClasses: &protocol.WorkspaceClassesSettings{
 				Regular:  "default",
 				Prebuild: "default",
+			},
+			RestrictedWorkspaceClasses: &[]string{"default"},
+			PrebuildSettings: &protocol.PrebuildSettings{
+				Enable: &b_false,
 			},
 		},
 		CreationTime: "2022-09-09T09:09:09.000Z",

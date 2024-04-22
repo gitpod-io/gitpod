@@ -75,18 +75,6 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 		return
 	}
 
-	// https://github.blog/2019-11-03-highlights-from-git-2-24/
-	err = ws.Git(ctx, "config", "feature.manyFiles", "true")
-	if err != nil {
-		log.WithError(err).Error("cannot configure feature.manyFiles")
-	}
-
-	// commit-graph after every git fetch command that downloads a pack-file from a remote
-	err = ws.Git(ctx, "config", "fetch.writeCommitGraph", "true")
-	if err != nil {
-		log.WithError(err).Error("cannot configure fetch.writeCommitGraph")
-	}
-
 	gitClone := func() error {
 		if err := os.MkdirAll(ws.Location, 0775); err != nil {
 			log.WithError(err).WithField("location", ws.Location).Error("cannot create directory")
@@ -95,8 +83,8 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 
 		// make sure that folder itself is owned by gitpod user prior to doing git clone
 		// this is needed as otherwise git clone will fail if the folder is owned by root
-		if ws.RunAs != nil {
-			args := []string{fmt.Sprintf("%d:%d", ws.RunAs.UID, ws.RunAs.GID), ws.Location}
+		if ws.RunAsGitpodUser {
+			args := []string{"gitpod", ws.Location}
 			cmd := exec.Command("chown", args...)
 			res, cerr := cmd.CombinedOutput()
 			if cerr != nil && !process.IsNotChildProcess(cerr) {
@@ -122,9 +110,16 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 			return err
 		}
 
+		// we can only do `git config` stuffs after having a directory that is also git init'd
+		// commit-graph after every git fetch command that downloads a pack-file from a remote
+		err = ws.Git(ctx, "config", "fetch.writeCommitGraph", "true")
+		if err != nil {
+			log.WithError(err).WithField("location", ws.Location).Error("cannot configure fetch.writeCommitGraph")
+		}
+
 		err = ws.Git(ctx, "config", "--replace-all", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
 		if err != nil {
-			log.WithError(err).WithField("location", ws.Location).Error("cannot configure fecth behavior")
+			log.WithError(err).WithField("location", ws.Location).Error("cannot configure fetch behavior")
 		}
 
 		err = ws.Git(ctx, "config", "--replace-all", "checkout.defaultRemote", "origin")

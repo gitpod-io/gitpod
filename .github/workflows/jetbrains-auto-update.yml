@@ -16,70 +16,46 @@ jobs:
     with:
       productId: intellij
       productCode: IIU
-    secrets:
-      projectId: ${{ secrets.GCP_PROJECT_ID }}
-      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+    secrets: inherit
   goland:
     uses: ./.github/workflows/jetbrains-auto-update-template.yml
     with:
       productId: goland
       productCode: GO
-    secrets:
-      projectId: ${{ secrets.GCP_PROJECT_ID }}
-      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+    secrets: inherit
   pycharm:
     uses: ./.github/workflows/jetbrains-auto-update-template.yml
     with:
       productId: pycharm
       productCode: PCP
-    secrets:
-      projectId: ${{ secrets.GCP_PROJECT_ID }}
-      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+    secrets: inherit
   phpstorm:
     uses: ./.github/workflows/jetbrains-auto-update-template.yml
     with:
       productId: phpstorm
       productCode: PS
-    secrets:
-      projectId: ${{ secrets.GCP_PROJECT_ID }}
-      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+    secrets: inherit
   rubymine:
     uses: ./.github/workflows/jetbrains-auto-update-template.yml
     with:
       productId: rubymine
       productCode: RM
-    secrets:
-      projectId: ${{ secrets.GCP_PROJECT_ID }}
-      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+    secrets: inherit
   webstorm:
     uses: ./.github/workflows/jetbrains-auto-update-template.yml
     with:
       productId: webstorm
       productCode: WS
-    secrets:
-      projectId: ${{ secrets.GCP_PROJECT_ID }}
-      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+    secrets: inherit
   rider:
     uses: ./.github/workflows/jetbrains-auto-update-template.yml
     with:
       productId: rider
       productCode: RD
-    secrets:
-      projectId: ${{ secrets.GCP_PROJECT_ID }}
-      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+    secrets: inherit
   clion:
     uses: ./.github/workflows/jetbrains-auto-update-template.yml
     with:
       productId: clion
       productCode: CL
-    secrets:
-      projectId: ${{ secrets.GCP_PROJECT_ID }}
-      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+    secrets: inherit

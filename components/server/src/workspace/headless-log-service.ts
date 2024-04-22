@@ -32,9 +32,12 @@ import {
     LogDownloadURLResponse,
 } from "@gitpod/content-service/lib/headless-log_pb";
 import { CachingHeadlessLogServiceClientProvider } from "../util/content-service-sugar";
+import { ctxIsAborted, ctxOnAbort } from "../util/request-context";
+import { PREBUILD_LOGS_PATH_PREFIX as PREBUILD_LOGS_PATH_PREFIX_common } from "@gitpod/public-api-common/lib/prebuild-utils";
 
 export const HEADLESS_LOGS_PATH_PREFIX = "/headless-logs";
 export const HEADLESS_LOG_DOWNLOAD_PATH_PREFIX = "/headless-log-download";
+export const PREBUILD_LOGS_PATH_PREFIX = PREBUILD_LOGS_PATH_PREFIX_common;
 
 export type HeadlessLogEndpoint = {
     url: string;
@@ -89,7 +92,6 @@ export class HeadlessLogService {
                 () => this.supervisorListHeadlessLogs(logCtx, wsi.id, logEndpoint),
                 "list headless log streams",
                 this.continueWhileRunning(wsi.id),
-                aborted,
             );
             if (streamIds !== undefined) {
                 return streamIds;
@@ -211,7 +213,7 @@ export class HeadlessLogService {
         wsi: WorkspaceInstance,
         ownerId: string,
         taskId: string,
-    ): Promise<string | undefined> {
+    ): Promise<string> {
         try {
             return await new Promise<string>((resolve, reject) => {
                 const req = new LogDownloadURLRequest();
@@ -229,13 +231,13 @@ export class HeadlessLogService {
                 });
             });
         } catch (err) {
-            log.debug(
+            log.error(
                 { userId, workspaceId: wsi.workspaceId, instanceId: wsi.id },
                 "an error occurred retrieving a headless log download URL",
                 err,
                 { taskId },
             );
-            return undefined;
+            throw err;
         }
     }
 
@@ -255,16 +257,8 @@ export class HeadlessLogService {
         instanceId: string,
         terminalID: string,
         sink: (chunk: string) => Promise<void>,
-        aborted: Deferred<boolean>,
     ): Promise<void> {
-        await this.streamWorkspaceLog(
-            logCtx,
-            logEndpoint,
-            terminalID,
-            sink,
-            this.continueWhileRunning(instanceId),
-            aborted,
-        );
+        await this.streamWorkspaceLog(logCtx, logEndpoint, terminalID, sink, this.continueWhileRunning(instanceId));
     }
 
     /**
@@ -274,7 +268,6 @@ export class HeadlessLogService {
      * @param terminalID
      * @param sink
      * @param doContinue
-     * @param aborted
      */
     protected async streamWorkspaceLog(
         logCtx: LogContext,
@@ -282,7 +275,6 @@ export class HeadlessLogService {
         terminalID: string,
         sink: (chunk: string) => Promise<void>,
         doContinue: () => Promise<boolean>,
-        aborted: Deferred<boolean>,
     ): Promise<void> {
         const client = new TerminalServiceClient(toSupervisorURL(logEndpoint.url), {
             transport: WebsocketTransport(), // necessary because HTTPTransport causes caching issues
@@ -292,11 +284,7 @@ export class HeadlessLogService {
 
         let receivedDataYet = false;
         let stream: ResponseStream<ListenTerminalResponse> | undefined = undefined;
-        aborted.promise
-            .then(() => stream?.cancel())
-            .catch((err) => {
-                /** ignore */
-            });
+        ctxOnAbort(() => stream?.cancel());
         const doStream = (retry: (doRetry?: boolean) => void) =>
             new Promise<void>((resolve, reject) => {
                 // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
@@ -330,7 +318,7 @@ export class HeadlessLogService {
                     reject(err);
                 });
             });
-        await this.retryOnError(doStream, "stream workspace logs", doContinue, aborted);
+        await this.retryOnError(doStream, "stream workspace logs", doContinue);
     }
 
     /**
@@ -338,13 +326,11 @@ export class HeadlessLogService {
      * @param logCtx
      * @param logEndpoint
      * @param sink
-     * @param aborted
      */
     async streamImageBuildLog(
         logCtx: LogContext,
         logEndpoint: HeadlessLogEndpoint,
         sink: (chunk: string) => Promise<void>,
-        aborted: Deferred<boolean>,
     ): Promise<void> {
         const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
         if (tasks.length === 0) {
@@ -353,14 +339,7 @@ export class HeadlessLogService {
 
         // we're just looking at the first stream; image builds just have one stream atm
         const task = tasks[0];
-        await this.streamWorkspaceLog(
-            logCtx,
-            logEndpoint,
-            task.getTerminal(),
-            sink,
-            () => Promise.resolve(true),
-            aborted,
-        );
+        await this.streamWorkspaceLog(logCtx, logEndpoint, task.getTerminal(), sink, () => Promise.resolve(true));
     }
 
     /**
@@ -371,21 +350,19 @@ export class HeadlessLogService {
      * @param op
      * @param description
      * @param doContinue
-     * @param aborted
      * @returns
      */
     protected async retryOnError<T>(
         op: (cancel: () => void) => Promise<T>,
         description: string,
         doContinue: () => Promise<boolean>,
-        aborted: Deferred<boolean>,
     ): Promise<T | undefined> {
         let retry = true;
         const retryFunction = (doRetry: boolean = true) => {
             retry = doRetry;
         };
 
-        while (retry && !(aborted.isResolved && (await aborted.promise))) {
+        while (retry && !ctxIsAborted()) {
             try {
                 return await op(retryFunction);
             } catch (err) {

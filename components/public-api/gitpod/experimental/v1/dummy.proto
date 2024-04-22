@@ -12,12 +12,13 @@ service HelloService {
   rpc SayHello(SayHelloRequest) returns (SayHelloResponse);
   // Server streaming RPCs where the client sends a request to the server and
   // gets a stream to read a sequence of messages back.
-  rpc LotsOfReplies(LotsOfRepliesRequest)
-      returns (stream LotsOfRepliesResponse);
+  rpc LotsOfReplies(LotsOfRepliesRequest) returns (stream LotsOfRepliesResponse);
 }
 
 message SayHelloRequest {}
-message SayHelloResponse { string reply = 1; }
+message SayHelloResponse {
+  string reply = 1;
+}
 
 message LotsOfRepliesRequest {
   int32 previous_count = 1;

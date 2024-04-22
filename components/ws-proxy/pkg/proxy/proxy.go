@@ -19,7 +19,8 @@ import (
 	"github.com/klauspost/cpuid/v2"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/golang-crypto/ssh"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
 )
 
 // WorkspaceProxy is the entity which forwards all inbound requests to the relevant workspace pods.
@@ -27,18 +28,18 @@ type WorkspaceProxy struct {
 	Ingress               HostBasedIngressConfig
 	Config                Config
 	WorkspaceRouter       WorkspaceRouter
-	WorkspaceInfoProvider WorkspaceInfoProvider
-	SSHHostSigners        []ssh.Signer
+	WorkspaceInfoProvider common.WorkspaceInfoProvider
+	SSHGatewayServer      *sshproxy.Server
 }
 
 // NewWorkspaceProxy creates a new workspace proxy.
-func NewWorkspaceProxy(ingress HostBasedIngressConfig, config Config, workspaceRouter WorkspaceRouter, workspaceInfoProvider WorkspaceInfoProvider, signers []ssh.Signer) *WorkspaceProxy {
+func NewWorkspaceProxy(ingress HostBasedIngressConfig, config Config, workspaceRouter WorkspaceRouter, workspaceInfoProvider common.WorkspaceInfoProvider, sshGatewayServer *sshproxy.Server) *WorkspaceProxy {
 	return &WorkspaceProxy{
 		Ingress:               ingress,
 		Config:                config,
 		WorkspaceRouter:       workspaceRouter,
 		WorkspaceInfoProvider: workspaceInfoProvider,
-		SSHHostSigners:        signers,
+		SSHGatewayServer:      sshGatewayServer,
 	}
 }
 
@@ -129,13 +130,17 @@ func (p *WorkspaceProxy) MustServe(ctx context.Context) {
 func (p *WorkspaceProxy) Handler() (http.Handler, error) {
 	r := mux.NewRouter()
 
+	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
 	// install routes
 	handlerConfig, err := NewRouteHandlerConfig(&p.Config, WithDefaultAuth(p.WorkspaceInfoProvider))
 	if err != nil {
 		return nil, err
 	}
 	ideRouter, portRouter, foreignRouter := p.WorkspaceRouter(r, p.WorkspaceInfoProvider)
-	err = installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider, p.SSHHostSigners)
+	err = installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider, p.SSHGatewayServer)
 	if err != nil {
 		return nil, err
 	}

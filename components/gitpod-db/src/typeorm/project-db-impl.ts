@@ -7,15 +7,17 @@
 import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue, ProjectUsage } from "@gitpod/gitpod-protocol";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { inject, injectable, optional } from "inversify";
-import { EntityManager, FindConditions, Repository } from "typeorm";
+import { Brackets, EntityManager, FindConditions, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
-import { ProjectDB } from "../project-db";
+import { ProjectDB, FindProjectsBySearchTermArgs } from "../project-db";
 import { DBProject } from "./entity/db-project";
 import { DBProjectEnvVar } from "./entity/db-project-env-vars";
 import { DBProjectInfo } from "./entity/db-project-info";
 import { DBProjectUsage } from "./entity/db-project-usage";
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { filter } from "../utils";
 
 function toProjectEnvVar(envVarWithValue: DBProjectEnvVar): ProjectEnvVar {
     const envVar = { ...envVarWithValue };
@@ -58,9 +60,12 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return repo.findOne({ id: projectId, markedDeleted: false });
     }
 
-    public async findProjectsByCloneUrl(cloneUrl: string): Promise<Project[]> {
+    public async findProjectsByCloneUrl(cloneUrl: string, organizationId?: string): Promise<Project[]> {
         const repo = await this.getRepo();
         const conditions: FindConditions<DBProject> = { cloneUrl, markedDeleted: false };
+        if (organizationId) {
+            conditions.teamId = organizationId;
+        }
         return repo.find(conditions);
     }
 
@@ -69,22 +74,45 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return repo.find({ where: { teamId: orgId, markedDeleted: false }, order: { name: "ASC" } });
     }
 
-    public async findProjectsBySearchTerm(
-        offset: number,
-        limit: number,
-        orderBy: keyof Project,
-        orderDir: "DESC" | "ASC",
-        searchTerm?: string,
-    ): Promise<{ total: number; rows: Project[] }> {
+    public async findProjectsBySearchTerm({
+        offset,
+        limit,
+        orderBy,
+        orderDir,
+        searchTerm,
+        organizationId,
+        prebuildsEnabled,
+    }: FindProjectsBySearchTermArgs): Promise<{ total: number; rows: Project[] }> {
         const projectRepo = await this.getRepo();
+        const normalizedSearchTerm = searchTerm?.trim();
 
         const queryBuilder = projectRepo
             .createQueryBuilder("project")
-            .where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${searchTerm}%` })
-            .andWhere("project.markedDeleted = false")
+            .where("project.markedDeleted = false")
             .skip(offset)
             .take(limit)
             .orderBy(orderBy, orderDir);
+
+        if (organizationId) {
+            queryBuilder.andWhere("project.teamId = :organizationId", { organizationId });
+        }
+
+        if (normalizedSearchTerm) {
+            queryBuilder.andWhere(
+                new Brackets((qb) => {
+                    qb.where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${normalizedSearchTerm}%` }).orWhere(
+                        "project.name LIKE :searchTerm",
+                        { searchTerm: `%${normalizedSearchTerm}%` },
+                    );
+                }),
+            );
+        }
+
+        if (prebuildsEnabled !== undefined) {
+            queryBuilder.andWhere("project.settings->>'$.prebuilds.enable' = :enabled", {
+                enabled: prebuildsEnabled ? "true" : "false",
+            });
+        }
 
         const [rows, total] = await queryBuilder.getManyAndCount();
         return { total, rows };
@@ -95,13 +123,19 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return repo.save(project);
     }
 
-    public async updateProject(partialProject: PartialProject): Promise<void> {
+    public async updateProject(partialProject: PartialProject): Promise<DBProject> {
         const repo = await this.getRepo();
         const count = await repo.count({ id: partialProject.id, markedDeleted: false });
         if (count < 1) {
-            throw new Error("A project with this ID could not be found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `project with ID ${partialProject.id} not found`);
         }
         await repo.update(partialProject.id, partialProject);
+        const project = await repo.findOne({ id: partialProject.id, markedDeleted: false });
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `project with ID ${partialProject.id} not found`);
+        }
+
+        return project;
     }
 
     public async markDeleted(projectId: string): Promise<void> {
@@ -129,9 +163,12 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return envVarRepo.findOne({ projectId, name: envVar.name, deleted: false });
     }
 
-    public async addProjectEnvironmentVariable(projectId: string, envVar: ProjectEnvVarWithValue): Promise<void> {
+    public async addProjectEnvironmentVariable(
+        projectId: string,
+        envVar: ProjectEnvVarWithValue,
+    ): Promise<ProjectEnvVar> {
         const envVarRepo = await this.getProjectEnvVarRepo();
-        await envVarRepo.save({
+        const insertedEnvVar = await envVarRepo.save({
             id: uuidv4(),
             projectId,
             name: envVar.name,
@@ -140,14 +177,31 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
             creationTime: new Date().toISOString(),
             deleted: false,
         });
+        return toProjectEnvVar(insertedEnvVar);
     }
 
     public async updateProjectEnvironmentVariable(
         projectId: string,
-        envVar: Required<ProjectEnvVarWithValue>,
-    ): Promise<void> {
-        const envVarRepo = await this.getProjectEnvVarRepo();
-        await envVarRepo.update({ id: envVar.id, projectId }, { value: envVar.value, censored: envVar.censored });
+        envVar: Partial<ProjectEnvVarWithValue>,
+    ): Promise<ProjectEnvVar | undefined> {
+        if (!envVar.id) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "An environment variable with this ID could not be found");
+        }
+
+        return await this.transaction(async (_, ctx) => {
+            const envVarRepo = ctx.entityManager.getRepository<DBProjectEnvVar>(DBProjectEnvVar);
+
+            await envVarRepo.update(
+                { id: envVar.id, projectId },
+                filter(envVar, (_, v) => v !== null && v !== undefined),
+            );
+
+            const found = await envVarRepo.findOne({ id: envVar.id, projectId, deleted: false });
+            if (!found) {
+                return;
+            }
+            return toProjectEnvVar(found);
+        });
     }
 
     public async getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]> {

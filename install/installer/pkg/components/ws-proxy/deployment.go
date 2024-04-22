@@ -23,6 +23,7 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
+	//nolint:typecheck
 	configHash, err := common.ObjectHash(configmap(ctx))
 	if err != nil {
 		return nil, err
@@ -58,6 +59,25 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "host-key",
 			MountPath: "/mnt/host-key",
+		})
+	}
+
+	if ctx.Config.SSHGatewayCAKey != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: "ca-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.SSHGatewayCAKey.Name,
+					Optional:   pointer.Bool(true),
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "ca-key",
+			MountPath: "/mnt/ca-key/ca.key",
+			SubPath:   "ca.key",
+			ReadOnly:  true,
 		})
 	}
 

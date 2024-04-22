@@ -196,6 +196,40 @@ describe("config inferrer", () => {
                     },
                 },
             )),
+        it("[kotlin] gradle", async () =>
+            expect(
+                {
+                    "build.gradle.kts": "",
+                    "pom.xml": "",
+                },
+                {
+                    tasks: [
+                        {
+                            init: "gradle build",
+                        },
+                    ],
+                    vscode: {
+                        extensions: ["fwcd.kotlin"],
+                    },
+                },
+            )),
+        it("[kotlin] gradle wrapper", async () =>
+            expect(
+                {
+                    "build.gradle.kts": "",
+                    gradlew: "",
+                },
+                {
+                    tasks: [
+                        {
+                            init: "./gradlew build",
+                        },
+                    ],
+                    vscode: {
+                        extensions: ["fwcd.kotlin"],
+                    },
+                },
+            )),
         it("[python] pip install", async () =>
             expect(
                 {

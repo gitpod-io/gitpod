@@ -19,3 +19,7 @@ func (c *NoOpClient) CancelSubscription(ctx context.Context, subscriptionId stri
 func (c *NoOpClient) OnChargeDispute(ctx context.Context, disputeID string) error {
 	return nil
 }
+
+func (c *NoOpClient) UpdateCustomerSubscriptionsTaxState(ctx context.Context, customerID string) error {
+	return nil
+}

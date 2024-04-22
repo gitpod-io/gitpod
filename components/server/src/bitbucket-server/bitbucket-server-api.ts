@@ -429,6 +429,19 @@ export class BitbucketServerApi {
         }
     }
 
+    async getRecentRepos(userOrToken: User | string, options: { limit: number }) {
+        const params = new URLSearchParams({
+            limit: `${options.limit}`,
+        });
+
+        const { values } = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
+            userOrToken,
+            `/profile/recent/repos?${params.toString()}`,
+        );
+
+        return values || [];
+    }
+
     async getPullRequest(
         user: User,
         params: { repoKind: "projects" | "users"; owner: string; repositorySlug: string; nr: number },
@@ -486,7 +499,7 @@ export namespace BitbucketServer {
     }
 
     export interface BranchWithMeta extends Branch {
-        latestCommitMetadata: Commit;
+        latestCommitMetadata?: Commit;
         htmlUrl: string;
         metadata: {
             "com.atlassian.bitbucket.server.bitbucket-branch:latest-commit-metadata": Commit;

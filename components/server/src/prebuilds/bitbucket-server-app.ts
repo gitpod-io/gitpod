@@ -19,6 +19,9 @@ import { UserService } from "../user/user-service";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
 import { ProjectsService } from "../projects/projects-service";
+import { SubjectId } from "../auth/subject-id";
+import { runWithSubjectId } from "../util/request-context";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 
 @injectable()
 export class BitbucketServerApp {
@@ -62,6 +65,7 @@ export class BitbucketServerApp {
                         return;
                     }
                     try {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                         await this.handlePushHook({ span }, user, payload, event);
                     } catch (err) {
                         TraceContext.setError({ span }, err);
@@ -116,7 +120,9 @@ export class BitbucketServerApp {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
             const cloneURL = this.getCloneUrl(payload);
-            const projects = await this.projectService.findProjectsByCloneUrl(user.id, cloneURL);
+            const projects = await runWithSubjectId(SYSTEM_USER, () =>
+                this.projectService.findProjectsByCloneUrl(SYSTEM_USER_ID, cloneURL),
+            );
             for (const project of projects) {
                 try {
                     const projectOwner = await this.findProjectOwner(project, user);
@@ -154,23 +160,25 @@ export class BitbucketServerApp {
 
                     log.debug("Bitbucket Server push event: Starting prebuild.", { contextUrl });
 
-                    const commitInfo = await this.getCommitInfo(user, cloneURL, commit);
-                    const ws = await this.prebuildManager.startPrebuild(
-                        { span },
-                        {
-                            user: projectOwner,
-                            project: project,
-                            context,
-                            commitInfo,
-                        },
-                    );
-                    if (!ws.done) {
-                        await this.webhookEvents.updateEvent(event.id, {
-                            prebuildStatus: "prebuild_triggered",
-                            status: "processed",
-                            prebuildId: ws.prebuildId,
-                        });
-                    }
+                    await runWithSubjectId(SubjectId.fromUserId(projectOwner.id), async () => {
+                        const commitInfo = await this.getCommitInfo(user, cloneURL, commit);
+                        const ws = await this.prebuildManager.startPrebuild(
+                            { span },
+                            {
+                                user: projectOwner,
+                                project: project,
+                                context,
+                                commitInfo,
+                            },
+                        );
+                        if (!ws.done) {
+                            await this.webhookEvents.updateEvent(event.id, {
+                                prebuildStatus: "prebuild_triggered",
+                                status: "processed",
+                                prebuildId: ws.prebuildId,
+                            });
+                        }
+                    });
                 } catch (error) {
                     log.error("Error processing Bitbucket Server webhook event", error);
                 }
@@ -213,7 +221,9 @@ export class BitbucketServerApp {
             const hostContext = this.hostCtxProvider.get(new URL(project.cloneUrl).host);
             const authProviderId = hostContext?.authProvider.authProviderId;
             for (const teamMember of teamMembers) {
-                const user = await this.userService.findUserById(webhookInstaller.id, teamMember.userId);
+                const user = await runWithSubjectId(SubjectId.fromUserId(webhookInstaller.id), () =>
+                    this.userService.findUserById(webhookInstaller.id, teamMember.userId),
+                );
                 if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
                     return user;
                 }

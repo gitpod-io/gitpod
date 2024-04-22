@@ -4,8 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import { MetricsReporter } from "@gitpod/public-api/lib/metrics";
+import { MetricsReporter } from "@gitpod/gitpod-protocol/lib/metrics";
 import { getExperimentsClient } from "../experiments/client";
 import { v4 } from "uuid";
 const commit = require("./config.json").commit;
@@ -13,7 +12,7 @@ const commit = require("./config.json").commit;
 const originalConsoleError = console.error;
 
 const metricsReporter = new MetricsReporter({
-    gitpodUrl: new GitpodHostUrl(window.location.href).withoutWorkspacePrefix().toString(),
+    gitpodUrl: window.location.href,
     clientName: "dashboard",
     clientVersion: commit,
     log: {
@@ -54,9 +53,11 @@ export function instrumentWebSocket(ws: WebSocket, origin: string) {
 export function reportError(...args: any[]) {
     let err = undefined;
     let details = undefined;
+    let requestContext = undefined;
     if (args[0] instanceof Error) {
         err = args[0];
         details = args[1];
+        requestContext = (args[0] as any)["requestContext"];
     } else if (typeof args[0] === "string") {
         err = new Error(args[0]);
         if (args[1] instanceof Error) {
@@ -64,12 +65,17 @@ export function reportError(...args: any[]) {
             err.name = args[1].name;
             err.stack = args[1].stack;
             details = args[2];
+            requestContext = (args[1] as any)["requestContext"];
         } else if (typeof args[1] === "string") {
             err.message += ": " + args[1];
             details = args[2];
         } else {
             details = args[1];
         }
+    }
+
+    if (!err) {
+        return;
     }
 
     let data = {};
@@ -91,8 +97,9 @@ export function reportError(...args: any[]) {
             ),
         );
     }
-
-    if (err) {
-        metricsReporter.reportError(err, data);
+    if (requestContext && typeof requestContext === "object") {
+        data = Object.assign(data, requestContext);
     }
+
+    metricsReporter.reportError(err, data);
 }

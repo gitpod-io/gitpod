@@ -9,7 +9,6 @@ import {
     WorkspaceInfo,
     WorkspaceCreationResult,
     WorkspaceInstanceUser,
-    WhitelistedRepository,
     WorkspaceImageBuild,
     AuthProviderInfo,
     Token,
@@ -41,7 +40,6 @@ import {
     PrebuildWithStatus,
     StartPrebuildResult,
     PartialProject,
-    PrebuildEvent,
     OrganizationSettings,
 } from "./teams-projects-protocol";
 import { JsonRpcProxy, JsonRpcServer } from "./messaging/proxy-factory";
@@ -81,22 +79,35 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     updateLoggedInUser(user: Partial<User>): Promise<User>;
     sendPhoneNumberVerificationToken(phoneNumber: string): Promise<{ verificationId: string }>;
     verifyPhoneNumberVerificationToken(phoneNumber: string, token: string, verificationId: string): Promise<boolean>;
-    getAuthProviders(): Promise<AuthProviderInfo[]>;
-    getOwnAuthProviders(): Promise<AuthProviderEntry[]>;
-    updateOwnAuthProvider(params: GitpodServer.UpdateOwnAuthProviderParams): Promise<AuthProviderEntry>;
-    deleteOwnAuthProvider(params: GitpodServer.DeleteOwnAuthProviderParams): Promise<void>;
     getConfiguration(): Promise<Configuration>;
     getToken(query: GitpodServer.GetTokenSearchOptions): Promise<Token | undefined>;
     getGitpodTokenScopes(tokenHash: string): Promise<string[]>;
     deleteAccount(): Promise<void>;
     getClientRegion(): Promise<string | undefined>;
 
+    // Auth Provider API
+    getAuthProviders(): Promise<AuthProviderInfo[]>;
+    // user-level
+    getOwnAuthProviders(): Promise<AuthProviderEntry[]>;
+    updateOwnAuthProvider(params: GitpodServer.UpdateOwnAuthProviderParams): Promise<AuthProviderEntry>;
+    deleteOwnAuthProvider(params: GitpodServer.DeleteOwnAuthProviderParams): Promise<void>;
+    // org-level
+    createOrgAuthProvider(params: GitpodServer.CreateOrgAuthProviderParams): Promise<AuthProviderEntry>;
+    updateOrgAuthProvider(params: GitpodServer.UpdateOrgAuthProviderParams): Promise<AuthProviderEntry>;
+    getOrgAuthProviders(params: GitpodServer.GetOrgAuthProviderParams): Promise<AuthProviderEntry[]>;
+    deleteOrgAuthProvider(params: GitpodServer.DeleteOrgAuthProviderParams): Promise<void>;
+    // public-api compatibility
+    /** @deprecated used for public-api compatibility only */
+    getAuthProvider(id: string): Promise<AuthProviderEntry>;
+    /** @deprecated used for public-api compatibility only */
+    deleteAuthProvider(id: string): Promise<void>;
+    /** @deprecated used for public-api compatibility only */
+    updateAuthProvider(id: string, update: AuthProviderEntry.UpdateOAuth2Config): Promise<AuthProviderEntry>;
+
     // Query/retrieve workspaces
     getWorkspaces(options: GitpodServer.GetWorkspacesOptions): Promise<WorkspaceInfo[]>;
     getWorkspaceOwner(workspaceId: string): Promise<UserInfo | undefined>;
     getWorkspaceUsers(workspaceId: string): Promise<WorkspaceInstanceUser[]>;
-    getFeaturedRepositories(): Promise<WhitelistedRepository[]>;
-    getSuggestedContextURLs(): Promise<string[]>;
     getSuggestedRepositories(organizationId: string): Promise<SuggestedRepository[]>;
     searchRepositories(params: SearchRepositoriesParams): Promise<SuggestedRepository[]>;
     /**
@@ -167,10 +178,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteTeam(teamId: string): Promise<void>;
     getOrgSettings(orgId: string): Promise<OrganizationSettings>;
     updateOrgSettings(teamId: string, settings: Partial<OrganizationSettings>): Promise<OrganizationSettings>;
-    createOrgAuthProvider(params: GitpodServer.CreateOrgAuthProviderParams): Promise<AuthProviderEntry>;
-    updateOrgAuthProvider(params: GitpodServer.UpdateOrgAuthProviderParams): Promise<AuthProviderEntry>;
-    getOrgAuthProviders(params: GitpodServer.GetOrgAuthProviderParams): Promise<AuthProviderEntry[]>;
-    deleteOrgAuthProvider(params: GitpodServer.DeleteOrgAuthProviderParams): Promise<void>;
+    getOrgWorkspaceClasses(orgId: string): Promise<SupportedWorkspaceClass[]>;
 
     getDefaultWorkspaceImage(params: GetDefaultWorkspaceImageParams): Promise<GetDefaultWorkspaceImageResult>;
 
@@ -178,6 +186,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getOnboardingState(): Promise<GitpodServer.OnboardingState>;
 
     // Projects
+    /** @deprecated no-op */
     getProviderRepositoriesForUser(
         params: GetProviderRepositoriesParams,
         cancellationToken?: CancellationToken,
@@ -186,14 +195,19 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteProject(projectId: string): Promise<void>;
     getTeamProjects(teamId: string): Promise<Project[]>;
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
-    getPrebuildEvents(projectId: string): Promise<PrebuildEvent[]>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
     findPrebuildByWorkspaceID(workspaceId: string): Promise<PrebuiltWorkspace | undefined>;
     getPrebuild(prebuildId: string): Promise<PrebuildWithStatus | undefined>;
     triggerPrebuild(projectId: string, branchName: string | null): Promise<StartPrebuildResult>;
     cancelPrebuild(projectId: string, prebuildId: string): Promise<void>;
     updateProjectPartial(partialProject: PartialProject): Promise<void>;
-    setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void>;
+    setProjectEnvironmentVariable(
+        projectId: string,
+        name: string,
+        value: string,
+        censored: boolean,
+        id?: string,
+    ): Promise<void>;
     getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
 
@@ -203,7 +217,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteGitpodToken(tokenHash: string): Promise<void>;
 
     // misc
+    /** @deprecated always returns false */
     isGitHubAppEnabled(): Promise<boolean>;
+    /** @deprecated this is a no-op */
     registerGithubApp(installationId: string): Promise<void>;
 
     /**
@@ -239,6 +255,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getCostCenter(attributionId: string): Promise<CostCenterJSON | undefined>;
     setUsageLimit(attributionId: string, usageLimit: number): Promise<void>;
     getUsageBalance(attributionId: string): Promise<number>;
+    isCustomerBillingAddressInvalid(attributionId: string): Promise<boolean>;
 
     listUsage(req: ListUsageRequest): Promise<ListUsageResponse>;
 
@@ -316,8 +333,10 @@ export interface GetProviderRepositoriesParams {
     maxPages?: number;
 }
 export interface SearchRepositoriesParams {
-    organizationId: string;
+    /** @deprecated unused */
+    organizationId?: string;
     searchString: string;
+    limit?: number; // defaults to 30
 }
 export interface ProviderRepository {
     name: string;
@@ -328,13 +347,6 @@ export interface ProviderRepository {
     updatedAt?: string;
     installationId?: number;
     installationUpdatedAt?: string;
-}
-
-export interface ClientHeaderFields {
-    ip?: string;
-    userAgent?: string;
-    dnt?: string;
-    clientRegion?: string;
 }
 
 const WORKSPACE_MAXIMUM_TIMEOUT_HOURS = 24;
@@ -357,7 +369,7 @@ export namespace WorkspaceTimeoutDuration {
         ) {
             throw new Error("Workspace inactivity timeout cannot exceed 24h");
         }
-        return duration;
+        return value + unit;
     }
 }
 
@@ -424,12 +436,11 @@ export namespace GitpodServer {
         // whether running workspaces on the same context should be ignored. If false (default) users will be asked.
         //TODO(se) remove this option and let clients do that check if they like. The new create workspace page does it already
         ignoreRunningWorkspaceOnSameCommit?: boolean;
-        ignoreRunningPrebuild?: boolean;
-        allowUsingPreviousPrebuilds?: boolean;
         forceDefaultConfig?: boolean;
     }
 
     export interface StartWorkspaceOptions {
+        //TODO(cw): none of these options can be changed for a workspace that's been created. Should be moved to CreateWorkspaceOptions.
         forceDefaultImage?: boolean;
         workspaceClass?: string;
         ideSettings?: IDESettings;

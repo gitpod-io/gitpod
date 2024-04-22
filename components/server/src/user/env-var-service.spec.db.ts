@@ -18,7 +18,7 @@ import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-s
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { createTestContainer } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "./user-service";
@@ -26,6 +26,7 @@ import { expectError } from "../test/expect-utils";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { EnvVarService } from "./env-var-service";
 import { ProjectsService } from "../projects/projects-service";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 const expect = chai.expect;
 
@@ -109,7 +110,7 @@ describe("EnvVarService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
-        await orgService.joinOrganization(member.id, invite.id);
+        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(member.id, invite.id));
         stranger = await userService.createUser({
             identity: {
                 authId: "foo2",
@@ -136,13 +137,19 @@ describe("EnvVarService", async () => {
     afterEach(async () => {
         // Clean-up database
         await resetDB(container.get(TypeORM));
+        // Deactivate all services
+        await container.unbindAllAsync();
     });
 
     it("should add and update env variable", async () => {
         const resp1 = await es.listUserEnvVars(member.id, member.id);
         expect(resp1.length).to.equal(0);
 
-        await es.addUserEnvVar(member.id, member.id, { name: "var1", value: "foo", repositoryPattern: "*/*" });
+        const added1 = await es.addUserEnvVar(member.id, member.id, {
+            name: "var1",
+            value: "foo",
+            repositoryPattern: "*/*",
+        });
 
         const resp2 = await es.listUserEnvVars(member.id, member.id);
         expect(resp2.length).to.equal(1);
@@ -152,14 +159,23 @@ describe("EnvVarService", async () => {
             es.addUserEnvVar(member.id, member.id, { name: "var1", value: "foo2", repositoryPattern: "*/*" }),
         );
 
-        await es.updateUserEnvVar(member.id, member.id, { name: "var1", value: "foo2", repositoryPattern: "*/*" });
+        await es.updateUserEnvVar(member.id, member.id, {
+            ...added1,
+            name: "var1",
+            value: "foo2",
+            repositoryPattern: "*/*",
+        });
 
         const resp3 = await es.listUserEnvVars(member.id, member.id);
         expect(resp3.length).to.equal(1);
 
         await expectError(
-            ErrorCodes.BAD_REQUEST,
-            es.updateUserEnvVar(member.id, member.id, { name: "var2", value: "foo2", repositoryPattern: "*/*" }),
+            ErrorCodes.NOT_FOUND,
+            es.updateUserEnvVar(member.id, member.id, {
+                name: "var2",
+                value: "foo2",
+                repositoryPattern: "*/*",
+            }),
         );
 
         await expectError(ErrorCodes.NOT_FOUND, es.listUserEnvVars(stranger.id, member.id));
@@ -197,15 +213,15 @@ describe("EnvVarService", async () => {
     });
 
     it("should let owners create, update, delete and get project env vars", async () => {
-        await es.addProjectEnvVar(owner.id, project.id, { name: "FOO", value: "BAR", censored: false });
+        const added1 = await es.addProjectEnvVar(owner.id, project.id, { name: "FOO", value: "BAR", censored: false });
         await expectError(
             ErrorCodes.BAD_REQUEST,
             es.addProjectEnvVar(owner.id, project.id, { name: "FOO", value: "BAR2", censored: false }),
         );
 
-        await es.updateProjectEnvVar(owner.id, project.id, { name: "FOO", value: "BAR2", censored: false });
+        await es.updateProjectEnvVar(owner.id, project.id, { ...added1, name: "FOO", value: "BAR2", censored: false });
         await expectError(
-            ErrorCodes.BAD_REQUEST,
+            ErrorCodes.NOT_FOUND,
             es.updateProjectEnvVar(owner.id, project.id, { name: "FOO2", value: "BAR", censored: false }),
         );
 

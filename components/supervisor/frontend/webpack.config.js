@@ -10,6 +10,7 @@ const webpack = require("webpack");
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
+/**@type {import('webpack').Configuration}*/
 module.exports = {
     target: "web",
     entry: {
@@ -17,7 +18,6 @@ module.exports = {
     },
     output: {
         filename: "[name].js",
-        chunkFilename: "[name].js",
         path: path.resolve(__dirname, "dist"),
     },
     module: {
@@ -25,6 +25,12 @@ module.exports = {
             {
                 test: /\.css$/i,
                 use: ["style-loader", "css-loader"],
+            },
+            {
+                test: /\.m?js$/,
+                resolve: {
+                    fullySpecified: false,
+                },
             },
         ],
     },

@@ -11,7 +11,6 @@ import {
     WorkspaceInfo,
     WorkspaceInstance,
     WorkspaceInstanceUser,
-    WhitelistedRepository,
     Snapshot,
     PrebuiltWorkspace,
     PrebuiltWorkspaceUpdatable,
@@ -142,9 +141,6 @@ export interface WorkspaceDB {
         includeStopping?: boolean,
     ): Promise<RunningWorkspaceInfo[]>;
 
-    isWhitelisted(repositoryUrl: string): Promise<boolean>;
-    getFeaturedRepositories(): Promise<Partial<WhitelistedRepository>[]>;
-
     findSnapshotById(snapshotId: string): Promise<Snapshot | undefined>;
     findSnapshotsWithState(
         state: SnapshotState,
@@ -174,6 +170,25 @@ export interface WorkspaceDB {
     hardDeleteWorkspace(workspaceID: string): Promise<void>;
 
     findPrebuiltWorkspacesByProject(projectId: string, branch?: string, limit?: number): Promise<PrebuiltWorkspace[]>;
+    findPrebuiltWorkspacesByOrganization(
+        organizationId: string,
+        pagination: {
+            offset: number;
+            limit: number;
+        },
+        filter: {
+            configuration?: {
+                id: string;
+                branch?: string;
+            };
+            state?: "succeeded" | "failed" | "unfinished";
+            searchTerm?: string;
+        },
+        sort: {
+            field: string;
+            order: "ASC" | "DESC";
+        },
+    ): Promise<PrebuiltWorkspace[]>;
     findPrebuiltWorkspaceById(prebuildId: string): Promise<PrebuiltWorkspace | undefined>;
 
     storePrebuildInfo(prebuildInfo: PrebuildInfo): Promise<void>;

@@ -335,7 +335,7 @@ func (reg *Registry) Serve() error {
 		// e.g. using curl or another Docker daemon. Using the env var we can enable an additional
 		// HTTP service.
 		//
-		// Note: this is is just meant for a telepresence setup
+		// Note: this is just meant for a telepresence setup
 		go func() {
 			err := http.ListenAndServe(addr, mux)
 			if err != nil {

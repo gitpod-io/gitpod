@@ -19,11 +19,12 @@ import { GitHubService } from "./github-service";
 import { URL } from "url";
 import { ContextParser } from "../workspace/context-parser-service";
 import { RepoURL } from "../repohost";
-import { GithubAppRules } from "./github-app-rules";
 import { UserService } from "../user/user-service";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ProjectsService } from "../projects/projects-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
+import { runWithSubjectId } from "../util/request-context";
+import { SubjectId } from "../auth/subject-id";
 
 @injectable()
 export class GitHubEnterpriseApp {
@@ -34,7 +35,6 @@ export class GitHubEnterpriseApp {
         @inject(TeamDB) private readonly teamDB: TeamDB,
         @inject(ContextParser) private readonly contextParser: ContextParser,
         @inject(WebhookEventDB) private readonly webhookEvents: WebhookEventDB,
-        @inject(GithubAppRules) private readonly appRules: GithubAppRules,
         @inject(ProjectsService) private readonly projectService: ProjectsService,
     ) {}
 
@@ -126,6 +126,7 @@ export class GitHubEnterpriseApp {
                     const sig =
                         "sha256=" +
                         createHmac("sha256", user.id + "|" + tokenEntry.token.value)
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                             .update(body)
                             .digest("hex");
                     return timingSafeEqual(Buffer.from(sig), Buffer.from(signature ?? ""));
@@ -153,7 +154,9 @@ export class GitHubEnterpriseApp {
             const cloneURL = payload.repository.clone_url;
             const contextURL = this.createContextUrl(payload);
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
-            const projects = await this.projectService.findProjectsByCloneUrl(user.id, context.repository.cloneUrl);
+            const projects = await runWithSubjectId(SYSTEM_USER, () =>
+                this.projectService.findProjectsByCloneUrl(SYSTEM_USER_ID, context.repository.cloneUrl),
+            );
             span.setTag("contextURL", contextURL);
             for (const project of projects) {
                 try {
@@ -174,10 +177,7 @@ export class GitHubEnterpriseApp {
                         context,
                     });
 
-                    const shouldRun = Project.hasPrebuildSettings(project)
-                        ? prebuildPrecondition.shouldRun
-                        : this.appRules.shouldRunPrebuild(config, CommitContext.isDefaultBranch(context), false, false);
-                    if (!shouldRun) {
+                    if (!prebuildPrecondition.shouldRun) {
                         log.info("GitHub Enterprise push event: No prebuild.", { config, context });
 
                         await this.webhookEvents.updateEvent(event.id, {
@@ -190,25 +190,27 @@ export class GitHubEnterpriseApp {
 
                     log.debug("GitHub Enterprise push event: Starting prebuild.", { contextURL });
 
-                    const commitInfo = await this.getCommitInfo(user, payload.repository.url, payload.after);
-                    const ws = await this.prebuildManager.startPrebuild(
-                        { span },
-                        {
-                            context,
-                            user: projectOwner,
-                            project: project,
-                            commitInfo,
-                        },
-                    );
-                    if (!ws.done) {
-                        await this.webhookEvents.updateEvent(event.id, {
-                            prebuildStatus: "prebuild_triggered",
-                            status: "processed",
-                            prebuildId: ws.prebuildId,
-                        });
-                    }
+                    await runWithSubjectId(SubjectId.fromUserId(projectOwner.id), async () => {
+                        const commitInfo = await this.getCommitInfo(user, payload.repository.url, payload.after);
+                        const ws = await this.prebuildManager.startPrebuild(
+                            { span },
+                            {
+                                context,
+                                user: projectOwner,
+                                project: project,
+                                commitInfo,
+                            },
+                        );
+                        if (!ws.done) {
+                            await this.webhookEvents.updateEvent(event.id, {
+                                prebuildStatus: "prebuild_triggered",
+                                status: "processed",
+                                prebuildId: ws.prebuildId,
+                            });
+                        }
+                    });
                 } catch (error) {
-                    log.error("Error processing Bitbucket Server webhook event", error);
+                    log.error("Error processing GitHub webhook event", error);
                 }
             }
         } catch (e) {
@@ -249,7 +251,9 @@ export class GitHubEnterpriseApp {
             const hostContext = this.hostContextProvider.get(new URL(project.cloneUrl).host);
             const authProviderId = hostContext?.authProvider.authProviderId;
             for (const teamMember of teamMembers) {
-                const user = await this.userService.findUserById(webhookInstaller.id, teamMember.userId);
+                const user = await runWithSubjectId(SubjectId.fromUserId(webhookInstaller.id), () =>
+                    this.userService.findUserById(webhookInstaller.id, teamMember.userId),
+                );
                 if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
                     return user;
                 }
@@ -262,7 +266,9 @@ export class GitHubEnterpriseApp {
 
     private async findProjectOwners(cloneURL: string): Promise<{ users: User[]; project: Project } | undefined> {
         try {
-            const projects = await this.projectService.findProjectsByCloneUrl(SYSTEM_USER, cloneURL);
+            const projects = await runWithSubjectId(SYSTEM_USER, async () =>
+                this.projectService.findProjectsByCloneUrl(SYSTEM_USER_ID, cloneURL),
+            );
             const project = projects[0];
             if (project) {
                 const users = [];
@@ -272,7 +278,9 @@ export class GitHubEnterpriseApp {
                 const hostContext = this.hostContextProvider.get(new URL(cloneURL).host);
                 const authProviderId = hostContext?.authProvider.authProviderId;
                 for (const teamMember of owners) {
-                    const user = await this.userService.findUserById(teamMember.userId, teamMember.userId);
+                    const user = await runWithSubjectId(SubjectId.fromUserId(teamMember.userId), () =>
+                        this.userService.findUserById(teamMember.userId, teamMember.userId),
+                    );
                     if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
                         users.push(user);
                     }

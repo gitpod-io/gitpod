@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-gitpod-dev:latest
 
-ENV TRIGGER_REBUILD 40
+ENV TRIGGER_REBUILD 41
 
 USER root
 
@@ -22,10 +22,7 @@ RUN mkdir -p /tmp/helm/ \
     && helm completion bash > /usr/share/bash-completion/completions/helm
 
 ### kubectl ###
-RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
-    # really 'xenial'
-    && add-apt-repository -yu "deb https://apt.kubernetes.io/ kubernetes-xenial main" \
-    && install-packages kubectl=1.27.1-00 \
+RUN curl -fsSL -o /usr/bin/kubectl "https://dl.k8s.io/release/v1.27.11/bin/linux/amd64/kubectl" && chmod +x /usr/bin/kubectl \
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl
 
 RUN curl -fsSL -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
@@ -48,12 +45,12 @@ RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/relea
 RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
 
 # leeway
-ARG LEEWAY_VERSION=0.7.8
+ARG LEEWAY_VERSION=0.8.0
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
 ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
 ENV LEEWAY_REMOTE_CACHE_BUCKET=gitpod-core-leeway-cache-branch
-ENV LEEWAY_CACHE_DIR=/var/tmp/cache
-ENV LEEWAY_BUILD_DIR=/var/tmp/build
+ENV LEEWAY_CACHE_DIR=/workspace/.leeway/cache
+ENV LEEWAY_BUILD_DIR=/workspace/.leeway/build
 RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v${LEEWAY_VERSION}/leeway_${LEEWAY_VERSION}_Linux_x86_64.tar.gz | tar xz
 
 # evans (gRPC client)
@@ -127,7 +124,7 @@ RUN install-packages netcat
 USER gitpod
 
 # Fix node version we develop against
-ARG GITPOD_NODE_VERSION=18.17.1
+ARG GITPOD_NODE_VERSION=18.18.2
 RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
     && npm install -g typescript yarn"
@@ -265,3 +262,8 @@ RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.0/oc
 
 # Install golangci-lint
 RUN go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+RUN sudo install-packages pigz
+
+# Install pre-commit hooks under /workspace during prebuilds
+ENV PRE_COMMIT_HOME=/workspace/.pre-commit

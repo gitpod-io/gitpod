@@ -5,9 +5,11 @@
 package io.gitpod.jetbrains.remote
 
 import com.jetbrains.ide.model.uiautomation.BeControl
+import com.jetbrains.ide.model.uiautomation.BeMargin
 import com.jetbrains.ide.model.uiautomation.DefiniteProgress
 import com.jetbrains.rd.platform.codeWithMe.unattendedHost.metrics.Metric
 import com.jetbrains.rd.ui.bedsl.dsl.*
+import com.jetbrains.rd.ui.bedsl.dsl.util.BeMarginsBuilder
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rdserver.diagnostics.BackendDiagnosticsService
@@ -16,9 +18,11 @@ import com.jetbrains.rdserver.unattendedHost.customization.controlCenter.perform
 
 abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
     override val id: String = "gitpodMetricsControl"
+
+    abstract fun setMargin(element: BeControl, left: Int, top: Int, right: Int, bottom: Int): BeControl;
+
     override fun getControl(lifetime: Lifetime): BeControl {
         val backendDiagnosticsService = BackendDiagnosticsService.Companion.getInstance()
-
         return verticalGrid {
             row {
                 horizontalGrid {
@@ -29,17 +33,18 @@ abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
             }
             createWorkspaceHeaderRow(this, backendDiagnosticsService, lifetime)
             row {
-                verticalGrid {
+                setMargin(verticalGrid {
                     createCpuControl(this, backendDiagnosticsService, lifetime)
                     createMemoryControl(this, backendDiagnosticsService, lifetime)
-                }.withMargin { margin(0, 15, 0, 25) }
+                }, 0, 15, 0, 25)
             }
+
             row {
-                horizontalGrid {
+                setMargin(horizontalGrid {
                     column {
                         label("Shared Node Resources")
                     }
-                }.withMargin { margin(0, 0, 0, 15) }.withHelpTooltip("Shared Node Resources", "The shared metrics represent the used and available resources of the cluster node on which your workspace is running")
+                }, 0, 0, 0, 15).withHelpTooltip("Shared Node Resources", "The shared metrics represent the used and available resources of the cluster node on which your workspace is running")
             }
         }
     }
@@ -64,13 +69,12 @@ abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
         if (workspaceClass == "") {
             return
         }
-
         return ctx.row {
-            horizontalGrid {
+            setMargin(horizontalGrid {
                 column {
                     label(workspaceClass)
                 }
-            }.withMargin { margin(0, 15, 0, 0) }
+            },0, 15, 0, 0)
         }
     }
 

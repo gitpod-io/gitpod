@@ -57,7 +57,7 @@ func socketActivationForDocker(parentCtx context.Context, wg *sync.WaitGroup, te
 		return
 	}
 
-	logFile, err := openDockerUpLogFile(int(cfg.WorkspaceLinuxUID), int(cfg.WorkspaceLinuxGID))
+	logFile, err := openDockerUpLogFile()
 	if err != nil {
 		log.WithError(err).Error("docker-up: cannot open log file")
 	} else {
@@ -164,7 +164,7 @@ func listenToDockerSocket(parentCtx context.Context, term *terminal.Mux, cfg *Co
 		l.Close()
 	}()
 
-	_ = os.Chown(fn, int(cfg.WorkspaceLinuxUID), int(cfg.WorkspaceLinuxGID))
+	_ = os.Chown(fn, gitpodUID, gitpodGID)
 
 	var lastExitErrorTime time.Time
 	burstAttempts := 0
@@ -267,11 +267,11 @@ func listenToDockerSocket(parentCtx context.Context, term *terminal.Mux, cfg *Co
 	return ctx.Err()
 }
 
-func openDockerUpLogFile(uid, gid int) (*os.File, error) {
+func openDockerUpLogFile() (*os.File, error) {
 	if err := os.MkdirAll(logsDir, 0755); err != nil {
 		return nil, xerrors.Errorf("cannot create logs dir: %w", err)
 	}
-	if err := os.Chown(logsDir, uid, gid); err != nil {
+	if err := os.Chown(logsDir, gitpodUID, gitpodGID); err != nil {
 		return nil, xerrors.Errorf("cannot chown logs dir: %w", err)
 	}
 	logFile, err := os.OpenFile(dockerUpLogFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -279,7 +279,7 @@ func openDockerUpLogFile(uid, gid int) (*os.File, error) {
 		return nil, xerrors.Errorf("cannot open docker-up log file: %w", err)
 	}
 
-	if err := os.Chown(dockerUpLogFilePath, uid, gid); err != nil {
+	if err := os.Chown(dockerUpLogFilePath, gitpodUID, gitpodGID); err != nil {
 		_ = logFile.Close()
 		return nil, xerrors.Errorf("cannot chown docker-up log file: %w", err)
 	}

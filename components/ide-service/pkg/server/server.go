@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -38,15 +39,15 @@ import (
 type ResolverProvider func() remotes.Resolver
 
 type IDEServiceServer struct {
-	config                   *config.ServiceConfiguration
-	originIDEConfig          []byte
-	parsedIDEConfigContent   string
-	parsedIDENonExperimental string
-	ideConfig                *config.IDEConfig
-	nonExperimentalIDEConfig *config.IDEConfig
-	ideConfigFileName        string
-	experimentsClient        experiments.Client
-	resolver                 ResolverProvider
+	config                         *config.ServiceConfiguration
+	originIDEConfig                []byte
+	parsedIDEConfigContent         string
+	parsedCode1_85IDEConfigContent string
+	ideConfig                      *config.IDEConfig
+	code1_85IdeConfig              *config.IDEConfig
+	ideConfigFileName              string
+	experimentsClient              experiments.Client
+	resolver                       ResolverProvider
 
 	api.UnimplementedIDEServiceServer
 }
@@ -176,70 +177,71 @@ func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequ
 		UserEmail: req.User.GetEmail(),
 	}
 
-	experimentalIdesEnabled := s.experimentsClient.GetBoolValue(ctx, "experimentalIdes", false, attributes)
+	// Check flag to enable vscode for older linux distros (distros that don't support glibc 2.28)
+	enableVscodeForOlderLinuxDistros := s.experimentsClient.GetBoolValue(ctx, "enableVscodeForOlderLinuxDistros", false, attributes)
 
-	if experimentalIdesEnabled {
+	if enableVscodeForOlderLinuxDistros {
 		return &api.GetConfigResponse{
-			Content: s.parsedIDEConfigContent,
-		}, nil
-	} else {
-		return &api.GetConfigResponse{
-			Content: s.parsedIDENonExperimental,
+			Content: s.parsedCode1_85IDEConfigContent,
 		}, nil
 	}
+
+	return &api.GetConfigResponse{
+		Content: s.parsedIDEConfigContent,
+	}, nil
 }
 
 func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
-	b, err := os.ReadFile(s.ideConfigFileName)
+	ideConfigbuffer, err := os.ReadFile(s.ideConfigFileName)
 	if err != nil {
-		log.WithError(err).Warn("cannot read ide config file")
+		log.WithError(err).Warn("cannot read original ide config file")
 		return
 	}
-	if ideConfig, err := ParseConfig(ctx, s.resolver(), b); err != nil {
+	if originalIdeConfig, err := ParseConfig(ctx, s.resolver(), ideConfigbuffer); err != nil {
 		if !isInit {
-			log.WithError(err).Fatal("cannot parse ide config")
+			log.WithError(err).Fatal("cannot parse original ide config")
 		}
-		log.WithError(err).Error("cannot parse ide config")
+		log.WithError(err).Error("cannot parse original ide config")
 		return
 	} else {
-		parsedConfig, err := json.Marshal(ideConfig)
+		parsedConfig, err := json.Marshal(originalIdeConfig)
+		if err != nil {
+			log.WithError(err).Error("cannot marshal original ide config")
+			return
+		}
+
+		// Precompute the config without code 1.85
+		code1_85IdeOptions := originalIdeConfig.IdeOptions.Options
+		ideOptions := make(map[string]config.IDEOption)
+		for key, ide := range code1_85IdeOptions {
+			if key != "code1_85" {
+				ideOptions[key] = ide
+			}
+		}
+
+		ideConfig := &config.IDEConfig{
+			SupervisorImage: originalIdeConfig.SupervisorImage,
+			IdeOptions: config.IDEOptions{
+				Options:           ideOptions,
+				DefaultIde:        originalIdeConfig.IdeOptions.DefaultIde,
+				DefaultDesktopIde: originalIdeConfig.IdeOptions.DefaultDesktopIde,
+				Clients:           originalIdeConfig.IdeOptions.Clients,
+			},
+		}
+
+		parsedIdeConfig, err := json.Marshal(ideConfig)
 		if err != nil {
 			log.WithError(err).Error("cannot marshal ide config")
 			return
 		}
 
-		// Precompute the config without experimental IDEs
-		ideOptions := ideConfig.IdeOptions.Options
-		nonExperimentalIdeOptions := make(map[string]config.IDEOption)
-		for key, ide := range ideOptions {
-			if !ide.Experimental {
-				nonExperimentalIdeOptions[key] = ide
-			}
-		}
+		s.parsedCode1_85IDEConfigContent = string(parsedConfig)
+		s.code1_85IdeConfig = originalIdeConfig
 
-		nonExperimentalConfig := &config.IDEConfig{
-			SupervisorImage: ideConfig.SupervisorImage,
-			IdeOptions: config.IDEOptions{
-				Options:           nonExperimentalIdeOptions,
-				DefaultIde:        ideConfig.IdeOptions.DefaultIde,
-				DefaultDesktopIde: ideConfig.IdeOptions.DefaultDesktopIde,
-				Clients:           ideConfig.IdeOptions.Clients,
-			},
-		}
-
-		parsedNonExperimentalConfig, err := json.Marshal(nonExperimentalConfig)
-		if err != nil {
-			log.WithError(err).Error("cannot marshal non-experimental ide config")
-			return
-		}
-
-		s.parsedIDEConfigContent = string(parsedConfig)
 		s.ideConfig = ideConfig
+		s.parsedIDEConfigContent = string(parsedIdeConfig)
 
-		s.nonExperimentalIDEConfig = nonExperimentalConfig
-		s.parsedIDENonExperimental = string(parsedNonExperimentalConfig)
-
-		s.originIDEConfig = b
+		s.originIDEConfig = ideConfigbuffer
 
 		log.Info("ide config updated")
 	}
@@ -299,8 +301,9 @@ func grpcProbe(cfg baseserver.ServerConfiguration) func() error {
 }
 
 type IDESettings struct {
-	DefaultIde       string `json:"defaultIde,omitempty"`
-	UseLatestVersion bool   `json:"useLatestVersion,omitempty"`
+	DefaultIde        string            `json:"defaultIde,omitempty"`
+	UseLatestVersion  bool              `json:"useLatestVersion,omitempty"`
+	PinnedIDEversions map[string]string `json:"pinnedIDEversions,omitempty"`
 }
 
 type WorkspaceContext struct {
@@ -353,22 +356,19 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 	log.WithField("req", req).Debug("receive ResolveWorkspaceConfig request")
 
 	// make a copy for ref ideConfig, it's safe because we replace ref in update config
-	ideConfig := s.ideConfig
+	ideConfig := s.code1_85IdeConfig
 
-	var defaultIde *config.IDEOption
-
-	if ide, ok := ideConfig.IdeOptions.Options[ideConfig.IdeOptions.DefaultIde]; !ok {
+	defaultIdeOption, ok := ideConfig.IdeOptions.Options[ideConfig.IdeOptions.DefaultIde]
+	if !ok {
 		// I think it never happen, we have a check to make sure all DefaultIDE should be in Options
 		log.WithError(err).WithField("defaultIDE", ideConfig.IdeOptions.DefaultIde).Error("IDE configuration corrupt, cannot found defaultIDE")
 		return nil, fmt.Errorf("IDE configuration corrupt")
-	} else {
-		defaultIde = &ide
 	}
 
 	resp = &api.ResolveWorkspaceConfigResponse{
 		SupervisorImage: ideConfig.SupervisorImage,
-		WebImage:        defaultIde.Image,
-		IdeImageLayers:  defaultIde.ImageLayers,
+		WebImage:        defaultIdeOption.Image,
+		IdeImageLayers:  defaultIdeOption.ImageLayers,
 	}
 
 	if os.Getenv("CONFIGCAT_SDK_KEY") != "" {
@@ -404,26 +404,41 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 
 		userIdeName := ""
 		useLatest := false
+		pinnedIDEversions := make(map[string]string)
 		resultingIdeName := ideConfig.IdeOptions.DefaultIde
+		chosenIDE := ideConfig.IdeOptions.Options[resultingIdeName]
 
 		if ideSettings != nil {
 			userIdeName = ideSettings.DefaultIde
 			useLatest = ideSettings.UseLatestVersion
+			pinnedIDEversions = ideSettings.PinnedIDEversions
 		}
 
-		chosenIDE := defaultIde
-
-		getUserIDEImage := func(ideOption *config.IDEOption) string {
+		getUserIDEImage := func(ide string) string {
+			ideOption := ideConfig.IdeOptions.Options[ide]
 			if useLatest && ideOption.LatestImage != "" {
 				return ideOption.LatestImage
+			}
+
+			if version, ok := pinnedIDEversions[ide]; ok {
+				if idx := slices.IndexFunc(ideOption.Versions, func(v config.IDEVersion) bool { return v.Version == version }); idx >= 0 {
+					return ideOption.Versions[idx].Image
+				}
 			}
 
 			return ideOption.Image
 		}
 
-		getUserImageLayers := func(ideOption *config.IDEOption) []string {
+		getUserImageLayers := func(ide string) []string {
+			ideOption := ideConfig.IdeOptions.Options[ide]
 			if useLatest {
 				return ideOption.LatestImageLayers
+			}
+
+			if version, ok := pinnedIDEversions[ide]; ok {
+				if idx := slices.IndexFunc(ideOption.Versions, func(v config.IDEVersion) bool { return v.Version == version }); idx >= 0 {
+					return ideOption.Versions[idx].ImageLayers
+				}
 			}
 
 			return ideOption.ImageLayers
@@ -431,8 +446,8 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 
 		if userIdeName != "" {
 			if ide, ok := ideConfig.IdeOptions.Options[userIdeName]; ok {
-				chosenIDE = &ide
 				resultingIdeName = userIdeName
+				chosenIDE = ide
 				// TODO: Currently this variable reflects the IDE selected in
 				// user's settings for backward compatibility but in the future
 				// we want to make it represent the actual IDE.
@@ -445,26 +460,26 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 		}
 
 		// we always need WebImage for when the user chooses a desktop ide
-		resp.WebImage = getUserIDEImage(defaultIde)
-		resp.IdeImageLayers = getUserImageLayers(defaultIde)
+		resp.WebImage = getUserIDEImage(ideConfig.IdeOptions.DefaultIde)
+		resp.IdeImageLayers = getUserImageLayers(ideConfig.IdeOptions.DefaultIde)
 
 		var desktopImageLayer string
 		var desktopUserImageLayers []string
 		if chosenIDE.Type == config.IDETypeDesktop {
-			desktopImageLayer = getUserIDEImage(chosenIDE)
-			desktopUserImageLayers = getUserImageLayers(chosenIDE)
+			desktopImageLayer = getUserIDEImage(resultingIdeName)
+			desktopUserImageLayers = getUserImageLayers(resultingIdeName)
 		} else {
-			resp.WebImage = getUserIDEImage(chosenIDE)
-			resp.IdeImageLayers = getUserImageLayers(chosenIDE)
+			resp.WebImage = getUserIDEImage(resultingIdeName)
+			resp.IdeImageLayers = getUserImageLayers(resultingIdeName)
 		}
 
 		// TODO (se) this should be handled on the surface (i.e. server or even dashboard) and not passed as a special workspace context down here.
-		ideName, referrer := s.resolveReferrerIDE(ideConfig, wsContext, userIdeName)
+		ideName, _ := s.resolveReferrerIDE(ideConfig, wsContext, userIdeName)
 		if ideName != "" {
 			resp.RefererIde = ideName
 			resultingIdeName = ideName
-			desktopImageLayer = getUserIDEImage(referrer)
-			desktopUserImageLayers = getUserImageLayers(referrer)
+			desktopImageLayer = getUserIDEImage(ideName)
+			desktopUserImageLayers = getUserImageLayers(ideName)
 		}
 
 		if desktopImageLayer != "" {

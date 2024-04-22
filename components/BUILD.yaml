@@ -148,7 +148,7 @@ scripts:
     srcs:
       - components/**/*
     script: |
-      GO_COMPONENTS=( local-app-api content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api usage-api )
+      GO_COMPONENTS=( local-app-api content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api usage-api spicedb )
 
       for COMPONENT in "${GO_COMPONENTS[@]}";do
         echo "Generating code for component $COMPONENT..."
@@ -157,7 +157,7 @@ scripts:
         popd > /dev/null
       done
 
-      WEB_COMPONENTS=( local-app-api/typescript-grpcweb supervisor-api/typescript-grpc supervisor-api/typescript-grpcweb )
+      WEB_COMPONENTS=( local-app-api/typescript-grpcweb supervisor-api/typescript-grpc supervisor-api/typescript-grpcweb spicedb/typescript )
       for COMPONENT in "${WEB_COMPONENTS[@]}";do
         echo "Generating code for component $COMPONENT..."
         pushd $COMPONENT > /dev/null
@@ -172,7 +172,7 @@ scripts:
       - test/**/*
       - dev/**/*
     script: |
-      leeway exec --filter-type go -v -- go mod tidy -compat=1.21
+      leeway exec --filter-type go -v -- go mod tidy -compat=1.22
 
       # not all the code is present in leeway.
       # ensure we update everything containing a go.mod file
@@ -180,7 +180,7 @@ scripts:
         DIRECTORY=$(dirname $COMPONENT)
         echo "$DIRECTORY"
         pushd $DIRECTORY > /dev/null
-        go mod tidy -compat=1.21 -v
+        go mod tidy -compat=1.22 -v
         popd > /dev/null
       done
 
@@ -268,7 +268,7 @@ scripts:
         echo "No input."
       else
         echo "User: $user"
-        query="update d_b_user set rolesOrPermissions = '[\"admin\"]' where name=\"$user\";"
+        query="update d_b_user set rolesOrPermissions = '[\"admin\", \"admin-permissions\"]', fgaRelationshipsVersion=0 where name=\"$user\";"
         mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
       fi
       kill $PID || true

@@ -123,6 +123,8 @@ type Configuration struct {
 	WorkspaceClusterHost string `json:"workspaceClusterHost"`
 	// WorkspaceClasses provide different resource classes for workspaces
 	WorkspaceClasses map[string]*WorkspaceClass `json:"workspaceClass"`
+	// PreferredWorkspaceClass is the name of the workspace class that should be used by default
+	PreferredWorkspaceClass string `json:"preferredWorkspaceClass"`
 	// DebugWorkspacePod adds extra finalizer to workspace to prevent it from shutting down. Helps to debug.
 	DebugWorkspacePod bool `json:"debugWorkspacePod,omitempty"`
 	// WorkspaceMaxConcurrentReconciles configures the max amount of concurrent workspace reconciliations on
@@ -135,12 +137,21 @@ type Configuration struct {
 	EnableCustomSSLCertificate bool `json:"enableCustomSSLCertificate"`
 	// WorkspacekitImage points to the default workspacekit image
 	WorkspacekitImage string `json:"workspacekitImage,omitempty"`
+
+	SSHGatewayCAPublicKeyFile string `json:"sshGatewayCAPublicKeyFile,omitempty"`
+
+	// SSHGatewayCAPublicKey is a CA public key
+	SSHGatewayCAPublicKey string
 }
 
 type WorkspaceClass struct {
-	Name      string                            `json:"name"`
-	Container ContainerConfiguration            `json:"container"`
-	Templates WorkspacePodTemplateConfiguration `json:"templates"`
+	Name        string                            `json:"name"`
+	Description string                            `json:"description"`
+	Container   ContainerConfiguration            `json:"container"`
+	Templates   WorkspacePodTemplateConfiguration `json:"templates"`
+
+	// CreditsPerMinute is the cost per minute for this workspace class in credits
+	CreditsPerMinute float32 `json:"creditsPerMinute"`
 }
 
 // WorkspaceTimeoutConfiguration configures the timeout behaviour of workspaces

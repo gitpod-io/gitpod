@@ -70,6 +70,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Templates: templatesCfg,
 		},
 	}
+	var preferredWorkspaceClass string
 
 	installationShortNameSuffix := ""
 	if ctx.Config.Metadata.InstallationShortname != "" && ctx.Config.Metadata.InstallationShortname != configv1.InstallationShortNameOldDefault {
@@ -100,7 +101,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				return err
 			}
 			classes[k] = &config.WorkspaceClass{
-				Name: c.Name,
+				Name:        c.Name,
+				Description: c.Description,
 				Container: config.ContainerConfiguration{
 					Requests: &config.ResourceRequestConfiguration{
 						CPU:              quantityString(c.Resources.Requests, corev1.ResourceCPU),
@@ -126,6 +128,15 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				tpls[tmpl_n] = tmpl_v
 			}
 		}
+		preferredWorkspaceClass = ucfg.Workspace.PreferredWorkspaceClass
+		if preferredWorkspaceClass == "" {
+			// if no preferred workspace class is set, use a random one (maps have no order, there is no "first")
+			for _, k := range ucfg.Workspace.WorkspaceClasses {
+				preferredWorkspaceClass = k.Name
+				break
+			}
+		}
+
 		schedulerName = ucfg.Workspace.SchedulerName
 		if ucfg.Workspace.HostURL != "" {
 			gitpodHostURL = ucfg.Workspace.HostURL
@@ -185,10 +196,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PrivateKey:  "/ws-daemon-tls-certs/tls.key",
 				},
 			},
-			WorkspaceClasses:     classes,
-			HeartbeatInterval:    util.Duration(30 * time.Second),
-			GitpodHostURL:        gitpodHostURL,
-			WorkspaceClusterHost: workspaceClusterHost,
+			WorkspaceClasses:        classes,
+			PreferredWorkspaceClass: preferredWorkspaceClass,
+			HeartbeatInterval:       util.Duration(30 * time.Second),
+			GitpodHostURL:           gitpodHostURL,
+			WorkspaceClusterHost:    workspaceClusterHost,
 			InitProbe: config.InitProbeConfiguration{
 				Timeout: (1 * time.Second).String(),
 			},
@@ -260,6 +272,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	if ctx.Config.CustomCACert != nil {
 		wsmcfg.Manager.EnableCustomSSLCertificate = true
+	}
+
+	if ctx.Config.SSHGatewayCAKey != nil {
+		wsmcfg.Manager.SSHGatewayCAPublicKeyFile = "/mnt/ca-key/ca.pem"
 	}
 
 	fc, err := common.ToJSONString(wsmcfg)

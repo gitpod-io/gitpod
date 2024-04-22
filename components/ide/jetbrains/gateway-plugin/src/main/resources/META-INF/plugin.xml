@@ -18,6 +18,8 @@
     see https://jetbrains.slack.com/archives/C02BRJLGPGF/p1643369943314119?thread_ts=1643358812.185799&cid=C02BRJLGPGF
     <depends>com.jetbrains.gateway</depends> -->
 
+    <depends optional="true">com.jetbrains.gateway</depends>
+
     <extensions defaultExtensionNs="com.intellij">
         <httpRequestHandler implementation="io.gitpod.jetbrains.auth.GitpodAuthCallbackHandler"/>
         <applicationService serviceImplementation="io.gitpod.jetbrains.gateway.GitpodSettingsState"/>

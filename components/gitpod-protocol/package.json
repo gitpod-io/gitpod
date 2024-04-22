@@ -20,7 +20,7 @@
         "@types/jaeger-client": "^3.18.3",
         "@types/js-yaml": "^3.10.1",
         "@types/mocha": "^10.0.1",
-        "@types/node": "^16.11.6",
+        "@types/node": "^18.18.8",
         "@types/random-number-csprng": "^1.0.0",
         "@types/uuid": "^8.3.1",
         "@types/ws": "^5.1.2",
@@ -33,16 +33,17 @@
         "rimraf": "^2.6.2",
         "ts-node": "^10.4.0",
         "typescript": "~4.4.2",
-        "typescript-json-schema": "^0.50.1",
         "typescript-parser": "^2.6.1"
     },
     "scripts": {
         "clean": "rimraf lib",
-        "build": "yarn lint && tsc",
+        "build": "tsc",
+        "build:clean": "yarn clean && yarn lint && yarn build",
         "lint": "yarn eslint src/*.ts src/**/*.ts",
         "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
-        "test": "mocha './**/*.spec.ts' --exclude './node_modules/**'",
-        "test-debug": "mocha --inspect-brk './**/*.spec.ts' --exclude './node_modules/**' --exit",
+        "test": "mocha './**/*.spec.js' --exclude './node_modules/**' --exit",
+        "test:leeway": "yarn build && yarn test",
+        "test-debug": "mocha --inspect-brk './**/*.spec.js' --exclude './node_modules/**' --exit",
         "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
     },
     "mocha": {
@@ -57,12 +58,15 @@
         "exit": true
     },
     "dependencies": {
+        "@bufbuild/protobuf": "^1.3.3",
+        "@connectrpc/connect": "1.1.2",
         "@types/react": "17.0.32",
         "abort-controller-x": "^0.4.0",
         "ajv": "^6.5.4",
         "analytics-node": "^6.0.0",
         "configcat-node": "^8.0.0",
         "cookie": "^0.4.2",
+        "event-iterator": "^2.0.0",
         "express": "^4.17.3",
         "google-protobuf": "^3.19.1",
         "inversify": "^6.0.1",

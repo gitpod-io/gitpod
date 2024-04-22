@@ -19,7 +19,7 @@ import (
 func (s *Server) ChannelForward(ctx context.Context, session *Session, targetConn ssh.Conn, originChannel ssh.NewChannel) {
 	targetChan, targetReqs, err := targetConn.OpenChannel(originChannel.ChannelType(), originChannel.ExtraData())
 	if err != nil {
-		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Error("open target channel error")
+		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).WithError(err).Error("open target channel error")
 		_ = originChannel.Reject(ssh.ConnectionFailed, "open target channel error")
 		return
 	}
@@ -27,7 +27,7 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 
 	originChan, originReqs, err := originChannel.Accept()
 	if err != nil {
-		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Error("accept origin channel failed")
+		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).WithError(err).Error("accept origin channel failed")
 		return
 	}
 	if originChannel.ChannelType() == "session" {

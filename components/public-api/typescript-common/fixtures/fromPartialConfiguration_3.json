@@ -1,0 +1,11 @@
+{
+  "id": "123",
+  "workspaceSettings": {
+      "workspaceClass": "huge",
+      "restrictedWorkspaceClasses": ["huge", "large"]
+  },
+  "prebuildSettings": {
+      "enabled": true,
+      "prebuildInterval": 5
+  }
+}

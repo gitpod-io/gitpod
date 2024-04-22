@@ -1,0 +1,10 @@
+{
+  "id": "123",
+  "workspaceSettings": {
+      "workspaceClass": "huge"
+  },
+  "prebuildSettings": {
+      "enabled": true,
+      "prebuildInterval": 5
+  }
+}

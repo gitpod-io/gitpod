@@ -6,8 +6,11 @@
 
 import { FunctionComponent, useEffect, useState } from "react";
 import { Heading3, Subheading } from "../components/typography/headings";
-import gitpodIcon from "../icons/gitpod.svg";
-import { Delayed } from "../components/Delayed";
+import { Delayed } from "@podkit/loading/Delayed";
+import { ProductLogo } from "../components/ProductLogo";
+import { useReportDashboardLoggingTracing } from "../data/featureflag-query";
+import { userLoaded } from "../hooks/use-user-loader";
+import { orgsLoaded } from "../data/organizations/orgs-query";
 
 function useDelay(wait: number) {
     const [done, setDone] = useState(false);
@@ -21,11 +24,21 @@ function useDelay(wait: number) {
 
 export const AppLoading: FunctionComponent = () => {
     const done = useDelay(8000);
+    const logTracing = useReportDashboardLoggingTracing();
+    useEffect(() => {
+        if (done) {
+            logTracing(async () => {}, "At least 8 seconds has passed trying to resolve an API call", {
+                userLoaded,
+                orgsLoaded,
+            });
+        }
+    }, [done, logTracing]);
+
     const connectionProblems = useDelay(25000);
     return (
         <Delayed wait={3000}>
             <div className="flex flex-col justify-center items-center w-full h-screen space-y-4">
-                <img src={gitpodIcon} alt="Gitpod's logo" className={"h-16 flex-shrink-0 animate-fade-in"} />
+                <ProductLogo className={"h-16 flex-shrink-0 animate-fade-in"} />
                 {connectionProblems ? (
                     <Heading3 className={done ? "" : "invisible"}>This is taking longer than it should</Heading3>
                 ) : (

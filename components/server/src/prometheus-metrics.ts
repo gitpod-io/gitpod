@@ -35,6 +35,8 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(dbConnectionsFree);
     registry.registerMetric(grpcServerStarted);
     registry.registerMetric(grpcServerHandling);
+    registry.registerMetric(spicedbCheckRequestsTotal);
+    registry.registerMetric(authorizerSubjectId);
 }
 
 export const grpcServerStarted = new prometheusClient.Counter({
@@ -201,6 +203,7 @@ export type FailedInstanceStartReason =
     | "startOnClusterFailed"
     | "imageBuildFailed"
     | "imageBuildFailedUser"
+    | "scmAccessFailed"
     | "resourceExhausted"
     | "workspaceClusterMaintenance"
     | "other";
@@ -348,7 +351,57 @@ export const guardAccessChecksTotal = new prometheusClient.Counter({
     labelNames: ["type"],
 });
 
-export type GuardAccessCheckType = "fga" | "resource-access";
+export type GuardAccessCheckType = "fga" | "resource-access" | "function-access";
 export function reportGuardAccessCheck(type: GuardAccessCheckType) {
     guardAccessChecksTotal.labels(type).inc();
 }
+
+export const spicedbCheckRequestsTotal = new prometheusClient.Counter({
+    name: "gitpod_spicedb_requests_check_total",
+    help: "Counter for the number of check requests against SpiceDB",
+    labelNames: ["consistency"],
+});
+
+export type SpiceDBCheckConsistency =
+    | "minimizeLatency"
+    | "atLeastAsFresh"
+    | "atExactSnapshot"
+    | "fullyConsistent"
+    | "undefined";
+export function incSpiceDBRequestsCheckTotal(consistency: SpiceDBCheckConsistency) {
+    spicedbCheckRequestsTotal.labels(consistency).inc();
+}
+
+export const authorizerSubjectId = new prometheusClient.Counter({
+    name: "gitpod_authorizer_subject_id_total",
+    help: "Counter for the number of authorizer permission checks",
+    labelNames: ["match"],
+});
+type AuthorizerSubjectIdMatch = "ctx-user-id-missing" | "passed-subject-id-missing" | "match" | "mismatch";
+export function reportAuthorizerSubjectId(match: AuthorizerSubjectIdMatch) {
+    authorizerSubjectId.labels(match).inc();
+}
+
+export const scmTokenRefreshRequestsTotal = new prometheusClient.Counter({
+    name: "gitpod_scm_token_refresh_requests_total",
+    help: "Counter for the number of token refresh requests we issue against SCM systems",
+    labelNames: ["host", "result"],
+});
+export type ScmTokenRefreshResult =
+    | "success"
+    | "timeout"
+    | "error"
+    | "still_valid"
+    | "no_token"
+    | "not_refreshable"
+    | "success_after_timeout";
+export function reportScmTokenRefreshRequest(host: string, result: ScmTokenRefreshResult) {
+    scmTokenRefreshRequestsTotal.labels(host, result).inc();
+}
+
+export const scmTokenRefreshLatencyHistogram = new prometheusClient.Histogram({
+    name: "gitpod_scm_token_refresh_latency_seconds",
+    help: "SCM token refresh latency in seconds",
+    labelNames: ["host"],
+    buckets: [0.01, 0.1, 0.2, 0.5, 1, 2, 5, 10],
+});

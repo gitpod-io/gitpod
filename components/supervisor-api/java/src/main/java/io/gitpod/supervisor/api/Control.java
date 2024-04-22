@@ -1418,6 +1418,26 @@ public final class Control {
      * <code>.supervisor.SSHPublicKey host_key = 2;</code>
      */
     io.gitpod.supervisor.api.Control.SSHPublicKeyOrBuilder getHostKeyOrBuilder();
+
+    /**
+     * <pre>
+     * Return userName used by client to authenticate
+     * </pre>
+     *
+     * <code>string user_name = 3;</code>
+     * @return The userName.
+     */
+    java.lang.String getUserName();
+    /**
+     * <pre>
+     * Return userName used by client to authenticate
+     * </pre>
+     *
+     * <code>string user_name = 3;</code>
+     * @return The bytes for userName.
+     */
+    com.google.protobuf.ByteString
+        getUserNameBytes();
   }
   /**
    * Protobuf type {@code supervisor.CreateSSHKeyPairResponse}
@@ -1433,6 +1453,7 @@ public final class Control {
     }
     private CreateSSHKeyPairResponse() {
       privateKey_ = "";
+      userName_ = "";
     }
 
     @java.lang.Override
@@ -1482,6 +1503,12 @@ public final class Control {
                 hostKey_ = subBuilder.buildPartial();
               }
 
+              break;
+            }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              userName_ = s;
               break;
             }
             default: {
@@ -1602,6 +1629,52 @@ public final class Control {
       return getHostKey();
     }
 
+    public static final int USER_NAME_FIELD_NUMBER = 3;
+    private volatile java.lang.Object userName_;
+    /**
+     * <pre>
+     * Return userName used by client to authenticate
+     * </pre>
+     *
+     * <code>string user_name = 3;</code>
+     * @return The userName.
+     */
+    @java.lang.Override
+    public java.lang.String getUserName() {
+      java.lang.Object ref = userName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        userName_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * Return userName used by client to authenticate
+     * </pre>
+     *
+     * <code>string user_name = 3;</code>
+     * @return The bytes for userName.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getUserNameBytes() {
+      java.lang.Object ref = userName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        userName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -1622,6 +1695,9 @@ public final class Control {
       if (hostKey_ != null) {
         output.writeMessage(2, getHostKey());
       }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userName_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, userName_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -1637,6 +1713,9 @@ public final class Control {
       if (hostKey_ != null) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, getHostKey());
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userName_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, userName_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -1660,6 +1739,8 @@ public final class Control {
         if (!getHostKey()
             .equals(other.getHostKey())) return false;
       }
+      if (!getUserName()
+          .equals(other.getUserName())) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -1677,6 +1758,8 @@ public final class Control {
         hash = (37 * hash) + HOST_KEY_FIELD_NUMBER;
         hash = (53 * hash) + getHostKey().hashCode();
       }
+      hash = (37 * hash) + USER_NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getUserName().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -1818,6 +1901,8 @@ public final class Control {
           hostKey_ = null;
           hostKeyBuilder_ = null;
         }
+        userName_ = "";
+
         return this;
       }
 
@@ -1850,6 +1935,7 @@ public final class Control {
         } else {
           result.hostKey_ = hostKeyBuilder_.build();
         }
+        result.userName_ = userName_;
         onBuilt();
         return result;
       }
@@ -1904,6 +1990,10 @@ public final class Control {
         }
         if (other.hasHostKey()) {
           mergeHostKey(other.getHostKey());
+        }
+        if (!other.getUserName().isEmpty()) {
+          userName_ = other.userName_;
+          onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -2183,6 +2273,102 @@ public final class Control {
           hostKey_ = null;
         }
         return hostKeyBuilder_;
+      }
+
+      private java.lang.Object userName_ = "";
+      /**
+       * <pre>
+       * Return userName used by client to authenticate
+       * </pre>
+       *
+       * <code>string user_name = 3;</code>
+       * @return The userName.
+       */
+      public java.lang.String getUserName() {
+        java.lang.Object ref = userName_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          userName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Return userName used by client to authenticate
+       * </pre>
+       *
+       * <code>string user_name = 3;</code>
+       * @return The bytes for userName.
+       */
+      public com.google.protobuf.ByteString
+          getUserNameBytes() {
+        java.lang.Object ref = userName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          userName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Return userName used by client to authenticate
+       * </pre>
+       *
+       * <code>string user_name = 3;</code>
+       * @param value The userName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserName(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        userName_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Return userName used by client to authenticate
+       * </pre>
+       *
+       * <code>string user_name = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserName() {
+
+        userName_ = getDefaultInstance().getUserName();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Return userName used by client to authenticate
+       * </pre>
+       *
+       * <code>string user_name = 3;</code>
+       * @param value The bytes for userName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        userName_ = value;
+        onChanged();
+        return this;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -5281,27 +5467,28 @@ public final class Control {
       "annotations.proto\032\014status.proto\032\ninfo.pr" +
       "oto\"\'\n\021ExposePortRequest\022\014\n\004port\030\001 \001(\rJ\004" +
       "\010\002\020\003\"\024\n\022ExposePortResponse\"\031\n\027CreateSSHK" +
-      "eyPairRequest\"[\n\030CreateSSHKeyPairRespons" +
+      "eyPairRequest\"n\n\030CreateSSHKeyPairRespons" +
       "e\022\023\n\013private_key\030\001 \001(\t\022*\n\010host_key\030\002 \001(\013" +
-      "2\030.supervisor.SSHPublicKey\"+\n\014SSHPublicK" +
-      "ey\022\014\n\004type\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\"\361\001\n\025Crea" +
-      "teDebugEnvRequest\0226\n\016workspace_type\030\001 \001(" +
-      "\0162\036.supervisor.DebugWorkspaceType\0221\n\016con" +
-      "tent_source\030\002 \001(\0162\031.supervisor.ContentSo" +
-      "urce\022\025\n\rworkspace_url\030\003 \001(\t\022\r\n\005tasks\030\004 \001" +
-      "(\t\022\031\n\021checkout_location\030\005 \001(\t\022\032\n\022workspa" +
-      "ce_location\030\006 \001(\t\022\020\n\010logLevel\030\007 \001(\t\"&\n\026C" +
-      "reateDebugEnvResponse\022\014\n\004envs\030\001 \003(\t2\266\002\n\016" +
-      "ControlService\022M\n\nExposePort\022\035.superviso" +
-      "r.ExposePortRequest\032\036.supervisor.ExposeP" +
-      "ortResponse\"\000\022z\n\020CreateSSHKeyPair\022#.supe" +
-      "rvisor.CreateSSHKeyPairRequest\032$.supervi" +
-      "sor.CreateSSHKeyPairResponse\"\033\202\323\344\223\002\025\022\023/v" +
-      "1/ssh_keys/create\022Y\n\016CreateDebugEnv\022!.su" +
-      "pervisor.CreateDebugEnvRequest\032\".supervi" +
-      "sor.CreateDebugEnvResponse\"\000BF\n\030io.gitpo" +
-      "d.supervisor.apiZ*github.com/gitpod-io/g" +
-      "itpod/supervisor/apib\006proto3"
+      "2\030.supervisor.SSHPublicKey\022\021\n\tuser_name\030" +
+      "\003 \001(\t\"+\n\014SSHPublicKey\022\014\n\004type\030\001 \001(\t\022\r\n\005v" +
+      "alue\030\002 \001(\t\"\361\001\n\025CreateDebugEnvRequest\0226\n\016" +
+      "workspace_type\030\001 \001(\0162\036.supervisor.DebugW" +
+      "orkspaceType\0221\n\016content_source\030\002 \001(\0162\031.s" +
+      "upervisor.ContentSource\022\025\n\rworkspace_url" +
+      "\030\003 \001(\t\022\r\n\005tasks\030\004 \001(\t\022\031\n\021checkout_locati" +
+      "on\030\005 \001(\t\022\032\n\022workspace_location\030\006 \001(\t\022\020\n\010" +
+      "logLevel\030\007 \001(\t\"&\n\026CreateDebugEnvResponse" +
+      "\022\014\n\004envs\030\001 \003(\t2\266\002\n\016ControlService\022M\n\nExp" +
+      "osePort\022\035.supervisor.ExposePortRequest\032\036" +
+      ".supervisor.ExposePortResponse\"\000\022z\n\020Crea" +
+      "teSSHKeyPair\022#.supervisor.CreateSSHKeyPa" +
+      "irRequest\032$.supervisor.CreateSSHKeyPairR" +
+      "esponse\"\033\202\323\344\223\002\025\022\023/v1/ssh_keys/create\022Y\n\016" +
+      "CreateDebugEnv\022!.supervisor.CreateDebugE" +
+      "nvRequest\032\".supervisor.CreateDebugEnvRes" +
+      "ponse\"\000BF\n\030io.gitpod.supervisor.apiZ*git" +
+      "hub.com/gitpod-io/gitpod/supervisor/apib" +
+      "\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -5333,7 +5520,7 @@ public final class Control {
     internal_static_supervisor_CreateSSHKeyPairResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_CreateSSHKeyPairResponse_descriptor,
-        new java.lang.String[] { "PrivateKey", "HostKey", });
+        new java.lang.String[] { "PrivateKey", "HostKey", "UserName", });
     internal_static_supervisor_SSHPublicKey_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_supervisor_SSHPublicKey_fieldAccessorTable = new

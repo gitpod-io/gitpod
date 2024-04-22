@@ -30,7 +30,7 @@ export class BitbucketTokenHelper {
         const { host } = this.config;
         try {
             const token = await this.tokenProvider.getTokenForHost(user, host);
-            if (this.containsScopes(token, requiredScopes)) {
+            if (token && this.containsScopes(token, requiredScopes)) {
                 return token;
             }
         } catch {
@@ -39,7 +39,13 @@ export class BitbucketTokenHelper {
         if (requiredScopes.length === 0) {
             requiredScopes = BitbucketOAuthScopes.Requirements.DEFAULT;
         }
-        throw UnauthorizedError.create(host, requiredScopes, "missing-identity");
+        throw UnauthorizedError.create({
+            host,
+            providerType: "Bitbucket",
+            requiredScopes: BitbucketOAuthScopes.Requirements.DEFAULT,
+            providerIsConnected: false,
+            isMissingScopes: true,
+        });
     }
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {
         const set = new Set(wantedScopes);

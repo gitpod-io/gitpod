@@ -19,6 +19,7 @@ import { CostCenterJSON, CostCenter_BillingStrategy } from "@gitpod/gitpod-proto
 import Modal from "../components/Modal";
 import { Heading2 } from "../components/typography/headings";
 import search from "../icons/search.svg";
+import { Button } from "@podkit/buttons/Button";
 
 export default function TeamDetail(props: { team: Team }) {
     const { team } = props;
@@ -213,6 +214,10 @@ export default function TeamDetail(props: { team: Team }) {
                                                 title: "member",
                                                 onClick: () => setTeamMemberRole(m.userId, "member"),
                                             },
+                                            {
+                                                title: "collaborator",
+                                                onClick: () => setTeamMemberRole(m.userId, "collaborator"),
+                                            },
                                         ]}
                                     />
                                 </span>
@@ -226,7 +231,7 @@ export default function TeamDetail(props: { team: Team }) {
                 onClose={() => setEditSpendingLimit(false)}
                 title="Change Usage Limit"
                 buttons={[
-                    <button
+                    <Button
                         disabled={usageLimit === costCenter?.spendingLimit}
                         onClick={async () => {
                             if (usageLimit !== undefined) {
@@ -238,7 +243,7 @@ export default function TeamDetail(props: { team: Team }) {
                         }}
                     >
                         Change
-                    </button>,
+                    </Button>,
                 ]}
             >
                 <p className="pb-4 text-gray-500 text-base">Change the usage limit in credits per month.</p>
@@ -260,7 +265,7 @@ export default function TeamDetail(props: { team: Team }) {
                 onClose={() => setEditAddCreditNote(false)}
                 title="Add Credits"
                 buttons={[
-                    <button
+                    <Button
                         disabled={creditNote.credits === 0 || !creditNote.note}
                         onClick={async () => {
                             if (creditNote.credits !== 0 && !!creditNote.note) {
@@ -276,7 +281,7 @@ export default function TeamDetail(props: { team: Team }) {
                         }}
                     >
                         Add Credits
-                    </button>,
+                    </Button>,
                 ]}
             >
                 <p>Adds or subtracts the amount of credits from this account.</p>

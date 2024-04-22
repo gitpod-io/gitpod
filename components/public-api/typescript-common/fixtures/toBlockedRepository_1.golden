@@ -1,0 +1,11 @@
+{
+    "result": {
+        "id": 2023,
+        "urlRegexp": "*/*",
+        "blockUser": false,
+        "blockFreeUsage": false,
+        "creationTime": "2023-11-29T18:17:16.194Z",
+        "updateTime": "2023-11-29T18:17:16.194Z"
+    },
+    "err": ""
+}

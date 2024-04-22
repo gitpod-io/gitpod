@@ -119,7 +119,7 @@ func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributi
 }
 
 // computeDefaultSpendingLimit computes the spending limit for a new Organization.
-// If the first joined member has not already granted credits to another org, we grant them the the free credits allowance.
+// If the first joined member has not already granted credits to another org, we grant them the free credits allowance.
 func (c *CostCenterManager) getSpendingLimitForNewCostCenter(attributionID AttributionID) int32 {
 	_, orgId := attributionID.Values()
 	orgUUID, err := uuid.Parse(orgId)
@@ -157,17 +157,33 @@ func (c *CostCenterManager) getSpendingLimitForNewCostCenter(attributionID Attri
 	// check if the user has already granted free credits to another org
 	type FreeCredit struct {
 		UserID         uuid.UUID `gorm:"primary_key;column:userId;type:char(36)"`
+		Email          string    `gorm:"column:email;type:varchar(255)"`
 		OrganizationID uuid.UUID `gorm:"column:organizationId;type:char(36)"`
+	}
+
+	// fetch primaryEmail from d_b_identity
+	var primaryEmail string
+	db = c.conn.Raw(`
+		SELECT primaryEmail
+		FROM d_b_identity
+		WHERE
+			userid = ?
+		LIMIT 1
+	`, userId).Scan(&primaryEmail)
+	if db.Error != nil {
+		log.WithError(db.Error).WithField("attributionId", attributionID).Error("Failed to get primaryEmail for user.")
+		return c.cfg.ForTeams
 	}
 
 	var freeCredit FreeCredit
 
 	// check if the user has already granted free credits to another org
-	db = c.conn.Table("d_b_free_credits").Where(&FreeCredit{UserID: userUUID}).First(&freeCredit)
+	db = c.conn.Table("d_b_free_credits").Where(&FreeCredit{UserID: userUUID}).Or(
+		&FreeCredit{Email: primaryEmail}).First(&freeCredit)
 	if db.Error != nil {
 		if errors.Is(db.Error, gorm.ErrRecordNotFound) {
 			// no record was found, so let's insert a new one
-			freeCredit = FreeCredit{UserID: userUUID, OrganizationID: orgUUID}
+			freeCredit = FreeCredit{UserID: userUUID, Email: primaryEmail, OrganizationID: orgUUID}
 			db = c.conn.Table("d_b_free_credits").Save(&freeCredit)
 			if db.Error != nil {
 				log.WithError(db.Error).WithField("attributionId", attributionID).Error("Failed to insert free credits.")

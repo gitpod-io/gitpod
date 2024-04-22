@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /**
  * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
@@ -14,9 +15,13 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { ConfigProvider } from "../workspace/config-provider";
 import { Config } from "../config";
 import { ProjectsService } from "../projects/projects-service";
-import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
+import { IncrementalWorkspaceService } from "./incremental-workspace-service";
 import { EntitlementService } from "../billing/entitlement-service";
 import { CommitContext, Project, ProjectSettings, Repository, WorkspaceConfig } from "@gitpod/gitpod-protocol";
+import { Authorizer } from "../authorization/authorizer";
+import { ContextParser } from "../workspace/context-parser-service";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { RedisSubscriber } from "../messaging/redis-subscriber";
 
 const expect = chai.expect;
 
@@ -30,8 +35,12 @@ const containerModule = new ContainerModule((bind) => {
     bind(ConfigProvider).toConstantValue({} as any);
     bind(Config).toConstantValue({} as any);
     bind(ProjectsService).toConstantValue({} as any);
-    bind(IncrementalPrebuildsService).toConstantValue({} as any);
+    bind(IncrementalWorkspaceService).toConstantValue({} as any);
     bind(EntitlementService).toConstantValue({} as any);
+    bind(Authorizer).toConstantValue({} as any);
+    bind(ContextParser).toConstantValue({} as any);
+    bind(IAnalyticsWriter).toConstantValue({} as any);
+    bind(RedisSubscriber).toConstantValue({} as any);
     // #endregion
 });
 
@@ -59,7 +68,9 @@ describe("PrebuildManager", () => {
         ref: "main",
     };
     const settings: ProjectSettings = {
-        enablePrebuilds: false,
+        prebuilds: {
+            enable: false,
+        },
     };
     const project = {
         settings,
@@ -89,20 +100,12 @@ describe("PrebuildManager", () => {
             project,
         },
         {
-            title: "pre-existing-project/enable-by-default(1)",
-            shouldRun: true,
-            reason: "all-branches-selected",
+            title: "pre-existing-project/disabled-if-not-migrated",
+            shouldRun: false,
+            reason: "prebuilds-not-enabled",
             config,
             context,
             project: clone(project, (p) => (p.settings = undefined)),
-        },
-        {
-            title: "pre-existing-project/enable-by-default(2)",
-            shouldRun: true,
-            reason: "all-branches-selected",
-            config,
-            context,
-            project: clone(project, (p) => delete p.settings),
         },
         {
             title: "prebuilds-not-enabled",
@@ -110,7 +113,7 @@ describe("PrebuildManager", () => {
             reason: "prebuilds-not-enabled",
             config,
             context,
-            project: clone(project, (p) => (p.settings!.enablePrebuilds = false)),
+            project: clone(project, (p) => (p.settings!.prebuilds!.enable = false)),
         },
         {
             title: "default-branch-only/matched(1)",
@@ -122,8 +125,10 @@ describe("PrebuildManager", () => {
                 project,
                 (p) =>
                     (p.settings = {
-                        enablePrebuilds: true,
-                        prebuildDefaultBranchOnly: true,
+                        prebuilds: {
+                            enable: true,
+                            branchStrategy: "default-branch",
+                        },
                     }),
             ),
         },
@@ -137,8 +142,10 @@ describe("PrebuildManager", () => {
                 project,
                 (p) =>
                     (p.settings = {
-                        enablePrebuilds: true,
-                        prebuildDefaultBranchOnly: undefined,
+                        prebuilds: {
+                            enable: true,
+                            branchStrategy: "default-branch",
+                        },
                     }),
             ),
         },
@@ -152,8 +159,10 @@ describe("PrebuildManager", () => {
                 project,
                 (p) =>
                     (p.settings = {
-                        enablePrebuilds: true,
-                        prebuildDefaultBranchOnly: true,
+                        prebuilds: {
+                            enable: true,
+                            branchStrategy: "default-branch",
+                        },
                     }),
             ),
         },
@@ -167,8 +176,10 @@ describe("PrebuildManager", () => {
                 project,
                 (p) =>
                     (p.settings = {
-                        enablePrebuilds: true,
-                        prebuildDefaultBranchOnly: true,
+                        prebuilds: {
+                            enable: true,
+                            branchStrategy: "default-branch",
+                        },
                     }),
             ),
         },
@@ -182,8 +193,10 @@ describe("PrebuildManager", () => {
                 project,
                 (p) =>
                     (p.settings = {
-                        enablePrebuilds: true,
-                        prebuildDefaultBranchOnly: false,
+                        prebuilds: {
+                            enable: true,
+                            branchStrategy: "all-branches",
+                        },
                     }),
             ),
         },
@@ -197,9 +210,11 @@ describe("PrebuildManager", () => {
                 project,
                 (p) =>
                     (p.settings = {
-                        enablePrebuilds: true,
-                        prebuildDefaultBranchOnly: false,
-                        prebuildBranchPattern: "*foo*",
+                        prebuilds: {
+                            enable: true,
+                            branchStrategy: "matched-branches",
+                            branchMatchingPattern: "*foo*",
+                        },
                     }),
             ),
         },
@@ -213,9 +228,11 @@ describe("PrebuildManager", () => {
                 project,
                 (p) =>
                     (p.settings = {
-                        enablePrebuilds: true,
-                        prebuildDefaultBranchOnly: false,
-                        prebuildBranchPattern: "*foo*",
+                        prebuilds: {
+                            enable: true,
+                            branchStrategy: "matched-branches",
+                            branchMatchingPattern: "*foo*",
+                        },
                     }),
             ),
         },
@@ -229,9 +246,11 @@ describe("PrebuildManager", () => {
                 project,
                 (p) =>
                     (p.settings = {
-                        enablePrebuilds: true,
-                        prebuildDefaultBranchOnly: false,
-                        prebuildBranchPattern: "*feature*",
+                        prebuilds: {
+                            enable: true,
+                            branchStrategy: "matched-branches",
+                            branchMatchingPattern: "*feature*",
+                        },
                     }),
             ),
         },
@@ -245,9 +264,11 @@ describe("PrebuildManager", () => {
                 project,
                 (p) =>
                     (p.settings = {
-                        enablePrebuilds: true,
-                        prebuildDefaultBranchOnly: false,
-                        prebuildBranchPattern: "main, bug-*, *feature*",
+                        prebuilds: {
+                            enable: true,
+                            branchStrategy: "matched-branches",
+                            branchMatchingPattern: "main, bug-*, *feature*",
+                        },
                     }),
             ),
         },
@@ -261,9 +282,11 @@ describe("PrebuildManager", () => {
                 project,
                 (p) =>
                     (p.settings = {
-                        enablePrebuilds: true,
-                        prebuildDefaultBranchOnly: false,
-                        prebuildBranchPattern: "bug-*, *sub/feature*",
+                        prebuilds: {
+                            enable: true,
+                            branchStrategy: "matched-branches",
+                            branchMatchingPattern: "bug-*, *sub/feature*",
+                        },
                     }),
             ),
         },
@@ -277,9 +300,11 @@ describe("PrebuildManager", () => {
                 project,
                 (p) =>
                     (p.settings = {
-                        enablePrebuilds: true,
-                        prebuildDefaultBranchOnly: false,
-                        prebuildBranchPattern: "**",
+                        prebuilds: {
+                            enable: true,
+                            branchStrategy: "matched-branches",
+                            branchMatchingPattern: "**",
+                        },
                     }),
             ),
         },

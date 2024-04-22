@@ -141,7 +141,7 @@ func (c *Client) findCustomers(ctx context.Context, query string) (customers []*
 	params := &stripe.CustomerSearchParams{
 		SearchParams: stripe.SearchParams{
 			Query:   query,
-			Expand:  []*string{stripe.String("data.subscriptions")},
+			Expand:  []*string{stripe.String("data.tax"), stripe.String("data.subscriptions")},
 			Context: ctx,
 		},
 	}
@@ -405,6 +405,25 @@ func (c *Client) CreateSubscription(ctx context.Context, customerID string, pric
 	return subscription, err
 }
 
+func (c *Client) UpdateSubscriptionAutomaticTax(ctx context.Context, subscriptionID string, isAutomaticTaxSupported bool) (*stripe.Subscription, error) {
+	if subscriptionID == "" {
+		return nil, fmt.Errorf("no subscriptionID specified")
+	}
+
+	params := &stripe.SubscriptionParams{
+		AutomaticTax: &stripe.SubscriptionAutomaticTaxParams{
+			Enabled: stripe.Bool(isAutomaticTaxSupported),
+		},
+	}
+
+	subscription, err := c.sc.Subscriptions.Update(subscriptionID, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update subscription with subscription ID %s", subscriptionID)
+	}
+
+	return subscription, err
+}
+
 func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID string, paymentIntentId string) (*stripe.Customer, error) {
 	if customerID == "" {
 		return nil, fmt.Errorf("no customerID specified")
@@ -432,8 +451,13 @@ func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID st
 		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
 			DefaultPaymentMethod: stripe.String(paymentMethod.ID)},
 		Address: &stripe.AddressParams{
-			Line1:   stripe.String(paymentMethod.BillingDetails.Address.Line1),
-			Country: stripe.String(paymentMethod.BillingDetails.Address.Country)}})
+			Line1:      stripe.String(paymentMethod.BillingDetails.Address.Line1),
+			Line2:      stripe.String(paymentMethod.BillingDetails.Address.Line2),
+			City:       stripe.String(paymentMethod.BillingDetails.Address.City),
+			PostalCode: stripe.String(paymentMethod.BillingDetails.Address.PostalCode),
+			Country:    stripe.String(paymentMethod.BillingDetails.Address.Country),
+			State:      stripe.String(paymentMethod.BillingDetails.Address.State),
+		}})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to update customer with id %s", customerID)
 	}

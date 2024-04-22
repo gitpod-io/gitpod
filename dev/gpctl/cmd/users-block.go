@@ -8,9 +8,6 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
-	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
 
 // usersBlockCmd represents the describe command
@@ -21,25 +18,7 @@ var usersBlockCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-
-		client, err := newLegacyAPIConn()
-		if err != nil {
-			log.WithError(err).Fatal("cannot connect")
-		}
-		defer client.Close()
-
-		for _, uid := range args {
-			err = client.AdminBlockUser(ctx, &protocol.AdminBlockUserRequest{
-				UserID:    uid,
-				IsBlocked: true,
-			})
-			if err != nil {
-				log.WithError(err).Error("cannot block user")
-			} else {
-				log.WithField("uid", uid).Info("user blocked")
-			}
-		}
-
+		blockUser(ctx, args, true)
 	},
 }
 

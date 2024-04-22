@@ -1204,10 +1204,12 @@ export namespace DescribeClusterRequest {
 }
 
 export class DescribeClusterResponse extends jspb.Message {
-    clearWorkspaceclassesList(): void;
-    getWorkspaceclassesList(): Array<WorkspaceClass>;
-    setWorkspaceclassesList(value: Array<WorkspaceClass>): DescribeClusterResponse;
-    addWorkspaceclasses(value?: WorkspaceClass, index?: number): WorkspaceClass;
+    clearWorkspaceClassesList(): void;
+    getWorkspaceClassesList(): Array<WorkspaceClass>;
+    setWorkspaceClassesList(value: Array<WorkspaceClass>): DescribeClusterResponse;
+    addWorkspaceClasses(value?: WorkspaceClass, index?: number): WorkspaceClass;
+    getPreferredWorkspaceClass(): string;
+    setPreferredWorkspaceClass(value: string): DescribeClusterResponse;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DescribeClusterResponse.AsObject;
@@ -1221,15 +1223,20 @@ export class DescribeClusterResponse extends jspb.Message {
 
 export namespace DescribeClusterResponse {
     export type AsObject = {
-        workspaceclassesList: Array<WorkspaceClass.AsObject>,
+        workspaceClassesList: Array<WorkspaceClass.AsObject>,
+        preferredWorkspaceClass: string,
     }
 }
 
 export class WorkspaceClass extends jspb.Message {
     getId(): string;
     setId(value: string): WorkspaceClass;
-    getDisplayname(): string;
-    setDisplayname(value: string): WorkspaceClass;
+    getDisplayName(): string;
+    setDisplayName(value: string): WorkspaceClass;
+    getDescription(): string;
+    setDescription(value: string): WorkspaceClass;
+    getCreditsPerMinute(): number;
+    setCreditsPerMinute(value: number): WorkspaceClass;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceClass.AsObject;
@@ -1244,7 +1251,9 @@ export class WorkspaceClass extends jspb.Message {
 export namespace WorkspaceClass {
     export type AsObject = {
         id: string,
-        displayname: string,
+        displayName: string,
+        description: string,
+        creditsPerMinute: number,
     }
 }
 
@@ -1295,6 +1304,7 @@ export enum WorkspaceFeatureFlag {
     NOOP = 0,
     WORKSPACE_CONNECTION_LIMITING = 10,
     WORKSPACE_PSI = 11,
+    SSH_CA = 12,
 }
 
 export enum WorkspaceType {

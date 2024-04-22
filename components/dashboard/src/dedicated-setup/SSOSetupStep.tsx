@@ -5,13 +5,13 @@
  */
 
 import { FC, useCallback, useReducer, useState } from "react";
-import { Button } from "../components/Button";
 import { Heading1, Subheading } from "../components/typography/headings";
 import { SetupLayout } from "./SetupLayout";
 import { SSOConfigForm, isValid, ssoConfigReducer, useSaveSSOConfig } from "../teams/sso/SSOConfigForm";
 import Alert from "../components/Alert";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { openOIDCStartWindow } from "../provider-utils";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 type Props = {
     config?: OIDCClientConfig;
@@ -103,9 +103,9 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete, progressCurrent, p
                 <SSOConfigForm config={ssoConfig} onChange={dispatch} />
 
                 <div className="mt-6">
-                    <Button htmlType="submit" size="block" disabled={!configIsValid} loading={isLoading}>
+                    <LoadingButton type="submit" className="w-full" disabled={!configIsValid} loading={isLoading}>
                         Verify SSO Configuration
-                    </Button>
+                    </LoadingButton>
                 </div>
             </form>
         </SetupLayout>

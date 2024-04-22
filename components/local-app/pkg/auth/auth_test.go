@@ -56,7 +56,7 @@ func TestValidateToken(t *testing.T) {
 		},
 		{
 			Desc:   "valid",
-			Scopes: authScopes,
+			Scopes: authScopesLocalCompanion,
 		},
 	}
 	for _, test := range tests {

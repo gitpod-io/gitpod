@@ -110,6 +110,14 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		repo  *Repo
 		alias string
 	)
+
+	// bypass for crane check
+	if r.URL.Path == "/v2/" {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("{}"))
+		return
+	}
+
 	for k, v := range proxy.Aliases {
 		// Docker api request
 		if strings.HasPrefix(r.URL.Path, "/v2/"+k+"/") {

@@ -43,7 +43,9 @@ export type UserPermission =
     | "read_tokens"
     | "write_tokens"
     | "read_env_var"
-    | "write_env_var";
+    | "write_env_var"
+    | "write_temporary_token"
+    | "code_sync";
 
 export type InstallationResourceType = "installation";
 
@@ -53,7 +55,7 @@ export type InstallationPermission = "create_organization" | "configure";
 
 export type OrganizationResourceType = "organization";
 
-export type OrganizationRelation = "installation" | "member" | "owner" | "snapshoter";
+export type OrganizationRelation = "installation" | "member" | "owner" | "snapshoter" | "collaborator";
 
 export type OrganizationPermission =
     | "installation_admin"
@@ -72,6 +74,7 @@ export type OrganizationPermission =
     | "write_git_provider"
     | "read_billing"
     | "write_billing"
+    | "read_prebuild"
     | "create_workspace"
     | "write_billing_admin";
 
@@ -306,6 +309,26 @@ export const rel = {
                                     objectId: objectId,
                                 },
                                 optionalRelation: "member",
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get collaborator() {
+                const result2 = {
+                    ...result,
+                    relation: "collaborator",
+                };
+                return {
+                    user(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: objectId,
+                                },
                             },
                         } as v1.Relationship;
                     },
