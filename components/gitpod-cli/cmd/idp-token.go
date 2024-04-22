@@ -6,10 +6,8 @@ package cmd
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	connect "github.com/bufbuild/connect-go"
@@ -18,6 +16,7 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -32,7 +31,7 @@ var idpTokenOpts struct {
 var idpTokenCmd = &cobra.Command{
 	Use:   "token",
 	Short: "Requests an ID token for this workspace",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		cmd.SilenceUsage = true
 
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
@@ -40,59 +39,28 @@ var idpTokenCmd = &cobra.Command{
 
 		tkn, err := idpToken(ctx, idpTokenOpts.Audience)
 
+		token, _, err := jwt.NewParser().ParseUnverified(tkn, jwt.MapClaims{})
+		if err != nil {
+			return err
+		}
+
 		// If the user wants to decode the token, then do so.
 		if idpTokenOpts.Decode {
-			// Split the token into its three parts.
-			parts := strings.Split(tkn, ".")
-			if len(parts) != 3 {
-				xerrors.Errorf("JWT token is not valid")
-			}
-
-			// Decode the header.
-			header, err := base64.RawURLEncoding.DecodeString(parts[0])
-			if err != nil {
-				xerrors.Errorf("Failed to decode header: ", err)
-			}
-
-			// Decode the payload.
-			payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-			if err != nil {
-				xerrors.Errorf("Failed to decode payload: ", err)
-			}
-
-			// Unmarshal the header and payload into JSON.
-			var headerJSON map[string]interface{}
-			var payloadJSON map[string]interface{}
-
-			// This function unmarshals the header and payload of a JWT.
-			// The header is unmarshalled into a HeaderJSON struct, and the payload is unmarshalled into a PayloadJSON struct.
-			if err := json.Unmarshal(header, &headerJSON); err != nil {
-				xerrors.Errorf("Failed to unmarshal header: ", err)
-			}
-
-			if err := json.Unmarshal(payload, &payloadJSON); err != nil {
-				xerrors.Errorf("Failed to unmarshal payload: ", err)
-			}
 
 			output := map[string]interface{}{
-				"Header":  headerJSON,
-				"Payload": payloadJSON,
+				"Header":  token.Header,
+				"Payload": token.Claims,
 			}
 
 			// The header and payload are then marshalled into a map and printed to the screen.
 			outputPretty, err := json.MarshalIndent(output, "", "  ")
 			if err != nil {
-				xerrors.Errorf("Failed to marshal output: ", err)
+				return xerrors.Errorf("Failed to marshal output: %w", err)
 			}
 
 			fmt.Printf("%s\n", outputPretty)
 			return nil
 		}
-
-		if err != nil {
-			return err
-		}
-
 		fmt.Println(tkn)
 		return nil
 	},
