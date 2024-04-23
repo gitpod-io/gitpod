@@ -13,7 +13,6 @@ module "preview_gce" {
     google           = google,
     acme.letsencrypt = acme.letsencrypt,
     acme.zerossl     = acme.zerossl,
-    k8s.dev          = k8s.dev
   }
 }
 
@@ -34,7 +33,6 @@ module "dns" {
     google           = google,
     acme.letsencrypt = acme.letsencrypt,
     acme.zerossl     = acme.zerossl,
-    k8s.dev          = k8s.dev
   }
 }
 

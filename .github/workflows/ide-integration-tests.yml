@@ -1,4 +1,7 @@
 name: "IDE integration tests"
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
 on:
   workflow_dispatch:
     inputs:
@@ -10,6 +13,14 @@ on:
         required: true
         description: "The version of Gitpod to install"
         default: "latest"
+      image_repo_base:
+        type: choice
+        required: false
+        description: "The base repo of image"
+        options:
+          - "eu.gcr.io/gitpod-core-dev/build"
+          - "eu.gcr.io/gitpod-dev-artifact/build"
+        default: "eu.gcr.io/gitpod-core-dev/build"
       skip_deploy:
         required: false
         description: "Skip deploy preview environment (debug only)"
@@ -80,23 +91,29 @@ jobs:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Create preview environment infrastructure
         id: create
         uses: ./.github/actions/preview-create
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: gce
           large_vm: true
           preemptible: true
+          image_repo_base: ${{ github.event.inputs.image_repo_base }}
       - name: Deploy Gitpod to the preview environment
         id: deploy-gitpod
         if: github.event.inputs.skip_deploy != 'true'
         uses: ./.github/actions/deploy-gitpod
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           version: ${{ needs.configuration.outputs.version}}
+          image_repo_base: ${{ github.event.inputs.image_repo_base }}
 
   check:
     name: Check for regressions
@@ -109,13 +126,18 @@ jobs:
         - /tmp:/tmp
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Integration Test
         shell: bash
         env:
           ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
           USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
-          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
           PREVIEW_NAME: ${{ needs.configuration.outputs.name }}
           TEST_BUILD_ID: ${{ github.run_id }}
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -125,17 +147,10 @@ jobs:
 
           export LEEWAY_WORKSPACE_ROOT="$(pwd)"
           export HOME="/home/gitpod"
-          export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
-
-          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
           leeway run dev/preview/previewctl:install
 
-          echo "Setting up access to core-dev and harvester"
-          previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m
 
           # start integration test
           args=()
@@ -193,11 +208,16 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Delete preview environment
         uses: ./.github/actions/delete-preview
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
 
   delete-runner:
     if: always()

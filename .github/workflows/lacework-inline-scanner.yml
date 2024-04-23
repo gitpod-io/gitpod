@@ -1,3 +1,6 @@
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
 name: Lacework Inline Scanner
 on:
   workflow_run:
@@ -57,7 +60,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-environment
         with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Get Secrets from GCP
         id: "secrets"

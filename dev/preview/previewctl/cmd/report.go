@@ -22,7 +22,7 @@ var tmplString = `
 	<li><b>🔗 URL</b> - <a href="https://{{ .Name }}.preview.gitpod-dev.com/workspaces" target="_blank">{{ .Name }}.preview.gitpod-dev.com/workspaces</a>.</li>
 	<li><b>📚 Documentation</b> - See our <a href="https://www.notion.so/gitpod/6debd359591b43688b52f76329d04010#7c1ce80ab31a41e29eff2735e38eec39" target="_blank">internal documentation</a> for information on how to interact with your preview environment.</li>
 	<li><b>📦 Version</b> - {{ .Version }}</li>
-	<li><b>🗒️ Logs</b> - <a href="https://console.cloud.google.com/logs/query;query=jsonPayload.kubernetes.host%3D%22preview-{{ .Name }}%22%0A%0A--%20Filter%20on%20service:%0A--%20jsonPayload.serviceContext.service%3D%22ws-manager-mk2%22%0A;duration=P1D?project=gitpod-core-dev" target="_blank">GCP Logs Explorer</a></li>
+	<li><b>🗒️ Logs</b> - <a href="https://console.cloud.google.com/logs/query;query=jsonPayload.kubernetes.host%3D%22preview-{{ .Name }}%22%0A%0A--%20Filter%20on%20service:%0A--%20jsonPayload.serviceContext.service%3D%22ws-manager-mk2%22%0A;duration=P1D?project=gitpod-dev-preview" target="_blank">GCP Logs Explorer</a></li>
 </ul>
 `
 
