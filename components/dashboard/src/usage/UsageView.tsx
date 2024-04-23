@@ -99,7 +99,7 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
     const schedulerDuration = useFeatureFlag("usage_update_scheduler_duration");
 
     const readableSchedulerDuration = useMemo(() => {
-        const duration = schedulerDuration.toLowerCase();
+        const duration = schedulerDuration.toString().toLowerCase();
         if (duration === "undefined") {
             return "15 minutes";
         }

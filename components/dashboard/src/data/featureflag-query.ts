@@ -43,7 +43,7 @@ const featureFlags = {
 
 type FeatureFlags = typeof featureFlags;
 
-export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] => {
+export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] | boolean => {
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
     const project = useCurrentProject().project;
@@ -67,7 +67,7 @@ export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): Fe
     return query.data !== undefined ? query.data : featureFlags[featureFlag];
 };
 
-export const useDedicatedFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] => {
+export const useDedicatedFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] | boolean => {
     const queryKey = ["dedicatedFeatureFlag", featureFlag];
 
     const query = useQuery(queryKey, async () => {
