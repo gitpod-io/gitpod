@@ -20,7 +20,7 @@ jobs:
   update-jetbrains:
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
     needs: [ create-runner ]
     steps:
       - uses: actions/checkout@v2
