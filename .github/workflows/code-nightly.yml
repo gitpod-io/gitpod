@@ -1,5 +1,7 @@
 name: Code Nightly
-
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
 on:
   workflow_dispatch:
   schedule:
@@ -21,22 +23,25 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-environment
         with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - id: build-code
         name: Build
         env:
           PR_DESC: "${{ steps.pr-details.outputs.pr_body }}"
           MAIN_BRANCH: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
+          LEEWAY_REMOTE_CACHE_BUCKET: ${{ github.ref == 'refs/heads/main' && 'gitpod-core-leeway-cache-main' || 'leeway-cache-dev-3ac8ef5' }}
         run: |
           export LEEWAY_WORKSPACE_ROOT=$GITHUB_WORKSPACE
 
           codeHeadCommit=$(curl -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/gitpod-io/openvscode-server/commits/gp-code/release/1.89)
           codeVersion=$(curl https://raw.githubusercontent.com/gitpod-io/openvscode-server/$codeHeadCommit/package.json | jq .version)
+          imageRepoBase=${{ github.ref == 'refs/heads/main' && 'eu.gcr.io/gitpod-core-dev/build' || 'eu.gcr.io/gitpod-dev-artifact/build' }}
           cd components/ide/code
           leeway build \
             -Dversion=nightly \
-            -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build \
+            -DimageRepoBase=$imageRepoBase \
             -DcodeCommit=$codeHeadCommit \
             -DcodeVersion=$codeVersion \
             -DcodeQuality=insider \

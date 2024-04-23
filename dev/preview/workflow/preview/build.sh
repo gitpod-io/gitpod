@@ -13,6 +13,8 @@ import "ensure-gcloud-auth.sh"
 leeway run dev/preview:configure-workspace
 ensure_gcloud_auth
 
+PREVIEW_GCP_PROJECT=gitpod-dev-preview
+
 if [[ "${VERSION:-}" == "" ]]; then
     VERSION="$(previewctl get name)-dev-$(date +%F_T%H-%M-%S)"
     log_info "VERSION is not set - using $VERSION"
@@ -20,7 +22,7 @@ if [[ "${VERSION:-}" == "" ]]; then
 fi
 
 leeway build \
-    -DSEGMENT_IO_TOKEN="$(kubectl --context=dev -n werft get secret self-hosted -o jsonpath='{.data.segmentIOToken}' | base64 -d)" \
+    -DSEGMENT_IO_TOKEN="$(gcloud secrets versions access latest --project ${PREVIEW_GCP_PROJECT} --secret=segment-io-token)" \
     -Dversion="${VERSION}" \
     --dont-test \
     dev/preview:deploy-dependencies

@@ -7,10 +7,15 @@ package common
 import (
 	"time"
 
+	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // This file exists to break cyclic-dependency errors
+
+var (
+	GitpodContainerRegistry = config.GitpodContainerRegistry
+)
 
 const (
 	AppName                     = "gitpod"
@@ -18,7 +23,6 @@ const (
 	CertManagerCAIssuer         = "gitpod-ca-issuer"
 	DockerRegistryURL           = "docker.io"
 	DockerRegistryName          = "registry"
-	GitpodContainerRegistry     = "eu.gcr.io/gitpod-core-dev/build"
 	InClusterDbSecret           = "mysql"
 	KubeRBACProxyRepo           = "quay.io"
 	KubeRBACProxyImage          = "brancz/kube-rbac-proxy"

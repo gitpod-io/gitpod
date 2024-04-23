@@ -17,12 +17,6 @@ write_files:
 
       set -eo pipefail
 
-      cat <<'EOF' >> /etc/containerd/config.toml
-      [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-1.docker.io".auth]
-        username = "${dockerhub_user}"
-        password = "${dockerhub_passwd}"
-      EOF
-
       sudo systemctl restart containerd.service &
 runcmd:
  - bash /usr/local/bin/bootstrap.sh
