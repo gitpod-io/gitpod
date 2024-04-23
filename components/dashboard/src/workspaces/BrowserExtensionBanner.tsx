@@ -10,6 +10,19 @@ import { useUserLoader } from "../hooks/use-user-loader";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { AuthProviderDescription, AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
+import { Button } from "@podkit/buttons/Button";
+
+import { ReactComponent as XSvg } from "../images/x.svg";
+import bitbucketButton from "../images/browser-extension/bitbucket.webp";
+import githubButton from "../images/browser-extension/github.webp";
+import gitlabButton from "../images/browser-extension/gitlab.webp";
+import { cn } from "@podkit/lib/cn";
+
+const browserExtensionImages = {
+    Bitbucket: bitbucketButton,
+    GitHub: githubButton,
+    GitLab: gitlabButton,
+} as const;
 
 type BrowserOption = {
     aliases?: string[];
@@ -63,12 +76,13 @@ export function BrowserExtensionBanner() {
     const { user } = useUserLoader();
     const { data: authProviderDescriptions } = useAuthProviderDescriptions();
 
-    const scmProviderString = useMemo(() => {
+    const usedProviders = useMemo(() => {
         if (!user || !authProviderDescriptions) return;
 
-        const usedProviders = getDeduplicatedScmProviders(user, authProviderDescriptions);
-        return displayScmProviders(usedProviders);
+        return getDeduplicatedScmProviders(user, authProviderDescriptions);
     }, [user, authProviderDescriptions]);
+
+    const scmProviderString = useMemo(() => usedProviders && displayScmProviders(usedProviders), [usedProviders]);
 
     const parser = useMemo(() => new UAParser(), []);
     const browserName = useMemo(() => parser.getBrowser().name?.toLowerCase(), [parser]);
@@ -83,11 +97,11 @@ export function BrowserExtensionBanner() {
         setIsVisible(!installedOrDismissed);
     }, []);
 
-    // Todo: Implement the x button
-    // const handleClose = () => {
-    //     localStorage.setItem("browser-extension-banner-dismissed", "true");
-    //     setIsVisible(false);
-    // };
+    const handleClose = () => {
+        //todo(ft): metrics
+        localStorage.setItem("browser-extension-banner-dismissed", "true");
+        setIsVisible(false);
+    };
 
     if (!isVisible) {
         return null;
@@ -97,7 +111,7 @@ export function BrowserExtensionBanner() {
         return null;
     }
 
-    if (!scmProviderString) {
+    if (!scmProviderString || !usedProviders?.length) {
         return null;
     }
 
@@ -113,17 +127,25 @@ export function BrowserExtensionBanner() {
 
     return (
         <section className="flex justify-center w-full mt-20 mx-4">
-            <div className="sm:flex justify-between border-2 rounded-xl hidden max-w-xl mt-4">
-                <div className="flex flex-col gap-1 py-4 px-2 justify-center">
+            <div className="sm:flex justify-between border-pk-border-base border-2 rounded-xl hidden max-w-xl mt-4">
+                <div className="flex flex-col gap-1 py-5 pl-6 pr-4 justify-center">
                     <span className="text-lg font-semibold">Open from {scmProviderString}</span>
-                    <span>
+                    <span className="text-xs">
                         <a href={browserOption.url} className="gp-link">
                             Install the Gitpod extension
                         </a>{" "}
-                        to launch workspaces from Github.
+                        to launch workspaces from {scmProviderString}.
                     </span>
                 </div>
-                <img alt="A button that says Gitpod" className="rounded-r-xl" src="https://picsum.photos/151/88" />
+                <img
+                    alt="A button that says Gitpod"
+                    src={browserExtensionImages[usedProviders.at(0)!]}
+                    className="w-32 h-fit self-end mb-2"
+                />
+                <Button variant={"ghost"} onClick={handleClose} className="ml-3 self-start hover:bg-transparent">
+                    <span className="sr-only">Close</span>
+                    <XSvg className={cn("w-3 h-4 dark:text-white text-gray-700")} />
+                </Button>
             </div>
         </section>
     );
