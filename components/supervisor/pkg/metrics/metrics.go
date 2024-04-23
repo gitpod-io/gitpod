@@ -54,7 +54,7 @@ func (m *SupervisorMetrics) Register(registry *prometheus.Registry) error {
 	metrics := []prometheus.Collector{
 		m.IDEReadyDurationTotal,
 		m.IDEStartTotal,
-		m.IDEFailedTotal,
+		m.IDEStopTotal,
 		m.InitializerHistogram,
 		m.SSHTunnelOpenedTotal,
 		m.SSHTunnelClosedTotal,
