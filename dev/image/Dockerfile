@@ -45,10 +45,10 @@ RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/relea
 RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
 
 # leeway
-ARG LEEWAY_VERSION=0.8.0
+ARG LEEWAY_VERSION=0.8.2
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
 ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
-ENV LEEWAY_REMOTE_CACHE_BUCKET=gitpod-core-leeway-cache-branch
+ENV LEEWAY_REMOTE_CACHE_BUCKET=leeway-cache-dev-3ac8ef5
 ENV LEEWAY_CACHE_DIR=/workspace/.leeway/cache
 ENV LEEWAY_BUILD_DIR=/workspace/.leeway/build
 RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v${LEEWAY_VERSION}/leeway_${LEEWAY_VERSION}_Linux_x86_64.tar.gz | tar xz
