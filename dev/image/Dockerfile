@@ -22,7 +22,7 @@ RUN mkdir -p /tmp/helm/ \
     && helm completion bash > /usr/share/bash-completion/completions/helm
 
 ### kubectl ###
-RUN curl -fsSL -o /usr/bin/kubectl "https://dl.k8s.io/release/v1.27.11/bin/linux/amd64/kubectl" && chmod +x /usr/bin/kubectl \
+RUN curl -fsSL -o /usr/bin/kubectl "https://dl.k8s.io/release/v1.28.9/bin/linux/amd64/kubectl" && chmod +x /usr/bin/kubectl \
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl
 
 RUN curl -fsSL -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
@@ -139,7 +139,7 @@ ARG GCS_DIR=/opt/google-cloud-sdk
 ENV PATH=$GCS_DIR/bin:$PATH
 RUN sudo chown gitpod: /opt \
     && mkdir $GCS_DIR \
-    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-445.0.0-linux-x86_64.tar.gz \
+    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-472.0.0-linux-x86_64.tar.gz \
     | tar -xzvC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
     --additional-components gke-gcloud-auth-plugin docker-credential-gcr alpha beta \
@@ -172,7 +172,7 @@ RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.7.25.zip" -o
     && rm -f awscliv2.zip
 
 # Install Terraform
-ARG RELEASE_URL="https://releases.hashicorp.com/terraform/1.3.1/terraform_1.3.1_linux_amd64.zip"
+ARG RELEASE_URL="https://releases.hashicorp.com/terraform/1.8.1/terraform_1.8.1_linux_amd64.zip"
 RUN mkdir -p ~/.terraform \
     && cd ~/.terraform \
     && curl -fsSL -o terraform_linux_amd64.zip ${RELEASE_URL} \
