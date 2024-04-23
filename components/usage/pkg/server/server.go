@@ -167,18 +167,18 @@ func Start(cfg Config, version string) error {
 }
 
 func startScheduler(ctx context.Context, cfg Config, redsyncPool *redsync.Redsync, jobClientsConstructor scheduler.ClientsConstructor) {
-	exps := experiments.NewClient()
+	exps := experiments.NewClient(experiments.WithPollInterval(1 * time.Minute))
 	ledgerSchedule := exps.GetStringValue(ctx, "usage_update_scheduler_duration", cfg.LedgerSchedule, experiments.Attributes{
 		GitpodHost: cfg.GitpodHost,
 	})
 
 	var (
 		sch  *scheduler.Scheduler
-		lock sync.Mutex
+		lock sync.Mutex // Lock sch and ledgerSchedule update
 	)
 
-	start := func(ledgerSchedule string) {
-		scheduler, err := createScheduler(redsyncPool, jobClientsConstructor, ledgerSchedule, cfg.ResetUsageSchedule)
+	start := func(ledgerDuration string) {
+		scheduler, err := createScheduler(redsyncPool, jobClientsConstructor, ledgerDuration, cfg.ResetUsageSchedule)
 		if err != nil {
 			log.WithError(err).Error("failed to create schedulers: %w", err)
 			return
@@ -190,7 +190,7 @@ func startScheduler(ctx context.Context, cfg Config, redsyncPool *redsync.Redsyn
 		if sch != nil {
 			sch.Stop()
 		}
-
+		ledgerSchedule = ledgerDuration
 		sch = scheduler
 		scheduler.Start()
 	}
@@ -218,7 +218,12 @@ func startScheduler(ctx context.Context, cfg Config, redsyncPool *redsync.Redsyn
 				if ledgerSchedule == newLedgerSchedule {
 					continue
 				}
-				start(newLedgerSchedule)
+				if _, err := time.ParseDuration(newLedgerSchedule); err != nil {
+					log.WithError(err).Warn("invalid duration")
+				} else {
+					log.WithField("before", ledgerSchedule).WithField("now", newLedgerSchedule).Info("restarting scheduler")
+					start(newLedgerSchedule)
+				}
 			}
 		}
 	}()
