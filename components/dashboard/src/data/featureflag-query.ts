@@ -38,11 +38,12 @@ const featureFlags = {
     // Logging tracing for added for investigate hanging issue
     dashboard_logging_tracing: false,
     showBrowserExtensionPromotion: false,
+    usage_update_scheduler_duration: "15m",
 };
 
 type FeatureFlags = typeof featureFlags;
 
-export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] | boolean => {
+export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] => {
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
     const project = useCurrentProject().project;
@@ -66,7 +67,7 @@ export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): Fe
     return query.data !== undefined ? query.data : featureFlags[featureFlag];
 };
 
-export const useDedicatedFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] | boolean => {
+export const useDedicatedFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] => {
     const queryKey = ["dedicatedFeatureFlag", featureFlag];
 
     const query = useQuery(queryKey, async () => {
