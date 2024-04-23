@@ -788,6 +788,7 @@ var (
 )
 
 const (
+	IDEStopReasonNone           = "None"
 	IDEStopReasonCmdStartFailed = "CmdStartFailed"
 	IDEStopReasonCmdWaitErr     = "CmdWaitErr"
 	IDEStopReasonIDENotReady    = "IDENotReady"
@@ -905,13 +906,17 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 
+		stoppedReason := IDEStopReasonNone
+
 		log.Info("start launchIDE")
 		err := cmd.Start()
 		if err != nil {
+			stoppedReason = IDEStopReasonCmdStartFailed
 			if s == func() *ideStatus { i := statusNeverRan; return &i }() {
+				ideStopped <- stoppedReason
+				close(ideStopped)
 				log.WithField("ide", ide.String()).WithError(err).Fatal("IDE failed to start")
 			}
-			ideStopped <- IDEStopReasonCmdStartFailed
 			return
 		}
 		s = func() *ideStatus { i := statusShouldRun; return &i }()
@@ -924,18 +929,22 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 		err = cmd.Wait()
 		if err != nil {
 			if errSignalTerminated.Error() != err.Error() {
-				ideStopped <- IDEStopReasonCmdWaitErr
+				stoppedReason = IDEStopReasonCmdWaitErr
 				log.WithField("ide", ide.String()).WithError(err).Warn("IDE was stopped")
 			}
 
 			ideWasReady, _ := ideReady.Get()
 			if !ideWasReady {
+				stoppedReason = IDEStopReasonIDENotReady
+				ideStopped <- stoppedReason
+				close(ideStopped)
 				log.WithField("ide", ide.String()).WithError(err).Fatal("IDE failed to start")
 				return
 			}
 		}
 
-		ideStopped <- IDEStopReasonIDENotReady
+		ideStopped <- stoppedReason
+		close(ideStopped)
 		ideReady.Set(false, nil)
 	}()
 }
