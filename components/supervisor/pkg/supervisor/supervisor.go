@@ -795,7 +795,7 @@ const (
 	IDEStopReasonShutdown       = "Shutdown"
 )
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind, metrics *metrics.SupervisorMetrics) {
+func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind, metrics *metrics.SupervisorMetrics, metricsReporter *metrics.GrpcMetricsReporter) {
 	defer wg.Done()
 	defer log.WithField("ide", ide.String()).Debug("startAndWatchIDE shutdown")
 
@@ -855,6 +855,7 @@ supervisorLoop:
 				log.WithField("kind", ide.String()).WithField("reason", reason).WithError(err).Error("cannot get metrics for IDEStopTotal")
 			} else {
 				c.Inc()
+				metricsReporter.ReportImmediaterly()
 			}
 			// kill all processes in same pgid
 			_ = syscall.Kill(-1*cmd.Process.Pid, syscall.SIGKILL)
@@ -868,6 +869,7 @@ supervisorLoop:
 				log.WithField("kind", ide.String()).WithField("reason", IDEStopReasonShutdown).WithError(err).Error("cannot get metrics for IDEStopTotal")
 			} else {
 				c.Inc()
+				metricsReporter.ReportImmediaterly()
 			}
 			// we've been asked to shut down
 			ideStatus = statusShouldShutdown
@@ -915,6 +917,7 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 			if s == func() *ideStatus { i := statusNeverRan; return &i }() {
 				ideStopped <- stoppedReason
 				close(ideStopped)
+				time.Sleep(1 * time.Second)
 				log.WithField("ide", ide.String()).WithError(err).Fatal("IDE failed to start")
 			}
 			return
@@ -938,6 +941,7 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 				stoppedReason = IDEStopReasonIDENotReady
 				ideStopped <- stoppedReason
 				close(ideStopped)
+				time.Sleep(1 * time.Second)
 				log.WithField("ide", ide.String()).WithError(err).Fatal("IDE failed to start")
 				return
 			}

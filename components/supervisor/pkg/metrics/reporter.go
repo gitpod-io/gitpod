@@ -71,6 +71,10 @@ func (r *GrpcMetricsReporter) Report(ctx context.Context) {
 	}
 }
 
+func (r *GrpcMetricsReporter) ReportImmediaterly() {
+	r.gather()
+}
+
 func (r *GrpcMetricsReporter) gather() {
 	families, err := r.Registry.Gather()
 	if err != nil {
