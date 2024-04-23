@@ -5,8 +5,10 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gitpod-io/gitpod/usage/pkg/scheduler"
@@ -17,6 +19,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
@@ -55,6 +58,8 @@ type Config struct {
 
 	// Where to find the gRPC/Connect APIs on the server component
 	ServerAddress string `json:"serverAddress"`
+
+	GitpodHost string `json:"gitpodHost"`
 }
 
 type RedisConfiguration struct {
@@ -136,54 +141,17 @@ func Start(cfg Config, version string) error {
 		return v1.NewUsageServiceClient(selfConnection), v1.NewBillingServiceClient(selfConnection), nil
 	}
 
-	var schedulerJobSpecs []scheduler.JobSpec
-	if cfg.LedgerSchedule != "" {
-		// we do not run the controller if there is no schedule defined.
-		schedule, err := time.ParseDuration(cfg.LedgerSchedule)
-		if err != nil {
-			return fmt.Errorf("failed to parse schedule duration: %w", err)
-		}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		jobSpec, err := scheduler.NewLedgerTriggerJob(schedule,
-			scheduler.NewLedgerTrigger(jobClientsConstructor),
-		)
-		if err != nil {
-			return fmt.Errorf("failed to setup ledger trigger job: %w", err)
-		}
-
-		schedulerJobSpecs = append(schedulerJobSpecs, jobSpec)
-
-	} else {
-		log.Info("No controller schedule specified, controller will be disabled.")
-	}
-
-	if cfg.ResetUsageSchedule != "" {
-		schedule, err := time.ParseDuration(cfg.ResetUsageSchedule)
-		if err != nil {
-			return fmt.Errorf("failed to parse reset usage schedule as duration: %w", err)
-		}
-
-		spec, err := scheduler.NewResetUsageJob(schedule, jobClientsConstructor)
-		if err != nil {
-			return fmt.Errorf("failed to setup reset usage job: %w", err)
-		}
-
-		schedulerJobSpecs = append(schedulerJobSpecs, spec)
-	}
-
-	sched := scheduler.New(redsyncPool, schedulerJobSpecs...)
-	sched.Start()
-	defer sched.Stop()
+	startScheduler(ctx, cfg, redsyncPool, jobClientsConstructor)
 
 	err = registerGRPCServices(srv, conn, stripeClient, pricer, cfg)
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC services: %w", err)
 	}
 
-	err = scheduler.RegisterMetrics(srv.MetricsRegistry())
-	if err != nil {
-		return fmt.Errorf("failed to register controller metrics: %w", err)
-	}
+	scheduler.RegisterMetrics(srv.MetricsRegistry())
 
 	err = stripe.RegisterMetrics(srv.MetricsRegistry())
 	if err != nil {
@@ -196,6 +164,123 @@ func Start(cfg Config, version string) error {
 	}
 
 	return nil
+}
+
+func startScheduler(ctx context.Context, cfg Config, redsyncPool *redsync.Redsync, jobClientsConstructor scheduler.ClientsConstructor) {
+	exps := experiments.NewClient()
+	ledgerSchedule := exps.GetStringValue(ctx, "usage_update_scheduler_duration", cfg.LedgerSchedule, experiments.Attributes{
+		GitpodHost: cfg.GitpodHost,
+	})
+
+	var (
+		sch  *scheduler.Scheduler
+		lock sync.Mutex
+	)
+
+	start := func(ledgerSchedule string) {
+		scheduler, err := createScheduler(redsyncPool, jobClientsConstructor, ledgerSchedule, cfg.ResetUsageSchedule)
+		if err != nil {
+			log.WithError(err).Error("failed to create schedulers: %w", err)
+			return
+		}
+
+		lock.Lock()
+		defer lock.Unlock()
+
+		if sch != nil {
+			sch.Stop()
+		}
+
+		sch = scheduler
+		scheduler.Start()
+	}
+
+	start(ledgerSchedule)
+
+	// periodically check if the schedule FF has changed
+	go func() {
+		ticker := time.NewTicker(3 * time.Minute)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				lock.Lock()
+				if sch != nil {
+					sch.Stop()
+				}
+				lock.Unlock()
+				return
+			case <-ticker.C:
+				newLedgerSchedule := exps.GetStringValue(ctx, "usage_update_scheduler_duration", cfg.LedgerSchedule, experiments.Attributes{
+					GitpodHost: cfg.GitpodHost,
+				})
+				if ledgerSchedule == newLedgerSchedule {
+					continue
+				}
+				start(newLedgerSchedule)
+			}
+		}
+	}()
+}
+
+func createScheduler(redsyncPool *redsync.Redsync, jobClientsConstructor scheduler.ClientsConstructor, ledgerSchedule, resetUsageSchedule string) (*scheduler.Scheduler, error) {
+	var schedulerJobSpecs []scheduler.JobSpec
+	appendLedgerJob := func() error {
+		if ledgerSchedule != "" {
+			// we do not run the controller if there is no schedule defined.
+			schedule, err := time.ParseDuration(ledgerSchedule)
+			if err != nil {
+				return fmt.Errorf("failed to parse schedule duration: %w", err)
+			}
+
+			jobSpec, err := scheduler.NewLedgerTriggerJob(schedule,
+				scheduler.NewLedgerTrigger(jobClientsConstructor),
+			)
+			if err != nil {
+				return fmt.Errorf("failed to setup ledger trigger job: %w", err)
+			}
+
+			schedulerJobSpecs = append(schedulerJobSpecs, jobSpec)
+		} else {
+			log.Info("No controller schedule specified, controller will be disabled.")
+		}
+		return nil
+	}
+
+	appendResetUsageJob := func() error {
+		if resetUsageSchedule != "" {
+			schedule, err := time.ParseDuration(resetUsageSchedule)
+			if err != nil {
+				return fmt.Errorf("failed to parse reset usage schedule as duration: %w", err)
+			}
+
+			spec, err := scheduler.NewResetUsageJob(schedule, jobClientsConstructor)
+			if err != nil {
+				return fmt.Errorf("failed to setup reset usage job: %w", err)
+			}
+
+			schedulerJobSpecs = append(schedulerJobSpecs, spec)
+		} else {
+			log.Info("No resetUsage schedule specified, controller will be disabled.")
+		}
+		return nil
+	}
+
+	if err := appendLedgerJob(); err != nil {
+		log.WithError(err).Error("failed to append ledger job")
+	}
+	if err := appendResetUsageJob(); err != nil {
+		log.WithError(err).Error("failed to append reset usage job")
+	}
+
+	if len(schedulerJobSpecs) == 0 {
+		return nil, fmt.Errorf("no jobs to schedule")
+	}
+
+	sched := scheduler.New(redsyncPool, schedulerJobSpecs...)
+	sched.Start()
+	return sched, nil
 }
 
 func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, pricer *apiv1.WorkspacePricer, cfg Config) error {
