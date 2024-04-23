@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -22,7 +22,7 @@ var idpGCloudTokenOpts struct {
 
 var idpGCloudTokenCmd = &cobra.Command{
 	Use:   "gcloud-token",
-	Short: "Requests an gcloud format ID token for this workspace",
+	Short: "Requests a gcloud format ID token for this workspace",
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		cmd.SilenceUsage = true
 		if len(idpGCloudTokenOpts.Audience) == 0 {
