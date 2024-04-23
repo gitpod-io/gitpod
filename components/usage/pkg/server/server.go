@@ -215,6 +215,9 @@ func startScheduler(ctx context.Context, cfg Config, redsyncPool *redsync.Redsyn
 				newLedgerSchedule := exps.GetStringValue(ctx, "usage_update_scheduler_duration", cfg.LedgerSchedule, experiments.Attributes{
 					GitpodHost: cfg.GitpodHost,
 				})
+				if newLedgerSchedule == "" {
+					newLedgerSchedule = cfg.LedgerSchedule
+				}
 				if ledgerSchedule == newLedgerSchedule {
 					continue
 				}
