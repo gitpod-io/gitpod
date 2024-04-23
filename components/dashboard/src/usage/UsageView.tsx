@@ -100,6 +100,9 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
 
     const readableSchedulerDuration = useMemo(() => {
         const duration = schedulerDuration.toLowerCase();
+        if (duration === "undefined") {
+            return "15 minutes";
+        }
         const unit = duration.slice(-1);
         const unitStr = durationUnitMap[unit];
         console.error("failed to parse duration", duration);
