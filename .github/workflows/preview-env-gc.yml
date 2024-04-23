@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
     outputs:
       names: ${{ steps.set-matrix.outputs.names }}
       count: ${{ steps.set-matrix.outputs.count }}
