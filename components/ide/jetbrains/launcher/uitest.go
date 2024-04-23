@@ -10,9 +10,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 func downloadUITestRobot(robotVersion, targetDir string) error {
+	log.WithField("robotVersion", robotVersion).Info("downloading UI Test plugin")
 	url := fmt.Sprintf("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/intellij/remoterobot/robot-server-plugin/%s/robot-server-plugin-%s.zip", robotVersion, robotVersion)
 	downloadedFile, err := download(url, targetDir)
 	if err != nil {

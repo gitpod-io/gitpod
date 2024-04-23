@@ -744,8 +744,12 @@ func updateVMOptions(
 	if alias == "intellij" {
 		gitpodVMOptions = append(gitpodVMOptions, "-Djdk.configure.existing=true")
 	}
-	gitpodVMOptions = append(gitpodVMOptions, "-Drobot-server.port=28082")
-	gitpodVMOptions = append(gitpodVMOptions, "-Drobot-server.host.public=true")
+
+	if isTestingJetBrains() {
+		log.Info("launch with test robot")
+		gitpodVMOptions = append(gitpodVMOptions, "-Drobot-server.port=28082")
+		gitpodVMOptions = append(gitpodVMOptions, "-Drobot-server.host.public=true")
+	}
 	vmoptions := deduplicateVMOption(ideaVMOptionsLines, gitpodVMOptions, filterFunc)
 
 	// user-defined vmoptions (EnvVar)
@@ -1079,9 +1083,10 @@ func linkRemotePlugin(launchCtx *LaunchContext) error {
 		return err
 	}
 
-	// download UI Test plugin
-	if err := downloadUITestRobot("0.11.22", remotePluginsFolder); err != nil {
-		log.WithError(err).Warn("failed to download UI Test Robot plugin")
+	if isTestingJetBrains() {
+		if err := downloadUITestRobot("0.11.22", remotePluginsFolder); err != nil {
+			log.WithError(err).Warn("failed to download UI Test Robot plugin")
+		}
 	}
 
 	// added for backwards compatibility, can be removed in the future
@@ -1092,6 +1097,10 @@ func linkRemotePlugin(launchCtx *LaunchContext) error {
 	}
 
 	return os.Symlink("/ide-desktop-plugins/gitpod-remote", remotePluginDir)
+}
+
+func isTestingJetBrains() bool {
+	return os.Getenv("GP_JETBRAINS_TESTS") == "true"
 }
 
 // TODO(andreafalzetti): remove dir scanning once this is implemented https://youtrack.jetbrains.com/issue/GTW-2402/Rider-Open-Project-dialog-not-displaying-in-remote-dev

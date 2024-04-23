@@ -316,7 +316,7 @@ func TestIntellij(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "intellij", "https://github.com/gitpod-samples/spring-petclinic/tree/gp/integration-test")
+			JetBrainsIDETest(ctx, t, cfg, "intellij", "GP_JETBRAINS_TESTS=true/https://github.com/gitpod-samples/spring-petclinic/tree/gp/integration-test")
 			return testCtx
 		}).
 		Feature()
