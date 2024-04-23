@@ -342,6 +342,30 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Labels: []config.LabelAllowList{},
 		},
 		{
+			Name: "supervisor_ide_start_total",
+			Help: "Total number of IDE start count",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "kind",
+					AllowValues: []string{"web", "desktop"},
+				},
+			},
+		},
+		{
+			Name: "supervisor_ide_stop_total",
+			Help: "Total number of IDE stop count",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "kind",
+					AllowValues: []string{"web", "desktop"},
+				},
+				{
+					Name:        "reason",
+					AllowValues: []string{"*"},
+				},
+			},
+		},
+		{
 			Name: "supervisor_ssh_tunnel_closed_total",
 			Help: "Total number of SSH tunnels closed by the supervisor",
 			Labels: []config.LabelAllowList{

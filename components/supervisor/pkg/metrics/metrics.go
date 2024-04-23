@@ -12,6 +12,8 @@ import (
 
 type SupervisorMetrics struct {
 	IDEReadyDurationTotal *prometheus.HistogramVec
+	IDEStartTotal         *prometheus.CounterVec
+	IDEStopTotal          *prometheus.CounterVec
 	InitializerHistogram  *prometheus.HistogramVec
 	SSHTunnelOpenedTotal  *prometheus.CounterVec
 	SSHTunnelClosedTotal  *prometheus.CounterVec
@@ -24,6 +26,14 @@ func NewMetrics() *SupervisorMetrics {
 			Help:    "the IDE startup time",
 			Buckets: []float64{0.1, 0.5, 1, 1.5, 2, 2.5, 5, 10},
 		}, []string{"kind"}),
+		IDEStartTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "supervisor_ide_start_total",
+			Help: "Total number of IDE start count",
+		}, []string{"kind"}),
+		IDEStopTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "supervisor_ide_stop_total",
+			Help: "Total number of IDE stop count",
+		}, []string{"kind", "reason"}),
 		InitializerHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "supervisor_initializer_bytes_second",
 			Help:    "initializer speed in bytes per second",
@@ -43,6 +53,8 @@ func NewMetrics() *SupervisorMetrics {
 func (m *SupervisorMetrics) Register(registry *prometheus.Registry) error {
 	metrics := []prometheus.Collector{
 		m.IDEReadyDurationTotal,
+		m.IDEStartTotal,
+		m.IDEFailedTotal,
 		m.InitializerHistogram,
 		m.SSHTunnelOpenedTotal,
 		m.SSHTunnelClosedTotal,

@@ -787,6 +787,13 @@ var (
 	errSignalTerminated = errors.New("signal: terminated")
 )
 
+const (
+	IDEStopReasonCmdStartFailed = "CmdStartFailed"
+	IDEStopReasonCmdWaitErr     = "CmdWaitErr"
+	IDEStopReasonIDENotReady    = "IDENotReady"
+	IDEStopReasonShutdown       = "Shutdown"
+)
+
 func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind, metrics *metrics.SupervisorMetrics) {
 	defer wg.Done()
 	defer log.WithField("ide", ide.String()).Debug("startAndWatchIDE shutdown")
@@ -803,7 +810,7 @@ func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, wg
 
 	var (
 		cmd        *exec.Cmd
-		ideStopped chan struct{}
+		ideStopped chan string
 		firstStart bool = true
 	)
 supervisorLoop:
@@ -811,8 +818,15 @@ supervisorLoop:
 		if ideStatus == statusShouldShutdown {
 			break
 		}
-
-		ideStopped = make(chan struct{}, 1)
+		if ideStopped != nil {
+			close(ideStopped)
+		}
+		ideStopped = make(chan string, 1)
+		if c, err := metrics.IDEStartTotal.GetMetricWithLabelValues(ide.String()); err != nil {
+			log.WithField("kind", ide.String()).WithError(err).Error("cannot get metrics for IDEStartTotal")
+		} else {
+			c.Inc()
+		}
 		startTime := time.Now()
 		cmd = prepareIDELaunch(cfg, ideConfig)
 		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide)
@@ -835,7 +849,12 @@ supervisorLoop:
 		}
 
 		select {
-		case <-ideStopped:
+		case reason := <-ideStopped:
+			if c, err := metrics.IDEStopTotal.GetMetricWithLabelValues(ide.String(), reason); err != nil {
+				log.WithField("kind", ide.String()).WithField("reason", reason).WithError(err).Error("cannot get metrics for IDEStopTotal")
+			} else {
+				c.Inc()
+			}
 			// kill all processes in same pgid
 			_ = syscall.Kill(-1*cmd.Process.Pid, syscall.SIGKILL)
 			// IDE was stopped - let's just restart it after a small delay (in case the IDE doesn't start at all) in the next round
@@ -844,6 +863,11 @@ supervisorLoop:
 			}
 			time.Sleep(1 * time.Second)
 		case <-ctx.Done():
+			if c, err := metrics.IDEStopTotal.GetMetricWithLabelValues(ide.String(), IDEStopReasonShutdown); err != nil {
+				log.WithField("kind", ide.String()).WithField("reason", IDEStopReasonShutdown).WithError(err).Error("cannot get metrics for IDEStopTotal")
+			} else {
+				c.Inc()
+			}
 			// we've been asked to shut down
 			ideStatus = statusShouldShutdown
 			if cmd == nil || cmd.Process == nil {
@@ -870,7 +894,7 @@ supervisorLoop:
 	}
 }
 
-func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan struct{}, ideReady *ideReadyState, s *ideStatus, ide IDEKind) {
+func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan string, ideReady *ideReadyState, s *ideStatus, ide IDEKind) {
 	go func() {
 		// prepareIDELaunch sets Pdeathsig, which on on Linux, will kill the
 		// child process when the thread dies, not when the process dies.
@@ -887,7 +911,7 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 			if s == func() *ideStatus { i := statusNeverRan; return &i }() {
 				log.WithField("ide", ide.String()).WithError(err).Fatal("IDE failed to start")
 			}
-
+			ideStopped <- IDEStopReasonCmdStartFailed
 			return
 		}
 		s = func() *ideStatus { i := statusShouldRun; return &i }()
@@ -900,6 +924,7 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 		err = cmd.Wait()
 		if err != nil {
 			if errSignalTerminated.Error() != err.Error() {
+				ideStopped <- IDEStopReasonCmdWaitErr
 				log.WithField("ide", ide.String()).WithError(err).Warn("IDE was stopped")
 			}
 
@@ -910,8 +935,8 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 			}
 		}
 
+		ideStopped <- IDEStopReasonIDENotReady
 		ideReady.Set(false, nil)
-		close(ideStopped)
 	}()
 }
 

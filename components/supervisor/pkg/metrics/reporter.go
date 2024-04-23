@@ -40,6 +40,8 @@ func NewGrpcMetricsReporter(gitpodHost string) *GrpcMetricsReporter {
 			"grpc_server_started_total":           true,
 			"grpc_server_handling_seconds":        true,
 			"supervisor_ide_ready_duration_total": true,
+			"supervisor_ide_start_total":          true,
+			"supervisor_ide_stop_total":           true,
 			"supervisor_initializer_bytes_second": true,
 			"supervisor_client_handled_total":     true,
 			"supervisor_client_handling_seconds":  true,
