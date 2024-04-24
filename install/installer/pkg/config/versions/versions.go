@@ -40,6 +40,7 @@ type Components struct {
 		CodeImage             Versioned `json:"codeImage"`
 		CodeHelperImage       Versioned `json:"codeHelperImage"`
 		CodeWebExtensionImage Versioned `json:"codeWebExtensionImage"`
+		XtermWebImage         Versioned `json:"xtermWebImage"`
 		DockerUp              Versioned `json:"dockerUp"`
 		Supervisor            Versioned `json:"supervisor"`
 		Workspacekit          Versioned `json:"workspacekit"`
