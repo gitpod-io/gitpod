@@ -383,7 +383,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.temp
 # includeAnalytics
 #
 if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
-  GITPOD_ANALYTICS_SEGMENT_TOKEN="$(readWerftSecret "segment-staging-write-key" "token")"
+  GITPOD_ANALYTICS_SEGMENT_TOKEN="$(gcloud secrets versions access latest --secret="segment-staging-write-key" --project=${PREVIEW_GCP_PROJECT} "segment-staging-write-key")"
   if [[ -z "${GITPOD_ANALYTICS_SEGMENT_TOKEN}" ]]; then
     echo "GITPOD_ANALYTICS_SEGMENT_TOKEN is empty"
     exit 1
