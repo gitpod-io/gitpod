@@ -1,3 +1,7 @@
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
+
 import axios from "axios";
 import { $ } from "bun";
 import path from "path";
