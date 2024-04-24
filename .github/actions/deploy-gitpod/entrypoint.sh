@@ -19,7 +19,8 @@ chmod +x $HOME/bin/installer
 echo "Download versions.yaml"
 oci-tool fetch file -o /tmp/versions.yaml --platform=linux-amd64 "${IMAGE_REPO_BASE}/versions:${VERSION}" versions.yaml
 
-leeway run dev/preview/previewctl:download
+gcloud auth login --cred-file="$GOOGLE_APPLICATION_CREDENTIALS" --activate --quiet
+leeway run dev/preview/previewctl:install
 
 PREVIEW_NAME="$(previewctl get-name --branch "${INPUT_NAME}")"
 export PREVIEW_NAME

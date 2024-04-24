@@ -22,7 +22,7 @@ if [ ! -f "${PREVIEW_ENV_DEV_SA_KEY_PATH}" ]; then
   echo "${PREVIEW_ENV_DEV_CRED}" >"${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 fi
 
-gcloud auth login --cred-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+gcloud auth login --cred-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}" --activate --quiet
 
 if [[ -n "${INSTALL_CONTEXT:-}" ]]; then
   log_info "Starting watch-loop to configure access to your preview environment"

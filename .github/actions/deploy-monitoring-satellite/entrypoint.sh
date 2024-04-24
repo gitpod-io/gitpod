@@ -9,7 +9,8 @@ export PATH="$PATH:$HOME/bin"
 
 mkdir $HOME/bin
 
-leeway run dev/preview/previewctl:download
+gcloud auth login --cred-file="$GOOGLE_APPLICATION_CREDENTIALS" --activate --quiet
+leeway run dev/preview/previewctl:install
 
 echo "previewctl install-context"
 previewctl install-context --log-level debug --timeout 10m
