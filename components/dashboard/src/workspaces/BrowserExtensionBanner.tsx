@@ -17,6 +17,7 @@ import bitbucketButton from "../images/browser-extension/bitbucket.webp";
 import githubButton from "../images/browser-extension/github.webp";
 import gitlabButton from "../images/browser-extension/gitlab.webp";
 import { cn } from "@podkit/lib/cn";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 const browserExtensionImages = {
     Bitbucket: bitbucketButton,
@@ -63,13 +64,16 @@ const getDeduplicatedScmProviders = (user: User, descriptions: AuthProviderDescr
         .filter(isIdentity)
         .map((provider) => provider.type);
 
-    return userProviders.map((type) => unifyProviderType(type)).filter(isAuthProviderType);
+    return userProviders
+        .map((type) => unifyProviderType(type))
+        .filter(isAuthProviderType)
+        .sort();
 };
 
 const displayScmProviders = (providers: UnifiedAuthProvider[]): string => {
     const formatter = new Intl.ListFormat("en", { style: "long", type: "disjunction" });
 
-    return formatter.format(providers);
+    return formatter.format(providers.sort());
 };
 
 export function BrowserExtensionBanner() {
@@ -88,6 +92,7 @@ export function BrowserExtensionBanner() {
     const browserName = useMemo(() => parser.getBrowser().name?.toLowerCase(), [parser]);
 
     const [isVisible, setIsVisible] = useState(false);
+    const isFeatureFlagEnabled = useFeatureFlag("showBrowserExtensionPromotion");
 
     useEffect(() => {
         const installedOrDismissed =
@@ -103,11 +108,7 @@ export function BrowserExtensionBanner() {
         setIsVisible(false);
     };
 
-    if (!isVisible) {
-        return null;
-    }
-
-    if (!browserName) {
+    if (!isVisible || !browserName || !isFeatureFlagEnabled) {
         return null;
     }
 
