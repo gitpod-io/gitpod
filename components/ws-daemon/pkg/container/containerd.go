@@ -504,7 +504,7 @@ func (s *Containerd) IsContainerdReady(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	return false, nil
+	return true, nil
 }
 
 var kubepodsQoSRegexp = regexp.MustCompile(`([^/]+)-([^/]+)-pod`)
