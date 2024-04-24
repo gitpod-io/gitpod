@@ -30,19 +30,25 @@ const workspaceYaml = z.object({
     }),
 });
 
-const jbReleaseResponse = z.array(z.object({
-    name: z.string(),
-    link: z.string(),
-    releases: z.array(z.object({
-        majorVersion: z.string(),
-        build: z.string(),
-        downloads: z.object({
-            linux: z.object({
-                link: z.string(),
-            }).optional(),
-        }),
-    })),
-}))
+const jbReleaseResponse = z.array(
+    z.object({
+        name: z.string(),
+        link: z.string(),
+        releases: z.array(
+            z.object({
+                majorVersion: z.string(),
+                build: z.string(),
+                downloads: z.object({
+                    linux: z
+                        .object({
+                            link: z.string(),
+                        })
+                        .optional(),
+                }),
+            }),
+        ),
+    }),
+);
 
 export const ides = [
     {
@@ -126,51 +132,69 @@ const getIDEVersion = function (ide: string) {
     return str.at(-1)!.replace(".tar.gz", "");
 };
 
-const updateLatestVersionsInWorkspaceaAndGradle = async () => {
-    const requests: Promise<any>[] = [];
-    for (const ide of ides) {
-        const params = new URLSearchParams({
-            code: ide.productCode,
-            "release.type": ide.productType,
-            fields: ["distributions", "link", "name", "releases"].join(","),
-            _: Date.now().toString(),
-        });
+// Skip update when build versions are not the same for all IDEs
+const skipOnDifferentBuildVersion = true;
 
-        const url = new URL(JB_PRODUCTS_DATA_URL);
-        url.search = params.toString();
-        requests.push(axios(url.toString()));
-    }
-
+const upgradeStableVersionsInWorkspaceaAndGradle = async () => {
     let buildVersion: semver.SemVer | undefined;
 
-    const responses = await Promise.all(requests);
     const uniqueMajorVersions = new Set();
+    const uniqueBuildVersions = new Set();
 
-    responses.forEach((resp, index) => {
-        const parsedResponse = jbReleaseResponse.parse(resp.data);
-        const lastRelease = parsedResponse[0].releases[0];
-        uniqueMajorVersions.add(lastRelease.majorVersion);
+    await Promise.all(
+        ides.map(async (ide) => {
+            const params = new URLSearchParams({
+                code: ide.productCode,
+                "release.type": ide.productType,
+                fields: ["distributions", "link", "name", "releases"].join(","),
+                _: Date.now().toString(),
+            });
 
-        const ideKey = `${ides[index].productId}DownloadUrl` as const
-        const oldDownloadUrl = workspace.defaultArgs[ideKey];
+            const url = new URL(JB_PRODUCTS_DATA_URL);
+            url.search = params.toString();
+            console.debug(`Fetching data for ${ide.productId.padStart(8, " ")}: ${url.toString()}`);
+            const resp = await axios(url.toString());
 
-        const downloadLink = lastRelease.downloads?.linux?.link;
-        if (!downloadLink) {
-            throw new Error("No download link found for the latest release");
-        }
-        rawWorkspace = rawWorkspace.replace(oldDownloadUrl, downloadLink);
+            const parsedResponse = jbReleaseResponse.parse(resp.data);
+            const lastRelease = parsedResponse[0].releases[0];
+            console.log(
+                `Latest ${ide.productId.padEnd(8, " ")} majorVersion: ${lastRelease.majorVersion}, buildVersion: ${
+                    lastRelease.build
+                }`,
+            );
 
-        const currentBuildVersion = semver.parse(lastRelease.build);
-        if (currentBuildVersion && (!buildVersion || semver.gt(currentBuildVersion, buildVersion))) {
-            buildVersion = currentBuildVersion;
-        }
-    });
+            uniqueMajorVersions.add(lastRelease.majorVersion);
+
+            const ideKey = `${ide.productId}DownloadUrl` as const;
+            const oldDownloadUrl = workspace.defaultArgs[ideKey];
+
+            const downloadLink = lastRelease.downloads?.linux?.link;
+            if (!downloadLink) {
+                throw new Error("No download link found for the latest release");
+            }
+            rawWorkspace = rawWorkspace.replace(oldDownloadUrl, downloadLink);
+
+            const currentBuildVersion = semver.parse(lastRelease.build);
+            if (!currentBuildVersion) {
+                throw new Error("Failed to parse the build version: " + lastRelease.build);
+            }
+            uniqueBuildVersions.add(`${currentBuildVersion.major}.${currentBuildVersion.minor}`);
+            if (!buildVersion || semver.gt(currentBuildVersion, buildVersion)) {
+                buildVersion = currentBuildVersion;
+            }
+        }),
+    );
 
     const majorVersions = [...uniqueMajorVersions];
-    console.log({ majorVersions, buildVersion });
+    const buildVersions = [...uniqueBuildVersions];
+    console.log({ majorVersions, buildVersions, buildVersion });
 
     if (!buildVersion) {
         throw new Error("build version is unresolved");
+    }
+    if (skipOnDifferentBuildVersion && buildVersions.length !== 1) {
+        console.log(`Multiple build versions found, skipping update: ${buildVersions.join(", ")}`);
+        return;
     }
 
     if (majorVersions.length !== 1) {
@@ -180,12 +204,15 @@ const updateLatestVersionsInWorkspaceaAndGradle = async () => {
 
     const majorVersion = majorVersions[0];
     console.log(`All IDEs are in the same major version: ${majorVersion}`);
+    if (skipOnDifferentBuildVersion) {
+        console.log(`All IDEs are in the same build version: ${buildVersion.major}.${buildVersion.minor}`);
+    }
 
     await Bun.write(pathToWorkspaceYaml, rawWorkspace);
 
     await Bun.write(
         pathTobackendPluginGradleStable,
-        `# this file is auto generated by components/ide/jetbrains/image/gha-update-image/index.js
+        `# this file is auto generated by components/ide/jetbrains/image/gha-update-image/index.ts
 # See https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html
 # for insight into build numbers and IntelliJ Platform versions.
 pluginSinceBuild=${buildVersion.major}.${buildVersion.minor}
@@ -202,7 +229,7 @@ platformVersion=${buildVersion.major}.${buildVersion.minor}-EAP-CANDIDATE-SNAPSH
     console.log(`File updated: ${pathTobackendPluginGradleStable}`);
 };
 
-const updateLatestVersionsInConfigmap = async () => {
+const appendPinVersionsIntoIDEConfigMap = async () => {
     const tagInfo =
         await $`git ls-remote --tags --sort=-v:refname https://github.com/gitpod-io/gitpod | grep 'main-gha.' | head -n1`
             .text()
@@ -279,5 +306,5 @@ const updateLatestVersionsInConfigmap = async () => {
     console.log(`File updated: ${pathToConfigmap}`);
 };
 
-await updateLatestVersionsInWorkspaceaAndGradle();
-await updateLatestVersionsInConfigmap();
+await upgradeStableVersionsInWorkspaceaAndGradle();
+await appendPinVersionsIntoIDEConfigMap();
