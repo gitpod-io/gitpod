@@ -144,7 +144,8 @@ func Start(cfg Config, version string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	startScheduler(ctx, cfg, redsyncPool, jobClientsConstructor)
+	exps := experiments.NewClient(experiments.WithPollInterval(1 * time.Minute))
+	startScheduler(ctx, exps, cfg, redsyncPool, jobClientsConstructor)
 
 	err = registerGRPCServices(srv, conn, stripeClient, pricer, cfg)
 	if err != nil {
@@ -166,11 +167,17 @@ func Start(cfg Config, version string) error {
 	return nil
 }
 
-func startScheduler(ctx context.Context, cfg Config, redsyncPool *redsync.Redsync, jobClientsConstructor scheduler.ClientsConstructor) {
-	exps := experiments.NewClient(experiments.WithPollInterval(1 * time.Minute))
-	ledgerSchedule := exps.GetStringValue(ctx, "usage_update_scheduler_duration", cfg.LedgerSchedule, experiments.Attributes{
-		GitpodHost: cfg.GitpodHost,
-	})
+func startScheduler(ctx context.Context, exps experiments.Client, cfg Config, redsyncPool *redsync.Redsync, jobClientsConstructor scheduler.ClientsConstructor) {
+	getLedgerSchedule := func() string {
+		schedule := exps.GetStringValue(ctx, "usage_update_scheduler_duration", cfg.LedgerSchedule, experiments.Attributes{
+			GitpodHost: cfg.GitpodHost,
+		})
+		if schedule == "undefined" {
+			schedule = cfg.LedgerSchedule
+		}
+		return schedule
+	}
+	ledgerSchedule := getLedgerSchedule()
 
 	var (
 		sch  *scheduler.Scheduler
@@ -199,7 +206,7 @@ func startScheduler(ctx context.Context, cfg Config, redsyncPool *redsync.Redsyn
 
 	// periodically check if the schedule FF has changed
 	go func() {
-		ticker := time.NewTicker(3 * time.Minute)
+		ticker := time.NewTicker(3 * time.Second)
 		defer ticker.Stop()
 
 		for {
@@ -212,12 +219,7 @@ func startScheduler(ctx context.Context, cfg Config, redsyncPool *redsync.Redsyn
 				lock.Unlock()
 				return
 			case <-ticker.C:
-				newLedgerSchedule := exps.GetStringValue(ctx, "usage_update_scheduler_duration", cfg.LedgerSchedule, experiments.Attributes{
-					GitpodHost: cfg.GitpodHost,
-				})
-				if newLedgerSchedule == "undefined" {
-					newLedgerSchedule = cfg.LedgerSchedule
-				}
+				newLedgerSchedule := getLedgerSchedule()
 				if ledgerSchedule == newLedgerSchedule {
 					continue
 				}
