@@ -37,12 +37,13 @@ type Components struct {
 	ServiceWaiter     Versioned `json:"serviceWaiter"`
 	Usage             Versioned `json:"usage"`
 	Workspace         struct {
-		CodeImage        Versioned `json:"codeImage"`
-		CodeHelperImage  Versioned `json:"codeHelperImage"`
-		DockerUp         Versioned `json:"dockerUp"`
-		Supervisor       Versioned `json:"supervisor"`
-		Workspacekit     Versioned `json:"workspacekit"`
-		DesktopIdeImages struct {
+		CodeImage             Versioned `json:"codeImage"`
+		CodeHelperImage       Versioned `json:"codeHelperImage"`
+		CodeWebExtensionImage Versioned `json:"codeWebExtensionImage"`
+		DockerUp              Versioned `json:"dockerUp"`
+		Supervisor            Versioned `json:"supervisor"`
+		Workspacekit          Versioned `json:"workspacekit"`
+		DesktopIdeImages      struct {
 			CodeDesktopImage                  Versioned `json:"codeDesktop"`
 			CodeDesktopImageInsiders          Versioned `json:"codeDesktopInsiders"`
 			IntelliJImage                     Versioned `json:"intellij"`

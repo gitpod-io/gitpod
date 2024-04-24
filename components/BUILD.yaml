@@ -38,6 +38,7 @@ packages:
       - components/ide/code-desktop:docker-insiders
       - components/ide/code:docker
       - components/ide/code/codehelper:docker
+      - components/ide/code/code-extension:docker
       - components/ide/jetbrains/launcher:docker
       - components/ide/jetbrains/backend-plugin:stable
       - components/ide/jetbrains/backend-plugin:latest
