@@ -129,8 +129,8 @@ export function BrowserExtensionBanner() {
 
             event.preventDefault();
 
-            trackEvent("browser_extension_promotion_dismissed", {
-                cause: browserOption.type === "chromium" ? "chrome_navigation" : "firefox_navigation",
+            trackEvent("browser_extension_promotion_interaction", {
+                action: browserOption.type === "chromium" ? "chrome_navigation" : "firefox_navigation",
             });
 
             window.open(browserOption.url, "_blank");

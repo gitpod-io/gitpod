@@ -17,7 +17,7 @@ export type Event =
     | "feedback_submitted"
     | "workspace_class_changed"
     | "privacy_policy_update_accepted"
-    | "browser_extension_promotion_dismissed"
+    | "browser_extension_promotion_interaction"
     | "coachmark_dismissed"
     | "modal_dismiss"
     | "ide_configuration_changed"
@@ -31,7 +31,7 @@ export type EventProperties =
     | TrackDotfileRepo
     | TrackFeedback
     | TrackPolicyUpdateClick
-    | TrackBrowserExtensionPromotionDismissed
+    | TrackBrowserExtensionPromotionInteraction
     | TrackModalDismiss
     | TrackIDEConfigurationChanged
     | TrackWorkspaceClassChanged
@@ -101,8 +101,8 @@ export interface TrackCoachmarkDismissed {
     success: boolean;
 }
 
-export interface TrackBrowserExtensionPromotionDismissed {
-    cause: "chrome_navigation" | "firefox_navigation" | "manually_dismissed";
+export interface TrackBrowserExtensionPromotionInteraction {
+    action: "chrome_navigation" | "firefox_navigation" | "manually_dismissed";
 }
 
 interface TrackDashboardClick {
@@ -133,8 +133,8 @@ export function trackEvent(event: "workspace_class_changed", properties: TrackWo
 export function trackEvent(event: "privacy_policy_update_accepted", properties: TrackPolicyUpdateClick): void;
 export function trackEvent(event: "coachmark_dismissed", properties: TrackCoachmarkDismissed): void;
 export function trackEvent(
-    event: "browser_extension_promotion_dismissed",
-    properties: TrackBrowserExtensionPromotionDismissed,
+    event: "browser_extension_promotion_interaction",
+    properties: TrackBrowserExtensionPromotionInteraction,
 ): void;
 export function trackEvent(event: "modal_dismiss", properties: TrackModalDismiss): void;
 export function trackEvent(event: "ide_configuration_changed", properties: TrackIDEConfigurationChanged): void;
