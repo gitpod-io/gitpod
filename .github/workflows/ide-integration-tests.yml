@@ -50,8 +50,10 @@ jobs:
               } >> $GITHUB_OUTPUT
           else
               # others
-              RUNID=$(gh run list -R gitpod-io/gitpod -b main -w Build --limit 1 --json databaseId --jq .[0].databaseId)
-              if ! gh run watch "$RUNID" --exit-status -R gitpod-io/gitpod >/dev/null 2>&1; then
+              RUNID=$(gh run list -R gitpod-io/gitpod -b main -w build.yml --limit 1 --json databaseId --jq .[0].databaseId)
+              gh run watch "$RUNID" -R gitpod-io/gitpod
+              CONCLUSION=$(gh run view "$RUNID" -R gitpod-io/gitpod --json jobs --jq '.jobs[] | select(.name == "Build Gitpod") | {name, status, conclusion} | .conclusion')
+              if [ "$CONCLUSION" != "success" ]; then
                 echo main branch build is failed, see https://github.com/gitpod-io/gitpod/actions/runs/"$RUNID" for detail | tee -a $GITHUB_STEP_SUMMARY
                 exit 1
               fi

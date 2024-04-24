@@ -49,6 +49,7 @@ func TestRedisCachePublicKeys(t *testing.T) {
 			Key:       &key.PublicKey,
 			Algorithm: string(jose.RS256),
 			KeyID:     testKeyID(key),
+			Use:       "sig",
 		})
 	}
 	sortKeys(&jwks)
@@ -93,10 +94,10 @@ func TestRedisCachePublicKeys(t *testing.T) {
 		{
 			Name: "no key in memory",
 			StateMod: func(c *redis.Client) error {
-				return c.Set(context.Background(), redisIDPKeyPrefix+"foo", `{"kty":"RSA","kid":"fpp","alg":"RS256","n":"VGVsbCBDaHJpcyB5b3UgZm91bmQgdGhpcyAtIGRyaW5rJ3Mgb24gbWU","e":"AQAB"}`, 0).Err()
+				return c.Set(context.Background(), redisIDPKeyPrefix+"foo", `{"use":"sig","kty":"RSA","kid":"fpp","alg":"RS256","n":"VGVsbCBDaHJpcyB5b3UgZm91bmQgdGhpcyAtIGRyaW5rJ3Mgb24gbWU","e":"AQAB"}`, 0).Err()
 			},
 			Expectation: Expectation{
-				Response: []byte(`{"keys":[{"kty":"RSA","kid":"fpp","alg":"RS256","n":"VGVsbCBDaHJpcyB5b3UgZm91bmQgdGhpcyAtIGRyaW5rJ3Mgb24gbWU","e":"AQAB"}]}`),
+				Response: []byte(`{"keys":[{"use":"sig","kty":"RSA","kid":"fpp","alg":"RS256","n":"VGVsbCBDaHJpcyB5b3UgZm91bmQgdGhpcyAtIGRyaW5rJ3Mgb24gbWU","e":"AQAB"}]}`),
 			},
 		},
 		{

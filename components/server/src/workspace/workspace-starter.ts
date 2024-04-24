@@ -1728,7 +1728,7 @@ export class WorkspaceStarter {
                 result.setGit(initializer);
             }
         } else {
-            throw new Error("cannot create initializer for unkown context type");
+            throw new Error("cannot create initializer for unknown context type");
         }
         if (AdditionalContentContext.is(context)) {
             const additionalInit = new FileDownloadInitializer();
@@ -1839,7 +1839,8 @@ export class WorkspaceStarter {
             targetMode = CloneTargetMode.REMOTE_HEAD;
         }
 
-        const gitToken = await this.tokenProvider.getTokenForHost(user, host, 30);
+        const tokenValidityThreshold = (await isLongAccessTokenValidityThresholdEnabled(user)) ? 50 : 30;
+        const gitToken = await this.tokenProvider.getTokenForHost(user, host, tokenValidityThreshold);
         if (!gitToken) {
             throw new Error(`No token for host: ${host}`);
         }
@@ -1955,6 +1956,12 @@ function resolveGitpodTasks(ws: Workspace, instance: WorkspaceInstance): TaskCon
 
 export async function isWorkspaceClassDiscoveryEnabled(user: { id: string }): Promise<boolean> {
     return getExperimentsClientForBackend().getValueAsync("workspace_class_discovery_enabled", false, {
+        user: user,
+    });
+}
+
+export async function isLongAccessTokenValidityThresholdEnabled(user: { id: string }): Promise<boolean> {
+    return getExperimentsClientForBackend().getValueAsync("workspace_start_extended_token_validity_threshold", false, {
         user: user,
     });
 }
