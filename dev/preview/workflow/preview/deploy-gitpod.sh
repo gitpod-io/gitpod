@@ -11,9 +11,6 @@ source "$(realpath "${SCRIPT_PATH}/../lib/common.sh")"
 # shellcheck source=../lib/k8s-util.sh
 source "$(realpath "${SCRIPT_PATH}/../lib/k8s-util.sh")"
 
-DEV_KUBE_PATH="${DEV_KUBE_PATH:-/home/gitpod/.kube/config}"
-DEV_KUBE_CONTEXT="${DEV_KUBE_CONTEXT:-dev}"
-
 PREVIEW_NAME="${PREVIEW_NAME:-$(previewctl get name)}"
 PREVIEW_K3S_KUBE_PATH="${PREVIEW_K3S_KUBECONFIG_PATH:-/home/gitpod/.kube/config}"
 PREVIEW_K3S_KUBE_CONTEXT="${PREVIEW_K3S_KUBE_CONTEXT:-$PREVIEW_NAME}"
@@ -31,15 +28,15 @@ GITPOD_WITH_DEDICATED_EMU="${GITPOD_WITH_DEDICATED_EMU:-false}"
 PREVIEW_GCP_PROJECT="gitpod-dev-preview"
 
 
-# if [[ "${VERSION:-}" == "" ]]; then
-#   if [[ ! -f  /tmp/local-dev-version ]]; then
-#     log_error "VERSION is not set and no fallback version exists in /tmp/local-dev-version."
-#     log_info "Please run leeway run dev/preview:build or set VERSION"
-#     exit 1
-#   fi
-#   VERSION="$(cat /tmp/local-dev-version)"
-#   log_info "VERSION is not set - using value from /tmp/local-dev-version which is $VERSION"
-# fi
+if [[ "${VERSION:-}" == "" ]]; then
+  if [[ ! -f  /tmp/local-dev-version ]]; then
+    log_error "VERSION is not set and no fallback version exists in /tmp/local-dev-version."
+    log_info "Please run leeway run dev/preview:build or set VERSION"
+    exit 1
+  fi
+  VERSION="$(cat /tmp/local-dev-version)"
+  log_info "VERSION is not set - using value from /tmp/local-dev-version which is $VERSION"
+fi
 
 INSTALLER_CONFIG_PATH="${INSTALLER_CONFIG_PATH:-$(mktemp "/tmp/XXXXXX.gitpod.config.yaml")}"
 INSTALLER_RENDER_PATH="k8s.yaml" # k8s.yaml is hardcoded in post-prcess.sh - we can fix that later.
