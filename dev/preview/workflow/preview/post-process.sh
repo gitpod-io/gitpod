@@ -158,6 +158,21 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-overrides.yaml
    fi
 
+   # overrides for blobserve configmap
+   if [[ "blobserve" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+      touch /tmp/"$NAME"-overrides.yaml
+
+      yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"-overrides.yaml
+      yq r /tmp/"$NAME"-overrides.yaml 'data.[config.json]' > /tmp/"$NAME"-overrides.json
+
+      jq '.blobserve.repos["eu.gcr.io/gitpod-core-dev/build/ide/code"] = .blobserve.repos["eu.gcr.io/gitpod-dev-artifact/build/ide/code"]' /tmp/"$NAME"-overrides.json > /tmp/"$NAME"-updated-overrides.json
+
+      yq w -i /tmp/"$NAME"-overrides.yaml  "data.[config.json]" -- "$(< /tmp/"$NAME"-updated-overrides.json)"
+      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-overrides.yaml
+   fi
+
    # override details for Minio
    if [[ "minio" == "$NAME" ]] && [[ "$KIND" == "Deployment" ]]; then
       WORK="overrides for $NAME $KIND"
