@@ -10,12 +10,12 @@ import { useUserLoader } from "../hooks/use-user-loader";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { AuthProviderDescription, AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
+import { useFeatureFlag } from "../data/featureflag-query";
+import { trackEvent } from "../Analytics";
 
 import bitbucketButton from "../images/browser-extension/bitbucket.webp";
 import githubButton from "../images/browser-extension/github.webp";
 import gitlabButton from "../images/browser-extension/gitlab.webp";
-import { useFeatureFlag } from "../data/featureflag-query";
-import { trackEvent } from "../Analytics";
 
 const browserExtensionImages = {
     Bitbucket: bitbucketButton,
