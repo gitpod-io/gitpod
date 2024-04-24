@@ -50,7 +50,7 @@
 - **Browser**: 
     - Using Gitpod dashboard [gitpod.io/new](https://gitpod.io/new).
     - Add `gitpod.io/# `as a prefix to any of your GitHub/ GitLab/ BitBucket repository, like [this](https://gitpod.io/#https://github.com/gitpod-io/template-typescript-react)
-- **CLI**: If you love the CLI, you can also [install Gitpod CLI](https://www.gitpod.io/docs/references/gitpod-cli#installation) and create your first workspace directly from your terminal :)
+- **CLI**: You can also [install Gitpod CLI](https://www.gitpod.io/docs/references/gitpod-cli#installation) and create your first workspace directly from your terminal :)
 
 
 ## Documentation
@@ -90,5 +90,5 @@ During the development of Gitpod, we also developed some of our infrastructure t
 
 ## Code of Conduct
 
-We want to create a welcoming environment for everyone who is interested in contributing to Gitpod or participating in discussions with the Gitpod community.
+We want to create a welcoming environment for everyone interested in contributing to Gitpod or participating in discussions with the Gitpod community.
 This project has adopted the [Contributor Covenant Code of Conduct](https://github.com/gitpod-io/.github/blob/main/CODE_OF_CONDUCT.md), [version 2.0](https://www.contributor-covenant.org/version/2/0/code_of_conduct/).
