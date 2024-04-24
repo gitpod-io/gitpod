@@ -38,7 +38,7 @@ const (
 )
 
 // NewContainerd creates a new containerd adapter
-func NewContainerd(cfg *ContainerdConfig, pathMapping PathMapping) (*Containerd, error) {
+func NewContainerd(cfg *ContainerdConfig, pathMapping PathMapping, registryFacadeHost string) (*Containerd, error) {
 	cc, err := containerd.New(cfg.SocketPath, containerd.WithDefaultNamespace(kubernetesNamespace))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot connect to containerd at %s: %w", cfg.SocketPath, err)
@@ -58,6 +58,8 @@ func NewContainerd(cfg *ContainerdConfig, pathMapping PathMapping) (*Containerd,
 		cntIdx: make(map[string]*containerInfo),
 		podIdx: make(map[string]*containerInfo),
 		wsiIdx: make(map[string]*containerInfo),
+
+		registryFacadeHost: registryFacadeHost,
 	}
 	go res.start()
 
@@ -73,6 +75,8 @@ type Containerd struct {
 	podIdx map[string]*containerInfo
 	wsiIdx map[string]*containerInfo
 	cntIdx map[string]*containerInfo
+
+	registryFacadeHost string
 }
 
 type containerInfo struct {
@@ -476,9 +480,31 @@ func (s *Containerd) ContainerPID(ctx context.Context, id ID) (pid uint64, err e
 	return uint64(info.PID), nil
 }
 
-// ContainerPID returns the PID of the container's namespace root process, e.g. the container shim.
 func (s *Containerd) IsContainerdReady(ctx context.Context) (bool, error) {
-	return s.Client.IsServing(ctx)
+	if len(s.registryFacadeHost) == 0 {
+		return s.Client.IsServing(ctx)
+	}
+
+	// check registry facade can reach containerd and returns image not found.
+	isServing, err := s.Client.IsServing(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	if !isServing {
+		return false, nil
+	}
+
+	_, err = s.Client.GetImage(ctx, fmt.Sprintf("%v/not-a-valid-image:latest", s.registryFacadeHost))
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			return true, nil
+		}
+
+		return false, nil
+	}
+
+	return false, nil
 }
 
 var kubepodsQoSRegexp = regexp.MustCompile(`([^/]+)-([^/]+)-pod`)
