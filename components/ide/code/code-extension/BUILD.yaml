@@ -1,0 +1,15 @@
+packages:
+  - name: docker
+    type: docker
+    argdeps:
+      - imageRepoBase
+      - codeWebExtensionCommit
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.codeWebExtensionImage
+      buildArgs:
+        CODE_EXTENSION_COMMIT: ${codeWebExtensionCommit}
+      image:
+        - ${imageRepoBase}/ide/gitpod-code-web:${version}
+        - ${imageRepoBase}/ide/gitpod-code-web:commit-${__git_commit}
