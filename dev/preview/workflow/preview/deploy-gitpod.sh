@@ -99,15 +99,6 @@ function refreshImagePullSecret {
 
 # Install Fluent-Bit sending logs to GCP
 function installFluentBit {
-    secret=$(gcloud secrets versions access latest --secret="fluent-bit-external" --project=${PREVIEW_GCP_PROJECT})
-    kubectl \
-      create secret generic "fluent-bit-external" --namespace="${PREVIEW_NAMESPACE}" --dry-run=client -oyaml \
-      | yq4 eval-all ".data = $secret" \
-      | kubectl \
-        --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-        --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-        apply -n ${PREVIEW_NAMESPACE} -f -
-
     helm3 \
       --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
       --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
