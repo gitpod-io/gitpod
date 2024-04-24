@@ -167,7 +167,7 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"-overrides.yaml
       yq r /tmp/"$NAME"-overrides.yaml 'data.[config.json]' > /tmp/"$NAME"-overrides.json
 
-      jq '.blobserve.repos["eu.gcr.io/gitpod-core-dev/build/ide/code"] = .blobserve.repos["eu.gcr.io/gitpod-dev-artifact/build/ide/code"]' /tmp/"$NAME"-overrides.json > /tmp/"$NAME"-updated-overrides.json
+      jq 'if .blobserve.repos["eu.gcr.io/gitpod-core-dev/build/ide/code"] == null then .blobserve.repos["eu.gcr.io/gitpod-core-dev/build/ide/code"] = .blobserve.repos["eu.gcr.io/gitpod-dev-artifact/build/ide/code"] else . end' /tmp/"$NAME"-overrides.json > /tmp/"$NAME"-updated-overrides.json
 
       yq w -i /tmp/"$NAME"-overrides.yaml  "data.[config.json]" -- "$(< /tmp/"$NAME"-updated-overrides.json)"
       yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-overrides.yaml

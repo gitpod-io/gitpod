@@ -441,12 +441,6 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-environment
-        with:
-          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
-          service_account: ${{ secrets.DEV_PREVIEW_SA }}
-          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-
       - name: Run integration test
         id: integration-test
         uses: ./.github/actions/integration-tests
@@ -459,6 +453,11 @@ jobs:
           test_build_id: ${{ github.run_id }}
           test_build_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           test_build_ref: ${{ github.head_ref || github.ref }}
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+          integration_test_username: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USERNAME }}
+          integration_test_usertoken: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
 
   workspace-integration-tests-main:
     name: "Run workspace integration tests on main branch"

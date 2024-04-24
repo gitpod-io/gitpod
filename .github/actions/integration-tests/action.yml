@@ -33,19 +33,49 @@ inputs:
   integration_test_usertoken:
     description: "The username for integration test"
     required: true
-
+  identity_provider:
+    description: "GCP workload identity provider"
+    required: true
+  service_account:
+    description: "GCP service account"
+    required: true
+  leeway_segment_key:
+    description: "leeway analytics key"
+    required: true
 runs:
   using: "composite"
   steps:
+    - uses: actions/checkout@v4
+    - id: env-vars
+      name: configure env variables
+      shell: bash
+      run: |
+        {
+            echo "LEEWAY_SEGMENT_KEY=${{ inputs.leeway_segment_key }}"
+            echo "LEEWAY_WORKSPACE_ROOT=$GITHUB_WORKSPACE"
+            echo "HOME=/home/gitpod"
+        }  >> "$GITHUB_ENV"
+    - id: auth
+      name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: "${{ inputs.identity_provider }}"
+        service_account: "${{ inputs.service_account }}"
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v2'
+      with:
+        skip_install: true
+    - id: docker
+      name: configure docker
+      shell: bash
+      run: |
+        gcloud auth configure-docker eu.gcr.io --quiet
     - name: Setup
       shell: bash
       env:
         PREVIEW_NAME: ${{ inputs.preview_name }}
       run: |
-        export LEEWAY_WORKSPACE_ROOT="$(pwd)"
-
         leeway run dev/preview/previewctl:install
-
         previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 10m
 
     - name: Integration Test
