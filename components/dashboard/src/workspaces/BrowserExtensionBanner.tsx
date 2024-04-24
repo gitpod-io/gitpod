@@ -171,7 +171,7 @@ export function BrowserExtensionBanner() {
                 <img
                     alt="A button that says Gitpod"
                     src={browserExtensionImages[usedProviders.at(0)!]}
-                    className="w-32 h-fit self-end mb-2"
+                    className="w-32 h-fit self-end mb-2 mr-4"
                 />
                 {/* <Button variant={"ghost"} onClick={handleClose} className="ml-3 self-start hover:bg-transparent">
                     <span className="sr-only">Close</span>
