@@ -7,9 +7,6 @@ inputs:
     version:
         description: "The version of Gitpod to install"
         required: true
-    previewctl_hash:
-        description: "The Leeway hash of the dev/preview/previewctl:docker package to be used when downloading previewclt"
-        required: false
     with_dedicated_emu:
         description: "Dedicated Config"
         required: false

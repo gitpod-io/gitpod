@@ -104,8 +104,6 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
-    outputs:
-      previewctl_hash: ${{ steps.build.outputs.previewctl_hash }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Environment
@@ -120,11 +118,7 @@ jobs:
         env:
           LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
         run: |
-          version="${{needs.configuration.outputs.version}}"
-          imageRepoBase="${{needs.configuration.outputs.image_repo_base}}/build"
-          leeway build dev/preview/previewctl:docker -Dversion=$version -DimageRepoBase=$imageRepoBase
-          echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -Dversion=$version -DimageRepoBase=$imageRepoBase -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
-
+          leeway build dev/preview/previewctl:cli --cache remote
   infrastructure:
     needs: [ configuration, build-previewctl, create-runner ]
     if: |

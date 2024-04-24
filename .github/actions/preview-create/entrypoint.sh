@@ -9,7 +9,8 @@ export PATH="$PATH:$HOME/bin"
 
 mkdir $HOME/bin
 
-leeway run dev/preview/previewctl:download
+gcloud auth login --cred-file="$GOOGLE_APPLICATION_CREDENTIALS" --activate --quiet
+leeway run dev/preview/previewctl:install
 
 TF_VAR_preview_name="$(previewctl get-name --branch "${INPUT_NAME}")"
 export TF_VAR_preview_name
