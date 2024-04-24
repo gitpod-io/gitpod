@@ -75,7 +75,7 @@ const getDeduplicatedScmProviders = (user: User, descriptions: AuthProviderDescr
 const displayScmProviders = (providers: UnifiedAuthProvider[]): string => {
     const formatter = new Intl.ListFormat("en", { style: "long", type: "disjunction" });
 
-    return formatter.format(providers.sort());
+    return formatter.format(providers);
 };
 
 export function BrowserExtensionBanner() {
