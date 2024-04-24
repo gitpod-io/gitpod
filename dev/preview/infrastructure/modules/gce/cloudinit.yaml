@@ -2,21 +2,7 @@
 users:
 - name: ubuntu
   sudo: "ALL=(ALL) NOPASSWD: ALL"
-  ssh_authorized_keys:
-    - ${ssh_authorized_keys}
 chpasswd:
   list: |
     ubuntu:ubuntu
   expire: False
-write_files:
-  - path: /usr/local/bin/bootstrap.sh
-    permissions: '0744'
-    owner: root
-    content: |
-      #!/bin/bash
-
-      set -eo pipefail
-
-      sudo systemctl restart containerd.service &
-runcmd:
- - bash /usr/local/bin/bootstrap.sh

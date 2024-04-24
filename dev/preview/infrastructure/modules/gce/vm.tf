@@ -47,7 +47,6 @@ resource "google_compute_instance" "default" {
   }
 
   metadata = {
-    ssh-keys           = "ubuntu:${var.ssh_key}"
     serial-port-enable = true
     user-data          = local.cloudinit_user_data
   }
@@ -75,11 +74,6 @@ resource "google_compute_address" "static-preview-ip" {
   name     = var.preview_name
 }
 
-# data "google_secret_manager_secret_version" "dockerhub-pull-account" {
-#   provider = google
-#   secret   = "dockerhub-pull-account"
-# }
-
 locals {
   vm_name = "preview-${var.preview_name}"
   bootstrap_script = templatefile("${path.module}/../../scripts/bootstrap-k3s.sh", {
@@ -94,10 +88,7 @@ locals {
   EOT
 
   cloudinit_user_data = templatefile("${path.module}/cloudinit.yaml", {
-    # dockerhub_user      = base64decode(jsondecode(data.google_secret_manager_secret_version.dockerhub-pull-account.secret_data).username)
-    # dockerhub_passwd    = base64decode(jsondecode(data.google_secret_manager_secret_version.dockerhub-pull-account.secret_data).password)
-    vm_name             = local.vm_name
-    ssh_authorized_keys = var.ssh_key
+    vm_name = local.vm_name
   })
 
   machine_type = var.with_large_vm ? "n2d-standard-32" : var.vm_type
