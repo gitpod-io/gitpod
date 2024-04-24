@@ -22,8 +22,8 @@ PREVIEW_SORUCE_CERT_NAME="certificate-${PREVIEW_NAME}"
 
 GITPOD_AGENT_SMITH_TOKEN="$(openssl rand -hex 30)"
 GITPOD_AGENT_SMITH_TOKEN_HASH="$(echo -n "$GITPOD_AGENT_SMITH_TOKEN" | sha256sum - | tr -d '  -')"
-# GITPOD_CONTAINER_REGISTRY_URL="eu.gcr.io/gitpod-dev-artifact/build/";
-GITPOD_IMAGE_PULL_SECRET_NAME="gcp-sa-registry-auth";
+GITPOD_CONTAINER_REGISTRY_URL="eu.gcr.io/gitpod-dev-artifact/image-build/";
+GITPOD_IMAGE_PULL_SECRET_NAME="image-pull-secret";
 GITPOD_PROXY_SECRET_NAME="proxy-config-certificates";
 GITPOD_ANALYTICS="${GITPOD_ANALYTICS:-}"
 GITPOD_WORKSPACE_FEATURE_FLAGS="${GITPOD_WORKSPACE_FEATURE_FLAGS:-}"
@@ -82,47 +82,19 @@ function copyCachedCertificate {
       apply -f -
 }
 
-# Used by blobserve
-function copyImagePullSecret {
-  local exists
-
-  # hasPullSecret
-  exists="$(
-    kubectl \
-      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-      --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      get secret ${GITPOD_IMAGE_PULL_SECRET_NAME} \
-        --namespace "${PREVIEW_NAMESPACE}" \
-        --ignore-not-found
-  )"
-
-  if [[ -n "${exists}" ]]; then
-    return
-  fi
-
-  imagePullAuth=$(
-    printf "%s" "_json_key:$(gcloud secrets versions access latest --secret="${GITPOD_IMAGE_PULL_SECRET_NAME}" --project=${PREVIEW_GCP_PROJECT} \
-    | yq r - ['.dockerconfigjson'] \
-    | base64 -d)" | base64 -w 0
-  )
-
-  cat <<EOF > "${GITPOD_IMAGE_PULL_SECRET_NAME}"
-  {
-    "auths": {
-      "eu.gcr.io": { "auth": "${imagePullAuth}" },
-      "europe-docker.pkg.dev": { "auth": "${imagePullAuth}" }
-    }
-  }
-EOF
-
+function refreshImagePullSecret {
   kubectl \
     --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
     --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    create secret docker-registry ${GITPOD_IMAGE_PULL_SECRET_NAME} \
-      --namespace ${PREVIEW_NAMESPACE} \
-      --from-file=.dockerconfigjson=./${GITPOD_IMAGE_PULL_SECRET_NAME}
-
-  rm -f ${GITPOD_IMAGE_PULL_SECRET_NAME}
+    apply -f "$SCRIPT_PATH/../vm/template/gcr-pull-secret-job.yaml"
+  kubectl \
+    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+    delete job refresh-job --ignore-not-found
+  kubectl \
+    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+    create job refresh-job --from=cronjob/gcr-refresh-token
 }
 
 # Install Fluent-Bit sending logs to GCP
@@ -171,7 +143,7 @@ while ! copyCachedCertificate; do
   tries=$((tries + 1))
 done
 
-# copyImagePullSecret
+refreshImagePullSecret
 installFluentBit
 
 # ========
@@ -210,11 +182,11 @@ rm shortname.yaml
 # configureContainerRegistry
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" certificate.name "${GITPOD_PROXY_SECRET_NAME}"
-yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.inCluster "true"
+yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.inCluster "false"
 
-# yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.external.url "${GITPOD_CONTAINER_REGISTRY_URL}"
-# yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.external.certificate.kind secret
-# yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.external.certificate.name "${GITPOD_IMAGE_PULL_SECRET_NAME}"
+yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.external.url "${GITPOD_CONTAINER_REGISTRY_URL}"
+yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.external.certificate.kind secret
+yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.external.certificate.name "${GITPOD_IMAGE_PULL_SECRET_NAME}"
 
 #
 # configureDomain
