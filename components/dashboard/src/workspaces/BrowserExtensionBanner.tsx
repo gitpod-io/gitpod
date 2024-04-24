@@ -133,7 +133,7 @@ export function BrowserExtensionBanner() {
                 cause: browserOption.type === "chromium" ? "chrome_navigation" : "firefox_navigation",
             });
 
-            window.location.href = browserOption.url;
+            window.open(browserOption.url, "_blank");
         },
         [browserOption],
     );
@@ -156,7 +156,13 @@ export function BrowserExtensionBanner() {
                 <div className="flex flex-col gap-1 py-5 pl-6 pr-4 justify-center">
                     <span className="text-lg font-semibold">Open from {scmProviderString}</span>
                     <span className="text-xs">
-                        <a href={browserOption.url} onClick={handleClick} className="gp-link">
+                        <a
+                            href={browserOption.url}
+                            target="_blank"
+                            onClick={handleClick}
+                            className="gp-link"
+                            rel="noreferrer"
+                        >
                             Install the Gitpod extension
                         </a>{" "}
                         to launch workspaces from {scmProviderString}.
