@@ -63,18 +63,12 @@ jobs:
           identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
           service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-      - name: Get Secrets from GCP
-        id: "secrets"
-        uses: "google-github-actions/get-secretmanager-secrets@v1"
-        with:
-          secrets: |-
-            lacework-access-token:gitpod-core-dev/lacework-access-token
       - name: Lacework Inline Scanner
         id: lacework-inline-scanner
         shell: bash
         env:
           VERSION: ${{needs.configuration.outputs.version}}
-          LW_ACCESS_TOKEN: "${{ steps.secrets.outputs.lacework-access-token }}"
+          LW_ACCESS_TOKEN: "${{ secrets.LACEWORK_ACCESS_TOKEN }}"
         run: |
           $GITHUB_WORKSPACE/scripts/lw-scan-images.sh
 

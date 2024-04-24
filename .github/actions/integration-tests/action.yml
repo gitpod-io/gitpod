@@ -11,9 +11,6 @@ inputs:
   preview_name:
     description: "Name of the preview environment to run the tests against"
     required: true
-  sa_key:
-    description: "The service account key to use when authenticating with GCP"
-    required: true
   github_token:
     description: "The GitHub token to use when authenticating with GitHub"
     required: true
@@ -30,26 +27,19 @@ inputs:
   test_build_ref:
     description: "The build ref of the test run. Used in the IDE integration tests."
     required: false
+  integration_test_username:
+    description: "The username for integration test"
+    required: true
+  integration_test_usertoken:
+    description: "The username for integration test"
+    required: true
 
 runs:
   using: "composite"
   steps:
-    - id: auth
-      uses: google-github-actions/auth@v1
-      with:
-        token_format: access_token
-        credentials_json: "${{ inputs.sa_key }}"
-    - name: Get Secrets from GCP
-      id: "secrets"
-      uses: "google-github-actions/get-secretmanager-secrets@v1"
-      with:
-        secrets: |-
-          WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
-          WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
     - name: Setup
       shell: bash
       env:
-        PREVIEW_ENV_DEV_SA_KEY: ${{ inputs.sa_key }}
         PREVIEW_NAME: ${{ inputs.preview_name }}
       run: |
         export LEEWAY_WORKSPACE_ROOT="$(pwd)"
@@ -63,9 +53,8 @@ runs:
       shell: bash
       env:
         ROBOQUAT_TOKEN: ${{ inputs.github_token }}
-        INTEGRATION_TEST_USERNAME: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USERNAME }}
-        INTEGRATION_TEST_USER_TOKEN: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
-        PREVIEW_ENV_DEV_SA_KEY: ${{ inputs.sa_key }}
+        INTEGRATION_TEST_USERNAME: ${{ inputs.integration_test_username }}
+        INTEGRATION_TEST_USER_TOKEN: ${{ inputs.integration_test_usertoken }}
         PREVIEW_NAME: ${{ inputs.preview_name }}
         TEST_USE_LATEST_VERSION: ${{ inputs.latest_ide_version }}
         TEST_BUILD_ID: ${{ inputs.test_build_id }}

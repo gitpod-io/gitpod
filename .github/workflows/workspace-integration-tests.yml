@@ -72,13 +72,6 @@ jobs:
         with:
           token_format: access_token
           credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-      # do this step as early as possible, so that Slack Notify failure has the secret
-      - name: Get Secrets from GCP
-        id: "secrets"
-        uses: "google-github-actions/get-secretmanager-secrets@v1"
-        with:
-          secrets: |-
-            WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
       - name: "Set outputs"
         id: configuration
         shell: bash
@@ -115,7 +108,7 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         if: failure()
         env:
-          SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
+          SLACK_WEBHOOK: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
           SLACK_ICON_EMOJI: ":test_tube:"
           SLACK_USERNAME: "Integration Tests: workspace"
           SLACK_COLOR: ${{ job.status }}
@@ -167,20 +160,13 @@ jobs:
           identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
           service_account: ${{ secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-      - name: Get Secrets from GCP
-        id: "secrets"
-        uses: "google-github-actions/get-secretmanager-secrets@v1"
-        with:
-          secrets: |-
-            WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
-
       - name: Integration Test
         id: integration-test
         uses: ./.github/actions/integration-tests
         with:
           preview_name: ${{ needs.configuration.outputs.name }}
           test_suite: workspace
-          notify_slack_webhook: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
+          notify_slack_webhook: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
   delete:
