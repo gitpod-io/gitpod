@@ -126,7 +126,7 @@ export function BrowserExtensionBanner() {
     }
 
     return (
-        <section className="flex justify-center w-full mt-20 mx-4">
+        <section className="flex justify-center mt-20 mx-4">
             <div className="sm:flex justify-between border-pk-border-base border-2 rounded-xl hidden max-w-xl mt-4">
                 <div className="flex flex-col gap-1 py-5 pl-6 pr-4 justify-center">
                     <span className="text-lg font-semibold">Open from {scmProviderString}</span>
