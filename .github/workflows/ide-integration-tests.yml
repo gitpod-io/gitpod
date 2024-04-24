@@ -127,6 +127,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup Environment
+        env:
+          HOME: /home/gitpod
         uses: ./.github/actions/setup-environment
         with:
           identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
@@ -142,11 +144,11 @@ jobs:
           TEST_BUILD_ID: ${{ github.run_id }}
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
+          HOME: /home/gitpod
         run: |
           set -euo pipefail
 
           export LEEWAY_WORKSPACE_ROOT="$(pwd)"
-          export HOME="/home/gitpod"
 
           leeway run dev/preview/previewctl:install
 
@@ -154,7 +156,7 @@ jobs:
 
           # start integration test
           args=()
-          args+=( "-kubeconfig=/home/gitpod/.kube/config" )
+          args+=( "-kubeconfig=$HOME/.kube/config" )
           args+=( "-namespace=default" )
           [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
           args+=( "-timeout=60m" )
