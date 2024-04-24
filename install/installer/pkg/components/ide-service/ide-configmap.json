@@ -286,6 +286,14 @@
         ],
         "versions": [
           {
+            "version": "2024.1.1",
+            "image": "{{.Repository}}/ide/webstorm:commit-41fdcc803fbfc5cd62ab441f1480a61e7ae8c9b4",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-41fdcc803fbfc5cd62ab441f1480a61e7ae8c9b4",
+              "{{.Repository}}/ide/jb-launcher:commit-421e85624ac62a9b8d62b939dc8f81311d0e08ce"
+            ]
+          },
+          {
             "version": "2024.1",
             "image": "{{.Repository}}/ide/webstorm:commit-ef400309563b040b84d9588862805ce2f26d688a",
             "imageLayers": [
@@ -321,6 +329,14 @@
           "{{.JetBrainsLauncherImage}}"
         ],
         "versions": [
+          {
+            "version": "2024.1.1",
+            "image": "{{.Repository}}/ide/rider:commit-41fdcc803fbfc5cd62ab441f1480a61e7ae8c9b4",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-41fdcc803fbfc5cd62ab441f1480a61e7ae8c9b4",
+              "{{.Repository}}/ide/jb-launcher:commit-421e85624ac62a9b8d62b939dc8f81311d0e08ce"
+            ]
+          },
           {
             "version": "2024.1",
             "image": "{{.Repository}}/ide/rider:commit-ef400309563b040b84d9588862805ce2f26d688a",
