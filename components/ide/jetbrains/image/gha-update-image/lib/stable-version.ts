@@ -162,7 +162,7 @@ export const getStableVersionsInfo = async (ides: JetBrainsIDE[]) => {
             }
             uniqueMajorBuildVersions.add(currentBuildVersion.major.toString());
             // Use minimal common build version, within the same major version there should have no breaking changes
-            if (!buildVersion || currentBuildVersion.minor < buildVersion.minor) {
+            if (!buildVersion || semver.lt(currentBuildVersion, buildVersion)) {
                 buildVersion = currentBuildVersion;
             }
         }),

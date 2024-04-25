@@ -70,13 +70,24 @@ describe("stableVersion", () => {
                     IUBuildVersion: "2024.1.300",
                     IUMajorVersion: "2024.1",
 
-                    GOBuildVersion: "2024.1.200",
+                    GOBuildVersion: "2024.2.200",
                     GOMajorVersion: "2024.1",
                 },
                 expect: { err: undefined, buildVersion: "2024.1", majorVersion: "2024.1" },
             },
             {
                 name: "happy path with minimal build version#2",
+                args: {
+                    IUBuildVersion: "2024.20.300",
+                    IUMajorVersion: "2024.1",
+
+                    GOBuildVersion: "2024.2.200",
+                    GOMajorVersion: "2024.1",
+                },
+                expect: { err: undefined, buildVersion: "2024.2", majorVersion: "2024.1" },
+            },
+            {
+                name: "happy path with minimal build version#3",
                 args: {
                     IUBuildVersion: "2024.1.300",
                     IUMajorVersion: "2024.1",
