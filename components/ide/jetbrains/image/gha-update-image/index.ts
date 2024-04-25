@@ -136,14 +136,11 @@ const getIDEVersion = function (ide: string) {
     return str.at(-1)!.replace(".tar.gz", "");
 };
 
-// Skip update when build versions are not the same for all IDEs
-const skipOnDifferentBuildVersion = true;
-
 const upgradeStableVersionsInWorkspaceaAndGradle = async () => {
     let buildVersion: semver.SemVer | undefined;
 
     const uniqueMajorVersions = new Set();
-    const uniqueBuildVersions = new Set();
+    const uniqueMajorBuildVersions = new Set();
 
     await Promise.all(
         ides.map(async (ide) => {
@@ -182,22 +179,22 @@ const upgradeStableVersionsInWorkspaceaAndGradle = async () => {
             if (!currentBuildVersion) {
                 throw new Error("Failed to parse the build version: " + lastRelease.build);
             }
-            uniqueBuildVersions.add(`${currentBuildVersion.major}.${currentBuildVersion.minor}`);
-            if (!buildVersion || semver.gt(currentBuildVersion, buildVersion)) {
+            // Use minimal common build version, within the same major version there should have no breaking changes
+            if (!buildVersion || currentBuildVersion.minor < buildVersion.minor) {
                 buildVersion = currentBuildVersion;
             }
         }),
     );
 
     const majorVersions = [...uniqueMajorVersions];
-    const buildVersions = [...uniqueBuildVersions];
-    console.log({ majorVersions, buildVersions, buildVersion });
+    const majorBuildVersions = [...uniqueMajorBuildVersions];
+    console.log({ majorVersions, majorBuildVersions, buildVersion });
 
     if (!buildVersion) {
         throw new Error("build version is unresolved");
     }
-    if (skipOnDifferentBuildVersion && buildVersions.length !== 1) {
-        console.log(`Multiple build versions found, skipping update: ${buildVersions.join(", ")}`);
+    if (majorBuildVersions.length !== 1) {
+        console.log(`Multiple build versions (major) found, skipping update: ${majorBuildVersions.join(", ")}`);
         return;
     }
 
@@ -208,9 +205,6 @@ const upgradeStableVersionsInWorkspaceaAndGradle = async () => {
 
     const majorVersion = majorVersions[0];
     console.log(`All IDEs are in the same major version: ${majorVersion}`);
-    if (skipOnDifferentBuildVersion) {
-        console.log(`All IDEs are in the same build version: ${buildVersion.major}.${buildVersion.minor}`);
-    }
 
     await Bun.write(pathToWorkspaceYaml, rawWorkspace);
 
