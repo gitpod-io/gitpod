@@ -4,6 +4,7 @@
 
 import { expect, test, mock, describe } from "bun:test";
 import { JetBrainsIDE, getStableVersionsInfo } from "./stable-version";
+import { SemVer } from "semver";
 
 describe("stableVersion", () => {
     const testIdes: JetBrainsIDE[] = [
@@ -31,7 +32,7 @@ describe("stableVersion", () => {
     }
     interface expect {
         err?: string;
-        buildVersion?: string;
+        buildVersion?: SemVer;
         majorVersion?: string;
     }
 
@@ -62,7 +63,7 @@ describe("stableVersion", () => {
                     GOBuildVersion: "2024.1.1",
                     GOMajorVersion: "2024.1",
                 },
-                expect: { err: undefined, buildVersion: "2024.1", majorVersion: "2024.1" },
+                expect: { err: undefined, buildVersion: new SemVer("2024.1.1"), majorVersion: "2024.1" },
             },
             {
                 name: "happy path with minimal build version",
@@ -73,7 +74,7 @@ describe("stableVersion", () => {
                     GOBuildVersion: "2024.2.200",
                     GOMajorVersion: "2024.1",
                 },
-                expect: { err: undefined, buildVersion: "2024.1", majorVersion: "2024.1" },
+                expect: { err: undefined, buildVersion: new SemVer("2024.1.300"), majorVersion: "2024.1" },
             },
             {
                 name: "happy path with minimal build version#2",
@@ -84,7 +85,7 @@ describe("stableVersion", () => {
                     GOBuildVersion: "2024.2.200",
                     GOMajorVersion: "2024.1",
                 },
-                expect: { err: undefined, buildVersion: "2024.2", majorVersion: "2024.1" },
+                expect: { err: undefined, buildVersion: new SemVer("2024.2.200"), majorVersion: "2024.1" },
             },
             {
                 name: "happy path with minimal build version#3",
@@ -95,7 +96,7 @@ describe("stableVersion", () => {
                     GOBuildVersion: "2024.1.1200",
                     GOMajorVersion: "2024.1",
                 },
-                expect: { err: undefined, buildVersion: "2024.1", majorVersion: "2024.1" },
+                expect: { err: undefined, buildVersion: new SemVer("2024.1.300"), majorVersion: "2024.1" },
             },
             {
                 name: "multiple major versions",
@@ -140,7 +141,7 @@ describe("stableVersion", () => {
             } else if (tt.expect.buildVersion && tt.expect.majorVersion) {
                 const got = await getStableVersionsInfo(testIdes);
                 expect(got.majorVersion).toBe(tt.expect.majorVersion);
-                expect(`${got.buildVersion.major}.${got.buildVersion.minor}`).toBe(tt.expect.buildVersion);
+                expect(String(got.buildVersion)).toBe(String(tt.expect.buildVersion));
             }
         }
     });
