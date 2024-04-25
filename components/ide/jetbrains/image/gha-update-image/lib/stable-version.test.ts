@@ -5,7 +5,7 @@
 import { expect, test, mock, describe } from "bun:test";
 import { JetBrainsIDE, getStableVersionsInfo } from "./stable-version";
 
-describe("getStableVersionsInfo", () => {
+describe("stableVersion", () => {
     const testIdes: JetBrainsIDE[] = [
         {
             productName: "IntelliJ IDEA Ultimate",
@@ -51,7 +51,7 @@ describe("getStableVersionsInfo", () => {
         },
     ];
 
-    test("it should skip update if major build versions are not the same", async () => {
+    test("getStableVersionsInfo", async () => {
         const tests: { name: string; args: args; expect: expect }[] = [
             {
                 name: "happy path",
