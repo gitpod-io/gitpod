@@ -113,7 +113,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	wsdcfg := wsdconfig.Config{
 		Daemon: daemon.Config{
-			RegistryFacadeHost: fmt.Sprintf("reg.%s:%d", ctx.Config.Domain, common.RegistryFacadeServicePort),
 			Runtime: daemon.RuntimeConfig{
 				KubernetesNamespace: ctx.Namespace,
 				SecretsNamespace:    common.WorkspaceSecretsNamespace,
