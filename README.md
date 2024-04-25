@@ -1,3 +1,4 @@
+#sudo su
 <a href="https://www.gitpod.io">
   <img width="1500" alt="Gitpod banner image" src="https://github.com/gitpod-io/gitpod/assets/55068936/ff393a65-a4f3-4997-a066-10337562cc34">
 </a>
