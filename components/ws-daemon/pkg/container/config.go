@@ -35,8 +35,6 @@ type Config struct {
 
 	// Containerd contains the containerd CRI config if runtime == RuntimeContainerd
 	Containerd *ContainerdConfig `json:"containerd,omitempty"`
-
-	RegistryFacadeHost string `json:"registryFacadeHost,omitempty"`
 }
 
 // RuntimeType lists the supported container runtimes
@@ -65,7 +63,7 @@ func FromConfig(cfg *Config) (rt Runtime, err error) {
 		if cfg.Containerd == nil {
 			return nil, xerrors.Errorf("runtime is set to containerd, but not containerd config is provided")
 		}
-		return NewContainerd(cfg.Containerd, cfg.Mapping, cfg.RegistryFacadeHost)
+		return NewContainerd(cfg.Containerd, cfg.Mapping)
 	default:
 		return nil, xerrors.Errorf("unknown runtime type: %s", cfg.Runtime)
 	}
