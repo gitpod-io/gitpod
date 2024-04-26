@@ -52,7 +52,6 @@ if ! test -f "/tmp/versions.yaml"; then
       leeway build components:all-docker \
                               --dont-test \
                               -Dversion="${VERSION}" \
-                              -DSEGMENT_IO_TOKEN="$(gcloud secrets versions access latest --project ${PREVIEW_GCP_PROJECT} --secret=segment-io-token)" \
                               --save "${VERSIONS_TMP_ZIP}"
       tar -xzvf "${VERSIONS_TMP_ZIP}" ./versions.yaml && sudo mv ./versions.yaml /tmp/versions.yaml
       rm "${VERSIONS_TMP_ZIP}"
