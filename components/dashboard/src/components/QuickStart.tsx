@@ -10,6 +10,7 @@ import { useHistory, useLocation } from "react-router";
 import { AppLoading } from "../app/AppLoading";
 import { Link } from "react-router-dom";
 import { authProviderClient, userClient } from "../service/public-api";
+import { storageAvailable } from "../utils";
 
 const parseErrorFromSearch = (search: string): string => {
     const searchParams = new URLSearchParams(search);
@@ -20,6 +21,14 @@ const parseErrorFromSearch = (search: string): string => {
     }
 
     return "";
+};
+
+const generateLocalStorageItemName = async (hash: string) => {
+    const id = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(hash));
+    return `quickstart-${Array.from(new Uint8Array(id))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+        .slice(0, 10)}` as const;
 };
 
 const QuickStart: FC = () => {
@@ -40,10 +49,33 @@ const QuickStart: FC = () => {
                 .then((r) => r?.descriptions);
 
             const hashValue = hash.slice(1);
+
+            // The browser will reject cookies larger than 4096 bytes, so we store the hash in local storage if it's too long and restore it later.
+            if (hashValue.length > 2048) {
+                const isLocalStorageAvailable = storageAvailable("localStorage");
+                if (isLocalStorageAvailable) {
+                    const localStorageItemName = await generateLocalStorageItemName(hashValue);
+
+                    console.log(`Hash value too long, storing in local storage as ${localStorageItemName}`);
+                    localStorage.setItem(localStorageItemName, hashValue);
+                    window.location.hash = `#${localStorageItemName}`;
+                    return;
+                }
+
+                setError("Context URL value is too long.");
+                return;
+            }
+
             let contextUrl: URL;
             try {
+                const value = hashValue.startsWith("quickstart-") ? localStorage.getItem(hashValue) : hashValue;
+                if (!value) {
+                    setError("Invalid hash value");
+                    return;
+                }
+
                 // We have to account for the case where environment variables are provided through the hash, so we search it for the URL.
-                const toParse = hashValue.match(/^https?:/) ? hashValue : hashValue.slice(hashValue.indexOf("/") + 1);
+                const toParse = value.match(/^https?:/) ? value : value.slice(value.indexOf("/") + 1);
                 contextUrl = new URL(toParse);
             } catch {
                 setError("Invalid context URL");
@@ -86,6 +118,18 @@ const QuickStart: FC = () => {
 
             const searchParams = new URLSearchParams(window.location.search);
             searchParams.delete("message");
+
+            if (hashValue.startsWith("quickstart-")) {
+                const storedHash = localStorage.getItem(hashValue);
+                if (!storedHash) {
+                    setError("Invalid hash value");
+                    return;
+                }
+
+                localStorage.removeItem(hashValue);
+                history.push(`/new/?${searchParams}#${storedHash}`);
+                return;
+            }
 
             history.push(`/new/?${searchParams}${window.location.hash}`);
 
