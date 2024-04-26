@@ -818,16 +818,8 @@ func removeSensitiveCookies(cookies []*http.Cookie, domain string) []*http.Cooki
 
 	n := 0
 	for _, c := range cookies {
-		if strings.EqualFold(c.Name, hostnamePrefix) {
+		if strings.HasPrefix(c.Name, hostnamePrefix) {
 			// skip session cookie
-			continue
-		}
-		if strings.HasPrefix(c.Name, hostnamePrefix) && strings.HasSuffix(c.Name, "_port_auth_") {
-			// skip port auth cookie
-			continue
-		}
-		if strings.HasPrefix(c.Name, hostnamePrefix) && strings.HasSuffix(c.Name, "_owner_") {
-			// skip owner token
 			continue
 		}
 		log.WithField("hostnamePrefix", hostnamePrefix).WithField("name", c.Name).Debug("keeping cookie")
