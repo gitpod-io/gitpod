@@ -26,7 +26,7 @@ scripts:
       export GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-$PREVIEW_ENV_DEV_SA_KEY_PATH}"
       export TF_VAR_cert_issuer="${TF_VAR_cert_issuer:-letsencrypt-issuer-gitpod-core-dev}"
       export TF_VAR_preview_name="${TF_VAR_preview_name:-$(previewctl get name)}"
-      ./workflow/preview/deploy-harvester.sh
+      ./workflow/preview/deploy-preview.sh
 
   - name: delete-preview
     description: Delete an existing preview environment
@@ -35,7 +35,7 @@ scripts:
       export GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-$PREVIEW_ENV_DEV_SA_KEY_PATH}"
       export TF_VAR_kubeconfig_path="${TF_VAR_kubeconfig_path:-$HOME/.kube/config}"
       export TF_VAR_preview_name="${TF_VAR_preview_name:-$(previewctl get name)}"
-      ./workflow/preview/deploy-harvester.sh
+      ./workflow/preview/deploy-preview.sh
 
   - name: deploy-gitpod
     description: Deploys Gitpod to an existing preview environment
