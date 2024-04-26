@@ -182,7 +182,7 @@ jobs:
       - uses: ./.github/actions/setup-environment
         with:
           identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
-          service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
+          service_account: github-action-sa@gitpod-dev-preview.iam.gserviceaccount.com
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Leeway Vet
         shell: bash
@@ -197,15 +197,14 @@ jobs:
             echo "::error title=The Pre-Commit Checks Failed.::Please run 'pre-commit run --show-diff-on-failure'"
           fi
           exit "$RESULT"
-      - name: Get Secrets from GCP
+      - name: Get Secrets from GCP TEST
         id: "secrets"
-        if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
         uses: "google-github-actions/get-secretmanager-secrets@v1"
         with:
           secrets: |-
-            npm-auth-token:gitpod-core-dev/npm-auth-token
-            jb-marketplace-publish-token:gitpod-core-dev/jb-marketplace-publish-token
-            codecov-token:gitpod-core-dev/codecov
+            spicedb-secret:gitpod-dev-preview/spicedb-secret
+            segment-io-token:gitpod-dev-preview/segment-io-token
+            host-key:gitpod-dev-preview/host-key
       - name: Dev Build
         id: dev-build
         env:
