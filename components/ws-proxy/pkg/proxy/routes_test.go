@@ -980,6 +980,7 @@ func TestRemoveSensitiveCookies(t *testing.T) {
 	var (
 		domain            = "test-domain.com"
 		sessionCookie     = &http.Cookie{Domain: domain, Name: "_test_domain_com_", Value: "fobar"}
+		sessionCookieJwt2 = &http.Cookie{Domain: domain, Name: "_test_domain_com_jwt2_", Value: "fobar"}
 		portAuthCookie    = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_port_auth_", Value: "some-token"}
 		ownerCookie       = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_owner_", Value: "some-other-token"}
 		miscCookie        = &http.Cookie{Domain: domain, Name: "some-other-cookie", Value: "I like cookies"}
@@ -993,6 +994,7 @@ func TestRemoveSensitiveCookies(t *testing.T) {
 	}{
 		{"no cookies", []*http.Cookie{}, []*http.Cookie{}},
 		{"session cookie", []*http.Cookie{sessionCookie, miscCookie}, []*http.Cookie{miscCookie}},
+		{"session cookie ending on _jwt2_", []*http.Cookie{sessionCookieJwt2, miscCookie}, []*http.Cookie{miscCookie}},
 		{"portAuth cookie", []*http.Cookie{portAuthCookie, miscCookie}, []*http.Cookie{miscCookie}},
 		{"owner cookie", []*http.Cookie{ownerCookie, miscCookie}, []*http.Cookie{miscCookie}},
 		{"misc cookie", []*http.Cookie{miscCookie}, []*http.Cookie{miscCookie}},
