@@ -157,7 +157,7 @@ export function BrowserExtensionBanner() {
                     <span className="text-lg font-semibold text-pk-content-secondary">
                         Open from {scmProviderString}
                     </span>
-                    <span className="text-xs">
+                    <span className="text-base">
                         <a
                             href={browserOption.url}
                             target="_blank"
