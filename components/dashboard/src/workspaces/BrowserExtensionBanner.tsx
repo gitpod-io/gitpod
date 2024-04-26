@@ -157,7 +157,7 @@ export function BrowserExtensionBanner() {
                     <span className="text-lg font-semibold text-pk-content-secondary">
                         Open from {scmProviderString}
                     </span>
-                    <span className="text-base">
+                    <span className="text-sm">
                         <a
                             href={browserOption.url}
                             target="_blank"
@@ -173,7 +173,7 @@ export function BrowserExtensionBanner() {
                 <img
                     alt="A button that says Gitpod"
                     src={browserExtensionImages[usedProviders.at(0)!]}
-                    className="w-32 h-fit self-end mb-2 mr-4"
+                    className="w-32 h-fit self-end mb-4 mr-8"
                 />
                 {/* <Button variant={"ghost"} onClick={handleClose} className="ml-3 self-start hover:bg-transparent">
                     <span className="sr-only">Close</span>
