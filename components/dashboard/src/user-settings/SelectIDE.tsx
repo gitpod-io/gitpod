@@ -90,6 +90,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                     useLatest={useLatestVersion}
                     setWarning={setIdeWarning}
                     ignoreRestrictionScopes={isOrgOwnedUser ? ["configuration"] : ["configuration", "organization"]}
+                    hideVersions
                 />
             </div>
 

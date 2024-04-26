@@ -47,15 +47,15 @@ export class TokenService implements TokenProvider {
             }
 
             const aboutToExpireTime = new Date();
-            aboutToExpireTime.setTime(aboutToExpireTime.getTime() + expiryThreshold * 60 * 1000);
+            aboutToExpireTime.setTime(aboutToExpireTime.getTime() + expiryThreshold * 1_000 * 60);
             if (t.expiryDate >= aboutToExpireTime.toISOString()) {
                 return true;
             }
 
             // This is to help us understand whether extending the default expiration tolerance actually helped or not and can be removed after verifying the changes.
             const defaultAboutToExpireTime = new Date();
-            aboutToExpireTime.setTime(
-                defaultAboutToExpireTime.getTime() + TokenService.DEFAULT_EXPIRY_THRESHOLD * 60 * 1000,
+            defaultAboutToExpireTime.setTime(
+                defaultAboutToExpireTime.getTime() + TokenService.DEFAULT_EXPIRY_THRESHOLD * 1_000 * 60,
             );
             if (
                 expiryThreshold !== TokenService.DEFAULT_EXPIRY_THRESHOLD &&
@@ -64,6 +64,7 @@ export class TokenService implements TokenProvider {
                 log.debug({ userId }, `Token refreshed with an extended threshold not covered by the default one`, {
                     host,
                     expiryThreshold,
+                    tokenExpiresAt: t.expiryDate,
                 });
             }
 

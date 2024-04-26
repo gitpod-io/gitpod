@@ -60,6 +60,11 @@ func TestGetIDToken(t *testing.T) {
 					&protocol.WorkspaceInfo{
 						Workspace: &protocol.Workspace{
 							ContextURL: "https://github.com/gitpod-io/gitpod",
+							Context: &protocol.WorkspaceContext{
+								Repository: &protocol.Repository{
+									CloneURL: "https://github.com/gitpod-io/gitpod.git",
+								},
+							},
 						},
 					},
 					nil,
@@ -103,6 +108,11 @@ func TestGetIDToken(t *testing.T) {
 					&protocol.WorkspaceInfo{
 						Workspace: &protocol.Workspace{
 							ContextURL: "https://github.com/gitpod-io/gitpod",
+							Context: &protocol.WorkspaceContext{
+								Repository: &protocol.Repository{
+									CloneURL: "https://github.com/gitpod-io/gitpod.git",
+								},
+							},
 						},
 					},
 					nil,

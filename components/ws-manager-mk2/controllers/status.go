@@ -15,6 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"github.com/go-logr/logr"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -41,7 +42,15 @@ const (
 func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods *corev1.PodList, cfg *config.Configuration) (err error) {
 	span, ctx := tracing.FromContext(ctx, "updateWorkspaceStatus")
 	defer tracing.FinishSpan(span, &err)
-	log := log.FromContext(ctx)
+	log := log.FromContext(ctx).WithValues("owi", workspace.OWI())
+	ctx = logr.NewContext(ctx, log)
+
+	oldPhase := workspace.Status.Phase
+	defer func() {
+		if oldPhase != workspace.Status.Phase {
+			log.Info("workspace phase updated", "oldPhase", oldPhase, "phase", workspace.Status.Phase)
+		}
+	}()
 
 	switch len(pods.Items) {
 	case 0:

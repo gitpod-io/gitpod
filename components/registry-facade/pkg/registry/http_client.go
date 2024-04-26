@@ -5,12 +5,23 @@
 package registry
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/sirupsen/logrus"
 )
+
+// Temporaryable is to match an error that has `.Temporary()`
+type Temporaryable interface {
+	Temporary() bool
+}
+
+// Timeoutable is to match an error that has `.Timeout()`
+type Timeoutable interface {
+	Timeout() bool
+}
 
 type Option func(opts *httpOpts)
 
@@ -28,6 +39,18 @@ func NewRetryableHTTPClient(options ...Option) *http.Client {
 
 	if opts.HTTPClient != nil {
 		client.HTTPClient = opts.HTTPClient
+	}
+
+	client.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+		if terr, ok := err.(Temporaryable); ok && terr.Temporary() {
+			return true, nil
+		}
+
+		if terr, ok := err.(Timeoutable); ok && terr.Timeout() {
+			return true, nil
+		}
+
+		return retryablehttp.DefaultRetryPolicy(ctx, resp, err)
 	}
 
 	return client.StandardClient()
