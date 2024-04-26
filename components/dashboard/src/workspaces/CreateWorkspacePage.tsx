@@ -35,6 +35,7 @@ import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { UserContext, useCurrentUser } from "../user-context";
 import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import { settingsPathIntegrations } from "../user-settings/settings.routes";
+import { BrowserExtensionBanner } from "./BrowserExtensionBanner";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import {
@@ -565,6 +566,7 @@ export function CreateWorkspacePage() {
                     )}
                 </div>
             </div>
+            {!autostart && <BrowserExtensionBanner />}
         </div>
     );
 }

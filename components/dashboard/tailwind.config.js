@@ -69,6 +69,7 @@ module.exports = {
                 },
                 "pk-border": {
                     base: "rgb(var(--border-base) / <alpha-value>)",
+                    light: "rgb(var(--border-light) / <alpha-value>)"
                 },
             },
             backgroundImage: {
