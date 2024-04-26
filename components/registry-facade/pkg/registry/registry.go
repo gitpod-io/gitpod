@@ -301,7 +301,8 @@ func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
 
 	rdc := redis.NewClient(opts)
 
-	err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
+	var lastError error
+	waitErr := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 		Steps:    5,
 		Duration: 50 * time.Millisecond,
 		Factor:   2.0,
@@ -309,13 +310,18 @@ func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
 	}, func(ctx context.Context) (bool, error) {
 		_, err := rdc.Ping(ctx).Result()
 		if err != nil {
-			return false, xerrors.Errorf("cannot check Redis connection: %w", err)
+			lastError = err
+			return false, nil
 		}
 
 		return true, nil
 	})
-	if err != nil {
-		return nil, err
+	if waitErr != nil {
+		if waitErr == wait.ErrWaitTimeout {
+			return nil, xerrors.Errorf("cannot check Redis connection: %w", lastError)
+		}
+
+		return nil, waitErr
 	}
 
 	return rdc, nil
