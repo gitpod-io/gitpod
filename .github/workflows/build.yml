@@ -203,7 +203,6 @@ jobs:
         uses: "google-github-actions/get-secretmanager-secrets@v1"
         with:
           secrets: |-
-            segment-io-token:gitpod-core-dev/segment-io-token
             npm-auth-token:gitpod-core-dev/npm-auth-token
             jb-marketplace-publish-token:gitpod-core-dev/jb-marketplace-publish-token
             codecov-token:gitpod-core-dev/codecov
@@ -245,7 +244,6 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=4096"
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
-          SEGMENT_IO_TOKEN: "${{ steps.secrets.outputs.segment-io-token }}"
           PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
           PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
           NPM_AUTH_TOKEN: "${{ steps.secrets.outputs.npm-auth-token }}"
@@ -270,7 +268,6 @@ jobs:
             --docker-build-options network=host \
             --max-concurrent-tasks 1 \
             -DlocalAppVersion=$VERSION \
-            -DSEGMENT_IO_TOKEN=$SEGMENT_IO_TOKEN \
             -DpublishToNPM="${PUBLISH_TO_NPM}" \
             -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
             -DpublishToJBMarketplace="${PUBLISH_TO_JBPM}" \
