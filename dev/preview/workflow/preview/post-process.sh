@@ -11,7 +11,6 @@ set -euo pipefail
 # Node pool index was only relevant with core-dev
 NODE_POOL_INDEX=0
 
-# These were previously using "findLastPort" etc. but in harvester-based preview environments they can be stable
 REG_DAEMON_PORT="31750"
 
 # Required params
