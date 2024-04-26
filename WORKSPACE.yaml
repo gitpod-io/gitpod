@@ -10,8 +10,8 @@ defaultArgs:
   codeCommit: 0859efdc73ff89d823efce9288ead6d36080f315
   codeVersion: 1.88.0
   codeQuality: stable
-  codeWebExtensionCommit: 7ff72a2938a7a06cbdf3964590f7e9b7525958f3
-  xtermCommit: 8915adfdb17c4dc52c327ca81c50c547e80d3a99
+  codeWebExtensionCommit: 736db6fb669a1e3dd3379c26e1aa932ab9c8f696
+  xtermCommit: 5a2eb92bec3dda821201f2681f531d1134173e6c
   noVerifyJBPlugin: false
   intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2024.1.tar.gz"
   golandDownloadUrl: "https://download.jetbrains.com/go/goland-2024.1.tar.gz"
