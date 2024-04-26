@@ -1,4 +1,7 @@
 name: "Workspace integration tests"
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
 on:
   workflow_dispatch:
     inputs:
@@ -10,6 +13,14 @@ on:
         required: false
         type: string
         description: "The version of Gitpod to install (leave empty to target the latest successful build on main)"
+      image_repo_base:
+        type: choice
+        required: false
+        description: "The base repo of image"
+        options:
+          - "eu.gcr.io/gitpod-core-dev/build"
+          - "eu.gcr.io/gitpod-dev-artifact/build"
+        default: "eu.gcr.io/gitpod-core-dev/build"
       skip_deploy:
         required: false
         type: boolean
@@ -28,6 +39,11 @@ on:
         required: false
         type: string
         description: "The version of Gitpod to install (leave empty to target the latest successful build on main)"
+      image_repo_base:
+        type: string
+        required: false
+        description: "The base repo of image"
+        default: "eu.gcr.io/gitpod-core-dev/build"
   schedule:
     - cron: "0 3,12 * * *"
 
@@ -45,24 +61,12 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
     outputs:
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
     steps:
-      - id: auth
-        uses: google-github-actions/auth@v1
-        continue-on-error: true
-        with:
-          token_format: access_token
-          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-      # do this step as early as possible, so that Slack Notify failure has the secret
-      - name: Get Secrets from GCP
-        id: "secrets"
-        uses: "google-github-actions/get-secretmanager-secrets@v1"
-        with:
-          secrets: |-
-            WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
+      - uses: actions/checkout@v4
       - name: "Set outputs"
         id: configuration
         shell: bash
@@ -99,7 +103,7 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         if: failure()
         env:
-          SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
+          SLACK_WEBHOOK: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
           SLACK_ICON_EMOJI: ":test_tube:"
           SLACK_USERNAME: "Integration Tests: workspace"
           SLACK_COLOR: ${{ job.status }}
@@ -113,68 +117,69 @@ jobs:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Create preview environment infrastructure
         id: create
         uses: ./.github/actions/preview-create
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: gce
           large_vm: true
           preemptible: true
+          image_repo_base: ${{ github.event.inputs.image_repo_base }}
       - name: Deploy Gitpod to the preview environment
         if: inputs.skip_deploy != 'true'
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           version: ${{ needs.configuration.outputs.version}}
+          image_repo_base: ${{ github.event.inputs.image_repo_base }}
 
   check:
     name: Check for regressions
     needs: [configuration, infrastructure, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
     steps:
       - uses: actions/checkout@v4
-      - id: auth
-        uses: google-github-actions/auth@v1
-        with:
-          token_format: access_token
-          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-      - name: Get Secrets from GCP
-        id: "secrets"
-        uses: "google-github-actions/get-secretmanager-secrets@v1"
-        with:
-          secrets: |-
-            WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
-
       - name: Integration Test
         id: integration-test
         uses: ./.github/actions/integration-tests
         with:
           preview_name: ${{ needs.configuration.outputs.name }}
           test_suite: workspace
-          notify_slack_webhook: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          notify_slack_webhook: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+          integration_test_username: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USERNAME }}
+          integration_test_usertoken: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
 
   delete:
     name: Delete preview environment
     needs: [configuration, infrastructure, check, create-runner]
     if: inputs.skip_delete != 'true' && always()
     runs-on: ${{ needs.create-runner.outputs.label }}
-    container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Delete preview environment
         uses: ./.github/actions/delete-preview
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
 
   delete-runner:
     if: always()

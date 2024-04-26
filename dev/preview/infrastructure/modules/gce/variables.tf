@@ -14,11 +14,6 @@ variable "vm_type" {
   default = "n2d-standard-16"
 }
 
-variable "ssh_key" {
-  type        = string
-  description = "ssh public key used for access to the vm"
-}
-
 variable "dev_kube_context" {
   type        = string
   default     = "dev"

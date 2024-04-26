@@ -24,7 +24,7 @@ TARGET_DIR="${PROJECT_ROOT}/dev/preview/infrastructure"
 # Setting the TF_DATA_DIR is advisable if we set the PLAN_LOCATION in a different place than the dir with the tf
 TF_DATA_DIR="${TARGET_DIR}"
 
-# Illustration purposes, but this will set the plan location to $TARGET_DIR/harvester.plan if PLAN_LOCATION is not set
+# Illustration purposes, but this will set the plan location to $TARGET_DIR/infrastructure.plan if PLAN_LOCATION is not set
 static_plan="$(realpath "${TARGET_DIR}")/$(basename "${TARGET_DIR}").plan"
 PLAN_LOCATION="${PLAN_LOCATION:-$static_plan}"
 
@@ -32,9 +32,6 @@ PLAN_LOCATION="${PLAN_LOCATION:-$static_plan}"
 shopt -os allexport
 
 terraform_init
-
-# avoid harvester entirely
-export TF_VAR_infra_provider="gce"
 
 PLAN_EXIT_CODE=0
 terraform_plan || PLAN_EXIT_CODE=$?

@@ -1,3 +1,6 @@
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
 on:
   workflow_call:
     inputs:
@@ -20,14 +23,15 @@ jobs:
   update-jetbrains:
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
     needs: [ create-runner ]
     steps:
       - uses: actions/checkout@v2
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Find IDE version to download
         id: ide-version
@@ -43,8 +47,10 @@ jobs:
         if: ${{ steps.ide-version.outputs.ideBuildVersion }}
         env:
           LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: "8388608"
+          LEEWAY_REMOTE_CACHE_BUCKET: ${{ github.ref == 'refs/heads/main' && 'leeway-cache-main-c514a01' || 'leeway-cache-dev-3ac8ef5' }}
         run: |
-          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DbuildNumber=${{ steps.ide-version.outputs.ideBuildVersion }} components/ide/jetbrains/image:${{ inputs.productId }}-latest -DjbBackendVersion=${{ steps.ide-version.outputs.ideVersion }}
+          imageRepoBase=${{ github.ref == 'refs/heads/main' && 'eu.gcr.io/gitpod-core-dev/build' || 'eu.gcr.io/gitpod-dev-artifact/build' }}
+          leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${{ steps.ide-version.outputs.ideBuildVersion }} components/ide/jetbrains/image:${{ inputs.productId }}-latest -DjbBackendVersion=${{ steps.ide-version.outputs.ideVersion }}
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main

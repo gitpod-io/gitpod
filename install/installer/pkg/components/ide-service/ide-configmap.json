@@ -365,8 +365,8 @@
         "type": "browser",
         "logo": "{{.IdeLogoBase}}/terminal.svg",
         "label": "Insiders",
-        "image": "{{.Repository}}/ide/xterm-web:latest",
-        "latestImage": "{{.Repository}}/ide/xterm-web:latest",
+        "image": "{{.Repository}}/ide/xterm-web:{{.WorkspaceVersions.Workspace.XtermWebImage.Version}}",
+        "latestImage": "{{.Repository}}/ide/xterm-web:{{.WorkspaceVersions.Workspace.XtermWebImage.Version}}",
         "resolveImageDigest": true
       }
     },

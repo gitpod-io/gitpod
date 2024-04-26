@@ -11,23 +11,21 @@ source "$(realpath "${SCRIPT_PATH}/../lib/common.sh")"
 # shellcheck source=../lib/k8s-util.sh
 source "$(realpath "${SCRIPT_PATH}/../lib/k8s-util.sh")"
 
-DEV_KUBE_PATH="${DEV_KUBE_PATH:-/home/gitpod/.kube/config}"
-DEV_KUBE_CONTEXT="${DEV_KUBE_CONTEXT:-dev}"
-
 PREVIEW_NAME="${PREVIEW_NAME:-$(previewctl get name)}"
 PREVIEW_K3S_KUBE_PATH="${PREVIEW_K3S_KUBECONFIG_PATH:-/home/gitpod/.kube/config}"
 PREVIEW_K3S_KUBE_CONTEXT="${PREVIEW_K3S_KUBE_CONTEXT:-$PREVIEW_NAME}"
 PREVIEW_NAMESPACE="default"
-PREVIEW_SORUCE_CERT_NAME="harvester-${PREVIEW_NAME}"
+PREVIEW_SORUCE_CERT_NAME="certificate-${PREVIEW_NAME}"
 
 GITPOD_AGENT_SMITH_TOKEN="$(openssl rand -hex 30)"
 GITPOD_AGENT_SMITH_TOKEN_HASH="$(echo -n "$GITPOD_AGENT_SMITH_TOKEN" | sha256sum - | tr -d '  -')"
-GITPOD_CONTAINER_REGISTRY_URL="eu.gcr.io/gitpod-core-dev/build/";
-GITPOD_IMAGE_PULL_SECRET_NAME="gcp-sa-registry-auth";
+GITPOD_CONTAINER_REGISTRY_URL="eu.gcr.io/gitpod-dev-artifact/image-build/";
+GITPOD_IMAGE_PULL_SECRET_NAME="image-pull-secret";
 GITPOD_PROXY_SECRET_NAME="proxy-config-certificates";
 GITPOD_ANALYTICS="${GITPOD_ANALYTICS:-}"
 GITPOD_WORKSPACE_FEATURE_FLAGS="${GITPOD_WORKSPACE_FEATURE_FLAGS:-}"
 GITPOD_WITH_DEDICATED_EMU="${GITPOD_WITH_DEDICATED_EMU:-false}"
+PREVIEW_GCP_PROJECT="gitpod-dev-preview"
 
 
 if [[ "${VERSION:-}" == "" ]]; then
@@ -48,13 +46,12 @@ INSTALLER_RENDER_PATH="k8s.yaml" # k8s.yaml is hardcoded in post-prcess.sh - we 
 # Or just build it and get it from there
 if ! test -f "/tmp/versions.yaml"; then
   ec=0
-  docker run --rm "eu.gcr.io/gitpod-core-dev/build/versions:$VERSION" cat /versions.yaml > /tmp/versions.yaml || ec=$?
+  docker run --rm "eu.gcr.io/gitpod-dev-artifact/build/versions:$VERSION" cat /versions.yaml > /tmp/versions.yaml || ec=$?
   if [[ ec -ne 0 ]];then
       VERSIONS_TMP_ZIP=$(mktemp "/tmp/XXXXXX.installer.tar.gz")
       leeway build components:all-docker \
                               --dont-test \
                               -Dversion="${VERSION}" \
-                              -DSEGMENT_IO_TOKEN="$(kubectl --context=dev -n werft get secret self-hosted -o jsonpath='{.data.segmentIOToken}' | base64 -d)" \
                               --save "${VERSIONS_TMP_ZIP}"
       tar -xzvf "${VERSIONS_TMP_ZIP}" ./versions.yaml && sudo mv ./versions.yaml /tmp/versions.yaml
       rm "${VERSIONS_TMP_ZIP}"
@@ -69,86 +66,35 @@ if ! command -v installer;then
 fi
 
 function copyCachedCertificate {
-  CERTS_NAMESPACE="certs"
   DESTINATION_CERT_NAME="$GITPOD_PROXY_SECRET_NAME"
 
+  secret=$(gcloud secrets versions access latest --secret="${PREVIEW_SORUCE_CERT_NAME}" --project=${PREVIEW_GCP_PROJECT})
   kubectl \
-    --kubeconfig "${DEV_KUBE_PATH}" \
-    --context "${DEV_KUBE_CONTEXT}" \
-    get secret "${PREVIEW_SORUCE_CERT_NAME}" --namespace="${CERTS_NAMESPACE}" -o yaml \
-  | yq d - 'metadata.namespace' \
-  | yq d - 'metadata.uid' \
-  | yq d - 'metadata.resourceVersion' \
-  | yq d - 'metadata.creationTimestamp' \
-  | yq d - 'metadata.ownerReferences' \
-  | sed "s/${PREVIEW_SORUCE_CERT_NAME}/${DESTINATION_CERT_NAME}/g" \
-  | kubectl \
+    create secret generic "${DESTINATION_CERT_NAME}" --namespace="${PREVIEW_NAMESPACE}" --dry-run=client -oyaml \
+    | yq4 eval-all ".data = $secret | .type = \"kubernetes.io/tls\"" \
+    | kubectl \
       --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
       --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      apply --namespace="${PREVIEW_NAMESPACE}" -f -
+      apply -f -
 }
 
-# Used by blobserve
-function copyImagePullSecret {
-  local exists
-
-  # hasPullSecret
-  exists="$(
-    kubectl \
-      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-      --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      get secret ${GITPOD_IMAGE_PULL_SECRET_NAME} \
-        --namespace "${PREVIEW_NAMESPACE}" \
-        --ignore-not-found
-  )"
-
-  if [[ -n "${exists}" ]]; then
-    return
-  fi
-
-  imagePullAuth=$(
-    printf "%s" "_json_key:$(kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" get secret ${GITPOD_IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
-    | yq r - data['.dockerconfigjson'] \
-    | base64 -d)" | base64 -w 0
-  )
-
-  cat <<EOF > "${GITPOD_IMAGE_PULL_SECRET_NAME}"
-  {
-    "auths": {
-      "eu.gcr.io": { "auth": "${imagePullAuth}" },
-      "europe-docker.pkg.dev": { "auth": "${imagePullAuth}" }
-    }
-  }
-EOF
-
+function refreshImagePullSecret {
   kubectl \
     --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
     --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    create secret docker-registry ${GITPOD_IMAGE_PULL_SECRET_NAME} \
-      --namespace ${PREVIEW_NAMESPACE} \
-      --from-file=.dockerconfigjson=./${GITPOD_IMAGE_PULL_SECRET_NAME}
-
-  rm -f ${GITPOD_IMAGE_PULL_SECRET_NAME}
+    apply -f "$SCRIPT_PATH/../vm/template/gcr-pull-secret-job.yaml"
+  kubectl \
+    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+    delete job refresh-job --ignore-not-found
+  kubectl \
+    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+    create job refresh-job --from=cronjob/gcr-refresh-token
 }
 
 # Install Fluent-Bit sending logs to GCP
 function installFluentBit {
-    kubectl \
-      --kubeconfig "${DEV_KUBE_PATH}" \
-      --context "${DEV_KUBE_CONTEXT}" \
-      --namespace werft \
-      get secret "fluent-bit-external" -o yaml \
-    | yq d - 'metadata.namespace' \
-    | yq d - 'metadata.uid' \
-    | yq d - 'metadata.resourceVersion' \
-    | yq d - 'metadata.creationTimestamp' \
-    | yq d - 'metadata.ownerReferences' \
-    | sed "s/werft/${PREVIEW_NAMESPACE}/g" \
-    | kubectl \
-      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-      --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      apply -n ${PREVIEW_NAMESPACE} -f -
-
     helm3 \
       --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
       --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
@@ -184,7 +130,7 @@ while ! copyCachedCertificate; do
   tries=$((tries + 1))
 done
 
-copyImagePullSecret
+refreshImagePullSecret
 installFluentBit
 
 # ========
@@ -224,6 +170,7 @@ rm shortname.yaml
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" certificate.name "${GITPOD_PROXY_SECRET_NAME}"
 yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.inCluster "false"
+
 yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.external.url "${GITPOD_CONTAINER_REGISTRY_URL}"
 yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.external.certificate.kind secret
 yq w -i "${INSTALLER_CONFIG_PATH}" containerRegistry.external.certificate.name "${GITPOD_IMAGE_PULL_SECRET_NAME}"
@@ -297,7 +244,8 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.ide.ideMetrics.enabledErrorRepor
 
 if [[ "${GITPOD_WITH_DEDICATED_EMU}" != "true" ]]
 then
-  for row in $(kubectl --kubeconfig "$DEV_KUBE_PATH" --context "${DEV_KUBE_CONTEXT}" get secret preview-envs-authproviders-harvester --namespace=keys -o jsonpath="{.data.authProviders}" \
+  secret=$(gcloud secrets versions access latest --secret="preview-envs-authproviders" --project=${PREVIEW_GCP_PROJECT})
+  for row in $(gcloud secrets versions access latest --secret="preview-envs-authproviders" --project=${PREVIEW_GCP_PROJECT}  | yq r - "authProviders" \
   | base64 -d -w 0 \
   | yq r - authProviders -j \
   | jq -r 'to_entries | .[] | @base64'); do
@@ -333,16 +281,14 @@ fi
 #
 if [[ "${GITPOD_WITH_DEDICATED_EMU}" != "true" ]]
 then
-  kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret stripe-api-keys -o yaml > stripe-api-keys.secret.yaml
-  yq w -i stripe-api-keys.secret.yaml metadata.namespace "default"
-  yq d -i stripe-api-keys.secret.yaml metadata.creationTimestamp
-  yq d -i stripe-api-keys.secret.yaml metadata.uid
-  yq d -i stripe-api-keys.secret.yaml metadata.resourceVersion
-  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" stripe-api-keys.secret.yaml
-  rm -f stripe-api-keys.secret.yaml
-
-  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeSecret" "stripe-api-keys"
-  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "stripe-config"
+  secret=$(gcloud secrets versions access latest --secret="stripe-api-keys" --project=${PREVIEW_GCP_PROJECT})
+  kubectl \
+    create secret generic "stripe-api-keys" --namespace="${PREVIEW_NAMESPACE}" --dry-run=client -oyaml \
+    | yq4 eval-all ".data = $secret" \
+    | kubectl \
+      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+      --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+      apply -n ${PREVIEW_NAMESPACE} -f -
 fi
 
 #
@@ -350,13 +296,14 @@ fi
 #
 if [[ "${GITPOD_WITH_DEDICATED_EMU}" != "true" ]]
 then
-  kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret linked-in -o yaml > linked-in.secret.yaml
-  yq w -i linked-in.secret.yaml metadata.namespace "default"
-  yq d -i linked-in.secret.yaml metadata.creationTimestamp
-  yq d -i linked-in.secret.yaml metadata.uid
-  yq d -i linked-in.secret.yaml metadata.resourceVersion
-  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" linked-in.secret.yaml
-  rm -f linked-in.secret.yaml
+  secret=$(gcloud secrets versions access latest --secret="linked-in" --project=${PREVIEW_GCP_PROJECT})
+  kubectl \
+    create secret generic "linked-in" --namespace="${PREVIEW_NAMESPACE}" --dry-run=client -oyaml \
+    | yq4 eval-all ".data = $secret" \
+    | kubectl \
+      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+      --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+      apply -n ${PREVIEW_NAMESPACE} -f -
 
   yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.linkedInSecret" "linked-in"
 fi
@@ -364,21 +311,23 @@ fi
 #
 # configureSSHGateway
 #
-kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" --namespace keys get secret host-key -o yaml \
-| yq w - metadata.namespace ${PREVIEW_NAMESPACE} \
-| yq d - metadata.uid \
-| yq d - metadata.resourceVersion \
-| yq d - metadata.creationTimestamp > host-key.yaml
-diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" host-key.yaml
-rm -f host-key.yaml
+secret=$(gcloud secrets versions access latest --secret="host-key" --project=${PREVIEW_GCP_PROJECT})
+kubectl \
+  create secret generic "host-key" --namespace="${PREVIEW_NAMESPACE}" --dry-run=client -oyaml \
+  | yq4 eval-all ".data = $secret" \
+  | kubectl \
+    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+    apply -n ${PREVIEW_NAMESPACE} -f -
 
-kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" --namespace keys get secret ssh-ca -o yaml \
-| yq w - metadata.namespace ${PREVIEW_NAMESPACE} \
-| yq d - metadata.uid \
-| yq d - metadata.resourceVersion \
-| yq d - metadata.creationTimestamp > ssh-ca.yaml
-diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" ssh-ca.yaml
-rm -f ssh-ca.yaml
+secret=$(gcloud secrets versions access latest --secret="ssh-ca" --project=${PREVIEW_GCP_PROJECT})
+kubectl \
+  create secret generic "ssh-ca" --namespace="${PREVIEW_NAMESPACE}" --dry-run=client -oyaml \
+  | yq4 eval-all ".data = $secret" \
+  | kubectl \
+    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+    apply -n ${PREVIEW_NAMESPACE} -f -
 
 yq w -i "${INSTALLER_CONFIG_PATH}" sshGatewayHostKey.kind "secret"
 yq w -i "${INSTALLER_CONFIG_PATH}" sshGatewayHostKey.name "host-key"
@@ -433,7 +382,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.temp
 # includeAnalytics
 #
 if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
-  GITPOD_ANALYTICS_SEGMENT_TOKEN="$(readWerftSecret "segment-staging-write-key" "token")"
+  GITPOD_ANALYTICS_SEGMENT_TOKEN="$(gcloud secrets versions access latest --secret="segment-staging-write-key" --project=${PREVIEW_GCP_PROJECT})"
   if [[ -z "${GITPOD_ANALYTICS_SEGMENT_TOKEN}" ]]; then
     echo "GITPOD_ANALYTICS_SEGMENT_TOKEN is empty"
     exit 1
@@ -475,13 +424,14 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.spicedb.secretRef "spiced
 #
 # Configure spicedb secret
 #
-kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret spicedb-secret -o yaml > spicedb-secret.yaml
-yq w -i spicedb-secret.yaml metadata.namespace "default"
-yq d -i spicedb-secret.yaml metadata.creationTimestamp
-yq d -i spicedb-secret.yaml metadata.uid
-yq d -i spicedb-secret.yaml metadata.resourceVersion
-diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" spicedb-secret.yaml
-rm -f spicedb-secret.yaml
+secret=$(gcloud secrets versions access latest --secret="spicedb-secret" --project=${PREVIEW_GCP_PROJECT})
+kubectl \
+  create secret generic "spicedb-secret" --namespace="${PREVIEW_NAMESPACE}" --dry-run=client -oyaml \
+  | yq4 eval-all ".data = $secret" \
+  | kubectl \
+    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+    apply -n ${PREVIEW_NAMESPACE} -f -
 
 #
 # Enable "Frontend Dev" on all preview envs
@@ -563,6 +513,7 @@ log_info "Applying manifests (installing)"
 # avoid random werft namespace errors
 kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" create namespace werft || true
 kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" delete -n "${PREVIEW_NAMESPACE}" job migrations || true
+kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" delete -n "${PREVIEW_NAMESPACE}" job spicedb-migrations || true
 # export the function so we can use it in xargs
 export -f diff-apply
 mkdir temp-installer || true

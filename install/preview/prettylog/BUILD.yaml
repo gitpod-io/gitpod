@@ -5,8 +5,6 @@
 packages:
   - name: app
     type: go
-    argdeps:
-      - SEGMENT_IO_TOKEN
     srcs:
       - "main.go"
       - "go.sum"
@@ -15,11 +13,3 @@ packages:
       - CGO_ENABLED=0
     config:
       packaging: app
-      buildCommand:
-        [
-          "go",
-          "build",
-          "-trimpath",
-          "-ldflags",
-          "-buildid= -w -s -X 'main.segmentIOToken=${SEGMENT_IO_TOKEN}'",
-        ]

@@ -5,12 +5,12 @@ variable "preview_name" {
 
 variable "preview_ip" {
   type        = string
-  description = "IP for the preview env: ingress in Harvester cluster, or machine ip"
+  description = "IP for the preview env: ingress in cluster, or machine ip"
 }
 
 variable "workspace_ip" {
   type        = string
-  description = "IP for the workspace: LB in dev cluster for Harvester previews, or machine ip"
+  description = "IP for the workspace: LB in dev cluster for previews, or machine ip"
 }
 
 variable "cert_issuer" {
