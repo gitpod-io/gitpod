@@ -31,7 +31,7 @@ jobs:
         env:
           PR_DESC: "${{ steps.pr-details.outputs.pr_body }}"
           MAIN_BRANCH: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
-          LEEWAY_REMOTE_CACHE_BUCKET: ${{ github.ref == 'refs/heads/main' && 'gitpod-core-leeway-cache-main' || 'leeway-cache-dev-3ac8ef5' }}
+          LEEWAY_REMOTE_CACHE_BUCKET: ${{ github.ref == 'refs/heads/main' && 'leeway-cache-main-c514a01' || 'leeway-cache-dev-3ac8ef5' }}
         run: |
           export LEEWAY_WORKSPACE_ROOT=$GITHUB_WORKSPACE
 

@@ -88,7 +88,7 @@ jobs:
             echo "workspace_feature_flags=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] workspace-feature-flags=).*?(?=\s*$)')"
             echo "with_integration_tests=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] with-integration-tests=).*?(?=\s*$)')"
             echo "analytics=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] analytics=).*?(?=\s*$)')"
-            echo "leeway_cache_bucket=$([[ "$MAIN_BRANCH"  = "true" ]] && echo "gitpod-core-leeway-cache-main" || echo "leeway-cache-dev-3ac8ef5")"
+            echo "leeway_cache_bucket=$([[ "$MAIN_BRANCH"  = "true" ]] && echo "leeway-cache-main-c514a01" || echo "leeway-cache-dev-3ac8ef5")"
             echo "image_repo_base=$([[ "$MAIN_BRANCH"  = "true" ]] && echo "eu.gcr.io/gitpod-core-dev" || echo "eu.gcr.io/gitpod-dev-artifact")"
           } >> $GITHUB_OUTPUT
 
