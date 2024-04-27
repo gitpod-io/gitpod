@@ -65,7 +65,7 @@ jobs:
     outputs:
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
-      version: ${{ steps.configuration.outputs.image_repo_base }}
+      image_repo_base: ${{ steps.configuration.outputs.image_repo_base }}
     steps:
       - uses: actions/checkout@v4
       - name: "Set outputs"
