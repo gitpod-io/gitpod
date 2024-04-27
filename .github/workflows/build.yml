@@ -362,7 +362,6 @@ jobs:
         with:
           name: ${{ needs.configuration.outputs.preview_name }}
           version: ${{needs.configuration.outputs.version}}
-          previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           with_dedicated_emu: ${{needs.configuration.outputs.with_dedicated_emulation}}
           analytics: ${{needs.configuration.outputs.analytics}}
           workspace_feature_flags: ${{needs.configuration.outputs.workspace_feature_flags}}
