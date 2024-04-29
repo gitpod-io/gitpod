@@ -22,7 +22,7 @@ defaultArgs:
   riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2024.1.1.tar.gz"
   clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2024.1.1.tar.gz"
   jbBackendVersion: "latest"
-  dockerVersion: "20.10.24"
+  dockerVersion: "26.0.1"
   dockerComposeVersion: "2.24.5-gitpod.1"
 provenance:
   enabled: true
