@@ -51,7 +51,8 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
              "address": "0.0.0.0:9001"
            }
          }
-       }
+       },
+	   "gitpodHost": "https://test.domain.everything.awesome.is"
      }`,
 		cfgmap.Data[configJSONFilename],
 	)
