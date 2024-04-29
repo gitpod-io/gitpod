@@ -128,9 +128,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:          HTTPSProxyPortName,
 				ContainerPort: HTTPSProxyPort,
 			}, {
-				Name:          baseserver.BuiltinMetricsPortName,
-				ContainerPort: baseserver.BuiltinMetricsPort,
-			}, {
 				Name:          SSHPortName,
 				ContainerPort: SSHServicePort,
 			}},
