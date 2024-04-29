@@ -232,7 +232,9 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 expiryDate,
             });
         } catch (error) {
-            log.error(`(${this.strategyName}) Failed to refresh token!`, { error: new TrustedValue(error) });
+            log.error({ userId: user.id }, `(${this.strategyName}) Failed to refresh token!`, {
+                error: new TrustedValue(error),
+            });
             throw error;
         }
     }

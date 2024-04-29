@@ -61,7 +61,7 @@ export class TokenService implements TokenProvider {
                 expiryThreshold !== TokenService.DEFAULT_EXPIRY_THRESHOLD &&
                 t.expiryDate >= defaultAboutToExpireTime.toISOString()
             ) {
-                log.debug({ userId }, `Token refreshed with an extended threshold not covered by the default one`, {
+                log.info({ userId }, `Token refreshed with an extended threshold not covered by the default one`, {
                     host,
                     expiryThreshold,
                     tokenExpiresAt: t.expiryDate,
