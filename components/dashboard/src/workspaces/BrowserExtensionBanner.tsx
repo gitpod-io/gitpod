@@ -16,7 +16,7 @@ import { trackEvent } from "../Analytics";
 import bitbucketButton from "../images/browser-extension/bitbucket.webp";
 import githubButton from "../images/browser-extension/github.webp";
 import gitlabButton from "../images/browser-extension/gitlab.webp";
-import { uniq } from "lodash";
+import uniq from "lodash/uniq";
 
 const browserExtensionImages = {
     Bitbucket: bitbucketButton,
