@@ -43,7 +43,7 @@ const UserContextProvider: React.FC = ({ children }) => {
             const w = window as any;
             const _gp = w._gp || (w._gp = {});
 
-            const frequencyMs = 1000 * 60 * 60; // 1 hour
+            const frequencyMs = 1000 * 60 * 5; // 5 mins
             if (!_gp.jwttimer) {
                 // Store the timer on the window, to avoid queuing up multiple
                 _gp.jwtTimer = setInterval(() => {
