@@ -3,6 +3,7 @@ permissions:
   id-token: write # This is required for requesting the JWT
   contents: write # This is required for actions/checkout and create release
   pull-requests: write
+  actions: write  # This is required for trigger another action which is used by JetBrains integrateion tests
 on:
   pull_request:
     types: [ opened, edited ]
