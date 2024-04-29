@@ -32,7 +32,7 @@ func BandwidthFromQuantity(v resource.Quantity) Bandwidth {
 	return Bandwidth(v.MilliValue())
 }
 
-// BandwithFromUsage computes the bandwidth neccesary to realise actual CPU time
+// BandwithFromUsage computes the bandwidth necessary to realise actual CPU time
 // consumption represented by two point samples.
 func BandwithFromUsage(t0, t1 CPUTime, dt time.Duration) (Bandwidth, error) {
 	if dt == 0 {

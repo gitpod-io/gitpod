@@ -214,7 +214,7 @@ type WorkspaceInstanceForUsage struct {
 }
 
 // WorkspaceRuntimeSeconds computes how long this WorkspaceInstance has been running.
-// If the instance is still running (no stopping time set), maxStopTime is used to to compute the duration - this is an upper bound on stop
+// If the instance is still running (no stopping time set), maxStopTime is used to compute the duration - this is an upper bound on stop
 func (i *WorkspaceInstanceForUsage) WorkspaceRuntimeSeconds(stopTimeIfInstanceIsStillRunning time.Time) int64 {
 	start := i.StartedTime.Time()
 	stop := stopTimeIfInstanceIsStillRunning

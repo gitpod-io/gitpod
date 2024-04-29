@@ -179,7 +179,7 @@ type WorkspaceTimeoutConfiguration struct {
 
 // InitProbeConfiguration configures the behaviour of the workspace ready probe
 type InitProbeConfiguration struct {
-	// Disabled disables the workspace init probe - this is only neccesary during tests and in noDomain environments.
+	// Disabled disables the workspace init probe - this is only necessary during tests and in noDomain environments.
 	Disabled bool `json:"disabled,omitempty"`
 
 	// Timeout is the HTTP GET timeout during each probe attempt. Defaults to 5 seconds.

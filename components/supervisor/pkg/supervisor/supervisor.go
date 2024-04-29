@@ -872,7 +872,7 @@ supervisorLoop:
 
 func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan struct{}, ideReady *ideReadyState, s *ideStatus, ide IDEKind) {
 	go func() {
-		// prepareIDELaunch sets Pdeathsig, which on on Linux, will kill the
+		// prepareIDELaunch sets Pdeathsig, which on Linux, will kill the
 		// child process when the thread dies, not when the process dies.
 		// runtime.LockOSThread ensures that as long as this function is
 		// executing that OS thread will still be around.

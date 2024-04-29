@@ -152,7 +152,7 @@ func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, option
 		// Also, we cannot do this in wsinit because we're dropping all the privileges that would be
 		// required for this operation.
 		//
-		// With FWB this bit becomes unneccesary.
+		// With FWB this bit becomes unnecessary.
 		UID: (wsinit.GitpodUID + 100000 - 1),
 		GID: (wsinit.GitpodGID + 100000 - 1),
 		IdMappings: []archive.IDMapping{
