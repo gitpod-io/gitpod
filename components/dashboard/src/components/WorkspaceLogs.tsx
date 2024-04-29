@@ -7,7 +7,7 @@
 import EventEmitter from "events";
 import { useContext, useEffect, useMemo, useRef } from "react";
 import { Terminal, ITerminalOptions, ITheme } from "xterm";
-import debounce from "lodash.debounce";
+import debounce from "lodash/debounce";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { ThemeContext } from "../theme-context";

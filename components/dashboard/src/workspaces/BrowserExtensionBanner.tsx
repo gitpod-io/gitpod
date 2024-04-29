@@ -16,6 +16,7 @@ import { trackEvent } from "../Analytics";
 import bitbucketButton from "../images/browser-extension/bitbucket.webp";
 import githubButton from "../images/browser-extension/github.webp";
 import gitlabButton from "../images/browser-extension/gitlab.webp";
+import uniq from "lodash/uniq";
 
 const browserExtensionImages = {
     Bitbucket: bitbucketButton,
@@ -66,10 +67,12 @@ const getDeduplicatedScmProviders = (user: User, descriptions: AuthProviderDescr
         .filter(isIdentity)
         .map((provider) => provider.type);
 
-    return userProviders
+    const unifiedProviders = userProviders
         .map((type) => unifyProviderType(type))
         .filter(isAuthProviderType)
         .sort();
+
+    return uniq(unifiedProviders);
 };
 
 const displayScmProviders = (providers: UnifiedAuthProvider[]): string => {
