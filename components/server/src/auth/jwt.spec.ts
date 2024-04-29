@@ -49,7 +49,7 @@ class TestAuthJWT {
         const subject = "user-id";
         const encoded = await sut.sign(subject, {});
 
-        const decoded = await sut.verify(encoded);
+        const decoded = (await sut.verify(encoded)).payload;
 
         expect(decoded["sub"]).to.equal(subject);
         expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
@@ -70,7 +70,7 @@ class TestAuthJWT {
         });
 
         // should use the second validating key and succesfully verify
-        const decoded = await sut.verify(encoded);
+        const decoded = (await sut.verify(encoded)).payload;
 
         expect(decoded["sub"]).to.equal(subject);
         expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
