@@ -548,3 +548,7 @@ leeway run components:add-smith-token \
   -DPREVIEW_NAMESPACE="${PREVIEW_NAMESPACE}"
 
 log_success "Installation is happy: https://${DOMAIN}/workspaces"
+
+leeway run dev/preview:deploy-monitoring-satellite
+
+log_success "Installation is still happy: https://${DOMAIN}/workspaces"

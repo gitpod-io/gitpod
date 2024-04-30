@@ -34,4 +34,4 @@ ensure_gcloud_auth
 
 leeway run dev/preview:create-preview dev/preview:build
 previewctl install-context --timeout 10m
-leeway run dev/preview:deploy-gitpod dev/preview:deploy-monitoring-satellite
+leeway run dev/preview:deploy-gitpod
