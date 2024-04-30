@@ -16,7 +16,7 @@ export function load(): Promise<{
         frame.src = startUrl.toString();
         frame.style.visibility = "visible";
         frame.className = "gitpod-frame loading";
-        frame.allow = "clipboard-read;"
+        frame.allow = "clipboard-write"
         document.body.prepend(frame);
 
         frame.onload = () => {
