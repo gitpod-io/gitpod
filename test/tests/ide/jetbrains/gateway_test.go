@@ -336,7 +336,7 @@ func TestIntellij(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "intellij", "IIU", "https://github.com/jeanp413/spring-petclinic")
+			JetBrainsIDETest(ctx, t, cfg, "intellij", "IU", "https://github.com/jeanp413/spring-petclinic")
 			return testCtx
 		}).
 		Feature()
@@ -374,7 +374,7 @@ func TestPyCharm(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "pycharm", "PCP", "https://github.com/gitpod-samples/template-python-django")
+			JetBrainsIDETest(ctx, t, cfg, "pycharm", "PY", "https://github.com/gitpod-samples/template-python-django")
 			return testCtx
 		}).
 		Feature()
@@ -394,7 +394,7 @@ func TestRubyMine(t *testing.T) {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 			// TODO: open comment after https://github.com/gitpod-io/gitpod/issues/16302 resolved
-			// JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-samples/template-ruby-on-rails-postgres")
+			// JetBrainsIDETest(ctx, t, cfg, "rubymine", "RM", "https://github.com/gitpod-samples/template-ruby-on-rails-postgres")
 			JetBrainsIDETest(ctx, t, cfg, "rubymine", "RM", "https://github.com/gitpod-io/Gitpod-Ruby-On-Rails")
 			return testCtx
 		}).
