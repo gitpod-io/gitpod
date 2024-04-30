@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -193,28 +194,24 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 
 	if os.Getenv("TEST_IN_WORKSPACE") == "true" {
 		t.Logf("run test in workspace")
-		err = testWithoutGithubAction(ctx, t, gatewayLink, oauthToken, strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"), useLatest)
+		go testWithoutGithubAction(ctx, gatewayLink, oauthToken, strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"), useLatest)
+	} else {
+		t.Logf("trigger github action")
+		_, err = githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, "gitpod-io", "gitpod", "jetbrains-integration-test.yml", github.CreateWorkflowDispatchEventRequest{
+			Ref: os.Getenv("TEST_BUILD_REF"),
+			Inputs: map[string]interface{}{
+				"secret_gateway_link": gatewayLink,
+				"secret_access_token": oauthToken,
+				"secret_endpoint":     strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"),
+				"jb_product":          ide,
+				"use_latest":          fmt.Sprintf("%v", useLatest),
+				"build_id":            os.Getenv("TEST_BUILD_ID"),
+				"build_url":           os.Getenv("TEST_BUILD_URL"),
+			},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return
-	}
-
-	t.Logf("trigger github action")
-	_, err = githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, "gitpod-io", "gitpod", "jetbrains-integration-test.yml", github.CreateWorkflowDispatchEventRequest{
-		Ref: os.Getenv("TEST_BUILD_REF"),
-		Inputs: map[string]interface{}{
-			"secret_gateway_link": gatewayLink,
-			"secret_access_token": oauthToken,
-			"secret_endpoint":     strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"),
-			"jb_product":          ide,
-			"use_latest":          fmt.Sprintf("%v", useLatest),
-			"build_id":            os.Getenv("TEST_BUILD_ID"),
-			"build_url":           os.Getenv("TEST_BUILD_URL"),
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	checkUrl := fmt.Sprintf("https://63342-%s/codeWithMe/unattendedHostStatus?token=gitpod", strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"))
@@ -237,6 +234,48 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 	if !testStatus {
 		t.Fatal(ctx.Err())
 	}
+	t.Log("checking task terminals")
+
+	testStatus = false
+	taskCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	for taskCtx.Err() == nil {
+		time.Sleep(1 * time.Second)
+		ok, err := tasksAttachedTest(strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !ok {
+			continue
+		} else {
+			testStatus = true
+			t.Log("tasks found")
+			break
+		}
+	}
+	if !testStatus {
+		t.Fatal(taskCtx.Err())
+	}
+}
+
+func tasksAttachedTest(endpoint string) (bool, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	url := fmt.Sprintf("https://28082-%s", endpoint)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return false, fmt.Errorf("failed to create request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch UI structure: %w", err)
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, fmt.Errorf("failed to read body: %w", err)
+	}
+	return strings.Contains(string(b), "Run PetClinic app") && strings.Contains(string(b), "Task 2"), nil
 }
 
 func resolveDesktopIDELink(info *protocol.WorkspaceInfo, ide string, ownerToken string, t *testing.T) (string, error) {

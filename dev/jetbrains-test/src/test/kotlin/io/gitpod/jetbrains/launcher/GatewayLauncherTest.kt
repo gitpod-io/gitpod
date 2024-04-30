@@ -33,7 +33,6 @@ class GatewayLauncherTest {
         private var gatewayProcess: Process? = null
         private var tmpDir: Path = Files.createTempDirectory("launcher")
         private lateinit var remoteRobot: RemoteRobot
-        private lateinit var mainWindowRemoteRobot: RemoteRobot
 
         @AfterAll
         @JvmStatic
@@ -70,7 +69,6 @@ class GatewayLauncherTest {
 
         val gatewayLink = System.getProperty("gateway_link")
         val gatewayPluginPath = System.getProperty("gateway_plugin_path")
-        val workspaceEndpoint = System.getProperty("ws_endpoint")
         if (gatewayPluginPath == null || gatewayPluginPath == "") {
             fail("please provider gateway plugin path")
         }
@@ -81,7 +79,6 @@ class GatewayLauncherTest {
 
         val client = OkHttpClient()
         remoteRobot = RemoteRobot("http://localhost:8082", client)
-        mainWindowRemoteRobot = RemoteRobot("https://28082-$workspaceEndpoint", client)
         val ideDownloader = IdeDownloader(client)
 
         val useLatest = System.getenv("TEST_USE_LATEST")?.toBoolean() ?: false
@@ -98,27 +95,14 @@ class GatewayLauncherTest {
             listOf(gatewayLink)
         )
         waitFor(Duration.ofSeconds(90), Duration.ofSeconds(5)) {
-            val ok1 = remoteRobot.isAvailable()
-            // TODO: INACCESSIBLE
-            val ok2 = mainWindowRemoteRobot.isAvailable()
-            log.atInfo().log("isAvailable========================================== gateway=$ok1 main=$ok2")
-            ok1 && ok2
-        }
-
-        val taskAttached = mainWindowRemoteRobot.findAll(ComponentFixture::class.java, byXpath("//div[@class='ContentTabLabel' and starts-with(@text, 'Run PetClinic app')]"))
-        if (taskAttached.size != 1) {
-            fail("Task Run PetClinic app is not attached")
-        } else {
-            log.atInfo().log("Task found")
+            remoteRobot.isAvailable()
         }
 
         log.atInfo().log("remoteRobot available")
-        Thread.sleep(1000 * 60 * 10)
+        Thread.sleep(1000 * 120)
     }
 }
 
 fun RemoteRobot.isAvailable(): Boolean = runCatching {
     callJs<Boolean>("true")
 }.getOrDefault(false)
-
-// ssh -L 28082:127.0.0.1:28082 -N ...

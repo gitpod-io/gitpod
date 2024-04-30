@@ -24,27 +24,26 @@ func (t *testLogWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// TODO: make it false
-const localDebug = true
+const localDebug = false
 
-func testWithoutGithubAction(ctx context.Context, t *testing.T, gatewayLink, gitpodAccessToken, secretEndpoint string, useLatest bool) error {
+func testWithoutGithubAction(ctx context.Context, gatewayLink, gitpodAccessToken, secretEndpoint string, useLatest bool) {
+	scriptName := "dev/jetbrains-test:test-stable"
+	if useLatest {
+		scriptName = "dev/jetbrains-test:test-latest"
+	}
+
 	if localDebug {
-		fmt.Printf("========env========\n\ncd /workspace/gitpod/dev/jetbrains-test\nexport GATEWAY_LINK=%s\nexport GITPOD_TEST_ACCESSTOKEN=\"%s\"\nexport WS_ENDPOINT=%s\n./test.sh\n\nAccess https://28082-%s to see JetBrains UI", gatewayLink, gitpodAccessToken, secretEndpoint, secretEndpoint)
+		fmt.Printf("========env========\n\nexport DISPLAY=:0\nexport GATEWAY_LINK=\"%s\"\nexport GITPOD_TEST_ACCESSTOKEN=\"%s\"\nexport WS_ENDPOINT=%s\nleeway run %s -Dversion=integration-test -DpublishToJBMarketplace=false\n\nAccess https://28082-%s to see JetBrains UI", gatewayLink, gitpodAccessToken, secretEndpoint, scriptName, secretEndpoint)
 		os.Exit(1)
 	}
 	cmdEnv := os.Environ()
 	cmdEnv = append(cmdEnv, "GATEWAY_LINK="+gatewayLink)
 	cmdEnv = append(cmdEnv, "GITPOD_TEST_ACCESSTOKEN="+gitpodAccessToken)
 	cmdEnv = append(cmdEnv, "WS_ENDPOINT="+secretEndpoint)
-
-	scriptName := "dev/jetbrains-test:test-stable"
-	if useLatest {
-		scriptName = "dev/jetbrains-test:test-latest"
-	}
 	cmd := exec.CommandContext(ctx, "leeway", "run", scriptName, "-Dversion=integration-test", "-DpublishToJBMarketplace=false")
 	cmd.Env = cmdEnv
 	// writer := &testLogWriter{t: t}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout
-	return cmd.Run()
+	cmd.Run()
 }

@@ -14,7 +14,6 @@ test {
     systemProperty('video.save.mode', 'ALL')
     systemProperty('gateway_link', System.getenv('GATEWAY_LINK'))
     systemProperty('gateway_plugin_path', System.getenv('GATEWAY_PLUGIN_PATH'))
-    systemProperty('ws_endpoint', System.getenv('WS_ENDPOINT'))
     useJUnitPlatform()
 }
 
