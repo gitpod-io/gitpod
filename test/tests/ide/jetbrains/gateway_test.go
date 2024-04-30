@@ -255,7 +255,7 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 	checkIDEALogs()
 
 	if len(fatalMessages) > 0 {
-		t.Fatalf("::error:: tests fail: \n%s", strings.Join(fatalMessages, "\n"))
+		t.Fatalf("[error] tests fail: \n%s", strings.Join(fatalMessages, "\n"))
 	}
 }
 
