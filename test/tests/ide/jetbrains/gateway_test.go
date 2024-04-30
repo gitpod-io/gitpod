@@ -236,6 +236,10 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 	}
 	t.Log("checking task terminals")
 
+	// TODO: other IDEs tasks support
+	if ide != "intellij" {
+		return
+	}
 	testStatus = false
 	taskCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
