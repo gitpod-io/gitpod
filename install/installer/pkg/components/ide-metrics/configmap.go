@@ -353,6 +353,22 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 		{
+			Name: "gitpod_jb_backend_started_total",
+			Help: "Total number of JetBrains backend-plugin starts",
+			Labels: []config.LabelAllowList{
+				{
+					Name:         "product",
+					AllowValues:  []string{"*"},
+					DefaultValue: "unknown",
+				},
+				{
+					Name:         "qualifier",
+					AllowValues:  []string{"*"},
+					DefaultValue: "unknown",
+				},
+			},
+		},
+		{
 			Name: "service_waiter_skip_components_result_total",
 			Help: "Total number of wait result of service_waiter/component service_waiter_skip_components flag",
 			Labels: []config.LabelAllowList{

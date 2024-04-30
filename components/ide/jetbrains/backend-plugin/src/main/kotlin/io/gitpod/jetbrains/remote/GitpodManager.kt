@@ -86,6 +86,13 @@ class GitpodManager : Disposable {
         LowMemoryWatcher.register({
             lowMemoryCounter.labels(backendKind, backendQualifier).inc()
          }, LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC, this)
+
+        var startedTotalCounter = Counter.build()
+            .name("gitpod_jb_backend_started_total")
+            .help("Total number of JetBrains backend-plugin starts")
+            .labelNames("product", "qualifier")
+            .register(registry)
+        startedTotalCounter.labels(backendKind, backendQualifier).inc()
     }
 
     init {
