@@ -317,7 +317,7 @@ func TestGoLand(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "goland", "https://github.com/gitpod-samples/template-golang-cli")
+			JetBrainsIDETest(ctx, t, cfg, "goland", "GO", "https://github.com/gitpod-samples/template-golang-cli")
 			return testCtx
 		}).
 		Feature()
@@ -336,7 +336,7 @@ func TestIntellij(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "intellij", "https://github.com/jeanp413/spring-petclinic")
+			JetBrainsIDETest(ctx, t, cfg, "intellij", "IIU", "https://github.com/jeanp413/spring-petclinic")
 			return testCtx
 		}).
 		Feature()
@@ -355,7 +355,7 @@ func TestPhpStorm(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "phpstorm", "https://github.com/gitpod-samples/template-php-laravel-mysql")
+			JetBrainsIDETest(ctx, t, cfg, "phpstorm", "PS", "https://github.com/gitpod-samples/template-php-laravel-mysql")
 			return testCtx
 		}).
 		Feature()
@@ -374,7 +374,7 @@ func TestPyCharm(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "pycharm", "https://github.com/gitpod-samples/template-python-django")
+			JetBrainsIDETest(ctx, t, cfg, "pycharm", "PCP", "https://github.com/gitpod-samples/template-python-django")
 			return testCtx
 		}).
 		Feature()
@@ -395,7 +395,7 @@ func TestRubyMine(t *testing.T) {
 			defer cancel()
 			// TODO: open comment after https://github.com/gitpod-io/gitpod/issues/16302 resolved
 			// JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-samples/template-ruby-on-rails-postgres")
-			JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-io/Gitpod-Ruby-On-Rails")
+			JetBrainsIDETest(ctx, t, cfg, "rubymine", "RM", "https://github.com/gitpod-io/Gitpod-Ruby-On-Rails")
 			return testCtx
 		}).
 		Feature()
@@ -414,7 +414,7 @@ func TestWebStorm(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "webstorm", "https://github.com/gitpod-samples/template-typescript-react")
+			JetBrainsIDETest(ctx, t, cfg, "webstorm", "WS", "https://github.com/gitpod-samples/template-typescript-react")
 			return testCtx
 		}).
 		Feature()
@@ -433,7 +433,7 @@ func TestRider(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "rider", "https://github.com/gitpod-samples/template-dotnet-core-cli-csharp")
+			JetBrainsIDETest(ctx, t, cfg, "rider", "RD", "https://github.com/gitpod-samples/template-dotnet-core-cli-csharp")
 			return testCtx
 		}).
 		Feature()
@@ -453,7 +453,7 @@ func TestCLion(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "clion", "https://github.com/gitpod-samples/template-cpp")
+			JetBrainsIDETest(ctx, t, cfg, "clion", "CL", "https://github.com/gitpod-samples/template-cpp")
 			return testCtx
 		}).
 		Feature()
