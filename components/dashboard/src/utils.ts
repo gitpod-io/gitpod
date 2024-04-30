@@ -77,7 +77,9 @@ export function inResource(pathname: string, resources: string[]): boolean {
     return resources.map((res) => trimmedResource.startsWith(trimResource(res))).some(Boolean);
 }
 
-export const copyToClipboard = navigator.clipboard.writeText.bind(navigator.clipboard);
+export const copyToClipboard = async (data: string) => {
+    await navigator.clipboard.writeText(data);
+};
 
 export function getURLHash() {
     return window.location.hash.replace(/^[#/]+/, "");
