@@ -180,7 +180,7 @@ export class WorkspaceManagerBridge implements Disposable {
     protected async handleStatusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus) {
         const start = performance.now();
         const status = rawStatus.toObject();
-        log.info("Handling WorkspaceStatus update", filterStatus(status));
+        log.debug("Handling WorkspaceStatus update", filterStatus(status));
 
         if (!status.spec || !status.metadata || !status.conditions) {
             log.warn("Received invalid status update", status);
@@ -209,7 +209,7 @@ export class WorkspaceManagerBridge implements Disposable {
         }
         const durationMs = performance.now() - start;
         this.metrics.reportWorkspaceInstanceUpdateCompleted(durationMs / 1000, this.cluster.name, status.spec.type);
-        log.info(logCtx, "Successfully completed WorkspaceInstance status update");
+        log.debug(logCtx, "Successfully completed WorkspaceInstance status update");
     }
 
     private async statusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus) {

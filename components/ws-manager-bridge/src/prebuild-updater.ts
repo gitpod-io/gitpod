@@ -34,7 +34,7 @@ export class PrebuildUpdater {
         const workspaceId = status.metadata!.metaId!;
         const logCtx: LogContext = { instanceId, workspaceId, userId };
 
-        log.info(logCtx, "Handling prebuild workspace update.", filterStatus(status));
+        log.debug(logCtx, "Handling prebuild workspace update.", filterStatus(status));
 
         const span = TraceContext.startSpan("updatePrebuiltWorkspace", ctx);
         try {
@@ -46,14 +46,14 @@ export class PrebuildUpdater {
             }
             span.setTag("updatePrebuiltWorkspace.prebuildId", prebuild.id);
             span.setTag("updatePrebuiltWorkspace.workspaceInstance.statusVersion", status.statusVersion);
-            log.info(logCtx, "Found prebuild record in database.", prebuild);
+            log.debug(logCtx, "Found prebuild record in database.", prebuild);
 
             // prebuild.statusVersion = 0 is the default value in the DB, these shouldn't be counted as stale in our metrics
             if (prebuild.statusVersion > 0 && prebuild.statusVersion >= status.statusVersion) {
                 // We've gotten an event which is younger than one we've already processed. We shouldn't process the stale one.
                 span.setTag("updatePrebuiltWorkspace.staleEvent", true);
                 this.prometheusExporter.recordStalePrebuildEvent();
-                log.info(logCtx, "Stale prebuild event received, skipping.");
+                log.warn(logCtx, "Stale prebuild event received, skipping.");
                 return;
             }
             prebuild.statusVersion = status.statusVersion;
