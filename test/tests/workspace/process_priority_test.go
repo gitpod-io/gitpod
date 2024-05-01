@@ -68,7 +68,7 @@ func TestProcessPriority(t *testing.T) {
 			defer rsa.Close()
 
 			t.Logf("waiting for the next ws-daemon tick, before running ps")
-			time.Sleep(11 * time.Second)
+			time.Sleep(15 * time.Second)
 
 			var res agent.ExecResponse
 			err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
