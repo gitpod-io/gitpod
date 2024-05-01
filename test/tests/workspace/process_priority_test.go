@@ -95,11 +95,9 @@ func TestProcessPriority(t *testing.T) {
 func checkProcessPriorities(t *testing.T, output string) {
 	t.Helper()
 
-	t.Log("output", output)
 	processes := strings.Split(output, "\n")
 	for _, p := range processes {
 		parts := strings.Fields(p)
-		t.Log("parts:", parts)
 		if len(parts) >= 2 {
 			checkProcessPriority(t, parts[0], parts[1])
 		}
@@ -113,8 +111,6 @@ func checkProcessPriority(t *testing.T, priority, process string) {
 	if err != nil {
 		return
 	}
-
-	t.Logf("checkProcessPriority, process {%s}, priority {%s} ", process, priority)
 
 	expectedPrio, err := determinePriority(process)
 	if err != nil {
