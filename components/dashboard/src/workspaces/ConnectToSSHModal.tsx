@@ -80,9 +80,9 @@ function SSHView(props: SSHProps) {
                         <span>The following shell command can be used to SSH into this workspace.</span>
                     ) : (
                         <span>
-                            The following shell command can be used to SSH into this workspace with a{" "}
+                            The following shell command can be used to SSH into this workspace with an{" "}
                             <Link to={settingsPathSSHKeys} className="gp-link">
-                                ssh key
+                                SSH key
                             </Link>
                             .
                         </span>
