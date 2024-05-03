@@ -62,7 +62,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
 
-		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionFalse))
+		workspace.UpsertConditionOnStatusChange(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionFalse))
 		return nil
 	case 1:
 		// continue below
@@ -139,17 +139,10 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		}
 	}
 
-	var workspaceContainerRunning bool
-	for _, cs := range pod.Status.ContainerStatuses {
-		if cs.Name == "workspace" {
-			workspaceContainerRunning = cs.State.Running != nil
-			break
-		}
-	}
-	if workspaceContainerRunning {
-		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionTrue))
+	if isWorkspaceContainerRunning(pod.Status.ContainerStatuses) {
+		workspace.UpsertConditionOnStatusChange(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionTrue))
 	} else {
-		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionFalse))
+		workspace.UpsertConditionOnStatusChange(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionFalse))
 	}
 
 	switch {
@@ -403,6 +396,18 @@ func (r *WorkspaceReconciler) extractFailure(ctx context.Context, ws *workspacev
 	}
 
 	return "", nil
+}
+
+func isWorkspaceContainerRunning(statuses []corev1.ContainerStatus) bool {
+	for _, cs := range statuses {
+		if cs.Name == "workspace" {
+			if cs.State.Running != nil {
+				return true
+			}
+			break
+		}
+	}
+	return false
 }
 
 // extractFailureFromLogs attempts to extract the last error message from a workspace

@@ -259,8 +259,6 @@ const (
 	VolumeAttached WorkspaceCondition = "VolumeAttached"
 	// VolumeMounted is true if the workspace's volume has been mounted on the node
 	VolumeMounted WorkspaceCondition = "VolumeMounted"
-	// ThroughputAdjusted is true if the throughput of the workspace volume has been adjusted
-	WorkspaceConditionThroughputAdjusted WorkspaceCondition = "ThroughputAdjusted"
 
 	// WorkspaceContainerRunning is true if the workspace container is running.
 	// Used to determine if a backup can be taken, only once the container is stopped.
@@ -393,14 +391,6 @@ func NewWorkspaceConditionNodeDisappeared() metav1.Condition {
 	}
 }
 
-func NewWorkspaceConditionThroughputAdjusted() metav1.Condition {
-	return metav1.Condition{
-		Type:               string(WorkspaceConditionThroughputAdjusted),
-		LastTransitionTime: metav1.Now(),
-		Status:             metav1.ConditionTrue,
-	}
-}
-
 func NewWorkspaceConditionContainerRunning(status metav1.ConditionStatus) metav1.Condition {
 	return metav1.Condition{
 		Type:               string(WorkspaceConditionContainerRunning),
@@ -493,6 +483,15 @@ func (w *Workspace) IsHeadless() bool {
 
 func (w *Workspace) IsConditionTrue(condition WorkspaceCondition) bool {
 	return wsk8s.ConditionPresentAndTrue(w.Status.Conditions, string(condition))
+}
+
+// UpsertConditionOnStatusChange calls SetCondition if the condition does not exist or it's status or message has changed.
+func (w *Workspace) UpsertConditionOnStatusChange(newCondition metav1.Condition) {
+	oldCondition := wsk8s.GetCondition(w.Status.Conditions, newCondition.Type)
+	if oldCondition != nil && oldCondition.Status == newCondition.Status && oldCondition.Message == newCondition.Message {
+		return
+	}
+	w.Status.SetCondition(newCondition)
 }
 
 // OWI produces the owner, workspace, instance log metadata from the information
