@@ -731,7 +731,7 @@ export interface Workspace {
 
 export type WorkspaceSoftDeletion = "user" | "gc";
 
-export type WorkspaceType = "regular" | "prebuild";
+export type WorkspaceType = "regular" | "prebuild" | "imagebuild";
 
 export namespace Workspace {
     export function getPullRequestNumber(ws: Workspace): number | undefined {
