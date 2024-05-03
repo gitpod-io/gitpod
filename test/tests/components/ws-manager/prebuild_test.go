@@ -209,7 +209,7 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 			for _, test := range tests {
 				test := test
 				t.Run(test.Name, func(t *testing.T) {
-					// t.Parallel()
+					t.Parallel()
 
 					ctx, cancel := context.WithTimeout(testCtx, time.Duration(10*len(tests))*time.Minute)
 					defer cancel()
