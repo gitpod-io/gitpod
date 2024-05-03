@@ -593,7 +593,7 @@ func checkPrebuildLogExist(t *testing.T, cfg *envconf.Config, rsa *integration.R
 		Command: "bash",
 		Args: []string{
 			"-c",
-			fmt.Sprintf("grep %s *", prebuildLog),
+			fmt.Sprintf("grep -r %s *", prebuildLog),
 		},
 	}, &grepResp)
 	if err == nil && grepResp.ExitCode == 0 && strings.Trim(grepResp.Stdout, " \t\n") != "" {
@@ -603,7 +603,7 @@ func checkPrebuildLogExist(t *testing.T, cfg *envconf.Config, rsa *integration.R
 		return
 	}
 
-	t.Logf("cannot found the prebuild message %s in %s, err:%v, exitCode:%d, stdout:%s", prebuildLog, prebuildLogPath, err, grepResp.ExitCode, grepResp.Stdout)
+	t.Logf("cannot found the prebuild message %s in %s, err:%v, exitCode:%d, stdout:%s, stderr:%s", prebuildLog, prebuildLogPath, err, grepResp.ExitCode, grepResp.Stdout, grepResp.Stderr)
 
 	// somehow, the prebuild log message '🍊 This task ran as a workspace prebuild' does not exists
 	// we fall back to check the init task message within the /workspace/.gitpod/prebuild-log-* or not
