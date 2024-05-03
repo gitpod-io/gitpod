@@ -155,9 +155,10 @@ export class Metrics {
         durationSeconds: number,
         workspaceCluster: string,
         type: WorkspaceType,
+        skippedUpdate: boolean,
         error?: Error,
     ): void {
-        const outcome = error ? "error" : "success";
+        const outcome = skippedUpdate ? "skipped" : error ? "error" : "success";
         this.workspaceInstanceUpdateCompletedSeconds
             .labels(workspaceCluster, WorkspaceType[type], outcome)
             .observe(durationSeconds);
