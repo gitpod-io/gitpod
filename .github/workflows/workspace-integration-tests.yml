@@ -89,10 +89,16 @@ jobs:
                   echo "version=${{ inputs.version }}"
               } >> $GITHUB_OUTPUT
           else
-              # Find the most recent successful build on main. Look back up to 10 builds.
+              # Search the last 10 builds regardless of status (success and failed)
               RUNID=$(gh run list --repo gitpod-io/gitpod --branch main --workflow build.yml --limit 10 --json createdAt,conclusion,databaseId --jq 'map(select(.conclusion == "success")) | sort_by(.createdAt) | .[-1] | .databaseId')
               if [ "$RUNID" == "" ]; then
                 echo no successful build found on main branch in the last 10 commits, see https://github.com/gitpod-io/gitpod/actions/workflows/build.yml for details | tee -a $GITHUB_STEP_SUMMARY
+                # if we got here, it means in the last 10 builds on main, there wasn't a success, and then we'll keep getting this message
+                # to fix, manually trigger the tests with the latest main-gha asset till we get a success
+                # you might have to fix or disable flakey tests to do this
+                #
+                # for posterity, this will show when the last success actually was, but it shouldn't be used to get RUNID
+                # gh run list --repo gitpod-io/gitpod --branch main --workflow build.yml --limit 10 --json createdAt,conclusion,databaseId --status success --jq 'sort_by(.createdAt) | .[-1]'
                 exit 1
               fi
 
