@@ -13,6 +13,7 @@ import {
     DisposableCollection,
     PortProtocol,
 } from "@gitpod/gitpod-protocol";
+import * as protocol from "@gitpod/gitpod-protocol";
 import {
     WorkspaceStatus,
     WorkspacePhase,
@@ -20,7 +21,9 @@ import {
     PortVisibility as WsManPortVisibility,
     PortProtocol as WsManPortProtocol,
     DescribeClusterRequest,
+    WorkspaceType,
 } from "@gitpod/ws-manager/lib";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -200,11 +203,12 @@ export class WorkspaceManagerBridge implements Disposable {
             workspaceId: status.metadata!.metaId!,
             userId: status.metadata!.owner!,
         };
+        const workspaceType = toWorkspaceType(status.spec.type);
 
         let updateError: any | undefined;
         let skipUpdate = false;
         try {
-            this.metrics.reportWorkspaceInstanceUpdateStarted(this.cluster.name, status.spec.type);
+            this.metrics.reportWorkspaceInstanceUpdateStarted(this.cluster.name, workspaceType);
 
             // If the last status update is identical to the current one, we can skip the update.
             skipUpdate = !!lastStatusUpdate && !hasRelevantDiff(rawStatus, lastStatusUpdate);
@@ -226,7 +230,7 @@ export class WorkspaceManagerBridge implements Disposable {
             this.metrics.reportWorkspaceInstanceUpdateCompleted(
                 durationMs / 1000,
                 this.cluster.name,
-                status.spec.type,
+                workspaceType,
                 skipUpdate,
                 updateError,
             );
@@ -454,8 +458,8 @@ export const filterStatus = (status: WorkspaceStatus.AsObject): Partial<Workspac
         metadata: status.metadata,
         phase: status.phase,
         message: status.message,
-        conditions: status.conditions,
-        runtime: status.runtime,
+        conditions: new TrustedValue(status.conditions).value,
+        runtime: new TrustedValue(status.runtime).value,
     };
 };
 
@@ -470,4 +474,16 @@ export function hasRelevantDiff(_a: WorkspaceStatus, _b: WorkspaceStatus): boole
     const as = a.serializeBinary();
     const bs = b.serializeBinary();
     return !(as.length === bs.length && as.every((v, i) => v === bs[i]));
+}
+
+function toWorkspaceType(type: WorkspaceType): protocol.WorkspaceType {
+    switch (type) {
+        case WorkspaceType.REGULAR:
+            return "regular";
+        case WorkspaceType.IMAGEBUILD:
+            return "imagebuild";
+        case WorkspaceType.PREBUILD:
+            return "prebuild";
+    }
+    throw new Error("invalid WorkspaceType: " + type);
 }

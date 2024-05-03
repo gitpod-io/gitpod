@@ -8,7 +8,7 @@ import * as prom from "prom-client";
 import { injectable } from "inversify";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
-import { WorkspaceType } from "@gitpod/ws-manager/lib/core_pb";
+import { WorkspaceType } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class Metrics {
@@ -148,7 +148,7 @@ export class Metrics {
     }
 
     reportWorkspaceInstanceUpdateStarted(workspaceCluster: string, type: WorkspaceType): void {
-        this.workspaceInstanceUpdateStartedTotal.labels(workspaceCluster, WorkspaceType[type]).inc();
+        this.workspaceInstanceUpdateStartedTotal.labels(workspaceCluster, type).inc();
     }
 
     reportWorkspaceInstanceUpdateCompleted(
@@ -159,9 +159,7 @@ export class Metrics {
         error?: Error,
     ): void {
         const outcome = skippedUpdate ? "skipped" : error ? "error" : "success";
-        this.workspaceInstanceUpdateCompletedSeconds
-            .labels(workspaceCluster, WorkspaceType[type], outcome)
-            .observe(durationSeconds);
+        this.workspaceInstanceUpdateCompletedSeconds.labels(workspaceCluster, type, outcome).observe(durationSeconds);
     }
 
     increasePrebuildsCompletedCounter(state: string) {
