@@ -232,7 +232,9 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 expiryDate,
             });
         } catch (error) {
-            log.error(`(${this.strategyName}) Failed to refresh token!`, { error: new TrustedValue(error) });
+            log.error({ userId: user.id }, `(${this.strategyName}) Failed to refresh token!`, {
+                error: new TrustedValue(error),
+            });
             throw error;
         }
     }
@@ -587,7 +589,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
 
                 // we need to check current provider authorizations first...
                 try {
-                    await this.userAuthentication.asserNoTwinAccount(
+                    await this.userAuthentication.assertNoTwinAccount(
                         currentGitpodUser,
                         this.host,
                         this.authProviderId,

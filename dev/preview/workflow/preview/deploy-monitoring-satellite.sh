@@ -11,12 +11,10 @@ source "$(realpath "${SCRIPT_PATH}/../lib/common.sh")"
 # shellcheck source=../lib/k8s-util.sh
 source "$(realpath "${SCRIPT_PATH}/../lib/k8s-util.sh")"
 
-DEV_KUBE_PATH="${DEV_KUBE_PATH:-/home/gitpod/.kube/config}"
-DEV_KUBE_CONTEXT="${DEV_KUBE_CONTEXT:-dev}"
-
 PREVIEW_NAME="${PREVIEW_NAME:-$(previewctl get name)}"
 PREVIEW_K3S_KUBE_PATH="${PREVIEW_K3S_KUBECONFIG_PATH:-/home/gitpod/.kube/config}"
 PREVIEW_K3S_KUBE_CONTEXT="${PREVIEW_K3S_KUBE_CONTEXT:-$PREVIEW_NAME}"
+PREVIEW_GCP_PROJECT="gitpod-dev-preview"
 
 INITIAL_DEFAULT_NAMESPACE="$(kubens -c)"
 
@@ -60,9 +58,9 @@ fi
 GOBIN=$(pwd) go install github.com/gitpod-io/observability/installer@main
 mv installer observability-installer
 
-HONEYCOMB_API_KEY="$(readWerftSecret honeycomb-api-key apikey)" \
-PROM_REMOTE_WRITE_USER="$(readWerftSecret prometheus-remote-write-auth user)" \
-PROM_REMOTE_WRITE_PASSWORD="$(readWerftSecret prometheus-remote-write-auth password)" \
+HONEYCOMB_API_KEY="$(gcloud secrets versions access latest --secret="honeycomb-api-key" --project=${PREVIEW_GCP_PROJECT})" \
+PROM_REMOTE_WRITE_USER="$(gcloud secrets versions access latest --secret="prometheus-remote-write-auth" --project=${PREVIEW_GCP_PROJECT})" \
+PROM_REMOTE_WRITE_PASSWORD="$(gcloud secrets versions access latest --secret="prometheus-remote-write-auth-password" --project=${PREVIEW_GCP_PROJECT}))" \
 PREVIEW_NAME="${PREVIEW_NAME}" \
 WORKSPACE_ROOT="${ROOT}" \
 envsubst <"${ROOT}/dev/preview/workflow/config/monitoring-satellite.yaml" \

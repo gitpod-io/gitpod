@@ -186,9 +186,23 @@ func Run(options ...RunOption) {
 		return
 	}
 
+	endpoint, host, err := cfg.GitpodAPIEndpoint()
+	if err != nil {
+		log.WithError(err).Fatal("cannot find Gitpod API endpoint")
+	}
+
+	experimentsClientOpts := []experiments.ClientOpt{}
+	if cfg.ConfigcatEnabled {
+		experimentsClientOpts = append(experimentsClientOpts, experiments.WithGitpodProxy(host))
+	}
+	exps := experiments.NewClient(experimentsClientOpts...)
+
 	// BEWARE: we can only call buildChildProcEnv once, because it might download env vars from a one-time-secret
 	//         URL, which would fail if we tried another time.
-	childProcEnvvars = buildChildProcEnv(cfg, nil, opts.RunGP)
+	isSetJavaXmx := experiments.IsSetJavaXmx(context.Background(), exps, experiments.Attributes{
+		UserID: cfg.OwnerId,
+	})
+	childProcEnvvars = buildChildProcEnv(cfg, nil, opts.RunGP, isSetJavaXmx)
 
 	err = AddGitpodUserIfNotExists()
 	if err != nil {
@@ -245,17 +259,6 @@ func Run(options ...RunOption) {
 	if cfg.isDebugWorkspace() {
 		internalPorts = append(internalPorts, debugProxyPort)
 	}
-
-	endpoint, host, err := cfg.GitpodAPIEndpoint()
-	if err != nil {
-		log.WithError(err).Fatal("cannot find Gitpod API endpoint")
-	}
-
-	experimentsClientOpts := []experiments.ClientOpt{}
-	if cfg.ConfigcatEnabled {
-		experimentsClientOpts = append(experimentsClientOpts, experiments.WithGitpodProxy(host))
-	}
-	exps := experiments.NewClient(experimentsClientOpts...)
 
 	var (
 		ideReady                       = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
@@ -952,7 +955,7 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 // of envvars. If envvars is nil, os.Environ() is used.
 //
 // Beware: if config contains an OTS URL the results may differ on subsequent calls.
-func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
+func buildChildProcEnv(cfg *Config, envvars []string, runGP bool, setJavaXmx bool) []string {
 	if envvars == nil {
 		envvars = os.Environ()
 	}
@@ -1029,7 +1032,7 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 	envs["USER"] = "gitpod"
 
 	// Particular Java optimisation: Java pre v10 did not gauge it's available memory correctly, and needed explicitly setting "-Xmx" for all Hotspot/openJDK VMs
-	if mem, ok := envs["GITPOD_MEMORY"]; ok {
+	if mem, ok := envs["GITPOD_MEMORY"]; ok && setJavaXmx {
 		envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", mem)
 	}
 

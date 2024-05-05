@@ -249,7 +249,7 @@ export class WorkspaceStarter {
 
         let instanceId: string | undefined = undefined;
         try {
-            await this.checkBlockedRepository(user, workspace.contextURL);
+            await this.checkBlockedRepository(user, workspace);
 
             // Some workspaces do not have an image source.
             // Workspaces without image source are not only legacy, but also happened due to what looks like a bug.
@@ -496,7 +496,7 @@ export class WorkspaceStarter {
         await client.stopWorkspace(ctx, req);
     }
 
-    private async checkBlockedRepository(user: User, contextURL: string) {
+    private async checkBlockedRepository(user: User, { contextURL, organizationId }: Workspace) {
         const blockedRepository = await this.blockedRepositoryDB.findBlockedRepositoryByURL(contextURL);
         if (!blockedRepository) return;
 
@@ -510,7 +510,18 @@ export class WorkspaceStarter {
                 log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });
             }
         }
-        throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, `${contextURL} is blocklisted on Gitpod.`);
+        if (blockedRepository.blockFreeUsage) {
+            const tier = await this.entitlementService.getBillingTier(user.id, organizationId);
+            if (tier === "free") {
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    `${contextURL} requires a paid plan on Gitpod.`,
+                );
+            }
+        }
+        if (!blockedRepository.blockFreeUsage) {
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, `${contextURL} is blocklisted on Gitpod.`);
+        }
     }
 
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself.
@@ -1717,7 +1728,7 @@ export class WorkspaceStarter {
                 result.setGit(initializer);
             }
         } else {
-            throw new Error("cannot create initializer for unkown context type");
+            throw new Error("cannot create initializer for unknown context type");
         }
         if (AdditionalContentContext.is(context)) {
             const additionalInit = new FileDownloadInitializer();
@@ -1828,7 +1839,8 @@ export class WorkspaceStarter {
             targetMode = CloneTargetMode.REMOTE_HEAD;
         }
 
-        const gitToken = await this.tokenProvider.getTokenForHost(user, host);
+        const tokenValidityThreshold = (await isLongAccessTokenValidityThresholdEnabled(user)) ? 50 : 30;
+        const gitToken = await this.tokenProvider.getTokenForHost(user, host, tokenValidityThreshold);
         if (!gitToken) {
             throw new Error(`No token for host: ${host}`);
         }
@@ -1944,6 +1956,12 @@ function resolveGitpodTasks(ws: Workspace, instance: WorkspaceInstance): TaskCon
 
 export async function isWorkspaceClassDiscoveryEnabled(user: { id: string }): Promise<boolean> {
     return getExperimentsClientForBackend().getValueAsync("workspace_class_discovery_enabled", false, {
+        user: user,
+    });
+}
+
+export async function isLongAccessTokenValidityThresholdEnabled(user: { id: string }): Promise<boolean> {
+    return getExperimentsClientForBackend().getValueAsync("workspace_start_extended_token_validity_threshold", false, {
         user: user,
     });
 }

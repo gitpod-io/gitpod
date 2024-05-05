@@ -1,4 +1,9 @@
 name: Build
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: write # This is required for actions/checkout and create release
+  pull-requests: write
+  actions: write  # This is required for trigger another action which is used by JetBrains integrateion tests
 on:
   pull_request:
     types: [ opened, edited ]
@@ -33,7 +38,6 @@ jobs:
       version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
       preview_enable: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-preview') || (steps.output.outputs.with_integration_tests != '') }}
       preview_name: ${{ github.head_ref || github.ref_name }}
-      preview_infra_provider: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-gce-vm') && 'gce' || 'harvester' }}
       build_no_cache: ${{ contains( steps.pr-details.outputs.pr_body, '[x] leeway-no-cache') }}
       build_no_test: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft no-test') }}
       with_large_vm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft with-large-vm') || (steps.output.outputs.with_integration_tests != '') }}
@@ -49,6 +53,7 @@ jobs:
       with_monitoring: ${{ contains( steps.pr-details.outputs.pr_body, '[x] with-monitoring') }}
       latest_ide_version: ${{ contains( steps.pr-details.outputs.pr_body, '[x] latest-ide-version=true') }}
       leeway_cache_bucket: ${{ steps.output.outputs.leeway_cache_bucket }}
+      image_repo_base: ${{ steps.output.outputs.image_repo_base }}
       pr_number: ${{ steps.pr-details.outputs.number }}
       pr_body: ${{ steps.pr-details.outputs.pr_body }}
     steps:
@@ -84,7 +89,8 @@ jobs:
             echo "workspace_feature_flags=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] workspace-feature-flags=).*?(?=\s*$)')"
             echo "with_integration_tests=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] with-integration-tests=).*?(?=\s*$)')"
             echo "analytics=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] analytics=).*?(?=\s*$)')"
-            echo "leeway_cache_bucket=$([[ "$MAIN_BRANCH"  = "true" ]] && echo "gitpod-core-leeway-cache-main" || echo "gitpod-core-leeway-cache-branch")"
+            echo "leeway_cache_bucket=$([[ "$MAIN_BRANCH"  = "true" ]] && echo "leeway-cache-main-c514a01" || echo "leeway-cache-dev-3ac8ef5")"
+            echo "image_repo_base=$([[ "$MAIN_BRANCH"  = "true" ]] && echo "eu.gcr.io/gitpod-core-dev" || echo "eu.gcr.io/gitpod-dev-artifact")"
           } >> $GITHUB_OUTPUT
 
   build-previewctl:
@@ -98,23 +104,22 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
-    outputs:
-      previewctl_hash: ${{ steps.build.outputs.previewctl_hash }}
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
     steps:
       - uses: actions/checkout@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Build previewctl
         id: build
         shell: bash
+        env:
+          LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
         run: |
-          leeway build dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}"
-          echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}" -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
-
+          leeway build dev/preview/previewctl:cli --cache remote
   infrastructure:
     needs: [ configuration, build-previewctl, create-runner ]
     if: |
@@ -127,17 +132,22 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Create preview environment infrastructure
         id: create
         uses: ./.github/actions/preview-create
         with:
           name: ${{ needs.configuration.outputs.preview_name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
-          infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           large_vm: ${{ needs.configuration.outputs.with_large_vm }}
           preemptible: ${{ needs.configuration.outputs.with_preemptible }}
           recreate_vm: ${{ inputs.recreate_vm }}
+          image_repo_base: ${{needs.configuration.outputs.image_repo_base}}/build
 
   build-gitpod:
     name: Build Gitpod
@@ -161,7 +171,7 @@ jobs:
         ports:
           - 6379:6379
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
       env:
         DB_HOST: "mysql"
         DB_PORT: "23306"
@@ -172,7 +182,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-environment
         with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Leeway Vet
         shell: bash
@@ -189,10 +200,10 @@ jobs:
           exit "$RESULT"
       - name: Get Secrets from GCP
         id: "secrets"
+        if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
         uses: "google-github-actions/get-secretmanager-secrets@v1"
         with:
           secrets: |-
-            segment-io-token:gitpod-core-dev/segment-io-token
             npm-auth-token:gitpod-core-dev/npm-auth-token
             jb-marketplace-publish-token:gitpod-core-dev/jb-marketplace-publish-token
             codecov-token:gitpod-core-dev/codecov
@@ -201,6 +212,8 @@ jobs:
         env:
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
+          LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
+          IMAGE_REPO_BASE: ${{needs.configuration.outputs.image_repo_base}}/dev
         shell: bash
         run: |
           RESULT=0
@@ -211,7 +224,7 @@ jobs:
             --cache remote \
             -Dversion=$VERSION \
             -DlocalAppVersion=$VERSION \
-            -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev \
+            -DimageRepoBase=$IMAGE_REPO_BASE \
             --report large-report.html || RESULT=$?
 
           set +x
@@ -232,7 +245,6 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=4096"
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
-          SEGMENT_IO_TOKEN: "${{ steps.secrets.outputs.segment-io-token }}"
           PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
           PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
           NPM_AUTH_TOKEN: "${{ steps.secrets.outputs.npm-auth-token }}"
@@ -240,6 +252,8 @@ jobs:
           JB_MARKETPLACE_PUBLISH_TOKEN: "${{ steps.secrets.outputs.jb-marketplace-publish-token }}"
           PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
           CODECOV_TOKEN: "${{ steps.secrets.outputs.codecov-token }}"
+          LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
+          IMAGE_REPO_BASE: ${{needs.configuration.outputs.image_repo_base}}/build
         run: |
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
@@ -255,11 +269,10 @@ jobs:
             --docker-build-options network=host \
             --max-concurrent-tasks 1 \
             -DlocalAppVersion=$VERSION \
-            -DSEGMENT_IO_TOKEN=$SEGMENT_IO_TOKEN \
             -DpublishToNPM="${PUBLISH_TO_NPM}" \
             -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
             -DpublishToJBMarketplace="${PUBLISH_TO_JBPM}" \
-            -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build \
+            -DimageRepoBase=$IMAGE_REPO_BASE \
             --report report.html || RESULT=$?
           set +x
 
@@ -338,17 +351,22 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Deploy Gitpod to the preview environment
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
         with:
           name: ${{ needs.configuration.outputs.preview_name }}
           version: ${{needs.configuration.outputs.version}}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
-          previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           with_dedicated_emu: ${{needs.configuration.outputs.with_dedicated_emulation}}
           analytics: ${{needs.configuration.outputs.analytics}}
           workspace_feature_flags: ${{needs.configuration.outputs.workspace_feature_flags}}
+          image_repo_base: ${{needs.configuration.outputs.image_repo_base}}/build
       - uses: actions/github-script@v6
         if: needs.configuration.outputs.pr_number != '' && contains(needs.configuration.outputs.pr_body, 'gitpod:summary')
         with:
@@ -383,12 +401,18 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Deploy monitoring satellite to the preview environment
         id: deploy-monitoring-satellite
         uses: ./.github/actions/deploy-monitoring-satellite
         with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
+          image_repo_base: ${{needs.configuration.outputs.image_repo_base}}/build
 
   integration-test:
     name: "Run integration test"
@@ -401,18 +425,13 @@ jobs:
       - create-runner
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
     if: needs.configuration.outputs.with_integration_tests != ''
     concurrency:
       group: ${{ needs.configuration.outputs.preview_name }}-integration-test
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-environment
-        with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
-          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-
       - name: Run integration test
         id: integration-test
         uses: ./.github/actions/integration-tests
@@ -420,12 +439,16 @@ jobs:
           preview_name: ${{ needs.configuration.outputs.preview_name }}
           test_suite: ${{ needs.configuration.outputs.with_integration_tests }}
           notify_slack_webhook: ''
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           latest_ide_version: ${{ needs.configuration.outputs.latest_ide_version }}
           test_build_id: ${{ github.run_id }}
           test_build_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           test_build_ref: ${{ github.head_ref || github.ref }}
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+          integration_test_username: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USERNAME }}
+          integration_test_usertoken: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
 
   workspace-integration-tests-main:
     name: "Run workspace integration tests on main branch"

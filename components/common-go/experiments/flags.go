@@ -16,6 +16,7 @@ const (
 	SupervisorUsePublicAPIFlag                     = "supervisor_experimental_publicapi"
 	ServiceWaiterSkipComponentsFlag                = "service_waiter_skip_components"
 	IdPClaimKeysFlag                               = "idp_claim_keys"
+	SetJavaXmxFlag                                 = "supervisor_set_java_xmx"
 )
 
 func IsPersonalAccessTokensEnabled(ctx context.Context, client Client, attributes Attributes) bool {
@@ -40,4 +41,8 @@ func SupervisorPersistServerAPIChannelWhenStart(ctx context.Context, client Clie
 
 func SupervisorUsePublicAPI(ctx context.Context, client Client, attributes Attributes) bool {
 	return client.GetBoolValue(ctx, SupervisorUsePublicAPIFlag, false, attributes)
+}
+
+func IsSetJavaXmx(ctx context.Context, client Client, attributes Attributes) bool {
+	return client.GetBoolValue(ctx, SetJavaXmxFlag, false, attributes)
 }

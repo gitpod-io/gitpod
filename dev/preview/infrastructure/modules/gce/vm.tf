@@ -2,12 +2,16 @@ data "google_compute_default_service_account" "default" {
   provider = google
 }
 
+data "google_service_account" "node_service_account" {
+  account_id = "preview-environmnet-node"
+}
+
 resource "google_compute_instance" "default" {
   provider = google
 
   name                      = local.vm_name
   machine_type              = local.machine_type
-  zone                      = "us-central1-a"
+  zone                      = "europe-west1-c"
   allow_stopping_for_update = true
 
   boot_disk {
@@ -43,7 +47,6 @@ resource "google_compute_instance" "default" {
   }
 
   metadata = {
-    ssh-keys           = "ubuntu:${var.ssh_key}"
     serial-port-enable = true
     user-data          = local.cloudinit_user_data
   }
@@ -60,24 +63,15 @@ resource "google_compute_instance" "default" {
 
   service_account {
     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.
-    email  = data.google_compute_default_service_account.default.email
+    email  = data.google_service_account.node_service_account.email
     scopes = ["cloud-platform"]
   }
 }
 
 resource "google_compute_address" "static-preview-ip" {
   provider = google
-
-  name = var.preview_name
-}
-
-data "kubernetes_secret" "harvester-k3s-dockerhub-pull-account" {
-  provider = k8s.dev
-
-  metadata {
-    name      = "harvester-k3s-dockerhub-pull-account"
-    namespace = "werft"
-  }
+  region   = "europe-west1"
+  name     = var.preview_name
 }
 
 locals {
@@ -94,10 +88,7 @@ locals {
   EOT
 
   cloudinit_user_data = templatefile("${path.module}/cloudinit.yaml", {
-    dockerhub_user      = data.kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["username"]
-    dockerhub_passwd    = data.kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["password"]
-    vm_name             = local.vm_name
-    ssh_authorized_keys = var.ssh_key
+    vm_name = local.vm_name
   })
 
   machine_type = var.with_large_vm ? "n2d-standard-32" : var.vm_type

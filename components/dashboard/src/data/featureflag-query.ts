@@ -37,6 +37,8 @@ const featureFlags = {
     dataops: false,
     // Logging tracing for added for investigate hanging issue
     dashboard_logging_tracing: false,
+    showBrowserExtensionPromotion: false,
+    usage_update_scheduler_duration: "15m",
 };
 
 type FeatureFlags = typeof featureFlags;

@@ -37,7 +37,7 @@ export class SessionHandler {
             const cookies = parseCookieHeader(req.headers.cookie || "");
             const jwtTokens = cookies[getJWTCookieName(this.config)];
 
-            let decoded: JwtPayload | undefined = undefined;
+            let decoded: { payload: JwtPayload; keyId: string } | undefined = undefined;
             try {
                 // will throw if the token is expired
                 decoded = await this.verifyFirstValidJwt(jwtTokens);
@@ -49,37 +49,40 @@ export class SessionHandler {
 
             if (!decoded) {
                 const cookie = await this.createJWTSessionCookie(user.id);
-
                 res.cookie(cookie.name, cookie.value, cookie.opts);
 
                 reportJWTCookieIssued();
                 res.status(200);
                 res.send("New JWT cookie issued.");
-            } else {
-                const issuedAtMs = (decoded.iat || 0) * 1000;
-                const now = new Date();
-
-                // Was the token issued more than threshold ago?
-                if (issuedAtMs + SessionHandler.JWT_REFRESH_THRESHOLD < now.getTime()) {
-                    try {
-                        // issue a new one, to refresh it
-                        const cookie = await this.createJWTSessionCookie(user.id);
-                        res.cookie(cookie.name, cookie.value, cookie.opts);
-
-                        reportJWTCookieIssued();
-                        res.status(200);
-                        res.send("Refreshed JWT cookie issued.");
-                        return;
-                    } catch (err) {
-                        res.status(401);
-                        res.send("JWT Session can't be signed");
-                        return;
-                    }
-                }
-
-                res.status(200);
-                res.send("User session already has a valid JWT session.");
+                return;
             }
+
+            // Was the token issued with the current signing key? If no, re-issue
+            const tokenSignedWithCurrentSigningKey = this.config.auth.pki.signing.id === decoded.keyId;
+
+            // Was the token issued more than threshold ago?
+            const issuedAtMs = (decoded.payload.iat || 0) * 1000;
+            const now = new Date();
+            const belowRefreshThreshold = issuedAtMs + SessionHandler.JWT_REFRESH_THRESHOLD < now.getTime();
+            if (belowRefreshThreshold || !tokenSignedWithCurrentSigningKey) {
+                try {
+                    // issue a new one, to refresh it
+                    const cookie = await this.createJWTSessionCookie(user.id);
+                    res.cookie(cookie.name, cookie.value, cookie.opts);
+
+                    reportJWTCookieIssued();
+                    res.status(200);
+                    res.send("Refreshed JWT cookie issued.");
+                    return;
+                } catch (err) {
+                    res.status(401);
+                    res.send("JWT Session can't be signed");
+                    return;
+                }
+            }
+
+            res.status(200);
+            res.send("User session already has a valid JWT session.");
         };
     }
 
@@ -145,7 +148,8 @@ export class SessionHandler {
         const cookies = parseCookieHeader(cookie);
         const cookieValues = cookies[getJWTCookieName(this.config)];
 
-        return this.verifyFirstValidJwt(cookieValues);
+        const token = await this.verifyFirstValidJwt(cookieValues);
+        return token?.payload;
     }
 
     /**
@@ -156,7 +160,9 @@ export class SessionHandler {
      * @param tokenCandidates to verify
      * @returns
      */
-    private async verifyFirstValidJwt(tokenCandidates: string[] | undefined): Promise<JwtPayload | undefined> {
+    private async verifyFirstValidJwt(
+        tokenCandidates: string[] | undefined,
+    ): Promise<{ payload: JwtPayload; keyId: string } | undefined> {
         if (!tokenCandidates || tokenCandidates.length === 0) {
             log.debug("No JWT session present on request");
             return undefined;
@@ -165,9 +171,9 @@ export class SessionHandler {
         let firstVerifyError: any;
         for (const jwtToken of tokenCandidates) {
             try {
-                const claims = await this.authJWT.verify(jwtToken);
-                log.debug("JWT Session token verified", { claims });
-                return claims;
+                const token = await this.authJWT.verify(jwtToken);
+                log.debug("JWT Session token verified", { token });
+                return token;
             } catch (err) {
                 if (!firstVerifyError) {
                     firstVerifyError = err;

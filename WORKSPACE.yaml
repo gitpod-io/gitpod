@@ -1,27 +1,29 @@
 # this file makes this a leeway workspace
 defaultTarget: components:all
 defaultArgs:
-  imageRepoBase: "eu.gcr.io/gitpod-core-dev/build"
+  imageRepoBase: "eu.gcr.io/gitpod-dev-artifact/build"
   coreYarnLockBase: ../..
   npmPublishTrigger: "false"
   publishToNPM: true
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: 0ab7db2c7269dc6711fee21bb9a4c2cc7c08142d
-  codeVersion: 1.87.1
+  codeCommit: d661363c7320f7e609b7ef4f7de346c7005fc811
+  codeVersion: 1.88.1
   codeQuality: stable
+  codeWebExtensionCommit: 7ff72a2938a7a06cbdf3964590f7e9b7525958f3
+  xtermCommit: 8915adfdb17c4dc52c327ca81c50c547e80d3a99
   noVerifyJBPlugin: false
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2023.3.6.tar.gz"
-  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2023.3.6.tar.gz"
-  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2023.3.5.tar.gz"
-  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2023.3.6.tar.gz"
-  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2023.3.6.tar.gz"
-  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2023.3.6.tar.gz"
-  riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2023.3.4.tar.gz"
-  clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2023.3.4.tar.gz"
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2024.1.tar.gz"
+  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2024.1.tar.gz"
+  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2024.1.tar.gz"
+  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2024.1.1.tar.gz"
+  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2024.1.1.tar.gz"
+  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2024.1.1.tar.gz"
+  riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2024.1.1.tar.gz"
+  clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2024.1.1.tar.gz"
   jbBackendVersion: "latest"
   dockerVersion: "20.10.24"
-  dockerComposeVersion: "2.24.5-gitpod.1"
+  dockerComposeVersion: "2.27.0-gitpod.0"
 provenance:
   enabled: true
   slsa: true

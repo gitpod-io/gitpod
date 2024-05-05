@@ -51,6 +51,7 @@
 
         /* Borders */
         --border-base: var(--gray-200);
+        --border-light: var(--gray-100);
     }
 
     /* Dark mode color adjustments */
@@ -73,6 +74,7 @@
 
         /* Borders */
         --border-base: var(--gray-700);
+        --border-light: var(--gray-800);
     }
 
     html,

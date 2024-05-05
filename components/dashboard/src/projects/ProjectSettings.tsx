@@ -21,7 +21,7 @@ import { useToast } from "../components/toasts/Toasts";
 import classNames from "classnames";
 import { InputField } from "../components/forms/InputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
-import debounce from "lodash.debounce";
+import debounce from "lodash/debounce";
 import { Button } from "@podkit/buttons/Button";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { PartialMessage } from "@bufbuild/protobuf";

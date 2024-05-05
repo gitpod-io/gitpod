@@ -11,6 +11,7 @@ require (
 	github.com/gitpod-io/gitpod/ide-metrics-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/go-errors/errors v1.4.2
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf

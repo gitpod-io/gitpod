@@ -51,7 +51,7 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
     const [search, setSearch] = useState<string>("");
     const filteredOptions = useMemo(() => getElements(search), [getElements, search]);
     const [selectedElementTemp, setSelectedElementTemp] = useState<string | undefined>(
-        initialValue || filteredOptions[0]?.id,
+        initialValue || (filteredOptions[0] && filteredOptions[0].isSelectable ? filteredOptions[0].id : undefined),
     );
 
     const onSelected = useCallback(

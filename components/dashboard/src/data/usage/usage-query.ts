@@ -15,8 +15,8 @@ export function useListUsage(request: ListUsageRequest) {
             return getGitpodService().server.listUsage(request);
         },
         {
-            cacheTime: 1000 * 60 * 10, // 10 minutes
-            staleTime: 1000 * 60 * 10, // 10 minutes
+            cacheTime: 1000 * 60 * 1, // 1 minutes
+            staleTime: 1000 * 60 * 1, // 1 minutes
             retry: false,
         },
     );

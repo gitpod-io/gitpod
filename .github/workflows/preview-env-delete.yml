@@ -1,4 +1,7 @@
 name: "Preview environment delete"
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
 on:
   workflow_dispatch:
     inputs:
@@ -20,11 +23,16 @@ jobs:
     needs: [create-runner]
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Delete preview environment
         uses: ./.github/actions/delete-preview
         with:
           name: ${{ github.event.inputs.name || github.event.ref}}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
 
   delete-runner:
     if: always()

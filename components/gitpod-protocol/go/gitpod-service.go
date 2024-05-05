@@ -421,6 +421,23 @@ func (gp *APIoverJSONRPC) AdminBlockUser(ctx context.Context, message *AdminBloc
 	return
 }
 
+// AdminVerifyUser calls adminVerifyUser on the server
+func (gp *APIoverJSONRPC) AdminVerifyUser(ctx context.Context, userId string) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+	_params = append(_params, userId)
+
+	var _result interface{}
+	err = gp.C.Call(ctx, "adminVerifyUser", _params, &_result)
+	if err != nil {
+		return err
+	}
+	return
+}
+
 // GetLoggedInUser calls getLoggedInUser on the server
 func (gp *APIoverJSONRPC) GetLoggedInUser(ctx context.Context) (res *User, err error) {
 	if gp == nil {

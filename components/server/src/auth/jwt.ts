@@ -32,7 +32,7 @@ export class AuthJWT {
         return sign(payload, this.config.auth.pki.signing.privateKey, opts);
     }
 
-    async verify(encoded: string): Promise<jsonwebtoken.JwtPayload> {
+    async verify(encoded: string): Promise<{ payload: jsonwebtoken.JwtPayload; keyId: string }> {
         const keypairs = [this.config.auth.pki.signing, ...this.config.auth.pki.validating];
         const publicKeysByID = keypairs.reduce<{ [id: string]: string }>((byID, keypair) => {
             byID[keypair.id] = keypair.publicKey;
@@ -57,7 +57,10 @@ export class AuthJWT {
             algorithms: [authJWTAlgorithm],
         });
 
-        return verified;
+        return {
+            payload: verified,
+            keyId: keyID,
+        };
     }
 }
 

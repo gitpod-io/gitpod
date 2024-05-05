@@ -40,23 +40,3 @@ scripts:
     description: Build and install previewctl into the current environment
     script:
       leeway build dev/preview/previewctl:install -Dno-cache=$RANDOM --dont-test --cache=remote-pull
-  - name: download
-    description:
-    script: |
-      if [[ -z "$INPUT_PREVIEWCTL_HASH" ]]; then
-        # If a specific hash isn't provided we'll use the latest image off main
-        PREVIEWCTL_VERSION=$(\
-            gcloud container images list-tags eu.gcr.io/gitpod-core-dev/build/previewctl \
-                --filter="tags:main-gha.*" \
-                --limit=1 \
-                --format=json \
-            | jq --raw-output '.[0].tags[0]' \
-        )
-        PREVIEWCTL_IMAGE="eu.gcr.io/gitpod-core-dev/build/previewctl:$PREVIEWCTL_VERSION"
-      else
-        PREVIEWCTL_IMAGE="eu.gcr.io/gitpod-core-dev/build/previewctl:hash-$INPUT_PREVIEWCTL_HASH"
-      fi
-
-      echo "Downloading previewctl for $PREVIEWCTL_IMAGE"
-      oci-tool fetch file -o $HOME/bin/previewctl --platform=linux-amd64 "$PREVIEWCTL_IMAGE" app/previewctl
-      chmod +x $HOME/bin/previewctl

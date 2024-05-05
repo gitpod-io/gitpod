@@ -11,6 +11,7 @@ packages:
       - "pkg/components/**/*.key"
       - "pkg/components/**/*.pem"
       - "pkg/components/**/*.sql"
+      - "pkg/components/**/*.json"
       - "pkg/components/spicedb/data/*.yaml"
       - "scripts/*.sh"
       - "third_party/charts/*/Chart.yaml"
@@ -42,13 +43,15 @@ packages:
       - components/spicedb:lib
     env:
       - CGO_ENABLED=0
+    argdeps:
+      - imageRepoBase
     prep:
       - ["sh", "-c", "ls -d third_party/charts/*/ | while read f; do echo \"cd $f && helm dep up && cd -\"; done | sh"]
       - ["mv", "_deps/components-ws-manager-mk2--crd/workspace.gitpod.io_workspaces.yaml", "pkg/components/ws-manager-mk2/crd.yaml"]
       - ["sh", "-c", "cat _deps/components-ws-manager-mk2--crd/workspace.gitpod.io_snapshots.yaml >> pkg/components/ws-manager-mk2/crd.yaml"]
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/installer/cmd.Version=commit-${__git_commit}'"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/installer/cmd.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/gitpod/installer/pkg/config.GitpodContainerRegistry=${imageRepoBase}'"]
   - name: app
     type: generic
     deps:

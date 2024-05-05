@@ -88,7 +88,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             }
             return await this.handleDefaultContext({ span }, user, host, owner, repoName);
         } catch (error) {
-            if (error && error.code === 401) {
+            if (error && (error.code === 401 || error.message === "Unauthorized")) {
                 const token = await this.tokenHelper.getCurrentToken(user);
 
                 throw UnauthorizedError.create({

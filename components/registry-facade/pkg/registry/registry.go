@@ -23,6 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/registry-facade/api/config"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/containerd/containerd/content/local"
 	"github.com/containerd/containerd/remotes"
@@ -299,9 +300,28 @@ func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
 	defer cancel()
 
 	rdc := redis.NewClient(opts)
-	_, err := rdc.Ping(ctx).Result()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot check Redis connection: %w", err)
+
+	var lastError error
+	waitErr := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
+		Steps:    5,
+		Duration: 50 * time.Millisecond,
+		Factor:   2.0,
+		Jitter:   0.2,
+	}, func(ctx context.Context) (bool, error) {
+		_, err := rdc.Ping(ctx).Result()
+		if err != nil {
+			lastError = err
+			return false, nil
+		}
+
+		return true, nil
+	})
+	if waitErr != nil {
+		if waitErr == wait.ErrWaitTimeout {
+			return nil, xerrors.Errorf("cannot check Redis connection: %w", lastError)
+		}
+
+		return nil, waitErr
 	}
 
 	return rdc, nil

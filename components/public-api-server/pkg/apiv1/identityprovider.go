@@ -96,6 +96,9 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 	userInfo.AppendClaims("context", workspace.Workspace.ContextURL)
 	userInfo.AppendClaims("workspace_id", workspaceID)
 
+	if workspace.Workspace.Context != nil && workspace.Workspace.Context.Repository != nil && workspace.Workspace.Context.Repository.CloneURL != "" {
+		userInfo.AppendClaims("repository", workspace.Workspace.Context.Repository.CloneURL)
+	}
 	if email != "" {
 		userInfo.SetEmail(email, user.OrganizationId != "")
 		userInfo.AppendClaims("email", email)

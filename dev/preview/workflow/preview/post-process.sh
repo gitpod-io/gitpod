@@ -11,12 +11,13 @@ set -euo pipefail
 # Node pool index was only relevant with core-dev
 NODE_POOL_INDEX=0
 
-# These were previously using "findLastPort" etc. but in harvester-based preview environments they can be stable
 REG_DAEMON_PORT="31750"
 
 # Required params
 DEV_BRANCH=$1
 SMITH_TOKEN=$2
+
+SCRIPT_PATH=$(realpath "$(dirname "$0")")
 
 if [[ -z ${REG_DAEMON_PORT} ]] || [[ -z ${DEV_BRANCH} ]] || [[ -z ${SMITH_TOKEN} ]]; then
    echo "One or more input params were invalid: ${REG_DAEMON_PORT} ${DEV_BRANCH} ${SMITH_TOKEN}"
@@ -141,6 +142,34 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
       yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
+   fi
+
+   # overrides for ide-config configmap
+   if [[ "ide-config" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+      touch /tmp/"$NAME"-overrides.yaml
+
+      yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"-overrides.yaml
+      yq r /tmp/"$NAME"-overrides.yaml 'data.[config.json]' > /tmp/"$NAME"-overrides.json
+      node "$SCRIPT_PATH/patch-ide-configmap.js" /tmp/"$NAME"-overrides.json
+      yq w -i /tmp/"$NAME"-overrides.yaml  "data.[config.json]" -- "$(< /tmp/"$NAME"-overrides.json)"
+      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-overrides.yaml
+   fi
+
+   # overrides for blobserve configmap
+   if [[ "blobserve" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+      touch /tmp/"$NAME"-overrides.yaml
+
+      yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"-overrides.yaml
+      yq r /tmp/"$NAME"-overrides.yaml 'data.[config.json]' > /tmp/"$NAME"-overrides.json
+
+      jq 'if .blobserve.repos["eu.gcr.io/gitpod-core-dev/build/ide/code"] == null then .blobserve.repos["eu.gcr.io/gitpod-core-dev/build/ide/code"] = .blobserve.repos["eu.gcr.io/gitpod-dev-artifact/build/ide/code"] else . end' /tmp/"$NAME"-overrides.json > /tmp/"$NAME"-updated-overrides.json
+
+      yq w -i /tmp/"$NAME"-overrides.yaml  "data.[config.json]" -- "$(< /tmp/"$NAME"-updated-overrides.json)"
+      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-overrides.yaml
    fi
 
    # override details for Minio
