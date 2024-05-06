@@ -210,6 +210,9 @@ export interface OrganizationSettings {
     pinnedEditorVersions?: { [key: string]: string } | null;
 
     restrictedEditorNames?: string[] | null;
+
+    // what role new members will get, default is "member"
+    defaultRole?: OrgMemberRole;
 }
 
 export type TeamMemberRole = OrgMemberRole;

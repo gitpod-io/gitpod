@@ -38,6 +38,7 @@ message OrganizationSettings {
   repeated string allowed_workspace_classes = 3;
   repeated string restricted_editor_names = 4;
   map<string, string> pinned_editor_versions = 5;
+  string default_role = 6;
 }
 
 service OrganizationService {
@@ -121,23 +122,29 @@ message UpdateOrganizationSettingsRequest {
   // pass empty string to reset to the installation default workspace image
   optional string default_workspace_image = 4;
 
-  // allowed_workspace_classes are the IDs of classes, which can be used by workspaces in an organization.
-  // Pass an empty array to allow all workspace classes
+  // allowed_workspace_classes are the IDs of classes, which can be used by
+  // workspaces in an organization. Pass an empty array to allow all workspace
+  // classes
   repeated string allowed_workspace_classes = 5;
 
-  // restricted_editor_names updates the list of restricted editor names that are not allowed to be used by workspaces in an organization.
-  // If empty, all editors are allowed.
-  // Only updates if update_restricted_editor_names is true.
+  // restricted_editor_names updates the list of restricted editor names that
+  // are not allowed to be used by workspaces in an organization. If empty, all
+  // editors are allowed. Only updates if update_restricted_editor_names is
+  // true.
   repeated string restricted_editor_names = 6;
 
   // Specifies whether restricted_workspace_classes should be updated.
   optional bool update_restricted_editor_names = 7;
 
-  // pinned_editor_versions updates the pinned version for the corresponding editor.
+  // pinned_editor_versions updates the pinned version for the corresponding
+  // editor.
   map<string, string> pinned_editor_versions = 8;
 
   // Specifies whether pinned_editor_versions should be updated.
   optional bool update_pinned_editor_versions = 9;
+
+  // default_role is the default role for new members in the organization.
+  optional string default_role = 10;
 }
 
 message UpdateOrganizationSettingsResponse {

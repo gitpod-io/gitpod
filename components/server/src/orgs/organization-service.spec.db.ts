@@ -349,6 +349,24 @@ describe("OrganizationService", async () => {
         await assertUserRole(u2.id, "collaborator");
     });
 
+    it("should add as set defaultRole with flexibleRole", async () => {
+        Experiments.configureTestingClient({
+            centralizedPermissions: true,
+            dataops: false,
+        });
+        await assertUserRole(collaborator.id, "collaborator");
+        await os.updateSettings(adminId, org.id, { defaultRole: "owner" });
+        const u2 = await userService.createUser({
+            identity: {
+                authId: "github|1234",
+                authName: "github",
+                authProviderId: "github",
+            },
+        });
+        await os.addOrUpdateMember(owner.id, org.id, u2.id, "member", { flexibleRole: true });
+        await assertUserRole(u2.id, "owner");
+    });
+
     it("should join an org with different cell id", async () => {
         Experiments.configureTestingClient({
             centralizedPermissions: true,

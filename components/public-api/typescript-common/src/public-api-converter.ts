@@ -1018,6 +1018,7 @@ export class PublicAPIConverter {
             allowedWorkspaceClasses: settings.allowedWorkspaceClasses || [],
             pinnedEditorVersions: settings.pinnedEditorVersions || {},
             restrictedEditorNames: settings.restrictedEditorNames || [],
+            defaultRole: settings.defaultRole || undefined,
         });
     }
 

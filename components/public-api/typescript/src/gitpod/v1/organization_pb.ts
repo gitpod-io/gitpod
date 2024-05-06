@@ -203,6 +203,11 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
    */
   pinnedEditorVersions: { [key: string]: string } = {};
 
+  /**
+   * @generated from field: string default_role = 6;
+   */
+  defaultRole = "";
+
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -216,6 +221,7 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
     { no: 3, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 4, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 5, name: "pinned_editor_versions", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+    { no: 6, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {
@@ -433,17 +439,19 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   defaultWorkspaceImage?: string;
 
   /**
-   * allowed_workspace_classes are the IDs of classes, which can be used by workspaces in an organization.
-   * Pass an empty array to allow all workspace classes
+   * allowed_workspace_classes are the IDs of classes, which can be used by
+   * workspaces in an organization. Pass an empty array to allow all workspace
+   * classes
    *
    * @generated from field: repeated string allowed_workspace_classes = 5;
    */
   allowedWorkspaceClasses: string[] = [];
 
   /**
-   * restricted_editor_names updates the list of restricted editor names that are not allowed to be used by workspaces in an organization.
-   * If empty, all editors are allowed.
-   * Only updates if update_restricted_editor_names is true.
+   * restricted_editor_names updates the list of restricted editor names that
+   * are not allowed to be used by workspaces in an organization. If empty, all
+   * editors are allowed. Only updates if update_restricted_editor_names is
+   * true.
    *
    * @generated from field: repeated string restricted_editor_names = 6;
    */
@@ -457,7 +465,8 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   updateRestrictedEditorNames?: boolean;
 
   /**
-   * pinned_editor_versions updates the pinned version for the corresponding editor.
+   * pinned_editor_versions updates the pinned version for the corresponding
+   * editor.
    *
    * @generated from field: map<string, string> pinned_editor_versions = 8;
    */
@@ -469,6 +478,13 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
    * @generated from field: optional bool update_pinned_editor_versions = 9;
    */
   updatePinnedEditorVersions?: boolean;
+
+  /**
+   * default_role is the default role for new members in the organization.
+   *
+   * @generated from field: optional string default_role = 10;
+   */
+  defaultRole?: string;
 
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
@@ -486,6 +502,7 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
     { no: 7, name: "update_restricted_editor_names", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 8, name: "pinned_editor_versions", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
     { no: 9, name: "update_pinned_editor_versions", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 10, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {
