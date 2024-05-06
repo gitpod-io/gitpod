@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -72,7 +73,7 @@ func GetHttpContent(url string, ownerToken string) ([]byte, error) {
 	return b, err
 }
 
-func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, ide string, repo string) {
+func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, ide, productCode, repo string) {
 	api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 	t.Cleanup(func() {
 		api.Done(t)
@@ -151,39 +152,6 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 		t.Fatal(err)
 	}
 
-	if ide == "intellij" {
-		t.Logf("Check idea.log file correct location")
-		rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(info.LatestInstance.ID), integration.WithWorkspacekitLift(true))
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer rsa.Close()
-		integration.DeferCloser(t, closer)
-
-		qualifier := ""
-		if useLatest {
-			qualifier = "-latest"
-		}
-
-		var resp agent.ExecResponse
-		err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
-			Dir:     "/",
-			Command: "bash",
-			Args: []string{
-				"-c",
-				fmt.Sprintf("test -f /workspace/.cache/JetBrains%s/RemoteDev-IU/log/idea.log", qualifier),
-			},
-		}, &resp)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if resp.ExitCode != 0 {
-			t.Fatal("idea.log file not found in the expected location")
-		}
-	}
-
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: roboquatToken},
 	)
@@ -227,6 +195,67 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 	}
 	if !testStatus {
 		t.Fatal(ctx.Err())
+	}
+
+	rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(info.LatestInstance.ID), integration.WithWorkspacekitLift(true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rsa.Close()
+	integration.DeferCloser(t, closer)
+
+	fatalMessages := []string{}
+
+	checkIDEALogs := func() {
+		qualifier := ""
+		if useLatest {
+			qualifier = "-latest"
+		}
+		jbSystemDir := fmt.Sprintf("/workspace/.cache/JetBrains%s/RemoteDev-%s", qualifier, productCode)
+		ideaLogPath := jbSystemDir + "/log/idea.log"
+
+		t.Logf("Check idea.log file correct location")
+
+		var resp agent.ExecResponse
+		err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+			Dir:     "/",
+			Command: "bash",
+			Args: []string{
+				"-c",
+				fmt.Sprintf("cat %s", ideaLogPath),
+			},
+		}, &resp)
+
+		t.Logf("checking idea.log")
+		if err != nil || resp.ExitCode != 0 {
+			t.Fatal("idea.log file not found in the expected location")
+		}
+
+		pluginLoadedRegex := regexp.MustCompile(`Loaded custom plugins:.* Gitpod Remote`)
+		pluginStartedRegex := regexp.MustCompile(`Gitpod gateway link`)
+		pluginIncompatibleRegex := regexp.MustCompile(`Plugin 'Gitpod Remote' .* is not compatible`)
+
+		ideaLogs := []byte(resp.Stdout)
+		if pluginLoadedRegex.Match(ideaLogs) {
+			t.Logf("backend-plugin loaded")
+		} else {
+			fatalMessages = append(fatalMessages, "backend-plugin not loaded")
+		}
+		if pluginStartedRegex.Match(ideaLogs) {
+			t.Logf("backend-plugin started")
+		} else {
+			fatalMessages = append(fatalMessages, "backend-plugin not started")
+		}
+		if pluginIncompatibleRegex.Match(ideaLogs) {
+			fatalMessages = append(fatalMessages, "backend-plugin is incompatible")
+		} else {
+			t.Logf("backend-plugin maybe compatible")
+		}
+	}
+	checkIDEALogs()
+
+	if len(fatalMessages) > 0 {
+		t.Fatalf("[error] tests fail: \n%s", strings.Join(fatalMessages, "\n"))
 	}
 }
 
@@ -288,7 +317,7 @@ func TestGoLand(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "goland", "https://github.com/gitpod-samples/template-golang-cli")
+			JetBrainsIDETest(ctx, t, cfg, "goland", "GO", "https://github.com/gitpod-samples/template-golang-cli")
 			return testCtx
 		}).
 		Feature()
@@ -307,7 +336,7 @@ func TestIntellij(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "intellij", "https://github.com/jeanp413/spring-petclinic")
+			JetBrainsIDETest(ctx, t, cfg, "intellij", "IU", "https://github.com/jeanp413/spring-petclinic")
 			return testCtx
 		}).
 		Feature()
@@ -326,7 +355,7 @@ func TestPhpStorm(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "phpstorm", "https://github.com/gitpod-samples/template-php-laravel-mysql")
+			JetBrainsIDETest(ctx, t, cfg, "phpstorm", "PS", "https://github.com/gitpod-samples/template-php-laravel-mysql")
 			return testCtx
 		}).
 		Feature()
@@ -345,7 +374,7 @@ func TestPyCharm(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "pycharm", "https://github.com/gitpod-samples/template-python-django")
+			JetBrainsIDETest(ctx, t, cfg, "pycharm", "PY", "https://github.com/gitpod-samples/template-python-django")
 			return testCtx
 		}).
 		Feature()
@@ -365,8 +394,8 @@ func TestRubyMine(t *testing.T) {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 			// TODO: open comment after https://github.com/gitpod-io/gitpod/issues/16302 resolved
-			// JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-samples/template-ruby-on-rails-postgres")
-			JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-io/Gitpod-Ruby-On-Rails")
+			// JetBrainsIDETest(ctx, t, cfg, "rubymine", "RM", "https://github.com/gitpod-samples/template-ruby-on-rails-postgres")
+			JetBrainsIDETest(ctx, t, cfg, "rubymine", "RM", "https://github.com/gitpod-io/Gitpod-Ruby-On-Rails")
 			return testCtx
 		}).
 		Feature()
@@ -385,7 +414,7 @@ func TestWebStorm(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "webstorm", "https://github.com/gitpod-samples/template-typescript-react")
+			JetBrainsIDETest(ctx, t, cfg, "webstorm", "WS", "https://github.com/gitpod-samples/template-typescript-react")
 			return testCtx
 		}).
 		Feature()
@@ -404,7 +433,7 @@ func TestRider(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "rider", "https://github.com/gitpod-samples/template-dotnet-core-cli-csharp")
+			JetBrainsIDETest(ctx, t, cfg, "rider", "RD", "https://github.com/gitpod-samples/template-dotnet-core-cli-csharp")
 			return testCtx
 		}).
 		Feature()
@@ -424,7 +453,7 @@ func TestCLion(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "clion", "https://github.com/gitpod-samples/template-cpp")
+			JetBrainsIDETest(ctx, t, cfg, "clion", "CL", "https://github.com/gitpod-samples/template-cpp")
 			return testCtx
 		}).
 		Feature()

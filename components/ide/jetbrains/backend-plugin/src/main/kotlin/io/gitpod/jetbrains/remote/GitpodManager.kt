@@ -141,6 +141,8 @@ class GitpodManager : Disposable {
                     httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
                 if (response.statusCode() == 200) {
                     val gatewayLink = response.body()
+                    // the output format should be constant (includes `Gitpod gateway link`)
+                    // which will be checked in integration test gateway_test.go
                     thisLogger().warn(
                         "\n\n\n*********************************************************\n\n" +
                                 "Gitpod gateway link: $gatewayLink" +
