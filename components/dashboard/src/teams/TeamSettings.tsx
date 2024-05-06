@@ -39,6 +39,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
 import { IdeOptions, IdeOptionsModifyModal, IdeOptionsModifyModalProps } from "../components/IdeOptions";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -170,6 +171,29 @@ export default function TeamSettingsPage() {
                                 Save
                             </Button>
                         )}
+                    </ConfigurationSettingsField>
+
+                    <ConfigurationSettingsField>
+                        <Heading3>Default role for joiners</Heading3>
+                        <Subheading className="mb-4">Choose the initial role for new members.</Subheading>
+                        <Select
+                            value={`${settings?.defaultRole || "member"}`}
+                            onValueChange={(value) => handleUpdateTeamSettings({ defaultRole: value })}
+                            disabled={isLoading || !isOwner}
+                        >
+                            <SelectTrigger className="w-60">
+                                <SelectValue placeholder="Select a branch filter" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={`owner`}>
+                                    Owner - Can fully manage org and repository settings
+                                </SelectItem>
+                                <SelectItem value={`member`}>Member - Can view repository settings</SelectItem>
+                                <SelectItem value={`collaborator`}>
+                                    Collaborator - Can only create workspaces
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </ConfigurationSettingsField>
 
                     <ConfigurationSettingsField>

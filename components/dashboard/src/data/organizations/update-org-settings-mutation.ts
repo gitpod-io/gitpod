@@ -20,6 +20,7 @@ type UpdateOrganizationSettingsArgs = Partial<
         | "allowedWorkspaceClasses"
         | "pinnedEditorVersions"
         | "restrictedEditorNames"
+        | "defaultRole"
     >
 >;
 
@@ -36,6 +37,7 @@ export const useUpdateOrgSettingsMutation = () => {
             allowedWorkspaceClasses,
             pinnedEditorVersions,
             restrictedEditorNames,
+            defaultRole,
         }) => {
             const settings = await organizationClient.updateOrganizationSettings({
                 organizationId: teamId,
@@ -46,6 +48,7 @@ export const useUpdateOrgSettingsMutation = () => {
                 pinnedEditorVersions,
                 restrictedEditorNames,
                 updateRestrictedEditorNames: !!restrictedEditorNames,
+                defaultRole,
             });
             return settings.settings!;
         },

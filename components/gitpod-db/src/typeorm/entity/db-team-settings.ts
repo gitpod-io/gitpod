@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { OrganizationSettings } from "@gitpod/gitpod-protocol";
+import { OrgMemberRole, OrganizationSettings } from "@gitpod/gitpod-protocol";
 import { Entity, Column, PrimaryColumn } from "typeorm";
 import { TypeORM } from "../typeorm";
 
@@ -29,6 +29,9 @@ export class DBOrgSettings implements OrganizationSettings {
 
     @Column("json", { nullable: true })
     restrictedEditorNames?: string[] | null;
+
+    @Column("varchar", { nullable: true })
+    defaultRole?: OrgMemberRole | undefined;
 
     @Column()
     deleted: boolean;

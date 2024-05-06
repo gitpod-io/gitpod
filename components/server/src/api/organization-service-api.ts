@@ -272,6 +272,17 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         if (req.updatePinnedEditorVersions) {
             update.pinnedEditorVersions = req.pinnedEditorVersions;
         }
+        if (typeof req.defaultRole === "string" && req.defaultRole !== "") {
+            switch (req.defaultRole) {
+                case "owner":
+                case "member":
+                case "collaborator":
+                    update.defaultRole = req.defaultRole;
+                    break;
+                default:
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invalid defaultRole");
+            }
+        }
 
         if (Object.keys(update).length === 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");
