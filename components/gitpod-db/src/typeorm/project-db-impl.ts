@@ -223,12 +223,7 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
 
     public async deleteProjectEnvironmentVariable(variableId: string): Promise<void> {
         const envVarRepo = await this.getProjectEnvVarRepo();
-        const envVarWithValue = await envVarRepo.findOne({ id: variableId, deleted: false });
-        if (!envVarWithValue) {
-            throw new Error("A environment variable with this name could not be found for this project");
-        }
-        envVarWithValue.deleted = true;
-        await envVarRepo.update({ id: envVarWithValue.id, projectId: envVarWithValue.projectId }, envVarWithValue);
+        await envVarRepo.delete({ id: variableId });
     }
 
     public async getProjectEnvironmentVariableValues(envVars: ProjectEnvVar[]): Promise<ProjectEnvVarWithValue[]> {
