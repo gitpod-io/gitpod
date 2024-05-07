@@ -54,6 +54,7 @@ import { useAllowedWorkspaceClassesMemo } from "../data/workspaces/workspace-cla
 import Menu from "../menu/Menu";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
+import { isGitpodIo } from "../utils";
 
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
 
@@ -743,6 +744,15 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
                 title={`Permission to access private repositories has been granted. If you are a member of '${owner}', please try to request access for Gitpod.`}
                 linkText="Request access"
                 linkHref={authorizeURL}
+            />
+        );
+    }
+    if (authProvider.id.toLocaleLowerCase() === "public-github" && isGitpodIo()) {
+        return (
+            <RepositoryInputError
+                title={`Although you appear to have the correct authorization credentials, the '${owner}' organization has enabled OAuth App access restrictions, meaning that data access to third-parties is limited. For more information on these restrictions, including how to enable this app, visit https://docs.github.com/articles/restricting-access-to-your-organization-s-data/.`}
+                linkText="Check Organization Permissions"
+                linkHref={"https://github.com/settings/connections/applications/484069277e293e6d2a2a"}
             />
         );
     }
