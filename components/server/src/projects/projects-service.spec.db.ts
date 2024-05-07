@@ -18,6 +18,7 @@ import { createTestContainer, withTestCtx } from "../test/service-testing-contai
 import { OldProjectSettings, ProjectsService } from "./projects-service";
 import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { SYSTEM_USER } from "../authorization/authorizer";
+import { EnvVarService } from "../user/env-var-service";
 
 const expect = chai.expect;
 
@@ -99,11 +100,22 @@ describe("ProjectsService", async () => {
 
     it("should deleteProject", async () => {
         const ps = container.get(ProjectsService);
+        const evs = container.get(EnvVarService);
+        const pdb = container.get<ProjectDB>(ProjectDB);
         const project1 = await createTestProject(ps, org, owner);
+        await evs.addProjectEnvVar(member.id, project1.id, {
+            name: "key",
+            value: "value",
+            censored: false,
+        });
+
+        expect(await pdb.getProjectEnvironmentVariables(project1.id)).to.have.lengthOf(1);
 
         await ps.deleteProject(member.id, project1.id);
         let projects = await ps.getProjects(member.id, org.id);
         expect(projects.length).to.equal(0);
+        // have to use db directly to verify the env vars are really deleted, the env var service would throw with project not found.
+        expect(await pdb.getProjectEnvironmentVariables(project1.id)).to.have.lengthOf(0);
 
         const project2 = await createTestProject(ps, org, owner);
         await expectError(ErrorCodes.NOT_FOUND, () => ps.deleteProject(stranger.id, project2.id));

@@ -320,6 +320,12 @@ export class ProjectsService {
                 orgId = project.teamId;
                 await db.markDeleted(projectId);
 
+                // delete env vars
+                const envVars = await db.getProjectEnvironmentVariables(projectId);
+                for (const envVar of envVars) {
+                    await db.deleteProjectEnvironmentVariable(envVar.id);
+                }
+
                 await this.auth.removeProjectFromOrg(userId, orgId, projectId);
             });
             this.analytics.track({
