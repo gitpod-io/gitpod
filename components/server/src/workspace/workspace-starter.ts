@@ -623,6 +623,11 @@ export class WorkspaceStarter {
                     return;
                 }
 
+                if (err instanceof StartInstanceError) {
+                    // we already took care of classification at a lower level, bubble it up!
+                    throw err;
+                }
+
                 let reason: FailedInstanceStartReason = "startOnClusterFailed";
                 if (isResourceExhaustedError(err)) {
                     reason = "resourceExhausted";
