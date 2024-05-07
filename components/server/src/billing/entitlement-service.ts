@@ -182,13 +182,13 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingMode(userId, organizationId);
             switch (billingMode.mode) {
                 case "none":
-                    return true;
+                    return false;
                 case "usage-based":
                     return this.ubp.limitNetworkConnections(userId, organizationId);
             }
         } catch (err) {
             log.warn({ userId }, "EntitlementService error: limitNetworkConnections", err);
-            return true;
+            return false;
         }
     }
 
