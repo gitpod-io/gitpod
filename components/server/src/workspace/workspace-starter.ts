@@ -547,35 +547,39 @@ export class WorkspaceStarter {
         });
 
         try {
-            // build workspace image
-            const additionalAuth = await this.getAdditionalImageAuth(envVars);
-            instance = await this.buildWorkspaceImage(
-                { span },
-                user,
-                workspace,
-                instance,
-                additionalAuth,
-                forceRebuild,
-                forceRebuild,
-                region,
-            );
+            const checkPendingFirst = await isCheckPendingFirstEnabled(user);
+            const doBuildWorkspaceImage = async (): Promise<StartWorkspaceRequest> => {
+                // build workspace image
+                const additionalAuth = await this.getAdditionalImageAuth(envVars);
+                instance = await this.buildWorkspaceImage(
+                    { span },
+                    user,
+                    workspace,
+                    instance,
+                    additionalAuth,
+                    forceRebuild,
+                    forceRebuild,
+                    region,
+                );
 
-            let type: WorkspaceType = WorkspaceType.REGULAR;
-            if (workspace.type === "prebuild") {
-                type = WorkspaceType.PREBUILD;
+                // create spec
+                const spec = await this.createSpec({ span }, user, workspace, instance, envVars);
+
+                // create start workspace request
+                const metadata = await this.createMetadata(workspace);
+                const startRequest = new StartWorkspaceRequest();
+                startRequest.setId(instance.id);
+                startRequest.setMetadata(metadata);
+                startRequest.setType(workspace.type === "prebuild" ? WorkspaceType.PREBUILD : WorkspaceType.REGULAR);
+                startRequest.setSpec(spec);
+                startRequest.setServicePrefix(workspace.id);
+                return startRequest;
+            };
+            let startRequest: StartWorkspaceRequest | undefined = undefined;
+            if (!checkPendingFirst) {
+                // this is the old path, with "workspace_start_check_pending_first" turned off
+                startRequest = await doBuildWorkspaceImage();
             }
-
-            // create spec
-            const spec = await this.createSpec({ span }, user, workspace, instance, envVars);
-
-            // create start workspace request
-            const metadata = await this.createMetadata(workspace);
-            const startRequest = new StartWorkspaceRequest();
-            startRequest.setId(instance.id);
-            startRequest.setMetadata(metadata);
-            startRequest.setType(type);
-            startRequest.setSpec(spec);
-            startRequest.setServicePrefix(workspace.id);
 
             // choose a cluster and start the instance
             let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
@@ -592,6 +596,10 @@ export class WorkspaceStarter {
                         );
                         return;
                     }
+                }
+                if (!startRequest) {
+                    // this is the new path, with "workspace_start_check_pending_first" turned ON
+                    startRequest = await doBuildWorkspaceImage();
                 }
 
                 for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
@@ -647,12 +655,12 @@ export class WorkspaceStarter {
                     type: workspace.type,
                     class: instance.workspaceClass,
                     ideConfig: instance.configuration?.ideConfig,
-                    usesPrebuild: spec.getInitializer()?.hasPrebuild(),
+                    usesPrebuild: startRequest.getSpec()?.getInitializer()?.hasPrebuild(),
                 },
                 timestamp: new Date(instance.creationTime),
             });
 
-            if (type === WorkspaceType.PREBUILD) {
+            if (workspace.type === "prebuild") {
                 // do not await
                 this.notifyOnPrebuildQueued(ctx, workspace.id).catch((err) => {
                     log.error("failed to notify on prebuild queued", err);
@@ -1952,6 +1960,12 @@ function resolveGitpodTasks(ws: Workspace, instance: WorkspaceInstance): TaskCon
         tasks.push(...instance.configuration.ideSetup.tasks);
     }
     return tasks;
+}
+
+export async function isCheckPendingFirstEnabled(user: { id: string }): Promise<boolean> {
+    return getExperimentsClientForBackend().getValueAsync("workspace_start_check_pending_first", false, {
+        user: user,
+    });
 }
 
 export async function isWorkspaceClassDiscoveryEnabled(user: { id: string }): Promise<boolean> {
