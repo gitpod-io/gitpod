@@ -289,6 +289,7 @@ then
       --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
       --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
       apply -n ${PREVIEW_NAMESPACE} -f -
+  yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.StripeSecret "stripe-api-keys"
 fi
 
 #
