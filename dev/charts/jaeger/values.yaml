@@ -1,6 +1,6 @@
 global:
   timestamp: timestamp
-
+# IMPORTANT CHANGE RIGHT THERE!
 jaeger:
   storage: "memory"
   roleBinding: true
