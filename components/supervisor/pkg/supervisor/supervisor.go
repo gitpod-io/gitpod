@@ -805,9 +805,11 @@ func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, wg
 	ideStatus := statusNeverRan
 
 	var (
-		cmd        *exec.Cmd
-		ideStopped chan struct{}
-		firstStart bool = true
+		cmd                  *exec.Cmd
+		ideStopped           chan struct{}
+		firstStart           bool = true
+		readyDurationMux     sync.Mutex
+		readyDurationHasSent bool
 	)
 supervisorLoop:
 	for {
@@ -819,12 +821,18 @@ supervisorLoop:
 		startTime := time.Now()
 		cmd = prepareIDELaunch(cfg, ideConfig)
 		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide)
+		timer10s := time.NewTimer(11 * time.Second)
 
 		if firstStart {
 			firstStart = false
 			go func() {
 				select {
-				case <-ideReady.Wait():
+				case <-timer10s.C:
+					readyDurationMux.Lock()
+					defer readyDurationMux.Unlock()
+					if readyDurationHasSent {
+						return
+					}
 					cost := time.Since(startTime).Seconds()
 					his, err := metrics.IDEReadyDurationTotal.GetMetricWithLabelValues(ide.String())
 					if err != nil {
@@ -832,6 +840,21 @@ supervisorLoop:
 						return
 					}
 					his.Observe(cost)
+					readyDurationHasSent = true
+				case <-ideReady.Wait():
+					readyDurationMux.Lock()
+					defer readyDurationMux.Unlock()
+					if readyDurationHasSent {
+						return
+					}
+					cost := time.Since(startTime).Seconds()
+					his, err := metrics.IDEReadyDurationTotal.GetMetricWithLabelValues(ide.String())
+					if err != nil {
+						log.WithError(err).Error("cannot get metrics for IDEReadyDurationTotal")
+						return
+					}
+					his.Observe(cost)
+					readyDurationHasSent = true
 				case <-ctx.Done():
 				}
 			}()
