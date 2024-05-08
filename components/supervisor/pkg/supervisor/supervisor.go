@@ -62,6 +62,7 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/metrics"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/serverapi"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/shared"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -135,7 +136,7 @@ type ShutdownReason int16
 const (
 	ShutdownReasonSuccess              ShutdownReason = 0
 	ShutdownReasonExecutionError       ShutdownReason = 1
-	ShutdownReasonIDEReadinessTimedOut ShutdownReason = 2
+	ShutdownReasonIDEReadinessTimedOut ShutdownReason = shared.ExitCodeReasonIDEReadinessTimedOut
 )
 
 type IDEKind int64
@@ -263,7 +264,7 @@ func Run(options ...RunOption) {
 	}
 
 	var (
-		ideReady                       = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
+		ideReady                       = newIDEReadyState(&cfg.IDE)
 		desktopIdeReady *ideReadyState = nil
 
 		cstate        = NewInMemoryContentState(cfg.RepoRoot)
@@ -285,7 +286,7 @@ func Run(options ...RunOption) {
 	}
 
 	if cfg.GetDesktopIDE() != nil {
-		desktopIdeReady = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
+		desktopIdeReady = newIDEReadyState(cfg.GetDesktopIDE())
 	}
 	if !cfg.isHeadless() && !opts.RunGP && !cfg.isDebugWorkspace() {
 		go trackReadiness(ctx, telemetry, cfg, cstate, ideReady, desktopIdeReady)
@@ -414,9 +415,10 @@ func Run(options ...RunOption) {
 		shutdown = make(chan ShutdownReason, 1)
 	)
 	go func() {
-		allReady := waitForIde(ctx, ideReady, desktopIdeReady, ideReadyTimeoutDuration)
+		<-cstate.ContentReady()
+		allReady, waitFor := waitForIde(ctx, ideReady, desktopIdeReady, ideReadyTimeoutDuration)
 		if !allReady {
-			msg := []byte(fmt.Sprintf("editor start timed out after %.0f minutes", ideReadyTimeoutDuration.Minutes()))
+			msg := []byte(fmt.Sprintf("%s timed out to start after %.0f minutes", waitFor, ideReadyTimeoutDuration.Minutes()))
 			err := os.WriteFile("/dev/termination-log", msg, 0o644)
 			if err != nil {
 				log.WithError(err).Error("err while writing termination log")
@@ -834,13 +836,13 @@ supervisorLoop:
 		startTime := time.Now()
 		cmd = prepareIDELaunch(cfg, ideConfig)
 		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide)
-		timer10s := time.NewTimer(11 * time.Second)
+		timerAfterMaxBucket := time.NewTimer((shared.IDEReadyDurationTotalMaxBucketSecond + 1) * time.Second)
 
 		if firstStart {
 			firstStart = false
 			go func() {
 				select {
-				case <-timer10s.C:
+				case <-timerAfterMaxBucket.C:
 					readyDurationMux.Lock()
 					defer readyDurationMux.Unlock()
 					if readyDurationHasSent {
@@ -1863,25 +1865,27 @@ func handleExit(ec *int) {
 	os.Exit(exitCode)
 }
 
-func waitForIde(parent context.Context, ideReady *ideReadyState, desktopIdeReady *ideReadyState, timeout time.Duration) bool {
+func waitForIde(parent context.Context, ideReady *ideReadyState, desktopIdeReady *ideReadyState, timeout time.Duration) (bool, string) {
 	if ideReady == nil {
-		return true
+		return true, ""
 	}
 	ctx, cancel := context.WithTimeout(parent, timeout)
 	defer cancel()
 	select {
 	case <-ctx.Done():
-		return false
+		return false, ideReady.ideConfig.DisplayName
 	case <-ideReady.Wait():
 	}
 
 	if desktopIdeReady == nil {
-		return true
+		return true, ""
 	}
 	select {
 	case <-ctx.Done():
-		return false
+		// We assume desktop editors should have backend/server anyway
+		// "IntelliJ backend timed out to start after 5 minutes"
+		return false, desktopIdeReady.ideConfig.DisplayName + " backend"
 	case <-desktopIdeReady.Wait():
 	}
-	return true
+	return true, ""
 }

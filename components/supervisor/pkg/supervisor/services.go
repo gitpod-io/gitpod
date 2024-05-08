@@ -53,9 +53,14 @@ type DesktopIDEStatus struct {
 }
 
 type ideReadyState struct {
-	ready bool
-	info  *DesktopIDEStatus
-	cond  *sync.Cond
+	ready     bool
+	ideConfig *IDEConfig
+	info      *DesktopIDEStatus
+	cond      *sync.Cond
+}
+
+func newIDEReadyState(ideConfig *IDEConfig) *ideReadyState {
+	return &ideReadyState{cond: sync.NewCond(&sync.Mutex{}), ideConfig: ideConfig}
 }
 
 // Wait returns a channel that emits when IDE is ready.
