@@ -272,6 +272,10 @@ func serve(launchCtx *LaunchContext) {
 		if backendPort == "" {
 			backendPort = defaultBackendPort
 		}
+		if err := isBackendPluginReady(backendPort); err != nil {
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			return
+		}
 		gatewayLink, err := resolveGatewayLink(backendPort, launchCtx.wsInfo)
 		if err != nil {
 			log.WithError(err).Error("cannot resolve gateway link")
@@ -291,6 +295,21 @@ func serve(launchCtx *LaunchContext) {
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", launchCtx.port), nil); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// isBackendPluginReady checks if the backend plugin is ready via backend plugin CLI GitpodCLIService.kt
+func isBackendPluginReady(backendPort string) error {
+	log.WithField("backendPort", backendPort).Info("wait backend plugin to be ready")
+	// op=echo as we don't care the respond content, but whether it's reachable
+	url, err := url.Parse("http://localhost:" + backendPort + "/api/gitpod/cli?op=echo")
+	if err != nil {
+		return err
+	}
+	resp, err := http.Get(url.String())
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	return err
 }
 
 func restart(r *http.Request) {
