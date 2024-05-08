@@ -63,6 +63,21 @@ export class TokenService implements TokenProvider {
             return false;
         }
 
+        const updateReservation = async (uid: string, token: Token, requestedLifetimeDate: Date): Promise<void> => {
+            if (
+                !token.reservedUntilDate ||
+                requestedLifetimeDate.getTime() > new Date(token.reservedUntilDate).getTime()
+            ) {
+                // If the requested lifetime is longer than the reserved lifetime, we extend the reservation
+                const reservedUntilDate = requestedLifetimeDate.toISOString();
+                await this.userDB.updateTokenEntry({
+                    uid,
+                    reservedUntilDate,
+                });
+                token.reservedUntilDate = reservedUntilDate;
+            }
+        };
+
         const requestedLifetimeDate = nowPlusMins(requestedLifetimeMins);
         let opportunisticRefresh: OpportunisticRefresh = "false";
         try {
@@ -85,31 +100,18 @@ export class TokenService implements TokenProvider {
                             !!authProvider.requiresOpportunisticRefresh &&
                             authProvider.requiresOpportunisticRefresh();
                         if (!doOpportunisticRefresh) {
-                            // No opportunistic refresh? Done.
-                            const reservedUntilDate = requestedLifetimeDate.toISOString();
-                            await this.userDB.updateTokenEntry({
-                                uid: tokenEntry.uid,
-                                reservedUntilDate,
-                            });
-                            token.reservedUntilDate = reservedUntilDate;
+                            // No opportunistic refresh? Update reserveation and we are done.
+                            await updateReservation(tokenEntry.uid, token, requestedLifetimeDate);
                             reportScmTokenRefreshRequest(host, opportunisticRefresh, "still_valid");
                             return token;
                         }
 
                         // Opportunistic, but token currently reserved? Done.
-                        if (
+                        const currentlyReserved =
                             token.reservedUntilDate &&
-                            new Date(token.reservedUntilDate).getTime() > new Date().getTime()
-                        ) {
-                            if (requestedLifetimeDate.getTime() > new Date(token.reservedUntilDate).getTime()) {
-                                // If
-                                const reservedUntilDate = requestedLifetimeDate.toISOString();
-                                await this.userDB.updateTokenEntry({
-                                    uid: tokenEntry.uid,
-                                    reservedUntilDate,
-                                });
-                                token.reservedUntilDate = reservedUntilDate;
-                            }
+                            new Date(token.reservedUntilDate).getTime() > new Date().getTime();
+                        if (currentlyReserved) {
+                            await updateReservation(tokenEntry.uid, token, requestedLifetimeDate);
                             reportScmTokenRefreshRequest(host, "reserved", "still_valid");
                             return token;
                         }
