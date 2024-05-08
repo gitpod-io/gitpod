@@ -177,14 +177,15 @@ export abstract class GenericAuthProvider implements AuthProvider {
         );
     }
 
-    async refreshToken(user: User) {
+    async refreshToken(user: User, requestedLifetimeDate: Date): Promise<Token> {
         log.info(`(${this.strategyName}) Token to be refreshed.`, { userId: user.id });
         const { authProviderId } = this;
         const identity = User.getIdentity(user, authProviderId);
         if (!identity) {
             throw new Error(`Cannot find an identity for ${authProviderId}`);
         }
-        const token = await this.userDb.findTokenForIdentity(identity);
+        const tokenEntry = await this.userDb.findTokenEntryForIdentity(identity);
+        const token = tokenEntry?.token;
         if (!token) {
             throw new Error(`Cannot find any current token for ${authProviderId}`);
         }
@@ -217,26 +218,34 @@ export abstract class GenericAuthProvider implements AuthProvider {
             const expiryDate = tokenExpiresInSeconds
                 ? new Date(now.getTime() + tokenExpiresInSeconds * 1000).toISOString()
                 : undefined;
+            const reservedUntilDate = requestedLifetimeDate.toISOString();
             const newToken: Token = {
                 value: access_token,
                 username: this.tokenUsername,
                 scopes: token.scopes,
                 updateDate,
                 expiryDate,
+                reservedUntilDate,
                 refreshToken: refresh_token,
             };
-            await this.userDb.storeSingleToken(identity, newToken);
+            const newTokenEntry = await this.userDb.storeSingleToken(identity, newToken);
             log.info(`(${this.strategyName}) Token refreshed and updated.`, {
                 userId: user.id,
                 updateDate,
                 expiryDate,
+                reservedUntilDate,
             });
+            return newTokenEntry.token;
         } catch (error) {
             log.error({ userId: user.id }, `(${this.strategyName}) Failed to refresh token!`, {
                 error: new TrustedValue(error),
             });
             throw error;
         }
+    }
+
+    public requiresOpportunisticRefresh() {
+        return this.params.type === "BitbucketServer";
     }
 
     protected cachedAuthCallbackPath: string | undefined = undefined;

@@ -385,7 +385,7 @@ export function reportAuthorizerSubjectId(match: AuthorizerSubjectIdMatch) {
 export const scmTokenRefreshRequestsTotal = new prometheusClient.Counter({
     name: "gitpod_scm_token_refresh_requests_total",
     help: "Counter for the number of token refresh requests we issue against SCM systems",
-    labelNames: ["host", "result"],
+    labelNames: ["host", "result", "opportunisticRefresh"],
 });
 export type ScmTokenRefreshResult =
     | "success"
@@ -395,8 +395,13 @@ export type ScmTokenRefreshResult =
     | "no_token"
     | "not_refreshable"
     | "success_after_timeout";
-export function reportScmTokenRefreshRequest(host: string, result: ScmTokenRefreshResult) {
-    scmTokenRefreshRequestsTotal.labels(host, result).inc();
+export type OpportunisticRefresh = "true" | "false" | "reserved";
+export function reportScmTokenRefreshRequest(
+    host: string,
+    opportunisticRefresh: OpportunisticRefresh,
+    result: ScmTokenRefreshResult,
+) {
+    scmTokenRefreshRequestsTotal.labels(host, result, opportunisticRefresh).inc();
 }
 
 export const scmTokenRefreshLatencyHistogram = new prometheusClient.Histogram({

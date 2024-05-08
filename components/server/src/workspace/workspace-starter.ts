@@ -143,6 +143,8 @@ export interface StartWorkspaceOptions extends Omit<GitpodServer.StartWorkspaceO
 
 const MAX_INSTANCE_START_RETRIES = 2;
 const INSTANCE_START_RETRY_INTERVAL_SECONDS = 2;
+/** [mins] */
+const SCM_TOKEN_LIFETIME_MINS = 10;
 
 export async function getWorkspaceClassForInstance(
     ctx: TraceContext,
@@ -1852,8 +1854,8 @@ export class WorkspaceStarter {
             targetMode = CloneTargetMode.REMOTE_HEAD;
         }
 
-        const tokenValidityThreshold = (await isLongAccessTokenValidityThresholdEnabled(user)) ? 50 : 30;
-        const gitToken = await this.tokenProvider.getTokenForHost(user, host, tokenValidityThreshold);
+        const tokenValidityPeriodMins = (await getScmAccessTokenLifetime(user)) || SCM_TOKEN_LIFETIME_MINS;
+        const gitToken = await this.tokenProvider.getTokenForHost(user, host, tokenValidityPeriodMins);
         if (!gitToken) {
             throw new Error(`No token for host: ${host}`);
         }
@@ -1979,10 +1981,14 @@ export async function isWorkspaceClassDiscoveryEnabled(user: { id: string }): Pr
     });
 }
 
-export async function isLongAccessTokenValidityThresholdEnabled(user: { id: string }): Promise<boolean> {
-    return getExperimentsClientForBackend().getValueAsync("workspace_start_extended_token_validity_threshold", false, {
-        user: user,
-    });
+export async function getScmAccessTokenLifetime(user: { id: string }): Promise<number | undefined> {
+    return getExperimentsClientForBackend().getValueAsync<number | undefined>(
+        "workspace_start_scm_access_token_lifetime",
+        undefined,
+        {
+            user: user,
+        },
+    );
 }
 
 export class ScmStartError extends Error {

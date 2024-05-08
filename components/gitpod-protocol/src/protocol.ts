@@ -618,6 +618,7 @@ export interface Token {
     scopes: string[];
     updateDate?: string;
     expiryDate?: string;
+    reservedUntilDate?: string;
     idToken?: string;
     refreshToken?: string;
     username?: string;
@@ -628,6 +629,7 @@ export interface TokenEntry {
     authId: string;
     token: Token;
     expiryDate?: string;
+    reservedUntilDate?: string;
     refreshable?: boolean;
 }
 
@@ -1416,7 +1418,7 @@ export interface OAuth2Config {
 }
 
 export namespace AuthProviderEntry {
-    export type Type = "GitHub" | "GitLab" | string;
+    export type Type = "GitHub" | "GitLab" | "Bitbucket" | "BitbucketServer" | string;
     export type Status = "pending" | "verified";
     export type NewEntry = Pick<AuthProviderEntry, "ownerId" | "host" | "type"> & {
         clientId?: string;
