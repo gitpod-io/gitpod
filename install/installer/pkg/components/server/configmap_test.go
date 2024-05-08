@@ -22,6 +22,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
+// TestConfigMap does something
 func TestConfigMap(t *testing.T) {
 	type Expectation struct {
 		EnableLocalApp                    bool
