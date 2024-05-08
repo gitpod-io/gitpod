@@ -1,6 +1,8 @@
-#
-# Changes to the CODEONWERS file have to get reviewed by Engineering Leadership.
-#
+
+# By default, Team Enterprise (co-)owns all code...
+* @gitpod-io/team-enterprise
+
+# ...except CODEONWERS whichs is reviewed by Engineering Leadership.
 /.github/CODEOWNERS @gitpod-io/engineering-leadership
 
 /components/blobserve @gitpod-io/team-experience
