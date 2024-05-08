@@ -83,7 +83,11 @@ var initCmd = &cobra.Command{
 			if err != nil && !(strings.Contains(err.Error(), "signal: ") || strings.Contains(err.Error(), "no child processes")) {
 				if eerr, ok := err.(*exec.ExitError); ok && eerr.ExitCode() != 0 {
 					logs := extractFailureFromRun()
-					log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
+					if eerr.ExitCode() == 2 {
+						log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error")
+					} else {
+						log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
+					}
 				}
 				log.WithError(err).Error("supervisor run error")
 				return

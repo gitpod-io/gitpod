@@ -121,7 +121,8 @@ func WithRunGP(enable bool) RunOption {
 
 // The sum of those timeBudget* times has to fit within the terminationGracePeriod of the workspace pod.
 const (
-	timeBudgetIDEShutdown = 15 * time.Second
+	timeBudgetIDEShutdown   = 15 * time.Second
+	ideReadyTimeoutDuration = 5 * time.Minute
 )
 
 const (
@@ -413,8 +414,13 @@ func Run(options ...RunOption) {
 		shutdown = make(chan ShutdownReason, 1)
 	)
 	go func() {
-		allReady := waitForIde(ctx, ideReady, desktopIdeReady, 10*time.Minute)
+		allReady := waitForIde(ctx, ideReady, desktopIdeReady, ideReadyTimeoutDuration)
 		if !allReady {
+			msg := []byte(fmt.Sprintf("editor start timed out after %.0f minutes", ideReadyTimeoutDuration.Minutes()))
+			err := os.WriteFile("/dev/termination-log", msg, 0o644)
+			if err != nil {
+				log.WithError(err).Error("err while writing termination log")
+			}
 			shutdown <- ShutdownReasonIDEReadinessTimedOut
 		}
 	}()

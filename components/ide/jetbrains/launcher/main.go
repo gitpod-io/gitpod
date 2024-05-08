@@ -299,7 +299,7 @@ func serve(launchCtx *LaunchContext) {
 
 // isBackendPluginReady checks if the backend plugin is ready via backend plugin CLI GitpodCLIService.kt
 func isBackendPluginReady(backendPort string) error {
-	log.WithField("backendPort", backendPort).Info("wait backend plugin to be ready")
+	log.WithField("backendPort", backendPort).Debug("wait backend plugin to be ready")
 	// Use op=metrics so that we don't need to rebuild old backend-plugin
 	url, err := url.Parse("http://localhost:" + backendPort + "/api/gitpod/cli?op=metrics")
 	if err != nil {
