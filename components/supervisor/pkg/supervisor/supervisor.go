@@ -132,8 +132,9 @@ const (
 type ShutdownReason int16
 
 const (
-	ShutdownReasonSuccess        ShutdownReason = 0
-	ShutdownReasonExecutionError ShutdownReason = 1
+	ShutdownReasonSuccess              ShutdownReason = 0
+	ShutdownReasonExecutionError       ShutdownReason = 1
+	ShutdownReasonIDEReadinessTimedOut ShutdownReason = 2
 )
 
 type IDEKind int64
@@ -411,6 +412,12 @@ func Run(options ...RunOption) {
 		wg       sync.WaitGroup
 		shutdown = make(chan ShutdownReason, 1)
 	)
+	go func() {
+		allReady := waitForIde(ctx, ideReady, desktopIdeReady, 10*time.Minute)
+		if !allReady {
+			shutdown <- ShutdownReasonIDEReadinessTimedOut
+		}
+	}()
 
 	if opts.RunGP {
 		cstate.MarkContentReady(csapi.WorkspaceInitFromOther)
@@ -1850,24 +1857,25 @@ func handleExit(ec *int) {
 	os.Exit(exitCode)
 }
 
-func waitForIde(parent context.Context, ideReady *ideReadyState, desktopIdeReady *ideReadyState, timeout time.Duration) {
+func waitForIde(parent context.Context, ideReady *ideReadyState, desktopIdeReady *ideReadyState, timeout time.Duration) bool {
 	if ideReady == nil {
-		return
+		return true
 	}
 	ctx, cancel := context.WithTimeout(parent, timeout)
 	defer cancel()
 	select {
 	case <-ctx.Done():
-		return
+		return false
 	case <-ideReady.Wait():
 	}
 
 	if desktopIdeReady == nil {
-		return
+		return true
 	}
 	select {
 	case <-ctx.Done():
-		return
+		return false
 	case <-desktopIdeReady.Wait():
 	}
+	return true
 }
