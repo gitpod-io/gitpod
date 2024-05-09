@@ -152,6 +152,10 @@ type DockerRefResolverOption func(o *opts)
 
 // WithAuthentication sets a base64 encoded authentication for accessing a Docker registry
 func WithAuthentication(auth *auth.Authentication) DockerRefResolverOption {
+	if auth == nil {
+		log.Debug("WithAuthentication - auth was nil")
+	}
+
 	return func(o *opts) {
 		o.Auth = auth
 	}

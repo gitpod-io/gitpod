@@ -159,7 +159,7 @@ func (o *Orchestrator) ResolveBaseImage(ctx context.Context, req *protocol.Resol
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
 
-	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
+	reqauth := o.AuthResolver.ResolveRequestAuth(ctx, req.Auth)
 
 	refstr, err := o.getAbsoluteImageRef(ctx, req.Ref, reqauth)
 	if err != nil {
@@ -177,7 +177,7 @@ func (o *Orchestrator) ResolveWorkspaceImage(ctx context.Context, req *protocol.
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
 
-	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
+	reqauth := o.AuthResolver.ResolveRequestAuth(ctx, req.Auth)
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
 	if _, ok := status.FromError(err); err != nil && ok {
 		return nil, err
@@ -227,7 +227,9 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	}
 
 	// resolve build request authentication
-	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
+	reqauth := o.AuthResolver.ResolveRequestAuth(ctx, req.Auth)
+
+	log.WithField("forceRebuild", req.GetForceRebuild()).WithField("baseImageNameResolved", req.BaseImageNameResolved).Info("build request")
 
 	// resolve to ref to baseImageNameResolved (if it exists)
 	if req.BaseImageNameResolved != "" && !req.GetForceRebuild() {
@@ -272,11 +274,14 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		}
 	}
 
+	log.Info("falling through to old way of building")
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
 	if _, ok := status.FromError(err); err != nil && ok {
+		log.WithError(err).Error("gRPC status error")
 		return err
 	}
 	if err != nil {
+		log.WithError(err).Error("cannot get base image ref")
 		return status.Errorf(codes.Internal, "cannot resolve base image: %s", err.Error())
 	}
 
@@ -597,6 +602,11 @@ func (o *Orchestrator) checkImageExists(ctx context.Context, ref string, authent
 
 // getAbsoluteImageRef returns the "digest" form of an image, i.e. contains no mutable image tags
 func (o *Orchestrator) getAbsoluteImageRef(ctx context.Context, ref string, allowedAuth auth.AllowedAuthFor) (res string, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "getAbsoluteImageRef")
+	defer tracing.FinishSpan(span, &err)
+	span.LogKV("ref", ref)
+
+	log.WithField("ref", ref).Debug("getAbsoluteImageRef")
 	auth, err := allowedAuth.GetAuthFor(ctx, o.Auth, ref)
 	if err != nil {
 		return "", status.Errorf(codes.InvalidArgument, "cannt resolve base image ref: %v", err)
@@ -607,6 +617,11 @@ func (o *Orchestrator) getAbsoluteImageRef(ctx context.Context, ref string, allo
 		return "", status.Error(codes.NotFound, "cannot resolve image")
 	}
 	if errors.Is(err, resolve.ErrUnauthorized) {
+		if auth == nil {
+			log.WithField("ref", ref).Warn("auth was nil")
+		} else if auth.Auth == "" && auth.Password == "" {
+			log.WithField("ref", ref).Warn("auth was empty")
+		}
 		return "", status.Error(codes.Unauthenticated, "cannot resolve image")
 	}
 	if err != nil {
