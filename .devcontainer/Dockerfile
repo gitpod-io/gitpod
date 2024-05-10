@@ -184,12 +184,12 @@ RUN curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip" -o aws
     rm -rf awscliv2.zip ./aws
 
 ENV GO_VERSION=1.22.2
-ENV GOPATH=/home/gitpod/go-packages
-ENV GOROOT=/home/gitpod/go
+ENV GOPATH=/root/go-packages
+ENV GOROOT=/root/go
 ENV PATH=$GOROOT/bin:$GOPATH/bin:$PATH
 
 RUN mkdir -p $GOROOT && \
-    cd /home/gitpod && \
+    cd /root && \
     curl -fsSL https://dl.google.com/go/go$GO_VERSION.${TARGETOS}-${TARGETARCH}.tar.gz | tar xzs
 
 # Install codecov uploader
@@ -242,27 +242,16 @@ RUN go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 ENV USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
-### Gitpod user ###
-# '-l': see https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
-RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod \
-    # Remove `use_pty` option and enable passwordless sudo for users in the 'sudo' group
-    && sed -i.bkp -e '/Defaults\tuse_pty/d' -e 's/%sudo\s\+ALL=(ALL\(:ALL\)\?)\s\+ALL/%sudo ALL=NOPASSWD:ALL/g' /etc/sudoers
+# create completions
+RUN mkdir -p /root/.bashrc.d && \
+    (echo; echo "source /etc/bash_completion"; echo) >> /root/.bashrc && \
+    (echo; echo "for i in \$(ls -A \$HOME/.bashrc.d/); do source \$HOME/.bashrc.d/\$i; done"; echo) >> /root/.bashrc && \
+    mkdir -p /root/.local/share/bash-completion/completions
 
-USER gitpod
-# use sudo so that user does not get sudo usage info on (the first) login
-RUN sudo echo "Running 'sudo' for Gitpod: success" && \
-    sudo chown -R gitpod:gitpod /home/gitpod && \
-    # create .bashrc.d folder and source it in the bashrc
-    mkdir -p /home/gitpod/.bashrc.d && \
-    (echo; echo "source /etc/bash_completion"; echo) >> /home/gitpod/.bashrc && \
-    (echo; echo "for i in \$(ls -A \$HOME/.bashrc.d/); do source \$HOME/.bashrc.d/\$i; done"; echo) >> /home/gitpod/.bashrc && \
-    # create a completions dir for gitpod user
-    mkdir -p /home/gitpod/.local/share/bash-completion/completions
-
-RUN { echo && echo "PS1='\[\033[01;32m\]\u\[\033[00m\] \[\033[01;34m\]\w\[\033[00m\]\$(__git_ps1 \" (%s)\") $ '" ; } >> /home/gitpod/.bashrc
+RUN { echo && echo "PS1='\[\033[01;32m\]\u\[\033[00m\] \[\033[01;34m\]\w\[\033[00m\]\$(__git_ps1 \" (%s)\") $ '" ; } >> /root/.bashrc
 
 ## Register leeway autocompletion in bashrc
-RUN bash -c "echo . \<\(leeway bash-completion\) >> /home/gitpod/.bashrc"
+RUN bash -c "echo . \<\(leeway bash-completion\) >> /root/.bashrc"
 
 ### Google Cloud ###
 # not installed via repository as then 'docker-credential-gcr' is not available
@@ -274,8 +263,7 @@ RUN arch=$(uname -m); \
     aarch64|arm64) arch=arm ;; \
     *) echo "Unsupported architecture: $arch"; exit 1 ;; \
     esac; \
-    sudo chown gitpod: /opt \
-    && mkdir -p $GCS_DIR \
+    mkdir -p $GCS_DIR \
     && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-472.0.0-linux-${arch}.tar.gz \
     | tar -xzC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
@@ -301,34 +289,34 @@ RUN mkdir -p ~/.terraform \
 ## Java
 ENV JAVA_VERSION=11.0.23.fx-zulu
 RUN curl -fsSL "https://get.sdkman.io" | bash \
-&& bash -c ". /home/gitpod/.sdkman/bin/sdkman-init.sh \
-            && sed -i 's/sdkman_selfupdate_enable=true/sdkman_selfupdate_enable=false/g' /home/gitpod/.sdkman/etc/config \
-            && sed -i 's/sdkman_selfupdate_feature=true/sdkman_selfupdate_feature=false/g' /home/gitpod/.sdkman/etc/config \
+&& bash -c ". /root/.sdkman/bin/sdkman-init.sh \
+            && sed -i 's/sdkman_selfupdate_enable=true/sdkman_selfupdate_enable=false/g' /root/.sdkman/etc/config \
+            && sed -i 's/sdkman_selfupdate_feature=true/sdkman_selfupdate_feature=false/g' /root/.sdkman/etc/config \
             && sdk install java ${JAVA_VERSION} \
             && sdk default java ${JAVA_VERSION} \
             && sdk install gradle \
             && sdk install maven \
             && sdk flush archives \
             && sdk flush temp \
-            && mkdir /home/gitpod/.m2 \
-            && printf '<settings>\n  <localRepository>/workspace/m2-repository/</localRepository>\n</settings>\n' > /home/gitpod/.m2/settings.xml \
-            && echo 'export SDKMAN_DIR=\"/home/gitpod/.sdkman\"' >> /home/gitpod/.bashrc.d/99-java \
-            && echo '[[ -s \"/home/gitpod/.sdkman/bin/sdkman-init.sh\" ]] && source \"/home/gitpod/.sdkman/bin/sdkman-init.sh\"' >> /home/gitpod/.bashrc.d/99-java"
+            && mkdir /root/.m2 \
+            && printf '<settings>\n  <localRepository>/workspace/m2-repository/</localRepository>\n</settings>\n' > /root/.m2/settings.xml \
+            && echo 'export SDKMAN_DIR=\"/root/.sdkman\"' >> /root/.bashrc.d/99-java \
+            && echo '[[ -s \"/root/.sdkman/bin/sdkman-init.sh\" ]] && source \"/root/.sdkman/bin/sdkman-init.sh\"' >> /root/.bashrc.d/99-java"
 # above, we are adding the sdkman init to .bashrc (executing sdkman-init.sh does that), because one is executed on interactive shells, the other for non-interactive shells (e.g. plugin-host)
 ENV GRADLE_USER_HOME=/workspace/.gradle/
 
 ENV NODE_VERSION=18.18.2
 
-ENV PNPM_HOME=/home/gitpod/.pnpm
-ENV PATH=/home/gitpod/.nvm/versions/node/v${NODE_VERSION}/bin:/home/gitpod/.yarn/bin:${PNPM_HOME}:$PATH
-ENV HOME=/home/gitpod
+ENV PNPM_HOME=/root/.pnpm
+ENV PATH=/root/.nvm/versions/node/v${NODE_VERSION}/bin:/root/.yarn/bin:${PNPM_HOME}:$PATH
+ENV HOME=/root
 RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash \
     && bash -c ". $HOME/.nvm/nvm.sh \
         && nvm install v${NODE_VERSION} \
         && nvm alias default v${NODE_VERSION} \
         && npm install -g typescript yarn pnpm node-gyp"
 
-ENV PATH=$PATH:/home/gitpod/.aws-iam:/home/gitpod/.terraform:/workspace/bin
+ENV PATH=$PATH:/root/.aws-iam:/root/.terraform:/workspace/bin
 
 # Install pre-commit hooks under /workspace during prebuilds
 ENV PRE_COMMIT_HOME=/workspace/.pre-commit
