@@ -26,6 +26,7 @@ import (
 var idpTokenOpts struct {
 	Audience []string
 	Decode   bool
+	Scope    string
 }
 
 var idpTokenCmd = &cobra.Command{
@@ -37,7 +38,7 @@ var idpTokenCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
-		tkn, err := idpToken(ctx, idpTokenOpts.Audience)
+		tkn, err := idpToken(ctx, idpTokenOpts.Audience, idpTokenOpts.Scope)
 
 		token, _, err := jwt.NewParser().ParseUnverified(tkn, jwt.MapClaims{})
 		if err != nil {
@@ -66,7 +67,7 @@ var idpTokenCmd = &cobra.Command{
 	},
 }
 
-func idpToken(ctx context.Context, audience []string) (idToken string, err error) {
+func idpToken(ctx context.Context, audience []string, scope string) (idToken string, err error) {
 	wsInfo, err := gitpod.GetWSInfo(ctx)
 	if err != nil {
 		return "", err
@@ -95,6 +96,7 @@ func idpToken(ctx context.Context, audience []string) (idToken string, err error
 		Msg: &v1.GetIDTokenRequest{
 			Audience:    audience,
 			WorkspaceId: wsInfo.WorkspaceId,
+			Scope:       scope,
 		},
 	})
 	if err != nil {
@@ -110,4 +112,5 @@ func init() {
 	_ = idpTokenCmd.MarkFlagRequired("audience")
 
 	idpTokenCmd.Flags().BoolVar(&idpTokenOpts.Decode, "decode", false, "decode token to JSON")
+	idpTokenCmd.Flags().StringVar(&idpTokenOpts.Scope, "scope", "", "scopes string of the ID token")
 }

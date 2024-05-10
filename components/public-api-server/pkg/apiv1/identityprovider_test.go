@@ -206,6 +206,56 @@ func TestGetIDToken(t *testing.T) {
 			},
 		},
 		{
+			Name: "include scope",
+			TokenSource: func(t *testing.T) IDTokenSource {
+				return functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
+					require.Equal(t, "correct@gitpod.io", userInfo.GetEmail())
+					require.True(t, userInfo.IsEmailVerified())
+					require.Equal(t, "foo", userInfo.GetClaim("scope"))
+
+					return "foobar", nil
+				})
+			},
+			ServerSetup: func(ma *protocol.MockAPIInterface) {
+				ma.EXPECT().GetIDToken(gomock.Any()).MinTimes(1).Return(nil)
+				ma.EXPECT().GetWorkspace(gomock.Any(), workspaceID).MinTimes(1).Return(
+					&protocol.WorkspaceInfo{
+						Workspace: &protocol.Workspace{
+							ContextURL: "https://github.com/gitpod-io/gitpod",
+							Context: &protocol.WorkspaceContext{
+								Repository: &protocol.Repository{
+									CloneURL: "https://github.com/gitpod-io/gitpod.git",
+								},
+							},
+						},
+					},
+					nil,
+				)
+				ma.EXPECT().GetLoggedInUser(gomock.Any()).Return(
+					&protocol.User{
+						Name: "foobar",
+						Identities: []*protocol.Identity{
+							nil,
+							{Deleted: true, PrimaryEmail: "nonsense@gitpod.io"},
+							{Deleted: false, PrimaryEmail: "correct@gitpod.io"},
+						},
+						OrganizationId: "test",
+					},
+					nil,
+				)
+			},
+			Request: &v1.GetIDTokenRequest{
+				WorkspaceId: workspaceID,
+				Audience:    []string{"some.audience.com"},
+				Scope:       "foo",
+			},
+			Expectation: Expectation{
+				Response: &v1.GetIDTokenResponse{
+					Token: "foobar",
+				},
+			},
+		},
+		{
 			Name: "token source error",
 			TokenSource: func(t *testing.T) IDTokenSource {
 				return functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {

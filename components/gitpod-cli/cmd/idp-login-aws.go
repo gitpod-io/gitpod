@@ -43,7 +43,7 @@ var idpLoginAwsCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
-		tkn, err := idpToken(ctx, idpLoginAwsOpts.Audience)
+		tkn, err := idpToken(ctx, idpLoginAwsOpts.Audience, idpLoginOpts.Scope)
 		if err != nil {
 			return err
 		}

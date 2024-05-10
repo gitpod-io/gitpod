@@ -12,6 +12,7 @@ service IdentityProviderService {
 message GetIDTokenRequest {
   string workspace_id = 1;
   repeated string audience = 2;
+  string scope = 3;
 }
 
 message GetIDTokenResponse {

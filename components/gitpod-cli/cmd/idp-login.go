@@ -8,6 +8,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var idpLoginOpts struct {
+	Scope string
+}
+
 var idpLoginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Login to a service for which trust has been established",
@@ -15,4 +19,6 @@ var idpLoginCmd = &cobra.Command{
 
 func init() {
 	idpCmd.AddCommand(idpLoginCmd)
+
+	idpLoginCmd.Flags().StringVar(&idpLoginOpts.Scope, "scope", "", "scopes string of the ID token")
 }

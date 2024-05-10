@@ -43,7 +43,7 @@ var idpGCloudTokenCmd = &cobra.Command{
 			}
 		}()
 
-		tkn, err := idpToken(ctx, idpGCloudTokenOpts.Audience)
+		tkn, err := idpToken(ctx, idpGCloudTokenOpts.Audience, "")
 		if err != nil {
 			return err
 		}
