@@ -20,6 +20,14 @@
         ],
         "versions": [
           {
+            "version": "1.89.1",
+            "image": "{{.Repository}}/ide/code:commit-06ae77a61f11e65a8f9cbb871eb69383caa6fbd4",
+            "imageLayers": [
+              "{{.CodeWebExtensionImage}}",
+              "{{.CodeHelperImage}}"
+            ]
+          },
+          {
             "version": "1.89.0",
             "image": "{{.Repository}}/ide/code:commit-8a412095311a2ee0460abca3a4461704c4533374",
             "imageLayers": [
