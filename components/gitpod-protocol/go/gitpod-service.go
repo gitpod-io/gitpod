@@ -2056,7 +2056,7 @@ type IDESettings struct {
 	DefaultIde        string `json:"defaultIde,omitempty"`
 	UseDesktopIde     bool   `json:"useDesktopIde,omitempty"`
 	DefaultDesktopIde string `json:"defaultDesktopIde,omitempty"`
-	UseLatestVersion  bool   `json:"useLatestVersion,omitempty"`
+	UseLatestVersion  bool   `json:"useLatestVersion"`
 }
 
 // EmailNotificationSettings is the EmailNotificationSettings message type
