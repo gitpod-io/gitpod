@@ -214,7 +214,7 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 		jbSystemDir := fmt.Sprintf("/workspace/.cache/JetBrains%s/RemoteDev-%s", qualifier, productCode)
 		ideaLogPath := jbSystemDir + "/log/idea.log"
 
-		t.Logf("Check idea.log file correct location")
+		t.Logf("Check idea.log file correct location %s", ideaLogPath)
 
 		var resp agent.ExecResponse
 		err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
