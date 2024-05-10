@@ -228,8 +228,6 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 
 		t.Logf("checking idea.log")
 		if err != nil || resp.ExitCode != 0 {
-			t.Logf("!!GOING TO FAIL, wsID: %s", info.LatestInstance.ID)
-			time.Sleep(30 * time.Minute)
 			t.Fatal("idea.log file not found in the expected location")
 		}
 
