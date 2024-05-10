@@ -7,7 +7,6 @@
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/gitpod,type=bind",
     "workspaceFolder": "/workspace/gitpod",
     "updateContentCommand": "dev/install-dependencies.sh",
-    "containerUser": "gitpod",
     "remoteEnv": {
         "GIT_EDITOR": "code --wait",
         "KUBE_EDITOR": "code --wait"
