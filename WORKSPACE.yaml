@@ -27,8 +27,15 @@ defaultArgs:
 provenance:
   enabled: true
   slsa: true
+environmentManifest:
+  - name: "go"
+    command: ["sh", "-c", "go version | sed s/arm/amd/"]
+  - name: "arch"
+    command: ["sh", "-c", "echo amd64"]
 defaultVariant:
   env:
+    - GOARCH=amd64
+    - DOCKER_DEFAULT_PLATFORM=linux/amd64
     - NODE_OPTIONS=--max_old_space_size=8192
   srcs:
     exclude:

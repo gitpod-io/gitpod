@@ -5,7 +5,7 @@ variable "preview_name" {
 
 variable "kubeconfig_path" {
   type        = string
-  default     = "/home/gitpod/.kube/config"
+  default     = "$HOME/.kube/config"
   description = "The path to the kubernetes config"
 }
 

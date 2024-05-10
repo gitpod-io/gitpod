@@ -1,0 +1,38 @@
+{
+    "name": "gitpod",
+    "build": {
+        "context": "..",
+        "dockerfile": "./Dockerfile"
+    },
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/gitpod,type=bind",
+    "workspaceFolder": "/workspace/gitpod",
+    "updateContentCommand": "dev/install-dependencies.sh",
+    "remoteEnv": {
+        "GIT_EDITOR": "code --wait",
+        "KUBE_EDITOR": "code --wait"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+            "installDockerComposeSwitch": false
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "EditorConfig.EditorConfig",
+                "golang.go",
+                "hashicorp.terraform",
+                "ms-azuretools.vscode-docker",
+                "ms-kubernetes-tools.vscode-kubernetes-tools",
+                "stkb.rewrap",
+                "zxh404.vscode-proto3",
+                "matthewpi.caddyfile-support",
+                "timonwong.shellcheck",
+                "fwcd.kotlin",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "hbenl.vscode-mocha-test-adapter"
+            ]
+        }
+    }
+}

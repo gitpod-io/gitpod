@@ -12,7 +12,7 @@ source "$(realpath "${SCRIPT_PATH}/../lib/common.sh")"
 source "$(realpath "${SCRIPT_PATH}/../lib/k8s-util.sh")"
 
 PREVIEW_NAME="${PREVIEW_NAME:-$(previewctl get name)}"
-PREVIEW_K3S_KUBE_PATH="${PREVIEW_K3S_KUBECONFIG_PATH:-/home/gitpod/.kube/config}"
+PREVIEW_K3S_KUBE_PATH="${PREVIEW_K3S_KUBECONFIG_PATH:-$HOME/.kube/config}"
 PREVIEW_K3S_KUBE_CONTEXT="${PREVIEW_K3S_KUBE_CONTEXT:-$PREVIEW_NAME}"
 PREVIEW_NAMESPACE="default"
 PREVIEW_SORUCE_CERT_NAME="certificate-${PREVIEW_NAME}"
