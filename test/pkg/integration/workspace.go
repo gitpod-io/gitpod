@@ -6,7 +6,6 @@ package integration
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
