@@ -214,7 +214,7 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 		jbSystemDir := fmt.Sprintf("/workspace/.cache/JetBrains%s/RemoteDev-%s", qualifier, productCode)
 		ideaLogPath := jbSystemDir + "/log/idea.log"
 
-		t.Logf("Check idea.log file correct location")
+		t.Logf("Check idea.log file correct location %s", ideaLogPath)
 
 		var resp agent.ExecResponse
 		err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
@@ -228,6 +228,8 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 
 		t.Logf("checking idea.log")
 		if err != nil || resp.ExitCode != 0 {
+			t.Logf("!!GOING TO FAIL, wsID: %s", info.LatestInstance.ID)
+			time.Sleep(30 * time.Minute)
 			t.Fatal("idea.log file not found in the expected location")
 		}
 
