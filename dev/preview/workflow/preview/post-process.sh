@@ -11,19 +11,17 @@ set -euo pipefail
 # Node pool index was only relevant with core-dev
 NODE_POOL_INDEX=0
 
-REG_DAEMON_PORT="31750"
-
 # Required params
 DEV_BRANCH=$1
 SMITH_TOKEN=$2
 
 SCRIPT_PATH=$(realpath "$(dirname "$0")")
 
-if [[ -z ${REG_DAEMON_PORT} ]] || [[ -z ${DEV_BRANCH} ]] || [[ -z ${SMITH_TOKEN} ]]; then
-   echo "One or more input params were invalid: ${REG_DAEMON_PORT} ${DEV_BRANCH} ${SMITH_TOKEN}"
+if [[ -z ${DEV_BRANCH} ]] || [[ -z ${SMITH_TOKEN} ]]; then
+   echo "One or more input params were invalid: ${DEV_BRANCH} ${SMITH_TOKEN}"
    exit 1
 else
-   echo "Running with the following params: ${REG_DAEMON_PORT} ${DEV_BRANCH}"
+   echo "Running with the following params: ${DEV_BRANCH}"
 fi
 
 echo "Use node pool index $NODE_POOL_INDEX"
@@ -70,13 +68,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].livenessProbe.initialDelaySeconds 15
    fi
 
-   # override details for registry-facade service
-   if [[ "registry-facade" == "$NAME" ]] && [[ "$KIND" == "Service" ]]; then
-      WORK="overrides for $NAME $KIND"
-      echo "$WORK"
-      yq w -i k8s.yaml -d "$documentIndex" spec.ports[0].port "$REG_DAEMON_PORT"
-   fi
-
    # override labels for pod scheduling on nodes
    WORKSPACE_COMPONENTS=("image-builder" "image-builder-mk3 blobserve registry-facade" "ws-daemon" "agent-smith")
    # shellcheck disable=SC2076
@@ -100,7 +91,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq m --arrays=overwrite -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"pool.yaml
    fi
 
-   SHORT_NAME="dev"
    # overrides for server-config
    if [[ "server-config" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
       WORK="overrides for $NAME $KIND"
@@ -132,15 +122,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
    fi
 
-   # overrides for ws-manager-bridge configmap
-   if [[ "ws-manager-bridge-config" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
-      WORK="overrides for $NAME $KIND"
-      echo "$WORK"
-      touch /tmp/"$NAME"overrides.yaml
-      yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
-
-      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
-   fi
 
    # overrides for ide-config configmap
    if [[ "ide-config" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
@@ -177,94 +158,7 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq -d "$documentIndex" w -i k8s.yaml spec.template.spec.serviceAccountName ws-daemon
    fi
 
-   # overrides for ws-manager
-   if [[ "ws-manager" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
-      WORK="overrides for $NAME $KIND"
-      echo "$WORK"
-      touch /tmp/"$NAME"overrides.yaml
-      yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
-
-      STAGING_HOST_NAME="staging.gitpod-dev.com"
-      CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
-      NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
-
-      WS_CLUSTER_HOST_EXPR="s/\"workspaceClusterHost\": \"$CURRENT_WS_HOST_NAME\"/\"workspaceClusterHost\": \"$NEW_WS_HOST_NAME\"/"
-      sed -i "$WS_CLUSTER_HOST_EXPR" /tmp/"$NAME"overrides.yaml
-
-      WS_PORT_URL_TEMP_EXPR="s|\"portUrlTemplate\": \"https://{{ .WorkspacePort }}-{{ .Prefix }}.$CURRENT_WS_HOST_NAME\"|\"portUrlTemplate\": \"https://{{ .WorkspacePort }}-{{ .Prefix }}.$NEW_WS_HOST_NAME\"|"
-      sed -i "$WS_PORT_URL_TEMP_EXPR" /tmp/"$NAME"overrides.yaml
-
-      WS_URL_TEMP_EXPR="s|\"urlTemplate\": \"https://{{ .Prefix }}.$CURRENT_WS_HOST_NAME\"|\"urlTemplate\": \"https://{{ .Prefix }}.$NEW_WS_HOST_NAME\"|"
-      sed -i "$WS_URL_TEMP_EXPR" /tmp/"$NAME"overrides.yaml
-
-      # Change the port we use to connect to registry-facade
-      # is expected to be reg.<branch-name-with-dashes>.staging.gitpod-dev.com:$REG_DAEMON_PORT
-      # Change the port we use to connect to ws-daemon
-      REGISTRY_FACADE_HOST="reg.$DEV_BRANCH.staging.gitpod-dev.com:$REG_DAEMON_PORT"
-      if [[ -v WITH_VM ]]; then
-         REGISTRY_FACADE_HOST="reg.$DEV_BRANCH.preview.gitpod-dev.com:$REG_DAEMON_PORT"
-      fi
-      yq r /tmp/"$NAME"overrides.yaml 'data.[config.json]' \
-      | jq --arg REGISTRY_FACADE_HOST "$REGISTRY_FACADE_HOST" '.manager.registryFacadeHost = $REGISTRY_FACADE_HOST' > /tmp/"$NAME"-cm-overrides.json
-
-      touch /tmp/"$NAME"-cm-overrides.yaml
-      # write a yaml file with the json as a multiline string
-      yq w -i /tmp/"$NAME"-cm-overrides.yaml "data.[config.json]" -- "$(< /tmp/"$NAME"-cm-overrides.json)"
-      yq m -x -i /tmp/"$NAME"overrides.yaml /tmp/"$NAME"-cm-overrides.yaml
-
-      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
-   fi
-
-    # overrides for ws-manager-mk2
-   if [[ "ws-manager-mk2" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
-      WORK="overrides for $NAME $KIND"
-      echo "$WORK"
-       # Change the port we use to connect to registry-facade
-      # is expected to be reg.<branch-name-with-dashes>.staging.gitpod-dev.com:$REG_DAEMON_PORT
-      # Change the port we use to connect to ws-daemon
-      REGISTRY_FACADE_HOST="reg.$DEV_BRANCH.staging.gitpod-dev.com:$REG_DAEMON_PORT"
-      if [[ -v WITH_VM ]]; then
-         REGISTRY_FACADE_HOST="reg.$DEV_BRANCH.preview.gitpod-dev.com:$REG_DAEMON_PORT"
-      fi
-
-      # get a copy of the config we're working with
-      yq r k8s.yaml -d "$documentIndex" > /tmp/"$NAME"-"$KIND"-overrides.yaml
-
-      # replace registry port
-      yq r /tmp/"$NAME"-"$KIND"-overrides.yaml 'data.[config.json]' \
-      | jq ".manager.registryFacadeHost = \"$REGISTRY_FACADE_HOST\"" > /tmp/"$NAME"-"$KIND"-overrides.json
-
-      # create override file
-      touch /tmp/"$NAME"-"$KIND"-data-overrides.yaml
-      yq w -i /tmp/"$NAME"-"$KIND"-data-overrides.yaml "data.[config.json]" -- "$(< /tmp/"$NAME"-"$KIND"-overrides.json)"
-
-      # merge the updated config map with k8s.yaml
-      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-"$KIND"-data-overrides.yaml
-   fi
-
-   # overrides for ws-proxy
-   if [[ "ws-proxy" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
-      WORK="overrides for $NAME $KIND"
-      echo "$WORK"
-      touch /tmp/"$NAME"overrides.yaml
-      yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
-
-      # simliar to server, except the ConfigMap hierarchy, key, and value are different
-      STAGING_HOST_NAME="staging.gitpod-dev.com"
-      CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
-      NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
-
-      WS_HOST_SUFFIX_EXPR="s/\"workspaceHostSuffix\": \".$CURRENT_WS_HOST_NAME\"/\"workspaceHostSuffix\": \".$NEW_WS_HOST_NAME\"/"
-      sed -i "$WS_HOST_SUFFIX_EXPR" /tmp/"$NAME"overrides.yaml
-
-      CURRENT_WS_SUFFIX_REGEX=$DEV_BRANCH.$STAGING_HOST_NAME
-      # In this, we only do a find replace on a given line if we find workspaceHostSuffixRegex on the line
-      sed -i -e "/workspaceHostSuffixRegex/s/$CURRENT_WS_SUFFIX_REGEX/$DEV_BRANCH\\\\\\\\.staging\\\\\\\\.gitpod-dev\\\\\\\\.com/g" /tmp/"$NAME"overrides.yaml
-
-      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
-   fi
-
-    if [[ ! -v WITH_VM ]] && [[ "ws-proxy" == "$NAME" ]] && [[ "$KIND" == "Service" ]]; then
+   if [[ ! -v WITH_VM ]] && [[ "ws-proxy" == "$NAME" ]] && [[ "$KIND" == "Service" ]]; then
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
       yq w -i k8s.yaml -d "$documentIndex" "spec.ports[+].name" http-lb
