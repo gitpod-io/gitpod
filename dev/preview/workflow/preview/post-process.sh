@@ -56,8 +56,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
    NAME=$(yq r k8s.yaml -d "$documentIndex" metadata.name)
    KIND=$(yq r k8s.yaml -d "$documentIndex" kind)
    if [[ "$SIZE" -ne "0" ]] && [[ "$NAME" == "registry-facade" ]] && [[ "$KIND" == "DaemonSet" ]] ; then
-      echo "setting $NAME to $REG_DAEMON_PORT"
-      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].ports.[0].hostPort "$REG_DAEMON_PORT"
       echo "setting $NAME probe period to 120s"
       yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].livenessProbe.periodSeconds 120
       yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].livenessProbe.initialDelaySeconds 15
