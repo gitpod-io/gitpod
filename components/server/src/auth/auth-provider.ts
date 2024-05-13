@@ -5,7 +5,7 @@
  */
 
 import express from "express";
-import { AuthProviderInfo, User, AuthProviderEntry } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, User, AuthProviderEntry, Token } from "@gitpod/gitpod-protocol";
 
 import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
 
@@ -89,7 +89,8 @@ export interface AuthProvider {
         state: string,
         scopes?: string[],
     ): void;
-    refreshToken?(user: User): Promise<void>;
+    refreshToken?(user: User, requestedLifetimeDate: Date): Promise<Token>;
+    requiresOpportunisticRefresh?(): boolean;
 }
 
 export interface AuthFlow {

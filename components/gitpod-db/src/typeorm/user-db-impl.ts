@@ -282,6 +282,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
             authId: identity.authId,
             token: token,
             expiryDate: token.expiryDate,
+            reservedUntilDate: token.reservedUntilDate,
             refreshable: !!token.refreshToken,
         };
         return await repo.save(entry);
@@ -324,7 +325,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         }
     }
 
-    public async findTokenForIdentity(identity: Identity): Promise<Token | undefined> {
+    public async findTokenEntryForIdentity(identity: Identity): Promise<TokenEntry | undefined> {
         const tokenEntries = await this.findTokensForIdentity(identity);
         if (tokenEntries.length > 1) {
             // TODO(gpl) This line is very noisy thus we don't want it to be a warning. Still we need to keep track,
@@ -337,12 +338,18 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         const latestTokenEntry = tokenEntries
             .sort((a, b) => `${a.token.updateDate}`.localeCompare(`${b.token.updateDate}`))
             .reverse()[0];
-        if (latestTokenEntry) {
-            if (latestTokenEntry.expiryDate !== latestTokenEntry.token.expiryDate) {
-                log.info(`Overriding 'expiryDate' of token to get refreshed on demand.`, { identity });
-            }
-            return { ...latestTokenEntry.token, expiryDate: latestTokenEntry.expiryDate };
+        if (!latestTokenEntry) {
+            return undefined;
         }
+        return {
+            ...latestTokenEntry,
+            token: {
+                // Take dates from the TokenEntry, as only those are being updated in the DB atm
+                ...latestTokenEntry.token,
+                expiryDate: latestTokenEntry.expiryDate,
+                reservedUntilDate: latestTokenEntry.reservedUntilDate,
+            },
+        };
     }
 
     public async findTokensForIdentity(identity: Identity): Promise<TokenEntry[]> {
