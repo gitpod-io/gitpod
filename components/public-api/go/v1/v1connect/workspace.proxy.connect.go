@@ -39,6 +39,16 @@ func (s *ProxyWorkspaceServiceHandler) ListWorkspaces(ctx context.Context, req *
 	return connect_go.NewResponse(resp), nil
 }
 
+func (s *ProxyWorkspaceServiceHandler) ListWorkspaceSessions(ctx context.Context, req *connect_go.Request[v1.ListWorkspaceSessionsRequest]) (*connect_go.Response[v1.ListWorkspaceSessionsResponse], error) {
+	resp, err := s.Client.ListWorkspaceSessions(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
 func (s *ProxyWorkspaceServiceHandler) CreateAndStartWorkspace(ctx context.Context, req *connect_go.Request[v1.CreateAndStartWorkspaceRequest]) (*connect_go.Response[v1.CreateAndStartWorkspaceResponse], error) {
 	resp, err := s.Client.CreateAndStartWorkspace(ctx, req.Msg)
 	if err != nil {

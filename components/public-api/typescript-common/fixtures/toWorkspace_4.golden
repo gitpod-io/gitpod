@@ -22,6 +22,7 @@
             "type": "WORKSPACE_TYPE_REGULAR",
             "git": {},
             "timeout": {
+                "inactivity": "1800s",
                 "disconnected": "1800s"
             },
             "admission": "ADMISSION_LEVEL_OWNER_ONLY",

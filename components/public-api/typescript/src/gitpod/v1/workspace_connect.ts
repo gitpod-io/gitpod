@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, CreateWorkspaceSnapshotRequest, CreateWorkspaceSnapshotResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspaceClassesRequest, ListWorkspaceClassesResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, UpdateWorkspacePortRequest, UpdateWorkspacePortResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WaitForWorkspaceSnapshotRequest, WaitForWorkspaceSnapshotResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
+import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, CreateWorkspaceSnapshotRequest, CreateWorkspaceSnapshotResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspaceClassesRequest, ListWorkspaceClassesResponse, ListWorkspaceSessionsRequest, ListWorkspaceSessionsResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, UpdateWorkspacePortRequest, UpdateWorkspacePortResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WaitForWorkspaceSnapshotRequest, WaitForWorkspaceSnapshotResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -57,6 +57,17 @@ export const WorkspaceService = {
       kind: MethodKind.Unary,
     },
     /**
+     * ListWorkspaceSessions returns a list of workspace sessions that match the
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.ListWorkspaceSessions
+     */
+    listWorkspaceSessions: {
+      name: "ListWorkspaceSessions",
+      I: ListWorkspaceSessionsRequest,
+      O: ListWorkspaceSessionsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
      * CreateAndStartWorkspace creates a new workspace and starts it.
      *
      * @generated from rpc gitpod.v1.WorkspaceService.CreateAndStartWorkspace
@@ -69,7 +80,8 @@ export const WorkspaceService = {
     },
     /**
      * StartWorkspace starts an existing workspace.
-     * If the specified workspace is not in stopped phase, this will return the workspace as is.
+     * If the specified workspace is not in stopped phase, this will return the
+     * workspace as is.
      *
      * @generated from rpc gitpod.v1.WorkspaceService.StartWorkspace
      */
@@ -126,8 +138,8 @@ export const WorkspaceService = {
       kind: MethodKind.Unary,
     },
     /**
-     * ParseContextURL parses a context URL and returns the workspace metadata and spec.
-     * Not implemented yet.
+     * ParseContextURL parses a context URL and returns the workspace metadata and
+     * spec. Not implemented yet.
      *
      * @generated from rpc gitpod.v1.WorkspaceService.ParseContextURL
      */

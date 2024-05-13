@@ -20,6 +20,7 @@ import {
     PrebuildInfo,
     AdminGetWorkspacesQuery,
     SnapshotState,
+    WorkspaceSession,
 } from "@gitpod/gitpod-protocol";
 
 export type MaybeWorkspace = Workspace | undefined;
@@ -46,13 +47,6 @@ export type WorkspaceInstancePortsAuthData = Pick<WorkspaceInstance, "id" | "reg
 export interface WorkspacePortsAuthData {
     instance: WorkspaceInstancePortsAuthData;
     workspace: WorkspaceAuthData;
-}
-
-export type WorkspaceInstanceSession = Pick<WorkspaceInstance, "id" | "startedTime" | "stoppingTime" | "stoppedTime">;
-export type WorkspaceSessionData = Pick<Workspace, "id" | "contextURL" | "context" | "type">;
-export interface WorkspaceInstanceSessionWithWorkspace {
-    instance: WorkspaceInstanceSession;
-    workspace: WorkspaceSessionData;
 }
 
 export interface PrebuildWithWorkspace {
@@ -96,10 +90,12 @@ export interface WorkspaceDB {
     findCurrentInstance(workspaceId: string): Promise<MaybeWorkspaceInstance>;
     findRunningInstance(workspaceId: string): Promise<MaybeWorkspaceInstance>;
     findSessionsInPeriod(
-        userId: string,
-        periodStart: string,
-        periodEnd: string,
-    ): Promise<WorkspaceInstanceSessionWithWorkspace[]>;
+        organizationId: string,
+        periodStart: Date,
+        periodEnd: Date,
+        limit: number,
+        offset: number,
+    ): Promise<WorkspaceSession[]>;
     findWorkspacesForGarbageCollection(minAgeInDays: number, limit: number): Promise<WorkspaceAndOwner[]>;
     findWorkspacesForContentDeletion(
         minSoftDeletedTimeInDays: number,

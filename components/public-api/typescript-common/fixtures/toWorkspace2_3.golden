@@ -39,6 +39,7 @@
                 "email": ""
             },
             "timeout": {
+                "inactivity": "3600s",
                 "disconnected": "3600s"
             },
             "admission": "ADMISSION_LEVEL_OWNER_ONLY",

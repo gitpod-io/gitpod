@@ -1,0 +1,91 @@
+{
+    "result": {
+        "id": "",
+        "workspace": {
+            "id": "sveneffting-2048intermi-5vb9hvqev88",
+            "metadata": {
+                "ownerId": "8d92f627-967d-445b-873c-02862cc6b5cf",
+                "organizationId": "c750135b-ac40-4ae1-8ce5-7e6ebc2c9158",
+                "configurationId": "",
+                "annotations": {},
+                "name": "svenefftinge/2048-in-terminal - master",
+                "pinned": false,
+                "originalContextUrl": "https://github.com/svenefftinge/2048-in-terminal"
+            },
+            "spec": {
+                "initializer": {
+                    "specs": [
+                        {
+                            "git": {
+                                "remoteUri": "https://github.com/svenefftinge/2048-in-terminal.git",
+                                "upstreamRemoteUri": "https://github.com/alewmoose/2048-in-terminal.git",
+                                "targetMode": "CLONE_TARGET_MODE_REMOTE_COMMIT",
+                                "cloneTarget": "aac9c200a79e37ebe216bb90c829d5ab2771f2ee",
+                                "checkoutLocation": "2048-in-terminal",
+                                "config": {
+                                    "customConfig": {},
+                                    "authentication": "AUTH_METHOD_UNSPECIFIED",
+                                    "authUser": "",
+                                    "authPassword": "",
+                                    "authOts": ""
+                                }
+                            }
+                        }
+                    ]
+                },
+                "type": "WORKSPACE_TYPE_REGULAR",
+                "ports": [],
+                "environmentVariables": [],
+                "git": {
+                    "username": "",
+                    "email": ""
+                },
+                "timeout": {
+                    "inactivity": "1800s",
+                    "disconnected": "1800s"
+                },
+                "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+                "class": "g1-standard",
+                "sshPublicKeys": [],
+                "subassemblyReferences": [],
+                "logUrl": "",
+                "editor": {
+                    "name": "code",
+                    "version": "stable"
+                }
+            },
+            "status": {
+                "statusVersion": "1715584485",
+                "phase": {
+                    "name": "PHASE_STOPPED",
+                    "lastTransitionTime": "2024-05-13T07:14:45.466Z"
+                },
+                "workspaceUrl": "https://sveneffting-2048intermi-5vb9hvqev88.ws-dev.se-workspad026375d1b.preview.gitpod-dev.com",
+                "conditions": {
+                    "failed": "container workspace completed; containers of a workspace pod are not supposed to do that",
+                    "failedReason": "FAILED_REASON_UNSPECIFIED",
+                    "timeout": ""
+                },
+                "gitStatus": {
+                    "cloneUrl": "https://github.com/svenefftinge/2048-in-terminal.git",
+                    "branch": "master",
+                    "latestCommit": "aac9c200a79e37ebe216bb90c829d5ab2771f2ee",
+                    "uncommitedFiles": [],
+                    "totalUncommitedFiles": 0,
+                    "untrackedFiles": [
+                        "prebuild.txt"
+                    ],
+                    "totalUntrackedFiles": 1,
+                    "unpushedCommits": [],
+                    "totalUnpushedCommits": 0
+                },
+                "instanceId": "36cd2611-fd7e-4462-832c-4122bd4ce6ef"
+            }
+        },
+        "creationTime": "2024-05-13T07:14:11.048Z",
+        "startedTime": "2024-05-13T07:14:13.406Z",
+        "stoppingTime": "2024-05-13T07:14:45.263Z",
+        "stoppedTime": "2024-05-13T07:14:45.466Z"
+    },
+    "err": ""
+}

@@ -1338,6 +1338,10 @@ export namespace WorkspaceInstancePortsChangedEvent {
     }
 }
 
+export interface WorkspaceSession {
+    workspace: Workspace;
+    instance: WorkspaceInstance;
+}
 export interface WorkspaceInfo {
     workspace: Workspace;
     latestInstance?: WorkspaceInstance;

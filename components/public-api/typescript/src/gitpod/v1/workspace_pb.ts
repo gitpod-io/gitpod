@@ -426,6 +426,120 @@ export class ListWorkspacesResponse extends Message<ListWorkspacesResponse> {
 }
 
 /**
+ * @generated from message gitpod.v1.ListWorkspaceSessionsRequest
+ */
+export class ListWorkspaceSessionsRequest extends Message<ListWorkspaceSessionsRequest> {
+  /**
+   * pagination contains the pagination options for listing workspaces
+   *
+   * @generated from field: gitpod.v1.PaginationRequest pagination = 1;
+   */
+  pagination?: PaginationRequest;
+
+  /**
+   * organization_id is the ID of the organization that contains the workspaces
+   *
+   * +required
+   *
+   * @generated from field: string organization_id = 2;
+   */
+  organizationId = "";
+
+  /**
+   * from specifies the starting time range for this request.
+   * All sessions which existed starting at from will be returned.
+   *
+   * @generated from field: google.protobuf.Timestamp from = 3;
+   */
+  from?: Timestamp;
+
+  /**
+   * to specifies the end time range for this request.
+   * All sessions which existed ending at to will be returned.
+   *
+   * @generated from field: google.protobuf.Timestamp to = 4;
+   */
+  to?: Timestamp;
+
+  constructor(data?: PartialMessage<ListWorkspaceSessionsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListWorkspaceSessionsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
+    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "from", kind: "message", T: Timestamp },
+    { no: 4, name: "to", kind: "message", T: Timestamp },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspaceSessionsRequest {
+    return new ListWorkspaceSessionsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListWorkspaceSessionsRequest {
+    return new ListWorkspaceSessionsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListWorkspaceSessionsRequest {
+    return new ListWorkspaceSessionsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListWorkspaceSessionsRequest | PlainMessage<ListWorkspaceSessionsRequest> | undefined, b: ListWorkspaceSessionsRequest | PlainMessage<ListWorkspaceSessionsRequest> | undefined): boolean {
+    return proto3.util.equals(ListWorkspaceSessionsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListWorkspaceSessionsResponse
+ */
+export class ListWorkspaceSessionsResponse extends Message<ListWorkspaceSessionsResponse> {
+  /**
+   * pagination contains the pagination options for listing workspaces
+   *
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 1;
+   */
+  pagination?: PaginationResponse;
+
+  /**
+   * workspaces are the workspaces that matched the query
+   *
+   * @generated from field: repeated gitpod.v1.WorkspaceSession workspace_sessions = 2;
+   */
+  workspaceSessions: WorkspaceSession[] = [];
+
+  constructor(data?: PartialMessage<ListWorkspaceSessionsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListWorkspaceSessionsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationResponse },
+    { no: 2, name: "workspace_sessions", kind: "message", T: WorkspaceSession, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspaceSessionsResponse {
+    return new ListWorkspaceSessionsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListWorkspaceSessionsResponse {
+    return new ListWorkspaceSessionsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListWorkspaceSessionsResponse {
+    return new ListWorkspaceSessionsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListWorkspaceSessionsResponse | PlainMessage<ListWorkspaceSessionsResponse> | undefined, b: ListWorkspaceSessionsResponse | PlainMessage<ListWorkspaceSessionsResponse> | undefined): boolean {
+    return proto3.util.equals(ListWorkspaceSessionsResponse, a, b);
+  }
+}
+
+/**
  * Required fields:
  * - metadata.organization_id
  * - metadata.configuration_id
@@ -434,7 +548,8 @@ export class ListWorkspacesResponse extends Message<ListWorkspacesResponse> {
  */
 export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorkspaceRequest> {
   /**
-   * metadata is data associated with this workspace that's required for other parts of Gitpod to function
+   * metadata is data associated with this workspace that's required for other
+   * parts of Gitpod to function
    *
    * @generated from field: gitpod.v1.WorkspaceMetadata metadata = 1;
    */
@@ -453,7 +568,8 @@ export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorksp
     case: "contextUrl";
   } | {
     /**
-     * spec is the configuration of the workspace that's required for the to start the workspace
+     * spec is the configuration of the workspace that's required for the to
+     * start the workspace
      *
      * @generated from field: gitpod.v1.WorkspaceSpec spec = 3;
      */
@@ -1023,21 +1139,24 @@ export class GetWorkspaceEditorCredentialsResponse extends Message<GetWorkspaceE
  */
 export class Workspace extends Message<Workspace> {
   /**
-   * ID is a unique identifier of this workspace. No other workspace with the same name must be managed by this workspace manager
+   * ID is a unique identifier of this workspace. No other workspace with the
+   * same name must be managed by this workspace manager
    *
    * @generated from field: string id = 1;
    */
   id = "";
 
   /**
-   * Metadata is data associated with this workspace that's required for other parts of Gitpod to function
+   * Metadata is data associated with this workspace that's required for other
+   * parts of Gitpod to function
    *
    * @generated from field: gitpod.v1.WorkspaceMetadata metadata = 2;
    */
   metadata?: WorkspaceMetadata;
 
   /**
-   * Spec is the configuration of the workspace that's required for the ws-manager to start the workspace
+   * Spec is the configuration of the workspace that's required for the
+   * ws-manager to start the workspace
    *
    * @generated from field: gitpod.v1.WorkspaceSpec spec = 3;
    */
@@ -1082,13 +1201,15 @@ export class Workspace extends Message<Workspace> {
 }
 
 /**
- * WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
+ * WorkspaceMetadata is data associated with a workspace that's required for
+ * other parts of the system to function
  *
  * @generated from message gitpod.v1.WorkspaceMetadata
  */
 export class WorkspaceMetadata extends Message<WorkspaceMetadata> {
   /**
-   * owner_id is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
+   * owner_id is the ID of the Gitpod user to whom we'll bill this workspace and
+   * who we consider responsible for its content
    *
    * @generated from field: string owner_id = 1;
    */
@@ -1131,7 +1252,8 @@ export class WorkspaceMetadata extends Message<WorkspaceMetadata> {
   pinned = false;
 
   /**
-   * original_context_url is the normalized URL from which the workspace was created
+   * original_context_url is the normalized URL from which the workspace was
+   * created
    *
    * @generated from field: string original_context_url = 7;
    */
@@ -1172,7 +1294,8 @@ export class WorkspaceMetadata extends Message<WorkspaceMetadata> {
 }
 
 /**
- * WorkspaceSpec specifies the configuration of a workspace for a workspace start
+ * WorkspaceSpec specifies the configuration of a workspace for a workspace
+ * start
  *
  * @generated from message gitpod.v1.WorkspaceSpec
  */
@@ -1199,7 +1322,8 @@ export class WorkspaceSpec extends Message<WorkspaceSpec> {
   ports: WorkspacePort[] = [];
 
   /**
-   * envvars are user-defined environment variables which ought to be available in the workspace (shim'ed environment)
+   * envvars are user-defined environment variables which ought to be available
+   * in the workspace (shim'ed environment)
    *
    * @generated from field: repeated gitpod.v1.EnvironmentVariable environment_variables = 4;
    */
@@ -1241,8 +1365,8 @@ export class WorkspaceSpec extends Message<WorkspaceSpec> {
   sshPublicKeys: string[] = [];
 
   /**
-   * subassembly_references is a list of workspace IDs that this workspace depends on.
-   * For example:
+   * subassembly_references is a list of workspace IDs that this workspace
+   * depends on. For example:
    *   index.docker.io/gitpod-io/subassmeblies/code:latest
    *
    * @generated from field: repeated string subassembly_references = 10;
@@ -1250,7 +1374,8 @@ export class WorkspaceSpec extends Message<WorkspaceSpec> {
   subassemblyReferences: string[] = [];
 
   /**
-   * last_user_activity is the time when the user last interacted with the workspace
+   * last_user_activity is the time when the user last interacted with the
+   * workspace
    *
    * @generated from field: google.protobuf.Timestamp last_user_activity = 11;
    */
@@ -1310,7 +1435,8 @@ export class WorkspaceSpec extends Message<WorkspaceSpec> {
 }
 
 /**
- * WorkspaceType specifies the purpose/use of a workspace. Different workspace types are handled differently by all parts of the system.
+ * WorkspaceType specifies the purpose/use of a workspace. Different workspace
+ * types are handled differently by all parts of the system.
  *
  * @generated from enum gitpod.v1.WorkspaceSpec.WorkspaceType
  */
@@ -1321,14 +1447,16 @@ export enum WorkspaceSpec_WorkspaceType {
   UNSPECIFIED = 0,
 
   /**
-   * Regular workspaces are your off-the-mill workspaces intended for users. They are directly user-facing and hence are most important.
+   * Regular workspaces are your off-the-mill workspaces intended for users.
+   * They are directly user-facing and hence are most important.
    *
    * @generated from enum value: WORKSPACE_TYPE_REGULAR = 1;
    */
   REGULAR = 1,
 
   /**
-   * Prebuild workspaces are workspaces used to pre-build the content of other workspaces. They run headless and have no direct user-interaction.
+   * Prebuild workspaces are workspaces used to pre-build the content of other
+   * workspaces. They run headless and have no direct user-interaction.
    *
    * @generated from enum value: WORKSPACE_TYPE_PREBUILD = 2;
    */
@@ -1348,15 +1476,16 @@ proto3.util.setEnumType(WorkspaceSpec_WorkspaceType, "gitpod.v1.WorkspaceSpec.Wo
  */
 export class WorkspaceSpec_Timeout extends Message<WorkspaceSpec_Timeout> {
   /**
-   * inacitivity is the maximum time of inactivity before the workspace is stopped or paused
+   * inacitivity is the maximum time of inactivity before the workspace is
+   * stopped or paused
    *
    * @generated from field: google.protobuf.Duration inactivity = 1;
    */
   inactivity?: Duration;
 
   /**
-   * inacitivity is the maximum time of disconnection before the workspace is stopped or paused
-   * set to zero to disable.
+   * inacitivity is the maximum time of disconnection before the workspace is
+   * stopped or paused set to zero to disable.
    *
    * @generated from field: google.protobuf.Duration disconnected = 2;
    */
@@ -1455,18 +1584,19 @@ export class WorkspaceSpec_GitSpec extends Message<WorkspaceSpec_GitSpec> {
  */
 export class WorkspaceStatus extends Message<WorkspaceStatus> {
   /**
-   * version of the status update. Workspace instances themselves are unversioned,
-   * but their statuus has different versions.
-   * The value of this field has no semantic meaning (e.g. don't interpret it as
-   * as a timestemp), but it can be used to impose a partial order.
-   * If a.status_version < b.status_version then a was the status before b.
+   * version of the status update. Workspace instances themselves are
+   * unversioned, but their statuus has different versions. The value of this
+   * field has no semantic meaning (e.g. don't interpret it as as a timestemp),
+   * but it can be used to impose a partial order. If a.status_version <
+   * b.status_version then a was the status before b.
    *
    * @generated from field: uint64 status_version = 1;
    */
   statusVersion = protoInt64.zero;
 
   /**
-   * the phase of a workspace is a simple, high-level summary of where the workspace is in its lifecycle
+   * the phase of a workspace is a simple, high-level summary of where the
+   * workspace is in its lifecycle
    *
    * @generated from field: gitpod.v1.WorkspacePhase phase = 2;
    */
@@ -1496,16 +1626,16 @@ export class WorkspaceStatus extends Message<WorkspaceStatus> {
 
   /**
    * git_status details the Git working copy status of the workspace.
-   * Note: this is a best-effort field and more often than not will not be present. Its absence does not
-   * indicate the absence of a working copy.
+   * Note: this is a best-effort field and more often than not will not be
+   * present. Its absence does not indicate the absence of a working copy.
    *
    * @generated from field: gitpod.v1.WorkspaceGitStatus git_status = 6;
    */
   gitStatus?: WorkspaceGitStatus;
 
   /**
-   * instance_id is the ID of the workspace instance - do not use, interpret or rely on this field
-   * unless you know what you're doing.
+   * instance_id is the ID of the workspace instance - do not use, interpret or
+   * rely on this field unless you know what you're doing.
    *
    * @generated from field: string instance_id = 7 [deprecated = true];
    * @deprecated
@@ -1547,14 +1677,16 @@ export class WorkspaceStatus extends Message<WorkspaceStatus> {
 }
 
 /**
- * WorkspaceCondition gives more detailed information as to the state of the workspace. Which condition actually
- * has a value depends on the phase the workspace is in.
+ * WorkspaceCondition gives more detailed information as to the state of the
+ * workspace. Which condition actually has a value depends on the phase the
+ * workspace is in.
  *
  * @generated from message gitpod.v1.WorkspaceStatus.WorkspaceConditions
  */
 export class WorkspaceStatus_WorkspaceConditions extends Message<WorkspaceStatus_WorkspaceConditions> {
   /**
-   * failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
+   * failed contains the reason the workspace failed to operate. If this field
+   * is empty, the workspace has not failed.
    *
    * @generated from field: string failed = 1;
    */
@@ -1569,7 +1701,8 @@ export class WorkspaceStatus_WorkspaceConditions extends Message<WorkspaceStatus
   failedReason = WorkspaceStatus_WorkspaceConditions_FailedReason.UNSPECIFIED;
 
   /**
-   * timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
+   * timeout contains the reason the workspace has timed out. If this field is
+   * empty, the workspace has not timed out.
    *
    * @generated from field: string timeout = 3;
    */
@@ -1648,8 +1781,8 @@ proto3.util.setEnumType(WorkspaceStatus_WorkspaceConditions_FailedReason, "gitpo
  */
 export class WorkspaceStatus_PrebuildResult extends Message<WorkspaceStatus_PrebuildResult> {
   /**
-   * Snapshot points to the content of the prebuild. This string is opaque to the cluster manager,
-   * and must be returned unaltered.
+   * Snapshot points to the content of the prebuild. This string is opaque to
+   * the cluster manager, and must be returned unaltered.
    *
    * @generated from field: string snapshot = 1;
    */
@@ -2185,7 +2318,8 @@ export class GitInitializer extends Message<GitInitializer> {
   cloneTarget = "";
 
   /**
-   * a path relative to the workspace root in which the code will be checked out to
+   * a path relative to the workspace root in which the code will be checked out
+   * to
    *
    * @generated from field: string checkout_location = 5;
    */
@@ -2232,7 +2366,8 @@ export class GitInitializer extends Message<GitInitializer> {
 }
 
 /**
- * CloneTargetMode is the target state in which we want to leave a GitWorkspace
+ * CloneTargetMode is the target state in which we want to leave a
+ * GitWorkspace
  *
  * @generated from enum gitpod.v1.GitInitializer.CloneTargetMode
  */
@@ -2293,15 +2428,17 @@ export enum GitInitializer_AuthMethod {
   UNSPECIFIED = 0,
 
   /**
-   * BASIC_AUTH uses HTTP basic auth during clone (fails if repo is not cloned through http)
+   * BASIC_AUTH uses HTTP basic auth during clone (fails if repo is not cloned
+   * through http)
    *
    * @generated from enum value: AUTH_METHOD_BASIC_AUTH = 1;
    */
   BASIC_AUTH = 1,
 
   /**
-   * BASIC_AUTH_OTS uses HTTP basic auth during the clone with the secrets coming from the OTS URL.
-   * Fails if either the OTS download or the clone fail.
+   * BASIC_AUTH_OTS uses HTTP basic auth during the clone with the secrets
+   * coming from the OTS URL. Fails if either the OTS download or the clone
+   * fail.
    *
    * @generated from enum value: AUTH_METHOD_BASIC_AUTH_OTS = 2;
    */
@@ -2340,15 +2477,16 @@ export class GitInitializer_GitConfig extends Message<GitInitializer_GitConfig> 
   authUser = "";
 
   /**
-   * auth_password is the password used to authenticate the clone (can also be an API token)
+   * auth_password is the password used to authenticate the clone (can also be
+   * an API token)
    *
    * @generated from field: string auth_password = 4;
    */
   authPassword = "";
 
   /**
-   * auth_ots is a URL where one can download the authentication secret (<username>:<password>)
-   * using a GET request.
+   * auth_ots is a URL where one can download the authentication secret
+   * (<username>:<password>) using a GET request.
    *
    * @generated from field: string auth_ots = 5;
    */
@@ -2519,19 +2657,22 @@ export class FileDownloadInitializer_FileInfo extends Message<FileDownloadInitia
   url = "";
 
   /**
-   * file_path is relative to the target_location, e.g. if target_location is in `/workspace/myrepo`
-   * a file_path of `foobar/file` would produce a file in `/workspace/myrepo/foobar/file`.
-   * file_path must include the filename. The FileDownloadInitializer will create any parent directories
-   * necessary to place the file.
+   * file_path is relative to the target_location, e.g. if target_location is
+   * in `/workspace/myrepo` a file_path of `foobar/file` would produce a file
+   * in `/workspace/myrepo/foobar/file`. file_path must include the filename.
+   * The FileDownloadInitializer will create any parent directories necessary
+   * to place the file.
    *
    * @generated from field: string file_path = 2;
    */
   filePath = "";
 
   /**
-   * digest is a hash of the file content in the OCI digest format (see https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests).
+   * digest is a hash of the file content in the OCI digest format (see
+   * https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests).
    * This information is used to compute subsequent
-   * content versions, and to validate the file content was downloaded correctly.
+   * content versions, and to validate the file content was downloaded
+   * correctly.
    *
    * @generated from field: string digest = 3;
    */
@@ -2568,7 +2709,8 @@ export class FileDownloadInitializer_FileInfo extends Message<FileDownloadInitia
 }
 
 /**
- * GitStatus describes the current Git working copy status, akin to a combination of "git status" and "git branch"
+ * GitStatus describes the current Git working copy status, akin to a
+ * combination of "git status" and "git branch"
  *
  * @generated from message gitpod.v1.GitStatus
  */
@@ -2602,7 +2744,8 @@ export class GitStatus extends Message<GitStatus> {
   totalUncommitedFiles = protoInt64.zero;
 
   /**
-   * untracked_files is the number of untracked files in the workspace, possibly truncated
+   * untracked_files is the number of untracked files in the workspace, possibly
+   * truncated
    *
    * @generated from field: repeated string untracked_files = 4;
    */
@@ -2616,7 +2759,8 @@ export class GitStatus extends Message<GitStatus> {
   totalUntrackedFiles = protoInt64.zero;
 
   /**
-   * unpushed_commits is the number of unpushed changes in the workspace, possibly truncated
+   * unpushed_commits is the number of unpushed changes in the workspace,
+   * possibly truncated
    *
    * @generated from field: repeated string unpushed_commits = 5;
    */
@@ -2678,21 +2822,24 @@ export class UpdateWorkspaceRequest extends Message<UpdateWorkspaceRequest> {
   workspaceId = "";
 
   /**
-   * metadata is data associated with this workspace that's required for other parts of Gitpod to function
+   * metadata is data associated with this workspace that's required for other
+   * parts of Gitpod to function
    *
    * @generated from field: optional gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceMetadata metadata = 2;
    */
   metadata?: UpdateWorkspaceRequest_UpdateWorkspaceMetadata;
 
   /**
-   * spec is the configuration of the workspace that's required for the ws-manager to start the workspace
+   * spec is the configuration of the workspace that's required for the
+   * ws-manager to start the workspace
    *
    * @generated from field: optional gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceSpec spec = 3;
    */
   spec?: UpdateWorkspaceRequest_UpdateWorkspaceSpec;
 
   /**
-   * git_status updates the git status of the workspace - this is only here during the migration
+   * git_status updates the git status of the workspace - this is only here
+   * during the migration
    *
    * @generated from field: optional gitpod.v1.WorkspaceGitStatus git_status = 4 [deprecated = true];
    * @deprecated
@@ -2782,14 +2929,16 @@ export class UpdateWorkspaceRequest_UpdateWorkspaceMetadata extends Message<Upda
  */
 export class UpdateWorkspaceRequest_UpdateTimeout extends Message<UpdateWorkspaceRequest_UpdateTimeout> {
   /**
-   * inacitivity is the maximum time of inactivity before the workspace is stopped or paused
+   * inacitivity is the maximum time of inactivity before the workspace is
+   * stopped or paused
    *
    * @generated from field: optional google.protobuf.Duration inactivity = 1;
    */
   inactivity?: Duration;
 
   /**
-   * inacitivity is the maximum time of disconnection before the workspace is stopped or paused
+   * inacitivity is the maximum time of disconnection before the workspace is
+   * stopped or paused
    *
    * @generated from field: optional google.protobuf.Duration disconnected = 2;
    */
@@ -2825,8 +2974,8 @@ export class UpdateWorkspaceRequest_UpdateTimeout extends Message<UpdateWorkspac
 }
 
 /**
- * Note(cw): Ports cannot be updated here in favour of UpdateWorkspacePorts call which exists so that
- * we can update individual ports.
+ * Note(cw): Ports cannot be updated here in favour of UpdateWorkspacePorts
+ * call which exists so that we can update individual ports.
  *
  * @generated from message gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceSpec
  */
@@ -2846,7 +2995,8 @@ export class UpdateWorkspaceRequest_UpdateWorkspaceSpec extends Message<UpdateWo
   admission?: AdmissionLevel;
 
   /**
-   * Note(cw): repeated fields have implicit presence. There's a difference between passing an empty list or nothing.
+   * Note(cw): repeated fields have implicit presence. There's a difference
+   * between passing an empty list or nothing.
    *
    * @generated from field: repeated string ssh_public_keys = 3;
    */
@@ -3496,5 +3646,78 @@ export class WorkspaceSnapshot extends Message<WorkspaceSnapshot> {
 
   static equals(a: WorkspaceSnapshot | PlainMessage<WorkspaceSnapshot> | undefined, b: WorkspaceSnapshot | PlainMessage<WorkspaceSnapshot> | undefined): boolean {
     return proto3.util.equals(WorkspaceSnapshot, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WorkspaceSession
+ */
+export class WorkspaceSession extends Message<WorkspaceSession> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: gitpod.v1.Workspace workspace = 2;
+   */
+  workspace?: Workspace;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp creation_time = 3;
+   */
+  creationTime?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp deployed_time = 4;
+   */
+  deployedTime?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp started_time = 5;
+   */
+  startedTime?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp stopping_time = 6;
+   */
+  stoppingTime?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp stopped_time = 7;
+   */
+  stoppedTime?: Timestamp;
+
+  constructor(data?: PartialMessage<WorkspaceSession>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceSession";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "workspace", kind: "message", T: Workspace },
+    { no: 3, name: "creation_time", kind: "message", T: Timestamp },
+    { no: 4, name: "deployed_time", kind: "message", T: Timestamp },
+    { no: 5, name: "started_time", kind: "message", T: Timestamp },
+    { no: 6, name: "stopping_time", kind: "message", T: Timestamp },
+    { no: 7, name: "stopped_time", kind: "message", T: Timestamp },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession {
+    return new WorkspaceSession().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSession {
+    return new WorkspaceSession().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSession {
+    return new WorkspaceSession().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceSession | PlainMessage<WorkspaceSession> | undefined, b: WorkspaceSession | PlainMessage<WorkspaceSession> | undefined): boolean {
+    return proto3.util.equals(WorkspaceSession, a, b);
   }
 }

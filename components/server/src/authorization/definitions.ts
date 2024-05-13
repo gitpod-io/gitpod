@@ -76,6 +76,7 @@ export type OrganizationPermission =
     | "write_billing"
     | "read_prebuild"
     | "create_workspace"
+    | "read_sessions"
     | "write_billing_admin";
 
 export type ProjectResourceType = "project";

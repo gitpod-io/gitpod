@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TypeORM } from "@gitpod/gitpod-db/lib";
+import { TypeORM, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import {
     CommitContext,
@@ -28,6 +28,7 @@ import { ProjectsService } from "../projects/projects-service";
 import { ConfigProvider } from "./config-provider";
 import { UserService } from "../user/user-service";
 import { SYSTEM_USER } from "../authorization/authorizer";
+import { v4 } from "uuid";
 
 const expect = chai.expect;
 
@@ -614,6 +615,81 @@ describe("WorkspaceService", async () => {
             "stranger does not see the workspace with setting disabled",
         );
     });
+
+    it("should listSessions", async () => {
+        const svc = container.get(WorkspaceService);
+        const db = container.get<WorkspaceDB>(WorkspaceDB);
+        const today = new Date();
+        const daysAgo = (days: number) => new Date(today.getTime() - 1000 * 60 * 60 * 24 * days);
+        await createTestWorkspaceWithInstances(
+            db,
+            org.id,
+            owner.id,
+            // last Week
+            { creationTime: daysAgo(7) },
+            // three weeks ago
+            { creationTime: daysAgo(21) },
+        );
+
+        await createTestWorkspaceWithInstances(
+            db,
+            org.id,
+            member.id, // member
+            // last Week
+            { creationTime: daysAgo(18) },
+            // three weeks ago
+            { creationTime: daysAgo(15) },
+        );
+
+        await createTestWorkspaceWithInstances(
+            db,
+            v4(), // other organization
+            owner.id,
+            // last Week
+            { creationTime: daysAgo(7) },
+            // three weeks ago
+            { creationTime: daysAgo(21) },
+        );
+
+        let result = await svc.listWorkspaceSessions(owner.id, org.id, daysAgo(16), daysAgo(5), 20, 0);
+        expect(result.length).to.equal(2);
+
+        result = await svc.listWorkspaceSessions(owner.id, org.id, daysAgo(5), daysAgo(0), 20, 0);
+        expect(result.length).to.equal(0);
+
+        result = await svc.listWorkspaceSessions(owner.id, org.id, daysAgo(22), daysAgo(20), 20, 0);
+        expect(result.length).to.equal(1);
+
+        result = await svc.listWorkspaceSessions(owner.id, org.id, daysAgo(40), daysAgo(0), 20, 0);
+        expect(result.length).to.equal(4);
+
+        result = await svc.listWorkspaceSessions(owner.id, org.id, daysAgo(40), daysAgo(0), 20, 1);
+        expect(result.length).to.equal(3);
+
+        result = await svc.listWorkspaceSessions(owner.id, org.id, daysAgo(40), daysAgo(0), 20, 10);
+        expect(result.length).to.equal(0);
+
+        result = await svc.listWorkspaceSessions(owner.id, org.id, daysAgo(40), daysAgo(0), 2, 0);
+        expect(result.length).to.equal(2);
+
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            svc.listWorkspaceSessions(member.id, org.id, daysAgo(16), daysAgo(5), 20, 0),
+            "members can't list workspace sessions",
+        );
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.listWorkspaceSessions(stranger.id, org.id, daysAgo(16), daysAgo(5), 20, 0),
+            "strangers can't list workspace sessions",
+        );
+
+        await expectError(
+            ErrorCodes.BAD_REQUEST,
+            svc.listWorkspaceSessions(owner.id, org.id, daysAgo(1), daysAgo(5), 20, 0),
+            "from must be before to",
+        );
+    });
 });
 
 async function createTestWorkspace(svc: WorkspaceService, org: Organization, owner: User, project: Project) {
@@ -636,4 +712,46 @@ async function createTestWorkspace(svc: WorkspaceService, org: Organization, own
         undefined,
     );
     return ws;
+}
+
+async function createTestWorkspaceWithInstances(
+    db: WorkspaceDB,
+    organizationId: string,
+    ownerId: string,
+    ...instances: {
+        creationTime: Date;
+    }[]
+) {
+    const id = v4();
+    await db.store({
+        id,
+        creationTime: new Date().toISOString(),
+        organizationId,
+        ownerId,
+        contextURL: "myContext",
+        type: "regular",
+        description: "myDescription",
+        context: {
+            title: "myTitle",
+        },
+        config: {},
+    });
+
+    for (const instance of instances) {
+        await db.storeInstance({
+            id: v4(),
+            workspaceId: id,
+            creationTime: instance.creationTime.toISOString(),
+            status: {
+                conditions: {},
+                phase: "stopped",
+            },
+            region: "us-central1",
+            ideUrl: "",
+            configuration: {
+                ideImage: "",
+            },
+            workspaceImage: "",
+        });
+    }
 }

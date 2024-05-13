@@ -1,0 +1,89 @@
+{
+    "result": {
+        "id": "",
+        "workspace": {
+            "id": "akosyakov-parceldemo-4crqn25qlwi",
+            "metadata": {
+                "ownerId": "827df1c8-d42d-4a69-bc38-64089af1f711",
+                "organizationId": "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
+                "configurationId": "",
+                "annotations": {},
+                "name": "akosyakov/parcel-demo - master",
+                "pinned": false,
+                "originalContextUrl": "https://github.com/akosyakov/parcel-demo"
+            },
+            "spec": {
+                "initializer": {
+                    "specs": [
+                        {
+                            "git": {
+                                "remoteUri": "https://github.com/akosyakov/parcel-demo.git",
+                                "upstreamRemoteUri": "",
+                                "targetMode": "CLONE_TARGET_MODE_REMOTE_COMMIT",
+                                "cloneTarget": "60dbf818194082ef1a368bacd49cfd25a34c9256",
+                                "checkoutLocation": "parcel-demo",
+                                "config": {
+                                    "customConfig": {},
+                                    "authentication": "AUTH_METHOD_UNSPECIFIED",
+                                    "authUser": "",
+                                    "authPassword": "",
+                                    "authOts": ""
+                                }
+                            }
+                        }
+                    ]
+                },
+                "type": "WORKSPACE_TYPE_REGULAR",
+                "ports": [],
+                "environmentVariables": [],
+                "git": {
+                    "username": "",
+                    "email": ""
+                },
+                "timeout": {
+                    "inactivity": "1800s",
+                    "disconnected": "1800s"
+                },
+                "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+                "class": "g1-standard",
+                "sshPublicKeys": [],
+                "subassemblyReferences": [],
+                "logUrl": "",
+                "editor": {
+                    "name": "code",
+                    "version": "stable"
+                }
+            },
+            "status": {
+                "statusVersion": "1697488124",
+                "phase": {
+                    "name": "PHASE_STOPPED",
+                    "lastTransitionTime": "2023-10-16T20:28:44.923Z"
+                },
+                "workspaceUrl": "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+                "conditions": {
+                    "failed": "",
+                    "failedReason": "FAILED_REASON_UNSPECIFIED",
+                    "timeout": ""
+                },
+                "gitStatus": {
+                    "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",
+                    "branch": "master",
+                    "latestCommit": "60dbf818194082ef1a368bacd49cfd25a34c9256",
+                    "uncommitedFiles": [],
+                    "totalUncommitedFiles": 0,
+                    "untrackedFiles": [],
+                    "totalUntrackedFiles": 0,
+                    "unpushedCommits": [],
+                    "totalUnpushedCommits": 0
+                },
+                "instanceId": "226695b4-f10a-471a-a219-9b657645bf78"
+            }
+        },
+        "creationTime": "2023-10-16T20:18:24.923Z",
+        "startedTime": "2023-10-16T20:18:26.923Z",
+        "stoppingTime": "2023-10-16T20:28:24.923Z",
+        "stoppedTime": "2023-10-16T20:28:44.923Z"
+    },
+    "err": ""
+}

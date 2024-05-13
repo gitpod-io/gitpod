@@ -44,6 +44,8 @@ import {
     UpdateWorkspacePortRequest,
     UpdateWorkspacePortResponse,
     WorkspacePort_Protocol,
+    ListWorkspaceSessionsRequest,
+    ListWorkspaceSessionsResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
@@ -101,6 +103,39 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         const resultTotal = results.length;
         const response = new ListWorkspacesResponse();
         response.workspaces = results.map((workspace) => this.apiConverter.toWorkspace(workspace));
+        response.pagination = new PaginationResponse();
+        response.pagination.total = resultTotal;
+        return response;
+    }
+
+    async listWorkspaceSessions(
+        req: ListWorkspaceSessionsRequest,
+        _: HandlerContext,
+    ): Promise<ListWorkspaceSessionsResponse> {
+        const page = parsePagination(req.pagination, 50);
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+        const toDate = req.to?.toDate() || new Date();
+        // default 7 days before toDate
+        const fromDate = req.from?.toDate() || new Date(toDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        // check fromDate is before toDate
+        if (fromDate.getTime() > toDate.getTime()) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "'from' is after 'to'");
+        }
+
+        const results = await this.workspaceService.listWorkspaceSessions(
+            ctxUserId(),
+            req.organizationId,
+            fromDate,
+            toDate,
+            page.limit,
+            page.offset,
+        );
+        const resultTotal = results.length;
+        const response = new ListWorkspaceSessionsResponse();
+        response.workspaceSessions = results.map((session) => this.apiConverter.toWorkspaceSession(session));
         response.pagination = new PaginationResponse();
         response.pagination.total = resultTotal;
         return response;
