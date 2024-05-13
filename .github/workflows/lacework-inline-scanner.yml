@@ -1,3 +1,6 @@
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
 name: Lacework Inline Scanner
 on:
   workflow_run:
@@ -51,28 +54,21 @@ jobs:
     needs: [configuration,create-runner]
     if: ${{ needs.configuration.outputs.skip == 'false' }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
     steps:
       # Most of this is taken over from the Build workflow/preview-env-check-regressions workflow
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-environment
         with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-      - name: Get Secrets from GCP
-        id: "secrets"
-        uses: "google-github-actions/get-secretmanager-secrets@v1"
-        with:
-          secrets: |-
-            lacework-access-token:gitpod-core-dev/lacework-access-token
       - name: Lacework Inline Scanner
         id: lacework-inline-scanner
         shell: bash
         env:
           VERSION: ${{needs.configuration.outputs.version}}
-          LW_ACCESS_TOKEN: "${{ steps.secrets.outputs.lacework-access-token }}"
-          # TODO(gpl) See docker.io access above
-          EXCLUDE_DOCKER_IO: true
+          LW_ACCESS_TOKEN: "${{ secrets.LACEWORK_ACCESS_TOKEN }}"
         run: |
           $GITHUB_WORKSPACE/scripts/lw-scan-images.sh
 

@@ -10,21 +10,28 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - name: Install dependencies
+              run: |
+                cd ./components/ide/jetbrains/image/gha-update-image
+                yarn
+                npm i -g bun
             - name: Check for updates
               run: |
-                  cd ./components/ide/jetbrains/image/gha-update-image
-                  yarn install
-                  node index.js
-                  git diff
+                cd ./components/ide/jetbrains/image/gha-update-image
+                bun run index.ts
+                git diff
 
             - name: Detect file changes
               id: changes
               run: |
-                echo "::set-output name=gradle-stable::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep backend-plugin/gradle-stable.properties$ | xargs)"
-                echo "::set-output name=workspaceYaml::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep WORKSPACE.yaml$ | xargs)"
+                if [ $(git status --porcelain | wc -l) -gt 0 ]; then
+                  echo "dirty=true" >> $GITHUB_OUTPUT
+                else
+                  echo "dirty=false" >> $GITHUB_OUTPUT
+                fi
             - name: Create Pull Request
-              if: ${{steps.changes.outputs.gradle-stable || steps.changes.outputs.workspaceYaml}}
-              uses: peter-evans/create-pull-request@v4
+              if: ${{steps.changes.outputs.dirty}}
+              uses: peter-evans/create-pull-request@v6
               with:
                   title: "[JetBrains] Update IDE images to new build version"
                   body: |

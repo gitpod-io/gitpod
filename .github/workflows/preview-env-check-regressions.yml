@@ -1,4 +1,7 @@
 name: "Preview environment regression check"
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
 on:
   workflow_run:
     workflows: ["Build"]
@@ -12,10 +15,14 @@ on:
       version:
         required: true
         description: "The version of Gitpod to install"
-      infrastructure_provider:
-        description: "The infrastructure provider to use. Valid options: harvester, gcp"
+      image_repo_base:
+        type: choice
         required: false
-        default: gcp
+        description: "The base repo of image"
+        options:
+          - "eu.gcr.io/gitpod-core-dev/build"
+          - "eu.gcr.io/gitpod-dev-artifact/build"
+        default: "eu.gcr.io/gitpod-core-dev/build"
 
 jobs:
   create-runner:
@@ -32,7 +39,7 @@ jobs:
       skip: ${{ steps.configuration.outputs.skip }}
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
-      infrastructure_provider: ${{ steps.configuration.outputs.infrastructure_provider }}
+      image_repo_base: ${{ steps.configuration.outputs.image_repo_base }}
     steps:
       - name: "Set outputs"
         id: configuration
@@ -42,7 +49,7 @@ jobs:
               {
                   echo "version=${{ github.event.inputs.version }}"
                   echo "name=${{ github.event.inputs.name }}"
-                  echo "infrastructure_provider=${{ github.event.inputs.infrastructure_provider }}"
+                  echo "image_repo_base=${{ github.event.inputs.image_repo_base }}"
                   echo "skip=false"
               } >> $GITHUB_OUTPUT
           else
@@ -50,7 +57,7 @@ jobs:
               {
                   echo "version=main-gha.${{ github.event.workflow_run.run_number }}"
                   echo "name=preview-regression-check-main-${{ github.run_id }}-${{ github.run_attempt }}"
-                  echo "infrastructure_provider=harvester"
+                  echo "image_repo_base=eu.gcr.io/gitpod-core-dev/build"
                   echo "skip=${{ github.event.workflow_run.conclusion == 'failure' }}"
               } >> $GITHUB_OUTPUT
           fi
@@ -63,22 +70,28 @@ jobs:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Create preview environment infrastructure
         id: create
         uses: ./.github/actions/preview-create
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: ${{ needs.configuration.outputs.infrastructure_provider }}
           large_vm: false
           preemptible: true
+          image_repo_base: ${{ needs.configuration.outputs.image_repo_base }}
       - name: Deploy Gitpod to the preview environment
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           version: ${{ needs.configuration.outputs.version}}
+          image_repo_base: ${{ needs.configuration.outputs.image_repo_base }}
 
   check:
     name: Check for regressions
@@ -86,36 +99,33 @@ jobs:
     if: ${{ needs.configuration.outputs.skip == 'false' }}
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Check
         shell: bash
         env:
           ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
           USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
-          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
           PREVIEW_NAME: ${{ needs.configuration.outputs.name }}
         run: |
           set -euo pipefail
 
           export LEEWAY_WORKSPACE_ROOT="$(pwd)"
           export HOME="/home/gitpod"
-          export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
-
-          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
           leeway run dev/preview/previewctl:install
-
-          echo "Setting up access to core-dev and harvester"
-          previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m
 
           # start integration test
           args=()
@@ -151,18 +161,11 @@ jobs:
         with:
           token_format: access_token
           credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-      - name: Get Secrets from GCP
-        if: failure()
-        id: "secrets"
-        uses: "google-github-actions/get-secretmanager-secrets@v1"
-        with:
-          secrets: |-
-            devx-slack-webhook:gitpod-core-dev/devx-alerts-slack-webhook
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         if: failure()
         env:
-          SLACK_WEBHOOK: "${{ steps.secrets.outputs.devx-slack-webhook }}"
+          SLACK_WEBHOOK: "${{ secrets.DEVX_SLACK_WEBHOOK }}"
           SLACK_COLOR: ${{ job.status }}
           SLACK_MESSAGE: "`${{ needs.configuration.outputs.version}}` smoke test failed"
           SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
@@ -174,11 +177,16 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Delete preview environment
         uses: ./.github/actions/delete-preview
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
 
   delete-runner:
     if: always()

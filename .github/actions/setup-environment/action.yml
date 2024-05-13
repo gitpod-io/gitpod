@@ -1,7 +1,10 @@
 name: Setup environment
-
+description: "Setup environment"
 inputs:
-  sa_key:
+  identity_provider:
+    description: "GCP workload identity provider"
+    required: true
+  service_account:
     description: "GCP service account"
     required: true
   leeway_segment_key:
@@ -14,33 +17,21 @@ runs:
     - uses: actions/checkout@v4
     - id: auth
       name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v1
+      uses: google-github-actions/auth@v2
       with:
-        credentials_json: "${{ inputs.sa_key }}"
-    - id: gcloud-auth
-      name: gcloud auth activate-service-account
-      shell: bash
-      run: |
-        gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
+        workload_identity_provider: "${{ inputs.identity_provider }}"
+        service_account: "${{ inputs.service_account }}"
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v2'
+      with:
+        skip_install: true
     - id: env-vars
       name: configure env variables
       shell: bash
       run: |
-        SA_KEY_FILE=$(mktemp)
-        echo '${{ inputs.sa_key }}' > "$SA_KEY_FILE"
-
-        trap 'rm -f ${SA_KEY_FILE}' EXIT
-
         gcloud auth configure-docker eu.gcr.io --quiet
-
-        PREVIEW_ENV_DEV_SA_KEY_PATH="$GITHUB_WORKSPACE/.config/gcloud/preview-environment-dev-sa.json"
 
         {
             echo "LEEWAY_SEGMENT_KEY=${{ inputs.leeway_segment_key }}"
             echo "LEEWAY_WORKSPACE_ROOT=$GITHUB_WORKSPACE"
-            echo "PREVIEW_ENV_DEV_SA_KEY_PATH=${PREVIEW_ENV_DEV_SA_KEY_PATH}"
         }  >> "$GITHUB_ENV"
-
-        # Authenticate with GCP so we can use the Leeway cache
-        mkdir -p "$(dirname "$PREVIEW_ENV_DEV_SA_KEY_PATH")"
-        echo '${{ inputs.sa_key }}' > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
