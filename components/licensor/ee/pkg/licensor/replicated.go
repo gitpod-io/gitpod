@@ -146,7 +146,7 @@ func newReplicatedEvaluator(client *http.Client) (res *Evaluator) {
 
 func newTEvaluator() (res *Evaluator) {
 
-	expDate := time.Date(2024, 6, 1, 1, 0, 0, 0, time.UTC)
+	expDate := time.Date(2025, 5, 26, 1, 0, 0, 0, time.UTC)
 
 	lic := LicensePayload{
 		ID:         "t-license",
