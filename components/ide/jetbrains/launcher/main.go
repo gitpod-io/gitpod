@@ -155,7 +155,7 @@ func main() {
 
 	var exps experiments.Client
 	var gitpodHostname string
-	if gitpodUrl, err := url.Parse(wsInfo.GitpodHost); err != nil {
+	if gitpodUrl, err := url.Parse(wsInfo.GitpodHost); err == nil {
 		gitpodHost := gitpodUrl.Hostname()
 		gitpodHostname = gitpodHost
 		exps = experiments.NewClient(experiments.WithGitpodProxy(gitpodHost))
