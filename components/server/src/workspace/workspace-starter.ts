@@ -1854,7 +1854,7 @@ export class WorkspaceStarter {
             targetMode = CloneTargetMode.REMOTE_HEAD;
         }
 
-        const tokenValidityPeriodMins = (await getScmAccessTokenLifetime(user)) || SCM_TOKEN_LIFETIME_MINS;
+        const tokenValidityPeriodMins = await getScmAccessTokenLifetimeMins(user);
         const gitToken = await this.tokenProvider.getTokenForHost(user, host, tokenValidityPeriodMins);
         if (!gitToken) {
             throw new Error(`No token for host: ${host}`);
@@ -1981,14 +1981,16 @@ export async function isWorkspaceClassDiscoveryEnabled(user: { id: string }): Pr
     });
 }
 
-export async function getScmAccessTokenLifetime(user: { id: string }): Promise<number | undefined> {
-    return getExperimentsClientForBackend().getValueAsync<number | undefined>(
+export async function getScmAccessTokenLifetimeMins(user: { id: string }): Promise<number> {
+    const customValue = await getExperimentsClientForBackend().getValueAsync<number | undefined>(
         "workspace_start_scm_access_token_lifetime",
         undefined,
         {
             user: user,
         },
     );
+
+    return customValue || SCM_TOKEN_LIFETIME_MINS;
 }
 
 export class ScmStartError extends Error {

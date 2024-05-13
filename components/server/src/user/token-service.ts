@@ -23,7 +23,13 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 @injectable()
 export class TokenService implements TokenProvider {
     static readonly GITPOD_AUTH_PROVIDER_ID = "Gitpod";
-    /** [mins] */
+    /**
+     * [mins]
+     *
+     * The default lifetime of a token if not specified otherwise.
+     * Atm we only specify a different lifetime on workspace starts (for the token we pass to "git clone" during content init).
+     * Also, this value is relevant for "opportunistic token refreshes" (enabled for BitBucket only atm): It's the time we mark a token as "reserved" (= do not opportunistically refresh it).
+     */
     static readonly DEFAULT_LIFETIME = 5;
 
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
@@ -52,15 +58,7 @@ export class TokenService implements TokenProvider {
         const identity = this.getIdentityForHost(user, host);
 
         function isValidUntil(t: Token, requestedLifetimeDate: Date): boolean {
-            if (!t.expiryDate) {
-                return true;
-            }
-
-            if (t.expiryDate >= requestedLifetimeDate.toISOString()) {
-                return true;
-            }
-
-            return false;
+            return !t.expiryDate || t.expiryDate >= requestedLifetimeDate.toISOString();
         }
 
         const updateReservation = async (uid: string, token: Token, requestedLifetimeDate: Date): Promise<void> => {
