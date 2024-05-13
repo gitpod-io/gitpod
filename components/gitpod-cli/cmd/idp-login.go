@@ -20,5 +20,5 @@ var idpLoginCmd = &cobra.Command{
 func init() {
 	idpCmd.AddCommand(idpLoginCmd)
 
-	idpLoginCmd.Flags().StringVar(&idpLoginOpts.Scope, "scope", "", "scopes string of the ID token")
+	idpLoginCmd.PersistentFlags().StringVar(&idpLoginOpts.Scope, "scope", "", "scopes string of the ID token")
 }
