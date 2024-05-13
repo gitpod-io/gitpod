@@ -35,6 +35,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -64,6 +65,8 @@ type LaunchContext struct {
 	info           *ProductInfo
 	backendVersion *version.Version
 	wsInfo         *supervisor.WorkspaceInfoResponse
+	exps           experiments.Client
+	gitpodHostname string
 
 	vmOptionsFile          string
 	platformPropertiesFile string
@@ -149,6 +152,14 @@ func main() {
 		return
 	}
 
+	var exps experiments.Client
+	var gitpodHostname string
+	if gitpodUrl, err := url.Parse(wsInfo.GitpodHost); err != nil {
+		gitpodHost := gitpodUrl.Hostname()
+		gitpodHostname = gitpodHost
+		exps = experiments.NewClient(experiments.WithGitpodProxy(gitpodHost))
+	}
+
 	launchCtx := &LaunchContext{
 		startTime: startTime,
 
@@ -163,6 +174,8 @@ func main() {
 		info:           info,
 		backendVersion: backendVersion,
 		wsInfo:         wsInfo,
+		exps:           exps,
+		gitpodHostname: gitpodHostname,
 	}
 
 	if launchCtx.warmup {
@@ -272,7 +285,7 @@ func serve(launchCtx *LaunchContext) {
 		if backendPort == "" {
 			backendPort = defaultBackendPort
 		}
-		if err := isBackendPluginReady(backendPort); err != nil {
+		if err := isBackendPluginReady(r.Context(), backendPort, launchCtx.exps, launchCtx.gitpodHostname); err != nil {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
@@ -298,14 +311,22 @@ func serve(launchCtx *LaunchContext) {
 }
 
 // isBackendPluginReady checks if the backend plugin is ready via backend plugin CLI GitpodCLIService.kt
-func isBackendPluginReady(backendPort string) error {
+func isBackendPluginReady(ctx context.Context, backendPort string, exps experiments.Client, gitpodHostname string) error {
+	if exps == nil {
+		return nil
+	}
+	exps.GetBoolValue(ctx, "jb_wait_backend_plugin_readiness", false, experiments.Attributes{GitpodHost: gitpodHostname})
 	log.WithField("backendPort", backendPort).Debug("wait backend plugin to be ready")
 	// Use op=metrics so that we don't need to rebuild old backend-plugin
 	url, err := url.Parse("http://localhost:" + backendPort + "/api/gitpod/cli?op=metrics")
 	if err != nil {
 		return err
 	}
-	resp, err := http.Get(url.String())
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}

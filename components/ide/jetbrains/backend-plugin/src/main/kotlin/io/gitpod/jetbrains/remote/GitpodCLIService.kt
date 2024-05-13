@@ -50,6 +50,9 @@ class GitpodCLIService : RestService() {
         /**
          * prod: curl http://localhost:63342/api/gitpod/cli?op=metrics
          * dev:  curl http://localhost:63343/api/gitpod/cli?op=metrics
+         *
+         * We will use this endpoint in JetBrains launcher to check if backend-plugin is ready.
+         * Please make sure this operation:metrics to respond 200
          */
         if (operation == "metrics") {
             val out = BufferExposingByteArrayOutputStream()

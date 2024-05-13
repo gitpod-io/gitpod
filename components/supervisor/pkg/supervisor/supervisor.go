@@ -416,9 +416,13 @@ func Run(options ...RunOption) {
 	)
 	go func() {
 		<-cstate.ContentReady()
-		allReady, waitFor := waitForIde(ctx, ideReady, desktopIdeReady, ideReadyTimeoutDuration)
+		shouldWait, duration := waitSupervisorIDENotReadyShutdownDurationValue(ctx, exps, host)
+		if !shouldWait {
+			return
+		}
+		allReady, waitFor := waitForIde(ctx, ideReady, desktopIdeReady, duration)
 		if !allReady {
-			msg := []byte(fmt.Sprintf("%s timed out to start after %.0f minutes", waitFor, ideReadyTimeoutDuration.Minutes()))
+			msg := []byte(fmt.Sprintf("%s timed out to start after %.0f minutes", waitFor, duration.Minutes()))
 			err := os.WriteFile("/dev/termination-log", msg, 0o644)
 			if err != nil {
 				log.WithError(err).Error("err while writing termination log")
@@ -520,6 +524,34 @@ func Run(options ...RunOption) {
 	termMux.Close(terminalShutdownCtx)
 
 	wg.Wait()
+}
+
+func waitSupervisorIDENotReadyShutdownDurationValue(ctx context.Context, exps experiments.Client, gitpodHost string) (bool, time.Duration) {
+	if exps == nil {
+		return false, time.Hour
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return false, time.Hour
+		default:
+		}
+		value := exps.GetStringValue(ctx, "supervisor_ide_not_ready_shutdown_duration", "not_found", experiments.Attributes{GitpodHost: gitpodHost})
+		if value == "not_found" {
+			time.Sleep(10 * time.Second)
+			continue
+		}
+		if value == "undefined" {
+			return false, time.Hour
+		}
+		duration, err := time.ParseDuration(value)
+		if err != nil {
+			log.WithField("value", value).Error("cannot parse FeatureFlag supervisor_ide_not_ready_shutdown_duration")
+			time.Sleep(10 * time.Second)
+			continue
+		}
+		return true, duration
+	}
 }
 
 func isShallowRepository(rootDir string) bool {
