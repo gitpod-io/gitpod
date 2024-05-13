@@ -94,7 +94,8 @@ func main() {
 		return
 	}
 
-	log.Init(ServiceName, Version, true, false)
+	debugEnabled := os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true"
+	log.Init(ServiceName, Version, true, debugEnabled)
 	log.Info(ServiceName + ": " + Version)
 	startTime := time.Now()
 
@@ -158,6 +159,8 @@ func main() {
 		gitpodHost := gitpodUrl.Hostname()
 		gitpodHostname = gitpodHost
 		exps = experiments.NewClient(experiments.WithGitpodProxy(gitpodHost))
+	} else {
+		log.WithField("gitpodHost", wsInfo.GitpodHost).WithError(err).Error("failed to parse url")
 	}
 
 	launchCtx := &LaunchContext{
@@ -313,9 +316,13 @@ func serve(launchCtx *LaunchContext) {
 // isBackendPluginReady checks if the backend plugin is ready via backend plugin CLI GitpodCLIService.kt
 func isBackendPluginReady(ctx context.Context, backendPort string, exps experiments.Client, gitpodHostname string) error {
 	if exps == nil {
+		log.Error("no experiments.Client setup")
 		return nil
 	}
-	exps.GetBoolValue(ctx, "jb_wait_backend_plugin_readiness", false, experiments.Attributes{GitpodHost: gitpodHostname})
+	if !exps.GetBoolValue(ctx, "jb_wait_backend_plugin_readiness", false, experiments.Attributes{GitpodHost: gitpodHostname}) {
+		log.Debug("will not wait plugin ready")
+		return nil
+	}
 	log.WithField("backendPort", backendPort).Debug("wait backend plugin to be ready")
 	// Use op=metrics so that we don't need to rebuild old backend-plugin
 	url, err := url.Parse("http://localhost:" + backendPort + "/api/gitpod/cli?op=metrics")
