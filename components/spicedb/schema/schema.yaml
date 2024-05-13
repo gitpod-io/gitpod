@@ -94,6 +94,8 @@ schema: |-
 
     permission create_workspace = member + collaborator
 
+    permission read_sessions = owner + installation->admin
+
     // can add credit notes and change the spending limits even for free users
     permission write_billing_admin = installation->admin
   }

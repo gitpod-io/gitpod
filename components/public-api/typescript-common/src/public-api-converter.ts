@@ -6,8 +6,81 @@
 
 import "reflect-metadata";
 
-import { Timestamp, toPlainMessage, PartialMessage, Duration } from "@bufbuild/protobuf";
+import { Duration, PartialMessage, Timestamp, toPlainMessage } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
+import { GitpodServer } from "@gitpod/gitpod-protocol";
+import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
+import { ContextURL } from "@gitpod/gitpod-protocol/lib/context-url";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { RoleOrPermission as ProtocolRoleOrPermission } from "@gitpod/gitpod-protocol/lib/permission";
+import {
+    AuthProviderInfo,
+    AuthProviderEntry as AuthProviderProtocol,
+    CommitContext,
+    EmailDomainFilterEntry,
+    EnvVarWithValue,
+    IDESettings,
+    Identity as IdentityProtocol,
+    NamedWorkspaceFeatureFlag,
+    PrebuiltWorkspaceState,
+    ProjectEnvVar,
+    Workspace as ProtocolWorkspace,
+    Snapshot,
+    SnapshotContext,
+    SuggestedRepository as SuggestedRepositoryProtocol,
+    Token,
+    UserEnvVarValue,
+    User as UserProtocol,
+    UserSSHPublicKeyValue,
+    WithEnvvarsContext,
+    WithPrebuild,
+    WorkspaceAutostartOption,
+    WorkspaceContext,
+    WorkspaceInfo,
+    WorkspaceSession as WorkspaceSessionProtocol,
+} from "@gitpod/gitpod-protocol/lib/protocol";
+import {
+    OrgMemberInfo,
+    OrgMemberRole,
+    OrganizationSettings as OrganizationSettingsProtocol,
+    PartialProject,
+    PrebuildSettings as PrebuildSettingsProtocol,
+    PrebuildWithStatus,
+    Project,
+    ProjectSettings,
+    Organization as ProtocolOrganization,
+} from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
+import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import {
+    ConfigurationIdeConfig,
+    PortProtocol,
+    WorkspaceInstance,
+    WorkspaceInstanceConditions,
+    WorkspaceInstancePhase,
+    WorkspaceInstancePort,
+} from "@gitpod/gitpod-protocol/lib/workspace-instance";
+import {
+    AuthProvider,
+    AuthProviderDescription,
+    AuthProviderType,
+    OAuth2Config,
+} from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import {
+    BranchMatchingStrategy,
+    Configuration,
+    PrebuildSettings,
+    WorkspaceSettings,
+} from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
+import {
+    ConfigurationEnvironmentVariable,
+    EnvironmentVariable,
+    EnvironmentVariableAdmission,
+    UserEnvironmentVariable,
+} from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 import {
     FailedPreconditionDetails,
     ImageBuildLogsNotYetAvailableError,
@@ -22,33 +95,36 @@ import {
     UserBlockedError,
 } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import {
-    AuthProvider,
-    AuthProviderDescription,
-    AuthProviderType,
-    OAuth2Config,
-} from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import {
-    Identity,
-    SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption,
-    User,
-    RoleOrPermission,
-    User_EmailNotificationSettings,
-    User_UserFeatureFlag,
-    User_WorkspaceAutostartOption,
-    User_WorkspaceTimeoutSettings,
-} from "@gitpod/public-api/lib/gitpod/v1/user_pb";
-import {
-    BranchMatchingStrategy,
-    Configuration,
-    PrebuildSettings,
-    WorkspaceSettings,
-} from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+    BlockedEmailDomain,
+    BlockedRepository,
+    OnboardingState,
+} from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import {
     Organization,
     OrganizationMember,
     OrganizationRole,
     OrganizationSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import {
+    Prebuild,
+    ListOrganizationPrebuildsRequest_Filter_State as PrebuildFilterState,
+    PrebuildPhase,
+    PrebuildPhase_Phase,
+    PrebuildStatus,
+} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Author, Commit, SCMToken, SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
+import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
+import {
+    Identity,
+    RoleOrPermission,
+    SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption,
+    User,
+    User_EmailNotificationSettings,
+    User_UserFeatureFlag,
+    User_WorkspaceAutostartOption,
+    User_WorkspaceTimeoutSettings,
+} from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import {
     AdmissionLevel,
     CreateAndStartWorkspaceRequest,
@@ -69,6 +145,7 @@ import {
     WorkspacePhase_Phase,
     WorkspacePort,
     WorkspacePort_Protocol,
+    WorkspaceSession,
     WorkspaceSnapshot,
     WorkspaceSpec,
     WorkspaceSpec_GitSpec,
@@ -77,84 +154,8 @@ import {
     WorkspaceStatus_PrebuildResult,
     WorkspaceStatus_WorkspaceConditions,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
-import {
-    BlockedEmailDomain,
-    BlockedRepository,
-    OnboardingState,
-} from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
-import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
-import {
-    ConfigurationEnvironmentVariable,
-    EnvironmentVariable,
-    EnvironmentVariableAdmission,
-    UserEnvironmentVariable,
-} from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
-import { SCMToken, SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
-import { ContextURL } from "@gitpod/gitpod-protocol/lib/context-url";
-import {
-    Prebuild,
-    PrebuildStatus,
-    PrebuildPhase,
-    PrebuildPhase_Phase,
-    ListOrganizationPrebuildsRequest_Filter_State as PrebuildFilterState,
-} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
-import {
-    User as UserProtocol,
-    Identity as IdentityProtocol,
-    AuthProviderEntry as AuthProviderProtocol,
-    AuthProviderInfo,
-    CommitContext,
-    EnvVarWithValue,
-    Workspace as ProtocolWorkspace,
-    WithEnvvarsContext,
-    WithPrebuild,
-    WorkspaceContext,
-    WorkspaceInfo,
-    UserEnvVarValue,
-    ProjectEnvVar,
-    PrebuiltWorkspaceState,
-    Token,
-    SuggestedRepository as SuggestedRepositoryProtocol,
-    UserSSHPublicKeyValue,
-    SnapshotContext,
-    EmailDomainFilterEntry,
-    NamedWorkspaceFeatureFlag,
-    WorkspaceAutostartOption,
-    IDESettings,
-    Snapshot,
-} from "@gitpod/gitpod-protocol/lib/protocol";
-import {
-    OrgMemberInfo,
-    OrgMemberRole,
-    OrganizationSettings as OrganizationSettingsProtocol,
-    PartialProject,
-    PrebuildSettings as PrebuildSettingsProtocol,
-    PrebuildWithStatus,
-    Project,
-    ProjectSettings,
-    Organization as ProtocolOrganization,
-} from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
-import {
-    ConfigurationIdeConfig,
-    PortProtocol,
-    WorkspaceInstance,
-    WorkspaceInstanceConditions,
-    WorkspaceInstancePhase,
-    WorkspaceInstancePort,
-} from "@gitpod/gitpod-protocol/lib/workspace-instance";
-import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
-import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
-import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
-import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
-import { RoleOrPermission as ProtocolRoleOrPermission } from "@gitpod/gitpod-protocol/lib/permission";
-import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
-import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
-import { GitpodServer } from "@gitpod/gitpod-protocol";
-import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 import { getPrebuildLogPath } from "./prebuild-utils";
+import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
 const URL = require("url").URL || window.URL;
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
@@ -167,6 +168,29 @@ export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configurati
  * - methods converting from gRPC to JSON-RPC is called `from*`
  */
 export class PublicAPIConverter {
+    toWorkspaceSession(arg: WorkspaceSessionProtocol): WorkspaceSession {
+        const workspace = this.toWorkspace({
+            workspace: arg.workspace,
+            latestInstance: arg.instance,
+        });
+        const result = new WorkspaceSession();
+        result.workspace = workspace;
+        result.creationTime = Timestamp.fromDate(new Date(arg.instance.creationTime));
+        if (arg.instance.startedTime) {
+            result.startedTime = Timestamp.fromDate(new Date(arg.instance.startedTime));
+        }
+        if (arg.instance.deployedTime) {
+            result.deployedTime = Timestamp.fromDate(new Date(arg.instance.deployedTime));
+        }
+        if (arg.instance.stoppingTime) {
+            result.stoppingTime = Timestamp.fromDate(new Date(arg.instance.stoppingTime));
+        }
+        if (arg.instance.stoppedTime) {
+            result.stoppedTime = Timestamp.fromDate(new Date(arg.instance.stoppedTime));
+        }
+        return result;
+    }
+
     toWorkspace(arg: WorkspaceInfo | WorkspaceInstance, current?: Workspace): Workspace {
         const workspace = current ?? new Workspace();
 
@@ -211,8 +235,7 @@ export class PublicAPIConverter {
         if (arg.status.timeout) {
             spec.timeout = new UpdateWorkspaceRequest_UpdateTimeout({
                 disconnected: this.toDuration(arg.status.timeout),
-                // TODO: inactivity
-                // TODO: maximum_lifetime
+                inactivity: this.toDuration(arg.status.timeout),
             });
         }
         if (arg.workspaceClass) {
@@ -345,7 +368,6 @@ export class PublicAPIConverter {
                     // errorMessage: "",
                 });
             }
-            // TODO: timeout
             status.phase.lastTransitionTime = Timestamp.fromDate(new Date(arg.workspace.creationTime));
             status.gitStatus = this.toGitStatus(arg.workspace);
             return status;
@@ -380,12 +402,10 @@ export class PublicAPIConverter {
 
         status.phase.name = this.toPhase(arg);
         status.instanceId = arg.id;
-        if (arg.status.message) {
-            status.conditions = new WorkspaceStatus_WorkspaceConditions({
-                failed: arg.status.message,
-            });
-            arg.status.conditions.failed;
-        }
+        status.conditions = new WorkspaceStatus_WorkspaceConditions({
+            failed: arg.status.conditions.failed,
+            timeout: arg.status.conditions.timeout,
+        });
         status.gitStatus = this.toGitStatus(arg, status.gitStatus);
 
         return status;

@@ -19,6 +19,7 @@ import {
     WorkspaceInfo,
     WorkspaceInstance,
     WorkspaceInstanceUser,
+    WorkspaceSession,
     WorkspaceType,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -36,7 +37,6 @@ import {
     PrebuiltUpdatableAndWorkspace,
     WorkspaceAndOwner,
     WorkspaceDB,
-    WorkspaceInstanceSessionWithWorkspace,
     WorkspaceOwnerAndSoftDeleted,
     WorkspacePortsAuthData,
 } from "../workspace-db";
@@ -448,54 +448,34 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
     }
 
     public async findSessionsInPeriod(
-        userId: string,
-        periodStart: string,
-        periodEnd: string,
-    ): Promise<WorkspaceInstanceSessionWithWorkspace[]> {
-        // This is an optinmization, which also matches rules elsewhere. This is old code that's heading for the trash, so no need to couple it properly. :-)
-        const workspaceType: Workspace["type"] = "regular";
+        organizationId: string,
+        periodStart: Date,
+        periodEnd: Date,
+        limit: number,
+        offset: number,
+    ): Promise<WorkspaceSession[]> {
         const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
         // The query basically selects all workspace instances for the given owner, whose startDate is within the period, and which are either:
         //  - not stopped yet, or
         //  - is stopped or stopping.
-        const sessions = await workspaceInstanceRepo.query(
-            `
-                SELECT wsi.id AS wsi_id,
-                        wsi.startedTime AS wsi_startedTime,
-                        wsi.stoppedTime AS wsi_stoppedTime,
-                        wsi.stoppingTime AS wsi_stoppingTime,
-                        ws.id AS ws_id,
-                        ws.type AS ws_type,
-                        ws.contextURL AS ws_contextURL,
-                        ws.context AS ws_context
-                    FROM d_b_workspace_instance AS wsi
-                    INNER JOIN d_b_workspace AS ws ON wsi.workspaceId = ws.id
-                    WHERE ws.ownerId = ?
-                        AND ws.type = ?
-                        AND wsi.startedTime < ?
-                        AND (wsi.stoppedTime IS NULL OR wsi.stoppedTime = '' OR wsi.stoppedTime >= ? OR wsi.stoppingTime >= ?)
-                    ORDER BY wsi.creationTime ASC;
-            `,
-            [userId, workspaceType, periodEnd, periodStart, periodStart],
-        );
+        const sessions = await workspaceInstanceRepo
+            .createQueryBuilder("wsi")
+            .leftJoinAndMapOne("wsi.workspace", DBWorkspace, "ws", "ws.id = wsi.workspaceId")
+            .where("ws.organizationId = :organizationId", { organizationId })
+            .andWhere("wsi.creationTime >= :periodStart", { periodStart: periodStart.toISOString() })
+            .andWhere("wsi.creationTime <= :periodEnd", { periodEnd: periodEnd.toISOString() })
+            .orderBy("wsi.creationTime", "DESC")
+            .offset(offset)
+            .limit(limit)
+            .getMany();
 
-        const resultSessions: WorkspaceInstanceSessionWithWorkspace[] = [];
+        const resultSessions: { instance: WorkspaceInstance; workspace: Workspace }[] = [];
         for (const session of sessions) {
             resultSessions.push({
-                workspace: {
-                    id: session.ws_id,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                    context: JSON.parse(session.ws_context),
-                    contextURL: session.ws_contextURL,
-                    type: session.ws_type,
-                },
-                instance: {
-                    id: session.wsi_id,
-                    startedTime: !session.wsi_startedTime ? undefined : session.wsi_startedTime, // Copy the TypeORM behavior according to column config
-                    stoppedTime: !session.wsi_stoppedTime ? undefined : session.wsi_stoppedTime, // Copy the TypeORM behavior according to column config
-                    stoppingTime: !session.wsi_stoppingTime ? undefined : session.wsi_stoppingTime, // Copy the TypeORM behavior according to column config
-                },
+                workspace: (session as any).workspace,
+                instance: session,
             });
+            delete (session as any).workspace;
         }
         return resultSessions;
     }

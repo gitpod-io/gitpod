@@ -25,11 +25,15 @@ service WorkspaceService {
   // ListWorkspaces returns a list of workspaces that match the query.
   rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse) {}
 
+  // ListWorkspaceSessions returns a list of workspace sessions that match the
+  rpc ListWorkspaceSessions(ListWorkspaceSessionsRequest) returns (ListWorkspaceSessionsResponse) {}
+
   // CreateAndStartWorkspace creates a new workspace and starts it.
   rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest) returns (CreateAndStartWorkspaceResponse) {}
 
   // StartWorkspace starts an existing workspace.
-  // If the specified workspace is not in stopped phase, this will return the workspace as is.
+  // If the specified workspace is not in stopped phase, this will return the
+  // workspace as is.
   rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
 
   // UpdateWorkspace updates the workspace.
@@ -46,8 +50,8 @@ service WorkspaceService {
   // ListWorkspaceClasses enumerates all available workspace classes.
   rpc ListWorkspaceClasses(ListWorkspaceClassesRequest) returns (ListWorkspaceClassesResponse) {}
 
-  // ParseContextURL parses a context URL and returns the workspace metadata and spec.
-  // Not implemented yet.
+  // ParseContextURL parses a context URL and returns the workspace metadata and
+  // spec. Not implemented yet.
   rpc ParseContextURL(ParseContextURLRequest) returns (ParseContextURLResponse) {}
 
   // GetWorkspaceDefaultImage returns the default workspace image of specified
@@ -145,6 +149,31 @@ message ListWorkspacesResponse {
   repeated Workspace workspaces = 2;
 }
 
+message ListWorkspaceSessionsRequest {
+  // pagination contains the pagination options for listing workspaces
+  PaginationRequest pagination = 1;
+
+  // organization_id is the ID of the organization that contains the workspaces
+  //
+  // +required
+  string organization_id = 2;
+
+  // from specifies the starting time range for this request.
+  // All sessions which existed starting at from will be returned.
+  google.protobuf.Timestamp from = 3;
+
+  // to specifies the end time range for this request.
+  // All sessions which existed ending at to will be returned.
+  google.protobuf.Timestamp to = 4;
+}
+
+message ListWorkspaceSessionsResponse {
+  // pagination contains the pagination options for listing workspaces
+  PaginationResponse pagination = 1;
+
+  // workspaces are the workspaces that matched the query
+  repeated WorkspaceSession workspace_sessions = 2;
+}
 // Required fields:
 // - metadata.organization_id
 // - metadata.configuration_id
@@ -160,14 +189,16 @@ message CreateAndStartWorkspaceRequest {
     EditorReference editor = 3;
   }
 
-  // metadata is data associated with this workspace that's required for other parts of Gitpod to function
+  // metadata is data associated with this workspace that's required for other
+  // parts of Gitpod to function
   WorkspaceMetadata metadata = 1;
 
   oneof source {
     // context_url is the URL from which the workspace is created
     ContextURL context_url = 2;
 
-    // spec is the configuration of the workspace that's required for the to start the workspace
+    // spec is the configuration of the workspace that's required for the to
+    // start the workspace
     WorkspaceSpec spec = 3;
   }
 
@@ -242,22 +273,27 @@ message GetWorkspaceEditorCredentialsResponse {
 
 // +resource get workspace
 message Workspace {
-  // ID is a unique identifier of this workspace. No other workspace with the same name must be managed by this workspace manager
+  // ID is a unique identifier of this workspace. No other workspace with the
+  // same name must be managed by this workspace manager
   string id = 1;
 
-  // Metadata is data associated with this workspace that's required for other parts of Gitpod to function
+  // Metadata is data associated with this workspace that's required for other
+  // parts of Gitpod to function
   WorkspaceMetadata metadata = 2;
 
-  // Spec is the configuration of the workspace that's required for the ws-manager to start the workspace
+  // Spec is the configuration of the workspace that's required for the
+  // ws-manager to start the workspace
   WorkspaceSpec spec = 3;
 
   // Status is the current status of the workspace
   WorkspaceStatus status = 4;
 }
 
-// WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
+// WorkspaceMetadata is data associated with a workspace that's required for
+// other parts of the system to function
 message WorkspaceMetadata {
-  // owner_id is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
+  // owner_id is the ID of the Gitpod user to whom we'll bill this workspace and
+  // who we consider responsible for its content
   string owner_id = 1;
 
   // organization_id is the ID of the organization that contains the workspace
@@ -276,18 +312,21 @@ message WorkspaceMetadata {
   // pinned indicates whether the workspace is pinned
   bool pinned = 6;
 
-  // original_context_url is the normalized URL from which the workspace was created
+  // original_context_url is the normalized URL from which the workspace was
+  // created
   string original_context_url = 7;
 }
 
-// WorkspaceSpec specifies the configuration of a workspace for a workspace start
+// WorkspaceSpec specifies the configuration of a workspace for a workspace
+// start
 message WorkspaceSpec {
   // Timeout configures the workspace timeout
   message Timeout {
-    // inacitivity is the maximum time of inactivity before the workspace is stopped or paused
+    // inacitivity is the maximum time of inactivity before the workspace is
+    // stopped or paused
     google.protobuf.Duration inactivity = 1;
-    // inacitivity is the maximum time of disconnection before the workspace is stopped or paused
-    // set to zero to disable.
+    // inacitivity is the maximum time of disconnection before the workspace is
+    // stopped or paused set to zero to disable.
     google.protobuf.Duration disconnected = 2;
     // maximum lifetime of the workspace
     google.protobuf.Duration maximum_lifetime = 3;
@@ -302,14 +341,17 @@ message WorkspaceSpec {
     string email = 2;
   }
 
-  // WorkspaceType specifies the purpose/use of a workspace. Different workspace types are handled differently by all parts of the system.
+  // WorkspaceType specifies the purpose/use of a workspace. Different workspace
+  // types are handled differently by all parts of the system.
   enum WorkspaceType {
     WORKSPACE_TYPE_UNSPECIFIED = 0;
 
-    // Regular workspaces are your off-the-mill workspaces intended for users. They are directly user-facing and hence are most important.
+    // Regular workspaces are your off-the-mill workspaces intended for users.
+    // They are directly user-facing and hence are most important.
     WORKSPACE_TYPE_REGULAR = 1;
 
-    // Prebuild workspaces are workspaces used to pre-build the content of other workspaces. They run headless and have no direct user-interaction.
+    // Prebuild workspaces are workspaces used to pre-build the content of other
+    // workspaces. They run headless and have no direct user-interaction.
     WORKSPACE_TYPE_PREBUILD = 2;
   }
 
@@ -322,7 +364,8 @@ message WorkspaceSpec {
   // ports is the set of ports which ought to be exposed to the internet
   repeated WorkspacePort ports = 3;
 
-  // envvars are user-defined environment variables which ought to be available in the workspace (shim'ed environment)
+  // envvars are user-defined environment variables which ought to be available
+  // in the workspace (shim'ed environment)
   repeated EnvironmentVariable environment_variables = 4;
 
   // Git configures the Git user in the workspace
@@ -340,12 +383,13 @@ message WorkspaceSpec {
   // ssh_public_keys is user's uploaded ssh public keys
   repeated string ssh_public_keys = 9;
 
-  // subassembly_references is a list of workspace IDs that this workspace depends on.
-  // For example:
+  // subassembly_references is a list of workspace IDs that this workspace
+  // depends on. For example:
   //   index.docker.io/gitpod-io/subassmeblies/code:latest
   repeated string subassembly_references = 10;
 
-  // last_user_activity is the time when the user last interacted with the workspace
+  // last_user_activity is the time when the user last interacted with the
+  // workspace
   google.protobuf.Timestamp last_user_activity = 11;
 
   // log_url is the URL where we stream the workspace's logs to.
@@ -357,8 +401,9 @@ message WorkspaceSpec {
 
 // WorkspaceStatus describes a workspace status
 message WorkspaceStatus {
-  // WorkspaceCondition gives more detailed information as to the state of the workspace. Which condition actually
-  // has a value depends on the phase the workspace is in.
+  // WorkspaceCondition gives more detailed information as to the state of the
+  // workspace. Which condition actually has a value depends on the phase the
+  // workspace is in.
   message WorkspaceConditions {
     enum FailedReason {
       FAILED_REASON_UNSPECIFIED = 0;
@@ -368,34 +413,37 @@ message WorkspaceStatus {
       FAILED_REASON_UNEXPECTED_TERMINATION = 4;
     }
 
-    // failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
+    // failed contains the reason the workspace failed to operate. If this field
+    // is empty, the workspace has not failed.
     string failed = 1;
 
     // failed_reason contains the reason the workspace failed to operate.
     // This field is only set if the workspace has failed.
     FailedReason failed_reason = 2;
 
-    // timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
+    // timeout contains the reason the workspace has timed out. If this field is
+    // empty, the workspace has not timed out.
     string timeout = 3;
   }
 
   message PrebuildResult {
-    // Snapshot points to the content of the prebuild. This string is opaque to the cluster manager,
-    // and must be returned unaltered.
+    // Snapshot points to the content of the prebuild. This string is opaque to
+    // the cluster manager, and must be returned unaltered.
     string snapshot = 1;
 
     // The prebuild's error message
     string error_message = 2;
   }
 
-  // version of the status update. Workspace instances themselves are unversioned,
-  // but their statuus has different versions.
-  // The value of this field has no semantic meaning (e.g. don't interpret it as
-  // as a timestemp), but it can be used to impose a partial order.
-  // If a.status_version < b.status_version then a was the status before b.
+  // version of the status update. Workspace instances themselves are
+  // unversioned, but their statuus has different versions. The value of this
+  // field has no semantic meaning (e.g. don't interpret it as as a timestemp),
+  // but it can be used to impose a partial order. If a.status_version <
+  // b.status_version then a was the status before b.
   uint64 status_version = 1;
 
-  // the phase of a workspace is a simple, high-level summary of where the workspace is in its lifecycle
+  // the phase of a workspace is a simple, high-level summary of where the
+  // workspace is in its lifecycle
   WorkspacePhase phase = 2;
 
   // workspace_url contains the URL at which the workspace can be accessed.
@@ -409,12 +457,12 @@ message WorkspaceStatus {
   PrebuildResult prebuild_result = 5;
 
   // git_status details the Git working copy status of the workspace.
-  // Note: this is a best-effort field and more often than not will not be present. Its absence does not
-  // indicate the absence of a working copy.
+  // Note: this is a best-effort field and more often than not will not be
+  // present. Its absence does not indicate the absence of a working copy.
   WorkspaceGitStatus git_status = 6;
 
-  // instance_id is the ID of the workspace instance - do not use, interpret or rely on this field
-  // unless you know what you're doing.
+  // instance_id is the ID of the workspace instance - do not use, interpret or
+  // rely on this field unless you know what you're doing.
   string instance_id = 7 [deprecated = true];
 }
 
@@ -560,7 +608,8 @@ message WorkspaceInitializer {
 }
 
 message GitInitializer {
-  // CloneTargetMode is the target state in which we want to leave a GitWorkspace
+  // CloneTargetMode is the target state in which we want to leave a
+  // GitWorkspace
   enum CloneTargetMode {
     CLONE_TARGET_MODE_UNSPECIFIED = 0;
 
@@ -587,11 +636,12 @@ message GitInitializer {
     // auth_user is the username used to authenticate the clone
     string auth_user = 3;
 
-    // auth_password is the password used to authenticate the clone (can also be an API token)
+    // auth_password is the password used to authenticate the clone (can also be
+    // an API token)
     string auth_password = 4;
 
-    // auth_ots is a URL where one can download the authentication secret (<username>:<password>)
-    // using a GET request.
+    // auth_ots is a URL where one can download the authentication secret
+    // (<username>:<password>) using a GET request.
     string auth_ots = 5;
   }
 
@@ -600,11 +650,13 @@ message GitInitializer {
     // NO_AUTH disables authentication during clone
     AUTH_METHOD_UNSPECIFIED = 0;
 
-    // BASIC_AUTH uses HTTP basic auth during clone (fails if repo is not cloned through http)
+    // BASIC_AUTH uses HTTP basic auth during clone (fails if repo is not cloned
+    // through http)
     AUTH_METHOD_BASIC_AUTH = 1;
 
-    // BASIC_AUTH_OTS uses HTTP basic auth during the clone with the secrets coming from the OTS URL.
-    // Fails if either the OTS download or the clone fail.
+    // BASIC_AUTH_OTS uses HTTP basic auth during the clone with the secrets
+    // coming from the OTS URL. Fails if either the OTS download or the clone
+    // fail.
     AUTH_METHOD_BASIC_AUTH_OTS = 2;
   }
 
@@ -620,7 +672,8 @@ message GitInitializer {
   // the value for the clone target mode - use depends on the target mode
   string clone_target = 4;
 
-  // a path relative to the workspace root in which the code will be checked out to
+  // a path relative to the workspace root in which the code will be checked out
+  // to
   string checkout_location = 5;
 
   // config specifies the Git configuration for this workspace
@@ -641,21 +694,25 @@ message PrebuildInitializer {
 message FileDownloadInitializer {
   message FileInfo {
     string url = 1;
-    // file_path is relative to the target_location, e.g. if target_location is in `/workspace/myrepo`
-    // a file_path of `foobar/file` would produce a file in `/workspace/myrepo/foobar/file`.
-    // file_path must include the filename. The FileDownloadInitializer will create any parent directories
-    // necessary to place the file.
+    // file_path is relative to the target_location, e.g. if target_location is
+    // in `/workspace/myrepo` a file_path of `foobar/file` would produce a file
+    // in `/workspace/myrepo/foobar/file`. file_path must include the filename.
+    // The FileDownloadInitializer will create any parent directories necessary
+    // to place the file.
     string file_path = 2;
-    // digest is a hash of the file content in the OCI digest format (see https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests).
+    // digest is a hash of the file content in the OCI digest format (see
+    // https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests).
     // This information is used to compute subsequent
-    // content versions, and to validate the file content was downloaded correctly.
+    // content versions, and to validate the file content was downloaded
+    // correctly.
     string digest = 3;
   }
   repeated FileInfo files = 1;
   string target_location = 2;
 }
 
-// GitStatus describes the current Git working copy status, akin to a combination of "git status" and "git branch"
+// GitStatus describes the current Git working copy status, akin to a
+// combination of "git status" and "git branch"
 message GitStatus {
   // branch is branch we're currently on
   string branch = 1;
@@ -669,13 +726,15 @@ message GitStatus {
   // the total number of uncommited files
   int64 total_uncommited_files = 6;
 
-  // untracked_files is the number of untracked files in the workspace, possibly truncated
+  // untracked_files is the number of untracked files in the workspace, possibly
+  // truncated
   repeated string untracked_files = 4;
 
   // the total number of untracked files
   int64 total_untracked_files = 7;
 
-  // unpushed_commits is the number of unpushed changes in the workspace, possibly truncated
+  // unpushed_commits is the number of unpushed changes in the workspace,
+  // possibly truncated
   repeated string unpushed_commits = 5;
 
   // the total number of unpushed changes
@@ -691,14 +750,16 @@ message UpdateWorkspaceRequest {
     optional bool pinned = 2;
   }
   message UpdateTimeout {
-    // inacitivity is the maximum time of inactivity before the workspace is stopped or paused
+    // inacitivity is the maximum time of inactivity before the workspace is
+    // stopped or paused
     optional google.protobuf.Duration inactivity = 1;
-    // inacitivity is the maximum time of disconnection before the workspace is stopped or paused
+    // inacitivity is the maximum time of disconnection before the workspace is
+    // stopped or paused
     optional google.protobuf.Duration disconnected = 2;
   }
   message UpdateWorkspaceSpec {
-    // Note(cw): Ports cannot be updated here in favour of UpdateWorkspacePorts call which exists so that
-    // we can update individual ports.
+    // Note(cw): Ports cannot be updated here in favour of UpdateWorkspacePorts
+    // call which exists so that we can update individual ports.
 
     // timeout configures the workspace timeout
     optional UpdateTimeout timeout = 1;
@@ -706,7 +767,8 @@ message UpdateWorkspaceRequest {
     // admission controlls who can access the workspace and its ports.
     optional AdmissionLevel admission = 2;
 
-    // Note(cw): repeated fields have implicit presence. There's a difference between passing an empty list or nothing.
+    // Note(cw): repeated fields have implicit presence. There's a difference
+    // between passing an empty list or nothing.
     repeated string ssh_public_keys = 3;
   }
 
@@ -715,13 +777,16 @@ message UpdateWorkspaceRequest {
   // +required
   string workspace_id = 1;
 
-  // metadata is data associated with this workspace that's required for other parts of Gitpod to function
+  // metadata is data associated with this workspace that's required for other
+  // parts of Gitpod to function
   optional UpdateWorkspaceMetadata metadata = 2;
 
-  // spec is the configuration of the workspace that's required for the ws-manager to start the workspace
+  // spec is the configuration of the workspace that's required for the
+  // ws-manager to start the workspace
   optional UpdateWorkspaceSpec spec = 3;
 
-  // git_status updates the git status of the workspace - this is only here during the migration
+  // git_status updates the git status of the workspace - this is only here
+  // during the migration
   optional WorkspaceGitStatus git_status = 4 [deprecated = true];
 }
 
@@ -812,4 +877,16 @@ message WorkspaceSnapshot {
   string workspace_id = 2;
 
   google.protobuf.Timestamp creation_time = 3;
+}
+
+message WorkspaceSession {
+  string id = 1;
+
+  Workspace workspace = 2;
+
+  google.protobuf.Timestamp creation_time = 3;
+  google.protobuf.Timestamp deployed_time = 4;
+  google.protobuf.Timestamp started_time = 5;
+  google.protobuf.Timestamp stopping_time = 6;
+  google.protobuf.Timestamp stopped_time = 7;
 }

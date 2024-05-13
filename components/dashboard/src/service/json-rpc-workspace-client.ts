@@ -46,6 +46,8 @@ import {
     UpdateWorkspacePortRequest,
     UpdateWorkspacePortResponse,
     WorkspacePort_Protocol,
+    ListWorkspaceSessionsRequest,
+    ListWorkspaceSessionsResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { converter } from "./public-api";
 import { getGitpodService } from "./service";
@@ -57,6 +59,13 @@ import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceService> {
+    async listWorkspaceSessions(
+        request: PartialMessage<ListWorkspaceSessionsRequest>,
+        options?: CallOptions | undefined,
+    ): Promise<ListWorkspaceSessionsResponse> {
+        throw new Error("not implemented");
+    }
+
     async getWorkspace(request: PartialMessage<GetWorkspaceRequest>): Promise<GetWorkspaceResponse> {
         if (!request.workspaceId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");

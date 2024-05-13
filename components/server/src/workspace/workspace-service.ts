@@ -27,6 +27,7 @@ import {
     WorkspaceInstance,
     WorkspaceInstancePort,
     WorkspaceInstanceRepoStatus,
+    WorkspaceSession,
     WorkspaceSoftDeletion,
     WorkspaceTimeoutDuration,
 } from "@gitpod/gitpod-protocol";
@@ -220,6 +221,31 @@ export class WorkspaceService {
             )
         ).filter((info) => !!info) as WorkspaceInfo[];
         return filtered;
+    }
+
+    async listWorkspaceSessions(
+        userId: string,
+        organizationId: string,
+        from: Date,
+        to: Date,
+        limit: number,
+        offset: number,
+    ): Promise<WorkspaceSession[]> {
+        await this.auth.checkPermissionOnOrganization(userId, "read_sessions", organizationId);
+
+        // check from is before to
+        if (from >= to) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "from must be before to");
+        }
+        // check limit is positive
+        if (limit < 0) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "limit must be positive");
+        }
+        if (limit > 1000) {
+            log.info("listWorkspaceSessions limit was set too high. Using 1000 instead", { limit, organizationId });
+        }
+
+        return this.db.findSessionsInPeriod(organizationId, from, to, Math.min(limit, 1000), offset);
     }
 
     /**

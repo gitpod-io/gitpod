@@ -37,10 +37,13 @@ type WorkspaceServiceClient interface {
 	WatchWorkspaceStatus(ctx context.Context, in *WatchWorkspaceStatusRequest, opts ...grpc.CallOption) (WorkspaceService_WatchWorkspaceStatusClient, error)
 	// ListWorkspaces returns a list of workspaces that match the query.
 	ListWorkspaces(ctx context.Context, in *ListWorkspacesRequest, opts ...grpc.CallOption) (*ListWorkspacesResponse, error)
+	// ListWorkspaceSessions returns a list of workspace sessions that match the
+	ListWorkspaceSessions(ctx context.Context, in *ListWorkspaceSessionsRequest, opts ...grpc.CallOption) (*ListWorkspaceSessionsResponse, error)
 	// CreateAndStartWorkspace creates a new workspace and starts it.
 	CreateAndStartWorkspace(ctx context.Context, in *CreateAndStartWorkspaceRequest, opts ...grpc.CallOption) (*CreateAndStartWorkspaceResponse, error)
 	// StartWorkspace starts an existing workspace.
-	// If the specified workspace is not in stopped phase, this will return the workspace as is.
+	// If the specified workspace is not in stopped phase, this will return the
+	// workspace as is.
 	StartWorkspace(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (*StartWorkspaceResponse, error)
 	// UpdateWorkspace updates the workspace.
 	UpdateWorkspace(ctx context.Context, in *UpdateWorkspaceRequest, opts ...grpc.CallOption) (*UpdateWorkspaceResponse, error)
@@ -52,8 +55,8 @@ type WorkspaceServiceClient interface {
 	DeleteWorkspace(ctx context.Context, in *DeleteWorkspaceRequest, opts ...grpc.CallOption) (*DeleteWorkspaceResponse, error)
 	// ListWorkspaceClasses enumerates all available workspace classes.
 	ListWorkspaceClasses(ctx context.Context, in *ListWorkspaceClassesRequest, opts ...grpc.CallOption) (*ListWorkspaceClassesResponse, error)
-	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
-	// Not implemented yet.
+	// ParseContextURL parses a context URL and returns the workspace metadata and
+	// spec. Not implemented yet.
 	ParseContextURL(ctx context.Context, in *ParseContextURLRequest, opts ...grpc.CallOption) (*ParseContextURLResponse, error)
 	// GetWorkspaceDefaultImage returns the default workspace image of specified
 	// workspace.
@@ -126,6 +129,15 @@ func (x *workspaceServiceWatchWorkspaceStatusClient) Recv() (*WatchWorkspaceStat
 func (c *workspaceServiceClient) ListWorkspaces(ctx context.Context, in *ListWorkspacesRequest, opts ...grpc.CallOption) (*ListWorkspacesResponse, error) {
 	out := new(ListWorkspacesResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/ListWorkspaces", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspaceServiceClient) ListWorkspaceSessions(ctx context.Context, in *ListWorkspaceSessionsRequest, opts ...grpc.CallOption) (*ListWorkspaceSessionsResponse, error) {
+	out := new(ListWorkspaceSessionsResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/ListWorkspaceSessions", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -273,10 +285,13 @@ type WorkspaceServiceServer interface {
 	WatchWorkspaceStatus(*WatchWorkspaceStatusRequest, WorkspaceService_WatchWorkspaceStatusServer) error
 	// ListWorkspaces returns a list of workspaces that match the query.
 	ListWorkspaces(context.Context, *ListWorkspacesRequest) (*ListWorkspacesResponse, error)
+	// ListWorkspaceSessions returns a list of workspace sessions that match the
+	ListWorkspaceSessions(context.Context, *ListWorkspaceSessionsRequest) (*ListWorkspaceSessionsResponse, error)
 	// CreateAndStartWorkspace creates a new workspace and starts it.
 	CreateAndStartWorkspace(context.Context, *CreateAndStartWorkspaceRequest) (*CreateAndStartWorkspaceResponse, error)
 	// StartWorkspace starts an existing workspace.
-	// If the specified workspace is not in stopped phase, this will return the workspace as is.
+	// If the specified workspace is not in stopped phase, this will return the
+	// workspace as is.
 	StartWorkspace(context.Context, *StartWorkspaceRequest) (*StartWorkspaceResponse, error)
 	// UpdateWorkspace updates the workspace.
 	UpdateWorkspace(context.Context, *UpdateWorkspaceRequest) (*UpdateWorkspaceResponse, error)
@@ -288,8 +303,8 @@ type WorkspaceServiceServer interface {
 	DeleteWorkspace(context.Context, *DeleteWorkspaceRequest) (*DeleteWorkspaceResponse, error)
 	// ListWorkspaceClasses enumerates all available workspace classes.
 	ListWorkspaceClasses(context.Context, *ListWorkspaceClassesRequest) (*ListWorkspaceClassesResponse, error)
-	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
-	// Not implemented yet.
+	// ParseContextURL parses a context URL and returns the workspace metadata and
+	// spec. Not implemented yet.
 	ParseContextURL(context.Context, *ParseContextURLRequest) (*ParseContextURLResponse, error)
 	// GetWorkspaceDefaultImage returns the default workspace image of specified
 	// workspace.
@@ -323,6 +338,9 @@ func (UnimplementedWorkspaceServiceServer) WatchWorkspaceStatus(*WatchWorkspaceS
 }
 func (UnimplementedWorkspaceServiceServer) ListWorkspaces(context.Context, *ListWorkspacesRequest) (*ListWorkspacesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListWorkspaces not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) ListWorkspaceSessions(context.Context, *ListWorkspaceSessionsRequest) (*ListWorkspaceSessionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListWorkspaceSessions not implemented")
 }
 func (UnimplementedWorkspaceServiceServer) CreateAndStartWorkspace(context.Context, *CreateAndStartWorkspaceRequest) (*CreateAndStartWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateAndStartWorkspace not implemented")
@@ -432,6 +450,24 @@ func _WorkspaceService_ListWorkspaces_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspaceServiceServer).ListWorkspaces(ctx, req.(*ListWorkspacesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspaceService_ListWorkspaceSessions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListWorkspaceSessionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).ListWorkspaceSessions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/ListWorkspaceSessions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).ListWorkspaceSessions(ctx, req.(*ListWorkspaceSessionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -702,6 +738,10 @@ var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListWorkspaces",
 			Handler:    _WorkspaceService_ListWorkspaces_Handler,
+		},
+		{
+			MethodName: "ListWorkspaceSessions",
+			Handler:    _WorkspaceService_ListWorkspaceSessions_Handler,
 		},
 		{
 			MethodName: "CreateAndStartWorkspace",

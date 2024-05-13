@@ -104,6 +104,12 @@ describe("PublicAPIConverter", () => {
             });
         });
 
+        it("toWorkspaceSession", async () => {
+            await startFixtureTest("../fixtures/toWorkspaceSession_*.json", async (input) =>
+                converter.toWorkspaceSession(input),
+            );
+        });
+
         it("toConfiguration", async () => {
             await startFixtureTest("../fixtures/toConfiguration_*.json", async (input) =>
                 converter.toConfiguration(input),

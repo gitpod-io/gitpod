@@ -52,6 +52,7 @@
                 "email": ""
             },
             "timeout": {
+                "inactivity": "1800s",
                 "disconnected": "1800s"
             },
             "admission": "ADMISSION_LEVEL_EVERYONE",

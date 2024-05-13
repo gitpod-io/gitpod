@@ -41,6 +41,7 @@
                 "email": ""
             },
             "timeout": {
+                "inactivity": "3722s",
                 "disconnected": "3722s"
             },
             "admission": "ADMISSION_LEVEL_EVERYONE",
