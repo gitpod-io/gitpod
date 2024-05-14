@@ -415,7 +415,7 @@ func Run(options ...RunOption) {
 	)
 	go func() {
 		<-cstate.ContentReady()
-		shouldWait, duration := waitSupervisorIDENotReadyShutdownDurationValue(ctx, exps, host)
+		shouldWait, duration := waitForIDENotReadyShutdownDuration(ctx, exps, host)
 		if !shouldWait {
 			return
 		}
@@ -526,7 +526,7 @@ func Run(options ...RunOption) {
 	wg.Wait()
 }
 
-func waitSupervisorIDENotReadyShutdownDurationValue(ctx context.Context, exps experiments.Client, gitpodHost string) (bool, time.Duration) {
+func waitForIDENotReadyShutdownDuration(ctx context.Context, exps experiments.Client, gitpodHost string) (bool, time.Duration) {
 	if exps == nil {
 		return false, time.Hour
 	}
