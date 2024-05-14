@@ -20,6 +20,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/process"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/shared"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 	"github.com/prometheus/procfs"
 	reaper "github.com/ramr/go-reaper"
@@ -83,7 +84,11 @@ var initCmd = &cobra.Command{
 			if err != nil && !(strings.Contains(err.Error(), "signal: ") || strings.Contains(err.Error(), "no child processes")) {
 				if eerr, ok := err.(*exec.ExitError); ok && eerr.ExitCode() != 0 {
 					logs := extractFailureFromRun()
-					log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
+					if shared.IsExpectedShutdown(eerr.ExitCode()) {
+						log.Fatal(logs)
+					} else {
+						log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
+					}
 				}
 				log.WithError(err).Error("supervisor run error")
 				return
