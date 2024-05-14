@@ -24,13 +24,7 @@ var Objects = common.CompositeRenderFunc(
 			ServicePort:   ServicePort,
 		},
 	}, func(svc *corev1.Service) {
-		svc.Spec.Type = corev1.ServiceTypeNodePort
-		svc.Spec.ExternalTrafficPolicy = corev1.ServiceExternalTrafficPolicyTypeLocal
-
-		clusterInternalTrafficPolicy := corev1.ServiceInternalTrafficPolicyLocal
-		svc.Spec.InternalTrafficPolicy = &clusterInternalTrafficPolicy
-
-		svc.Spec.Ports[0].NodePort = common.RegistryFacadeServicePort
+		svc.Spec.Type = corev1.ServiceTypeClusterIP
 	}),
 	common.DefaultServiceAccount(Component),
 )
