@@ -21,7 +21,7 @@ async function updateCodeBrowserVersions() {
         codeHelper: latestInstaller.components.workspace.codeHelperImage.version,
     };
 
-    console.log("comparing with latest installer versions", latestInstaller.version, latestBuildImage);
+    console.error("comparing with latest installer versions", latestInstaller.version, latestBuildImage);
 
     const firstPinnedInfo = ideConfigmapJson.ideOptions.options.code.versions[0];
     const hasChangedMap = {
@@ -33,10 +33,10 @@ async function updateCodeBrowserVersions() {
 
     const hasChanged = Object.values(hasChangedMap).some((v) => v);
     if (!hasChanged) {
-        console.log("stable version is already up-to-date.");
+        console.error("stable version is already up-to-date.");
         return;
     }
-    console.log("latest build versions changed, processing...", hasChangedMap);
+    console.error("latest build versions changed, processing...", hasChangedMap);
 
     const replaceImageHash = (image: string, hash: string) => image.replace(/commit-.*/, hash);
     const updateImages = <T extends { image: string; imageLayers: string[] }>(originData: T) => {
@@ -50,7 +50,7 @@ async function updateCodeBrowserVersions() {
     const newJson = structuredClone(ideConfigmapJsonObj);
     newJson.ideOptions.options.code = updateImages(newJson.ideOptions.options.code);
 
-    console.log("updating related pinned version");
+    console.error("updating related pinned version", firstPinnedInfo.version, workspaceYaml.defaultArgs.codeVersion);
     const hasPinned = firstPinnedInfo.version === workspaceYaml.defaultArgs.codeVersion;
     if (!hasPinned) {
         newJson.ideOptions.options.code.versions.unshift({
@@ -60,8 +60,13 @@ async function updateCodeBrowserVersions() {
     }
     newJson.ideOptions.options.code.versions[0] = updateImages(newJson.ideOptions.options.code.versions[0]);
 
-    console.log("updating ide-configmap.json");
+    console.error("updating ide-configmap.json");
     await Bun.write(pathToConfigmap, JSON.stringify(newJson, null, 2) + "\n");
+
+    if (hasChangedMap.pinned) {
+        console.error("new version released", workspaceYaml.defaultArgs.codeVersion);
+        console.log("codeVersion=" + workspaceYaml.defaultArgs.codeVersion);
+    }
 }
 
 await updateCodeBrowserVersions();
