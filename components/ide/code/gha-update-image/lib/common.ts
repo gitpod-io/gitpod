@@ -16,6 +16,8 @@ export const pathToConfigmap = path.resolve(
     "install/installer/pkg/components/ide-service/ide-configmap.json",
 );
 
+export const rawWorkspaceYaml = await Bun.file(pathToWorkspaceYaml).text()
+export const workspaceYamlObj = yaml.parse(rawWorkspaceYaml);
 export const workspaceYaml = z
     .object({
         defaultArgs: z.object({
@@ -33,7 +35,7 @@ export const workspaceYaml = z
             clionDownloadUrl: z.string(),
         }),
     })
-    .parse(yaml.parse(await Bun.file(pathToWorkspaceYaml).text()));
+    .parse(workspaceYamlObj);
 
 export const ideConfigmapJsonObj = JSON.parse(await Bun.file(pathToConfigmap).text());
 export const ideConfigmapJson = z

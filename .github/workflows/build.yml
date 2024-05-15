@@ -469,7 +469,7 @@ jobs:
       - build-gitpod
       - create-runner
     if: needs.configuration.outputs.is_main_branch == 'true'
-    uses: ./.github/workflows/ide-code-updates.yml
+    uses: ./.github/workflows/code-updates.yml
     secrets: inherit
 
   delete-runner:

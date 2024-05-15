@@ -29,35 +29,20 @@ jobs:
                 fi
             - name: Create Release Pull Request
               if: ${{steps.changes.outputs.dirty && steps.update-output.ouput.codeVersion}}
+              id: code-update-pr
               uses: peter-evans/create-pull-request@v6
               with:
-                title: ${{"[VS Code Browser] Update stable code to `" + steps.update-output.ouput.codeVersion + "`"}}
+                title: "[VS Code Browser] Update stable code to `${{steps.update-output.ouput.codeVersion}}`"
                 body: |
                   ## Description
                   Update code to `${{steps.update-output.ouput.codeVersion}}`
 
                   ## How to test
 
-                  - Switch to VS Code Browser Insiders in settings.
-                  - Start a workspace.
-                  - Test the following:
-                    - [ ] terminals are preserved and resized properly between window reloads
-                    - [ ] WebViews are working
-                    - [ ] extension host process: check language smartness and debugging
-                    - [ ] extension management (installing/uninstalling)
-                    - [ ] install the [VIM extension](https://open-vsx.org/extension/vscodevim/vim) to test web extensions
-                    - that user data is synced across workspaces as well as on workspace restarts, especially for extensions
-                      - [ ] extensions from `.gitpod.yml` are not installed as sync
-                      - [ ] extensions installed as sync are actually synced to all new workspaces
-                    - [ ] settings should not contain any mentions of MS telemetry
-                    - [ ] WebSockets and workers are properly proxied
-                      - [ ] diff editor should be operable
-                      - [ ] trigger reconnection with `window.WebSocket.disconnectWorkspace()`, check that old WebSockets are closed and new opened of the same amount
-                    - [ ] workspace specific commands should work, i.e. <kbd>F1</kbd> → type <kbd>Gitpod</kbd>
-                    - [ ] that a PR view is preloaded when opening a PR URL
-                    - [ ] test `gp open` and `gp preview`
-                    - [ ] test open in VS Code Desktop, check `gp open` and `gp preview` in task/user terminals
-                    - [ ] telemetry data like `vscode_extension_gallery` is collected in [Segment](https://app.segment.com/gitpod/sources/staging_trusted/debugger)
+                  Should be tested already in build PR, double check:
+
+                  - [ ] Version is pinnable
+                  - [ ] Stable version is updated and it can start workspace with it
 
                   ### Preview status
                   gitpod:summary
@@ -67,7 +52,7 @@ jobs:
                   - [x] /werft with-preview
                   - [x] /werft analytics=segment
                   - [x] /werft with-large-vm
-                commit-message: ${{"[VS Code Browser] Update stable code to `" + steps.update-output.ouput.codeVersion + "`"}}
+                commit-message: "[VS Code Browser] Update stable code to `${{steps.update-output.ouput.codeVersion}}`"
                 branch: "ide/code-stable"
                 labels: "team: IDE,editor: code (browser)"
                 token: ${{ secrets.ROBOQUAT_REPO_PAT }}
@@ -80,7 +65,7 @@ jobs:
               if: ${{steps.changes.outputs.dirty && !steps.update-output.ouput.codeVersion}}
               uses: peter-evans/create-pull-request@v6
               with:
-                  title: "[VS Code Browser] Update stable code images"
+                  title: "[code] update code image layers"
                   body: |
                       ## Description
                       This PR updates the VS Code Browser image layers to the most recent intaller version.
@@ -102,7 +87,7 @@ jobs:
                       - [x] /werft with-preview
                       - [x] /werft analytics=segment
 
-                  commit-message: "[VS Code Browser] Update stable code images"
+                  commit-message: "[code] update code image layers"
                   branch: "ide/code-stable"
                   labels: "team: IDE,editor: code (browser)"
                   token: ${{ secrets.ROBOQUAT_REPO_PAT }}
@@ -110,14 +95,12 @@ jobs:
                   author: Robo Quat <roboquat@gitpod.io>
                   team-reviewers: |
                     team-experience
-            - name: Get previous job's status
-              id: lastrun
-              uses: filiptronicek/get-last-job-status@main
-            - name: Slack Notification
-              if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
+            - name: Slack notification (code)
+              if: ${{ steps.code-update-pr.pull-request-url }}
               uses: rtCamp/action-slack-notify@v2
               env:
                   SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
-                  SLACK_TITLE: ${{ inputs.productName }}
+                  SLACK_TITLE: "VS Code Browser release `${{ steps.update-output.ouput.codeVersion }}`"
+                  SLACK_MESSAGE: "PR is created ${{ steps.code-update-pr.pull-request-url }}"
                   SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"

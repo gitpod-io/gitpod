@@ -1,0 +1,91 @@
+name: VS Code Browser build
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        required: true
+        description: "The commit of gitpod-io/openvscode-server release branch like gp-code/release/1.89"
+
+jobs:
+    update:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Install dependencies
+              run: |
+                cd ./components/ide/code/gha-update-image/
+                yarn
+                npm i -g bun
+            - name: Check for updates
+              run: |
+                cd ./components/ide/code/gha-update-image/
+                bun run check-code-build.ts
+
+            - name: Detect file changes
+              id: changes
+              run: |
+                if [ $(git status --porcelain | wc -l) -gt 0 ]; then
+                  echo "dirty=true" >> $GITHUB_OUTPUT
+                else
+                  echo "dirty=false" >> $GITHUB_OUTPUT
+                fi
+            - name: Create Release Pull Request
+              if: steps.changes.outputs.dirty
+              uses: peter-evans/create-pull-request@v6
+              with:
+                title: ${{"[VS Code Browser] Build stable code `" + steps.update-output.ouput.codeVersion + "`"}}
+                body: |
+                  ## Description
+
+                  Build code version `${{steps.update-output.ouput.codeVersion}}`
+
+                  ## How to test
+
+                  - Switch to VS Code Browser Insiders in settings.
+                  - Start a workspace.
+                  - Test the following:
+                    - [ ] terminals are preserved and resized properly between window reloads
+                    - [ ] WebViews are working
+                    - [ ] extension host process: check language smartness and debugging
+                    - [ ] extension management (installing/uninstalling)
+                    - [ ] install the [VIM extension](https://open-vsx.org/extension/vscodevim/vim) to test web extensions
+                    - that user data is synced across workspaces as well as on workspace restarts, especially for extensions
+                      - [ ] extensions from `.gitpod.yml` are not installed as sync
+                      - [ ] extensions installed as sync are actually synced to all new workspaces
+                    - [ ] settings should not contain any mentions of MS telemetry
+                    - [ ] WebSockets and workers are properly proxied
+                      - [ ] diff editor should be operable
+                      - [ ] trigger reconnection with `window.WebSocket.disconnectWorkspace()`, check that old WebSockets are closed and new opened of the same amount
+                    - [ ] workspace specific commands should work, i.e. <kbd>F1</kbd> → type <kbd>Gitpod</kbd>
+                    - [ ] that a PR view is preloaded when opening a PR URL
+                    - [ ] test `gp open` and `gp preview`
+                    - [ ] test open in VS Code Desktop, check `gp open` and `gp preview` in task/user terminals
+                    - [ ] telemetry data like `vscode_extension_gallery` is collected in [Segment](https://app.segment.com/gitpod/sources/staging_trusted/debugger)
+
+                  ### Preview status
+                  gitpod:summary
+
+                  ## Werft options:
+
+                  - [x] /werft with-preview
+                  - [x] /werft analytics=segment
+                  - [x] /werft with-large-vm
+                commit-message: ${{"[VS Code Browser] Build stable code `" + steps.update-output.ouput.codeVersion + "`"}}
+                branch: "ide/code-stable"
+                labels: "team: IDE,editor: code (browser)"
+                token: ${{ secrets.ROBOQUAT_REPO_PAT }}
+                committer: Robo Quat <roboquat@gitpod.io>
+                author: Robo Quat <roboquat@gitpod.io>
+                team-reviewers: |
+                  team-experience
+            - name: Get previous job's status
+              id: lastrun
+              uses: filiptronicek/get-last-job-status@main
+            - name: Slack Notification
+              if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
+                  SLACK_COLOR: ${{ job.status }}
+                  SLACK_TITLE: "VS Code Browser Build"
+                  SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
