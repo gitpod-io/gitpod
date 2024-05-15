@@ -2,7 +2,16 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-import { getLatestInstallerVersions, ideConfigmapJson, pathToConfigmap, workspaceYaml } from "./lib/common";
+import { $ } from "bun";
+import {
+    getLatestInstallerVersions,
+    ideConfigmapJson,
+    ideConfigmapJsonObj,
+    pathToConfigmap,
+    workspaceYaml,
+} from "./lib/common";
+
+$.nothrow();
 
 async function updateCodeBrowserVersions() {
     const latestInstaller = await getLatestInstallerVersions();
@@ -15,19 +24,19 @@ async function updateCodeBrowserVersions() {
     console.log("comparing with latest installer versions", latestInstaller.version, latestBuildImage);
 
     const firstPinnedInfo = ideConfigmapJson.ideOptions.options.code.versions[0];
-    const changeInfo = {
-        image: ideConfigmapJson.ideOptions.options.code.image.includes(latestBuildImage.code),
-        webExtension: ideConfigmapJson.ideOptions.options.code.imageLayers[0].includes(latestBuildImage.webExtension),
-        codeHelper: ideConfigmapJson.ideOptions.options.code.imageLayers[1].includes(latestBuildImage.codeHelper),
+    const hasChangedMap = {
+        image: !ideConfigmapJson.ideOptions.options.code.image.includes(latestBuildImage.code),
+        webExtension: !ideConfigmapJson.ideOptions.options.code.imageLayers[0].includes(latestBuildImage.webExtension),
+        codeHelper: !ideConfigmapJson.ideOptions.options.code.imageLayers[1].includes(latestBuildImage.codeHelper),
         pinned: firstPinnedInfo.version !== workspaceYaml.defaultArgs.codeVersion,
     };
 
-    const hasChanged = Object.values(changeInfo).some((v) => v);
+    const hasChanged = Object.values(hasChangedMap).some((v) => v);
     if (!hasChanged) {
         console.log("stable version is already up-to-date.");
         return;
     }
-    console.log("latest build versions changed, processing...", changeInfo);
+    console.log("latest build versions changed, processing...", hasChangedMap);
 
     const replaceImageHash = (image: string, hash: string) => image.replace(/commit-.*/, hash);
     const updateImages = <T extends { image: string; imageLayers: string[] }>(originData: T) => {
@@ -38,7 +47,7 @@ async function updateCodeBrowserVersions() {
         return data;
     };
 
-    const newJson = structuredClone(ideConfigmapJson);
+    const newJson = structuredClone(ideConfigmapJsonObj);
     newJson.ideOptions.options.code = updateImages(newJson.ideOptions.options.code);
 
     console.log("updating related pinned version");

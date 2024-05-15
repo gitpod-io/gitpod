@@ -35,6 +35,7 @@ export const workspaceYaml = z
     })
     .parse(yaml.parse(await Bun.file(pathToWorkspaceYaml).text()));
 
+export const ideConfigmapJsonObj = JSON.parse(await Bun.file(pathToConfigmap).text());
 export const ideConfigmapJson = z
     .object({
         supervisorImage: z.string(),
@@ -54,12 +55,12 @@ export const ideConfigmapJson = z
             }),
         }),
     })
-    .parse(JSON.parse(await Bun.file(pathToConfigmap).text()));
+    .parse(ideConfigmapJsonObj);
 
 export const getLatestInstallerVersions = async (version?: string) => {
     const v = version ? version : "main-gha.";
     const tagInfo =
-        await $`git ls-remote --tags --sort=-v:refname https://github.com/gitpod-io/gitpod | grep '${v}' | head -n1`
+        await $`git ls-remote --tags --sort=-v:refname https://github.com/gitpod-io/gitpod | grep ${v} | head -n1`
             .text()
             .catch((e) => {
                 throw new Error("Failed to fetch the latest main-gha. git tag", e);
