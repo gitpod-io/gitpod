@@ -68,7 +68,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		JetBrainsPluginLatestImage:     ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage.Version),
 		JetBrainsLauncherImage:         ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsLauncherImage.Version),
 		JetBrainsPluginImagePrevious:   ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-e7eb44545510a8293c5c6aa814a0ad4e81852e5f"),
-		JetBrainsLauncherImagePrevious: ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, "commit-b6bd8411cbb5682eb18ef60a3b9fa8cdbb2b64d9"),
+		JetBrainsLauncherImagePrevious: ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, "commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"),
 
 		WorkspaceVersions: ctx.VersionManifest.Components,
 	}

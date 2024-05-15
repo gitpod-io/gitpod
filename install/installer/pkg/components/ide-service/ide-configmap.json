@@ -121,7 +121,7 @@
             "image": "{{.Repository}}/ide/intellij:commit-2c2d3cc34e65af282c0af29f66ce255a90a69069",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -129,7 +129,7 @@
             "image": "{{.Repository}}/ide/intellij:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -137,7 +137,7 @@
             "image": "{{.Repository}}/ide/intellij:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
-              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           }
         ]
@@ -177,7 +177,7 @@
             "image": "{{.Repository}}/ide/goland:commit-2c2d3cc34e65af282c0af29f66ce255a90a69069",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -185,7 +185,7 @@
             "image": "{{.Repository}}/ide/goland:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -193,7 +193,7 @@
             "image": "{{.Repository}}/ide/goland:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
-              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           }
         ]
@@ -222,7 +222,7 @@
             "image": "{{.Repository}}/ide/pycharm:commit-2c2d3cc34e65af282c0af29f66ce255a90a69069",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -230,7 +230,7 @@
             "image": "{{.Repository}}/ide/pycharm:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -238,7 +238,7 @@
             "image": "{{.Repository}}/ide/pycharm:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
-              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           }
         ]
@@ -266,7 +266,7 @@
             "image": "{{.Repository}}/ide/phpstorm:commit-9382d33ee521e6a72d763f906b24dd53893103df",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -274,7 +274,7 @@
             "image": "{{.Repository}}/ide/phpstorm:commit-ef400309563b040b84d9588862805ce2f26d688a",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
-              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -282,7 +282,7 @@
             "image": "{{.Repository}}/ide/phpstorm:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
-              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           }
         ]
@@ -310,7 +310,7 @@
             "image": "{{.Repository}}/ide/rubymine:commit-9382d33ee521e6a72d763f906b24dd53893103df",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -318,7 +318,7 @@
             "image": "{{.Repository}}/ide/rubymine:commit-ef400309563b040b84d9588862805ce2f26d688a",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
-              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -326,7 +326,7 @@
             "image": "{{.Repository}}/ide/rubymine:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
-              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           }
         ]
@@ -354,7 +354,7 @@
             "image": "{{.Repository}}/ide/webstorm:commit-2c2d3cc34e65af282c0af29f66ce255a90a69069",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -362,7 +362,7 @@
             "image": "{{.Repository}}/ide/webstorm:commit-9382d33ee521e6a72d763f906b24dd53893103df",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -370,7 +370,7 @@
             "image": "{{.Repository}}/ide/webstorm:commit-ef400309563b040b84d9588862805ce2f26d688a",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
-              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -378,7 +378,7 @@
             "image": "{{.Repository}}/ide/webstorm:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-dc860e22fa7c07401c6dce62360589ff36e36bba",
-              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           }
         ]
@@ -406,7 +406,7 @@
             "image": "{{.Repository}}/ide/rider:commit-9382d33ee521e6a72d763f906b24dd53893103df",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -414,7 +414,7 @@
             "image": "{{.Repository}}/ide/rider:commit-ef400309563b040b84d9588862805ce2f26d688a",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
-              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           }
         ]
@@ -442,7 +442,7 @@
             "image": "{{.Repository}}/ide/clion:commit-9382d33ee521e6a72d763f906b24dd53893103df",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
-              "{{.Repository}}/ide/jb-launcher:commit-2e8e2d9d60156010db07711335f362299242c6a7"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           },
           {
@@ -450,7 +450,7 @@
             "image": "{{.Repository}}/ide/clion:commit-ef400309563b040b84d9588862805ce2f26d688a",
             "imageLayers": [
               "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
-              "{{.Repository}}/ide/jb-launcher:commit-614cc59b70f3ebfe26b3a31a32088da54af1c9db"
+              "{{.Repository}}/ide/jb-launcher:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"
             ]
           }
         ]

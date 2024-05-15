@@ -14,6 +14,7 @@ for (let ide in json.ideOptions.options) {
         json.ideOptions.options[ide].latestImage = replaceImage(json.ideOptions.options[ide].latestImage);
         json.ideOptions.options[ide].versions = json.ideOptions.options[ide].versions?.map((version) => {
             version.image = replaceImage(version.image);
+            version.imageLayers = version.imageLayers.map(replaceImage);
             return version;
         });
     }
