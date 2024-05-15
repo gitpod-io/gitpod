@@ -6,7 +6,7 @@ packages:
       - package.json
       - mocha.opts
     deps:
-      - :dbtest
+      #- :dbtest
       - components/gitpod-protocol:lib
     config:
       packaging: library
@@ -32,7 +32,7 @@ packages:
       - package.json
       - mocha.opts
     deps:
-      # - :dbtest-init
+      #- :dbtest-init
       - components/gitpod-protocol:lib
     config:
       packaging: library

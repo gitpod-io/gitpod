@@ -59,7 +59,7 @@ packages:
       - components/supervisor-api/typescript-grpcweb:lib
       - components/usage-api/typescript:lib
       - components/ide-service-api/typescript:lib
-      - :dbtest
+      #- :dbtest
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock

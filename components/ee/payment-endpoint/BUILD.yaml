@@ -24,7 +24,7 @@ packages:
     deps:
       - components/gitpod-db:lib
       - components/gitpod-protocol:lib
-      - :dbtest
+      #- :dbtest
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/../yarn.lock
