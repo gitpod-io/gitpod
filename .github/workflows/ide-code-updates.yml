@@ -77,7 +77,7 @@ jobs:
                   team-experience
 
             - name: Create Images Update Pull Request
-              if: ${{steps.changes.outputs.dirty}}
+              if: ${{steps.changes.outputs.dirty && !steps.update-output.ouput.codeVersion}}
               uses: peter-evans/create-pull-request@v6
               with:
                   title: "[VS Code Browser] Update stable code images"
