@@ -1,10 +1,10 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
-# See License-AGPL.txt in the project root for license information.
+# See License.AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full:2022-11-09-13-54-49
+FROM gitpod/workspace-gitpod-dev:latest
 
-ENV TRIGGER_REBUILD 25
+ENV TRIGGER_REBUILD 41
 
 USER root
 
@@ -21,20 +21,8 @@ RUN mkdir -p /tmp/helm/ \
     && rm -rf /tmp/helm/ \
     && helm completion bash > /usr/share/bash-completion/completions/helm
 
-### kubernetes ###
-RUN mkdir -p /usr/local/kubernetes/ && \
-    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.24.1/kubernetes.tar.gz \
-    | tar -xzvC /usr/local/kubernetes/ --strip-components=1 \
-    && KUBERNETES_SKIP_CONFIRM=true /usr/local/kubernetes/cluster/get-kube-binaries.sh \
-    && chown gitpod:gitpod -R /usr/local/kubernetes
-
-ENV PATH=$PATH:/usr/local/kubernetes/cluster/:/usr/local/kubernetes/client/bin/
-
 ### kubectl ###
-RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
-    # really 'xenial'
-    && add-apt-repository -yu "deb https://apt.kubernetes.io/ kubernetes-xenial main" \
-    && install-packages kubectl=1.24.1-00 \
+RUN curl -fsSL -o /usr/bin/kubectl "https://dl.k8s.io/release/v1.28.9/bin/linux/amd64/kubectl" && chmod +x /usr/bin/kubectl \
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl
 
 RUN curl -fsSL -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
@@ -51,14 +39,19 @@ RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | sudo apt-key
 RUN install-packages mysql-client
 
 ### CertManager's cmctl
-RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/releases/download/v1.8.2/cmctl-linux-amd64.tar.gz | tar xzv --no-anchored cmctl
+RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cmctl-linux-amd64.tar.gz | tar xzv --no-anchored cmctl
 
 # gokart
 RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
 
 # leeway
+ARG LEEWAY_VERSION=0.8.2
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
-RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.5.2/leeway_0.5.2_Linux_x86_64.tar.gz | tar xz
+ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
+ENV LEEWAY_REMOTE_CACHE_BUCKET=leeway-cache-dev-3ac8ef5
+ENV LEEWAY_CACHE_DIR=/workspace/.leeway/cache
+ENV LEEWAY_BUILD_DIR=/workspace/.leeway/build
+RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v${LEEWAY_VERSION}/leeway_${LEEWAY_VERSION}_Linux_x86_64.tar.gz | tar xz
 
 # evans (gRPC client)
 RUN cd /usr/bin && curl -fsSL https://github.com/ktr0731/evans/releases/download/v0.10.6/evans_linux_amd64.tar.gz | tar xz evans
@@ -131,7 +124,7 @@ RUN install-packages netcat
 USER gitpod
 
 # Fix node version we develop against
-ARG GITPOD_NODE_VERSION=16.16.0
+ARG GITPOD_NODE_VERSION=18.20.2
 RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
     && npm install -g typescript yarn"
@@ -146,7 +139,7 @@ ARG GCS_DIR=/opt/google-cloud-sdk
 ENV PATH=$GCS_DIR/bin:$PATH
 RUN sudo chown gitpod: /opt \
     && mkdir $GCS_DIR \
-    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-400.0.0-linux-x86_64.tar.gz \
+    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-472.0.0-linux-x86_64.tar.gz \
     | tar -xzvC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
     --additional-components gke-gcloud-auth-plugin docker-credential-gcr alpha beta \
@@ -158,27 +151,17 @@ ENV USE_GKE_GCLOUD_AUTH_PLUGIN=True
 # Install tools for gsutil
 RUN sudo install-packages \
     gcc \
-    python-dev \
+    python3-pip \
     python-setuptools
 
 RUN sudo python3 -m pip uninstall crcmod; sudo python3 -m pip install --no-cache-dir -U crcmod
 
-### gitpod-core specific gcloud/kubectl config
+### gitpod-core specific gcloud config
 # Copy GCloud default config that points to gitpod-dev
 ARG GCLOUD_CONFIG_DIR=/home/gitpod/.config/gcloud
 COPY --chown=gitpod gcloud-default-config $GCLOUD_CONFIG_DIR/configurations/config_default
 
-# Set kubeconfig file for dev cluster, using GCloud Application Default Credentials (ADC) as auth provider
-ARG KUBE_CONFIG_PATH=/home/gitpod/.kube/config
-COPY --chown=gitpod kubeconfig.yaml $KUBE_CONFIG_PATH
-
-# Set Application Default Credentials (ADC) based on user-provided env var
-RUN echo ". /workspace/gitpod/scripts/setup-google-adc.sh" >> ~/.bashrc
-
-ENV DB_HOST=localhost
-
-ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
-ENV LEEWAY_REMOTE_CACHE_BUCKET=gitpod-core-leeway-cache-branch
+ENV DB_HOST=127.0.0.1
 
 # awscliv2
 # See also: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-version.html
@@ -189,7 +172,7 @@ RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.7.25.zip" -o
     && rm -f awscliv2.zip
 
 # Install Terraform
-ARG RELEASE_URL="https://releases.hashicorp.com/terraform/1.3.1/terraform_1.3.1_linux_amd64.zip"
+ARG RELEASE_URL="https://releases.hashicorp.com/terraform/1.8.1/terraform_1.8.1_linux_amd64.zip"
 RUN mkdir -p ~/.terraform \
     && cd ~/.terraform \
     && curl -fsSL -o terraform_linux_amd64.zip ${RELEASE_URL} \
@@ -212,8 +195,8 @@ RUN sudo install-packages shellcheck \
     && sudo python3 -m pip install pre-commit
 
 # gh (Github CLI) binary:
-RUN cd /usr/bin && curl -fsSL https://github.com/cli/cli/releases/download/v2.11.3/gh_2.11.3_linux_amd64.tar.gz \
-    | sudo tar xzv --strip-components=2 gh_2.11.3_linux_amd64/bin/gh
+RUN cd /usr/bin && curl -fsSL https://github.com/cli/cli/releases/download/v2.35.0/gh_2.35.0_linux_amd64.tar.gz \
+    | sudo tar xzv --strip-components=2 gh_2.35.0_linux_amd64/bin/gh
 
 # Install observability-related binaries
 ARG PROM_VERSION="2.36.0"
@@ -242,24 +225,45 @@ RUN curl -fsSLO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJS
     tar -tzf gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz | xargs rm -f && \
     rm -f gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz
 
-# Install Replicated and KOTS
-RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/$(curl -s https://api.github.com/repos/replicatedhq/replicated/releases/latest | jq -r '.name')/install.sh | sudo bash && \
-    curl https://kots.io/install | sudo bash && \
-    bash -c "echo . \<\(kubectl kots completion bash\) >> ~/.bashrc"
-
 # Install fish shell
 RUN sudo apt-add-repository -y ppa:fish-shell/release-3 && \
     sudo apt update && \
     sudo apt install -y fish
 
 # Install tmux + tmuxinator
-RUN brew install tmux tmuxinator
+RUN brew install tmux tmuxinator \
+    # Install redis-server
+    && brew install redis \
+    # Install zed & spicedb CLI
+    && brew install authzed/tap/zed \
+    && brew install authzed/tap/spicedb \
+    && brew cleanup
 
 # Copy our own tools
-ENV NEW_KUBECDL=1
+ENV NEW_KUBECDL=2
 COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/
 
 # Configure our tools' autocompletion
 RUN bash -c "echo . \<\(gpctl completion bash\) >> ~/.bashrc"
 
 ENV PATH=$PATH:/workspace/bin
+
+# Setting the environment variable here so that it will be accessible to all tasks and
+# terminal sessions in Gitpod workspaces.
+ENV PREVIEW_ENV_DEV_SA_KEY_PATH=/home/gitpod/.config/gcloud/preview-environment-dev-sa.json
+
+# So we can parse the report.html output by leeway, and remove the output produced by this image build
+# why? it's too verbose, exceeding the Github Actions summary limit
+RUN go install github.com/ericchiang/pup@v0.4.0
+
+# Install oci-tool
+RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.0/oci-tool_0.2.0_linux_amd64.tar.gz | sudo tar xz -C /usr/local/bin \
+    && sudo chmod +x /usr/local/bin/oci-tool
+
+# Install golangci-lint
+RUN go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+RUN sudo install-packages pigz
+
+# Install pre-commit hooks under /workspace during prebuilds
+ENV PRE_COMMIT_HOME=/workspace/.pre-commit
