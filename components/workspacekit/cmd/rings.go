@@ -52,11 +52,11 @@ const (
 	//
 	// This time must give ring1 enough time to shut down (see time budgets in supervisor.go),
 	// and to talk to ws-daemon within the terminationGracePeriod of the workspace pod.
-	ring1ShutdownTimeout = 20 * time.Second
+	ring1ShutdownTimeout = 20 * time.Minute
 
 	// ring2StartupTimeout is the maximum time we wait between starting ring2 and its
 	// attempt to connect to the parent socket.
-	ring2StartupTimeout = 5 * time.Second
+	ring2StartupTimeout = 5 * time.Minute
 )
 
 var ring0Cmd = &cobra.Command{

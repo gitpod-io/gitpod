@@ -277,6 +277,7 @@ export function stream<Response>(
     const abort = new AbortController();
     (async () => {
         while (!abort.signal.aborted) {
+            console.log(new Date(), "=================stream.started");
             try {
                 for await (const response of factory({
                     signal: abort.signal,
@@ -289,6 +290,7 @@ export function stream<Response>(
                 }
             } catch (e) {
                 if (abort.signal.aborted) {
+                    console.log(new Date(), "=================stream.aborted");
                     // client aborted, don't reconnect, early exit
                     return;
                 }
@@ -299,9 +301,11 @@ export function stream<Response>(
                         // (clean up when fixed, on server abort we should rather backoff with jitter)
                         e.code === ErrorCodes.CANCELLED)
                 ) {
+                    console.log(new Date(), "=================stream.hitErr", e.code);
                     // timeout is expected, reconnect with base backoff
                     backoff = BASE_BACKOFF;
                 } else {
+                    console.log(new Date(), "=================stream.err", e);
                     backoff = Math.min(2 * backoff, MAX_BACKOFF);
                     console.error(e);
                 }
@@ -312,5 +316,8 @@ export function stream<Response>(
         }
     })();
 
-    return Disposable.create(() => abort.abort());
+    return Disposable.create(() => {
+        console.log(new Date(), "=================stream.disposed");
+        abort.abort();
+    });
 }

@@ -516,6 +516,7 @@ func Run(options ...RunOption) {
 	stopGitStatus()
 	gitStatusWg.Wait()
 
+	time.Sleep(20 * time.Minute)
 	terminalShutdownCtx, cancelTermination := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
 	defer cancelTermination()
 	cancel()

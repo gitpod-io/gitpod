@@ -34,6 +34,7 @@ export function watchWorkspaceStatusInOrder(
     callbacks.sort((a, b) => b.priority - a.priority);
 
     if (!cachedDisposables.has(wsID)) {
+        console.log(new Date(), "=================watchWorkspaceStatusInOrder", workspaceId);
         const disposable = watchWorkspaceStatus(wsID, async (response) => {
             const list = cachedCallbackInfoMap.get(wsID);
             if (!list) {

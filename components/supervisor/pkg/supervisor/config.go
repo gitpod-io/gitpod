@@ -532,11 +532,11 @@ func (c WorkspaceConfig) getCommit() (commit *gitpod.Commit, err error) {
 }
 
 func (c WorkspaceConfig) GetTerminationGracePeriod() time.Duration {
-	defaultGracePeriod := 15 * time.Second
-	if c.TerminationGracePeriodSeconds == nil || *c.TerminationGracePeriodSeconds <= 0 {
-		return defaultGracePeriod
-	}
-	return time.Duration(*c.TerminationGracePeriodSeconds) * time.Second
+	defaultGracePeriod := 15 * time.Minute
+	// if c.TerminationGracePeriodSeconds == nil || *c.TerminationGracePeriodSeconds <= 0 {
+	return defaultGracePeriod
+	// }
+	// return time.Duration(*c.TerminationGracePeriodSeconds) * time.Second
 }
 
 // GetConfig loads the supervisor configuration.
