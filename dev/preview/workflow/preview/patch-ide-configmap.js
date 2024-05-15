@@ -20,8 +20,10 @@ for (let ide in json.ideOptions.options) {
     }
     if (["code", "code1_85"].includes(ide)) {
         json.ideOptions.options[ide].image = replaceImage(json.ideOptions.options[ide].image);
+        json.ideOptions.options[ide].imageLayers = json.ideOptions.options[ide].imageLayers.map(replaceImage);
         json.ideOptions.options[ide].versions = json.ideOptions.options[ide].versions?.map((version) => {
             version.image = replaceImage(version.image);
+            version.imageLayers = version.imageLayers.map(replaceImage);
             return version;
         });
     }
