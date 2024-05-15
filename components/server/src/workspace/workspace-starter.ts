@@ -1060,7 +1060,6 @@ export class WorkspaceStarter {
         imgsrc: WorkspaceImageSource,
         user: User,
         additionalAuth: Map<string, string>,
-        ignoreBaseImageresolvedAndRebuildBase: boolean = false,
     ): Promise<{ src: BuildSource; auth: BuildRegistryAuth; disposable?: Disposable }> {
         const span = TraceContext.startSpan("prepareBuildRequest", ctx);
 
@@ -1176,7 +1175,6 @@ export class WorkspaceStarter {
                 workspace.imageSource!,
                 user,
                 additionalAuth,
-                ignoreBaseImageresolvedAndRebuildBase || forceRebuild,
             );
 
             const req = new BuildRequest();
