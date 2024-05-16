@@ -64,6 +64,9 @@
             "path": "components/ws-manager-api"
         },
         {
+            "path": "components/ws-manager-bridge"
+        },
+        {
             "path": "components/ws-manager-mk2"
         },
         {
