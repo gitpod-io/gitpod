@@ -330,20 +330,15 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         // Only exception is when we do the switch from the "old" to the "new" one.
         const startedInstanceId = this.state?.startedInstanceId;
         if (startedInstanceId !== workspace.status.instanceId) {
-            // do we want to switch to "new" instance we just received an update for?
-            const switchToNewInstance =
-                this.state.workspace?.status?.phase?.name === WorkspacePhase_Phase.STOPPED &&
-                workspace.status?.phase?.name !== WorkspacePhase_Phase.STOPPED;
-            if (!switchToNewInstance) {
-                return;
-            }
+            // do we want to switch to "new" instance we just received an update for? Yes
             this.setState({
                 startedInstanceId: workspace.status.instanceId,
                 workspace,
             });
-
-            // now we're listening to a new instance, which might have been started with other IDEoptions
-            this.fetchIDEOptions();
+            if (startedInstanceId) {
+                // now we're listening to a new instance, which might have been started with other IDEoptions
+                this.fetchIDEOptions();
+            }
         }
 
         await this.ensureWorkspaceAuth(workspace.status.instanceId, false); // Don't block the workspace auth retrieval, as it's guaranteed to get a seconds chance later on!
