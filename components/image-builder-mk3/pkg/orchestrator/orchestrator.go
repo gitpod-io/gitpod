@@ -228,12 +228,20 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 
 	// resolve build request authentication
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
+
+	// resolve to ref to baseImageNameResolved (if it exists)
 	if req.BaseImageNameResolved != "" && !req.GetForceRebuild() {
+		if req.Auth != nil && req.Auth.GetSelective() != nil {
+			// allow access to baseImage repository so we can look it up later
+			req.Auth.GetSelective().AllowBaserep = true
+			reqauth = o.AuthResolver.ResolveRequestAuth(req.Auth)
+		}
+
 		wsrefstr, err := o.getWorkspaceImageRef(ctx, req.BaseImageNameResolved)
 		if err != nil {
 			return status.Errorf(codes.Internal, "cannot produce workspace image ref: %q", err)
 		}
-		wsrefAuth, err := auth.AllowedAuthForAll().GetAuthFor(ctx, o.Auth, wsrefstr)
+		wsrefAuth, err := reqauth.GetAuthFor(ctx, o.Auth, wsrefstr)
 		if err != nil {
 			return status.Errorf(codes.Internal, "cannot get workspace image authentication: %q", err)
 		}
@@ -254,7 +262,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 			}
 			return nil
 		}
-		baseref, err := o.getAbsoluteImageRef(ctx, req.BaseImageNameResolved, auth.AllowedAuthForAll())
+		baseref, err := o.getAbsoluteImageRef(ctx, req.BaseImageNameResolved, reqauth)
 		if err == nil {
 			req.Source.From = &protocol.BuildSource_Ref{
 				Ref: &protocol.BuildSourceReference{
