@@ -26,6 +26,7 @@ spec:
       labels:
         severity: error
         team: webapp
+        dedicated: included
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WsManagerBridgeHighEventsReceived.md
         summary: WS Manager Bridge events received from ws-manager-mk2 is abnormally high
