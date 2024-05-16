@@ -236,7 +236,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		if req.Auth != nil && req.Auth.GetSelective() != nil {
 			// allow access to baseImage repository so we can look it up later
 			req.Auth.GetSelective().AllowBaserep = true
-			reqauth = o.AuthResolver.ResolveRequestAuth(req.Auth)
+			reqauth = o.AuthResolver.ResolveRequestAuth(ctx, req.Auth)
 		}
 
 		wsrefstr, err := o.getWorkspaceImageRef(ctx, req.BaseImageNameResolved)
