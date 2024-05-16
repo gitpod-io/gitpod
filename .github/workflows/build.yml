@@ -462,6 +462,16 @@ jobs:
       version: ${{ needs.configuration.outputs.version }}
     secrets: inherit
 
+  ide-code-updates:
+    name: "Run VS Code update jobs on main branch"
+    needs:
+      - configuration
+      - build-gitpod
+      - create-runner
+    if: needs.configuration.outputs.is_main_branch == 'true'
+    uses: ./.github/workflows/code-updates.yml
+    secrets: inherit
+
   delete-runner:
     if: always()
     needs:

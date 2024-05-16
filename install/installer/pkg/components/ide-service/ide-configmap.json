@@ -8,11 +8,11 @@
         "type": "browser",
         "logo": "{{.IdeLogoBase}}/vscode.svg",
         "label": "Browser",
-        "image": "{{.Repository}}/ide/code:{{.CodeBrowserVersionStable}}",
+        "image": "{{.Repository}}/ide/code:commit-06ae77a61f11e65a8f9cbb871eb69383caa6fbd4",
         "latestImage": "{{.ResolvedCodeBrowserImageLatest}}",
         "imageLayers": [
-          "{{.CodeWebExtensionImage}}",
-          "{{.CodeHelperImage}}"
+          "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+          "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
         ],
         "latestImageLayers": [
           "{{.CodeWebExtensionImage}}",
@@ -23,56 +23,56 @@
             "version": "1.89.1",
             "image": "{{.Repository}}/ide/code:commit-06ae77a61f11e65a8f9cbb871eb69383caa6fbd4",
             "imageLayers": [
-              "{{.CodeWebExtensionImage}}",
-              "{{.CodeHelperImage}}"
+              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           },
           {
             "version": "1.89.0",
             "image": "{{.Repository}}/ide/code:commit-8a412095311a2ee0460abca3a4461704c4533374",
             "imageLayers": [
-              "{{.CodeWebExtensionImage}}",
-              "{{.CodeHelperImage}}"
+              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           },
           {
             "version": "1.88.1",
             "image": "{{.Repository}}/ide/code:commit-2ca710524cf1d69bc014cbfd57865375a4f9a522",
             "imageLayers": [
-              "{{.CodeWebExtensionImage}}",
-              "{{.CodeHelperImage}}"
+              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           },
           {
             "version": "1.88.0",
             "image": "{{.Repository}}/ide/code:commit-7721fe825201d4d8d53975f81de0b063d94383cc",
             "imageLayers": [
-              "{{.CodeWebExtensionImage}}",
-              "{{.CodeHelperImage}}"
+              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           },
           {
             "version": "1.87.1",
             "image": "{{.Repository}}/ide/code:commit-aaa9aeb1a12870ab8c19ca8a928d76849bc24c84",
             "imageLayers": [
-              "{{.CodeWebExtensionImage}}",
-              "{{.CodeHelperImage}}"
+              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           },
           {
             "version": "1.87.0",
             "image": "{{.Repository}}/ide/code:commit-82dc424633bdc7266b46302042dd98af201fa8f8",
             "imageLayers": [
-              "{{.CodeWebExtensionImage}}",
-              "{{.CodeHelperImage}}"
+              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           },
           {
             "version": "1.86.2",
             "image": "{{.Repository}}/ide/code:commit-d86f6aa033943c9650d06339915e68063b0cf142",
             "imageLayers": [
-              "{{.CodeWebExtensionImage}}",
-              "{{.CodeHelperImage}}"
+              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           }
         ]
@@ -85,8 +85,8 @@
         "label": "Browser",
         "image": "{{.Repository}}/ide/code:commit-cb1173f2a457633550a7fdc89af86d8d4da51876",
         "imageLayers": [
-          "{{.CodeWebExtensionImage}}",
-          "{{.CodeHelperImage}}"
+          "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+          "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
         ]
       },
       "code-desktop": {

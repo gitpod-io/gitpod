@@ -41,7 +41,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Repository  string
 		IdeLogoBase string
 
-		CodeBrowserVersionStable       string
 		ResolvedCodeBrowserImageLatest string
 		CodeHelperImage                string
 		CodeWebExtensionImage          string
@@ -59,7 +58,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Repository:  ctx.Config.Repository,
 		IdeLogoBase: fmt.Sprintf("https://ide.%s/image/ide-logo", ctx.Config.Domain),
 
-		CodeBrowserVersionStable:       ide.CodeIDEImageStableVersion,
 		ResolvedCodeBrowserImageLatest: resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
 		CodeHelperImage:                ctx.ImageName(ctx.Config.Repository, ide.CodeHelperIDEImage, ctx.VersionManifest.Components.Workspace.CodeHelperImage.Version),
 		CodeWebExtensionImage:          ctx.ImageName(ctx.Config.Repository, ide.CodeWebExtensionImage, ctx.VersionManifest.Components.Workspace.CodeWebExtensionImage.Version),
