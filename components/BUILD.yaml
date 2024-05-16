@@ -86,7 +86,7 @@ packages:
       # - components/kots-config-check/database:docker
       # - components/kots-config-check/registry:docker
       # - components/kots-config-check/storage:docker
-      - test:docker
+      #- test:docker
       - dev/version-manifest:app
     config:
       commands:

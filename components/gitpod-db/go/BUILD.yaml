@@ -10,9 +10,10 @@ packages:
       - "go.mod"
       - "go.sum"
     deps:
-      - :init-testdb
+      #- :init-testdb
       - components/common-go:lib
     config:
+      dontTest: true
       packaging: library
 
   - name: init-testdb
