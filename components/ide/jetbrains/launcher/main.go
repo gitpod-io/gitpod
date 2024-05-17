@@ -362,6 +362,7 @@ type Projects struct {
 }
 type Response struct {
 	AppPid   int        `json:"appPid"`
+	JoinLink string     `json:"joinLink"`
 	Projects []Projects `json:"projects"`
 }
 type JoinLinkResponse struct {
@@ -433,10 +434,15 @@ func resolveJsonLink2(backendPort string) (*JoinLinkResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(jsonResp.Projects) != 1 {
-		return nil, xerrors.Errorf("project is not found")
+	if len(jsonResp.Projects) > 0 {
+		return &JoinLinkResponse{AppPid: jsonResp.AppPid, JoinLink: jsonResp.Projects[0].JoinLink}, nil
+
 	}
-	return &JoinLinkResponse{AppPid: jsonResp.AppPid, JoinLink: jsonResp.Projects[0].JoinLink}, nil
+	if len(jsonResp.JoinLink) > 0 {
+		return &JoinLinkResponse{AppPid: jsonResp.AppPid, JoinLink: jsonResp.JoinLink}, nil
+	}
+	log.Error("failed to resolve JetBrains JoinLink")
+	return nil, xerrors.Errorf("failed to resolve JoinLink")
 }
 
 func terminateIDE(backendPort string) error {
