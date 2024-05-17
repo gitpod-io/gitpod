@@ -91,13 +91,14 @@
           "fields": "/value/",
           "values": false
         },
+        "showPercentChange": false,
         "text": {
           "titleSize": 1
         },
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "10.4.1",
       "targets": [
         {
           "datasource": {
@@ -148,7 +149,6 @@
         "y": 1
       },
       "id": 2,
-      "links": [],
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -161,10 +161,11 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "10.4.1",
       "targets": [
         {
           "datasource": {
@@ -235,6 +236,7 @@
       "id": 3,
       "options": {
         "displayMode": "lcd",
+        "maxVizHeight": 300,
         "minVizHeight": 10,
         "minVizWidth": 0,
         "namePlacement": "auto",
@@ -247,9 +249,10 @@
           "values": false
         },
         "showUnfilled": true,
+        "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "10.4.1",
       "targets": [
         {
           "datasource": {
@@ -296,6 +299,7 @@
       "id": 4,
       "options": {
         "displayMode": "lcd",
+        "maxVizHeight": 300,
         "minVizHeight": 10,
         "minVizWidth": 0,
         "namePlacement": "auto",
@@ -308,9 +312,10 @@
           "values": false
         },
         "showUnfilled": true,
+        "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "10.4.1",
       "targets": [
         {
           "datasource": {
@@ -421,7 +426,6 @@
         }
       ],
       "title": "Gitpod Version",
-      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -463,7 +467,7 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 13
       },
@@ -482,13 +486,12 @@
       },
       "lines": true,
       "linewidth": 1,
-      "links": [],
       "nullPointMode": "null",
       "options": {
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "10.4.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -851,7 +854,7 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 38
       },
@@ -870,13 +873,12 @@
       },
       "lines": true,
       "linewidth": 1,
-      "links": [],
       "nullPointMode": "null",
       "options": {
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "10.4.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -979,17 +981,11 @@
         "uid": "$datasource"
       },
       "description": "Nodes with a high normalized load average do not represent a real problem, it only means that pods should probably not be scheduled to them.\n\nIf you'd like to see more details about resource consumption of a particular node, you can do so by clicking at the node name.\n",
-      "fieldConfig": {
-        "defaults": {
-          "unitScale": true
-        },
-        "overrides": []
-      },
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 46
       },
@@ -1008,13 +1004,12 @@
       },
       "lines": true,
       "linewidth": 1,
-      "links": [],
       "nullPointMode": "null",
       "options": {
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "10.3.1",
+      "pluginVersion": "10.4.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1139,9 +1134,9 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 46
+        "y": 54
       },
       "heatmap": {},
       "hideZeroBuckets": true,
@@ -1178,7 +1173,8 @@
         },
         "showValue": "never",
         "tooltip": {
-          "show": true,
+          "mode": "single",
+          "showColorScale": false,
           "yHistogram": false
         },
         "yAxis": {
@@ -1187,7 +1183,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "10.4.1",
       "repeat": "cluster",
       "targets": [
         {
@@ -1228,7 +1224,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 61
       },
       "id": 15,
       "panels": [],
@@ -1257,9 +1253,9 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 54
+        "y": 62
       },
       "hiddenSeries": false,
       "id": 8,
@@ -1276,13 +1272,12 @@
       },
       "lines": true,
       "linewidth": 1,
-      "links": [],
       "nullPointMode": "null",
       "options": {
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "10.4.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1388,7 +1383,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 61
+        "y": 69
       },
       "id": 16,
       "panels": [],
@@ -1416,9 +1411,9 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 62
+        "y": 70
       },
       "hiddenSeries": false,
       "id": 9,
@@ -1435,13 +1430,12 @@
       },
       "lines": true,
       "linewidth": 1,
-      "links": [],
       "nullPointMode": "null",
       "options": {
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "10.4.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1517,7 +1511,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 69
+        "y": 77
       },
       "id": 17,
       "panels": [],
@@ -1545,9 +1539,9 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 70
+        "y": 78
       },
       "hiddenSeries": false,
       "id": 10,
@@ -1564,13 +1558,12 @@
       },
       "lines": true,
       "linewidth": 1,
-      "links": [],
       "nullPointMode": "null",
       "options": {
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.5.3",
+      "pluginVersion": "10.4.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1626,15 +1619,15 @@
   ],
   "refresh": "30s",
   "revision": 1,
-  "schemaVersion": 38,
+  "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
           "selected": false,
-          "text": "prometheus",
-          "value": "P1809F7CD0C75ACF3"
+          "text": "VictoriaMetrics",
+          "value": "P4169E866C3094E38"
         },
         "hide": 0,
         "includeAll": false,
