@@ -5,8 +5,11 @@
         "dockerfile": "./Dockerfile"
     },
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/gitpod,type=bind",
-    "workspaceFolder": "/workspace/gitpod",
-    "updateContentCommand": "dev/install-dependencies.sh",
+    "workspaceFolder": "/workspace/gitpod/",
+    "postCreateCommand": "dev/install-dependencies.sh",
+    "mounts": [
+        "source=/usr/local/gitpod/config/,target=/usr/local/gitpod/config/,type=bind"
+    ],
     "remoteEnv": {
         "GIT_EDITOR": "code --wait",
         "KUBE_EDITOR": "code --wait"
