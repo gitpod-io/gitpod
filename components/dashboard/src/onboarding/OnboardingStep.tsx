@@ -12,7 +12,7 @@ import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 type Props = {
     title: string;
-    subtitle: string;
+    subtitle?: string;
     isValid: boolean;
     isSaving?: boolean;
     error?: string;
@@ -53,7 +53,7 @@ export const OnboardingStep: FC<Props> = ({
         <div className="flex flex-col items-center justify-center max-w-full">
             {/* Intentionally adjusting the size of the heading here */}
             <Heading2 className="text-4xl">{title}</Heading2>
-            <Subheading>{subtitle}</Subheading>
+            {subtitle && <Subheading>{subtitle}</Subheading>}
 
             <form className="mt-8 mb-14 max-w-lg" onSubmit={handleSubmit}>
                 {/* Form contents provided as children */}
