@@ -125,9 +125,10 @@ export class TokenService implements TokenProvider {
                     // Perform actual refresh
                     const stopTimer = scmTokenRefreshLatencyHistogram.startTimer({ host });
                     try {
-                        return await authProvider.refreshToken(user, requestedLifetimeDate);
-                    } finally {
+                        const result = await authProvider.refreshToken(user, requestedLifetimeDate);
                         reportScmTokenRefreshRequest(host, opportunisticRefresh, "success");
+                        return result;
+                    } finally {
                         stopTimer({ host });
                     }
                 },
