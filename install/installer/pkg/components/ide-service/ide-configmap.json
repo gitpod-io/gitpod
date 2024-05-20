@@ -402,6 +402,14 @@
         ],
         "versions": [
           {
+            "version": "2024.1.2",
+            "image": "{{.Repository}}/ide/rider:commit-e6e412c809dfa004678166a82f1243cedd3e7167",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6",
+              "{{.Repository}}/ide/jb-launcher:commit-120b50c982216c7b4ca9fe37d039b3f6644b4571"
+            ]
+          },
+          {
             "version": "2024.1.1",
             "image": "{{.Repository}}/ide/rider:commit-9382d33ee521e6a72d763f906b24dd53893103df",
             "imageLayers": [
