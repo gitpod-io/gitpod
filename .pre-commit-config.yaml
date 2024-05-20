@@ -5,6 +5,7 @@ repos:
       #- id: check-yaml
       #  args: [--allow-multiple-documents]
       - id: check-json
+        exclude: ^.devcontainer/devcontainer.json$
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-symlinks
@@ -80,5 +81,10 @@ repos:
         language: system
         pass_filenames: false
         files: ^components/dashboard/
+  - repo: https://gitlab.com/bmares/check-json5
+    rev: v1.0.0
+    hooks:
+    - id: check-json5
+      files: ^.devcontainer/devcontainer.json$
 
 exclude: ^install/installer/.*/.*\.golden$
