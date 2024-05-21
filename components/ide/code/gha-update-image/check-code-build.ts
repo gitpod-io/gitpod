@@ -37,7 +37,8 @@ const main = async () => {
     console.log("fetch gitpod-io/openvscode-server with " + inputs.branch, { commit, version });
 
     if (workspaceYaml.defaultArgs.codeVersion === version) {
-        throw new Error("code version is the same, no need to update");
+        console.error("code version is the same, no need to update");
+        return;
     }
     console.log(
         `found different version ${version} (than ${workspaceYaml.defaultArgs.codeVersion}) with commit:${workspaceYaml.defaultArgs.codeCommit}`,
