@@ -108,3 +108,31 @@ jobs:
                   SLACK_TITLE: "VS Code Browser release `${{ steps.updates.outputs.codeVersion }}`"
                   SLACK_MESSAGE: "PR is created ${{ steps.code-update-pr.pull-request-url }}"
                   SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
+    release-openvscode-server:
+        runs-on: ubuntu-latest
+        needs: [ update ]
+        if: ${{ needs.update.steps.changes.outputs.dirty && needs.update.steps.updates.outputs.codeVersion }}
+        steps:
+            - uses: gitpod-io/gh-app-auth@v0.1
+              id: auth
+              name: Auth GH App
+              with:
+                private-key: ${{ secrets.ACTIONS_APP_PKEY }}
+                app-id: 308947
+                installation-id: 35574470
+            - name: Trigger Open VS Code Server Release
+              uses: actions/github-script@v6
+              with:
+                github-token: ${{ steps.auth.outputs.token }}
+                script: |
+                  const releaseBranch = "release/" + "${{ needs.update.steps.updates.outputs.codeVersion }}".split(".").slice(0, 2).join(".")
+                  const result = await github.rest.actions.createWorkflowDispatch({
+                    owner: context.repo.owner,
+                    repo: 'openvscode-releases',
+                    workflow_id: 'release.yml',
+                    ref: 'main',
+                    inputs: {
+                      "quality": "stable",
+                      "commit": releaseBranch,
+                    }
+                  })
