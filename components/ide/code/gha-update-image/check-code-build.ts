@@ -4,7 +4,7 @@
 
 import { $ } from "bun";
 import { parseArgs } from "util";
-import { pathToWorkspaceYaml, rawWorkspaceYaml, workspaceYaml, workspaceYamlObj } from "./lib/common";
+import { pathToOutput, pathToWorkspaceYaml, rawWorkspaceYaml, workspaceYaml, workspaceYamlObj } from "./lib/common";
 
 $.nothrow();
 
@@ -37,15 +37,19 @@ const main = async () => {
     console.log("fetch gitpod-io/openvscode-server with " + inputs.branch, { commit, version });
 
     if (workspaceYaml.defaultArgs.codeVersion === version) {
-        throw new Error("code version is the same, no need to update");
+        console.error("code version is the same, no need to update");
+        return;
     }
     console.log(
-        `found different version ${version} (than ${workspaceYaml.defaultArgs.codeVersion}) with commit:${workspaceYaml.defaultArgs.codeCommit}`,
+        `found different version ${version} (than ${workspaceYaml.defaultArgs.codeVersion}) with commit:${commit} (than ${workspaceYaml.defaultArgs.codeCommit})`,
     );
-    let newYaml = rawWorkspaceYaml.replace(workspaceYaml.defaultArgs.codeCommit, commit);
-    newYaml = rawWorkspaceYaml.replace(workspaceYaml.defaultArgs.codeVersion, version);
+    const newYaml = rawWorkspaceYaml
+        .replace(workspaceYaml.defaultArgs.codeCommit, commit)
+        .replace(workspaceYaml.defaultArgs.codeVersion, version);
 
     await Bun.write(pathToWorkspaceYaml, newYaml);
+
+    await Bun.write(pathToOutput, `codeVersion=${version}\ncodeCommit=${commit}`);
 };
 
 await main();
