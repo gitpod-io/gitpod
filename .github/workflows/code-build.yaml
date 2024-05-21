@@ -70,7 +70,7 @@ jobs:
                   - [x] /werft with-preview
                   - [x] /werft analytics=segment
                   - [x] /werft with-large-vm
-                commit-message: ${{"[VS Code Browser] Build stable code `" + steps.update-output.ouput.codeVersion + "`"}}
+                commit-message: "[VS Code Browser] Build stable code `${{steps.update-output.ouput.codeVersion}}`"
                 branch: "ide/code-stable"
                 labels: "team: IDE,editor: code (browser)"
                 token: ${{ secrets.ROBOQUAT_REPO_PAT }}
