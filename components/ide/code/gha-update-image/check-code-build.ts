@@ -41,10 +41,11 @@ const main = async () => {
         return;
     }
     console.log(
-        `found different version ${version} (than ${workspaceYaml.defaultArgs.codeVersion}) with commit:${workspaceYaml.defaultArgs.codeCommit}`,
+        `found different version ${version} (than ${workspaceYaml.defaultArgs.codeVersion}) with commit:${commit} (than ${workspaceYaml.defaultArgs.codeCommit})`,
     );
-    let newYaml = rawWorkspaceYaml.replace(workspaceYaml.defaultArgs.codeCommit, commit);
-    newYaml = rawWorkspaceYaml.replace(workspaceYaml.defaultArgs.codeVersion, version);
+    const newYaml = rawWorkspaceYaml
+        .replace(workspaceYaml.defaultArgs.codeCommit, commit)
+        .replace(workspaceYaml.defaultArgs.codeVersion, version);
 
     await Bun.write(pathToWorkspaceYaml, newYaml);
 };
