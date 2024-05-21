@@ -4,135 +4,135 @@ on:
   workflow_call:
 
 jobs:
-    update:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - name: Install dependencies
-              run: |
-                cd ./components/ide/code/gha-update-image/
-                yarn
-                npm i -g bun
-            - name: Check for updates
-              id: updates
-              run: |
-                cd ./components/ide/code/gha-update-image/
-                bun run index.ts
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          cd ./components/ide/code/gha-update-image/
+          yarn
+          npm i -g bun
+      - name: Check for updates
+        id: updates
+        run: |
+          cd ./components/ide/code/gha-update-image/
+          bun run index.ts
 
-                if [ -f /tmp/__gh_output.txt ]
-                then
-                  cat /tmp/__gh_output.txt >> $GITHUB_OUTPUT
-                fi
+          if [ -f /tmp/__gh_output.txt ]
+          then
+            cat /tmp/__gh_output.txt >> $GITHUB_OUTPUT
+          fi
 
-            - name: Detect file changes
-              id: changes
-              run: |
-                if [ $(git status --porcelain | wc -l) -gt 0 ]; then
-                  echo "dirty=true" >> $GITHUB_OUTPUT
-                else
-                  echo "dirty=false" >> $GITHUB_OUTPUT
-                fi
-            - name: Create Release Pull Request
-              if: ${{steps.changes.outputs.dirty && steps.updates.outputs.codeVersion}}
-              id: code-update-pr
-              uses: peter-evans/create-pull-request@v6
-              with:
-                title: "[VS Code Browser] Update stable code to `${{steps.updates.outputs.codeVersion}}`"
-                body: |
-                  ## Description
-                  Update code to `${{steps.updates.outputs.codeVersion}}`
+      - name: Detect file changes
+        id: changes
+        run: |
+          if [ $(git status --porcelain | wc -l) -gt 0 ]; then
+            echo "dirty=true" >> $GITHUB_OUTPUT
+          else
+            echo "dirty=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Create Release Pull Request
+        if: ${{steps.changes.outputs.dirty && steps.updates.outputs.codeVersion}}
+        id: code-update-pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "[VS Code Browser] Update stable code to `${{steps.updates.outputs.codeVersion}}`"
+          body: |
+            ## Description
+            Update code to `${{steps.updates.outputs.codeVersion}}`
 
-                  ## How to test
+            ## How to test
 
-                  Should be tested already in build PR, double check:
+            Should be tested already in build PR, double check:
 
-                  - [ ] New version is pinnable
-                  - [ ] Stable version is updated and it can start workspace with it
+            - [ ] New version is pinnable
+            - [ ] Stable version is updated and it can start workspace with it
 
-                  ### Preview status
-                  gitpod:summary
+            ### Preview status
+            gitpod:summary
 
-                  ## Werft options:
+            ## Werft options:
 
-                  - [x] /werft with-preview
-                  - [x] /werft analytics=segment
-                commit-message: "[VS Code Browser] Update stable code to `${{steps.updates.outputs.codeVersion}}`"
-                branch: "ide/code-stable"
-                labels: "team: IDE,editor: code (browser)"
-                token: ${{ secrets.ROBOQUAT_REPO_PAT }}
-                committer: Robo Quat <roboquat@gitpod.io>
-                author: Robo Quat <roboquat@gitpod.io>
-                team-reviewers: |
-                  team-experience
+            - [x] /werft with-preview
+            - [x] /werft analytics=segment
+          commit-message: "[VS Code Browser] Update stable code to `${{steps.updates.outputs.codeVersion}}`"
+          branch: "ide/code-stable"
+          labels: "team: IDE,editor: code (browser)"
+          token: ${{ secrets.ROBOQUAT_REPO_PAT }}
+          committer: Robo Quat <roboquat@gitpod.io>
+          author: Robo Quat <roboquat@gitpod.io>
+          team-reviewers: |
+            team-experience
 
-            - name: Create Images Update Pull Request
-              if: ${{steps.changes.outputs.dirty && !steps.updates.outputs.codeVersion}}
-              uses: peter-evans/create-pull-request@v6
-              with:
-                  title: "[code] update code image layers"
-                  body: |
-                      ## Description
-                      This PR updates the VS Code Browser image layers to the most recent intaller version.
+      - name: Create Images Update Pull Request
+        if: ${{steps.changes.outputs.dirty && !steps.updates.outputs.codeVersion}}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "[code] update code image layers"
+          body: |
+            ## Description
+            This PR updates the VS Code Browser image layers to the most recent intaller version.
 
-                      ## How to test
+            ## How to test
 
-                      Test if changes are working.
+            Test if changes are working.
 
-                      i.e.
-                      - `code-helper` it can start browser code with extensions installed
-                      - `gitpod-web-extension` extension functionalities are works well
-                      - `code` is not expected it to be changed
+            i.e.
+            - `code-helper` it can start browser code with extensions installed
+            - `gitpod-web-extension` extension functionalities are works well
+            - `code` is not expected it to be changed
 
-                      ### Preview status
-                      gitpod:summary
+            ### Preview status
+            gitpod:summary
 
-                      ## Werft options:
+            ## Werft options:
 
-                      - [x] /werft with-preview
-                      - [x] /werft analytics=segment
+            - [x] /werft with-preview
+            - [x] /werft analytics=segment
 
-                  commit-message: "[code] update code image layers"
-                  branch: "ide/code-stable"
-                  labels: "team: IDE,editor: code (browser)"
-                  token: ${{ secrets.ROBOQUAT_REPO_PAT }}
-                  committer: Robo Quat <roboquat@gitpod.io>
-                  author: Robo Quat <roboquat@gitpod.io>
-                  team-reviewers: |
-                    team-experience
-            - name: Slack notification (code)
-              if: ${{ steps.code-update-pr.pull-request-url }}
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
-                  SLACK_COLOR: ${{ job.status }}
-                  SLACK_TITLE: "VS Code Browser release `${{ steps.updates.outputs.codeVersion }}`"
-                  SLACK_MESSAGE: "PR is created ${{ steps.code-update-pr.pull-request-url }}"
-                  SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
-    release-openvscode-server:
-        runs-on: ubuntu-latest
-        needs: [ update ]
-        if: ${{ needs.update.steps.changes.outputs.dirty && needs.update.steps.updates.outputs.codeVersion }}
-        steps:
-            - uses: gitpod-io/gh-app-auth@v0.1
-              id: auth
-              name: Auth GH App
-              with:
-                private-key: ${{ secrets.ACTIONS_APP_PKEY }}
-                app-id: 308947
-                installation-id: 35574470
-            - name: Trigger Open VS Code Server Release
-              uses: actions/github-script@v6
-              with:
-                github-token: ${{ steps.auth.outputs.token }}
-                script: |
-                  const releaseBranch = "release/" + "${{ needs.update.steps.updates.outputs.codeVersion }}".split(".").slice(0, 2).join(".")
-                  const result = await github.rest.actions.createWorkflowDispatch({
-                    owner: context.repo.owner,
-                    repo: 'openvscode-releases',
-                    workflow_id: 'release.yml',
-                    ref: 'main',
-                    inputs: {
-                      "quality": "stable",
-                      "commit": releaseBranch,
-                    }
-                  })
+          commit-message: "[code] update code image layers"
+          branch: "ide/code-stable"
+          labels: "team: IDE,editor: code (browser)"
+          token: ${{ secrets.ROBOQUAT_REPO_PAT }}
+          committer: Robo Quat <roboquat@gitpod.io>
+          author: Robo Quat <roboquat@gitpod.io>
+          team-reviewers: |
+            team-experience
+      - name: Slack notification (code)
+        if: ${{ steps.code-update-pr.pull-request-url }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: "VS Code Browser release `${{ steps.updates.outputs.codeVersion }}`"
+          SLACK_MESSAGE: "PR is created ${{ steps.code-update-pr.pull-request-url }}"
+          SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
+  release-openvscode-server:
+    runs-on: ubuntu-latest
+    needs: [update]
+    if: ${{ needs.update.steps.changes.outputs.dirty && needs.update.steps.updates.outputs.codeVersion }}
+    steps:
+      - uses: gitpod-io/gh-app-auth@v0.1
+        id: auth
+        name: Auth GH App
+        with:
+          private-key: ${{ secrets.ACTIONS_APP_PKEY }}
+          app-id: 308947
+          installation-id: 35574470
+      - name: Trigger Open VS Code Server Release
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ steps.auth.outputs.token }}
+          script: |
+            const releaseBranch = "release/" + "${{ needs.update.steps.updates.outputs.codeVersion }}".split(".").slice(0, 2).join(".")
+            const result = await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: 'openvscode-releases',
+              workflow_id: 'release.yml',
+              ref: 'main',
+              inputs: {
+                "quality": "stable",
+                "commit": releaseBranch,
+              }
+            })
