@@ -35,7 +35,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -65,8 +64,6 @@ type LaunchContext struct {
 	info           *ProductInfo
 	backendVersion *version.Version
 	wsInfo         *supervisor.WorkspaceInfoResponse
-	exps           experiments.Client
-	gitpodHostname string
 
 	vmOptionsFile          string
 	platformPropertiesFile string
@@ -77,6 +74,11 @@ type LaunchContext struct {
 	riderSolutionFile      string
 
 	env []string
+
+	// Custom fields
+
+	// shouldWaitBackendPlugin is controlled by env GITPOD_WAIT_IDE_BACKEND
+	shouldWaitBackendPlugin bool
 }
 
 // JB startup entrypoint
@@ -94,6 +96,7 @@ func main() {
 		return
 	}
 
+	waitBackendPlugin := os.Getenv("GITPOD_WAIT_IDE_BACKEND") == "true"
 	debugEnabled := os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true"
 	log.Init(ServiceName, Version, true, debugEnabled)
 	log.Info(ServiceName + ": " + Version)
@@ -153,16 +156,6 @@ func main() {
 		return
 	}
 
-	var exps experiments.Client
-	var gitpodHostname string
-	if gitpodUrl, err := url.Parse(wsInfo.GitpodHost); err == nil {
-		gitpodHost := gitpodUrl.Hostname()
-		gitpodHostname = gitpodHost
-		exps = experiments.NewClient(experiments.WithGitpodProxy(gitpodHost))
-	} else {
-		log.WithField("gitpodHost", wsInfo.GitpodHost).WithError(err).Error("failed to parse url")
-	}
-
 	launchCtx := &LaunchContext{
 		startTime: startTime,
 
@@ -171,14 +164,13 @@ func main() {
 		alias:  alias,
 		label:  label,
 
-		qualifier:      qualifier,
-		productDir:     productDir,
-		backendDir:     backendDir,
-		info:           info,
-		backendVersion: backendVersion,
-		wsInfo:         wsInfo,
-		exps:           exps,
-		gitpodHostname: gitpodHostname,
+		qualifier:               qualifier,
+		productDir:              productDir,
+		backendDir:              backendDir,
+		info:                    info,
+		backendVersion:          backendVersion,
+		wsInfo:                  wsInfo,
+		shouldWaitBackendPlugin: waitBackendPlugin,
 	}
 
 	if launchCtx.warmup {
@@ -288,7 +280,7 @@ func serve(launchCtx *LaunchContext) {
 		if backendPort == "" {
 			backendPort = defaultBackendPort
 		}
-		if err := isBackendPluginReady(r.Context(), backendPort, launchCtx.exps, launchCtx.gitpodHostname); err != nil {
+		if err := isBackendPluginReady(r.Context(), backendPort, launchCtx.shouldWaitBackendPlugin); err != nil {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
@@ -314,12 +306,8 @@ func serve(launchCtx *LaunchContext) {
 }
 
 // isBackendPluginReady checks if the backend plugin is ready via backend plugin CLI GitpodCLIService.kt
-func isBackendPluginReady(ctx context.Context, backendPort string, exps experiments.Client, gitpodHostname string) error {
-	if exps == nil {
-		log.Error("no experiments.Client setup")
-		return nil
-	}
-	if !exps.GetBoolValue(ctx, "jb_wait_backend_plugin_readiness", false, experiments.Attributes{GitpodHost: gitpodHostname}) {
+func isBackendPluginReady(ctx context.Context, backendPort string, shouldWaitBackendPlugin bool) error {
+	if !shouldWaitBackendPlugin {
 		log.Debug("will not wait plugin ready")
 		return nil
 	}

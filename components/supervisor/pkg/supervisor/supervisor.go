@@ -401,12 +401,15 @@ func Run(options ...RunOption) {
 		installDotfiles(ctx, cfg, tokenService)
 	}
 
+	shouldShutdown, shutdownDuration := getIDENotReadyShutdownDuration(ctx, exps, host)
+	// with value true, supervisor will pass env GITPOD_WAIT_IDE_BACKEND=true when starting IDEs
+	shouldWaitBackend := shouldShutdown
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
-	go startAndWatchIDE(ctx, cfg, &cfg.IDE, &ideWG, cstate, ideReady, WebIDE, supervisorMetrics)
+	go startAndWatchIDE(ctx, cfg, &cfg.IDE, &ideWG, cstate, ideReady, WebIDE, supervisorMetrics, shouldWaitBackend)
 	if cfg.GetDesktopIDE() != nil {
 		ideWG.Add(1)
-		go startAndWatchIDE(ctx, cfg, cfg.GetDesktopIDE(), &ideWG, cstate, desktopIdeReady, DesktopIDE, supervisorMetrics)
+		go startAndWatchIDE(ctx, cfg, cfg.GetDesktopIDE(), &ideWG, cstate, desktopIdeReady, DesktopIDE, supervisorMetrics, shouldWaitBackend)
 	}
 
 	var (
@@ -415,14 +418,13 @@ func Run(options ...RunOption) {
 	)
 	go func() {
 		<-cstate.ContentReady()
-		shouldWait, duration := waitForIDENotReadyShutdownDuration(ctx, exps, host)
-		if !shouldWait {
+		if !shouldShutdown {
 			return
 		}
-		allReady, waitFor := waitForIde(ctx, ideReady, desktopIdeReady, duration)
+		allReady, waitFor := waitForIde(ctx, ideReady, desktopIdeReady, shutdownDuration)
 		if !allReady {
-			log.WithField("waitFor", waitFor).WithField("duration", duration.String()).Error("shutdown as IDEs are not ready")
-			msg := []byte(fmt.Sprintf("%s timed out to start after %.0f minutes", waitFor, duration.Minutes()))
+			log.WithField("waitFor", waitFor).WithField("duration", shutdownDuration.String()).Error("shutdown as IDEs are not ready")
+			msg := []byte(fmt.Sprintf("%s timed out to start after %.0f minutes", waitFor, shutdownDuration.Minutes()))
 			err := os.WriteFile("/dev/termination-log", msg, 0o644)
 			if err != nil {
 				log.WithError(err).Error("err while writing termination log")
@@ -526,7 +528,7 @@ func Run(options ...RunOption) {
 	wg.Wait()
 }
 
-func waitForIDENotReadyShutdownDuration(ctx context.Context, exps experiments.Client, gitpodHost string) (bool, time.Duration) {
+func getIDENotReadyShutdownDuration(ctx context.Context, exps experiments.Client, gitpodHost string) (bool, time.Duration) {
 	if exps == nil {
 		return false, time.Hour
 	}
@@ -537,11 +539,7 @@ func waitForIDENotReadyShutdownDuration(ctx context.Context, exps experiments.Cl
 		default:
 		}
 		value := exps.GetStringValue(ctx, "supervisor_ide_not_ready_shutdown_duration", "not_found", experiments.Attributes{GitpodHost: gitpodHost})
-		if value == "not_found" {
-			time.Sleep(10 * time.Second)
-			continue
-		}
-		if value == "undefined" {
+		if value == "not_found" || value == "undefined" {
 			return false, time.Hour
 		}
 		duration, err := time.ParseDuration(value)
@@ -837,7 +835,7 @@ var (
 	errSignalTerminated = errors.New("signal: terminated")
 )
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind, metrics *metrics.SupervisorMetrics) {
+func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind, metrics *metrics.SupervisorMetrics, shouldWaitBackend bool) {
 	defer wg.Done()
 	defer log.WithField("ide", ide.String()).Debug("startAndWatchIDE shutdown")
 
@@ -867,7 +865,7 @@ supervisorLoop:
 		ideStopped = make(chan struct{}, 1)
 		startTime := time.Now()
 		cmd = prepareIDELaunch(cfg, ideConfig)
-		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide)
+		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide, shouldWaitBackend)
 		timerAfterMaxBucket := time.NewTimer((shared.IDEReadyDurationTotalMaxBucketSecond + 1) * time.Second)
 
 		if firstStart {
@@ -943,7 +941,7 @@ supervisorLoop:
 	}
 }
 
-func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan struct{}, ideReady *ideReadyState, s *ideStatus, ide IDEKind) {
+func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan struct{}, ideReady *ideReadyState, s *ideStatus, ide IDEKind, shouldWaitBackend bool) {
 	go func() {
 		// prepareIDELaunch sets Pdeathsig, which on on Linux, will kill the
 		// child process when the thread dies, not when the process dies.
@@ -955,6 +953,9 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 		defer runtime.UnlockOSThread()
 
 		log.Info("start launchIDE")
+		if shouldWaitBackend {
+			cmd.Env = append(cmd.Env, "GITPOD_WAIT_IDE_BACKEND=true")
+		}
 		err := cmd.Start()
 		if err != nil {
 			if s == func() *ideStatus { i := statusNeverRan; return &i }() {
