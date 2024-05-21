@@ -101,17 +101,13 @@ export const appendPinVersionsIntoIDEConfigMap = async () => {
             }
 
             const currentVersion = configmapVersions.at(0);
-            if (!currentVersion.image.includes(installerImageVersion)) {
-                if (currentVersion.version === ideVersion) {
-                    // Update the current version
-                    configmap.ideOptions.options[ide].versions[0] = installerIdeVersion;
-                    console.log(`Updated ${ide} (old ${currentVersion.image}, new ${installerIdeVersion.image})`);
-                } else {
-                    configmap.ideOptions.options[ide].versions.unshift(installerIdeVersion);
-                    console.log(`Added ${ide} (new ${installerIdeVersion.image})`);
-                }
+            if (currentVersion.version === ideVersion) {
+                // Update the current version
+                configmap.ideOptions.options[ide].versions[0] = installerIdeVersion;
+                console.log(`Updated ${ide} (old ${currentVersion.image}, new ${installerIdeVersion.image})`);
             } else {
-                console.log(`Not updating, ${ide} is up-to-date`);
+                configmap.ideOptions.options[ide].versions.unshift(installerIdeVersion);
+                console.log(`Added ${ide} (new ${installerIdeVersion.image})`);
             }
         }
     }
