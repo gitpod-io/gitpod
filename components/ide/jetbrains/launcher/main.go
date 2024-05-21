@@ -103,6 +103,7 @@ func main() {
 	log.Info(ServiceName + ": " + Version)
 	startTime := time.Now()
 
+	log.WithField("shouldWait", shouldWaitBackendPlugin).Info("should wait backend plugin")
 	var port string
 	var warmup bool
 
