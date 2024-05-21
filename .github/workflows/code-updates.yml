@@ -95,12 +95,12 @@ jobs:
                   author: Robo Quat <roboquat@gitpod.io>
                   team-reviewers: |
                     team-experience
-            - name: Slack notification (code)
-              if: ${{ steps.code-update-pr.pull-request-url }}
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
-                  SLACK_COLOR: ${{ job.status }}
-                  SLACK_TITLE: "VS Code Browser release `${{ steps.update-output.ouput.codeVersion }}`"
-                  SLACK_MESSAGE: "PR is created ${{ steps.code-update-pr.pull-request-url }}"
-                  SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
+            # - name: Slack notification (code)
+            #   if: ${{ steps.code-update-pr.pull-request-url }}
+            #   uses: rtCamp/action-slack-notify@v2
+            #   env:
+            #       SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
+            #       SLACK_COLOR: ${{ job.status }}
+            #       SLACK_TITLE: "VS Code Browser release `${{ steps.update-output.ouput.codeVersion }}`"
+            #       SLACK_MESSAGE: "PR is created ${{ steps.code-update-pr.pull-request-url }}"
+            #       SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
