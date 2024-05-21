@@ -36,11 +36,11 @@ jobs:
               if: steps.changes.outputs.dirty
               uses: peter-evans/create-pull-request@v6
               with:
-                title: '[VS Code Browser] Build stable code `${{steps.updates.ouput.codeVersion}}`'
+                title: '[VS Code Browser] Build stable code `${{steps.updates.outputs.codeVersion}}`'
                 body: |
                   ## Description
 
-                  Build code version `${{steps.updates.ouput.codeVersion}}` (`${{steps.updates.ouput.codeCommit}}`)
+                  Build code version `${{steps.updates.outputs.codeVersion}}` (`${{steps.updates.outputs.codeCommit}}`)
 
                   ## How to test
 
@@ -73,7 +73,7 @@ jobs:
                   - [x] /werft with-preview
                   - [x] /werft analytics=segment
                   - [x] /werft with-large-vm
-                commit-message: "[VS Code Browser] Build stable code `${{steps.updates.ouput.codeVersion}}`"
+                commit-message: "[VS Code Browser] Build stable code `${{steps.updates.outputs.codeVersion}}`"
                 branch: "ide/code-stable"
                 labels: "team: IDE,editor: code (browser)"
                 token: ${{ secrets.ROBOQUAT_REPO_PAT }}
