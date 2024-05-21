@@ -33,7 +33,7 @@ jobs:
               if: steps.changes.outputs.dirty
               uses: peter-evans/create-pull-request@v6
               with:
-                title: ${{"[VS Code Browser] Build stable code `" + steps.update-output.ouput.codeVersion + "`"}}
+                title: '[VS Code Browser] Build stable code `${{steps.update-output.ouput.codeVersion}}`'
                 body: |
                   ## Description
 
