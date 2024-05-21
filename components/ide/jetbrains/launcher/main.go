@@ -96,7 +96,8 @@ func main() {
 		return
 	}
 
-	waitBackendPlugin := os.Getenv("GITPOD_WAIT_IDE_BACKEND") == "true"
+	// supervisor refer see https://github.com/gitpod-io/gitpod/blob/main/components/supervisor/pkg/supervisor/supervisor.go#L961
+	shouldWaitBackendPlugin := os.Getenv("GITPOD_WAIT_IDE_BACKEND") == "true"
 	debugEnabled := os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true"
 	log.Init(ServiceName, Version, true, debugEnabled)
 	log.Info(ServiceName + ": " + Version)
@@ -170,7 +171,7 @@ func main() {
 		info:                    info,
 		backendVersion:          backendVersion,
 		wsInfo:                  wsInfo,
-		shouldWaitBackendPlugin: waitBackendPlugin,
+		shouldWaitBackendPlugin: shouldWaitBackendPlugin,
 	}
 
 	if launchCtx.warmup {

@@ -403,6 +403,8 @@ func Run(options ...RunOption) {
 
 	shouldShutdown, shutdownDuration := getIDENotReadyShutdownDuration(ctx, exps, host)
 	// with value true, supervisor will pass env GITPOD_WAIT_IDE_BACKEND=true when starting IDEs
+	// works with IDEs:
+	// - JB backend-plugin https://github.com/gitpod-io/gitpod/blob/main/components/ide/jetbrains/launcher/main.go#L80
 	shouldWaitBackend := shouldShutdown
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
@@ -953,7 +955,9 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 		defer runtime.UnlockOSThread()
 
 		log.Info("start launchIDE")
-		if shouldWaitBackend {
+		if shouldWaitBackend && ide == DesktopIDE {
+			// works with IDEs:
+			// - JB backend-plugin https://github.com/gitpod-io/gitpod/blob/main/components/ide/jetbrains/launcher/main.go#L80
 			cmd.Env = append(cmd.Env, "GITPOD_WAIT_IDE_BACKEND=true")
 		}
 		err := cmd.Start()
