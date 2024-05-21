@@ -10,13 +10,14 @@ import { z } from "zod";
 const pathToProjectRoot = path.resolve(__dirname, "../../../../../");
 
 export const pathToWorkspaceYaml = path.resolve(pathToProjectRoot, "WORKSPACE.yaml");
+export const pathToOutput = path.resolve("/tmp/__gh_output.txt");
 
 export const pathToConfigmap = path.resolve(
     pathToProjectRoot,
     "install/installer/pkg/components/ide-service/ide-configmap.json",
 );
 
-export const rawWorkspaceYaml = await Bun.file(pathToWorkspaceYaml).text()
+export const rawWorkspaceYaml = await Bun.file(pathToWorkspaceYaml).text();
 export const workspaceYamlObj = yaml.parse(rawWorkspaceYaml);
 export const workspaceYaml = z
     .object({

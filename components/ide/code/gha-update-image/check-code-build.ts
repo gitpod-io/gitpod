@@ -4,7 +4,7 @@
 
 import { $ } from "bun";
 import { parseArgs } from "util";
-import { pathToWorkspaceYaml, rawWorkspaceYaml, workspaceYaml, workspaceYamlObj } from "./lib/common";
+import { pathToOutput, pathToWorkspaceYaml, rawWorkspaceYaml, workspaceYaml, workspaceYamlObj } from "./lib/common";
 
 $.nothrow();
 
@@ -48,6 +48,8 @@ const main = async () => {
         .replace(workspaceYaml.defaultArgs.codeVersion, version);
 
     await Bun.write(pathToWorkspaceYaml, newYaml);
+
+    await Bun.write(pathToOutput, `codeVersion=${version}\ncodeCommit=${commit}`);
 };
 
 await main();
