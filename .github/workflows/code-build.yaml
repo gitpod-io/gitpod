@@ -21,6 +21,7 @@ jobs:
               run: |
                 cd ./components/ide/code/gha-update-image/
                 bun run check-code-build.ts --branch ${{inputs.branch}}
+                cat /tmp/__gh_output.txt
                 cat /tmp/__gh_output.txt >> $GITHUB_OUTPUT
 
             - name: Detect file changes
