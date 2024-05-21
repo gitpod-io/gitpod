@@ -19,7 +19,7 @@ jobs:
             - name: Check for updates
               run: |
                 cd ./components/ide/code/gha-update-image/
-                bun run check-code-build.ts
+                bun run check-code-build.ts --branch ${{inputs.branch}}
 
             - name: Detect file changes
               id: changes
