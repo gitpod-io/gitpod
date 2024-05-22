@@ -170,6 +170,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private user: User | undefined;
     private ideCredentials!: string;
     private workspace!: Workspace;
+    private isDesktopIDE: boolean = false;
 
     private latestInfo?: IDEFrontendDashboardService.Info;
 
@@ -192,6 +193,9 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             }
             if (IDEFrontendDashboardService.isSetStateEventData(event.data)) {
                 this.onDidChangeEmitter.fire(event.data.state);
+                if (event.data.state.desktopIDE) {
+                    this.isDesktopIDE = true;
+                }
             }
             if (IDEFrontendDashboardService.isOpenDesktopIDE(event.data)) {
                 this.openDesktopIDE(event.data.url);
@@ -202,6 +206,10 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
                 return;
             }
             if (this.ownerId !== this.user?.id) {
+                return;
+            }
+            // we only send the close heartbeat if we are in a web IDE
+            if (this.isDesktopIDE) {
                 return;
             }
             // send last heartbeat (wasClosed: true)
