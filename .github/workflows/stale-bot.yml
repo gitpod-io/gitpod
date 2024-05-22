@@ -1,0 +1,30 @@
+name: "Close stale issues and PRs"
+on:
+    schedule:
+        # Run the stalebot every day at 3pm UTC
+        - cron: "00 15 * * *"
+    workflow_dispatch:
+
+jobs:
+    stale:
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+            pull-requests: write
+        steps:
+            - uses: actions/stale@v9
+              with:
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  stale-issue-message: "This issue has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs. Thank you for your contributions."
+                  exempt-issue-labels: "meta: never-stale"
+                  stale-issue-label: "meta: stale"
+                  days-before-stale: 90
+                  days-before-close: 10
+                  stale-pr-message: "This pull request has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs. Thank you for your contributions."
+                  exempt-pr-labels: "meta: never-stale"
+                  stale-pr-label: "meta: stale"
+                  days-before-pr-stale: 10
+                  days-before-pr-close: 5
+                  exempt-milestones: true
+                  ascending: true # old issues/PRs first
+                  operations-per-run: 1000 # default is 30, enlarge for dealing with more issues/PRs
