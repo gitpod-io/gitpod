@@ -46,6 +46,9 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
         if (application.isHeadlessEnvironment) return
 
         runJob(lifetime) {
+            // TODO(hw): debug sleep 1m
+            delay(60000)
+
             val terminals = getSupervisorTerminalsList()
             val tasks = getSupervisorTasksList()
 
@@ -165,6 +168,7 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
         closeTerminalWidgetWhenClientGetsClosed(shellTerminalWidget)
         exitTaskWhenTerminalWidgetGetsClosed(supervisorTerminal, shellTerminalWidget)
         listenForTaskTerminationAndTitleChanges(supervisorTerminal, shellTerminalWidget)
+        thisLogger().info("gitpod: task ${supervisorTerminal.alias} (${supervisorTerminal.title}) attached")
     }
 
     private fun listenForTaskTerminationAndTitleChanges(
