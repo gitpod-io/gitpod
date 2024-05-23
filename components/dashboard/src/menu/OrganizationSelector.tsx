@@ -27,9 +27,10 @@ export default function OrganizationSelector() {
     const getOrgURL = useGetOrgURL();
     const configurationsAndPrebuilds = useHasConfigurationsAndPrebuildsEnabled();
     const showPrebuildMenuItem = useFeatureFlag("showPrebuildsMenuItem");
+    const isDedicated = useFeatureFlag("enableDedicatedOnboardingFlow");
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
-    const canCreateOrgs = user && !isOrganizationOwned(user);
+    const canCreateOrgs = user && !isOrganizationOwned(user) && !isDedicated;
 
     const userFullName = user?.name || "...";
 
