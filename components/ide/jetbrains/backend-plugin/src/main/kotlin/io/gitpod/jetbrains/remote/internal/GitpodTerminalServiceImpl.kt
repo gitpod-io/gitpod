@@ -4,12 +4,14 @@
 
 package io.gitpod.jetbrains.remote.internal
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.coroutines.launch
 import com.jetbrains.rdserver.terminal.BackendTerminalManager
 import io.gitpod.jetbrains.remote.AbstractGitpodTerminalService
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import java.util.*
@@ -21,16 +23,10 @@ class GitpodTerminalServiceImpl(val project: Project) : AbstractGitpodTerminalSe
 
     override fun runJob(lifetime: Lifetime, block: suspend CoroutineScope.() -> Unit) = lifetime.launch { block() }
 
-    override fun createSharedTerminal(title: String): ShellTerminalWidget {
-        val shellTerminalWidget = ShellTerminalWidget.toShellJediTermWidgetOrThrow(
-            terminalToolWindowManager.createShellWidget(
-                null,
-                title,
-                true,
-                false
-            )
-        )
-        backendTerminalManager.shareTerminal(shellTerminalWidget.asNewWidget(), UUID.randomUUID().toString())
+    override suspend fun createSharedTerminal(id: String, title: String): ShellTerminalWidget {
+        val widget = terminalToolWindowManager.createShellWidget(null, title, true, false)
+        val shellTerminalWidget = ShellTerminalWidget.toShellJediTermWidgetOrThrow(widget)
+        backendTerminalManager.shareTerminal(shellTerminalWidget.asNewWidget(), id)
         return shellTerminalWidget
     }
 }

@@ -50,6 +50,7 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
                 val terminals = withTimeout(20000L) { getSupervisorTerminalsList() }
                 val tasks = withTimeout(20000L) { getSupervisorTasksList() }
 
+               delay(5000L)
                 application.invokeLater {
                     createTerminalsAttachedToTasks(terminals, tasks)
                 }
@@ -61,13 +62,12 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
         }
     }
 
-    protected abstract fun createSharedTerminal(title: String): ShellTerminalWidget
+    protected abstract suspend fun createSharedTerminal(id: String, title: String): ShellTerminalWidget
 
     private fun createTerminalsAttachedToTasks(
         terminals: List<TerminalOuterClass.Terminal>,
         tasks: List<Status.TaskStatus>
     ) {
-        thisLogger().info("gitpod: attaching tasks ${tasks.size}, terminals ${terminals.size}")
         if (tasks.isEmpty()) return
 
         val aliasToTerminalMap: MutableMap<String, TerminalOuterClass.Terminal> = mutableMapOf()
@@ -77,17 +77,20 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
             aliasToTerminalMap[terminalAlias] = terminal
         }
 
-        for (task in tasks) {
+        tasks.forEachIndexed { index, task ->
             val terminalAlias = task.terminal
             val terminal = aliasToTerminalMap[terminalAlias]
 
             if (terminal == null) {
                 thisLogger().warn("gitpod: found no terminal for task ${task.id}, expecting ${task.terminal}")
-                continue
+                return
             }
-
-            createAttachedSharedTerminal(terminal)
-            thisLogger().info("gitpod: attached task ${terminal.title} (${task.terminal})")
+            val title = terminal.title.takeIf { !it.isNullOrBlank() } ?: "Gitpod Task ${index + 1}"
+            runBlocking {
+                thisLogger().info("gitpod: attaching task ${terminal.title} (${task.terminal}) with title $title")
+                createAttachedSharedTerminal(title, terminal)
+                thisLogger().info("gitpod: attached task ${terminal.title} (${task.terminal})")
+            }
         }
     }
 
@@ -166,8 +169,8 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
         }
     }
 
-    private fun createAttachedSharedTerminal(supervisorTerminal: TerminalOuterClass.Terminal) {
-        val shellTerminalWidget = createSharedTerminal(supervisorTerminal.title)
+    private suspend fun createAttachedSharedTerminal(title: String, supervisorTerminal: TerminalOuterClass.Terminal) {
+        val shellTerminalWidget = createSharedTerminal(supervisorTerminal.alias, title)
         shellTerminalWidget.executeCommand("gp tasks attach ${supervisorTerminal.alias}")
         closeTerminalWidgetWhenClientGetsClosed(supervisorTerminal, shellTerminalWidget)
         exitTaskWhenTerminalWidgetGetsClosed(supervisorTerminal, shellTerminalWidget)
