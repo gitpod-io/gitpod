@@ -45,9 +45,6 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
         if (application.isHeadlessEnvironment) return
 
         runJob(lifetime) {
-            // TODO(hw): debug sleep 1.5m
-            delay(90000)
-
             thisLogger().info("gitpod: starting tasks' terminals")
             try {
                 val terminals = withTimeout(20000L) { getSupervisorTerminalsList() }
