@@ -12,6 +12,10 @@ RUN mkdir /gp-code \
     && git fetch origin $CODE_COMMIT --depth=1 \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
+
+# Disable v8 cache used by yarn v1.x, refs https://github.com/nodejs/node/issues/51555
+ENV DISABLE_V8_COMPILE_CACHE=1
+
 RUN yarn --cwd remote --frozen-lockfile --network-timeout 180000
 
 FROM gitpod/openvscode-server-linux-build-agent:focal-x64 as code_builder
@@ -27,7 +31,13 @@ ARG CODE_VERSION
 
 RUN sudo mkdir -m 0755 -p /etc/apt/keyrings
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+
+RUN if dpkg --compare-versions "$CODE_VERSION" "ge" "1.90"; then \
+      NODE_VERSION=20; \
+    else \
+      NODE_VERSION=18; \
+    fi && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_VERSION.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && apt-get install -y nodejs
 
 RUN mkdir /gp-code \
@@ -45,6 +55,9 @@ RUN apt-get install -y pkg-config dbus xvfb libgtk-3-0 libxkbfile-dev libkrb5-de
     && service xvfb start \
     # Start dbus session
     && mkdir -p /var/run/dbus
+
+# Disable v8 cache used by yarn v1.x, refs https://github.com/nodejs/node/issues/51555
+ENV DISABLE_V8_COMPILE_CACHE=1
 
 ENV npm_config_arch=x64
 RUN mkdir -p .build \
