@@ -484,8 +484,8 @@ func (l *multiWriterListener) CloseWithError(err error) error {
 		if err != nil {
 			l.closeErr = err
 		}
-		close(l.closeChan)
 		l.closed = true
+		close(l.closeChan)
 
 		// actual cleanup happens in a go routine started by Listen()
 	})
@@ -561,17 +561,19 @@ func (mw *multiWriter) ListenWithOptions(options TermListenOptions) io.ReadClose
 	go func() {
 		// listener cleanup on close
 		<-closeChan
+
 		if res.closeErr != nil {
 			log.WithError(res.closeErr).Error("terminal listener droped out")
 			w.CloseWithError(res.closeErr)
 		} else {
 			w.Close()
 		}
-		close(cchan)
 
 		mw.mu.Lock()
+		defer mw.mu.Unlock()
+		close(cchan)
+
 		delete(mw.listener, res)
-		mw.mu.Unlock()
 	}()
 
 	mw.listener[res] = struct{}{}
