@@ -41,6 +41,7 @@ packages:
       - components/node-labeler:lib
       - dev/addlicense:app
       - components/spicedb:lib
+      - components/server/go:lib
     env:
       - CGO_ENABLED=0
     argdeps:
