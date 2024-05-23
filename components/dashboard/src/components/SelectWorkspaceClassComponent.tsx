@@ -77,12 +77,7 @@ export default function SelectWorkspaceClassComponent({
             );
             return;
         }
-        // if the selected workspace class is not supported, we set an error and ask the user to pick one
-        if (selectedWorkspaceClass && !workspaceClasses?.find((c) => c.id === selectedWorkspaceClass)) {
-            setError?.(`The workspace class '${selectedWorkspaceClass}' is not supported.`);
-        } else {
-            setError?.(undefined);
-        }
+        setError?.(undefined);
     }, [
         loading,
         workspaceClassesLoading,
@@ -106,8 +101,20 @@ export default function SelectWorkspaceClassComponent({
         if (!workspaceClasses) {
             return undefined;
         }
-        const defaultClassId = workspaceClasses.find((ws) => ws.isDefault)?.id;
-        return workspaceClasses.find((ws) => ws.id === (selectedWorkspaceClass || defaultClassId));
+        // first we try to find the selected class, then the computed default, then the global default and finally the first one
+        const selectedWsClass = workspaceClasses.find((ws) => ws.id === selectedWorkspaceClass);
+        if (selectedWsClass) {
+            return selectedWsClass;
+        }
+        const computedDefaultClass = workspaceClasses.find((ws) => ws.isComputedDefaultClass);
+        if (computedDefaultClass) {
+            return computedDefaultClass;
+        }
+        const defaultClass = workspaceClasses.find((ws) => ws.isDefault);
+        if (defaultClass) {
+            return defaultClass;
+        }
+        return workspaceClasses[0];
     }, [selectedWorkspaceClass, workspaceClasses]);
     return (
         <Combobox
