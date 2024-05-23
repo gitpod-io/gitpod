@@ -144,7 +144,7 @@ export interface StartWorkspaceOptions extends Omit<GitpodServer.StartWorkspaceO
 const MAX_INSTANCE_START_RETRIES = 2;
 const INSTANCE_START_RETRY_INTERVAL_SECONDS = 2;
 /** [mins] */
-const SCM_TOKEN_LIFETIME_MINS = 10;
+const SCM_TOKEN_LIFETIME_MINS = 30;
 
 export async function getWorkspaceClassForInstance(
     ctx: TraceContext,
@@ -1852,8 +1852,7 @@ export class WorkspaceStarter {
             targetMode = CloneTargetMode.REMOTE_HEAD;
         }
 
-        const tokenValidityPeriodMins = await getScmAccessTokenLifetimeMins(user);
-        const gitToken = await this.tokenProvider.getTokenForHost(user, host, tokenValidityPeriodMins);
+        const gitToken = await this.tokenProvider.getTokenForHost(user, host, SCM_TOKEN_LIFETIME_MINS);
         if (!gitToken) {
             throw new Error(`No token for host: ${host}`);
         }
@@ -1977,18 +1976,6 @@ export async function isWorkspaceClassDiscoveryEnabled(user: { id: string }): Pr
     return getExperimentsClientForBackend().getValueAsync("workspace_class_discovery_enabled", false, {
         user: user,
     });
-}
-
-export async function getScmAccessTokenLifetimeMins(user: { id: string }): Promise<number> {
-    const customValue = await getExperimentsClientForBackend().getValueAsync<number | undefined>(
-        "workspace_start_scm_access_token_lifetime",
-        undefined,
-        {
-            user: user,
-        },
-    );
-
-    return customValue || SCM_TOKEN_LIFETIME_MINS;
 }
 
 export class ScmStartError extends Error {

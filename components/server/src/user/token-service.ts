@@ -18,7 +18,6 @@ import {
     reportScmTokenRefreshRequest,
     scmTokenRefreshLatencyHistogram,
 } from "../prometheus-metrics";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class TokenService implements TokenProvider {
@@ -94,9 +93,7 @@ export class TokenService implements TokenProvider {
                     const { authProvider } = this.hostContextProvider.get(host)!;
                     if (isValidUntil(token, requestedLifetimeDate)) {
                         const doOpportunisticRefresh =
-                            (await isOpportunisticTokenRefreshEnabled(userId)) &&
-                            !!authProvider.requiresOpportunisticRefresh &&
-                            authProvider.requiresOpportunisticRefresh();
+                            !!authProvider.requiresOpportunisticRefresh && authProvider.requiresOpportunisticRefresh();
                         if (!doOpportunisticRefresh) {
                             // No opportunistic refresh? Update reserveation and we are done.
                             await updateReservation(tokenEntry.uid, token, requestedLifetimeDate);
@@ -201,14 +198,6 @@ export class TokenService implements TokenProvider {
         }
         return hostContext.authProvider.authProviderId;
     }
-}
-
-export async function isOpportunisticTokenRefreshEnabled(userId: string): Promise<boolean> {
-    return getExperimentsClientForBackend().getValueAsync("opportunistic_token_refresh", false, {
-        user: {
-            id: userId,
-        },
-    });
 }
 
 function nowPlusMins(mins: number): Date {
