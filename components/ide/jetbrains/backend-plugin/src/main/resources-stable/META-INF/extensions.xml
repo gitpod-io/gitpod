@@ -6,8 +6,6 @@
 <!--suppress PluginXmlValidity -->
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodTerminalService" client="controller"
-                        preload="true"/>
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodPortForwardingService"
                             serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodPortForwardingServiceImpl"
                             client="controller" preload="true"/>

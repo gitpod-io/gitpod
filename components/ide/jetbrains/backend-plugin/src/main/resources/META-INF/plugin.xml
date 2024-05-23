@@ -27,6 +27,9 @@
                             preload="true"/>
         <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodManager" preload="true"/>
 
+        <projectService serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodTerminalServiceImpl" client="controller"
+                        preload="true"/>
+
         <notificationGroup id="Gitpod Notifications" displayType="BALLOON" isLogByDefault="false"/>
 
         <httpRequestHandler implementation="io.gitpod.jetbrains.remote.GitpodCLIService"/>
