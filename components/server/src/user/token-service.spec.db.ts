@@ -69,7 +69,6 @@ describe("TokenService", async () => {
         container = createTestContainer();
         Experiments.configureTestingClient({
             centralizedPermissions: true,
-            opportunistic_token_refresh: true,
         });
 
         // re-overwrite the stuff mocked out in createTestContainer
