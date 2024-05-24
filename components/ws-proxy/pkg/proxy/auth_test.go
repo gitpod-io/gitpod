@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -232,7 +233,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/", domain), nil)
 			if test.OwnerCookie != "" {
-				setOwnerTokenCookie(req, instanceID, test.OwnerCookie)
+				setOwnerTokenCookie(req, domain, instanceID, test.OwnerCookie)
 			}
 			vars := map[string]string{
 				common.WorkspaceIDIdentifier: test.WorkspaceID,
@@ -252,6 +253,13 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 	}
 }
 
-func setOwnerTokenCookie(r *http.Request, instanceID, token string) {
-	r.AddCookie(&http.Cookie{Name: "_test_domain_com_ws_" + instanceID + "_owner_", Value: token})
+func setOwnerTokenCookie(r *http.Request, domain, instanceID, token string) {
+	c := ownerTokenCookie(domain, instanceID, token)
+	r.AddCookie(c)
+}
+
+func ownerTokenCookie(domain, instanceID, token string) *http.Cookie {
+	domainPart := strings.ReplaceAll(domain, ".", "_")
+	domainPart = strings.ReplaceAll(domainPart, "-", "_")
+	return &http.Cookie{Name: "_" + domainPart + "_ws_" + instanceID + "_owner_", Value: token}
 }
