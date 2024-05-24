@@ -14,7 +14,6 @@ import { Link } from "react-router-dom";
 import { repositoriesRoutes } from "../repositories/repositories.routes";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { isGitpodIo } from "../utils";
-import { ReactComponent as FullArrow } from "../icons/FullArrow.svg";
 
 interface SelectWorkspaceClassProps {
     selectedConfigurationId?: string;
@@ -53,16 +52,15 @@ export default function SelectWorkspaceClassComponent({
             elements.push({
                 id: "learn-more",
                 element: (
-                    <div className="px-1 py-2 text-pk-content-secondary">
-                        <span className="font-bold text-sm ">Need more classes? </span>
+                    <div className="px-1 py-2 text-sm text-pk-content-tertiary">
+                        <span>Need more classes? </span>
                         <a
-                            className="text-sm inline-flex gp-link"
+                            className="text-sm gp-link"
                             href="https://www.gitpod.io/docs/enterprise"
                             target="_blank"
                             rel="noreferrer"
                         >
                             Learn about Gitpod Enterprise
-                            <FullArrow className="ml-2" />
                         </a>
                     </div>
                 ),
