@@ -23,6 +23,7 @@ import { cn } from "@podkit/lib/cn";
 import { userClient } from "./service/public-api";
 import { ProductLogo } from "./components/ProductLogo";
 import { useIsDataOps } from "./data/featureflag-query";
+import { isGitpodIo } from "./utils";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -169,6 +170,19 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                                 </span>
                                             </LoginButton>
                                         ))
+                                    )}
+                                    {isGitpodIo() && (
+                                        <div className="text-pk-content-tertiary py-3">
+                                            <span className="text-sm font-bold">Need SSO? </span>
+                                            <a
+                                                className="text-sm gp-link"
+                                                href="https://www.gitpod.io/docs/enterprise"
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                Try Gitpod Enterprise
+                                            </a>
+                                        </div>
                                     )}
                                     <SSOLoginForm
                                         onSuccess={authorizeSuccessful}
