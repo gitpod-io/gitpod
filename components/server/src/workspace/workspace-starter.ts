@@ -549,8 +549,24 @@ export class WorkspaceStarter {
         });
 
         try {
-            const checkPendingFirst = await isCheckPendingFirstEnabled(user);
-            const doBuildWorkspaceImage = async (): Promise<StartWorkspaceRequest> => {
+            // choose a cluster and start the instance
+            let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
+            let startRequest: StartWorkspaceRequest;
+            let retries = 0;
+            try {
+                if (instance.status.phase === "pending") {
+                    // due to the reconciliation loop we might have already started the workspace, especially in the "pending" phase
+                    const workspaceAlreadyExists = await this.existsWithWsManager(ctx, instance);
+                    if (workspaceAlreadyExists) {
+                        log.debug(
+                            { instanceId: instance.id, workspaceId: instance.workspaceId },
+                            "workspace already exists, not starting again",
+                            { phase: instance.status.phase },
+                        );
+                        return;
+                    }
+                }
+
                 // build workspace image
                 const additionalAuth = await this.getAdditionalImageAuth(envVars);
                 instance = await this.buildWorkspaceImage(
@@ -569,40 +585,12 @@ export class WorkspaceStarter {
 
                 // create start workspace request
                 const metadata = await this.createMetadata(workspace);
-                const startRequest = new StartWorkspaceRequest();
+                startRequest = new StartWorkspaceRequest();
                 startRequest.setId(instance.id);
                 startRequest.setMetadata(metadata);
                 startRequest.setType(workspace.type === "prebuild" ? WorkspaceType.PREBUILD : WorkspaceType.REGULAR);
                 startRequest.setSpec(spec);
                 startRequest.setServicePrefix(workspace.id);
-                return startRequest;
-            };
-            let startRequest: StartWorkspaceRequest | undefined = undefined;
-            if (!checkPendingFirst) {
-                // this is the old path, with "workspace_start_check_pending_first" turned off
-                startRequest = await doBuildWorkspaceImage();
-            }
-
-            // choose a cluster and start the instance
-            let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
-            let retries = 0;
-            try {
-                if (instance.status.phase === "pending") {
-                    // due to the reconciliation loop we might have already started the workspace, especially in the "pending" phase
-                    const workspaceAlreadyExists = await this.existsWithWsManager(ctx, instance);
-                    if (workspaceAlreadyExists) {
-                        log.debug(
-                            { instanceId: instance.id, workspaceId: instance.workspaceId },
-                            "workspace already exists, not starting again",
-                            { phase: instance.status.phase },
-                        );
-                        return;
-                    }
-                }
-                if (!startRequest) {
-                    // this is the new path, with "workspace_start_check_pending_first" turned ON
-                    startRequest = await doBuildWorkspaceImage();
-                }
 
                 for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
                     if (ctxIsAborted()) {
