@@ -548,88 +548,61 @@ export class WorkspaceStarter {
             forceRebuild: forceRebuild,
         });
 
+        // choose a cluster and start the instance
+        let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
+        let startRequest: StartWorkspaceRequest;
+        let retries = 0;
+        let failReason: FailedInstanceStartReason = "other";
         try {
-            // choose a cluster and start the instance
-            let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
-            let startRequest: StartWorkspaceRequest;
-            let retries = 0;
-            try {
-                if (instance.status.phase === "pending") {
-                    // due to the reconciliation loop we might have already started the workspace, especially in the "pending" phase
-                    const workspaceAlreadyExists = await this.existsWithWsManager(ctx, instance);
-                    if (workspaceAlreadyExists) {
-                        log.debug(
-                            { instanceId: instance.id, workspaceId: instance.workspaceId },
-                            "workspace already exists, not starting again",
-                            { phase: instance.status.phase },
-                        );
-                        return;
-                    }
-                }
-
-                // build workspace image
-                const additionalAuth = await this.getAdditionalImageAuth(envVars);
-                instance = await this.buildWorkspaceImage(
-                    { span },
-                    user,
-                    workspace,
-                    instance,
-                    additionalAuth,
-                    forceRebuild,
-                    forceRebuild,
-                    region,
-                );
-
-                // create spec
-                const spec = await this.createSpec({ span }, user, workspace, instance, envVars);
-
-                // create start workspace request
-                const metadata = await this.createMetadata(workspace);
-                startRequest = new StartWorkspaceRequest();
-                startRequest.setId(instance.id);
-                startRequest.setMetadata(metadata);
-                startRequest.setType(workspace.type === "prebuild" ? WorkspaceType.PREBUILD : WorkspaceType.REGULAR);
-                startRequest.setSpec(spec);
-                startRequest.setServicePrefix(workspace.id);
-
-                for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
-                    if (ctxIsAborted()) {
-                        return;
-                    }
-                    resp = await this.tryStartOnCluster({ span }, startRequest, user, workspace, instance, region);
-                    if (resp) {
-                        break;
-                    }
-                    await new Promise((resolve) => setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000));
-                }
-            } catch (err) {
-                if (isGrpcError(err) && err.code === grpc.status.ALREADY_EXISTS) {
-                    // This might happen because of timing: When we did the "workspaceAlreadyExists" check above, the DB state was not updated yet.
-                    // But when calling ws-manager to start the workspace, it was already present.
-                    //
-                    // By returning we skip the current cycle and wait for the next run of the workspace-start-controller.
-                    // This gives ws-manager(-bridge) some time to emit(/digest) updates.
-                    log.info(logCtx, "workspace already exists, waiting for ws-manager to push new state", err);
+            if (instance.status.phase === "pending") {
+                // due to the reconciliation loop we might have already started the workspace, especially in the "pending" phase
+                const workspaceAlreadyExists = await this.existsWithWsManager(ctx, instance);
+                if (workspaceAlreadyExists) {
+                    log.debug(
+                        { instanceId: instance.id, workspaceId: instance.workspaceId },
+                        "workspace already exists, not starting again",
+                        { phase: instance.status.phase },
+                    );
                     return;
                 }
+            }
 
-                if (err instanceof StartInstanceError) {
-                    // we already took care of classification at a lower level, bubble it up!
-                    throw err;
-                }
+            // build workspace image
+            const additionalAuth = await this.getAdditionalImageAuth(envVars);
+            instance = await this.buildWorkspaceImage(
+                { span },
+                user,
+                workspace,
+                instance,
+                additionalAuth,
+                forceRebuild,
+                forceRebuild,
+                region,
+            );
 
-                let reason: FailedInstanceStartReason = "startOnClusterFailed";
-                if (isResourceExhaustedError(err)) {
-                    reason = "resourceExhausted";
+            // create spec
+            const spec = await this.createSpec({ span }, user, workspace, instance, envVars);
+
+            // create start workspace request
+            const metadata = await this.createMetadata(workspace);
+            startRequest = new StartWorkspaceRequest();
+            startRequest.setId(instance.id);
+            startRequest.setMetadata(metadata);
+            startRequest.setType(workspace.type === "prebuild" ? WorkspaceType.PREBUILD : WorkspaceType.REGULAR);
+            startRequest.setSpec(spec);
+            startRequest.setServicePrefix(workspace.id);
+
+            // try to start the workspace on a cluster
+            failReason = "startOnClusterFailed";
+            for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
+                if (ctxIsAborted()) {
+                    return;
                 }
-                if (isClusterMaintenanceError(err)) {
-                    reason = "workspaceClusterMaintenance";
-                    err = new Error(
-                        "We're in the middle of an update. We'll be back to normal soon. Please try again in a few minutes.",
-                    );
+                resp = await this.tryStartOnCluster({ span }, startRequest, user, workspace, instance, region);
+                if (resp) {
+                    break;
                 }
-                await this.failInstanceStart({ span }, err, workspace, instance);
-                throw new StartInstanceError(reason, err);
+                await new Promise((resolve) => setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000));
             }
 
             if (!resp) {
@@ -639,6 +612,7 @@ export class WorkspaceStarter {
             }
             increaseSuccessfulInstanceStartCounter(retries);
 
+            // update analytics
             this.analytics.track({
                 userId: user.id,
                 event: "workspace_started",
@@ -655,6 +629,7 @@ export class WorkspaceStarter {
                 timestamp: new Date(instance.creationTime),
             });
 
+            // update prebuild status hook
             if (workspace.type === "prebuild") {
                 // do not await
                 this.notifyOnPrebuildQueued(ctx, workspace.id).catch((err) => {
@@ -662,17 +637,41 @@ export class WorkspaceStarter {
                 });
             }
         } catch (err) {
-            if (isGrpcError(err) && (err.code === grpc.status.UNAVAILABLE || err.code === grpc.status.ALREADY_EXISTS)) {
+            if (isGrpcError(err) && err.code === grpc.status.ALREADY_EXISTS) {
+                // This might happen because of timing: When we did the "workspaceAlreadyExists" check above, the DB state was not updated yet.
+                // But when calling ws-manager to start the workspace, it was already present.
+                //
+                // By returning we skip the current cycle and wait for the next run of the workspace-start-controller.
+                // This gives ws-manager(-bridge) some time to emit(/digest) updates.
+                log.info(logCtx, "workspace already exists, waiting for ws-manager to push new state", err);
+                return;
+            }
+
+            if (isGrpcError(err) && err.code === grpc.status.UNAVAILABLE) {
                 // fall-through: we don't want to fail but retry/wait for future updates to resolve this
                 log.warn(logCtx, "cannot start workspace instance due to temporary error", err);
-            } else if (ScmStartError.isScmStartError(err)) {
+                return;
+            }
+
+            if (ScmStartError.isScmStartError(err)) {
                 // user does not have access to SCM
                 await this.failInstanceStart({ span }, err, workspace, instance);
                 err = new StartInstanceError("scmAccessFailed", err);
-            } else if (!(err instanceof StartInstanceError)) {
-                // fallback in case we did not already handle this error
+            }
+
+            if (!(err instanceof StartInstanceError)) {
+                // Serves as a catch-all for those cases that we have failed to map before
+                if (isResourceExhaustedError(err)) {
+                    failReason = "resourceExhausted";
+                }
+                if (isClusterMaintenanceError(err)) {
+                    failReason = "workspaceClusterMaintenance";
+                    err = new Error(
+                        "We're in the middle of an update. We'll be back to normal soon. Please try again in a few minutes.",
+                    );
+                }
                 await this.failInstanceStart({ span }, err, workspace, instance);
-                err = new StartInstanceError("other", err); // don't throw because there's nobody catching it. We just want to log/trace it.
+                err = new StartInstanceError(failReason, err);
             }
 
             this.logAndTraceStartWorkspaceError({ span }, logCtx, err);
