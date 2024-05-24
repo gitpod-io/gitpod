@@ -13,6 +13,8 @@ import { PlainMessage } from "@bufbuild/protobuf";
 import { Link } from "react-router-dom";
 import { repositoriesRoutes } from "../repositories/repositories.routes";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { isGitpodIo } from "../utils";
+import { ReactComponent as FullArrow } from "../icons/FullArrow.svg";
 
 interface SelectWorkspaceClassProps {
     selectedConfigurationId?: string;
@@ -42,11 +44,34 @@ export default function SelectWorkspaceClassComponent({
     );
 
     const getElements = useCallback((): ComboboxElement[] => {
-        return (workspaceClasses || [])?.map((c) => ({
+        const elements = (workspaceClasses || [])?.map((c) => ({
             id: c.id,
             element: <WorkspaceClassDropDownElement wsClass={c} />,
             isSelectable: true,
+            customParentClass: "",
         }));
+        if (isGitpodIo()) {
+            elements.push({
+                id: "learn-more",
+                element: (
+                    <div className="py-2 text-pk-content-secondary ">
+                        <span className="font-bold text-sm ">Need more classes? </span>
+                        <a
+                            className="text-sm inline-flex"
+                            href="https://www.gitpod.io/docs/enterprise"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Learn about Gitpod Enterprise
+                            <FullArrow className="ml-2" />
+                        </a>
+                    </div>
+                ),
+                customParentClass: "justify-end",
+                isSelectable: false,
+            });
+        }
+        return elements;
     }, [workspaceClasses]);
 
     useEffect(() => {

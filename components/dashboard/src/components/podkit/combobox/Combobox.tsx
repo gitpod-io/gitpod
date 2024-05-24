@@ -13,6 +13,7 @@ export interface ComboboxElement {
     id: string;
     element: JSX.Element;
     isSelectable?: boolean;
+    customParentClass?: string;
 }
 
 export interface ComboboxProps {
@@ -332,7 +333,12 @@ export const ComboboxItem: FC<ComboboxItemProps> = ({ element, isActive, classNa
     return (
         <li
             id={element.id}
-            className={cn("h-min rounded-lg flex items-center px-2 py-1.5", selectionClasses, className)}
+            className={cn(
+                "h-min rounded-lg flex items-center px-2 py-1.5",
+                selectionClasses,
+                className,
+                element?.customParentClass,
+            )}
             onMouseDown={() => {
                 if (element.isSelectable) {
                     onSelected(element.id);
