@@ -172,9 +172,9 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                         ))
                                     )}
                                     {isGitpodIo() && (
-                                        <div className="text-pk-content-tertiary my-4">
-                                            <span className="text-lg font-bold">Need SSO? </span>
-                                            <a className="text-lg gp-link" href="https://www.gitpod.io/enterprise">
+                                        <div className="text-pk-content-tertiary py-3">
+                                            <span className="text-sm font-bold">Need SSO? </span>
+                                            <a className="text-sm gp-link" href="https://www.gitpod.io/enterprise">
                                                 Try Gitpod Enterprise
                                             </a>
                                         </div>
