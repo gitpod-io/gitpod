@@ -48,7 +48,6 @@ export default function SelectWorkspaceClassComponent({
             id: c.id,
             element: <WorkspaceClassDropDownElement wsClass={c} />,
             isSelectable: true,
-            customParentClass: "",
         }));
         if (isGitpodIo()) {
             elements.push({
@@ -57,7 +56,7 @@ export default function SelectWorkspaceClassComponent({
                     <div className="py-2 text-pk-content-secondary ">
                         <span className="font-bold text-sm ">Need more classes? </span>
                         <a
-                            className="text-sm inline-flex"
+                            className="text-sm inline-flex gp-link"
                             href="https://www.gitpod.io/docs/enterprise"
                             target="_blank"
                             rel="noreferrer"
@@ -67,7 +66,6 @@ export default function SelectWorkspaceClassComponent({
                         </a>
                     </div>
                 ),
-                customParentClass: "justify-end",
                 isSelectable: false,
             });
         }
