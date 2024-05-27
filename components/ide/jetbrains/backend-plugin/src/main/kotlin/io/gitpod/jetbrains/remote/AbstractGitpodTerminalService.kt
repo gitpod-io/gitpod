@@ -89,11 +89,9 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
                 return
             }
             val title = terminal.title.takeIf { !it.isNullOrBlank() } ?: "Gitpod Task ${index + 1}"
-            runBlocking {
-                thisLogger().info("gitpod: attaching task ${terminal.title} (${task.terminal}) with title $title")
-                createAttachedSharedTerminal(title, terminal)
-                thisLogger().info("gitpod: attached task ${terminal.title} (${task.terminal})")
-            }
+            thisLogger().info("gitpod: attaching task ${terminal.title} (${task.terminal}) with title $title")
+            createAttachedSharedTerminal(title, terminal)
+            thisLogger().info("gitpod: attached task ${terminal.title} (${task.terminal})")
         }
     }
 
