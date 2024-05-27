@@ -104,7 +104,7 @@
         "logo": "{{.IdeLogoBase}}/intellijIdeaLogo.svg",
         "label": "Ultimate",
         "image": "{{.Repository}}/ide/intellij:{{.WorkspaceVersions.Workspace.DesktopIdeImages.IntelliJImage.Version}}",
-        "latestImage": "{{.Repository}}/ide/intellij:latest",
+        "latestImage": "{{.ResolvedJBImageLatest.IntelliJ}}",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
@@ -160,7 +160,7 @@
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/golandLogo.svg",
         "image": "{{.Repository}}/ide/goland:{{.WorkspaceVersions.Workspace.DesktopIdeImages.GoLandImage.Version}}",
-        "latestImage": "{{.Repository}}/ide/goland:latest",
+        "latestImage": "{{.ResolvedJBImageLatest.GoLand}}",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
@@ -205,7 +205,7 @@
         "logo": "{{.IdeLogoBase}}/pycharmLogo.svg",
         "label": "Professional",
         "image": "{{.Repository}}/ide/pycharm:{{.WorkspaceVersions.Workspace.DesktopIdeImages.PyCharmImage.Version}}",
-        "latestImage": "{{.Repository}}/ide/pycharm:latest",
+        "latestImage": "{{.ResolvedJBImageLatest.PyCharm}}",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
@@ -249,7 +249,7 @@
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/phpstormLogo.svg",
         "image": "{{.Repository}}/ide/phpstorm:{{.WorkspaceVersions.Workspace.DesktopIdeImages.PhpStormImage.Version}}",
-        "latestImage": "{{.Repository}}/ide/phpstorm:latest",
+        "latestImage": "{{.ResolvedJBImageLatest.PhpStorm}}",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
@@ -293,7 +293,7 @@
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/rubymineLogo.svg",
         "image": "{{.Repository}}/ide/rubymine:{{.WorkspaceVersions.Workspace.DesktopIdeImages.RubyMineImage.Version}}",
-        "latestImage": "{{.Repository}}/ide/rubymine:latest",
+        "latestImage": "{{.ResolvedJBImageLatest.RubyMine}}",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
@@ -337,7 +337,7 @@
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/webstormLogo.svg",
         "image": "{{.Repository}}/ide/webstorm:{{.WorkspaceVersions.Workspace.DesktopIdeImages.WebStormImage.Version}}",
-        "latestImage": "{{.Repository}}/ide/webstorm:latest",
+        "latestImage": "{{.ResolvedJBImageLatest.WebStorm}}",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
@@ -389,7 +389,7 @@
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/riderLogo.svg",
         "image": "{{.Repository}}/ide/rider:{{.WorkspaceVersions.Workspace.DesktopIdeImages.RiderImage.Version}}",
-        "latestImage": "{{.Repository}}/ide/rider:latest",
+        "latestImage": "{{.ResolvedJBImageLatest.Rider}}",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
@@ -433,7 +433,7 @@
         "type": "desktop",
         "logo": "{{.IdeLogoBase}}/clionLogo.svg",
         "image": "{{.Repository}}/ide/clion:{{.WorkspaceVersions.Workspace.DesktopIdeImages.CLionImage.Version}}",
-        "latestImage": "{{.Repository}}/ide/clion:latest",
+        "latestImage": "{{.ResolvedJBImageLatest.CLion}}",
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [

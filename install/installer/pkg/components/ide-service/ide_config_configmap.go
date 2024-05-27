@@ -37,6 +37,17 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return ctx.ImageName(ctx.Config.Repository, name, bundledLatest.Version)
 	}
 
+	type JBImages struct {
+		IntelliJ string
+		GoLand   string
+		PyCharm  string
+		PhpStorm string
+		RubyMine string
+		WebStorm string
+		Rider    string
+		CLion    string
+	}
+
 	type ConfigTemplate struct {
 		Repository  string
 		IdeLogoBase string
@@ -50,6 +61,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		JetBrainsLauncherImage         string
 		JetBrainsPluginImagePrevious   string
 		JetBrainsLauncherImagePrevious string
+		ResolvedJBImageLatest          JBImages
 
 		WorkspaceVersions versions.Components
 	}
@@ -67,6 +79,16 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		JetBrainsLauncherImage:         ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsLauncherImage.Version),
 		JetBrainsPluginImagePrevious:   ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-e7eb44545510a8293c5c6aa814a0ad4e81852e5f"),
 		JetBrainsLauncherImagePrevious: ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, "commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"),
+		ResolvedJBImageLatest: JBImages{
+			IntelliJ: resolveLatestImage(ide.IntelliJDesktopIDEImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJLatestImage),
+			GoLand:   resolveLatestImage(ide.GoLandDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandLatestImage),
+			PyCharm:  resolveLatestImage(ide.PyCharmDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmLatestImage),
+			PhpStorm: resolveLatestImage(ide.PhpStormDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormLatestImage),
+			RubyMine: resolveLatestImage(ide.RubyMineDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.RubyMineLatestImage),
+			WebStorm: resolveLatestImage(ide.WebStormDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.WebStormLatestImage),
+			Rider:    resolveLatestImage(ide.RiderDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.RiderLatestImage),
+			CLion:    resolveLatestImage(ide.CLionDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CLionLatestImage),
+		},
 
 		WorkspaceVersions: ctx.VersionManifest.Components,
 	}
