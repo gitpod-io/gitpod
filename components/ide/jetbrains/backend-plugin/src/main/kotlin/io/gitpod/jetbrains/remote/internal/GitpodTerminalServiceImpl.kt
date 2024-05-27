@@ -24,7 +24,14 @@ class GitpodTerminalServiceImpl(val project: Project) : AbstractGitpodTerminalSe
     override fun runJob(lifetime: Lifetime, block: suspend CoroutineScope.() -> Unit) = lifetime.launch { block() }
 
     override fun createSharedTerminal(id: String, title: String): ShellTerminalWidget {
-        val shellTerminalWidget = ShellTerminalWidget.toShellJediTermWidgetOrThrow(terminalToolWindowManager.createShellWidget(null, title, true, false))
+        val shellTerminalWidget = ShellTerminalWidget.toShellJediTermWidgetOrThrow(
+            terminalToolWindowManager.createShellWidget(
+                null,
+                title,
+                true,
+                false
+            )
+        )
         backendTerminalManager.shareTerminal(shellTerminalWidget.asNewWidget(), id)
         return shellTerminalWidget
     }
