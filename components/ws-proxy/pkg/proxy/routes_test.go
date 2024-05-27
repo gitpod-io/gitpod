@@ -27,7 +27,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
-	server_lib "github.com/gitpod-io/gitpod/server/pkg/lib"
+	server_lib "github.com/gitpod-io/gitpod/server/go/pkg/lib"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"

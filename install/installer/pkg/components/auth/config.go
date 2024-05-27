@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	server_lib "github.com/gitpod-io/gitpod/server/pkg/lib"
+	server_lib "github.com/gitpod-io/gitpod/server/go/pkg/lib"
 	corev1 "k8s.io/api/core/v1"
 )
 

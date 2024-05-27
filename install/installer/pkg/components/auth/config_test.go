@@ -7,7 +7,7 @@ package auth
 import (
 	"testing"
 
-	server_lib "github.com/gitpod-io/gitpod/server/pkg/lib"
+	server_lib "github.com/gitpod-io/gitpod/server/go/pkg/lib"
 )
 
 func TestCookieNameFromDomain(t *testing.T) {
