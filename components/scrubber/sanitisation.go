@@ -88,6 +88,11 @@ func SanitiseHashURLPathSegments(value string, opts ...SanitiserOption) string {
 		"tag",
 		"tags",
 		"tree",
+		"users",
+		"projects",
+		"scm",
+		"repos",
+		"browse",
 	}
 
 	var pathSegements []string
@@ -103,6 +108,9 @@ SEGMENTS:
 			pathSegements = append(pathSegements, p)
 			continue SEGMENTS
 		}
+
+		p = strings.TrimPrefix(p, "~")
+		p = strings.TrimSuffix(p, ".git")
 
 		for _, a := range pathSegmentAllowList {
 			if p == a {
