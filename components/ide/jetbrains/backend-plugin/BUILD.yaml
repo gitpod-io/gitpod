@@ -80,3 +80,10 @@ packages:
     config:
       commands:
         - ["./build.sh"]
+  - name: latest-info
+    type: generic
+    srcs:
+      - "gradle-latest.properties"
+    config:
+      commands:
+        - ["echo", "hello"]

@@ -91,6 +91,7 @@ const generateIDEDownloadPackage = function (ideConfig, qualifier) {
         config: {
             commands: [["./download.sh"]],
         },
+        deps: [],
     };
     if (qualifier === "stable") {
         pkg.env.push(`JETBRAINS_BACKEND_URL=${args[`${ideConfig.name}DownloadUrl`]}`);
@@ -98,6 +99,11 @@ const generateIDEDownloadPackage = function (ideConfig, qualifier) {
         let url = `https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=${ideConfig.productCode}`;
         if (args["buildNumber"]) {
             url = `${url}&build=${args["buildNumber"]}`;
+        } else {
+            pkg.srcs.push("resolve-latest-ide-version.sh");
+            pkg.deps.push("components/ide/jetbrains/backend-plugin:latest-info");
+            pkg.env.push("PRODUCT_CODE=" + ideConfig.productCode);
+            pkg.env.push("PARSE_URL_FROM_LATEST_INFO=true");
         }
         pkg.env.push(`JETBRAINS_BACKEND_URL=${url}`);
     }
