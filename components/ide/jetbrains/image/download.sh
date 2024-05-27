@@ -14,7 +14,11 @@ if [ "$PARSE_URL_FROM_LATEST_INFO" = "true" ]; then
     IDE_BUILD_VERSION=$(jq -r -c "first(.${PRODUCT_CODE}[] | select(.build | contains(\"$PLUGIN_PLATFORM_VERSION\")) | .build)" < "$TEMP_FILENAME") # Example: IDE_BUILD_VERSION: 223.7571.176
     rm "$TEMP_FILENAME"
 
-    JETBRAINS_BACKEND_URL="https://data.services.jetbrains.com/products/releases?code=$PRODUCT_CODE&type=eap,rc,release&platform=linux&buildNumber=$IDE_BUILD_VERSION"
+    if [ -n "$IDE_BUILD_VERSION" ]; then
+        JETBRAINS_BACKEND_URL="https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=$PRODUCT_CODE&build=$IDE_BUILD_VERSION"
+    else
+        JETBRAINS_BACKEND_URL="https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=$PRODUCT_CODE"
+    fi
 fi
 
 echo "Downloading from $JETBRAINS_BACKEND_URL"
