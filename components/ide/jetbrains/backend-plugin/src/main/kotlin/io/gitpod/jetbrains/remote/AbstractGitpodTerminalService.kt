@@ -45,24 +45,24 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
         if (application.isHeadlessEnvironment) return
 
         runJob(lifetime) {
-            thisLogger().info("gitpod: starting tasks' terminals")
             try {
                 val terminals = withTimeout(20000L) { getSupervisorTerminalsList() }
                 val tasks = withTimeout(20000L) { getSupervisorTasksList() }
-
-               delay(5000L)
+                thisLogger().info("gitpod: attaching tasks ${tasks.size}, terminals ${terminals.size}")
+                // see internal chat https://gitpod.slack.com/archives/C02BRJLGPGF/p1716540080028119
+                delay(5000L)
                 application.invokeLater {
                     createTerminalsAttachedToTasks(terminals, tasks)
                 }
             } catch (e: TimeoutCancellationException) {
-                thisLogger().error("gitpod: Timeout while fetching terminals or tasks", e)
+                thisLogger().error("gitpod: timeout while fetching tasks or terminals", e)
             } catch (e: Exception) {
-                thisLogger().error("gitpod: Error while attaching tasks' terminals", e)
+                thisLogger().error("gitpod: error while attaching tasks", e)
             }
         }
     }
 
-    protected abstract suspend fun createSharedTerminal(id: String, title: String): ShellTerminalWidget
+    protected abstract fun createSharedTerminal(id: String, title: String): ShellTerminalWidget
 
     private fun createTerminalsAttachedToTasks(
         terminals: List<TerminalOuterClass.Terminal>,
@@ -169,7 +169,7 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
         }
     }
 
-    private suspend fun createAttachedSharedTerminal(title: String, supervisorTerminal: TerminalOuterClass.Terminal) {
+    private fun createAttachedSharedTerminal(title: String, supervisorTerminal: TerminalOuterClass.Terminal) {
         val shellTerminalWidget = createSharedTerminal(supervisorTerminal.alias, title)
         shellTerminalWidget.executeCommand("gp tasks attach ${supervisorTerminal.alias}")
         closeTerminalWidgetWhenClientGetsClosed(supervisorTerminal, shellTerminalWidget)
@@ -235,14 +235,11 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
                     throwable is InterruptedException
                 ) {
                     shellTerminalWidget.close()
-                    thisLogger().info(
-                        "gitpod: Stopped listening to '${supervisorTerminal.title}' terminal due to an expected exception."
-                    )
                     break
                 }
 
                 thisLogger().error(
-                    "gitpod: Got an error while listening to '${supervisorTerminal.title}' terminal. Trying again in one second.",
+                    "gitpod: got an error while listening to '${supervisorTerminal.title}' terminal. Trying again in one second.",
                     throwable
                 )
             }
@@ -260,7 +257,7 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
                 runJob(lifetime) {
                     delay(5000)
                     try {
-                        thisLogger().info("gitpod: shutdown task terminal service ${supervisorTerminal.title} (${supervisorTerminal.alias})")
+                        thisLogger().info("gitpod: shutdown task ${supervisorTerminal.title} (${supervisorTerminal.alias})")
                         terminalServiceFutureStub.shutdown(
                             TerminalOuterClass.ShutdownTerminalRequest.newBuilder()
                                 .setAlias(supervisorTerminal.alias)
@@ -268,7 +265,7 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
                         ).await()
                     } catch (throwable: Throwable) {
                         thisLogger().error(
-                            "gitpod: Got an error while shutting down '${supervisorTerminal.title}' terminal.",
+                            "gitpod: got an error while shutting down '${supervisorTerminal.title}' terminal.",
                             throwable
                         )
                     }
@@ -283,7 +280,7 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
     ) {
         @Suppress("UnstableApiUsage")
         lifetime.onTerminationOrNow {
-            thisLogger().info("gitpod: closing task terminal service ${supervisorTerminal.title} (${supervisorTerminal.alias})")
+            thisLogger().debug("gitpod: closing task terminal service ${supervisorTerminal.title} (${supervisorTerminal.alias})")
             shellTerminalWidget.close()
         }
     }
