@@ -4,7 +4,11 @@
 
 package auth
 
-import "testing"
+import (
+	"testing"
+
+	server_lib "github.com/gitpod-io/gitpod/server/go/pkg/lib"
+)
 
 func TestCookieNameFromDomain(t *testing.T) {
 	tests := []struct {
@@ -56,7 +60,7 @@ func TestCookieNameFromDomain(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := cookieNameFromDomain(tt.domain)
+			actual := server_lib.CookieNameFromDomain(tt.domain)
 			if actual != tt.expectedOutcome {
 				t.Errorf("expected %q, got %q", tt.expectedOutcome, actual)
 			}

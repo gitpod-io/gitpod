@@ -1,11 +1,12 @@
 module github.com/gitpod-io/gitpod/ws-proxy
 
-go 1.22
+go 1.22.2
 
 require (
 	github.com/bombsimon/logrusr/v2 v2.0.1
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/server/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/golang-crypto v0.0.0-20231122075959-de838e9cb174
@@ -117,6 +118,8 @@ replace github.com/gitpod-io/gitpod/registry-facade/api => ../registry-facade-ap
 replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-manager/api => ../ws-manager-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/server/go => ../server/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.29.3 // leeway indirect from components/common-go:lib
 

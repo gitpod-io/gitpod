@@ -27,6 +27,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
+	server_lib "github.com/gitpod-io/gitpod/server/go/pkg/lib"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
@@ -978,13 +979,14 @@ func TestNoSSHGatewayRouter(t *testing.T) {
 
 func TestRemoveSensitiveCookies(t *testing.T) {
 	var (
-		domain            = "test-domain.com"
-		sessionCookie     = &http.Cookie{Domain: domain, Name: "_test_domain_com_", Value: "fobar"}
-		sessionCookieJwt2 = &http.Cookie{Domain: domain, Name: "_test_domain_com_jwt2_", Value: "fobar"}
-		portAuthCookie    = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_port_auth_", Value: "some-token"}
-		ownerCookie       = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_owner_", Value: "some-other-token"}
-		miscCookie        = &http.Cookie{Domain: domain, Name: "some-other-cookie", Value: "I like cookies"}
-		invalidCookieName = &http.Cookie{Domain: domain, Name: "foobar[0]", Value: "violates RFC6266"}
+		domain                  = "test-domain.com"
+		sessionCookie           = &http.Cookie{Domain: domain, Name: "_test_domain_com_", Value: "fobar"}
+		sessionCookieJwt2       = &http.Cookie{Domain: domain, Name: "_test_domain_com_jwt2_", Value: "fobar"}
+		realGitpodSessionCookie = &http.Cookie{Domain: domain, Name: server_lib.CookieNameFromDomain(domain), Value: "fobar"}
+		portAuthCookie          = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_port_auth_", Value: "some-token"}
+		ownerCookie             = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_owner_", Value: "some-other-token"}
+		miscCookie              = &http.Cookie{Domain: domain, Name: "some-other-cookie", Value: "I like cookies"}
+		invalidCookieName       = &http.Cookie{Domain: domain, Name: "foobar[0]", Value: "violates RFC6266"}
 	)
 
 	tests := []struct {
@@ -992,13 +994,14 @@ func TestRemoveSensitiveCookies(t *testing.T) {
 		Input    []*http.Cookie
 		Expected []*http.Cookie
 	}{
-		{"no cookies", []*http.Cookie{}, []*http.Cookie{}},
-		{"session cookie", []*http.Cookie{sessionCookie, miscCookie}, []*http.Cookie{miscCookie}},
-		{"session cookie ending on _jwt2_", []*http.Cookie{sessionCookieJwt2, miscCookie}, []*http.Cookie{miscCookie}},
-		{"portAuth cookie", []*http.Cookie{portAuthCookie, miscCookie}, []*http.Cookie{miscCookie}},
-		{"owner cookie", []*http.Cookie{ownerCookie, miscCookie}, []*http.Cookie{miscCookie}},
-		{"misc cookie", []*http.Cookie{miscCookie}, []*http.Cookie{miscCookie}},
-		{"invalid cookie name", []*http.Cookie{invalidCookieName}, []*http.Cookie{invalidCookieName}},
+		{Name: "no cookies", Input: []*http.Cookie{}, Expected: []*http.Cookie{}},
+		{Name: "session cookie", Input: []*http.Cookie{sessionCookie, miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "session cookie ending on _jwt2_", Input: []*http.Cookie{sessionCookieJwt2, miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "real Gitpod session cookie", Input: []*http.Cookie{realGitpodSessionCookie, miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "portAuth cookie", Input: []*http.Cookie{portAuthCookie, miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "owner cookie", Input: []*http.Cookie{ownerCookie, miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "misc cookie", Input: []*http.Cookie{miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "invalid cookie name", Input: []*http.Cookie{invalidCookieName}, Expected: []*http.Cookie{invalidCookieName}},
 	}
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
@@ -1020,9 +1023,9 @@ func TestSensitiveCookieHandler(t *testing.T) {
 		Input    string
 		Expected string
 	}{
-		{"no cookies", "", ""},
-		{"valid cookie", miscCookie.String(), `some-other-cookie="I like cookies";Domain=test-domain.com`},
-		{"invalid cookie", `foobar[0]="violates RFC6266"`, `foobar[0]="violates RFC6266"`},
+		{Name: "no cookies", Input: "", Expected: ""},
+		{Name: "valid cookie", Input: miscCookie.String(), Expected: `some-other-cookie="I like cookies";Domain=test-domain.com`},
+		{Name: "invalid cookie", Input: `foobar[0]="violates RFC6266"`, Expected: `foobar[0]="violates RFC6266"`},
 	}
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {

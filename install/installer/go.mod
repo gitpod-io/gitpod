@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/installer
 
-go 1.22
+go 1.22.2
 
 require (
 	github.com/Masterminds/semver v1.5.0
@@ -19,6 +19,7 @@ require (
 	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/openvsx-proxy v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/registry-facade/api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/server/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/usage v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
@@ -361,6 +362,8 @@ replace github.com/gitpod-io/gitpod/ws-manager/api => ../../components/ws-manage
 replace github.com/gitpod-io/gitpod/ws-proxy => ../../components/ws-proxy // leeway
 
 replace github.com/gitpod-io/gitpod/node-labeler => ../../components/node-labeler // leeway
+
+replace github.com/gitpod-io/gitpod/server/go => ../../components/server/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.29.3 // leeway indirect from components/common-go:lib
 
