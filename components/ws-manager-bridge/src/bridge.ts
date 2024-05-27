@@ -109,6 +109,7 @@ export class WorkspaceManagerBridge implements Disposable {
             controllerIntervalSeconds,
             this.config.controllerMaxDisconnectSeconds,
         );
+        this.disposables.push(this.workspaceInstanceController);
 
         const tim = setInterval(() => {
             this.updateWorkspaceClasses(cluster, clientProvider);
