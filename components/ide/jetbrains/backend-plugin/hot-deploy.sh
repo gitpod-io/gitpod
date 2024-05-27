@@ -21,24 +21,26 @@ leeway build -DnoVerifyJBPlugin=true -Dversion="$version" -DimageRepoBase=eu.gcr
 dev_image="$(tar xfO "$bldfn" ./imgnames.txt | head -n1)"
 echo "Dev Image: $dev_image"
 
+ide_list=("intellij" "goland" "pycharm" "phpstorm" "rubymine" "webstorm" "rider" "clion")
+
 if [ "$qualifier" == "stable" ]; then
-    prop="pluginImage"
+  prop_list=("pluginImage" "imageLayers[0]")
 else
-    prop="pluginLatestImage"
+  prop_list=("pluginLatestImage" "latestImageLayers[0]")
 fi
 
 cf_patch=$(kubectl get cm ide-config -o=json | jq '.data."config.json"' |jq -r)
-cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.intellij.$prop = \"$dev_image\"")
-cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.goland.$prop = \"$dev_image\"")
-cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.pycharm.$prop = \"$dev_image\"")
-cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.phpstorm.$prop = \"$dev_image\"")
-cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.rubymine.$prop = \"$dev_image\"")
-cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.webstorm.$prop = \"$dev_image\"")
-cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.rider.$prop = \"$dev_image\"")
-cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.clion.$prop = \"$dev_image\"")
+
+for ide in "${ide_list[@]}"; do
+  for prop in "${prop_list[@]}"; do
+    cf_patch=$(echo "$cf_patch" | jq ".ideOptions.options.$ide.$prop = \"$dev_image\"")
+  done
+done
+
 cf_patch=$(echo "$cf_patch" |jq tostring)
 cf_patch="{\"data\": {\"config.json\": $cf_patch}}"
 
 kubectl patch cm ide-config --type=merge -p "$cf_patch"
 
 kubectl rollout restart deployment ide-service
+kubectl rollout restart deployment server
