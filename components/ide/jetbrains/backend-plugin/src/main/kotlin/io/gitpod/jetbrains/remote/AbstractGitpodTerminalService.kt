@@ -49,6 +49,9 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
                 val terminals = withTimeout(20000L) { getSupervisorTerminalsList() }
                 val tasks = withTimeout(20000L) { getSupervisorTasksList() }
                 thisLogger().info("gitpod: attaching tasks ${tasks.size}, terminals ${terminals.size}")
+                if (tasks.isEmpty() && terminals.isEmpty()) {
+                    return@runJob
+                }
                 // see internal chat https://gitpod.slack.com/archives/C02BRJLGPGF/p1716540080028119
                 delay(5000L)
                 application.invokeLater {
