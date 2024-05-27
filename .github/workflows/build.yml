@@ -198,15 +198,6 @@ jobs:
             echo "::error title=The Pre-Commit Checks Failed.::Please run 'pre-commit run --show-diff-on-failure'"
           fi
           exit "$RESULT"
-      - name: Get Secrets from GCP
-        id: "secrets"
-        if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
-        uses: "google-github-actions/get-secretmanager-secrets@v1"
-        with:
-          secrets: |-
-            npm-auth-token:gitpod-core-dev/npm-auth-token
-            jb-marketplace-publish-token:gitpod-core-dev/jb-marketplace-publish-token
-            codecov-token:gitpod-core-dev/codecov
       - name: Dev Build
         id: dev-build
         env:
@@ -247,11 +238,11 @@ jobs:
           VERSION: ${{needs.configuration.outputs.version}}
           PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
           PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
-          NPM_AUTH_TOKEN: "${{ steps.secrets.outputs.npm-auth-token }}"
+          NPM_AUTH_TOKEN: "${{ secrets.NPM_AUTH_TOKEN }}"
           PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
-          JB_MARKETPLACE_PUBLISH_TOKEN: "${{ steps.secrets.outputs.jb-marketplace-publish-token }}"
+          JB_MARKETPLACE_PUBLISH_TOKEN: "${{ secrets.JB_MARKETPLACE_PUBLISH_TOKEN }}"
           PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
-          CODECOV_TOKEN: "${{ steps.secrets.outputs.codecov-token }}"
+          CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
           LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
           IMAGE_REPO_BASE: ${{needs.configuration.outputs.image_repo_base}}/build
         run: |
