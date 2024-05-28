@@ -88,11 +88,13 @@ func SanitiseHashURLPathSegments(value string, opts ...SanitiserOption) string {
 		"tag",
 		"tags",
 		"tree",
+		// Bitbucket ENT-126
 		"users",
 		"projects",
 		"scm",
 		"repos",
 		"browse",
+		"branches",
 	}
 
 	var pathSegements []string
