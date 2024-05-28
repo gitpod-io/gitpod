@@ -280,7 +280,7 @@ const WorkspaceClassesEnterpriseCallout = () => {
         <ConfigurationSettingsField className="bg-pk-surface-secondary">
             <Heading3 className="flex items-center gap-4">
                 Additional workspace classes
-                <PillLabel type="warn" className="!py-0.5">
+                <PillLabel type="warn" className="!px-3 !py-0 !text-xs border">
                     <span className="text-sm font-semibold text-pk-content-secondary">Enterprise</span>
                 </PillLabel>
             </Heading3>
