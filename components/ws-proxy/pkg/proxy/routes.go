@@ -385,9 +385,9 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 	r.Use(ir.Config.CorsHandler)
 	r.Use(ir.workspaceMustExistHandler)
 
-	directIDEPass := ir.Config.WorkspaceAuthHandler(
-		proxyPass(ir.Config, ir.InfoProvider, workspacePodResolver),
-	)
+	proxyPassWoSensitiveCookies := sensitiveCookieHandler(ir.Config.Config.GitpodInstallation.HostName)(proxyPass(ir.Config, ir.InfoProvider, workspacePodResolver))
+	directIDEPass := ir.Config.WorkspaceAuthHandler(proxyPassWoSensitiveCookies)
+
 	// always hit the blobserver to ensure that blob is downloaded
 	r.NewRoute().HandlerFunc(proxyPass(ir.Config, ir.InfoProvider, dynamicIDEResolver, func(h *proxyPassConfig) {
 		h.Transport = &blobserveTransport{
@@ -487,6 +487,9 @@ func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvi
 	r.Use(logHandler)
 	r.Use(logRouteHandlerHandler("BlobserveRootHandler"))
 
+	// filter all session cookies
+	r.Use(sensitiveCookieHandler(config.Config.GitpodInstallation.HostName))
+
 	targetResolver := func(cfg *Config, infoProvider common.WorkspaceInfoProvider, req *http.Request) (tgt *url.URL, err error) {
 		segments := strings.SplitN(req.URL.Path, imagePathSeparator, 2)
 		if len(segments) < 2 {
@@ -517,6 +520,7 @@ func installDebugWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, info
 	r.Use(config.WorkspaceAuthHandler)
 	// filter all session cookies
 	r.Use(sensitiveCookieHandler(config.Config.GitpodInstallation.HostName))
+
 	r.NewRoute().HandlerFunc(proxyPass(config, infoProvider, workspacePodResolver, withHTTPErrorHandler(showPortNotFoundPage)))
 	return nil
 }
