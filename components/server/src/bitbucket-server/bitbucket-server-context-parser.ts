@@ -137,7 +137,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
     ): Promise<NavigatorContext> {
         const span = TraceContext.startSpan("BitbucketServerContextParser.handleNavigatorContext", ctx);
         try {
-            const repo = await this.api.getRepository(user, {
+            const repoPromise = this.api.getRepository(user, {
                 repoKind,
                 owner,
                 repositorySlug: repoName,
@@ -147,6 +147,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
                 owner,
                 repositorySlug: repoName,
             });
+            const repo = await repoPromise;
             const repository = this.toRepository(host, repo, repoKind, defaultBranch);
             span.log({ "request.finished": "" });
 

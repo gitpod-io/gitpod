@@ -26,11 +26,38 @@ export class ConfigInferrer {
     ];
 
     async getConfig(ctx: Context): Promise<WorkspaceConfig> {
-        for (const contrib of this.contributions) {
-            try {
-                await contrib(ctx);
-            } catch (e) {
-                console.log(e);
+        // initialize cache
+        await Promise.allSettled(
+            [
+                "package.json",
+                "yarn.lock",
+                "pnpm-lock.yaml",
+                "build.gradle",
+                "build.gradle.kts",
+                "gradlew",
+                "pom.xml",
+                "mvnw",
+                "Makefile",
+                "makefile",
+                "CMakeLists.txt",
+                "requirements.txt",
+                "setup.py",
+                "main.py",
+                "app.py",
+                "runserver.py",
+                "go.mod",
+                "Cargo.toml",
+                "packages.config",
+                "Gemfile",
+                "bin/setup",
+                "bin/startup",
+                "bin/rails",
+            ].map((file) => ctx.read(file)),
+        );
+        const result = await Promise.allSettled(this.contributions.map((contrib) => contrib(ctx)));
+        for (const p of result) {
+            if (p.status === "rejected") {
+                console.error(p.reason);
             }
         }
         return ctx.config;
