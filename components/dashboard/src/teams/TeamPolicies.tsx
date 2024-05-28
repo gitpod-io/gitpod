@@ -280,12 +280,12 @@ const WorkspaceClassesEnterpriseCallout = () => {
         <ConfigurationSettingsField className="bg-pk-surface-secondary">
             <Heading3 className="flex items-center gap-4">
                 Additional workspace classes
-                <PillLabel type="warn" className="py-0.5">
+                <PillLabel type="warn" className="!py-0.5">
                     <span className="text-sm font-semibold text-pk-content-secondary">Enterprise</span>
                 </PillLabel>
             </Heading3>
             <Subheading>
-                Access to more powerful workspace classes with up to 30 cores, 54GB of RAM and 100GB storage
+                Access to more powerful workspace classes with up to 30 cores 54GB of RAM and 100GB storage
             </Subheading>
 
             <div className="mt-6 flex flex-row space-x-2">
