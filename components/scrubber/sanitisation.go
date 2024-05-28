@@ -88,6 +88,13 @@ func SanitiseHashURLPathSegments(value string, opts ...SanitiserOption) string {
 		"tag",
 		"tags",
 		"tree",
+		// Bitbucket ENT-126
+		"users",
+		"projects",
+		"scm",
+		"repos",
+		"browse",
+		"branches",
 	}
 
 	var pathSegements []string
@@ -103,6 +110,9 @@ SEGMENTS:
 			pathSegements = append(pathSegements, p)
 			continue SEGMENTS
 		}
+
+		p = strings.TrimPrefix(p, "~")
+		p = strings.TrimSuffix(p, ".git")
 
 		for _, a := range pathSegmentAllowList {
 			if p == a {
