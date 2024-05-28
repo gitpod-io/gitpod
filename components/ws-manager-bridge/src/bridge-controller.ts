@@ -16,6 +16,7 @@ import { Queue } from "@gitpod/gitpod-protocol";
 import { defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import * as grpc from "@grpc/grpc-js";
 import { Metrics } from "./metrics";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 @injectable()
 export class BridgeController {
@@ -57,13 +58,16 @@ export class BridgeController {
     private async reconcile() {
         return this.reconcileQueue.enqueue(async () => {
             const allClusters = await this.getAllWorkspaceClusters();
-            log.info("reconciling clusters...", { allClusters: Array.from(allClusters.keys()) });
+            log.info("reconciling clusters...", {
+                allClusters: new TrustedValue(Array.from(allClusters.keys())),
+                bridges: new TrustedValue(Array.from(this.bridges.keys())),
+            });
             const toDelete: string[] = [];
             try {
                 for (const [name, bridge] of this.bridges) {
                     const cluster = allClusters.get(name);
                     if (!cluster) {
-                        log.debug("reconcile: cluster not present anymore, stopping", { name });
+                        log.info("reconcile: cluster not present anymore, stopping", { name });
                         bridge.stop();
                         toDelete.push(name);
                     } else {
@@ -79,11 +83,14 @@ export class BridgeController {
 
             this.metrics.updateClusterMetrics(Array.from(allClusters).map(([_, c]) => c));
             for (const [name, newCluster] of allClusters) {
-                log.debug("reconcile: create bridge for new cluster", { name });
+                log.info("reconcile: create bridge for new cluster", { name });
                 const bridge = await this.createAndStartBridge(newCluster);
                 this.bridges.set(newCluster.name, bridge);
             }
-            log.info("done reconciling.", { allClusters: Array.from(allClusters.keys()) });
+            log.info("done reconciling.", {
+                newClusters: new TrustedValue(Array.from(allClusters.keys())),
+                bridges: new TrustedValue(Array.from(this.bridges.keys())),
+            });
         });
     }
 
