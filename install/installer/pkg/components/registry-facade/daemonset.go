@@ -189,6 +189,13 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					RestartPolicy:                 corev1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					InitContainers:                initContainers,
+					Tolerations: []corev1.Toleration{
+						{
+							Key:      "gitpod.io/gpu",
+							Operator: "Exists",
+							Effect:   "NoSchedule",
+						},
+					},
 					Containers: []corev1.Container{{
 						Name:            Component,
 						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.RegistryFacade.Version),
