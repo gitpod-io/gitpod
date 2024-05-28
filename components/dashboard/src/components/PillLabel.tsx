@@ -8,7 +8,7 @@ export type PillType = "info" | "warn" | "success" | "neutral";
 
 const PillClsMap: Record<PillType, string> = {
     info: "bg-blue-50 text-blue-500 dark:bg-blue-500 dark:text-blue-100",
-    warn: "bg-orange-100 text-orange-700 dark:bg-orange-600 dark:text-orange-100",
+    warn: "bg-kumquat-light text-pk-content-secondary",
     success: "bg-green-100 text-green-700 dark:bg-green-600 dark:text-green-100",
     neutral: "bg-gray-300 text-gray-800 dark:bg-gray-600 dark:text-gray-100",
 };

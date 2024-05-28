@@ -29,8 +29,10 @@ import { Button } from "@podkit/buttons/Button";
 import { useInstallationDefaultWorkspaceImageQuery } from "../data/installation/default-workspace-image-query";
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
+import { useDocumentTitle } from "../hooks/use-document-title";
 
 export default function TeamSettingsPage() {
+    useDocumentTitle("Organization Settings - General");
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
     const isOwner = useIsOwner();
@@ -118,8 +120,10 @@ export default function TeamSettingsPage() {
             <OrgSettingsPage>
                 <div className="space-y-4">
                     <div>
-                        <Heading2>Organization Details</Heading2>
-                        <Subheading>Details of your organization within Gitpod.</Subheading>
+                        <Heading2>General</Heading2>
+                        <Subheading>
+                            Set the default role and workspace image, name or delete your organization.
+                        </Subheading>
                     </div>
                     <ConfigurationSettingsField>
                         {updateOrg.isError && (

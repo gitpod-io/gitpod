@@ -11,6 +11,7 @@ import React from "react";
 export interface LinkButtonProps extends ButtonProps {
     asChild?: false;
     href: string;
+    isExternalUrl?: boolean;
 }
 
 /**
@@ -20,7 +21,13 @@ export const LinkButton = React.forwardRef<HTMLButtonElement, LinkButtonProps>(
     ({ asChild, children, href, ...props }, ref) => {
         return (
             <Button ref={ref} {...props} asChild>
-                <Link to={href}>{children}</Link>
+                {props.isExternalUrl ? (
+                    <a href={href} target="_blank" rel="noreferrer">
+                        {children}
+                    </a>
+                ) : (
+                    <Link to={href}>{children}</Link>
+                )}
             </Button>
         );
     },

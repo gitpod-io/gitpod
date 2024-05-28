@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { isGitpodIo } from "../utils";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import React, { useCallback, useMemo, useState } from "react";
 import Alert from "../components/Alert";
@@ -27,9 +28,11 @@ import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-
 import { IdeOptions, IdeOptionsModifyModal, IdeOptionsModifyModalProps } from "../components/IdeOptions";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { useDocumentTitle } from "../hooks/use-document-title";
+import { LinkButton } from "@podkit/buttons/LinkButton";
+import PillLabel from "../components/PillLabel";
 
 export default function TeamPoliciesPage() {
-    useDocumentTitle("Organization Policies");
+    useDocumentTitle("Organization Settings - Policies");
     const org = useCurrentOrg().data;
     const isOwner = useIsOwner();
     const orgLevelEditorRestrictionEnabled = useFeatureFlag("org_level_editor_restriction_enabled");
@@ -65,8 +68,10 @@ export default function TeamPoliciesPage() {
             <OrgSettingsPage>
                 <div className="space-y-4">
                     <div>
-                        <Heading2>Organization Policies</Heading2>
-                        <Subheading>Policies of your organization within Gitpod.</Subheading>
+                        <Heading2>Policies</Heading2>
+                        <Subheading>
+                            Restrict workspace classes, editors and sharing across your organization.
+                        </Subheading>
                     </div>
 
                     <ConfigurationSettingsField>
@@ -93,6 +98,8 @@ export default function TeamPoliciesPage() {
                         settings={settings}
                         handleUpdateTeamSettings={handleUpdateTeamSettings}
                     />
+
+                    {isGitpodIo() && <WorkspaceClassesEnterpriseCallout />}
 
                     {orgLevelEditorRestrictionEnabled && (
                         <EditorOptions
@@ -264,6 +271,34 @@ const EditorOptions = ({ isOwner, settings, handleUpdateTeamSettings }: EditorOp
                     onClose={() => setShowModal(false)}
                 />
             )}
+        </ConfigurationSettingsField>
+    );
+};
+
+const WorkspaceClassesEnterpriseCallout = () => {
+    return (
+        <ConfigurationSettingsField className="bg-pk-surface-secondary">
+            <Heading3 className="flex items-center gap-4">
+                Additional workspace classes
+                <PillLabel type="warn" className="py-0.5">
+                    <span className="text-sm font-semibold text-pk-content-secondary">Enterprise</span>
+                </PillLabel>
+            </Heading3>
+            <Subheading>
+                Access to more powerful workspace classes with up to 30 cores, 54GB of RAM and 100GB storage
+            </Subheading>
+
+            <div className="mt-6 flex flex-row space-x-2">
+                <LinkButton
+                    href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes#enterprise"
+                    isExternalUrl={true}
+                >
+                    Dcoumentation
+                </LinkButton>
+                <LinkButton variant="secondary" href="https://www.gitpod.io/docs/enterprise" isExternalUrl={true}>
+                    Learn more about Enterprise
+                </LinkButton>
+            </div>
         </ConfigurationSettingsField>
     );
 };
