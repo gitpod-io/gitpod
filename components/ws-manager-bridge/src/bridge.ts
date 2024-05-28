@@ -153,6 +153,7 @@ export class WorkspaceManagerBridge implements Disposable {
         this.disposables.push(subscriber);
 
         const onReconnect = (ctx: TraceContext, s: WorkspaceStatus[]) => {
+            log.info("ws-manager subscriber reconnected", logPayload);
             s.forEach((sx) => this.queueMessagesByInstanceId(ctx, sx));
         };
         const onStatusUpdate = (ctx: TraceContext, s: WorkspaceStatus) => {
