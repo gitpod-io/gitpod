@@ -270,7 +270,7 @@ function GitProviders() {
             case "api":
                 return "Allow making API calls (used to set up a webhook when enabling prebuilds for a repository)";
             case "read_repository":
-                return "Read/write access to your repositories";
+                return "Read access to your repositories";
             // Bitbucket
             case "account":
                 return "Read-only access to your account information";
