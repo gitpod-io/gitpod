@@ -8,6 +8,8 @@ import { OrgSettingsPage } from "./OrgSettingsPage";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
+import { useIsOwner } from "../data/organizations/members-query";
+import { Redirect } from "react-router";
 
 export default function TeamUsageBasedBillingPage() {
     return (
@@ -19,6 +21,11 @@ export default function TeamUsageBasedBillingPage() {
 
 function TeamUsageBasedBilling() {
     const orgBillingMode = useOrgBillingMode();
+    const isOwner = useIsOwner();
+
+    if (!isOwner) {
+        return <Redirect to="/settings" />;
+    }
 
     if (!BillingMode.showUsageBasedBilling(orgBillingMode.data)) {
         return <></>;
