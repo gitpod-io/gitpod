@@ -83,22 +83,31 @@ export const getListConfigurationsVariablesQueryKey = (configurationId: string) 
     return [BASE_KEY, "variable", "list", { configurationId }];
 };
 
-export const useConfiguration = (configurationId: string) => {
-    return useQuery<Configuration | undefined, Error>(
+export const useConfiguration = (configurationId?: string) => {
+    // As we want to return "undefined" from this query/cache, and useQuery doesn't allow that, we need:
+    //  - use "null" internally/in the cache
+    //  - transform it to "undefined" using the "select" option
+    return useQuery<Configuration | null, Error, Configuration | undefined>(
         getConfigurationQueryKey(configurationId),
         async () => {
             if (!configurationId) {
-                return;
+                return null;
             }
 
             const { configuration } = await configurationClient.getConfiguration({
                 configurationId,
             });
 
-            return configuration;
+            return configuration || null;
         },
         {
+            initialData: null,
+            select: (data) => data || undefined,
             retry: (failureCount, error) => {
+                if (!configurationId) {
+                    return false;
+                }
+
                 if (failureCount > 3) {
                     return false;
                 }
@@ -165,8 +174,8 @@ export const useConfigurationMutation = () => {
     });
 };
 
-export const getConfigurationQueryKey = (configurationId: string) => {
-    const key: any[] = [BASE_KEY, { configurationId }];
+export const getConfigurationQueryKey = (configurationId?: string) => {
+    const key: any[] = [BASE_KEY, { configurationId: configurationId || "undefined" }];
 
     return key;
 };

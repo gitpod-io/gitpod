@@ -70,7 +70,7 @@ export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefin
     const organizationId = useCurrentOrg().data?.id;
     const { data: orgSettings, isLoading: isLoadingOrgSettings } = useOrgSettingsQuery();
     const { data: installationOptions, isLoading: isLoadingInstallationCls } = useIDEOptions();
-    const { data: configuration, isLoading: isLoadingConfiguration } = useConfiguration(configurationId ?? "");
+    const { data: configuration, isLoading: isLoadingConfiguration } = useConfiguration(configurationId);
     let isLoading = isLoadingOrgSettings || isLoadingInstallationCls || isLoadingConfiguration;
     if (!organizationId) {
         // If there's no orgID set (i.e. User onboarding page), isLoadingOrgSettings will always be true
