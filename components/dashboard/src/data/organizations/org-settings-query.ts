@@ -20,18 +20,18 @@ export function useOrgSettingsQueryInvalidator() {
 
 export function useOrgSettingsQuery() {
     const organizationId = useCurrentOrg().data?.id;
-    return useQuery<OrganizationSettings, Error>(
+    return useQuery<OrganizationSettings | null, Error, OrganizationSettings | undefined>(
         getQueryKey(organizationId),
         async () => {
             if (!organizationId) {
-                throw new Error("No org selected.");
+                return null;
             }
 
             const settings = await organizationClient.getOrganizationSettings({ organizationId });
             return settings.settings || new OrganizationSettings();
         },
         {
-            enabled: !!organizationId,
+            select: (data) => data || undefined,
         },
     );
 }
