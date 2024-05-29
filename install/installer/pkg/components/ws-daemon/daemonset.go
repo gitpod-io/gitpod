@@ -204,6 +204,11 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Operator: "Exists",
 			Effect:   "NoExecute",
 		},
+		{
+			Key:      "gitpod.io/gpu",
+			Operator: "Exists",
+			Effect:   "NoSchedule",
+		},
 	}
 
 	podSpec := corev1.PodSpec{
