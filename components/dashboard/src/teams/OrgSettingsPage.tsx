@@ -91,7 +91,7 @@ function getOrgSettingsMenu(params: {
     if (isGitpodIo()) {
         result.push(
             {
-                title: "Neworking",
+                title: "Networking",
                 link: [`/settings/networking`],
             },
             {

@@ -108,7 +108,7 @@ const DeployedRegionCard = () => {
                 href="https://www.gitpod.io/docs/enterprise/overview#aws-support-and-regions"
                 isExternalUrl={true}
             >
-                Dcoumentation
+                Documentation
             </LinkButton>
         </ConfigurationSettingsField>
     );
@@ -128,7 +128,7 @@ const VPNCard = () => {
                 href="https://www.gitpod.io/docs/enterprise/getting-started/networking#private-networking-configuration-highly-restrictive"
                 isExternalUrl={true}
             >
-                Dcoumentation
+                Documentation
             </LinkButton>
         </ConfigurationSettingsField>
     );

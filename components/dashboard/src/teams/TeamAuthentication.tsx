@@ -85,7 +85,7 @@ const PrivateImageRegistryCard = () => {
                 href="https://www.gitpod.io/docs/enterprise/setup-gitpod/use-private-ecr-repos-for-workspace-images"
                 isExternalUrl={true}
             >
-                Dcoumentation
+                Documentation
             </LinkButton>
         </ConfigurationSettingsField>
     );
@@ -105,7 +105,7 @@ const PrivateSourceControlAccess = () => {
                 href="https://www.gitpod.io/docs/enterprise/setup-gitpod/scm-integration"
                 isExternalUrl={true}
             >
-                Dcoumentation
+                Documentation
             </LinkButton>
         </ConfigurationSettingsField>
     );

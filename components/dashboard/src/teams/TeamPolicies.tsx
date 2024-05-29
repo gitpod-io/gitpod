@@ -295,7 +295,7 @@ const WorkspaceClassesEnterpriseCallout = () => {
                     href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes#enterprise"
                     isExternalUrl={true}
                 >
-                    Dcoumentation
+                    Documentation
                 </LinkButton>
                 <LinkButton
                     variant="secondary"
