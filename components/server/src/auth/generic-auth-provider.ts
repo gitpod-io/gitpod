@@ -438,6 +438,16 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     isBlocked: flowContext.isBlocked,
                 });
 
+                // Set all cookies used on website for visitor preferences for .gitpod.io domain if no preference exists yet
+                ["gp-analytical", "gp-necessary", "gp-targeting"].forEach((cookieName) => {
+                    if (!request.cookies[cookieName]) {
+                        response.cookie(cookieName, "true", {
+                            maxAge: 365 * 24 * 60 * 60 * 1000, //set to a year
+                            domain: "." + request.header("Host"),
+                        });
+                    }
+                });
+
                 await this.loginCompletionHandler.complete(request, response, {
                     user: newUser,
                     returnToUrl: authFlow.returnTo,
