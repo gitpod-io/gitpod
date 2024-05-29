@@ -19,19 +19,21 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 
 async function tryThree<T>(errMessage: string, code: (attempt: number) => Promise<T>): Promise<T> {
     let attempt = 0;
-    // we do sometimes see INTERNAL errors from SpiceDB, so we retry a few times
+    // we do sometimes see INTERNAL errors from SpiceDB, or grpc-js reports DEADLINE_EXCEEDED, so we retry a few times
     // last time we checked it was 15 times per day (check logs)
     while (attempt++ < 3) {
         try {
             return await code(attempt);
         } catch (err) {
-            if (err.code === grpc.status.INTERNAL && attempt < 3) {
+            if ((err.code === grpc.status.INTERNAL || err.code === grpc.status.DEADLINE_EXCEEDED) && attempt < 3) {
                 log.warn(errMessage, err, {
                     attempt,
+                    code: err.code,
                 });
             } else {
                 log.error(errMessage, err, {
                     attempt,
+                    code: err.code,
                 });
                 // we don't try again on other errors
                 throw err;
