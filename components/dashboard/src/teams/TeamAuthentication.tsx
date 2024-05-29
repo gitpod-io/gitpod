@@ -16,7 +16,7 @@ import { Redirect } from "react-router";
 import PillLabel from "../components/PillLabel";
 
 export default function TeamPoliciesPage() {
-    useDocumentTitle("Organization Settings - Networking");
+    useDocumentTitle("Organization Settings - Authentication");
 
     if (!isGitpodIo) {
         return <Redirect to="/settings" />;
@@ -28,47 +28,37 @@ export default function TeamPoliciesPage() {
                 <div className="space-y-8">
                     <div>
                         <Heading2 className="flex items-center gap-4">
-                            Networking
+                            Authentication
                             <PillLabel type="warn" className="!px-3 !py-0.5 !text-xs border">
                                 <span className="text-sm font-semibold text-pk-content-secondary">Enterprise</span>
                             </PillLabel>
                         </Heading2>
-                        <Subheading className="mt-1">Manage your organization's networking settings.</Subheading>
+                        <Subheading className="mt-1">Manage your organization's authentication settings.</Subheading>
                     </div>
 
-                    <SelfHostedCalloutCard />
-                    <DeployedRegionCard />
-                    <VPNCard />
+                    <SSOCard />
+                    <PrivateImageRegistryCard />
+                    <PrivateSourceControlAccess />
                 </div>
             </OrgSettingsPage>
         </>
     );
 }
 
-const SelfHostedCalloutCard = () => {
+const SSOCard = () => {
     return (
         <ConfigurationSettingsField className="bg-pk-surface-secondary">
-            <Heading3>Self-host in your cloud account</Heading3>
-            <Subheading className="mt-1">
-                Deploy the Gitpod infrastructure into your own cloud account and connect to your private network
-            </Subheading>
+            <Heading3>Single sign-on (SSO)</Heading3>
+            <Subheading className="mt-1">More control over workspace access for your organization</Subheading>
 
-            <div className="mt-1 flex flex-col space-y-2">
+            <div className="mt-8 flex flex-col space-y-2">
                 <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
                     <CheckCircle2Icon size={20} />
-                    Managed application feature releases and updates
+                    Includes support for Google, Okta, AWS Cognito and others
                 </div>
                 <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
                     <CheckCircle2Icon size={20} />
-                    Managed provisioning and scaling of workspaces
-                </div>
-                <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
-                    Managed backup and restore processes
-                </div>
-                <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
-                    Managed security updates and patches
+                    Instantly revoke access and off-board users from Gitpod
                 </div>
             </div>
 
@@ -83,29 +73,16 @@ const SelfHostedCalloutCard = () => {
     );
 };
 
-const DeployedRegionCard = () => {
+const PrivateImageRegistryCard = () => {
     return (
         <ConfigurationSettingsField className="bg-pk-surface-secondary">
-            <Heading3>Choose your deployed region</Heading3>
-            <Subheading className="mt-1">
-                Deploy Gitpod to any location, such as: United States, South America, Europe and Asia Pacific
-            </Subheading>
-
-            <div className="mt-8 flex flex-col space-y-2">
-                <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
-                    Meet data residency compliance requirements
-                </div>
-                <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
-                    Reduce your workspace latency
-                </div>
-            </div>
+            <Heading3>Private container image registry</Heading3>
+            <Subheading className="mt-1">Provide secure access to private image registries such as ECR</Subheading>
 
             <LinkButton
                 variant="secondary"
                 className="mt-8 border border-pk-content-tertiary text-pk-content-tertiary"
-                href="https://www.gitpod.io/docs/enterprise/overview#aws-support-and-regions"
+                href="https://www.gitpod.io/docs/enterprise/setup-gitpod/use-private-ecr-repos-for-workspace-images"
                 isExternalUrl={true}
             >
                 Dcoumentation
@@ -114,18 +91,18 @@ const DeployedRegionCard = () => {
     );
 };
 
-const VPNCard = () => {
+const PrivateSourceControlAccess = () => {
     return (
         <ConfigurationSettingsField className="bg-pk-surface-secondary">
-            <Heading3>Virtual Private Network (VPN)</Heading3>
+            <Heading3>Private source control access</Heading3>
             <Subheading className="mt-1">
-                Ensure that only your developers can access your Gitpod instance through your VPN network
+                Connect to your private source control like GitHub, BitBucket and GitLab
             </Subheading>
 
             <LinkButton
                 variant="secondary"
                 className="mt-8 border border-pk-content-tertiary text-pk-content-tertiary"
-                href="https://www.gitpod.io/docs/enterprise/getting-started/networking#private-networking-configuration-highly-restrictive"
+                href="https://www.gitpod.io/docs/enterprise/setup-gitpod/scm-integration"
                 isExternalUrl={true}
             >
                 Dcoumentation

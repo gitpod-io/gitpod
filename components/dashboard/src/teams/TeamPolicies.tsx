@@ -291,7 +291,7 @@ const WorkspaceClassesEnterpriseCallout = () => {
             <div className="mt-6 flex flex-row space-x-2">
                 <LinkButton
                     variant="secondary"
-                    className="border border-pk-content-tertiary text-pk-content-tertiary rounded-xl"
+                    className="border border-pk-content-tertiary text-pk-content-tertiary"
                     href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes#enterprise"
                     isExternalUrl={true}
                 >
@@ -299,7 +299,7 @@ const WorkspaceClassesEnterpriseCallout = () => {
                 </LinkButton>
                 <LinkButton
                     variant="secondary"
-                    className="border border-pk-content-tertiary text-pk-content-tertiary rounded-xl"
+                    className="border border-pk-content-tertiary text-pk-content-tertiary"
                     href="https://www.gitpod.io/docs/enterprise"
                     isExternalUrl={true}
                 >
