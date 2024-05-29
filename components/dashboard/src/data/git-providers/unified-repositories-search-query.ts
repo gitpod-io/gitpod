@@ -53,7 +53,6 @@ export function deduplicateAndFilterRepositories(
     onlyConfigurations = false,
     suggestedRepos: SuggestedRepository[],
 ): SuggestedRepository[] {
-    const normalizedSearchString = searchString.trim().toLowerCase();
     const collected = new Set<string>();
     const results: SuggestedRepository[] = [];
     const reposWithConfiguration = new Set<string>();
@@ -73,7 +72,7 @@ export function deduplicateAndFilterRepositories(
         }
 
         // filter out entries that don't match the search string
-        if (!`${repo.url}${repo.configurationName || ""}`.toLowerCase().includes(normalizedSearchString)) {
+        if (!`${repo.url}${repo.configurationName || ""}`.toLowerCase().includes(searchString.trim().toLowerCase())) {
             continue;
         }
         // filter out duplicates
@@ -87,11 +86,11 @@ export function deduplicateAndFilterRepositories(
 
     if (results.length === 0) {
         try {
-            // If the normalizedSearchString is a URL, and it's not present in the proposed results, "artificially" add it here.
-            new URL(normalizedSearchString);
+            // If the searchString is a URL, and it's not present in the proposed results, "artificially" add it here.
+            new URL(searchString);
             results.push(
                 new SuggestedRepository({
-                    url: normalizedSearchString,
+                    url: searchString,
                 }),
             );
         } catch {}
