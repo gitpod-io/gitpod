@@ -33,7 +33,9 @@ export default function TeamPoliciesPage() {
                                 <span className="text-sm font-semibold text-pk-content-secondary">Enterprise</span>
                             </PillLabel>
                         </Heading2>
-                        <Subheading className="mt-1">Manage your organization's networking settings.</Subheading>
+                        <Subheading className="mt-1">
+                            Self-host a single-tenant installation in your own cloud account.
+                        </Subheading>
                     </div>
 
                     <SelfHostedCalloutCard />
@@ -53,18 +55,10 @@ const SelfHostedCalloutCard = () => {
                 Deploy the Gitpod infrastructure into your own cloud account and connect to your private network
             </Subheading>
 
-            <div className="mt-1 flex flex-col space-y-2">
+            <div className="mt-8 flex flex-col space-y-2">
                 <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
                     <CheckCircle2Icon size={20} />
-                    Managed application feature releases and updates
-                </div>
-                <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
-                    Managed provisioning and scaling of workspaces
-                </div>
-                <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
-                    Managed backup and restore processes
+                    Managed application feature release and backup process
                 </div>
                 <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
                     <CheckCircle2Icon size={20} />
@@ -98,7 +92,7 @@ const DeployedRegionCard = () => {
                 </div>
                 <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
                     <CheckCircle2Icon size={20} />
-                    Reduce your workspace latency
+                    Reduce latency and bring your code closer to your data
                 </div>
             </div>
 
@@ -119,7 +113,7 @@ const VPNCard = () => {
         <ConfigurationSettingsField className="bg-pk-surface-secondary">
             <Heading3>Virtual Private Network (VPN)</Heading3>
             <Subheading className="mt-1">
-                Ensure that only your developers can access your Gitpod instance through your VPN network
+                Restrict access to your instance using your own private VPN network
             </Subheading>
 
             <LinkButton

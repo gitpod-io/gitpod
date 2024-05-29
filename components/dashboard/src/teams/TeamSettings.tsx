@@ -118,7 +118,7 @@ export default function TeamSettingsPage() {
     return (
         <>
             <OrgSettingsPage>
-                <div className="space-y-4">
+                <div className="space-y-8">
                     <div>
                         <Heading2>General</Heading2>
                         <Subheading>

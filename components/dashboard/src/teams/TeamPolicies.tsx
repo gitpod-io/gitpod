@@ -66,7 +66,7 @@ export default function TeamPoliciesPage() {
     return (
         <>
             <OrgSettingsPage>
-                <div className="space-y-4">
+                <div className="space-y-8">
                     <div>
                         <Heading2>Policies</Heading2>
                         <Subheading>

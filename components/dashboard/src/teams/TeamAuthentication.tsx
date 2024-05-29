@@ -33,7 +33,10 @@ export default function TeamPoliciesPage() {
                                 <span className="text-sm font-semibold text-pk-content-secondary">Enterprise</span>
                             </PillLabel>
                         </Heading2>
-                        <Subheading className="mt-1">Manage your organization's authentication settings.</Subheading>
+                        <Subheading className="mt-1">
+                            Manage users through single sign-on and privately authenticate with source control and image
+                            registries.
+                        </Subheading>
                     </div>
 
                     <SSOCard />
