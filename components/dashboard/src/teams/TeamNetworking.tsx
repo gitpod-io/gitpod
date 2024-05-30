@@ -55,11 +55,11 @@ const SelfHostedCalloutCard = () => {
 
             <div className="mt-8 flex flex-col space-y-2">
                 <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
+                    <CheckCircle2Icon size={20} className="text-pk-content-primary" />
                     Managed application feature release and backup process
                 </div>
                 <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
+                    <CheckCircle2Icon size={20} className="text-pk-content-primary" />
                     Managed security updates and patches
                 </div>
             </div>
@@ -85,11 +85,11 @@ const DeployedRegionCard = () => {
 
             <div className="mt-8 flex flex-col space-y-2">
                 <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
+                    <CheckCircle2Icon size={20} className="text-pk-content-primary" />
                     Meet data residency compliance requirements
                 </div>
                 <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
+                    <CheckCircle2Icon size={20} className="text-pk-content-primary" />
                     Reduce latency and bring your code closer to your data
                 </div>
             </div>

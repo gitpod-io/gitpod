@@ -54,11 +54,11 @@ const SSOCard = () => {
 
             <div className="mt-8 flex flex-col space-y-2">
                 <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
+                    <CheckCircle2Icon size={20} className="text-pk-content-primary" />
                     Includes support for Google, Okta, AWS Cognito and others
                 </div>
                 <div className="flex flex-row gap-2 items-center text-pk-content-secondary">
-                    <CheckCircle2Icon size={20} />
+                    <CheckCircle2Icon size={20} className="text-pk-content-primary" />
                     Instantly revoke access and off-board users from Gitpod
                 </div>
             </div>
