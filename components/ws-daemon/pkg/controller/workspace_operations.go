@@ -97,10 +97,11 @@ type InitOptions struct {
 }
 
 type BackupOptions struct {
-	Meta            WorkspaceMeta
-	BackupLogs      bool
-	UpdateGitStatus bool
-	SnapshotName    string
+	Meta              WorkspaceMeta
+	BackupLogs        bool
+	UpdateGitStatus   bool
+	SnapshotName      string
+	SkipBackupContent bool
 }
 
 func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, reg prometheus.Registerer) (WorkspaceOperations, error) {
@@ -235,6 +236,10 @@ func (wso *DefaultWorkspaceOperations) BackupWorkspace(ctx context.Context, opts
 			// we do not fail the workspace yet because we still might succeed with its content!
 			glog.WithError(err).WithFields(ws.OWI()).Error("log backup failed")
 		}
+	}
+
+	if opts.SkipBackupContent {
+		return nil, nil
 	}
 
 	err = wso.uploadWorkspaceContent(ctx, ws, opts.SnapshotName)
