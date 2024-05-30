@@ -280,9 +280,7 @@ const WorkspaceClassesEnterpriseCallout = () => {
         <ConfigurationSettingsField className="bg-pk-surface-secondary">
             <Heading3 className="flex items-center gap-4">
                 Additional workspace classes
-                <PillLabel type="warn" className="!px-3 !py-0 !text-xs border">
-                    <span className="text-sm font-semibold text-pk-content-secondary">Enterprise</span>
-                </PillLabel>
+                <PillLabel type="warn">Enterprise</PillLabel>
             </Heading3>
             <Subheading>
                 Access to more powerful workspace classes with up to 30 cores 54GB of RAM and 100GB storage
@@ -291,7 +289,7 @@ const WorkspaceClassesEnterpriseCallout = () => {
             <div className="mt-6 flex flex-row space-x-2">
                 <LinkButton
                     variant="secondary"
-                    className="border border-pk-content-tertiary text-pk-content-tertiary"
+                    className="border border-pk-content-tertiary text-pk-content-primary bg-pk-surface-primary"
                     href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes#enterprise"
                     isExternalUrl={true}
                 >
@@ -299,7 +297,7 @@ const WorkspaceClassesEnterpriseCallout = () => {
                 </LinkButton>
                 <LinkButton
                     variant="secondary"
-                    className="border border-pk-content-tertiary text-pk-content-tertiary"
+                    className="border border-pk-content-tertiary text-pk-content-primary bg-pk-surface-primary"
                     href="https://www.gitpod.io/docs/enterprise"
                     isExternalUrl={true}
                 >

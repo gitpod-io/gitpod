@@ -29,9 +29,7 @@ export default function TeamPoliciesPage() {
                     <div>
                         <Heading2 className="flex items-center gap-4">
                             Authentication
-                            <PillLabel type="warn" className="!px-3 !py-0.5 !text-xs border">
-                                <span className="text-sm font-semibold text-pk-content-secondary">Enterprise</span>
-                            </PillLabel>
+                            <PillLabel type="warn">Enterprise</PillLabel>
                         </Heading2>
                         <Subheading className="mt-1">
                             Manage users through single sign-on and privately authenticate with source control and image
@@ -84,7 +82,7 @@ const PrivateImageRegistryCard = () => {
 
             <LinkButton
                 variant="secondary"
-                className="mt-8 border border-pk-content-tertiary text-pk-content-tertiary"
+                className="mt-8 border border-pk-content-tertiary text-pk-content-primary bg-pk-surface-primary"
                 href="https://www.gitpod.io/docs/enterprise/setup-gitpod/use-private-ecr-repos-for-workspace-images"
                 isExternalUrl={true}
             >
@@ -104,7 +102,7 @@ const PrivateSourceControlAccess = () => {
 
             <LinkButton
                 variant="secondary"
-                className="mt-8 border border-pk-content-tertiary text-pk-content-tertiary"
+                className="mt-8 border border-pk-content-tertiary text-pk-content-primary bg-pk-surface-primary"
                 href="https://www.gitpod.io/docs/enterprise/setup-gitpod/scm-integration"
                 isExternalUrl={true}
             >

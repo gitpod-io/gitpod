@@ -29,9 +29,7 @@ export default function TeamPoliciesPage() {
                     <div>
                         <Heading2 className="flex items-center gap-4">
                             Networking
-                            <PillLabel type="warn" className="!px-3 !py-0.5 !text-xs border">
-                                <span className="text-sm font-semibold text-pk-content-secondary">Enterprise</span>
-                            </PillLabel>
+                            <PillLabel type="warn">Enterprise</PillLabel>
                         </Heading2>
                         <Subheading className="mt-1">
                             Self-host a single-tenant installation in your own cloud account.
@@ -98,7 +96,7 @@ const DeployedRegionCard = () => {
 
             <LinkButton
                 variant="secondary"
-                className="mt-8 border border-pk-content-tertiary text-pk-content-tertiary"
+                className="mt-8 border border-pk-content-tertiary text-pk-content-primary bg-pk-surface-primary"
                 href="https://www.gitpod.io/docs/enterprise/overview#aws-support-and-regions"
                 isExternalUrl={true}
             >
@@ -118,7 +116,7 @@ const VPNCard = () => {
 
             <LinkButton
                 variant="secondary"
-                className="mt-8 border border-pk-content-tertiary text-pk-content-tertiary"
+                className="mt-8 border border-pk-content-tertiary text-pk-content-primary bg-pk-surface-primary"
                 href="https://www.gitpod.io/docs/enterprise/getting-started/networking#private-networking-configuration-highly-restrictive"
                 isExternalUrl={true}
             >
