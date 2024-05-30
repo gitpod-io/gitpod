@@ -278,11 +278,6 @@ func (s *Service) authenticate(ctx context.Context, params authenticateParams) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify id_token: %w", err)
 	}
-	claims := map[string]interface{}{}
-	err = idToken.Claims(&claims)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal the payload of the ID token: %w", err)
-	}
 	if idToken.Nonce != params.NonceCookieValue {
 		return nil, fmt.Errorf("nonce mismatch")
 	}
