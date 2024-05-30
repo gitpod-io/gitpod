@@ -65,12 +65,13 @@ Create a Gitpod configuration for this project.
 			if err != nil {
 				fmt.Printf("failed to get organization default workspace image: %v\n", err)
 				fmt.Println("fallback to gitpod default")
-				defaultImage = "gitpod/workspace-full"
+				defaultImage = ""
 			}
-			yml := fmt.Sprintf(`# Image of workspace. Learn more: https://www.gitpod.io/docs/configure/workspaces/workspace-image
-image: %s
-
-# List the start up tasks. Learn more: https://www.gitpod.io/docs/configure/workspaces/tasks
+			yml := ""
+			if defaultImage != "" {
+				yml = yml + fmt.Sprintf("# Image of workspace. Learn more: https://www.gitpod.io/docs/configure/workspaces/workspace-image\nimage: %s\n\n", defaultImage)
+			}
+			yml = yml + `# List the start up tasks. Learn more: https://www.gitpod.io/docs/configure/workspaces/tasks
 tasks:
   - name: Script Task
     init: echo 'init script' # runs during prebuild => https://www.gitpod.io/docs/configure/projects/prebuilds
@@ -84,7 +85,7 @@ ports:
     onOpen: open-preview
 
 # Learn more from ready-to-use templates: https://www.gitpod.io/docs/introduction/getting-started/quickstart
-`, defaultImage)
+`
 			d = []byte(yml)
 		} else {
 			fmt.Printf("\n\n---\n%s", d)
@@ -145,6 +146,9 @@ func getDefaultWorkspaceImage(ctx context.Context, wsInfo *api.WorkspaceInfoResp
 	})
 	if err != nil {
 		return "", err
+	}
+	if res.Source == protocol.WorkspaceImageSourceInstallation {
+		return "", nil
 	}
 	return res.Image, nil
 }
