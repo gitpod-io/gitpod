@@ -158,9 +158,14 @@ RUN cd /usr/bin && curl -fsSL https://github.com/mikefarah/yq/releases/download/
 RUN cd /usr/bin && curl -fsSL https://github.com/c4milo/github-release/releases/download/v1.1.0/github-release_v1.1.0_linux_${TARGETARCH}.tar.gz | tar xz
 
 ### Protobuf
-RUN set -ex \
-    && tmpdir=$(mktemp -d) \
-    && curl -fsSL -o $tmpdir/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protoc-3.20.1-linux-x86_64.zip \
+RUN arch=$(uname -m); \
+    case $arch in \
+    x86_64) arch=x86_64 ;; \
+    aarch64|arm64) arch=aarch_64 ;; \
+    *) echo "Unsupported architecture: $arch"; exit 1 ;; \
+    esac; \
+    tmpdir=$(mktemp -d) \
+    && curl -fsSL -o $tmpdir/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protoc-3.20.1-linux-${arch}.zip \
     && mkdir -p /usr/lib/protoc && cd /usr/lib/protoc && unzip $tmpdir/protoc.zip \
     && chmod -R o+r+x /usr/lib/protoc/include \
     && chmod -R +x /usr/lib/protoc/bin \

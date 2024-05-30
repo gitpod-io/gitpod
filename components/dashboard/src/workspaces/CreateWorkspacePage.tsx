@@ -58,6 +58,8 @@ import { isGitpodIo } from "../utils";
 
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
 
+export const StartWorkspaceKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl﹢"}Enter`;
+
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
@@ -429,6 +431,21 @@ export function CreateWorkspacePage() {
         return false;
     }, [autostart, contextURL, errorIde, errorWsClass, workspaceContext.error, workspaceContext.isLoading]);
 
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                if (!continueButtonDisabled) {
+                    event.preventDefault();
+                    onClickCreate();
+                }
+            }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+        };
+    }, [continueButtonDisabled, onClickCreate]);
+
     if (SelectAccountPayload.is(selectAccountError)) {
         return (
             <SelectAccountModal
@@ -546,7 +563,9 @@ export function CreateWorkspacePage() {
                             loading={createWorkspaceMutation.isStarting || !!autostart}
                             disabled={continueButtonDisabled}
                         >
-                            {createWorkspaceMutation.isStarting ? "Opening Workspace ..." : "Continue"}
+                            {createWorkspaceMutation.isStarting
+                                ? "Opening Workspace ..."
+                                : `Continue (${StartWorkspaceKeyBinding})`}
                         </LoadingButton>
                     </div>
                     {existingWorkspaces.length > 0 && !createWorkspaceMutation.isStarting && (
