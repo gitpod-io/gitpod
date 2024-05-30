@@ -169,9 +169,9 @@ function ListAccessTokensView() {
         <>
             <div className="flex items-center sm:justify-between mb-4">
                 <div>
-                    <Heading2>
-                        Access Tokens{" "}
-                        <PillLabel type="warn" className="font-semibold self-center py-0.5 px-1.5">
+                    <Heading2 className="flex gap-4 items-center">
+                        Access Tokens
+                        <PillLabel type="warn">
                             <a href="https://www.gitpod.io/docs/references/gitpod-releases">
                                 <span className="text-xs">BETA</span>
                             </a>

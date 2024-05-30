@@ -15,6 +15,7 @@ import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useIsOwner } from "../data/organizations/members-query";
+import { isGitpodIo } from "../utils";
 
 export interface OrgSettingsPageProps {
     children: React.ReactNode;
@@ -82,7 +83,23 @@ function getOrgSettingsMenu(params: {
             title: "General",
             link: [`/settings`],
         },
+        {
+            title: "Policies",
+            link: [`/settings/policy`],
+        },
     ];
+    if (isGitpodIo()) {
+        result.push(
+            {
+                title: "Networking",
+                link: [`/settings/networking`],
+            },
+            {
+                title: "Authentication",
+                link: [`/settings/auth`],
+            },
+        );
+    }
     if (isOwner && ssoEnabled) {
         result.push({
             title: "SSO",
