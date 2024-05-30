@@ -193,7 +193,7 @@ export class HeadlessLogController {
         const router = express.Router();
 
         router.use(this.auth.restHandlerOptionally);
-        router.get("/:prebuildId", [
+        router.get("/:prebuildId/:taskId?", [
             authenticateAndAuthorize,
             asyncHandler(async (req: express.Request, res: express.Response) => {
                 const span = opentracing.globalTracer().startSpan(PREBUILD_LOGS_PATH_PREFIX);
@@ -212,7 +212,8 @@ export class HeadlessLogController {
                         res.status(400).send("prebuildId is invalid");
                         return;
                     }
-                    const logCtx = { userId: user.id, prebuildId };
+                    let taskId = req.params.taskId;
+                    const logCtx = { userId: user.id, prebuildId, taskId };
 
                     const head = {
                         "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
@@ -246,7 +247,7 @@ export class HeadlessLogController {
                         );
                     try {
                         await runWithSubSignal(abortController, async () => {
-                            await this.prebuildManager.watchPrebuildLogs(user.id, prebuildId, writeToResponse);
+                            await this.prebuildManager.watchPrebuildLogs(user.id, prebuildId, taskId, writeToResponse);
                         });
                     } catch (e) {
                         log.error(logCtx, "error streaming headless logs", e);

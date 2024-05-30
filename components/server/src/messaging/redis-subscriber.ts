@@ -141,12 +141,19 @@ export class RedisSubscriber {
         const ctx = {};
         const info = (await this.workspaceDB.findPrebuildInfos([update.prebuildID]))[0];
         if (!info) {
+            log.error("Failed to find prebuild info for prebuild", { ...update });
+            return;
+        }
+        const workspace = await this.workspaceDB.findById(update.workspaceID);
+        if (!workspace) {
+            log.error("Failed to find workspace for prebuild", { ...update });
             return;
         }
 
         const prebuildWithStatus: PrebuildWithStatus = {
             info: info,
             status: update.status,
+            workspace,
         };
 
         for (const l of listeners) {

@@ -13,8 +13,12 @@ import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol
  */
 export const PREBUILD_LOGS_PATH_PREFIX = "/prebuild-logs";
 
-export function getPrebuildLogPath(prebuildId: string): string {
-    return PREBUILD_LOGS_PATH_PREFIX + "/" + prebuildId;
+export function getPrebuildLogPath(prebuildId: string, taskId?: string): string {
+    const result = PREBUILD_LOGS_PATH_PREFIX + "/" + prebuildId;
+    if (taskId) {
+        return result + "/" + taskId;
+    }
+    return result;
 }
 
 /** cmp. @const HEADLESS_LOG_STREAM_ERROR_REGEX */

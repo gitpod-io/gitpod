@@ -247,7 +247,7 @@ export class PrebuildManager {
             await oldPermissionCheck(pbws, workspace);
         }
         await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId!);
-        const result: PrebuildWithStatus = { info, status: pbws.state };
+        const result: PrebuildWithStatus = { info, status: pbws.state, workspace };
         if (pbws.error) {
             result.error = pbws.error;
         }
@@ -284,7 +284,11 @@ export class PrebuildManager {
                     return;
                 }
 
-                const fullPrebuild: PrebuildWithStatus = { info, status: prebuild.state };
+                const fullPrebuild: PrebuildWithStatus = {
+                    info,
+                    status: prebuild.state,
+                    workspace: prebuild.workspace,
+                };
                 if (prebuild.error) {
                     fullPrebuild.error = prebuild.error;
                 }
@@ -636,7 +640,12 @@ export class PrebuildManager {
         return false;
     }
 
-    public async watchPrebuildLogs(userId: string, prebuildId: string, onLog: (message: string) => Promise<void>) {
+    public async watchPrebuildLogs(
+        userId: string,
+        prebuildId: string,
+        taskId: string | undefined,
+        onLog: (message: string) => Promise<void>,
+    ) {
         const { workspaceId, organizationId } = await this.waitUntilPrebuildWorkspaceCreated(userId, prebuildId);
         if (!workspaceId || !organizationId) {
             throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "prebuild workspace not found");
@@ -672,13 +681,16 @@ export class PrebuildManager {
                         itWsInfo.status.instanceId,
                         async () => {},
                     );
-                    // TODO: Only listening on first stream for now
-                    const firstUrl = Object.values(urls.streams)[0];
-                    if (!firstUrl) {
-                        throw new ApplicationError(ErrorCodes.NOT_FOUND, "no logs found");
+
+                    let taskUrl = Object.values(urls.streams)[0];
+                    if (taskId) {
+                        taskUrl = urls.streams[taskId];
+                    }
+                    if (!taskUrl) {
+                        throw new ApplicationError(ErrorCodes.NOT_FOUND, `no logs found for task ${taskId}`);
                     }
 
-                    const info = this.parsePrebuildLogUrl(firstUrl);
+                    const info = this.parsePrebuildLogUrl(taskUrl);
                     if (!info) {
                         throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "cannot parse prebuild log info");
                     }

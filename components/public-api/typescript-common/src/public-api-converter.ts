@@ -111,6 +111,7 @@ import {
     PrebuildPhase,
     PrebuildPhase_Phase,
     PrebuildStatus,
+    TaskLog,
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Author, Commit, SCMToken, SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
@@ -1194,6 +1195,24 @@ export class PublicAPIConverter {
     }
 
     toPrebuildStatus(gitpodHost: string, prebuild: PrebuildWithStatus): PrebuildStatus {
+        const tasks: TaskLog[] = [];
+        if (prebuild.workspace.config.tasks) {
+            for (let i = 0; i < prebuild.workspace.config.tasks.length; i++) {
+                const task = prebuild.workspace.config.tasks[i];
+                tasks.push(
+                    new TaskLog({
+                        taskId: `${i}`,
+                        taskLabel: task.name || `Task [${i + 1}]`,
+                        taskJson: JSON.stringify(task),
+                        logUrl:
+                            // if it has a prebuild task it has logs
+                            task.before || task.init || task.prebuild
+                                ? new URL(getPrebuildLogPath(prebuild.info.id, `${i}`), gitpodHost).toString()
+                                : undefined,
+                    }),
+                );
+            }
+        }
         return new PrebuildStatus({
             phase: new PrebuildPhase({
                 name: this.toPrebuildPhase(prebuild.status),
@@ -1201,6 +1220,7 @@ export class PublicAPIConverter {
             startTime: Timestamp.fromDate(new Date(prebuild.info.startedAt)),
             message: prebuild.error,
             logUrl: new URL(getPrebuildLogPath(prebuild.info.id), gitpodHost).toString(),
+            taskLogs: tasks,
         });
     }
 

@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { PrebuiltWorkspaceState, WorkspaceClasses } from "./protocol";
+import { PrebuiltWorkspaceState, Workspace, WorkspaceClasses } from "./protocol";
 import { v4 as uuidv4 } from "uuid";
 import { DeepPartial } from "./util/deep-partial";
 
@@ -148,6 +148,7 @@ export interface ProjectUsage {
 export interface PrebuildWithStatus {
     info: PrebuildInfo;
     status: PrebuiltWorkspaceState;
+    workspace: Workspace;
     error?: string;
 }
 

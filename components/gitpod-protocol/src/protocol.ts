@@ -912,6 +912,8 @@ export interface PrebuiltWorkspace {
     snapshot?: string;
 }
 
+export type PrebuiltWorkspaceWithWorkspace = PrebuiltWorkspace & { workspace: Workspace };
+
 export namespace PrebuiltWorkspace {
     export function isDone(pws: PrebuiltWorkspace) {
         return (

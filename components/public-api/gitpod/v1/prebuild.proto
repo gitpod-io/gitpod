@@ -118,6 +118,14 @@ message PrebuildStatus {
   // message is an optional human-readable message detailing the current phase
   string message = 3;
   string log_url = 4;
+  repeated TaskLog task_logs = 5;
+}
+
+message TaskLog {
+  string task_id = 1;
+  string task_label = 2;
+  string task_json = 3;
+  string log_url = 4;
 }
 
 message PrebuildPhase {
