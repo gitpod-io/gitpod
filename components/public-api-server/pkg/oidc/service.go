@@ -237,7 +237,6 @@ func (s *Service) convertClientConfig(ctx context.Context, dbEntry db.OIDCClient
 		return ClientConfig{}, err
 	}
 
-	log.WithField("scopes", log.TrustedValueWrap{Value: spec.Scopes}).Info("scopes ===================")
 	return ClientConfig{
 		ID:             dbEntry.ID.String(),
 		OrganizationID: dbEntry.OrganizationID.String(),
