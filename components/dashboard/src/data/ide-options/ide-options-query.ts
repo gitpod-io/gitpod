@@ -11,7 +11,6 @@ import { DisableScope, Scope } from "../workspaces/workspace-classes-query";
 import { useOrgSettingsQuery } from "../organizations/org-settings-query";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useMemo } from "react";
-import { useCurrentOrg } from "../organizations/orgs-query";
 import { useConfiguration } from "../configurations/configuration-queries";
 import { useDeepCompareMemoize } from "use-deep-compare-effect";
 
@@ -67,16 +66,10 @@ interface FilterOptions {
     ignoreScope?: DisableScope[];
 }
 export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefined, options?: FilterOptions) => {
-    const organizationId = useCurrentOrg().data?.id;
     const { data: orgSettings, isLoading: isLoadingOrgSettings } = useOrgSettingsQuery();
     const { data: installationOptions, isLoading: isLoadingInstallationCls } = useIDEOptions();
-    const { data: configuration, isLoading: isLoadingConfiguration } = useConfiguration(configurationId ?? "");
-    let isLoading = isLoadingOrgSettings || isLoadingInstallationCls || isLoadingConfiguration;
-    if (!organizationId) {
-        // If there's no orgID set (i.e. User onboarding page), isLoadingOrgSettings will always be true
-        // So we will filter it out
-        isLoading = isLoadingInstallationCls || isLoadingConfiguration;
-    }
+    const { data: configuration, isLoading: isLoadingConfiguration } = useConfiguration(configurationId);
+    const isLoading = isLoadingOrgSettings || isLoadingInstallationCls || isLoadingConfiguration;
     const depItems = [
         installationOptions,
         options?.ignoreScope,

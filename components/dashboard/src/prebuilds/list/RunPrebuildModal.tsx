@@ -43,7 +43,7 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
         data: prebuildId,
     } = useTriggerPrebuildQuery(configurationId, branchName);
 
-    const { data: configuration } = useConfiguration(configurationId ?? "");
+    const { data: configuration } = useConfiguration(configurationId);
 
     const handleSubmit = useCallback(() => {
         if (!configurationId) {

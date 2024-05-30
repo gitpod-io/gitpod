@@ -120,7 +120,7 @@ export const useAllowedWorkspaceClassesMemo = (
     const { data: orgSettings, isLoading: isLoadingOrgSettings } = useOrgSettingsQuery();
     const { data: installationClasses, isLoading: isLoadingInstallationCls } = useWorkspaceClasses();
     // empty configurationId will return undefined
-    const { data: configuration, isLoading: isLoadingConfiguration } = useConfiguration(configurationId ?? "");
+    const { data: configuration, isLoading: isLoadingConfiguration } = useConfiguration(configurationId);
 
     const isLoading = isLoadingOrgSettings || isLoadingInstallationCls || isLoadingConfiguration;
 
