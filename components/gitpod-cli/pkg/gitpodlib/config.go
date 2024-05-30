@@ -28,6 +28,9 @@ type GitpodFile struct {
 
 // SetImageName configures a pre-built docker image by name
 func (cfg *GitpodFile) SetImageName(name string) {
+	if name == "" {
+		return
+	}
 	cfg.Image = name
 }
 

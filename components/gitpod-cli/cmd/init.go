@@ -69,10 +69,9 @@ Create a Gitpod configuration for this project.
 			}
 			yml := ""
 			if defaultImage != "" {
-				yml = yml + fmt.Sprintf("# Image of workspace. Learn more: https://www.gitpod.io/docs/configure/workspaces/workspace-image\nimage: %s\n", defaultImage)
+				yml = yml + fmt.Sprintf("# Image of workspace. Learn more: https://www.gitpod.io/docs/configure/workspaces/workspace-image\nimage: %s\n\n", defaultImage)
 			}
-			yml = yml + `
-# List the start up tasks. Learn more: https://www.gitpod.io/docs/configure/workspaces/tasks
+			yml = yml + `# List the start up tasks. Learn more: https://www.gitpod.io/docs/configure/workspaces/tasks
 tasks:
   - name: Script Task
     init: echo 'init script' # runs during prebuild => https://www.gitpod.io/docs/configure/projects/prebuilds
