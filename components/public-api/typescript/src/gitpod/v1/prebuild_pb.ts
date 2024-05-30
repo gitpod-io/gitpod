@@ -765,6 +765,11 @@ export class PrebuildStatus extends Message<PrebuildStatus> {
    */
   logUrl = "";
 
+  /**
+   * @generated from field: repeated gitpod.v1.TaskLog task_logs = 5;
+   */
+  taskLogs: TaskLog[] = [];
+
   constructor(data?: PartialMessage<PrebuildStatus>) {
     super();
     proto3.util.initPartial(data, this);
@@ -777,6 +782,7 @@ export class PrebuildStatus extends Message<PrebuildStatus> {
     { no: 2, name: "start_time", kind: "message", T: Timestamp },
     { no: 3, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "log_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "task_logs", kind: "message", T: TaskLog, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildStatus {
@@ -793,6 +799,61 @@ export class PrebuildStatus extends Message<PrebuildStatus> {
 
   static equals(a: PrebuildStatus | PlainMessage<PrebuildStatus> | undefined, b: PrebuildStatus | PlainMessage<PrebuildStatus> | undefined): boolean {
     return proto3.util.equals(PrebuildStatus, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.TaskLog
+ */
+export class TaskLog extends Message<TaskLog> {
+  /**
+   * @generated from field: string task_id = 1;
+   */
+  taskId = "";
+
+  /**
+   * @generated from field: string task_label = 2;
+   */
+  taskLabel = "";
+
+  /**
+   * @generated from field: string task_json = 3;
+   */
+  taskJson = "";
+
+  /**
+   * @generated from field: string log_url = 4;
+   */
+  logUrl = "";
+
+  constructor(data?: PartialMessage<TaskLog>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.TaskLog";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "task_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "task_label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "task_json", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "log_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TaskLog {
+    return new TaskLog().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TaskLog {
+    return new TaskLog().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TaskLog {
+    return new TaskLog().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: TaskLog | PlainMessage<TaskLog> | undefined, b: TaskLog | PlainMessage<TaskLog> | undefined): boolean {
+    return proto3.util.equals(TaskLog, a, b);
   }
 }
 

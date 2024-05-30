@@ -246,4 +246,20 @@ export class WorkspaceSpec {
         expect(secondPage).length(3);
         expect(secondPage[0].id).not.eq(firstPage[0].id);
     }
+
+    @test()
+    async testPrebuildLookupContainsWorkspace(): Promise<void> {
+        await this.setupPrebuilds();
+
+        const firstPage = await this.wsDB.findPrebuiltWorkspacesByOrganization(
+            this.org,
+            { limit: 3, offset: 0 },
+            {},
+            this.defaultSorting,
+        );
+        expect(firstPage).length(3);
+        for (const prebuild of firstPage) {
+            expect(prebuild.workspace).to.not.be.undefined;
+        }
+    }
 }

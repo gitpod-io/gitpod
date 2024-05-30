@@ -62,12 +62,15 @@ export const PrebuildDetailPage: FC = () => {
     const { toast, dismissToast } = useToast();
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
     const [logNotFound, setLogNotFound] = useState(false);
+    const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>(undefined);
+
+    const taskId = selectedTaskId ?? prebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? "0";
 
     const {
         emitter: logEmitter,
         isLoading: isStreamingLogs,
         disposable: disposeStreamingLogs,
-    } = usePrebuildLogsEmitter(prebuildId);
+    } = usePrebuildLogsEmitter(prebuildId, taskId);
     const {
         isFetching: isTriggeringPrebuild,
         refetch: triggerPrebuild,
@@ -245,8 +248,8 @@ export const PrebuildDetailPage: FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="px-6 py-4 flex flex-col gap-1 border-pk-border-base">
-                                <div className="flex gap-1 items-center">
+                            <div className="pt-4 flex flex-col gap-1 border-pk-border-base">
+                                <div className="px-6 flex gap-1 items-center">
                                     {prebuildPhase.icon}
                                     <span className="capitalize">{prebuildPhase.description}</span>{" "}
                                     {isStreamingLogs && (
@@ -256,8 +259,43 @@ export const PrebuildDetailPage: FC = () => {
                                     )}
                                 </div>
                                 {prebuild.status?.message && (
-                                    <div className="text-pk-content-secondary truncate">{prebuild.status.message}</div>
+                                    <div className="px-6 text-pk-content-secondary truncate">
+                                        {prebuild.status.message}
+                                    </div>
                                 )}
+                                <div className="flex mt-3 h-10">
+                                    {prebuild.status?.taskLogs
+                                        .filter((t) => t.logUrl)
+                                        .map((task) => {
+                                            const commonClasses =
+                                                "pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0";
+                                            if (task.taskId === taskId) {
+                                                return (
+                                                    <div
+                                                        className={
+                                                            commonClasses +
+                                                            " bg-pk-surface-secondary z-10 relative -mb-px"
+                                                        }
+                                                    >
+                                                        {task.taskLabel}
+                                                    </div>
+                                                );
+                                            }
+                                            return (
+                                                <div
+                                                    onClick={() => {
+                                                        setSelectedTaskId(task.taskId);
+                                                    }}
+                                                    className={
+                                                        commonClasses +
+                                                        " text-pk-content-secondary hover:text-pk-content-primary hover:bg-pk-surface-tertiary cursor-pointer"
+                                                    }
+                                                >
+                                                    {task.taskLabel}
+                                                </div>
+                                            );
+                                        })}
+                                </div>
                             </div>
                             <div className="h-112 border-pk-border-base">
                                 <Suspense fallback={<div />}>
@@ -281,8 +319,9 @@ export const PrebuildDetailPage: FC = () => {
                                     ) : (
                                         <WorkspaceLogs
                                             classes="h-full w-full"
-                                            xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0"
+                                            xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0 mt-4"
                                             logsEmitter={logEmitter}
+                                            key={taskId}
                                         />
                                     )}
                                 </Suspense>

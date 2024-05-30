@@ -58,6 +58,7 @@ import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { DBProject } from "./entity/db-project";
+import { PrebuiltWorkspaceWithWorkspace } from "@gitpod/gitpod-protocol/src/protocol";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -997,7 +998,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         projectId: string,
         branch?: string,
         limit?: number,
-    ): Promise<PrebuiltWorkspace[]> {
+    ): Promise<PrebuiltWorkspaceWithWorkspace[]> {
         const repo = await this.getPrebuiltWorkspaceRepo();
 
         const query = repo
@@ -1014,7 +1015,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         }
 
         const res = await query.getMany();
-        return res;
+        return res as PrebuiltWorkspaceWithWorkspace[];
     }
 
     /**
@@ -1043,7 +1044,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             field: string;
             order: "ASC" | "DESC";
         },
-    ): Promise<PrebuiltWorkspace[]> {
+    ): Promise<PrebuiltWorkspaceWithWorkspace[]> {
         const repo = await this.getPrebuiltWorkspaceRepo();
         const query = repo
             .createQueryBuilder("pws")
@@ -1114,7 +1115,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             );
         }
 
-        return query.getMany();
+        return (await query.getMany()) as PrebuiltWorkspaceWithWorkspace[];
     }
 
     async findPrebuiltWorkspaceById(id: string): Promise<PrebuiltWorkspace | undefined> {

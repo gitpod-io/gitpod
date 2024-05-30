@@ -359,8 +359,12 @@ export class ProjectsService {
         if (prebuildId) {
             const pbws = await this.workspaceDb.trace({}).findPrebuiltWorkspaceById(prebuildId);
             const info = (await this.workspaceDb.trace({}).findPrebuildInfos([prebuildId]))[0];
-            if (info && pbws) {
-                const r: PrebuildWithStatus = { info, status: pbws.state };
+            let workspace = undefined;
+            if (pbws) {
+                workspace = await this.workspaceDb.trace({}).findById(pbws.buildWorkspaceId);
+            }
+            if (info && pbws && workspace) {
+                const r: PrebuildWithStatus = { info, status: pbws.state, workspace };
                 if (pbws.error) {
                     r.error = pbws.error;
                 }
@@ -379,7 +383,7 @@ export class ProjectsService {
             result.push(
                 ...infos.map((info) => {
                     const p = prebuilds.find((p) => p.id === info.id)!;
-                    const r: PrebuildWithStatus = { info, status: p.state };
+                    const r: PrebuildWithStatus = { info, status: p.state, workspace: p.workspace };
                     if (p.error) {
                         r.error = p.error;
                     }
