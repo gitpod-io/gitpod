@@ -343,15 +343,14 @@ func (s *Service) validateRequiredClaims(ctx context.Context, provider *oidc.Pro
 		return nil, fmt.Errorf("failed to unmarshal claims of ID token: %w", err)
 	}
 	requiredClaims := []string{"email", "name"}
-	shouldFillClaims := false
+	missingClaims := []string{}
 	for _, claim := range requiredClaims {
 		if _, ok := claims[claim]; !ok {
-			shouldFillClaims = true
-			break
+			missingClaims = append(missingClaims, claim)
 		}
 	}
-	if shouldFillClaims {
-		err = s.fillClaims(ctx, provider, claims, requiredClaims)
+	if len(missingClaims) > 0 {
+		err = s.fillClaims(ctx, provider, claims, missingClaims)
 		if err != nil {
 			log.WithError(err).Error("failed to fill claims")
 		}
@@ -381,14 +380,10 @@ func (s *Service) fillClaims(ctx context.Context, provider *oidc.Provider, claim
 	for _, key := range missingClaims {
 		switch key {
 		case "email":
-			if _, ok := claims["email"]; !ok {
-				claims["email"] = userinfo.Email
-			}
+			claims["email"] = userinfo.Email
 		default:
-			if _, ok := claims[key]; !ok {
-				if value, ok2 := userinfoClaims[key]; ok2 {
-					claims[key] = value
-				}
+			if value, ok2 := userinfoClaims[key]; ok2 {
+				claims[key] = value
 			}
 		}
 	}
