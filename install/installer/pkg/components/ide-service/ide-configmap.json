@@ -12,7 +12,7 @@
         "latestImage": "{{.ResolvedCodeBrowserImageLatest}}",
         "imageLayers": [
           "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
-          "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
+          "{{.Repository}}/ide/code-codehelper:commit-304eda30826ad765c5a9e810a37af433016bb798"
         ],
         "latestImageLayers": [
           "{{.CodeWebExtensionImage}}",
@@ -24,7 +24,7 @@
             "image": "{{.Repository}}/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
             "imageLayers": [
               "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
-              "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
+              "{{.Repository}}/ide/code-codehelper:commit-304eda30826ad765c5a9e810a37af433016bb798"
             ]
           },
           {
