@@ -383,7 +383,7 @@ func (s *Service) fillClaims(ctx context.Context, provider *oidc.Provider, claim
 		case "email":
 			claims["email"] = userinfo.Email
 		default:
-			if value, ok := userinfoClaims["name"]; ok {
+			if value, ok := userinfoClaims[claim]; ok {
 				claims[claim] = value
 			}
 		}
