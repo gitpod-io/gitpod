@@ -365,7 +365,7 @@ func (s *Service) validateRequiredClaims(ctx context.Context, provider *oidc.Pro
 	return claims, nil
 }
 
-func (s *Service) fillClaims(ctx context.Context, provider *oidc.Provider, claims jwt.MapClaims, requiredClaims []string) error {
+func (s *Service) fillClaims(ctx context.Context, provider *oidc.Provider, claims jwt.MapClaims, missingClaims []string) error {
 	oauth2Info := GetOAuth2ResultFromContext(ctx)
 	if oauth2Info == nil {
 		return fmt.Errorf("oauth2 info not found")
@@ -378,13 +378,17 @@ func (s *Service) fillClaims(ctx context.Context, provider *oidc.Provider, claim
 	if err := userinfo.Claims(&userinfoClaims); err != nil {
 		return fmt.Errorf("failed to unmarshal userinfo claims: %w", err)
 	}
-	for _, claim := range requiredClaims {
-		switch claim {
+	for _, key := range missingClaims {
+		switch key {
 		case "email":
-			claims["email"] = userinfo.Email
+			if _, ok := claims["email"]; !ok {
+				claims["email"] = userinfo.Email
+			}
 		default:
-			if value, ok := userinfoClaims[claim]; ok {
-				claims[claim] = value
+			if _, ok := claims[key]; !ok {
+				if value, ok2 := userinfoClaims[key]; ok2 {
+					claims[key] = value
+				}
 			}
 		}
 	}
