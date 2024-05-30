@@ -64,7 +64,7 @@ export const Heading3: FC<HeadingProps> = ({ id, tracking, className, children, 
  */
 export const Subheading: FC<HeadingProps> = ({ id, tracking, className, children }) => {
     return (
-        <p id={id} className={cn("text-base text-pk-content-tertiary", getTracking(tracking), className)}>
+        <p id={id} className={cn("text-base text-pk-content-secondary", getTracking(tracking), className)}>
             {children}
         </p>
     );
