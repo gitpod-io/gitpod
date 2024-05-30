@@ -237,6 +237,7 @@ func (s *Service) convertClientConfig(ctx context.Context, dbEntry db.OIDCClient
 		return ClientConfig{}, err
 	}
 
+	log.WithField("scopes", log.TrustedValueWrap{Value: spec.Scopes}).Info("scopes ===================")
 	return ClientConfig{
 		ID:             dbEntry.ID.String(),
 		OrganizationID: dbEntry.OrganizationID.String(),
@@ -286,7 +287,7 @@ func (s *Service) authenticate(ctx context.Context, params authenticateParams) (
 	if idToken.Nonce != params.NonceCookieValue {
 		return nil, fmt.Errorf("nonce mismatch")
 	}
-	err = s.validateRequiredClaims(idToken)
+	err = s.validateRequiredClaims(ctx, provider, idToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate required claims: %w", err)
 	}
@@ -338,24 +339,56 @@ func (s *Service) createSession(ctx context.Context, flowResult *AuthFlowResult,
 	return nil, message, fmt.Errorf("unexpected status code: %v", res.StatusCode)
 }
 
-func (s *Service) validateRequiredClaims(token *goidc.IDToken) error {
+type validateClaims struct {
+	Email string `json:"email,omitempty"`
+	Name  string `json:"name,omitempty"`
+	jwt.RegisteredClaims
+}
+
+func (s *Service) validateRequiredClaims(ctx context.Context, provider *oidc.Provider, token *goidc.IDToken) error {
 	if len(token.Audience) < 1 {
 		return fmt.Errorf("audience claim is missing")
 	}
-	var claims struct {
-		Email string `json:"email,omitempty"`
-		Name  string `json:"name,omitempty"`
-		jwt.RegisteredClaims
-	}
+	var claims validateClaims
 	err := token.Claims(&claims)
+	log.WithField("claims", log.TrustedValueWrap{Value: claims}).Info("full data ===================")
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal claims of ID token: %w", err)
+	}
+	if claims.Email == "" || claims.Name == "" {
+		err = s.fillClaims(ctx, provider, &claims)
+		if err != nil {
+			log.WithError(err).Error("failed to fill claims")
+		}
+		log.WithField("claims", log.TrustedValueWrap{Value: claims}).Info("full data2 ===================")
 	}
 	if claims.Email == "" {
 		return fmt.Errorf("email claim is missing")
 	}
 	if claims.Name == "" {
 		return fmt.Errorf("name claim is missing")
+	}
+	return nil
+}
+
+func (s *Service) fillClaims(ctx context.Context, provider *oidc.Provider, claims *validateClaims) error {
+	oauth2Info := GetOAuth2ResultFromContext(ctx)
+	if oauth2Info == nil {
+		return fmt.Errorf("oauth2 info not found")
+	}
+	userinfo, err := provider.UserInfo(ctx, oauth2.StaticTokenSource(oauth2Info.OAuth2Token))
+	if err != nil {
+		return fmt.Errorf("failed to get userinfo: %w", err)
+	}
+	log.WithField("userinfo", log.TrustedValueWrap{Value: userinfo}).Info("userinfo ===================")
+
+	claims.Email = userinfo.Email
+	var userinfoClaims map[string]interface{}
+	if err := userinfo.Claims(userinfoClaims); err != nil {
+		return fmt.Errorf("failed to unmarshal userinfo claims: %w", err)
+	}
+	if name, ok := userinfoClaims["name"].(string); ok {
+		claims.Name = name
 	}
 	return nil
 }
