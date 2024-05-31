@@ -717,6 +717,19 @@ export class WorkspaceService {
     ) {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
 
+        if (!!gitStatus) {
+            const validateGitStatusLength = await getExperimentsClientForBackend().getValueAsync(
+                "api_validate_git_status_length",
+                false,
+                {
+                    user: { id: userId || "" },
+                },
+            );
+            if (validateGitStatusLength) {
+                this.validateGitStatusLength(gitStatus);
+            }
+        }
+
         let instance = await this.getCurrentInstance(userId, workspaceId);
         if (WorkspaceInstanceRepoStatus.equals(instance.gitStatus, gitStatus)) {
             return;
@@ -729,6 +742,23 @@ export class WorkspaceService {
             ownerID: workspace.ownerId,
             workspaceID: workspace.id,
         });
+    }
+
+    protected validateGitStatusLength(gitStatus: Required<WorkspaceInstanceRepoStatus>) {
+        /** [bytes] */
+        const MAX_GIT_STATUS_LENGTH = 4096;
+
+        try {
+            const s = JSON.stringify(gitStatus);
+            if (Buffer.byteLength(s, "utf8") > MAX_GIT_STATUS_LENGTH) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    `gitStatus too long, maximum is ${MAX_GIT_STATUS_LENGTH} bytes`,
+                );
+            }
+        } catch (err) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid gitStatus: " + err.message);
+        }
     }
 
     public async getSupportedWorkspaceClasses(user: { id: string }): Promise<SupportedWorkspaceClass[]> {

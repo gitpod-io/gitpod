@@ -7,6 +7,7 @@ package serverapi
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -246,7 +247,7 @@ func (s *Service) UpdateGitStatus(ctx context.Context, status *gitpod.WorkspaceI
 		WorkspaceId: workspaceID,
 	}
 	if status != nil {
-		payload.Status = &v1.GitStatus{
+		payload.Status = capGitStatusLength(&v1.GitStatus{
 			Branch:               status.Branch,
 			LatestCommit:         status.LatestCommit,
 			TotalUncommitedFiles: int32(status.TotalUncommitedFiles),
@@ -255,7 +256,7 @@ func (s *Service) UpdateGitStatus(ctx context.Context, status *gitpod.WorkspaceI
 			UncommitedFiles:      status.UncommitedFiles,
 			UnpushedCommits:      status.UnpushedCommits,
 			UntrackedFiles:       status.UntrackedFiles,
-		}
+		})
 	}
 	_, err = service.UpdateGitStatus(ctx, payload)
 	return
@@ -514,4 +515,48 @@ func workspaceStatusToWorkspaceInstance(status *v1.WorkspaceStatus) *gitpod.Work
 		instance.Status.ExposedPorts = append(instance.Status.ExposedPorts, info)
 	}
 	return instance
+}
+
+const GIT_STATUS_API_LIMIT_BYTES = 4096
+
+func capGitStatusLength(s *v1.GitStatus) *v1.GitStatus {
+	const MARGIN = 200                                     // bytes (we account for differences in JSON formatting, as well JSON escape characters in the static part of the status)
+	const API_BUDGET = GIT_STATUS_API_LIMIT_BYTES - MARGIN // bytes
+
+	// calculate JSON length in bytes
+	bytes, err := json.Marshal(s)
+	if err != nil {
+		log.WithError(err).Warn("cannot marshal GitStatus to calculate byte length")
+		s.UncommitedFiles = nil
+		s.UnpushedCommits = nil
+		s.UntrackedFiles = nil
+		return s
+	}
+	if len(bytes) < API_BUDGET {
+		return s
+	}
+
+	// roughly estimate how many bytes we have left for the path arrays (containing long strings)
+	budget := API_BUDGET - len(s.Branch) - len(s.LatestCommit)
+	bytesUsed := 0
+	const PLACEHOLDER = "..."
+	capArrayAtByteLimit := func(arr []string) []string {
+		result := make([]string, 0, len(arr))
+		for _, s := range arr {
+			bytesRequired := len(s) + 4 // 4 bytes for the JSON encoding
+			if bytesUsed+bytesRequired+len(PLACEHOLDER) > budget {
+				result = append(result, PLACEHOLDER)
+				bytesUsed += len(PLACEHOLDER) + 4
+				break
+			}
+			result = append(result, s)
+			bytesUsed += bytesRequired
+		}
+		return result
+	}
+	s.UncommitedFiles = capArrayAtByteLimit(s.UncommitedFiles)
+	s.UnpushedCommits = capArrayAtByteLimit(s.UnpushedCommits)
+	s.UntrackedFiles = capArrayAtByteLimit(s.UntrackedFiles)
+
+	return s
 }
