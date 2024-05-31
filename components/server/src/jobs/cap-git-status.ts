@@ -73,7 +73,7 @@ export class CapGitStatus implements Job {
     ): Promise<WorkspaceInstance[]> {
         const qb = repo
             .createQueryBuilder("wsi")
-            .where("JSON_STORAGE_SIZE(wsi.gitStatus > :byteLimit", { byteLimit })
+            .where("JSON_STORAGE_SIZE(wsi.gitStatus) > :byteLimit", { byteLimit })
             .orWhere("JSON_STORAGE_SIZE(wsi.status) > :byteLimit", { byteLimit })
             .limit(limit);
         return qb.getMany();
