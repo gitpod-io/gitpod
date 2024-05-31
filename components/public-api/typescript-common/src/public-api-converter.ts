@@ -1196,7 +1196,7 @@ export class PublicAPIConverter {
 
     toPrebuildStatus(gitpodHost: string, prebuild: PrebuildWithStatus): PrebuildStatus {
         const tasks: TaskLog[] = [];
-        if (prebuild.workspace.config.tasks) {
+        if (prebuild.workspace?.config?.tasks) {
             for (let i = 0; i < prebuild.workspace.config.tasks.length; i++) {
                 const task = prebuild.workspace.config.tasks[i];
                 tasks.push(
