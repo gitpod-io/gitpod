@@ -90,7 +90,10 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
     }
 
     async listWorkspaces(req: ListWorkspacesRequest, _: HandlerContext): Promise<ListWorkspacesResponse> {
-        const { limit } = parsePagination(req.pagination, 50);
+        if (req.pagination?.pageSize && req.pagination?.pageSize > 400) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Pagesize must not exceed 400");
+        }
+        const { limit } = parsePagination(req.pagination, 50, 400);
         if (!uuidValidate(req.organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
@@ -112,7 +115,10 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         req: ListWorkspaceSessionsRequest,
         _: HandlerContext,
     ): Promise<ListWorkspaceSessionsResponse> {
-        const page = parsePagination(req.pagination, 50);
+        if (req.pagination?.pageSize && req.pagination?.pageSize > 400) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Pagesize must not exceed 400");
+        }
+        const page = parsePagination(req.pagination, 100, 400);
         if (!uuidValidate(req.organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
