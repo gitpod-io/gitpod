@@ -380,6 +380,7 @@ func (s *Service) fillClaims(ctx context.Context, provider *oidc.Provider, claim
 	for _, key := range missingClaims {
 		switch key {
 		case "email":
+			// check userinfo definition to get more info
 			claims["email"] = userinfo.Email
 		default:
 			if value, ok := userinfoClaims[key]; ok {
