@@ -16,6 +16,7 @@ const DEFAULT_PAGE_SIZE = 50;
 export function parsePagination(
     pagination: Partial<PaginationRequest> | undefined,
     defaultPageSize = DEFAULT_PAGE_SIZE,
+    maxPageSize = MAX_PAGE_SIZE,
 ): ParsedPagination {
     let pageSize = pagination?.pageSize ?? defaultPageSize;
     if (!Number.isInteger(pageSize)) {
@@ -23,8 +24,8 @@ export function parsePagination(
     }
     if (pageSize < 0) {
         pageSize = defaultPageSize;
-    } else if (pageSize > MAX_PAGE_SIZE) {
-        pageSize = MAX_PAGE_SIZE;
+    } else if (pageSize > maxPageSize) {
+        pageSize = maxPageSize;
     }
     let page = pagination?.page ?? 0;
     if (!Number.isInteger(page) || (page ?? 0) < 0) {
