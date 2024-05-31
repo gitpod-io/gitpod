@@ -499,6 +499,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                         AND ws.creationTime < NOW() - INTERVAL ? DAY
                     GROUP BY ws.id, ws.ownerId
                     HAVING MAX(GREATEST(wsi.creationTime, wsi.startedTime, wsi.stoppedTime)) < NOW() - INTERVAL ? DAY OR MAX(wsi.creationTime) IS NULL
+                    ORDER BY MAX(GREATEST(wsi.creationTime, wsi.startedTime, wsi.stoppedTime)) DESC
                     LIMIT ?;
             `,
             [minAgeInDays, minAgeInDays, limit],
