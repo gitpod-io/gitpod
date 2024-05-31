@@ -410,10 +410,11 @@ var _ = Describe("WorkspaceController", func() {
 				}
 			})
 
+			expectFinalizerAndMarkBackupCompleted(ws, pod)
 			expectWorkspaceCleanup(ws, pod)
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
 				restores:       1,
-				backups:        0,
+				backups:        1,
 				backupFailures: 0,
 				failures:       0,
 				stops:          map[StopReason]int{StopReasonRegular: 1},
@@ -454,11 +455,11 @@ var _ = Describe("WorkspaceController", func() {
 				}
 			})
 
-			// should not take a backup
+			expectFinalizerAndMarkBackupCompleted(ws, pod)
 			expectWorkspaceCleanup(ws, pod)
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
 				restores:       1,
-				backups:        0,
+				backups:        1,
 				backupFailures: 0,
 				failures:       1,
 				stops:          map[StopReason]int{StopReasonFailed: 1},
