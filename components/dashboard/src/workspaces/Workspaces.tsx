@@ -127,8 +127,9 @@ const WorkspacesPage: FunctionComponent = () => {
                                                 </span>
                                             </div>
                                             <div className="text-sm flex-auto">
-                                                Workspaces that have been stopped for more than 24 hours. Inactive
-                                                workspaces are automatically deleted after 14 days.{" "}
+                                                Inactive workspaces will be automatically deleted after 14 days.
+                                                However, if a workspace contains git changes, it will be deleted after
+                                                28 days. You can "pin" a workspace to keep it indefinitely.{" "}
                                                 <a
                                                     target="_blank"
                                                     rel="noreferrer"

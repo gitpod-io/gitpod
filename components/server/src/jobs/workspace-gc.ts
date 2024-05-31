@@ -89,18 +89,44 @@ export class WorkspaceGarbageCollector implements Job {
                     this.config.workspaceGarbageCollection.minAgeDays,
                     this.config.workspaceGarbageCollection.chunkLimit,
                 );
+            let deleted = 0;
             const afterSelect = new Date();
             log.info(`workspace-gc: about to soft-delete ${workspaces.length} workspaces`);
             for (const ws of workspaces) {
                 try {
+                    const info = await this.workspaceService.getWorkspace(SYSTEM_USER_ID, ws.id);
+                    let pendingChanges = 0;
+                    if (info.latestInstance) {
+                        pendingChanges += info.latestInstance.gitStatus?.totalUncommitedFiles || 0;
+                        pendingChanges += info.latestInstance.gitStatus?.totalUnpushedCommits || 0;
+                        pendingChanges += info.latestInstance.gitStatus?.totalUntrackedFiles || 0;
+                    }
+                    if (
+                        pendingChanges > 0 &&
+                        info.latestInstance?.creationTime &&
+                        // skip workspaces with pending changes that are younger than minAgeDays times two
+                        new Date(info.latestInstance.creationTime).getTime() >
+                            now.getTime() - this.config.workspaceGarbageCollection.minAgeDays * 2 * 24 * 60 * 60 * 1000
+                    ) {
+                        log.info(
+                            { workspaceId: ws.id, pendingChanges, lastUse: info.latestInstance.creationTime },
+                            "workspace-gc: skipping workspace with pending changes",
+                        );
+                        continue;
+                    }
+                } catch (err) {
+                    log.error({ workspaceId: ws.id }, "workspace-gc: error during workspace selection", err);
+                }
+                try {
                     await this.workspaceService.deleteWorkspace(SYSTEM_USER_ID, ws.id, "gc");
+                    deleted++;
                 } catch (err) {
                     log.error({ workspaceId: ws.id }, "workspace-gc: error during workspace soft-deletion", err);
                 }
             }
             const afterDelete = new Date();
 
-            log.info(`workspace-gc: successfully soft-deleted ${workspaces.length} workspaces`, {
+            log.info(`workspace-gc: successfully soft-deleted ${deleted} of ${workspaces.length} fetched workspaces.`, {
                 selectionTimeMs: afterSelect.getTime() - now.getTime(),
                 deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
             });
