@@ -21,7 +21,8 @@
             },
             "startTime": "2023-11-17T10:42:00Z",
             "message": "",
-            "logUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/5fba7d7c-e740-4339-b928-0e3c5975eb37"
+            "logUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/5fba7d7c-e740-4339-b928-0e3c5975eb37",
+            "taskLogs": []
         },
         "configurationName": "parcel-demo"
     },
