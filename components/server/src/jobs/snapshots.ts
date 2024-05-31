@@ -20,7 +20,7 @@ export class SnapshotsJob implements Job {
     public name = "snapshots";
     public frequencyMs = 5 * 60 * 1000; // every 5 minutes
 
-    public async run(): Promise<void> {
+    public async run(): Promise<number | undefined> {
         if (this.config.completeSnapshotJob?.disabled) {
             log.info("snapshots: Snapshot completion job is disabled.");
             return;
@@ -52,5 +52,7 @@ export class SnapshotsJob implements Job {
                 .driveSnapshot({ workspaceOwner: workspace.ownerId, snapshot })
                 .catch((err) => log.error("driveSnapshot", err));
         }
+
+        return pendingSnapshots.length;
     }
 }

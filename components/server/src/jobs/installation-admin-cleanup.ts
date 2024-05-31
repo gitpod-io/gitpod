@@ -16,7 +16,7 @@ export class InstallationAdminCleanup implements Job {
     public name = "installation-admin-cleanup";
     public frequencyMs = 5 * 60 * 1000; // every 5 minutes
 
-    public async run(): Promise<void> {
+    public async run(): Promise<number | undefined> {
         try {
             const installationAdmin = await this.userDb.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID);
             if (!installationAdmin) {
@@ -33,6 +33,8 @@ export class InstallationAdminCleanup implements Job {
                 await this.userDb.storeUser(installationAdmin);
                 log.info("Cleaned up SCM connections of installation admin.");
             }
+
+            return undefined;
         } catch (err) {
             log.error("Failed to clean up SCM connections of installation admin.", err);
             throw err;

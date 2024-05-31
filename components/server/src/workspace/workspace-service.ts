@@ -76,6 +76,8 @@ import { InstallationService } from "../auth/installation-service";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { WatchWorkspaceStatusResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
+export const GIT_STATUS_LENGTH_CAP_BYTES = 4096;
+
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
      * This field is used to guess the workspace location using the RegionService
@@ -726,7 +728,7 @@ export class WorkspaceService {
                 },
             );
             if (validateGitStatusLength) {
-                this.validateGitStatusLength(gitStatus);
+                this.validateGitStatusLength(gitStatus, GIT_STATUS_LENGTH_CAP_BYTES);
             }
         }
 
@@ -744,16 +746,13 @@ export class WorkspaceService {
         });
     }
 
-    protected validateGitStatusLength(gitStatus: Required<WorkspaceInstanceRepoStatus>) {
-        /** [bytes] */
-        const MAX_GIT_STATUS_LENGTH = 4096;
-
+    protected validateGitStatusLength(gitStatus: Required<WorkspaceInstanceRepoStatus>, maxByteLength: number) {
         try {
             const s = JSON.stringify(gitStatus);
-            if (Buffer.byteLength(s, "utf8") > MAX_GIT_STATUS_LENGTH) {
+            if (Buffer.byteLength(s, "utf8") > maxByteLength) {
                 throw new ApplicationError(
                     ErrorCodes.BAD_REQUEST,
-                    `gitStatus too long, maximum is ${MAX_GIT_STATUS_LENGTH} bytes`,
+                    `gitStatus too long, maximum is ${maxByteLength} bytes`,
                 );
             }
         } catch (err) {
