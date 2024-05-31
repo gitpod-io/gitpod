@@ -16,11 +16,13 @@ import { cn } from "@podkit/lib/cn";
 const darkTheme: ITheme = {
     // What written on DevTool dark:bg-gray-800 is
     background: "#23211E", // Tailwind's warmGray 50 https://tailwindcss.com/docs/customizing-colors
+    selectionBackground: "#add6ff26", // https://github.com/gitpod-io/gitpod-vscode-theme/blob/6fb17ba8915fcd68fde3055b4bc60642ce5eed14/themes/gitpod-dark-color-theme.json#L15
 };
 const lightTheme: ITheme = {
     background: "#F9F9F9", // Tailwind's warmGray 800 https://tailwindcss.com/docs/customizing-colors
     foreground: "#78716C", // Tailwind's warmGray 500 https://tailwindcss.com/docs/customizing-colors
     cursor: "#78716C", // Tailwind's warmGray 500 https://tailwindcss.com/docs/customizing-colors
+    selectionBackground: "#add6ff80", // https://github.com/gitpod-io/gitpod-vscode-theme/blob/6fb17ba8915fcd68fde3055b4bc60642ce5eed14/themes/gitpod-light-color-theme.json#L15
 };
 
 export interface WorkspaceLogsProps {
