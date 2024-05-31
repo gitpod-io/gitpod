@@ -278,21 +278,16 @@ func (s *Service) authenticate(ctx context.Context, params authenticateParams) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify id_token: %w", err)
 	}
-	claims := map[string]interface{}{}
-	err = idToken.Claims(&claims)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal the payload of the ID token: %w", err)
-	}
 	if idToken.Nonce != params.NonceCookieValue {
 		return nil, fmt.Errorf("nonce mismatch")
 	}
-	err = s.validateRequiredClaims(idToken)
+	validatedClaims, err := s.validateRequiredClaims(ctx, provider, idToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate required claims: %w", err)
 	}
 	return &AuthFlowResult{
 		IDToken: idToken,
-		Claims:  claims,
+		Claims:  validatedClaims,
 	}, nil
 }
 
@@ -338,24 +333,60 @@ func (s *Service) createSession(ctx context.Context, flowResult *AuthFlowResult,
 	return nil, message, fmt.Errorf("unexpected status code: %v", res.StatusCode)
 }
 
-func (s *Service) validateRequiredClaims(token *goidc.IDToken) error {
+func (s *Service) validateRequiredClaims(ctx context.Context, provider *oidc.Provider, token *goidc.IDToken) (jwt.MapClaims, error) {
 	if len(token.Audience) < 1 {
-		return fmt.Errorf("audience claim is missing")
+		return nil, fmt.Errorf("audience claim is missing")
 	}
-	var claims struct {
-		Email string `json:"email,omitempty"`
-		Name  string `json:"name,omitempty"`
-		jwt.RegisteredClaims
-	}
+	var claims jwt.MapClaims
 	err := token.Claims(&claims)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal claims of ID token: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal claims of ID token: %w", err)
 	}
-	if claims.Email == "" {
-		return fmt.Errorf("email claim is missing")
+	requiredClaims := []string{"email", "name"}
+	missingClaims := []string{}
+	for _, claim := range requiredClaims {
+		if _, ok := claims[claim]; !ok {
+			missingClaims = append(missingClaims, claim)
+		}
 	}
-	if claims.Name == "" {
-		return fmt.Errorf("name claim is missing")
+	if len(missingClaims) > 0 {
+		err = s.fillClaims(ctx, provider, claims, missingClaims)
+		if err != nil {
+			log.WithError(err).Error("failed to fill claims")
+		}
+		// continue
+	}
+	for _, claim := range requiredClaims {
+		if _, ok := claims[claim]; !ok {
+			return nil, fmt.Errorf("%s claim is missing", claim)
+		}
+	}
+	return claims, nil
+}
+
+func (s *Service) fillClaims(ctx context.Context, provider *oidc.Provider, claims jwt.MapClaims, missingClaims []string) error {
+	oauth2Info := GetOAuth2ResultFromContext(ctx)
+	if oauth2Info == nil {
+		return fmt.Errorf("oauth2 info not found")
+	}
+	userinfo, err := provider.UserInfo(ctx, oauth2.StaticTokenSource(oauth2Info.OAuth2Token))
+	if err != nil {
+		return fmt.Errorf("failed to get userinfo: %w", err)
+	}
+	var userinfoClaims map[string]interface{}
+	if err := userinfo.Claims(&userinfoClaims); err != nil {
+		return fmt.Errorf("failed to unmarshal userinfo claims: %w", err)
+	}
+	for _, key := range missingClaims {
+		switch key {
+		case "email":
+			// check userinfo definition to get more info
+			claims["email"] = userinfo.Email
+		default:
+			if value, ok := userinfoClaims[key]; ok {
+				claims[key] = value
+			}
+		}
 	}
 	return nil
 }

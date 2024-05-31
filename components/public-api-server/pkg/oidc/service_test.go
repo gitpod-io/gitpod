@@ -344,7 +344,7 @@ func Test_validateRequiredClaims(t *testing.T) {
 		t.Run(tc.Label, func(t *testing.T) {
 			token := createTestIDToken(t, tc.Claims)
 
-			err := service.validateRequiredClaims(token)
+			_, err := service.validateRequiredClaims(context.Background(), nil, token)
 			if tc.ExpectedError == "" {
 				require.NoError(t, err)
 			}
