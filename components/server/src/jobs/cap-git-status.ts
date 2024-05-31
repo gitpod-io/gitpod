@@ -22,7 +22,7 @@ export class CapGitStatus implements Job {
     public name = "git-status-capper";
     public frequencyMs = 2 * 60 * 1000; // every 2 minutes
 
-    public async run(): Promise<void> {
+    public async run(): Promise<number | undefined> {
         log.info("git-status: we're leading the quorum.");
 
         const validateGitStatusLength = await getExperimentsClientForBackend().getValueAsync(
@@ -63,6 +63,7 @@ export class CapGitStatus implements Job {
         });
 
         log.info(`git-status: capped ${instancesCapped} instances.`);
+        return instancesCapped;
     }
 
     async findInstancesWithLengthyGitStatus(

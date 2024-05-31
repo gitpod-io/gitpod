@@ -29,7 +29,7 @@ export interface Job {
     readonly name: string;
     readonly frequencyMs: number;
     readonly lockedResources?: string[];
-    run: () => Promise<void>;
+    run: () => Promise<number | undefined>;
 }
 
 @injectable()
@@ -102,12 +102,12 @@ export class JobRunner {
                     reportJobStarted(job.name);
                     const now = new Date().getTime();
                     try {
-                        await job.run();
+                        const unitsOfWork = await job.run();
                         log.debug(`Successfully finished job ${job.name}`, {
                             ...logCtx,
                             jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
                         });
-                        reportJobCompleted(job.name, true);
+                        reportJobCompleted(job.name, true, unitsOfWork);
                     } catch (err) {
                         log.error(`Error while running job ${job.name}`, err, {
                             ...logCtx,

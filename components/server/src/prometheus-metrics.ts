@@ -280,11 +280,11 @@ export function reportJobStarted(name: string) {
 export const jobsCompletedTotal = new prometheusClient.Counter({
     name: "gitpod_server_jobs_completed_total",
     help: "Total number of errors caught by an error boundary in the dashboard",
-    labelNames: ["name", "success"],
+    labelNames: ["name", "success", "unitsOfWork"],
 });
 
-export function reportJobCompleted(name: string, success: boolean) {
-    jobsCompletedTotal.inc({ name, success: String(success) });
+export function reportJobCompleted(name: string, success: boolean, unitsOfWork?: number | undefined) {
+    jobsCompletedTotal.inc({ name, success: String(success), unitsOfWork: String(unitsOfWork) });
 }
 
 export const jobsDurationSeconds = new prometheusClient.Histogram({

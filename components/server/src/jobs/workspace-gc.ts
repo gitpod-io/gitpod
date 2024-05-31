@@ -43,7 +43,7 @@ export class WorkspaceGarbageCollector implements Job {
         this.frequencyMs = this.config.workspaceGarbageCollection.intervalSeconds * 1000;
     }
 
-    public async run(): Promise<void> {
+    public async run(): Promise<number | undefined> {
         if (this.config.workspaceGarbageCollection.disabled) {
             log.info("workspace-gc: Garbage collection disabled.");
             return;
@@ -69,6 +69,8 @@ export class WorkspaceGarbageCollector implements Job {
         } catch (err) {
             log.error("workspace-gc: error during prebuild deletion", err);
         }
+
+        return undefined;
     }
 
     /**

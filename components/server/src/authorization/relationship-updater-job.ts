@@ -20,7 +20,7 @@ export class RelationshipUpdateJob implements Job {
     public name = "relationship-update-job";
     public frequencyMs = 1000 * 60 * 3; // 3m
 
-    public async run(): Promise<void> {
+    public async run(): Promise<number | undefined> {
         try {
             const ids = await this.userDB.findUserIdsNotYetMigratedToFgaVersion(RelationshipUpdater.version, 50);
             const now = Date.now();
@@ -40,6 +40,7 @@ export class RelationshipUpdateJob implements Job {
                 }
             }
             log.info(this.name + ": updated " + migrated + " users in " + (Date.now() - now) + "ms");
+            return migrated;
         } catch (error) {
             log.error(this.name + ": error running relationship update job", error);
         }

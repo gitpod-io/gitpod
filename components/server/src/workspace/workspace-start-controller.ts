@@ -23,12 +23,13 @@ export class WorkspaceStartController implements Job {
         @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
     ) {}
 
-    public async run(): Promise<void> {
+    public async run(): Promise<number | undefined> {
         const span = TraceContext.startSpan("controlStartingWorkspaces");
         const ctx = { span };
 
         try {
             const instances = await this.workspaceDB.trace(ctx).findInstancesByPhase(WorkspaceStarter.STARTING_PHASES);
+            let toReconcile = 0;
             for (const instance of instances) {
                 try {
                     const phase = instance.status.phase;
@@ -51,6 +52,7 @@ export class WorkspaceStartController implements Job {
                         if (!user) {
                             throw new Error("cannot find owner for workspace");
                         }
+                        toReconcile++;
 
                         await this.workspaceStarter.reconcileWorkspaceStart(ctx, instance.id, user, workspace);
                     }
@@ -58,6 +60,7 @@ export class WorkspaceStartController implements Job {
                     log.warn({ instanceId: instance.id }, "error while reconciling workspace start", err);
                 }
             }
+            return toReconcile;
         } catch (err) {
             TraceContext.setError(ctx, err);
         } finally {
