@@ -4,7 +4,7 @@
 
 FROM cgr.dev/chainguard/wolfi-base:latest@sha256:97a9dd83b120b33159b94f79db90cd51a205363305818f737605354b54311974 as compress
 
-RUN apk add brotli gzip
+RUN apk add brotli gzip curl
 
 # Gitpod CLI and Local App
 COPY components-local-app--app-with-manifest/bin/* /bin/
@@ -12,6 +12,9 @@ COPY components-local-app--app-with-manifest/bin/* /bin/
 RUN for FILE in `ls /bin/gitpod-local-companion*`;do \
   gzip -v -f -9 -k "$FILE"; \
 done
+
+RUN mkdir -p static/code
+RUN curl -o static/code/marketplace.json "https://raw.githubusercontent.com/open-vsx/publish-extensions/master/extension-control/extensions.json"
 
 FROM caddy/caddy:2.7.6-alpine
 
