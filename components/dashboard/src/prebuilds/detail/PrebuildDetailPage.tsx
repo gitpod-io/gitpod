@@ -256,7 +256,7 @@ export const PrebuildDetailPage: FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="pt-4 flex flex-col gap-1 border-pk-border-base">
+                            <div className="py-4 flex flex-col gap-1 border-pk-border-base">
                                 <div className="px-6 flex gap-1 items-center">
                                     {prebuildPhase.icon}
                                     <span className="capitalize">{prebuildPhase.description}</span>{" "}
@@ -271,9 +271,8 @@ export const PrebuildDetailPage: FC = () => {
                                         {prebuild.status.message}
                                     </div>
                                 )}
-                                <div className="my-3"></div>
                                 {prebuild?.status?.taskLogs.some((t) => t.logUrl) && (
-                                    <div className="flex h-10">
+                                    <div className="flex h-10 mt-3">
                                         {prebuild.status?.taskLogs
                                             .filter((t) => t.logUrl)
                                             .map((task) => {
