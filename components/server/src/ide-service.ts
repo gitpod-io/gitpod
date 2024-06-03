@@ -68,11 +68,11 @@ export class IDEService {
     }
 
     migrateSettings(user: User): IDESettings | undefined {
-        if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.0") {
+        if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.1") {
             return undefined;
         }
         const newIDESettings: IDESettings = {
-            settingVersion: "2.0",
+            settingVersion: "2.1",
         };
         const ideSettings = user.additionalData.ideSettings;
         if (ideSettings.useDesktopIde) {
@@ -81,6 +81,9 @@ export class IDEService {
             } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
                 newIDESettings.defaultIde = "code-desktop";
                 newIDESettings.useLatestVersion = true;
+            } else if (ideSettings.defaultDesktopIde === "intellij-previous") {
+                newIDESettings.defaultIde = "intellij";
+                newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
             } else {
                 newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
                 newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
@@ -100,6 +103,11 @@ export class IDEService {
     ): Promise<ResolveWorkspaceConfigResponse> {
         const workspaceType =
             workspace.type === "prebuild" ? IdeServiceApi.WorkspaceType.PREBUILD : IdeServiceApi.WorkspaceType.REGULAR;
+
+        // in case users have `auto-start` options set
+        if (userSelectedIdeSettings?.defaultIde === "intellij-previous") {
+            userSelectedIdeSettings.defaultIde = "intellij";
+        }
 
         const req: IdeServiceApi.ResolveWorkspaceConfigRequest = {
             type: workspaceType,

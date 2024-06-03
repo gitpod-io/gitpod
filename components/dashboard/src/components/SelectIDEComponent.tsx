@@ -142,7 +142,7 @@ export default function SelectIDEComponent({
             setWarning?.(
                 <>
                     <span className="font-semibold">
-                        Support for IntelliJ IDEA 2022.3.3 will be discontinued on May 31<sup>st</sup>
+                        Support for IntelliJ IDEA 2022.3.3 is discontinued on May 31<sup>st</sup>
                     </span>
                     . <br />
                     Please use version 2024.1{" "}

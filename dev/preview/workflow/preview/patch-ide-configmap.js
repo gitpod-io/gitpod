@@ -30,10 +30,6 @@ for (let ide in json.ideOptions.options) {
             return version;
         });
     }
-    if (["intellij-previous"].includes(ide)) {
-        json.ideOptions.options[ide].image = replaceImage(json.ideOptions.options[ide].image);
-        json.ideOptions.options[ide].imageLayers = json.ideOptions.options[ide].imageLayers.map((i) => replaceImage(i));
-    }
 }
 
 fs.writeFileSync(process.argv[2], JSON.stringify(json));
