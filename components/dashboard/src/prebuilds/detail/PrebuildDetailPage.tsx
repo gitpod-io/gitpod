@@ -30,6 +30,7 @@ import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { MiddleDot } from "../../components/typography/MiddleDot";
 import { TextMuted } from "@podkit/typography/TextMuted";
+import { cn } from "@podkit/lib/cn";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -64,7 +65,7 @@ export const PrebuildDetailPage: FC = () => {
     const [logNotFound, setLogNotFound] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>(undefined);
 
-    const taskId = selectedTaskId ?? prebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? "0";
+    const taskId = selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? "0";
 
     const {
         emitter: logEmitter,
@@ -87,7 +88,7 @@ export const PrebuildDetailPage: FC = () => {
     useEffect(() => {
         setLogNotFound(false);
         const disposable = watchPrebuild(prebuildId, (prebuild) => {
-            if (prebuild.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
+            if (currentPrebuild?.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
                 disposeStreamingLogs?.dispose();
             }
             setCurrentPrebuild(prebuild);
@@ -96,7 +97,14 @@ export const PrebuildDetailPage: FC = () => {
         return () => {
             disposable.dispose();
         };
-    }, [prebuildId, disposeStreamingLogs]);
+    }, [prebuildId, disposeStreamingLogs, currentPrebuild?.status?.phase?.name]);
+
+    useEffect(() => {
+        const anyLogAvailable = currentPrebuild?.status?.taskLogs.some((t) => t.logUrl);
+        if (!anyLogAvailable) {
+            setLogNotFound(true);
+        }
+    }, [currentPrebuild?.status?.taskLogs]);
 
     useEffect(() => {
         history.listen(() => {
@@ -117,7 +125,7 @@ export const PrebuildDetailPage: FC = () => {
                 return;
             }
             if (err?.message) {
-                toast("Failed to fetch logs: " + err.message);
+                toast("Fetching logs failed: " + err.message);
             }
         });
         logEmitter.on("logs-error", (err: ApplicationError) => {
@@ -248,54 +256,58 @@ export const PrebuildDetailPage: FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="pt-4 flex flex-col gap-1 border-pk-border-base">
-                                <div className="px-6 flex gap-1 items-center">
-                                    {prebuildPhase.icon}
-                                    <span className="capitalize">{prebuildPhase.description}</span>{" "}
-                                    {isStreamingLogs && (
-                                        <TextMuted>
-                                            <MiddleDot /> Fetching logs...
-                                        </TextMuted>
+                            <div className="flex flex-col gap-1 border-pk-border-base">
+                                <div className="py-4 flex flex-col gap-1 ">
+                                    <div className="px-6 flex gap-1 items-center">
+                                        {prebuildPhase.icon}
+                                        <span className="capitalize">{prebuildPhase.description}</span>{" "}
+                                        {isStreamingLogs && (
+                                            <TextMuted>
+                                                <MiddleDot /> Fetching logs...
+                                            </TextMuted>
+                                        )}
+                                    </div>
+                                    {prebuild.status?.message && (
+                                        <div className="px-6 text-pk-content-secondary truncate">
+                                            {prebuild.status.message}
+                                        </div>
                                     )}
                                 </div>
-                                {prebuild.status?.message && (
-                                    <div className="px-6 text-pk-content-secondary truncate">
-                                        {prebuild.status.message}
-                                    </div>
-                                )}
-                                <div className="flex mt-3 h-10">
-                                    {prebuild.status?.taskLogs
-                                        .filter((t) => t.logUrl)
-                                        .map((task) => {
-                                            const commonClasses =
-                                                "pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0";
-                                            if (task.taskId === taskId) {
+                                {currentPrebuild?.status?.taskLogs.some((t) => t.logUrl) && (
+                                    <div className="flex h-10">
+                                        {currentPrebuild.status?.taskLogs
+                                            .filter((t) => t.logUrl)
+                                            .map((task) => {
+                                                const commonClasses =
+                                                    "pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0";
+                                                if (task.taskId === taskId) {
+                                                    return (
+                                                        <div
+                                                            className={cn(
+                                                                commonClasses,
+                                                                "bg-pk-surface-secondary z-10 relative -mb-px",
+                                                            )}
+                                                        >
+                                                            {task.taskLabel}
+                                                        </div>
+                                                    );
+                                                }
                                                 return (
                                                     <div
-                                                        className={
-                                                            commonClasses +
-                                                            " bg-pk-surface-secondary z-10 relative -mb-px"
-                                                        }
+                                                        onClick={() => {
+                                                            setSelectedTaskId(task.taskId);
+                                                        }}
+                                                        className={cn(
+                                                            commonClasses,
+                                                            "text-pk-content-secondary hover:text-pk-content-primary hover:bg-pk-surface-tertiary cursor-pointer",
+                                                        )}
                                                     >
                                                         {task.taskLabel}
                                                     </div>
                                                 );
-                                            }
-                                            return (
-                                                <div
-                                                    onClick={() => {
-                                                        setSelectedTaskId(task.taskId);
-                                                    }}
-                                                    className={
-                                                        commonClasses +
-                                                        " text-pk-content-secondary hover:text-pk-content-primary hover:bg-pk-surface-tertiary cursor-pointer"
-                                                    }
-                                                >
-                                                    {task.taskLabel}
-                                                </div>
-                                            );
-                                        })}
-                                </div>
+                                            })}
+                                    </div>
+                                )}
                             </div>
                             <div className="h-112 border-pk-border-base">
                                 <Suspense fallback={<div />}>
