@@ -4,9 +4,13 @@
 
 import { $ } from "bun";
 import { parseArgs } from "util";
-import { pathToOutput, pathToWorkspaceYaml, rawWorkspaceYaml, workspaceYaml, workspaceYamlObj } from "./lib/common";
+import { pathToOutput, pathToWorkspaceYaml, readWorkspaceYaml } from "./lib/common";
 
 $.nothrow();
+
+const workspaceYamlInfo = await readWorkspaceYaml();
+const rawWorkspaceYaml = workspaceYamlInfo.rawText;
+const workspaceYaml = workspaceYamlInfo.parsedObj;
 
 const { values } = parseArgs({
     args: Bun.argv,

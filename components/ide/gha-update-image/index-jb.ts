@@ -3,8 +3,8 @@
 // See License.AGPL.txt in the project root for license information.
 
 import { $ } from "bun";
-import { upgradeStableVersionsInWorkspaceaAndGradle } from "./lib/stable-version";
-import { appendPinVersionsIntoIDEConfigMap } from "./lib/pin-version";
+import { upgradeStableVersionsInWorkspaceaAndGradle } from "./lib/jb-stable-version";
+import { appendPinVersionsIntoIDEConfigMap } from "./lib/jb-pin-version";
 
 $.nothrow(); // git likes to respond with non-zero codes, but it is alright for us
 
