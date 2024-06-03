@@ -1,5 +1,6 @@
 name: JB Stable IDEs Update
 on:
+    workflow_call:
     workflow_dispatch:
     schedule:
         # At 11:00 on every day-of-week from Monday through Friday.
