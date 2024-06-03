@@ -7,6 +7,7 @@ package proxy
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -229,7 +230,12 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 			return true, nil
 		}
 		if resp.StatusCode == http.StatusBadRequest {
-			log.WithField("URL", resp.Request.URL.String()).Warn("bad request")
+			bodyBytes, err := io.ReadAll(resp.Body)
+			if err != nil {
+				log.WithError(err).WithField("URL", resp.Request.URL.String()).Warn("failed to read response body")
+			}
+
+			log.WithField("URL", resp.Request.URL.String()).WithField("Body", string(bodyBytes)).Warn("bad request")
 			return true, nil
 		}
 
