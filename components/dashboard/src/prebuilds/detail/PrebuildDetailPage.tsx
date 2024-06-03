@@ -30,6 +30,7 @@ import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { MiddleDot } from "../../components/typography/MiddleDot";
 import { TextMuted } from "@podkit/typography/TextMuted";
+import { cn } from "@podkit/lib/cn";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -99,6 +100,13 @@ export const PrebuildDetailPage: FC = () => {
     }, [prebuildId, disposeStreamingLogs]);
 
     useEffect(() => {
+        const anyLogAvailable = prebuild?.status?.taskLogs.some((t) => t.logUrl);
+        if (!anyLogAvailable) {
+            setLogNotFound(true);
+        }
+    }, [prebuild?.status]);
+
+    useEffect(() => {
         history.listen(() => {
             dismissToast(PersistedToastID);
         });
@@ -117,7 +125,7 @@ export const PrebuildDetailPage: FC = () => {
                 return;
             }
             if (err?.message) {
-                toast("Failed to fetch logs: " + err.message);
+                toast("Fetching logs failed: " + err.message);
             }
         });
         logEmitter.on("logs-error", (err: ApplicationError) => {
@@ -263,39 +271,42 @@ export const PrebuildDetailPage: FC = () => {
                                         {prebuild.status.message}
                                     </div>
                                 )}
-                                <div className="flex mt-3 h-10">
-                                    {prebuild.status?.taskLogs
-                                        .filter((t) => t.logUrl)
-                                        .map((task) => {
-                                            const commonClasses =
-                                                "pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0";
-                                            if (task.taskId === taskId) {
+                                <div className="my-3"></div>
+                                {prebuild?.status?.taskLogs.some((t) => t.logUrl) && (
+                                    <div className="flex h-10">
+                                        {prebuild.status?.taskLogs
+                                            .filter((t) => t.logUrl)
+                                            .map((task) => {
+                                                const commonClasses =
+                                                    "pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0";
+                                                if (task.taskId === taskId) {
+                                                    return (
+                                                        <div
+                                                            className={cn(
+                                                                commonClasses,
+                                                                "bg-pk-surface-secondary z-10 relative -mb-px",
+                                                            )}
+                                                        >
+                                                            {task.taskLabel}
+                                                        </div>
+                                                    );
+                                                }
                                                 return (
                                                     <div
-                                                        className={
-                                                            commonClasses +
-                                                            " bg-pk-surface-secondary z-10 relative -mb-px"
-                                                        }
+                                                        onClick={() => {
+                                                            setSelectedTaskId(task.taskId);
+                                                        }}
+                                                        className={cn(
+                                                            commonClasses,
+                                                            "text-pk-content-secondary hover:text-pk-content-primary hover:bg-pk-surface-tertiary cursor-pointer",
+                                                        )}
                                                     >
                                                         {task.taskLabel}
                                                     </div>
                                                 );
-                                            }
-                                            return (
-                                                <div
-                                                    onClick={() => {
-                                                        setSelectedTaskId(task.taskId);
-                                                    }}
-                                                    className={
-                                                        commonClasses +
-                                                        " text-pk-content-secondary hover:text-pk-content-primary hover:bg-pk-surface-tertiary cursor-pointer"
-                                                    }
-                                                >
-                                                    {task.taskLabel}
-                                                </div>
-                                            );
-                                        })}
-                                </div>
+                                            })}
+                                    </div>
+                                )}
                             </div>
                             <div className="h-112 border-pk-border-base">
                                 <Suspense fallback={<div />}>
