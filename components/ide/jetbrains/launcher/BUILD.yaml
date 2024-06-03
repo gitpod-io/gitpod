@@ -29,7 +29,7 @@ packages:
       - components/common-go:lib
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/jetbrains/launcher.Version=commit-${__git_commit}'"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/jetbrains/launcher/pkg/constant.Version=commit-${__git_commit}'"]
   - name: hot-swap
     type: generic
     deps:
