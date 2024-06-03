@@ -463,6 +463,16 @@ jobs:
     uses: ./.github/workflows/code-updates.yml
     secrets: inherit
 
+  ide-jb-updates:
+    name: "Run JetBrains update jobs on main branch"
+    needs:
+      - configuration
+      - build-gitpod
+      - create-runner
+    if: needs.configuration.outputs.is_main_branch == 'true'
+    uses: ./.github/workflows/jetbrains-updates.yml
+    secrets: inherit
+
   delete-runner:
     if: always()
     needs:
