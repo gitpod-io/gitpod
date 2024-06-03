@@ -257,7 +257,7 @@ export const PrebuildDetailPage: FC = () => {
                                 </div>
                             </div>
                             <div className="flex flex-col gap-1 border-pk-border-base">
-                                <div className="py-4">
+                                <div className="py-4 flex flex-col gap-1 ">
                                     <div className="px-6 flex gap-1 items-center">
                                         {prebuildPhase.icon}
                                         <span className="capitalize">{prebuildPhase.description}</span>{" "}
