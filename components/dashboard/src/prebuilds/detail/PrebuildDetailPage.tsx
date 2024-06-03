@@ -104,7 +104,7 @@ export const PrebuildDetailPage: FC = () => {
         if (!anyLogAvailable) {
             setLogNotFound(true);
         }
-    }, [currentPrebuild?.status]);
+    }, [currentPrebuild?.status?.taskLogs]);
 
     useEffect(() => {
         history.listen(() => {
@@ -274,7 +274,7 @@ export const PrebuildDetailPage: FC = () => {
                                     )}
                                 </div>
                                 {currentPrebuild?.status?.taskLogs.some((t) => t.logUrl) && (
-                                    <div className="flex h-10 mt-3">
+                                    <div className="flex h-10">
                                         {currentPrebuild.status?.taskLogs
                                             .filter((t) => t.logUrl)
                                             .map((task) => {
