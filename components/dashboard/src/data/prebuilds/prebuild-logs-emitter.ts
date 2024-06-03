@@ -33,7 +33,7 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
             });
             const prebuild = await prebuildClient.getPrebuild({ prebuildId });
             const task = prebuild.prebuild?.status?.taskLogs?.find((log) => log.taskId === taskId);
-            if (!task) {
+            if (!task?.logUrl) {
                 setIsLoading(false);
                 throw new ApplicationError(ErrorCodes.NOT_FOUND, "Task not found");
             }
