@@ -81,9 +81,6 @@ export class IDEService {
             } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
                 newIDESettings.defaultIde = "code-desktop";
                 newIDESettings.useLatestVersion = true;
-            } else if (ideSettings.defaultDesktopIde === "intellij-previous") {
-                newIDESettings.defaultIde = "intellij";
-                newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
             } else {
                 newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
                 newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
@@ -92,6 +89,9 @@ export class IDEService {
             const useLatest = ideSettings.defaultIde === "code-latest";
             newIDESettings.defaultIde = "code";
             newIDESettings.useLatestVersion = useLatest;
+        }
+        if (ideSettings.defaultIde === "intellij-previous") {
+            newIDESettings.defaultIde = "intellij";
         }
         return newIDESettings;
     }
