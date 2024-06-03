@@ -65,7 +65,7 @@ export const PrebuildDetailPage: FC = () => {
     const [logNotFound, setLogNotFound] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>(undefined);
 
-    const taskId = selectedTaskId ?? prebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? "0";
+    const taskId = selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? "0";
 
     const {
         emitter: logEmitter,
@@ -88,7 +88,7 @@ export const PrebuildDetailPage: FC = () => {
     useEffect(() => {
         setLogNotFound(false);
         const disposable = watchPrebuild(prebuildId, (prebuild) => {
-            if (prebuild.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
+            if (currentPrebuild?.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
                 disposeStreamingLogs?.dispose();
             }
             setCurrentPrebuild(prebuild);
@@ -97,7 +97,7 @@ export const PrebuildDetailPage: FC = () => {
         return () => {
             disposable.dispose();
         };
-    }, [prebuildId, disposeStreamingLogs]);
+    }, [prebuildId, disposeStreamingLogs, currentPrebuild?.status?.phase?.name]);
 
     useEffect(() => {
         const anyLogAvailable = currentPrebuild?.status?.taskLogs.some((t) => t.logUrl);
@@ -271,9 +271,9 @@ export const PrebuildDetailPage: FC = () => {
                                         {prebuild.status.message}
                                     </div>
                                 )}
-                                {prebuild?.status?.taskLogs.some((t) => t.logUrl) && (
+                                {currentPrebuild?.status?.taskLogs.some((t) => t.logUrl) && (
                                     <div className="flex h-10 mt-3">
-                                        {prebuild.status?.taskLogs
+                                        {currentPrebuild.status?.taskLogs
                                             .filter((t) => t.logUrl)
                                             .map((task) => {
                                                 const commonClasses =
