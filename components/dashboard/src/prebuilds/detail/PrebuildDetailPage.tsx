@@ -100,11 +100,11 @@ export const PrebuildDetailPage: FC = () => {
     }, [prebuildId, disposeStreamingLogs]);
 
     useEffect(() => {
-        const anyLogAvailable = prebuild?.status?.taskLogs.some((t) => t.logUrl);
+        const anyLogAvailable = currentPrebuild?.status?.taskLogs.some((t) => t.logUrl);
         if (!anyLogAvailable) {
             setLogNotFound(true);
         }
-    }, [prebuild?.status]);
+    }, [currentPrebuild?.status]);
 
     useEffect(() => {
         history.listen(() => {
