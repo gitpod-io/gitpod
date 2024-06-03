@@ -3,7 +3,7 @@
 // See License.AGPL.txt in the project root for license information.
 
 import { expect, test, mock, describe } from "bun:test";
-import { JetBrainsIDE, getStableVersionsInfo } from "./stable-version";
+import { JetBrainsIDE, getStableVersionsInfo } from "./jb-stable-version";
 import { SemVer } from "semver";
 
 describe("stableVersion", () => {

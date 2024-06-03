@@ -13,13 +13,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          cd ./components/ide/code/gha-update-image/
+          cd ./components/ide/gha-update-image/
           yarn
           npm i -g bun
       - name: Check for updates
         id: updates
         run: |
-          cd ./components/ide/code/gha-update-image/
+          cd ./components/ide/gha-update-image/
           bun run check-code-build.ts --branch ${{inputs.branch}}
 
           if [ -f /tmp/__gh_output.txt ]
