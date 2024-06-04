@@ -87,6 +87,7 @@ class GitpodStartWorkspaceView(
                                 "CLion" -> "https://github.com/gitpod-samples/template-cpp"
                                 "RubyMine" -> "https://github.com/gitpod-samples/template-ruby-on-rails-postgres"
                                 "PhpStorm" -> "https://github.com/gitpod-samples/template-php-laravel-mysql"
+                                "RustRover" -> "https://github.com/gitpod-samples/template-rust-cli"
                                 else -> "https://github.com/gitpod-io/empty"
                             }
                         }

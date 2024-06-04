@@ -519,8 +519,27 @@
           }
         ]
       },
-      "xterm": {
+      "rustrover": {
         "orderKey": "120",
+        "title": "RustRover",
+        "type": "desktop",
+        "logo": "{{.IdeLogoBase}}/rustroverLogo.svg",
+        "image": "{{.Repository}}/ide/rustrover:{{.WorkspaceVersions.Workspace.DesktopIdeImages.RustRoverImage.Version}}",
+        "latestImage": "{{.ResolvedJBImageLatest.RustRover}}",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
+        "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
+        "imageLayers": [
+          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "latestImageLayers": [
+          "{{.JetBrainsPluginLatestImage}}",
+          "{{.JetBrainsLauncherImage}}"
+        ],
+        "versions": []
+      },
+      "xterm": {
+        "orderKey": "130",
         "title": "Terminal",
         "type": "browser",
         "logo": "{{.IdeLogoBase}}/terminal.svg",
@@ -543,7 +562,8 @@
           "rubymine",
           "webstorm",
           "rider",
-          "clion"
+          "clion",
+          "rustrover"
         ],
         "installationSteps": [
           "If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below."

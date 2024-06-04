@@ -38,6 +38,10 @@ const ideConfigs = [
         name: "clion",
         displayName: "CLion",
     },
+    {
+        name: "rustrover",
+        displayName: "RustRover",
+    },
 ];
 
 ["stable", "latest"].forEach((qualifier) => {
