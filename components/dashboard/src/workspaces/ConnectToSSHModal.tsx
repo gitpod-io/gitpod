@@ -48,7 +48,7 @@ function SSHView(props: SSHProps) {
                         Access Token
                     </TabsTrigger>
                 </TabsList>
-                <div className="border-gray-200 dark:border-gray-800 border-b"></div>
+                <div className="border-gray-200 dark:border-gray-800 pt-1 border-b"></div>
                 <TabsContent value="ssh_key" className="space-y-4 mt-4">
                     {!hasSSHKey && (
                         <Alert type="warning" className="whitespace-normal">
