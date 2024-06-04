@@ -1,0 +1,36 @@
+{
+  "name": "rustrover",
+  "displayName": "RustRover",
+  "version": "stable",
+  "entrypoint": "/ide-desktop/jb-launcher",
+  "entrypointArgs": [
+    "{DESKTOPIDEPORT}",
+    "rustrover",
+    "Open in RustRover"
+  ],
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "/status"
+    }
+  },
+  "env": {
+    "JETBRAINS_BACKEND_QUALIFIER": "stable",
+    "PATH": "/ide-desktop/rustrover/bin:$PATH",
+    "EDITOR": "/ide-desktop/rustrover/bin/idea-cli open",
+    "VISUAL": "$EDITOR",
+    "GP_OPEN_EDITOR": "$EDITOR",
+    "GIT_EDITOR": "$EDITOR --wait",
+    "GP_PREVIEW_BROWSER": "/ide-desktop/rustrover/bin/idea-cli preview",
+    "GP_EXTERNAL_BROWSER": "/ide-desktop/rustrover/bin/idea-cli preview"
+  },
+  "prebuild": {
+    "args": [
+      "warmup",
+      "rustrover"
+    ],
+    "env": {
+      "JETBRAINS_BACKEND_QUALIFIER": "stable"
+    }
+  }
+}
