@@ -38,6 +38,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/jetbrains/launcher/pkg/constant"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
@@ -46,8 +47,6 @@ const defaultBackendPort = "63342"
 var (
 	// ServiceName is the name we use for tracing/logging.
 	ServiceName = "jetbrains-launcher"
-	// Version of this service - set during build.
-	Version = ""
 )
 
 type LaunchContext struct {
@@ -99,8 +98,8 @@ func main() {
 	// supervisor refer see https://github.com/gitpod-io/gitpod/blob/main/components/supervisor/pkg/supervisor/supervisor.go#L961
 	shouldWaitBackendPlugin := os.Getenv("GITPOD_WAIT_IDE_BACKEND") == "true"
 	debugEnabled := os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true"
-	log.Init(ServiceName, Version, true, debugEnabled)
-	log.Info(ServiceName + ": " + Version)
+	log.Init(ServiceName, constant.Version, true, debugEnabled)
+	log.Info(ServiceName + ": " + constant.Version)
 	startTime := time.Now()
 
 	log.WithField("shouldWait", shouldWaitBackendPlugin).Info("should wait backend plugin")
