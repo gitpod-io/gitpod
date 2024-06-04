@@ -118,11 +118,11 @@ type Jetbrains struct {
 	// Configure RubyMine integration
 	Rubymine *JetbrainsProduct `yaml:"rubymine,omitempty" json:"rubymine,omitempty"`
 
+	// Configure RustRover integration
+	Rustrover *JetbrainsProduct `yaml:"rustrover,omitempty" json:"rustrover,omitempty"`
+
 	// Configure WebStorm integration
 	Webstorm *JetbrainsProduct `yaml:"webstorm,omitempty" json:"webstorm,omitempty"`
-
-	// Configure RustRover integration
-	RustRover *JetbrainsProduct `yaml:"rustrover,omitempty" json:"rustrover,omitempty"`
 }
 
 // JetbrainsProduct
