@@ -59,6 +59,8 @@ packages:
       - components/ide/jetbrains/image:rider-latest
       - components/ide/jetbrains/image:clion
       - components/ide/jetbrains/image:clion-latest
+      - components/ide/jetbrains/image:rustrover
+      - components/ide/jetbrains/image:rustrover-latest
       - components/image-builder-bob:docker
       - components/image-builder-mk3:docker
       - components/ipfs/ipfs-cluster:docker

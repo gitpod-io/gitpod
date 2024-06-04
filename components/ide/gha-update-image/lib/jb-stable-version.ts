@@ -98,6 +98,13 @@ export const ides: JetBrainsIDE[] = [
         productType: "release",
         exampleRepo: "https://github.com/gitpod-samples/template-cpp",
     },
+    {
+        productName: "RustRover",
+        productId: "rustrover",
+        productCode: "RR",
+        productType: "release",
+        exampleRepo: "https://github.com/gitpod-samples/template-rust-cli",
+    },
 ] as const;
 
 const workspaceYamlInfo = await readWorkspaceYaml();

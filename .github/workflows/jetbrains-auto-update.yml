@@ -59,3 +59,9 @@ jobs:
       productId: clion
       productCode: CL
     secrets: inherit
+  rustrover:
+    uses: ./.github/workflows/jetbrains-auto-update-template.yml
+    with:
+      productId: rustrover
+      productCode: RR
+    secrets: inherit

@@ -27,6 +27,7 @@ const workspaceYamlSchema = z.object({
         webstormDownloadUrl: z.string(),
         riderDownloadUrl: z.string(),
         clionDownloadUrl: z.string(),
+        rustroverDownloadUrl: z.string(),
     }),
 });
 export type IWorkspaceYaml = z.infer<typeof workspaceYamlSchema>;
@@ -143,6 +144,8 @@ export const getLatestInstallerVersions = async (version?: string) => {
                         riderLatest: versionObj,
                         rubymine: versionObj,
                         rubymineLatest: versionObj,
+                        rustrover: versionObj,
+                        rustroverLatest: versionObj,
                         webstorm: versionObj,
                         webstormLatest: versionObj,
                     }),

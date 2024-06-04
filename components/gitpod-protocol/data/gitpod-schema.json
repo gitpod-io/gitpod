@@ -297,6 +297,10 @@
                 "clion": {
                     "$ref": "#/definitions/jetbrainsProduct",
                     "description": "Configure CLion integration"
+                },
+                "rustrover": {
+                    "$ref": "#/definitions/jetbrainsProduct",
+                    "description": "Configure RustRover integration"
                 }
             }
         },

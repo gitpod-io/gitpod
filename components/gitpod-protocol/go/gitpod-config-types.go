@@ -120,6 +120,9 @@ type Jetbrains struct {
 
 	// Configure WebStorm integration
 	Webstorm *JetbrainsProduct `yaml:"webstorm,omitempty" json:"webstorm,omitempty"`
+
+	// Configure RustRover integration
+	RustRover *JetbrainsProduct `yaml:"rustrover,omitempty" json:"rustrover,omitempty"`
 }
 
 // JetbrainsProduct
