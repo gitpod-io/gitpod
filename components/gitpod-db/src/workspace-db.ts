@@ -97,6 +97,11 @@ export interface WorkspaceDB {
         limit: number,
         offset: number,
     ): Promise<WorkspaceSession[]>;
+    findEligibleWorkspacesForSoftDeletion(
+        cutOffDate?: Date,
+        limit?: number,
+        type?: WorkspaceType,
+    ): Promise<WorkspaceAndOwner[]>;
     findWorkspacesForGarbageCollection(minAgeInDays: number, limit: number): Promise<WorkspaceAndOwner[]>;
     findWorkspacesForContentDeletion(
         minSoftDeletedTimeInDays: number,
