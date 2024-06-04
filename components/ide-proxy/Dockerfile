@@ -20,4 +20,5 @@ FROM caddy/caddy:2.7.6-alpine
 
 COPY conf/Caddyfile /etc/caddy/Caddyfile
 COPY static /www/
+COPY --from=compress /static /www
 COPY --from=compress /bin /www/static/bin
