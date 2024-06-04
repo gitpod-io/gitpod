@@ -68,8 +68,10 @@ module.exports = {
                     invert: "rgb(var(--surface-invert) / <alpha-value>)",
                 },
                 "pk-border": {
+                    light: "rgb(var(--border-light) / <alpha-value>)",
                     base: "rgb(var(--border-base) / <alpha-value>)",
-                    light: "rgb(var(--border-light) / <alpha-value>)"
+                    strong: "rgb(var(--border-strong) / <alpha-value>)",
+                    invert: "rgb(var(--border-invert) / <alpha-value>)",
                 },
             },
             backgroundImage: {

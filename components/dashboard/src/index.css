@@ -52,6 +52,8 @@
         /* Borders */
         --border-base: var(--gray-200);
         --border-light: var(--gray-100);
+        --border-strong: var(--gray-500);
+        --border-invert: var(--gray-600);
     }
 
     /* Dark mode color adjustments */
@@ -75,6 +77,8 @@
         /* Borders */
         --border-base: var(--gray-700);
         --border-light: var(--gray-800);
+        --border-strong: var(--gray-500);
+        --border-invert: var(--gray-400);
     }
 
     html,
