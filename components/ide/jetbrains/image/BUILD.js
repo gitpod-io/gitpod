@@ -35,6 +35,10 @@ const ideConfigs = [
         name: "clion",
         productCode: "CL",
     },
+    {
+        name: "rustrover",
+        productCode: "RR",
+    },
 ];
 
 const getIDEVersion = function (qualifier, url) {

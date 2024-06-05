@@ -20,6 +20,7 @@ const (
 	WebStormDesktopIdeImage       = "ide/webstorm"
 	RiderDesktopIdeImage          = "ide/rider"
 	CLionDesktopIdeImage          = "ide/clion"
+	RustRoverDesktopIdeImage      = "ide/rustrover"
 	JetBrainsBackendPluginImage   = "ide/jb-backend-plugin"
 	JetBrainsLauncherImage        = "ide/jb-launcher"
 )
