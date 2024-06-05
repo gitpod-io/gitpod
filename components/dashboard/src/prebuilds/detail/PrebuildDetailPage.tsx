@@ -280,14 +280,14 @@ export const PrebuildDetailPage: FC = () => {
                                         onValueChange={setSelectedTaskId}
                                         className="p-0"
                                     >
-                                        <TabsList className="overflow-x-scroll max-w-full p-0">
+                                        <TabsList className="overflow-x-scroll max-w-full p-0 h-12 items-end">
                                             {currentPrebuild.status?.taskLogs
                                                 .filter((t) => t.logUrl)
                                                 .map((task) => (
                                                     <TabsTrigger
                                                         value={task.taskId}
                                                         key={task.taskId}
-                                                        className="font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative data-[state=active]:-mb-px"
+                                                        className="font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 focus-visible:ring-offset-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative data-[state=active]:-mb-px"
                                                     >
                                                         {task.taskLabel}
                                                     </TabsTrigger>
