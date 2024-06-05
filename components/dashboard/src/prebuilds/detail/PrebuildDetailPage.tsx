@@ -282,7 +282,7 @@ export const PrebuildDetailPage: FC = () => {
                                                     <TabsTrigger
                                                         value={task.taskId}
                                                         key={task.taskId}
-                                                        className="font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 focus-visible:ring-offset-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative"
+                                                        className="font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative"
                                                     >
                                                         {task.taskLabel}
                                                     </TabsTrigger>
