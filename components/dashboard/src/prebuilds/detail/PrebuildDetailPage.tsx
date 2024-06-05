@@ -30,7 +30,7 @@ import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { MiddleDot } from "../../components/typography/MiddleDot";
 import { TextMuted } from "@podkit/typography/TextMuted";
-import { cn } from "@podkit/lib/cn";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@podkit/tabs/Tabs";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -274,69 +274,56 @@ export const PrebuildDetailPage: FC = () => {
                                     )}
                                 </div>
                                 {currentPrebuild?.status?.taskLogs.some((t) => t.logUrl) && (
-                                    <div className="flex h-10">
-                                        {currentPrebuild.status?.taskLogs
-                                            .filter((t) => t.logUrl)
-                                            .map((task) => {
-                                                const commonClasses =
-                                                    "pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0";
-                                                if (task.taskId === taskId) {
-                                                    return (
-                                                        <div
-                                                            className={cn(
-                                                                commonClasses,
-                                                                "bg-pk-surface-secondary z-10 relative -mb-px",
-                                                            )}
-                                                        >
-                                                            {task.taskLabel}
-                                                        </div>
-                                                    );
-                                                }
-                                                return (
-                                                    <div
-                                                        onClick={() => {
-                                                            setSelectedTaskId(task.taskId);
-                                                        }}
-                                                        className={cn(
-                                                            commonClasses,
-                                                            "text-pk-content-secondary hover:text-pk-content-primary hover:bg-pk-surface-tertiary cursor-pointer",
-                                                        )}
+                                    <Tabs
+                                        defaultValue={taskId}
+                                        value={taskId}
+                                        onValueChange={setSelectedTaskId}
+                                        className="p-0"
+                                    >
+                                        <TabsList className="overflow-x-scroll max-w-full p-0">
+                                            {currentPrebuild.status?.taskLogs
+                                                .filter((t) => t.logUrl)
+                                                .map((task) => (
+                                                    <TabsTrigger
+                                                        value={task.taskId}
+                                                        key={task.taskId}
+                                                        className="font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative data-[state=active]:-mb-px"
                                                     >
                                                         {task.taskLabel}
+                                                    </TabsTrigger>
+                                                ))}
+                                        </TabsList>
+                                        <TabsContent value={taskId} className="h-112 mt-0 border-pk-border-base">
+                                            <Suspense fallback={<div />}>
+                                                {logNotFound ? (
+                                                    <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
+                                                        <Text className="w-80 text-center">
+                                                            Logs of this prebuild are inaccessible. Use{" "}
+                                                            <code>gp validate --prebuild --headless</code> in a
+                                                            workspace to see logs and debug prebuild issues.{" "}
+                                                            <a
+                                                                href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
+                                                                target="_blank"
+                                                                rel="noreferrer noopener"
+                                                                className="gp-link"
+                                                            >
+                                                                Learn more
+                                                            </a>
+                                                            .
+                                                        </Text>
                                                     </div>
-                                                );
-                                            })}
-                                    </div>
+                                                ) : (
+                                                    <WorkspaceLogs
+                                                        classes="h-full w-full"
+                                                        xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0 mt-4"
+                                                        logsEmitter={logEmitter}
+                                                        key={taskId}
+                                                    />
+                                                )}
+                                            </Suspense>
+                                        </TabsContent>
+                                    </Tabs>
                                 )}
-                            </div>
-                            <div className="h-112 border-pk-border-base">
-                                <Suspense fallback={<div />}>
-                                    {logNotFound ? (
-                                        <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
-                                            <Text className="w-80 text-center">
-                                                Logs of this prebuild are inaccessible. Use{" "}
-                                                <code>gp validate --prebuild --headless</code> in a workspace to see
-                                                logs and debug prebuild issues.{" "}
-                                                <a
-                                                    href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
-                                                    target="_blank"
-                                                    rel="noreferrer noopener"
-                                                    className="gp-link"
-                                                >
-                                                    Learn more
-                                                </a>
-                                                .
-                                            </Text>
-                                        </div>
-                                    ) : (
-                                        <WorkspaceLogs
-                                            classes="h-full w-full"
-                                            xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0 mt-4"
-                                            logsEmitter={logEmitter}
-                                            key={taskId}
-                                        />
-                                    )}
-                                </Suspense>
                             </div>
                             <div className="px-6 pt-6 flex justify-between border-pk-border-base">
                                 {[PrebuildPhase_Phase.BUILDING, PrebuildPhase_Phase.QUEUED].includes(
