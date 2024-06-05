@@ -20,6 +20,7 @@ import {
     StartWorkspaceResult,
     User,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+    WithPrebuild,
     Workspace,
     WorkspaceContext,
     WorkspaceImageBuild,
@@ -191,7 +192,15 @@ export class WorkspaceService {
             );
             throw err;
         }
-        await this.updateDeletionEligabilityTime(user.id, workspace.id);
+        const update = this.updateDeletionEligabilityTime(user.id, workspace.id);
+        if (WithPrebuild.is(workspace.context) && workspace.context.prebuildWorkspaceId) {
+            // mark the prebuild active
+            const prebuiltWorkspace = await this.db.findPrebuiltWorkspaceById(workspace.context.prebuildWorkspaceId);
+            if (prebuiltWorkspace?.buildWorkspaceId) {
+                await this.updateDeletionEligabilityTime(user.id, prebuiltWorkspace?.buildWorkspaceId, true);
+            }
+        }
+        await update;
         return workspace;
     }
 
@@ -369,15 +378,18 @@ export class WorkspaceService {
      * @param workspaceId
      * @returns
      */
-    async updateDeletionEligabilityTime(userId: string, workspaceId: string): Promise<void> {
+    async updateDeletionEligabilityTime(userId: string, workspaceId: string, activeNow = false): Promise<void> {
         try {
             let daysToLive = this.config.workspaceGarbageCollection?.minAgeDays || 14;
             const daysToLiveForPrebuilds = this.config.workspaceGarbageCollection?.minAgePrebuildDays || 7;
 
             const workspace = await this.doGetWorkspace(userId, workspaceId);
             const instance = await this.db.findCurrentInstance(workspaceId);
-            const lastActive =
+            let lastActive =
                 instance?.stoppingTime || instance?.startedTime || instance?.creationTime || workspace?.creationTime;
+            if (activeNow) {
+                lastActive = new Date().toISOString();
+            }
             if (!lastActive) {
                 return;
             }
@@ -394,7 +406,7 @@ export class WorkspaceService {
             if (
                 (instance?.gitStatus?.totalUncommitedFiles || 0) > 0 ||
                 (instance?.gitStatus?.totalUnpushedCommits || 0) > 0 ||
-                (instance?.gitStatus?.totalUnpushedCommits || 0) > 0
+                (instance?.gitStatus?.totalUntrackedFiles || 0) > 0
             ) {
                 daysToLive = daysToLive * 2;
             }
