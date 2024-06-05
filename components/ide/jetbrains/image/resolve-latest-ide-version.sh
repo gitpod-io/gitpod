@@ -17,7 +17,7 @@ IDE_VERSION=$(jq -r -c "first(.${PRODUCT_CODE}[] | select(.build | contains(\"$P
 
 if [ -z "$IDE_BUILD_VERSION" ] || [ -z "$IDE_VERSION" ]; then
     if [ -n "$JB_FALLBACK_URL" ]; then
-        echo "Could not resolve latest IDE version for $PRODUCT_CODE. Falling back to find $JB_FALLBACK_URL"
+        # echo "Could not resolve latest IDE version for $PRODUCT_CODE. Falling back to find $JB_FALLBACK_URL"
         IDE_BUILD_VERSION=$(jq -r -c "first(.${PRODUCT_CODE}[] | select(.downloads.linux.link == \"$JB_FALLBACK_URL\") | .build)" < "$TEMP_FILENAME") # Example: IDE_BUILD_VERSION: 223.7571.176
         IDE_VERSION=$(jq -r -c "first(.${PRODUCT_CODE}[] | select(.downloads.linux.link == \"$JB_FALLBACK_URL\") | .version)" < "$TEMP_FILENAME") # Example: IDE_VERSION: 2022.3
     fi
