@@ -87,6 +87,16 @@ export class StripeService {
         return result.data[0]?.id;
     }
 
+    /**
+     * Permanently deletes a customer. It cannot be undone. Also immediately cancels any active subscriptions on the customer.
+     * @see https://docs.stripe.com/api/customers/delete
+     */
+    async deleteCustomer(attributionId: string): Promise<void> {
+        await reportStripeOutcome("customers_cancel", () => {
+            return this.getStripe().customers.del(attributionId);
+        });
+    }
+
     async getPriceInformation(attributionId: string): Promise<string> {
         const priceInformation = await this.billingService.getPriceInformation({ attributionId });
         return priceInformation.humanReadableDescription;
