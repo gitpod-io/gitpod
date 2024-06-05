@@ -377,10 +377,11 @@ func (c WorkspaceConfig) Validate() error {
 }
 
 func (c Config) GetDesktopIDE() *IDEConfig {
-	if len(c.DesktopIDEs) == 0 {
-		return nil
-	}
-	return c.DesktopIDEs[0]
+	return nil
+	// if len(c.DesktopIDEs) == 0 {
+	// 	return nil
+	// }
+	// return c.DesktopIDEs[0]
 }
 
 // GetTokens parses tokens from GITPOD_TOKENS and possibly downloads OTS.
