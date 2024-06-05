@@ -13,7 +13,7 @@
   ],
   "dependencies": {
     "@gitpod/content-service": "0.1.5",
-    "@grpc/grpc-js": "1.9.1",
+    "@grpc/grpc-js": "1.10.8",
     "google-protobuf": "^3.19.1",
     "inversify": "^6.0.1",
     "opentracing": "^0.14.4"
