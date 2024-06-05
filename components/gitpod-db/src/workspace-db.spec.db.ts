@@ -337,6 +337,30 @@ class WorkspaceDBSpec {
     }
 
     @test(timeout(10000))
+    public async testFindWorkspacesForGarbageCollection_markedEligable() {
+        this.ws.deletionEligibilityTime = this.timeWs;
+        await Promise.all([this.db.store(this.ws), this.db.storeInstance(this.wsi1), this.db.storeInstance(this.wsi2)]);
+        const dbResult = await this.db.findWorkspacesForGarbageCollection(14, 10);
+        expect(dbResult.length).to.eq(0);
+    }
+
+    @test(timeout(10000))
+    public async testFindEligableWorkspacesForSoftDeletion_markedEligable() {
+        this.ws.deletionEligibilityTime = this.timeWs;
+        await Promise.all([this.db.store(this.ws), this.db.storeInstance(this.wsi1), this.db.storeInstance(this.wsi2)]);
+        const dbResult = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(this.timeAfter), 10);
+        expect(dbResult[0].id).to.eq(this.ws.id);
+        expect(dbResult[0].ownerId).to.eq(this.ws.ownerId);
+    }
+
+    @test(timeout(10000))
+    public async testFindEligableWorkspacesForSoftDeletion_notMarkedEligable() {
+        await Promise.all([this.db.store(this.ws), this.db.storeInstance(this.wsi1), this.db.storeInstance(this.wsi2)]);
+        const dbResult = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(this.timeAfter), 10);
+        expect(dbResult.length).to.eq(0);
+    }
+
+    @test(timeout(10000))
     public async testFindAllWorkspaceAndInstances_workspaceId() {
         await Promise.all([
             this.db.store(this.ws),

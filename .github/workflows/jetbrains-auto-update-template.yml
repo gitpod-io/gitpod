@@ -33,10 +33,15 @@ jobs:
           identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
           service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+      - name: Find downloadUrl
+        id: download-url
+        run: |
+          downloadUrl=$(cat WORKSPACE.yaml | yq r - 'defaultArgs.${{ inputs.productId }}DownloadUrl')
+          echo "::set-output name=downloadUrl::$downloadUrl"
       - name: Find IDE version to download
         id: ide-version
         run: |
-          IDE_VERSIONS_JSON=$(bash ./components/ide/jetbrains/image/resolve-latest-ide-version.sh ${{ inputs.productCode }})
+          IDE_VERSIONS_JSON=$(bash ./components/ide/jetbrains/image/resolve-latest-ide-version.sh ${{ inputs.productCode }} ${{ steps.download-url.outputs.downloadUrl }})
           IDE_BUILD_VERSION=$(echo "$IDE_VERSIONS_JSON" | jq -r .IDE_BUILD_VERSION)
           IDE_VERSION=$(echo "$IDE_VERSIONS_JSON" | jq -r .IDE_VERSION)
           echo "IDE_BUILD_VERSION: $IDE_BUILD_VERSION"

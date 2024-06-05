@@ -459,3 +459,22 @@ func TestCLion(t *testing.T) {
 		Feature()
 	testEnv.Test(t, f)
 }
+
+func TestRustRover(t *testing.T) {
+	if roboquatToken == "" {
+		t.Skip("this test need github action run permission")
+	}
+	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+	f := features.New("Start a workspace using RustRover").
+		WithLabel("component", "IDE").
+		WithLabel("ide", "RustRover").
+		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
+			defer cancel()
+			JetBrainsIDETest(ctx, t, cfg, "rustrover", "RR", "https://github.com/gitpod-samples/template-rust-cli")
+			return testCtx
+		}).
+		Feature()
+	testEnv.Test(t, f)
+}

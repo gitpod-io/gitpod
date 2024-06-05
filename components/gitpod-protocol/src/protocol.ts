@@ -795,6 +795,7 @@ export interface JetBrainsConfig {
     webstorm?: JetBrainsProductConfig;
     rider?: JetBrainsProductConfig;
     clion?: JetBrainsProductConfig;
+    rustrover?: JetBrainsProductConfig;
 }
 export interface JetBrainsProductConfig {
     prebuilds?: JetBrainsPrebuilds;

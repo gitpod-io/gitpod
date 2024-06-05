@@ -63,6 +63,8 @@ type Components struct {
 			RiderLatestImage                  Versioned `json:"riderLatest"`
 			CLionImage                        Versioned `json:"clion"`
 			CLionLatestImage                  Versioned `json:"clionLatest"`
+			RustRoverImage                    Versioned `json:"rustrover"`
+			RustRoverLatestImage              Versioned `json:"rustroverLatest"`
 			JetBrainsBackendPluginImage       Versioned `json:"jbBackendPlugin"`
 			JetBrainsBackendPluginLatestImage Versioned `json:"jbBackendPluginLatest"`
 			JetBrainsLauncherImage            Versioned `json:"jbLauncher"`
