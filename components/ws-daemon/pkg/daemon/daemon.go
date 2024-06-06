@@ -118,6 +118,8 @@ func NewDaemon(config Config) (*Daemon, error) {
 
 				cgroup.ProcessCodeServer:       -10,
 				cgroup.ProcessCodeServerHelper: -5,
+
+				cgroup.ProcessJetBrainsIDE: -10,
 			},
 			EnableOOMScoreAdj: config.OOMScores.Enabled,
 			OOMScoreAdj: map[cgroup.ProcessType]int{
@@ -125,6 +127,7 @@ func NewDaemon(config Config) (*Daemon, error) {
 				cgroup.ProcessSupervisor:       config.OOMScores.Tier1,
 				cgroup.ProcessCodeServer:       config.OOMScores.Tier1,
 				cgroup.ProcessIDE:              config.OOMScores.Tier1,
+				cgroup.ProcessJetBrainsIDE:     config.OOMScores.Tier1,
 				cgroup.ProcessCodeServerHelper: config.OOMScores.Tier2,
 				cgroup.ProcessWebIDEHelper:     config.OOMScores.Tier2,
 			},
