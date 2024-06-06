@@ -192,15 +192,8 @@ export class WorkspaceService {
             );
             throw err;
         }
-        const update = this.updateDeletionEligabilityTime(user.id, workspace.id);
-        if (WithPrebuild.is(workspace.context) && workspace.context.prebuildWorkspaceId) {
-            // mark the prebuild active
-            const prebuiltWorkspace = await this.db.findPrebuiltWorkspaceById(workspace.context.prebuildWorkspaceId);
-            if (prebuiltWorkspace?.buildWorkspaceId) {
-                await this.updateDeletionEligabilityTime(user.id, prebuiltWorkspace?.buildWorkspaceId, true);
-            }
-        }
-        await update;
+        this.asyncUpdateDeletionEligabilityTime(user.id, workspace.id);
+        this.asyncUpdateDeletionEligabilityTimeForUsedPrebuild(user.id, workspace);
         return workspace;
     }
 
@@ -344,7 +337,7 @@ export class WorkspaceService {
             return;
         }
         await this.workspaceStarter.stopWorkspaceInstance({}, instance.id, instance.region, reason, policy);
-        this.updateDeletionEligabilityTime(userId, workspaceId);
+        this.asyncUpdateDeletionEligabilityTime(userId, workspaceId);
     }
 
     public async stopRunningWorkspacesForUser(
@@ -365,10 +358,36 @@ export class WorkspaceService {
                     reason,
                     policy,
                 );
-                await this.updateDeletionEligabilityTime(userId, info.workspace.id);
+                this.asyncUpdateDeletionEligabilityTime(userId, info.workspace.id);
             }),
         );
         return infos.map((instance) => instance.workspace);
+    }
+
+    private asyncUpdateDeletionEligabilityTimeForUsedPrebuild(userId: string, workspace: Workspace): void {
+        (async () => {
+            if (WithPrebuild.is(workspace.context) && workspace.context.prebuildWorkspaceId) {
+                // mark the prebuild active
+                const prebuiltWorkspace = await this.db.findPrebuiltWorkspaceById(
+                    workspace.context.prebuildWorkspaceId,
+                );
+                if (prebuiltWorkspace?.buildWorkspaceId) {
+                    await this.updateDeletionEligabilityTime(userId, prebuiltWorkspace?.buildWorkspaceId, true);
+                }
+            }
+        })().catch((err) =>
+            log.error(
+                { userId, workspaceId: workspace.id },
+                "Failed to update deletion eligibility time for prebuild",
+                err,
+            ),
+        );
+    }
+
+    private asyncUpdateDeletionEligabilityTime(userId: string, workspaceId: string): void {
+        this.updateDeletionEligabilityTime(userId, workspaceId).catch((err) =>
+            log.error({ userId, workspaceId }, "Failed to update deletion eligibility time", err),
+        );
     }
 
     /**
@@ -669,7 +688,7 @@ export class WorkspaceService {
 
         // at this point we're about to actually start a new workspace
         const result = await this.workspaceStarter.startWorkspace(ctx, workspace, user, await projectPromise, options);
-        await this.updateDeletionEligabilityTime(user.id, workspaceId);
+        this.asyncUpdateDeletionEligabilityTime(user.id, workspaceId);
         return result;
     }
 

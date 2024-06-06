@@ -44,10 +44,9 @@ export class CapGitStatus implements Job {
             }
 
             // Cap the git status (incl. status.repo, the old place where we stored it before)
-            const MARGIN = 200;
             instances.forEach((i) => {
                 if (i.gitStatus) {
-                    i.gitStatus = capGitStatus(i.gitStatus, GIT_STATUS_LENGTH_CAP_BYTES - MARGIN);
+                    i.gitStatus = capGitStatus(i.gitStatus);
                 }
                 if (i.status) {
                     delete (i.status as any).repo;
@@ -80,7 +79,9 @@ export class CapGitStatus implements Job {
     }
 }
 
-function capGitStatus(gitStatus: WorkspaceInstanceRepoStatus, maxLength: number): WorkspaceInstanceRepoStatus {
+function capGitStatus(gitStatus: WorkspaceInstanceRepoStatus): WorkspaceInstanceRepoStatus {
+    const MARGIN = 500; // to account for attribute name's, and generic JSON overhead
+    const maxLength = GIT_STATUS_LENGTH_CAP_BYTES - MARGIN;
     let bytesUsed = 0;
     function capStr(str: string | undefined): string | undefined {
         if (str === undefined) {

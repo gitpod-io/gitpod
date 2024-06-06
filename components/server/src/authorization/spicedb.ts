@@ -70,8 +70,11 @@ export class SpiceDBClientProvider {
                             },
                         ],
                     }),
-
                     "grpc.enable_retries": 1, //TODO enabled by default
+
+                    // Governs how log DNS resolution results are cached (at minimum!)
+                    // default is 30s, which is too long for us during rollouts (where service DNS entries are updated)
+                    "grpc.dns_min_time_between_resolutions_ms": 2000,
                     interceptors: this.interceptors,
                 },
             ) as Client;
