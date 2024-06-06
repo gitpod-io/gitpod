@@ -275,7 +275,7 @@ export const PrebuildDetailPage: FC = () => {
                                 </div>
                                 {(currentPrebuild?.status?.taskLogs.some((t) => t.logUrl) || logNotFound) && (
                                     <Tabs value={taskId} onValueChange={setSelectedTaskId} className="p-0">
-                                        <TabsList className="overflow-x-auto max-w-full p-0 items-end">
+                                        <TabsList className="overflow-x-auto max-w-full p-0 h-auto items-end">
                                             {currentPrebuild?.status?.taskLogs
                                                 .filter((t) => t.logUrl)
                                                 .map((task) => (
