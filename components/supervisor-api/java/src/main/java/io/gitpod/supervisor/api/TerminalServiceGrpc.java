@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -172,6 +172,37 @@ public final class TerminalServiceGrpc {
       }
     }
     return getListenMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest,
+      io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse> getGetTaskOutputMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "GetTaskOutput",
+      requestType = io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest.class,
+      responseType = io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest,
+      io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse> getGetTaskOutputMethod() {
+    io.grpc.MethodDescriptor<io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest, io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse> getGetTaskOutputMethod;
+    if ((getGetTaskOutputMethod = TerminalServiceGrpc.getGetTaskOutputMethod) == null) {
+      synchronized (TerminalServiceGrpc.class) {
+        if ((getGetTaskOutputMethod = TerminalServiceGrpc.getGetTaskOutputMethod) == null) {
+          TerminalServiceGrpc.getGetTaskOutputMethod = getGetTaskOutputMethod =
+              io.grpc.MethodDescriptor.<io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest, io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "GetTaskOutput"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse.getDefaultInstance()))
+              .setSchemaDescriptor(new TerminalServiceMethodDescriptorSupplier("GetTaskOutput"))
+              .build();
+        }
+      }
+    }
+    return getGetTaskOutputMethod;
   }
 
   private static volatile io.grpc.MethodDescriptor<io.gitpod.supervisor.api.TerminalOuterClass.WriteTerminalRequest,
@@ -398,6 +429,13 @@ public final class TerminalServiceGrpc {
     }
 
     /**
+     */
+    public void getTaskOutput(io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest request,
+        io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getGetTaskOutputMethod(), responseObserver);
+    }
+
+    /**
      * <pre>
      * Write writes to a terminal
      * </pre>
@@ -474,6 +512,13 @@ public final class TerminalServiceGrpc {
                 io.gitpod.supervisor.api.TerminalOuterClass.ListenTerminalRequest,
                 io.gitpod.supervisor.api.TerminalOuterClass.ListenTerminalResponse>(
                   this, METHODID_LISTEN)))
+          .addMethod(
+            getGetTaskOutputMethod(),
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
+              new MethodHandlers<
+                io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest,
+                io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse>(
+                  this, METHODID_GET_TASK_OUTPUT)))
           .addMethod(
             getWriteMethod(),
             io.grpc.stub.ServerCalls.asyncUnaryCall(
@@ -574,6 +619,14 @@ public final class TerminalServiceGrpc {
         io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.TerminalOuterClass.ListenTerminalResponse> responseObserver) {
       io.grpc.stub.ClientCalls.asyncServerStreamingCall(
           getChannel().newCall(getListenMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
+    public void getTaskOutput(io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest request,
+        io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getGetTaskOutputMethod(), getCallOptions()), request, responseObserver);
     }
 
     /**
@@ -688,6 +741,13 @@ public final class TerminalServiceGrpc {
     }
 
     /**
+     */
+    public io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse getTaskOutput(io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getGetTaskOutputMethod(), getCallOptions(), request);
+    }
+
+    /**
      * <pre>
      * Write writes to a terminal
      * </pre>
@@ -788,6 +848,14 @@ public final class TerminalServiceGrpc {
     }
 
     /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse> getTaskOutput(
+        io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getGetTaskOutputMethod(), getCallOptions()), request);
+    }
+
+    /**
      * <pre>
      * Write writes to a terminal
      * </pre>
@@ -837,10 +905,11 @@ public final class TerminalServiceGrpc {
   private static final int METHODID_GET = 2;
   private static final int METHODID_LIST = 3;
   private static final int METHODID_LISTEN = 4;
-  private static final int METHODID_WRITE = 5;
-  private static final int METHODID_SET_SIZE = 6;
-  private static final int METHODID_SET_TITLE = 7;
-  private static final int METHODID_UPDATE_ANNOTATIONS = 8;
+  private static final int METHODID_GET_TASK_OUTPUT = 5;
+  private static final int METHODID_WRITE = 6;
+  private static final int METHODID_SET_SIZE = 7;
+  private static final int METHODID_SET_TITLE = 8;
+  private static final int METHODID_UPDATE_ANNOTATIONS = 9;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -878,6 +947,10 @@ public final class TerminalServiceGrpc {
         case METHODID_LISTEN:
           serviceImpl.listen((io.gitpod.supervisor.api.TerminalOuterClass.ListenTerminalRequest) request,
               (io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.TerminalOuterClass.ListenTerminalResponse>) responseObserver);
+          break;
+        case METHODID_GET_TASK_OUTPUT:
+          serviceImpl.getTaskOutput((io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputRequest) request,
+              (io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.TerminalOuterClass.GetTaskOutputResponse>) responseObserver);
           break;
         case METHODID_WRITE:
           serviceImpl.write((io.gitpod.supervisor.api.TerminalOuterClass.WriteTerminalRequest) request,
@@ -961,6 +1034,7 @@ public final class TerminalServiceGrpc {
               .addMethod(getGetMethod())
               .addMethod(getListMethod())
               .addMethod(getListenMethod())
+              .addMethod(getGetTaskOutputMethod())
               .addMethod(getWriteMethod())
               .addMethod(getSetSizeMethod())
               .addMethod(getSetTitleMethod())

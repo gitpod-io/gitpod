@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -37,6 +37,7 @@ type TerminalServiceClient interface {
 	List(ctx context.Context, in *ListTerminalsRequest, opts ...grpc.CallOption) (*ListTerminalsResponse, error)
 	// Listen listens to a terminal
 	Listen(ctx context.Context, in *ListenTerminalRequest, opts ...grpc.CallOption) (TerminalService_ListenClient, error)
+	GetTaskOutput(ctx context.Context, in *GetTaskOutputRequest, opts ...grpc.CallOption) (*GetTaskOutputResponse, error)
 	// Write writes to a terminal
 	Write(ctx context.Context, in *WriteTerminalRequest, opts ...grpc.CallOption) (*WriteTerminalResponse, error)
 	// SetSize sets the terminal's size
@@ -123,6 +124,15 @@ func (x *terminalServiceListenClient) Recv() (*ListenTerminalResponse, error) {
 	return m, nil
 }
 
+func (c *terminalServiceClient) GetTaskOutput(ctx context.Context, in *GetTaskOutputRequest, opts ...grpc.CallOption) (*GetTaskOutputResponse, error) {
+	out := new(GetTaskOutputResponse)
+	err := c.cc.Invoke(ctx, "/supervisor.TerminalService/GetTaskOutput", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *terminalServiceClient) Write(ctx context.Context, in *WriteTerminalRequest, opts ...grpc.CallOption) (*WriteTerminalResponse, error) {
 	out := new(WriteTerminalResponse)
 	err := c.cc.Invoke(ctx, "/supervisor.TerminalService/Write", in, out, opts...)
@@ -174,6 +184,7 @@ type TerminalServiceServer interface {
 	List(context.Context, *ListTerminalsRequest) (*ListTerminalsResponse, error)
 	// Listen listens to a terminal
 	Listen(*ListenTerminalRequest, TerminalService_ListenServer) error
+	GetTaskOutput(context.Context, *GetTaskOutputRequest) (*GetTaskOutputResponse, error)
 	// Write writes to a terminal
 	Write(context.Context, *WriteTerminalRequest) (*WriteTerminalResponse, error)
 	// SetSize sets the terminal's size
@@ -203,6 +214,9 @@ func (UnimplementedTerminalServiceServer) List(context.Context, *ListTerminalsRe
 }
 func (UnimplementedTerminalServiceServer) Listen(*ListenTerminalRequest, TerminalService_ListenServer) error {
 	return status.Errorf(codes.Unimplemented, "method Listen not implemented")
+}
+func (UnimplementedTerminalServiceServer) GetTaskOutput(context.Context, *GetTaskOutputRequest) (*GetTaskOutputResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTaskOutput not implemented")
 }
 func (UnimplementedTerminalServiceServer) Write(context.Context, *WriteTerminalRequest) (*WriteTerminalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Write not implemented")
@@ -322,6 +336,24 @@ func (x *terminalServiceListenServer) Send(m *ListenTerminalResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _TerminalService_GetTaskOutput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTaskOutputRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TerminalServiceServer).GetTaskOutput(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/supervisor.TerminalService/GetTaskOutput",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TerminalServiceServer).GetTaskOutput(ctx, req.(*GetTaskOutputRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TerminalService_Write_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(WriteTerminalRequest)
 	if err := dec(in); err != nil {
@@ -416,6 +448,10 @@ var TerminalService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "List",
 			Handler:    _TerminalService_List_Handler,
+		},
+		{
+			MethodName: "GetTaskOutput",
+			Handler:    _TerminalService_GetTaskOutput_Handler,
 		},
 		{
 			MethodName: "Write",
