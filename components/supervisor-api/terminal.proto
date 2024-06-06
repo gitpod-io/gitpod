@@ -44,6 +44,12 @@ service TerminalService {
         };
     }
 
+    rpc GetTaskOutput(GetTaskOutputRequest) returns (GetTaskOutputResponse) {
+        option (google.api.http) = {
+            get: "/v1/terminal/task/output/{alias}"
+        };
+    }
+
     // Write writes to a terminal
     rpc Write(WriteTerminalRequest) returns (WriteTerminalResponse) {
         option (google.api.http) = {
@@ -128,6 +134,13 @@ message ListenTerminalResponse {
     };
     // only present if output is title
     TerminalTitleSource title_source = 4;
+}
+
+message GetTaskOutputRequest {
+    string alias = 1;
+}
+message GetTaskOutputResponse {
+    bytes data = 1;
 }
 
 message WriteTerminalRequest {
