@@ -257,7 +257,7 @@ export const PrebuildDetailPage: FC = () => {
                                 </div>
                             </div>
                             <div className="flex flex-col gap-1 border-pk-border-base">
-                                <div className="py-4 flex flex-col gap-1 ">
+                                <div className="py-4 flex flex-col gap-1">
                                     <div className="px-6 flex gap-1 items-center">
                                         {prebuildPhase.icon}
                                         <span className="capitalize">{prebuildPhase.description}</span>{" "}
@@ -274,7 +274,11 @@ export const PrebuildDetailPage: FC = () => {
                                     )}
                                 </div>
                                 {(currentPrebuild?.status?.taskLogs.some((t) => t.logUrl) || logNotFound) && (
-                                    <Tabs value={taskId} onValueChange={setSelectedTaskId} className="p-0">
+                                    <Tabs
+                                        value={taskId}
+                                        onValueChange={setSelectedTaskId}
+                                        className="p-0 bg-pk-surface-primary"
+                                    >
                                         <TabsList className="overflow-x-auto max-w-full p-0 h-auto items-end">
                                             {currentPrebuild?.status?.taskLogs
                                                 .filter((t) => t.logUrl)
