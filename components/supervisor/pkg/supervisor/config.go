@@ -188,7 +188,7 @@ func (c IDEConfig) GetUniqKey() string {
 }
 
 func (c IDEConfig) PrebuildTaskName() string {
-	return "ide-prebuild-" + c.Name
+	return "ide-prebuild-" + c.GetUniqKey()
 }
 
 // Validate validates this configuration.
