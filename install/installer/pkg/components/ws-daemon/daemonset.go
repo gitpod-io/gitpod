@@ -209,6 +209,12 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Operator: "Exists",
 			Effect:   "NoSchedule",
 		},
+		// the following toleration is for enterprise instances that supports XL workspace nodegroups
+		{
+			Key:      "gitpod.io/xl-workspace",
+			Operator: "Exists",
+			Effect:   "NoSchedule",
+		},
 	}
 
 	podSpec := corev1.PodSpec{
