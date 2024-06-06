@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { WorkspaceDB, TeamDB, ProjectDB } from "@gitpod/gitpod-db/lib";
+import { WorkspaceDB, TeamDB } from "@gitpod/gitpod-db/lib";
 import { User, Workspace } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -14,7 +14,7 @@ import { AuthProviderService } from "../auth/auth-provider-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { UserService } from "./user-service";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
-import { StripeService } from "../billing/stripe-service";
+import { OrganizationService } from "../orgs/organization-service";
 
 @injectable()
 export class UserDeletionService {
@@ -22,11 +22,10 @@ export class UserDeletionService {
         @inject(UserService) private readonly userService: UserService,
         @inject(WorkspaceDB) private readonly workspaceDb: WorkspaceDB,
         @inject(TeamDB) private readonly teamDb: TeamDB,
-        @inject(ProjectDB) private readonly projectDb: ProjectDB,
         @inject(StorageClient) private readonly storageClient: StorageClient,
         @inject(WorkspaceService) private readonly workspaceService: WorkspaceService,
         @inject(AuthProviderService) private readonly authProviderService: AuthProviderService,
-        @inject(StripeService) private readonly stripeService: StripeService,
+        @inject(OrganizationService) private readonly organizationService: OrganizationService,
     ) {
         this.userService.onDeleteUser(async (subjectId, user, ctx) => {
             await this.contributeToDeleteUser(subjectId, user, ctx);
@@ -91,16 +90,7 @@ export class UserDeletionService {
 
     private async deleteSoleOwnedTeams(userId: string) {
         const ownedTeams = await this.teamDb.findTeamsByUserAsSoleOwner(userId);
-
-        for (const team of ownedTeams) {
-            const teamProjects = await this.projectDb.findProjects(team.id);
-            await Promise.all(teamProjects.map((project) => this.projectDb.markDeleted(project.id)));
-
-            // Look into whether this is a proper way of determining an attribution ID
-            await this.stripeService.deleteCustomer(`team:${team.id}`);
-        }
-
-        await Promise.all(ownedTeams.map((t) => this.teamDb.deleteTeam(t.id)));
+        await Promise.all(ownedTeams.map((t) => this.organizationService.deleteOrganization(userId, t.id)));
     }
 
     private anonymizeWorkspace(ws: Workspace) {
