@@ -193,7 +193,6 @@ export class OrganizationService {
 
                 await db.deleteTeam(orgId);
 
-                // todo: look into introducing an isStripe() method to simplify this here and other places
                 const costCenter = await this.usageService.getCostCenter(userId, orgId);
                 if (costCenter.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
                     await this.stripeService.cancelCustomerSubscriptions(AttributionId.createFromOrganizationId(orgId));
