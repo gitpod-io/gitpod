@@ -381,11 +381,10 @@ func (c WorkspaceConfig) Validate() error {
 }
 
 func (c Config) GetDesktopIDE() *IDEConfig {
-	return nil
-	// if len(c.DesktopIDEs) == 0 {
-	// 	return nil
-	// }
-	// return c.DesktopIDEs[0]
+	if len(c.DesktopIDEs) == 0 {
+		return nil
+	}
+	return c.DesktopIDEs[0]
 }
 
 // GetTokens parses tokens from GITPOD_TOKENS and possibly downloads OTS.
@@ -487,7 +486,6 @@ func (c Config) getGitpodTasks() (tasks []TaskConfig, err error) {
 		// if prebuild with running IDEs then there is going to be a race condition
 		// between IDE itself and its prebuild
 		var prevTaskID string
-		log.WithField("desktopIdes", log.TrustedValueWrap{Value: c.DesktopIDEs}).Info("===================DesktopIDEs")
 		for _, ideConfig := range c.DesktopIDEs {
 			if ideConfig == nil || ideConfig.Prebuild == nil {
 				continue
@@ -507,7 +505,7 @@ func (c Config) getGitpodTasks() (tasks []TaskConfig, err error) {
 				entrypoint = ideConfig.Entrypoint
 			}
 
-			init := fmt.Sprintf("echo 'Prebuilding %s (%s)'; ", ideConfig.DisplayName, ideConfig.Version)
+			init := fmt.Sprintf("echo 'Prebuilding %s (%s-%s)'; ", ideConfig.DisplayName, ideConfig.GetUniqKey(), ideConfig.Version)
 			init += entrypoint
 			for _, arg := range ideConfig.Prebuild.Args {
 				init = init + " " + arg

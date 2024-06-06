@@ -559,7 +559,6 @@ func run(launchCtx *LaunchContext) {
 	}
 	args = append(args, launchCtx.projectContextDir)
 
-	log.Info("=============run")
 	cmd := remoteDevServerCmd(args, launchCtx)
 	cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_BACKEND_KIND="+launchCtx.alias)
 	workspaceUrl, err := url.Parse(launchCtx.wsInfo.WorkspaceUrl)
@@ -661,7 +660,6 @@ func resolveLaunchContextEnv() []string {
 
 func remoteDevServerCmd(args []string, launchCtx *LaunchContext) *exec.Cmd {
 	cmd := exec.Command(launchCtx.backendDir+"/bin/remote-dev-server.sh", args...)
-	log.WithField("cmd", launchCtx.backendDir+"/bin/remote-dev-server.sh").WithField("args", args).Info("===================remoteDevServerCmd")
 	cmd.Env = launchCtx.env
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -1038,7 +1036,6 @@ func unzipArchive(src, dest string) error {
 
 func installPlugins(config *gitpod.GitpodConfig, launchCtx *LaunchContext) error {
 	plugins, err := getPlugins(config, launchCtx.alias)
-	log.WithField("plugins", log.TrustedValueWrap{Value: plugins}).Info("==============install plugins")
 	if err != nil {
 		return err
 	}
