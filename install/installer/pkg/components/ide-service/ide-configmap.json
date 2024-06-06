@@ -8,17 +8,25 @@
         "type": "browser",
         "logo": "{{.IdeLogoBase}}/vscode.svg",
         "label": "Browser",
-        "image": "{{.Repository}}/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
+        "image": "{{.Repository}}/ide/code:commit-ece9c809ac703118bd86cc0b69191db74dcd3df4",
         "latestImage": "{{.ResolvedCodeBrowserImageLatest}}",
         "imageLayers": [
           "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
-          "{{.Repository}}/ide/code-codehelper:commit-304eda30826ad765c5a9e810a37af433016bb798"
+          "{{.Repository}}/ide/code-codehelper:commit-f9c0969d7d7512d32c33d5cfa0e831d92f7f81ae"
         ],
         "latestImageLayers": [
           "{{.CodeWebExtensionImage}}",
           "{{.CodeHelperImage}}"
         ],
         "versions": [
+          {
+            "version": "1.90.0",
+            "image": "{{.Repository}}/ide/code:commit-ece9c809ac703118bd86cc0b69191db74dcd3df4",
+            "imageLayers": [
+              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/code-codehelper:commit-f9c0969d7d7512d32c33d5cfa0e831d92f7f81ae"
+            ]
+          },
           {
             "version": "1.89.1",
             "image": "{{.Repository}}/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
