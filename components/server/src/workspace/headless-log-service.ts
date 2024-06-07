@@ -339,6 +339,18 @@ export class HeadlessLogService {
                                 log.debug(logCtx, "stream cancelled", err);
                             });
                         });
+
+                        stream.on("end", (status) => {
+                            if (status && status.code === grpc.status.OK) {
+                                resolve();
+                                return;
+                            }
+
+                            log.error(logCtx, "stream workspace logs: getOutput failed", { status });
+                            reject(err);
+                        });
+
+                        return;
                     }
 
                     retry(false);
