@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -6714,6 +6714,1070 @@ java.lang.String defaultValue);
 
     @java.lang.Override
     public io.gitpod.supervisor.api.TerminalOuterClass.GetTerminalRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface GetOutputRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.GetOutputRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string task_id = 1;</code>
+     * @return The taskId.
+     */
+    java.lang.String getTaskId();
+    /**
+     * <code>string task_id = 1;</code>
+     * @return The bytes for taskId.
+     */
+    com.google.protobuf.ByteString
+        getTaskIdBytes();
+  }
+  /**
+   * Protobuf type {@code supervisor.GetOutputRequest}
+   */
+  public static final class GetOutputRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.GetOutputRequest)
+      GetOutputRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use GetOutputRequest.newBuilder() to construct.
+    private GetOutputRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private GetOutputRequest() {
+      taskId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new GetOutputRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private GetOutputRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              taskId_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_GetOutputRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_GetOutputRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest.class, io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest.Builder.class);
+    }
+
+    public static final int TASK_ID_FIELD_NUMBER = 1;
+    private volatile java.lang.Object taskId_;
+    /**
+     * <code>string task_id = 1;</code>
+     * @return The taskId.
+     */
+    @java.lang.Override
+    public java.lang.String getTaskId() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        taskId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task_id = 1;</code>
+     * @return The bytes for taskId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTaskIdBytes() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        taskId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(taskId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, taskId_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(taskId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, taskId_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest other = (io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest) obj;
+
+      if (!getTaskId()
+          .equals(other.getTaskId())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + TASK_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTaskId().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.GetOutputRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.GetOutputRequest)
+        io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_GetOutputRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_GetOutputRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest.class, io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        taskId_ = "";
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_GetOutputRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest build() {
+        io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest buildPartial() {
+        io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest result = new io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest(this);
+        result.taskId_ = taskId_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest) {
+          return mergeFrom((io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest other) {
+        if (other == io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest.getDefaultInstance()) return this;
+        if (!other.getTaskId().isEmpty()) {
+          taskId_ = other.taskId_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object taskId_ = "";
+      /**
+       * <code>string task_id = 1;</code>
+       * @return The taskId.
+       */
+      public java.lang.String getTaskId() {
+        java.lang.Object ref = taskId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          taskId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 1;</code>
+       * @return The bytes for taskId.
+       */
+      public com.google.protobuf.ByteString
+          getTaskIdBytes() {
+        java.lang.Object ref = taskId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          taskId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 1;</code>
+       * @param value The taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTaskId() {
+
+        taskId_ = getDefaultInstance().getTaskId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 1;</code>
+       * @param value The bytes for taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        taskId_ = value;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.GetOutputRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.GetOutputRequest)
+    private static final io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest();
+    }
+
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<GetOutputRequest>
+        PARSER = new com.google.protobuf.AbstractParser<GetOutputRequest>() {
+      @java.lang.Override
+      public GetOutputRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new GetOutputRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<GetOutputRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GetOutputRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.TerminalOuterClass.GetOutputRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface GetOutputResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.GetOutputResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bytes data = 1;</code>
+     * @return The data.
+     */
+    com.google.protobuf.ByteString getData();
+  }
+  /**
+   * Protobuf type {@code supervisor.GetOutputResponse}
+   */
+  public static final class GetOutputResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.GetOutputResponse)
+      GetOutputResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use GetOutputResponse.newBuilder() to construct.
+    private GetOutputResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private GetOutputResponse() {
+      data_ = com.google.protobuf.ByteString.EMPTY;
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new GetOutputResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private GetOutputResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+
+              data_ = input.readBytes();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_GetOutputResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_GetOutputResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse.class, io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse.Builder.class);
+    }
+
+    public static final int DATA_FIELD_NUMBER = 1;
+    private com.google.protobuf.ByteString data_;
+    /**
+     * <code>bytes data = 1;</code>
+     * @return The data.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString getData() {
+      return data_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!data_.isEmpty()) {
+        output.writeBytes(1, data_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!data_.isEmpty()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, data_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse other = (io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse) obj;
+
+      if (!getData()
+          .equals(other.getData())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + DATA_FIELD_NUMBER;
+      hash = (53 * hash) + getData().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.GetOutputResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.GetOutputResponse)
+        io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_GetOutputResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_GetOutputResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse.class, io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        data_ = com.google.protobuf.ByteString.EMPTY;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.TerminalOuterClass.internal_static_supervisor_GetOutputResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse build() {
+        io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse buildPartial() {
+        io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse result = new io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse(this);
+        result.data_ = data_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse) {
+          return mergeFrom((io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse other) {
+        if (other == io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse.getDefaultInstance()) return this;
+        if (other.getData() != com.google.protobuf.ByteString.EMPTY) {
+          setData(other.getData());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private com.google.protobuf.ByteString data_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>bytes data = 1;</code>
+       * @return The data.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getData() {
+        return data_;
+      }
+      /**
+       * <code>bytes data = 1;</code>
+       * @param value The data to set.
+       * @return This builder for chaining.
+       */
+      public Builder setData(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        data_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bytes data = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearData() {
+
+        data_ = getDefaultInstance().getData();
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.GetOutputResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.GetOutputResponse)
+    private static final io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse();
+    }
+
+    public static io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<GetOutputResponse>
+        PARSER = new com.google.protobuf.AbstractParser<GetOutputResponse>() {
+      @java.lang.Override
+      public GetOutputResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new GetOutputResponse(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<GetOutputResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GetOutputResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.TerminalOuterClass.GetOutputResponse getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -15137,6 +16201,16 @@ java.lang.String defaultValue);
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_GetTerminalRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_GetOutputRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_GetOutputRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_GetOutputResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_GetOutputResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ListTerminalsRequest_descriptor;
   private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -15234,54 +16308,59 @@ java.lang.String defaultValue);
       "supervisor.TerminalTitleSource\0322\n\020Annota" +
       "tionsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\002" +
       "8\001\"#\n\022GetTerminalRequest\022\r\n\005alias\030\001 \001(\t\"" +
-      "\026\n\024ListTerminalsRequest\"@\n\025ListTerminals" +
-      "Response\022\'\n\tterminals\030\001 \003(\0132\024.supervisor" +
-      ".Terminal\"&\n\025ListenTerminalRequest\022\r\n\005al" +
-      "ias\030\001 \001(\t\"\217\001\n\026ListenTerminalResponse\022\016\n\004" +
-      "data\030\001 \001(\014H\000\022\023\n\texit_code\030\002 \001(\005H\000\022\017\n\005tit" +
-      "le\030\003 \001(\tH\000\0225\n\014title_source\030\004 \001(\0162\037.super" +
-      "visor.TerminalTitleSourceB\010\n\006output\"4\n\024W" +
-      "riteTerminalRequest\022\r\n\005alias\030\001 \001(\t\022\r\n\005st" +
-      "din\030\002 \001(\014\".\n\025WriteTerminalResponse\022\025\n\rby" +
-      "tes_written\030\001 \001(\r\"}\n\026SetTerminalSizeRequ" +
-      "est\022\r\n\005alias\030\001 \001(\t\022\017\n\005token\030\002 \001(\tH\000\022\017\n\005f" +
-      "orce\030\003 \001(\010H\000\022&\n\004size\030\004 \001(\0132\030.supervisor." +
-      "TerminalSizeB\n\n\010priority\"\031\n\027SetTerminalS" +
-      "izeResponse\"7\n\027SetTerminalTitleRequest\022\r" +
-      "\n\005alias\030\001 \001(\t\022\r\n\005title\030\002 \001(\t\"\032\n\030SetTermi" +
-      "nalTitleResponse\"\276\001\n UpdateTerminalAnnot" +
-      "ationsRequest\022\r\n\005alias\030\001 \001(\t\022J\n\007changed\030" +
-      "\002 \003(\01329.supervisor.UpdateTerminalAnnotat" +
-      "ionsRequest.ChangedEntry\022\017\n\007deleted\030\003 \003(" +
-      "\t\032.\n\014ChangedEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030" +
-      "\002 \001(\t:\0028\001\"#\n!UpdateTerminalAnnotationsRe" +
-      "sponse*+\n\023TerminalTitleSource\022\013\n\007process" +
-      "\020\000\022\007\n\003api\020\0012\260\007\n\017TerminalService\022K\n\004Open\022" +
-      "\037.supervisor.OpenTerminalRequest\032 .super" +
-      "visor.OpenTerminalResponse\"\000\022|\n\010Shutdown" +
-      "\022#.supervisor.ShutdownTerminalRequest\032$." +
-      "supervisor.ShutdownTerminalResponse\"%\202\323\344" +
-      "\223\002\037\022\035/v1/terminal/shutdown/{alias}\022]\n\003Ge" +
-      "t\022\036.supervisor.GetTerminalRequest\032\024.supe" +
-      "rvisor.Terminal\" \202\323\344\223\002\032\022\030/v1/terminal/ge" +
-      "t/{alias}\022f\n\004List\022 .supervisor.ListTermi" +
-      "nalsRequest\032!.supervisor.ListTerminalsRe" +
-      "sponse\"\031\202\323\344\223\002\023\022\021/v1/terminal/list\022v\n\006Lis" +
-      "ten\022!.supervisor.ListenTerminalRequest\032\"" +
-      ".supervisor.ListenTerminalResponse\"#\202\323\344\223" +
-      "\002\035\022\033/v1/terminal/listen/{alias}0\001\022p\n\005Wri" +
-      "te\022 .supervisor.WriteTerminalRequest\032!.s" +
-      "upervisor.WriteTerminalResponse\"\"\202\323\344\223\002\034\"" +
-      "\032/v1/terminal/write/{alias}\022T\n\007SetSize\022\"" +
-      ".supervisor.SetTerminalSizeRequest\032#.sup" +
-      "ervisor.SetTerminalSizeResponse\"\000\022W\n\010Set" +
-      "Title\022#.supervisor.SetTerminalTitleReque" +
-      "st\032$.supervisor.SetTerminalTitleResponse" +
-      "\"\000\022r\n\021UpdateAnnotations\022,.supervisor.Upd" +
-      "ateTerminalAnnotationsRequest\032-.supervis" +
-      "or.UpdateTerminalAnnotationsResponse\"\000BF" +
-      "\n\030io.gitpod.supervisor.apiZ*github.com/g" +
-      "itpod-io/gitpod/supervisor/apib\006proto3"
+      "#\n\020GetOutputRequest\022\017\n\007task_id\030\001 \001(\t\"!\n\021" +
+      "GetOutputResponse\022\014\n\004data\030\001 \001(\014\"\026\n\024ListT" +
+      "erminalsRequest\"@\n\025ListTerminalsResponse" +
+      "\022\'\n\tterminals\030\001 \003(\0132\024.supervisor.Termina" +
+      "l\"&\n\025ListenTerminalRequest\022\r\n\005alias\030\001 \001(" +
+      "\t\"\217\001\n\026ListenTerminalResponse\022\016\n\004data\030\001 \001" +
+      "(\014H\000\022\023\n\texit_code\030\002 \001(\005H\000\022\017\n\005title\030\003 \001(\t" +
+      "H\000\0225\n\014title_source\030\004 \001(\0162\037.supervisor.Te" +
+      "rminalTitleSourceB\010\n\006output\"4\n\024WriteTerm" +
+      "inalRequest\022\r\n\005alias\030\001 \001(\t\022\r\n\005stdin\030\002 \001(" +
+      "\014\".\n\025WriteTerminalResponse\022\025\n\rbytes_writ" +
+      "ten\030\001 \001(\r\"}\n\026SetTerminalSizeRequest\022\r\n\005a" +
+      "lias\030\001 \001(\t\022\017\n\005token\030\002 \001(\tH\000\022\017\n\005force\030\003 \001" +
+      "(\010H\000\022&\n\004size\030\004 \001(\0132\030.supervisor.Terminal" +
+      "SizeB\n\n\010priority\"\031\n\027SetTerminalSizeRespo" +
+      "nse\"7\n\027SetTerminalTitleRequest\022\r\n\005alias\030" +
+      "\001 \001(\t\022\r\n\005title\030\002 \001(\t\"\032\n\030SetTerminalTitle" +
+      "Response\"\276\001\n UpdateTerminalAnnotationsRe" +
+      "quest\022\r\n\005alias\030\001 \001(\t\022J\n\007changed\030\002 \003(\01329." +
+      "supervisor.UpdateTerminalAnnotationsRequ" +
+      "est.ChangedEntry\022\017\n\007deleted\030\003 \003(\t\032.\n\014Cha" +
+      "ngedEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028" +
+      "\001\"#\n!UpdateTerminalAnnotationsResponse*+" +
+      "\n\023TerminalTitleSource\022\013\n\007process\020\000\022\007\n\003ap" +
+      "i\020\0012\247\010\n\017TerminalService\022K\n\004Open\022\037.superv" +
+      "isor.OpenTerminalRequest\032 .supervisor.Op" +
+      "enTerminalResponse\"\000\022|\n\010Shutdown\022#.super" +
+      "visor.ShutdownTerminalRequest\032$.supervis" +
+      "or.ShutdownTerminalResponse\"%\202\323\344\223\002\037\022\035/v1" +
+      "/terminal/shutdown/{alias}\022]\n\003Get\022\036.supe" +
+      "rvisor.GetTerminalRequest\032\024.supervisor.T" +
+      "erminal\" \202\323\344\223\002\032\022\030/v1/terminal/get/{alias" +
+      "}\022u\n\tGetOutput\022\034.supervisor.GetOutputReq" +
+      "uest\032\035.supervisor.GetOutputResponse\")\202\323\344" +
+      "\223\002#\022!/v1/terminal/get/{task_id}/output0\001" +
+      "\022f\n\004List\022 .supervisor.ListTerminalsReque" +
+      "st\032!.supervisor.ListTerminalsResponse\"\031\202" +
+      "\323\344\223\002\023\022\021/v1/terminal/list\022v\n\006Listen\022!.sup" +
+      "ervisor.ListenTerminalRequest\032\".supervis" +
+      "or.ListenTerminalResponse\"#\202\323\344\223\002\035\022\033/v1/t" +
+      "erminal/listen/{alias}0\001\022p\n\005Write\022 .supe" +
+      "rvisor.WriteTerminalRequest\032!.supervisor" +
+      ".WriteTerminalResponse\"\"\202\323\344\223\002\034\"\032/v1/term" +
+      "inal/write/{alias}\022T\n\007SetSize\022\".supervis" +
+      "or.SetTerminalSizeRequest\032#.supervisor.S" +
+      "etTerminalSizeResponse\"\000\022W\n\010SetTitle\022#.s" +
+      "upervisor.SetTerminalTitleRequest\032$.supe" +
+      "rvisor.SetTerminalTitleResponse\"\000\022r\n\021Upd" +
+      "ateAnnotations\022,.supervisor.UpdateTermin" +
+      "alAnnotationsRequest\032-.supervisor.Update" +
+      "TerminalAnnotationsResponse\"\000BF\n\030io.gitp" +
+      "od.supervisor.apiZ*github.com/gitpod-io/" +
+      "gitpod/supervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -15348,68 +16427,80 @@ java.lang.String defaultValue);
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_GetTerminalRequest_descriptor,
         new java.lang.String[] { "Alias", });
-    internal_static_supervisor_ListTerminalsRequest_descriptor =
+    internal_static_supervisor_GetOutputRequest_descriptor =
       getDescriptor().getMessageTypes().get(7);
+    internal_static_supervisor_GetOutputRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_GetOutputRequest_descriptor,
+        new java.lang.String[] { "TaskId", });
+    internal_static_supervisor_GetOutputResponse_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_supervisor_GetOutputResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_GetOutputResponse_descriptor,
+        new java.lang.String[] { "Data", });
+    internal_static_supervisor_ListTerminalsRequest_descriptor =
+      getDescriptor().getMessageTypes().get(9);
     internal_static_supervisor_ListTerminalsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_ListTerminalsRequest_descriptor,
         new java.lang.String[] { });
     internal_static_supervisor_ListTerminalsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_supervisor_ListTerminalsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_ListTerminalsResponse_descriptor,
         new java.lang.String[] { "Terminals", });
     internal_static_supervisor_ListenTerminalRequest_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_supervisor_ListenTerminalRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_ListenTerminalRequest_descriptor,
         new java.lang.String[] { "Alias", });
     internal_static_supervisor_ListenTerminalResponse_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_supervisor_ListenTerminalResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_ListenTerminalResponse_descriptor,
         new java.lang.String[] { "Data", "ExitCode", "Title", "TitleSource", "Output", });
     internal_static_supervisor_WriteTerminalRequest_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_supervisor_WriteTerminalRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_WriteTerminalRequest_descriptor,
         new java.lang.String[] { "Alias", "Stdin", });
     internal_static_supervisor_WriteTerminalResponse_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(14);
     internal_static_supervisor_WriteTerminalResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_WriteTerminalResponse_descriptor,
         new java.lang.String[] { "BytesWritten", });
     internal_static_supervisor_SetTerminalSizeRequest_descriptor =
-      getDescriptor().getMessageTypes().get(13);
+      getDescriptor().getMessageTypes().get(15);
     internal_static_supervisor_SetTerminalSizeRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_SetTerminalSizeRequest_descriptor,
         new java.lang.String[] { "Alias", "Token", "Force", "Size", "Priority", });
     internal_static_supervisor_SetTerminalSizeResponse_descriptor =
-      getDescriptor().getMessageTypes().get(14);
+      getDescriptor().getMessageTypes().get(16);
     internal_static_supervisor_SetTerminalSizeResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_SetTerminalSizeResponse_descriptor,
         new java.lang.String[] { });
     internal_static_supervisor_SetTerminalTitleRequest_descriptor =
-      getDescriptor().getMessageTypes().get(15);
+      getDescriptor().getMessageTypes().get(17);
     internal_static_supervisor_SetTerminalTitleRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_SetTerminalTitleRequest_descriptor,
         new java.lang.String[] { "Alias", "Title", });
     internal_static_supervisor_SetTerminalTitleResponse_descriptor =
-      getDescriptor().getMessageTypes().get(16);
+      getDescriptor().getMessageTypes().get(18);
     internal_static_supervisor_SetTerminalTitleResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_SetTerminalTitleResponse_descriptor,
         new java.lang.String[] { });
     internal_static_supervisor_UpdateTerminalAnnotationsRequest_descriptor =
-      getDescriptor().getMessageTypes().get(17);
+      getDescriptor().getMessageTypes().get(19);
     internal_static_supervisor_UpdateTerminalAnnotationsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_UpdateTerminalAnnotationsRequest_descriptor,
@@ -15421,7 +16512,7 @@ java.lang.String defaultValue);
         internal_static_supervisor_UpdateTerminalAnnotationsRequest_ChangedEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_supervisor_UpdateTerminalAnnotationsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(18);
+      getDescriptor().getMessageTypes().get(20);
     internal_static_supervisor_UpdateTerminalAnnotationsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_UpdateTerminalAnnotationsResponse_descriptor,

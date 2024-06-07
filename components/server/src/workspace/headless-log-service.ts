@@ -16,7 +16,11 @@ import {
     TaskStatus,
 } from "@gitpod/supervisor-api-grpcweb/lib/status_pb";
 import { ResponseStream, TerminalServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service";
-import { ListenTerminalRequest, ListenTerminalResponse } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb";
+import {
+    GetOutputRequest,
+    ListenTerminalRequest,
+    ListenTerminalResponse,
+} from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import * as grpc from "@grpc/grpc-js";
 import { Config } from "../config";
@@ -182,7 +186,7 @@ export class HeadlessLogService {
                 // this might be the case when there is no terminal for this task, yet.
                 // if we find any such case, we deem the workspace not ready yet, and try to reconnect later,
                 // to be sure to get hold of all terminals created.
-                throw new Error(`instance's ${instanceId} task ${task.getId()} has no terminal yet`);
+                throw new Error(`instance's ${instanceId} task ${taskId} has no terminal yet`);
             }
             // if (task.getState() === TaskState.CLOSED) {
             //     // if a task has already been closed we can no longer access its terminal, and have to skip it.
@@ -302,7 +306,7 @@ export class HeadlessLogService {
                         log.debug(logCtx, "stream cancelled", err);
                     });
                 });
-                stream.on("end", (status?: Status) => {
+                stream.on("end", async (status?: Status) => {
                     if (!status || status.code === grpc.status.OK) {
                         resolve();
                         return;
@@ -314,6 +318,27 @@ export class HeadlessLogService {
                         log.debug("stream headless workspace log", err);
                         reject(err);
                         return;
+                    } else if (status.code === grpc.status.NOT_FOUND) {
+                        const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
+                        const taskIndex = tasks.findIndex((t) => t.getTerminal() === terminalID);
+                        if (taskIndex < 0) {
+                            log.warn(logCtx, "stream workspace logs: terminal not found", { terminalID, tasks });
+                            reject(err);
+                            return;
+                        }
+
+                        const request = new GetOutputRequest();
+                        request.setTaskId(taskIndex.toString());
+                        const stream = client.getOutput(request, authHeaders);
+
+                        stream.on("data", (resp) => {
+                            const data = resp.getData();
+                            const text = typeof data === "string" ? data : decoder.decode(data);
+                            sink(text).catch((err) => {
+                                stream.cancel();
+                                log.debug(logCtx, "stream cancelled", err);
+                            });
+                        });
                     }
 
                     retry(false);

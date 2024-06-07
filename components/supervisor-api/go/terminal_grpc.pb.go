@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -33,6 +33,7 @@ type TerminalServiceClient interface {
 	Shutdown(ctx context.Context, in *ShutdownTerminalRequest, opts ...grpc.CallOption) (*ShutdownTerminalResponse, error)
 	// Get returns an opened terminal info
 	Get(ctx context.Context, in *GetTerminalRequest, opts ...grpc.CallOption) (*Terminal, error)
+	GetOutput(ctx context.Context, in *GetOutputRequest, opts ...grpc.CallOption) (TerminalService_GetOutputClient, error)
 	// List lists all open terminals
 	List(ctx context.Context, in *ListTerminalsRequest, opts ...grpc.CallOption) (*ListTerminalsResponse, error)
 	// Listen listens to a terminal
@@ -82,6 +83,38 @@ func (c *terminalServiceClient) Get(ctx context.Context, in *GetTerminalRequest,
 	return out, nil
 }
 
+func (c *terminalServiceClient) GetOutput(ctx context.Context, in *GetOutputRequest, opts ...grpc.CallOption) (TerminalService_GetOutputClient, error) {
+	stream, err := c.cc.NewStream(ctx, &TerminalService_ServiceDesc.Streams[0], "/supervisor.TerminalService/GetOutput", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &terminalServiceGetOutputClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type TerminalService_GetOutputClient interface {
+	Recv() (*GetOutputResponse, error)
+	grpc.ClientStream
+}
+
+type terminalServiceGetOutputClient struct {
+	grpc.ClientStream
+}
+
+func (x *terminalServiceGetOutputClient) Recv() (*GetOutputResponse, error) {
+	m := new(GetOutputResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *terminalServiceClient) List(ctx context.Context, in *ListTerminalsRequest, opts ...grpc.CallOption) (*ListTerminalsResponse, error) {
 	out := new(ListTerminalsResponse)
 	err := c.cc.Invoke(ctx, "/supervisor.TerminalService/List", in, out, opts...)
@@ -92,7 +125,7 @@ func (c *terminalServiceClient) List(ctx context.Context, in *ListTerminalsReque
 }
 
 func (c *terminalServiceClient) Listen(ctx context.Context, in *ListenTerminalRequest, opts ...grpc.CallOption) (TerminalService_ListenClient, error) {
-	stream, err := c.cc.NewStream(ctx, &TerminalService_ServiceDesc.Streams[0], "/supervisor.TerminalService/Listen", opts...)
+	stream, err := c.cc.NewStream(ctx, &TerminalService_ServiceDesc.Streams[1], "/supervisor.TerminalService/Listen", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -170,6 +203,7 @@ type TerminalServiceServer interface {
 	Shutdown(context.Context, *ShutdownTerminalRequest) (*ShutdownTerminalResponse, error)
 	// Get returns an opened terminal info
 	Get(context.Context, *GetTerminalRequest) (*Terminal, error)
+	GetOutput(*GetOutputRequest, TerminalService_GetOutputServer) error
 	// List lists all open terminals
 	List(context.Context, *ListTerminalsRequest) (*ListTerminalsResponse, error)
 	// Listen listens to a terminal
@@ -197,6 +231,9 @@ func (UnimplementedTerminalServiceServer) Shutdown(context.Context, *ShutdownTer
 }
 func (UnimplementedTerminalServiceServer) Get(context.Context, *GetTerminalRequest) (*Terminal, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedTerminalServiceServer) GetOutput(*GetOutputRequest, TerminalService_GetOutputServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetOutput not implemented")
 }
 func (UnimplementedTerminalServiceServer) List(context.Context, *ListTerminalsRequest) (*ListTerminalsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
@@ -281,6 +318,27 @@ func _TerminalService_Get_Handler(srv interface{}, ctx context.Context, dec func
 		return srv.(TerminalServiceServer).Get(ctx, req.(*GetTerminalRequest))
 	}
 	return interceptor(ctx, in, info, handler)
+}
+
+func _TerminalService_GetOutput_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetOutputRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TerminalServiceServer).GetOutput(m, &terminalServiceGetOutputServer{stream})
+}
+
+type TerminalService_GetOutputServer interface {
+	Send(*GetOutputResponse) error
+	grpc.ServerStream
+}
+
+type terminalServiceGetOutputServer struct {
+	grpc.ServerStream
+}
+
+func (x *terminalServiceGetOutputServer) Send(m *GetOutputResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _TerminalService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -435,6 +493,11 @@ var TerminalService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetOutput",
+			Handler:       _TerminalService_GetOutput_Handler,
+			ServerStreams: true,
+		},
 		{
 			StreamName:    "Listen",
 			Handler:       _TerminalService_Listen_Handler,
