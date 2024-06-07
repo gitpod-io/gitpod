@@ -184,10 +184,10 @@ export class HeadlessLogService {
                 // to be sure to get hold of all terminals created.
                 throw new Error(`instance's ${instanceId} task ${task.getId()} has no terminal yet`);
             }
-            if (task.getState() === TaskState.CLOSED) {
-                // if a task has already been closed we can no longer access it's terminal, and have to skip it.
-                continue;
-            }
+            // if (task.getState() === TaskState.CLOSED) {
+            //     // if a task has already been closed we can no longer access its terminal, and have to skip it.
+            //     continue;
+            // }
             streams[taskId] = this.config.hostUrl
                 .with({
                     pathname: `/headless-logs/${instanceId}/${terminalId}`,
@@ -282,6 +282,8 @@ export class HeadlessLogService {
         const req = new ListenTerminalRequest();
         req.setAlias(terminalID);
 
+        const authHeaders = HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint);
+
         let receivedDataYet = false;
         let stream: ResponseStream<ListenTerminalResponse> | undefined = undefined;
         ctxOnAbort(() => stream?.cancel());
@@ -289,7 +291,7 @@ export class HeadlessLogService {
             new Promise<void>((resolve, reject) => {
                 // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
                 const decoder = new TextDecoder("utf-8");
-                stream = client.listen(req, HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint));
+                stream = client.listen(req, authHeaders);
                 stream.on("data", (resp: ListenTerminalResponse) => {
                     receivedDataYet = true;
 

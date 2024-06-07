@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
@@ -216,7 +217,32 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 	term, ok := srv.Mux.terms[req.Alias]
 	srv.Mux.mu.RUnlock()
 	if !ok {
-		return status.Error(codes.NotFound, "terminal not found")
+		// fallback to streaming from the task's file
+		fileLocation := logs.PrebuildLogFileName(logs.TerminalStoreLocation, req.Alias)
+		if _, err := os.Stat(fileLocation); os.IsNotExist(err) {
+			return status.Error(codes.NotFound, "terminal not found")
+		}
+
+		file, err := os.Open(fileLocation)
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+		defer file.Close()
+
+		buf := make([]byte, 4096)
+		for {
+			n, err := file.Read(buf)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
+
+			if err := resp.Send(&api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Data{Data: buf[:n]}}); err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
+		}
 	}
 	stdout := term.Stdout.Listen()
 	defer stdout.Close()
