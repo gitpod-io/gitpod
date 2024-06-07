@@ -9,6 +9,7 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+option java_package = "io.gitpod.publicapi.v1";
 
 service WorkspaceService {
   // GetWorkspace returns a single workspace.
