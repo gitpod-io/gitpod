@@ -133,7 +133,7 @@ func TestBuildChildProcEnv(t *testing.T) {
 				cfg.EnvvarOTS = srv.URL
 			}
 
-			act := buildChildProcEnv(cfg, test.Input, false, false)
+			act := buildChildProcEnv(cfg, test.Input, false, false, false)
 			assert(t, act)
 		})
 	}
