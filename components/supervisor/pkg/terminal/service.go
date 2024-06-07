@@ -292,10 +292,8 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 }
 
 func (srv *MuxTerminalService) GetOutput(req *api.GetOutputRequest, resp api.TerminalService_GetOutputServer) error {
-	// fallback to streaming from the task's file
 	fileLocation := logs.PrebuildLogFileName(logs.TerminalStoreLocation, req.TaskId)
 	if _, err := os.Stat(fileLocation); os.IsNotExist(err) {
-		// return status.Error(codes.NotFound, "terminal not found") for debugging purposes, instead of erroring, we list the logs.TerminalStoreLocation directory
 		files, err := os.ReadDir(logs.TerminalStoreLocation)
 		if err != nil {
 			fmt.Println("Error reading directory:", err)

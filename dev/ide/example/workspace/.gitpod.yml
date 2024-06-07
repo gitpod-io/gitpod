@@ -1,10 +1,4 @@
 image:
   file: Dockerfile
-
 tasks:
-  - name: Short Script Task
-    init: echo "started task 2" && sleep 20 && sudo du -h / --max-depth=1
-    command: echo 'start script'
-  - name: Long Script task
-    init: echo "started task and going to sleep" && sleep 200 && sudo du -h / --max-depth=1
-    command: echo 'start script'
+  - command: gp open .gitpod.yml
