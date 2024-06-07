@@ -17,6 +17,7 @@ const (
 	ServiceWaiterSkipComponentsFlag                = "service_waiter_skip_components"
 	IdPClaimKeysFlag                               = "idp_claim_keys"
 	SetJavaXmxFlag                                 = "supervisor_set_java_xmx"
+	SetJavaProcessorCount                          = "supervisor_set_java_processor_count"
 )
 
 func IsPersonalAccessTokensEnabled(ctx context.Context, client Client, attributes Attributes) bool {
@@ -45,4 +46,8 @@ func SupervisorUsePublicAPI(ctx context.Context, client Client, attributes Attri
 
 func IsSetJavaXmx(ctx context.Context, client Client, attributes Attributes) bool {
 	return client.GetBoolValue(ctx, SetJavaXmxFlag, false, attributes)
+}
+
+func IsSetJavaProcessorCount(ctx context.Context, client Client, attributes Attributes) bool {
+	return client.GetBoolValue(ctx, SetJavaProcessorCount, false, attributes)
 }

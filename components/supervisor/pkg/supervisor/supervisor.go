@@ -199,12 +199,15 @@ func Run(options ...RunOption) {
 	}
 	exps := experiments.NewClient(experimentsClientOpts...)
 
-	// BEWARE: we can only call buildChildProcEnv once, because it might download env vars from a one-time-secret
-	//         URL, which would fail if we tried another time.
 	isSetJavaXmx := experiments.IsSetJavaXmx(context.Background(), exps, experiments.Attributes{
 		UserID: cfg.OwnerId,
 	})
-	childProcEnvvars = buildChildProcEnv(cfg, nil, opts.RunGP, isSetJavaXmx)
+	isSetJavaProcessorCount := experiments.IsSetJavaProcessorCount(context.Background(), exps, experiments.Attributes{
+		UserID: cfg.OwnerId,
+	})
+	// BEWARE: we can only call buildChildProcEnv once, because it might download env vars from a one-time-secret
+	//         URL, which would fail if we tried another time.
+	childProcEnvvars = buildChildProcEnv(cfg, nil, opts.RunGP, isSetJavaXmx, isSetJavaProcessorCount)
 
 	err = AddGitpodUserIfNotExists()
 	if err != nil {
@@ -1030,7 +1033,7 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 // of envvars. If envvars is nil, os.Environ() is used.
 //
 // Beware: if config contains an OTS URL the results may differ on subsequent calls.
-func buildChildProcEnv(cfg *Config, envvars []string, runGP bool, setJavaXmx bool) []string {
+func buildChildProcEnv(cfg *Config, envvars []string, runGP bool, setJavaXmx bool, isSetJavaProcessorCount bool) []string {
 	if envvars == nil {
 		envvars = os.Environ()
 	}
@@ -1106,6 +1109,16 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool, setJavaXmx boo
 	envs["HOME"] = "/home/gitpod"
 	envs["USER"] = "gitpod"
 
+	if cpuCount, ok := envs["GITPOD_CPU_COUNT"]; ok && isSetJavaProcessorCount {
+		if _, exists := envs["JAVA_TOOL_OPTIONS"]; exists {
+			// check if the JAVA_TOOL_OPTIONS already contains the ActiveProcessorCount flag
+			if !strings.Contains(envs["JAVA_TOOL_OPTIONS"], "-XX:ActiveProcessorCount=") {
+				envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -XX:+UseContainerSupport -XX:ActiveProcessorCount=%s", cpuCount)
+			}
+		} else {
+			envs["JAVA_TOOL_OPTIONS"] = fmt.Sprintf("-XX:+UseContainerSupport -XX:ActiveProcessorCount=%s", cpuCount)
+		}
+	}
 	// Particular Java optimisation: Java pre v10 did not gauge it's available memory correctly, and needed explicitly setting "-Xmx" for all Hotspot/openJDK VMs
 	if mem, ok := envs["GITPOD_MEMORY"]; ok && setJavaXmx {
 		envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", mem)

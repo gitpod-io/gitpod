@@ -615,6 +615,9 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	memoryInMegabyte := res.Memory().Value() / (1000 * 1000)
 	result = append(result, corev1.EnvVar{Name: "GITPOD_MEMORY", Value: strconv.FormatInt(memoryInMegabyte, 10)})
 
+	cpuCount := res.Cpu().Value()
+	result = append(result, corev1.EnvVar{Name: "GITPOD_CPU_COUNT", Value: strconv.FormatInt(int64(cpuCount), 10)})
+
 	if sctx.Headless {
 		result = append(result, corev1.EnvVar{Name: "GITPOD_HEADLESS", Value: "true"})
 	}

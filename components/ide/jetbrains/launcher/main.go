@@ -790,6 +790,14 @@ func updateVMOptions(
 	if alias == "intellij" {
 		gitpodVMOptions = append(gitpodVMOptions, "-Djdk.configure.existing=true")
 	}
+	// container relevant options
+	gitpodVMOptions = append(gitpodVMOptions, "-XX:+UseContainerSupport")
+	cpuCount := os.Getenv("GITPOD_CPU_COUNT")
+	parsedCPUCount, err := strconv.Atoi(cpuCount)
+	// if CPU count is set and is parseable as a positive number
+	if err == nil && parsedCPUCount > 0 && parsedCPUCount <= 16 {
+		gitpodVMOptions = append(gitpodVMOptions, "-XX:ActiveProcessorCount="+cpuCount)
+	}
 	vmoptions := deduplicateVMOption(ideaVMOptionsLines, gitpodVMOptions, filterFunc)
 
 	// user-defined vmoptions (EnvVar)
