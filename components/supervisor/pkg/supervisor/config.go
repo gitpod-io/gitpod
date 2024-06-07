@@ -183,12 +183,12 @@ type IDEConfig struct {
 	} `json:"prebuild"`
 }
 
-func (c IDEConfig) GetUniqKey() string {
+func (c IDEConfig) GetUniqueKey() string {
 	return c.Name + "-" + c.Version
 }
 
 func (c IDEConfig) PrebuildTaskName() string {
-	return "ide-prebuild-" + c.GetUniqKey()
+	return "ide-prebuild-" + c.GetUniqueKey()
 }
 
 // Validate validates this configuration.
@@ -505,7 +505,7 @@ func (c Config) getGitpodTasks() (tasks []TaskConfig, err error) {
 				entrypoint = ideConfig.Entrypoint
 			}
 
-			init := fmt.Sprintf("echo 'Prebuilding %s (%s-%s)'; ", ideConfig.DisplayName, ideConfig.GetUniqKey(), ideConfig.Version)
+			init := fmt.Sprintf("echo 'Prebuilding %s (%s) (%s)'; ", ideConfig.DisplayName, ideConfig.Version, ideConfig.GetUniqueKey())
 			init += entrypoint
 			for _, arg := range ideConfig.Prebuild.Args {
 				init = init + " " + arg
@@ -590,7 +590,7 @@ func loadDesktopIDEs(static *StaticConfig) ([]*IDEConfig, error) {
 	}
 	if desktopIDE != nil {
 		desktopIDEs = append(desktopIDEs, desktopIDE)
-		uniqueDesktopIDEs[desktopIDE.GetUniqKey()] = struct{}{}
+		uniqueDesktopIDEs[desktopIDE.GetUniqueKey()] = struct{}{}
 	}
 
 	files, err := ioutil.ReadDir(static.DesktopIDERoot)
@@ -606,9 +606,9 @@ func loadDesktopIDEs(static *StaticConfig) ([]*IDEConfig, error) {
 			if err != nil {
 				return nil, err
 			}
-			_, alreadyPresent := uniqueDesktopIDEs[desktopIDE.GetUniqKey()]
+			_, alreadyPresent := uniqueDesktopIDEs[desktopIDE.GetUniqueKey()]
 			if alreadyPresent {
-				log.WithField("key", desktopIDE.GetUniqKey()).Warn("ignoring duplicate desktop IDE")
+				log.WithField("key", desktopIDE.GetUniqueKey()).Warn("ignoring duplicate desktop IDE")
 				continue
 			}
 			desktopIDEs = append(desktopIDEs, desktopIDE)
