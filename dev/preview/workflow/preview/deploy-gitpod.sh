@@ -208,26 +208,12 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].descr
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].powerups "2"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].credits.perMinute "0.1666666667"
 
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[+].id "g1-large"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].category "GENERAL PURPOSE"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].displayName "large"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].description "large workspace class (5GB disk)"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].powerups "2"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].credits.perMinute "0.1666666667"
-
 # create two workspace classes (g1-standard and g1-small) in ws-manager configmap
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].name "g1-standard"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.requests.cpu "100m"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.requests.memory "128Mi"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.limits.storage "10Gi"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.limits.ephemeral-storage "10Gi"
-
-# create two workspace classes (g1-standard and g1-small) in ws-manager configmap
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-large"].name "g1-large"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-large"].resources.requests.cpu "200m"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-large"].resources.requests.memory "228Mi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-large"].resources.limits.storage "100Gi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-large"].resources.limits.ephemeral-storage "100Gi"
 
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].name "g1-small"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].resources.requests.cpu "100m"
