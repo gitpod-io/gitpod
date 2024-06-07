@@ -10,14 +10,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          cd ./components/ide/code/gha-update-image/
+          cd ./components/ide/gha-update-image/
           yarn
           npm i -g bun
       - name: Check for updates
         id: updates
         run: |
-          cd ./components/ide/code/gha-update-image/
-          bun run index.ts
+          cd ./components/ide/gha-update-image/
+          bun run index-code.ts
 
           if [ -f /tmp/__gh_output.txt ]
           then
@@ -57,7 +57,7 @@ jobs:
             - [x] /werft with-preview
             - [x] /werft analytics=segment
           commit-message: "[VS Code Browser] Update stable code to `${{steps.updates.outputs.codeVersion}}`"
-          branch: "ide/code-stable"
+          branch: "ide/code-release"
           labels: "team: IDE,editor: code (browser)"
           token: ${{ secrets.ROBOQUAT_REPO_PAT }}
           committer: Robo Quat <roboquat@gitpod.io>
@@ -92,7 +92,7 @@ jobs:
             - [x] /werft analytics=segment
 
           commit-message: "[code] update code image layers"
-          branch: "ide/code-stable"
+          branch: "ide/code-images"
           labels: "team: IDE,editor: code (browser)"
           token: ${{ secrets.ROBOQUAT_REPO_PAT }}
           committer: Robo Quat <roboquat@gitpod.io>

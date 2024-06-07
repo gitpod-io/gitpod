@@ -509,6 +509,7 @@ export class Authorizer {
             }),
             relationshipFilter: {
                 resourceType: relation.resource?.objectType || "",
+                optionalResourceIdPrefix: "",
                 optionalResourceId: relation.resource?.objectId || "",
                 optionalRelation: relation.relation,
                 optionalSubjectFilter: relation.subject?.object && {
@@ -534,6 +535,7 @@ export class Authorizer {
             }),
             relationshipFilter: {
                 resourceType: relation.resource?.objectType || "",
+                optionalResourceIdPrefix: "",
                 optionalResourceId: relation.resource?.objectId || "",
                 optionalRelation: relation.relation,
                 optionalSubjectFilter: relation.subject?.object && {

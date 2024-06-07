@@ -45,9 +45,9 @@
     "/src"
   ],
   "dependencies": {
-    "@authzed/authzed-node": "^0.12.1",
-    "@connectrpc/connect-express": "1.1.2",
+    "@authzed/authzed-node": "^0.15.0",
     "@connectrpc/connect": "1.1.2",
+    "@connectrpc/connect-express": "1.1.2",
     "@gitbeaker/rest": "^39.12.0",
     "@gitpod/content-service": "0.1.5",
     "@gitpod/gitpod-db": "0.1.5",
@@ -56,10 +56,10 @@
     "@gitpod/image-builder": "0.1.5",
     "@gitpod/public-api": "0.1.5",
     "@gitpod/public-api-common": "0.1.5",
+    "@gitpod/spicedb-impl": "0.1.5",
     "@gitpod/supervisor-api-grpcweb": "0.1.5",
     "@gitpod/usage-api": "0.1.5",
     "@gitpod/ws-manager": "0.1.5",
-    "@gitpod/spicedb-impl": "0.1.5",
     "@google-cloud/profiler": "^6.0.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.14.0",
     "@jmondi/oauth2-server": "^2.6.1",
@@ -103,7 +103,7 @@
     "rate-limiter-flexible": "^2.3.6",
     "redlock": "^5.0.0-beta.2",
     "reflect-metadata": "^0.1.10",
-    "stripe": "^9.0.0",
+    "stripe": "^15.9.0",
     "twilio": "^4.16.0",
     "uuid": "^8.3.2",
     "vscode-ws-jsonrpc": "^0.2.0",
@@ -152,8 +152,5 @@
     "ts-node": "^10.4.0",
     "typescript": "~4.4.2",
     "watch": "^1.0.2"
-  },
-  "resolutions": {
-    "@authzed/authzed-node/**/@grpc/grpc-js": "1.9.1"
   }
 }

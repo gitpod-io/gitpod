@@ -55,7 +55,7 @@ packages:
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
     config:
       commands:
-        - ["./build.sh"]
+        - ["./build.sh", "${__git_commit}"]
   - name: plugin-latest
     type: generic
     argdeps:
@@ -79,7 +79,7 @@ packages:
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
     config:
       commands:
-        - ["./build.sh"]
+        - ["./build.sh", "${__git_commit}"]
   - name: latest-info
     type: generic
     srcs:

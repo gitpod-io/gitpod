@@ -690,6 +690,107 @@ describe("WorkspaceService", async () => {
             "from must be before to",
         );
     });
+
+    it("should update the deletion eligibility time of a workspace", async () => {
+        const svc = container.get(WorkspaceService);
+        const db = container.get<WorkspaceDB>(WorkspaceDB);
+        const today = new Date();
+        const daysAgo = (days: number) => new Date(today.getTime() - 1000 * 60 * 60 * 24 * days);
+
+        const ws = await createTestWorkspace(svc, org, owner, project);
+        await db.storeInstance({
+            id: v4(),
+            workspaceId: ws.id,
+            creationTime: daysAgo(7).toISOString(),
+            status: {
+                conditions: {},
+                phase: "stopped",
+            },
+            region: "us-central1",
+            ideUrl: "",
+            configuration: {
+                ideImage: "",
+            },
+            workspaceImage: "",
+        });
+
+        await svc.updateDeletionEligabilityTime(owner.id, ws.id);
+
+        const workspace = await svc.getWorkspace(owner.id, ws.id);
+        expect(workspace).to.not.be.undefined;
+        expect(workspace.workspace.deletionEligibilityTime).to.not.be.undefined;
+        expect(workspace.workspace.deletionEligibilityTime).to.eq(daysAgo(7 - 14).toISOString());
+    });
+
+    it("should update the deletion eligibility time of a workspace with git changes", async () => {
+        const svc = container.get(WorkspaceService);
+        const db = container.get<WorkspaceDB>(WorkspaceDB);
+        const today = new Date();
+        const daysAgo = (days: number) => new Date(today.getTime() - 1000 * 60 * 60 * 24 * days);
+
+        const ws = await createTestWorkspace(svc, org, owner, project);
+        await db.storeInstance({
+            id: v4(),
+            workspaceId: ws.id,
+            creationTime: daysAgo(7).toISOString(),
+            status: {
+                conditions: {},
+                phase: "stopped",
+            },
+            region: "us-central1",
+            ideUrl: "",
+            gitStatus: {
+                totalUnpushedCommits: 2,
+            },
+            configuration: {
+                ideImage: "",
+            },
+            workspaceImage: "",
+        });
+
+        await svc.updateDeletionEligabilityTime(owner.id, ws.id);
+
+        const workspace = await svc.getWorkspace(owner.id, ws.id);
+        expect(workspace).to.not.be.undefined;
+        expect(workspace.workspace.deletionEligibilityTime).to.not.be.undefined;
+        expect(workspace.workspace.deletionEligibilityTime).to.eq(daysAgo(7 - 14 * 2).toISOString());
+    });
+
+    it("should update the deletion eligibility time of a prebuild", async () => {
+        const svc = container.get(WorkspaceService);
+        const db = container.get<WorkspaceDB>(WorkspaceDB);
+        const today = new Date();
+        const daysAgo = (days: number) => new Date(today.getTime() - 1000 * 60 * 60 * 24 * days);
+
+        const ws = await createTestWorkspace(svc, org, owner, project);
+        ws.type = "prebuild";
+        await db.store(ws);
+        await db.storeInstance({
+            id: v4(),
+            workspaceId: ws.id,
+            creationTime: daysAgo(7).toISOString(),
+            status: {
+                conditions: {},
+                phase: "stopped",
+            },
+            region: "us-central1",
+            ideUrl: "",
+            gitStatus: {
+                totalUnpushedCommits: 2,
+            },
+            configuration: {
+                ideImage: "",
+            },
+            workspaceImage: "",
+        });
+
+        await svc.updateDeletionEligabilityTime(owner.id, ws.id);
+
+        const workspace = await svc.getWorkspace(owner.id, ws.id);
+        expect(workspace).to.not.be.undefined;
+        expect(workspace.workspace.deletionEligibilityTime).to.not.be.undefined;
+        expect(workspace.workspace.deletionEligibilityTime).to.eq(daysAgo(7 - 7).toISOString());
+    });
 });
 
 async function createTestWorkspace(svc: WorkspaceService, org: Organization, owner: User, project: Project) {
@@ -754,4 +855,6 @@ async function createTestWorkspaceWithInstances(
             workspaceImage: "",
         });
     }
+
+    return id;
 }

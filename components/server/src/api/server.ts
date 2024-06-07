@@ -223,6 +223,21 @@ export class API {
                     };
                     const handleError = (reason: unknown) => {
                         const err = self.apiConverter.toError(reason);
+
+                        if (
+                            err.code === Code.Internal &&
+                            err.message.includes("Cannot call write after a stream was destroyed")
+                        ) {
+                            // Compare https://linear.app/gitpod/issue/ENT-232 and https://github.com/gitpod-io/gitpod/pull/19827
+                            // Connect seems to try to write an error response to a closed stream in some cases(*), resulting in this error.
+                            // We don't want it to pollute our metrics, so we ignore it.
+                            //
+                            // (*) Hypothesis: This seems to happen when the client cancels a stream and abortSignal is triggered, and we throw a "cancelled" error.
+                            log.debug("connect wrote to a closed stream, ignoring.");
+                            done();
+                            return;
+                        }
+
                         if (isException(err)) {
                             log.error("public api exception reason:", reason);
                         }

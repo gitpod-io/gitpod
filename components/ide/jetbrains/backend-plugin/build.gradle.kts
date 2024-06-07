@@ -24,7 +24,7 @@ plugins {
 
 group = properties("pluginGroup")
 val environmentName = properties("environmentName")
-var pluginVersion = properties("pluginVersion")
+var pluginVersion = "${properties("pluginVersion")}-${properties("gitpodVersion")}"
 
 if (environmentName.isNotBlank()) {
     pluginVersion += "-$environmentName"

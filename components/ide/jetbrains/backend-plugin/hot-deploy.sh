@@ -21,7 +21,7 @@ leeway build -DnoVerifyJBPlugin=true -Dversion="$version" -DimageRepoBase=eu.gcr
 dev_image="$(tar xfO "$bldfn" ./imgnames.txt | head -n1)"
 echo "Dev Image: $dev_image"
 
-ide_list=("intellij" "goland" "pycharm" "phpstorm" "rubymine" "webstorm" "rider" "clion")
+ide_list=("intellij" "goland" "pycharm" "phpstorm" "rubymine" "webstorm" "rider" "clion" "rustrover")
 
 if [ "$qualifier" == "stable" ]; then
   prop_list=("pluginImage" "imageLayers[0]")

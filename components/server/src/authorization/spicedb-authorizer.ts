@@ -25,19 +25,33 @@ async function tryThree<T>(errMessage: string, code: (attempt: number) => Promis
         try {
             return await code(attempt);
         } catch (err) {
-            if ((err.code === grpc.status.INTERNAL || err.code === grpc.status.DEADLINE_EXCEEDED) && attempt < 3) {
+            if (
+                (err.code === grpc.status.INTERNAL ||
+                    err.code === grpc.status.DEADLINE_EXCEEDED ||
+                    err.code === grpc.status.UNAVAILABLE) &&
+                attempt < 3
+            ) {
+                let delay = 500 * attempt;
+                if (err.code === grpc.status.DEADLINE_EXCEEDED) {
+                    // we already waited for timeout, so let's try again immediately
+                    delay = 0;
+                }
+
                 log.warn(errMessage, err, {
                     attempt,
+                    delay,
                     code: err.code,
                 });
-            } else {
-                log.error(errMessage, err, {
-                    attempt,
-                    code: err.code,
-                });
-                // we don't try again on other errors
-                throw err;
+                await new Promise((resolve) => setTimeout(resolve, delay));
+                continue;
             }
+
+            log.error(errMessage, err, {
+                attempt,
+                code: err.code,
+            });
+            // we don't try again on other errors
+            throw err;
         }
     }
     throw new Error("unreachable");

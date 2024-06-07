@@ -5,14 +5,18 @@
 import { $ } from "bun";
 import {
     getLatestInstallerVersions,
-    ideConfigmapJson,
-    ideConfigmapJsonObj,
     pathToConfigmap,
     pathToOutput,
-    workspaceYaml,
+    readIDEConfigmapJson,
+    readWorkspaceYaml,
 } from "./lib/common";
 
 $.nothrow();
+
+const ideConfigmapInfo = await readIDEConfigmapJson();
+const ideConfigmapJson = ideConfigmapInfo.parsedObj;
+const ideConfigmapJsonObj = ideConfigmapInfo.rawObj;
+const workspaceYaml = await readWorkspaceYaml().then((d) => d.parsedObj);
 
 async function updateCodeBrowserVersions() {
     const latestInstaller = await getLatestInstallerVersions();

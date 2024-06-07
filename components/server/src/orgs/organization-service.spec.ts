@@ -17,6 +17,8 @@ import { DefaultWorkspaceImageValidator } from "./default-workspace-image-valida
 import { UserService } from "../user/user-service";
 import { Config } from "../config";
 import { IDEService } from "../ide-service";
+import { StripeService } from "../billing/stripe-service";
+import { UsageService } from "./usage-service";
 
 const expect = chai.expect;
 
@@ -73,6 +75,8 @@ describe("OrganizationService", async () => {
                     return allWorkspaceClasses;
                 },
             } as any as InstallationService);
+            container.bind(StripeService).toConstantValue({} as any as StripeService);
+            container.bind(UsageService).toConstantValue({} as any as UsageService);
             os = container.get(OrganizationService);
         });
 

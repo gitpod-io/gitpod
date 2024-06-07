@@ -28,6 +28,10 @@ import { InstallationService } from "../auth/installation-service";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { runWithSubjectId } from "../util/request-context";
 import { IDEService } from "../ide-service";
+import { StripeService } from "../billing/stripe-service";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { UsageService } from "./usage-service";
+import { CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
 
 @injectable()
 export class OrganizationService {
@@ -40,6 +44,8 @@ export class OrganizationService {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(InstallationService) private readonly installationService: InstallationService,
         @inject(IDEService) private readonly ideService: IDEService,
+        @inject(StripeService) private readonly stripeService: StripeService,
+        @inject(UsageService) private readonly usageService: UsageService,
         @inject(DefaultWorkspaceImageValidator)
         private readonly validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator,
     ) {}
@@ -186,6 +192,11 @@ export class OrganizationService {
                 }
 
                 await db.deleteTeam(orgId);
+
+                const costCenter = await this.usageService.getCostCenter(userId, orgId);
+                if (costCenter.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+                    await this.stripeService.cancelCustomerSubscriptions(AttributionId.createFromOrganizationId(orgId));
+                }
 
                 await this.auth.removeAllRelationships(userId, "organization", orgId);
             });

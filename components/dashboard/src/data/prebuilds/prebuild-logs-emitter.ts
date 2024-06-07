@@ -9,6 +9,7 @@ import { prebuildClient } from "../../service/public-api";
 import { useEffect, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { Disposable } from "@gitpod/gitpod-protocol";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
     const [emitter] = useState(new EventEmitter());
@@ -23,6 +24,7 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
         const controller = new AbortController();
         const watch = async () => {
             if (!prebuildId || !taskId) {
+                setIsLoading(false);
                 return;
             }
             let dispose: () => void | undefined;
@@ -31,8 +33,9 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
             });
             const prebuild = await prebuildClient.getPrebuild({ prebuildId });
             const task = prebuild.prebuild?.status?.taskLogs?.find((log) => log.taskId === taskId);
-            if (!task) {
-                throw new Error("no prebuild logs url found");
+            if (!task?.logUrl) {
+                setIsLoading(false);
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "Task not found");
             }
             dispose = onDownloadPrebuildLogsUrl(
                 task.logUrl,

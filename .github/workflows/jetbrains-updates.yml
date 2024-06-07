@@ -1,5 +1,6 @@
 name: JB Stable IDEs Update
 on:
+    workflow_call:
     workflow_dispatch:
     schedule:
         # At 11:00 on every day-of-week from Monday through Friday.
@@ -12,13 +13,13 @@ jobs:
             - uses: actions/checkout@v4
             - name: Install dependencies
               run: |
-                cd ./components/ide/jetbrains/image/gha-update-image
+                cd ./components/ide/gha-update-image
                 yarn
                 npm i -g bun
             - name: Check for updates
               run: |
-                cd ./components/ide/jetbrains/image/gha-update-image
-                bun run index.ts
+                cd ./components/ide/gha-update-image
+                bun run index-jb.ts
                 git diff
 
             - name: Detect file changes

@@ -212,7 +212,7 @@ export class HeadlessLogController {
                         res.status(400).send("prebuildId is invalid");
                         return;
                     }
-                    let taskId = req.params.taskId;
+                    const { taskId } = req.params;
                     const logCtx = { userId: user.id, prebuildId, taskId };
 
                     const head = {

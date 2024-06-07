@@ -101,7 +101,6 @@ export const useConfiguration = (configurationId?: string) => {
             return configuration || null;
         },
         {
-            initialData: null,
             select: (data) => data || undefined,
             retry: (failureCount, error) => {
                 if (!configurationId) {
@@ -115,6 +114,7 @@ export const useConfiguration = (configurationId?: string) => {
                 if (error && [ErrorCodes.NOT_FOUND, ErrorCodes.PERMISSION_DENIED].includes((error as any).code)) {
                     return false;
                 }
+
                 return true;
             },
             cacheTime: 1000 * 60 * 5, // 5m

@@ -38,6 +38,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/jetbrains/launcher/pkg/constant"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
@@ -46,8 +47,6 @@ const defaultBackendPort = "63342"
 var (
 	// ServiceName is the name we use for tracing/logging.
 	ServiceName = "jetbrains-launcher"
-	// Version of this service - set during build.
-	Version = ""
 )
 
 type LaunchContext struct {
@@ -99,8 +98,8 @@ func main() {
 	// supervisor refer see https://github.com/gitpod-io/gitpod/blob/main/components/supervisor/pkg/supervisor/supervisor.go#L961
 	shouldWaitBackendPlugin := os.Getenv("GITPOD_WAIT_IDE_BACKEND") == "true"
 	debugEnabled := os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true"
-	log.Init(ServiceName, Version, true, debugEnabled)
-	log.Info(ServiceName + ": " + Version)
+	log.Init(ServiceName, constant.Version, true, debugEnabled)
+	log.Info(ServiceName + ": " + constant.Version)
 	startTime := time.Now()
 
 	log.WithField("shouldWait", shouldWaitBackendPlugin).Info("should wait backend plugin")
@@ -648,7 +647,7 @@ func resolveLaunchContextEnv() []string {
 	// instead put them into /ide-desktop/${alias}${qualifier}/backend/bin/idea64.vmoptions
 	// otherwise JB will complain to a user on each startup
 	// by default remote dev already set -Xmx2048m, see /ide-desktop/${alias}${qualifier}/backend/plugins/remote-dev-server/bin/launcher.sh
-	launchCtxEnv = append(launchCtxEnv, "JAVA_TOOL_OPTIONS=")
+	// launchCtxEnv = append(launchCtxEnv, "JAVA_TOOL_OPTIONS=")
 
 	// Force it to be disabled as we update platform properties file already
 	// TODO: Some ides have it enabled by default still, check pycharm and remove next release
@@ -790,6 +789,14 @@ func updateVMOptions(
 	gitpodVMOptions = append(gitpodVMOptions, "-Dfreeze.reporter.profiling=false")
 	if alias == "intellij" {
 		gitpodVMOptions = append(gitpodVMOptions, "-Djdk.configure.existing=true")
+	}
+	// container relevant options
+	gitpodVMOptions = append(gitpodVMOptions, "-XX:+UseContainerSupport")
+	cpuCount := os.Getenv("GITPOD_CPU_COUNT")
+	parsedCPUCount, err := strconv.Atoi(cpuCount)
+	// if CPU count is set and is parseable as a positive number
+	if err == nil && parsedCPUCount > 0 && parsedCPUCount <= 16 {
+		gitpodVMOptions = append(gitpodVMOptions, "-XX:ActiveProcessorCount="+cpuCount)
 	}
 	vmoptions := deduplicateVMOption(ideaVMOptionsLines, gitpodVMOptions, filterFunc)
 

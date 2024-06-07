@@ -1697,7 +1697,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!prebuild) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Prebuild not found");
         }
-        // Explicitly stopping the prebuild workspace now automaticaly cancels the prebuild
+        // Explicitly stopping the prebuild workspace now automatically cancels the prebuild
         await this.stopWorkspace(ctx, prebuild.buildWorkspaceId);
     }
 
@@ -2277,7 +2277,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             if (ApplicationError.hasErrorCode(error)) {
                 throw error;
             }
-            const message = error ? String(error) : "Error retreiving auth providers for organization.";
+            const message = error ? String(error) : "Error retrieving auth providers for organization.";
             throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, message);
         }
     }
@@ -2496,7 +2496,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attribution id: ${attributionId}`);
         }
 
         try {
@@ -2589,7 +2589,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id`);
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attribution id: ${attributionId}`);
         }
 
         await this.guardTeamOperation(attrId.teamId, "update");
@@ -2623,7 +2623,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attribution id: ${attributionId}`);
         }
 
         try {
@@ -2671,7 +2671,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attribution id: ${attributionId}`);
         }
 
         const returnUrl = this.config.hostUrl
@@ -2697,7 +2697,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attribution id: ${attributionId}`);
         }
 
         const user = await this.checkAndBlockUser("getCostCenter");
@@ -2711,7 +2711,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attribution id: ${attributionId}`);
         }
         if (typeof usageLimit !== "number" || usageLimit < 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
@@ -2779,7 +2779,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attribution id: ${attributionId}`);
         }
 
         const user = await this.checkAndBlockUser("isCustomerBillingAddressInvalid");
@@ -2816,7 +2816,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attribution id: ${attributionId}`);
         }
 
         const user = await this.checkAndBlockUser("adminGetCostCenter");
@@ -2829,7 +2829,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attribution id: ${attributionId}`);
         }
         const adminUser = await this.checkAndBlockUser("adminSetUsageLimit");
         await this.guardAdminAccess("adminSetUsageLimit", { id: adminUser.id }, Permission.ADMIN_USERS);
@@ -2849,7 +2849,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attribution id: ${attributionId}`);
         }
         const user = await this.checkAndBlockUser("adminGetUsageBalance");
         await this.guardAdminAccess("adminGetUsageBalance", { id: user.id }, Permission.ADMIN_USERS);
@@ -2867,7 +2867,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attribution id: ${attributionId}`);
         }
         const user = await this.checkAndBlockUser("adminAddUsageCreditNote");
         await this.guardAdminAccess("adminAddUsageCreditNote", { id: user.id }, Permission.ADMIN_USERS);
