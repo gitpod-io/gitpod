@@ -10,6 +10,8 @@ import (
 	"net"
 	"net/netip"
 	"os"
+	"path/filepath"
+	"sync"
 	"time"
 	"unsafe"
 
@@ -83,6 +85,87 @@ func main() {
 				},
 				Action: func(c *cli.Context) error {
 					return unix.Mount("none", c.String("target"), "", unix.MS_SHARED, "")
+				},
+			},
+			{
+				Name:  "mount-idmapped-mark",
+				Usage: "mounts a idmapped mark",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "source",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "merged",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "upper",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "work",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "userns",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					target := filepath.Clean(c.String("merged"))
+					upper := filepath.Clean(c.String("upper"))
+					work := filepath.Clean(c.String("work"))
+					source := filepath.Clean(c.String("source"))
+					userns := filepath.Clean(c.String("userns"))
+
+					mappedLower, err := os.MkdirTemp("", "idmapped-mark")
+					if err != nil {
+						return xerrors.Errorf("mkdirtemp: %w", err)
+					}
+
+					mappedFD, err := unix.OpenTree(unix.AT_FDCWD, source, unix.OPEN_TREE_CLONE)
+					if err != nil {
+						return xerrors.Errorf("opentree: %w", err)
+					}
+					var closeOnce sync.Once
+					closeMappedFD := func() {
+						closeOnce.Do(func() { unix.Close(mappedFD) })
+					}
+					defer closeMappedFD()
+
+					usernsFD, err := os.Open(userns)
+					if err != nil {
+						return xerrors.Errorf("open(userns): %w", err)
+					}
+					defer usernsFD.Close()
+					err = unix.MountSetattr(mappedFD, "", unix.AT_EMPTY_PATH|unix.AT_RECURSIVE, &unix.MountAttr{
+						Attr_set:    unix.MOUNT_ATTR_IDMAP,
+						Attr_clr:    0,
+						Propagation: 0,
+						Userns_fd:   uint64(usernsFD.Fd()),
+					})
+					if err != nil {
+						return xerrors.Errorf("mountsetattr: %w", err)
+					}
+
+					err = unix.MoveMount(mappedFD, "", unix.AT_FDCWD, mappedLower, flagMoveMountFEmptyPath)
+					if err != nil {
+						return xerrors.Errorf("moveMount: %w", err)
+					}
+
+					err = unix.Mount("overlay", target, "overlay", 0, fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", mappedLower, upper, work))
+					if err != nil {
+						return xerrors.Errorf("mount(overlay): %w", err)
+					}
+
+					closeMappedFD()
+					err = unix.Unmount(mappedLower, 0)
+					if err != nil {
+						return xerrors.Errorf("Unmount(mappedLower): %w", err)
+					}
+
+					return nil
 				},
 			},
 			{

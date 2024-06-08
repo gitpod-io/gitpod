@@ -332,7 +332,7 @@ umountSysfs: {
     responseSerialize: serialize_iws_UmountProcResponse,
     responseDeserialize: deserialize_iws_UmountProcResponse,
   },
-  // UmountSysfs unmounts a masked sysfs from the container's rootfs.
+  // MountNfs mounts a nfs share into the container's rootfs.
 // The PID must be in the PID namespace of the workspace container.
 // The path is relative to the mount namespace of the PID.
 mountNfs: {
@@ -346,7 +346,7 @@ mountNfs: {
     responseSerialize: serialize_iws_MountNfsResponse,
     responseDeserialize: deserialize_iws_MountNfsResponse,
   },
-  // UmountSysfs unmounts a masked sysfs from the container's rootfs.
+  // UmountNfs unmounts a nfs share from the container's rootfs.
 // The PID must be in the PID namespace of the workspace container.
 // The path is relative to the mount namespace of the PID.
 umountNfs: {

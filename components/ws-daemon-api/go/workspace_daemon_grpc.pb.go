@@ -56,11 +56,11 @@ type InWorkspaceServiceClient interface {
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
 	UmountSysfs(ctx context.Context, in *UmountProcRequest, opts ...grpc.CallOption) (*UmountProcResponse, error)
-	// UmountSysfs unmounts a masked sysfs from the container's rootfs.
+	// MountNfs mounts a nfs share into the container's rootfs.
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
 	MountNfs(ctx context.Context, in *MountNfsRequest, opts ...grpc.CallOption) (*MountNfsResponse, error)
-	// UmountSysfs unmounts a masked sysfs from the container's rootfs.
+	// UmountNfs unmounts a nfs share from the container's rootfs.
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
 	UmountNfs(ctx context.Context, in *UmountNfsRequest, opts ...grpc.CallOption) (*UmountNfsResponse, error)
@@ -223,11 +223,11 @@ type InWorkspaceServiceServer interface {
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
 	UmountSysfs(context.Context, *UmountProcRequest) (*UmountProcResponse, error)
-	// UmountSysfs unmounts a masked sysfs from the container's rootfs.
+	// MountNfs mounts a nfs share into the container's rootfs.
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
 	MountNfs(context.Context, *MountNfsRequest) (*MountNfsResponse, error)
-	// UmountSysfs unmounts a masked sysfs from the container's rootfs.
+	// UmountNfs unmounts a nfs share from the container's rootfs.
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
 	UmountNfs(context.Context, *UmountNfsRequest) (*UmountNfsResponse, error)

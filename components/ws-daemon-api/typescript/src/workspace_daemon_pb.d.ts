@@ -13,6 +13,8 @@
 import * as jspb from "google-protobuf";
 
 export class PrepareForUserNSRequest extends jspb.Message {
+    getUsernsPid(): number;
+    setUsernsPid(value: number): PrepareForUserNSRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrepareForUserNSRequest.AsObject;
@@ -26,6 +28,7 @@ export class PrepareForUserNSRequest extends jspb.Message {
 
 export namespace PrepareForUserNSRequest {
     export type AsObject = {
+        usernsPid: number,
     }
 }
 
@@ -522,4 +525,5 @@ export namespace Memory {
 
 export enum FSShiftMethod {
     SHIFTFS = 0,
+    IDMAPPED = 2,
 }

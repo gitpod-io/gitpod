@@ -256,22 +256,48 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 
-	// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
-	// That's why we resort to exec'ing "nsenter ... mount ...".
-	err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
-		c.Args = append(c.Args, "make-shared", "--target", "/")
-	})
-	if err != nil {
-		log.WithField("containerPID", containerPID).WithFields(wbs.Session.OWI()).WithError(err).Error("cannot make container's rootfs shared")
-		return nil, status.Errorf(codes.Internal, "cannot make container's rootfs shared")
-	}
+	switch wbs.FSShift {
+	case api.FSShiftMethod_SHIFTFS:
+		// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
+		// That's why we resort to exec'ing "nsenter ... mount ...".
+		err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+			c.Args = append(c.Args, "make-shared", "--target", "/")
+		})
+		if err != nil {
+			log.WithField("containerPID", containerPID).WithFields(wbs.Session.OWI()).WithError(err).Error("cannot make container's rootfs shared")
+			return nil, status.Errorf(codes.Internal, "cannot make container's rootfs shared")
+		}
 
-	err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
-		c.Args = append(c.Args, "mount-shiftfs-mark", "--source", rootfs, "--target", mountpoint)
-	})
-	if err != nil {
-		log.WithField("rootfs", rootfs).WithFields(wbs.Session.OWI()).WithField("mountpoint", mountpoint).WithError(err).Error("cannot mount shiftfs mark")
-		return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
+		err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+			c.Args = append(c.Args, "mount-shiftfs-mark", "--source", rootfs, "--target", mountpoint)
+		})
+		if err != nil {
+			log.WithField("rootfs", rootfs).WithFields(wbs.Session.OWI()).WithField("mountpoint", mountpoint).WithError(err).Error("cannot mount shiftfs mark")
+			return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
+		}
+	case api.FSShiftMethod_IDMAPPED:
+		procPID, err := wbs.Uidmapper.findHostPID(containerPID, uint64(req.UsernsPid))
+		if err != nil {
+			log.WithError(err).WithField("containerPID", containerPID).WithField("processPID", req.UsernsPid).Error("cannot map in-container PID")
+			return nil, status.Error(codes.InvalidArgument, "cannot map in-container PID")
+		}
+
+		err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+			// In case of any change in the user mapping, the next line must be updated.
+			c.Args = append(c.Args, "mount-idmapped-mark",
+				"--source", rootfs,
+				"--merged", filepath.Join(wbs.Session.ServiceLocNode, "mark"),
+				"--upper", filepath.Join(wbs.Session.ServiceLocNode, "upper"),
+				"--work", filepath.Join(wbs.Session.ServiceLocNode, "work"),
+				"--userns", fmt.Sprintf("/proc/%d/ns/user", procPID))
+		})
+		if err != nil {
+			log.WithField("rootfs", rootfs).WithError(err).Error("cannot mount idmapped mark")
+			return nil, status.Errorf(codes.Internal, "cannot mount idmapped mark")
+		}
+	default:
+		log.WithField("fsshift", wbs.FSShift).Error("unknown fs shift")
+		return nil, status.Errorf(codes.FailedPrecondition, "unknown fs shift")
 	}
 
 	if err := wbs.createWorkspaceCgroup(ctx, wscontainerID); err != nil {
@@ -279,7 +305,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 	}
 
 	return &api.PrepareForUserNSResponse{
-		FsShift: api.FSShiftMethod_SHIFTFS,
+		FsShift: wbs.FSShift,
 	}, nil
 }
 
