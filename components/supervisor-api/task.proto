@@ -18,11 +18,25 @@ service TaskService {
             get: "/v1/task/get/{task_id}/output"
         };
     }
+
+    // Listens to the output of a given task
+    rpc ListenToOutput(ListenToOutputRequest) returns (stream ListenToOutputResponse) {
+        option (google.api.http) = {
+            get: "/v1/task/listen/{task_id}/output"
+        };
+    }
 }
 
 message GetOutputRequest {
     string task_id = 1;
 }
 message GetOutputResponse {
+    bytes data = 1;
+}
+
+message ListenToOutputRequest {
+    string task_id = 1;
+}
+message ListenToOutputResponse {
     bytes data = 1;
 }

@@ -28,6 +28,8 @@ const _ = grpc.SupportPackageIsVersion7
 type TaskServiceClient interface {
 	// Gets the output of a given task
 	GetOutput(ctx context.Context, in *GetOutputRequest, opts ...grpc.CallOption) (TaskService_GetOutputClient, error)
+	// Listens to the output of a given task
+	ListenToOutput(ctx context.Context, in *ListenToOutputRequest, opts ...grpc.CallOption) (TaskService_ListenToOutputClient, error)
 }
 
 type taskServiceClient struct {
@@ -70,12 +72,46 @@ func (x *taskServiceGetOutputClient) Recv() (*GetOutputResponse, error) {
 	return m, nil
 }
 
+func (c *taskServiceClient) ListenToOutput(ctx context.Context, in *ListenToOutputRequest, opts ...grpc.CallOption) (TaskService_ListenToOutputClient, error) {
+	stream, err := c.cc.NewStream(ctx, &TaskService_ServiceDesc.Streams[1], "/supervisor.TaskService/ListenToOutput", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &taskServiceListenToOutputClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type TaskService_ListenToOutputClient interface {
+	Recv() (*ListenToOutputResponse, error)
+	grpc.ClientStream
+}
+
+type taskServiceListenToOutputClient struct {
+	grpc.ClientStream
+}
+
+func (x *taskServiceListenToOutputClient) Recv() (*ListenToOutputResponse, error) {
+	m := new(ListenToOutputResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // TaskServiceServer is the server API for TaskService service.
 // All implementations must embed UnimplementedTaskServiceServer
 // for forward compatibility
 type TaskServiceServer interface {
 	// Gets the output of a given task
 	GetOutput(*GetOutputRequest, TaskService_GetOutputServer) error
+	// Listens to the output of a given task
+	ListenToOutput(*ListenToOutputRequest, TaskService_ListenToOutputServer) error
 	mustEmbedUnimplementedTaskServiceServer()
 }
 
@@ -85,6 +121,9 @@ type UnimplementedTaskServiceServer struct {
 
 func (UnimplementedTaskServiceServer) GetOutput(*GetOutputRequest, TaskService_GetOutputServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetOutput not implemented")
+}
+func (UnimplementedTaskServiceServer) ListenToOutput(*ListenToOutputRequest, TaskService_ListenToOutputServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListenToOutput not implemented")
 }
 func (UnimplementedTaskServiceServer) mustEmbedUnimplementedTaskServiceServer() {}
 
@@ -120,6 +159,27 @@ func (x *taskServiceGetOutputServer) Send(m *GetOutputResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _TaskService_ListenToOutput_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListenToOutputRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TaskServiceServer).ListenToOutput(m, &taskServiceListenToOutputServer{stream})
+}
+
+type TaskService_ListenToOutputServer interface {
+	Send(*ListenToOutputResponse) error
+	grpc.ServerStream
+}
+
+type taskServiceListenToOutputServer struct {
+	grpc.ServerStream
+}
+
+func (x *taskServiceListenToOutputServer) Send(m *ListenToOutputResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // TaskService_ServiceDesc is the grpc.ServiceDesc for TaskService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -131,6 +191,11 @@ var TaskService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetOutput",
 			Handler:       _TaskService_GetOutput_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ListenToOutput",
+			Handler:       _TaskService_ListenToOutput_Handler,
 			ServerStreams: true,
 		},
 	},

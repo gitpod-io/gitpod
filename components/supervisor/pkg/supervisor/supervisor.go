@@ -395,7 +395,7 @@ func Run(options ...RunOption) {
 		NewInfoService(cfg, cstate, gitpodService),
 		&ControlService{portsManager: portMgmt},
 		&portService{portsManager: portMgmt},
-		&taskService{},
+		&taskService{tasksManager: taskManager},
 	}
 	apiServices = append(apiServices, additionalServices...)
 

@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -1036,6 +1037,8 @@ func (s *statusService) ResourcesStatus(ctx context.Context, in *api.ResourcesSt
 }
 
 type taskService struct {
+	tasksManager *tasksManager
+
 	api.UnimplementedTaskServiceServer
 }
 
@@ -1047,7 +1050,7 @@ func (s *taskService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) e
 	return api.RegisterPortServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
-// Tunnel opens a new tunnel.
+// GetOutput returns the output of a task at this moment.
 func (s *taskService) GetOutput(req *api.GetOutputRequest, resp api.TaskService_GetOutputServer) error {
 	fileLocation := logs.PrebuildLogFileName(logs.TerminalStoreLocation, req.TaskId)
 	if _, err := os.Stat(fileLocation); os.IsNotExist(err) {
@@ -1076,4 +1079,93 @@ func (s *taskService) GetOutput(req *api.GetOutputRequest, resp api.TaskService_
 	}
 
 	return nil
+}
+
+// ListenToOutput listens to the output of a task. It streams the output from the task's file and ends when the task's state changes to done.
+func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.TaskService_ListenToOutputServer) error {
+	fileLocation := logs.PrebuildLogFileName(logs.TerminalStoreLocation, req.TaskId)
+	if _, err := os.Stat(fileLocation); os.IsNotExist(err) {
+		return status.Error(codes.NotFound, "task not found")
+	}
+
+	file, err := os.Open(fileLocation)
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	defer file.Close()
+
+	buf := make([]byte, 4096)
+	done := make(chan struct{})
+
+	// Subscription mechanism to task updates
+	sub := s.tasksManager.Subscribe()
+	if sub == nil {
+		log.Warn("potentially leaking subscription to tasks status: too many subscriptions")
+		return status.Error(codes.ResourceExhausted, "too many subscriptions")
+	}
+	defer sub.Close()
+
+	go func() {
+		for {
+			select {
+			case <-srv.Context().Done():
+				close(done)
+				return
+			case updates := <-sub.Updates(): // This is a slice of TaskStatus pointers
+				if updates == nil {
+					close(done)
+					return
+				}
+				for _, update := range updates {
+					if update == nil {
+						continue
+					}
+					if update.Id == req.TaskId && update.State == api.TaskState_closed {
+						close(done)
+						return
+					}
+				}
+			}
+		}
+	}()
+
+	// Initialize fsnotify
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	defer watcher.Close()
+
+	dir, fileName := filepath.Split(fileLocation)
+
+	// Start watching the directory containing the file
+	err = watcher.Add(dir)
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	for {
+		select {
+		case <-done:
+			return nil
+		case event := <-watcher.Events:
+			if event.Op&fsnotify.Write == fsnotify.Write && filepath.Base(event.Name) == fileName {
+				n, err := file.Read(buf)
+				if err != nil && err != io.EOF {
+					return status.Error(codes.Internal, err.Error())
+				}
+
+				if n > 0 {
+					if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
+						return status.Error(codes.Internal, err.Error())
+					}
+				}
+			}
+		case err := <-watcher.Errors:
+			if err != nil {
+				log.Println("error:", err)
+				return status.Error(codes.Internal, err.Error())
+			}
+		}
+	}
 }
