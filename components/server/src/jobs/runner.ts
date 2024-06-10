@@ -22,6 +22,7 @@ import { runWithRequestContext } from "../util/request-context";
 import { SYSTEM_USER } from "../authorization/authorizer";
 import { InstallationAdminCleanup } from "./installation-admin-cleanup";
 import { CapGitStatus } from "./cap-git-status";
+import { CapStatus } from "./cap-status";
 
 export const Job = Symbol("Job");
 
@@ -46,6 +47,7 @@ export class JobRunner {
         @inject(WorkspaceStartController) private readonly workspaceStartController: WorkspaceStartController,
         @inject(InstallationAdminCleanup) private readonly installationAdminCleanup: InstallationAdminCleanup,
         @inject(CapGitStatus) private readonly capGitStatus: CapGitStatus,
+        @inject(CapStatus) private readonly capStatus: CapStatus,
     ) {}
 
     public start(): DisposableCollection {
@@ -62,6 +64,7 @@ export class JobRunner {
             this.workspaceStartController,
             this.installationAdminCleanup,
             this.capGitStatus,
+            this.capStatus,
         ];
 
         for (const job of jobs) {
