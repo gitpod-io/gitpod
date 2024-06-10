@@ -15,9 +15,8 @@ import {
     TaskState,
     TaskStatus,
 } from "@gitpod/supervisor-api-grpcweb/lib/status_pb";
-import { ResponseStream, TerminalServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service";
-import { ListenTerminalRequest, ListenTerminalResponse } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb";
-import { GetOutputRequest } from "@gitpod/supervisor-api-grpcweb/lib/task_pb";
+import { ResponseStream } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service";
+import { ListenToOutputRequest, ListenToOutputResponse } from "@gitpod/supervisor-api-grpcweb/lib/task_pb";
 import { TaskServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/task_pb_service";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import * as grpc from "@grpc/grpc-js";
@@ -36,6 +35,7 @@ import {
 import { CachingHeadlessLogServiceClientProvider } from "../util/content-service-sugar";
 import { ctxIsAborted, ctxOnAbort } from "../util/request-context";
 import { PREBUILD_LOGS_PATH_PREFIX as PREBUILD_LOGS_PATH_PREFIX_common } from "@gitpod/public-api-common/lib/prebuild-utils";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export const HEADLESS_LOGS_PATH_PREFIX = "/headless-logs";
 export const HEADLESS_LOG_DOWNLOAD_PATH_PREFIX = "/headless-log-download";
@@ -278,27 +278,31 @@ export class HeadlessLogService {
         sink: (chunk: string) => Promise<void>,
         doContinue: () => Promise<boolean>,
     ): Promise<void> {
-        const terminalClient = new TerminalServiceClient(toSupervisorURL(logEndpoint.url), {
-            transport: WebsocketTransport(), // necessary because HTTPTransport causes caching issues
-        });
         const taskClient = new TaskServiceClient(toSupervisorURL(logEndpoint.url), {
             transport: WebsocketTransport(),
         });
 
-        const req = new ListenTerminalRequest();
-        req.setAlias(terminalID);
+        const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
+        const taskIndex = tasks.findIndex((t) => t.getTerminal() === terminalID);
+        if (taskIndex < 0) {
+            log.warn(logCtx, "stream workspace logs: terminal not found", { terminalID, tasks });
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "terminal not found");
+        }
+
+        const req = new ListenToOutputRequest();
+        req.setTaskId(taskIndex.toString());
 
         const authHeaders = HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint);
 
         let receivedDataYet = false;
-        let stream: ResponseStream<ListenTerminalResponse> | undefined = undefined;
+        let stream: ResponseStream<ListenToOutputResponse> | undefined = undefined;
         ctxOnAbort(() => stream?.cancel());
         const doStream = (retry: (doRetry?: boolean) => void) =>
             new Promise<void>((resolve, reject) => {
                 // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
                 const decoder = new TextDecoder("utf-8");
-                stream = terminalClient.listen(req, authHeaders);
-                stream.on("data", (resp: ListenTerminalResponse) => {
+                stream = taskClient.listenToOutput(req, authHeaders);
+                stream.on("data", (resp: ListenToOutputResponse) => {
                     receivedDataYet = true;
 
                     const raw = resp.getData();
@@ -319,39 +323,6 @@ export class HeadlessLogService {
                     if (!receivedDataYet && status.code === grpc.status.UNAVAILABLE) {
                         log.debug("stream headless workspace log", err);
                         reject(err);
-                        return;
-                    } else if (status.code === grpc.status.NOT_FOUND) {
-                        const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
-                        const taskIndex = tasks.findIndex((t) => t.getTerminal() === terminalID);
-                        if (taskIndex < 0) {
-                            log.warn(logCtx, "stream workspace logs: terminal not found", { terminalID, tasks });
-                            reject(err);
-                            return;
-                        }
-
-                        const request = new GetOutputRequest();
-                        request.setTaskId(taskIndex.toString());
-                        const stream = taskClient.getOutput(request, authHeaders);
-
-                        stream.on("data", (resp) => {
-                            const data = resp.getData();
-                            const text = typeof data === "string" ? data : decoder.decode(data);
-                            sink(text).catch((err) => {
-                                stream.cancel();
-                                log.debug(logCtx, "stream cancelled", err);
-                            });
-                        });
-
-                        stream.on("end", (status) => {
-                            if (status && status.code === grpc.status.OK) {
-                                resolve();
-                                return;
-                            }
-
-                            log.error(logCtx, "stream workspace logs: getOutput failed", { status });
-                            reject(err);
-                        });
-
                         return;
                     }
 
