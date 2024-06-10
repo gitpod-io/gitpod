@@ -81,6 +81,20 @@ const displayScmProviders = (providers: UnifiedAuthProvider[]): string => {
     return formatter.format(providers);
 };
 
+/**
+ * Determines whether the extension has been able to access the current site in the past month. If it hasn't, it's most likely not installed or misconfigured
+ */
+const wasRecentlySeenActive = (): boolean => {
+    const lastSeen = localStorage.getItem("extension-last-seen-active");
+    if (!lastSeen) {
+        return false;
+    }
+
+    const threshold = 30 * 24 * 60 * 60 * 1_000; // 1 month
+
+    return new Date().getTime() - new Date(lastSeen).getTime() > threshold;
+};
+
 export function BrowserExtensionBanner() {
     const { user } = useUserLoader();
     const { data: authProviderDescriptions } = useAuthProviderDescriptions();
@@ -101,7 +115,8 @@ export function BrowserExtensionBanner() {
 
     useEffect(() => {
         const installedOrDismissed =
-            sessionStorage.getItem("browser-extension-installed") ||
+            sessionStorage.getItem("browser-extension-installed") || // todo(ft): delete after migration is complete
+            wasRecentlySeenActive ||
             localStorage.getItem("browser-extension-banner-dismissed");
 
         setIsVisible(!installedOrDismissed);
