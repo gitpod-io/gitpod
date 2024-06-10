@@ -25,6 +25,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/serverapi"
@@ -1032,4 +1033,61 @@ func (s *portService) RetryAutoExpose(ctx context.Context, req *api.RetryAutoExp
 // ResourcesStatus provides workspace resources status information.
 func (s *statusService) ResourcesStatus(ctx context.Context, in *api.ResourcesStatuRequest) (*api.ResourcesStatusResponse, error) {
 	return s.topService.data, nil
+}
+
+type taskService struct {
+	api.UnimplementedTaskServiceServer
+}
+
+func (s *taskService) RegisterGRPC(srv *grpc.Server) {
+	api.RegisterTaskServiceServer(srv, s)
+}
+
+func (s *taskService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterPortServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+}
+
+// Tunnel opens a new tunnel.
+func (s *taskService) GetOutput(req *api.GetOutputRequest, resp api.TaskService_GetOutputServer) error {
+	fileLocation := logs.PrebuildLogFileName(logs.TerminalStoreLocation, req.TaskId)
+	if _, err := os.Stat(fileLocation); os.IsNotExist(err) {
+		files, err := os.ReadDir(logs.TerminalStoreLocation)
+		if err != nil {
+			fmt.Println("Error reading directory:", err)
+			return status.Error(codes.Internal, err.Error())
+		}
+
+		var fileNames []string
+		for _, file := range files {
+			if !file.IsDir() { // Only include files, not subdirectories
+				fileNames = append(fileNames, file.Name())
+			}
+		}
+
+		result := strings.Join(fileNames, ",")
+		return status.Error(codes.NotFound, "terminal not found. Available files: "+result+" looking for: "+fileLocation)
+	}
+
+	file, err := os.Open(fileLocation)
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	defer file.Close()
+
+	buf := make([]byte, 4096)
+	for {
+		n, err := file.Read(buf)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+
+		if err := resp.Send(&api.GetOutputResponse{Data: buf[:n]}); err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	return nil
 }
