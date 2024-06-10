@@ -109,17 +109,43 @@ export function BrowserExtensionBanner() {
     const parser = useMemo(() => new UAParser(), []);
     const browserName = useMemo(() => parser.getBrowser().name?.toLowerCase(), [parser]);
 
-    const [isVisible, setIsVisible] = useState(false);
+    const [isVisible, setIsVisible] = useState<boolean | null>(null); // null is used to indicate an initial loading state
     const isFeatureFlagEnabled = useFeatureFlag("showBrowserExtensionPromotion");
 
     useEffect(() => {
+        const targetElement = document.querySelector(`meta[name="extension-active"]`);
+        if (!targetElement) {
+            return;
+        }
+
+        if (targetElement.getAttribute("content") === "true") {
+            setIsVisible(false);
+            return;
+        }
+
+        const observer = new MutationObserver(() => {
+            setIsVisible(!targetElement.getAttribute("content"));
+        });
+
+        observer.observe(targetElement, {
+            attributes: true,
+            attributeFilter: ["content"],
+        });
+    }, []);
+
+    useEffect(() => {
+        // If the visibility state has already been set, don't override it
+        if (isVisible !== null) {
+            return;
+        }
+
         const installedOrDismissed =
             sessionStorage.getItem("browser-extension-installed") || // todo(ft): delete after migration is complete
             wasRecentlySeenActive() ||
             localStorage.getItem("browser-extension-banner-dismissed");
 
         setIsVisible(!installedOrDismissed);
-    }, []);
+    }, [isVisible]);
 
     // const handleClose = () => {
     //     let persistSuccess = true;
