@@ -9,22 +9,21 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { Job } from "./runner";
 import { Config } from "../config";
-import { GIT_STATUS_LENGTH_CAP_BYTES } from "../workspace/workspace-service";
 import { Repository } from "typeorm";
-import { WorkspaceInstance, WorkspaceInstanceRepoStatus } from "@gitpod/gitpod-protocol";
+import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 @injectable()
-export class CapGitStatus implements Job {
+export class CapStatus implements Job {
     @inject(Config) protected readonly config: Config;
     @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
 
-    public name = "git-status-capper";
+    public name = "status-capper";
     public frequencyMs = 2 * 60 * 1000; // every 2 minutes
 
     public async run(): Promise<number | undefined> {
-        log.info("git-status: we're leading the quorum.");
+        log.info("cap-status: we're leading the quorum.");
 
         const validateGitStatusLength = await getExperimentsClientForBackend().getValueAsync(
             "api_validate_git_status_length",
@@ -32,22 +31,22 @@ export class CapGitStatus implements Job {
             {},
         );
         if (!validateGitStatusLength) {
-            log.info("git-status: feature flag is not enabled.");
+            log.info("cap-status: feature flag is not enabled.");
             return;
         }
 
         const limit = 100;
         const instances = await this.workspaceDb.transaction(async (db) => {
             const repo = await ((db as any).getWorkspaceInstanceRepo() as Promise<Repository<DBWorkspaceInstance>>);
-            const instances = await this.findInstancesWithLengthyGitStatus(repo, GIT_STATUS_LENGTH_CAP_BYTES, limit);
+            const instances = await this.findInstancesWithLengthyStatus(repo, limit);
             if (instances.length === 0) {
                 return [];
             }
 
-            // Cap gitStatus
+            // Cap the status (the old place where we stored gitStatus before)
             instances.forEach((i) => {
-                if (i.gitStatus) {
-                    i.gitStatus = capGitStatus(i.gitStatus);
+                if (i.status) {
+                    delete (i.status as any).repo;
                 }
             });
 
@@ -60,50 +59,17 @@ export class CapGitStatus implements Job {
         });
         const instancesCapped = instances.length;
 
-        log.info(`git-status: capped ${instancesCapped} instances.`, {
+        log.info(`cap-status: capped ${instancesCapped} instances.`, {
             instanceIds: new TrustedValue(instances.map((i) => i.id)),
         });
         return instancesCapped;
     }
 
-    async findInstancesWithLengthyGitStatus(
+    async findInstancesWithLengthyStatus(
         repo: Repository<DBWorkspaceInstance>,
-        byteLimit: number,
         limit: number = 1000,
     ): Promise<WorkspaceInstance[]> {
-        const qb = repo
-            .createQueryBuilder("wsi")
-            .where("JSON_STORAGE_SIZE(wsi.gitStatus) > :byteLimit", { byteLimit })
-            .limit(limit);
+        const qb = repo.createQueryBuilder("wsi").where("wsi.status->>'$.repo' IS NOT NULL").limit(limit);
         return qb.getMany();
     }
-}
-
-function capGitStatus(gitStatus: WorkspaceInstanceRepoStatus): WorkspaceInstanceRepoStatus {
-    const MARGIN = 800; // to account for attribute name's, and generic JSON overhead
-    const maxLength = GIT_STATUS_LENGTH_CAP_BYTES - MARGIN;
-    let bytesUsed = 0;
-    function capStr(str: string | undefined): string | undefined {
-        if (str === undefined) {
-            return undefined;
-        }
-
-        const len = Buffer.byteLength(str, "utf8") + 6;
-        if (bytesUsed + len > maxLength) {
-            return undefined;
-        }
-        bytesUsed = bytesUsed + len;
-        return str;
-    }
-    function filterStr(str: string | undefined): boolean {
-        return !!capStr(str);
-    }
-
-    gitStatus.branch = capStr(gitStatus.branch);
-    gitStatus.latestCommit = capStr(gitStatus.latestCommit);
-    gitStatus.uncommitedFiles = gitStatus.uncommitedFiles?.filter(filterStr);
-    gitStatus.untrackedFiles = gitStatus.untrackedFiles?.filter(filterStr);
-    gitStatus.unpushedCommits = gitStatus.unpushedCommits?.filter(filterStr);
-
-    return gitStatus;
 }
