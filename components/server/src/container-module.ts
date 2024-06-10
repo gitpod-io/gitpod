@@ -134,6 +134,7 @@ import { RateLimitter } from "./rate-limitter";
 import { AnalyticsController } from "./analytics-controller";
 import { InstallationAdminCleanup } from "./jobs/installation-admin-cleanup";
 import { CapGitStatus } from "./jobs/cap-git-status";
+import { CapStatus } from "./jobs/cap-status";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -375,6 +376,7 @@ export const productionContainerModule = new ContainerModule(
         bind(RelationshipUpdateJob).toSelf().inSingletonScope();
         bind(InstallationAdminCleanup).toSelf().inSingletonScope();
         bind(CapGitStatus).toSelf().inSingletonScope();
+        bind(CapStatus).toSelf().inSingletonScope();
 
         // Redis
         bind(Redis).toDynamicValue((ctx) => {
