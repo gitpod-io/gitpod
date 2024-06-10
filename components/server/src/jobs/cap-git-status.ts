@@ -44,7 +44,7 @@ export class CapGitStatus implements Job {
                 return [];
             }
 
-            // Cap the git status (incl. status.repo, the old place where we stored it before)
+            // Cap gitStatus
             instances.forEach((i) => {
                 if (i.gitStatus) {
                     i.gitStatus = capGitStatus(i.gitStatus);

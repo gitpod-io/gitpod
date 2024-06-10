@@ -43,7 +43,7 @@ export class CapStatus implements Job {
                 return [];
             }
 
-            // Cap the git status (incl. status.repo, the old place where we stored it before)
+            // Cap the status (the old place where we stored gitStatus before)
             instances.forEach((i) => {
                 if (i.status) {
                     delete (i.status as any).repo;
