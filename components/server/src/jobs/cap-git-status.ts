@@ -13,6 +13,7 @@ import { GIT_STATUS_LENGTH_CAP_BYTES } from "../workspace/workspace-service";
 import { Repository } from "typeorm";
 import { WorkspaceInstance, WorkspaceInstanceRepoStatus } from "@gitpod/gitpod-protocol";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 @injectable()
 export class CapGitStatus implements Job {
@@ -36,11 +37,11 @@ export class CapGitStatus implements Job {
         }
 
         const limit = 100;
-        const instancesCapped = await this.workspaceDb.transaction(async (db) => {
+        const instances = await this.workspaceDb.transaction(async (db) => {
             const repo = await ((db as any).getWorkspaceInstanceRepo() as Promise<Repository<DBWorkspaceInstance>>);
             const instances = await this.findInstancesWithLengthyGitStatus(repo, GIT_STATUS_LENGTH_CAP_BYTES, limit);
             if (instances.length === 0) {
-                return 0;
+                return [];
             }
 
             // Cap the git status (incl. status.repo, the old place where we stored it before)
@@ -58,10 +59,13 @@ export class CapGitStatus implements Job {
             await repo.delete(instances.map((i) => i.id));
             await repo.save(instances);
 
-            return instances.length;
+            return instances;
         });
+        const instancesCapped = instances.length;
 
-        log.info(`git-status: capped ${instancesCapped} instances.`);
+        log.info(`git-status: capped ${instancesCapped} instances.`, {
+            instanceIds: new TrustedValue(instances.map((i) => i.id)),
+        });
         return instancesCapped;
     }
 
