@@ -91,8 +91,7 @@ const wasRecentlySeenActive = (): boolean => {
     }
 
     const threshold = 30 * 24 * 60 * 60 * 1_000; // 1 month
-
-    return new Date().getTime() - new Date(lastSeen).getTime() > threshold;
+    return Date.now() - new Date(lastSeen).getTime() < threshold;
 };
 
 export function BrowserExtensionBanner() {
@@ -116,7 +115,7 @@ export function BrowserExtensionBanner() {
     useEffect(() => {
         const installedOrDismissed =
             sessionStorage.getItem("browser-extension-installed") || // todo(ft): delete after migration is complete
-            wasRecentlySeenActive ||
+            wasRecentlySeenActive() ||
             localStorage.getItem("browser-extension-banner-dismissed");
 
         setIsVisible(!installedOrDismissed);
