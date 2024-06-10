@@ -15,7 +15,7 @@ service TaskService {
     // Gets the output of a given task
     rpc GetOutput(GetOutputRequest) returns (stream GetOutputResponse) {
         option (google.api.http) = {
-            get: "/v1/terminal/get/{task_id}/output"
+            get: "/v1/task/get/{task_id}/output"
         };
     }
 }

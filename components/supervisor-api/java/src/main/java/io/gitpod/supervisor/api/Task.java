@@ -1104,12 +1104,12 @@ public final class Task {
       "\n\ntask.proto\022\nsupervisor\032\034google/api/ann" +
       "otations.proto\"#\n\020GetOutputRequest\022\017\n\007ta" +
       "sk_id\030\001 \001(\t\"!\n\021GetOutputResponse\022\014\n\004data" +
-      "\030\001 \001(\0142\204\001\n\013TaskService\022u\n\tGetOutput\022\034.su" +
+      "\030\001 \001(\0142\200\001\n\013TaskService\022q\n\tGetOutput\022\034.su" +
       "pervisor.GetOutputRequest\032\035.supervisor.G" +
-      "etOutputResponse\")\202\323\344\223\002#\022!/v1/terminal/g" +
-      "et/{task_id}/output0\001BF\n\030io.gitpod.super" +
-      "visor.apiZ*github.com/gitpod-io/gitpod/s" +
-      "upervisor/apib\006proto3"
+      "etOutputResponse\"%\202\323\344\223\002\037\022\035/v1/task/get/{" +
+      "task_id}/output0\001BF\n\030io.gitpod.superviso" +
+      "r.apiZ*github.com/gitpod-io/gitpod/super" +
+      "visor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
