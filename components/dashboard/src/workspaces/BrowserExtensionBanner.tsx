@@ -131,6 +131,9 @@ export function BrowserExtensionBanner() {
             attributes: true,
             attributeFilter: ["content"],
         });
+        return () => {
+            observer.disconnect();
+        };
     }, []);
 
     useEffect(() => {
