@@ -1051,21 +1051,7 @@ func (s *taskService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) e
 func (s *taskService) GetOutput(req *api.GetOutputRequest, resp api.TaskService_GetOutputServer) error {
 	fileLocation := logs.PrebuildLogFileName(logs.TerminalStoreLocation, req.TaskId)
 	if _, err := os.Stat(fileLocation); os.IsNotExist(err) {
-		files, err := os.ReadDir(logs.TerminalStoreLocation)
-		if err != nil {
-			fmt.Println("Error reading directory:", err)
-			return status.Error(codes.Internal, err.Error())
-		}
-
-		var fileNames []string
-		for _, file := range files {
-			if !file.IsDir() { // Only include files, not subdirectories
-				fileNames = append(fileNames, file.Name())
-			}
-		}
-
-		result := strings.Join(fileNames, ",")
-		return status.Error(codes.NotFound, "terminal not found. Available files: "+result+" looking for: "+fileLocation)
+		return status.Error(codes.NotFound, "task not found")
 	}
 
 	file, err := os.Open(fileLocation)

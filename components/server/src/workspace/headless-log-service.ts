@@ -16,11 +16,9 @@ import {
     TaskStatus,
 } from "@gitpod/supervisor-api-grpcweb/lib/status_pb";
 import { ResponseStream, TerminalServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service";
-import {
-    GetOutputRequest,
-    ListenTerminalRequest,
-    ListenTerminalResponse,
-} from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb";
+import { ListenTerminalRequest, ListenTerminalResponse } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb";
+import { GetOutputRequest } from "@gitpod/supervisor-api-grpcweb/lib/task_pb";
+import { TaskServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/task_pb_service";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import * as grpc from "@grpc/grpc-js";
 import { Config } from "../config";
@@ -280,9 +278,13 @@ export class HeadlessLogService {
         sink: (chunk: string) => Promise<void>,
         doContinue: () => Promise<boolean>,
     ): Promise<void> {
-        const client = new TerminalServiceClient(toSupervisorURL(logEndpoint.url), {
+        const terminalClient = new TerminalServiceClient(toSupervisorURL(logEndpoint.url), {
             transport: WebsocketTransport(), // necessary because HTTPTransport causes caching issues
         });
+        const taskClient = new TaskServiceClient(toSupervisorURL(logEndpoint.url), {
+            transport: WebsocketTransport(),
+        });
+
         const req = new ListenTerminalRequest();
         req.setAlias(terminalID);
 
@@ -295,7 +297,7 @@ export class HeadlessLogService {
             new Promise<void>((resolve, reject) => {
                 // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
                 const decoder = new TextDecoder("utf-8");
-                stream = client.listen(req, authHeaders);
+                stream = terminalClient.listen(req, authHeaders);
                 stream.on("data", (resp: ListenTerminalResponse) => {
                     receivedDataYet = true;
 
@@ -329,7 +331,7 @@ export class HeadlessLogService {
 
                         const request = new GetOutputRequest();
                         request.setTaskId(taskIndex.toString());
-                        const stream = client.getOutput(request, authHeaders);
+                        const stream = taskClient.getOutput(request, authHeaders);
 
                         stream.on("data", (resp) => {
                             const data = resp.getData();

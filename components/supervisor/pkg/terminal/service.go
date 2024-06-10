@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
 
@@ -23,7 +22,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
