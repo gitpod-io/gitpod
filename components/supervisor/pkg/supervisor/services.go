@@ -1127,7 +1127,6 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	}
 
 	done := make(chan struct{})
-	defer close(done)
 
 	sub := s.tasksManager.Subscribe()
 	if sub == nil {
@@ -1137,6 +1136,7 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	defer sub.Close()
 
 	go func() {
+		defer close(done)
 		for {
 			select {
 			case <-srv.Context().Done():
