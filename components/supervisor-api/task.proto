@@ -12,26 +12,12 @@ option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
 option java_package = "io.gitpod.supervisor.api";
 
 service TaskService {
-    // Gets the output of a given task
-    rpc GetOutput(GetOutputRequest) returns (stream GetOutputResponse) {
-        option (google.api.http) = {
-            get: "/v1/task/get/{task_id}/output"
-        };
-    }
-
     // Listens to the output of a given task
     rpc ListenToOutput(ListenToOutputRequest) returns (stream ListenToOutputResponse) {
         option (google.api.http) = {
             get: "/v1/task/listen/{task_id}/output"
         };
     }
-}
-
-message GetOutputRequest {
-    string task_id = 1;
-}
-message GetOutputResponse {
-    bytes data = 1;
 }
 
 message ListenToOutputRequest {

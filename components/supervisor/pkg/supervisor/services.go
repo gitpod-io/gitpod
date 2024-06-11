@@ -1050,37 +1050,6 @@ func (s *taskService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) e
 	return api.RegisterPortServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
-// GetOutput returns the output of a task at this moment.
-func (s *taskService) GetOutput(req *api.GetOutputRequest, resp api.TaskService_GetOutputServer) error {
-	fileLocation := logs.PrebuildLogFileName(logs.TerminalStoreLocation, req.TaskId)
-	if _, err := os.Stat(fileLocation); os.IsNotExist(err) {
-		return status.Error(codes.NotFound, "task not found")
-	}
-
-	file, err := os.Open(fileLocation)
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-	defer file.Close()
-
-	buf := make([]byte, 4096)
-	for {
-		n, err := file.Read(buf)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-
-		if err := resp.Send(&api.GetOutputResponse{Data: buf[:n]}); err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return nil
-}
-
 // ListenToOutput listens to the output of a task. It streams the output from the task's file and ends when the task's state changes to done.
 func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.TaskService_ListenToOutputServer) error {
 	fileLocation := logs.PrebuildLogFileName(logs.TerminalStoreLocation, req.TaskId)
@@ -1107,22 +1076,21 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	}
 
 	if taskClosed {
-		offset := int64(0)
+		buf := make([]byte, 4096)
 		for {
-			n, err := file.ReadAt(buf, offset)
-			if n > 0 {
-				offset += int64(n)
-				if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
-					return status.Error(codes.Internal, err.Error())
-				}
-			}
+			n, err := file.Read(buf)
 			if err == io.EOF {
 				break
 			}
 			if err != nil {
 				return status.Error(codes.Internal, err.Error())
 			}
+
+			if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
 		}
+
 		return nil
 	}
 

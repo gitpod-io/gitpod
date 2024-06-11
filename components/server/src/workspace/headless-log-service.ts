@@ -186,10 +186,6 @@ export class HeadlessLogService {
                 // to be sure to get hold of all terminals created.
                 throw new Error(`instance's ${instanceId} task ${taskId} has no terminal yet`);
             }
-            // if (task.getState() === TaskState.CLOSED) {
-            //     // if a task has already been closed we can no longer access its terminal, and have to skip it.
-            //     continue;
-            // }
             streams[taskId] = this.config.hostUrl
                 .with({
                     pathname: `/headless-logs/${instanceId}/${terminalId}`,
@@ -279,7 +275,7 @@ export class HeadlessLogService {
         doContinue: () => Promise<boolean>,
     ): Promise<void> {
         const taskClient = new TaskServiceClient(toSupervisorURL(logEndpoint.url), {
-            transport: WebsocketTransport(),
+            transport: WebsocketTransport(), // necessary because HTTPTransport causes caching issues
         });
 
         const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
@@ -312,7 +308,7 @@ export class HeadlessLogService {
                         log.debug(logCtx, "stream cancelled", err);
                     });
                 });
-                stream.on("end", async (status?: Status) => {
+                stream.on("end", (status?: Status) => {
                     if (!status || status.code === grpc.status.OK) {
                         resolve();
                         return;
