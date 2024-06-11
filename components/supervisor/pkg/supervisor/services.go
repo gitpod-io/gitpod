@@ -1095,6 +1095,37 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	defer file.Close()
 
 	buf := make([]byte, 4096)
+
+	// If the task is already done, we can just send all the logs and return without subscribing to task updates
+	taskStatuses := s.tasksManager.Status()
+	taskClosed := false
+	for _, taskStatus := range taskStatuses {
+		if taskStatus.Id == req.TaskId && taskStatus.State == api.TaskState_closed {
+			taskClosed = true
+			break
+		}
+	}
+
+	if taskClosed {
+		offset := int64(0)
+		for {
+			n, err := file.ReadAt(buf, offset)
+			if n > 0 {
+				offset += int64(n)
+				if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
+					return status.Error(codes.Internal, err.Error())
+				}
+			}
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
+		}
+		return nil
+	}
+
 	done := make(chan struct{})
 	defer close(done)
 
