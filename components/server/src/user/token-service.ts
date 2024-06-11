@@ -27,7 +27,7 @@ export class TokenService implements TokenProvider {
      *
      * The default lifetime of a token if not specified otherwise.
      * Atm we only specify a different lifetime on workspace starts (for the token we pass to "git clone" during content init).
-     * Also, this value is relevant for "opportunistic token refreshes" (enabled for BitBucket only atm): It's the time we mark a token as "reserved" (= do not opportunistically refresh it).
+     * Also, this value is relevant for "opportunistic token refreshes" (enabled for Bitbucket only atm): It's the time we mark a token as "reserved" (= do not opportunistically refresh it).
      */
     static readonly DEFAULT_LIFETIME = 5;
 

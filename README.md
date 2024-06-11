@@ -49,7 +49,7 @@
 
 - **Browser**: 
     - Using Gitpod dashboard [gitpod.io/new](https://gitpod.io/new).
-    - Add `gitpod.io/# `as a prefix to any of your GitHub/ GitLab/ BitBucket repository, like [this](https://gitpod.io/#https://github.com/gitpod-io/template-typescript-react)
+    - Add `gitpod.io/# `as a prefix to any of your GitHub/ GitLab/ Bitbucket repository, like [this](https://gitpod.io/#https://github.com/gitpod-io/template-typescript-react)
 - **CLI**: You can also [install Gitpod CLI](https://www.gitpod.io/docs/references/gitpod-cli#installation) and create your first workspace directly from your terminal :)
 
 

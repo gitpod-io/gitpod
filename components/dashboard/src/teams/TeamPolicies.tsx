@@ -283,7 +283,7 @@ const WorkspaceClassesEnterpriseCallout = () => {
                 <PillLabel type="warn">Enterprise</PillLabel>
             </Heading3>
             <Subheading>
-                Access to more powerful workspace classes with up to 30 cores 54GB of RAM and 100GB storage
+                Access to more powerful workspace classes with up to 30 cores 54GB of RAM and 100GB of storage
             </Subheading>
 
             <div className="mt-6 flex flex-row space-x-2">

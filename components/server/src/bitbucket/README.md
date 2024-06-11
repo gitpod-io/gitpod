@@ -1,6 +1,6 @@
-# BitBucket Integration tests
+# Bitbucket Integration tests
 
-To run the BitBucket integration tests via `npm test` the `GITPOD_TEST_TOKEN_BITBUCKET` environment variable needs to be defined:
+To run the Bitbucket integration tests via `npm test` the `GITPOD_TEST_TOKEN_BITBUCKET` environment variable needs to be defined:
 
 ```bash
 export GITPOD_TEST_TOKEN_BITBUCKET='{ "username": "$username", "value": "$applicationPassword", "scopes": [] }'
