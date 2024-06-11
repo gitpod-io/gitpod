@@ -22,6 +22,7 @@
 
 	servers {
 		protocols h1 h2 h2c
+		metrics
 	}
 }
 
