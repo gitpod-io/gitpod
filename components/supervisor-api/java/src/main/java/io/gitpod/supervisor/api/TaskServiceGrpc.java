@@ -19,37 +19,6 @@ public final class TaskServiceGrpc {
   public static final String SERVICE_NAME = "supervisor.TaskService";
 
   // Static method descriptors that strictly reflect the proto.
-  private static volatile io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Task.GetOutputRequest,
-      io.gitpod.supervisor.api.Task.GetOutputResponse> getGetOutputMethod;
-
-  @io.grpc.stub.annotations.RpcMethod(
-      fullMethodName = SERVICE_NAME + '/' + "GetOutput",
-      requestType = io.gitpod.supervisor.api.Task.GetOutputRequest.class,
-      responseType = io.gitpod.supervisor.api.Task.GetOutputResponse.class,
-      methodType = io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
-  public static io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Task.GetOutputRequest,
-      io.gitpod.supervisor.api.Task.GetOutputResponse> getGetOutputMethod() {
-    io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Task.GetOutputRequest, io.gitpod.supervisor.api.Task.GetOutputResponse> getGetOutputMethod;
-    if ((getGetOutputMethod = TaskServiceGrpc.getGetOutputMethod) == null) {
-      synchronized (TaskServiceGrpc.class) {
-        if ((getGetOutputMethod = TaskServiceGrpc.getGetOutputMethod) == null) {
-          TaskServiceGrpc.getGetOutputMethod = getGetOutputMethod =
-              io.grpc.MethodDescriptor.<io.gitpod.supervisor.api.Task.GetOutputRequest, io.gitpod.supervisor.api.Task.GetOutputResponse>newBuilder()
-              .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "GetOutput"))
-              .setSampledToLocalTracing(true)
-              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  io.gitpod.supervisor.api.Task.GetOutputRequest.getDefaultInstance()))
-              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  io.gitpod.supervisor.api.Task.GetOutputResponse.getDefaultInstance()))
-              .setSchemaDescriptor(new TaskServiceMethodDescriptorSupplier("GetOutput"))
-              .build();
-        }
-      }
-    }
-    return getGetOutputMethod;
-  }
-
   private static volatile io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Task.ListenToOutputRequest,
       io.gitpod.supervisor.api.Task.ListenToOutputResponse> getListenToOutputMethod;
 
@@ -131,16 +100,6 @@ public final class TaskServiceGrpc {
 
     /**
      * <pre>
-     * Gets the output of a given task
-     * </pre>
-     */
-    public void getOutput(io.gitpod.supervisor.api.Task.GetOutputRequest request,
-        io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Task.GetOutputResponse> responseObserver) {
-      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getGetOutputMethod(), responseObserver);
-    }
-
-    /**
-     * <pre>
      * Listens to the output of a given task
      * </pre>
      */
@@ -151,13 +110,6 @@ public final class TaskServiceGrpc {
 
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
-          .addMethod(
-            getGetOutputMethod(),
-            io.grpc.stub.ServerCalls.asyncServerStreamingCall(
-              new MethodHandlers<
-                io.gitpod.supervisor.api.Task.GetOutputRequest,
-                io.gitpod.supervisor.api.Task.GetOutputResponse>(
-                  this, METHODID_GET_OUTPUT)))
           .addMethod(
             getListenToOutputMethod(),
             io.grpc.stub.ServerCalls.asyncServerStreamingCall(
@@ -181,17 +133,6 @@ public final class TaskServiceGrpc {
     protected TaskServiceStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new TaskServiceStub(channel, callOptions);
-    }
-
-    /**
-     * <pre>
-     * Gets the output of a given task
-     * </pre>
-     */
-    public void getOutput(io.gitpod.supervisor.api.Task.GetOutputRequest request,
-        io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Task.GetOutputResponse> responseObserver) {
-      io.grpc.stub.ClientCalls.asyncServerStreamingCall(
-          getChannel().newCall(getGetOutputMethod(), getCallOptions()), request, responseObserver);
     }
 
     /**
@@ -222,17 +163,6 @@ public final class TaskServiceGrpc {
 
     /**
      * <pre>
-     * Gets the output of a given task
-     * </pre>
-     */
-    public java.util.Iterator<io.gitpod.supervisor.api.Task.GetOutputResponse> getOutput(
-        io.gitpod.supervisor.api.Task.GetOutputRequest request) {
-      return io.grpc.stub.ClientCalls.blockingServerStreamingCall(
-          getChannel(), getGetOutputMethod(), getCallOptions(), request);
-    }
-
-    /**
-     * <pre>
      * Listens to the output of a given task
      * </pre>
      */
@@ -258,8 +188,7 @@ public final class TaskServiceGrpc {
     }
   }
 
-  private static final int METHODID_GET_OUTPUT = 0;
-  private static final int METHODID_LISTEN_TO_OUTPUT = 1;
+  private static final int METHODID_LISTEN_TO_OUTPUT = 0;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -278,10 +207,6 @@ public final class TaskServiceGrpc {
     @java.lang.SuppressWarnings("unchecked")
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
-        case METHODID_GET_OUTPUT:
-          serviceImpl.getOutput((io.gitpod.supervisor.api.Task.GetOutputRequest) request,
-              (io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Task.GetOutputResponse>) responseObserver);
-          break;
         case METHODID_LISTEN_TO_OUTPUT:
           serviceImpl.listenToOutput((io.gitpod.supervisor.api.Task.ListenToOutputRequest) request,
               (io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Task.ListenToOutputResponse>) responseObserver);
@@ -347,7 +272,6 @@ public final class TaskServiceGrpc {
         if (result == null) {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
               .setSchemaDescriptor(new TaskServiceFileDescriptorSupplier())
-              .addMethod(getGetOutputMethod())
               .addMethod(getListenToOutputMethod())
               .build();
         }

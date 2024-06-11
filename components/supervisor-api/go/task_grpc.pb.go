@@ -26,8 +26,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TaskServiceClient interface {
-	// Gets the output of a given task
-	GetOutput(ctx context.Context, in *GetOutputRequest, opts ...grpc.CallOption) (TaskService_GetOutputClient, error)
 	// Listens to the output of a given task
 	ListenToOutput(ctx context.Context, in *ListenToOutputRequest, opts ...grpc.CallOption) (TaskService_ListenToOutputClient, error)
 }
@@ -40,40 +38,8 @@ func NewTaskServiceClient(cc grpc.ClientConnInterface) TaskServiceClient {
 	return &taskServiceClient{cc}
 }
 
-func (c *taskServiceClient) GetOutput(ctx context.Context, in *GetOutputRequest, opts ...grpc.CallOption) (TaskService_GetOutputClient, error) {
-	stream, err := c.cc.NewStream(ctx, &TaskService_ServiceDesc.Streams[0], "/supervisor.TaskService/GetOutput", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &taskServiceGetOutputClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type TaskService_GetOutputClient interface {
-	Recv() (*GetOutputResponse, error)
-	grpc.ClientStream
-}
-
-type taskServiceGetOutputClient struct {
-	grpc.ClientStream
-}
-
-func (x *taskServiceGetOutputClient) Recv() (*GetOutputResponse, error) {
-	m := new(GetOutputResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 func (c *taskServiceClient) ListenToOutput(ctx context.Context, in *ListenToOutputRequest, opts ...grpc.CallOption) (TaskService_ListenToOutputClient, error) {
-	stream, err := c.cc.NewStream(ctx, &TaskService_ServiceDesc.Streams[1], "/supervisor.TaskService/ListenToOutput", opts...)
+	stream, err := c.cc.NewStream(ctx, &TaskService_ServiceDesc.Streams[0], "/supervisor.TaskService/ListenToOutput", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +74,6 @@ func (x *taskServiceListenToOutputClient) Recv() (*ListenToOutputResponse, error
 // All implementations must embed UnimplementedTaskServiceServer
 // for forward compatibility
 type TaskServiceServer interface {
-	// Gets the output of a given task
-	GetOutput(*GetOutputRequest, TaskService_GetOutputServer) error
 	// Listens to the output of a given task
 	ListenToOutput(*ListenToOutputRequest, TaskService_ListenToOutputServer) error
 	mustEmbedUnimplementedTaskServiceServer()
@@ -119,9 +83,6 @@ type TaskServiceServer interface {
 type UnimplementedTaskServiceServer struct {
 }
 
-func (UnimplementedTaskServiceServer) GetOutput(*GetOutputRequest, TaskService_GetOutputServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetOutput not implemented")
-}
 func (UnimplementedTaskServiceServer) ListenToOutput(*ListenToOutputRequest, TaskService_ListenToOutputServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListenToOutput not implemented")
 }
@@ -136,27 +97,6 @@ type UnsafeTaskServiceServer interface {
 
 func RegisterTaskServiceServer(s grpc.ServiceRegistrar, srv TaskServiceServer) {
 	s.RegisterService(&TaskService_ServiceDesc, srv)
-}
-
-func _TaskService_GetOutput_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(GetOutputRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(TaskServiceServer).GetOutput(m, &taskServiceGetOutputServer{stream})
-}
-
-type TaskService_GetOutputServer interface {
-	Send(*GetOutputResponse) error
-	grpc.ServerStream
-}
-
-type taskServiceGetOutputServer struct {
-	grpc.ServerStream
-}
-
-func (x *taskServiceGetOutputServer) Send(m *GetOutputResponse) error {
-	return x.ServerStream.SendMsg(m)
 }
 
 func _TaskService_ListenToOutput_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -188,11 +128,6 @@ var TaskService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*TaskServiceServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "GetOutput",
-			Handler:       _TaskService_GetOutput_Handler,
-			ServerStreams: true,
-		},
 		{
 			StreamName:    "ListenToOutput",
 			Handler:       _TaskService_ListenToOutput_Handler,
