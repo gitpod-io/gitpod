@@ -158,7 +158,7 @@ export class GitHubRestApi {
     }
 
     protected get userAgent() {
-        return (this.config.oauth && new URL(this.config.oauth?.callBackUrl)?.hostname) || "GitPod unknown";
+        return (this.config.oauth && new URL(this.config.oauth?.callBackUrl)?.hostname) || "Gitpod unknown";
     }
 
     /**

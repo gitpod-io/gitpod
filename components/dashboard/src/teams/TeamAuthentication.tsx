@@ -97,7 +97,7 @@ const PrivateSourceControlAccess = () => {
         <ConfigurationSettingsField className="bg-pk-surface-secondary">
             <Heading3>Private source control access</Heading3>
             <Subheading className="mt-1">
-                Connect to your private source control like GitHub, BitBucket and GitLab
+                Connect to your private source control like GitHub, Bitbucket and GitLab
             </Subheading>
 
             <LinkButton
