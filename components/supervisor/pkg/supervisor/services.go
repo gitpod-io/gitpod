@@ -1128,7 +1128,6 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	}()
 
 	offset := int64(0)
-
 	readAndStream := func() error {
 		for {
 			n, err := file.ReadAt(buf, offset)
