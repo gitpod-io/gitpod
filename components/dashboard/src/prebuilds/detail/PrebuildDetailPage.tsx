@@ -63,7 +63,7 @@ export const PrebuildDetailPage: FC = () => {
     const { toast, dismissToast } = useToast();
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
     const [logNotFound, setLogNotFound] = useState(false);
-    const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>(undefined);
+    const [selectedTaskId, actuallySetSelectedTaskId] = useState<string | undefined>(window.location.hash.slice(1));
 
     const taskId = selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? "0";
 
@@ -84,6 +84,17 @@ export const PrebuildDetailPage: FC = () => {
 
     const triggeredDate = useMemo(() => dayjs(prebuild?.status?.startTime?.toDate()), [prebuild?.status?.startTime]);
     const triggeredString = useMemo(() => formatDate(triggeredDate), [triggeredDate]);
+
+    const setSelectedTaskId = useCallback(
+        (taskId: string) => {
+            actuallySetSelectedTaskId(taskId);
+
+            history.push({
+                hash: taskId,
+            });
+        },
+        [history],
+    );
 
     useEffect(() => {
         setLogNotFound(false);
@@ -286,7 +297,8 @@ export const PrebuildDetailPage: FC = () => {
                                                     <TabsTrigger
                                                         value={task.taskId}
                                                         key={task.taskId}
-                                                        className="font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative last:mr-1"
+                                                        data-analytics={JSON.stringify({ dnt: true })}
+                                                        className="mt-1 font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative last:mr-1"
                                                     >
                                                         {task.taskLabel}
                                                     </TabsTrigger>
