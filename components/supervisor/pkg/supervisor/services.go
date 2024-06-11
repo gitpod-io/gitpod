@@ -1096,8 +1096,8 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 
 	buf := make([]byte, 4096)
 	done := make(chan struct{})
+	defer close(done)
 
-	// Subscription mechanism to task updates
 	sub := s.tasksManager.Subscribe()
 	if sub == nil {
 		log.Warn("potentially leaking subscription to tasks status: too many subscriptions")
@@ -1109,11 +1109,9 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 		for {
 			select {
 			case <-srv.Context().Done():
-				close(done)
 				return
-			case updates := <-sub.Updates(): // This is a slice of TaskStatus pointers
+			case updates := <-sub.Updates():
 				if updates == nil {
-					close(done)
 					return
 				}
 				for _, update := range updates {
@@ -1121,7 +1119,6 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 						continue
 					}
 					if update.Id == req.TaskId && update.State == api.TaskState_closed {
-						close(done)
 						return
 					}
 				}
@@ -1129,7 +1126,6 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 		}
 	}()
 
-	// Initialize fsnotify
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return status.Error(codes.Internal, err.Error())
@@ -1138,10 +1134,27 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 
 	dir, fileName := filepath.Split(fileLocation)
 
-	// Start watching the directory containing the file
 	err = watcher.Add(dir)
 	if err != nil {
 		return status.Error(codes.Internal, err.Error())
+	}
+
+	// Send all previous logs before starting to watch for new ones
+	offset := int64(0)
+	for {
+		n, err := file.ReadAt(buf, offset)
+		if n > 0 {
+			offset += int64(n)
+			if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
 	}
 
 	for {
@@ -1150,15 +1163,15 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 			return nil
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write && filepath.Base(event.Name) == fileName {
-				n, err := file.Read(buf)
-				if err != nil && err != io.EOF {
-					return status.Error(codes.Internal, err.Error())
-				}
-
+				n, err := file.ReadAt(buf, offset)
 				if n > 0 {
+					offset += int64(n)
 					if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
 						return status.Error(codes.Internal, err.Error())
 					}
+				}
+				if err != nil && err != io.EOF {
+					return status.Error(codes.Internal, err.Error())
 				}
 			}
 		case err := <-watcher.Errors:
