@@ -63,7 +63,9 @@ export const PrebuildDetailPage: FC = () => {
     const { toast, dismissToast } = useToast();
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
     const [logNotFound, setLogNotFound] = useState(false);
-    const [selectedTaskId, actuallySetSelectedTaskId] = useState<string | undefined>(window.location.hash.slice(1));
+    const [selectedTaskId, actuallySetSelectedTaskId] = useState<string | undefined>(
+        window.location.hash.slice(1) || undefined,
+    );
 
     const taskId = selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? "0";
 
