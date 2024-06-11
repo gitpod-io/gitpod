@@ -1052,9 +1052,14 @@ func (s *taskService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) e
 
 // ListenToOutput listens to the output of a task. It streams the output from the task's file and ends when the task's state changes to done.
 func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.TaskService_ListenToOutputServer) error {
+	taskStatus := s.tasksManager.getTaskStatus(req.TaskId)
+	if taskStatus == nil {
+		return status.Error(codes.NotFound, "task not found")
+	}
+
 	fileLocation := logs.PrebuildLogFileName(logs.TerminalStoreLocation, req.TaskId)
 	if _, err := os.Stat(fileLocation); os.IsNotExist(err) {
-		return status.Error(codes.NotFound, "task not found")
+		return status.Error(codes.Internal, "task file not found")
 	}
 
 	file, err := os.Open(fileLocation)
@@ -1065,18 +1070,7 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 
 	buf := make([]byte, 4096)
 
-	// If the task is already done, we can just send all the logs and return without subscribing to task updates
-	taskStatuses := s.tasksManager.Status()
-	taskClosed := false
-	for _, taskStatus := range taskStatuses {
-		if taskStatus.Id == req.TaskId && taskStatus.State == api.TaskState_closed {
-			taskClosed = true
-			break
-		}
-	}
-
-	if taskClosed {
-		buf := make([]byte, 4096)
+	if taskStatus.State == api.TaskState_closed {
 		for {
 			n, err := file.Read(buf)
 			if err == io.EOF {
@@ -1094,14 +1088,25 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 		return nil
 	}
 
-	done := make(chan struct{})
-
 	sub := s.tasksManager.Subscribe()
 	if sub == nil {
 		log.Warn("potentially leaking subscription to tasks status: too many subscriptions")
 		return status.Error(codes.ResourceExhausted, "too many subscriptions")
 	}
 	defer sub.Close()
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(fileLocation)
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	done := make(chan struct{})
 
 	go func() {
 		defer close(done)
@@ -1114,10 +1119,7 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 					return
 				}
 				for _, update := range updates {
-					if update == nil {
-						continue
-					}
-					if update.Id == req.TaskId && update.State == api.TaskState_closed {
+					if update != nil && update.Id == req.TaskId && update.State == api.TaskState_closed {
 						return
 					}
 				}
@@ -1125,58 +1127,45 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 		}
 	}()
 
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-	defer watcher.Close()
-
-	dir, fileName := filepath.Split(fileLocation)
-
-	err = watcher.Add(dir)
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	// Send all previous logs before starting to watch for new ones
 	offset := int64(0)
-	for {
-		n, err := file.ReadAt(buf, offset)
-		if n > 0 {
-			offset += int64(n)
-			if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
+
+	readAndStream := func() error {
+		for {
+			n, err := file.ReadAt(buf, offset)
+			if n > 0 {
+				offset += int64(n)
+				if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
+					return status.Error(codes.Internal, err.Error())
+				}
+			}
+			if err == io.EOF {
+				return nil
+			}
+			if err != nil {
 				return status.Error(codes.Internal, err.Error())
 			}
-		}
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return status.Error(codes.Internal, err.Error())
 		}
 	}
 
 	for {
 		select {
 		case <-done:
-			return nil
+			// Task closed or context done; exit after sending remaining logs
+			return readAndStream()
 		case event := <-watcher.Events:
-			if event.Op&fsnotify.Write == fsnotify.Write && filepath.Base(event.Name) == fileName {
-				n, err := file.ReadAt(buf, offset)
-				if n > 0 {
-					offset += int64(n)
-					if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
-						return status.Error(codes.Internal, err.Error())
-					}
-				}
-				if err != nil && err != io.EOF {
-					return status.Error(codes.Internal, err.Error())
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				if err := readAndStream(); err != nil {
+					return err
 				}
 			}
 		case err := <-watcher.Errors:
 			if err != nil {
 				log.Println("error:", err)
 				return status.Error(codes.Internal, err.Error())
+			}
+		default:
+			if err := readAndStream(); err != nil {
+				return err
 			}
 		}
 	}

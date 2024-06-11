@@ -132,6 +132,18 @@ func (tm *tasksManager) Status() []*api.TaskStatus {
 	return tm.getStatus()
 }
 
+func (tm *tasksManager) getTaskStatus(taskID string) *api.TaskStatus {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+
+	for _, t := range tm.tasks {
+		if t.Id == taskID {
+			return &t.TaskStatus
+		}
+	}
+	return nil
+}
+
 // getStatus produces an API compatible task status list.
 // Callers are expected to hold mu.
 func (tm *tasksManager) getStatus() []*api.TaskStatus {
