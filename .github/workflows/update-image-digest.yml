@@ -63,6 +63,14 @@ jobs:
             fi
           done < <(find "$(pwd)" -type f \( -name "*.yaml" -o -name "*.yml" -o -name "Dockerfile*" -o -name "leeway.Dockerfile" \) -print0)
 
+          # update for chainguard redis
+          redisImageDigest=$(crane digest cgr.dev/chainguard/redis:latest)
+          redisExporterDigest=$(crane digest cgr.dev/chainguard/prometheus-redis-exporter:latest)
+
+
+          sed -i -e "s/^\(\s*ImageDigest\s*=\s*\)\".*\"/\1\"$redisImageDigest\"/" install/installer/pkg/components/redis/constants.go
+          sed -i -e "s/^\(\s*ExporterImageDigest\s*=\s*\)\".*\"/\1\"$redisExporterDigest\"/" install/installer/pkg/components/redis/constants.go
+          go fmt install/installer/pkg/components/redis/constants.go
       - name: Check workspace
         id: create_pr
         shell: bash
@@ -81,9 +89,20 @@ jobs:
           body: |
             Update images digests using the latest version available for image/s
 
-            ```release-note
-            NONE
-            ```
+            ## How to test
+            - [ ] Start a workspace in the preview environment and verify that it functions properly.
+
+            <details>
+            <summary>Preview Environment / Integration Tests</summary>
+
+            - [x] /werft with-preview
+            - [x] /werft with-gce-vm
+                  If enabled this will create the environment on GCE infra
+            - [x] /werft preemptible
+                  Saves cost. Untick this only if you're really sure you need a non-preemtible machine.
+            - [x] with-integration-tests=ssh
+                  Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`. If enabled, `with-preview` and `with-large-vm` will be enabled.
+            </details>
           labels: automated pr, kind/cleanup, release-note-none
           branch: update-digests
           delete-branch: true
