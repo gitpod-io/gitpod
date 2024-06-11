@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -30,6 +30,28 @@ function serialize_iws_EvacuateCGroupResponse(arg) {
 
 function deserialize_iws_EvacuateCGroupResponse(buffer_arg) {
   return workspace_daemon_pb.EvacuateCGroupResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_MountNfsRequest(arg) {
+  if (!(arg instanceof workspace_daemon_pb.MountNfsRequest)) {
+    throw new Error('Expected argument of type iws.MountNfsRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_MountNfsRequest(buffer_arg) {
+  return workspace_daemon_pb.MountNfsRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_MountNfsResponse(arg) {
+  if (!(arg instanceof workspace_daemon_pb.MountNfsResponse)) {
+    throw new Error('Expected argument of type iws.MountNfsResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_MountNfsResponse(buffer_arg) {
+  return workspace_daemon_pb.MountNfsResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_iws_MountProcRequest(arg) {
@@ -118,6 +140,28 @@ function serialize_iws_TeardownResponse(arg) {
 
 function deserialize_iws_TeardownResponse(buffer_arg) {
   return workspace_daemon_pb.TeardownResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_UmountNfsRequest(arg) {
+  if (!(arg instanceof workspace_daemon_pb.UmountNfsRequest)) {
+    throw new Error('Expected argument of type iws.UmountNfsRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_UmountNfsRequest(buffer_arg) {
+  return workspace_daemon_pb.UmountNfsRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_UmountNfsResponse(arg) {
+  if (!(arg instanceof workspace_daemon_pb.UmountNfsResponse)) {
+    throw new Error('Expected argument of type iws.UmountNfsResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_UmountNfsResponse(buffer_arg) {
+  return workspace_daemon_pb.UmountNfsResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_iws_UmountProcRequest(arg) {
@@ -287,6 +331,34 @@ umountSysfs: {
     requestDeserialize: deserialize_iws_UmountProcRequest,
     responseSerialize: serialize_iws_UmountProcResponse,
     responseDeserialize: deserialize_iws_UmountProcResponse,
+  },
+  // UmountSysfs unmounts a masked sysfs from the container's rootfs.
+// The PID must be in the PID namespace of the workspace container.
+// The path is relative to the mount namespace of the PID.
+mountNfs: {
+    path: '/iws.InWorkspaceService/MountNfs',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.MountNfsRequest,
+    responseType: workspace_daemon_pb.MountNfsResponse,
+    requestSerialize: serialize_iws_MountNfsRequest,
+    requestDeserialize: deserialize_iws_MountNfsRequest,
+    responseSerialize: serialize_iws_MountNfsResponse,
+    responseDeserialize: deserialize_iws_MountNfsResponse,
+  },
+  // UmountSysfs unmounts a masked sysfs from the container's rootfs.
+// The PID must be in the PID namespace of the workspace container.
+// The path is relative to the mount namespace of the PID.
+umountNfs: {
+    path: '/iws.InWorkspaceService/UmountNfs',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.UmountNfsRequest,
+    responseType: workspace_daemon_pb.UmountNfsResponse,
+    requestSerialize: serialize_iws_UmountNfsRequest,
+    requestDeserialize: deserialize_iws_UmountNfsRequest,
+    responseSerialize: serialize_iws_UmountNfsResponse,
+    responseDeserialize: deserialize_iws_UmountNfsResponse,
   },
   // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
