@@ -6,7 +6,7 @@
 
 import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
 import { useCallback, useEffect, useState } from "react";
-import { Redirect, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { personalAccessTokensService } from "../service/public-api";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { settingsPathPersonalAccessTokenCreate, settingsPathPersonalAccessTokenEdit } from "./settings.routes";
@@ -21,17 +21,10 @@ import TokenEntry from "./TokenEntry";
 import ShowTokenModal from "./ShowTokenModal";
 import Pagination from "../Pagination/Pagination";
 import { Heading2, Subheading } from "../components/typography/headings";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { Button } from "@podkit/buttons/Button";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 
 export default function PersonalAccessTokens() {
-    const enablePersonalAccessTokens = useFeatureFlag("personalAccessTokensEnabled");
-
-    if (!enablePersonalAccessTokens) {
-        return <Redirect to="/" />;
-    }
-
     return (
         <div>
             <PageWithSettingsSubMenu>

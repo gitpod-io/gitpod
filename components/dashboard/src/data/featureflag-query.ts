@@ -12,7 +12,6 @@ import { useCurrentUser } from "../user-context";
 import { useCurrentOrg } from "./organizations/orgs-query";
 
 const featureFlags = {
-    personalAccessTokensEnabled: false,
     oidcServiceEnabled: false,
     // Default to true to enable on gitpod dedicated until ff support is added for dedicated
     orgGitAuthProviders: true,

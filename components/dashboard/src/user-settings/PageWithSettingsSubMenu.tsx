@@ -4,9 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useMemo } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { useFeatureFlag } from "../data/featureflag-query";
 import {
     settingsPathAccount,
     settingsPathIntegrations,
@@ -25,12 +23,7 @@ export interface PageWithAdminSubMenuProps {
 }
 
 export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps) {
-    const enablePersonalAccessTokens = useFeatureFlag("personalAccessTokensEnabled");
-
-    const settingsMenu = useMemo(() => {
-        return getSettingsMenu(enablePersonalAccessTokens);
-    }, [enablePersonalAccessTokens]);
-
+    const settingsMenu = getSettingsMenu();
     return (
         <PageWithSubMenu subMenu={settingsMenu} title="User Settings" subtitle="Manage your personal account settings.">
             {children}
@@ -38,7 +31,7 @@ export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps)
     );
 }
 
-function getSettingsMenu(enablePersonalAccessTokens?: boolean) {
+function getSettingsMenu() {
     return [
         {
             title: "Account",
@@ -60,18 +53,14 @@ function getSettingsMenu(enablePersonalAccessTokens?: boolean) {
             title: "Git Providers",
             link: [settingsPathIntegrations, "/access-control"],
         },
-        ...(enablePersonalAccessTokens
-            ? [
-                  {
-                      title: "Access Tokens",
-                      link: [
-                          settingsPathPersonalAccessTokens,
-                          settingsPathPersonalAccessTokenCreate,
-                          settingsPathPersonalAccessTokenEdit,
-                      ],
-                  },
-              ]
-            : []),
+        {
+            title: "Access Tokens",
+            link: [
+                settingsPathPersonalAccessTokens,
+                settingsPathPersonalAccessTokenCreate,
+                settingsPathPersonalAccessTokenEdit,
+            ],
+        },
         {
             title: "Preferences",
             link: [settingsPathPreferences],
