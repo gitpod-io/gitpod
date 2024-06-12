@@ -5,13 +5,22 @@
  */
 
 import EventEmitter from "events";
-import { prebuildClient } from "../../service/public-api";
+import { prebuildClient, workspaceClient } from "../../service/public-api";
 import { useEffect, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
-import { Disposable } from "@gitpod/gitpod-protocol";
+import { Disposable, WorkspaceImageBuild } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { getGitpodService } from "../../service/service";
+import pRetry from "p-retry";
 
-export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
+/**
+ *
+ * @param prebuildId ID of the prebuild to watch
+ * @param taskId ID of the task to watch. If `null`, watch will not be started and if `image-build` is passed, it will watch the image build logs.
+ * @returns
+ */
+export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null) {
     const [emitter] = useState(new EventEmitter());
     const [isLoading, setIsLoading] = useState(true);
     const [disposable, setDisposable] = useState<Disposable | undefined>();
@@ -23,19 +32,55 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
     useEffect(() => {
         const controller = new AbortController();
         const watch = async () => {
+            if (taskId === null) {
+                return;
+            }
             if (!prebuildId || !taskId) {
                 setIsLoading(false);
                 return;
             }
+
             let dispose: () => void | undefined;
             controller.signal.addEventListener("abort", () => {
                 dispose?.();
             });
-            const prebuild = await prebuildClient.getPrebuild({ prebuildId });
-            const task = prebuild.prebuild?.status?.taskLogs?.find((log) => log.taskId === taskId);
+            const { prebuild } = await prebuildClient.getPrebuild({ prebuildId });
+            if (taskId === "image-build" && prebuild?.workspaceId) {
+                const workspace = await workspaceClient.getWorkspace({ workspaceId: prebuild.workspaceId });
+                if (workspace.workspace?.status?.phase?.name === WorkspacePhase_Phase.IMAGEBUILD) {
+                    await pRetry(
+                        async () => {
+                            await getGitpodService().server.watchWorkspaceImageBuildLogs(prebuild.workspaceId);
+                        },
+                        {
+                            retries: 10,
+                            onFailedAttempt: (error) => {
+                                console.error(
+                                    `Failed to watch image build logs for workspace ${prebuild.workspaceId} attempt ${error.attemptNumber}: ${error.message}`,
+                                );
+                            },
+                        },
+                    );
+                    dispose = getGitpodService().registerClient({
+                        onWorkspaceImageBuildLogs: (
+                            _: WorkspaceImageBuild.StateInfo,
+                            content?: WorkspaceImageBuild.LogContent,
+                        ) => {
+                            if (!content) {
+                                return;
+                            }
+                            emitter.emit("logs", content.text);
+                        },
+                    }).dispose;
+                }
+
+                return;
+            }
+
+            const task = prebuild?.status?.taskLogs?.find((log) => log.taskId === taskId);
             if (!task?.logUrl) {
                 setIsLoading(false);
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, "Task not found");
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `Task ${taskId} not found`);
             }
             dispose = onDownloadPrebuildLogsUrl(
                 task.logUrl,
@@ -68,6 +113,7 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
         );
         return () => {
             controller.abort();
+            emitter.removeAllListeners();
         };
     }, [emitter, prebuildId, taskId]);
     return { emitter, isLoading, disposable };

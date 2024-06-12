@@ -67,7 +67,18 @@ export const PrebuildDetailPage: FC = () => {
         window.location.hash.slice(1) || undefined,
     );
 
-    const taskId = selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? "0";
+    const isImageBuild =
+        currentPrebuild?.status?.phase?.name === PrebuildPhase_Phase.QUEUED && !!currentPrebuild.status.logUrl;
+    const taskId = useMemo(() => {
+        if (!currentPrebuild) {
+            return null;
+        }
+        if (isImageBuild) {
+            return "image-build";
+        }
+
+        return selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? "0";
+    }, [currentPrebuild, isImageBuild, selectedTaskId]);
 
     const {
         emitter: logEmitter,
@@ -113,11 +124,11 @@ export const PrebuildDetailPage: FC = () => {
     }, [prebuildId, disposeStreamingLogs, currentPrebuild?.status?.phase?.name]);
 
     useEffect(() => {
-        const anyLogAvailable = currentPrebuild?.status?.taskLogs.some((t) => t.logUrl);
+        const anyLogAvailable = isImageBuild || currentPrebuild?.status?.taskLogs.some((t) => t.logUrl);
         if (!anyLogAvailable) {
             setLogNotFound(true);
         }
-    }, [currentPrebuild?.status?.taskLogs]);
+    }, [currentPrebuild?.status?.taskLogs, isImageBuild]);
 
     useEffect(() => {
         history.listen(() => {
@@ -237,7 +248,9 @@ export const PrebuildDetailPage: FC = () => {
                         )}
                     </div>
                 ) : (
-                    prebuild && (
+                    prebuild &&
+                    currentPrebuild &&
+                    taskId && (
                         <div className={"border border-pk-border-base rounded-xl py-6 divide-y"}>
                             <div className="px-6 pb-4">
                                 <div className="flex flex-col gap-2">
@@ -286,13 +299,25 @@ export const PrebuildDetailPage: FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                {(currentPrebuild?.status?.taskLogs.some((t) => t.logUrl) || logNotFound) && (
+                                {(currentPrebuild?.status?.taskLogs.some((t) => t.logUrl) ||
+                                    logNotFound ||
+                                    isImageBuild) && (
                                     <Tabs
                                         value={taskId}
                                         onValueChange={setSelectedTaskId}
                                         className="p-0 bg-pk-surface-primary"
                                     >
                                         <TabsList className="overflow-x-auto max-w-full p-0 h-auto items-end">
+                                            {isImageBuild && (
+                                                <TabsTrigger
+                                                    value="image-build"
+                                                    key="image-build"
+                                                    data-analytics={JSON.stringify({ dnt: true })}
+                                                    className="mt-1 font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative last:mr-1"
+                                                >
+                                                    Image Build
+                                                </TabsTrigger>
+                                            )}
                                             {currentPrebuild?.status?.taskLogs
                                                 .filter((t) => t.logUrl)
                                                 .map((task) => (

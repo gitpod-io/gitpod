@@ -3987,6 +3987,11 @@
   resolved "https://registry.yarnpkg.com/@types/retry/-/retry-0.12.0.tgz#2b35eccfcee7d38cd72ad99232fbd58bffb3c84d"
   integrity sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==
 
+"@types/retry@0.12.2":
+  version "0.12.2"
+  resolved "https://registry.yarnpkg.com/@types/retry/-/retry-0.12.2.tgz#ed279a64fa438bb69f2480eda44937912bb7480a"
+  integrity sha512-XISRgDJ2Tc5q4TRqvgJtzsRkFYNJzZrhTdtMoGVBttwzzQJkPnS3WWTFc7kuDRoPtPakl+T+OfdEUjYJj7Jbow==
+
 "@types/rimraf@^3.0.2":
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/@types/rimraf/-/rimraf-3.0.2.tgz#a63d175b331748e5220ad48c901d7bbf1f44eef8"
@@ -9274,6 +9279,11 @@ is-negative-zero@^2.0.2:
   resolved "https://registry.yarnpkg.com/is-negative-zero/-/is-negative-zero-2.0.2.tgz#7bf6f03a28003b8b3965de3ac26f664d765f3150"
   integrity sha512-dqJvarLawXsFbNDeJW7zAz8ItJ9cd28YufuuFzh0G8pNHjJMnY08Dv7sYX2uF5UpQOwieAeOExEYAWWfu7ZZUA==
 
+is-network-error@^1.0.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/is-network-error/-/is-network-error-1.1.0.tgz#d26a760e3770226d11c169052f266a4803d9c997"
+  integrity sha512-tUdRRAnhT+OtCZR/LxZelH/C7QtjtFrTu5tXCA8pl55eTUElUHT+GPYV8MBMBvea/j+NxQqVt3LbWMRir7Gx9g==
+
 is-number-object@^1.0.4, is-number-object@^1.0.6:
   version "1.0.6"
   resolved "https://registry.npmjs.org/is-number-object/-/is-number-object-1.0.6.tgz"
@@ -11511,6 +11521,15 @@ p-retry@^4.5.0:
   integrity sha512-312Id396EbJdvRONlngUx0NydfrIQ5lsYu0znKVUzVvArzEIt08V1qhtyESbGVd1FGX7UKtiFp5uwKZdM8wIuQ==
   dependencies:
     "@types/retry" "0.12.0"
+    retry "^0.13.1"
+
+p-retry@^6.2.0:
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/p-retry/-/p-retry-6.2.0.tgz#8d6df01af298750009691ce2f9b3ad2d5968f3bd"
+  integrity sha512-JA6nkq6hKyWLLasXQXUrO4z8BUZGUt/LjlJxx8Gb2+2ntodU/SS63YZ8b0LUTbQ8ZB9iwOfhEPhg4ykKnn2KsA==
+  dependencies:
+    "@types/retry" "0.12.2"
+    is-network-error "^1.0.0"
     retry "^0.13.1"
 
 p-throttle@^5.1.0:
