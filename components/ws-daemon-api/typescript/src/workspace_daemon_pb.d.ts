@@ -250,6 +250,8 @@ export class MountNfsRequest extends jspb.Message {
     setSource(value: string): MountNfsRequest;
     getTarget(): string;
     setTarget(value: string): MountNfsRequest;
+    getArgs(): string;
+    setArgs(value: string): MountNfsRequest;
     getPid(): number;
     setPid(value: number): MountNfsRequest;
 
@@ -267,6 +269,7 @@ export namespace MountNfsRequest {
     export type AsObject = {
         source: string,
         target: string,
+        args: string,
         pid: number,
     }
 }

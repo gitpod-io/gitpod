@@ -254,10 +254,17 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 		return Errno(unix.EFAULT)
 	}
 
+	var args string
+	if len(req.Data.Args) >= 5 {
+		args, err = readarg.ReadString(memFile, int64(req.Data.Args[4]))
+		log.WithField("arg", 4).WithError(err).Error("cannot read argument")
+	}
+
 	log.WithFields(map[string]interface{}{
 		"source": source,
 		"dest":   dest,
 		"fstype": filesystem,
+		"args":   args,
 	}).Info("handling mount syscall")
 
 	if filesystem == "proc" || filesystem == "sysfs" || filesystem == "nfs4" {
@@ -312,10 +319,21 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 				if filesystem == "sysfs" {
 					call = iws.MountSysfs
 				}
-				_, err = call(ctx, &daemonapi.MountProcRequest{
-					Target: dest,
-					Pid:    int64(req.Pid),
-				})
+
+				if filesystem == "sysfs" || filesystem == "proc" {
+					_, err = call(ctx, &daemonapi.MountProcRequest{
+						Target: dest,
+						Pid:    int64(req.Pid),
+					})
+				} else {
+					_, err = iws.MountNfs(ctx, &daemonapi.MountNfsRequest{
+						Source: source,
+						Target: dest,
+						Args:   args,
+						Pid:    int64(req.Pid),
+					})
+				}
+
 				if err != nil {
 					log.WithField("target", dest).WithError(err).Errorf("cannot mount %s", filesystem)
 					return err
@@ -328,7 +346,10 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 				if wait > iwsBackoffMaxWait {
 					wait = iwsBackoffMaxWait
 				}
+			} else {
+				break
 			}
+
 		}
 		if err != nil {
 			// We've already logged the reason above

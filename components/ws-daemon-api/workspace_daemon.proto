@@ -119,7 +119,8 @@ message UmountProcResponse {}
 message MountNfsRequest {
     string source = 1;
     string target =2;
-    int64 pid = 3;
+    string args = 3;
+    int64 pid = 4;
 }
 
 message MountNfsResponse {}

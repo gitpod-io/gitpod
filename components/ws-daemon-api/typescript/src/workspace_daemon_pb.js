@@ -2139,7 +2139,8 @@ proto.iws.MountNfsRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     source: jspb.Message.getFieldWithDefault(msg, 1, ""),
     target: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    pid: jspb.Message.getFieldWithDefault(msg, 3, 0)
+    args: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    pid: jspb.Message.getFieldWithDefault(msg, 4, 0)
   };
 
   if (includeInstance) {
@@ -2185,6 +2186,10 @@ proto.iws.MountNfsRequest.deserializeBinaryFromReader = function(msg, reader) {
       msg.setTarget(value);
       break;
     case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setArgs(value);
+      break;
+    case 4:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setPid(value);
       break;
@@ -2231,10 +2236,17 @@ proto.iws.MountNfsRequest.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getArgs();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
   f = message.getPid();
   if (f !== 0) {
     writer.writeInt64(
-      3,
+      4,
       f
     );
   }
@@ -2278,11 +2290,29 @@ proto.iws.MountNfsRequest.prototype.setTarget = function(value) {
 
 
 /**
- * optional int64 pid = 3;
+ * optional string args = 3;
+ * @return {string}
+ */
+proto.iws.MountNfsRequest.prototype.getArgs = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.iws.MountNfsRequest} returns this
+ */
+proto.iws.MountNfsRequest.prototype.setArgs = function(value) {
+  return jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
+/**
+ * optional int64 pid = 4;
  * @return {number}
  */
 proto.iws.MountNfsRequest.prototype.getPid = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
 };
 
 
@@ -2291,7 +2321,7 @@ proto.iws.MountNfsRequest.prototype.getPid = function() {
  * @return {!proto.iws.MountNfsRequest} returns this
  */
 proto.iws.MountNfsRequest.prototype.setPid = function(value) {
-  return jspb.Message.setProto3IntField(this, 3, value);
+  return jspb.Message.setProto3IntField(this, 4, value);
 };
 
 
