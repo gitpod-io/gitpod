@@ -271,10 +271,6 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 		// When a process wants to mount proc relative to `/proc/self` that path has no meaning outside of the processes' context.
 		// runc started doing this in https://github.com/opencontainers/runc/commit/0ca91f44f1664da834bc61115a849b56d22f595f
 		// TODO(cw): there must be a better way to handle this. Find one.
-		if filesystem == "nfs4" {
-			log.Info("Handling nfs4 syscall")
-		}
-
 		target := filepath.Join(h.Ring2Rootfs, dest)
 		if strings.HasPrefix(dest, "/proc/self/") {
 			target = filepath.Join("/proc", strconv.Itoa(int(req.Pid)), strings.TrimPrefix(dest, "/proc/self/"))
@@ -325,7 +321,7 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 						Target: dest,
 						Pid:    int64(req.Pid),
 					})
-				} else {
+				} else if filesystem == "nfs4" {
 					_, err = iws.MountNfs(ctx, &daemonapi.MountNfsRequest{
 						Source: source,
 						Target: dest,
