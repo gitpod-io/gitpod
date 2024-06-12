@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -1069,8 +1070,8 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	defer file.Close()
 
 	// Determine when the task is done
-	done := make(chan struct{})
-	alreadyClosed := taskStatus.State == api.TaskState_closed
+	var isClosed atomic.Bool
+	isClosed.Store(taskStatus.State == api.TaskState_closed)
 
 	sub := s.tasksManager.Subscribe()
 	if sub == nil {
@@ -1079,8 +1080,8 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	}
 
 	go func() {
-		defer close(done)
 		defer func() {
+			isClosed.Store(true)
 			_ = sub.Close()
 		}()
 
@@ -1121,38 +1122,33 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	// Do the actual reading
 	buf := make([]byte, 4096)
 	offset := int64(0)
-	readAndStream := func() error {
-		for {
-			n, err := file.ReadAt(buf, offset)
-			if n > 0 {
-				offset += int64(n)
-				if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
-					return status.Error(codes.Internal, err.Error())
-				}
-			}
-			if err == io.EOF {
-				return nil
-			}
-			if err != nil {
+	for {
+		n, err := file.ReadAt(buf, offset)
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+		if n > 0 {
+			offset += int64(n)
+			if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
 				return status.Error(codes.Internal, err.Error())
 			}
 		}
-	}
-
-	for {
-		select {
-		case <-done:
-			if alreadyClosed && offset == 0 {
-				// in case the task was already closed, and we never read anything: still read once
-				return readAndStream()
+		if err == io.EOF {
+			if isClosed.Load() && offset > 0 {
+				// we are done
+				return nil
 			}
+		}
+
+		select {
+		case <-srv.Context().Done():
 			return nil
 		case event := <-watcher.Events:
-			if event.Op&fsnotify.Write == fsnotify.Write {
-				if err := readAndStream(); err != nil {
-					return err
-				}
+			if event.Op&fsnotify.Write == fsnotify.Write && event.Name == fileLocation {
+				// File was written to
+				continue
 			}
+
 		case err := <-watcher.Errors:
 			if err != nil {
 				log.Println("error:", err)
