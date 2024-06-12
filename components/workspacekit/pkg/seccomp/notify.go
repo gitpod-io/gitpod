@@ -255,7 +255,7 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 	}
 
 	var args string
-	if len(req.Data.Args) >= 5 {
+	if len(req.Data.Args) >= 5 && filesystem == "nfs4" {
 		args, err = readarg.ReadString(memFile, int64(req.Data.Args[4]))
 		log.WithField("arg", 4).WithError(err).Error("cannot read argument")
 	}
