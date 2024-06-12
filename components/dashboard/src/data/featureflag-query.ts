@@ -24,7 +24,6 @@ const featureFlags = {
     // Local SSH feature of VS Code Desktop Extension
     gitpod_desktop_use_local_ssh_proxy: false,
     enabledOrbitalDiscoveries: "",
-    newProjectIncrementalRepoSearchBBS: false,
     repositoryFinderSearch: false,
     createProjectModal: false,
     configurationsAndPrebuilds: false,
