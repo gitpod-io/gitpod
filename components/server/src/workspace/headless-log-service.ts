@@ -15,8 +15,9 @@ import {
     TaskState,
     TaskStatus,
 } from "@gitpod/supervisor-api-grpcweb/lib/status_pb";
-import { ResponseStream, TerminalServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service";
-import { ListenTerminalRequest, ListenTerminalResponse } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb";
+import { ResponseStream } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service";
+import { ListenToOutputRequest, ListenToOutputResponse } from "@gitpod/supervisor-api-grpcweb/lib/task_pb";
+import { TaskServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/task_pb_service";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import * as grpc from "@grpc/grpc-js";
 import { Config } from "../config";
@@ -34,6 +35,7 @@ import {
 import { CachingHeadlessLogServiceClientProvider } from "../util/content-service-sugar";
 import { ctxIsAborted, ctxOnAbort } from "../util/request-context";
 import { PREBUILD_LOGS_PATH_PREFIX as PREBUILD_LOGS_PATH_PREFIX_common } from "@gitpod/public-api-common/lib/prebuild-utils";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export const HEADLESS_LOGS_PATH_PREFIX = "/headless-logs";
 export const HEADLESS_LOG_DOWNLOAD_PATH_PREFIX = "/headless-log-download";
@@ -182,11 +184,7 @@ export class HeadlessLogService {
                 // this might be the case when there is no terminal for this task, yet.
                 // if we find any such case, we deem the workspace not ready yet, and try to reconnect later,
                 // to be sure to get hold of all terminals created.
-                throw new Error(`instance's ${instanceId} task ${task.getId()} has no terminal yet`);
-            }
-            if (task.getState() === TaskState.CLOSED) {
-                // if a task has already been closed we can no longer access it's terminal, and have to skip it.
-                continue;
+                throw new Error(`instance's ${instanceId} task ${taskId} has no terminal yet`);
             }
             streams[taskId] = this.config.hostUrl
                 .with({
@@ -276,21 +274,31 @@ export class HeadlessLogService {
         sink: (chunk: string) => Promise<void>,
         doContinue: () => Promise<boolean>,
     ): Promise<void> {
-        const client = new TerminalServiceClient(toSupervisorURL(logEndpoint.url), {
+        const taskClient = new TaskServiceClient(toSupervisorURL(logEndpoint.url), {
             transport: WebsocketTransport(), // necessary because HTTPTransport causes caching issues
         });
-        const req = new ListenTerminalRequest();
-        req.setAlias(terminalID);
+
+        const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
+        const taskIndex = tasks.findIndex((t) => t.getTerminal() === terminalID);
+        if (taskIndex < 0) {
+            log.warn(logCtx, "stream workspace logs: terminal not found", { terminalID, tasks });
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "terminal not found");
+        }
+
+        const req = new ListenToOutputRequest();
+        req.setTaskId(taskIndex.toString());
+
+        const authHeaders = HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint);
 
         let receivedDataYet = false;
-        let stream: ResponseStream<ListenTerminalResponse> | undefined = undefined;
+        let stream: ResponseStream<ListenToOutputResponse> | undefined = undefined;
         ctxOnAbort(() => stream?.cancel());
         const doStream = (retry: (doRetry?: boolean) => void) =>
             new Promise<void>((resolve, reject) => {
                 // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
                 const decoder = new TextDecoder("utf-8");
-                stream = client.listen(req, HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint));
-                stream.on("data", (resp: ListenTerminalResponse) => {
+                stream = taskClient.listenToOutput(req, authHeaders);
+                stream.on("data", (resp: ListenToOutputResponse) => {
                     receivedDataYet = true;
 
                     const raw = resp.getData();

@@ -5,6 +5,7 @@
 package supervisor
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -14,8 +15,10 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -25,6 +28,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/serverapi"
@@ -1032,4 +1036,129 @@ func (s *portService) RetryAutoExpose(ctx context.Context, req *api.RetryAutoExp
 // ResourcesStatus provides workspace resources status information.
 func (s *statusService) ResourcesStatus(ctx context.Context, in *api.ResourcesStatuRequest) (*api.ResourcesStatusResponse, error) {
 	return s.topService.data, nil
+}
+
+type taskService struct {
+	tasksManager *tasksManager
+
+	api.UnimplementedTaskServiceServer
+}
+
+func (s *taskService) RegisterGRPC(srv *grpc.Server) {
+	api.RegisterTaskServiceServer(srv, s)
+}
+
+func (s *taskService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterPortServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+}
+
+// ListenToOutput listens to the output of a task. It streams the output from the task's file and ends when the task's state changes to done.
+func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.TaskService_ListenToOutputServer) error {
+	taskStatus := s.tasksManager.getTaskStatus(req.TaskId)
+	if taskStatus == nil {
+		return status.Error(codes.NotFound, "task not found")
+	}
+
+	fileLocation := logs.PrebuildLogFileName(logs.TerminalStoreLocation, req.TaskId)
+	if _, err := os.Stat(fileLocation); os.IsNotExist(err) {
+		return status.Error(codes.Internal, "task file not found")
+	}
+
+	file, err := os.Open(fileLocation)
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	defer file.Close()
+
+	// Determine when the task is done
+	var isClosed atomic.Bool
+	closedChannel := make(chan struct{})
+	isClosed.Store(taskStatus.State == api.TaskState_closed)
+
+	sub := s.tasksManager.Subscribe()
+	if sub == nil {
+		log.Warn("potentially leaking subscription to tasks status: too many subscriptions")
+		return status.Error(codes.ResourceExhausted, "too many subscriptions")
+	}
+
+	go func() {
+		defer func() {
+			isClosed.Store(true)
+			close(closedChannel)
+			_ = sub.Close()
+		}()
+
+		if taskStatus.State == api.TaskState_closed {
+			return
+		}
+
+		for {
+			select {
+			case <-srv.Context().Done():
+				return
+			case updates := <-sub.Updates():
+				if updates == nil {
+					return
+				}
+				for _, update := range updates {
+					if update != nil && update.Id == req.TaskId && update.State == api.TaskState_closed {
+						return
+					}
+				}
+			}
+		}
+	}()
+
+	// Setup fs watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("Error creating the watcher: %s", err.Error()))
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(fileLocation)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("Error adding file to the watcher: %s", err.Error()))
+	}
+
+	// Do the actual reading
+	buf := make([]byte, 4096)
+	reader := bufio.NewReader(file)
+	for {
+		n, err := reader.Read(buf)
+		if err == io.EOF {
+			if isClosed.Load() {
+				// We are done
+				return nil
+			}
+		}
+		if err != nil && err != io.EOF {
+			return status.Error(codes.Internal, fmt.Sprintf("Error reading log file: %s", err.Error()))
+		}
+		if n > 0 {
+			if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
+
+			continue
+		}
+
+		select {
+		case <-srv.Context().Done():
+			return nil
+		case <-closedChannel:
+			continue
+		case event := <-watcher.Events:
+			if event.Op&fsnotify.Write == fsnotify.Write && event.Name == fileLocation {
+				// File was written to
+				continue
+			}
+
+		case err := <-watcher.Errors:
+			if err != nil {
+				log.Println("error:", err)
+				return status.Error(codes.Internal, fmt.Sprintf("Error watching log file: %s", err.Error()))
+			}
+		}
+	}
 }
