@@ -1068,48 +1068,26 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	}
 	defer file.Close()
 
-	buf := make([]byte, 4096)
-
-	if taskStatus.State == api.TaskState_closed {
-		for {
-			n, err := file.Read(buf)
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return status.Error(codes.Internal, err.Error())
-			}
-
-			if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
-				return status.Error(codes.Internal, err.Error())
-			}
-		}
-
-		return nil
-	}
+	// Determine when the task is done
+	done := make(chan struct{})
+	alreadyClosed := taskStatus.State == api.TaskState_closed
 
 	sub := s.tasksManager.Subscribe()
 	if sub == nil {
 		log.Warn("potentially leaking subscription to tasks status: too many subscriptions")
 		return status.Error(codes.ResourceExhausted, "too many subscriptions")
 	}
-	defer sub.Close()
-
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-	defer watcher.Close()
-
-	err = watcher.Add(fileLocation)
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	done := make(chan struct{})
 
 	go func() {
 		defer close(done)
+		defer func() {
+			_ = sub.Close()
+		}()
+
+		if taskStatus.State == api.TaskState_closed {
+			return
+		}
+
 		for {
 			select {
 			case <-srv.Context().Done():
@@ -1125,8 +1103,23 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 				}
 			}
 		}
+
 	}()
 
+	// Setup fs watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(fileLocation)
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	// Do the actual reading
+	buf := make([]byte, 4096)
 	offset := int64(0)
 	readAndStream := func() error {
 		for {
@@ -1149,8 +1142,11 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	for {
 		select {
 		case <-done:
-			// Task closed or context done; exit after sending remaining logs
-			return readAndStream()
+			if alreadyClosed && offset == 0 {
+				// in case the task was already closed, and we never read anything: still read once
+				return readAndStream()
+			}
+			return nil
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				if err := readAndStream(); err != nil {
@@ -1161,10 +1157,6 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 			if err != nil {
 				log.Println("error:", err)
 				return status.Error(codes.Internal, err.Error())
-			}
-		default:
-			if err := readAndStream(); err != nil {
-				return err
 			}
 		}
 	}
