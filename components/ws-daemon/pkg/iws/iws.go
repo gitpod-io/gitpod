@@ -707,6 +707,64 @@ func (wbs *InWorkspaceServiceServer) MountSysfs(ctx context.Context, req *api.Mo
 	return &api.MountProcResponse{}, nil
 }
 
+func (wbs *InWorkspaceServiceServer) MountNfs(ctx context.Context, req *api.MountNfsRequest) (resp *api.MountNfsResponse, err error) {
+	var (
+		reqPID = req.Pid
+		nfsPID uint64
+	)
+	defer func() {
+		if err == nil {
+			return
+		}
+
+		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("procPID", nfsPID).WithField("reqPID", reqPID).WithFields(wbs.Session.OWI()).Error("cannot mount nfs")
+		if _, ok := status.FromError(err); !ok {
+			err = status.Error(codes.Internal, "cannot mount nfs")
+		}
+	}()
+
+	rt := wbs.Uidmapper.Runtime
+	if rt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
+	}
+	wscontainerID, err := rt.WaitForContainer(ctx, wbs.Session.InstanceID)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot find workspace container")
+	}
+
+	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID, err)
+	}
+
+	nfsPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
+	}
+
+	nodeStaging, err := os.MkdirTemp("", "nfs-staging")
+	if err != nil {
+		return nil, xerrors.Errorf("cannot prepare nfs staging: %w", err)
+	}
+
+	log.WithField("source", req.Source).WithField("target", req.Target).WithField("staging", nodeStaging).WithField("args", req.Args).Info("Mounting nfs")
+	cmd := exec.CommandContext(ctx, "mount", "-t", "nfs4", "-o", req.Args, req.Source, nodeStaging)
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	err = cmd.Run()
+	if err != nil {
+		return nil, xerrors.Errorf("cannot mount nfs: %w", err)
+	}
+
+	err = moveMount(wbs.Session.InstanceID, int(nfsPID), nodeStaging, req.Target)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.MountNfsResponse{}, nil
+}
+
 func moveMount(instanceID string, targetPid int, source, target string) error {
 	mntfd, err := syscallOpenTree(unix.AT_FDCWD, source, flagOpenTreeClone|flagAtRecursive)
 	if err != nil {

@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -542,6 +542,208 @@ func (*UmountProcResponse) Descriptor() ([]byte, []int) {
 	return file_workspace_daemon_proto_rawDescGZIP(), []int{9}
 }
 
+type MountNfsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Source string `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	Target string `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
+	Args   string `protobuf:"bytes,3,opt,name=args,proto3" json:"args,omitempty"`
+	Pid    int64  `protobuf:"varint,4,opt,name=pid,proto3" json:"pid,omitempty"`
+}
+
+func (x *MountNfsRequest) Reset() {
+	*x = MountNfsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_workspace_daemon_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MountNfsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MountNfsRequest) ProtoMessage() {}
+
+func (x *MountNfsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_workspace_daemon_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MountNfsRequest.ProtoReflect.Descriptor instead.
+func (*MountNfsRequest) Descriptor() ([]byte, []int) {
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *MountNfsRequest) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *MountNfsRequest) GetTarget() string {
+	if x != nil {
+		return x.Target
+	}
+	return ""
+}
+
+func (x *MountNfsRequest) GetArgs() string {
+	if x != nil {
+		return x.Args
+	}
+	return ""
+}
+
+func (x *MountNfsRequest) GetPid() int64 {
+	if x != nil {
+		return x.Pid
+	}
+	return 0
+}
+
+type MountNfsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *MountNfsResponse) Reset() {
+	*x = MountNfsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_workspace_daemon_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MountNfsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MountNfsResponse) ProtoMessage() {}
+
+func (x *MountNfsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_workspace_daemon_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MountNfsResponse.ProtoReflect.Descriptor instead.
+func (*MountNfsResponse) Descriptor() ([]byte, []int) {
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{11}
+}
+
+type UmountNfsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Target string `protobuf:"bytes,1,opt,name=target,proto3" json:"target,omitempty"`
+	Pid    int64  `protobuf:"varint,2,opt,name=pid,proto3" json:"pid,omitempty"`
+}
+
+func (x *UmountNfsRequest) Reset() {
+	*x = UmountNfsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_workspace_daemon_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UmountNfsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UmountNfsRequest) ProtoMessage() {}
+
+func (x *UmountNfsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_workspace_daemon_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UmountNfsRequest.ProtoReflect.Descriptor instead.
+func (*UmountNfsRequest) Descriptor() ([]byte, []int) {
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *UmountNfsRequest) GetTarget() string {
+	if x != nil {
+		return x.Target
+	}
+	return ""
+}
+
+func (x *UmountNfsRequest) GetPid() int64 {
+	if x != nil {
+		return x.Pid
+	}
+	return 0
+}
+
+type UmountNfsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *UmountNfsResponse) Reset() {
+	*x = UmountNfsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_workspace_daemon_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UmountNfsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UmountNfsResponse) ProtoMessage() {}
+
+func (x *UmountNfsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_workspace_daemon_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UmountNfsResponse.ProtoReflect.Descriptor instead.
+func (*UmountNfsResponse) Descriptor() ([]byte, []int) {
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{13}
+}
+
 type TeardownRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -551,7 +753,7 @@ type TeardownRequest struct {
 func (x *TeardownRequest) Reset() {
 	*x = TeardownRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[10]
+		mi := &file_workspace_daemon_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -564,7 +766,7 @@ func (x *TeardownRequest) String() string {
 func (*TeardownRequest) ProtoMessage() {}
 
 func (x *TeardownRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[10]
+	mi := &file_workspace_daemon_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -577,7 +779,7 @@ func (x *TeardownRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TeardownRequest.ProtoReflect.Descriptor instead.
 func (*TeardownRequest) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{10}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{14}
 }
 
 type TeardownResponse struct {
@@ -591,7 +793,7 @@ type TeardownResponse struct {
 func (x *TeardownResponse) Reset() {
 	*x = TeardownResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[11]
+		mi := &file_workspace_daemon_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -604,7 +806,7 @@ func (x *TeardownResponse) String() string {
 func (*TeardownResponse) ProtoMessage() {}
 
 func (x *TeardownResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[11]
+	mi := &file_workspace_daemon_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -617,7 +819,7 @@ func (x *TeardownResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TeardownResponse.ProtoReflect.Descriptor instead.
 func (*TeardownResponse) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{11}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *TeardownResponse) GetSuccess() bool {
@@ -638,7 +840,7 @@ type SetupPairVethsRequest struct {
 func (x *SetupPairVethsRequest) Reset() {
 	*x = SetupPairVethsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[12]
+		mi := &file_workspace_daemon_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -651,7 +853,7 @@ func (x *SetupPairVethsRequest) String() string {
 func (*SetupPairVethsRequest) ProtoMessage() {}
 
 func (x *SetupPairVethsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[12]
+	mi := &file_workspace_daemon_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -664,7 +866,7 @@ func (x *SetupPairVethsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetupPairVethsRequest.ProtoReflect.Descriptor instead.
 func (*SetupPairVethsRequest) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{12}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SetupPairVethsRequest) GetPid() int64 {
@@ -683,7 +885,7 @@ type SetupPairVethsResponse struct {
 func (x *SetupPairVethsResponse) Reset() {
 	*x = SetupPairVethsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[13]
+		mi := &file_workspace_daemon_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -696,7 +898,7 @@ func (x *SetupPairVethsResponse) String() string {
 func (*SetupPairVethsResponse) ProtoMessage() {}
 
 func (x *SetupPairVethsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[13]
+	mi := &file_workspace_daemon_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -709,7 +911,7 @@ func (x *SetupPairVethsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetupPairVethsResponse.ProtoReflect.Descriptor instead.
 func (*SetupPairVethsResponse) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{13}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{17}
 }
 
 type WorkspaceInfoRequest struct {
@@ -721,7 +923,7 @@ type WorkspaceInfoRequest struct {
 func (x *WorkspaceInfoRequest) Reset() {
 	*x = WorkspaceInfoRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[14]
+		mi := &file_workspace_daemon_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -734,7 +936,7 @@ func (x *WorkspaceInfoRequest) String() string {
 func (*WorkspaceInfoRequest) ProtoMessage() {}
 
 func (x *WorkspaceInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[14]
+	mi := &file_workspace_daemon_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -747,7 +949,7 @@ func (x *WorkspaceInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkspaceInfoRequest.ProtoReflect.Descriptor instead.
 func (*WorkspaceInfoRequest) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{14}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{18}
 }
 
 type WorkspaceInfoResponse struct {
@@ -761,7 +963,7 @@ type WorkspaceInfoResponse struct {
 func (x *WorkspaceInfoResponse) Reset() {
 	*x = WorkspaceInfoResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[15]
+		mi := &file_workspace_daemon_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -774,7 +976,7 @@ func (x *WorkspaceInfoResponse) String() string {
 func (*WorkspaceInfoResponse) ProtoMessage() {}
 
 func (x *WorkspaceInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[15]
+	mi := &file_workspace_daemon_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -787,7 +989,7 @@ func (x *WorkspaceInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkspaceInfoResponse.ProtoReflect.Descriptor instead.
 func (*WorkspaceInfoResponse) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{15}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *WorkspaceInfoResponse) GetResources() *Resources {
@@ -809,7 +1011,7 @@ type Resources struct {
 func (x *Resources) Reset() {
 	*x = Resources{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[16]
+		mi := &file_workspace_daemon_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -822,7 +1024,7 @@ func (x *Resources) String() string {
 func (*Resources) ProtoMessage() {}
 
 func (x *Resources) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[16]
+	mi := &file_workspace_daemon_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -835,7 +1037,7 @@ func (x *Resources) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Resources.ProtoReflect.Descriptor instead.
 func (*Resources) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{16}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *Resources) GetCpu() *Cpu {
@@ -864,7 +1066,7 @@ type Cpu struct {
 func (x *Cpu) Reset() {
 	*x = Cpu{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[17]
+		mi := &file_workspace_daemon_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -877,7 +1079,7 @@ func (x *Cpu) String() string {
 func (*Cpu) ProtoMessage() {}
 
 func (x *Cpu) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[17]
+	mi := &file_workspace_daemon_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -890,7 +1092,7 @@ func (x *Cpu) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Cpu.ProtoReflect.Descriptor instead.
 func (*Cpu) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{17}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *Cpu) GetUsed() int64 {
@@ -919,7 +1121,7 @@ type Memory struct {
 func (x *Memory) Reset() {
 	*x = Memory{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[18]
+		mi := &file_workspace_daemon_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -932,7 +1134,7 @@ func (x *Memory) String() string {
 func (*Memory) ProtoMessage() {}
 
 func (x *Memory) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[18]
+	mi := &file_workspace_daemon_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -945,7 +1147,7 @@ func (x *Memory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Memory.ProtoReflect.Descriptor instead.
 func (*Memory) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{18}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *Memory) GetUsed() int64 {
@@ -975,7 +1177,7 @@ type WriteIDMappingRequest_Mapping struct {
 func (x *WriteIDMappingRequest_Mapping) Reset() {
 	*x = WriteIDMappingRequest_Mapping{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[19]
+		mi := &file_workspace_daemon_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -988,7 +1190,7 @@ func (x *WriteIDMappingRequest_Mapping) String() string {
 func (*WriteIDMappingRequest_Mapping) ProtoMessage() {}
 
 func (x *WriteIDMappingRequest_Mapping) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[19]
+	mi := &file_workspace_daemon_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1072,6 +1274,19 @@ var file_workspace_daemon_proto_rawDesc = []byte{
 	0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x12,
 	0x10, 0x0a, 0x03, 0x70, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03, 0x70, 0x69,
 	0x64, 0x22, 0x14, 0x0a, 0x12, 0x55, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x50, 0x72, 0x6f, 0x63, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x67, 0x0a, 0x0f, 0x4d, 0x6f, 0x75, 0x6e, 0x74,
+	0x4e, 0x66, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x06, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x61, 0x72,
+	0x67, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x61, 0x72, 0x67, 0x73, 0x12, 0x10,
+	0x0a, 0x03, 0x70, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03, 0x70, 0x69, 0x64,
+	0x22, 0x12, 0x0a, 0x10, 0x4d, 0x6f, 0x75, 0x6e, 0x74, 0x4e, 0x66, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3c, 0x0a, 0x10, 0x55, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x4e, 0x66,
+	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x74, 0x61, 0x72, 0x67,
+	0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74,
+	0x12, 0x10, 0x0a, 0x03, 0x70, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03, 0x70,
+	0x69, 0x64, 0x22, 0x13, 0x0a, 0x11, 0x55, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x4e, 0x66, 0x73, 0x52,
 	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x11, 0x0a, 0x0f, 0x54, 0x65, 0x61, 0x72, 0x64,
 	0x6f, 0x77, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x2c, 0x0a, 0x10, 0x54, 0x65,
 	0x61, 0x72, 0x64, 0x6f, 0x77, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18,
@@ -1100,7 +1315,7 @@ var file_workspace_daemon_proto_rawDesc = []byte{
 	0x69, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x2a,
 	0x22, 0x0a, 0x0d, 0x46, 0x53, 0x53, 0x68, 0x69, 0x66, 0x74, 0x4d, 0x65, 0x74, 0x68, 0x6f, 0x64,
 	0x12, 0x0b, 0x0a, 0x07, 0x53, 0x48, 0x49, 0x46, 0x54, 0x46, 0x53, 0x10, 0x00, 0x22, 0x04, 0x08,
-	0x01, 0x10, 0x01, 0x32, 0xd3, 0x05, 0x0a, 0x12, 0x49, 0x6e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70,
+	0x01, 0x10, 0x01, 0x32, 0xcc, 0x06, 0x0a, 0x12, 0x49, 0x6e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70,
 	0x61, 0x63, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x51, 0x0a, 0x10, 0x50, 0x72,
 	0x65, 0x70, 0x61, 0x72, 0x65, 0x46, 0x6f, 0x72, 0x55, 0x73, 0x65, 0x72, 0x4e, 0x53, 0x12, 0x1c,
 	0x2e, 0x69, 0x77, 0x73, 0x2e, 0x50, 0x72, 0x65, 0x70, 0x61, 0x72, 0x65, 0x46, 0x6f, 0x72, 0x55,
@@ -1132,29 +1347,37 @@ var file_workspace_daemon_proto_rawDesc = []byte{
 	0x79, 0x73, 0x66, 0x73, 0x12, 0x16, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x55, 0x6d, 0x6f, 0x75, 0x6e,
 	0x74, 0x50, 0x72, 0x6f, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x17, 0x2e, 0x69,
 	0x77, 0x73, 0x2e, 0x55, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x50, 0x72, 0x6f, 0x63, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x39, 0x0a, 0x08, 0x54, 0x65, 0x61, 0x72, 0x64,
-	0x6f, 0x77, 0x6e, 0x12, 0x14, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x54, 0x65, 0x61, 0x72, 0x64, 0x6f,
-	0x77, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x15, 0x2e, 0x69, 0x77, 0x73, 0x2e,
-	0x54, 0x65, 0x61, 0x72, 0x64, 0x6f, 0x77, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x00, 0x12, 0x4b, 0x0a, 0x0e, 0x53, 0x65, 0x74, 0x75, 0x70, 0x50, 0x61, 0x69, 0x72, 0x56,
-	0x65, 0x74, 0x68, 0x73, 0x12, 0x1a, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x53, 0x65, 0x74, 0x75, 0x70,
-	0x50, 0x61, 0x69, 0x72, 0x56, 0x65, 0x74, 0x68, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x1b, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x53, 0x65, 0x74, 0x75, 0x70, 0x50, 0x61, 0x69, 0x72,
-	0x56, 0x65, 0x74, 0x68, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
-	0x48, 0x0a, 0x0d, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f,
-	0x12, 0x19, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
-	0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x69, 0x77,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x39, 0x0a, 0x08, 0x4d, 0x6f, 0x75, 0x6e, 0x74,
+	0x4e, 0x66, 0x73, 0x12, 0x14, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x4d, 0x6f, 0x75, 0x6e, 0x74, 0x4e,
+	0x66, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x15, 0x2e, 0x69, 0x77, 0x73, 0x2e,
+	0x4d, 0x6f, 0x75, 0x6e, 0x74, 0x4e, 0x66, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x00, 0x12, 0x3c, 0x0a, 0x09, 0x55, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x4e, 0x66, 0x73, 0x12,
+	0x15, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x55, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x4e, 0x66, 0x73, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x55, 0x6d, 0x6f,
+	0x75, 0x6e, 0x74, 0x4e, 0x66, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
+	0x12, 0x39, 0x0a, 0x08, 0x54, 0x65, 0x61, 0x72, 0x64, 0x6f, 0x77, 0x6e, 0x12, 0x14, 0x2e, 0x69,
+	0x77, 0x73, 0x2e, 0x54, 0x65, 0x61, 0x72, 0x64, 0x6f, 0x77, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x15, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x54, 0x65, 0x61, 0x72, 0x64, 0x6f, 0x77,
+	0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x4b, 0x0a, 0x0e, 0x53,
+	0x65, 0x74, 0x75, 0x70, 0x50, 0x61, 0x69, 0x72, 0x56, 0x65, 0x74, 0x68, 0x73, 0x12, 0x1a, 0x2e,
+	0x69, 0x77, 0x73, 0x2e, 0x53, 0x65, 0x74, 0x75, 0x70, 0x50, 0x61, 0x69, 0x72, 0x56, 0x65, 0x74,
+	0x68, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x69, 0x77, 0x73, 0x2e,
+	0x53, 0x65, 0x74, 0x75, 0x70, 0x50, 0x61, 0x69, 0x72, 0x56, 0x65, 0x74, 0x68, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x48, 0x0a, 0x0d, 0x57, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x19, 0x2e, 0x69, 0x77, 0x73, 0x2e,
+	0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73,
+	0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x00, 0x32, 0x60, 0x0a, 0x14, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49,
+	0x6e, 0x66, 0x6f, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x48, 0x0a, 0x0d, 0x57, 0x6f,
+	0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x19, 0x2e, 0x69, 0x77,
 	0x73, 0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x32, 0x60, 0x0a, 0x14, 0x57, 0x6f, 0x72,
-	0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
-	0x65, 0x12, 0x48, 0x0a, 0x0d, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e,
-	0x66, 0x6f, 0x12, 0x19, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
-	0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e,
-	0x69, 0x77, 0x73, 0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x66,
-	0x6f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x2b, 0x5a, 0x29, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64,
-	0x2d, 0x69, 0x6f, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2f, 0x77, 0x73, 0x2d, 0x64, 0x61,
-	0x65, 0x6d, 0x6f, 0x6e, 0x2f, 0x61, 0x70, 0x69, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x57, 0x6f, 0x72,
+	0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x00, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2d, 0x69, 0x6f, 0x2f, 0x67, 0x69, 0x74,
+	0x70, 0x6f, 0x64, 0x2f, 0x77, 0x73, 0x2d, 0x64, 0x61, 0x65, 0x6d, 0x6f, 0x6e, 0x2f, 0x61, 0x70,
+	0x69, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1170,7 +1393,7 @@ func file_workspace_daemon_proto_rawDescGZIP() []byte {
 }
 
 var file_workspace_daemon_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_workspace_daemon_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_workspace_daemon_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_workspace_daemon_proto_goTypes = []interface{}{
 	(FSShiftMethod)(0),                    // 0: iws.FSShiftMethod
 	(*PrepareForUserNSRequest)(nil),       // 1: iws.PrepareForUserNSRequest
@@ -1183,23 +1406,27 @@ var file_workspace_daemon_proto_goTypes = []interface{}{
 	(*MountProcResponse)(nil),             // 8: iws.MountProcResponse
 	(*UmountProcRequest)(nil),             // 9: iws.UmountProcRequest
 	(*UmountProcResponse)(nil),            // 10: iws.UmountProcResponse
-	(*TeardownRequest)(nil),               // 11: iws.TeardownRequest
-	(*TeardownResponse)(nil),              // 12: iws.TeardownResponse
-	(*SetupPairVethsRequest)(nil),         // 13: iws.SetupPairVethsRequest
-	(*SetupPairVethsResponse)(nil),        // 14: iws.SetupPairVethsResponse
-	(*WorkspaceInfoRequest)(nil),          // 15: iws.WorkspaceInfoRequest
-	(*WorkspaceInfoResponse)(nil),         // 16: iws.WorkspaceInfoResponse
-	(*Resources)(nil),                     // 17: iws.Resources
-	(*Cpu)(nil),                           // 18: iws.Cpu
-	(*Memory)(nil),                        // 19: iws.Memory
-	(*WriteIDMappingRequest_Mapping)(nil), // 20: iws.WriteIDMappingRequest.Mapping
+	(*MountNfsRequest)(nil),               // 11: iws.MountNfsRequest
+	(*MountNfsResponse)(nil),              // 12: iws.MountNfsResponse
+	(*UmountNfsRequest)(nil),              // 13: iws.UmountNfsRequest
+	(*UmountNfsResponse)(nil),             // 14: iws.UmountNfsResponse
+	(*TeardownRequest)(nil),               // 15: iws.TeardownRequest
+	(*TeardownResponse)(nil),              // 16: iws.TeardownResponse
+	(*SetupPairVethsRequest)(nil),         // 17: iws.SetupPairVethsRequest
+	(*SetupPairVethsResponse)(nil),        // 18: iws.SetupPairVethsResponse
+	(*WorkspaceInfoRequest)(nil),          // 19: iws.WorkspaceInfoRequest
+	(*WorkspaceInfoResponse)(nil),         // 20: iws.WorkspaceInfoResponse
+	(*Resources)(nil),                     // 21: iws.Resources
+	(*Cpu)(nil),                           // 22: iws.Cpu
+	(*Memory)(nil),                        // 23: iws.Memory
+	(*WriteIDMappingRequest_Mapping)(nil), // 24: iws.WriteIDMappingRequest.Mapping
 }
 var file_workspace_daemon_proto_depIdxs = []int32{
 	0,  // 0: iws.PrepareForUserNSResponse.fs_shift:type_name -> iws.FSShiftMethod
-	20, // 1: iws.WriteIDMappingRequest.mapping:type_name -> iws.WriteIDMappingRequest.Mapping
-	17, // 2: iws.WorkspaceInfoResponse.resources:type_name -> iws.Resources
-	18, // 3: iws.Resources.cpu:type_name -> iws.Cpu
-	19, // 4: iws.Resources.memory:type_name -> iws.Memory
+	24, // 1: iws.WriteIDMappingRequest.mapping:type_name -> iws.WriteIDMappingRequest.Mapping
+	21, // 2: iws.WorkspaceInfoResponse.resources:type_name -> iws.Resources
+	22, // 3: iws.Resources.cpu:type_name -> iws.Cpu
+	23, // 4: iws.Resources.memory:type_name -> iws.Memory
 	1,  // 5: iws.InWorkspaceService.PrepareForUserNS:input_type -> iws.PrepareForUserNSRequest
 	4,  // 6: iws.InWorkspaceService.WriteIDMapping:input_type -> iws.WriteIDMappingRequest
 	5,  // 7: iws.InWorkspaceService.EvacuateCGroup:input_type -> iws.EvacuateCGroupRequest
@@ -1207,23 +1434,27 @@ var file_workspace_daemon_proto_depIdxs = []int32{
 	9,  // 9: iws.InWorkspaceService.UmountProc:input_type -> iws.UmountProcRequest
 	7,  // 10: iws.InWorkspaceService.MountSysfs:input_type -> iws.MountProcRequest
 	9,  // 11: iws.InWorkspaceService.UmountSysfs:input_type -> iws.UmountProcRequest
-	11, // 12: iws.InWorkspaceService.Teardown:input_type -> iws.TeardownRequest
-	13, // 13: iws.InWorkspaceService.SetupPairVeths:input_type -> iws.SetupPairVethsRequest
-	15, // 14: iws.InWorkspaceService.WorkspaceInfo:input_type -> iws.WorkspaceInfoRequest
-	15, // 15: iws.WorkspaceInfoService.WorkspaceInfo:input_type -> iws.WorkspaceInfoRequest
-	2,  // 16: iws.InWorkspaceService.PrepareForUserNS:output_type -> iws.PrepareForUserNSResponse
-	3,  // 17: iws.InWorkspaceService.WriteIDMapping:output_type -> iws.WriteIDMappingResponse
-	6,  // 18: iws.InWorkspaceService.EvacuateCGroup:output_type -> iws.EvacuateCGroupResponse
-	8,  // 19: iws.InWorkspaceService.MountProc:output_type -> iws.MountProcResponse
-	10, // 20: iws.InWorkspaceService.UmountProc:output_type -> iws.UmountProcResponse
-	8,  // 21: iws.InWorkspaceService.MountSysfs:output_type -> iws.MountProcResponse
-	10, // 22: iws.InWorkspaceService.UmountSysfs:output_type -> iws.UmountProcResponse
-	12, // 23: iws.InWorkspaceService.Teardown:output_type -> iws.TeardownResponse
-	14, // 24: iws.InWorkspaceService.SetupPairVeths:output_type -> iws.SetupPairVethsResponse
-	16, // 25: iws.InWorkspaceService.WorkspaceInfo:output_type -> iws.WorkspaceInfoResponse
-	16, // 26: iws.WorkspaceInfoService.WorkspaceInfo:output_type -> iws.WorkspaceInfoResponse
-	16, // [16:27] is the sub-list for method output_type
-	5,  // [5:16] is the sub-list for method input_type
+	11, // 12: iws.InWorkspaceService.MountNfs:input_type -> iws.MountNfsRequest
+	13, // 13: iws.InWorkspaceService.UmountNfs:input_type -> iws.UmountNfsRequest
+	15, // 14: iws.InWorkspaceService.Teardown:input_type -> iws.TeardownRequest
+	17, // 15: iws.InWorkspaceService.SetupPairVeths:input_type -> iws.SetupPairVethsRequest
+	19, // 16: iws.InWorkspaceService.WorkspaceInfo:input_type -> iws.WorkspaceInfoRequest
+	19, // 17: iws.WorkspaceInfoService.WorkspaceInfo:input_type -> iws.WorkspaceInfoRequest
+	2,  // 18: iws.InWorkspaceService.PrepareForUserNS:output_type -> iws.PrepareForUserNSResponse
+	3,  // 19: iws.InWorkspaceService.WriteIDMapping:output_type -> iws.WriteIDMappingResponse
+	6,  // 20: iws.InWorkspaceService.EvacuateCGroup:output_type -> iws.EvacuateCGroupResponse
+	8,  // 21: iws.InWorkspaceService.MountProc:output_type -> iws.MountProcResponse
+	10, // 22: iws.InWorkspaceService.UmountProc:output_type -> iws.UmountProcResponse
+	8,  // 23: iws.InWorkspaceService.MountSysfs:output_type -> iws.MountProcResponse
+	10, // 24: iws.InWorkspaceService.UmountSysfs:output_type -> iws.UmountProcResponse
+	12, // 25: iws.InWorkspaceService.MountNfs:output_type -> iws.MountNfsResponse
+	14, // 26: iws.InWorkspaceService.UmountNfs:output_type -> iws.UmountNfsResponse
+	16, // 27: iws.InWorkspaceService.Teardown:output_type -> iws.TeardownResponse
+	18, // 28: iws.InWorkspaceService.SetupPairVeths:output_type -> iws.SetupPairVethsResponse
+	20, // 29: iws.InWorkspaceService.WorkspaceInfo:output_type -> iws.WorkspaceInfoResponse
+	20, // 30: iws.WorkspaceInfoService.WorkspaceInfo:output_type -> iws.WorkspaceInfoResponse
+	18, // [18:31] is the sub-list for method output_type
+	5,  // [5:18] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name
@@ -1356,7 +1587,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TeardownRequest); i {
+			switch v := v.(*MountNfsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1368,7 +1599,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TeardownResponse); i {
+			switch v := v.(*MountNfsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1380,7 +1611,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetupPairVethsRequest); i {
+			switch v := v.(*UmountNfsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1392,7 +1623,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetupPairVethsResponse); i {
+			switch v := v.(*UmountNfsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1404,7 +1635,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*WorkspaceInfoRequest); i {
+			switch v := v.(*TeardownRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1416,7 +1647,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*WorkspaceInfoResponse); i {
+			switch v := v.(*TeardownResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1428,7 +1659,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Resources); i {
+			switch v := v.(*SetupPairVethsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1440,7 +1671,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Cpu); i {
+			switch v := v.(*SetupPairVethsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1452,7 +1683,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Memory); i {
+			switch v := v.(*WorkspaceInfoRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1464,6 +1695,54 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WorkspaceInfoResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_workspace_daemon_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Resources); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_workspace_daemon_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Cpu); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_workspace_daemon_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Memory); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_workspace_daemon_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*WriteIDMappingRequest_Mapping); i {
 			case 0:
 				return &v.state
@@ -1482,7 +1761,7 @@ func file_workspace_daemon_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_workspace_daemon_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   20,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

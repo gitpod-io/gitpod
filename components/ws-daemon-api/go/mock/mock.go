@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -329,6 +329,26 @@ func (mr *MockInWorkspaceServiceClientMockRecorder) EvacuateCGroup(arg0, arg1 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EvacuateCGroup", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).EvacuateCGroup), varargs...)
 }
 
+// MountNfs mocks base method.
+func (m *MockInWorkspaceServiceClient) MountNfs(arg0 context.Context, arg1 *api.MountNfsRequest, arg2 ...grpc.CallOption) (*api.MountNfsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "MountNfs", varargs...)
+	ret0, _ := ret[0].(*api.MountNfsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MountNfs indicates an expected call of MountNfs.
+func (mr *MockInWorkspaceServiceClientMockRecorder) MountNfs(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MountNfs", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).MountNfs), varargs...)
+}
+
 // MountProc mocks base method.
 func (m *MockInWorkspaceServiceClient) MountProc(arg0 context.Context, arg1 *api.MountProcRequest, arg2 ...grpc.CallOption) (*api.MountProcResponse, error) {
 	m.ctrl.T.Helper()
@@ -427,6 +447,26 @@ func (mr *MockInWorkspaceServiceClientMockRecorder) Teardown(arg0, arg1 interfac
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Teardown", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).Teardown), varargs...)
+}
+
+// UmountNfs mocks base method.
+func (m *MockInWorkspaceServiceClient) UmountNfs(arg0 context.Context, arg1 *api.UmountNfsRequest, arg2 ...grpc.CallOption) (*api.UmountNfsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UmountNfs", varargs...)
+	ret0, _ := ret[0].(*api.UmountNfsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UmountNfs indicates an expected call of UmountNfs.
+func (mr *MockInWorkspaceServiceClientMockRecorder) UmountNfs(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UmountNfs", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).UmountNfs), varargs...)
 }
 
 // UmountProc mocks base method.

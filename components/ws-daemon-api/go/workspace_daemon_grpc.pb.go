@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -56,6 +56,14 @@ type InWorkspaceServiceClient interface {
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
 	UmountSysfs(ctx context.Context, in *UmountProcRequest, opts ...grpc.CallOption) (*UmountProcResponse, error)
+	// UmountSysfs unmounts a masked sysfs from the container's rootfs.
+	// The PID must be in the PID namespace of the workspace container.
+	// The path is relative to the mount namespace of the PID.
+	MountNfs(ctx context.Context, in *MountNfsRequest, opts ...grpc.CallOption) (*MountNfsResponse, error)
+	// UmountSysfs unmounts a masked sysfs from the container's rootfs.
+	// The PID must be in the PID namespace of the workspace container.
+	// The path is relative to the mount namespace of the PID.
+	UmountNfs(ctx context.Context, in *UmountNfsRequest, opts ...grpc.CallOption) (*UmountNfsResponse, error)
 	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 	Teardown(ctx context.Context, in *TeardownRequest, opts ...grpc.CallOption) (*TeardownResponse, error)
@@ -136,6 +144,24 @@ func (c *inWorkspaceServiceClient) UmountSysfs(ctx context.Context, in *UmountPr
 	return out, nil
 }
 
+func (c *inWorkspaceServiceClient) MountNfs(ctx context.Context, in *MountNfsRequest, opts ...grpc.CallOption) (*MountNfsResponse, error) {
+	out := new(MountNfsResponse)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/MountNfs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inWorkspaceServiceClient) UmountNfs(ctx context.Context, in *UmountNfsRequest, opts ...grpc.CallOption) (*UmountNfsResponse, error) {
+	out := new(UmountNfsResponse)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/UmountNfs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *inWorkspaceServiceClient) Teardown(ctx context.Context, in *TeardownRequest, opts ...grpc.CallOption) (*TeardownResponse, error) {
 	out := new(TeardownResponse)
 	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/Teardown", in, out, opts...)
@@ -197,6 +223,14 @@ type InWorkspaceServiceServer interface {
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
 	UmountSysfs(context.Context, *UmountProcRequest) (*UmountProcResponse, error)
+	// UmountSysfs unmounts a masked sysfs from the container's rootfs.
+	// The PID must be in the PID namespace of the workspace container.
+	// The path is relative to the mount namespace of the PID.
+	MountNfs(context.Context, *MountNfsRequest) (*MountNfsResponse, error)
+	// UmountSysfs unmounts a masked sysfs from the container's rootfs.
+	// The PID must be in the PID namespace of the workspace container.
+	// The path is relative to the mount namespace of the PID.
+	UmountNfs(context.Context, *UmountNfsRequest) (*UmountNfsResponse, error)
 	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 	Teardown(context.Context, *TeardownRequest) (*TeardownResponse, error)
@@ -231,6 +265,12 @@ func (UnimplementedInWorkspaceServiceServer) MountSysfs(context.Context, *MountP
 }
 func (UnimplementedInWorkspaceServiceServer) UmountSysfs(context.Context, *UmountProcRequest) (*UmountProcResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UmountSysfs not implemented")
+}
+func (UnimplementedInWorkspaceServiceServer) MountNfs(context.Context, *MountNfsRequest) (*MountNfsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MountNfs not implemented")
+}
+func (UnimplementedInWorkspaceServiceServer) UmountNfs(context.Context, *UmountNfsRequest) (*UmountNfsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UmountNfs not implemented")
 }
 func (UnimplementedInWorkspaceServiceServer) Teardown(context.Context, *TeardownRequest) (*TeardownResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Teardown not implemented")
@@ -380,6 +420,42 @@ func _InWorkspaceService_UmountSysfs_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InWorkspaceService_MountNfs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MountNfsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceServiceServer).MountNfs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/iws.InWorkspaceService/MountNfs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceServiceServer).MountNfs(ctx, req.(*MountNfsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InWorkspaceService_UmountNfs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UmountNfsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceServiceServer).UmountNfs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/iws.InWorkspaceService/UmountNfs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceServiceServer).UmountNfs(ctx, req.(*UmountNfsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _InWorkspaceService_Teardown_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TeardownRequest)
 	if err := dec(in); err != nil {
@@ -468,6 +544,14 @@ var InWorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UmountSysfs",
 			Handler:    _InWorkspaceService_UmountSysfs_Handler,
+		},
+		{
+			MethodName: "MountNfs",
+			Handler:    _InWorkspaceService_MountNfs_Handler,
+		},
+		{
+			MethodName: "UmountNfs",
+			Handler:    _InWorkspaceService_UmountNfs_Handler,
 		},
 		{
 			MethodName: "Teardown",

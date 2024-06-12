@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -241,6 +241,92 @@ export class UmountProcResponse extends jspb.Message {
 }
 
 export namespace UmountProcResponse {
+    export type AsObject = {
+    }
+}
+
+export class MountNfsRequest extends jspb.Message {
+    getSource(): string;
+    setSource(value: string): MountNfsRequest;
+    getTarget(): string;
+    setTarget(value: string): MountNfsRequest;
+    getArgs(): string;
+    setArgs(value: string): MountNfsRequest;
+    getPid(): number;
+    setPid(value: number): MountNfsRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): MountNfsRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: MountNfsRequest): MountNfsRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: MountNfsRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): MountNfsRequest;
+    static deserializeBinaryFromReader(message: MountNfsRequest, reader: jspb.BinaryReader): MountNfsRequest;
+}
+
+export namespace MountNfsRequest {
+    export type AsObject = {
+        source: string,
+        target: string,
+        args: string,
+        pid: number,
+    }
+}
+
+export class MountNfsResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): MountNfsResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: MountNfsResponse): MountNfsResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: MountNfsResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): MountNfsResponse;
+    static deserializeBinaryFromReader(message: MountNfsResponse, reader: jspb.BinaryReader): MountNfsResponse;
+}
+
+export namespace MountNfsResponse {
+    export type AsObject = {
+    }
+}
+
+export class UmountNfsRequest extends jspb.Message {
+    getTarget(): string;
+    setTarget(value: string): UmountNfsRequest;
+    getPid(): number;
+    setPid(value: number): UmountNfsRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UmountNfsRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: UmountNfsRequest): UmountNfsRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UmountNfsRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UmountNfsRequest;
+    static deserializeBinaryFromReader(message: UmountNfsRequest, reader: jspb.BinaryReader): UmountNfsRequest;
+}
+
+export namespace UmountNfsRequest {
+    export type AsObject = {
+        target: string,
+        pid: number,
+    }
+}
+
+export class UmountNfsResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UmountNfsResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: UmountNfsResponse): UmountNfsResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UmountNfsResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UmountNfsResponse;
+    static deserializeBinaryFromReader(message: UmountNfsResponse, reader: jspb.BinaryReader): UmountNfsResponse;
+}
+
+export namespace UmountNfsResponse {
     export type AsObject = {
     }
 }
