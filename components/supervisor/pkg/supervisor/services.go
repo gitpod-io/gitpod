@@ -5,6 +5,7 @@
 package supervisor
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -1071,6 +1072,7 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 
 	// Determine when the task is done
 	var isClosed atomic.Bool
+	closedChannel := make(chan struct{})
 	isClosed.Store(taskStatus.State == api.TaskState_closed)
 
 	sub := s.tasksManager.Subscribe()
@@ -1082,6 +1084,7 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	go func() {
 		defer func() {
 			isClosed.Store(true)
+			close(closedChannel)
 			_ = sub.Close()
 		}()
 
@@ -1104,45 +1107,47 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 				}
 			}
 		}
-
 	}()
 
 	// Setup fs watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return status.Error(codes.Internal, err.Error())
+		return status.Error(codes.Internal, fmt.Sprintf("Error creating the watcher: %s", err.Error()))
 	}
 	defer watcher.Close()
 
 	err = watcher.Add(fileLocation)
 	if err != nil {
-		return status.Error(codes.Internal, err.Error())
+		return status.Error(codes.Internal, fmt.Sprintf("Error adding file to the watcher: %s", err.Error()))
 	}
 
 	// Do the actual reading
 	buf := make([]byte, 4096)
-	offset := int64(0)
+	reader := bufio.NewReader(file)
 	for {
-		n, err := file.ReadAt(buf, offset)
-		if err != nil {
-			return status.Error(codes.Internal, err.Error())
+		n, err := reader.Read(buf)
+		if err == io.EOF {
+			if isClosed.Load() {
+				// We are done
+				return nil
+			}
+		}
+		if err != nil && err != io.EOF {
+			return status.Error(codes.Internal, fmt.Sprintf("Error reading log file: %s", err.Error()))
 		}
 		if n > 0 {
-			offset += int64(n)
 			if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
 				return status.Error(codes.Internal, err.Error())
 			}
-		}
-		if err == io.EOF {
-			if isClosed.Load() && offset > 0 {
-				// we are done
-				return nil
-			}
+
+			continue
 		}
 
 		select {
 		case <-srv.Context().Done():
 			return nil
+		case <-closedChannel:
+			continue
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write && event.Name == fileLocation {
 				// File was written to
@@ -1152,7 +1157,7 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 		case err := <-watcher.Errors:
 			if err != nil {
 				log.Println("error:", err)
-				return status.Error(codes.Internal, err.Error())
+				return status.Error(codes.Internal, fmt.Sprintf("Error watching log file: %s", err.Error()))
 			}
 		}
 	}
