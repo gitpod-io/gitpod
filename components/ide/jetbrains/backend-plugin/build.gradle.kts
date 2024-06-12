@@ -63,6 +63,13 @@ dependencies {
     compileOnly("javax.websocket:javax.websocket-api:1.1")
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
     testImplementation(kotlin("test"))
+
+    // grpc
+    implementation("com.google.api.grpc:proto-google-common-protos:2.2.2")
+    implementation("io.grpc:grpc-core:1.49.0")
+    implementation("io.grpc:grpc-protobuf:1.49.0")
+    implementation("io.grpc:grpc-stub:1.49.0")
+    implementation("io.grpc:grpc-netty-shaded:1.49.0")
 }
 
 // Configure gradle-intellij-plugin plugin.
