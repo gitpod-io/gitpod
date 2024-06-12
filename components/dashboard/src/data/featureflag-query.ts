@@ -20,7 +20,6 @@ const featureFlags = {
     linkedinConnectionForOnboarding: false,
     enableDedicatedOnboardingFlow: false,
     phoneVerificationByCall: false,
-    doRetryUserLoader: true,
     // Local SSH feature of VS Code Desktop Extension
     gitpod_desktop_use_local_ssh_proxy: false,
     enabledOrbitalDiscoveries: "",

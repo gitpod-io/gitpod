@@ -10,13 +10,12 @@ import { trackLocation } from "../Analytics";
 import { useQuery } from "@tanstack/react-query";
 import { noPersistence } from "../data/setup";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { useFeatureFlag, useReportDashboardLoggingTracing } from "../data/featureflag-query";
+import { useReportDashboardLoggingTracing } from "../data/featureflag-query";
 import { userClient } from "../service/public-api";
 
 export let userLoaded = false;
 export const useUserLoader = () => {
     const { user, setUser } = useContext(UserContext);
-    const doRetryUserLoader = useFeatureFlag("doRetryUserLoader");
     const logTracing = useReportDashboardLoggingTracing();
 
     // For now, we're using the user context to store the user, but letting react-query handle the loading
@@ -31,9 +30,6 @@ export const useUserLoader = () => {
         useErrorBoundary: true,
         // It's important we don't retry as we want to show the login screen as quickly as possible if a 401
         retry: (_failureCount: number, error: Error & { code?: number }) => {
-            if (!doRetryUserLoader) {
-                return false;
-            }
             return error.code !== ErrorCodes.NOT_AUTHENTICATED && error.code !== ErrorCodes.USER_DELETED;
         },
         // docs: https://tanstack.com/query/v4/docs/react/guides/query-retries
