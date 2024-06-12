@@ -22,16 +22,7 @@
 
 	servers {
 		protocols h1 h2 h2c
-		metrics
 	}
-}
-
-# Define a matcher to exclude 502 errors on a specific path
-@exclude502 {
-    not {
-        path /_supervisor*
-        status 502
-    }
 }
 
 (compression) {
@@ -151,7 +142,7 @@
 
 # TODO: refactor once we can listen only in localhost
 :9545 {
-	metrics /metrics @exclude502 {
+	metrics /metrics {
 		disable_openmetrics
 	}
 }
