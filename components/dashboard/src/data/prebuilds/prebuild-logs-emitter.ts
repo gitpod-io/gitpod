@@ -10,10 +10,7 @@ import { useEffect, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import {
-    WatchWorkspaceImageBuildLogsRequest,
-    WorkspacePhase_Phase,
-} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import pRetry from "p-retry";
 
 /**
@@ -35,6 +32,7 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null
         const controller = new AbortController();
         const watch = async () => {
             if (taskId === null) {
+                setIsLoading(false);
                 return;
             }
             if (!prebuildId || !taskId) {
@@ -52,16 +50,15 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null
                 throw new ApplicationError(ErrorCodes.NOT_FOUND, `Prebuild ${prebuildId} not found`);
             }
 
+            setIsLoading(true);
+
             const { workspaceId } = prebuild;
             if (taskId === "image-build" && workspaceId) {
                 const workspace = await workspaceClient.getWorkspace({ workspaceId });
                 if (workspace.workspace?.status?.phase?.name === WorkspacePhase_Phase.IMAGEBUILD) {
                     await pRetry(
                         async () => {
-                            const request = new WatchWorkspaceImageBuildLogsRequest();
-                            request.workspaceId = workspaceId;
-                            const iterable = workspaceClient.watchWorkspaceImageBuildLogs(request);
-
+                            const iterable = workspaceClient.watchWorkspaceImageBuildLogs({ workspaceId });
                             for await (const response of iterable) {
                                 if (response.log) {
                                     emitter.emit("logs", response.log.content);
@@ -80,6 +77,7 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null
                     );
                 }
 
+                setIsLoading(false);
                 return;
             }
 

@@ -63,6 +63,7 @@ export const PrebuildDetailPage: FC = () => {
     const { toast, dismissToast } = useToast();
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
     const [logNotFound, setLogNotFound] = useState(false);
+    const [noTasksPresent, setNoTasksPresent] = useState(false);
     const [selectedTaskId, actuallySetSelectedTaskId] = useState<string | undefined>(
         window.location.hash.slice(1) || undefined,
     );
@@ -77,7 +78,7 @@ export const PrebuildDetailPage: FC = () => {
             return "image-build";
         }
 
-        return selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? "0";
+        return selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? null;
     }, [currentPrebuild, isImageBuild, selectedTaskId]);
 
     const {
@@ -125,9 +126,7 @@ export const PrebuildDetailPage: FC = () => {
 
     useEffect(() => {
         const anyLogAvailable = isImageBuild || currentPrebuild?.status?.taskLogs.some((t) => t.logUrl);
-        if (!anyLogAvailable) {
-            setLogNotFound(true);
-        }
+        setNoTasksPresent(!anyLogAvailable);
     }, [currentPrebuild?.status?.taskLogs, isImageBuild]);
 
     useEffect(() => {
@@ -206,6 +205,8 @@ export const PrebuildDetailPage: FC = () => {
         };
     }, [currentPrebuild]);
 
+    const isError = logNotFound || noTasksPresent;
+
     if (newPrebuildID) {
         return <Redirect to={repositoriesRoutes.PrebuildDetail(newPrebuildID)} />;
     }
@@ -249,8 +250,7 @@ export const PrebuildDetailPage: FC = () => {
                     </div>
                 ) : (
                     prebuild &&
-                    currentPrebuild &&
-                    taskId && (
+                    currentPrebuild && (
                         <div className={"border border-pk-border-base rounded-xl py-6 divide-y"}>
                             <div className="px-6 pb-4">
                                 <div className="flex flex-col gap-2">
@@ -300,10 +300,10 @@ export const PrebuildDetailPage: FC = () => {
                                     )}
                                 </div>
                                 {(currentPrebuild?.status?.taskLogs.some((t) => t.logUrl) ||
-                                    logNotFound ||
+                                    isError ||
                                     isImageBuild) && (
                                     <Tabs
-                                        value={taskId}
+                                        value={taskId ?? "empty-tab"}
                                         onValueChange={setSelectedTaskId}
                                         className="p-0 bg-pk-surface-primary"
                                     >
@@ -331,23 +331,32 @@ export const PrebuildDetailPage: FC = () => {
                                                     </TabsTrigger>
                                                 ))}
                                         </TabsList>
-                                        <TabsContent value={taskId} className="h-112 mt-0 border-pk-border-base">
+                                        <TabsContent
+                                            value={taskId ?? "empty-tab"}
+                                            className="h-112 mt-0 border-pk-border-base"
+                                        >
                                             <Suspense fallback={<div />}>
-                                                {logNotFound ? (
+                                                {isError ? (
                                                     <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
                                                         <Text className="w-80 text-center">
-                                                            Logs of this prebuild are inaccessible. Use{" "}
-                                                            <code>gp validate --prebuild --headless</code> in a
-                                                            workspace to see logs and debug prebuild issues.{" "}
-                                                            <a
-                                                                href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
-                                                                target="_blank"
-                                                                rel="noreferrer noopener"
-                                                                className="gp-link"
-                                                            >
-                                                                Learn more
-                                                            </a>
-                                                            .
+                                                            {logNotFound ? (
+                                                                <>
+                                                                    Logs of this prebuild are inaccessible. Use{" "}
+                                                                    <code>gp validate --prebuild --headless</code> in a
+                                                                    workspace to see logs and debug prebuild issues.{" "}
+                                                                    <a
+                                                                        href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
+                                                                        target="_blank"
+                                                                        rel="noreferrer noopener"
+                                                                        className="gp-link"
+                                                                    >
+                                                                        Learn more
+                                                                    </a>
+                                                                    .
+                                                                </>
+                                                            ) : (
+                                                                "No prebuild tasks defined in `.gitpod.yml` for this prebuild"
+                                                            )}
                                                         </Text>
                                                     </div>
                                                 ) : (
