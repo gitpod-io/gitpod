@@ -33,9 +33,7 @@ describe("UserService", async () => {
 
     beforeEach(async () => {
         container = createTestContainer();
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         userService = container.get<UserService>(UserService);
         auth = container.get(Authorizer);
         orgService = container.get<OrganizationService>(OrganizationService);

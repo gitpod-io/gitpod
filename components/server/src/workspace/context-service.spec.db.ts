@@ -75,9 +75,7 @@ describe("ContextService", async () => {
 
     beforeEach(async () => {
         container = createTestContainer();
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         container.rebind(ConfigProvider).toConstantValue({
             fetchConfig: () => {
                 return {

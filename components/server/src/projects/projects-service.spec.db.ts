@@ -32,9 +32,7 @@ describe("ProjectsService", async () => {
 
     beforeEach(async () => {
         container = createTestContainer();
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         const userDB = container.get<UserDB>(UserDB);
 
         // create the owner

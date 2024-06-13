@@ -179,10 +179,7 @@ function createServiceClient<T extends ServiceType>(
                 if (!jsonRpcOptions) {
                     return grpcClient;
                 }
-                const featureFlags = [
-                    `dashboard_public_api_${jsonRpcOptions.featureFlagSuffix}_enabled`,
-                    "centralizedPermissions",
-                ];
+                const featureFlags = [`dashboard_public_api_${jsonRpcOptions.featureFlagSuffix}_enabled`];
                 const resolvedFlags = await Promise.all(
                     featureFlags.map((ff) =>
                         experimentsClient.getValueAsync(ff, false, {
