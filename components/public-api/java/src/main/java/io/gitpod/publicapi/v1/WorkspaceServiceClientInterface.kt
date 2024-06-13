@@ -31,6 +31,12 @@ public interface WorkspaceServiceClientInterface {
       ServerOnlyStreamInterface<WorkspaceOuterClass.WatchWorkspaceStatusRequest, WorkspaceOuterClass.WatchWorkspaceStatusResponse>
 
   /**
+   *  WatchWorkspaceImageBuildLogs watches the image build logs of the workspace
+   */
+  public suspend fun watchWorkspaceImageBuildLogs(headers: Headers = emptyMap()):
+      ServerOnlyStreamInterface<WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest, WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse>
+
+  /**
    *  ListWorkspaces returns a list of workspaces that match the query.
    */
   public suspend fun listWorkspaces(request: WorkspaceOuterClass.ListWorkspacesRequest,

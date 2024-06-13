@@ -36,6 +36,7 @@ import {
     WithPrebuild,
     WorkspaceAutostartOption,
     WorkspaceContext,
+    WorkspaceImageBuild,
     WorkspaceInfo,
     WorkspaceSession as WorkspaceSessionProtocol,
 } from "@gitpod/gitpod-protocol/lib/protocol";
@@ -136,6 +137,9 @@ import {
     PrebuildInitializer,
     SnapshotInitializer,
     UpdateWorkspaceRequest_UpdateTimeout,
+    WatchWorkspaceImageBuildLogsResponse_Log,
+    WatchWorkspaceImageBuildLogsResponse_State,
+    WatchWorkspaceImageBuildLogsResponse_State_Phase,
     Workspace,
     WorkspaceClass,
     WorkspaceGitStatus,
@@ -819,6 +823,38 @@ export class PublicAPIConverter {
             result.unpushedCommits = gitStatus.unpushedCommits || [];
             result.totalUnpushedCommits = gitStatus.totalUnpushedCommits || 0;
         }
+        return result;
+    }
+
+    toImageBuildLogsState(info: WorkspaceImageBuild.StateInfo): WatchWorkspaceImageBuildLogsResponse_State {
+        const result = new WatchWorkspaceImageBuildLogsResponse_State();
+
+        result.currentStep = info.currentStep ?? 0;
+        result.maxSteps = info.maxSteps ?? 0;
+        switch (info.phase) {
+            case "BaseImage":
+                result.phase = WatchWorkspaceImageBuildLogsResponse_State_Phase.BASE_IMAGE;
+                break;
+            case "Done":
+                result.phase = WatchWorkspaceImageBuildLogsResponse_State_Phase.DONE;
+                break;
+            case "Error":
+                result.phase = WatchWorkspaceImageBuildLogsResponse_State_Phase.ERROR;
+                break;
+            case "GitpodLayer":
+                result.phase = WatchWorkspaceImageBuildLogsResponse_State_Phase.GITPOD_LAYER;
+                break;
+        }
+
+        return result;
+    }
+
+    toImageBuildLog(log: WorkspaceImageBuild.LogContent): WatchWorkspaceImageBuildLogsResponse_Log {
+        const result = new WatchWorkspaceImageBuildLogsResponse_Log();
+        result.content = log.text;
+        result.isDiff = log.isDiff ?? false;
+        result.upToLine = log.upToLine ?? 0;
+
         return result;
     }
 

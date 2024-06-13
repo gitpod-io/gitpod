@@ -44,34 +44,44 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null
             controller.signal.addEventListener("abort", () => {
                 dispose?.();
             });
+
             const { prebuild } = await prebuildClient.getPrebuild({ prebuildId });
-            if (taskId === "image-build" && prebuild?.workspaceId) {
-                const workspace = await workspaceClient.getWorkspace({ workspaceId: prebuild.workspaceId });
+            if (!prebuild) {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `Prebuild ${prebuildId} not found`);
+            }
+
+            const { workspaceId } = prebuild;
+            if (taskId === "image-build" && workspaceId) {
+                const workspace = await workspaceClient.getWorkspace({ workspaceId });
                 if (workspace.workspace?.status?.phase?.name === WorkspacePhase_Phase.IMAGEBUILD) {
-                    await pRetry(
-                        async () => {
-                            await getGitpodService().server.watchWorkspaceImageBuildLogs(prebuild.workspaceId);
-                        },
-                        {
-                            retries: 10,
-                            onFailedAttempt: (error) => {
-                                console.error(
-                                    `Failed to watch image build logs for workspace ${prebuild.workspaceId} attempt ${error.attemptNumber}: ${error.message}`,
-                                );
-                            },
-                        },
-                    );
                     dispose = getGitpodService().registerClient({
                         onWorkspaceImageBuildLogs: (
                             _: WorkspaceImageBuild.StateInfo,
                             content?: WorkspaceImageBuild.LogContent,
                         ) => {
                             if (!content) {
+                                console.error("Received empty image build log content");
                                 return;
                             }
+
+                            console.debug("Received image build log content", content);
                             emitter.emit("logs", content.text);
                         },
                     }).dispose;
+                    await pRetry(
+                        async () => {
+                            await getGitpodService().server.watchWorkspaceImageBuildLogs(workspaceId);
+                        },
+                        {
+                            signal: controller.signal,
+                            retries: 10,
+                            onFailedAttempt: (error) => {
+                                console.error(
+                                    `Failed to watch image build logs for workspace ${workspaceId} attempt ${error.attemptNumber}: ${error.message}`,
+                                );
+                            },
+                        },
+                    );
                 }
 
                 return;

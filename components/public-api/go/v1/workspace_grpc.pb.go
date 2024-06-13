@@ -35,6 +35,8 @@ type WorkspaceServiceClient interface {
 	//
 	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(ctx context.Context, in *WatchWorkspaceStatusRequest, opts ...grpc.CallOption) (WorkspaceService_WatchWorkspaceStatusClient, error)
+	// WatchWorkspaceImageBuildLogs watches the image build logs of the workspace
+	WatchWorkspaceImageBuildLogs(ctx context.Context, in *WatchWorkspaceImageBuildLogsRequest, opts ...grpc.CallOption) (WorkspaceService_WatchWorkspaceImageBuildLogsClient, error)
 	// ListWorkspaces returns a list of workspaces that match the query.
 	ListWorkspaces(ctx context.Context, in *ListWorkspacesRequest, opts ...grpc.CallOption) (*ListWorkspacesResponse, error)
 	// ListWorkspaceSessions returns a list of workspace sessions that match the
@@ -120,6 +122,38 @@ type workspaceServiceWatchWorkspaceStatusClient struct {
 
 func (x *workspaceServiceWatchWorkspaceStatusClient) Recv() (*WatchWorkspaceStatusResponse, error) {
 	m := new(WatchWorkspaceStatusResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *workspaceServiceClient) WatchWorkspaceImageBuildLogs(ctx context.Context, in *WatchWorkspaceImageBuildLogsRequest, opts ...grpc.CallOption) (WorkspaceService_WatchWorkspaceImageBuildLogsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &WorkspaceService_ServiceDesc.Streams[1], "/gitpod.v1.WorkspaceService/WatchWorkspaceImageBuildLogs", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &workspaceServiceWatchWorkspaceImageBuildLogsClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type WorkspaceService_WatchWorkspaceImageBuildLogsClient interface {
+	Recv() (*WatchWorkspaceImageBuildLogsResponse, error)
+	grpc.ClientStream
+}
+
+type workspaceServiceWatchWorkspaceImageBuildLogsClient struct {
+	grpc.ClientStream
+}
+
+func (x *workspaceServiceWatchWorkspaceImageBuildLogsClient) Recv() (*WatchWorkspaceImageBuildLogsResponse, error) {
+	m := new(WatchWorkspaceImageBuildLogsResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -283,6 +317,8 @@ type WorkspaceServiceServer interface {
 	//
 	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(*WatchWorkspaceStatusRequest, WorkspaceService_WatchWorkspaceStatusServer) error
+	// WatchWorkspaceImageBuildLogs watches the image build logs of the workspace
+	WatchWorkspaceImageBuildLogs(*WatchWorkspaceImageBuildLogsRequest, WorkspaceService_WatchWorkspaceImageBuildLogsServer) error
 	// ListWorkspaces returns a list of workspaces that match the query.
 	ListWorkspaces(context.Context, *ListWorkspacesRequest) (*ListWorkspacesResponse, error)
 	// ListWorkspaceSessions returns a list of workspace sessions that match the
@@ -335,6 +371,9 @@ func (UnimplementedWorkspaceServiceServer) GetWorkspace(context.Context, *GetWor
 }
 func (UnimplementedWorkspaceServiceServer) WatchWorkspaceStatus(*WatchWorkspaceStatusRequest, WorkspaceService_WatchWorkspaceStatusServer) error {
 	return status.Errorf(codes.Unimplemented, "method WatchWorkspaceStatus not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) WatchWorkspaceImageBuildLogs(*WatchWorkspaceImageBuildLogsRequest, WorkspaceService_WatchWorkspaceImageBuildLogsServer) error {
+	return status.Errorf(codes.Unimplemented, "method WatchWorkspaceImageBuildLogs not implemented")
 }
 func (UnimplementedWorkspaceServiceServer) ListWorkspaces(context.Context, *ListWorkspacesRequest) (*ListWorkspacesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListWorkspaces not implemented")
@@ -433,6 +472,27 @@ type workspaceServiceWatchWorkspaceStatusServer struct {
 }
 
 func (x *workspaceServiceWatchWorkspaceStatusServer) Send(m *WatchWorkspaceStatusResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _WorkspaceService_WatchWorkspaceImageBuildLogs_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchWorkspaceImageBuildLogsRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(WorkspaceServiceServer).WatchWorkspaceImageBuildLogs(m, &workspaceServiceWatchWorkspaceImageBuildLogsServer{stream})
+}
+
+type WorkspaceService_WatchWorkspaceImageBuildLogsServer interface {
+	Send(*WatchWorkspaceImageBuildLogsResponse) error
+	grpc.ServerStream
+}
+
+type workspaceServiceWatchWorkspaceImageBuildLogsServer struct {
+	grpc.ServerStream
+}
+
+func (x *workspaceServiceWatchWorkspaceImageBuildLogsServer) Send(m *WatchWorkspaceImageBuildLogsResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -804,6 +864,11 @@ var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "WatchWorkspaceStatus",
 			Handler:       _WorkspaceService_WatchWorkspaceStatus_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "WatchWorkspaceImageBuildLogs",
+			Handler:       _WorkspaceService_WatchWorkspaceImageBuildLogs_Handler,
 			ServerStreams: true,
 		},
 	},

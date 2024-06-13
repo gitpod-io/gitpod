@@ -314,6 +314,234 @@ export class WatchWorkspaceStatusResponse extends Message<WatchWorkspaceStatusRe
 }
 
 /**
+ * @generated from message gitpod.v1.WatchWorkspaceImageBuildLogsRequest
+ */
+export class WatchWorkspaceImageBuildLogsRequest extends Message<WatchWorkspaceImageBuildLogsRequest> {
+  /**
+   * workspace_id specifies the workspace to watch
+   *
+   * +required
+   *
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<WatchWorkspaceImageBuildLogsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WatchWorkspaceImageBuildLogsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WatchWorkspaceImageBuildLogsRequest {
+    return new WatchWorkspaceImageBuildLogsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WatchWorkspaceImageBuildLogsRequest {
+    return new WatchWorkspaceImageBuildLogsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WatchWorkspaceImageBuildLogsRequest {
+    return new WatchWorkspaceImageBuildLogsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WatchWorkspaceImageBuildLogsRequest | PlainMessage<WatchWorkspaceImageBuildLogsRequest> | undefined, b: WatchWorkspaceImageBuildLogsRequest | PlainMessage<WatchWorkspaceImageBuildLogsRequest> | undefined): boolean {
+    return proto3.util.equals(WatchWorkspaceImageBuildLogsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WatchWorkspaceImageBuildLogsResponse
+ */
+export class WatchWorkspaceImageBuildLogsResponse extends Message<WatchWorkspaceImageBuildLogsResponse> {
+  /**
+   * log is the updated logs of workspace
+   *
+   * @generated from field: gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log log = 1;
+   */
+  log?: WatchWorkspaceImageBuildLogsResponse_Log;
+
+  /**
+   * state is additional information about the state of the image build
+   *
+   * @generated from field: gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2;
+   */
+  state?: WatchWorkspaceImageBuildLogsResponse_State;
+
+  constructor(data?: PartialMessage<WatchWorkspaceImageBuildLogsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WatchWorkspaceImageBuildLogsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "log", kind: "message", T: WatchWorkspaceImageBuildLogsResponse_Log },
+    { no: 2, name: "state", kind: "message", T: WatchWorkspaceImageBuildLogsResponse_State },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WatchWorkspaceImageBuildLogsResponse {
+    return new WatchWorkspaceImageBuildLogsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WatchWorkspaceImageBuildLogsResponse {
+    return new WatchWorkspaceImageBuildLogsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WatchWorkspaceImageBuildLogsResponse {
+    return new WatchWorkspaceImageBuildLogsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WatchWorkspaceImageBuildLogsResponse | PlainMessage<WatchWorkspaceImageBuildLogsResponse> | undefined, b: WatchWorkspaceImageBuildLogsResponse | PlainMessage<WatchWorkspaceImageBuildLogsResponse> | undefined): boolean {
+    return proto3.util.equals(WatchWorkspaceImageBuildLogsResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State
+ */
+export class WatchWorkspaceImageBuildLogsResponse_State extends Message<WatchWorkspaceImageBuildLogsResponse_State> {
+  /**
+   * @generated from field: gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase phase = 1;
+   */
+  phase = WatchWorkspaceImageBuildLogsResponse_State_Phase.UNSPECIFIED;
+
+  /**
+   * @generated from field: int32 current_step = 2;
+   */
+  currentStep = 0;
+
+  /**
+   * @generated from field: int32 max_steps = 3;
+   */
+  maxSteps = 0;
+
+  constructor(data?: PartialMessage<WatchWorkspaceImageBuildLogsResponse_State>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "phase", kind: "enum", T: proto3.getEnumType(WatchWorkspaceImageBuildLogsResponse_State_Phase) },
+    { no: 2, name: "current_step", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "max_steps", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WatchWorkspaceImageBuildLogsResponse_State {
+    return new WatchWorkspaceImageBuildLogsResponse_State().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WatchWorkspaceImageBuildLogsResponse_State {
+    return new WatchWorkspaceImageBuildLogsResponse_State().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WatchWorkspaceImageBuildLogsResponse_State {
+    return new WatchWorkspaceImageBuildLogsResponse_State().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WatchWorkspaceImageBuildLogsResponse_State | PlainMessage<WatchWorkspaceImageBuildLogsResponse_State> | undefined, b: WatchWorkspaceImageBuildLogsResponse_State | PlainMessage<WatchWorkspaceImageBuildLogsResponse_State> | undefined): boolean {
+    return proto3.util.equals(WatchWorkspaceImageBuildLogsResponse_State, a, b);
+  }
+}
+
+/**
+ * @generated from enum gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase
+ */
+export enum WatchWorkspaceImageBuildLogsResponse_State_Phase {
+  /**
+   * @generated from enum value: PHASE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: PHASE_BASE_IMAGE = 1;
+   */
+  BASE_IMAGE = 1,
+
+  /**
+   * @generated from enum value: PHASE_GITPOD_LAYER = 2;
+   */
+  GITPOD_LAYER = 2,
+
+  /**
+   * @generated from enum value: PHASE_ERROR = 3;
+   */
+  ERROR = 3,
+
+  /**
+   * @generated from enum value: PHASE_DONE = 4;
+   */
+  DONE = 4,
+}
+// Retrieve enum metadata with: proto3.getEnumType(WatchWorkspaceImageBuildLogsResponse_State_Phase)
+proto3.util.setEnumType(WatchWorkspaceImageBuildLogsResponse_State_Phase, "gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase", [
+  { no: 0, name: "PHASE_UNSPECIFIED" },
+  { no: 1, name: "PHASE_BASE_IMAGE" },
+  { no: 2, name: "PHASE_GITPOD_LAYER" },
+  { no: 3, name: "PHASE_ERROR" },
+  { no: 4, name: "PHASE_DONE" },
+]);
+
+/**
+ * @generated from message gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log
+ */
+export class WatchWorkspaceImageBuildLogsResponse_Log extends Message<WatchWorkspaceImageBuildLogsResponse_Log> {
+  /**
+   * content is the log content
+   *
+   * @generated from field: string content = 1;
+   */
+  content = "";
+
+  /**
+   * up_to_line is the line number up to which the log is displayed
+   *
+   * @generated from field: int32 up_to_line = 2;
+   */
+  upToLine = 0;
+
+  /**
+   * @generated from field: bool is_diff = 3;
+   */
+  isDiff = false;
+
+  constructor(data?: PartialMessage<WatchWorkspaceImageBuildLogsResponse_Log>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "content", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "up_to_line", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "is_diff", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WatchWorkspaceImageBuildLogsResponse_Log {
+    return new WatchWorkspaceImageBuildLogsResponse_Log().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WatchWorkspaceImageBuildLogsResponse_Log {
+    return new WatchWorkspaceImageBuildLogsResponse_Log().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WatchWorkspaceImageBuildLogsResponse_Log {
+    return new WatchWorkspaceImageBuildLogsResponse_Log().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WatchWorkspaceImageBuildLogsResponse_Log | PlainMessage<WatchWorkspaceImageBuildLogsResponse_Log> | undefined, b: WatchWorkspaceImageBuildLogsResponse_Log | PlainMessage<WatchWorkspaceImageBuildLogsResponse_Log> | undefined): boolean {
+    return proto3.util.equals(WatchWorkspaceImageBuildLogsResponse_Log, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.ListWorkspacesRequest
  */
 export class ListWorkspacesRequest extends Message<ListWorkspacesRequest> {

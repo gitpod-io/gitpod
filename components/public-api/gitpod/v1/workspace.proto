@@ -23,6 +23,9 @@ service WorkspaceService {
   // workspace_id +return NOT_FOUND Workspace does not exist
   rpc WatchWorkspaceStatus(WatchWorkspaceStatusRequest) returns (stream WatchWorkspaceStatusResponse) {}
 
+  // WatchWorkspaceImageBuildLogs watches the image build logs of the workspace
+  rpc WatchWorkspaceImageBuildLogs(WatchWorkspaceImageBuildLogsRequest) returns (stream WatchWorkspaceImageBuildLogsResponse) {}
+
   // ListWorkspaces returns a list of workspaces that match the query.
   rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse) {}
 
@@ -124,6 +127,45 @@ message WatchWorkspaceStatusResponse {
 
   // status is the updated status of workspace
   WorkspaceStatus status = 2;
+}
+
+message WatchWorkspaceImageBuildLogsRequest {
+  // workspace_id specifies the workspace to watch
+  //
+  // +required
+  string workspace_id = 1;
+}
+
+message WatchWorkspaceImageBuildLogsResponse {
+  message State {
+    enum Phase {
+      PHASE_UNSPECIFIED = 0;
+      PHASE_BASE_IMAGE = 1;
+      PHASE_GITPOD_LAYER = 2;
+      PHASE_ERROR = 3;
+      PHASE_DONE = 4;
+    }
+
+    Phase phase = 1;
+    int32 current_step = 2;
+    int32 max_steps = 3;
+  }
+
+  message Log {
+    // content is the log content
+    string content = 1;
+
+    // up_to_line is the line number up to which the log is displayed
+    int32 up_to_line = 2;
+
+    bool is_diff = 3;
+  }
+
+  // log is the updated logs of workspace
+  Log log = 1;
+
+  // state is additional information about the state of the image build
+  State state = 2;
 }
 
 message ListWorkspacesRequest {

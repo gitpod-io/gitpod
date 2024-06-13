@@ -1119,8 +1119,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // TODO(gpl) Remove entirely after FGA rollout
         const logCtx: LogContext = { userId: user.id, workspaceId };
-        // eslint-disable-next-line prefer-const
-        let { instance, workspace } = await this.internGetCurrentWorkspaceInstance(ctx, user, workspaceId);
+        const { instance, workspace } = await this.internGetCurrentWorkspaceInstance(ctx, user, workspaceId);
         if (!instance) {
             log.debug(logCtx, `No running instance for workspaceId.`);
             return;
