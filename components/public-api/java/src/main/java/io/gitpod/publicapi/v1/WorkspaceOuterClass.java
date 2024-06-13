@@ -4072,6 +4072,2926 @@ public final class WorkspaceOuterClass {
 
   }
 
+  public interface WatchWorkspaceImageBuildLogsRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.WatchWorkspaceImageBuildLogsRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * workspace_id specifies the workspace to watch
+     *
+     * +required
+     * </pre>
+     *
+     * <code>string workspace_id = 1 [json_name = "workspaceId"];</code>
+     * @return The workspaceId.
+     */
+    java.lang.String getWorkspaceId();
+    /**
+     * <pre>
+     * workspace_id specifies the workspace to watch
+     *
+     * +required
+     * </pre>
+     *
+     * <code>string workspace_id = 1 [json_name = "workspaceId"];</code>
+     * @return The bytes for workspaceId.
+     */
+    com.google.protobuf.ByteString
+        getWorkspaceIdBytes();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.WatchWorkspaceImageBuildLogsRequest}
+   */
+  public static final class WatchWorkspaceImageBuildLogsRequest extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.WatchWorkspaceImageBuildLogsRequest)
+      WatchWorkspaceImageBuildLogsRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 1,
+        /* suffix= */ "",
+        WatchWorkspaceImageBuildLogsRequest.class.getName());
+    }
+    // Use WatchWorkspaceImageBuildLogsRequest.newBuilder() to construct.
+    private WatchWorkspaceImageBuildLogsRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private WatchWorkspaceImageBuildLogsRequest() {
+      workspaceId_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest.Builder.class);
+    }
+
+    public static final int WORKSPACE_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object workspaceId_ = "";
+    /**
+     * <pre>
+     * workspace_id specifies the workspace to watch
+     *
+     * +required
+     * </pre>
+     *
+     * <code>string workspace_id = 1 [json_name = "workspaceId"];</code>
+     * @return The workspaceId.
+     */
+    @java.lang.Override
+    public java.lang.String getWorkspaceId() {
+      java.lang.Object ref = workspaceId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        workspaceId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * workspace_id specifies the workspace to watch
+     *
+     * +required
+     * </pre>
+     *
+     * <code>string workspace_id = 1 [json_name = "workspaceId"];</code>
+     * @return The bytes for workspaceId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getWorkspaceIdBytes() {
+      java.lang.Object ref = workspaceId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        workspaceId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(workspaceId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, workspaceId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(workspaceId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, workspaceId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest other = (io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest) obj;
+
+      if (!getWorkspaceId()
+          .equals(other.getWorkspaceId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + WORKSPACE_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getWorkspaceId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.WatchWorkspaceImageBuildLogsRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.WatchWorkspaceImageBuildLogsRequest)
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        workspaceId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest build() {
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest buildPartial() {
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest result = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.workspaceId_ = workspaceId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest) {
+          return mergeFrom((io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest other) {
+        if (other == io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest.getDefaultInstance()) return this;
+        if (!other.getWorkspaceId().isEmpty()) {
+          workspaceId_ = other.workspaceId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                workspaceId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object workspaceId_ = "";
+      /**
+       * <pre>
+       * workspace_id specifies the workspace to watch
+       *
+       * +required
+       * </pre>
+       *
+       * <code>string workspace_id = 1 [json_name = "workspaceId"];</code>
+       * @return The workspaceId.
+       */
+      public java.lang.String getWorkspaceId() {
+        java.lang.Object ref = workspaceId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          workspaceId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * workspace_id specifies the workspace to watch
+       *
+       * +required
+       * </pre>
+       *
+       * <code>string workspace_id = 1 [json_name = "workspaceId"];</code>
+       * @return The bytes for workspaceId.
+       */
+      public com.google.protobuf.ByteString
+          getWorkspaceIdBytes() {
+        java.lang.Object ref = workspaceId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          workspaceId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * workspace_id specifies the workspace to watch
+       *
+       * +required
+       * </pre>
+       *
+       * <code>string workspace_id = 1 [json_name = "workspaceId"];</code>
+       * @param value The workspaceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWorkspaceId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        workspaceId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * workspace_id specifies the workspace to watch
+       *
+       * +required
+       * </pre>
+       *
+       * <code>string workspace_id = 1 [json_name = "workspaceId"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearWorkspaceId() {
+        workspaceId_ = getDefaultInstance().getWorkspaceId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * workspace_id specifies the workspace to watch
+       *
+       * +required
+       * </pre>
+       *
+       * <code>string workspace_id = 1 [json_name = "workspaceId"];</code>
+       * @param value The bytes for workspaceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWorkspaceIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        workspaceId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.WatchWorkspaceImageBuildLogsRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.WatchWorkspaceImageBuildLogsRequest)
+    private static final io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest();
+    }
+
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<WatchWorkspaceImageBuildLogsRequest>
+        PARSER = new com.google.protobuf.AbstractParser<WatchWorkspaceImageBuildLogsRequest>() {
+      @java.lang.Override
+      public WatchWorkspaceImageBuildLogsRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<WatchWorkspaceImageBuildLogsRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<WatchWorkspaceImageBuildLogsRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface WatchWorkspaceImageBuildLogsResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.WatchWorkspaceImageBuildLogsResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * logs is the updated logs of workspace
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+     * @return Whether the logs field is set.
+     */
+    boolean hasLogs();
+    /**
+     * <pre>
+     * logs is the updated logs of workspace
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+     * @return The logs.
+     */
+    io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log getLogs();
+    /**
+     * <pre>
+     * logs is the updated logs of workspace
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+     */
+    io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.LogOrBuilder getLogsOrBuilder();
+
+    /**
+     * <pre>
+     * state is additional information about the state of the image build
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+     * @return Whether the state field is set.
+     */
+    boolean hasState();
+    /**
+     * <pre>
+     * state is additional information about the state of the image build
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+     * @return The state.
+     */
+    io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State getState();
+    /**
+     * <pre>
+     * state is additional information about the state of the image build
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+     */
+    io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.StateOrBuilder getStateOrBuilder();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.WatchWorkspaceImageBuildLogsResponse}
+   */
+  public static final class WatchWorkspaceImageBuildLogsResponse extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.WatchWorkspaceImageBuildLogsResponse)
+      WatchWorkspaceImageBuildLogsResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 1,
+        /* suffix= */ "",
+        WatchWorkspaceImageBuildLogsResponse.class.getName());
+    }
+    // Use WatchWorkspaceImageBuildLogsResponse.newBuilder() to construct.
+    private WatchWorkspaceImageBuildLogsResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private WatchWorkspaceImageBuildLogsResponse() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Builder.class);
+    }
+
+    public interface StateOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase phase = 1 [json_name = "phase"];</code>
+       * @return The enum numeric value on the wire for phase.
+       */
+      int getPhaseValue();
+      /**
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase phase = 1 [json_name = "phase"];</code>
+       * @return The phase.
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase getPhase();
+
+      /**
+       * <code>int32 current_step = 2 [json_name = "currentStep"];</code>
+       * @return The currentStep.
+       */
+      int getCurrentStep();
+
+      /**
+       * <code>int32 max_steps = 3 [json_name = "maxSteps"];</code>
+       * @return The maxSteps.
+       */
+      int getMaxSteps();
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State}
+     */
+    public static final class State extends
+        com.google.protobuf.GeneratedMessage implements
+        // @@protoc_insertion_point(message_implements:gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State)
+        StateOrBuilder {
+    private static final long serialVersionUID = 0L;
+      static {
+        com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+          com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+          /* major= */ 4,
+          /* minor= */ 27,
+          /* patch= */ 1,
+          /* suffix= */ "",
+          State.class.getName());
+      }
+      // Use State.newBuilder() to construct.
+      private State(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+        super(builder);
+      }
+      private State() {
+        phase_ = 0;
+      }
+
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_State_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_State_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Builder.class);
+      }
+
+      /**
+       * Protobuf enum {@code gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase}
+       */
+      public enum Phase
+          implements com.google.protobuf.ProtocolMessageEnum {
+        /**
+         * <code>PHASE_UNSPECIFIED = 0;</code>
+         */
+        PHASE_UNSPECIFIED(0),
+        /**
+         * <code>PHASE_BASE_IMAGE = 1;</code>
+         */
+        PHASE_BASE_IMAGE(1),
+        /**
+         * <code>PHASE_GITPOD_LAYER = 2;</code>
+         */
+        PHASE_GITPOD_LAYER(2),
+        /**
+         * <code>PHASE_ERROR = 3;</code>
+         */
+        PHASE_ERROR(3),
+        /**
+         * <code>PHASE_DONE = 4;</code>
+         */
+        PHASE_DONE(4),
+        UNRECOGNIZED(-1),
+        ;
+
+        static {
+          com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+            com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+            /* major= */ 4,
+            /* minor= */ 27,
+            /* patch= */ 1,
+            /* suffix= */ "",
+            Phase.class.getName());
+        }
+        /**
+         * <code>PHASE_UNSPECIFIED = 0;</code>
+         */
+        public static final int PHASE_UNSPECIFIED_VALUE = 0;
+        /**
+         * <code>PHASE_BASE_IMAGE = 1;</code>
+         */
+        public static final int PHASE_BASE_IMAGE_VALUE = 1;
+        /**
+         * <code>PHASE_GITPOD_LAYER = 2;</code>
+         */
+        public static final int PHASE_GITPOD_LAYER_VALUE = 2;
+        /**
+         * <code>PHASE_ERROR = 3;</code>
+         */
+        public static final int PHASE_ERROR_VALUE = 3;
+        /**
+         * <code>PHASE_DONE = 4;</code>
+         */
+        public static final int PHASE_DONE_VALUE = 4;
+
+
+        public final int getNumber() {
+          if (this == UNRECOGNIZED) {
+            throw new java.lang.IllegalArgumentException(
+                "Can't get the number of an unknown enum value.");
+          }
+          return value;
+        }
+
+        /**
+         * @param value The numeric wire value of the corresponding enum entry.
+         * @return The enum associated with the given numeric wire value.
+         * @deprecated Use {@link #forNumber(int)} instead.
+         */
+        @java.lang.Deprecated
+        public static Phase valueOf(int value) {
+          return forNumber(value);
+        }
+
+        /**
+         * @param value The numeric wire value of the corresponding enum entry.
+         * @return The enum associated with the given numeric wire value.
+         */
+        public static Phase forNumber(int value) {
+          switch (value) {
+            case 0: return PHASE_UNSPECIFIED;
+            case 1: return PHASE_BASE_IMAGE;
+            case 2: return PHASE_GITPOD_LAYER;
+            case 3: return PHASE_ERROR;
+            case 4: return PHASE_DONE;
+            default: return null;
+          }
+        }
+
+        public static com.google.protobuf.Internal.EnumLiteMap<Phase>
+            internalGetValueMap() {
+          return internalValueMap;
+        }
+        private static final com.google.protobuf.Internal.EnumLiteMap<
+            Phase> internalValueMap =
+              new com.google.protobuf.Internal.EnumLiteMap<Phase>() {
+                public Phase findValueByNumber(int number) {
+                  return Phase.forNumber(number);
+                }
+              };
+
+        public final com.google.protobuf.Descriptors.EnumValueDescriptor
+            getValueDescriptor() {
+          if (this == UNRECOGNIZED) {
+            throw new java.lang.IllegalStateException(
+                "Can't get the descriptor of an unrecognized enum value.");
+          }
+          return getDescriptor().getValues().get(ordinal());
+        }
+        public final com.google.protobuf.Descriptors.EnumDescriptor
+            getDescriptorForType() {
+          return getDescriptor();
+        }
+        public static final com.google.protobuf.Descriptors.EnumDescriptor
+            getDescriptor() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.getDescriptor().getEnumTypes().get(0);
+        }
+
+        private static final Phase[] VALUES = values();
+
+        public static Phase valueOf(
+            com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+          if (desc.getType() != getDescriptor()) {
+            throw new java.lang.IllegalArgumentException(
+              "EnumValueDescriptor is not for this type.");
+          }
+          if (desc.getIndex() == -1) {
+            return UNRECOGNIZED;
+          }
+          return VALUES[desc.getIndex()];
+        }
+
+        private final int value;
+
+        private Phase(int value) {
+          this.value = value;
+        }
+
+        // @@protoc_insertion_point(enum_scope:gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase)
+      }
+
+      public static final int PHASE_FIELD_NUMBER = 1;
+      private int phase_ = 0;
+      /**
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase phase = 1 [json_name = "phase"];</code>
+       * @return The enum numeric value on the wire for phase.
+       */
+      @java.lang.Override public int getPhaseValue() {
+        return phase_;
+      }
+      /**
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase phase = 1 [json_name = "phase"];</code>
+       * @return The phase.
+       */
+      @java.lang.Override public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase getPhase() {
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase result = io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase.forNumber(phase_);
+        return result == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase.UNRECOGNIZED : result;
+      }
+
+      public static final int CURRENT_STEP_FIELD_NUMBER = 2;
+      private int currentStep_ = 0;
+      /**
+       * <code>int32 current_step = 2 [json_name = "currentStep"];</code>
+       * @return The currentStep.
+       */
+      @java.lang.Override
+      public int getCurrentStep() {
+        return currentStep_;
+      }
+
+      public static final int MAX_STEPS_FIELD_NUMBER = 3;
+      private int maxSteps_ = 0;
+      /**
+       * <code>int32 max_steps = 3 [json_name = "maxSteps"];</code>
+       * @return The maxSteps.
+       */
+      @java.lang.Override
+      public int getMaxSteps() {
+        return maxSteps_;
+      }
+
+      private byte memoizedIsInitialized = -1;
+      @java.lang.Override
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      @java.lang.Override
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        if (phase_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase.PHASE_UNSPECIFIED.getNumber()) {
+          output.writeEnum(1, phase_);
+        }
+        if (currentStep_ != 0) {
+          output.writeInt32(2, currentStep_);
+        }
+        if (maxSteps_ != 0) {
+          output.writeInt32(3, maxSteps_);
+        }
+        getUnknownFields().writeTo(output);
+      }
+
+      @java.lang.Override
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (phase_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase.PHASE_UNSPECIFIED.getNumber()) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeEnumSize(1, phase_);
+        }
+        if (currentStep_ != 0) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeInt32Size(2, currentStep_);
+        }
+        if (maxSteps_ != 0) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeInt32Size(3, maxSteps_);
+        }
+        size += getUnknownFields().getSerializedSize();
+        memoizedSize = size;
+        return size;
+      }
+
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State)) {
+          return super.equals(obj);
+        }
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State other = (io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State) obj;
+
+        if (phase_ != other.phase_) return false;
+        if (getCurrentStep()
+            != other.getCurrentStep()) return false;
+        if (getMaxSteps()
+            != other.getMaxSteps()) return false;
+        if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+        return true;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        hash = (37 * hash) + PHASE_FIELD_NUMBER;
+        hash = (53 * hash) + phase_;
+        hash = (37 * hash) + CURRENT_STEP_FIELD_NUMBER;
+        hash = (53 * hash) + getCurrentStep();
+        hash = (37 * hash) + MAX_STEPS_FIELD_NUMBER;
+        hash = (53 * hash) + getMaxSteps();
+        hash = (29 * hash) + getUnknownFields().hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      @java.lang.Override
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      @java.lang.Override
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State)
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.StateOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_State_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_State_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Builder.class);
+        }
+
+        // Construct using io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.newBuilder()
+        private Builder() {
+
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          super(parent);
+
+        }
+        @java.lang.Override
+        public Builder clear() {
+          super.clear();
+          bitField0_ = 0;
+          phase_ = 0;
+          currentStep_ = 0;
+          maxSteps_ = 0;
+          return this;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_State_descriptor;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State getDefaultInstanceForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.getDefaultInstance();
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State build() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State buildPartial() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State result = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State(this);
+          if (bitField0_ != 0) { buildPartial0(result); }
+          onBuilt();
+          return result;
+        }
+
+        private void buildPartial0(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State result) {
+          int from_bitField0_ = bitField0_;
+          if (((from_bitField0_ & 0x00000001) != 0)) {
+            result.phase_ = phase_;
+          }
+          if (((from_bitField0_ & 0x00000002) != 0)) {
+            result.currentStep_ = currentStep_;
+          }
+          if (((from_bitField0_ & 0x00000004) != 0)) {
+            result.maxSteps_ = maxSteps_;
+          }
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State) {
+            return mergeFrom((io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State other) {
+          if (other == io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.getDefaultInstance()) return this;
+          if (other.phase_ != 0) {
+            setPhaseValue(other.getPhaseValue());
+          }
+          if (other.getCurrentStep() != 0) {
+            setCurrentStep(other.getCurrentStep());
+          }
+          if (other.getMaxSteps() != 0) {
+            setMaxSteps(other.getMaxSteps());
+          }
+          this.mergeUnknownFields(other.getUnknownFields());
+          onChanged();
+          return this;
+        }
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          if (extensionRegistry == null) {
+            throw new java.lang.NullPointerException();
+          }
+          try {
+            boolean done = false;
+            while (!done) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  done = true;
+                  break;
+                case 8: {
+                  phase_ = input.readEnum();
+                  bitField0_ |= 0x00000001;
+                  break;
+                } // case 8
+                case 16: {
+                  currentStep_ = input.readInt32();
+                  bitField0_ |= 0x00000002;
+                  break;
+                } // case 16
+                case 24: {
+                  maxSteps_ = input.readInt32();
+                  bitField0_ |= 0x00000004;
+                  break;
+                } // case 24
+                default: {
+                  if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                    done = true; // was an endgroup tag
+                  }
+                  break;
+                } // default:
+              } // switch (tag)
+            } // while (!done)
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.unwrapIOException();
+          } finally {
+            onChanged();
+          } // finally
+          return this;
+        }
+        private int bitField0_;
+
+        private int phase_ = 0;
+        /**
+         * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase phase = 1 [json_name = "phase"];</code>
+         * @return The enum numeric value on the wire for phase.
+         */
+        @java.lang.Override public int getPhaseValue() {
+          return phase_;
+        }
+        /**
+         * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase phase = 1 [json_name = "phase"];</code>
+         * @param value The enum numeric value on the wire for phase to set.
+         * @return This builder for chaining.
+         */
+        public Builder setPhaseValue(int value) {
+          phase_ = value;
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase phase = 1 [json_name = "phase"];</code>
+         * @return The phase.
+         */
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase getPhase() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase result = io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase.forNumber(phase_);
+          return result == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase.UNRECOGNIZED : result;
+        }
+        /**
+         * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase phase = 1 [json_name = "phase"];</code>
+         * @param value The phase to set.
+         * @return This builder for chaining.
+         */
+        public Builder setPhase(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Phase value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          bitField0_ |= 0x00000001;
+          phase_ = value.getNumber();
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State.Phase phase = 1 [json_name = "phase"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearPhase() {
+          bitField0_ = (bitField0_ & ~0x00000001);
+          phase_ = 0;
+          onChanged();
+          return this;
+        }
+
+        private int currentStep_ ;
+        /**
+         * <code>int32 current_step = 2 [json_name = "currentStep"];</code>
+         * @return The currentStep.
+         */
+        @java.lang.Override
+        public int getCurrentStep() {
+          return currentStep_;
+        }
+        /**
+         * <code>int32 current_step = 2 [json_name = "currentStep"];</code>
+         * @param value The currentStep to set.
+         * @return This builder for chaining.
+         */
+        public Builder setCurrentStep(int value) {
+
+          currentStep_ = value;
+          bitField0_ |= 0x00000002;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>int32 current_step = 2 [json_name = "currentStep"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearCurrentStep() {
+          bitField0_ = (bitField0_ & ~0x00000002);
+          currentStep_ = 0;
+          onChanged();
+          return this;
+        }
+
+        private int maxSteps_ ;
+        /**
+         * <code>int32 max_steps = 3 [json_name = "maxSteps"];</code>
+         * @return The maxSteps.
+         */
+        @java.lang.Override
+        public int getMaxSteps() {
+          return maxSteps_;
+        }
+        /**
+         * <code>int32 max_steps = 3 [json_name = "maxSteps"];</code>
+         * @param value The maxSteps to set.
+         * @return This builder for chaining.
+         */
+        public Builder setMaxSteps(int value) {
+
+          maxSteps_ = value;
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>int32 max_steps = 3 [json_name = "maxSteps"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearMaxSteps() {
+          bitField0_ = (bitField0_ & ~0x00000004);
+          maxSteps_ = 0;
+          onChanged();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State)
+      }
+
+      // @@protoc_insertion_point(class_scope:gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State)
+      private static final io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State();
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<State>
+          PARSER = new com.google.protobuf.AbstractParser<State>() {
+        @java.lang.Override
+        public State parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          Builder builder = newBuilder();
+          try {
+            builder.mergeFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(builder.buildPartial());
+          } catch (com.google.protobuf.UninitializedMessageException e) {
+            throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+          } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(e)
+                .setUnfinishedMessage(builder.buildPartial());
+          }
+          return builder.buildPartial();
+        }
+      };
+
+      public static com.google.protobuf.Parser<State> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<State> getParserForType() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
+    public interface LogOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <pre>
+       * content is the log content
+       * </pre>
+       *
+       * <code>string content = 1 [json_name = "content"];</code>
+       * @return The content.
+       */
+      java.lang.String getContent();
+      /**
+       * <pre>
+       * content is the log content
+       * </pre>
+       *
+       * <code>string content = 1 [json_name = "content"];</code>
+       * @return The bytes for content.
+       */
+      com.google.protobuf.ByteString
+          getContentBytes();
+
+      /**
+       * <pre>
+       * up_to_line is the line number up to which the log is displayed
+       * </pre>
+       *
+       * <code>int32 up_to_line = 2 [json_name = "upToLine"];</code>
+       * @return The upToLine.
+       */
+      int getUpToLine();
+
+      /**
+       * <code>bool is_diff = 3 [json_name = "isDiff"];</code>
+       * @return The isDiff.
+       */
+      boolean getIsDiff();
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log}
+     */
+    public static final class Log extends
+        com.google.protobuf.GeneratedMessage implements
+        // @@protoc_insertion_point(message_implements:gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log)
+        LogOrBuilder {
+    private static final long serialVersionUID = 0L;
+      static {
+        com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+          com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+          /* major= */ 4,
+          /* minor= */ 27,
+          /* patch= */ 1,
+          /* suffix= */ "",
+          Log.class.getName());
+      }
+      // Use Log.newBuilder() to construct.
+      private Log(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+        super(builder);
+      }
+      private Log() {
+        content_ = "";
+      }
+
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_Log_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_Log_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.Builder.class);
+      }
+
+      public static final int CONTENT_FIELD_NUMBER = 1;
+      @SuppressWarnings("serial")
+      private volatile java.lang.Object content_ = "";
+      /**
+       * <pre>
+       * content is the log content
+       * </pre>
+       *
+       * <code>string content = 1 [json_name = "content"];</code>
+       * @return The content.
+       */
+      @java.lang.Override
+      public java.lang.String getContent() {
+        java.lang.Object ref = content_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          content_ = s;
+          return s;
+        }
+      }
+      /**
+       * <pre>
+       * content is the log content
+       * </pre>
+       *
+       * <code>string content = 1 [json_name = "content"];</code>
+       * @return The bytes for content.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getContentBytes() {
+        java.lang.Object ref = content_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          content_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int UP_TO_LINE_FIELD_NUMBER = 2;
+      private int upToLine_ = 0;
+      /**
+       * <pre>
+       * up_to_line is the line number up to which the log is displayed
+       * </pre>
+       *
+       * <code>int32 up_to_line = 2 [json_name = "upToLine"];</code>
+       * @return The upToLine.
+       */
+      @java.lang.Override
+      public int getUpToLine() {
+        return upToLine_;
+      }
+
+      public static final int IS_DIFF_FIELD_NUMBER = 3;
+      private boolean isDiff_ = false;
+      /**
+       * <code>bool is_diff = 3 [json_name = "isDiff"];</code>
+       * @return The isDiff.
+       */
+      @java.lang.Override
+      public boolean getIsDiff() {
+        return isDiff_;
+      }
+
+      private byte memoizedIsInitialized = -1;
+      @java.lang.Override
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      @java.lang.Override
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(content_)) {
+          com.google.protobuf.GeneratedMessage.writeString(output, 1, content_);
+        }
+        if (upToLine_ != 0) {
+          output.writeInt32(2, upToLine_);
+        }
+        if (isDiff_ != false) {
+          output.writeBool(3, isDiff_);
+        }
+        getUnknownFields().writeTo(output);
+      }
+
+      @java.lang.Override
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(content_)) {
+          size += com.google.protobuf.GeneratedMessage.computeStringSize(1, content_);
+        }
+        if (upToLine_ != 0) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeInt32Size(2, upToLine_);
+        }
+        if (isDiff_ != false) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeBoolSize(3, isDiff_);
+        }
+        size += getUnknownFields().getSerializedSize();
+        memoizedSize = size;
+        return size;
+      }
+
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log)) {
+          return super.equals(obj);
+        }
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log other = (io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log) obj;
+
+        if (!getContent()
+            .equals(other.getContent())) return false;
+        if (getUpToLine()
+            != other.getUpToLine()) return false;
+        if (getIsDiff()
+            != other.getIsDiff()) return false;
+        if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+        return true;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        hash = (37 * hash) + CONTENT_FIELD_NUMBER;
+        hash = (53 * hash) + getContent().hashCode();
+        hash = (37 * hash) + UP_TO_LINE_FIELD_NUMBER;
+        hash = (53 * hash) + getUpToLine();
+        hash = (37 * hash) + IS_DIFF_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getIsDiff());
+        hash = (29 * hash) + getUnknownFields().hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      @java.lang.Override
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      @java.lang.Override
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log)
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.LogOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_Log_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_Log_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.Builder.class);
+        }
+
+        // Construct using io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.newBuilder()
+        private Builder() {
+
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          super(parent);
+
+        }
+        @java.lang.Override
+        public Builder clear() {
+          super.clear();
+          bitField0_ = 0;
+          content_ = "";
+          upToLine_ = 0;
+          isDiff_ = false;
+          return this;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_Log_descriptor;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log getDefaultInstanceForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.getDefaultInstance();
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log build() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log buildPartial() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log result = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log(this);
+          if (bitField0_ != 0) { buildPartial0(result); }
+          onBuilt();
+          return result;
+        }
+
+        private void buildPartial0(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log result) {
+          int from_bitField0_ = bitField0_;
+          if (((from_bitField0_ & 0x00000001) != 0)) {
+            result.content_ = content_;
+          }
+          if (((from_bitField0_ & 0x00000002) != 0)) {
+            result.upToLine_ = upToLine_;
+          }
+          if (((from_bitField0_ & 0x00000004) != 0)) {
+            result.isDiff_ = isDiff_;
+          }
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log) {
+            return mergeFrom((io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log other) {
+          if (other == io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.getDefaultInstance()) return this;
+          if (!other.getContent().isEmpty()) {
+            content_ = other.content_;
+            bitField0_ |= 0x00000001;
+            onChanged();
+          }
+          if (other.getUpToLine() != 0) {
+            setUpToLine(other.getUpToLine());
+          }
+          if (other.getIsDiff() != false) {
+            setIsDiff(other.getIsDiff());
+          }
+          this.mergeUnknownFields(other.getUnknownFields());
+          onChanged();
+          return this;
+        }
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          if (extensionRegistry == null) {
+            throw new java.lang.NullPointerException();
+          }
+          try {
+            boolean done = false;
+            while (!done) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  done = true;
+                  break;
+                case 10: {
+                  content_ = input.readStringRequireUtf8();
+                  bitField0_ |= 0x00000001;
+                  break;
+                } // case 10
+                case 16: {
+                  upToLine_ = input.readInt32();
+                  bitField0_ |= 0x00000002;
+                  break;
+                } // case 16
+                case 24: {
+                  isDiff_ = input.readBool();
+                  bitField0_ |= 0x00000004;
+                  break;
+                } // case 24
+                default: {
+                  if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                    done = true; // was an endgroup tag
+                  }
+                  break;
+                } // default:
+              } // switch (tag)
+            } // while (!done)
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.unwrapIOException();
+          } finally {
+            onChanged();
+          } // finally
+          return this;
+        }
+        private int bitField0_;
+
+        private java.lang.Object content_ = "";
+        /**
+         * <pre>
+         * content is the log content
+         * </pre>
+         *
+         * <code>string content = 1 [json_name = "content"];</code>
+         * @return The content.
+         */
+        public java.lang.String getContent() {
+          java.lang.Object ref = content_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            content_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <pre>
+         * content is the log content
+         * </pre>
+         *
+         * <code>string content = 1 [json_name = "content"];</code>
+         * @return The bytes for content.
+         */
+        public com.google.protobuf.ByteString
+            getContentBytes() {
+          java.lang.Object ref = content_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            content_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <pre>
+         * content is the log content
+         * </pre>
+         *
+         * <code>string content = 1 [json_name = "content"];</code>
+         * @param value The content to set.
+         * @return This builder for chaining.
+         */
+        public Builder setContent(
+            java.lang.String value) {
+          if (value == null) { throw new NullPointerException(); }
+          content_ = value;
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * content is the log content
+         * </pre>
+         *
+         * <code>string content = 1 [json_name = "content"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearContent() {
+          content_ = getDefaultInstance().getContent();
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * content is the log content
+         * </pre>
+         *
+         * <code>string content = 1 [json_name = "content"];</code>
+         * @param value The bytes for content to set.
+         * @return This builder for chaining.
+         */
+        public Builder setContentBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) { throw new NullPointerException(); }
+          checkByteStringIsUtf8(value);
+          content_ = value;
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+
+        private int upToLine_ ;
+        /**
+         * <pre>
+         * up_to_line is the line number up to which the log is displayed
+         * </pre>
+         *
+         * <code>int32 up_to_line = 2 [json_name = "upToLine"];</code>
+         * @return The upToLine.
+         */
+        @java.lang.Override
+        public int getUpToLine() {
+          return upToLine_;
+        }
+        /**
+         * <pre>
+         * up_to_line is the line number up to which the log is displayed
+         * </pre>
+         *
+         * <code>int32 up_to_line = 2 [json_name = "upToLine"];</code>
+         * @param value The upToLine to set.
+         * @return This builder for chaining.
+         */
+        public Builder setUpToLine(int value) {
+
+          upToLine_ = value;
+          bitField0_ |= 0x00000002;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * up_to_line is the line number up to which the log is displayed
+         * </pre>
+         *
+         * <code>int32 up_to_line = 2 [json_name = "upToLine"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearUpToLine() {
+          bitField0_ = (bitField0_ & ~0x00000002);
+          upToLine_ = 0;
+          onChanged();
+          return this;
+        }
+
+        private boolean isDiff_ ;
+        /**
+         * <code>bool is_diff = 3 [json_name = "isDiff"];</code>
+         * @return The isDiff.
+         */
+        @java.lang.Override
+        public boolean getIsDiff() {
+          return isDiff_;
+        }
+        /**
+         * <code>bool is_diff = 3 [json_name = "isDiff"];</code>
+         * @param value The isDiff to set.
+         * @return This builder for chaining.
+         */
+        public Builder setIsDiff(boolean value) {
+
+          isDiff_ = value;
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>bool is_diff = 3 [json_name = "isDiff"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearIsDiff() {
+          bitField0_ = (bitField0_ & ~0x00000004);
+          isDiff_ = false;
+          onChanged();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log)
+      }
+
+      // @@protoc_insertion_point(class_scope:gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log)
+      private static final io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log();
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<Log>
+          PARSER = new com.google.protobuf.AbstractParser<Log>() {
+        @java.lang.Override
+        public Log parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          Builder builder = newBuilder();
+          try {
+            builder.mergeFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(builder.buildPartial());
+          } catch (com.google.protobuf.UninitializedMessageException e) {
+            throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+          } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(e)
+                .setUnfinishedMessage(builder.buildPartial());
+          }
+          return builder.buildPartial();
+        }
+      };
+
+      public static com.google.protobuf.Parser<Log> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<Log> getParserForType() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
+    private int bitField0_;
+    public static final int LOGS_FIELD_NUMBER = 1;
+    private io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log logs_;
+    /**
+     * <pre>
+     * logs is the updated logs of workspace
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+     * @return Whether the logs field is set.
+     */
+    @java.lang.Override
+    public boolean hasLogs() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <pre>
+     * logs is the updated logs of workspace
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+     * @return The logs.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log getLogs() {
+      return logs_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.getDefaultInstance() : logs_;
+    }
+    /**
+     * <pre>
+     * logs is the updated logs of workspace
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.LogOrBuilder getLogsOrBuilder() {
+      return logs_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.getDefaultInstance() : logs_;
+    }
+
+    public static final int STATE_FIELD_NUMBER = 2;
+    private io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State state_;
+    /**
+     * <pre>
+     * state is additional information about the state of the image build
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+     * @return Whether the state field is set.
+     */
+    @java.lang.Override
+    public boolean hasState() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <pre>
+     * state is additional information about the state of the image build
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+     * @return The state.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State getState() {
+      return state_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.getDefaultInstance() : state_;
+    }
+    /**
+     * <pre>
+     * state is additional information about the state of the image build
+     * </pre>
+     *
+     * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.StateOrBuilder getStateOrBuilder() {
+      return state_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.getDefaultInstance() : state_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (((bitField0_ & 0x00000001) != 0)) {
+        output.writeMessage(1, getLogs());
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        output.writeMessage(2, getState());
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, getLogs());
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getState());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse other = (io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse) obj;
+
+      if (hasLogs() != other.hasLogs()) return false;
+      if (hasLogs()) {
+        if (!getLogs()
+            .equals(other.getLogs())) return false;
+      }
+      if (hasState() != other.hasState()) return false;
+      if (hasState()) {
+        if (!getState()
+            .equals(other.getState())) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasLogs()) {
+        hash = (37 * hash) + LOGS_FIELD_NUMBER;
+        hash = (53 * hash) + getLogs().hashCode();
+      }
+      if (hasState()) {
+        hash = (37 * hash) + STATE_FIELD_NUMBER;
+        hash = (53 * hash) + getState().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.WatchWorkspaceImageBuildLogsResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.WatchWorkspaceImageBuildLogsResponse)
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage
+                .alwaysUseFieldBuilders) {
+          getLogsFieldBuilder();
+          getStateFieldBuilder();
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        logs_ = null;
+        if (logsBuilder_ != null) {
+          logsBuilder_.dispose();
+          logsBuilder_ = null;
+        }
+        state_ = null;
+        if (stateBuilder_ != null) {
+          stateBuilder_.dispose();
+          stateBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse build() {
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse buildPartial() {
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse result = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse result) {
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.logs_ = logsBuilder_ == null
+              ? logs_
+              : logsBuilder_.build();
+          to_bitField0_ |= 0x00000001;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.state_ = stateBuilder_ == null
+              ? state_
+              : stateBuilder_.build();
+          to_bitField0_ |= 0x00000002;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse) {
+          return mergeFrom((io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse other) {
+        if (other == io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.getDefaultInstance()) return this;
+        if (other.hasLogs()) {
+          mergeLogs(other.getLogs());
+        }
+        if (other.hasState()) {
+          mergeState(other.getState());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                input.readMessage(
+                    getLogsFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                input.readMessage(
+                    getStateFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log logs_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.LogOrBuilder> logsBuilder_;
+      /**
+       * <pre>
+       * logs is the updated logs of workspace
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+       * @return Whether the logs field is set.
+       */
+      public boolean hasLogs() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <pre>
+       * logs is the updated logs of workspace
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+       * @return The logs.
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log getLogs() {
+        if (logsBuilder_ == null) {
+          return logs_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.getDefaultInstance() : logs_;
+        } else {
+          return logsBuilder_.getMessage();
+        }
+      }
+      /**
+       * <pre>
+       * logs is the updated logs of workspace
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+       */
+      public Builder setLogs(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log value) {
+        if (logsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          logs_ = value;
+        } else {
+          logsBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * logs is the updated logs of workspace
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+       */
+      public Builder setLogs(
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.Builder builderForValue) {
+        if (logsBuilder_ == null) {
+          logs_ = builderForValue.build();
+        } else {
+          logsBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * logs is the updated logs of workspace
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+       */
+      public Builder mergeLogs(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log value) {
+        if (logsBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) != 0) &&
+            logs_ != null &&
+            logs_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.getDefaultInstance()) {
+            getLogsBuilder().mergeFrom(value);
+          } else {
+            logs_ = value;
+          }
+        } else {
+          logsBuilder_.mergeFrom(value);
+        }
+        if (logs_ != null) {
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * logs is the updated logs of workspace
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+       */
+      public Builder clearLogs() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        logs_ = null;
+        if (logsBuilder_ != null) {
+          logsBuilder_.dispose();
+          logsBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * logs is the updated logs of workspace
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.Builder getLogsBuilder() {
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return getLogsFieldBuilder().getBuilder();
+      }
+      /**
+       * <pre>
+       * logs is the updated logs of workspace
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.LogOrBuilder getLogsOrBuilder() {
+        if (logsBuilder_ != null) {
+          return logsBuilder_.getMessageOrBuilder();
+        } else {
+          return logs_ == null ?
+              io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.getDefaultInstance() : logs_;
+        }
+      }
+      /**
+       * <pre>
+       * logs is the updated logs of workspace
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.Log logs = 1 [json_name = "logs"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.LogOrBuilder>
+          getLogsFieldBuilder() {
+        if (logsBuilder_ == null) {
+          logsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.Log.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.LogOrBuilder>(
+                  getLogs(),
+                  getParentForChildren(),
+                  isClean());
+          logs_ = null;
+        }
+        return logsBuilder_;
+      }
+
+      private io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State state_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.StateOrBuilder> stateBuilder_;
+      /**
+       * <pre>
+       * state is additional information about the state of the image build
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+       * @return Whether the state field is set.
+       */
+      public boolean hasState() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <pre>
+       * state is additional information about the state of the image build
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+       * @return The state.
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State getState() {
+        if (stateBuilder_ == null) {
+          return state_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.getDefaultInstance() : state_;
+        } else {
+          return stateBuilder_.getMessage();
+        }
+      }
+      /**
+       * <pre>
+       * state is additional information about the state of the image build
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+       */
+      public Builder setState(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State value) {
+        if (stateBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          state_ = value;
+        } else {
+          stateBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * state is additional information about the state of the image build
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+       */
+      public Builder setState(
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Builder builderForValue) {
+        if (stateBuilder_ == null) {
+          state_ = builderForValue.build();
+        } else {
+          stateBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * state is additional information about the state of the image build
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+       */
+      public Builder mergeState(io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State value) {
+        if (stateBuilder_ == null) {
+          if (((bitField0_ & 0x00000002) != 0) &&
+            state_ != null &&
+            state_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.getDefaultInstance()) {
+            getStateBuilder().mergeFrom(value);
+          } else {
+            state_ = value;
+          }
+        } else {
+          stateBuilder_.mergeFrom(value);
+        }
+        if (state_ != null) {
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * state is additional information about the state of the image build
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+       */
+      public Builder clearState() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        state_ = null;
+        if (stateBuilder_ != null) {
+          stateBuilder_.dispose();
+          stateBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * state is additional information about the state of the image build
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Builder getStateBuilder() {
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return getStateFieldBuilder().getBuilder();
+      }
+      /**
+       * <pre>
+       * state is additional information about the state of the image build
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.StateOrBuilder getStateOrBuilder() {
+        if (stateBuilder_ != null) {
+          return stateBuilder_.getMessageOrBuilder();
+        } else {
+          return state_ == null ?
+              io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.getDefaultInstance() : state_;
+        }
+      }
+      /**
+       * <pre>
+       * state is additional information about the state of the image build
+       * </pre>
+       *
+       * <code>.gitpod.v1.WatchWorkspaceImageBuildLogsResponse.State state = 2 [json_name = "state"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.StateOrBuilder>
+          getStateFieldBuilder() {
+        if (stateBuilder_ == null) {
+          stateBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.State.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse.StateOrBuilder>(
+                  getState(),
+                  getParentForChildren(),
+                  isClean());
+          state_ = null;
+        }
+        return stateBuilder_;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.WatchWorkspaceImageBuildLogsResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.WatchWorkspaceImageBuildLogsResponse)
+    private static final io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse();
+    }
+
+    public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<WatchWorkspaceImageBuildLogsResponse>
+        PARSER = new com.google.protobuf.AbstractParser<WatchWorkspaceImageBuildLogsResponse>() {
+      @java.lang.Override
+      public WatchWorkspaceImageBuildLogsResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<WatchWorkspaceImageBuildLogsResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<WatchWorkspaceImageBuildLogsResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface ListWorkspacesRequestOrBuilder extends
       // @@protoc_insertion_point(interface_extends:gitpod.v1.ListWorkspacesRequest)
       com.google.protobuf.MessageOrBuilder {
@@ -8905,7 +11825,7 @@ public final class WorkspaceOuterClass {
      *
      * <code>bool force_default_config = 4 [json_name = "forceDefaultConfig", deprecated = true];</code>
      * @deprecated gitpod.v1.CreateAndStartWorkspaceRequest.force_default_config is deprecated.
-     *     See gitpod/v1/workspace.proto;l=208
+     *     See gitpod/v1/workspace.proto;l=250
      * @return The forceDefaultConfig.
      */
     @java.lang.Deprecated boolean getForceDefaultConfig();
@@ -10137,7 +13057,7 @@ public final class WorkspaceOuterClass {
      *
      * <code>bool force_default_config = 4 [json_name = "forceDefaultConfig", deprecated = true];</code>
      * @deprecated gitpod.v1.CreateAndStartWorkspaceRequest.force_default_config is deprecated.
-     *     See gitpod/v1/workspace.proto;l=208
+     *     See gitpod/v1/workspace.proto;l=250
      * @return The forceDefaultConfig.
      */
     @java.lang.Override
@@ -11134,7 +14054,7 @@ public final class WorkspaceOuterClass {
        *
        * <code>bool force_default_config = 4 [json_name = "forceDefaultConfig", deprecated = true];</code>
        * @deprecated gitpod.v1.CreateAndStartWorkspaceRequest.force_default_config is deprecated.
-       *     See gitpod/v1/workspace.proto;l=208
+       *     See gitpod/v1/workspace.proto;l=250
        * @return The forceDefaultConfig.
        */
       @java.lang.Override
@@ -11150,7 +14070,7 @@ public final class WorkspaceOuterClass {
        *
        * <code>bool force_default_config = 4 [json_name = "forceDefaultConfig", deprecated = true];</code>
        * @deprecated gitpod.v1.CreateAndStartWorkspaceRequest.force_default_config is deprecated.
-       *     See gitpod/v1/workspace.proto;l=208
+       *     See gitpod/v1/workspace.proto;l=250
        * @param value The forceDefaultConfig to set.
        * @return This builder for chaining.
        */
@@ -11170,7 +14090,7 @@ public final class WorkspaceOuterClass {
        *
        * <code>bool force_default_config = 4 [json_name = "forceDefaultConfig", deprecated = true];</code>
        * @deprecated gitpod.v1.CreateAndStartWorkspaceRequest.force_default_config is deprecated.
-       *     See gitpod/v1/workspace.proto;l=208
+       *     See gitpod/v1/workspace.proto;l=250
        * @return This builder for chaining.
        */
       @java.lang.Deprecated public Builder clearForceDefaultConfig() {
@@ -11832,7 +14752,7 @@ public final class WorkspaceOuterClass {
     /**
      * <code>bool force_default_config = 2 [json_name = "forceDefaultConfig", deprecated = true];</code>
      * @deprecated gitpod.v1.StartWorkspaceRequest.force_default_config is deprecated.
-     *     See gitpod/v1/workspace.proto;l=221
+     *     See gitpod/v1/workspace.proto;l=263
      * @return The forceDefaultConfig.
      */
     @java.lang.Deprecated boolean getForceDefaultConfig();
@@ -11931,7 +14851,7 @@ public final class WorkspaceOuterClass {
     /**
      * <code>bool force_default_config = 2 [json_name = "forceDefaultConfig", deprecated = true];</code>
      * @deprecated gitpod.v1.StartWorkspaceRequest.force_default_config is deprecated.
-     *     See gitpod/v1/workspace.proto;l=221
+     *     See gitpod/v1/workspace.proto;l=263
      * @return The forceDefaultConfig.
      */
     @java.lang.Override
@@ -12363,7 +15283,7 @@ public final class WorkspaceOuterClass {
       /**
        * <code>bool force_default_config = 2 [json_name = "forceDefaultConfig", deprecated = true];</code>
        * @deprecated gitpod.v1.StartWorkspaceRequest.force_default_config is deprecated.
-       *     See gitpod/v1/workspace.proto;l=221
+       *     See gitpod/v1/workspace.proto;l=263
        * @return The forceDefaultConfig.
        */
       @java.lang.Override
@@ -12373,7 +15293,7 @@ public final class WorkspaceOuterClass {
       /**
        * <code>bool force_default_config = 2 [json_name = "forceDefaultConfig", deprecated = true];</code>
        * @deprecated gitpod.v1.StartWorkspaceRequest.force_default_config is deprecated.
-       *     See gitpod/v1/workspace.proto;l=221
+       *     See gitpod/v1/workspace.proto;l=263
        * @param value The forceDefaultConfig to set.
        * @return This builder for chaining.
        */
@@ -12387,7 +15307,7 @@ public final class WorkspaceOuterClass {
       /**
        * <code>bool force_default_config = 2 [json_name = "forceDefaultConfig", deprecated = true];</code>
        * @deprecated gitpod.v1.StartWorkspaceRequest.force_default_config is deprecated.
-       *     See gitpod/v1/workspace.proto;l=221
+       *     See gitpod/v1/workspace.proto;l=263
        * @return This builder for chaining.
        */
       @java.lang.Deprecated public Builder clearForceDefaultConfig() {
@@ -26679,7 +29599,7 @@ java.lang.String defaultValue) {
      *
      * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
      * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-     *     See gitpod/v1/workspace.proto;l=466
+     *     See gitpod/v1/workspace.proto;l=508
      * @return The instanceId.
      */
     @java.lang.Deprecated java.lang.String getInstanceId();
@@ -26691,7 +29611,7 @@ java.lang.String defaultValue) {
      *
      * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
      * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-     *     See gitpod/v1/workspace.proto;l=466
+     *     See gitpod/v1/workspace.proto;l=508
      * @return The bytes for instanceId.
      */
     @java.lang.Deprecated com.google.protobuf.ByteString
@@ -28774,7 +31694,7 @@ java.lang.String defaultValue) {
      *
      * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
      * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-     *     See gitpod/v1/workspace.proto;l=466
+     *     See gitpod/v1/workspace.proto;l=508
      * @return The instanceId.
      */
     @java.lang.Override
@@ -28798,7 +31718,7 @@ java.lang.String defaultValue) {
      *
      * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
      * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-     *     See gitpod/v1/workspace.proto;l=466
+     *     See gitpod/v1/workspace.proto;l=508
      * @return The bytes for instanceId.
      */
     @java.lang.Override
@@ -30138,7 +33058,7 @@ java.lang.String defaultValue) {
        *
        * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
        * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-       *     See gitpod/v1/workspace.proto;l=466
+       *     See gitpod/v1/workspace.proto;l=508
        * @return The instanceId.
        */
       @java.lang.Deprecated public java.lang.String getInstanceId() {
@@ -30161,7 +33081,7 @@ java.lang.String defaultValue) {
        *
        * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
        * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-       *     See gitpod/v1/workspace.proto;l=466
+       *     See gitpod/v1/workspace.proto;l=508
        * @return The bytes for instanceId.
        */
       @java.lang.Deprecated public com.google.protobuf.ByteString
@@ -30185,7 +33105,7 @@ java.lang.String defaultValue) {
        *
        * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
        * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-       *     See gitpod/v1/workspace.proto;l=466
+       *     See gitpod/v1/workspace.proto;l=508
        * @param value The instanceId to set.
        * @return This builder for chaining.
        */
@@ -30205,7 +33125,7 @@ java.lang.String defaultValue) {
        *
        * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
        * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-       *     See gitpod/v1/workspace.proto;l=466
+       *     See gitpod/v1/workspace.proto;l=508
        * @return This builder for chaining.
        */
       @java.lang.Deprecated public Builder clearInstanceId() {
@@ -30222,7 +33142,7 @@ java.lang.String defaultValue) {
        *
        * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
        * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-       *     See gitpod/v1/workspace.proto;l=466
+       *     See gitpod/v1/workspace.proto;l=508
        * @param value The bytes for instanceId to set.
        * @return This builder for chaining.
        */
@@ -44749,7 +47669,7 @@ java.lang.String defaultValue) {
      *
      * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
      * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-     *     See gitpod/v1/workspace.proto;l=790
+     *     See gitpod/v1/workspace.proto;l=832
      * @return Whether the gitStatus field is set.
      */
     @java.lang.Deprecated boolean hasGitStatus();
@@ -44761,7 +47681,7 @@ java.lang.String defaultValue) {
      *
      * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
      * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-     *     See gitpod/v1/workspace.proto;l=790
+     *     See gitpod/v1/workspace.proto;l=832
      * @return The gitStatus.
      */
     @java.lang.Deprecated io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceGitStatus getGitStatus();
@@ -47713,7 +50633,7 @@ java.lang.String defaultValue) {
      *
      * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
      * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-     *     See gitpod/v1/workspace.proto;l=790
+     *     See gitpod/v1/workspace.proto;l=832
      * @return Whether the gitStatus field is set.
      */
     @java.lang.Override
@@ -47728,7 +50648,7 @@ java.lang.String defaultValue) {
      *
      * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
      * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-     *     See gitpod/v1/workspace.proto;l=790
+     *     See gitpod/v1/workspace.proto;l=832
      * @return The gitStatus.
      */
     @java.lang.Override
@@ -48608,7 +51528,7 @@ java.lang.String defaultValue) {
        *
        * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
        * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-       *     See gitpod/v1/workspace.proto;l=790
+       *     See gitpod/v1/workspace.proto;l=832
        * @return Whether the gitStatus field is set.
        */
       @java.lang.Deprecated public boolean hasGitStatus() {
@@ -48622,7 +51542,7 @@ java.lang.String defaultValue) {
        *
        * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
        * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-       *     See gitpod/v1/workspace.proto;l=790
+       *     See gitpod/v1/workspace.proto;l=832
        * @return The gitStatus.
        */
       @java.lang.Deprecated public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceGitStatus getGitStatus() {
@@ -59992,6 +62912,26 @@ java.lang.String defaultValue) {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_WatchWorkspaceStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_State_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_State_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_Log_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_Log_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_v1_ListWorkspacesRequest_descriptor;
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -60314,316 +63254,335 @@ java.lang.String defaultValue) {
       "R\013workspaceId\"u\n\034WatchWorkspaceStatusRes" +
       "ponse\022!\n\014workspace_id\030\001 \001(\tR\013workspaceId" +
       "\0222\n\006status\030\002 \001(\0132\032.gitpod.v1.WorkspaceSt" +
-      "atusR\006status\"\267\001\n\025ListWorkspacesRequest\022<" +
-      "\n\npagination\030\001 \001(\0132\034.gitpod.v1.Paginatio" +
-      "nRequestR\npagination\022\'\n\017organization_id\030" +
-      "\002 \001(\tR\016organizationId\022\026\n\006pinned\030\003 \001(\010R\006p" +
-      "inned\022\037\n\013search_term\030\004 \001(\tR\nsearchTerm\"\215" +
-      "\001\n\026ListWorkspacesResponse\022=\n\npagination\030" +
-      "\001 \001(\0132\035.gitpod.v1.PaginationResponseR\npa" +
-      "gination\0224\n\nworkspaces\030\002 \003(\0132\024.gitpod.v1" +
-      ".WorkspaceR\nworkspaces\"\341\001\n\034ListWorkspace" +
-      "SessionsRequest\022<\n\npagination\030\001 \001(\0132\034.gi" +
-      "tpod.v1.PaginationRequestR\npagination\022\'\n" +
-      "\017organization_id\030\002 \001(\tR\016organizationId\022." +
-      "\n\004from\030\003 \001(\0132\032.google.protobuf.Timestamp" +
-      "R\004from\022*\n\002to\030\004 \001(\0132\032.google.protobuf.Tim" +
-      "estampR\002to\"\252\001\n\035ListWorkspaceSessionsResp" +
-      "onse\022=\n\npagination\030\001 \001(\0132\035.gitpod.v1.Pag" +
-      "inationResponseR\npagination\022J\n\022workspace" +
-      "_sessions\030\002 \003(\0132\033.gitpod.v1.WorkspaceSes" +
-      "sionR\021workspaceSessions\"\240\003\n\036CreateAndSta" +
-      "rtWorkspaceRequest\0228\n\010metadata\030\001 \001(\0132\034.g" +
-      "itpod.v1.WorkspaceMetadataR\010metadata\022W\n\013" +
-      "context_url\030\002 \001(\01324.gitpod.v1.CreateAndS" +
-      "tartWorkspaceRequest.ContextURLH\000R\nconte" +
-      "xtUrl\022.\n\004spec\030\003 \001(\0132\030.gitpod.v1.Workspac" +
-      "eSpecH\000R\004spec\0224\n\024force_default_config\030\004 " +
-      "\001(\010B\002\030\001R\022forceDefaultConfig\032{\n\nContextUR" +
-      "L\022\020\n\003url\030\001 \001(\tR\003url\022\'\n\017workspace_class\030\002" +
-      " \001(\tR\016workspaceClass\0222\n\006editor\030\003 \001(\0132\032.g" +
-      "itpod.v1.EditorReferenceR\006editorB\010\n\006sour" +
-      "ce\"U\n\037CreateAndStartWorkspaceResponse\0222\n" +
-      "\tworkspace\030\001 \001(\0132\024.gitpod.v1.WorkspaceR\t" +
-      "workspace\"p\n\025StartWorkspaceRequest\022!\n\014wo" +
-      "rkspace_id\030\001 \001(\tR\013workspaceId\0224\n\024force_d" +
-      "efault_config\030\002 \001(\010B\002\030\001R\022forceDefaultCon" +
-      "fig\"L\n\026StartWorkspaceResponse\0222\n\tworkspa" +
-      "ce\030\001 \001(\0132\024.gitpod.v1.WorkspaceR\tworkspac" +
-      "e\"D\n\037GetWorkspaceDefaultImageRequest\022!\n\014" +
-      "workspace_id\030\001 \001(\tR\013workspaceId\"\372\001\n GetW" +
-      "orkspaceDefaultImageResponse\0226\n\027default_" +
-      "workspace_image\030\001 \001(\tR\025defaultWorkspaceI" +
-      "mage\022J\n\006source\030\002 \001(\01622.gitpod.v1.GetWork" +
-      "spaceDefaultImageResponse.SourceR\006source" +
-      "\"R\n\006Source\022\026\n\022SOURCE_UNSPECIFIED\020\000\022\027\n\023SO" +
-      "URCE_INSTALLATION\020\001\022\027\n\023SOURCE_ORGANIZATI" +
-      "ON\020\002\"]\n\024SendHeartBeatRequest\022!\n\014workspac" +
-      "e_id\030\001 \001(\tR\013workspaceId\022\"\n\014disconnected\030" +
-      "\002 \001(\010R\014disconnected\"\027\n\025SendHeartBeatResp" +
-      "onse\"B\n\035GetWorkspaceOwnerTokenRequest\022!\n" +
-      "\014workspace_id\030\001 \001(\tR\013workspaceId\"A\n\036GetW" +
-      "orkspaceOwnerTokenResponse\022\037\n\013owner_toke" +
-      "n\030\001 \001(\tR\nownerToken\"I\n$GetWorkspaceEdito" +
-      "rCredentialsRequest\022!\n\014workspace_id\030\001 \001(" +
-      "\tR\013workspaceId\"V\n%GetWorkspaceEditorCred" +
-      "entialsResponse\022-\n\022editor_credentials\030\001 " +
-      "\001(\tR\021editorCredentials\"\267\001\n\tWorkspace\022\016\n\002" +
-      "id\030\001 \001(\tR\002id\0228\n\010metadata\030\002 \001(\0132\034.gitpod." +
-      "v1.WorkspaceMetadataR\010metadata\022,\n\004spec\030\003" +
-      " \001(\0132\030.gitpod.v1.WorkspaceSpecR\004spec\0222\n\006" +
-      "status\030\004 \001(\0132\032.gitpod.v1.WorkspaceStatus" +
-      "R\006status\"\361\002\n\021WorkspaceMetadata\022\031\n\010owner_" +
-      "id\030\001 \001(\tR\007ownerId\022\'\n\017organization_id\030\002 \001" +
-      "(\tR\016organizationId\022)\n\020configuration_id\030\003" +
-      " \001(\tR\017configurationId\022O\n\013annotations\030\004 \003" +
-      "(\0132-.gitpod.v1.WorkspaceMetadata.Annotat" +
-      "ionsEntryR\013annotations\022\022\n\004name\030\005 \001(\tR\004na" +
-      "me\022\026\n\006pinned\030\006 \001(\010R\006pinned\0220\n\024original_c" +
-      "ontext_url\030\007 \001(\tR\022originalContextUrl\032>\n\020" +
-      "AnnotationsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005va" +
-      "lue\030\002 \001(\tR\005value:\0028\001\"\273\010\n\rWorkspaceSpec\022A" +
-      "\n\013initializer\030\001 \001(\0132\037.gitpod.v1.Workspac" +
-      "eInitializerR\013initializer\022:\n\004type\030\002 \001(\0162" +
-      "&.gitpod.v1.WorkspaceSpec.WorkspaceTypeR" +
-      "\004type\022.\n\005ports\030\003 \003(\0132\030.gitpod.v1.Workspa" +
-      "cePortR\005ports\022S\n\025environment_variables\030\004" +
-      " \003(\0132\036.gitpod.v1.EnvironmentVariableR\024en" +
-      "vironmentVariables\0222\n\003git\030\005 \001(\0132 .gitpod" +
-      ".v1.WorkspaceSpec.GitSpecR\003git\022:\n\007timeou" +
-      "t\030\006 \001(\0132 .gitpod.v1.WorkspaceSpec.Timeou" +
-      "tR\007timeout\0227\n\tadmission\030\007 \001(\0162\031.gitpod.v" +
-      "1.AdmissionLevelR\tadmission\022\024\n\005class\030\010 \001" +
-      "(\tR\005class\022&\n\017ssh_public_keys\030\t \003(\tR\rsshP" +
-      "ublicKeys\0225\n\026subassembly_references\030\n \003(" +
-      "\tR\025subassemblyReferences\022H\n\022last_user_ac" +
-      "tivity\030\013 \001(\0132\032.google.protobuf.Timestamp" +
-      "R\020lastUserActivity\022\027\n\007log_url\030\014 \001(\tR\006log" +
-      "Url\0222\n\006editor\030\r \001(\0132\032.gitpod.v1.EditorRe" +
-      "ferenceR\006editor\032\311\001\n\007Timeout\0229\n\ninactivit" +
-      "y\030\001 \001(\0132\031.google.protobuf.DurationR\ninac" +
-      "tivity\022=\n\014disconnected\030\002 \001(\0132\031.google.pr" +
-      "otobuf.DurationR\014disconnected\022D\n\020maximum" +
-      "_lifetime\030\003 \001(\0132\031.google.protobuf.Durati" +
-      "onR\017maximumLifetime\032;\n\007GitSpec\022\032\n\010userna" +
-      "me\030\001 \001(\tR\010username\022\024\n\005email\030\002 \001(\tR\005email" +
-      "\"h\n\rWorkspaceType\022\036\n\032WORKSPACE_TYPE_UNSP" +
-      "ECIFIED\020\000\022\032\n\026WORKSPACE_TYPE_REGULAR\020\001\022\033\n" +
-      "\027WORKSPACE_TYPE_PREBUILD\020\002\"\346\006\n\017Workspace" +
-      "Status\022%\n\016status_version\030\001 \001(\004R\rstatusVe" +
-      "rsion\022/\n\005phase\030\002 \001(\0132\031.gitpod.v1.Workspa" +
-      "cePhaseR\005phase\022#\n\rworkspace_url\030\003 \001(\tR\014w" +
-      "orkspaceUrl\022N\n\nconditions\030\004 \001(\0132..gitpod" +
-      ".v1.WorkspaceStatus.WorkspaceConditionsR" +
-      "\nconditions\022R\n\017prebuild_result\030\005 \001(\0132).g" +
-      "itpod.v1.WorkspaceStatus.PrebuildResultR" +
-      "\016prebuildResult\022<\n\ngit_status\030\006 \001(\0132\035.gi" +
-      "tpod.v1.WorkspaceGitStatusR\tgitStatus\022#\n" +
-      "\013instance_id\030\007 \001(\tB\002\030\001R\ninstanceId\032\373\002\n\023W" +
-      "orkspaceConditions\022\026\n\006failed\030\001 \001(\tR\006fail" +
-      "ed\022`\n\rfailed_reason\030\002 \001(\0162;.gitpod.v1.Wo" +
-      "rkspaceStatus.WorkspaceConditions.Failed" +
-      "ReasonR\014failedReason\022\030\n\007timeout\030\003 \001(\tR\007t" +
-      "imeout\"\317\001\n\014FailedReason\022\035\n\031FAILED_REASON" +
-      "_UNSPECIFIED\020\000\022/\n+FAILED_REASON_CONTENT_" +
-      "INITIALIZATION_FAILED\020\001\022\037\n\033FAILED_REASON" +
-      "_BACKUP_FAILED\020\002\022$\n FAILED_REASON_IMAGE_" +
-      "PULL_FAILURE\020\003\022(\n$FAILED_REASON_UNEXPECT" +
-      "ED_TERMINATION\020\004\032Q\n\016PrebuildResult\022\032\n\010sn" +
-      "apshot\030\001 \001(\tR\010snapshot\022#\n\rerror_message\030" +
-      "\002 \001(\tR\014errorMessage\"\372\001\n\rWorkspacePort\022\022\n" +
-      "\004port\030\001 \001(\004R\004port\0227\n\tadmission\030\002 \001(\0162\031.g" +
-      "itpod.v1.AdmissionLevelR\tadmission\022\020\n\003ur" +
-      "l\030\003 \001(\tR\003url\022=\n\010protocol\030\004 \001(\0162!.gitpod." +
-      "v1.WorkspacePort.ProtocolR\010protocol\"K\n\010P" +
-      "rotocol\022\030\n\024PROTOCOL_UNSPECIFIED\020\000\022\021\n\rPRO" +
-      "TOCOL_HTTP\020\001\022\022\n\016PROTOCOL_HTTPS\020\002\"\215\003\n\022Wor" +
-      "kspaceGitStatus\022\033\n\tclone_url\030\001 \001(\tR\010clon" +
-      "eUrl\022\026\n\006branch\030\002 \001(\tR\006branch\022#\n\rlatest_c" +
-      "ommit\030\003 \001(\tR\014latestCommit\022)\n\020uncommited_" +
-      "files\030\004 \003(\tR\017uncommitedFiles\0224\n\026total_un" +
-      "commited_files\030\005 \001(\005R\024totalUncommitedFil" +
-      "es\022\'\n\017untracked_files\030\006 \003(\tR\016untrackedFi" +
-      "les\0222\n\025total_untracked_files\030\007 \001(\005R\023tota" +
-      "lUntrackedFiles\022)\n\020unpushed_commits\030\010 \003(" +
-      "\tR\017unpushedCommits\0224\n\026total_unpushed_com" +
-      "mits\030\t \001(\005R\024totalUnpushedCommits\"\201\003\n\016Wor" +
-      "kspacePhase\0223\n\004name\030\001 \001(\0162\037.gitpod.v1.Wo" +
-      "rkspacePhase.PhaseR\004name\022L\n\024last_transit" +
-      "ion_time\030\002 \001(\0132\032.google.protobuf.Timesta" +
-      "mpR\022lastTransitionTime\"\353\001\n\005Phase\022\025\n\021PHAS" +
-      "E_UNSPECIFIED\020\000\022\023\n\017PHASE_PREPARING\020\001\022\024\n\020" +
-      "PHASE_IMAGEBUILD\020\002\022\021\n\rPHASE_PENDING\020\003\022\022\n" +
-      "\016PHASE_CREATING\020\004\022\026\n\022PHASE_INITIALIZING\020" +
-      "\005\022\021\n\rPHASE_RUNNING\020\006\022\025\n\021PHASE_INTERRUPTE" +
-      "D\020\007\022\020\n\014PHASE_PAUSED\020\010\022\022\n\016PHASE_STOPPING\020" +
-      "\t\022\021\n\rPHASE_STOPPED\020\n\"\320\002\n\024WorkspaceInitia" +
-      "lizer\022:\n\005specs\030\001 \003(\0132$.gitpod.v1.Workspa" +
-      "ceInitializer.SpecR\005specs\032\373\001\n\004Spec\022-\n\003gi" +
-      "t\030\001 \001(\0132\031.gitpod.v1.GitInitializerH\000R\003gi" +
-      "t\022<\n\010snapshot\030\002 \001(\0132\036.gitpod.v1.Snapshot" +
-      "InitializerH\000R\010snapshot\022<\n\010prebuild\030\003 \001(" +
-      "\0132\036.gitpod.v1.PrebuildInitializerH\000R\010pre" +
-      "build\022@\n\010download\030\004 \001(\0132\".gitpod.v1.File" +
-      "DownloadInitializerH\000R\010downloadB\006\n\004spec\"" +
-      "\275\007\n\016GitInitializer\022\035\n\nremote_uri\030\001 \001(\tR\t" +
-      "remoteUri\022.\n\023upstream_remote_uri\030\002 \001(\tR\021" +
-      "upstreamRemoteUri\022J\n\013target_mode\030\003 \001(\0162)" +
-      ".gitpod.v1.GitInitializer.CloneTargetMod" +
-      "eR\ntargetMode\022!\n\014clone_target\030\004 \001(\tR\013clo" +
-      "neTarget\022+\n\021checkout_location\030\005 \001(\tR\020che" +
-      "ckoutLocation\022;\n\006config\030\006 \001(\0132#.gitpod.v" +
-      "1.GitInitializer.GitConfigR\006config\032\323\002\n\tG" +
-      "itConfig\022Z\n\rcustom_config\030\001 \003(\01325.gitpod" +
-      ".v1.GitInitializer.GitConfig.CustomConfi" +
-      "gEntryR\014customConfig\022L\n\016authentication\030\002" +
-      " \001(\0162$.gitpod.v1.GitInitializer.AuthMeth" +
-      "odR\016authentication\022\033\n\tauth_user\030\003 \001(\tR\010a" +
-      "uthUser\022#\n\rauth_password\030\004 \001(\tR\014authPass" +
-      "word\022\031\n\010auth_ots\030\005 \001(\tR\007authOts\032?\n\021Custo" +
-      "mConfigEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030" +
-      "\002 \001(\tR\005value:\0028\001\"\305\001\n\017CloneTargetMode\022!\n\035" +
-      "CLONE_TARGET_MODE_UNSPECIFIED\020\000\022!\n\035CLONE" +
-      "_TARGET_MODE_REMOTE_HEAD\020\001\022#\n\037CLONE_TARG" +
-      "ET_MODE_REMOTE_COMMIT\020\002\022#\n\037CLONE_TARGET_" +
-      "MODE_REMOTE_BRANCH\020\003\022\"\n\036CLONE_TARGET_MOD" +
-      "E_LOCAL_BRANCH\020\004\"e\n\nAuthMethod\022\033\n\027AUTH_M" +
-      "ETHOD_UNSPECIFIED\020\000\022\032\n\026AUTH_METHOD_BASIC" +
-      "_AUTH\020\001\022\036\n\032AUTH_METHOD_BASIC_AUTH_OTS\020\002\"" +
-      "6\n\023SnapshotInitializer\022\037\n\013snapshot_id\030\001 " +
-      "\001(\tR\nsnapshotId\"6\n\023PrebuildInitializer\022\037" +
-      "\n\013prebuild_id\030\001 \001(\tR\nprebuildId\"\330\001\n\027File" +
-      "DownloadInitializer\022A\n\005files\030\001 \003(\0132+.git" +
-      "pod.v1.FileDownloadInitializer.FileInfoR" +
-      "\005files\022\'\n\017target_location\030\002 \001(\tR\016targetL" +
-      "ocation\032Q\n\010FileInfo\022\020\n\003url\030\001 \001(\tR\003url\022\033\n" +
-      "\tfile_path\030\002 \001(\tR\010filePath\022\026\n\006digest\030\003 \001" +
-      "(\tR\006digest\"\347\002\n\tGitStatus\022\026\n\006branch\030\001 \001(\t" +
-      "R\006branch\022#\n\rlatest_commit\030\002 \001(\tR\014latestC" +
-      "ommit\022)\n\020uncommited_files\030\003 \003(\tR\017uncommi" +
-      "tedFiles\0224\n\026total_uncommited_files\030\006 \001(\003" +
-      "R\024totalUncommitedFiles\022\'\n\017untracked_file" +
-      "s\030\004 \003(\tR\016untrackedFiles\0222\n\025total_untrack" +
-      "ed_files\030\007 \001(\003R\023totalUntrackedFiles\022)\n\020u" +
-      "npushed_commits\030\005 \003(\tR\017unpushedCommits\0224" +
-      "\n\026total_unpushed_commits\030\010 \001(\003R\024totalUnp" +
-      "ushedCommits\"\326\006\n\026UpdateWorkspaceRequest\022" +
-      "!\n\014workspace_id\030\001 \001(\tR\013workspaceId\022Z\n\010me" +
-      "tadata\030\002 \001(\01329.gitpod.v1.UpdateWorkspace" +
-      "Request.UpdateWorkspaceMetadataH\000R\010metad" +
-      "ata\210\001\001\022N\n\004spec\030\003 \001(\01325.gitpod.v1.UpdateW" +
-      "orkspaceRequest.UpdateWorkspaceSpecH\001R\004s" +
-      "pec\210\001\001\022E\n\ngit_status\030\004 \001(\0132\035.gitpod.v1.W" +
-      "orkspaceGitStatusB\002\030\001H\002R\tgitStatus\210\001\001\032c\n" +
-      "\027UpdateWorkspaceMetadata\022\027\n\004name\030\001 \001(\tH\000" +
-      "R\004name\210\001\001\022\033\n\006pinned\030\002 \001(\010H\001R\006pinned\210\001\001B\007" +
-      "\n\005_nameB\t\n\007_pinned\032\263\001\n\rUpdateTimeout\022>\n\n" +
-      "inactivity\030\001 \001(\0132\031.google.protobuf.Durat" +
-      "ionH\000R\ninactivity\210\001\001\022B\n\014disconnected\030\002 \001" +
-      "(\0132\031.google.protobuf.DurationH\001R\014disconn" +
-      "ected\210\001\001B\r\n\013_inactivityB\017\n\r_disconnected" +
-      "\032\345\001\n\023UpdateWorkspaceSpec\022N\n\007timeout\030\001 \001(" +
-      "\0132/.gitpod.v1.UpdateWorkspaceRequest.Upd" +
-      "ateTimeoutH\000R\007timeout\210\001\001\022<\n\tadmission\030\002 " +
-      "\001(\0162\031.gitpod.v1.AdmissionLevelH\001R\tadmiss" +
-      "ion\210\001\001\022&\n\017ssh_public_keys\030\003 \003(\tR\rsshPubl" +
-      "icKeysB\n\n\010_timeoutB\014\n\n_admissionB\013\n\t_met" +
-      "adataB\007\n\005_specB\r\n\013_git_status\"M\n\027UpdateW" +
-      "orkspaceResponse\0222\n\tworkspace\030\001 \001(\0132\024.gi" +
-      "tpod.v1.WorkspaceR\tworkspace\"9\n\024StopWork" +
-      "spaceRequest\022!\n\014workspace_id\030\001 \001(\tR\013work" +
-      "spaceId\"\027\n\025StopWorkspaceResponse\";\n\026Dele" +
-      "teWorkspaceRequest\022!\n\014workspace_id\030\001 \001(\t" +
-      "R\013workspaceId\"\031\n\027DeleteWorkspaceResponse" +
-      "\"[\n\033ListWorkspaceClassesRequest\022<\n\npagin" +
-      "ation\030\001 \001(\0132\034.gitpod.v1.PaginationReques" +
-      "tR\npagination\"\245\001\n\034ListWorkspaceClassesRe" +
+      "atusR\006status\"H\n#WatchWorkspaceImageBuild" +
+      "LogsRequest\022!\n\014workspace_id\030\001 \001(\tR\013works" +
+      "paceId\"\240\004\n$WatchWorkspaceImageBuildLogsR" +
+      "esponse\022G\n\004logs\030\001 \001(\01323.gitpod.v1.WatchW" +
+      "orkspaceImageBuildLogsResponse.LogR\004logs" +
+      "\022K\n\005state\030\002 \001(\01325.gitpod.v1.WatchWorkspa" +
+      "ceImageBuildLogsResponse.StateR\005state\032\211\002" +
+      "\n\005State\022Q\n\005phase\030\001 \001(\0162;.gitpod.v1.Watch" +
+      "WorkspaceImageBuildLogsResponse.State.Ph" +
+      "aseR\005phase\022!\n\014current_step\030\002 \001(\005R\013curren" +
+      "tStep\022\033\n\tmax_steps\030\003 \001(\005R\010maxSteps\"m\n\005Ph" +
+      "ase\022\025\n\021PHASE_UNSPECIFIED\020\000\022\024\n\020PHASE_BASE" +
+      "_IMAGE\020\001\022\026\n\022PHASE_GITPOD_LAYER\020\002\022\017\n\013PHAS" +
+      "E_ERROR\020\003\022\016\n\nPHASE_DONE\020\004\032V\n\003Log\022\030\n\007cont" +
+      "ent\030\001 \001(\tR\007content\022\034\n\nup_to_line\030\002 \001(\005R\010" +
+      "upToLine\022\027\n\007is_diff\030\003 \001(\010R\006isDiff\"\267\001\n\025Li" +
+      "stWorkspacesRequest\022<\n\npagination\030\001 \001(\0132" +
+      "\034.gitpod.v1.PaginationRequestR\npaginatio" +
+      "n\022\'\n\017organization_id\030\002 \001(\tR\016organization" +
+      "Id\022\026\n\006pinned\030\003 \001(\010R\006pinned\022\037\n\013search_ter" +
+      "m\030\004 \001(\tR\nsearchTerm\"\215\001\n\026ListWorkspacesRe" +
       "sponse\022=\n\npagination\030\001 \001(\0132\035.gitpod.v1.P" +
-      "aginationResponseR\npagination\022F\n\021workspa" +
-      "ce_classes\030\002 \003(\0132\031.gitpod.v1.WorkspaceCl" +
-      "assR\020workspaceClasses\"d\n\026ParseContextURL" +
-      "Request\022\037\n\013context_url\030\001 \001(\tR\ncontextUrl" +
-      "\022)\n\020configuration_id\030\002 \001(\tR\017configuratio" +
-      "nId\"\201\001\n\027ParseContextURLResponse\0228\n\010metad" +
-      "ata\030\001 \001(\0132\034.gitpod.v1.WorkspaceMetadataR" +
-      "\010metadata\022,\n\004spec\030\002 \001(\0132\030.gitpod.v1.Work" +
-      "spaceSpecR\004spec\"\204\001\n\016WorkspaceClass\022\016\n\002id" +
-      "\030\001 \001(\tR\002id\022!\n\014display_name\030\002 \001(\tR\013displa" +
-      "yName\022 \n\013description\030\003 \001(\tR\013description\022" +
-      "\035\n\nis_default\030\004 \001(\010R\tisDefault\"C\n\036Create" +
-      "WorkspaceSnapshotRequest\022!\n\014workspace_id" +
-      "\030\001 \001(\tR\013workspaceId\"[\n\037CreateWorkspaceSn" +
-      "apshotResponse\0228\n\010snapshot\030\001 \001(\0132\034.gitpo" +
-      "d.v1.WorkspaceSnapshotR\010snapshot\"B\n\037Wait" +
-      "ForWorkspaceSnapshotRequest\022\037\n\013snapshot_" +
-      "id\030\001 \001(\tR\nsnapshotId\"\"\n WaitForWorkspace" +
-      "SnapshotResponse\"\207\001\n\021WorkspaceSnapshot\022\016" +
-      "\n\002id\030\001 \001(\tR\002id\022!\n\014workspace_id\030\002 \001(\tR\013wo" +
-      "rkspaceId\022?\n\rcreation_time\030\003 \001(\0132\032.googl" +
-      "e.protobuf.TimestampR\014creationTime\"\227\003\n\020W" +
-      "orkspaceSession\022\016\n\002id\030\001 \001(\tR\002id\0222\n\tworks" +
-      "pace\030\002 \001(\0132\024.gitpod.v1.WorkspaceR\tworksp" +
-      "ace\022?\n\rcreation_time\030\003 \001(\0132\032.google.prot" +
-      "obuf.TimestampR\014creationTime\022?\n\rdeployed" +
-      "_time\030\004 \001(\0132\032.google.protobuf.TimestampR" +
-      "\014deployedTime\022=\n\014started_time\030\005 \001(\0132\032.go" +
-      "ogle.protobuf.TimestampR\013startedTime\022?\n\r" +
-      "stopping_time\030\006 \001(\0132\032.google.protobuf.Ti" +
-      "mestampR\014stoppingTime\022=\n\014stopped_time\030\007 " +
-      "\001(\0132\032.google.protobuf.TimestampR\013stopped" +
-      "Time*o\n\016AdmissionLevel\022\037\n\033ADMISSION_LEVE" +
-      "L_UNSPECIFIED\020\000\022\036\n\032ADMISSION_LEVEL_OWNER" +
-      "_ONLY\020\001\022\034\n\030ADMISSION_LEVEL_EVERYONE\020\0022\323\016" +
-      "\n\020WorkspaceService\022Q\n\014GetWorkspace\022\036.git" +
-      "pod.v1.GetWorkspaceRequest\032\037.gitpod.v1.G" +
-      "etWorkspaceResponse\"\000\022k\n\024WatchWorkspaceS" +
-      "tatus\022&.gitpod.v1.WatchWorkspaceStatusRe" +
-      "quest\032\'.gitpod.v1.WatchWorkspaceStatusRe" +
-      "sponse\"\0000\001\022W\n\016ListWorkspaces\022 .gitpod.v1" +
-      ".ListWorkspacesRequest\032!.gitpod.v1.ListW" +
-      "orkspacesResponse\"\000\022l\n\025ListWorkspaceSess" +
-      "ions\022\'.gitpod.v1.ListWorkspaceSessionsRe" +
-      "quest\032(.gitpod.v1.ListWorkspaceSessionsR" +
-      "esponse\"\000\022r\n\027CreateAndStartWorkspace\022).g" +
-      "itpod.v1.CreateAndStartWorkspaceRequest\032" +
-      "*.gitpod.v1.CreateAndStartWorkspaceRespo" +
-      "nse\"\000\022W\n\016StartWorkspace\022 .gitpod.v1.Star" +
-      "tWorkspaceRequest\032!.gitpod.v1.StartWorks" +
-      "paceResponse\"\000\022Z\n\017UpdateWorkspace\022!.gitp" +
-      "od.v1.UpdateWorkspaceRequest\032\".gitpod.v1" +
-      ".UpdateWorkspaceResponse\"\000\022T\n\rStopWorksp" +
-      "ace\022\037.gitpod.v1.StopWorkspaceRequest\032 .g" +
-      "itpod.v1.StopWorkspaceResponse\"\000\022Z\n\017Dele" +
-      "teWorkspace\022!.gitpod.v1.DeleteWorkspaceR" +
-      "equest\032\".gitpod.v1.DeleteWorkspaceRespon" +
-      "se\"\000\022i\n\024ListWorkspaceClasses\022&.gitpod.v1" +
-      ".ListWorkspaceClassesRequest\032\'.gitpod.v1" +
-      ".ListWorkspaceClassesResponse\"\000\022Z\n\017Parse" +
-      "ContextURL\022!.gitpod.v1.ParseContextURLRe" +
-      "quest\032\".gitpod.v1.ParseContextURLRespons" +
-      "e\"\000\022u\n\030GetWorkspaceDefaultImage\022*.gitpod" +
-      ".v1.GetWorkspaceDefaultImageRequest\032+.gi" +
-      "tpod.v1.GetWorkspaceDefaultImageResponse" +
-      "\"\000\022T\n\rSendHeartBeat\022\037.gitpod.v1.SendHear" +
-      "tBeatRequest\032 .gitpod.v1.SendHeartBeatRe" +
-      "sponse\"\000\022o\n\026GetWorkspaceOwnerToken\022(.git" +
-      "pod.v1.GetWorkspaceOwnerTokenRequest\032).g" +
-      "itpod.v1.GetWorkspaceOwnerTokenResponse\"" +
-      "\000\022\204\001\n\035GetWorkspaceEditorCredentials\022/.gi" +
-      "tpod.v1.GetWorkspaceEditorCredentialsReq" +
-      "uest\0320.gitpod.v1.GetWorkspaceEditorCrede" +
-      "ntialsResponse\"\000\022r\n\027CreateWorkspaceSnaps" +
-      "hot\022).gitpod.v1.CreateWorkspaceSnapshotR" +
-      "equest\032*.gitpod.v1.CreateWorkspaceSnapsh" +
-      "otResponse\"\000\022u\n\030WaitForWorkspaceSnapshot" +
-      "\022*.gitpod.v1.WaitForWorkspaceSnapshotReq" +
-      "uest\032+.gitpod.v1.WaitForWorkspaceSnapsho" +
-      "tResponse\"\000\022f\n\023UpdateWorkspacePort\022%.git" +
-      "pod.v1.UpdateWorkspacePortRequest\032&.gitp" +
-      "od.v1.UpdateWorkspacePortResponse\"\000BQ\n\026i" +
-      "o.gitpod.publicapi.v1Z7github.com/gitpod" +
-      "-io/gitpod/components/public-api/go/v1b\006" +
-      "proto3"
+      "aginationResponseR\npagination\0224\n\nworkspa" +
+      "ces\030\002 \003(\0132\024.gitpod.v1.WorkspaceR\nworkspa" +
+      "ces\"\341\001\n\034ListWorkspaceSessionsRequest\022<\n\n" +
+      "pagination\030\001 \001(\0132\034.gitpod.v1.PaginationR" +
+      "equestR\npagination\022\'\n\017organization_id\030\002 " +
+      "\001(\tR\016organizationId\022.\n\004from\030\003 \001(\0132\032.goog" +
+      "le.protobuf.TimestampR\004from\022*\n\002to\030\004 \001(\0132" +
+      "\032.google.protobuf.TimestampR\002to\"\252\001\n\035List" +
+      "WorkspaceSessionsResponse\022=\n\npagination\030" +
+      "\001 \001(\0132\035.gitpod.v1.PaginationResponseR\npa" +
+      "gination\022J\n\022workspace_sessions\030\002 \003(\0132\033.g" +
+      "itpod.v1.WorkspaceSessionR\021workspaceSess" +
+      "ions\"\240\003\n\036CreateAndStartWorkspaceRequest\022" +
+      "8\n\010metadata\030\001 \001(\0132\034.gitpod.v1.WorkspaceM" +
+      "etadataR\010metadata\022W\n\013context_url\030\002 \001(\01324" +
+      ".gitpod.v1.CreateAndStartWorkspaceReques" +
+      "t.ContextURLH\000R\ncontextUrl\022.\n\004spec\030\003 \001(\013" +
+      "2\030.gitpod.v1.WorkspaceSpecH\000R\004spec\0224\n\024fo" +
+      "rce_default_config\030\004 \001(\010B\002\030\001R\022forceDefau" +
+      "ltConfig\032{\n\nContextURL\022\020\n\003url\030\001 \001(\tR\003url" +
+      "\022\'\n\017workspace_class\030\002 \001(\tR\016workspaceClas" +
+      "s\0222\n\006editor\030\003 \001(\0132\032.gitpod.v1.EditorRefe" +
+      "renceR\006editorB\010\n\006source\"U\n\037CreateAndStar" +
+      "tWorkspaceResponse\0222\n\tworkspace\030\001 \001(\0132\024." +
+      "gitpod.v1.WorkspaceR\tworkspace\"p\n\025StartW" +
+      "orkspaceRequest\022!\n\014workspace_id\030\001 \001(\tR\013w" +
+      "orkspaceId\0224\n\024force_default_config\030\002 \001(\010" +
+      "B\002\030\001R\022forceDefaultConfig\"L\n\026StartWorkspa" +
+      "ceResponse\0222\n\tworkspace\030\001 \001(\0132\024.gitpod.v" +
+      "1.WorkspaceR\tworkspace\"D\n\037GetWorkspaceDe" +
+      "faultImageRequest\022!\n\014workspace_id\030\001 \001(\tR" +
+      "\013workspaceId\"\372\001\n GetWorkspaceDefaultImag" +
+      "eResponse\0226\n\027default_workspace_image\030\001 \001" +
+      "(\tR\025defaultWorkspaceImage\022J\n\006source\030\002 \001(" +
+      "\01622.gitpod.v1.GetWorkspaceDefaultImageRe" +
+      "sponse.SourceR\006source\"R\n\006Source\022\026\n\022SOURC" +
+      "E_UNSPECIFIED\020\000\022\027\n\023SOURCE_INSTALLATION\020\001" +
+      "\022\027\n\023SOURCE_ORGANIZATION\020\002\"]\n\024SendHeartBe" +
+      "atRequest\022!\n\014workspace_id\030\001 \001(\tR\013workspa" +
+      "ceId\022\"\n\014disconnected\030\002 \001(\010R\014disconnected" +
+      "\"\027\n\025SendHeartBeatResponse\"B\n\035GetWorkspac" +
+      "eOwnerTokenRequest\022!\n\014workspace_id\030\001 \001(\t" +
+      "R\013workspaceId\"A\n\036GetWorkspaceOwnerTokenR" +
+      "esponse\022\037\n\013owner_token\030\001 \001(\tR\nownerToken" +
+      "\"I\n$GetWorkspaceEditorCredentialsRequest" +
+      "\022!\n\014workspace_id\030\001 \001(\tR\013workspaceId\"V\n%G" +
+      "etWorkspaceEditorCredentialsResponse\022-\n\022" +
+      "editor_credentials\030\001 \001(\tR\021editorCredenti" +
+      "als\"\267\001\n\tWorkspace\022\016\n\002id\030\001 \001(\tR\002id\0228\n\010met" +
+      "adata\030\002 \001(\0132\034.gitpod.v1.WorkspaceMetadat" +
+      "aR\010metadata\022,\n\004spec\030\003 \001(\0132\030.gitpod.v1.Wo" +
+      "rkspaceSpecR\004spec\0222\n\006status\030\004 \001(\0132\032.gitp" +
+      "od.v1.WorkspaceStatusR\006status\"\361\002\n\021Worksp" +
+      "aceMetadata\022\031\n\010owner_id\030\001 \001(\tR\007ownerId\022\'" +
+      "\n\017organization_id\030\002 \001(\tR\016organizationId\022" +
+      ")\n\020configuration_id\030\003 \001(\tR\017configuration" +
+      "Id\022O\n\013annotations\030\004 \003(\0132-.gitpod.v1.Work" +
+      "spaceMetadata.AnnotationsEntryR\013annotati" +
+      "ons\022\022\n\004name\030\005 \001(\tR\004name\022\026\n\006pinned\030\006 \001(\010R" +
+      "\006pinned\0220\n\024original_context_url\030\007 \001(\tR\022o" +
+      "riginalContextUrl\032>\n\020AnnotationsEntry\022\020\n" +
+      "\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005value:\0028" +
+      "\001\"\273\010\n\rWorkspaceSpec\022A\n\013initializer\030\001 \001(\013" +
+      "2\037.gitpod.v1.WorkspaceInitializerR\013initi" +
+      "alizer\022:\n\004type\030\002 \001(\0162&.gitpod.v1.Workspa" +
+      "ceSpec.WorkspaceTypeR\004type\022.\n\005ports\030\003 \003(" +
+      "\0132\030.gitpod.v1.WorkspacePortR\005ports\022S\n\025en" +
+      "vironment_variables\030\004 \003(\0132\036.gitpod.v1.En" +
+      "vironmentVariableR\024environmentVariables\022" +
+      "2\n\003git\030\005 \001(\0132 .gitpod.v1.WorkspaceSpec.G" +
+      "itSpecR\003git\022:\n\007timeout\030\006 \001(\0132 .gitpod.v1" +
+      ".WorkspaceSpec.TimeoutR\007timeout\0227\n\tadmis" +
+      "sion\030\007 \001(\0162\031.gitpod.v1.AdmissionLevelR\ta" +
+      "dmission\022\024\n\005class\030\010 \001(\tR\005class\022&\n\017ssh_pu" +
+      "blic_keys\030\t \003(\tR\rsshPublicKeys\0225\n\026subass" +
+      "embly_references\030\n \003(\tR\025subassemblyRefer" +
+      "ences\022H\n\022last_user_activity\030\013 \001(\0132\032.goog" +
+      "le.protobuf.TimestampR\020lastUserActivity\022" +
+      "\027\n\007log_url\030\014 \001(\tR\006logUrl\0222\n\006editor\030\r \001(\013" +
+      "2\032.gitpod.v1.EditorReferenceR\006editor\032\311\001\n" +
+      "\007Timeout\0229\n\ninactivity\030\001 \001(\0132\031.google.pr" +
+      "otobuf.DurationR\ninactivity\022=\n\014disconnec" +
+      "ted\030\002 \001(\0132\031.google.protobuf.DurationR\014di" +
+      "sconnected\022D\n\020maximum_lifetime\030\003 \001(\0132\031.g" +
+      "oogle.protobuf.DurationR\017maximumLifetime" +
+      "\032;\n\007GitSpec\022\032\n\010username\030\001 \001(\tR\010username\022" +
+      "\024\n\005email\030\002 \001(\tR\005email\"h\n\rWorkspaceType\022\036" +
+      "\n\032WORKSPACE_TYPE_UNSPECIFIED\020\000\022\032\n\026WORKSP" +
+      "ACE_TYPE_REGULAR\020\001\022\033\n\027WORKSPACE_TYPE_PRE" +
+      "BUILD\020\002\"\346\006\n\017WorkspaceStatus\022%\n\016status_ve" +
+      "rsion\030\001 \001(\004R\rstatusVersion\022/\n\005phase\030\002 \001(" +
+      "\0132\031.gitpod.v1.WorkspacePhaseR\005phase\022#\n\rw" +
+      "orkspace_url\030\003 \001(\tR\014workspaceUrl\022N\n\ncond" +
+      "itions\030\004 \001(\0132..gitpod.v1.WorkspaceStatus" +
+      ".WorkspaceConditionsR\nconditions\022R\n\017preb" +
+      "uild_result\030\005 \001(\0132).gitpod.v1.WorkspaceS" +
+      "tatus.PrebuildResultR\016prebuildResult\022<\n\n" +
+      "git_status\030\006 \001(\0132\035.gitpod.v1.WorkspaceGi" +
+      "tStatusR\tgitStatus\022#\n\013instance_id\030\007 \001(\tB" +
+      "\002\030\001R\ninstanceId\032\373\002\n\023WorkspaceConditions\022" +
+      "\026\n\006failed\030\001 \001(\tR\006failed\022`\n\rfailed_reason" +
+      "\030\002 \001(\0162;.gitpod.v1.WorkspaceStatus.Works" +
+      "paceConditions.FailedReasonR\014failedReaso" +
+      "n\022\030\n\007timeout\030\003 \001(\tR\007timeout\"\317\001\n\014FailedRe" +
+      "ason\022\035\n\031FAILED_REASON_UNSPECIFIED\020\000\022/\n+F" +
+      "AILED_REASON_CONTENT_INITIALIZATION_FAIL" +
+      "ED\020\001\022\037\n\033FAILED_REASON_BACKUP_FAILED\020\002\022$\n" +
+      " FAILED_REASON_IMAGE_PULL_FAILURE\020\003\022(\n$F" +
+      "AILED_REASON_UNEXPECTED_TERMINATION\020\004\032Q\n" +
+      "\016PrebuildResult\022\032\n\010snapshot\030\001 \001(\tR\010snaps" +
+      "hot\022#\n\rerror_message\030\002 \001(\tR\014errorMessage" +
+      "\"\372\001\n\rWorkspacePort\022\022\n\004port\030\001 \001(\004R\004port\0227" +
+      "\n\tadmission\030\002 \001(\0162\031.gitpod.v1.AdmissionL" +
+      "evelR\tadmission\022\020\n\003url\030\003 \001(\tR\003url\022=\n\010pro" +
+      "tocol\030\004 \001(\0162!.gitpod.v1.WorkspacePort.Pr" +
+      "otocolR\010protocol\"K\n\010Protocol\022\030\n\024PROTOCOL" +
+      "_UNSPECIFIED\020\000\022\021\n\rPROTOCOL_HTTP\020\001\022\022\n\016PRO" +
+      "TOCOL_HTTPS\020\002\"\215\003\n\022WorkspaceGitStatus\022\033\n\t" +
+      "clone_url\030\001 \001(\tR\010cloneUrl\022\026\n\006branch\030\002 \001(" +
+      "\tR\006branch\022#\n\rlatest_commit\030\003 \001(\tR\014latest" +
+      "Commit\022)\n\020uncommited_files\030\004 \003(\tR\017uncomm" +
+      "itedFiles\0224\n\026total_uncommited_files\030\005 \001(" +
+      "\005R\024totalUncommitedFiles\022\'\n\017untracked_fil" +
+      "es\030\006 \003(\tR\016untrackedFiles\0222\n\025total_untrac" +
+      "ked_files\030\007 \001(\005R\023totalUntrackedFiles\022)\n\020" +
+      "unpushed_commits\030\010 \003(\tR\017unpushedCommits\022" +
+      "4\n\026total_unpushed_commits\030\t \001(\005R\024totalUn" +
+      "pushedCommits\"\201\003\n\016WorkspacePhase\0223\n\004name" +
+      "\030\001 \001(\0162\037.gitpod.v1.WorkspacePhase.PhaseR" +
+      "\004name\022L\n\024last_transition_time\030\002 \001(\0132\032.go" +
+      "ogle.protobuf.TimestampR\022lastTransitionT" +
+      "ime\"\353\001\n\005Phase\022\025\n\021PHASE_UNSPECIFIED\020\000\022\023\n\017" +
+      "PHASE_PREPARING\020\001\022\024\n\020PHASE_IMAGEBUILD\020\002\022" +
+      "\021\n\rPHASE_PENDING\020\003\022\022\n\016PHASE_CREATING\020\004\022\026" +
+      "\n\022PHASE_INITIALIZING\020\005\022\021\n\rPHASE_RUNNING\020" +
+      "\006\022\025\n\021PHASE_INTERRUPTED\020\007\022\020\n\014PHASE_PAUSED" +
+      "\020\010\022\022\n\016PHASE_STOPPING\020\t\022\021\n\rPHASE_STOPPED\020" +
+      "\n\"\320\002\n\024WorkspaceInitializer\022:\n\005specs\030\001 \003(" +
+      "\0132$.gitpod.v1.WorkspaceInitializer.SpecR" +
+      "\005specs\032\373\001\n\004Spec\022-\n\003git\030\001 \001(\0132\031.gitpod.v1" +
+      ".GitInitializerH\000R\003git\022<\n\010snapshot\030\002 \001(\013" +
+      "2\036.gitpod.v1.SnapshotInitializerH\000R\010snap" +
+      "shot\022<\n\010prebuild\030\003 \001(\0132\036.gitpod.v1.Prebu" +
+      "ildInitializerH\000R\010prebuild\022@\n\010download\030\004" +
+      " \001(\0132\".gitpod.v1.FileDownloadInitializer" +
+      "H\000R\010downloadB\006\n\004spec\"\275\007\n\016GitInitializer\022" +
+      "\035\n\nremote_uri\030\001 \001(\tR\tremoteUri\022.\n\023upstre" +
+      "am_remote_uri\030\002 \001(\tR\021upstreamRemoteUri\022J" +
+      "\n\013target_mode\030\003 \001(\0162).gitpod.v1.GitIniti" +
+      "alizer.CloneTargetModeR\ntargetMode\022!\n\014cl" +
+      "one_target\030\004 \001(\tR\013cloneTarget\022+\n\021checkou" +
+      "t_location\030\005 \001(\tR\020checkoutLocation\022;\n\006co" +
+      "nfig\030\006 \001(\0132#.gitpod.v1.GitInitializer.Gi" +
+      "tConfigR\006config\032\323\002\n\tGitConfig\022Z\n\rcustom_" +
+      "config\030\001 \003(\01325.gitpod.v1.GitInitializer." +
+      "GitConfig.CustomConfigEntryR\014customConfi" +
+      "g\022L\n\016authentication\030\002 \001(\0162$.gitpod.v1.Gi" +
+      "tInitializer.AuthMethodR\016authentication\022" +
+      "\033\n\tauth_user\030\003 \001(\tR\010authUser\022#\n\rauth_pas" +
+      "sword\030\004 \001(\tR\014authPassword\022\031\n\010auth_ots\030\005 " +
+      "\001(\tR\007authOts\032?\n\021CustomConfigEntry\022\020\n\003key" +
+      "\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005value:\0028\001\"\305\001" +
+      "\n\017CloneTargetMode\022!\n\035CLONE_TARGET_MODE_U" +
+      "NSPECIFIED\020\000\022!\n\035CLONE_TARGET_MODE_REMOTE" +
+      "_HEAD\020\001\022#\n\037CLONE_TARGET_MODE_REMOTE_COMM" +
+      "IT\020\002\022#\n\037CLONE_TARGET_MODE_REMOTE_BRANCH\020" +
+      "\003\022\"\n\036CLONE_TARGET_MODE_LOCAL_BRANCH\020\004\"e\n" +
+      "\nAuthMethod\022\033\n\027AUTH_METHOD_UNSPECIFIED\020\000" +
+      "\022\032\n\026AUTH_METHOD_BASIC_AUTH\020\001\022\036\n\032AUTH_MET" +
+      "HOD_BASIC_AUTH_OTS\020\002\"6\n\023SnapshotInitiali" +
+      "zer\022\037\n\013snapshot_id\030\001 \001(\tR\nsnapshotId\"6\n\023" +
+      "PrebuildInitializer\022\037\n\013prebuild_id\030\001 \001(\t" +
+      "R\nprebuildId\"\330\001\n\027FileDownloadInitializer" +
+      "\022A\n\005files\030\001 \003(\0132+.gitpod.v1.FileDownload" +
+      "Initializer.FileInfoR\005files\022\'\n\017target_lo" +
+      "cation\030\002 \001(\tR\016targetLocation\032Q\n\010FileInfo" +
+      "\022\020\n\003url\030\001 \001(\tR\003url\022\033\n\tfile_path\030\002 \001(\tR\010f" +
+      "ilePath\022\026\n\006digest\030\003 \001(\tR\006digest\"\347\002\n\tGitS" +
+      "tatus\022\026\n\006branch\030\001 \001(\tR\006branch\022#\n\rlatest_" +
+      "commit\030\002 \001(\tR\014latestCommit\022)\n\020uncommited" +
+      "_files\030\003 \003(\tR\017uncommitedFiles\0224\n\026total_u" +
+      "ncommited_files\030\006 \001(\003R\024totalUncommitedFi" +
+      "les\022\'\n\017untracked_files\030\004 \003(\tR\016untrackedF" +
+      "iles\0222\n\025total_untracked_files\030\007 \001(\003R\023tot" +
+      "alUntrackedFiles\022)\n\020unpushed_commits\030\005 \003" +
+      "(\tR\017unpushedCommits\0224\n\026total_unpushed_co" +
+      "mmits\030\010 \001(\003R\024totalUnpushedCommits\"\326\006\n\026Up" +
+      "dateWorkspaceRequest\022!\n\014workspace_id\030\001 \001" +
+      "(\tR\013workspaceId\022Z\n\010metadata\030\002 \001(\01329.gitp" +
+      "od.v1.UpdateWorkspaceRequest.UpdateWorks" +
+      "paceMetadataH\000R\010metadata\210\001\001\022N\n\004spec\030\003 \001(" +
+      "\01325.gitpod.v1.UpdateWorkspaceRequest.Upd" +
+      "ateWorkspaceSpecH\001R\004spec\210\001\001\022E\n\ngit_statu" +
+      "s\030\004 \001(\0132\035.gitpod.v1.WorkspaceGitStatusB\002" +
+      "\030\001H\002R\tgitStatus\210\001\001\032c\n\027UpdateWorkspaceMet" +
+      "adata\022\027\n\004name\030\001 \001(\tH\000R\004name\210\001\001\022\033\n\006pinned" +
+      "\030\002 \001(\010H\001R\006pinned\210\001\001B\007\n\005_nameB\t\n\007_pinned\032" +
+      "\263\001\n\rUpdateTimeout\022>\n\ninactivity\030\001 \001(\0132\031." +
+      "google.protobuf.DurationH\000R\ninactivity\210\001" +
+      "\001\022B\n\014disconnected\030\002 \001(\0132\031.google.protobu" +
+      "f.DurationH\001R\014disconnected\210\001\001B\r\n\013_inacti" +
+      "vityB\017\n\r_disconnected\032\345\001\n\023UpdateWorkspac" +
+      "eSpec\022N\n\007timeout\030\001 \001(\0132/.gitpod.v1.Updat" +
+      "eWorkspaceRequest.UpdateTimeoutH\000R\007timeo" +
+      "ut\210\001\001\022<\n\tadmission\030\002 \001(\0162\031.gitpod.v1.Adm" +
+      "issionLevelH\001R\tadmission\210\001\001\022&\n\017ssh_publi" +
+      "c_keys\030\003 \003(\tR\rsshPublicKeysB\n\n\010_timeoutB" +
+      "\014\n\n_admissionB\013\n\t_metadataB\007\n\005_specB\r\n\013_" +
+      "git_status\"M\n\027UpdateWorkspaceResponse\0222\n" +
+      "\tworkspace\030\001 \001(\0132\024.gitpod.v1.WorkspaceR\t" +
+      "workspace\"9\n\024StopWorkspaceRequest\022!\n\014wor" +
+      "kspace_id\030\001 \001(\tR\013workspaceId\"\027\n\025StopWork" +
+      "spaceResponse\";\n\026DeleteWorkspaceRequest\022" +
+      "!\n\014workspace_id\030\001 \001(\tR\013workspaceId\"\031\n\027De" +
+      "leteWorkspaceResponse\"[\n\033ListWorkspaceCl" +
+      "assesRequest\022<\n\npagination\030\001 \001(\0132\034.gitpo" +
+      "d.v1.PaginationRequestR\npagination\"\245\001\n\034L" +
+      "istWorkspaceClassesResponse\022=\n\npaginatio" +
+      "n\030\001 \001(\0132\035.gitpod.v1.PaginationResponseR\n" +
+      "pagination\022F\n\021workspace_classes\030\002 \003(\0132\031." +
+      "gitpod.v1.WorkspaceClassR\020workspaceClass" +
+      "es\"d\n\026ParseContextURLRequest\022\037\n\013context_" +
+      "url\030\001 \001(\tR\ncontextUrl\022)\n\020configuration_i" +
+      "d\030\002 \001(\tR\017configurationId\"\201\001\n\027ParseContex" +
+      "tURLResponse\0228\n\010metadata\030\001 \001(\0132\034.gitpod." +
+      "v1.WorkspaceMetadataR\010metadata\022,\n\004spec\030\002" +
+      " \001(\0132\030.gitpod.v1.WorkspaceSpecR\004spec\"\204\001\n" +
+      "\016WorkspaceClass\022\016\n\002id\030\001 \001(\tR\002id\022!\n\014displ" +
+      "ay_name\030\002 \001(\tR\013displayName\022 \n\013descriptio" +
+      "n\030\003 \001(\tR\013description\022\035\n\nis_default\030\004 \001(\010" +
+      "R\tisDefault\"C\n\036CreateWorkspaceSnapshotRe" +
+      "quest\022!\n\014workspace_id\030\001 \001(\tR\013workspaceId" +
+      "\"[\n\037CreateWorkspaceSnapshotResponse\0228\n\010s" +
+      "napshot\030\001 \001(\0132\034.gitpod.v1.WorkspaceSnaps" +
+      "hotR\010snapshot\"B\n\037WaitForWorkspaceSnapsho" +
+      "tRequest\022\037\n\013snapshot_id\030\001 \001(\tR\nsnapshotI" +
+      "d\"\"\n WaitForWorkspaceSnapshotResponse\"\207\001" +
+      "\n\021WorkspaceSnapshot\022\016\n\002id\030\001 \001(\tR\002id\022!\n\014w" +
+      "orkspace_id\030\002 \001(\tR\013workspaceId\022?\n\rcreati" +
+      "on_time\030\003 \001(\0132\032.google.protobuf.Timestam" +
+      "pR\014creationTime\"\227\003\n\020WorkspaceSession\022\016\n\002" +
+      "id\030\001 \001(\tR\002id\0222\n\tworkspace\030\002 \001(\0132\024.gitpod" +
+      ".v1.WorkspaceR\tworkspace\022?\n\rcreation_tim" +
+      "e\030\003 \001(\0132\032.google.protobuf.TimestampR\014cre" +
+      "ationTime\022?\n\rdeployed_time\030\004 \001(\0132\032.googl" +
+      "e.protobuf.TimestampR\014deployedTime\022=\n\014st" +
+      "arted_time\030\005 \001(\0132\032.google.protobuf.Times" +
+      "tampR\013startedTime\022?\n\rstopping_time\030\006 \001(\013" +
+      "2\032.google.protobuf.TimestampR\014stoppingTi" +
+      "me\022=\n\014stopped_time\030\007 \001(\0132\032.google.protob" +
+      "uf.TimestampR\013stoppedTime*o\n\016AdmissionLe" +
+      "vel\022\037\n\033ADMISSION_LEVEL_UNSPECIFIED\020\000\022\036\n\032" +
+      "ADMISSION_LEVEL_OWNER_ONLY\020\001\022\034\n\030ADMISSIO" +
+      "N_LEVEL_EVERYONE\020\0022\331\017\n\020WorkspaceService\022" +
+      "Q\n\014GetWorkspace\022\036.gitpod.v1.GetWorkspace" +
+      "Request\032\037.gitpod.v1.GetWorkspaceResponse" +
+      "\"\000\022k\n\024WatchWorkspaceStatus\022&.gitpod.v1.W" +
+      "atchWorkspaceStatusRequest\032\'.gitpod.v1.W" +
+      "atchWorkspaceStatusResponse\"\0000\001\022\203\001\n\034Watc" +
+      "hWorkspaceImageBuildLogs\022..gitpod.v1.Wat" +
+      "chWorkspaceImageBuildLogsRequest\032/.gitpo" +
+      "d.v1.WatchWorkspaceImageBuildLogsRespons" +
+      "e\"\0000\001\022W\n\016ListWorkspaces\022 .gitpod.v1.List" +
+      "WorkspacesRequest\032!.gitpod.v1.ListWorksp" +
+      "acesResponse\"\000\022l\n\025ListWorkspaceSessions\022" +
+      "\'.gitpod.v1.ListWorkspaceSessionsRequest" +
+      "\032(.gitpod.v1.ListWorkspaceSessionsRespon" +
+      "se\"\000\022r\n\027CreateAndStartWorkspace\022).gitpod" +
+      ".v1.CreateAndStartWorkspaceRequest\032*.git" +
+      "pod.v1.CreateAndStartWorkspaceResponse\"\000" +
+      "\022W\n\016StartWorkspace\022 .gitpod.v1.StartWork" +
+      "spaceRequest\032!.gitpod.v1.StartWorkspaceR" +
+      "esponse\"\000\022Z\n\017UpdateWorkspace\022!.gitpod.v1" +
+      ".UpdateWorkspaceRequest\032\".gitpod.v1.Upda" +
+      "teWorkspaceResponse\"\000\022T\n\rStopWorkspace\022\037" +
+      ".gitpod.v1.StopWorkspaceRequest\032 .gitpod" +
+      ".v1.StopWorkspaceResponse\"\000\022Z\n\017DeleteWor" +
+      "kspace\022!.gitpod.v1.DeleteWorkspaceReques" +
+      "t\032\".gitpod.v1.DeleteWorkspaceResponse\"\000\022" +
+      "i\n\024ListWorkspaceClasses\022&.gitpod.v1.List" +
+      "WorkspaceClassesRequest\032\'.gitpod.v1.List" +
+      "WorkspaceClassesResponse\"\000\022Z\n\017ParseConte" +
+      "xtURL\022!.gitpod.v1.ParseContextURLRequest" +
+      "\032\".gitpod.v1.ParseContextURLResponse\"\000\022u" +
+      "\n\030GetWorkspaceDefaultImage\022*.gitpod.v1.G" +
+      "etWorkspaceDefaultImageRequest\032+.gitpod." +
+      "v1.GetWorkspaceDefaultImageResponse\"\000\022T\n" +
+      "\rSendHeartBeat\022\037.gitpod.v1.SendHeartBeat" +
+      "Request\032 .gitpod.v1.SendHeartBeatRespons" +
+      "e\"\000\022o\n\026GetWorkspaceOwnerToken\022(.gitpod.v" +
+      "1.GetWorkspaceOwnerTokenRequest\032).gitpod" +
+      ".v1.GetWorkspaceOwnerTokenResponse\"\000\022\204\001\n" +
+      "\035GetWorkspaceEditorCredentials\022/.gitpod." +
+      "v1.GetWorkspaceEditorCredentialsRequest\032" +
+      "0.gitpod.v1.GetWorkspaceEditorCredential" +
+      "sResponse\"\000\022r\n\027CreateWorkspaceSnapshot\022)" +
+      ".gitpod.v1.CreateWorkspaceSnapshotReques" +
+      "t\032*.gitpod.v1.CreateWorkspaceSnapshotRes" +
+      "ponse\"\000\022u\n\030WaitForWorkspaceSnapshot\022*.gi" +
+      "tpod.v1.WaitForWorkspaceSnapshotRequest\032" +
+      "+.gitpod.v1.WaitForWorkspaceSnapshotResp" +
+      "onse\"\000\022f\n\023UpdateWorkspacePort\022%.gitpod.v" +
+      "1.UpdateWorkspacePortRequest\032&.gitpod.v1" +
+      ".UpdateWorkspacePortResponse\"\000BQ\n\026io.git" +
+      "pod.publicapi.v1Z7github.com/gitpod-io/g" +
+      "itpod/components/public-api/go/v1b\006proto" +
+      "3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -60670,32 +63629,56 @@ java.lang.String defaultValue) {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WatchWorkspaceStatusResponse_descriptor,
         new java.lang.String[] { "WorkspaceId", "Status", });
-    internal_static_gitpod_v1_ListWorkspacesRequest_descriptor =
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsRequest_descriptor =
       getDescriptor().getMessageTypes().get(6);
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsRequest_descriptor,
+        new java.lang.String[] { "WorkspaceId", });
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_descriptor =
+      getDescriptor().getMessageTypes().get(7);
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_descriptor,
+        new java.lang.String[] { "Logs", "State", });
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_State_descriptor =
+      internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_descriptor.getNestedTypes().get(0);
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_State_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_State_descriptor,
+        new java.lang.String[] { "Phase", "CurrentStep", "MaxSteps", });
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_Log_descriptor =
+      internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_descriptor.getNestedTypes().get(1);
+    internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_Log_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_WatchWorkspaceImageBuildLogsResponse_Log_descriptor,
+        new java.lang.String[] { "Content", "UpToLine", "IsDiff", });
+    internal_static_gitpod_v1_ListWorkspacesRequest_descriptor =
+      getDescriptor().getMessageTypes().get(8);
     internal_static_gitpod_v1_ListWorkspacesRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListWorkspacesRequest_descriptor,
         new java.lang.String[] { "Pagination", "OrganizationId", "Pinned", "SearchTerm", });
     internal_static_gitpod_v1_ListWorkspacesResponse_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_gitpod_v1_ListWorkspacesResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListWorkspacesResponse_descriptor,
         new java.lang.String[] { "Pagination", "Workspaces", });
     internal_static_gitpod_v1_ListWorkspaceSessionsRequest_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_gitpod_v1_ListWorkspaceSessionsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListWorkspaceSessionsRequest_descriptor,
         new java.lang.String[] { "Pagination", "OrganizationId", "From", "To", });
     internal_static_gitpod_v1_ListWorkspaceSessionsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_gitpod_v1_ListWorkspaceSessionsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListWorkspaceSessionsResponse_descriptor,
         new java.lang.String[] { "Pagination", "WorkspaceSessions", });
     internal_static_gitpod_v1_CreateAndStartWorkspaceRequest_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_gitpod_v1_CreateAndStartWorkspaceRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_CreateAndStartWorkspaceRequest_descriptor,
@@ -60707,79 +63690,79 @@ java.lang.String defaultValue) {
         internal_static_gitpod_v1_CreateAndStartWorkspaceRequest_ContextURL_descriptor,
         new java.lang.String[] { "Url", "WorkspaceClass", "Editor", });
     internal_static_gitpod_v1_CreateAndStartWorkspaceResponse_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_gitpod_v1_CreateAndStartWorkspaceResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_CreateAndStartWorkspaceResponse_descriptor,
         new java.lang.String[] { "Workspace", });
     internal_static_gitpod_v1_StartWorkspaceRequest_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(14);
     internal_static_gitpod_v1_StartWorkspaceRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_StartWorkspaceRequest_descriptor,
         new java.lang.String[] { "WorkspaceId", "ForceDefaultConfig", });
     internal_static_gitpod_v1_StartWorkspaceResponse_descriptor =
-      getDescriptor().getMessageTypes().get(13);
+      getDescriptor().getMessageTypes().get(15);
     internal_static_gitpod_v1_StartWorkspaceResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_StartWorkspaceResponse_descriptor,
         new java.lang.String[] { "Workspace", });
     internal_static_gitpod_v1_GetWorkspaceDefaultImageRequest_descriptor =
-      getDescriptor().getMessageTypes().get(14);
+      getDescriptor().getMessageTypes().get(16);
     internal_static_gitpod_v1_GetWorkspaceDefaultImageRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetWorkspaceDefaultImageRequest_descriptor,
         new java.lang.String[] { "WorkspaceId", });
     internal_static_gitpod_v1_GetWorkspaceDefaultImageResponse_descriptor =
-      getDescriptor().getMessageTypes().get(15);
+      getDescriptor().getMessageTypes().get(17);
     internal_static_gitpod_v1_GetWorkspaceDefaultImageResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetWorkspaceDefaultImageResponse_descriptor,
         new java.lang.String[] { "DefaultWorkspaceImage", "Source", });
     internal_static_gitpod_v1_SendHeartBeatRequest_descriptor =
-      getDescriptor().getMessageTypes().get(16);
+      getDescriptor().getMessageTypes().get(18);
     internal_static_gitpod_v1_SendHeartBeatRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_SendHeartBeatRequest_descriptor,
         new java.lang.String[] { "WorkspaceId", "Disconnected", });
     internal_static_gitpod_v1_SendHeartBeatResponse_descriptor =
-      getDescriptor().getMessageTypes().get(17);
+      getDescriptor().getMessageTypes().get(19);
     internal_static_gitpod_v1_SendHeartBeatResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_SendHeartBeatResponse_descriptor,
         new java.lang.String[] { });
     internal_static_gitpod_v1_GetWorkspaceOwnerTokenRequest_descriptor =
-      getDescriptor().getMessageTypes().get(18);
+      getDescriptor().getMessageTypes().get(20);
     internal_static_gitpod_v1_GetWorkspaceOwnerTokenRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetWorkspaceOwnerTokenRequest_descriptor,
         new java.lang.String[] { "WorkspaceId", });
     internal_static_gitpod_v1_GetWorkspaceOwnerTokenResponse_descriptor =
-      getDescriptor().getMessageTypes().get(19);
+      getDescriptor().getMessageTypes().get(21);
     internal_static_gitpod_v1_GetWorkspaceOwnerTokenResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetWorkspaceOwnerTokenResponse_descriptor,
         new java.lang.String[] { "OwnerToken", });
     internal_static_gitpod_v1_GetWorkspaceEditorCredentialsRequest_descriptor =
-      getDescriptor().getMessageTypes().get(20);
+      getDescriptor().getMessageTypes().get(22);
     internal_static_gitpod_v1_GetWorkspaceEditorCredentialsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetWorkspaceEditorCredentialsRequest_descriptor,
         new java.lang.String[] { "WorkspaceId", });
     internal_static_gitpod_v1_GetWorkspaceEditorCredentialsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(21);
+      getDescriptor().getMessageTypes().get(23);
     internal_static_gitpod_v1_GetWorkspaceEditorCredentialsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetWorkspaceEditorCredentialsResponse_descriptor,
         new java.lang.String[] { "EditorCredentials", });
     internal_static_gitpod_v1_Workspace_descriptor =
-      getDescriptor().getMessageTypes().get(22);
+      getDescriptor().getMessageTypes().get(24);
     internal_static_gitpod_v1_Workspace_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_Workspace_descriptor,
         new java.lang.String[] { "Id", "Metadata", "Spec", "Status", });
     internal_static_gitpod_v1_WorkspaceMetadata_descriptor =
-      getDescriptor().getMessageTypes().get(23);
+      getDescriptor().getMessageTypes().get(25);
     internal_static_gitpod_v1_WorkspaceMetadata_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceMetadata_descriptor,
@@ -60791,7 +63774,7 @@ java.lang.String defaultValue) {
         internal_static_gitpod_v1_WorkspaceMetadata_AnnotationsEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_gitpod_v1_WorkspaceSpec_descriptor =
-      getDescriptor().getMessageTypes().get(24);
+      getDescriptor().getMessageTypes().get(26);
     internal_static_gitpod_v1_WorkspaceSpec_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceSpec_descriptor,
@@ -60809,7 +63792,7 @@ java.lang.String defaultValue) {
         internal_static_gitpod_v1_WorkspaceSpec_GitSpec_descriptor,
         new java.lang.String[] { "Username", "Email", });
     internal_static_gitpod_v1_WorkspaceStatus_descriptor =
-      getDescriptor().getMessageTypes().get(25);
+      getDescriptor().getMessageTypes().get(27);
     internal_static_gitpod_v1_WorkspaceStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceStatus_descriptor,
@@ -60827,25 +63810,25 @@ java.lang.String defaultValue) {
         internal_static_gitpod_v1_WorkspaceStatus_PrebuildResult_descriptor,
         new java.lang.String[] { "Snapshot", "ErrorMessage", });
     internal_static_gitpod_v1_WorkspacePort_descriptor =
-      getDescriptor().getMessageTypes().get(26);
+      getDescriptor().getMessageTypes().get(28);
     internal_static_gitpod_v1_WorkspacePort_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspacePort_descriptor,
         new java.lang.String[] { "Port", "Admission", "Url", "Protocol", });
     internal_static_gitpod_v1_WorkspaceGitStatus_descriptor =
-      getDescriptor().getMessageTypes().get(27);
+      getDescriptor().getMessageTypes().get(29);
     internal_static_gitpod_v1_WorkspaceGitStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceGitStatus_descriptor,
         new java.lang.String[] { "CloneUrl", "Branch", "LatestCommit", "UncommitedFiles", "TotalUncommitedFiles", "UntrackedFiles", "TotalUntrackedFiles", "UnpushedCommits", "TotalUnpushedCommits", });
     internal_static_gitpod_v1_WorkspacePhase_descriptor =
-      getDescriptor().getMessageTypes().get(28);
+      getDescriptor().getMessageTypes().get(30);
     internal_static_gitpod_v1_WorkspacePhase_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspacePhase_descriptor,
         new java.lang.String[] { "Name", "LastTransitionTime", });
     internal_static_gitpod_v1_WorkspaceInitializer_descriptor =
-      getDescriptor().getMessageTypes().get(29);
+      getDescriptor().getMessageTypes().get(31);
     internal_static_gitpod_v1_WorkspaceInitializer_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceInitializer_descriptor,
@@ -60857,7 +63840,7 @@ java.lang.String defaultValue) {
         internal_static_gitpod_v1_WorkspaceInitializer_Spec_descriptor,
         new java.lang.String[] { "Git", "Snapshot", "Prebuild", "Download", "Spec", });
     internal_static_gitpod_v1_GitInitializer_descriptor =
-      getDescriptor().getMessageTypes().get(30);
+      getDescriptor().getMessageTypes().get(32);
     internal_static_gitpod_v1_GitInitializer_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GitInitializer_descriptor,
@@ -60875,19 +63858,19 @@ java.lang.String defaultValue) {
         internal_static_gitpod_v1_GitInitializer_GitConfig_CustomConfigEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_gitpod_v1_SnapshotInitializer_descriptor =
-      getDescriptor().getMessageTypes().get(31);
+      getDescriptor().getMessageTypes().get(33);
     internal_static_gitpod_v1_SnapshotInitializer_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_SnapshotInitializer_descriptor,
         new java.lang.String[] { "SnapshotId", });
     internal_static_gitpod_v1_PrebuildInitializer_descriptor =
-      getDescriptor().getMessageTypes().get(32);
+      getDescriptor().getMessageTypes().get(34);
     internal_static_gitpod_v1_PrebuildInitializer_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_PrebuildInitializer_descriptor,
         new java.lang.String[] { "PrebuildId", });
     internal_static_gitpod_v1_FileDownloadInitializer_descriptor =
-      getDescriptor().getMessageTypes().get(33);
+      getDescriptor().getMessageTypes().get(35);
     internal_static_gitpod_v1_FileDownloadInitializer_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_FileDownloadInitializer_descriptor,
@@ -60899,13 +63882,13 @@ java.lang.String defaultValue) {
         internal_static_gitpod_v1_FileDownloadInitializer_FileInfo_descriptor,
         new java.lang.String[] { "Url", "FilePath", "Digest", });
     internal_static_gitpod_v1_GitStatus_descriptor =
-      getDescriptor().getMessageTypes().get(34);
+      getDescriptor().getMessageTypes().get(36);
     internal_static_gitpod_v1_GitStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GitStatus_descriptor,
         new java.lang.String[] { "Branch", "LatestCommit", "UncommitedFiles", "TotalUncommitedFiles", "UntrackedFiles", "TotalUntrackedFiles", "UnpushedCommits", "TotalUnpushedCommits", });
     internal_static_gitpod_v1_UpdateWorkspaceRequest_descriptor =
-      getDescriptor().getMessageTypes().get(35);
+      getDescriptor().getMessageTypes().get(37);
     internal_static_gitpod_v1_UpdateWorkspaceRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateWorkspaceRequest_descriptor,
@@ -60929,97 +63912,97 @@ java.lang.String defaultValue) {
         internal_static_gitpod_v1_UpdateWorkspaceRequest_UpdateWorkspaceSpec_descriptor,
         new java.lang.String[] { "Timeout", "Admission", "SshPublicKeys", });
     internal_static_gitpod_v1_UpdateWorkspaceResponse_descriptor =
-      getDescriptor().getMessageTypes().get(36);
+      getDescriptor().getMessageTypes().get(38);
     internal_static_gitpod_v1_UpdateWorkspaceResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateWorkspaceResponse_descriptor,
         new java.lang.String[] { "Workspace", });
     internal_static_gitpod_v1_StopWorkspaceRequest_descriptor =
-      getDescriptor().getMessageTypes().get(37);
+      getDescriptor().getMessageTypes().get(39);
     internal_static_gitpod_v1_StopWorkspaceRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_StopWorkspaceRequest_descriptor,
         new java.lang.String[] { "WorkspaceId", });
     internal_static_gitpod_v1_StopWorkspaceResponse_descriptor =
-      getDescriptor().getMessageTypes().get(38);
+      getDescriptor().getMessageTypes().get(40);
     internal_static_gitpod_v1_StopWorkspaceResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_StopWorkspaceResponse_descriptor,
         new java.lang.String[] { });
     internal_static_gitpod_v1_DeleteWorkspaceRequest_descriptor =
-      getDescriptor().getMessageTypes().get(39);
+      getDescriptor().getMessageTypes().get(41);
     internal_static_gitpod_v1_DeleteWorkspaceRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteWorkspaceRequest_descriptor,
         new java.lang.String[] { "WorkspaceId", });
     internal_static_gitpod_v1_DeleteWorkspaceResponse_descriptor =
-      getDescriptor().getMessageTypes().get(40);
+      getDescriptor().getMessageTypes().get(42);
     internal_static_gitpod_v1_DeleteWorkspaceResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteWorkspaceResponse_descriptor,
         new java.lang.String[] { });
     internal_static_gitpod_v1_ListWorkspaceClassesRequest_descriptor =
-      getDescriptor().getMessageTypes().get(41);
+      getDescriptor().getMessageTypes().get(43);
     internal_static_gitpod_v1_ListWorkspaceClassesRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListWorkspaceClassesRequest_descriptor,
         new java.lang.String[] { "Pagination", });
     internal_static_gitpod_v1_ListWorkspaceClassesResponse_descriptor =
-      getDescriptor().getMessageTypes().get(42);
+      getDescriptor().getMessageTypes().get(44);
     internal_static_gitpod_v1_ListWorkspaceClassesResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListWorkspaceClassesResponse_descriptor,
         new java.lang.String[] { "Pagination", "WorkspaceClasses", });
     internal_static_gitpod_v1_ParseContextURLRequest_descriptor =
-      getDescriptor().getMessageTypes().get(43);
+      getDescriptor().getMessageTypes().get(45);
     internal_static_gitpod_v1_ParseContextURLRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ParseContextURLRequest_descriptor,
         new java.lang.String[] { "ContextUrl", "ConfigurationId", });
     internal_static_gitpod_v1_ParseContextURLResponse_descriptor =
-      getDescriptor().getMessageTypes().get(44);
+      getDescriptor().getMessageTypes().get(46);
     internal_static_gitpod_v1_ParseContextURLResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ParseContextURLResponse_descriptor,
         new java.lang.String[] { "Metadata", "Spec", });
     internal_static_gitpod_v1_WorkspaceClass_descriptor =
-      getDescriptor().getMessageTypes().get(45);
+      getDescriptor().getMessageTypes().get(47);
     internal_static_gitpod_v1_WorkspaceClass_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceClass_descriptor,
         new java.lang.String[] { "Id", "DisplayName", "Description", "IsDefault", });
     internal_static_gitpod_v1_CreateWorkspaceSnapshotRequest_descriptor =
-      getDescriptor().getMessageTypes().get(46);
+      getDescriptor().getMessageTypes().get(48);
     internal_static_gitpod_v1_CreateWorkspaceSnapshotRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_CreateWorkspaceSnapshotRequest_descriptor,
         new java.lang.String[] { "WorkspaceId", });
     internal_static_gitpod_v1_CreateWorkspaceSnapshotResponse_descriptor =
-      getDescriptor().getMessageTypes().get(47);
+      getDescriptor().getMessageTypes().get(49);
     internal_static_gitpod_v1_CreateWorkspaceSnapshotResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_CreateWorkspaceSnapshotResponse_descriptor,
         new java.lang.String[] { "Snapshot", });
     internal_static_gitpod_v1_WaitForWorkspaceSnapshotRequest_descriptor =
-      getDescriptor().getMessageTypes().get(48);
+      getDescriptor().getMessageTypes().get(50);
     internal_static_gitpod_v1_WaitForWorkspaceSnapshotRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WaitForWorkspaceSnapshotRequest_descriptor,
         new java.lang.String[] { "SnapshotId", });
     internal_static_gitpod_v1_WaitForWorkspaceSnapshotResponse_descriptor =
-      getDescriptor().getMessageTypes().get(49);
+      getDescriptor().getMessageTypes().get(51);
     internal_static_gitpod_v1_WaitForWorkspaceSnapshotResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WaitForWorkspaceSnapshotResponse_descriptor,
         new java.lang.String[] { });
     internal_static_gitpod_v1_WorkspaceSnapshot_descriptor =
-      getDescriptor().getMessageTypes().get(50);
+      getDescriptor().getMessageTypes().get(52);
     internal_static_gitpod_v1_WorkspaceSnapshot_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceSnapshot_descriptor,
         new java.lang.String[] { "Id", "WorkspaceId", "CreationTime", });
     internal_static_gitpod_v1_WorkspaceSession_descriptor =
-      getDescriptor().getMessageTypes().get(51);
+      getDescriptor().getMessageTypes().get(53);
     internal_static_gitpod_v1_WorkspaceSession_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceSession_descriptor,
