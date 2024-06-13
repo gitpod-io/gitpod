@@ -12,19 +12,15 @@ import { useCurrentUser } from "../user-context";
 import { useCurrentOrg } from "./organizations/orgs-query";
 
 const featureFlags = {
-    personalAccessTokensEnabled: false,
     oidcServiceEnabled: false,
     // Default to true to enable on gitpod dedicated until ff support is added for dedicated
     orgGitAuthProviders: true,
     userGitAuthProviders: false,
     linkedinConnectionForOnboarding: false,
     enableDedicatedOnboardingFlow: false,
-    phoneVerificationByCall: false,
-    doRetryUserLoader: true,
     // Local SSH feature of VS Code Desktop Extension
     gitpod_desktop_use_local_ssh_proxy: false,
     enabledOrbitalDiscoveries: "",
-    newProjectIncrementalRepoSearchBBS: false,
     repositoryFinderSearch: false,
     createProjectModal: false,
     configurationsAndPrebuilds: false,

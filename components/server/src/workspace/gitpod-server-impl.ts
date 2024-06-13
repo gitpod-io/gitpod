@@ -446,20 +446,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<{ verificationId: string }> {
         const user = await this.checkUser("sendPhoneNumberVerificationToken");
 
-        // Check if verify via call is enabled
-        const phoneVerificationByCall = await getExperimentsClientForBackend().getValueAsync(
-            "phoneVerificationByCall",
-            false,
-            {
-                user: {
-                    id: user.id,
-                    email: getPrimaryEmail(user),
-                },
-            },
-        );
-
-        const channel = phoneVerificationByCall ? "call" : "sms";
-
+        const channel = "call";
         const verificationId = await this.verificationService.sendVerificationToken(
             user.id,
             formatPhoneNumber(rawPhoneNumber),

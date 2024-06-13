@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	PersonalAccessTokensEnabledFlag                = "personalAccessTokensEnabled"
 	OIDCServiceEnabledFlag                         = "oidcServiceEnabled"
 	SupervisorPersistServerAPIChannelWhenStartFlag = "supervisor_persist_serverapi_channel_when_start"
 	SupervisorUsePublicAPIFlag                     = "supervisor_experimental_publicapi"
@@ -19,10 +18,6 @@ const (
 	SetJavaXmxFlag                                 = "supervisor_set_java_xmx"
 	SetJavaProcessorCount                          = "supervisor_set_java_processor_count"
 )
-
-func IsPersonalAccessTokensEnabled(ctx context.Context, client Client, attributes Attributes) bool {
-	return client.GetBoolValue(ctx, PersonalAccessTokensEnabledFlag, false, attributes)
-}
 
 func GetIdPClaimKeys(ctx context.Context, client Client, attributes Attributes) []string {
 	value := client.GetStringValue(ctx, IdPClaimKeysFlag, "undefined", attributes)
