@@ -67,9 +67,7 @@ describe("TokenService", async () => {
 
     beforeEach(async () => {
         container = createTestContainer();
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
 
         // re-overwrite the stuff mocked out in createTestContainer
         container.rebind(TokenProvider).toService(TokenService);

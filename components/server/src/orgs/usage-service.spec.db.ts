@@ -44,9 +44,7 @@ describe("UsageService", async () => {
 
     beforeEach(async () => {
         container = createTestContainer();
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         os = container.get(OrganizationService);
         const userService = container.get<UserService>(UserService);
         owner = await userService.createUser({

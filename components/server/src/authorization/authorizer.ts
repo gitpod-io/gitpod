@@ -194,7 +194,6 @@ export class Authorizer {
         passed: Subject,
         permission: WorkspacePermission,
         workspaceId: string,
-        forceEnablement?: boolean, // temporary to find an issue with workspace sharing
     ): Promise<boolean> {
         const subjectId = await getSubjectFromCtx(passed);
         if (isSystemUser(subjectId)) {
@@ -208,7 +207,7 @@ export class Authorizer {
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId: getUserId(subjectId) }, forceEnablement);
+        return await this.authorizer.check(req, { userId: getUserId(subjectId) });
     }
 
     async checkPermissionOnWorkspace(passed: Subject, permission: WorkspacePermission, workspaceId: string) {
@@ -228,9 +227,6 @@ export class Authorizer {
 
     // write operations below
     public async removeAllRelationships(userId: string, type: ResourceType, id: string) {
-        if (!(await isFgaWritesEnabled(userId))) {
-            return;
-        }
         await this.authorizer.deleteRelationships(
             v1.DeleteRelationshipsRequest.create({
                 relationshipFilter: {
@@ -259,9 +255,6 @@ export class Authorizer {
     }
 
     async addUser(userId: string, owningOrgId?: string) {
-        if (!(await isFgaWritesEnabled(userId))) {
-            return;
-        }
         const oldOrgs = await this.findAll(rel.user(userId).organization.organization(""));
         const updates = [set(rel.user(userId).self.user(userId))];
         updates.push(
@@ -289,16 +282,10 @@ export class Authorizer {
     }
 
     async removeUser(userId: string) {
-        if (!(await isFgaWritesEnabled(userId))) {
-            return;
-        }
         await this.removeAllRelationships(userId, "user", userId);
     }
 
     async addOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
-        if (!(await isFgaWritesEnabled(userID))) {
-            return;
-        }
         const updates = [];
         if (role === "owner") {
             updates.push(
@@ -325,9 +312,6 @@ export class Authorizer {
     }
 
     async removeOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
-        if (!(await isFgaWritesEnabled(userID))) {
-            return;
-        }
         const updates = [];
         if (role === "owner") {
             updates.push(remove(rel.organization(orgID).owner.user(userID)));
@@ -347,9 +331,6 @@ export class Authorizer {
     }
 
     async addProjectToOrg(userId: string, orgID: string, projectID: string): Promise<void> {
-        if (!(await isFgaWritesEnabled(userId))) {
-            return;
-        }
         await this.authorizer.writeRelationships(set(rel.project(projectID).org.organization(orgID)));
     }
 
@@ -359,9 +340,6 @@ export class Authorizer {
         organizationId: string,
         visibility: Project.Visibility,
     ) {
-        if (!(await isFgaWritesEnabled(userId))) {
-            return;
-        }
         const updates = [];
         switch (visibility) {
             case "private":
@@ -381,9 +359,6 @@ export class Authorizer {
     }
 
     async removeProjectFromOrg(userId: string, orgID: string, projectID: string): Promise<void> {
-        if (!(await isFgaWritesEnabled(userId))) {
-            return;
-        }
         await this.authorizer.writeRelationships(
             remove(rel.project(projectID).org.organization(orgID)), //
             remove(rel.project(projectID).viewer.anyUser),
@@ -397,9 +372,6 @@ export class Authorizer {
         members: { userId: string; role: TeamMemberRole }[],
         projectIds: string[],
     ): Promise<void> {
-        if (!(await isFgaWritesEnabled(userId))) {
-            return;
-        }
         await this.addOrganizationMembers(orgId, members);
 
         await this.addOrganizationProjects(userId, orgId, projectIds);
@@ -439,27 +411,18 @@ export class Authorizer {
     }
 
     async addInstallationAdminRole(userId: string) {
-        if (!(await isFgaWritesEnabled(userId))) {
-            return;
-        }
         await this.authorizer.writeRelationships(
             set(rel.installation.admin.user(userId)), //
         );
     }
 
     async removeInstallationAdminRole(userId: string) {
-        if (!(await isFgaWritesEnabled(userId))) {
-            return;
-        }
         await this.authorizer.writeRelationships(
             remove(rel.installation.admin.user(userId)), //
         );
     }
 
     async addWorkspaceToOrg(orgID: string, userID: string, workspaceID: string, shared: boolean): Promise<void> {
-        if (!(await isFgaWritesEnabled(userID))) {
-            return;
-        }
         const rels: v1.RelationshipUpdate[] = [];
         rels.push(set(rel.workspace(workspaceID).org.organization(orgID)));
         rels.push(set(rel.workspace(workspaceID).owner.user(userID)));
@@ -470,9 +433,6 @@ export class Authorizer {
     }
 
     async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
-        if (!(await isFgaWritesEnabled(userID))) {
-            return;
-        }
         await this.authorizer.writeRelationships(
             remove(rel.workspace(workspaceID).org.organization(orgID)),
             remove(rel.workspace(workspaceID).owner.user(userID)),
@@ -481,9 +441,6 @@ export class Authorizer {
     }
 
     async setWorkspaceIsShared(userID: string, workspaceID: string, shared: boolean): Promise<void> {
-        if (!(await isFgaWritesEnabled(userID))) {
-            return;
-        }
         if (shared) {
             await this.authorizer.writeRelationships(set(rel.workspace(workspaceID).shared.anyUser));
 
@@ -617,31 +574,6 @@ function getUserId(subjectId: SubjectId): string {
         throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `No userId available`);
     }
     return userId;
-}
-
-export async function isFgaChecksEnabled(subject: Subject): Promise<boolean> {
-    const subjectId = Subject.toId(subject);
-    const userId = subjectId.userId();
-    return getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
-        user: userId
-            ? {
-                  id: userId,
-              }
-            : undefined,
-    });
-}
-
-export async function isFgaWritesEnabled(subject: Subject): Promise<boolean> {
-    const subjectId = Subject.toId(subject);
-    const userId = subjectId.userId();
-    const result = await getExperimentsClientForBackend().getValueAsync("spicedb_relationship_updates", false, {
-        user: userId
-            ? {
-                  id: userId,
-              }
-            : undefined,
-    });
-    return result || (await isFgaChecksEnabled(subjectId));
 }
 
 function set(rs: v1.Relationship): v1.RelationshipUpdate {
