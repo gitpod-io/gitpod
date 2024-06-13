@@ -26,14 +26,6 @@
 	}
 }
 
-# Define a matcher to exclude 502 errors on a specific path
-@exclude502 {
-    not {
-        path /_supervisor*
-        status 502
-    }
-}
-
 (compression) {
 	encode zstd gzip
 }
@@ -151,6 +143,14 @@
 
 # TODO: refactor once we can listen only in localhost
 :9545 {
+	# Define a matcher to exclude 502 errors on a specific path
+	@exclude502 {
+    not {
+        path /_supervisor*
+        status 502
+    }
+}
+
 	metrics /metrics @exclude502 {
 		disable_openmetrics
 	}
