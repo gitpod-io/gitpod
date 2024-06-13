@@ -20,7 +20,7 @@ import Tooltip from "../components/Tooltip";
 import { prebuildClient, watchPrebuild } from "../service/public-api";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Button } from "@podkit/buttons/Button";
-import { getPrebuildStatusDescription, prebuildStatusIcon, prebuildStatusLabel } from "./prebuild-utils";
+import { PrebuildStatus } from "./prebuild-utils";
 
 export default function PrebuildsPage(props: { project?: Project; isAdminDashboard?: boolean }) {
     const currentProject = useCurrentProject();
@@ -212,15 +212,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                                         }`}
                                     >
                                         <div>
-                                            <div
-                                                className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1"
-                                                title={getPrebuildStatusDescription(p)}
-                                            >
-                                                <div className="inline-block align-text-bottom mr-2 w-4 h-4">
-                                                    {prebuildStatusIcon(p)}
-                                                </div>
-                                                {prebuildStatusLabel(p)}
-                                            </div>
+                                            <PrebuildStatus prebuild={p} />
                                             <p>
                                                 <Tooltip
                                                     content={dayjs(p.status?.startTime?.toDate()).format("MMM D, YYYY")}
@@ -277,23 +269,5 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                 )}
             </div>
         </>
-    );
-}
-
-export function PrebuildStatus(props: { prebuild: Prebuild }) {
-    const prebuild = props.prebuild;
-
-    return (
-        <div className="flex flex-col space-y-1 justify-center text-sm font-semibold">
-            <div>
-                <div className="flex space-x-1 items-center">
-                    {prebuildStatusIcon(prebuild)}
-                    {prebuildStatusLabel(prebuild)}
-                </div>
-            </div>
-            <div className="flex space-x-1 items-center text-gray-400">
-                <span className="text-left">{getPrebuildStatusDescription(prebuild)}</span>
-            </div>
-        </div>
     );
 }

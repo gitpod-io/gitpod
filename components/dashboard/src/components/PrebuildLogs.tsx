@@ -13,7 +13,7 @@ import {
     Disposable,
 } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
-import { PrebuildStatus } from "../projects/Prebuilds";
+import { PrebuildStatusOld } from "../projects/prebuild-utils";
 import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
 import { prebuildClient, watchPrebuild, workspaceClient } from "../service/public-api";
 import { GetWorkspaceRequest, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
@@ -177,7 +177,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                 </Suspense>
             </div>
             <div className="w-full bottom-0 h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex flex-row items-center space-x-2">
-                {prebuild && <PrebuildStatus prebuild={prebuild} />}
+                {prebuild && <PrebuildStatusOld prebuild={prebuild} />}
                 <div className="flex-grow" />
                 {props.children}
             </div>
