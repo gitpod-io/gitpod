@@ -8,10 +8,12 @@ import EventEmitter from "events";
 import { prebuildClient, workspaceClient } from "../../service/public-api";
 import { useEffect, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
-import { Disposable, WorkspaceImageBuild } from "@gitpod/gitpod-protocol";
+import { Disposable } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { getGitpodService } from "../../service/service";
+import {
+    WatchWorkspaceImageBuildLogsRequest,
+    WorkspacePhase_Phase,
+} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import pRetry from "p-retry";
 
 /**
@@ -54,23 +56,17 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null
             if (taskId === "image-build" && workspaceId) {
                 const workspace = await workspaceClient.getWorkspace({ workspaceId });
                 if (workspace.workspace?.status?.phase?.name === WorkspacePhase_Phase.IMAGEBUILD) {
-                    dispose = getGitpodService().registerClient({
-                        onWorkspaceImageBuildLogs: (
-                            _: WorkspaceImageBuild.StateInfo,
-                            content?: WorkspaceImageBuild.LogContent,
-                        ) => {
-                            if (!content) {
-                                console.error("Received empty image build log content");
-                                return;
-                            }
-
-                            console.debug("Received image build log content", content);
-                            emitter.emit("logs", content.text);
-                        },
-                    }).dispose;
                     await pRetry(
                         async () => {
-                            await getGitpodService().server.watchWorkspaceImageBuildLogs(workspaceId);
+                            const request = new WatchWorkspaceImageBuildLogsRequest();
+                            request.workspaceId = workspaceId;
+                            const iterable = workspaceClient.watchWorkspaceImageBuildLogs(request);
+
+                            for await (const response of iterable) {
+                                if (response.log) {
+                                    emitter.emit("logs", response.log.content);
+                                }
+                            }
                         },
                         {
                             signal: controller.signal,
