@@ -10,11 +10,10 @@ import (
 )
 
 const (
-	OIDCServiceEnabledFlag          = "oidcServiceEnabled"
-	ServiceWaiterSkipComponentsFlag = "service_waiter_skip_components"
-	IdPClaimKeysFlag                = "idp_claim_keys"
-	SetJavaXmxFlag                  = "supervisor_set_java_xmx"
-	SetJavaProcessorCount           = "supervisor_set_java_processor_count"
+	OIDCServiceEnabledFlag = "oidcServiceEnabled"
+	IdPClaimKeysFlag       = "idp_claim_keys"
+	SetJavaXmxFlag         = "supervisor_set_java_xmx"
+	SetJavaProcessorCount  = "supervisor_set_java_processor_count"
 )
 
 func GetIdPClaimKeys(ctx context.Context, client Client, attributes Attributes) []string {
