@@ -44,23 +44,6 @@ var (
 func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T) {
 	user := newUser(&protocol.User{})
 
-	t.Run("permission denied when feature flag is not enabled", func(t *testing.T) {
-		serverMock, _, client := setupTokensService(t, experimentsClient)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
-
-		_, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
-			Token: &v1.PersonalAccessToken{
-				Name:           "my-token",
-				ExpirationTime: timestamppb.Now(),
-			},
-		}))
-
-		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
-		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	})
-
 	t.Run("invalid argument when name is not specified", func(t *testing.T) {
 		_, _, client := setupTokensService(t, experimentsClient)
 
@@ -272,42 +255,10 @@ func TestTokensService_GetPersonalAccessToken(t *testing.T) {
 		require.Error(t, err)
 		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	})
-
-	t.Run("permission denied when feature flag disabled", func(t *testing.T) {
-		serverMock, dbConn, client := setupTokensService(t, experimentsClient)
-
-		tokens := dbtest.CreatePersonalAccessTokenRecords(t, dbConn,
-			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
-				UserID: uuid.MustParse(user.ID),
-			}),
-		)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
-
-		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
-			Id: tokens[0].ID.String(),
-		}))
-
-		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
-		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	})
 }
 
 func TestTokensService_ListPersonalAccessTokens(t *testing.T) {
 	user := newUser(&protocol.User{})
-
-	t.Run("permission denied when feature flag is disabled", func(t *testing.T) {
-		serverMock, _, client := setupTokensService(t, experimentsClient)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
-
-		_, err := client.ListPersonalAccessTokens(context.Background(), connect.NewRequest(&v1.ListPersonalAccessTokensRequest{}))
-
-		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
-		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	})
 
 	t.Run("no tokens returns empty list", func(t *testing.T) {
 		serverMock, _, client := setupTokensService(t, experimentsClient)
@@ -408,21 +359,6 @@ func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 	user := newUser(&protocol.User{})
 	user2 := newUser(&protocol.User{})
 
-	t.Run("permission denied when feature flag is disabled", func(t *testing.T) {
-		serverMock, _, client := setupTokensService(t, experimentsClient)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
-
-		_, err := client.RegeneratePersonalAccessToken(context.Background(), connect.NewRequest(&v1.RegeneratePersonalAccessTokenRequest{
-			Id:             uuid.New().String(),
-			ExpirationTime: timestamppb.Now(),
-		}))
-
-		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
-		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	})
-
 	t.Run("invalid argument when Token ID is empty", func(t *testing.T) {
 		_, _, client := setupTokensService(t, experimentsClient)
 
@@ -503,28 +439,6 @@ func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 
 func TestTokensService_UpdatePersonalAccessToken(t *testing.T) {
 	user := newUser(&protocol.User{})
-
-	t.Run("permission denied when feature flag is disabled", func(t *testing.T) {
-		serverMock, _, client := setupTokensService(t, experimentsClient)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
-
-		token := &v1.PersonalAccessToken{
-			Id:   uuid.New().String(),
-			Name: "foo-bar",
-		}
-		mask, err := fieldmaskpb.New(token, "name")
-		require.NoError(t, err)
-
-		_, err = client.UpdatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.UpdatePersonalAccessTokenRequest{
-			Token:      token,
-			UpdateMask: mask,
-		}))
-
-		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
-		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	})
 
 	t.Run("invalid argument when Token ID is empty", func(t *testing.T) {
 		_, _, client := setupTokensService(t, experimentsClient)
