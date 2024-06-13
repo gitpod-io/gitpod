@@ -35,7 +35,7 @@ export class CapStatus implements Job {
             return;
         }
 
-        const limit = 100;
+        const limit = 500;
         const instances = await this.workspaceDb.transaction(async (db) => {
             const repo = await ((db as any).getWorkspaceInstanceRepo() as Promise<Repository<DBWorkspaceInstance>>);
             const instances = await this.findInstancesWithLengthyStatus(repo, limit);
