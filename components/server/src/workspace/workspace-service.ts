@@ -59,7 +59,6 @@ import {
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import * as crypto from "crypto";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceRegion, isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { RegionService } from "./region-service";
 import { ProjectsService } from "../projects/projects-service";
@@ -799,16 +798,7 @@ export class WorkspaceService {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
 
         if (!!gitStatus) {
-            const validateGitStatusLength = await getExperimentsClientForBackend().getValueAsync(
-                "api_validate_git_status_length",
-                false,
-                {
-                    user: { id: userId || "" },
-                },
-            );
-            if (validateGitStatusLength) {
-                this.validateGitStatusLength(gitStatus, GIT_STATUS_LENGTH_CAP_BYTES);
-            }
+            this.validateGitStatusLength(gitStatus, GIT_STATUS_LENGTH_CAP_BYTES);
         }
 
         let instance = await this.getCurrentInstance(userId, workspaceId);
