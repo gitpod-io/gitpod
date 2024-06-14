@@ -25,7 +25,6 @@ const featureFlags = {
     createProjectModal: false,
     configurationsAndPrebuilds: false,
     showPrebuildsMenuItem: false,
-    org_level_editor_restriction_enabled: false,
     org_level_editor_version_pinning_enabled: false,
     // dummy specified dataops feature, default false
     dataops: false,
