@@ -72,7 +72,7 @@ jobs:
           title: "[code] update code image layers"
           body: |
             ## Description
-            This PR updates the VS Code Browser image layers to the most recent intaller version.
+            This PR updates the VS Code Browser image layers to the most recent installer version.
 
             ## How to test
 
@@ -80,7 +80,7 @@ jobs:
 
             i.e.
             - `code-helper` it can start browser code with extensions installed
-            - `gitpod-web-extension` extension functionalities are works well
+            - `gitpod-web-extension` extension functionalities are working well
             - `code` is not expected it to be changed
 
             ### Preview status
@@ -100,18 +100,18 @@ jobs:
           team-reviewers: |
             team-experience
       - name: Slack notification (code)
-        if: ${{ steps.code-update-pr.pull-request-url }}
+        if: ${{ steps.code-update-pr.outputs.pull-request-url }}
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
           SLACK_TITLE: "VS Code Browser release `${{ steps.updates.outputs.codeVersion }}`"
-          SLACK_MESSAGE: "PR is created ${{ steps.code-update-pr.pull-request-url }}"
+          SLACK_MESSAGE: "Release [PR#${{steps.code-update-pr.outputs.pull-request-number}}](${{ steps.code-update-pr.outputs.pull-request-url }}) is created @ask-vscode-engineers"
           SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
   release-openvscode-server:
     runs-on: ubuntu-latest
     needs: [update]
-    if: always() && ${{ needs.update.steps.changes.outputs.dirty && needs.update.steps.updates.outputs.codeVersion }}
+    if: always() && ${{ needs.update.steps.code-update-pr.outputs.pull-request-url }}
     steps:
       - uses: gitpod-io/gh-app-auth@v0.1
         id: auth
