@@ -94,7 +94,7 @@ export const IdeOptionsModifyModal = ({
     ...props
 }: IdeOptionsModifyModalProps) => {
     const ideOptionsArr = ideOptions;
-    const pinnableIdes = useMemo(() => ideOptionsArr?.filter((i) => !i.pinnable), [ideOptionsArr]);
+    const pinnableIdes = useMemo(() => ideOptionsArr?.filter((i) => !!i.pinnable), [ideOptionsArr]);
 
     const [restrictedEditors, setEditors] = useState(props.restrictedEditors);
     const [pinnedEditorVersions, setPinnedEditorVersions] = useState(props.pinnedEditorVersions);
