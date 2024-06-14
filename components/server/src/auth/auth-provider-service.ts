@@ -416,7 +416,8 @@ export class AuthProviderService {
     async isHostReachable(host: string): Promise<boolean> {
         try {
             // Don't attempt to follow redirects, and manually check response status code
-            const resp = await fetch(`https://${host}`, { timeout: 2000, redirect: "manual" });
+            // set the timeout to a rather high number, because we're seeing Bitbuckets in the wild that have a response time of 10 seconds for unauthenticated users.
+            const resp = await fetch(`https://${host}`, { timeout: 15000, redirect: "manual" });
             return resp.status <= 399;
         } catch (error) {
             console.log(`Host is not reachable: ${host}`);

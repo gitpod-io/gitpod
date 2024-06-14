@@ -110,9 +110,7 @@ describe("AuthProviderService", async () => {
 
     beforeEach(async () => {
         container = createTestContainer();
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         service = container.get(AuthProviderService);
         userService = container.get<UserService>(UserService);
         currentUser = await userService.createUser({

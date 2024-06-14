@@ -7,17 +7,14 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/gitpod-io/gitpod/common-go/experiments"
 	k8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/service-waiter/pkg/metrics"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -25,14 +22,10 @@ import (
 )
 
 var componentCmdOpt struct {
-	image          string
-	namespace      string
-	component      string
-	labels         string
-	ideMetricsHost string
-	gitpodHost     string
-
-	featureFlagTimeout time.Duration
+	image     string
+	namespace string
+	component string
+	labels    string
 }
 
 var componentCmd = &cobra.Command{
@@ -54,10 +47,7 @@ var componentCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 		defer cancel()
 
-		go startWaitFeatureFlag(ctx, componentCmdOpt.featureFlagTimeout)
-
 		err := waitPodsImage(ctx)
-
 		if err != nil {
 			log.WithError(err).Fatal("failed to wait service")
 		} else {
@@ -65,8 +55,6 @@ var componentCmd = &cobra.Command{
 		}
 	},
 }
-
-var shouldSkipComponentWaiter bool = false
 
 func checkPodsImage(ctx context.Context, k8sClient *kubernetes.Clientset) (bool, error) {
 	pods, err := k8sClient.CoreV1().Pods(componentCmdOpt.namespace).List(ctx, metav1.ListOptions{
@@ -115,10 +103,6 @@ func waitPodsImage(ctx context.Context) error {
 			}
 			return ctx.Err()
 		default:
-			if shouldSkipComponentWaiter {
-				log.Infof("skip component waiter %s with Feature Flag", componentCmdOpt.component)
-				return nil
-			}
 			ok, err := checkPodsImage(ctx, k8sClient)
 			if err != nil {
 				log.WithError(err).Error("image check failed")
@@ -139,75 +123,8 @@ func init() {
 	componentCmd.Flags().StringVar(&componentCmdOpt.namespace, "namespace", "", "The namespace of deployment")
 	componentCmd.Flags().StringVar(&componentCmdOpt.component, "component", "", "Component name of deployment")
 	componentCmd.Flags().StringVar(&componentCmdOpt.labels, "labels", "", "Labels of deployment")
-	componentCmd.Flags().StringVar(&componentCmdOpt.ideMetricsHost, "ide-metrics-host", "", "Host of ide metrics")
-	componentCmd.Flags().DurationVar(&componentCmdOpt.featureFlagTimeout, "feature-flag-timeout", 3*time.Minute, "The maximum time to wait for feature flag")
-	componentCmd.Flags().StringVar(&componentCmdOpt.gitpodHost, "gitpod-host", "", "Domain of Gitpod installation")
 
 	_ = componentCmd.MarkFlagRequired("namespace")
 	_ = componentCmd.MarkFlagRequired("component")
 	_ = componentCmd.MarkFlagRequired("labels")
-}
-
-func startWaitFeatureFlag(ctx context.Context, timeout time.Duration) {
-	featureFlagCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	client := experiments.NewClient(experiments.WithDefaultClient(nil), experiments.WithPollInterval(time.Second*3))
-	defaultSkip := true
-	if client == nil {
-		log.Error("failed to create experiments client, skip immediately")
-		shouldSkipComponentWaiter = defaultSkip
-		metrics.AddSkipComponentsCounter(componentCmdOpt.ideMetricsHost, strconv.FormatBool(shouldSkipComponentWaiter), false)
-		return
-	}
-	getShouldSkipComponentWaiter := func() {
-		startTime := time.Now()
-		value, isActualValue, fetchTimes := ActualWaitFeatureFlag(featureFlagCtx, client, defaultSkip)
-		avgTime := time.Duration(0)
-		if fetchTimes > 0 {
-			avgTime = time.Since(startTime) / time.Duration(fetchTimes)
-		}
-		log.WithField("fetchTimes", fetchTimes).WithField("avgTime", avgTime).WithField("isActualValue", isActualValue).WithField("value", value).Info("get final value of feature flag")
-		shouldSkipComponentWaiter = value
-		metrics.AddSkipComponentsCounter(componentCmdOpt.ideMetricsHost, strconv.FormatBool(shouldSkipComponentWaiter), isActualValue)
-	}
-	for !shouldSkipComponentWaiter {
-		if featureFlagCtx.Err() != nil {
-			break
-		}
-		getShouldSkipComponentWaiter()
-		time.Sleep(1 * time.Second)
-	}
-}
-
-var FeatureSleepDuration = 1 * time.Second
-
-func ActualWaitFeatureFlag(ctx context.Context, client experiments.Client, defaultValue bool) (flagValue bool, ok bool, fetchTimes int) {
-	if client == nil {
-		return defaultValue, false, fetchTimes
-	}
-	for {
-		select {
-		case <-ctx.Done():
-			log.WithField("defaultValue", defaultValue).Info("feature flag timeout with no expected value, fallback")
-			return defaultValue, false, fetchTimes
-		default:
-			stringValue := client.GetStringValue(ctx, experiments.ServiceWaiterSkipComponentsFlag, "NONE", experiments.Attributes{
-				GitpodHost: componentCmdOpt.gitpodHost,
-				Component:  componentCmdOpt.component,
-			})
-			fetchTimes++
-			if stringValue == "true" {
-				return true, true, fetchTimes
-			}
-			if stringValue == "false" {
-				return false, true, fetchTimes
-			}
-			if stringValue == "NONE" {
-				time.Sleep(FeatureSleepDuration)
-				continue
-			}
-			log.WithField("value", stringValue).Warn("unexpected value from feature flag")
-			time.Sleep(FeatureSleepDuration)
-		}
-	}
 }

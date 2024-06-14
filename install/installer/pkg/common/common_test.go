@@ -58,8 +58,7 @@ func TestPublicApiServerComponentWaiterContainer(t *testing.T) {
 	container := common.PublicApiServerComponentWaiterContainer(ctx)
 	labels := common.DefaultLabelSelector(common.PublicApiComponent)
 	require.Equal(t, labels, "app=gitpod,component=public-api-server")
-	ideProxyHost := common.ClusterURL("http", common.IDEProxyComponent, ctx.Namespace, common.IDEProxyPort)
-	require.Equal(t, []string{"-v", "component", "--gitpod-host", ctx.Config.Domain, "--ide-metrics-host", ideProxyHost, "--namespace", "test_namespace", "--component", common.PublicApiComponent, "--labels", labels, "--image", ctx.Config.Repository + "/public-api-server:" + "happy_path_papi_image"}, container.Args)
+	require.Equal(t, []string{"-v", "component", "--namespace", "test_namespace", "--component", common.PublicApiComponent, "--labels", labels, "--image", ctx.Config.Repository + "/public-api-server:" + "happy_path_papi_image"}, container.Args)
 }
 
 func TestServerComponentWaiterContainer(t *testing.T) {
@@ -72,6 +71,5 @@ func TestServerComponentWaiterContainer(t *testing.T) {
 	container := common.ServerComponentWaiterContainer(ctx)
 	labels := common.DefaultLabelSelector(common.ServerComponent)
 	require.Equal(t, labels, "app=gitpod,component=server")
-	ideProxyHost := common.ClusterURL("http", common.IDEProxyComponent, ctx.Namespace, common.IDEProxyPort)
-	require.Equal(t, []string{"-v", "component", "--gitpod-host", ctx.Config.Domain, "--ide-metrics-host", ideProxyHost, "--namespace", "test_namespace", "--component", common.ServerComponent, "--labels", labels, "--image", ctx.Config.Repository + "/server:" + "happy_path_server_image"}, container.Args)
+	require.Equal(t, []string{"-v", "component", "--namespace", "test_namespace", "--component", common.ServerComponent, "--labels", labels, "--image", ctx.Config.Repository + "/server:" + "happy_path_server_image"}, container.Args)
 }

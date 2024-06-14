@@ -50,9 +50,7 @@ describe("WorkspaceService", async () => {
                 },
             }),
         } as any as ConfigProvider);
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         const userService = container.get(UserService);
 
         // create the owner

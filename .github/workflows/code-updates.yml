@@ -111,7 +111,7 @@ jobs:
   release-openvscode-server:
     runs-on: ubuntu-latest
     needs: [update]
-    if: ${{ needs.update.steps.changes.outputs.dirty && needs.update.steps.updates.outputs.codeVersion }}
+    if: always() && ${{ needs.update.steps.changes.outputs.dirty && needs.update.steps.updates.outputs.codeVersion }}
     steps:
       - uses: gitpod-io/gh-app-auth@v0.1
         id: auth

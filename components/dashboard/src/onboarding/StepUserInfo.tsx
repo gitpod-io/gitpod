@@ -11,7 +11,6 @@ import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutati
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { OnboardingStep } from "./OnboardingStep";
 import { LinkedInBanner } from "./LinkedInBanner";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
@@ -20,7 +19,6 @@ type Props = {
     onComplete(user: User): void;
 };
 export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
-    const linkedinConnectionForOnboarding = useFeatureFlag("linkedinConnectionForOnboarding");
     const updateUser = useUpdateCurrentUserMutation();
     // attempt to split provided name for default input values
     const { first, last } = getInitialNameParts(user);
@@ -69,12 +67,8 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
 
     const firstNameError = useOnBlurError("Please enter a value", !!firstName);
     const lastNameError = useOnBlurError("Please enter a value", !!lastName);
-    const emailError = useOnBlurError("Please enter your email address", !!emailAddress);
 
-    const isValid =
-        [firstNameError, lastNameError].every((e) => e.isValid) &&
-        // If we're using LinkedIn, we don't need to validate the email input, otherwise we do
-        (linkedinConnectionForOnboarding || (!linkedinConnectionForOnboarding && emailError.isValid));
+    const isValid = [firstNameError, lastNameError].every((e) => e.isValid);
 
     return (
         <OnboardingStep
@@ -84,8 +78,8 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
             isValid={isValid}
             isSaving={updateUser.isLoading}
             onSubmit={handleSubmit}
-            submitButtonText={linkedinConnectionForOnboarding ? "Continue with 10 hours per month" : undefined}
-            submitButtonType={linkedinConnectionForOnboarding ? "secondary" : undefined}
+            submitButtonText={"Continue with 10 hours per month"}
+            submitButtonType={"secondary"}
         >
             {user.avatarUrl && (
                 <div className="my-4 flex justify-center">
@@ -115,19 +109,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
                 />
             </div>
 
-            {linkedinConnectionForOnboarding ? (
-                <LinkedInBanner onSuccess={onLinkedInSuccess} />
-            ) : (
-                <TextInputField
-                    value={emailAddress}
-                    label="Work Email"
-                    type="email"
-                    error={emailError.message}
-                    onBlur={emailError.onBlur}
-                    onChange={setEmailAddress}
-                    required
-                />
-            )}
+            <LinkedInBanner onSuccess={onLinkedInSuccess} />
         </OnboardingStep>
     );
 };

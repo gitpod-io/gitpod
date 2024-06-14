@@ -47,7 +47,6 @@ import { SubjectId } from "../auth/subject-id";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { validate as uuidValidate } from "uuid";
 import { getPrebuildErrorMessage } from "@gitpod/public-api-common/lib/prebuild-utils";
-import { isFgaChecksEnabled } from "../authorization/authorizer";
 
 @injectable()
 export class HeadlessLogController {
@@ -282,7 +281,7 @@ export class HeadlessLogController {
                 await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
                     // ensure fga migration
                     const subjectId = ctxTrySubjectId();
-                    if (!subjectId || !(await isFgaChecksEnabled(subjectId))) {
+                    if (!subjectId) {
                         res.status(403).send("unauthorized");
                         return;
                     }

@@ -26,7 +26,6 @@ import { AddressInfo } from "net";
 import { performance } from "perf_hooks";
 import { RateLimiterRes } from "rate-limiter-flexible";
 import { v4 } from "uuid";
-import { isFgaChecksEnabled } from "../authorization/authorizer";
 import { Config } from "../config";
 import { grpcServerHandled, grpcServerHandling, grpcServerStarted } from "../prometheus-metrics";
 import { SessionHandler } from "../session-handler";
@@ -366,11 +365,6 @@ export class API {
     }
 
     private async ensureFgaMigration(subjectId: SubjectId): Promise<void> {
-        const fgaChecksEnabled = await isFgaChecksEnabled(subjectId);
-        if (!fgaChecksEnabled) {
-            throw new ConnectError("unauthorized", Code.PermissionDenied);
-        }
-
         if (subjectId.kind === "user") {
             const userId = subjectId.userId()!;
             try {

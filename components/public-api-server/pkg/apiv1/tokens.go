@@ -303,39 +303,12 @@ func (s *TokensService) getUser(ctx context.Context, conn protocol.APIInterface)
 
 	log.AddFields(ctx, log.UserID(user.ID))
 
-	if !s.isFeatureEnabled(ctx, conn, user) {
-		return nil, uuid.Nil, connect.NewError(connect.CodePermissionDenied, errors.New("This feature is currently in beta. If you would like to be part of the beta, please contact us."))
-	}
-
 	userID, err := uuid.Parse(user.ID)
 	if err != nil {
 		return nil, uuid.Nil, connect.NewError(connect.CodeInternal, errors.New("Failed to parse user ID as UUID. Please contact support."))
 	}
 
 	return user, userID, nil
-}
-
-func (s *TokensService) isFeatureEnabled(ctx context.Context, conn protocol.APIInterface, user *protocol.User) bool {
-	if user == nil {
-		return false
-	}
-
-	if experiments.IsPersonalAccessTokensEnabled(ctx, s.expClient, experiments.Attributes{UserID: user.ID}) {
-		return true
-	}
-
-	teams, err := conn.GetTeams(ctx)
-	if err != nil {
-		log.Extract(ctx).WithError(err).Warnf("Failed to retreive Teams for user %s, personal access token feature flag will not evaluate team membership.", user.ID)
-		teams = nil
-	}
-	for _, team := range teams {
-		if experiments.IsPersonalAccessTokensEnabled(ctx, s.expClient, experiments.Attributes{TeamID: team.ID}) {
-			return true
-		}
-	}
-
-	return false
 }
 
 func getConnection(ctx context.Context, pool proxy.ServerConnectionPool) (protocol.APIInterface, error) {

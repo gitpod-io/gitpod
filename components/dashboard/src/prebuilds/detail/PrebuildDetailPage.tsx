@@ -10,12 +10,12 @@ import { Text } from "@podkit/typography/Text";
 import { Button } from "@podkit/buttons/Button";
 import { FC, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
-import { CircleSlash, Loader2Icon } from "lucide-react";
 import dayjs from "dayjs";
 import { usePrebuildLogsEmitter } from "../../data/prebuilds/prebuild-logs-emitter";
 import React from "react";
 import { useToast } from "../../components/toasts/Toasts";
 import {
+    isPrebuildDone,
     useCancelPrebuildMutation,
     usePrebuildQuery,
     useTriggerPrebuildQuery,
@@ -25,11 +25,9 @@ import { LinkButton } from "@podkit/buttons/LinkButton";
 import { repositoriesRoutes } from "../../repositories/repositories.routes";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import Alert from "../../components/Alert";
-import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
+import { PrebuildStatus } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { MiddleDot } from "../../components/typography/MiddleDot";
-import { TextMuted } from "@podkit/typography/TextMuted";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@podkit/tabs/Tabs";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
@@ -82,11 +80,7 @@ export const PrebuildDetailPage: FC = () => {
         return selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? null;
     }, [currentPrebuild, isImageBuild, selectedTaskId]);
 
-    const {
-        emitter: logEmitter,
-        isLoading: isStreamingLogs,
-        disposable: disposeStreamingLogs,
-    } = usePrebuildLogsEmitter(prebuildId, taskId);
+    const { emitter: logEmitter, disposable: disposeStreamingLogs } = usePrebuildLogsEmitter(prebuildId, taskId);
     const {
         isFetching: isTriggeringPrebuild,
         refetch: triggerPrebuild,
@@ -118,6 +112,8 @@ export const PrebuildDetailPage: FC = () => {
                 disposeStreamingLogs?.dispose();
             }
             setCurrentPrebuild(prebuild);
+
+            return isPrebuildDone(prebuild);
         });
 
         return () => {
@@ -179,32 +175,6 @@ export const PrebuildDetailPage: FC = () => {
             console.error("Could not cancel prebuild", error);
         }
     }, [prebuild, cancelPrebuildMutation]);
-
-    const prebuildPhase = useMemo(() => {
-        const loaderIcon = <Loader2Icon size={20} className="text-gray-500 animate-spin" />;
-
-        if (!currentPrebuild) {
-            return {
-                icon: loaderIcon,
-                description: "",
-            };
-        }
-
-        if (!currentPrebuild.status?.phase?.name) {
-            return {
-                icon: <CircleSlash size={20} className="text-gray-500" />,
-                description: "Unknown prebuild status.",
-            };
-        }
-
-        const props = prebuildDisplayProps(currentPrebuild);
-        const Icon = prebuildStatusIconComponent(currentPrebuild);
-
-        return {
-            description: props.label,
-            icon: <Icon className={props.className} />,
-        };
-    }, [currentPrebuild]);
 
     const isError = logNotFound || noTasksPresent;
 
@@ -284,19 +254,11 @@ export const PrebuildDetailPage: FC = () => {
                                 </div>
                             </div>
                             <div className="flex flex-col gap-1 border-pk-border-base">
-                                <div className="py-4 flex flex-col gap-1">
-                                    <div className="px-6 flex gap-1 items-center">
-                                        {prebuildPhase.icon}
-                                        <span className="capitalize">{prebuildPhase.description}</span>{" "}
-                                        {isStreamingLogs && (
-                                            <TextMuted>
-                                                <MiddleDot /> Fetching logs...
-                                            </TextMuted>
-                                        )}
-                                    </div>
-                                    {prebuild.status?.message && (
-                                        <div className="px-6 text-pk-content-secondary truncate">
-                                            {prebuild.status.message}
+                                <div className="py-4 px-6 flex flex-col gap-1">
+                                    <PrebuildStatus prebuild={currentPrebuild} />
+                                    {currentPrebuild?.status?.message && (
+                                        <div className="text-pk-content-secondary truncate">
+                                            {currentPrebuild?.status.message}
                                         </div>
                                     )}
                                 </div>

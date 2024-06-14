@@ -27,9 +27,7 @@ describe("Authorizer", async () => {
 
     beforeEach(async () => {
         container = createTestContainer();
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         authorizer = container.get<Authorizer>(Authorizer);
     });
 
