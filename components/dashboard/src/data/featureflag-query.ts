@@ -25,8 +25,6 @@ const featureFlags = {
     createProjectModal: false,
     configurationsAndPrebuilds: false,
     showPrebuildsMenuItem: false,
-    // Whether to enable workspace class restrictions for configurations
-    configuration_workspace_class_restrictions: false,
     org_level_editor_restriction_enabled: false,
     org_level_editor_version_pinning_enabled: false,
     // dummy specified dataops feature, default false
