@@ -16,9 +16,10 @@ import (
 )
 
 var (
-	hostname string
-	hostfs   string
-	port     int
+	hostname            string
+	hostfs              string
+	port                int
+	containerdConfigDir string
 )
 
 var setupCmd = &cobra.Command{
@@ -27,9 +28,9 @@ var setupCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		{
 			log.Info("Creating containerd registry directory...")
-			regDirectory := fmt.Sprintf("/etc/containerd/certs.d/%v:%v", hostname, port)
+			regDirectory := fmt.Sprintf("/certs.d/%v:%v", hostname, port)
 
-			fakeRegPath := filepath.Join(hostfs, regDirectory)
+			fakeRegPath := filepath.Join(hostfs, containerdConfigDir, regDirectory)
 			err := os.MkdirAll(fakeRegPath, 0644)
 			if err != nil {
 				log.Fatalf("cannot create containerd cert directory: %v", err)
@@ -51,7 +52,7 @@ server = "https://%v:%v"
     ca = "%v"
 	# skip verifications of the registry's certificate chain and host name when set to true
     #skip_verify = true
-`, hostname, port, hostname, port, filepath.Join(regDirectory, "ca.crt"))
+`, hostname, port, hostname, port, filepath.Join(containerdConfigDir, regDirectory, "ca.crt"))
 
 			err = os.WriteFile(filepath.Join(fakeRegPath, "hosts.toml"), []byte(hostsToml), 0644)
 			if err != nil {
@@ -78,6 +79,7 @@ func init() {
 	setupCmd.Flags().StringVar(&hostname, "hostname", "", "registry facade host <hostname:port>")
 	setupCmd.Flags().StringVar(&hostfs, "hostfs", "", "Mount point path for the root filesystem")
 	setupCmd.Flags().IntVar(&port, "port", 31750, "Listening port for the new registry hostname")
+	setupCmd.Flags().StringVar(&containerdConfigDir, "containerd-config-dir", "/etc/containerd", "Containerd configuration directory")
 
 	_ = setupCmd.MarkFlagRequired("hostname")
 	_ = setupCmd.MarkFlagRequired("hostfs")

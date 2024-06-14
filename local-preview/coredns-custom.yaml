@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  rewrite.override: |
+    rewrite name registry.local.preview.gitpod-dev.com proxy.default.svc.cluster.local

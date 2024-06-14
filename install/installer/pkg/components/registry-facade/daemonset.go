@@ -89,6 +89,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	var envvars []corev1.EnvVar
+	containerdConfigDir := "/etc/containerd"
 	err = ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
 			return nil
@@ -127,6 +128,9 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}
 		}
 
+		if ucfg.Workspace.RegistryFacade.ContainerdConfigDir != "" {
+			containerdConfigDir = ucfg.Workspace.RegistryFacade.ContainerdConfigDir
+		}
 		return nil
 	})
 	if err != nil {
@@ -142,6 +146,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				"--hostfs=/mnt/dst",
 				fmt.Sprintf("--hostname=reg.%s", ctx.Config.Domain),
 				fmt.Sprintf("--port=%v", ServicePort),
+				fmt.Sprintf("--containerd-config-dir=%s", containerdConfigDir),
 			},
 			SecurityContext: &corev1.SecurityContext{RunAsUser: pointer.Int64(0)},
 			VolumeMounts: []corev1.VolumeMount{

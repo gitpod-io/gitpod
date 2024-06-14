@@ -1,0 +1,789 @@
+---
+# Source: trust-manager/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: trust-manager
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: trust-manager/templates/trust.cert-manager.io_bundles.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: "bundles.trust.cert-manager.io"
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+  namespace: cert-manager
+spec:
+  group: trust.cert-manager.io
+  names:
+    kind: Bundle
+    listKind: BundleList
+    plural: bundles
+    singular: bundle
+  scope: Cluster
+  versions:
+    - additionalPrinterColumns:
+        - description: Bundle Target Key
+          jsonPath: .status.target.configMap.key
+          name: Target
+          type: string
+        - description: Bundle has been synced
+          jsonPath: .status.conditions[?(@.type == "Synced")].status
+          name: Synced
+          type: string
+        - description: Reason Bundle has Synced status
+          jsonPath: .status.conditions[?(@.type == "Synced")].reason
+          name: Reason
+          type: string
+        - description: Timestamp Bundle was created
+          jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+      name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - spec
+          properties:
+            apiVersion:
+              description: |-
+                APIVersion defines the versioned schema of this representation of an object.
+                Servers should convert recognized schemas to the latest internal value, and
+                may reject unrecognized values.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+              type: string
+            kind:
+              description: |-
+                Kind is a string value representing the REST resource this object represents.
+                Servers may infer this from the endpoint the client submits requests to.
+                Cannot be updated.
+                In CamelCase.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: Desired state of the Bundle resource.
+              type: object
+              required:
+                - sources
+                - target
+              properties:
+                sources:
+                  description: Sources is a set of references to data whose data will
+                    sync to the target.
+                  type: array
+                  items:
+                    description: |-
+                      BundleSource is the set of sources whose data will be appended and synced to
+                      the BundleTarget in all Namespaces.
+                    type: object
+                    properties:
+                      configMap:
+                        description: |-
+                          ConfigMap is a reference (by name) to a ConfigMap's `data` key, or to a
+                          list of ConfigMap's `data` key using label selector, in the trust Namespace.
+                        type: object
+                        required:
+                          - key
+                        properties:
+                          key:
+                            description: Key is the key of the entry in the object's
+                              `data` field to be used.
+                            type: string
+                          name:
+                            description: |-
+                              Name is the name of the source object in the trust Namespace.
+                              This field must be left empty when `selector` is set
+                            type: string
+                          selector:
+                            description: |-
+                              Selector is the label selector to use to fetch a list of objects. Must not be set
+                              when `Name` is set.
+                            type: object
+                            properties:
+                              matchExpressions:
+                                description: matchExpressions is a list of label selector
+                                  requirements. The requirements are ANDed.
+                                type: array
+                                items:
+                                  description: |-
+                                    A label selector requirement is a selector that contains values, a key, and an operator that
+                                    relates the key and values.
+                                  type: object
+                                  required:
+                                    - key
+                                    - operator
+                                  properties:
+                                    key:
+                                      description: key is the label key that the selector
+                                        applies to.
+                                      type: string
+                                    operator:
+                                      description: |-
+                                        operator represents a key's relationship to a set of values.
+                                        Valid operators are In, NotIn, Exists and DoesNotExist.
+                                      type: string
+                                    values:
+                                      description: |-
+                                        values is an array of string values. If the operator is In or NotIn,
+                                        the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                        the values array must be empty. This array is replaced during a strategic
+                                        merge patch.
+                                      type: array
+                                      items:
+                                        type: string
+                              matchLabels:
+                                description: |-
+                                  matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                  map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                  operator is "In", and the values array contains only "value". The requirements are ANDed.
+                                type: object
+                                additionalProperties:
+                                  type: string
+                            x-kubernetes-map-type: atomic
+                      inLine:
+                        description: InLine is a simple string to append as the source
+                          data.
+                        type: string
+                      secret:
+                        description: |-
+                          Secret is a reference (by name) to a Secret's `data` key, or to a
+                          list of Secret's `data` key using label selector, in the trust Namespace.
+                        type: object
+                        required:
+                          - key
+                        properties:
+                          key:
+                            description: Key is the key of the entry in the object's
+                              `data` field to be used.
+                            type: string
+                          name:
+                            description: |-
+                              Name is the name of the source object in the trust Namespace.
+                              This field must be left empty when `selector` is set
+                            type: string
+                          selector:
+                            description: |-
+                              Selector is the label selector to use to fetch a list of objects. Must not be set
+                              when `Name` is set.
+                            type: object
+                            properties:
+                              matchExpressions:
+                                description: matchExpressions is a list of label selector
+                                  requirements. The requirements are ANDed.
+                                type: array
+                                items:
+                                  description: |-
+                                    A label selector requirement is a selector that contains values, a key, and an operator that
+                                    relates the key and values.
+                                  type: object
+                                  required:
+                                    - key
+                                    - operator
+                                  properties:
+                                    key:
+                                      description: key is the label key that the selector
+                                        applies to.
+                                      type: string
+                                    operator:
+                                      description: |-
+                                        operator represents a key's relationship to a set of values.
+                                        Valid operators are In, NotIn, Exists and DoesNotExist.
+                                      type: string
+                                    values:
+                                      description: |-
+                                        values is an array of string values. If the operator is In or NotIn,
+                                        the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                        the values array must be empty. This array is replaced during a strategic
+                                        merge patch.
+                                      type: array
+                                      items:
+                                        type: string
+                              matchLabels:
+                                description: |-
+                                  matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                  map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                  operator is "In", and the values array contains only "value". The requirements are ANDed.
+                                type: object
+                                additionalProperties:
+                                  type: string
+                            x-kubernetes-map-type: atomic
+                      useDefaultCAs:
+                        description: |-
+                          UseDefaultCAs, when true, requests the default CA bundle to be used as a source.
+                          Default CAs are available if trust-manager was installed via Helm
+                          or was otherwise set up to include a package-injecting init container by using the
+                          "--default-package-location" flag when starting the trust-manager controller.
+                          If default CAs were not configured at start-up, any request to use the default
+                          CAs will fail.
+                          The version of the default CA package which is used for a Bundle is stored in the
+                          defaultCAPackageVersion field of the Bundle's status field.
+                        type: boolean
+                target:
+                  description: Target is the target location in all namespaces to
+                    sync source data to.
+                  type: object
+                  properties:
+                    additionalFormats:
+                      description: AdditionalFormats specifies any additional formats
+                        to write to the target
+                      type: object
+                      properties:
+                        jks:
+                          description: |-
+                            JKS requests a JKS-formatted binary trust bundle to be written to the target.
+                            The bundle has "changeit" as the default password.
+                            For more information refer to this link https://cert-manager.io/docs/faq/#keystore-passwords
+                          type: object
+                          required:
+                            - key
+                          properties:
+                            key:
+                              description: Key is the key of the entry in the object's
+                                `data` field to be used.
+                              type: string
+                            password:
+                              description: Password for JKS trust store
+                              type: string
+                              default: changeit
+                              maxLength: 128
+                              minLength: 1
+                        pkcs12:
+                          description: |-
+                            PKCS12 requests a PKCS12-formatted binary trust bundle to be written to the target.
+                            The bundle is by default created without a password.
+                          type: object
+                          required:
+                            - key
+                          properties:
+                            key:
+                              description: Key is the key of the entry in the object's
+                                `data` field to be used.
+                              type: string
+                            password:
+                              description: Password for PKCS12 trust store
+                              type: string
+                              default: ""
+                              maxLength: 128
+                    configMap:
+                      description: |-
+                        ConfigMap is the target ConfigMap in Namespaces that all Bundle source
+                        data will be synced to.
+                      type: object
+                      required:
+                        - key
+                      properties:
+                        key:
+                          description: Key is the key of the entry in the object's
+                            `data` field to be used.
+                          type: string
+                    namespaceSelector:
+                      description: |-
+                        NamespaceSelector will, if set, only sync the target resource in
+                        Namespaces which match the selector.
+                      type: object
+                      properties:
+                        matchLabels:
+                          description: |-
+                            MatchLabels matches on the set of labels that must be present on a
+                            Namespace for the Bundle target to be synced there.
+                          type: object
+                          additionalProperties:
+                            type: string
+                    secret:
+                      description: |-
+                        Secret is the target Secret that all Bundle source data will be synced to.
+                        Using Secrets as targets is only supported if enabled at trust-manager startup.
+                        By default, trust-manager has no permissions for writing to secrets and can only read secrets in the trust namespace.
+                      type: object
+                      required:
+                        - key
+                      properties:
+                        key:
+                          description: Key is the key of the entry in the object's
+                            `data` field to be used.
+                          type: string
+            status:
+              description: Status of the Bundle. This is set and managed automatically.
+              type: object
+              properties:
+                conditions:
+                  description: |-
+                    List of status conditions to indicate the status of the Bundle.
+                    Known condition types are `Bundle`.
+                  type: array
+                  items:
+                    description: BundleCondition contains condition information for
+                      a Bundle.
+                    type: object
+                    required:
+                      - lastTransitionTime
+                      - reason
+                      - status
+                      - type
+                    properties:
+                      lastTransitionTime:
+                        description: |-
+                          LastTransitionTime is the timestamp corresponding to the last status
+                          change of this condition.
+                        type: string
+                        format: date-time
+                      message:
+                        description: |-
+                          Message is a human-readable description of the details of the last
+                          transition, complementing reason.
+                        type: string
+                        maxLength: 32768
+                      observedGeneration:
+                        description: |-
+                          If set, this represents the .metadata.generation that the condition was
+                          set based upon.
+                          For instance, if .metadata.generation is currently 12, but the
+                          .status.condition[x].observedGeneration is 9, the condition is out of date
+                          with respect to the current state of the Bundle.
+                        type: integer
+                        format: int64
+                        minimum: 0
+                      reason:
+                        description: |-
+                          Reason is a brief machine-readable explanation for the condition's last
+                          transition.
+                          The value should be a CamelCase string.
+                          This field may not be empty.
+                        type: string
+                        maxLength: 1024
+                        minLength: 1
+                        pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      status:
+                        description: Status of the condition, one of True, False,
+                          Unknown.
+                        type: string
+                        enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                      type:
+                        description: Type of the condition, known values are (`Synced`).
+                        type: string
+                        maxLength: 316
+                        pattern:
+                          ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                  x-kubernetes-list-map-keys:
+                    - type
+                  x-kubernetes-list-type: map
+                defaultCAVersion:
+                  description: |-
+                    DefaultCAPackageVersion, if set and non-empty, indicates the version information
+                    which was retrieved when the set of default CAs was requested in the bundle
+                    source. This should only be set if useDefaultCAs was set to "true" on a source,
+                    and will be the same for the same version of a bundle with identical certificates.
+                  type: string
+      served: true
+      storage: true
+      subresources:
+        status: {}
+---
+# Source: trust-manager/templates/clusterrole.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  labels:
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+  name: trust-manager
+rules:
+  - apiGroups:
+      - "trust.cert-manager.io"
+    resources:
+      - "bundles"
+    verbs: ["get", "list", "watch"]
+    # Permissions to update finalizers are required for trust-manager to work correctly
+    # on OpenShift, even though we don't directly use finalizers at the time of writing
+  - apiGroups:
+      - "trust.cert-manager.io"
+    resources:
+      - "bundles/finalizers"
+    verbs: ["update"]
+  - apiGroups:
+      - "trust.cert-manager.io"
+    resources:
+      - "bundles/status"
+    verbs: ["patch"]
+  - apiGroups:
+      - "trust.cert-manager.io"
+    resources:
+      - "bundles"
+      # We also need update here so we can perform migrations from old CSA to SSA.
+    verbs: ["update"]
+  - apiGroups:
+      - ""
+    resources:
+      - "configmaps"
+      # We also need update here so we can perform migrations from old CSA to SSA.
+    verbs: ["get", "list", "create", "update", "patch", "watch", "delete"]
+  - apiGroups:
+      - ""
+    resources:
+      - "namespaces"
+    verbs: ["get", "list", "watch"]
+  - apiGroups:
+      - ""
+    resources:
+      - "events"
+    verbs: ["create", "patch"]
+---
+# Source: trust-manager/templates/clusterrolebinding.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  labels:
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+  name: trust-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: trust-manager
+subjects:
+  - kind: ServiceAccount
+    name: trust-manager
+    namespace: cert-manager
+---
+# Source: trust-manager/templates/role.yaml
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: trust-manager
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - "secrets"
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
+---
+# Source: trust-manager/templates/role.yaml
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: trust-manager:leaderelection
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+rules:
+  - apiGroups:
+      - "coordination.k8s.io"
+    resources:
+      - "leases"
+    verbs:
+      - "get"
+      - "create"
+      - "update"
+      - "watch"
+      - "list"
+---
+# Source: trust-manager/templates/rolebinding.yaml
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: trust-manager
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: trust-manager
+subjects:
+  - kind: ServiceAccount
+    name: trust-manager
+    namespace: cert-manager
+---
+# Source: trust-manager/templates/rolebinding.yaml
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: trust-manager:leaderelection
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: trust-manager:leaderelection
+subjects:
+  - kind: ServiceAccount
+    name: trust-manager
+    namespace: cert-manager
+---
+# Source: trust-manager/templates/metrics-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: trust-manager-metrics
+  namespace: cert-manager
+  labels:
+    app: trust-manager
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9402
+      targetPort: 9402
+      protocol: TCP
+      name: metrics
+  selector:
+    app: trust-manager
+---
+# Source: trust-manager/templates/webhook.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: trust-manager
+  namespace: cert-manager
+  labels:
+    app: trust-manager
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 443
+      targetPort: 6443
+      protocol: TCP
+      name: webhook
+  selector:
+    app: trust-manager
+---
+# Source: trust-manager/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trust-manager
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: trust-manager
+  template:
+    metadata:
+      labels:
+        app: trust-manager
+        app.kubernetes.io/name: trust-manager
+        helm.sh/chart: trust-manager-v0.9.2
+        app.kubernetes.io/instance: trust-manager
+        app.kubernetes.io/version: "v0.9.2"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: trust-manager
+      initContainers:
+        - name: cert-manager-package-debian
+          image: "quay.io/jetstack/cert-manager-package-debian:20210119.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            - "/copyandmaybepause"
+            - "/debian-package"
+            - "/packages"
+          volumeMounts:
+            - mountPath: /packages
+              name: packages
+              readOnly: false
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+      containers:
+        - name: trust-manager
+          image: "quay.io/jetstack/trust-manager:v0.9.2"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6443
+            - containerPort: 9402
+          readinessProbe:
+            httpGet:
+              port: 6060
+              path: /readyz
+            initialDelaySeconds: 3
+            periodSeconds: 7
+          command: ["trust-manager"]
+          args:
+            - "--log-level=1"
+            - "--metrics-port=9402"
+            - "--readiness-probe-port=6060"
+            - "--readiness-probe-path=/readyz"
+            # trust
+            - "--trust-namespace=cert-manager"
+            # webhook
+            - "--webhook-host=0.0.0.0"
+            - "--webhook-port=6443"
+            - "--webhook-certificate-dir=/tls"
+            - "--default-package-location=/packages/cert-manager-package-debian.json"
+          volumeMounts:
+            - mountPath: /tls
+              name: tls
+              readOnly: true
+            - mountPath: /packages
+              name: packages
+              readOnly: true
+          resources: {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+      nodeSelector:
+        kubernetes.io/os: linux
+      volumes:
+        - name: packages
+          emptyDir:
+            sizeLimit: 50M
+        - name: tls
+          secret:
+            defaultMode: 420
+            secretName: trust-manager-tls
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: gitpod.io/workload_services
+                    operator: Exists
+              topologyKey: kubernetes.io/hostname
+---
+# Source: trust-manager/templates/certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: trust-manager
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  commonName: "trust-manager.cert-manager.svc"
+  dnsNames:
+    - "trust-manager.cert-manager.svc"
+  secretName: trust-manager-tls
+  revisionHistoryLimit: 1
+  issuerRef:
+    name: trust-manager
+    kind: Issuer
+    group: cert-manager.io
+---
+# Source: trust-manager/templates/certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: trust-manager
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selfSigned: {}
+---
+# Source: trust-manager/templates/webhook.yaml
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: trust-manager
+  labels:
+    app: trust-manager
+    app.kubernetes.io/name: trust-manager
+    helm.sh/chart: trust-manager-v0.9.2
+    app.kubernetes.io/instance: trust-manager
+    app.kubernetes.io/version: "v0.9.2"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    cert-manager.io/inject-ca-from: "cert-manager/trust-manager"
+webhooks:
+  - name: trust.cert-manager.io
+    rules:
+      - apiGroups:
+          - "trust.cert-manager.io"
+        apiVersions:
+          - "*"
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - "*/*"
+    admissionReviewVersions: ["v1"]
+    timeoutSeconds: 5
+    failurePolicy: Fail
+    sideEffects: None
+    clientConfig:
+      service:
+        name: trust-manager
+        namespace: cert-manager
+        path: /validate-trust-cert-manager-io-v1alpha1-bundle

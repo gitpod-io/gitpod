@@ -66,15 +66,18 @@ if ! command -v installer;then
 fi
 
 function copyCachedCertificate {
+  PREVIEW_SORUCE_CERT_NAME="certificate-local"
+
+  GITPOD_PROXY_SECRET_NAME="proxy-config-certificates";
+  PREVIEW_GCP_PROJECT="gitpod-dev-preview"
   DESTINATION_CERT_NAME="$GITPOD_PROXY_SECRET_NAME"
+  PREVIEW_NAMESPACE=default
 
   secret=$(gcloud secrets versions access latest --secret="${PREVIEW_SORUCE_CERT_NAME}" --project=${PREVIEW_GCP_PROJECT})
   kubectl \
     create secret generic "${DESTINATION_CERT_NAME}" --namespace="${PREVIEW_NAMESPACE}" --dry-run=client -oyaml \
     | yq4 eval-all ".data = $secret | .type = \"kubernetes.io/tls\"" \
     | kubectl \
-      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-      --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
       apply -f -
 }
 
@@ -244,6 +247,9 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.ide.ideMetrics.enabledErrorRepor
 
 if [[ "${GITPOD_WITH_DEDICATED_EMU}" != "true" ]]
 then
+  PREVIEW_GCP_PROJECT="gitpod-dev-preview"
+  PREVIEW_NAMESPACE="default"
+  DOMAIN="local.preview.gitpod-dev.com"
   secret=$(gcloud secrets versions access latest --secret="preview-envs-authproviders" --project=${PREVIEW_GCP_PROJECT})
   for row in $(gcloud secrets versions access latest --secret="preview-envs-authproviders" --project=${PREVIEW_GCP_PROJECT}  | yq r - "authProviders" \
   | base64 -d -w 0 \
@@ -260,11 +266,9 @@ then
 
       kubectl create secret generic "$providerId" \
           --namespace "${PREVIEW_NAMESPACE}" \
-          --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-          --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
           --from-literal=provider="$data" \
           --dry-run=client -o yaml | \
-          kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" replace --force -f -
+          kubectl replace --force -f -
   done
 fi
 
@@ -355,6 +359,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.stripe.teamUsagePriceIds[
 # configureConfigCat
 #
 # This key is not a secret, it is a unique identifier of our ConfigCat application
+export INSTALLER_CONFIG_PATH="/workspace/gitpod/gitpod.config.yaml"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.configcatKey "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.baseUrl "https://cdn-global.configcat.com"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.pollInterval "1m"
@@ -425,13 +430,13 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.spicedb.secretRef "spiced
 #
 # Configure spicedb secret
 #
+export PREVIEW_GCP_PROJECT="gitpod-dev-preview"
+export PREVIEW_NAMESPACE="default"
 secret=$(gcloud secrets versions access latest --secret="spicedb-secret" --project=${PREVIEW_GCP_PROJECT})
 kubectl \
   create secret generic "spicedb-secret" --namespace="${PREVIEW_NAMESPACE}" --dry-run=client -oyaml \
   | yq4 eval-all ".data = $secret" \
   | kubectl \
-    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
     apply -n ${PREVIEW_NAMESPACE} -f -
 
 #

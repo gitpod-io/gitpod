@@ -1,0 +1,43 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: gitpod
+servers: 1
+# agents: 1
+# registries:
+#   config: |
+#     configs:
+#       "reg.local.preview.gitpod-dev.com:31750":
+#         tls:
+#           ca_file: /etc/containerd/certs.d/reg.local.preview.gitpod-dev.com:31750/ca.crt
+#           insecure_skip_verify: true
+options:
+  k3s:
+    nodeLabels:
+      - label: gitpod.io/workload_meta=true
+        nodeFilters:
+          - "server:*"
+      - label: gitpod.io/workload_ide=true
+        nodeFilters:
+          - "server:*"
+      - label: gitpod.io/workload_workspace_services=true
+        nodeFilters:
+          - "server:*"
+      - label: gitpod.io/workload_services=true
+        nodeFilters:
+          - "server:*"
+      - label: gitpod.io/workload_workspace_regular=true
+        nodeFilters:
+          - "server:*"
+      - label: gitpod.io/workload_workspace_headless=true
+        nodeFilters:
+          - "server:*"
+      - label: gitpod.io/workspace_0=true
+        nodeFilters:
+          - "server:*"
+      - label: gitpod.io/workspace_1=true
+        nodeFilters:
+          - "server:*"
+      - label: gitpod.io/workspace_2=true
+        nodeFilters:
+          - "server:*"

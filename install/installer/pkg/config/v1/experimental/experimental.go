@@ -99,6 +99,7 @@ type WorkspaceConfig struct {
 			UseTLS             bool   `json:"useTLS"`
 			InsecureSkipVerify bool   `json:"insecureSkipVerify"`
 		} `json:"redisCache"`
+		ContainerdConfigDir string `json:"containerdConfigDir"`
 	} `json:"registryFacade"`
 
 	WSDaemon struct {

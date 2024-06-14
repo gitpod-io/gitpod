@@ -141,7 +141,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 								Resources: common.ResourceRequirements(ctx, Component, ContainerName, corev1.ResourceRequirements{
 									Requests: corev1.ResourceList{
-										"cpu":    resource.MustParse("1"),
+										"cpu":    resource.MustParse("10m"),
 										"memory": resource.MustParse("500M"),
 									},
 								}),

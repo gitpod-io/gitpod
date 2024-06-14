@@ -1,0 +1,60 @@
+apiVersion: v1
+authProviders:
+  - kind: secret
+    name: public-github
+  - kind: secret
+    name: public-gitlab
+  - kind: secret
+    name: public-bitbucket
+blockNewUsers:
+  enabled: true
+  passlist:
+    - gitpod.io
+certificate:
+  kind: secret
+  name: proxy-config-certificates
+containerRegistry:
+  enableAdditionalECRAuth: false
+  inCluster: true
+  privateBaseImageAllowList: []
+  subassemblyBucket: ""
+database:
+  inCluster: true
+disableDefinitelyGp: true
+domain: "local.preview.gitpod-dev.com"
+kind: Full
+metadata:
+  region: local
+  shortname: default
+objectStorage:
+  inCluster: true
+  resources:
+    requests:
+      memory: 2Gi
+observability:
+  logLevel: info
+openVSX:
+  url: https://open-vsx.org
+workspace:
+  maxLifetime: 36h0m0s
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+  runtime:
+    containerdRuntimeDir: /var/lib/rancher/k3s/agent/containerd/io.containerd.runtime.v2.task/k8s.io
+    containerdSocketDir: /run/k3s/containerd
+    fsShiftMethod: shiftfs
+experimental:
+  webapp:
+    spicedb:
+      enabled: true
+      secretRef: spicedb-secret
+    configcatKey: WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw
+    proxy:
+      configcat:
+        baseUrl: https://cdn-global.configcat.com
+        pollInterval: 1m
+  workspace:
+    registryFacade:
+      containerdConfigDir: /var/lib/rancher/k3s/agent/etc/containerd

@@ -231,8 +231,8 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					common.NodeNameEnv(ctx),
 				)),
 				Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{Requests: corev1.ResourceList{
-					"cpu":    resource.MustParse("500m"),
-					"memory": resource.MustParse("4Gi"),
+					"cpu":    resource.MustParse("50m"),
+					"memory": resource.MustParse("2Gi"),
 				}}),
 				VolumeMounts:    volumeMounts,
 				ImagePullPolicy: corev1.PullIfNotPresent,
