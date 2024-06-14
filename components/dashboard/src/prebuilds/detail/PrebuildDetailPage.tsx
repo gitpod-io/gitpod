@@ -15,6 +15,7 @@ import { usePrebuildLogsEmitter } from "../../data/prebuilds/prebuild-logs-emitt
 import React from "react";
 import { useToast } from "../../components/toasts/Toasts";
 import {
+    isPrebuildDone,
     useCancelPrebuildMutation,
     usePrebuildQuery,
     useTriggerPrebuildQuery,
@@ -98,6 +99,8 @@ export const PrebuildDetailPage: FC = () => {
                 disposeStreamingLogs?.dispose();
             }
             setCurrentPrebuild(prebuild);
+
+            return isPrebuildDone(prebuild);
         });
 
         return () => {

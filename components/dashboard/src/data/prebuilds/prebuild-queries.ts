@@ -6,7 +6,7 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { prebuildClient, stream } from "../../service/public-api";
-import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export function usePrebuildQuery(prebuildId: string) {
@@ -30,15 +30,30 @@ function prebuildQueryKey(prebuildId: string) {
     return ["prebuild", prebuildId];
 }
 
-export function watchPrebuild(prebuildId: string, cb: (data: Prebuild) => void) {
-    return stream(
+export function watchPrebuild(prebuildId: string, cb: (data: Prebuild) => boolean) {
+    const disposable = stream(
         (options) => prebuildClient.watchPrebuild({ scope: { case: "prebuildId", value: prebuildId } }, options),
         (resp) => {
             if (resp.prebuild) {
-                cb(resp.prebuild);
+                const done = cb(resp.prebuild);
+                if (done) {
+                    disposable.dispose();
+                }
             }
         },
     );
+    return disposable;
+}
+
+export function isPrebuildDone(prebuild: Prebuild) {
+    switch (prebuild.status?.phase?.name) {
+        case PrebuildPhase_Phase.UNSPECIFIED:
+        case PrebuildPhase_Phase.QUEUED:
+        case PrebuildPhase_Phase.BUILDING:
+            return false;
+        default:
+            return true;
+    }
 }
 
 export function useCancelPrebuildMutation() {
