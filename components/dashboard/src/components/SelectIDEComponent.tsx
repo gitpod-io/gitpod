@@ -12,7 +12,6 @@ import { MiddleDot } from "./typography/MiddleDot";
 import { DisableScope } from "../data/workspaces/workspace-classes-query";
 import { Link } from "react-router-dom";
 import { repositoriesRoutes } from "../repositories/repositories.routes";
-import { useFeatureFlag } from "../data/featureflag-query";
 
 type Props = {
     selectedIdeOption?: string;
@@ -50,7 +49,6 @@ export default function SelectIDEComponent({
         filterOutDisabled: true,
         ignoreScope: ignoreRestrictionScopes,
     });
-    const isEditorVersionPinningEnabled = useFeatureFlag("org_level_editor_version_pinning_enabled");
 
     const getElements = useCallback(
         (search: string) => {
@@ -148,23 +146,19 @@ export default function SelectIDEComponent({
                     </span>
                     . <br />
                     Please use version 2024.1{" "}
-                    {isEditorVersionPinningEnabled ? (
-                        <>
-                            or pin to another version in your{" "}
-                            <Link className="gp-link" to={"/settings"}>
-                                Organization settings
-                            </Link>
-                        </>
-                    ) : (
-                        "instead"
-                    )}
+                    <>
+                        or pin to another version in your{" "}
+                        <Link className="gp-link" to={"/settings"}>
+                            Organization settings
+                        </Link>
+                    </>
                     .
                 </>,
             );
         } else {
             setWarning?.(undefined);
         }
-    }, [setError, setWarning, ide, isEditorVersionPinningEnabled]);
+    }, [setError, setWarning, ide]);
 
     return (
         <Combobox
