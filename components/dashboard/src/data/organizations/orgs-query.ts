@@ -5,13 +5,12 @@
  */
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useLocation } from "react-router";
 import { organizationClient } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
 import { noPersistence } from "../setup";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import { useReportDashboardLoggingTracing } from "../featureflag-query";
 
 export function useOrganizationsInvalidator() {
     const user = useCurrentUser();
@@ -23,10 +22,8 @@ export function useOrganizationsInvalidator() {
     }, [user?.id, queryClient]);
 }
 
-export let orgsLoaded = false;
 export function useOrganizations() {
     const user = useCurrentUser();
-    const logTracing = useReportDashboardLoggingTracing();
     const query = useQuery<Organization[], Error>(
         getQueryKey(user?.id),
         async () => {
@@ -35,10 +32,8 @@ export function useOrganizations() {
                 console.log("useOrganizations with empty user");
                 return [];
             }
-            const response = await logTracing(
-                async () => organizationClient.listOrganizations({}),
-                "on organization loading",
-            );
+
+            const response = await organizationClient.listOrganizations({});
             return response.organizations;
         },
         {
@@ -49,9 +44,6 @@ export function useOrganizations() {
             useErrorBoundary: true,
         },
     );
-    useEffect(() => {
-        orgsLoaded = !query.isLoading;
-    }, [query.isLoading]);
     return query;
 }
 
