@@ -647,7 +647,8 @@ func resolveLaunchContextEnv() []string {
 	// instead put them into /ide-desktop/${alias}${qualifier}/backend/bin/idea64.vmoptions
 	// otherwise JB will complain to a user on each startup
 	// by default remote dev already set -Xmx2048m, see /ide-desktop/${alias}${qualifier}/backend/plugins/remote-dev-server/bin/launcher.sh
-	// launchCtxEnv = append(launchCtxEnv, "JAVA_TOOL_OPTIONS=")
+	launchCtxEnv = append(launchCtxEnv, "INTELLIJ_ORIGINAL_ENV_JAVA_TOOL_OPTIONS="+os.Getenv("JAVA_TOOL_OPTIONS"))
+	launchCtxEnv = append(launchCtxEnv, "JAVA_TOOL_OPTIONS=")
 
 	// Force it to be disabled as we update platform properties file already
 	// TODO: Some ides have it enabled by default still, check pycharm and remove next release
