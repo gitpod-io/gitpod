@@ -129,6 +129,7 @@ export function onDownloadPrebuildLogsUrl(
                         }
                     }
                 } else if (prebuildMatches && prebuildMatches.code === ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE) {
+                    delayInSeconds = 1;
                     throw prebuildMatches;
                 } else {
                     onLog(msg);
