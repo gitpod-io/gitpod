@@ -211,6 +211,8 @@ export class HeadlessLogController {
                     };
                     res.writeHead(200, head);
 
+                    let hasWritten = false;
+
                     const abortController = new AbortController();
                     const queue = new Queue(); // Make sure we forward in the correct order
                     const writeToResponse = async (chunk: string) =>
@@ -227,6 +229,8 @@ export class HeadlessLogController {
                                             return;
                                         }
                                     });
+                                    hasWritten = true;
+
                                     if (!done) {
                                         res.once("drain", resolve);
                                     } else {
@@ -255,6 +259,14 @@ export class HeadlessLogController {
                         TraceContext.setError({ span }, e);
                         await writeToResponse(getPrebuildErrorMessage(e)).catch(() => {});
                     } finally {
+                        if (!hasWritten) {
+                            res.write(
+                                getPrebuildErrorMessage(
+                                    new ApplicationError(ErrorCodes.NOT_FOUND, "No image build logs found"),
+                                ),
+                            );
+                        }
+
                         span.finish();
                         res.end();
                     }
