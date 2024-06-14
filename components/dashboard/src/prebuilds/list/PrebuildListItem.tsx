@@ -79,7 +79,7 @@ export const PrebuildListItem: FC<Props> = ({ prebuild }) => {
             </TableCell>
 
             <TableCell>
-                <PrebuildStatus prebuild={prebuild} classname="w-5 h-5" />
+                <PrebuildStatus prebuild={prebuild} classname="size-5" />
             </TableCell>
 
             <TableCell>
