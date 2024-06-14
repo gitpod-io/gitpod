@@ -262,11 +262,7 @@ export const PrebuildDetailPage: FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                <Tabs
-                                    value={taskId ?? "empty-tab"}
-                                    onValueChange={setSelectedTaskId}
-                                    className="p-0 bg-pk-surface-primary"
-                                >
+                                <Tabs value={taskId ?? "empty-tab"} onValueChange={setSelectedTaskId} className="p-0">
                                     <TabsList className="overflow-x-auto max-w-full p-0 h-auto items-end">
                                         {isImageBuild && (
                                             <TabsTrigger

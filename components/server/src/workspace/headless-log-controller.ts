@@ -200,7 +200,12 @@ export class HeadlessLogController {
                 const user = req.user as User;
 
                 await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
-                    const workspaceId = req.params.workspaceId;
+                    const { workspaceId } = req.params;
+                    const subjectId = ctxTrySubjectId();
+                    if (!subjectId) {
+                        res.status(403).send("unauthorized");
+                        return;
+                    }
 
                     const logCtx = { userId: user.id, workspaceId };
                     const head = {
