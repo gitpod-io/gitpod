@@ -86,7 +86,7 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
 
             if (terminal == null) {
                 thisLogger().warn("gitpod: found no terminal for task ${task.id}, expecting ${task.terminal}")
-                return
+                return@forEachIndexed
             }
             val title = terminal.title.takeIf { !it.isNullOrBlank() } ?: "Gitpod Task ${index + 1}"
             thisLogger().info("gitpod: attaching task ${terminal.title} (${task.terminal}) with title $title")
