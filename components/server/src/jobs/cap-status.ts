@@ -11,7 +11,6 @@ import { Job } from "./runner";
 import { Config } from "../config";
 import { Repository } from "typeorm";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 @injectable()
@@ -24,16 +23,6 @@ export class CapStatus implements Job {
 
     public async run(): Promise<number | undefined> {
         log.info("cap-status: we're leading the quorum.");
-
-        const validateGitStatusLength = await getExperimentsClientForBackend().getValueAsync(
-            "api_validate_git_status_length",
-            false,
-            {},
-        );
-        if (!validateGitStatusLength) {
-            log.info("cap-status: feature flag is not enabled.");
-            return;
-        }
 
         const limit = 500;
         const instances = await this.workspaceDb.transaction(async (db) => {

@@ -59,7 +59,6 @@ import {
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import * as crypto from "crypto";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceRegion, isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { RegionService } from "./region-service";
 import { ProjectsService } from "../projects/projects-service";
@@ -740,43 +739,28 @@ export class WorkspaceService {
         preference: WorkspaceRegion,
         clientCountryCode: string | undefined,
     ): Promise<WorkspaceRegion> {
-        const guessWorkspaceRegionEnabled = await getExperimentsClientForBackend().getValueAsync(
-            "guessWorkspaceRegion",
-            false,
-            {
-                user: { id: userId || "" },
-            },
-        );
-
-        const regionLogContext = {
-            requested_region: preference,
-            client_region_from_header: clientCountryCode,
-            experiment_enabled: false,
-            guessed_region: "",
-        };
-
         let targetRegion = preference;
         if (!isWorkspaceRegion(preference)) {
             targetRegion = "";
-        } else {
-            targetRegion = preference;
         }
 
-        if (guessWorkspaceRegionEnabled) {
-            regionLogContext.experiment_enabled = true;
-
-            if (!preference) {
-                // Attempt to identify the region based on LoadBalancer headers, if there was no explicit choice on the request.
-                // The Client region contains the two letter country code.
-                if (clientCountryCode) {
-                    targetRegion = RegionService.countryCodeToNearestWorkspaceRegion(clientCountryCode);
-                    regionLogContext.guessed_region = targetRegion;
-                }
+        let guessedRegion = "";
+        if (!preference) {
+            // Attempt to identify the region based on LoadBalancer headers, if there was no explicit choice on the request.
+            // The Client region contains the two letter country code.
+            if (clientCountryCode) {
+                targetRegion = RegionService.countryCodeToNearestWorkspaceRegion(clientCountryCode);
+                guessedRegion = targetRegion;
             }
         }
 
         const logCtx = { userId, workspaceId };
-        log.info(logCtx, "[guessWorkspaceRegion] Workspace with region selection", regionLogContext);
+        log.info(logCtx, "[guessWorkspaceRegion] Workspace with region selection", {
+            requested_region: preference,
+            client_region_from_header: clientCountryCode,
+            guessed_region: guessedRegion,
+            result: targetRegion,
+        });
 
         return targetRegion;
     }
@@ -799,16 +783,7 @@ export class WorkspaceService {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
 
         if (!!gitStatus) {
-            const validateGitStatusLength = await getExperimentsClientForBackend().getValueAsync(
-                "api_validate_git_status_length",
-                false,
-                {
-                    user: { id: userId || "" },
-                },
-            );
-            if (validateGitStatusLength) {
-                this.validateGitStatusLength(gitStatus, GIT_STATUS_LENGTH_CAP_BYTES);
-            }
+            this.validateGitStatusLength(gitStatus, GIT_STATUS_LENGTH_CAP_BYTES);
         }
 
         let instance = await this.getCurrentInstance(userId, workspaceId);

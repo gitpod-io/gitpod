@@ -20,6 +20,7 @@ import { EntitlementService, HitParallelWorkspaceLimit, MayStartWorkspaceResult 
 import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { UsageService } from "../orgs/usage-service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { VerificationService } from "../auth/verification-service";
 
 const MAX_PARALLEL_WORKSPACES_FREE = 4;
 const MAX_PARALLEL_WORKSPACES_PAID = 16;
@@ -29,13 +30,23 @@ const MAX_PARALLEL_WORKSPACES_PAID = 16;
  */
 @injectable()
 export class EntitlementServiceUBP implements EntitlementService {
-    constructor(@inject(UsageService) private readonly usageService: UsageService) {}
+    constructor(
+        @inject(UsageService) private readonly usageService: UsageService,
+        @inject(VerificationService) private readonly verificationService: VerificationService,
+    ) {}
 
     async mayStartWorkspace(
         user: User,
         organizationId: string,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
+        const verification = await this.verificationService.needsVerification(user);
+        if (verification) {
+            return {
+                needsVerification: true,
+            };
+        }
+
         const hasHitParallelWorkspaceLimit = async (): Promise<HitParallelWorkspaceLimit | undefined> => {
             const max = await this.getMaxParallelWorkspaces(user.id, organizationId);
             const current = (await runningInstances).filter((i) => i.status.phase !== "preparing").length;
