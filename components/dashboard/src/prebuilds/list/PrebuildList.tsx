@@ -14,11 +14,13 @@ import { PrebuildListErrorState } from "./PrebuildListErrorState";
 import { PrebuildsTable } from "./PrebuildTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { useListOrganizationPrebuildsQuery } from "../../data/prebuilds/organization-prebuilds-query";
-import { ListOrganizationPrebuildsRequest_Filter_State } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { ListOrganizationPrebuildsRequest_Filter_State, Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { validate } from "uuid";
 import type { TableSortOrder } from "@podkit/tables/SortableTable";
 import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 import { RunPrebuildModal } from "./RunPrebuildModal";
+import { isPrebuildDone, watchPrebuild } from "../../data/prebuilds/prebuild-queries";
+import { Disposable } from "@gitpod/gitpod-protocol";
 
 const STATUS_FILTER_VALUES = ["succeeded", "failed", "unfinished", undefined] as const; // undefined means any status
 export type StatusOption = typeof STATUS_FILTER_VALUES[number];
@@ -47,6 +49,8 @@ const PrebuildsListPage: FC = () => {
 
     const [sortBy, setSortBy] = useState(parseSortBy(params));
     const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
+
+    const [prebuilds, setPrebuilds] = useState<Prebuild[]>([]);
 
     const [showRunPrebuildModal, setShowRunPrebuildModal] = useState(false);
 
@@ -119,9 +123,37 @@ const PrebuildsListPage: FC = () => {
         pageSize,
     });
 
-    const prebuilds = useMemo(() => {
+    const prebuildsData = useMemo(() => {
         return data?.pages.map((page) => page.prebuilds).flat() ?? [];
     }, [data?.pages]);
+
+    useEffect(() => {
+        // Watch prebuilds that are not done yet, and update their status
+        const prebuilds = [...prebuildsData];
+        const listeners = prebuilds.map((prebuild) => {
+            if (isPrebuildDone(prebuild)) {
+                return Disposable.NULL;
+            }
+
+            return watchPrebuild(prebuild.id, (update) => {
+                const index = prebuilds.findIndex((p) => p.id === prebuild.id);
+                if (index === -1) {
+                    console.warn("Can't handle prebuild update");
+                    return false;
+                }
+
+                prebuilds.splice(index, 1, update);
+                setPrebuilds([...prebuilds]);
+
+                return isPrebuildDone(update);
+            });
+        });
+        setPrebuilds(prebuilds);
+
+        return () => {
+            listeners.forEach((l) => l?.dispose());
+        };
+    }, [prebuildsData, setPrebuilds]);
 
     const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;
 
