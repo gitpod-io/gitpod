@@ -5,13 +5,11 @@
  */
 
 import EventEmitter from "events";
-import { prebuildClient, workspaceClient } from "../../service/public-api";
+import { prebuildClient } from "../../service/public-api";
 import { useEffect, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import pRetry from "p-retry";
 
 /**
  *
@@ -52,40 +50,26 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null
 
             setIsLoading(true);
 
-            const { workspaceId } = prebuild;
-            if (taskId === "image-build" && workspaceId) {
-                const workspace = await workspaceClient.getWorkspace({ workspaceId });
-                if (workspace.workspace?.status?.phase?.name === WorkspacePhase_Phase.IMAGEBUILD) {
-                    await pRetry(
-                        async () => {
-                            const iterable = workspaceClient.watchWorkspaceImageBuildLogs({ workspaceId });
-                            for await (const response of iterable) {
-                                if (response.log) {
-                                    emitter.emit("logs", response.log.content);
-                                }
-                            }
-                        },
-                        {
-                            signal: controller.signal,
-                            retries: 10,
-                            onFailedAttempt: (error) => {
-                                console.error(
-                                    `Failed to watch image build logs for workspace ${workspaceId} attempt ${error.attemptNumber}: ${error.message}`,
-                                );
-                            },
-                        },
-                    );
+            const task = {
+                taskId,
+                logUrl: "",
+            };
+            if (taskId === "image-build") {
+                if (!prebuild.status?.imageBuildLogUrl) {
+                    setIsLoading(false);
+                    throw new ApplicationError(ErrorCodes.NOT_FOUND, `Image build logs URL not found in response`);
+                }
+                task.logUrl = prebuild.status?.imageBuildLogUrl;
+            } else {
+                const logUrl = prebuild?.status?.taskLogs?.find((log) => log.taskId === taskId)?.logUrl;
+                if (!logUrl) {
+                    setIsLoading(false);
+                    throw new ApplicationError(ErrorCodes.NOT_FOUND, `Task ${taskId} not found`);
                 }
 
-                setIsLoading(false);
-                return;
+                task.logUrl = logUrl;
             }
 
-            const task = prebuild?.status?.taskLogs?.find((log) => log.taskId === taskId);
-            if (!task?.logUrl) {
-                setIsLoading(false);
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, `Task ${taskId} not found`);
-            }
             dispose = onDownloadPrebuildLogsUrl(
                 task.logUrl,
                 (msg) => {

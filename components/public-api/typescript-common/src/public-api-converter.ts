@@ -1257,6 +1257,7 @@ export class PublicAPIConverter {
             message: prebuild.error,
             logUrl: new URL(getPrebuildLogPath(prebuild.info.id), gitpodHost).toString(),
             taskLogs: tasks,
+            imageBuildLogUrl: new URL(getPrebuildLogPath(prebuild.workspace.id, "image-build"), gitpodHost).toString(),
         });
     }
 

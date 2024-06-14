@@ -69,7 +69,8 @@ export const PrebuildDetailPage: FC = () => {
     );
 
     const isImageBuild =
-        currentPrebuild?.status?.phase?.name === PrebuildPhase_Phase.QUEUED && !!currentPrebuild.status.logUrl;
+        currentPrebuild?.status?.phase?.name === PrebuildPhase_Phase.QUEUED &&
+        !!currentPrebuild.status.imageBuildLogUrl;
     const taskId = useMemo(() => {
         if (!currentPrebuild) {
             return null;
@@ -299,78 +300,78 @@ export const PrebuildDetailPage: FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                {(currentPrebuild?.status?.taskLogs.some((t) => t.logUrl) ||
-                                    isError ||
-                                    isImageBuild) && (
-                                    <Tabs
-                                        value={taskId ?? "empty-tab"}
-                                        onValueChange={setSelectedTaskId}
-                                        className="p-0 bg-pk-surface-primary"
-                                    >
-                                        <TabsList className="overflow-x-auto max-w-full p-0 h-auto items-end">
-                                            {isImageBuild && (
+                                <Tabs
+                                    value={taskId ?? "empty-tab"}
+                                    onValueChange={setSelectedTaskId}
+                                    className="p-0 bg-pk-surface-primary"
+                                >
+                                    <TabsList className="overflow-x-auto max-w-full p-0 h-auto items-end">
+                                        {isImageBuild && (
+                                            <TabsTrigger
+                                                value="image-build"
+                                                key="image-build"
+                                                data-analytics={JSON.stringify({ dnt: true })}
+                                                className="mt-1 font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative last:mr-1"
+                                            >
+                                                Image Build
+                                            </TabsTrigger>
+                                        )}
+                                        {currentPrebuild?.status?.taskLogs
+                                            .filter((t) => t.logUrl)
+                                            .map((task) => (
                                                 <TabsTrigger
-                                                    value="image-build"
-                                                    key="image-build"
+                                                    value={task.taskId}
+                                                    key={task.taskId}
                                                     data-analytics={JSON.stringify({ dnt: true })}
                                                     className="mt-1 font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative last:mr-1"
+                                                    disabled={isImageBuild}
                                                 >
-                                                    Image Build
+                                                    {task.taskLabel}
                                                 </TabsTrigger>
+                                            ))}
+                                    </TabsList>
+                                    <TabsContent
+                                        value={taskId ?? "empty-tab"}
+                                        className="h-112 mt-0 border-pk-border-base"
+                                    >
+                                        <Suspense fallback={<div />}>
+                                            {isError ? (
+                                                <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
+                                                    <Text className="w-80 text-center">
+                                                        {logNotFound ? (
+                                                            <>
+                                                                Logs of this prebuild are inaccessible. Use{" "}
+                                                                <code>gp validate --prebuild --headless</code> in a
+                                                                workspace to see logs and debug prebuild issues.{" "}
+                                                                <a
+                                                                    href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
+                                                                    target="_blank"
+                                                                    rel="noreferrer noopener"
+                                                                    className="gp-link"
+                                                                >
+                                                                    Learn more
+                                                                </a>
+                                                                .
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                No prebuild tasks defined in <code>.gitpod.yml</code>{" "}
+                                                                for this prebuild
+                                                            </>
+                                                        )}
+                                                    </Text>
+                                                </div>
+                                            ) : (
+                                                <WorkspaceLogs
+                                                    classes="h-full w-full"
+                                                    xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0 mt-4"
+                                                    logsEmitter={logEmitter}
+                                                    key={taskId}
+                                                />
                                             )}
-                                            {currentPrebuild?.status?.taskLogs
-                                                .filter((t) => t.logUrl)
-                                                .map((task) => (
-                                                    <TabsTrigger
-                                                        value={task.taskId}
-                                                        key={task.taskId}
-                                                        data-analytics={JSON.stringify({ dnt: true })}
-                                                        className="mt-1 font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative last:mr-1"
-                                                    >
-                                                        {task.taskLabel}
-                                                    </TabsTrigger>
-                                                ))}
-                                        </TabsList>
-                                        <TabsContent
-                                            value={taskId ?? "empty-tab"}
-                                            className="h-112 mt-0 border-pk-border-base"
-                                        >
-                                            <Suspense fallback={<div />}>
-                                                {isError ? (
-                                                    <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
-                                                        <Text className="w-80 text-center">
-                                                            {logNotFound ? (
-                                                                <>
-                                                                    Logs of this prebuild are inaccessible. Use{" "}
-                                                                    <code>gp validate --prebuild --headless</code> in a
-                                                                    workspace to see logs and debug prebuild issues.{" "}
-                                                                    <a
-                                                                        href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
-                                                                        target="_blank"
-                                                                        rel="noreferrer noopener"
-                                                                        className="gp-link"
-                                                                    >
-                                                                        Learn more
-                                                                    </a>
-                                                                    .
-                                                                </>
-                                                            ) : (
-                                                                "No prebuild tasks defined in `.gitpod.yml` for this prebuild"
-                                                            )}
-                                                        </Text>
-                                                    </div>
-                                                ) : (
-                                                    <WorkspaceLogs
-                                                        classes="h-full w-full"
-                                                        xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0 mt-4"
-                                                        logsEmitter={logEmitter}
-                                                        key={taskId}
-                                                    />
-                                                )}
-                                            </Suspense>
-                                        </TabsContent>
-                                    </Tabs>
-                                )}
+                                        </Suspense>
+                                    </TabsContent>
+                                </Tabs>
                             </div>
                             <div className="px-6 pt-6 flex justify-between border-pk-border-base">
                                 {[PrebuildPhase_Phase.BUILDING, PrebuildPhase_Phase.QUEUED].includes(

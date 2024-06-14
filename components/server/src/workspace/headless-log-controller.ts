@@ -12,6 +12,7 @@ import {
     TeamMemberInfo,
     User,
     Workspace,
+    WorkspaceImageBuild,
     WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -193,6 +194,73 @@ export class HeadlessLogController {
         const router = express.Router();
 
         router.use(this.auth.restHandlerOptionally);
+        router.get("/:workspaceId/image-build", [
+            authenticateAndAuthorize,
+            asyncHandler(async (req: express.Request, res: express.Response) => {
+                const span = opentracing.globalTracer().startSpan(HEADLESS_LOGS_PATH_PREFIX);
+                const user = req.user as User;
+
+                await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
+                    const workspaceId = req.params.workspaceId;
+
+                    const logCtx = { userId: user.id, workspaceId };
+                    const head = {
+                        "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
+                        "Transfer-Encoding": "chunked",
+                        "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
+                    };
+                    res.writeHead(200, head);
+
+                    const abortController = new AbortController();
+                    const queue = new Queue(); // Make sure we forward in the correct order
+                    const writeToResponse = async (chunk: string) =>
+                        queue.enqueue(
+                            () =>
+                                new Promise<void>((resolve) => {
+                                    if (ctxIsAborted()) {
+                                        return;
+                                    }
+                                    const done = res.write(chunk, "utf-8", (err?: Error | null) => {
+                                        if (err) {
+                                            // we don't reject in current promise to avoid floating error throws
+                                            abortController.abort("Failed to write chunk");
+                                            return;
+                                        }
+                                    });
+                                    if (!done) {
+                                        res.once("drain", resolve);
+                                    } else {
+                                        setImmediate(resolve);
+                                    }
+                                }),
+                        );
+
+                    const client = {
+                        onWorkspaceImageBuildLogs: async (
+                            _info: WorkspaceImageBuild.StateInfo,
+                            content: WorkspaceImageBuild.LogContent | undefined,
+                        ) => {
+                            if (!content) return;
+
+                            await writeToResponse(content.text);
+                        },
+                    };
+
+                    try {
+                        await runWithSubSignal(abortController, async () => {
+                            await this.workspaceService.watchWorkspaceImageBuildLogs(user.id, workspaceId, client);
+                        });
+                    } catch (e) {
+                        log.error(logCtx, "error streaming headless logs", e);
+                        TraceContext.setError({ span }, e);
+                        await writeToResponse(getPrebuildErrorMessage(e)).catch(() => {});
+                    } finally {
+                        span.finish();
+                        res.end();
+                    }
+                });
+            }),
+        ]);
         router.get("/:prebuildId/:taskId?", [
             authenticateAndAuthorize,
             asyncHandler(async (req: express.Request, res: express.Response) => {

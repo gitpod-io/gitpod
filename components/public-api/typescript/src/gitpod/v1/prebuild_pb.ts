@@ -770,6 +770,11 @@ export class PrebuildStatus extends Message<PrebuildStatus> {
    */
   taskLogs: TaskLog[] = [];
 
+  /**
+   * @generated from field: string image_build_log_url = 6;
+   */
+  imageBuildLogUrl = "";
+
   constructor(data?: PartialMessage<PrebuildStatus>) {
     super();
     proto3.util.initPartial(data, this);
@@ -783,6 +788,7 @@ export class PrebuildStatus extends Message<PrebuildStatus> {
     { no: 3, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "log_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "task_logs", kind: "message", T: TaskLog, repeated: true },
+    { no: 6, name: "image_build_log_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildStatus {
