@@ -284,7 +284,7 @@ func Run(options ...RunOption) {
 			OwnerID:           cfg.OwnerId,
 			SupervisorVersion: Version,
 			ConfigcatEnabled:  cfg.ConfigcatEnabled,
-		}, tokenService, exps)
+		}, tokenService)
 	}
 
 	if cfg.GetDesktopIDE() != nil {

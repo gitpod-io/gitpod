@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	ServerTypeServerAPI = "server-api"
 	ServerTypePublicAPI = "public-api"
 )
 
@@ -44,12 +43,9 @@ func NewClientMetrics() *ClientMetrics {
 	}
 }
 
-func (c *ClientMetrics) ProcessMetrics(usePublicAPI bool, method string, err error, startTime time.Time) {
+func (c *ClientMetrics) ProcessMetrics(method string, err error, startTime time.Time) {
 	code := status.Code(normalizeError(err))
-	server := ServerTypeServerAPI
-	if usePublicAPI {
-		server = ServerTypePublicAPI
-	}
+	server := ServerTypePublicAPI
 	c.clientHandledCounter.WithLabelValues(method, server, code.String()).Inc()
 	c.clientHandledHistogram.WithLabelValues(method, server, code.String()).Observe(time.Since(startTime).Seconds())
 }
