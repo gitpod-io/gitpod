@@ -48,14 +48,12 @@ import {
     WorkspacePort_Protocol,
     ListWorkspaceSessionsRequest,
     ListWorkspaceSessionsResponse,
-    WatchWorkspaceImageBuildLogsRequest,
-    WatchWorkspaceImageBuildLogsResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { converter } from "./public-api";
 import { getGitpodService } from "./service";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
-import { WorkspaceImageBuild, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { parsePagination } from "@gitpod/public-api-common/lib/public-api-pagination";
 import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -126,62 +124,6 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
             const response = new WatchWorkspaceStatusResponse();
             response.workspaceId = item.workspaceId;
             response.status = status;
-            yield response;
-        }
-    }
-
-    async *watchWorkspaceImageBuildLogs(
-        request: PartialMessage<WatchWorkspaceImageBuildLogsRequest>,
-        options?: CallOptions,
-    ): AsyncIterable<WatchWorkspaceImageBuildLogsResponse> {
-        if (!options?.signal) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "signal is required");
-        }
-        if (!request.workspaceId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
-        }
-
-        const it = generateAsyncGenerator<{
-            state: WorkspaceImageBuild.StateInfo;
-            content: WorkspaceImageBuild.LogContent;
-        }>(
-            (queue) => {
-                try {
-                    const dispose = getGitpodService().registerClient({
-                        onWorkspaceImageBuildLogs: (state, content) => {
-                            if (!content) {
-                                return;
-                            }
-                            queue.push({ state, content });
-                        },
-                    });
-                    return () => {
-                        dispose.dispose();
-                    };
-                } catch (e) {
-                    queue.fail(e);
-                }
-            },
-            { signal: options.signal },
-        );
-        for await (const logItem of it) {
-            if (!logItem) {
-                continue;
-            }
-            const log = converter.toImageBuildLog(logItem.content);
-            if (!log) {
-                continue;
-            }
-
-            const state = converter.toImageBuildLogsState(logItem.state);
-            if (!state) {
-                continue;
-            }
-
-            const response = new WatchWorkspaceImageBuildLogsResponse();
-            response.log = log;
-            response.state = state;
-
             yield response;
         }
     }

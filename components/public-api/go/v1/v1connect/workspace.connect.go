@@ -40,8 +40,6 @@ type WorkspaceServiceClient interface {
 	//
 	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest]) (*connect_go.ServerStreamForClient[v1.WatchWorkspaceStatusResponse], error)
-	// WatchWorkspaceImageBuildLogs watches the image build logs of the workspace
-	WatchWorkspaceImageBuildLogs(context.Context, *connect_go.Request[v1.WatchWorkspaceImageBuildLogsRequest]) (*connect_go.ServerStreamForClient[v1.WatchWorkspaceImageBuildLogsResponse], error)
 	// ListWorkspaces returns a list of workspaces that match the query.
 	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
 	// ListWorkspaceSessions returns a list of workspace sessions that match the
@@ -102,11 +100,6 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 		watchWorkspaceStatus: connect_go.NewClient[v1.WatchWorkspaceStatusRequest, v1.WatchWorkspaceStatusResponse](
 			httpClient,
 			baseURL+"/gitpod.v1.WorkspaceService/WatchWorkspaceStatus",
-			opts...,
-		),
-		watchWorkspaceImageBuildLogs: connect_go.NewClient[v1.WatchWorkspaceImageBuildLogsRequest, v1.WatchWorkspaceImageBuildLogsResponse](
-			httpClient,
-			baseURL+"/gitpod.v1.WorkspaceService/WatchWorkspaceImageBuildLogs",
 			opts...,
 		),
 		listWorkspaces: connect_go.NewClient[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse](
@@ -196,7 +189,6 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 type workspaceServiceClient struct {
 	getWorkspace                  *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
 	watchWorkspaceStatus          *connect_go.Client[v1.WatchWorkspaceStatusRequest, v1.WatchWorkspaceStatusResponse]
-	watchWorkspaceImageBuildLogs  *connect_go.Client[v1.WatchWorkspaceImageBuildLogsRequest, v1.WatchWorkspaceImageBuildLogsResponse]
 	listWorkspaces                *connect_go.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
 	listWorkspaceSessions         *connect_go.Client[v1.ListWorkspaceSessionsRequest, v1.ListWorkspaceSessionsResponse]
 	createAndStartWorkspace       *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
@@ -223,11 +215,6 @@ func (c *workspaceServiceClient) GetWorkspace(ctx context.Context, req *connect_
 // WatchWorkspaceStatus calls gitpod.v1.WorkspaceService.WatchWorkspaceStatus.
 func (c *workspaceServiceClient) WatchWorkspaceStatus(ctx context.Context, req *connect_go.Request[v1.WatchWorkspaceStatusRequest]) (*connect_go.ServerStreamForClient[v1.WatchWorkspaceStatusResponse], error) {
 	return c.watchWorkspaceStatus.CallServerStream(ctx, req)
-}
-
-// WatchWorkspaceImageBuildLogs calls gitpod.v1.WorkspaceService.WatchWorkspaceImageBuildLogs.
-func (c *workspaceServiceClient) WatchWorkspaceImageBuildLogs(ctx context.Context, req *connect_go.Request[v1.WatchWorkspaceImageBuildLogsRequest]) (*connect_go.ServerStreamForClient[v1.WatchWorkspaceImageBuildLogsResponse], error) {
-	return c.watchWorkspaceImageBuildLogs.CallServerStream(ctx, req)
 }
 
 // ListWorkspaces calls gitpod.v1.WorkspaceService.ListWorkspaces.
@@ -321,8 +308,6 @@ type WorkspaceServiceHandler interface {
 	//
 	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest], *connect_go.ServerStream[v1.WatchWorkspaceStatusResponse]) error
-	// WatchWorkspaceImageBuildLogs watches the image build logs of the workspace
-	WatchWorkspaceImageBuildLogs(context.Context, *connect_go.Request[v1.WatchWorkspaceImageBuildLogsRequest], *connect_go.ServerStream[v1.WatchWorkspaceImageBuildLogsResponse]) error
 	// ListWorkspaces returns a list of workspaces that match the query.
 	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
 	// ListWorkspaceSessions returns a list of workspace sessions that match the
@@ -380,11 +365,6 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 	mux.Handle("/gitpod.v1.WorkspaceService/WatchWorkspaceStatus", connect_go.NewServerStreamHandler(
 		"/gitpod.v1.WorkspaceService/WatchWorkspaceStatus",
 		svc.WatchWorkspaceStatus,
-		opts...,
-	))
-	mux.Handle("/gitpod.v1.WorkspaceService/WatchWorkspaceImageBuildLogs", connect_go.NewServerStreamHandler(
-		"/gitpod.v1.WorkspaceService/WatchWorkspaceImageBuildLogs",
-		svc.WatchWorkspaceImageBuildLogs,
 		opts...,
 	))
 	mux.Handle("/gitpod.v1.WorkspaceService/ListWorkspaces", connect_go.NewUnaryHandler(
@@ -479,10 +459,6 @@ func (UnimplementedWorkspaceServiceHandler) GetWorkspace(context.Context, *conne
 
 func (UnimplementedWorkspaceServiceHandler) WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest], *connect_go.ServerStream[v1.WatchWorkspaceStatusResponse]) error {
 	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.WatchWorkspaceStatus is not implemented"))
-}
-
-func (UnimplementedWorkspaceServiceHandler) WatchWorkspaceImageBuildLogs(context.Context, *connect_go.Request[v1.WatchWorkspaceImageBuildLogsRequest], *connect_go.ServerStream[v1.WatchWorkspaceImageBuildLogsResponse]) error {
-	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.WatchWorkspaceImageBuildLogs is not implemented"))
 }
 
 func (UnimplementedWorkspaceServiceHandler) ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error) {

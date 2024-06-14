@@ -46,8 +46,6 @@ import {
     WorkspacePort_Protocol,
     ListWorkspaceSessionsRequest,
     ListWorkspaceSessionsResponse,
-    WatchWorkspaceImageBuildLogsRequest,
-    WatchWorkspaceImageBuildLogsResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
@@ -60,7 +58,6 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { ContextService } from "../workspace/context-service";
 import { UserService } from "../user/user-service";
 import { ContextParser } from "../workspace/context-parser-service";
-import { WorkspaceImageBuild } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceInterface> {
@@ -89,53 +86,6 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         });
         for await (const status of it) {
             yield status;
-        }
-    }
-
-    async *watchWorkspaceImageBuildLogs(
-        req: WatchWorkspaceImageBuildLogsRequest,
-        _: HandlerContext,
-    ): AsyncIterable<WatchWorkspaceImageBuildLogsResponse> {
-        // Used as a callback to resolve the current log promise
-        let resolveLog: ((response: WatchWorkspaceImageBuildLogsResponse) => void) | null = null;
-
-        const client = {
-            onWorkspaceImageBuildLogs: (
-                info: WorkspaceImageBuild.StateInfo,
-                content: WorkspaceImageBuild.LogContent | undefined,
-            ) => {
-                if (!content) return;
-
-                const response = new WatchWorkspaceImageBuildLogsResponse();
-                response.state = this.apiConverter.toImageBuildLogsState(info);
-                response.log = this.apiConverter.toImageBuildLog(content);
-
-                if (resolveLog) {
-                    // Resolve the current promise with the new log
-                    resolveLog(response);
-                    resolveLog = null;
-                }
-            },
-        };
-
-        const watchLogsPromise = this.workspaceService.watchWorkspaceImageBuildLogs(
-            ctxUserId(),
-            req.workspaceId,
-            client,
-        );
-
-        try {
-            while (true) {
-                // Create a promise and wait for the next log entry
-                const logPromise = new Promise<WatchWorkspaceImageBuildLogsResponse>((resolve) => {
-                    resolveLog = resolve;
-                });
-
-                yield await logPromise;
-            }
-        } finally {
-            // Ensure to complete the log watching process
-            await watchLogsPromise;
         }
     }
 

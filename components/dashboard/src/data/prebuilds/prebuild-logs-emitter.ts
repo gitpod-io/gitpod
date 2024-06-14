@@ -14,7 +14,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 /**
  *
  * @param prebuildId ID of the prebuild to watch
- * @param taskId ID of the task to watch. If `null`, watch will not be started and if `image-build` is passed, it will watch the image build logs.
+ * @param taskId ID of the task to watch. If `null`, watch will not be started.
  * @returns
  */
 export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null) {

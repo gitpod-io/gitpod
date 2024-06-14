@@ -56,22 +56,6 @@ public class WorkspaceServiceClient(
 
 
   /**
-   *  WatchWorkspaceImageBuildLogs watches the image build logs of the workspace
-   */
-  override suspend fun watchWorkspaceImageBuildLogs(headers: Headers):
-      ServerOnlyStreamInterface<WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest, WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse>
-      = client.serverStream(
-    headers,
-    MethodSpec(
-    "gitpod.v1.WorkspaceService/WatchWorkspaceImageBuildLogs",
-      io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsRequest::class,
-      io.gitpod.publicapi.v1.WorkspaceOuterClass.WatchWorkspaceImageBuildLogsResponse::class,
-      StreamType.SERVER,
-    ),
-  )
-
-
-  /**
    *  ListWorkspaces returns a list of workspaces that match the query.
    */
   override suspend fun listWorkspaces(request: WorkspaceOuterClass.ListWorkspacesRequest,

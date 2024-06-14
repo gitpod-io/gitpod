@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, CreateWorkspaceSnapshotRequest, CreateWorkspaceSnapshotResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspaceClassesRequest, ListWorkspaceClassesResponse, ListWorkspaceSessionsRequest, ListWorkspaceSessionsResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, UpdateWorkspacePortRequest, UpdateWorkspacePortResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WaitForWorkspaceSnapshotRequest, WaitForWorkspaceSnapshotResponse, WatchWorkspaceImageBuildLogsRequest, WatchWorkspaceImageBuildLogsResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
+import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, CreateWorkspaceSnapshotRequest, CreateWorkspaceSnapshotResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspaceClassesRequest, ListWorkspaceClassesResponse, ListWorkspaceSessionsRequest, ListWorkspaceSessionsResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, UpdateWorkspacePortRequest, UpdateWorkspacePortResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WaitForWorkspaceSnapshotRequest, WaitForWorkspaceSnapshotResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -43,17 +43,6 @@ export const WorkspaceService = {
       name: "WatchWorkspaceStatus",
       I: WatchWorkspaceStatusRequest,
       O: WatchWorkspaceStatusResponse,
-      kind: MethodKind.ServerStreaming,
-    },
-    /**
-     * WatchWorkspaceImageBuildLogs watches the image build logs of the workspace
-     *
-     * @generated from rpc gitpod.v1.WorkspaceService.WatchWorkspaceImageBuildLogs
-     */
-    watchWorkspaceImageBuildLogs: {
-      name: "WatchWorkspaceImageBuildLogs",
-      I: WatchWorkspaceImageBuildLogsRequest,
-      O: WatchWorkspaceImageBuildLogsResponse,
       kind: MethodKind.ServerStreaming,
     },
     /**
