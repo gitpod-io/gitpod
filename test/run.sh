@@ -146,7 +146,11 @@ else
 
     cd "${TEST_PATH}"
     set +e
-    go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}.xml" -iocopy
+    if [ "$TEST_SUITE" == "jetbrains" ]; then
+      go test -parallel=2 -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}.xml" -iocopy
+    else
+      go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}.xml" -iocopy
+    fi
     RC=${PIPESTATUS[0]}
     set -e
     cd -

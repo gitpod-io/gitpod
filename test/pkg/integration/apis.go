@@ -566,6 +566,65 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	return userId, nil
 }
 
+func (c *ComponentAPI) CreateTeam(ctx context.Context, userID, teamName string) (string, error) {
+	db, err := c.DB()
+	if err != nil {
+		return "", err
+	}
+
+	teamUUID, err := uuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+	var teamID string
+	if err := db.QueryRowContext(ctx, `SELECT teamId FROM d_b_team_membership WHERE userId = ? AND role = "owner"`, userID).Scan(&teamID); err == nil {
+		return teamID, nil
+	}
+
+	teamID = teamUUID.String()
+	_, err = db.ExecContext(ctx, `INSERT INTO d_b_team (id, name, slug) VALUES (?, ?, ?)`, teamID, teamName, "")
+	if err != nil {
+		return "", err
+	}
+	_, err = db.ExecContext(ctx, `INSERT INTO d_b_team_membership (teamId, userId, role) VALUES (?, ?, ?)`, teamID, userID, "owner")
+	if err != nil {
+		return "", err
+	}
+
+	return teamID, nil
+}
+
+func (c *ComponentAPI) CreateProject(ctx context.Context, teamID, repoName, repoUrl string, prebuildEnabled bool) (string, error) {
+	db, err := c.DB()
+	if err != nil {
+		return "", err
+	}
+
+	projectUUID, err := uuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+	projectID := projectUUID.String()
+
+	prebuildSettings := map[string]interface{}{
+		"prebuilds": map[string]interface{}{
+			"enable":           true,
+			"prebuildInterval": 20,
+		},
+	}
+	prebuildSettingsBytes, err := json.Marshal(prebuildSettings)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = db.ExecContext(ctx, `INSERT INTO d_b_project (id, name, cloneUrl, teamId, appInstallationId, settings) VALUES (?, ?, ?, ?, ?, ?)`, projectID, repoName, repoUrl, teamID, "", string(prebuildSettingsBytes))
+	if err != nil {
+		return "", err
+	}
+
+	return projectID, nil
+}
+
 func (c *ComponentAPI) createGitpodToken(user string, scopes []string) (tkn string, err error) {
 	id, err := c.GetUserId(user)
 	if err != nil {
