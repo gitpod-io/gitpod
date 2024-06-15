@@ -144,9 +144,7 @@ export function BrowserExtensionBanner() {
         }
 
         const installedOrDismissed =
-            sessionStorage.getItem("browser-extension-installed") || // todo(ft): delete after migration is complete
-            wasRecentlySeenActive() ||
-            localStorage.getItem("browser-extension-banner-dismissed");
+            wasRecentlySeenActive() || localStorage.getItem("browser-extension-banner-dismissed");
 
         setIsVisible(!installedOrDismissed);
     }, [isVisible]);
