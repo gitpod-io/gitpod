@@ -122,6 +122,8 @@ func ParseConfig(ctx context.Context, res remotes.Resolver, b []byte) (*config.I
 		}
 	}
 
+	log.WithField("cfg", cfg).Info("=================parsed IDE config")
+
 	return &cfg, nil
 }
 
