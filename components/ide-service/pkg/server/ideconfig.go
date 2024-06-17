@@ -93,7 +93,7 @@ func ParseConfig(ctx context.Context, res remotes.Resolver, b []byte) (*config.I
 		}
 
 		// append or replace latest stable version into versions
-		if option.ImageVersion != "" {
+		if option.AllowPin && option.ImageVersion != "" {
 			found := false
 			foundIndex := -1
 			for index, version := range option.Versions {

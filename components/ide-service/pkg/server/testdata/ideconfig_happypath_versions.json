@@ -4,6 +4,7 @@
     "options": {
       "code": {
         "orderKey": "00",
+        "allowPin": true,
         "title": "VS Code",
         "type": "browser",
         "logo": "https://ide.gitpod.io/image/ide-logo/vscode.svg",
@@ -26,6 +27,7 @@
       },
       "code-desktop": {
         "orderKey": "02",
+        "allowPin": true,
         "title": "VS Code",
         "type": "desktop",
         "logo": "https://ide.gitpod.io/image/ide-logo/vscode.svg",
@@ -39,6 +41,7 @@
       },
       "goland": {
         "orderKey": "05",
+        "allowPin": true,
         "title": "GoLand",
         "type": "desktop",
         "resolveImageDigest": true,
@@ -63,6 +66,7 @@
       },
       "intellij": {
         "orderKey": "04",
+        "allowPin": true,
         "title": "IntelliJ IDEA",
         "type": "desktop",
         "logo": "https://ide.gitpod.io/image/ide-logo/intellijIdeaLogo.svg",
@@ -76,6 +80,7 @@
       },
       "phpstorm": {
         "orderKey": "07",
+        "allowPin": true,
         "title": "PhpStorm",
         "type": "desktop",
         "logo": "https://ide.gitpod.io/image/ide-logo/phpstormLogo.svg",
@@ -89,6 +94,7 @@
       },
       "pycharm": {
         "orderKey": "06",
+        "allowPin": false,
         "title": "PyCharm",
         "type": "desktop",
         "logo": "https://ide.gitpod.io/image/ide-logo/pycharmLogo.svg",
