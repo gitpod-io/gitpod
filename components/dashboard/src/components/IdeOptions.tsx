@@ -16,7 +16,6 @@ import { useToast } from "./toasts/Toasts";
 import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "./Modal";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { useIDEVersionsQuery } from "../data/ide-options/ide-options-query";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { AllowedWorkspaceEditor } from "../data/ide-options/ide-options-query";
 import { isJetbrains } from "./SelectIDEComponent";
 
@@ -94,13 +93,8 @@ export const IdeOptionsModifyModal = ({
     hidePinEditorInputs,
     ...props
 }: IdeOptionsModifyModalProps) => {
-    const orgLevelEditorVersionPinningEnabled = useFeatureFlag("org_level_editor_version_pinning_enabled");
-
     const ideOptionsArr = ideOptions;
-    const pinnableIdes = useMemo(
-        () => ideOptionsArr?.filter((i) => orgLevelEditorVersionPinningEnabled && !!i.pinnable),
-        [ideOptionsArr, orgLevelEditorVersionPinningEnabled],
-    );
+    const pinnableIdes = useMemo(() => ideOptionsArr?.filter((i) => !!i.pinnable), [ideOptionsArr]);
 
     const [restrictedEditors, setEditors] = useState(props.restrictedEditors);
     const [pinnedEditorVersions, setPinnedEditorVersions] = useState(props.pinnedEditorVersions);
