@@ -246,7 +246,7 @@ export class HeadlessLogController {
                     const client = {
                         onWorkspaceImageBuildLogs: async (
                             _info: WorkspaceImageBuild.StateInfo,
-                            content: WorkspaceImageBuild.LogContent | undefined,
+                            content?: WorkspaceImageBuild.LogContent,
                         ) => {
                             if (!content) return;
 

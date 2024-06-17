@@ -4,21 +4,26 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import EventEmitter from "events";
 import { prebuildClient } from "../../service/public-api";
 import { useEffect, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ReplayableEventEmitter } from "../../utils";
+
+type LogEventTypes = {
+    error: [Error];
+    logs: [string];
+    "logs-error": [ApplicationError];
+};
 
 /**
- *
+ * Watches the logs of a prebuild task by returning an EventEmitter that emits logs, logs-error, and error events.
  * @param prebuildId ID of the prebuild to watch
- * @param taskId ID of the task to watch. If `null`, watch will not be started.
- * @returns
+ * @param taskId ID of the task to watch.
  */
-export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null) {
-    const [emitter] = useState(new EventEmitter());
+export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
+    const [emitter] = useState(new ReplayableEventEmitter<LogEventTypes>());
     const [isLoading, setIsLoading] = useState(true);
     const [disposable, setDisposable] = useState<Disposable | undefined>();
 
@@ -29,15 +34,6 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null
     useEffect(() => {
         const controller = new AbortController();
         const watch = async () => {
-            if (taskId === null) {
-                setIsLoading(false);
-                return;
-            }
-            if (!prebuildId || !taskId) {
-                setIsLoading(false);
-                return;
-            }
-
             let dispose: () => void | undefined;
             controller.signal.addEventListener("abort", () => {
                 dispose?.();
@@ -47,8 +43,6 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null
             if (!prebuild) {
                 throw new ApplicationError(ErrorCodes.NOT_FOUND, `Prebuild ${prebuildId} not found`);
             }
-
-            setIsLoading(true);
 
             const task = {
                 taskId,
@@ -101,6 +95,7 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null
         );
         return () => {
             controller.abort();
+            emitter.clearLog();
             emitter.removeAllListeners();
         };
     }, [emitter, prebuildId, taskId]);

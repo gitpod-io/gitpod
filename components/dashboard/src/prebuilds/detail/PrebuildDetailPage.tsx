@@ -11,8 +11,6 @@ import { Button } from "@podkit/buttons/Button";
 import { FC, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
 import dayjs from "dayjs";
-import { usePrebuildLogsEmitter } from "../../data/prebuilds/prebuild-logs-emitter";
-import React from "react";
 import { useToast } from "../../components/toasts/Toasts";
 import {
     isPrebuildDone,
@@ -29,8 +27,7 @@ import { PrebuildStatus } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@podkit/tabs/Tabs";
-
-const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
+import { PrebuildTaskTab } from "./PrebuildTaskTab";
 
 /**
  * Formats a date. For today, it returns the time. For this year, it returns the month and day and time. Otherwise, it returns the full date and time.
@@ -47,8 +44,7 @@ const formatDate = (date: dayjs.Dayjs): string => {
     return date.format("MMM D, YYYY [at] h:mm A");
 };
 
-const PersistedToastID = "prebuild-logs-error";
-
+export const PersistedToastID = "prebuild-logs-error";
 interface Props {
     prebuildId: string;
 }
@@ -80,7 +76,6 @@ export const PrebuildDetailPage: FC = () => {
         return selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? null;
     }, [currentPrebuild, isImageBuild, selectedTaskId]);
 
-    const { emitter: logEmitter, disposable: disposeStreamingLogs } = usePrebuildLogsEmitter(prebuildId, taskId);
     const {
         isFetching: isTriggeringPrebuild,
         refetch: triggerPrebuild,
@@ -109,7 +104,7 @@ export const PrebuildDetailPage: FC = () => {
         setLogNotFound(false);
         const disposable = watchPrebuild(prebuildId, (prebuild) => {
             if (currentPrebuild?.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
-                disposeStreamingLogs?.dispose();
+                return true;
             }
             setCurrentPrebuild(prebuild);
 
@@ -119,7 +114,7 @@ export const PrebuildDetailPage: FC = () => {
         return () => {
             disposable.dispose();
         };
-    }, [prebuildId, disposeStreamingLogs, currentPrebuild?.status?.phase?.name]);
+    }, [prebuildId, currentPrebuild?.status?.phase?.name]);
 
     useEffect(() => {
         const anyLogAvailable = isImageBuild || currentPrebuild?.status?.taskLogs.some((t) => t.logUrl);
@@ -134,29 +129,6 @@ export const PrebuildDetailPage: FC = () => {
     }, []);
 
     const notFoundError = error instanceof ApplicationError && error.code === ErrorCodes.NOT_FOUND;
-
-    useEffect(() => {
-        logEmitter.on("error", (err: Error) => {
-            if (err?.name === "AbortError") {
-                return;
-            }
-            if (err instanceof ApplicationError && err.code === ErrorCodes.NOT_FOUND) {
-                // We don't want to show a toast for this error, because it's handled by `notFoundError`.
-                return;
-            }
-            if (err?.message) {
-                toast("Fetching logs failed: " + err.message);
-            }
-        });
-        logEmitter.on("logs-error", (err: ApplicationError) => {
-            if (err.code === ErrorCodes.NOT_FOUND) {
-                setLogNotFound(true);
-                return;
-            }
-
-            toast("Fetching logs failed: " + err.message, { autoHide: false, id: PersistedToastID });
-        });
-    }, [logEmitter, toast]);
 
     useEffect(() => {
         if (isTriggerError && triggerError?.message) {
@@ -288,12 +260,21 @@ export const PrebuildDetailPage: FC = () => {
                                                 </TabsTrigger>
                                             ))}
                                     </TabsList>
-                                    <TabsContent
-                                        value={taskId ?? "empty-tab"}
-                                        className="h-112 mt-0 border-pk-border-base"
-                                    >
-                                        <Suspense fallback={<div />}>
-                                            {isError ? (
+                                    {!isError ? (
+                                        currentPrebuild.status?.taskLogs.map(({ taskId }) => (
+                                            <PrebuildTaskTab
+                                                key={taskId}
+                                                taskId={taskId}
+                                                prebuild={currentPrebuild}
+                                                onLogNotFound={() => setLogNotFound(true)}
+                                            />
+                                        ))
+                                    ) : (
+                                        <TabsContent
+                                            value={taskId ?? "empty-tab"}
+                                            className="h-112 mt-0 border-pk-border-base"
+                                        >
+                                            <Suspense fallback={<div />}>
                                                 <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
                                                     <Text className="w-80 text-center">
                                                         {logNotFound ? (
@@ -319,16 +300,9 @@ export const PrebuildDetailPage: FC = () => {
                                                         )}
                                                     </Text>
                                                 </div>
-                                            ) : (
-                                                <WorkspaceLogs
-                                                    classes="h-full w-full"
-                                                    xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0 mt-4"
-                                                    logsEmitter={logEmitter}
-                                                    key={taskId}
-                                                />
-                                            )}
-                                        </Suspense>
-                                    </TabsContent>
+                                            </Suspense>
+                                        </TabsContent>
+                                    )}
                                 </Tabs>
                             </div>
                             <div className="px-6 pt-6 flex justify-between border-pk-border-base">
