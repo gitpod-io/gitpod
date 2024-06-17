@@ -8,5 +8,5 @@ import { appendPinVersionsIntoIDEConfigMap } from "./lib/jb-pin-version";
 
 $.nothrow(); // git likes to respond with non-zero codes, but it is alright for us
 
-await upgradeStableVersionsInWorkspaceaAndGradle();
-await appendPinVersionsIntoIDEConfigMap();
+const updatedIDEs = await upgradeStableVersionsInWorkspaceaAndGradle();
+await appendPinVersionsIntoIDEConfigMap(updatedIDEs);

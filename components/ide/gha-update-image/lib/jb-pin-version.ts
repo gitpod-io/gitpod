@@ -22,7 +22,7 @@ const getIDEVersion = function (workspaceYaml: IWorkspaceYaml, ide: string) {
     return str.at(-1)!.replace(".tar.gz", "");
 };
 
-export const appendPinVersionsIntoIDEConfigMap = async () => {
+export const appendPinVersionsIntoIDEConfigMap = async (updatedIDEs: string[] | undefined) => {
     const latestInstallerVersions = await getLatestInstallerVersions();
     const workspaceYaml = await readWorkspaceYaml().then((d) => d.parsedObj);
 
@@ -43,7 +43,6 @@ export const appendPinVersionsIntoIDEConfigMap = async () => {
 
         if (Object.keys(configmap.ideOptions.options).includes(ide)) {
             const { version: installerImageVersion } = versionObject;
-            const configmapVersions = configmap.ideOptions.options[ide]?.versions ?? [];
 
             const installerIdeVersion = {
                 version: ideVersion,
@@ -54,23 +53,15 @@ export const appendPinVersionsIntoIDEConfigMap = async () => {
                 ],
             };
 
-            if (configmapVersions.length === 0) {
-                console.log(
-                    `${ide} does not have multiple versions support. Initializing it with the current installer version.`,
-                );
-                configmap.ideOptions.options[ide].versions = [installerIdeVersion];
+            if (!updatedIDEs || !updatedIDEs.includes(ide)) {
+                console.log(`Ignore latest version (${ide}:${installerImageVersion})`);
                 continue;
             }
-
-            const currentVersion = configmapVersions.at(0);
-            if (currentVersion.version === ideVersion) {
-                // Update the current version
-                configmap.ideOptions.options[ide].versions[0] = installerIdeVersion;
-                console.log(`Updated ${ide} (old ${currentVersion.image}, new ${installerIdeVersion.image})`);
-            } else {
-                configmap.ideOptions.options[ide].versions.unshift(installerIdeVersion);
-                console.log(`Added ${ide} (new ${installerIdeVersion.image})`);
+            if (!configmap.ideOptions.options[ide].versions) {
+                configmap.ideOptions.options[ide].versions = []
             }
+            console.log(`Added ${ide} (new ${installerIdeVersion.image})`);
+            configmap.ideOptions.options[ide].versions.unshift(installerIdeVersion);
         }
     }
 
