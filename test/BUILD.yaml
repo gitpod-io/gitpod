@@ -9,6 +9,7 @@ packages:
       - go.mod
       - go.sum
       - "**/*.go"
+      - tests/ide/jetbrains/warmup-indexing.sh
       - leeway-build.sh
     deps:
       - components/common-go:lib
