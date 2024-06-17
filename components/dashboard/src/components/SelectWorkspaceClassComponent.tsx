@@ -12,7 +12,6 @@ import { useAllowedWorkspaceClassesMemo } from "../data/workspaces/workspace-cla
 import { PlainMessage } from "@bufbuild/protobuf";
 import { Link } from "react-router-dom";
 import { repositoriesRoutes } from "../repositories/repositories.routes";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { isGitpodIo } from "../utils";
 
 interface SelectWorkspaceClassProps {
@@ -32,9 +31,6 @@ export default function SelectWorkspaceClassComponent({
     setError,
     onSelectionChange,
 }: SelectWorkspaceClassProps) {
-    const enabledWorkspaceClassRestrictionOnConfiguration = useFeatureFlag(
-        "configuration_workspace_class_restrictions",
-    );
     const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useAllowedWorkspaceClassesMemo(
         selectedConfigurationId,
         {
@@ -85,7 +81,7 @@ export default function SelectWorkspaceClassComponent({
                     <Link className="underline" to={teamSettingsLink}>
                         organization settings
                     </Link>
-                    {enabledWorkspaceClassRestrictionOnConfiguration && repoWorkspaceSettingsLink && (
+                    {repoWorkspaceSettingsLink && (
                         <>
                             {" or "}
                             <Link className="underline" to={repoWorkspaceSettingsLink}>
@@ -111,7 +107,6 @@ export default function SelectWorkspaceClassComponent({
         workspaceClasses,
         selectedWorkspaceClass,
         setError,
-        enabledWorkspaceClassRestrictionOnConfiguration,
         selectedConfigurationId,
     ]);
     const internalOnSelectionChange = useCallback(

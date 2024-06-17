@@ -26,7 +26,6 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
 import { IdeOptions, IdeOptionsModifyModal, IdeOptionsModifyModalProps } from "../components/IdeOptions";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 import PillLabel from "../components/PillLabel";
@@ -35,7 +34,6 @@ export default function TeamPoliciesPage() {
     useDocumentTitle("Organization Settings - Policies");
     const org = useCurrentOrg().data;
     const isOwner = useIsOwner();
-    const orgLevelEditorRestrictionEnabled = useFeatureFlag("org_level_editor_restriction_enabled");
 
     const { data: settings, isLoading } = useOrgSettingsQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
@@ -101,13 +99,11 @@ export default function TeamPoliciesPage() {
 
                     {isGitpodIo() && <WorkspaceClassesEnterpriseCallout />}
 
-                    {orgLevelEditorRestrictionEnabled && (
-                        <EditorOptions
-                            isOwner={isOwner}
-                            settings={settings}
-                            handleUpdateTeamSettings={handleUpdateTeamSettings}
-                        />
-                    )}
+                    <EditorOptions
+                        isOwner={isOwner}
+                        settings={settings}
+                        handleUpdateTeamSettings={handleUpdateTeamSettings}
+                    />
                 </div>
             </OrgSettingsPage>
         </>
