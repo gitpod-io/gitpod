@@ -15,6 +15,13 @@
         "imageLayers": [
           "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
           "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
+        ],
+        "versions": [
+          {
+            "version": "1.90.1",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+            "imageLayers": []
+          }
         ]
       },
       "code-desktop": {
@@ -22,11 +29,11 @@
         "title": "VS Code",
         "type": "desktop",
         "logo": "https://ide.gitpod.io/image/ide-logo/vscode.svg",
-        "imageVersion": "1.90.1",
-        "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+        "imageVersion": "1.89.1",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
         "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:commit-c2b7421628ed5a5fb618817a4fd1549684659c2d",
         "imageLayers": [
-          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
           "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
         ]
       },
@@ -42,6 +49,16 @@
         "imageLayers": [
           "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
           "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
+        ],
+        "versions": [
+          {
+            "version": "1.89.1",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
+            "imageLayers": [
+              "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
+              "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
+            ]
+          }
         ]
       },
       "intellij": {
