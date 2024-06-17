@@ -91,7 +91,6 @@ func ParseConfig(ctx context.Context, res remotes.Resolver, b []byte) (*config.I
 				option.LatestImageVersion = resolvedVersion
 			}
 		}
-		cfg.IdeOptions.Options[id] = option
 
 		// append or replace latest stable version into versions
 		if option.ImageVersion != "" {
@@ -120,9 +119,10 @@ func ParseConfig(ctx context.Context, res remotes.Resolver, b []byte) (*config.I
 				option.Versions = versions
 			}
 		}
+		cfg.IdeOptions.Options[id] = option
 	}
 
-	log.WithField("cfg", cfg).Info("=================parsed IDE config")
+	log.WithField("cfg", log.TrustedValueWrap{Value: cfg}).Info("=================parsed IDE config")
 
 	return &cfg, nil
 }
