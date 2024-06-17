@@ -10,7 +10,6 @@ import { Text } from "@podkit/typography/Text";
 import { Truck } from "lucide-react";
 import { PropsWithChildren, useCallback, useMemo, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
-import { useFeatureFlag, useHasConfigurationsAndPrebuildsEnabled } from "../../data/featureflag-query";
 import { useUserLoader } from "../../hooks/use-user-loader";
 import { useUpdateCurrentUserMutation } from "../../data/current-user/update-mutation";
 import dayjs from "dayjs";
@@ -21,9 +20,6 @@ const COACHMARK_KEY = "projects_configuration_migration";
 type Props = PropsWithChildren<{}>;
 export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
     const [isOpen, setIsOpen] = useState(true);
-
-    const configurationsAndPrebuildsEnabled = useHasConfigurationsAndPrebuildsEnabled();
-    const prebuildsInMenu = useFeatureFlag("showPrebuildsMenuItem");
 
     const history = useHistory();
 
@@ -62,10 +58,8 @@ export const ConfigurationsMigrationCoachmark = ({ children }: Props) => {
             return false;
         }
 
-        return (
-            configurationsAndPrebuildsEnabled && prebuildsInMenu && !user.profile?.coachmarksDismissals[COACHMARK_KEY]
-        );
-    }, [configurationsAndPrebuildsEnabled, dismiss, history.location.pathname, isOpen, prebuildsInMenu, user]);
+        return !user.profile?.coachmarksDismissals[COACHMARK_KEY];
+    }, [dismiss, history.location.pathname, isOpen, user]);
 
     const handleClose = useCallback(() => {
         setIsOpen(false);
