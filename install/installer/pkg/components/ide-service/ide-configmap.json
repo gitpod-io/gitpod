@@ -18,7 +18,7 @@
           "{{.CodeWebExtensionImage}}",
           "{{.CodeHelperImage}}"
         ],
-        "allowPining": true,
+        "allowPin": true,
         "versions": [
           {
             "version": "1.90.0",
@@ -124,7 +124,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
-        "allowPining": true,
+        "allowPin": true,
         "versions": [
           {
             "version": "2024.1.2",
@@ -189,7 +189,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
-        "allowPining": true,
+        "allowPin": true,
         "versions": [
           {
             "version": "2024.1.2",
@@ -243,7 +243,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
-        "allowPining": true,
+        "allowPin": true,
         "versions": [
           {
             "version": "2024.1.2",
@@ -296,7 +296,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
-        "allowPining": true,
+        "allowPin": true,
         "versions": [
           {
             "version": "2024.1.2",
@@ -349,7 +349,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
-        "allowPining": true,
+        "allowPin": true,
         "versions": [
           {
             "version": "2024.1.2",
@@ -402,7 +402,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
-        "allowPining": true,
+        "allowPin": true,
         "versions": [
           {
             "version": "2024.1.3",
@@ -463,7 +463,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
-        "allowPining": true,
+        "allowPin": true,
         "versions": [
           {
             "version": "2024.1.2",
@@ -508,7 +508,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
-        "allowPining": true,
+        "allowPin": true,
         "versions": [
           {
             "version": "2024.1.2",
@@ -553,7 +553,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
-        "allowPining": true,
+        "allowPin": true,
         "versions": [
           {
             "version": "2024.1.1",
