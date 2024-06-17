@@ -176,21 +176,26 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, op
 
 	githubClient := github.NewClient(tc)
 
-	t.Logf("trigger github action")
-	_, err = githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, "gitpod-io", "gitpod", "jetbrains-integration-test.yml", github.CreateWorkflowDispatchEventRequest{
-		Ref: os.Getenv("TEST_BUILD_REF"),
-		Inputs: map[string]interface{}{
-			"secret_gateway_link": gatewayLink,
-			"secret_access_token": oauthToken,
-			"secret_endpoint":     strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"),
-			"jb_product":          option.IDE,
-			"use_latest":          fmt.Sprintf("%v", useLatest),
-			"build_id":            os.Getenv("TEST_BUILD_ID"),
-			"build_url":           os.Getenv("TEST_BUILD_URL"),
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
+	if os.Getenv("TEST_IN_WORKSPACE") == "true" {
+		t.Logf("run test in workspace")
+		go testWithoutGithubAction(ctx, gatewayLink, oauthToken, strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"), useLatest)
+	} else {
+		t.Logf("trigger github action")
+		_, err = githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, "gitpod-io", "gitpod", "jetbrains-integration-test.yml", github.CreateWorkflowDispatchEventRequest{
+			Ref: os.Getenv("TEST_BUILD_REF"),
+			Inputs: map[string]interface{}{
+				"secret_gateway_link": gatewayLink,
+				"secret_access_token": oauthToken,
+				"secret_endpoint":     strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"),
+				"jb_product":          option.IDE,
+				"use_latest":          fmt.Sprintf("%v", useLatest),
+				"build_id":            os.Getenv("TEST_BUILD_ID"),
+				"build_url":           os.Getenv("TEST_BUILD_URL"),
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	checkUrl := fmt.Sprintf("https://63342-%s/codeWithMe/unattendedHostStatus?token=gitpod", strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"))

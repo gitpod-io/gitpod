@@ -204,7 +204,7 @@ func TestIntelliJWarmup(t *testing.T) {
 					return fmt.Errorf("failed to trigger prebuild: %v", err)
 				}
 				prebuildDone := false
-				if !prebuildDone {
+				for !prebuildDone {
 					time.Sleep(5 * time.Second)
 					prebuildDone, err = server.IsPrebuildDone(ctx, result.WorkspaceID)
 					if err != nil {
