@@ -27,6 +27,11 @@ export const useAnalyticsTracking = () => {
 
         return history.listen((location: any) => {
             const path = window.location.pathname;
+            // Do not track things like changes to the hash
+            if (path === _gp.path) {
+                return;
+            }
+
             trackPathChange({
                 prev: (window as any)._gp.path,
                 path: path,

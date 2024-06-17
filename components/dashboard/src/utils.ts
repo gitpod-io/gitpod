@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import EventEmitter from "node:events";
+import EventEmitter from "events";
 
 export interface PollOptions<T> {
     backoffFactor: number;
