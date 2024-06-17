@@ -114,9 +114,10 @@ func ParseConfig(ctx context.Context, res remotes.Resolver, b []byte) (*config.I
 				versions = append(versions, currentVersion)
 				versions = append(versions, option.Versions...)
 				option.Versions = versions
-			} else {
+			} else if foundIndex >= 0 {
 				versions := append([]config.IDEVersion{}, option.Versions...)
 				versions[foundIndex] = currentVersion
+				option.Versions = versions
 			}
 		}
 	}
