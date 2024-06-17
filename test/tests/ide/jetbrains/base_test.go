@@ -88,13 +88,16 @@ func WithRepo(repo string) JetBrainsIDETestOpt {
 	}
 }
 
-func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, opts ...JetBrainsIDETestOpt) {
+func BaseGuard(t *testing.T) {
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
+}
 
+func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, opts ...JetBrainsIDETestOpt) {
+	BaseGuard(t)
 	option := &JetBrainsIDETestOpts{
 		AdditionalRpcCall: func(rsa *integration.RpcClient, jbCtx *JetBrainsTestCtx) error {
 			return nil
@@ -373,7 +376,7 @@ type JetBrainsTestCtx struct {
 	SystemDir string
 }
 
-func MustConnectToServer(ctx context.Context, t *testing.T, cfg *envconf.Config) (*integration.ComponentAPI, protocol.APIInterface, string) {
+func MustConnectToServer(ctx context.Context, t *testing.T, cfg *envconf.Config) (*integration.ComponentAPI, protocol.APIInterface, *integration.PAPIClient, string) {
 	t.Logf("connected to server")
 	api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 	t.Cleanup(func() {
@@ -390,5 +393,9 @@ func MustConnectToServer(ctx context.Context, t *testing.T, cfg *envconf.Config)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return api, server, userID
+	papi, err := api.PublicApi(integration.WithGitpodUser(username))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return api, server, papi, userID
 }

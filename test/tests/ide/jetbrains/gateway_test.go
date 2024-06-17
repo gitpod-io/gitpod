@@ -183,6 +183,7 @@ func TestIntelliJWarmup(t *testing.T) {
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Intellij").
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			BaseGuard(t)
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 
@@ -190,26 +191,27 @@ func TestIntelliJWarmup(t *testing.T) {
 
 			// trigger a warmup prebuild
 			triggerAndWaitForPrebuild := func() error {
-				api, server, userID := MustConnectToServer(ctx, t, cfg)
-				teamID, err := api.CreateTeam(ctx, userID, "image-build")
+				api, _, papi, _ := MustConnectToServer(ctx, t, cfg)
+				teamID, err := api.GetTeam(ctx, papi)
 				if err != nil {
-					return fmt.Errorf("failed to create team: %v", err)
+					return fmt.Errorf("failed to get or create team: %v", err)
 				}
-				projectID, err := api.CreateProject(ctx, teamID, "petclinic", testRepo, true)
+				projectID, err := api.CreateProject(ctx, papi, teamID, "petclinic", testRepo, true)
 				if err != nil {
 					return fmt.Errorf("failed to create project: %v", err)
 				}
-				result, err := server.TriggerPrebuild(ctx, projectID, "gp/integration-test")
+
+				prebuildID, err := api.TriggerPrebuild(ctx, papi, projectID, "gp/integration-test")
 				if err != nil {
 					return fmt.Errorf("failed to trigger prebuild: %v", err)
 				}
-				prebuildDone := false
-				for !prebuildDone {
-					time.Sleep(5 * time.Second)
-					prebuildDone, err = server.IsPrebuildDone(ctx, result.WorkspaceID)
-					if err != nil {
-						return fmt.Errorf("failed to check prebuild status: %v", err)
-					}
+
+				ok, err := api.WaitForPrebuild(ctx, papi, prebuildID)
+				if err != nil {
+					return fmt.Errorf("failed to wait for prebuild: %v", err)
+				}
+				if !ok {
+					return fmt.Errorf("prebuild failed")
 				}
 				return nil
 			}

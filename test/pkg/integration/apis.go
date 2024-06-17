@@ -27,6 +27,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/google/uuid"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -47,6 +48,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/v1"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
@@ -75,8 +77,9 @@ func NewComponentAPI(ctx context.Context, namespace string, kubeconfig string, c
 }
 
 type serverStatus struct {
-	Token  map[string]string
-	Client map[string]*gitpod.APIoverJSONRPC
+	Token      map[string]string
+	Client     map[string]*gitpod.APIoverJSONRPC
+	PAPIClient map[string]*PAPIClient
 }
 
 // ComponentAPI provides access to the individual component's API
@@ -566,63 +569,100 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	return userId, nil
 }
 
-func (c *ComponentAPI) CreateTeam(ctx context.Context, userID, teamName string) (string, error) {
-	db, err := c.DB()
+func (c *ComponentAPI) GetTeam(ctx context.Context, papi *PAPIClient) (string, error) {
+	resp, err := papi.Organization.ListOrganizations(ctx, &connect.Request[v1.ListOrganizationsRequest]{})
 	if err != nil {
 		return "", err
 	}
-
-	teamUUID, err := uuid.NewRandom()
+	if len(resp.Msg.GetOrganizations()) > 0 {
+		return resp.Msg.GetOrganizations()[0].Id, nil
+	}
+	resp2, err := papi.Organization.CreateOrganization(ctx, &connect.Request[v1.CreateOrganizationRequest]{
+		Msg: &v1.CreateOrganizationRequest{
+			Name: "integration-test",
+		},
+	})
 	if err != nil {
 		return "", err
 	}
-	var teamID string
-	if err := db.QueryRowContext(ctx, `SELECT teamId FROM d_b_team_membership WHERE userId = ? AND role = "owner"`, userID).Scan(&teamID); err == nil {
-		return teamID, nil
-	}
-
-	teamID = teamUUID.String()
-	_, err = db.ExecContext(ctx, `INSERT INTO d_b_team (id, name, slug) VALUES (?, ?, ?)`, teamID, teamName, "")
-	if err != nil {
-		return "", err
-	}
-	_, err = db.ExecContext(ctx, `INSERT INTO d_b_team_membership (teamId, userId, role) VALUES (?, ?, ?)`, teamID, userID, "owner")
-	if err != nil {
-		return "", err
-	}
-
-	return teamID, nil
+	return resp2.Msg.Organization.Id, nil
 }
 
-func (c *ComponentAPI) CreateProject(ctx context.Context, teamID, repoName, repoUrl string, prebuildEnabled bool) (string, error) {
-	db, err := c.DB()
-	if err != nil {
-		return "", err
-	}
-
-	projectUUID, err := uuid.NewRandom()
-	if err != nil {
-		return "", err
-	}
-	projectID := projectUUID.String()
-
-	prebuildSettings := map[string]interface{}{
-		"prebuilds": map[string]interface{}{
-			"enable":           true,
-			"prebuildInterval": 20,
+func (c *ComponentAPI) CreateProject(ctx context.Context, papi *PAPIClient, teamID, repoName, repoUrl string, prebuildEnabled bool) (string, error) {
+	resp, err := papi.Configuration.CreateConfiguration(ctx, &connect.Request[v1.CreateConfigurationRequest]{
+		Msg: &v1.CreateConfigurationRequest{
+			OrganizationId: teamID,
+			Name:           repoName,
+			CloneUrl:       repoUrl,
 		},
-	}
-	prebuildSettingsBytes, err := json.Marshal(prebuildSettings)
+	})
 	if err != nil {
 		return "", err
 	}
+	if prebuildEnabled {
+		db, err := c.DB()
+		if err != nil {
+			return "", err
+		}
+		prebuildSettings := map[string]interface{}{
+			"prebuilds": map[string]interface{}{
+				"enable":           true,
+				"prebuildInterval": 20,
+			},
+		}
+		prebuildSettingsBytes, err := json.Marshal(prebuildSettings)
+		if err != nil {
+			return "", err
+		}
 
-	_, err = db.ExecContext(ctx, `INSERT INTO d_b_project (id, name, cloneUrl, teamId, appInstallationId, settings) VALUES (?, ?, ?, ?, ?, ?)`, projectID, repoName, repoUrl, teamID, "", string(prebuildSettingsBytes))
+		_, err = db.ExecContext(ctx, `UPDATE d_b_project SET settings=? WHERE id=?`, string(prebuildSettingsBytes), resp.Msg.Configuration.Id)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return resp.Msg.Configuration.Id, nil
+}
+
+func (c *ComponentAPI) TriggerPrebuild(ctx context.Context, papi *PAPIClient, projectID, branchName string) (string, error) {
+	resp, err := papi.Prebuild.StartPrebuild(ctx, &connect.Request[v1.StartPrebuildRequest]{
+		Msg: &v1.StartPrebuildRequest{
+			ConfigurationId: projectID,
+			GitRef:          branchName,
+		},
+	})
 	if err != nil {
 		return "", err
 	}
+	return resp.Msg.PrebuildId, nil
+}
 
-	return projectID, nil
+func (c *ComponentAPI) WaitForPrebuild(ctx context.Context, papi *PAPIClient, prebuildID string) (bool, error) {
+	resp, err := papi.Prebuild.WatchPrebuild(ctx, &connect.Request[v1.WatchPrebuildRequest]{
+		Msg: &v1.WatchPrebuildRequest{
+			Scope: &v1.WatchPrebuildRequest_PrebuildId{
+				PrebuildId: prebuildID,
+			},
+		},
+	})
+	if err != nil {
+		return false, fmt.Errorf("watch prebuild failed: %w", err)
+	}
+	defer resp.Close()
+	for {
+		if ok := resp.Receive(); !ok {
+			return false, fmt.Errorf("watch prebuild failed: %w", resp.Err())
+		}
+		phase := resp.Msg().GetPrebuild().GetStatus().GetPhase().Name
+		if phase == v1.PrebuildPhase_PHASE_BUILDING || phase == v1.PrebuildPhase_PHASE_QUEUED {
+			continue
+		}
+		if phase == v1.PrebuildPhase_PHASE_AVAILABLE {
+			return true, nil
+		}
+		return false, fmt.Errorf("prebuild failed: %s", phase.String())
+	}
+	return false, fmt.Errorf("prebuild failed: unknown error")
 }
 
 func (c *ComponentAPI) createGitpodToken(user string, scopes []string) (tkn string, err error) {

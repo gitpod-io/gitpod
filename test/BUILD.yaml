@@ -70,4 +70,4 @@ scripts:
       useLatest=$([ "$option" == "latest" ] && true || false)
 
       echo "🚢 Starting intergration tests for IntelliJ $option..."
-      TEST_USE_LATEST_VERSION=$useLatest TEST_IN_WORKSPACE=true ROBOQUAT_TOKEN=skip go test -v -run ^TestIntellij ./tests/ide/jetbrains -kubeconfig=/home/gitpod/.kube/config -namespace=default -username=$USERNAME
+      TEST_USE_LATEST_VERSION=$useLatest TEST_IN_WORKSPACE=true ROBOQUAT_TOKEN=skip go test -v -run ^TestIntelliJWarmup ./tests/ide/jetbrains -kubeconfig=/root/.kube/config -namespace=default -username=$USERNAME
