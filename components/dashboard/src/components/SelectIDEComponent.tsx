@@ -145,13 +145,10 @@ export default function SelectIDEComponent({
                         Support for IntelliJ IDEA 2022.3.3 is discontinued on May 31<sup>st</sup>
                     </span>
                     . <br />
-                    Please use version 2024.1{" "}
-                    <>
-                        or pin to another version in your{" "}
-                        <Link className="gp-link" to={"/settings"}>
-                            Organization settings
-                        </Link>
-                    </>
+                    Please use version latest stable IntelliJ IDEA or pin to a version in your{" "}
+                    <Link className="gp-link" to={"/settings"}>
+                        Organization settings
+                    </Link>
                     .
                 </>,
             );
