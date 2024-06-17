@@ -78,6 +78,10 @@ export class UsageServiceClientMock implements Partial<UsageServiceClient> {
                 totalPages: 3,
             },
             usageEntries: [],
+            ledgerInterval: {
+                seconds: 60,
+                nanos: 0,
+            },
         };
     }
     async getBalance(req: GetBalanceRequest) {
