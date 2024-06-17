@@ -21,6 +21,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "1.90.1",
+            "image": "{{.Repository}}/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+            "imageLayers": [
+              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/code-codehelper:commit-a6aca7f18e80ce3827384cecb31b5f0643481eb6"
+            ]
+          },
+          {
             "version": "1.90.0",
             "image": "{{.Repository}}/ide/code:commit-ece9c809ac703118bd86cc0b69191db74dcd3df4",
             "imageLayers": [
