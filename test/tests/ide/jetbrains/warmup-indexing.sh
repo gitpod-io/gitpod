@@ -3,6 +3,11 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
+# This script is used to test JetBrains prebuild warmup indexing (search warmup-indexing.sh in codebase)
+# It will update get the last indexing json file (scan type FULL_ON_PROJECT_OPEN)
+# and check if the scheduled indexing count is 0
+#
+# `exit 0` means JetBrains IDEs no need to indexing again
 
 set -euo pipefail
 SystemDir=$1
