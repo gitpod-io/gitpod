@@ -80,7 +80,7 @@ export const PrebuildDetailPage: FC = () => {
         return selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? undefined;
     }, [currentPrebuild, isImageBuild, selectedTaskId]);
 
-    const { emitter: logEmitter, abortController: abortStreamingLogs } = usePrebuildLogsEmitter(prebuildId, taskId);
+    const { emitter: logEmitter, disposable: disposeStreamingLogs } = usePrebuildLogsEmitter(prebuildId, taskId);
     const {
         isFetching: isTriggeringPrebuild,
         refetch: triggerPrebuild,
@@ -109,7 +109,7 @@ export const PrebuildDetailPage: FC = () => {
         setLogNotFound(false);
         const disposable = watchPrebuild(prebuildId, (prebuild) => {
             if (currentPrebuild?.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
-                abortStreamingLogs?.abort();
+                disposeStreamingLogs?.dispose();
             }
             setCurrentPrebuild(prebuild);
 
@@ -119,7 +119,7 @@ export const PrebuildDetailPage: FC = () => {
         return () => {
             disposable.dispose();
         };
-    }, [prebuildId, currentPrebuild?.status?.phase?.name, abortStreamingLogs]);
+    }, [prebuildId, currentPrebuild?.status?.phase?.name, disposeStreamingLogs]);
 
     useEffect(() => {
         const anyLogAvailable = isImageBuild || currentPrebuild?.status?.taskLogs.some((t) => t.logUrl);

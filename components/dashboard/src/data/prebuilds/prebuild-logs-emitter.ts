@@ -6,9 +6,10 @@
 
 import EventEmitter from "events";
 import { prebuildClient } from "../../service/public-api";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { Disposable } from "@gitpod/gitpod-protocol";
 
 /**
  *
@@ -19,13 +20,14 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 export function usePrebuildLogsEmitter(prebuildId: string, taskId?: string) {
     const [emitter] = useState(new EventEmitter());
     const [isLoading, setIsLoading] = useState(true);
-    const abortController = useMemo(() => new AbortController(), []);
+    const [disposable, setDisposable] = useState<Disposable | undefined>();
 
     useEffect(() => {
         setIsLoading(true);
     }, [prebuildId, taskId]);
 
     useEffect(() => {
+        const abortController = new AbortController();
         const watch = async () => {
             if (!prebuildId || !taskId) {
                 setIsLoading(false);
@@ -88,12 +90,17 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId?: string) {
             .catch((err) => {
                 emitter.emit("error", err);
             });
+        setDisposable(
+            Disposable.create(() => {
+                abortController.abort();
+            }),
+        );
 
         return () => {
             abortController.abort();
             emitter.removeAllListeners();
         };
-    }, [abortController, emitter, prebuildId, taskId]);
+    }, [emitter, prebuildId, taskId]);
 
-    return { emitter, isLoading, abortController };
+    return { emitter, isLoading, disposable };
 }
