@@ -109,7 +109,7 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, op
 		}
 	}
 
-	api, server, _ := MustConnectToServer(ctx, t, cfg)
+	api, server, _, _ := MustConnectToServer(ctx, t, cfg)
 	var err error
 
 	t.Logf("starting workspace")
