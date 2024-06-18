@@ -19,6 +19,8 @@ import (
 )
 
 func TestGoLand(t *testing.T) {
+	BaseGuard(t)
+	t.Parallel()
 	f := features.New("Start a workspace using GoLand").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "GoLand").
@@ -33,6 +35,8 @@ func TestGoLand(t *testing.T) {
 }
 
 func TestIntellij(t *testing.T) {
+	BaseGuard(t)
+	t.Parallel()
 	f := features.New("Start a workspace using Intellij").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Intellij").
@@ -48,6 +52,8 @@ func TestIntellij(t *testing.T) {
 }
 
 func TestPhpStorm(t *testing.T) {
+	BaseGuard(t)
+	t.Parallel()
 	f := features.New("Start a workspace using PhpStorm").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "PhpStorm").
@@ -62,6 +68,8 @@ func TestPhpStorm(t *testing.T) {
 }
 
 func TestPyCharm(t *testing.T) {
+	BaseGuard(t)
+	t.Parallel()
 	f := features.New("Start a workspace using Pycharm").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Pycharm").
@@ -76,6 +84,8 @@ func TestPyCharm(t *testing.T) {
 }
 
 func TestRubyMine(t *testing.T) {
+	BaseGuard(t)
+	t.Parallel()
 	f := features.New("Start a workspace using RubyMine").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "RubyMine").
@@ -90,6 +100,8 @@ func TestRubyMine(t *testing.T) {
 }
 
 func TestWebStorm(t *testing.T) {
+	BaseGuard(t)
+	t.Parallel()
 	f := features.New("Start a workspace using WebStorm").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "WebStorm").
@@ -104,11 +116,9 @@ func TestWebStorm(t *testing.T) {
 }
 
 func TestRider(t *testing.T) {
-	if roboquatToken == "" {
-		t.Skip("this test need github action run permission")
-	}
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
+	BaseGuard(t)
+	t.Parallel()
+	t.Skip("Until ENT-56")
 	f := features.New("Start a workspace using Rider").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Rider").
@@ -123,11 +133,8 @@ func TestRider(t *testing.T) {
 }
 
 func TestCLion(t *testing.T) {
-	if roboquatToken == "" {
-		t.Skip("this test need github action run permission")
-	}
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
+	BaseGuard(t)
+	t.Parallel()
 	t.Skip("See EXP-414")
 	f := features.New("Start a workspace using CLion").
 		WithLabel("component", "IDE").
@@ -143,11 +150,8 @@ func TestCLion(t *testing.T) {
 }
 
 func TestRustRover(t *testing.T) {
-	if roboquatToken == "" {
-		t.Skip("this test need github action run permission")
-	}
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
+	BaseGuard(t)
+	t.Parallel()
 	f := features.New("Start a workspace using RustRover").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "RustRover").
@@ -162,6 +166,8 @@ func TestRustRover(t *testing.T) {
 }
 
 func TestIntellijNotPreconfiguredRepo(t *testing.T) {
+	BaseGuard(t)
+	t.Parallel()
 	f := features.New("Start a workspace using Intellij with not preconfigured repo").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Intellij").
@@ -180,11 +186,12 @@ func TestIntellijNotPreconfiguredRepo(t *testing.T) {
 var warmupIndexingShell []byte
 
 func TestIntelliJWarmup(t *testing.T) {
+	BaseGuard(t)
+	t.Parallel()
 	f := features.New("Start a workspace using Intellij and imagebuild to test warmup tasks").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Intellij").
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			BaseGuard(t)
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 

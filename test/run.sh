@@ -81,7 +81,7 @@ if [ "${REPORT}" != "" ]; then
 fi
 args+=( "-kubeconfig=${KUBECONFIG:-/home/gitpod/.kube/config}" )
 args+=( "-namespace=${NAMESPACE:-default}" )
-args+=( "-timeout=60m" )
+args+=( "-timeout=120m" )
 
 if [[ "${GITPOD_REPO_ROOT:-}" != "" ]]; then
   echo "Running in Gitpod workspace. Fetching USER_NAME and USER_TOKEN"
