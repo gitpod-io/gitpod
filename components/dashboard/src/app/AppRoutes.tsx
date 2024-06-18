@@ -63,12 +63,6 @@ const TeamGitIntegrations = React.lazy(() => import(/* webpackPrefetch: true */ 
 const TeamPolicies = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamPolicies"));
 const TeamNetworking = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamNetworking"));
 const TeamAuthentication = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamAuthentication"));
-const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Projects"));
-const Project = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Project"));
-const ProjectSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/ProjectSettings"));
-const ProjectVariables = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/ProjectVariables"));
-const Prebuilds = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Prebuilds"));
-const Prebuild = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Prebuild"));
 const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/InstallGitHubApp"));
 const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ "../FromReferrer"));
 const UserSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/UserSearch"));
@@ -198,7 +192,6 @@ export const AppRoutes = () => {
                             </Route>
                             <Route exact path="/orgs/new" component={NewTeam} />
                             <Route exact path="/orgs/join" component={JoinTeam} />
-                            <Route exact path="/projects" component={Projects} />
 
                             {/* These routes that require a selected organization, otherwise they redirect to "/" */}
                             <Route exact path="/members" component={Members} />
@@ -211,12 +204,6 @@ export const AppRoutes = () => {
                             <Route exact path="/billing" component={TeamUsageBasedBilling} />
                             <Route exact path="/sso" component={SSO} />
 
-                            <Route exact path={`/projects/:projectSlug`} component={Project} />
-                            <Route exact path={`/projects/:projectSlug/prebuilds`} component={Prebuilds} />
-                            <Route exact path={`/projects/:projectSlug/settings`} component={ProjectSettings} />
-                            <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />
-                            <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
-
                             <Route exact path={`/prebuilds`} component={PrebuildListPage} />
                             <Route path="/prebuilds/:prebuildId" component={PrebuildDetailPage} />
                             <Route exact path="/repositories" component={ConfigurationListPage} />
@@ -225,7 +212,10 @@ export const AppRoutes = () => {
 
                             {/* basic redirect for old team slugs */}
                             <Route path={["/t/"]} exact>
-                                <Redirect to="/projects" />
+                                <Redirect to="/repositories" />
+                            </Route>
+                            <Route path={["/projects/*"]} exact>
+                                <Redirect to="/repositories" />
                             </Route>
                             {/* redirect for old user settings slugs */}
                             <Route path="/account" exact>
