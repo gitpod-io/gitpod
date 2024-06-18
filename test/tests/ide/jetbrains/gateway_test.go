@@ -175,7 +175,9 @@ func TestIntellijNotPreconfiguredRepo(t *testing.T) {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 			// ENT-260
-			JetBrainsIDETest(ctx, t, cfg, WithIDE("intellij"), WithRepo("https://github.com/spring-projects/spring-petclinic"))
+			// https://github.com/spring-projects/spring-petclinic is not an option because it will prompt to ask user to select project type
+			// which will block integration test (UI tests)
+			JetBrainsIDETest(ctx, t, cfg, WithIDE("intellij"), WithRepo("https://github.com/gitpod-io/empty"))
 			return testCtx
 		}).
 		Feature()
