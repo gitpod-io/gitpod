@@ -128,6 +128,89 @@
       },
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 40,
+      "options": {
+        "calculate": false,
+        "cellGap": 1,
+        "cellValues": {},
+        "color": {
+          "exponent": 0.6,
+          "fill": "dark-orange",
+          "mode": "scheme",
+          "reverse": false,
+          "scale": "exponential",
+          "scheme": "Spectral",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1e-9
+        },
+        "legend": {
+          "show": true
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "tooltip": {
+          "mode": "single",
+          "showColorScale": false,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "s"
+        }
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P4169E866C3094E38"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": " sum(rate(caddy_http_response_duration_seconds_bucket{cluster=~\"$cluster\"}[$__rate_interval])) by (le)",
+          "format": "heatmap",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Response Duration",
+      "type": "heatmap"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "P4169E866C3094E38"
+      },
+      "fieldConfig": {
+        "defaults": {
           "color": {
             "mode": "palette-classic"
           },
@@ -184,7 +267,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 17
       },
       "id": 39,
       "options": {
@@ -279,7 +362,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 17
+        "y": 25
       },
       "id": 37,
       "options": {
@@ -374,7 +457,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 17
+        "y": 25
       },
       "id": 38,
       "options": {
@@ -416,7 +499,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 33
       },
       "id": 16,
       "panels": [],
@@ -494,7 +577,7 @@
         "h": 7,
         "w": 10,
         "x": 0,
-        "y": 26
+        "y": 34
       },
       "id": 34,
       "options": {
@@ -540,7 +623,7 @@
         "h": 7,
         "w": 7,
         "x": 10,
-        "y": 26
+        "y": 34
       },
       "hiddenSeries": false,
       "id": 2,
@@ -630,7 +713,7 @@
         "h": 7,
         "w": 7,
         "x": 17,
-        "y": 26
+        "y": 34
       },
       "hiddenSeries": false,
       "id": 4,
@@ -731,7 +814,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 33
+        "y": 41
       },
       "hiddenSeries": false,
       "id": 6,
@@ -819,7 +902,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 33
+        "y": 41
       },
       "hiddenSeries": false,
       "id": 8,
@@ -906,7 +989,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 40
+        "y": 48
       },
       "hiddenSeries": false,
       "id": 10,
@@ -1002,7 +1085,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 40
+        "y": 48
       },
       "hiddenSeries": false,
       "id": 30,
@@ -1100,7 +1183,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 40
+        "y": 48
       },
       "hiddenSeries": false,
       "id": 32,
@@ -1199,7 +1282,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 47
+        "y": 55
       },
       "hiddenSeries": false,
       "id": 22,
@@ -1288,7 +1371,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 47
+        "y": 55
       },
       "hiddenSeries": false,
       "id": 28,
@@ -1395,7 +1478,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 47
+        "y": 55
       },
       "hiddenSeries": false,
       "id": 26,
@@ -1616,6 +1699,6 @@
   "timezone": "utc",
   "title": "Gitpod / Component / proxy",
   "uid": "proxy",
-  "version": 4,
+  "version": 5,
   "weekStart": ""
 }
