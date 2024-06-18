@@ -24,12 +24,7 @@ type LogEventTypes = {
  */
 export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
     const [emitter] = useState(new ReplayableEventEmitter<LogEventTypes>());
-    const [isLoading, setIsLoading] = useState(true);
     const [disposable, setDisposable] = useState<Disposable | undefined>();
-
-    useEffect(() => {
-        setIsLoading(true);
-    }, [prebuildId, taskId]);
 
     useEffect(() => {
         // The abortcontroller is meant to abort all activity on unmounting this effect
@@ -51,14 +46,12 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
             };
             if (taskId === "image-build") {
                 if (!prebuild.status?.imageBuildLogUrl) {
-                    setIsLoading(false);
                     throw new ApplicationError(ErrorCodes.NOT_FOUND, `Image build logs URL not found in response`);
                 }
                 task.logUrl = prebuild.status?.imageBuildLogUrl;
             } else {
                 const logUrl = prebuild?.status?.taskLogs?.find((log) => log.taskId === taskId)?.logUrl;
                 if (!logUrl) {
-                    setIsLoading(false);
                     throw new ApplicationError(ErrorCodes.NOT_FOUND, `Task ${taskId} not found`);
                 }
 
@@ -78,9 +71,7 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
                 {
                     includeCredentials: true,
                     maxBackoffTimes: 3,
-                    onEnd: () => {
-                        setIsLoading(false);
-                    },
+                    onEnd: () => {},
                 },
             );
         };
@@ -104,5 +95,5 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
         };
     }, [emitter, prebuildId, taskId]);
 
-    return { emitter, isLoading, disposable };
+    return { emitter, disposable };
 }

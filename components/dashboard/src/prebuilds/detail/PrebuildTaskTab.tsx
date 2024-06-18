@@ -25,12 +25,6 @@ export const PrebuildTaskTab = ({ taskId, prebuild, onLogNotFound }: Props) => {
     const { toast } = useToast();
 
     useEffect(() => {
-        return () => {
-            disposeStreamingLogs?.dispose();
-        };
-    }, [disposeStreamingLogs]);
-
-    useEffect(() => {
         if (prebuild.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
             disposeStreamingLogs?.dispose();
         }
