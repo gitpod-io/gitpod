@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild, PrebuildPhase_Phase, TaskLog } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Text } from "@podkit/typography/Text";
 import { Button } from "@podkit/buttons/Button";
@@ -28,6 +28,7 @@ import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@podkit/tabs/Tabs";
 import { PrebuildTaskTab } from "./PrebuildTaskTab";
+import type { PlainMessage } from "@bufbuild/protobuf";
 
 /**
  * Formats a date. For today, it returns the time. For this year, it returns the month and day and time. Otherwise, it returns the full date and time.
@@ -57,7 +58,6 @@ export const PrebuildDetailPage: FC = () => {
     const { toast, dismissToast } = useToast();
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
     const [logNotFound, setLogNotFound] = useState(false);
-    const [noTasksPresent, setNoTasksPresent] = useState(false);
     const [selectedTaskId, actuallySetSelectedTaskId] = useState<string | undefined>(
         window.location.hash.slice(1) || undefined,
     );
@@ -116,10 +116,19 @@ export const PrebuildDetailPage: FC = () => {
         };
     }, [prebuildId, currentPrebuild?.status?.phase?.name]);
 
-    useEffect(() => {
-        const anyLogAvailable = isImageBuild || currentPrebuild?.status?.taskLogs.some((t) => t.logUrl);
-        setNoTasksPresent(!anyLogAvailable);
-    }, [currentPrebuild?.status?.taskLogs, isImageBuild]);
+    const prebuildTasks = useMemo(() => {
+        const validTasks: Omit<PlainMessage<TaskLog>, "taskJson">[] =
+            currentPrebuild?.status?.taskLogs.filter((t) => t.logUrl) ?? [];
+        if (isImageBuild) {
+            validTasks.unshift({
+                taskId: "image-build",
+                taskLabel: "Image Build",
+                logUrl: currentPrebuild?.status?.imageBuildLogUrl!, // we know this is defined because we're in the isImageBuild branch
+            });
+        }
+
+        return validTasks;
+    }, [currentPrebuild?.status, isImageBuild]);
 
     useEffect(() => {
         history.listen(() => {
@@ -148,7 +157,7 @@ export const PrebuildDetailPage: FC = () => {
         }
     }, [prebuild, cancelPrebuildMutation]);
 
-    const isError = logNotFound || noTasksPresent;
+    const isError = logNotFound || prebuildTasks.length === 0;
 
     if (newPrebuildID) {
         return <Redirect to={repositoriesRoutes.PrebuildDetail(newPrebuildID)} />;
@@ -236,32 +245,20 @@ export const PrebuildDetailPage: FC = () => {
                                 </div>
                                 <Tabs value={taskId ?? "empty-tab"} onValueChange={setSelectedTaskId} className="p-0">
                                     <TabsList className="overflow-x-auto max-w-full p-0 h-auto items-end">
-                                        {isImageBuild && (
+                                        {prebuildTasks.map((task) => (
                                             <TabsTrigger
-                                                value="image-build"
-                                                key="image-build"
+                                                value={task.taskId}
+                                                key={task.taskId}
                                                 data-analytics={JSON.stringify({ dnt: true })}
                                                 className="mt-1 font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative last:mr-1"
+                                                disabled={task.taskId !== "image-build" && isImageBuild}
                                             >
-                                                Image Build
+                                                {task.taskLabel}
                                             </TabsTrigger>
-                                        )}
-                                        {currentPrebuild?.status?.taskLogs
-                                            .filter((t) => t.logUrl)
-                                            .map((task) => (
-                                                <TabsTrigger
-                                                    value={task.taskId}
-                                                    key={task.taskId}
-                                                    data-analytics={JSON.stringify({ dnt: true })}
-                                                    className="mt-1 font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative last:mr-1"
-                                                    disabled={isImageBuild}
-                                                >
-                                                    {task.taskLabel}
-                                                </TabsTrigger>
-                                            ))}
+                                        ))}
                                     </TabsList>
                                     {!isError ? (
-                                        currentPrebuild.status?.taskLogs.map(({ taskId }) => (
+                                        prebuildTasks.map(({ taskId }) => (
                                             <PrebuildTaskTab
                                                 key={taskId}
                                                 taskId={taskId}
