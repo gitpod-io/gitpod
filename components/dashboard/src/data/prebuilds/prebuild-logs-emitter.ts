@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ReplayableEventEmitter } from "../../utils";
+import { Disposable } from "@gitpod/gitpod-protocol";
 
 type LogEventTypes = {
     error: [Error];
@@ -97,7 +98,7 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
         );
 
         return () => {
-            controller.abort();
+            abortController.abort();
             emitter.clearLog();
             emitter.removeAllListeners();
         };
