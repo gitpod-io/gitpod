@@ -13,6 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
+          curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.1/oci-tool_0.2.1_linux_amd64.tar.gz | tar xz -C /usr/local/bin
+          chmod +x /usr/local/bin/oci-tool
           cd ./components/ide/gha-update-image/
           yarn
           npm i -g bun
