@@ -4,7 +4,7 @@
 
 import { $ } from "bun";
 import { parseArgs } from "util";
-import { pathToOutput, pathToWorkspaceYaml, readWorkspaceYaml } from "./lib/common";
+import { appendGitHubOutput, pathToWorkspaceYaml, readWorkspaceYaml } from "./lib/common";
 
 $.nothrow();
 
@@ -27,9 +27,10 @@ const inputs = {
     branch: values.branch,
 };
 
+// example: bun run check-code-build.ts --branch gp-code/release/1.89
 const main = async () => {
     if (!inputs.branch || !inputs.branch.startsWith("gp-code/release/")) {
-        throw new Error("invalid branch, expected something like `gp-code/release/1.90`");
+        throw new Error(`invalid branch ${inputs.branch}, expected something like \`gp-code/release/1.90\``);
     }
     const commit =
         await $`curl -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/gitpod-io/openvscode-server/commits/${inputs.branch}`.text();
@@ -52,8 +53,8 @@ const main = async () => {
         .replace(workspaceYaml.defaultArgs.codeVersion, version);
 
     await Bun.write(pathToWorkspaceYaml, newYaml);
-
-    await Bun.write(pathToOutput, `codeVersion=${version}\ncodeCommit=${commit}`);
+    await appendGitHubOutput(`codeVersion=${version}`)
+    await appendGitHubOutput(`codeCommit=${commit}`)
 };
 
 await main();

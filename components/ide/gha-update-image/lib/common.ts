@@ -9,7 +9,12 @@ import { z } from "zod";
 
 const pathToProjectRoot = path.resolve(__dirname, "../../../../");
 
-export const pathToOutput = path.resolve("/tmp/__gh_output.txt");
+const pathToOutput = path.resolve("/tmp/__gh_output.txt");
+
+export const appendGitHubOutput = async (kv: string) => {
+    console.log("Appending to GitHub output:", kv);
+    return await $`echo ${kv} >> ${pathToOutput}`;
+}
 
 // WORKSPACE.yaml
 export const pathToWorkspaceYaml = path.resolve(pathToProjectRoot, "WORKSPACE.yaml");
@@ -103,6 +108,7 @@ export const getLatestInstallerVersions = async (version?: string) => {
             .catch((e) => {
                 throw new Error("Failed to parse installer version from git tag", e);
             });
+    console.log("Fetching installer version for", installationVersion);
     // exec command below to see results
     // ```
     // $ docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:main-gha.25759 cat /versions.yaml | yq r -
@@ -154,3 +160,11 @@ export const getLatestInstallerVersions = async (version?: string) => {
         })
         .parse(yaml.parse(versionData));
 };
+
+
+export const getIDEVersionOfImage = async (img: string) => {
+    console.log("Fetching IDE version in image:", `oci-tool fetch image eu.gcr.io/gitpod-core-dev/build/${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`)
+    return await $`oci-tool fetch image eu.gcr.io/gitpod-core-dev/build/${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`.text().catch((e) => {
+        throw new Error("Failed to fetch ide version in image", e);
+    }).then(str => str.replaceAll("\n", ""));
+}

@@ -150,7 +150,9 @@ export const getStableVersionsInfo = async (ides: JetBrainsIDE[]) => {
                 throw new Error("No download link found for the latest release");
             }
             rawWorkspace = rawWorkspace.replace(oldDownloadUrl, downloadLink);
-            updatedIDEs.push(ide.productId);
+            if (oldDownloadUrl !== downloadLink) {
+                updatedIDEs.push(ide.productId);
+            }
 
             const currentBuildVersion = semver.parse(lastRelease.build);
             if (!currentBuildVersion) {
