@@ -35,7 +35,7 @@ export async function updateCodeIDEConfigMapJson() {
         codeHelper: !ideConfigmapJson.ideOptions.options.code.imageLayers[1].includes(latestBuildImage.codeHelper),
     };
 
-    console.log("latest build versions changed, processing...", hasChangedMap);
+    console.log("image change status", hasChangedMap);
 
     const replaceImageHash = (image: string, hash: string) => image.replace(/commit-.*/, hash);
     const updateImages = <T extends { image: string; imageLayers: string[] }>(originData: T) => {
@@ -51,6 +51,10 @@ export async function updateCodeIDEConfigMapJson() {
 
     // try append new pin versions
     const installationCodeVersion = await getIDEVersionOfImage(`ide/code:${latestBuildImage.code}`);
+    if (installationCodeVersion.trim() === "") {
+        throw new Error("installation code version can't be empty");
+    }
+    console.log("installation code version", installationCodeVersion);
     if (installationCodeVersion === workspaceYaml.defaultArgs.codeVersion) {
         console.log("code version is the same, no need to update (ide-service will do it)", installationCodeVersion);
     } else {
