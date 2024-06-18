@@ -120,6 +120,7 @@ message PrebuildStatus {
   string message = 3;
   string log_url = 4;
   repeated TaskLog task_logs = 5;
+  string image_build_log_url = 6;
 }
 
 message TaskLog {
