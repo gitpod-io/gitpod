@@ -67,13 +67,13 @@ export const PrebuildDetailPage: FC = () => {
         !!currentPrebuild.status.imageBuildLogUrl;
     const taskId = useMemo(() => {
         if (!currentPrebuild) {
-            return null;
+            return undefined;
         }
         if (isImageBuild) {
             return "image-build";
         }
 
-        return selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? null;
+        return selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? undefined;
     }, [currentPrebuild, isImageBuild, selectedTaskId]);
 
     const {

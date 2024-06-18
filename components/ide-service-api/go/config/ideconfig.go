@@ -67,6 +67,8 @@ type IDEOption struct {
 	ImageLayers []string `json:"imageLayers,omitempty"`
 	// LatestImageLayers for latest additional ide layers and dependencies
 	LatestImageLayers []string `json:"latestImageLayers,omitempty"`
+	// AllowPin if the editor is allowed to pin versions, only used for `ide-service` internal computation.
+	AllowPin bool `json:"allowPin,omitempty"`
 	// Release Versions of the IDE
 	Versions []IDEVersion `json:"versions,omitempty"`
 }

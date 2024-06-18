@@ -23,7 +23,7 @@
             "message": "",
             "logUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/5fba7d7c-e740-4339-b928-0e3c5975eb37",
             "taskLogs": [],
-            "imageBuildLogUrl": ""
+            "imageBuildLogUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/eb276a90-0970-49fb-947f-3cefe856efdc/image-build"
         },
         "configurationName": "parcel-demo"
     },

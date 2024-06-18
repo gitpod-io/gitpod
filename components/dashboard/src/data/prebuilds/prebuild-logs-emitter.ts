@@ -7,7 +7,6 @@
 import { prebuildClient } from "../../service/public-api";
 import { useEffect, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
-import { Disposable } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ReplayableEventEmitter } from "../../utils";
 
@@ -32,10 +31,11 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
     }, [prebuildId, taskId]);
 
     useEffect(() => {
-        const controller = new AbortController();
+        // The abortcontroller is meant to abort all activity on unmounting this effect
+        const abortController = new AbortController();
         const watch = async () => {
             let dispose: () => void | undefined;
-            controller.signal.addEventListener("abort", () => {
+            abortController.signal.addEventListener("abort", () => {
                 dispose?.();
             });
 
@@ -88,16 +88,20 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
             .catch((err) => {
                 emitter.emit("error", err);
             });
+
+        // The Disposable is meant as to give clients a way to stop watching logs before the component is unmounted. As such it decouples the individual AbortControllers that might get re-created multiple times.
         setDisposable(
             Disposable.create(() => {
-                controller.abort();
+                abortController.abort();
             }),
         );
+
         return () => {
             controller.abort();
             emitter.clearLog();
             emitter.removeAllListeners();
         };
     }, [emitter, prebuildId, taskId]);
+
     return { emitter, isLoading, disposable };
 }
