@@ -72,7 +72,7 @@
           "unit": "s"
         },
         "color": {
-          "exponent": 0.5,
+          "exponent": 0.6,
           "fill": "dark-orange",
           "mode": "scheme",
           "reverse": false,
@@ -99,7 +99,8 @@
         },
         "yAxis": {
           "axisPlacement": "left",
-          "reverse": false
+          "reverse": false,
+          "unit": "s"
         }
       },
       "pluginVersion": "10.4.1",
@@ -1617,6 +1618,6 @@
   "timezone": "utc",
   "title": "Gitpod / Component / proxy",
   "uid": "proxy",
-  "version": 2,
+  "version": 4,
   "weekStart": ""
 }
