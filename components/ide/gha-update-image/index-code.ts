@@ -3,14 +3,11 @@
 // See License.AGPL.txt in the project root for license information.
 
 import { $ } from "bun";
-import { updateCodeIDEConfigJson } from "./lib/code-pin-version"
+import { updateCodeIDEConfigMapJson } from "./lib/code-pin-version"
 import { appendGitHubOutput } from "./lib/common";
 
 $.nothrow();
 
-const newVersion = await updateCodeIDEConfigJson();
-
-if (newVersion) {
-    console.log("new version released", newVersion);
-    await appendGitHubOutput(`codeVersion=${newVersion}`)
-}
+const newVersion = await updateCodeIDEConfigMapJson();
+console.log("new version released", newVersion);
+await appendGitHubOutput(`codeVersion=${newVersion}`)
