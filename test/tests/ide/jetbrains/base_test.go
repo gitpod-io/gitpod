@@ -55,15 +55,16 @@ type JetBrainsIDETestOpts struct {
 	IDE                  string
 	ProductCode          string
 	Repo                 string
-	AdditionalRpcCall    func(rsa *integration.RpcClient, jbCtx *JetBrainsTestCtx) error
+	AdditionalRpcCalls   []func(rsa *integration.RpcClient, jbCtx *JetBrainsTestCtx) error
 	BeforeWorkspaceStart func(userID string) error
+	RepositoryID         string
 }
 
 type JetBrainsIDETestOpt func(*JetBrainsIDETestOpts) error
 
 func WithAdditionRpcCall(f func(rsa *integration.RpcClient, jbCtx *JetBrainsTestCtx) error) JetBrainsIDETestOpt {
 	return func(o *JetBrainsIDETestOpts) error {
-		o.AdditionalRpcCall = f
+		o.AdditionalRpcCalls = append(o.AdditionalRpcCalls, f)
 		return nil
 	}
 }
@@ -88,6 +89,13 @@ func WithRepo(repo string) JetBrainsIDETestOpt {
 	}
 }
 
+func WithRepositoryID(repoID string) JetBrainsIDETestOpt {
+	return func(o *JetBrainsIDETestOpts) error {
+		o.RepositoryID = repoID
+		return nil
+	}
+}
+
 func BaseGuard(t *testing.T) {
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
@@ -98,11 +106,7 @@ func BaseGuard(t *testing.T) {
 
 func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, opts ...JetBrainsIDETestOpt) {
 	BaseGuard(t)
-	option := &JetBrainsIDETestOpts{
-		AdditionalRpcCall: func(rsa *integration.RpcClient, jbCtx *JetBrainsTestCtx) error {
-			return nil
-		},
-	}
+	option := &JetBrainsIDETestOpts{}
 	for _, o := range opts {
 		if err := o(option); err != nil {
 			t.Fatal(err)
@@ -119,6 +123,7 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, op
 	for i := 0; i < 3; i++ {
 		info, stopWs, err = integration.LaunchWorkspaceWithOptions(t, ctx, &integration.LaunchWorkspaceOptions{
 			ContextURL: option.Repo,
+			ProjectID:  option.RepositoryID,
 			IDESettings: &protocol.IDESettings{
 				DefaultIde:       option.IDE,
 				UseLatestVersion: useLatest,
@@ -277,10 +282,12 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, op
 			t.Logf("backend-plugin maybe compatible")
 		}
 
-		if err := option.AdditionalRpcCall(rsa, &JetBrainsTestCtx{
-			SystemDir: jbSystemDir,
-		}); err != nil {
-			fatalMessages = append(fatalMessages, fmt.Sprintf("additional agent exec failed: %v", err))
+		for _, fn := range option.AdditionalRpcCalls {
+			if err := fn(rsa, &JetBrainsTestCtx{
+				SystemDir: jbSystemDir,
+			}); err != nil {
+				fatalMessages = append(fatalMessages, fmt.Sprintf("additional agent exec failed: %v", err))
+			}
 		}
 	}
 	checkIDEALogs()
@@ -393,6 +400,7 @@ func MustConnectToServer(ctx context.Context, t *testing.T, cfg *envconf.Config)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("connecting to papi...")
 	papi, err := api.PublicApi(integration.WithGitpodUser(username))
 	if err != nil {
 		t.Fatal(err)

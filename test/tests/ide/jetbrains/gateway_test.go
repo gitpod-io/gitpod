@@ -187,25 +187,26 @@ func TestIntelliJWarmup(t *testing.T) {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 
-			testRepo := "https://github.com/gitpod-samples/spring-petclinic/tree/gp/integration-test"
+			testRepo := "https://github.com/gitpod-samples/spring-petclinic"
+			testRepoBranch := "gp/integration-test"
 
-			// trigger a warmup prebuild
+			api, _, papi, _ := MustConnectToServer(ctx, t, cfg)
+			t.Logf("get or create team")
+			teamID, err := api.GetTeam(ctx, papi)
+			if err != nil {
+				t.Fatalf("failed to get or create team: %v", err)
+			}
+			t.Logf("get or create repository for %s", testRepo)
+			projectID, err := api.GetProject(ctx, papi, teamID, "petclinic", testRepo, true)
+			if err != nil {
+				t.Fatalf("failed to get or create project: %v", err)
+			}
+
 			triggerAndWaitForPrebuild := func() error {
-				api, _, papi, _ := MustConnectToServer(ctx, t, cfg)
-				teamID, err := api.GetTeam(ctx, papi)
-				if err != nil {
-					return fmt.Errorf("failed to get or create team: %v", err)
-				}
-				projectID, err := api.CreateProject(ctx, papi, teamID, "petclinic", testRepo, true)
-				if err != nil {
-					return fmt.Errorf("failed to create project: %v", err)
-				}
-
-				prebuildID, err := api.TriggerPrebuild(ctx, papi, projectID, "gp/integration-test")
+				prebuildID, err := api.TriggerPrebuild(ctx, papi, projectID, testRepoBranch)
 				if err != nil {
 					return fmt.Errorf("failed to trigger prebuild: %v", err)
 				}
-
 				ok, err := api.WaitForPrebuild(ctx, papi, prebuildID)
 				if err != nil {
 					return fmt.Errorf("failed to wait for prebuild: %v", err)
@@ -216,30 +217,58 @@ func TestIntelliJWarmup(t *testing.T) {
 				return nil
 			}
 
+			t.Logf("trigger prebuild and wait for it")
 			if err := triggerAndWaitForPrebuild(); err != nil {
 				t.Fatalf("failed to trigger prebuild: %v", err)
 			}
+			t.Logf("prebuild available")
 
-			JetBrainsIDETest(ctx, t, cfg, WithIDE("intellij"), WithRepo(testRepo), WithAdditionRpcCall(func(rsa *integration.RpcClient, jbCtx *JetBrainsTestCtx) error {
-				var resp agent.ExecResponse
-				err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
-					Dir:     "/",
-					Command: "bash",
-					Args: []string{
-						"-c",
-						string(warmupIndexingShell),
-						"--",
-						jbCtx.SystemDir,
-					},
-				}, &resp)
-				if err != nil {
-					return fmt.Errorf("failed to warmup indexing: %v", err)
-				}
-				if resp.ExitCode != 0 {
-					return fmt.Errorf("failed to warmup indexing: %s, %d", resp.Stderr, resp.ExitCode)
-				}
-				return nil
-			}))
+			JetBrainsIDETest(ctx, t, cfg, WithIDE("intellij"),
+				WithRepo(fmt.Sprintf("%s/tree/%s", testRepo, testRepoBranch)),
+				WithRepositoryID(projectID),
+				WithAdditionRpcCall(func(rsa *integration.RpcClient, jbCtx *JetBrainsTestCtx) error {
+					t.Logf("check if it has warmup.log")
+					var resp agent.ExecResponse
+					err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+						Dir:     "/",
+						Command: "bash",
+						Args: []string{
+							"-c",
+							"stat",
+							fmt.Sprintf("%s/log/warmup/warmup.log", jbCtx.SystemDir),
+						},
+					}, &resp)
+					if err != nil {
+						return fmt.Errorf("warmup.log not found: %v", err)
+					}
+					if resp.ExitCode != 0 {
+						return fmt.Errorf("warmup.log not found: %s, %d", resp.Stderr, resp.ExitCode)
+					}
+					return nil
+				}),
+				WithAdditionRpcCall(func(rsa *integration.RpcClient, jbCtx *JetBrainsTestCtx) error {
+					t.Logf("sleep for 1 minute to wait project open")
+					var resp agent.ExecResponse
+					time.Sleep(1 * time.Minute)
+					t.Logf("checking warmup indexing")
+					err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+						Dir:     "/",
+						Command: "bash",
+						Args: []string{
+							"-c",
+							string(warmupIndexingShell),
+							"--",
+							jbCtx.SystemDir,
+						},
+					}, &resp)
+					if err != nil {
+						return fmt.Errorf("failed to warmup indexing: %v", err)
+					}
+					if resp.ExitCode != 0 {
+						return fmt.Errorf("failed to warmup indexing: %s, %d", resp.Stderr, resp.ExitCode)
+					}
+					return nil
+				}))
 			return testCtx
 		}).
 		Feature()

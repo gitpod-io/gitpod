@@ -6,11 +6,13 @@ package integration
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/bufbuild/connect-go"
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/v1"
 	v1connect "github.com/gitpod-io/gitpod/components/public-api/go/v1/v1connect"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
@@ -77,7 +79,7 @@ func (c *ComponentAPI) PublicApi(opts ...GitpodServerOpt) (*PAPIClient, error) {
 		hostURL = strings.ReplaceAll(hostURL, "http://", "")
 		hostURL = strings.ReplaceAll(hostURL, "https://", "")
 
-		httpClient, connOpts, endpoint := getPAPIConnSettings(hostURL, tkn, true)
+		httpClient, connOpts, endpoint := getPAPIConnSettings(hostURL, tkn, false)
 
 		Configuration := v1connect.NewConfigurationServiceClient(httpClient, endpoint, connOpts...)
 		Prebuild := v1connect.NewPrebuildServiceClient(httpClient, endpoint, connOpts...)
@@ -143,4 +145,119 @@ func (t *authenticatedTransport) RoundTrip(req *http.Request) (*http.Response, e
 		req.Header.Add("Authorization", "Bearer "+t.Token)
 	}
 	return t.T.RoundTrip(req)
+}
+
+func (c *ComponentAPI) GetTeam(ctx context.Context, papi *PAPIClient) (string, error) {
+	resp, err := papi.Organization.ListOrganizations(ctx, &connect.Request[v1.ListOrganizationsRequest]{})
+	if err != nil {
+		return "", err
+	}
+	if len(resp.Msg.GetOrganizations()) > 0 {
+		return resp.Msg.GetOrganizations()[0].Id, nil
+	}
+	resp2, err := papi.Organization.CreateOrganization(ctx, &connect.Request[v1.CreateOrganizationRequest]{
+		Msg: &v1.CreateOrganizationRequest{
+			Name: "integration-test",
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	return resp2.Msg.Organization.Id, nil
+}
+
+func (c *ComponentAPI) GetProject(ctx context.Context, papi *PAPIClient, teamID, repoName, repoUrl string, prebuildEnabled bool) (string, error) {
+	resp, err := papi.Configuration.ListConfigurations(ctx, &connect.Request[v1.ListConfigurationsRequest]{
+		Msg: &v1.ListConfigurationsRequest{
+			OrganizationId: teamID,
+			SearchTerm:     repoName,
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	projectID := ""
+	for _, cfg := range resp.Msg.Configurations {
+		if cfg.CloneUrl == repoUrl {
+			projectID = cfg.Id
+		}
+	}
+	if projectID == "" {
+		resp, err := papi.Configuration.CreateConfiguration(ctx, &connect.Request[v1.CreateConfigurationRequest]{
+			Msg: &v1.CreateConfigurationRequest{
+				OrganizationId: teamID,
+				Name:           repoName,
+				CloneUrl:       repoUrl,
+			},
+		})
+		if err != nil {
+			return "", err
+		}
+		projectID = resp.Msg.Configuration.Id
+	}
+
+	if prebuildEnabled {
+		db, err := c.DB()
+		if err != nil {
+			return "", err
+		}
+		prebuildSettings := map[string]interface{}{
+			"prebuilds": map[string]interface{}{
+				"enable":           true,
+				"prebuildInterval": 20,
+			},
+		}
+		prebuildSettingsBytes, err := json.Marshal(prebuildSettings)
+		if err != nil {
+			return "", err
+		}
+
+		_, err = db.ExecContext(ctx, `UPDATE d_b_project SET settings=? WHERE id=?`, string(prebuildSettingsBytes), projectID)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return projectID, nil
+}
+
+func (c *ComponentAPI) TriggerPrebuild(ctx context.Context, papi *PAPIClient, projectID, branchName string) (string, error) {
+	resp, err := papi.Prebuild.StartPrebuild(ctx, &connect.Request[v1.StartPrebuildRequest]{
+		Msg: &v1.StartPrebuildRequest{
+			ConfigurationId: projectID,
+			GitRef:          branchName,
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	return resp.Msg.PrebuildId, nil
+}
+
+func (c *ComponentAPI) WaitForPrebuild(ctx context.Context, papi *PAPIClient, prebuildID string) (bool, error) {
+	resp, err := papi.Prebuild.WatchPrebuild(ctx, &connect.Request[v1.WatchPrebuildRequest]{
+		Msg: &v1.WatchPrebuildRequest{
+			Scope: &v1.WatchPrebuildRequest_PrebuildId{
+				PrebuildId: prebuildID,
+			},
+		},
+	})
+	if err != nil {
+		return false, fmt.Errorf("watch prebuild failed: %w", err)
+	}
+	// Note: it's not able to close the stream here
+	// defer resp.Close()
+	for {
+		if ok := resp.Receive(); !ok {
+			return false, fmt.Errorf("watch prebuild failed: %w", resp.Err())
+		}
+		phase := resp.Msg().GetPrebuild().GetStatus().GetPhase().Name
+		if phase == v1.PrebuildPhase_PHASE_BUILDING || phase == v1.PrebuildPhase_PHASE_QUEUED {
+			continue
+		}
+		if phase == v1.PrebuildPhase_PHASE_AVAILABLE {
+			return true, nil
+		}
+		return false, fmt.Errorf("prebuild failed: %s", phase.String())
+	}
 }
