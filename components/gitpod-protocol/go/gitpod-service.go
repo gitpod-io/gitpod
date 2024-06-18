@@ -54,7 +54,6 @@ type APIInterface interface {
 	SendHeartBeat(ctx context.Context, options *SendHeartBeatOptions) (err error)
 	WatchWorkspaceImageBuildLogs(ctx context.Context, workspaceID string) (err error)
 	IsPrebuildDone(ctx context.Context, pwsid string) (res bool, err error)
-	TriggerPrebuild(ctx context.Context, projectID string, branchName string) (res *TriggerPrebuildResult, err error)
 	SetWorkspaceTimeout(ctx context.Context, workspaceID string, duration time.Duration) (res *SetWorkspaceTimeoutResult, err error)
 	GetWorkspaceTimeout(ctx context.Context, workspaceID string) (res *GetWorkspaceTimeoutResult, err error)
 	GetOpenPorts(ctx context.Context, workspaceID string) (res []*WorkspaceInstancePort, err error)
@@ -170,8 +169,6 @@ const (
 	FunctionWatchWorkspaceImageBuildLogs FunctionName = "watchWorkspaceImageBuildLogs"
 	// FunctionIsPrebuildDone is the name of the isPrebuildDone function
 	FunctionIsPrebuildDone FunctionName = "isPrebuildDone"
-	// FunctionTriggerPrebuild is the name of the triggerPrebuild function
-	FunctionTriggerPrebuild FunctionName = "triggerPrebuild"
 	// FunctionSetWorkspaceTimeout is the name of the setWorkspaceTimeout function
 	FunctionSetWorkspaceTimeout FunctionName = "setWorkspaceTimeout"
 	// FunctionGetWorkspaceTimeout is the name of the getWorkspaceTimeout function
@@ -911,24 +908,6 @@ func (gp *APIoverJSONRPC) IsPrebuildDone(ctx context.Context, pwsid string) (res
 		return
 	}
 	res = result
-
-	return
-}
-
-// TriggerPrebuild calls triggerPrebuild on the server
-func (gp *APIoverJSONRPC) TriggerPrebuild(ctx context.Context, projectID, branchName string) (res *TriggerPrebuildResult, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, projectID, branchName)
-
-	err = gp.C.Call(ctx, "triggerPrebuild", _params, nil)
-	if err != nil {
-		return
-	}
 
 	return
 }
@@ -2199,12 +2178,6 @@ type AuthProviderInfo struct {
 // GetTokenSearchOptions is the GetTokenSearchOptions message type
 type GetTokenSearchOptions struct {
 	Host string `json:"host,omitempty"`
-}
-
-type TriggerPrebuildResult struct {
-	PrebuildID  string `json:"prebuildId,omitempty"`
-	WorkspaceID string `json:"wsid,omitempty"`
-	Done        bool   `json:"done,omitempty"`
 }
 
 // SetWorkspaceTimeoutResult is the SetWorkspaceTimeoutResult message type

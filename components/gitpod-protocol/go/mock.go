@@ -731,21 +731,6 @@ func (mr *MockAPIInterfaceMockRecorder) IsPrebuildDone(ctx, pwsid interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsPrebuildDone", reflect.TypeOf((*MockAPIInterface)(nil).IsPrebuildDone), ctx, pwsid)
 }
 
-// TriggerPrebuild mocks base method.
-func (m *MockAPIInterface) TriggerPrebuild(ctx context.Context, projectID, branchName string) (*TriggerPrebuildResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TriggerPrebuild", ctx, projectID, branchName)
-	ret0, _ := ret[0].(*TriggerPrebuildResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// TriggerPrebuild indicates an expected call of TriggerPrebuild.
-func (mr *MockAPIInterfaceMockRecorder) TriggerPrebuild(ctx, projectID, branchName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TriggerPrebuild", reflect.TypeOf((*MockAPIInterface)(nil).TriggerPrebuild), ctx, projectID, branchName)
-}
-
 // IsWorkspaceOwner mocks base method.
 func (m *MockAPIInterface) IsWorkspaceOwner(ctx context.Context, workspaceID string) (bool, error) {
 	m.ctrl.T.Helper()
