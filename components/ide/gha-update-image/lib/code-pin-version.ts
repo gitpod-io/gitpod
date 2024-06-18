@@ -52,14 +52,18 @@ export async function updateCodeIDEConfigJson() {
     // try append new pin versions
     // eu.gcr.io/gitpod-core-dev/build/commit-518f23b3b895cd544bd6b3dd383af95c350718cc:
     const installationCodeVersion = await getIDEVersionOfImage(`ide/code:${latestBuildImage.code}`);
-    const hasPinned = firstPinnedInfo.version === installationCodeVersion;
-    if (!hasPinned) {
-        console.log("updating related pinned version", firstPinnedInfo.version, installationCodeVersion);
-        newJson.ideOptions.options.code.versions.unshift({
-            version: installationCodeVersion,
-            image: newJson.ideOptions.options.code.image,
-            imageLayers: newJson.ideOptions.options.code.imageLayers,
-        });
+    if (installationCodeVersion === workspaceYaml.defaultArgs.codeVersion) {
+        console.log("code version is the same, no need to update (ide-service will do it)");
+    } else {
+        const hasPinned = firstPinnedInfo.version === installationCodeVersion;
+        if (!hasPinned) {
+            console.log("updating related pinned version", firstPinnedInfo.version, installationCodeVersion);
+            newJson.ideOptions.options.code.versions.unshift({
+                version: installationCodeVersion,
+                image: newJson.ideOptions.options.code.image,
+                imageLayers: newJson.ideOptions.options.code.imageLayers,
+            });
+        }
     }
 
     console.log("updating ide-configmap.json");
