@@ -68,9 +68,7 @@
       "options": {
         "calculate": false,
         "cellGap": 1,
-        "cellValues": {
-          "unit": "s"
-        },
+        "cellValues": {},
         "color": {
           "exponent": 0.6,
           "fill": "dark-orange",
