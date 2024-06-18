@@ -217,6 +217,7 @@ func TestIntelliJWarmup(t *testing.T) {
 				if err != nil {
 					return fmt.Errorf("failed to trigger prebuild: %v", err)
 				}
+				t.Logf("prebuild triggered, id: %s", prebuildID)
 				ok, err := api.WaitForPrebuild(ctx, papi, prebuildID)
 				if err != nil {
 					return fmt.Errorf("failed to wait for prebuild: %v", err)
@@ -233,6 +234,8 @@ func TestIntelliJWarmup(t *testing.T) {
 			}
 			t.Logf("prebuild available")
 
+			t.Logf("warmup prebuild prepared, org: %s, repository: %s", teamID, projectID)
+
 			JetBrainsIDETest(ctx, t, cfg, WithIDE("intellij"),
 				WithRepo(fmt.Sprintf("%s/tree/%s", testRepo, testRepoBranch)),
 				WithRepositoryID(projectID),
@@ -244,8 +247,7 @@ func TestIntelliJWarmup(t *testing.T) {
 						Command: "bash",
 						Args: []string{
 							"-c",
-							"stat",
-							fmt.Sprintf("%s/log/warmup/warmup.log", jbCtx.SystemDir),
+							fmt.Sprintf("stat %s/log/warmup/warmup.log", jbCtx.SystemDir),
 						},
 					}, &resp)
 					if err != nil {
@@ -277,6 +279,7 @@ func TestIntelliJWarmup(t *testing.T) {
 					if resp.ExitCode != 0 {
 						return fmt.Errorf("failed to warmup indexing: %s, %d", resp.Stderr, resp.ExitCode)
 					}
+					t.Logf("output:\n%s", string(resp.Stdout))
 					return nil
 				}))
 			return testCtx
