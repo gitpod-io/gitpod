@@ -27,6 +27,7 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId?: string) {
     }, [prebuildId, taskId]);
 
     useEffect(() => {
+        // The abortcontroller is meant to abort all activity on unmounting this effect
         const abortController = new AbortController();
         const watch = async () => {
             if (!prebuildId || !taskId) {
@@ -90,6 +91,8 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId?: string) {
             .catch((err) => {
                 emitter.emit("error", err);
             });
+
+        // The Disposable is meant as to give clients a way to stop watching logs before the component is unmounted. As such it decouples the individual AbortControllers that might get re-created multiple times.
         setDisposable(
             Disposable.create(() => {
                 abortController.abort();
