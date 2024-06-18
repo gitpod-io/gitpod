@@ -161,14 +161,15 @@ func TestRustRover(t *testing.T) {
 	testEnv.Test(t, f)
 }
 
-func TestIntellijEmptyRepo(t *testing.T) {
-	f := features.New("Start a workspace using Intellij and empty folder").
+func TestIntellijNotPreconfiguredRepo(t *testing.T) {
+	f := features.New("Start a workspace using Intellij with not preconfigured repo").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Intellij").
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, WithIDE("intellij"), WithRepo("https://github.com/gitpod-io/empty"))
+			// ENT-260
+			JetBrainsIDETest(ctx, t, cfg, WithIDE("intellij"), WithRepo("https://github.com/spring-projects/spring-petclinic"))
 			return testCtx
 		}).
 		Feature()
