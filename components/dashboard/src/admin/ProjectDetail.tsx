@@ -8,8 +8,8 @@ import { Link } from "react-router-dom";
 import { Project } from "@gitpod/gitpod-protocol";
 import Property from "./Property";
 import dayjs from "dayjs";
-import { Heading2, Subheading } from "../components/typography/headings";
 import { PrebuildsList } from "../prebuilds/list/PrebuildList";
+import { Heading2, Heading3, Subheading } from "@podkit/typography/Headings";
 
 export default function ProjectDetail({ project, owner }: { project: Project; owner?: string }) {
     return (
@@ -49,7 +49,12 @@ export default function ProjectDetail({ project, owner }: { project: Project; ow
                 </div>
             </div>
             <div className="mt-6">
-                <PrebuildsList initialFilter={{ configurationId: project.id }} organizationId={project.teamId} />
+                <Heading3 className="mb-4">Prebuilds</Heading3>
+                <PrebuildsList
+                    initialFilter={{ configurationId: project.id }}
+                    organizationId={project.teamId}
+                    hideOrgSpecificControls
+                />
             </div>
         </div>
     );

@@ -39,8 +39,12 @@ const pageSize = 30;
 type Props = {
     initialFilter?: Filter;
     organizationId?: string;
+    /**
+     * If true, the configuration dropdown and the "Run Prebuild" button will be hidden.
+     */
+    hideOrgSpecificControls?: boolean;
 };
-export const PrebuildsList = ({ initialFilter, organizationId }: Props) => {
+export const PrebuildsList = ({ initialFilter, organizationId, hideOrgSpecificControls }: Props) => {
     const history = useHistory();
     const params = useQueryParams();
 
@@ -100,13 +104,13 @@ export const PrebuildsList = ({ initialFilter, organizationId }: Props) => {
             params.set("prebuilds", statusFilter);
         }
 
-        if (configurationFilter) {
+        if (configurationFilter && configurationFilter !== initialFilter?.configurationId) {
             params.set("configurationId", configurationFilter);
         }
 
         params.toString();
         history.replace({ search: `?${params.toString()}` });
-    }, [history, statusFilter, configurationFilter]);
+    }, [history, statusFilter, configurationFilter, initialFilter?.configurationId]);
 
     const {
         data,
@@ -180,6 +184,7 @@ export const PrebuildsList = ({ initialFilter, organizationId }: Props) => {
                     filter={filter}
                     sort={sort}
                     hasMoreThanOnePage={hasMoreThanOnePage}
+                    hideOrgSpecificControls={!!hideOrgSpecificControls}
                     onLoadNextPage={() => fetchNextPage()}
                     onFilterChange={handleFilterChange}
                     onSort={handleSort}
