@@ -6,40 +6,34 @@
 
 import EventEmitter from "events";
 import { prebuildClient } from "../../service/public-api";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
-import { Disposable } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 /**
  *
  * @param prebuildId ID of the prebuild to watch
- * @param taskId ID of the task to watch. If `null`, watch will not be started.
+ * @param taskId ID of the task to watch. If `undefined`, watch will not be started.
  * @returns
  */
-export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null) {
+export function usePrebuildLogsEmitter(prebuildId: string, taskId?: string) {
     const [emitter] = useState(new EventEmitter());
     const [isLoading, setIsLoading] = useState(true);
-    const [disposable, setDisposable] = useState<Disposable | undefined>();
+    const abortController = useMemo(() => new AbortController(), []);
 
     useEffect(() => {
         setIsLoading(true);
     }, [prebuildId, taskId]);
 
     useEffect(() => {
-        const controller = new AbortController();
         const watch = async () => {
-            if (taskId === null) {
-                setIsLoading(false);
-                return;
-            }
             if (!prebuildId || !taskId) {
                 setIsLoading(false);
                 return;
             }
 
             let dispose: () => void | undefined;
-            controller.signal.addEventListener("abort", () => {
+            abortController.signal.addEventListener("abort", () => {
                 dispose?.();
             });
 
@@ -94,15 +88,12 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId: string | null
             .catch((err) => {
                 emitter.emit("error", err);
             });
-        setDisposable(
-            Disposable.create(() => {
-                controller.abort();
-            }),
-        );
+
         return () => {
-            controller.abort();
+            abortController.abort();
             emitter.removeAllListeners();
         };
-    }, [emitter, prebuildId, taskId]);
-    return { emitter, isLoading, disposable };
+    }, [abortController, emitter, prebuildId, taskId]);
+
+    return { emitter, isLoading, abortController };
 }
