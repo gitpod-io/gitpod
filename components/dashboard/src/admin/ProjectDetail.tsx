@@ -11,7 +11,11 @@ import dayjs from "dayjs";
 import { PrebuildsList } from "../prebuilds/list/PrebuildList";
 import { Heading2, Heading3, Subheading } from "@podkit/typography/Headings";
 
-export default function ProjectDetail({ project, owner }: { project: Project; owner?: string }) {
+type Props = {
+    project: Project;
+    owner?: string;
+};
+export default function ProjectDetail({ project, owner }: Props) {
     return (
         <div className="app-container">
             <div className="flex mt-8">
