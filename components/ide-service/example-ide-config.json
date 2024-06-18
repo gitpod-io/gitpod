@@ -10,6 +10,7 @@
         "label": "Browser",
         "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9",
         "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly@sha256:8669f6ab8dceefde11138bf4bc0ee73b934b2cc47e6135426f05fb4343ec5ab1",
+        "allowPin": true,
         "versions": [
           {
             "version": "1.87.0",
@@ -59,6 +60,25 @@
         "latestImageLayers": [
           "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:commit-b38092639d1783a1957894ddd4f492b3cdc9794a-latest",
           "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:commit-b38092639d1783a1957894ddd4f492b3cdc9794a"
+        ],
+        "allowPin": true,
+        "versions": [
+          {
+            "version": "2024.1.2",
+            "image": "ide/jb/2024.1.2/image",
+            "imageLayers": [
+              "ide/jb-2024.1.2/layer_1",
+              "ide/jb-2024.1.2/layer_2"
+            ]
+          },
+          {
+            "version": "2024.1",
+            "image": "ide/jb/2024.1/image",
+            "imageLayers": [
+              "ide/jb-2024.1/layer_1",
+              "ide/jb-2024.1/layer_2"
+            ]
+          }
         ]
       },
       "phpstorm": {
