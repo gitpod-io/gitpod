@@ -514,6 +514,9 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 	if req.Type == api.WorkspaceType_PREBUILD && ok {
 		imageLayers := make(map[string]struct{})
 		for _, alias := range jbGW.DesktopIDEs {
+			if _, ok := ideConfig.IdeOptions.Options[alias]; !ok {
+				continue
+			}
 			prebuilds := getPrebuilds(wsConfig, alias)
 			if prebuilds != nil {
 				if prebuilds.Version != "latest" && prebuilds.Version != "stable" && prebuilds.Version != "both" {
