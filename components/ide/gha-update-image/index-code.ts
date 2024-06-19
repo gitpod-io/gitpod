@@ -9,5 +9,8 @@ import { appendGitHubOutput } from "./lib/common";
 $.nothrow();
 
 const newVersion = await updateCodeIDEConfigMapJson();
-console.log("new version released", newVersion);
-await appendGitHubOutput(`codeVersion=${newVersion}`)
+
+if (newVersion) {
+    console.log("new version released", newVersion);
+    await appendGitHubOutput(`codeVersion=${newVersion}`)
+}

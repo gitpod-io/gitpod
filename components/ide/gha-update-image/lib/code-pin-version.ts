@@ -54,6 +54,7 @@ export async function updateCodeIDEConfigMapJson() {
     if (installationCodeVersion.trim() === "") {
         throw new Error("installation code version can't be empty");
     }
+    let appendNewVersion = false;
     console.log("installation code version", installationCodeVersion);
     if (installationCodeVersion === workspaceYaml.defaultArgs.codeVersion) {
         console.log("code version is the same, no need to update (ide-service will do it)", installationCodeVersion);
@@ -66,10 +67,11 @@ export async function updateCodeIDEConfigMapJson() {
                 image: newJson.ideOptions.options.code.image,
                 imageLayers: newJson.ideOptions.options.code.imageLayers,
             });
+            appendNewVersion = true;
         }
     }
 
     console.log("updating ide-configmap.json");
     await Bun.write(pathToConfigmap, JSON.stringify(newJson, null, 2) + "\n");
-    return workspaceYaml.defaultArgs.codeVersion;
+    return appendNewVersion ? workspaceYaml.defaultArgs.codeVersion : undefined;
 }
