@@ -196,6 +196,7 @@ ENV PATH=$GOROOT/bin:$GOPATH/bin:$PATH
 RUN mkdir -p $GOROOT && \
     cd /root && \
     curl -fsSL https://dl.google.com/go/go$GO_VERSION.${TARGETOS}-${TARGETARCH}.tar.gz | tar xzs
+RUN go install github.com/go-delve/delve/cmd/dlv
 
 # Install codecov uploader
 # https://about.codecov.io/blog/introducing-codecovs-new-uploader
