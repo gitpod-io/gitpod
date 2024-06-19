@@ -452,7 +452,7 @@ func Run(options ...RunOption) {
 	}
 
 	wg.Add(1)
-	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, supervisorMetrics, topService, apiEndpointOpts...)
+	go startAPIEndpoint(willShutdownCtx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, supervisorMetrics, topService, apiEndpointOpts...)
 
 	wg.Add(1)
 	go startSSHServer(ctx, cfg, &wg)
@@ -1367,7 +1367,7 @@ func startAPIEndpoint(
 			reg.RegisterGRPC(grpcServer)
 		}
 		if reg, ok := reg.(RegisterableRESTService); ok {
-			err := reg.RegisterREST(restMux, grpcEndpoint)
+			err := reg.RegisterREST(ctx, restMux, grpcEndpoint)
 			if err != nil {
 				log.WithError(err).Fatal("cannot register REST service")
 			}
@@ -1483,14 +1483,20 @@ func startAPIEndpoint(
 		}))
 		routes.Handle("/_supervisor"+pprof.Path, http.StripPrefix("/_supervisor", pprof.Handler()))
 	}
-	go http.Serve(httpMux, routes)
+
+	server := &http.Server{Handler: routes}
+	go func(l net.Listener) {
+		if err := server.Serve(l); err != http.ErrServerClosed {
+			log.WithError(err).Error("API endpoint closed")
+		}
+	}(httpMux)
 
 	go m.Serve()
 
 	<-ctx.Done()
 	log.Info("shutting down API endpoint")
-	l.Close()
-	grpcServer.GracefulStop()
+	server.Shutdown(ctx)
+	// time.Sleep(10 * time.Millisecond) // give the mux some time to close all connections
 }
 
 func tunnelOverWebSocket(tunneled *ports.TunneledPortsService, conn *gitpod.WebsocketConnection) {
