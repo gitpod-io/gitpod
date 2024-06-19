@@ -234,6 +234,10 @@ func TestIntelliJWarmup(t *testing.T) {
 			}
 			t.Logf("prebuild available")
 
+			// EXP-1860
+			// Prebuild is marked as available before content back-up is completed
+			time.Sleep(2 * time.Minute)
+
 			t.Logf("warmup prebuild prepared, org: %s, repository: %s", teamID, projectID)
 
 			JetBrainsIDETest(ctx, t, cfg, WithIDE("intellij"),
