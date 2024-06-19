@@ -9,5 +9,12 @@ components/**/*_pb.ts linguist-generated=true
 components/**/*_pb.d.ts linguist-generated=true
 components/**/*_connectweb.ts linguist-generated=true
 components/**/*.pb.ts linguist-generated=true
+components/public-api/**/*.java linguist-generated=true
+components/public-api/**/*.kt linguist-generated=true
+components/**/*_connect.go linguist-generated=true
+components/public-api/**/*_connect.ts linguist-generated=true
+components/ide-metrics-api/**/*.java linguist-generated=true
+components/supervisor-api/**/*.java linguist-generated=true
+components/supervisor-api/typescript-rest linguist-generated=true
 
 **/go.sum linguist-generated=true
