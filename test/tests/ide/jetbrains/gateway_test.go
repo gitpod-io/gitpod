@@ -225,6 +225,11 @@ func TestIntelliJWarmup(t *testing.T) {
 				if !ok {
 					return fmt.Errorf("prebuild failed")
 				}
+				// EXP-1860
+				// Prebuild is marked as available before content back-up is completed
+				if err := api.WaitForPrebuildWorkspaceToStoppedPhase(ctx, prebuildID); err != nil {
+					return fmt.Errorf("failed to wait for prebuild workspace to be backed-up : %v", err)
+				}
 				return nil
 			}
 
@@ -233,10 +238,6 @@ func TestIntelliJWarmup(t *testing.T) {
 				t.Fatalf("failed to trigger prebuild: %v", err)
 			}
 			t.Logf("prebuild available")
-
-			// EXP-1860
-			// Prebuild is marked as available before content back-up is completed
-			time.Sleep(2 * time.Minute)
 
 			t.Logf("warmup prebuild prepared, org: %s, repository: %s", teamID, projectID)
 

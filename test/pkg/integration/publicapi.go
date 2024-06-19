@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/v1"
@@ -247,7 +248,7 @@ func (c *ComponentAPI) WaitForPrebuild(ctx context.Context, papi *PAPIClient, pr
 	}
 	// Note: it's not able to close the stream here
 	// defer resp.Close()
-	for {
+	for ctx.Err() == nil {
 		if ok := resp.Receive(); !ok {
 			return false, fmt.Errorf("watch prebuild failed: %w", resp.Err())
 		}
@@ -260,4 +261,23 @@ func (c *ComponentAPI) WaitForPrebuild(ctx context.Context, papi *PAPIClient, pr
 		}
 		return false, fmt.Errorf("prebuild failed: %s", phase.String())
 	}
+	return false, ctx.Err()
+}
+
+func (c *ComponentAPI) WaitForPrebuildWorkspaceToStoppedPhase(ctx context.Context, prebuildID string) error {
+	db, err := c.DB()
+	if err != nil {
+		return err
+	}
+	var phase string
+	for ctx.Err() == nil {
+		if err := db.QueryRowContext(ctx, `SELECT phase FROM d_b_workspace_instance WHERE workspaceId=(SELECT buildWorkspaceId FROM d_b_prebuilt_workspace WHERE id=?) LIMIT 1`, prebuildID).Scan(&phase); err != nil {
+			return err
+		}
+		if phase == "stopped" {
+			return nil
+		}
+		time.Sleep(5 * time.Second)
+	}
+	return ctx.Err()
 }
