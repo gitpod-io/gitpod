@@ -1039,7 +1039,8 @@ func (s *statusService) ResourcesStatus(ctx context.Context, in *api.ResourcesSt
 }
 
 type taskService struct {
-	tasksManager *tasksManager
+	tasksManager    *tasksManager
+	willShutdownCtx context.Context
 
 	api.UnimplementedTaskServiceServer
 }
@@ -1145,6 +1146,8 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 
 		select {
 		case <-srv.Context().Done():
+			return nil
+		case <-s.willShutdownCtx.Done():
 			return nil
 		case <-closedChannel:
 			continue

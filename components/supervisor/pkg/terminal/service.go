@@ -26,16 +26,17 @@ import (
 )
 
 // NewMuxTerminalService creates a new terminal service.
-func NewMuxTerminalService(m *Mux) *MuxTerminalService {
+func NewMuxTerminalService(m *Mux, willShutdownCtx context.Context) *MuxTerminalService {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "/bin/bash"
 	}
 	return &MuxTerminalService{
-		Mux:            m,
-		DefaultWorkdir: "/workspace",
-		DefaultShell:   shell,
-		Env:            os.Environ(),
+		Mux:             m,
+		DefaultWorkdir:  "/workspace",
+		DefaultShell:    shell,
+		Env:             os.Environ(),
+		willShutdownCtx: willShutdownCtx,
 	}
 }
 
@@ -51,6 +52,8 @@ type MuxTerminalService struct {
 	DefaultShell string
 	Env          []string
 	DefaultCreds *syscall.Credential
+
+	willShutdownCtx context.Context
 
 	api.UnimplementedTerminalServiceServer
 }
@@ -278,6 +281,8 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 		case err = <-errchan:
 		case <-resp.Context().Done():
 			return status.Error(codes.DeadlineExceeded, resp.Context().Err().Error())
+		case <-srv.willShutdownCtx.Done():
+			return nil
 		}
 		if err == io.EOF {
 			// EOF isn't really an error here

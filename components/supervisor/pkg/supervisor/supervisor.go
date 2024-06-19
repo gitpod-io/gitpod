@@ -341,8 +341,9 @@ func Run(options ...RunOption) {
 		}
 	}
 
+	willShutdownCtx, fireWillShutdown := context.WithCancel(ctx)
 	termMux := terminal.NewMux()
-	termMuxSrv := terminal.NewMuxTerminalService(termMux)
+	termMuxSrv := terminal.NewMuxTerminalService(termMux, willShutdownCtx)
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	if cfg.WorkspaceRoot != "" {
 		termMuxSrv.DefaultWorkdirProvider = func() string {
@@ -378,7 +379,6 @@ func Run(options ...RunOption) {
 		go gitStatusService.Run(gitStatusCtx, gitStatusWg)
 	}
 
-	willShutdownCtx, fireWillShutdown := context.WithCancel(ctx)
 	apiServices := []RegisterableService{
 		&statusService{
 			willShutdownCtx: willShutdownCtx,
@@ -395,7 +395,10 @@ func Run(options ...RunOption) {
 		NewInfoService(cfg, cstate, gitpodService),
 		&ControlService{portsManager: portMgmt},
 		&portService{portsManager: portMgmt},
-		&taskService{tasksManager: taskManager},
+		&taskService{
+			tasksManager:    taskManager,
+			willShutdownCtx: willShutdownCtx,
+		},
 	}
 	apiServices = append(apiServices, additionalServices...)
 
@@ -1487,6 +1490,7 @@ func startAPIEndpoint(
 	<-ctx.Done()
 	log.Info("shutting down API endpoint")
 	l.Close()
+	grpcServer.GracefulStop()
 }
 
 func tunnelOverWebSocket(tunneled *ports.TunneledPortsService, conn *gitpod.WebsocketConnection) {
