@@ -343,7 +343,7 @@ func Run(options ...RunOption) {
 
 	willShutdownCtx, fireWillShutdown := context.WithCancel(ctx)
 	termMux := terminal.NewMux()
-	termMuxSrv := terminal.NewMuxTerminalService(termMux, willShutdownCtx)
+	termMuxSrv := terminal.NewMuxTerminalService(termMux)
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	if cfg.WorkspaceRoot != "" {
 		termMuxSrv.DefaultWorkdirProvider = func() string {

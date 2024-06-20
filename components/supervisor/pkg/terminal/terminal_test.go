@@ -59,7 +59,7 @@ func TestTitle(t *testing.T) {
 			}
 			defer os.RemoveAll(tmpWorkdir)
 
-			terminalService := NewMuxTerminalService(mux, ctx)
+			terminalService := NewMuxTerminalService(mux)
 			terminalService.DefaultWorkdir = tmpWorkdir
 
 			term, err := terminalService.OpenWithOptions(ctx, &api.OpenTerminalRequest{}, TermOptions{
@@ -197,7 +197,7 @@ func TestAnnotations(t *testing.T) {
 			mux := NewMux()
 			defer mux.Close(ctx)
 
-			terminalService := NewMuxTerminalService(mux, ctx)
+			terminalService := NewMuxTerminalService(mux)
 			var err error
 			if test.Opts == nil {
 				_, err = terminalService.Open(ctx, test.Req)
@@ -248,8 +248,7 @@ func TestTerminals(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			ctx := context.Background()
-			terminalService := NewMuxTerminalService(NewMux(), ctx)
+			terminalService := NewMuxTerminalService(NewMux())
 			resp, err := terminalService.Open(context.Background(), &api.OpenTerminalRequest{})
 			if err != nil {
 				t.Fatal(err)
@@ -330,7 +329,7 @@ func TestWorkDirProvider(t *testing.T) {
 	mux := NewMux()
 	defer mux.Close(ctx)
 
-	terminalService := NewMuxTerminalService(mux, ctx)
+	terminalService := NewMuxTerminalService(mux)
 
 	type AssertWorkDirTest struct {
 		expectedWorkDir string

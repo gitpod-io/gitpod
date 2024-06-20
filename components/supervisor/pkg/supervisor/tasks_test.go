@@ -200,8 +200,6 @@ func TestTaskManager(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			ctx := context.Background()
-
 			storeLocation, err := os.MkdirTemp("", "tasktest")
 			if err != nil {
 				t.Fatal(err)
@@ -218,7 +216,7 @@ func TestTaskManager(t *testing.T) {
 			}
 
 			var (
-				terminalService = terminal.NewMuxTerminalService(terminal.NewMux(), ctx)
+				terminalService = terminal.NewMuxTerminalService(terminal.NewMux())
 				contentState    = NewInMemoryContentState("")
 				reporter        = testHeadlessTaskProgressReporter{}
 				taskManager     = newTasksManager(&Config{
