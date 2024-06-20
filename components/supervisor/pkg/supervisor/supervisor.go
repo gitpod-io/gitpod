@@ -455,7 +455,7 @@ func Run(options ...RunOption) {
 	}
 
 	wg.Add(1)
-	go startAPIEndpoint(ctx, willShutdownCtx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, supervisorMetrics, topService, apiEndpointOpts...)
+	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, supervisorMetrics, topService, apiEndpointOpts...)
 
 	wg.Add(1)
 	go startSSHServer(ctx, cfg, &wg)
@@ -1300,7 +1300,6 @@ func extractCloseErrorCode(errStr string) string {
 
 func startAPIEndpoint(
 	ctx context.Context,
-	willShutdownCtx context.Context,
 	cfg *Config,
 	wg *sync.WaitGroup,
 	services []RegisterableService,
@@ -1501,7 +1500,6 @@ func startAPIEndpoint(
 	<-ctx.Done()
 	log.Info("shutting down API endpoint")
 	server.Shutdown(ctx)
-	log.Info("API endpoint shut down")
 }
 
 func tunnelOverWebSocket(tunneled *ports.TunneledPortsService, conn *gitpod.WebsocketConnection) {

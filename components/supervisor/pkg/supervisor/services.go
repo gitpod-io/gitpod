@@ -1132,7 +1132,6 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 		n, err := reader.Read(buf)
 		if err == io.EOF {
 			if isClosed.Load() {
-				log.Errorf("[ListenToTaskOutput] task %s is closed", req.TaskId)
 				// We are done
 				return nil
 			}
@@ -1150,10 +1149,8 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 
 		select {
 		case <-srv.Context().Done():
-			log.Error("[ListenToTaskOutput] context done")
 			return nil
 		case <-s.willShutdownCtx.Done():
-			log.Error("[ListenToTaskOutput] willShutdownCtx")
 			return nil
 		case <-closedChannel:
 			continue
