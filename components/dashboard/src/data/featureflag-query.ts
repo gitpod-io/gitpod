@@ -21,9 +21,6 @@ const featureFlags = {
     gitpod_desktop_use_local_ssh_proxy: false,
     enabledOrbitalDiscoveries: "",
     repositoryFinderSearch: false,
-    createProjectModal: false,
-    configurationsAndPrebuilds: false,
-    showPrebuildsMenuItem: false,
     // dummy specified dataops feature, default false
     dataops: false,
     // Logging tracing for added for investigate hanging issue
@@ -60,8 +57,4 @@ export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): Fe
 
 export const useIsDataOps = () => {
     return useFeatureFlag("dataops");
-};
-
-export const useHasConfigurationsAndPrebuildsEnabled = () => {
-    return useFeatureFlag("configurationsAndPrebuilds");
 };
