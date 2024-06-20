@@ -35,9 +35,8 @@ import {
     WithEnvvarsContext,
     WithPrebuild,
     WorkspaceAutostartOption,
-    WorkspaceContext,
-    WorkspaceInfo,
-    WorkspaceSession as WorkspaceSessionProtocol,
+    WorkspaceContext, WorkspaceInfo,
+    WorkspaceSession as WorkspaceSessionProtocol
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import {
     OrgMemberInfo,
@@ -135,8 +134,7 @@ import {
     ParseContextURLResponse,
     PrebuildInitializer,
     SnapshotInitializer,
-    UpdateWorkspaceRequest_UpdateTimeout,
-    Workspace,
+    UpdateWorkspaceRequest_UpdateTimeout, Workspace,
     WorkspaceClass,
     WorkspaceGitStatus,
     WorkspaceInitializer,
@@ -153,7 +151,7 @@ import {
     WorkspaceSpec_WorkspaceType,
     WorkspaceStatus,
     WorkspaceStatus_PrebuildResult,
-    WorkspaceStatus_WorkspaceConditions,
+    WorkspaceStatus_WorkspaceConditions
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { getPrebuildLogPath } from "./prebuild-utils";
 import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
@@ -1221,6 +1219,7 @@ export class PublicAPIConverter {
             message: prebuild.error,
             logUrl: new URL(getPrebuildLogPath(prebuild.info.id), gitpodHost).toString(),
             taskLogs: tasks,
+            imageBuildLogUrl: new URL(getPrebuildLogPath(prebuild.workspace.id, "image-build"), gitpodHost).toString(),
         });
     }
 

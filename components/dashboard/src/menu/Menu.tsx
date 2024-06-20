@@ -125,23 +125,19 @@ export default function Menu() {
     );
 }
 
+const leftMenu: Entry[] = [
+    {
+        title: "Workspaces",
+        link: "/workspaces",
+        alternatives: ["/"],
+    },
+];
+
 type OrgPagesNavProps = {
     className?: string;
 };
 const OrgPagesNav: FC<OrgPagesNavProps> = ({ className }) => {
     const location = useLocation();
-
-    const leftMenu: Entry[] = useMemo(() => {
-        const menus = [
-            {
-                title: "Workspaces",
-                link: "/workspaces",
-                alternatives: ["/"],
-            },
-        ];
-
-        return menus;
-    }, []);
 
     return (
         <div

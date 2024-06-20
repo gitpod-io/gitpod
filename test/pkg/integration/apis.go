@@ -68,15 +68,17 @@ func NewComponentAPI(ctx context.Context, namespace string, kubeconfig string, c
 		imgbldStatusMu:         sync.Mutex{},
 
 		serverStatus: &serverStatus{
-			Client: make(map[string]*gitpod.APIoverJSONRPC),
-			Token:  make(map[string]string),
+			Client:     make(map[string]*gitpod.APIoverJSONRPC),
+			Token:      make(map[string]string),
+			PAPIClient: make(map[string]*PAPIClient),
 		},
 	}
 }
 
 type serverStatus struct {
-	Token  map[string]string
-	Client map[string]*gitpod.APIoverJSONRPC
+	Token      map[string]string
+	Client     map[string]*gitpod.APIoverJSONRPC
+	PAPIClient map[string]*PAPIClient
 }
 
 // ComponentAPI provides access to the individual component's API
