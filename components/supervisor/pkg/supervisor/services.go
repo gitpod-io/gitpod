@@ -1041,6 +1041,7 @@ func (s *statusService) ResourcesStatus(ctx context.Context, in *api.ResourcesSt
 type taskService struct {
 	tasksManager    *tasksManager
 	willShutdownCtx context.Context
+	wg              *sync.WaitGroup
 
 	api.UnimplementedTaskServiceServer
 }
@@ -1054,6 +1055,9 @@ func (s *taskService) RegisterREST(ctx context.Context, mux *runtime.ServeMux, g
 
 // ListenToOutput listens to the output of a task. It streams the output from the task's file and ends when the task's state changes to done.
 func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.TaskService_ListenToOutputServer) error {
+	s.wg.Add(1)
+	defer s.wg.Done()
+
 	taskStatus := s.tasksManager.getTaskStatus(req.TaskId)
 	if taskStatus == nil {
 		return status.Error(codes.NotFound, "task not found")

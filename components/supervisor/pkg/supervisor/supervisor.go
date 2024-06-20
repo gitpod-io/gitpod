@@ -379,6 +379,8 @@ func Run(options ...RunOption) {
 		go gitStatusService.Run(gitStatusCtx, gitStatusWg)
 	}
 
+	taskServiceWg := &sync.WaitGroup{}
+
 	apiServices := []RegisterableService{
 		&statusService{
 			willShutdownCtx: willShutdownCtx,
@@ -396,6 +398,7 @@ func Run(options ...RunOption) {
 		&ControlService{portsManager: portMgmt},
 		&portService{portsManager: portMgmt},
 		&taskService{
+			wg:              taskServiceWg,
 			tasksManager:    taskManager,
 			willShutdownCtx: willShutdownCtx,
 		},
@@ -452,7 +455,7 @@ func Run(options ...RunOption) {
 	}
 
 	wg.Add(1)
-	go startAPIEndpoint(willShutdownCtx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, supervisorMetrics, topService, apiEndpointOpts...)
+	go startAPIEndpoint(ctx, willShutdownCtx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, supervisorMetrics, topService, apiEndpointOpts...)
 
 	wg.Add(1)
 	go startSSHServer(ctx, cfg, &wg)
@@ -526,6 +529,7 @@ func Run(options ...RunOption) {
 	// wait for last git status to persist
 	stopGitStatus()
 	gitStatusWg.Wait()
+	taskServiceWg.Wait()
 
 	terminalShutdownCtx, cancelTermination := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
 	defer cancelTermination()
@@ -1296,6 +1300,7 @@ func extractCloseErrorCode(errStr string) string {
 
 func startAPIEndpoint(
 	ctx context.Context,
+	willShutdownCtx context.Context,
 	cfg *Config,
 	wg *sync.WaitGroup,
 	services []RegisterableService,
@@ -1493,10 +1498,11 @@ func startAPIEndpoint(
 
 	go m.Serve()
 
+	<-willShutdownCtx.Done()
 	<-ctx.Done()
 	log.Info("shutting down API endpoint")
 	server.Shutdown(ctx)
-	// time.Sleep(10 * time.Millisecond) // give the mux some time to close all connections
+	log.Info("API endpoint shut down")
 }
 
 func tunnelOverWebSocket(tunneled *ports.TunneledPortsService, conn *gitpod.WebsocketConnection) {
