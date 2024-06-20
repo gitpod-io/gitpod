@@ -22,9 +22,9 @@ var ideOpts struct {
 	UseExperimentalConfig bool
 }
 
-// ideCmd generates ide-configmap.json
-var ideCmd = &cobra.Command{
-	Use:    "ide",
+// ideConfigmapCmd generates ide-configmap.json
+var ideConfigmapCmd = &cobra.Command{
+	Use:    "ide-configmap",
 	Hidden: true,
 	Short:  "render ide-configmap.json",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -70,14 +70,14 @@ func getRenderCtx(configFN, namespace string, useExperimentalConfig bool) (*comm
 }
 
 func init() {
-	rootCmd.AddCommand(ideCmd)
+	rootCmd.AddCommand(ideConfigmapCmd)
 
 	dir, err := os.Getwd()
 	if err != nil {
 		log.WithError(err).Fatal("Failed to get working directory")
 	}
 
-	ideCmd.PersistentFlags().StringVarP(&ideOpts.ConfigFN, "config", "c", getEnvvar("GITPOD_INSTALLER_CONFIG", filepath.Join(dir, "gitpod.config.yaml")), "path to the config file, use - for stdin")
-	ideCmd.PersistentFlags().StringVarP(&ideOpts.Namespace, "namespace", "n", getEnvvar("NAMESPACE", "default"), "namespace to deploy to")
-	ideCmd.Flags().BoolVar(&ideOpts.UseExperimentalConfig, "use-experimental-config", false, "enable the use of experimental config that is prone to be changed")
+	ideConfigmapCmd.PersistentFlags().StringVarP(&ideOpts.ConfigFN, "config", "c", getEnvvar("GITPOD_INSTALLER_CONFIG", filepath.Join(dir, "gitpod.config.yaml")), "path to the config file, use - for stdin")
+	ideConfigmapCmd.PersistentFlags().StringVarP(&ideOpts.Namespace, "namespace", "n", getEnvvar("NAMESPACE", "default"), "namespace to deploy to")
+	ideConfigmapCmd.Flags().BoolVar(&ideOpts.UseExperimentalConfig, "use-experimental-config", false, "enable the use of experimental config that is prone to be changed")
 }

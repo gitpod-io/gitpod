@@ -9,6 +9,7 @@ import {
     pathToConfigmap,
     readIDEConfigmapJson,
     readWorkspaceYaml,
+    renderInstallerIDEConfigMap,
 } from "./common";
 
 $.nothrow();
@@ -50,8 +51,9 @@ export async function updateCodeIDEConfigMapJson() {
     newJson.ideOptions.options.code = updateImages(newJson.ideOptions.options.code);
 
     // try append new pin versions
-    const previousCodeVersion = await getIDEVersionOfImage(ideConfigmapJson.ideOptions.options.code.image.replace("{{.Repository}}/", ""));
-    const installationCodeVersion = await getIDEVersionOfImage(`ide/code:${latestBuildImage.code}`);
+    const previousCodeVersion = await getIDEVersionOfImage("eu.gcr.io/gitpod-core-dev/build/" + ideConfigmapJson.ideOptions.options.code.image.replace("{{.Repository}}/", ""));
+    const installerIDEConfigMap = await renderInstallerIDEConfigMap(undefined);
+    const installationCodeVersion = await getIDEVersionOfImage(installerIDEConfigMap.ideOptions.options.code.image);
     if (installationCodeVersion.trim() === "" || previousCodeVersion.trim() === "") {
         throw new Error("installation or previous code version can't be empty");
     }

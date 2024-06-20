@@ -58,21 +58,32 @@ export const pathToConfigmap = path.resolve(
     pathToProjectRoot,
     "install/installer/pkg/components/ide-service/ide-configmap.json",
 );
+
+const IDEOptionSchema = z.object({
+    image: z.string(),
+    imageLayers: z.array(z.string()),
+    versions: z.array(
+        z.object({
+            version: z.string(),
+            image: z.string(),
+            imageLayers: z.array(z.string()),
+        }),
+    ),
+});
 const ideConfigmapJsonSchema = z.object({
     supervisorImage: z.string(),
     ideOptions: z.object({
         options: z.object({
-            code: z.object({
-                image: z.string(),
-                imageLayers: z.array(z.string()),
-                versions: z.array(
-                    z.object({
-                        version: z.string(),
-                        image: z.string(),
-                        imageLayers: z.array(z.string()),
-                    }),
-                ),
-            }),
+            code: IDEOptionSchema,
+            intellij: IDEOptionSchema,
+            goland: IDEOptionSchema,
+            pycharm: IDEOptionSchema,
+            phpstorm: IDEOptionSchema,
+            rubymine: IDEOptionSchema,
+            webstorm: IDEOptionSchema,
+            rider: IDEOptionSchema,
+            clion: IDEOptionSchema,
+            rustrover: IDEOptionSchema,
         }),
     }),
 });
@@ -88,8 +99,7 @@ export const readIDEConfigmapJson = async () => {
     };
 };
 
-// installer versions
-export const getLatestInstallerVersions = async (version?: string) => {
+const execInstaller = async (version: string | undefined, command: string) => {
     const v = version ? version : "main-gha.";
     let tagInfo: string;
     try {
@@ -109,17 +119,14 @@ export const getLatestInstallerVersions = async (version?: string) => {
                 throw new Error("Failed to parse installer version from git tag", e);
             });
     console.log("Fetching installer version for", installationVersion);
-    // exec command below to see results
-    // ```
-    // $ docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:main-gha.25759 cat /versions.yaml | yq r -
-    // ```
-    const versionData =
-        await $`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${installationVersion.trim()} cat /versions.yaml`
-            .text()
-            .catch((e) => {
-                throw new Error("Failed to fetch versions.yaml from latest installer", e);
-            });
+    return await $`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${installationVersion.trim()} ${command}`.text().catch((e) => {
+        throw new Error(`Failed to exec command \`${command}\` in installer`, e);
+    });
+}
 
+// installer versions
+export const getLatestInstallerVersions = async (version?: string) => {
+    const versionData = await execInstaller(version, "cat /versions.yaml > /tmp/versions.yaml");
     const versionObj = z.object({ version: z.string() });
     return z
         .object({
@@ -161,10 +168,18 @@ export const getLatestInstallerVersions = async (version?: string) => {
         .parse(yaml.parse(versionData));
 };
 
+export const renderInstallerIDEConfigMap = async (version?: string) => {
+    const ideConfigMapStr = await execInstaller(version, "ide-configmap");
+    const ideConfigmapJsonObj = JSON.parse(ideConfigMapStr);
+    const ideConfigmapJson = ideConfigmapJsonSchema.parse(ideConfigmapJsonObj);
+    return ideConfigmapJson;
+}
 
 export const getIDEVersionOfImage = async (img: string) => {
-    console.log("Fetching IDE version in image:", `oci-tool fetch image eu.gcr.io/gitpod-core-dev/build/${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`)
-    return await $`oci-tool fetch image eu.gcr.io/gitpod-core-dev/build/${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`.text().catch((e) => {
+    console.log("Fetching IDE version in image:", `oci-tool fetch image ${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`)
+    const version = await $`oci-tool fetch image ${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`.text().catch((e) => {
         throw new Error("Failed to fetch ide version in image", e);
     }).then(str => str.replaceAll("\n", ""));
+    console.log("IDE version in image:", version);
+    return version;
 }
