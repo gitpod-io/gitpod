@@ -172,7 +172,10 @@ export const getLatestInstallerVersions = async (version?: string) => {
 
 export const renderInstallerIDEConfigMap = async (version?: string) => {
     const installationVersion = await getInstallerVersion(version);
-    const ideConfigMapStr = await $`docker run --rm eu.gcr.io/gitpod-core-dev/build/installer:${installationVersion} config init --overwrite --log-level=error && cat gitpod.config.yaml | docker run -i --rm eu.gcr.io/gitpod-core-dev/build/installer:${installationVersion} ide-configmap -c -`.text().catch((e) => {
+    await $`docker run --rm -v /tmp:/tmp eu.gcr.io/gitpod-core-dev/build/installer:${installationVersion} config init --overwrite --log-level=error -c /tmp/gitpod.config.yaml`.catch((e) => {
+        throw new Error("Failed to render gitpod.config.yaml", e);
+    })
+    const ideConfigMapStr = await $`cat /tmp/gitpod.config.yaml | docker run -i --rm eu.gcr.io/gitpod-core-dev/build/installer:${installationVersion} ide-configmap -c -`.text().catch((e) => {
         throw new Error(`Failed to render ide-configmap`, e);
     });
     const ideConfigmapJsonObj = JSON.parse(ideConfigMapStr);
