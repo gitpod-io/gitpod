@@ -18,5 +18,8 @@
     "changeTitle": "add open/preview",
     "changeUrl": "https://github.com/akosyakov/parcel-demo/tree/master"
   },
+  "workspace": {
+    "id":  "eb276a90-0970-49fb-947f-3cefe856efdc"
+  },
   "status": "building"
 }

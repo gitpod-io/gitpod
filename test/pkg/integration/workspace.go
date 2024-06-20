@@ -328,6 +328,7 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 
 type LaunchWorkspaceOptions struct {
 	ContextURL  string
+	ProjectID   string
 	IDESettings *protocol.IDESettings
 }
 
@@ -381,6 +382,7 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 
 		resp, err = server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
 			ContextURL:                         opts.ContextURL,
+			ProjectId:                          opts.ProjectID,
 			OrganizationId:                     orgId,
 			IgnoreRunningWorkspaceOnSameCommit: true,
 			StartWorkspaceOptions: protocol.StartWorkspaceOptions{

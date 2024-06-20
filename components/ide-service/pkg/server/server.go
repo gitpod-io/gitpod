@@ -386,15 +386,51 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 		}
 	}
 
-	if req.Type == api.WorkspaceType_REGULAR {
-		var ideSettings *IDESettings
-		var wsContext *WorkspaceContext
+	var ideSettings *IDESettings
+	if req.IdeSettings != "" {
+		if err := json.Unmarshal([]byte(req.IdeSettings), &ideSettings); err != nil {
+			log.WithError(err).WithField("ideSetting", req.IdeSettings).Error("failed to parse ide settings")
+		}
+	}
 
-		if req.IdeSettings != "" {
-			if err := json.Unmarshal([]byte(req.IdeSettings), &ideSettings); err != nil {
-				log.WithError(err).WithField("ideSetting", req.IdeSettings).Error("failed to parse ide settings")
+	pinnedIDEversions := make(map[string]string)
+
+	if ideSettings != nil {
+		pinnedIDEversions = ideSettings.PinnedIDEversions
+	}
+
+	getUserIDEImage := func(ide string, useLatest bool) string {
+		ideOption := ideConfig.IdeOptions.Options[ide]
+		if useLatest && ideOption.LatestImage != "" {
+			return ideOption.LatestImage
+		}
+
+		if version, ok := pinnedIDEversions[ide]; ok {
+			if idx := slices.IndexFunc(ideOption.Versions, func(v config.IDEVersion) bool { return v.Version == version }); idx >= 0 {
+				return ideOption.Versions[idx].Image
 			}
 		}
+
+		return ideOption.Image
+	}
+
+	getUserImageLayers := func(ide string, useLatest bool) []string {
+		ideOption := ideConfig.IdeOptions.Options[ide]
+		if useLatest {
+			return ideOption.LatestImageLayers
+		}
+
+		if version, ok := pinnedIDEversions[ide]; ok {
+			if idx := slices.IndexFunc(ideOption.Versions, func(v config.IDEVersion) bool { return v.Version == version }); idx >= 0 {
+				return ideOption.Versions[idx].ImageLayers
+			}
+		}
+
+		return ideOption.ImageLayers
+	}
+
+	if req.Type == api.WorkspaceType_REGULAR {
+		var wsContext *WorkspaceContext
 
 		if req.Context != "" {
 			if err := json.Unmarshal([]byte(req.Context), &wsContext); err != nil {
@@ -404,44 +440,12 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 
 		userIdeName := ""
 		useLatest := false
-		pinnedIDEversions := make(map[string]string)
 		resultingIdeName := ideConfig.IdeOptions.DefaultIde
 		chosenIDE := ideConfig.IdeOptions.Options[resultingIdeName]
 
 		if ideSettings != nil {
 			userIdeName = ideSettings.DefaultIde
 			useLatest = ideSettings.UseLatestVersion
-			pinnedIDEversions = ideSettings.PinnedIDEversions
-		}
-
-		getUserIDEImage := func(ide string) string {
-			ideOption := ideConfig.IdeOptions.Options[ide]
-			if useLatest && ideOption.LatestImage != "" {
-				return ideOption.LatestImage
-			}
-
-			if version, ok := pinnedIDEversions[ide]; ok {
-				if idx := slices.IndexFunc(ideOption.Versions, func(v config.IDEVersion) bool { return v.Version == version }); idx >= 0 {
-					return ideOption.Versions[idx].Image
-				}
-			}
-
-			return ideOption.Image
-		}
-
-		getUserImageLayers := func(ide string) []string {
-			ideOption := ideConfig.IdeOptions.Options[ide]
-			if useLatest {
-				return ideOption.LatestImageLayers
-			}
-
-			if version, ok := pinnedIDEversions[ide]; ok {
-				if idx := slices.IndexFunc(ideOption.Versions, func(v config.IDEVersion) bool { return v.Version == version }); idx >= 0 {
-					return ideOption.Versions[idx].ImageLayers
-				}
-			}
-
-			return ideOption.ImageLayers
 		}
 
 		if userIdeName != "" {
@@ -460,17 +464,17 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 		}
 
 		// we always need WebImage for when the user chooses a desktop ide
-		resp.WebImage = getUserIDEImage(ideConfig.IdeOptions.DefaultIde)
-		resp.IdeImageLayers = getUserImageLayers(ideConfig.IdeOptions.DefaultIde)
+		resp.WebImage = getUserIDEImage(ideConfig.IdeOptions.DefaultIde, useLatest)
+		resp.IdeImageLayers = getUserImageLayers(ideConfig.IdeOptions.DefaultIde, useLatest)
 
 		var desktopImageLayer string
 		var desktopUserImageLayers []string
 		if chosenIDE.Type == config.IDETypeDesktop {
-			desktopImageLayer = getUserIDEImage(resultingIdeName)
-			desktopUserImageLayers = getUserImageLayers(resultingIdeName)
+			desktopImageLayer = getUserIDEImage(resultingIdeName, useLatest)
+			desktopUserImageLayers = getUserImageLayers(resultingIdeName, useLatest)
 		} else {
-			resp.WebImage = getUserIDEImage(resultingIdeName)
-			resp.IdeImageLayers = getUserImageLayers(resultingIdeName)
+			resp.WebImage = getUserIDEImage(resultingIdeName, useLatest)
+			resp.IdeImageLayers = getUserImageLayers(resultingIdeName, useLatest)
 		}
 
 		// TODO (se) this should be handled on the surface (i.e. server or even dashboard) and not passed as a special workspace context down here.
@@ -478,8 +482,8 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 		if ideName != "" {
 			resp.RefererIde = ideName
 			resultingIdeName = ideName
-			desktopImageLayer = getUserIDEImage(ideName)
-			desktopUserImageLayers = getUserImageLayers(ideName)
+			desktopImageLayer = getUserIDEImage(ideName, useLatest)
+			desktopUserImageLayers = getUserImageLayers(ideName, useLatest)
 		}
 
 		if desktopImageLayer != "" {
@@ -510,30 +514,35 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 	if req.Type == api.WorkspaceType_PREBUILD && ok {
 		imageLayers := make(map[string]struct{})
 		for _, alias := range jbGW.DesktopIDEs {
+			if _, ok := ideConfig.IdeOptions.Options[alias]; !ok {
+				continue
+			}
 			prebuilds := getPrebuilds(wsConfig, alias)
 			if prebuilds != nil {
+				if prebuilds.Version != "latest" && prebuilds.Version != "stable" && prebuilds.Version != "both" {
+					continue
+				}
+
 				if prebuilds.Version != "latest" {
-					if ide, ok := ideConfig.IdeOptions.Options[alias]; ok {
-						for _, ideImageLayer := range ide.ImageLayers {
-							if _, ok := imageLayers[ideImageLayer]; !ok {
-								imageLayers[ideImageLayer] = struct{}{}
-								resp.IdeImageLayers = append(resp.IdeImageLayers, ideImageLayer)
-							}
+					layers := getUserImageLayers(alias, false)
+					for _, layer := range layers {
+						if _, ok := imageLayers[layer]; !ok {
+							imageLayers[layer] = struct{}{}
+							resp.IdeImageLayers = append(resp.IdeImageLayers, layer)
 						}
-						resp.IdeImageLayers = append(resp.IdeImageLayers, ide.Image)
 					}
+					resp.IdeImageLayers = append(resp.IdeImageLayers, getUserIDEImage(alias, false))
 				}
 
 				if prebuilds.Version != "stable" {
-					if ide, ok := ideConfig.IdeOptions.Options[alias]; ok {
-						for _, latestIdeImageLayer := range ide.LatestImageLayers {
-							if _, ok := imageLayers[latestIdeImageLayer]; !ok {
-								imageLayers[latestIdeImageLayer] = struct{}{}
-								resp.IdeImageLayers = append(resp.IdeImageLayers, latestIdeImageLayer)
-							}
+					layers := getUserImageLayers(alias, true)
+					for _, layer := range layers {
+						if _, ok := imageLayers[layer]; !ok {
+							imageLayers[layer] = struct{}{}
+							resp.IdeImageLayers = append(resp.IdeImageLayers, layer)
 						}
-						resp.IdeImageLayers = append(resp.IdeImageLayers, ide.LatestImage)
 					}
+					resp.IdeImageLayers = append(resp.IdeImageLayers, getUserIDEImage(alias, true))
 				}
 			}
 		}

@@ -121,7 +121,6 @@ func ParseConfig(ctx context.Context, res remotes.Resolver, b []byte) (*config.I
 		}
 		cfg.IdeOptions.Options[id] = option
 	}
-	log.WithField("cfg", log.TrustedValueWrap{Value: cfg}).Info("==============ParsedIDEConfig")
 
 	return &cfg, nil
 }

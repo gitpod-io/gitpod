@@ -511,36 +511,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         return dbResults as WorkspaceAndOwner[];
     }
 
-    /**
-     * @deprecated delete me end of June 2024
-     */
-    public async findWorkspacesForGarbageCollection(minAgeInDays: number, limit: number): Promise<WorkspaceAndOwner[]> {
-        const workspaceRepo = await this.getWorkspaceRepo();
-
-        // AND ws.softDeletedTime = ''    // enables usage of: ind_softDeletion
-        const dbResults = await workspaceRepo.query(
-            `
-                SELECT ws.id AS id,
-                       ws.ownerId AS ownerId
-                    FROM d_b_workspace AS ws
-                    LEFT OUTER JOIN d_b_workspace_instance AS wsi ON ws.id=wsi.workspaceid
-                    WHERE	ws.deleted = 0
-                        AND ws.type='regular'
-                        AND ws.softDeletedTime = ''
-                        AND ws.softDeleted IS NULL
-                        AND ws.pinned = 0
-                        AND ws.deletionEligibilityTime = ''
-                        AND ws.creationTime < NOW() - INTERVAL ? DAY
-                    GROUP BY ws.id, ws.ownerId
-                    HAVING MAX(GREATEST(wsi.creationTime, wsi.startedTime, wsi.stoppedTime)) < NOW() - INTERVAL ? DAY OR MAX(wsi.creationTime) IS NULL
-                    LIMIT ?;
-            `,
-            [minAgeInDays, minAgeInDays, limit],
-        );
-
-        return dbResults as WorkspaceAndOwner[];
-    }
-
     public async findWorkspacesForPurging(
         minContentDeletionTimeInDays: number,
         limit: number,
