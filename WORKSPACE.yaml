@@ -20,7 +20,7 @@ defaultArgs:
   rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2024.1.3.tar.gz"
   webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2024.1.4.tar.gz"
   riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2024.1.3.tar.gz"
-  clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2024.1.3.tar.gz"
+  clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2024.1.4.tar.gz"
   rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2024.1.2.tar.gz"
   jbBackendVersion: "latest"
   dockerVersion: "20.10.24"

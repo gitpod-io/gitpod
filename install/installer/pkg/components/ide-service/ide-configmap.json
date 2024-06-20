@@ -511,6 +511,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.1.4",
+            "image": "{{.Repository}}/ide/clion:commit-a3caec67fa572ef9d8b7f0fc93247ccb112472c9",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-a3caec67fa572ef9d8b7f0fc93247ccb112472c9",
+              "{{.Repository}}/ide/jb-launcher:commit-a3caec67fa572ef9d8b7f0fc93247ccb112472c9"
+            ]
+          },
+          {
             "version": "2024.1.2",
             "image": "{{.Repository}}/ide/clion:commit-9823a689c6259339239381e2840e29149fc8d195",
             "imageLayers": [
