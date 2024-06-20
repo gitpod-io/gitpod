@@ -133,7 +133,6 @@ import { ContextService } from "./workspace/context-service";
 import { RateLimitter } from "./rate-limitter";
 import { AnalyticsController } from "./analytics-controller";
 import { InstallationAdminCleanup } from "./jobs/installation-admin-cleanup";
-import { CapStatus } from "./jobs/cap-status";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -374,7 +373,6 @@ export const productionContainerModule = new ContainerModule(
         bind(JobRunner).toSelf().inSingletonScope();
         bind(RelationshipUpdateJob).toSelf().inSingletonScope();
         bind(InstallationAdminCleanup).toSelf().inSingletonScope();
-        bind(CapStatus).toSelf().inSingletonScope();
 
         // Redis
         bind(Redis).toDynamicValue((ctx) => {

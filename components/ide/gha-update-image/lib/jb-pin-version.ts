@@ -8,6 +8,8 @@ import {
     readIDEConfigmapJson,
     readWorkspaceYaml,
     IWorkspaceYaml,
+    getIDEVersionOfImage,
+    renderInstallerIDEConfigMap,
 } from "./common";
 
 const configmap = await readIDEConfigmapJson().then((d) => d.rawObj);
@@ -41,16 +43,16 @@ export const appendPinVersionsIntoIDEConfigMap = async (updatedIDEs: string[] | 
 
         console.debug(`Processing ${ide} ${ideVersion}...`);
 
+        const ideConfigMap = await renderInstallerIDEConfigMap(undefined)
+
         if (Object.keys(configmap.ideOptions.options).includes(ide)) {
             const { version: installerImageVersion } = versionObject;
 
-            const installerIdeVersion = {
-                version: ideVersion,
-                image: `{{.Repository}}/ide/${ide}:${installerImageVersion}`,
-                imageLayers: [
-                    `{{.Repository}}/ide/jb-backend-plugin:${latestInstallerVersions.components.workspace.desktopIdeImages.jbBackendPlugin.version}`,
-                    `{{.Repository}}/ide/jb-launcher:${latestInstallerVersions.components.workspace.desktopIdeImages.jbLauncher.version}`,
-                ],
+            const previousVersion = await getIDEVersionOfImage(ideConfigMap.ideOptions.options[ide].image);
+            const previousInfo = {
+                version: previousVersion,
+                image: ideConfigMap.ideOptions.options[ide].image,
+                imageLayers: ideConfigMap.ideOptions.options[ide].imageLayers,
             };
 
             if (!updatedIDEs || !updatedIDEs.includes(ide)) {
@@ -60,8 +62,8 @@ export const appendPinVersionsIntoIDEConfigMap = async (updatedIDEs: string[] | 
             if (!configmap.ideOptions.options[ide].versions) {
                 configmap.ideOptions.options[ide].versions = []
             }
-            console.log(`Added ${ide} (new ${installerIdeVersion.image})`);
-            configmap.ideOptions.options[ide].versions.unshift(installerIdeVersion);
+            console.log(`Added ${ide} (new ${previousInfo.image})`);
+            configmap.ideOptions.options[ide].versions.unshift(previousInfo);
         }
     }
 

@@ -4,10 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { PageHeading } from "@podkit/layout/PageHeading";
-import { useDocumentTitle } from "../../hooks/use-document-title";
 import { useQueryParams } from "../../hooks/use-query-params";
 import { PrebuildListEmptyState } from "./PrebuildListEmptyState";
 import { PrebuildListErrorState } from "./PrebuildListErrorState";
@@ -38,14 +36,22 @@ export type Sort = {
 
 const pageSize = 30;
 
-const PrebuildsListPage: FC = () => {
-    useDocumentTitle("Prebuilds");
-
+type Props = {
+    initialFilter?: Filter;
+    organizationId?: string;
+    /**
+     * If true, the configuration dropdown and the "Run Prebuild" button will be hidden.
+     */
+    hideOrgSpecificControls?: boolean;
+};
+export const PrebuildsList = ({ initialFilter, organizationId, hideOrgSpecificControls }: Props) => {
     const history = useHistory();
     const params = useQueryParams();
 
-    const [statusFilter, setPrebuildsFilter] = useState(parseStatus(params));
-    const [configurationFilter, setConfigurationFilter] = useState(parseConfigurationId(params));
+    const [statusFilter, setPrebuildsFilter] = useState(parseStatus(params) ?? initialFilter?.status);
+    const [configurationFilter, setConfigurationFilter] = useState(
+        parseConfigurationId(params) ?? initialFilter?.configurationId,
+    );
 
     const [sortBy, setSortBy] = useState(parseSortBy(params));
     const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
@@ -98,13 +104,13 @@ const PrebuildsListPage: FC = () => {
             params.set("prebuilds", statusFilter);
         }
 
-        if (configurationFilter) {
+        if (configurationFilter && configurationFilter !== initialFilter?.configurationId) {
             params.set("configurationId", configurationFilter);
         }
 
         params.toString();
         history.replace({ search: `?${params.toString()}` });
-    }, [history, statusFilter, configurationFilter]);
+    }, [history, statusFilter, configurationFilter, initialFilter?.configurationId]);
 
     const {
         data,
@@ -119,6 +125,7 @@ const PrebuildsListPage: FC = () => {
         error,
     } = useListOrganizationPrebuildsQuery({
         filter: apiFilter,
+        organizationId,
         sort: apiSort,
         pageSize,
     });
@@ -165,43 +172,40 @@ const PrebuildsListPage: FC = () => {
 
     return (
         <>
-            <div className="app-container mb-8">
-                <PageHeading title="Prebuilds" subtitle="Review prebuilds of your added repositories." />
+            {isLoading && <LoadingState />}
 
-                {isLoading && <LoadingState />}
+            {showTable && (
+                <PrebuildsTable
+                    prebuilds={prebuilds}
+                    // we check isPreviousData too so we don't show spinner if it's a background refresh
+                    isSearching={isFetching && isPreviousData}
+                    isFetchingNextPage={isFetchingNextPage}
+                    hasNextPage={!!hasNextPage}
+                    filter={filter}
+                    sort={sort}
+                    hasMoreThanOnePage={hasMoreThanOnePage}
+                    hideOrgSpecificControls={!!hideOrgSpecificControls}
+                    onLoadNextPage={() => fetchNextPage()}
+                    onFilterChange={handleFilterChange}
+                    onSort={handleSort}
+                    onTriggerPrebuild={() => setShowRunPrebuildModal(true)}
+                />
+            )}
 
-                {showTable && (
-                    <PrebuildsTable
-                        prebuilds={prebuilds}
-                        // we check isPreviousData too so we don't show spinner if it's a background refresh
-                        isSearching={isFetching && isPreviousData}
-                        isFetchingNextPage={isFetchingNextPage}
-                        hasNextPage={!!hasNextPage}
-                        filter={filter}
-                        sort={sort}
-                        hasMoreThanOnePage={hasMoreThanOnePage}
-                        onLoadNextPage={() => fetchNextPage()}
-                        onFilterChange={handleFilterChange}
-                        onSort={handleSort}
-                        onTriggerPrebuild={() => setShowRunPrebuildModal(true)}
-                    />
-                )}
+            {showRunPrebuildModal && (
+                <RunPrebuildModal
+                    onClose={() => setShowRunPrebuildModal(false)}
+                    onRun={() => {
+                        refetchPrebuilds();
+                    }}
+                    defaultRepositoryId={configurationFilter}
+                />
+            )}
 
-                {showRunPrebuildModal && (
-                    <RunPrebuildModal
-                        onClose={() => setShowRunPrebuildModal(false)}
-                        onRun={() => {
-                            refetchPrebuilds();
-                        }}
-                        defaultRepositoryId={configurationFilter}
-                    />
-                )}
-
-                {!showTable && !isLoading && (
-                    <PrebuildListEmptyState onTriggerPrebuild={() => setShowRunPrebuildModal(true)} />
-                )}
-                {isError && <PrebuildListErrorState error={error} />}
-            </div>
+            {!showTable && !isLoading && (
+                <PrebuildListEmptyState onTriggerPrebuild={() => setShowRunPrebuildModal(true)} />
+            )}
+            {isError && <PrebuildListErrorState error={error} />}
         </>
     );
 };
@@ -257,5 +261,3 @@ const parseConfigurationId = (params: URLSearchParams): string | undefined => {
 
     return undefined;
 };
-
-export default PrebuildsListPage;

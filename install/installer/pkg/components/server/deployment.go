@@ -142,6 +142,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GoogleCloudProfilerEnabled {
+			env = append(env, corev1.EnvVar{
+				Name:  "GOOGLE_CLOUD_PROFILER",
+				Value: "true",
+			})
+		}
+		return nil
+	})
+
 	volumes := make([]corev1.Volume, 0)
 	volumeMounts := make([]corev1.VolumeMount, 0)
 

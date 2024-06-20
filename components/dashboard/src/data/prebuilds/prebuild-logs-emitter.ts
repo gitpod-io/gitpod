@@ -4,37 +4,32 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import EventEmitter from "events";
 import { prebuildClient } from "../../service/public-api";
 import { useEffect, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ReplayableEventEmitter } from "../../utils";
 import { Disposable } from "@gitpod/gitpod-protocol";
 
-/**
- *
- * @param prebuildId ID of the prebuild to watch
- * @param taskId ID of the task to watch. If `undefined`, watch will not be started.
- * @returns
- */
-export function usePrebuildLogsEmitter(prebuildId: string, taskId?: string) {
-    const [emitter] = useState(new EventEmitter());
-    const [isLoading, setIsLoading] = useState(true);
-    const [disposable, setDisposable] = useState<Disposable | undefined>();
+type LogEventTypes = {
+    error: [Error];
+    logs: [string];
+    "logs-error": [ApplicationError];
+};
 
-    useEffect(() => {
-        setIsLoading(true);
-    }, [prebuildId, taskId]);
+/**
+ * Watches the logs of a prebuild task by returning an EventEmitter that emits logs, logs-error, and error events.
+ * @param prebuildId ID of the prebuild to watch
+ * @param taskId ID of the task to watch.
+ */
+export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
+    const [emitter] = useState(new ReplayableEventEmitter<LogEventTypes>());
+    const [disposable, setDisposable] = useState<Disposable | undefined>();
 
     useEffect(() => {
         // The abortcontroller is meant to abort all activity on unmounting this effect
         const abortController = new AbortController();
         const watch = async () => {
-            if (!prebuildId || !taskId) {
-                setIsLoading(false);
-                return;
-            }
-
             let dispose: () => void | undefined;
             abortController.signal.addEventListener("abort", () => {
                 dispose?.();
@@ -45,22 +40,18 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId?: string) {
                 throw new ApplicationError(ErrorCodes.NOT_FOUND, `Prebuild ${prebuildId} not found`);
             }
 
-            setIsLoading(true);
-
             const task = {
                 taskId,
                 logUrl: "",
             };
             if (taskId === "image-build") {
                 if (!prebuild.status?.imageBuildLogUrl) {
-                    setIsLoading(false);
                     throw new ApplicationError(ErrorCodes.NOT_FOUND, `Image build logs URL not found in response`);
                 }
                 task.logUrl = prebuild.status?.imageBuildLogUrl;
             } else {
                 const logUrl = prebuild?.status?.taskLogs?.find((log) => log.taskId === taskId)?.logUrl;
                 if (!logUrl) {
-                    setIsLoading(false);
                     throw new ApplicationError(ErrorCodes.NOT_FOUND, `Task ${taskId} not found`);
                 }
 
@@ -80,9 +71,7 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId?: string) {
                 {
                     includeCredentials: true,
                     maxBackoffTimes: 3,
-                    onEnd: () => {
-                        setIsLoading(false);
-                    },
+                    onEnd: () => {},
                 },
             );
         };
@@ -101,9 +90,10 @@ export function usePrebuildLogsEmitter(prebuildId: string, taskId?: string) {
 
         return () => {
             abortController.abort();
+            emitter.clearLog();
             emitter.removeAllListeners();
         };
     }, [emitter, prebuildId, taskId]);
 
-    return { emitter, isLoading, disposable };
+    return { emitter, disposable };
 }

@@ -57,6 +57,7 @@
     "setimmediate": "^1.0.5",
     "stream-browserify": "^2.0.1",
     "tailwind-merge": "^1.14.0",
+    "tailwindcss": "^3.4.4",
     "tailwindcss-animate": "^1.0.7",
     "ua-parser-js": "^1.0.36",
     "url": "^0.11.1",

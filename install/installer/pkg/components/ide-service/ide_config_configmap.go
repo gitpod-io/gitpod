@@ -25,7 +25,7 @@ import (
 //go:embed ide-configmap.json
 var ideConfigFile string
 
-func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+func GenerateIDEConfigmap(ctx *common.RenderContext) (*ide_config.IDEConfig, error) {
 	resolveLatestImage := func(name string, tag string, bundledLatest versions.Versioned) string {
 		resolveLatest := true
 		if ctx.Config.Components != nil && ctx.Config.Components.IDE != nil && ctx.Config.Components.IDE.ResolveLatest != nil {
@@ -115,7 +115,14 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if idecfg.IdeOptions.Options[idecfg.IdeOptions.DefaultDesktopIde].Type != ide_config.IDETypeDesktop {
 		return nil, fmt.Errorf("default desktop IDE '%s' does not point to a desktop IDE option", idecfg.IdeOptions.DefaultIde)
 	}
+	return &idecfg, nil
+}
 
+func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	idecfg, err := GenerateIDEConfigmap(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate ide-config config: %w", err)
+	}
 	fc, err := common.ToJSONString(idecfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal ide-config config: %w", err)

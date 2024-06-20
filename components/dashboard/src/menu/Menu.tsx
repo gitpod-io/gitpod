@@ -21,10 +21,7 @@ import { getAdminTabs } from "../admin/admin.routes";
 import classNames from "classnames";
 import { User, RoleOrPermission } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
-import { useHasRolePermission } from "../data/organizations/members-query";
-import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { ConfigurationsMigrationCoachmark } from "../repositories/coachmarks/MigrationCoachmark";
-import { useFeatureFlag, useHasConfigurationsAndPrebuildsEnabled } from "../data/featureflag-query";
 
 interface Entry {
     title: string;
@@ -128,33 +125,19 @@ export default function Menu() {
     );
 }
 
+const leftMenu: Entry[] = [
+    {
+        title: "Workspaces",
+        link: "/workspaces",
+        alternatives: ["/"],
+    },
+];
+
 type OrgPagesNavProps = {
     className?: string;
 };
 const OrgPagesNav: FC<OrgPagesNavProps> = ({ className }) => {
     const location = useLocation();
-    const hasMemberPermission = useHasRolePermission(OrganizationRole.MEMBER);
-    const configurationsEnabled = useHasConfigurationsAndPrebuildsEnabled();
-    const prebuildsInMenu = useFeatureFlag("showPrebuildsMenuItem");
-
-    const leftMenu: Entry[] = useMemo(() => {
-        const menus = [
-            {
-                title: "Workspaces",
-                link: "/workspaces",
-                alternatives: ["/"],
-            },
-        ];
-        // collaborators can't access projects
-        if (hasMemberPermission && (!configurationsEnabled || !prebuildsInMenu)) {
-            menus.push({
-                title: "Projects",
-                link: `/projects`,
-                alternatives: [] as string[],
-            });
-        }
-        return menus;
-    }, [configurationsEnabled, hasMemberPermission, prebuildsInMenu]);
 
     return (
         <div

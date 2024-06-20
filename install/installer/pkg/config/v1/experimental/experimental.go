@@ -274,6 +274,8 @@ type ServerConfig struct {
 
 	// @deprecated use containerRegistry.privateBaseImageAllowList instead
 	DefaultBaseImageRegistryWhiteList []string `json:"defaultBaseImageRegistryWhitelist"`
+
+	GoogleCloudProfilerEnabled bool `json:"gcpProfilerEnabled,omitempty"`
 }
 
 type ProxyConfig struct {

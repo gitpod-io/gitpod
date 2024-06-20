@@ -102,7 +102,6 @@ export interface WorkspaceDB {
         limit?: number,
         type?: WorkspaceType,
     ): Promise<WorkspaceAndOwner[]>;
-    findWorkspacesForGarbageCollection(minAgeInDays: number, limit: number): Promise<WorkspaceAndOwner[]>;
     findWorkspacesForContentDeletion(
         minSoftDeletedTimeInDays: number,
         limit: number,

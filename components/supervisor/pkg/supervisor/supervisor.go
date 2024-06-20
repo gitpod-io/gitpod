@@ -341,6 +341,7 @@ func Run(options ...RunOption) {
 		}
 	}
 
+	willShutdownCtx, fireWillShutdown := context.WithCancel(ctx)
 	termMux := terminal.NewMux()
 	termMuxSrv := terminal.NewMuxTerminalService(termMux)
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
@@ -378,7 +379,8 @@ func Run(options ...RunOption) {
 		go gitStatusService.Run(gitStatusCtx, gitStatusWg)
 	}
 
-	willShutdownCtx, fireWillShutdown := context.WithCancel(ctx)
+	taskServiceWg := &sync.WaitGroup{}
+
 	apiServices := []RegisterableService{
 		&statusService{
 			willShutdownCtx: willShutdownCtx,
@@ -395,7 +397,11 @@ func Run(options ...RunOption) {
 		NewInfoService(cfg, cstate, gitpodService),
 		&ControlService{portsManager: portMgmt},
 		&portService{portsManager: portMgmt},
-		&taskService{tasksManager: taskManager},
+		&taskService{
+			wg:              taskServiceWg,
+			tasksManager:    taskManager,
+			willShutdownCtx: willShutdownCtx,
+		},
 	}
 	apiServices = append(apiServices, additionalServices...)
 
@@ -523,6 +529,7 @@ func Run(options ...RunOption) {
 	// wait for last git status to persist
 	stopGitStatus()
 	gitStatusWg.Wait()
+	taskServiceWg.Wait()
 
 	terminalShutdownCtx, cancelTermination := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
 	defer cancelTermination()
@@ -1364,7 +1371,7 @@ func startAPIEndpoint(
 			reg.RegisterGRPC(grpcServer)
 		}
 		if reg, ok := reg.(RegisterableRESTService); ok {
-			err := reg.RegisterREST(restMux, grpcEndpoint)
+			err := reg.RegisterREST(ctx, restMux, grpcEndpoint)
 			if err != nil {
 				log.WithError(err).Fatal("cannot register REST service")
 			}
@@ -1480,13 +1487,19 @@ func startAPIEndpoint(
 		}))
 		routes.Handle("/_supervisor"+pprof.Path, http.StripPrefix("/_supervisor", pprof.Handler()))
 	}
-	go http.Serve(httpMux, routes)
+
+	server := &http.Server{Handler: routes}
+	go func(l net.Listener) {
+		if err := server.Serve(l); err != http.ErrServerClosed {
+			log.WithError(err).Error("API endpoint closed")
+		}
+	}(httpMux)
 
 	go m.Serve()
 
 	<-ctx.Done()
 	log.Info("shutting down API endpoint")
-	l.Close()
+	server.Shutdown(ctx)
 }
 
 func tunnelOverWebSocket(tunneled *ports.TunneledPortsService, conn *gitpod.WebsocketConnection) {
