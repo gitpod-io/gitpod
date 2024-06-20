@@ -19,7 +19,33 @@
     "changeUrl": "https://github.com/akosyakov/parcel-demo/tree/master"
   },
   "workspace": {
-    "id":  "eb276a90-0970-49fb-947f-3cefe856efdc"
+    "id":  "eb276a90-0970-49fb-947f-3cefe856efdc",
+    "config": {
+      "tasks": [
+        {
+          "init": "true",
+          "command": "npm install"
+        },
+        {
+          "command": "npm run build"
+        },
+        {
+          "command": "npm run start"
+        }
+      ],
+      "jetbrains": {
+        "intellij": {
+          "prebuilds": {
+            "version": "both"
+          }
+        },
+        "clion": {
+          "prebuilds": {
+            "version": "stable"
+          }
+        }
+      }
+    }
   },
   "status": "building"
 }

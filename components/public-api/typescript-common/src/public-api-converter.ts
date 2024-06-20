@@ -1194,8 +1194,10 @@ export class PublicAPIConverter {
 
     toPrebuildStatus(gitpodHost: string, prebuild: PrebuildWithStatus): PrebuildStatus {
         const tasks: TaskLog[] = [];
+        let taskIndex = 0;
         if (prebuild.workspace?.config?.tasks) {
             for (let i = 0; i < prebuild.workspace.config.tasks.length; i++) {
+                taskIndex = i;
                 const task = prebuild.workspace.config.tasks[i];
                 tasks.push(
                     new TaskLog({
@@ -1211,6 +1213,41 @@ export class PublicAPIConverter {
                 );
             }
         }
+        const jetbrainsIdes = prebuild.workspace.config.jetbrains;
+        if (jetbrainsIdes) {
+            for (const ide in jetbrainsIdes) {
+                const ideConfig = jetbrainsIdes[ide as keyof typeof jetbrainsIdes]!;
+                if (!ideConfig.prebuilds) {
+                    continue;
+                }
+
+                if (ideConfig.prebuilds.version === "latest" || ideConfig.prebuilds.version === "both") {
+                    tasks.push(
+                        new TaskLog({
+                            taskId: `jetbrains-warmup-${ide}-latest`,
+                            taskLabel: `JetBrains ${ide} Warmup (latest)`,
+                            logUrl: new URL(
+                                getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
+                                gitpodHost,
+                            ).toString(),
+                        }),
+                    );
+                }
+                if (ideConfig.prebuilds.version === "stable" || ideConfig.prebuilds.version === "both") {
+                    tasks.push(
+                        new TaskLog({
+                            taskId: `jetbrains-warmup-${ide}-stable`,
+                            taskLabel: `JetBrains ${ide} Warmup (stable)`,
+                            logUrl: new URL(
+                                getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
+                                gitpodHost,
+                            ).toString(),
+                        }),
+                    );
+                }
+            }
+        }
+
         return new PrebuildStatus({
             phase: new PrebuildPhase({
                 name: this.toPrebuildPhase(prebuild.status),
