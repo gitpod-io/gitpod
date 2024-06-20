@@ -211,10 +211,10 @@ export const AppRoutes = () => {
                             <Route path="/repositories/:id" component={ConfigurationDetailPage} />
 
                             {/* basic redirect for old team slugs */}
-                            <Route path={["/t/"]} exact>
+                            <Route path={"/t/"} exact>
                                 <Redirect to="/repositories" />
                             </Route>
-                            <Route path={["/projects/*"]}>
+                            <Route path={"/projects/"}>
                                 <Redirect to="/repositories" />
                             </Route>
                             {/* redirect for old user settings slugs */}
