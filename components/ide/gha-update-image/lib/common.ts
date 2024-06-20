@@ -99,7 +99,7 @@ export const readIDEConfigmapJson = async () => {
     };
 };
 
-const execInstaller = async (version: string | undefined, command: string) => {
+const getInstallerVersion = async (version: string | undefined) => {
     const v = version ? version : "main-gha.";
     let tagInfo: string;
     try {
@@ -118,15 +118,17 @@ const execInstaller = async (version: string | undefined, command: string) => {
             .catch((e) => {
                 throw new Error("Failed to parse installer version from git tag", e);
             });
-    console.log("Fetching installer version for", installationVersion);
-    return await $`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${installationVersion.trim()} ${command}`.text().catch((e) => {
-        throw new Error(`Failed to exec command \`${command}\` in installer`, e);
-    });
+    return installationVersion;
 }
 
 // installer versions
 export const getLatestInstallerVersions = async (version?: string) => {
-    const versionData = await execInstaller(version, "cat /versions.yaml");
+    const installationVersion = await getInstallerVersion(version);
+    console.log("Fetching installer versions for", installationVersion);
+    const versionData = await $`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${installationVersion} cat /versions.yaml`.text().catch((e) => {
+        throw new Error(`Failed to get installer versions`, e);
+    });
+
     const versionObj = z.object({ version: z.string() });
     return z
         .object({
@@ -169,15 +171,18 @@ export const getLatestInstallerVersions = async (version?: string) => {
 };
 
 export const renderInstallerIDEConfigMap = async (version?: string) => {
-    const ideConfigMapStr = await execInstaller(version, "ide-configmap");
+    const installationVersion = await getInstallerVersion(version);
+    const ideConfigMapStr = await $`docker run --rm eu.gcr.io/gitpod-core-dev/build/installer:${installationVersion} config init --overwrite --log-level=error && cat gitpod.config.yaml | docker run -i --rm eu.gcr.io/gitpod-core-dev/build/installer:${installationVersion} ide-configmap -c -`.text().catch((e) => {
+        throw new Error(`Failed to render ide-configmap`, e);
+    });
     const ideConfigmapJsonObj = JSON.parse(ideConfigMapStr);
     const ideConfigmapJson = ideConfigmapJsonSchema.parse(ideConfigmapJsonObj);
     return ideConfigmapJson;
 }
 
 export const getIDEVersionOfImage = async (img: string) => {
-    console.log("Fetching IDE version in image:", `oci-tool fetch image ${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`)
-    const version = await $`oci-tool fetch image ${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`.text().catch((e) => {
+    console.log("Fetching IDE version in image:", `oci-tool fetch image execInstaller${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`)
+    const version = await $`oci-tool fetch image execInstaller${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`.text().catch((e) => {
         throw new Error("Failed to fetch ide version in image", e);
     }).then(str => str.replaceAll("\n", ""));
     console.log("IDE version in image:", version);
