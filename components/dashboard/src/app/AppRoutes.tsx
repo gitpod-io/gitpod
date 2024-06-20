@@ -214,7 +214,7 @@ export const AppRoutes = () => {
                             <Route path={["/t/"]} exact>
                                 <Redirect to="/repositories" />
                             </Route>
-                            <Route path={["/projects/*"]} exact>
+                            <Route path={["/projects/*"]}>
                                 <Redirect to="/repositories" />
                             </Route>
                             {/* redirect for old user settings slugs */}
