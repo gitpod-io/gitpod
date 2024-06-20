@@ -25,8 +25,13 @@ export const useAnalyticsTracking = () => {
         const _gp = w._gp || (w._gp = {});
         _gp.path = window.location.pathname;
 
-        return history.listen((location: any) => {
+        return history.listen(() => {
             const path = window.location.pathname;
+            // Make sure that we don't accidentally track the same path twice. This can happen if just the hash or search params change.
+            if (path === _gp.path) {
+                return;
+            }
+
             trackPathChange({
                 prev: (window as any)._gp.path,
                 path: path,

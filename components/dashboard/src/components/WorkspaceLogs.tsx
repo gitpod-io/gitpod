@@ -53,15 +53,19 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
         terminalRef.current = terminal;
         terminal.loadAddon(fitAddon);
         terminal.open(xTermParentRef.current);
-        props.logsEmitter.on("logs", (logs) => {
+
+        const logListener = (logs: string) => {
             if (terminal && logs) {
                 terminal.write(logs);
             }
-        });
+        };
+
+        const emitter = props.logsEmitter.on("logs", logListener);
         fitAddon.fit();
 
         return () => {
             terminal.dispose();
+            emitter.removeListener("logs", logListener);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.logsEmitter]);
