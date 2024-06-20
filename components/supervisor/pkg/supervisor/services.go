@@ -1050,7 +1050,7 @@ func (s *taskService) RegisterGRPC(srv *grpc.Server) {
 	api.RegisterTaskServiceServer(srv, s)
 }
 func (s *taskService) RegisterREST(ctx context.Context, mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterPortServiceHandlerFromEndpoint(s.willShutdownCtx, mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+	return api.RegisterPortServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // ListenToOutput listens to the output of a task. It streams the output from the task's file and ends when the task's state changes to done.
