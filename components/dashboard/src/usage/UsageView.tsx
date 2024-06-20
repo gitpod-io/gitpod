@@ -95,7 +95,7 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
             return "";
         }
 
-        return `${intervalMinutes} minutes`;
+        return `${intervalMinutes} minute${intervalMinutes !== 1 ? "s" : "" }`;
     }, [usagePage.data]);
 
     return (
