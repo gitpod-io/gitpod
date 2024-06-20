@@ -17,3 +17,20 @@ packages:
       image:
         - ${imageRepoBase}/ide/code:${version}
         - ${imageRepoBase}/ide/code:commit-${__git_commit}
+  - name: docker-nightly
+    type: docker
+    argdeps:
+      - imageRepoBase
+      - codeCommit
+      - codeQuality
+      - codeVersion
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.codeImage
+      buildArgs:
+        CODE_COMMIT: ${codeCommit}
+        CODE_QUALITY: ${codeQuality}
+        CODE_VERSION: ${codeVersion}
+      image:
+        - ${imageRepoBase}/ide/code:nightly

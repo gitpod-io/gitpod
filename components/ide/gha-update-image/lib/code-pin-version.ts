@@ -9,6 +9,7 @@ import {
     pathToConfigmap,
     readIDEConfigmapJson,
     readWorkspaceYaml,
+    renderInstallerIDEConfigMap,
 } from "./common";
 
 $.nothrow();
@@ -50,13 +51,15 @@ export async function updateCodeIDEConfigMapJson() {
     newJson.ideOptions.options.code = updateImages(newJson.ideOptions.options.code);
 
     // try append new pin versions
-    const installationCodeVersion = await getIDEVersionOfImage(`ide/code:${latestBuildImage.code}`);
-    if (installationCodeVersion.trim() === "") {
-        throw new Error("installation code version can't be empty");
+    const previousCodeVersion = await getIDEVersionOfImage("eu.gcr.io/gitpod-core-dev/build/" + ideConfigmapJson.ideOptions.options.code.image.replace("{{.Repository}}/", ""));
+    const installerIDEConfigMap = await renderInstallerIDEConfigMap(undefined);
+    const installationCodeVersion = await getIDEVersionOfImage(installerIDEConfigMap.ideOptions.options.code.image);
+    if (installationCodeVersion.trim() === "" || previousCodeVersion.trim() === "") {
+        throw new Error("installation or previous code version can't be empty");
     }
     let appendNewVersion = false;
-    console.log("installation code version", installationCodeVersion);
-    if (installationCodeVersion === workspaceYaml.defaultArgs.codeVersion) {
+    console.log("code versions", { installationCodeVersion, previousCodeVersion });
+    if (installationCodeVersion === previousCodeVersion) {
         console.log("code version is the same, no need to update (ide-service will do it)", installationCodeVersion);
     } else {
         const hasPinned = firstPinnedInfo.version === installationCodeVersion;
