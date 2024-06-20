@@ -3,6 +3,8 @@
 # See License.AGPL.txt in the project root for license information.
 FROM gitpod/openvscode-server-linux-build-agent:centos7-devtoolset8-x64 as dependencies_builder
 
+ENV TRIGGER_REBUILD 1
+
 ARG CODE_COMMIT
 
 RUN mkdir /gp-code \

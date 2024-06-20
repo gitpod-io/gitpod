@@ -45,7 +45,7 @@ jobs:
             -DcodeCommit=$codeHeadCommit \
             -DcodeVersion=$codeVersion \
             -DcodeQuality=insider \
-            .:docker
+            .:docker-nightly
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
