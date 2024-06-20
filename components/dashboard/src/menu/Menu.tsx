@@ -138,6 +138,7 @@ type OrgPagesNavProps = {
 };
 const OrgPagesNav: FC<OrgPagesNavProps> = ({ className }) => {
     const location = useLocation();
+
     return (
         <div
             className={classNames(

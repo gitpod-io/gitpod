@@ -95,7 +95,7 @@ const RepositoryListPage: FC = () => {
             <div className="app-container mb-8">
                 <PageHeading
                     title="Repository settings"
-                    subtitle="Configure and refine the experience of working with a repository in Gitpod"
+                    subtitle="Configure and refine the experience of working with a repository in Gitpod."
                 />
 
                 {isLoading && <LoadingState />}

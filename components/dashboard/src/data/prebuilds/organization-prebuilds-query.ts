@@ -15,20 +15,22 @@ import { Sort } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 type Args = {
     filter: DeepPartial<PlainMessage<ListOrganizationPrebuildsRequest_Filter>>;
     sort: PartialMessage<Sort>;
+    organizationId?: string;
     pageSize: number;
 };
-export const useListOrganizationPrebuildsQuery = ({ filter, pageSize, sort }: Args) => {
+export const useListOrganizationPrebuildsQuery = ({ filter, pageSize, sort, organizationId }: Args) => {
     const { data: org } = useCurrentOrg();
 
     return useInfiniteQuery(
         getListConfigurationsPrebuildsQueryKey(org?.id ?? "", { filter, pageSize, sort }),
         async ({ pageParam: nextToken }) => {
-            if (!org) {
+            const actualOrganizationId = organizationId ?? org?.id;
+            if (!actualOrganizationId) {
                 throw new Error("No org currently selected");
             }
 
             const { prebuilds, pagination } = await prebuildClient.listOrganizationPrebuilds({
-                organizationId: org.id,
+                organizationId: actualOrganizationId,
                 filter,
                 sort: [sort],
                 pagination: { pageSize, token: nextToken },
