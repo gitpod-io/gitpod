@@ -122,6 +122,7 @@ export class UsageService {
                   }
                 : undefined,
             creditsUsed: response.creditsUsed,
+            ledgerIntervalMinutes: (response.ledgerInterval?.seconds || 0) / 60,
         };
     }
 

@@ -19,7 +19,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
-	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
@@ -144,8 +143,7 @@ func Start(cfg Config, version string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	exps := experiments.NewClient(experiments.WithPollInterval(1 * time.Minute))
-	startScheduler(ctx, exps, cfg, redsyncPool, jobClientsConstructor)
+	startScheduler(ctx, cfg, redsyncPool, jobClientsConstructor)
 
 	err = registerGRPCServices(srv, conn, stripeClient, pricer, cfg)
 	if err != nil {
@@ -167,71 +165,26 @@ func Start(cfg Config, version string) error {
 	return nil
 }
 
-func startScheduler(ctx context.Context, exps experiments.Client, cfg Config, redsyncPool *redsync.Redsync, jobClientsConstructor scheduler.ClientsConstructor) {
-	getLedgerSchedule := func() string {
-		schedule := exps.GetStringValue(ctx, "usage_update_scheduler_duration", cfg.LedgerSchedule, experiments.Attributes{
-			GitpodHost: cfg.GitpodHost,
-		})
-		if schedule == "undefined" {
-			schedule = cfg.LedgerSchedule
-		}
-		return schedule
-	}
-	ledgerSchedule := getLedgerSchedule()
-
+func startScheduler(ctx context.Context, cfg Config, redsyncPool *redsync.Redsync, jobClientsConstructor scheduler.ClientsConstructor) {
 	var (
 		sch  *scheduler.Scheduler
 		lock sync.Mutex // Lock sch and ledgerSchedule update
 	)
 
-	start := func(ledgerDuration string) {
-		scheduler, err := createScheduler(redsyncPool, jobClientsConstructor, ledgerDuration, cfg.ResetUsageSchedule)
-		if err != nil {
-			log.WithError(err).Error("failed to create schedulers: %w", err)
-			return
-		}
-
-		lock.Lock()
-		defer lock.Unlock()
-
-		if sch != nil {
-			sch.Stop()
-		}
-		ledgerSchedule = ledgerDuration
-		sch = scheduler
-		scheduler.Start()
+	scheduler, err := createScheduler(redsyncPool, jobClientsConstructor, cfg.LedgerSchedule, cfg.ResetUsageSchedule)
+	if err != nil {
+		log.WithError(err).Error("failed to create schedulers: %w", err)
+		return
 	}
 
-	start(ledgerSchedule)
+	lock.Lock()
+	defer lock.Unlock()
 
-	// periodically check if the schedule FF has changed
-	go func() {
-		ticker := time.NewTicker(3 * time.Second)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				lock.Lock()
-				if sch != nil {
-					sch.Stop()
-				}
-				lock.Unlock()
-				return
-			case <-ticker.C:
-				newLedgerSchedule := getLedgerSchedule()
-				if ledgerSchedule == newLedgerSchedule {
-					continue
-				}
-				if _, err := time.ParseDuration(newLedgerSchedule); err != nil {
-					log.WithError(err).Warn("invalid duration")
-				} else {
-					log.WithField("before", ledgerSchedule).WithField("now", newLedgerSchedule).Info("restarting scheduler")
-					start(newLedgerSchedule)
-				}
-			}
-		}
-	}()
+	if sch != nil {
+		sch.Stop()
+	}
+	sch = scheduler
+	scheduler.Start()
 }
 
 func createScheduler(redsyncPool *redsync.Redsync, jobClientsConstructor scheduler.ClientsConstructor, ledgerSchedule, resetUsageSchedule string) (*scheduler.Scheduler, error) {
@@ -295,7 +248,12 @@ func createScheduler(redsyncPool *redsync.Redsync, jobClientsConstructor schedul
 
 func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, pricer *apiv1.WorkspacePricer, cfg Config) error {
 	ccManager := db.NewCostCenterManager(conn, cfg.DefaultSpendingLimit)
-	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn, pricer, ccManager))
+
+	usageService, err := apiv1.NewUsageService(conn, pricer, ccManager, cfg.LedgerSchedule)
+	if err != nil {
+		return fmt.Errorf("cannot create usage service: %w", err)
+	}
+	v1.RegisterUsageServiceServer(srv.GRPC(), usageService)
 
 	teamsService := v1connect.NewTeamsServiceClient(http.DefaultClient, fmt.Sprintf("http://%s", cfg.ServerAddress))
 	userService := v1connect.NewUserServiceClient(http.DefaultClient, fmt.Sprintf("http://%s", cfg.ServerAddress))

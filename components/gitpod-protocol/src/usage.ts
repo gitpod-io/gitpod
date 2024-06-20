@@ -30,6 +30,7 @@ export interface ListUsageResponse {
     usageEntriesList: Usage[];
     pagination?: PaginationResponse;
     creditsUsed: number;
+    ledgerIntervalMinutes?: number;
 }
 
 export interface PaginationResponse {

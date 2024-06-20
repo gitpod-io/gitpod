@@ -100,7 +100,7 @@ func Test_startScheduler(t *testing.T) {
 			go tt.expHandler(&exps)
 			ctx, cancel := context.WithTimeout(context.Background(), tt.ctxTimeout)
 			defer cancel()
-			startScheduler(ctx, &exps, mockConfig, rs, mockClients)
+			startScheduler(ctx, mockConfig, rs, mockClients)
 			ticker := time.NewTicker(tt.tickerDuration)
 			defer ticker.Stop()
 			gotUsage := []int{}
