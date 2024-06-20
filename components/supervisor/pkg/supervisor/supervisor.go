@@ -1498,7 +1498,6 @@ func startAPIEndpoint(
 
 	go m.Serve()
 
-	<-willShutdownCtx.Done()
 	<-ctx.Done()
 	log.Info("shutting down API endpoint")
 	server.Shutdown(ctx)
