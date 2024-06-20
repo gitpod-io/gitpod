@@ -126,7 +126,7 @@ const execInstaller = async (version: string | undefined, command: string) => {
 
 // installer versions
 export const getLatestInstallerVersions = async (version?: string) => {
-    const versionData = await execInstaller(version, "cat /versions.yaml > /tmp/versions.yaml");
+    const versionData = await execInstaller(version, "cat /versions.yaml");
     const versionObj = z.object({ version: z.string() });
     return z
         .object({
