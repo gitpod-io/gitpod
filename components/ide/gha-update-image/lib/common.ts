@@ -184,8 +184,8 @@ export const renderInstallerIDEConfigMap = async (version?: string) => {
 }
 
 export const getIDEVersionOfImage = async (img: string) => {
-    console.log("Fetching IDE version in image:", `oci-tool fetch image execInstaller${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`)
-    const version = await $`oci-tool fetch image execInstaller${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`.text().catch((e) => {
+    console.log("Fetching IDE version in image:", `oci-tool fetch image ${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`)
+    const version = await $`oci-tool fetch image ${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`.text().catch((e) => {
         throw new Error("Failed to fetch ide version in image: " + e);
     }).then(str => str.replaceAll("\n", ""));
     console.log("IDE version in image:", version);
