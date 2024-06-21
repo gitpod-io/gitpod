@@ -65,8 +65,8 @@ export async function updateCodeIDEConfigMapJson() {
             console.log("updating related pinned version", installationCodeVersion);
             newJson.ideOptions.options.code.versions.unshift({
                 version: previousCodeVersion,
-                image: newJson.ideOptions.options.code.image,
-                imageLayers: newJson.ideOptions.options.code.imageLayers,
+                image: ideConfigmapJsonObj.ideOptions.options.code.image,
+                imageLayers: ideConfigmapJsonObj.ideOptions.options.code.imageLayers,
             });
             appendNewVersion = true;
         }
