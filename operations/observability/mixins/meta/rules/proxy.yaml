@@ -25,9 +25,9 @@ spec:
   - name: proxy
     rules:
     - alert: ProxyBadGateway
-      # Reasoning: PAYG returns 502s at an increase of 1 using the same formula, something is wrong if the increase is higher
+      # Reasoning: The highest peak of 502's for PAYG is 0.00007 in 5m, and this was not impactful for users.
       expr: |
-        sum(increase(caddy_http_response_duration_seconds_count{code="502"}[5m])) > 1
+        sum(increase(caddy_http_response_duration_seconds_count{code="502"}[5m])) / sum(increase(caddy_http_response_duration_seconds_count[5m])) > 0.001
       labels:
         severity: critical
         team: webapp
