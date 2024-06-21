@@ -529,7 +529,11 @@ func Run(options ...RunOption) {
 	// wait for last git status to persist
 	stopGitStatus()
 	gitStatusWg.Wait()
-	taskServiceWg.Wait()
+
+	cleanExit := waitWithTimeout(taskServiceWg, 2*time.Second)
+	if !cleanExit {
+		log.Warn("task service did not finish in time, force closing")
+	}
 
 	terminalShutdownCtx, cancelTermination := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
 	defer cancelTermination()
@@ -539,6 +543,21 @@ func Run(options ...RunOption) {
 	termMux.Close(terminalShutdownCtx)
 
 	wg.Wait()
+}
+
+// Based off of https://stackoverflow.com/questions/32840687/timeout-for-waitgroup-wait/32843750#32843750
+func waitWithTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+	select {
+	case <-c:
+		return true
+	case <-time.After(timeout):
+		return false
+	}
 }
 
 func getIDENotReadyShutdownDuration(ctx context.Context, exps experiments.Client, gitpodHost string) (bool, time.Duration) {
