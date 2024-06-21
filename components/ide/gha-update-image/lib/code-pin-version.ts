@@ -9,7 +9,6 @@ import {
     pathToConfigmap,
     readIDEConfigmapJson,
     readWorkspaceYaml,
-    renderInstallerIDEConfigMap,
 } from "./common";
 
 $.nothrow();
@@ -52,8 +51,7 @@ export async function updateCodeIDEConfigMapJson() {
 
     // try append new pin versions
     const previousCodeVersion = await getIDEVersionOfImage("eu.gcr.io/gitpod-core-dev/build/" + ideConfigmapJson.ideOptions.options.code.image.replace("{{.Repository}}/", ""));
-    const installerIDEConfigMap = await renderInstallerIDEConfigMap(undefined);
-    const installationCodeVersion = await getIDEVersionOfImage(installerIDEConfigMap.ideOptions.options.code.image);
+    const installationCodeVersion = await getIDEVersionOfImage("eu.gcr.io/gitpod-core-dev/build/" + newJson.ideOptions.options.code.image.replace("{{.Repository}}/", ""));
     if (installationCodeVersion.trim() === "" || previousCodeVersion.trim() === "") {
         throw new Error("installation or previous code version can't be empty");
     }
@@ -66,9 +64,9 @@ export async function updateCodeIDEConfigMapJson() {
         if (!hasPinned) {
             console.log("updating related pinned version", installationCodeVersion);
             newJson.ideOptions.options.code.versions.unshift({
-                version: installationCodeVersion,
-                image: newJson.ideOptions.options.code.image,
-                imageLayers: newJson.ideOptions.options.code.imageLayers,
+                version: previousCodeVersion,
+                image: ideConfigmapJsonObj.ideOptions.options.code.image,
+                imageLayers: ideConfigmapJsonObj.ideOptions.options.code.imageLayers,
             });
             appendNewVersion = true;
         }

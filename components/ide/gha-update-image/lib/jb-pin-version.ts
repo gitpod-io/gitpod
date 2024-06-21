@@ -51,8 +51,8 @@ export const appendPinVersionsIntoIDEConfigMap = async (updatedIDEs: string[] | 
             const previousVersion = await getIDEVersionOfImage(ideConfigMap.ideOptions.options[ide].image);
             const previousInfo = {
                 version: previousVersion,
-                image: ideConfigMap.ideOptions.options[ide].image,
-                imageLayers: ideConfigMap.ideOptions.options[ide].imageLayers,
+                image: ideConfigMap.ideOptions.options[ide].image.replaceAll("eu.gcr.io/gitpod-core-dev/build", "{{.Repository}}"),
+                imageLayers: ideConfigMap.ideOptions.options[ide].imageLayers.map((e: string) => e.replaceAll("eu.gcr.io/gitpod-core-dev/build", "{{.Repository}}")),
             };
 
             if (!updatedIDEs || !updatedIDEs.includes(ide)) {
