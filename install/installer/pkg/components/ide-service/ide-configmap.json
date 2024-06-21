@@ -168,18 +168,6 @@
           }
         ]
       },
-      "intellij-previous": {
-        "orderKey": "041",
-        "title": "IntelliJ IDEA 2022.3.3",
-        "type": "desktop",
-        "logo": "{{.IdeLogoBase}}/intellijIdeaLogo.svg",
-        "label": "Ultimate",
-        "image": "{{.Repository}}/ide/intellij:2022.3.3",
-        "imageLayers": [
-          "{{.JetBrainsPluginImagePrevious}}",
-          "{{.JetBrainsLauncherImagePrevious}}"
-        ]
-      },
       "goland": {
         "orderKey": "050",
         "title": "GoLand",

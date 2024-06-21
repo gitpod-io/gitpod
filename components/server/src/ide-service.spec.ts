@@ -24,7 +24,7 @@ describe("ide-service", function () {
             expect(result).to.undefined;
         });
 
-        it("with settingVersion 2.0 should be undefined", function () {
+        it("with settingVersion 2.0 should be 2.1", function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -32,6 +32,48 @@ describe("ide-service", function () {
                 additionalData: {
                     ideSettings: {
                         settingVersion: "2.0",
+                        defaultIde: "code-latest",
+                        useDesktopIde: false,
+                    },
+                },
+            };
+            const result = ideService.migrateSettings(user);
+            expect(result).to.deep.equal({
+                settingVersion: "2.1",
+                defaultIde: "code",
+                useLatestVersion: true,
+            });
+        });
+
+        it("with settingVersion 2.0 should be 2.1 and remove intellij-previous", function () {
+            const user: User = {
+                id: "string",
+                creationDate: "string",
+                identities: [],
+                additionalData: {
+                    ideSettings: {
+                        settingVersion: "2.0",
+                        defaultIde: "intellij-previous",
+                        useDesktopIde: false,
+                    },
+                },
+            };
+            const result = ideService.migrateSettings(user);
+            expect(result).to.deep.equal({
+                settingVersion: "2.1",
+                defaultIde: "intellij",
+                useLatestVersion: false,
+            });
+        });
+
+        it("with settingVersion 2.1 should be undefined", function () {
+            const user: User = {
+                id: "string",
+                creationDate: "string",
+                identities: [],
+                additionalData: {
+                    ideSettings: {
+                        settingVersion: "2.1",
                         defaultIde: "code-latest",
                         useDesktopIde: false,
                     },
