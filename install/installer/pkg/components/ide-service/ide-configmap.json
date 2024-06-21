@@ -192,6 +192,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.1.3",
+            "image": "{{.Repository}}/ide/goland:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+              "{{.Repository}}/ide/jb-launcher:commit-294b37ad7b93bcc347bf970a11e269e2b477f603"
+            ]
+          },
+          {
             "version": "2024.1.2",
             "image": "{{.Repository}}/ide/goland:commit-9823a689c6259339239381e2840e29149fc8d195",
             "imageLayers": [
@@ -510,6 +518,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.1.3",
+            "image": "{{.Repository}}/ide/clion:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+              "{{.Repository}}/ide/jb-launcher:commit-294b37ad7b93bcc347bf970a11e269e2b477f603"
+            ]
+          },
           {
             "version": "2024.1.2",
             "image": "{{.Repository}}/ide/clion:commit-9823a689c6259339239381e2840e29149fc8d195",
