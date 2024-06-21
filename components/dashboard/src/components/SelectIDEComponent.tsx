@@ -136,25 +136,6 @@ export default function SelectIDEComponent({
         }
     }, [ide, availableOptions, setError, loading, disabled, ideOptionsLoading, helpMessage]);
 
-    useEffect(() => {
-        const shouldShowDeprecationNotice = ["intellij-previous"].includes(ide);
-        if (shouldShowDeprecationNotice) {
-            setWarning?.(
-                <>
-                    <span className="font-semibold">Support for IntelliJ IDEA 2022.3.3 is discontinued</span>
-                    . <br />
-                    Please use version latest stable IntelliJ IDEA or pin to a version in your{" "}
-                    <Link className="gp-link" to={"/settings"}>
-                        Organization settings
-                    </Link>
-                    .
-                </>,
-            );
-        } else {
-            setWarning?.(undefined);
-        }
-    }, [setError, setWarning, ide]);
-
     return (
         <Combobox
             getElements={getElements}
