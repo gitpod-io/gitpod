@@ -42,8 +42,8 @@
                     "logUrl": ""
                 },
                 {
-                    "taskId": "jb-warmup-intellij-latest",
-                    "taskLabel": "JetBrains Intellij warmup (latest)",
+                    "taskId": "jb-warmup-clion-stable",
+                    "taskLabel": "JetBrains Clion warmup (stable)",
                     "taskJson": "",
                     "logUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/5fba7d7c-e740-4339-b928-0e3c5975eb37/3"
                 },
@@ -54,8 +54,8 @@
                     "logUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/5fba7d7c-e740-4339-b928-0e3c5975eb37/4"
                 },
                 {
-                    "taskId": "jb-warmup-clion-stable",
-                    "taskLabel": "JetBrains Clion warmup (stable)",
+                    "taskId": "jb-warmup-intellij-latest",
+                    "taskLabel": "JetBrains Intellij warmup (latest)",
                     "taskJson": "",
                     "logUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/5fba7d7c-e740-4339-b928-0e3c5975eb37/5"
                 }
