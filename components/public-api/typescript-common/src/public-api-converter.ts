@@ -1213,6 +1213,8 @@ export class PublicAPIConverter {
                 );
             }
         }
+
+        // This is a hack mimicking the supervisor behavior of adding dynamic IDE tasks https://github.com/gitpod-io/gitpod/blob/e7d79c355e2cd6ac34056ea52d7bdcda45975839/components/ide-service/pkg/server/server.go#L508-L540
         const jetbrainsIdes = prebuild.workspace.config.jetbrains;
         if (jetbrainsIdes) {
             for (const ide in jetbrainsIdes) {
