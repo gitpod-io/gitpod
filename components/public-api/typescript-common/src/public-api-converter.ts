@@ -1226,7 +1226,7 @@ export class PublicAPIConverter {
                 if (ideConfig.prebuilds.version === "latest" || ideConfig.prebuilds.version === "both") {
                     tasks.push(
                         new TaskLog({
-                            taskId: `jetbrains-warmup-${ide}-latest`,
+                            taskId: `jb-warmup-${ide}-latest`,
                             taskLabel: `JetBrains ${ide} Warmup (latest)`,
                             logUrl: new URL(
                                 getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
@@ -1238,7 +1238,7 @@ export class PublicAPIConverter {
                 if (ideConfig.prebuilds.version === "stable" || ideConfig.prebuilds.version === "both") {
                     tasks.push(
                         new TaskLog({
-                            taskId: `jetbrains-warmup-${ide}-stable`,
+                            taskId: `jb-warmup-${ide}-stable`,
                             taskLabel: `JetBrains ${ide} Warmup (stable)`,
                             logUrl: new URL(
                                 getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
