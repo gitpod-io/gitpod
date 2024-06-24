@@ -1214,6 +1214,10 @@ export class PublicAPIConverter {
             }
         }
 
+        const capitalize = (input: string) => {
+            return input.charAt(0).toUpperCase() + input.slice(1);
+        }
+
         // This is a hack mimicking the supervisor behavior of adding dynamic IDE tasks https://github.com/gitpod-io/gitpod/blob/e7d79c355e2cd6ac34056ea52d7bdcda45975839/components/ide-service/pkg/server/server.go#L508-L540
         const jetbrainsIdes = prebuild.workspace.config.jetbrains;
         if (jetbrainsIdes) {
@@ -1227,7 +1231,7 @@ export class PublicAPIConverter {
                     tasks.push(
                         new TaskLog({
                             taskId: `jb-warmup-${ide}-latest`,
-                            taskLabel: `JetBrains ${ide} Warmup (latest)`,
+                            taskLabel: `JetBrains ${capitalize(ide)} warmup (latest)`,
                             logUrl: new URL(
                                 getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
                                 gitpodHost,
@@ -1239,7 +1243,7 @@ export class PublicAPIConverter {
                     tasks.push(
                         new TaskLog({
                             taskId: `jb-warmup-${ide}-stable`,
-                            taskLabel: `JetBrains ${ide} Warmup (stable)`,
+                            taskLabel: `JetBrains ${capitalize(ide)} warmup (stable)`,
                             logUrl: new URL(
                                 getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
                                 gitpodHost,
