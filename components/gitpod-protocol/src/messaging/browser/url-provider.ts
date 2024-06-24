@@ -17,6 +17,7 @@ export const getUrlProvider = (url: string): UrlProvider => {
                 document.visibilityState === "visible" ||
                 (window.self !== window.top && window.parent.document.visibilityState === "visible");
             if (checkVisibility()) {
+                console.log(`hwen: [${url}] is visible`);
                 resolve(url);
                 return;
             }
@@ -24,6 +25,7 @@ export const getUrlProvider = (url: string): UrlProvider => {
             let timer: ReturnType<typeof setTimeout> | undefined;
             const eventHandler = () => {
                 if (checkVisibility()) {
+                    console.log(`hwen: [${url}] become visible`);
                     resolve(url);
                     cleanup();
                 }
@@ -31,7 +33,11 @@ export const getUrlProvider = (url: string): UrlProvider => {
             const cleanup = () => {
                 document.removeEventListener("visibilitychange", eventHandler);
                 if (window.self !== window.top) {
-                    window.parent.document.removeEventListener("visibilitychange", eventHandler);
+                    try {
+                        window.parent.document.removeEventListener("visibilitychange", eventHandler);
+                    } catch (err) {
+                        console.warn(`hwen: [${url}] error removing event listener: ${err}`);
+                    }
                 }
                 if (timer) {
                     clearTimeout(timer);
@@ -39,10 +45,18 @@ export const getUrlProvider = (url: string): UrlProvider => {
             };
             document.addEventListener("visibilitychange", eventHandler);
             if (window.self !== window.top) {
-                // Also listen to the parent document's visibility if inside an iframe
-                window.parent.document.addEventListener("visibilitychange", eventHandler);
+                try {
+                    // Also listen to the parent document's visibility if inside an iframe
+                    window.parent.document.addEventListener("visibilitychange", eventHandler);
+                } catch (err) {
+                    console.warn(`hwen: [${url}] error adding event listener: ${err}, resolve immediately`);
+                    resolve(url);
+                    cleanup();
+                    return;
+                }
             }
             timer = setTimeout(() => {
+                console.log(`hwen: [${url}] max delay reached`);
                 resolve(url);
                 cleanup();
             }, delay);
