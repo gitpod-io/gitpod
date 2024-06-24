@@ -13,7 +13,8 @@ import {
     GitpodServiceImpl,
     Disposable,
 } from "@gitpod/gitpod-protocol";
-import { WebSocketConnectionProvider, getUrlProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/connection";
+import { WebSocketConnectionProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/connection";
+import { getUrlProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/url-provider";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
