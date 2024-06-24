@@ -22,7 +22,44 @@
             "startTime": "2023-11-17T10:42:00Z",
             "message": "",
             "logUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/5fba7d7c-e740-4339-b928-0e3c5975eb37",
-            "taskLogs": [],
+            "taskLogs": [
+                {
+                    "taskId": "0",
+                    "taskLabel": "Task [1]",
+                    "taskJson": "{\"init\":\"true\",\"command\":\"npm install\"}",
+                    "logUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/5fba7d7c-e740-4339-b928-0e3c5975eb37/0"
+                },
+                {
+                    "taskId": "1",
+                    "taskLabel": "Task [2]",
+                    "taskJson": "{\"command\":\"npm run build\"}",
+                    "logUrl": ""
+                },
+                {
+                    "taskId": "2",
+                    "taskLabel": "Task [3]",
+                    "taskJson": "{\"command\":\"npm run start\"}",
+                    "logUrl": ""
+                },
+                {
+                    "taskId": "jb-warmup-clion-stable",
+                    "taskLabel": "JetBrains Clion warmup (stable)",
+                    "taskJson": "",
+                    "logUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/5fba7d7c-e740-4339-b928-0e3c5975eb37/3"
+                },
+                {
+                    "taskId": "jb-warmup-intellij-stable",
+                    "taskLabel": "JetBrains Intellij warmup (stable)",
+                    "taskJson": "",
+                    "logUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/5fba7d7c-e740-4339-b928-0e3c5975eb37/4"
+                },
+                {
+                    "taskId": "jb-warmup-intellij-latest",
+                    "taskLabel": "JetBrains Intellij warmup (latest)",
+                    "taskJson": "",
+                    "logUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/5fba7d7c-e740-4339-b928-0e3c5975eb37/5"
+                }
+            ],
             "imageBuildLogUrl": "https://gitpod-test.preview.gitpod-dev.com/prebuild-logs/eb276a90-0970-49fb-947f-3cefe856efdc/image-build"
         },
         "configurationName": "parcel-demo"
