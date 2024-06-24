@@ -13,7 +13,7 @@ import {
     GitpodServiceImpl,
     Disposable,
 } from "@gitpod/gitpod-protocol";
-import { WebSocketConnectionProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/connection";
+import { WebSocketConnectionProvider, getUrlProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/connection";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
@@ -33,41 +33,14 @@ import { sendTrackEvent } from "../Analytics";
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
 const gitpodHost = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi().toString();
-
-/**
- * Retrieves the Gitpod host URL asynchronously.
- * returns when the document is visible or after a random delay between 1 and 4 minutes.
- * @returns A promise that resolves to the Gitpod host URL.
- */
-const getGitpodHostUrl = () =>
-    new Promise<string>((resolve) => {
-        if (document.visibilityState === "visible") {
-            resolve(gitpodHost);
-            return;
-        }
-        const delay = Math.floor(Math.random() * 240000) + 60000; // between 1 and 4 minutes
-        let timer: ReturnType<typeof setTimeout> | undefined;
-        const eventHandler = () => {
-            if (document.visibilityState === "visible") {
-                resolve(gitpodHost);
-                if (timer) {
-                    clearTimeout(timer);
-                }
-            }
-        };
-        document.addEventListener("visibilitychange", eventHandler);
-        timer = setTimeout(() => {
-            resolve(gitpodHost);
-            document.removeEventListener("visibilitychange", eventHandler);
-        }, delay);
-    });
+const urlProvider = getUrlProvider(gitpodHost);
 
 function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     const connectionProvider = new WebSocketConnectionProvider();
     instrumentWebSocketConnection(connectionProvider);
     let numberOfErrors = 0;
     let onReconnect = () => {};
-    const proxy = connectionProvider.createProxy<S>(getGitpodHostUrl, undefined, {
+    const proxy = connectionProvider.createProxy<S>(urlProvider, undefined, {
         onerror: (event: any) => {
             log.error(event);
             // don't show alert if dashboard is inside iframe (workspace origin)

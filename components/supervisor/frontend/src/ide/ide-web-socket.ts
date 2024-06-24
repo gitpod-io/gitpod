@@ -8,6 +8,7 @@ import { serverUrl } from "../shared/urls";
 import { metricsReporter } from "./ide-metrics-service-client";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { Disposable } from "@gitpod/gitpod-protocol/lib/util/disposable";
+import { getUrlProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/connection";
 
 let connected = false;
 const workspaceSockets = new Set<IDEWebSocket>();
@@ -38,7 +39,7 @@ function isGitpodOrigin(url: string): boolean {
  */
 class IDEWebSocket extends ReconnectingWebSocket {
     constructor(url: string, protocol?: string | string[]) {
-        super(url, protocol, {
+        super(getUrlProvider(url), protocol, {
             WebSocket,
             startClosed: isWorkspaceOrigin(url) && !connected,
             maxRetries: 0,
