@@ -21,6 +21,7 @@ import {
     EnvVarWithValue,
     IDESettings,
     Identity as IdentityProtocol,
+    JetBrainsProductConfig,
     NamedWorkspaceFeatureFlag,
     PrebuiltWorkspaceState,
     ProjectEnvVar,
@@ -35,8 +36,9 @@ import {
     WithEnvvarsContext,
     WithPrebuild,
     WorkspaceAutostartOption,
-    WorkspaceContext, WorkspaceInfo,
-    WorkspaceSession as WorkspaceSessionProtocol
+    WorkspaceContext,
+    WorkspaceInfo,
+    WorkspaceSession as WorkspaceSessionProtocol,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import {
     OrgMemberInfo,
@@ -134,7 +136,8 @@ import {
     ParseContextURLResponse,
     PrebuildInitializer,
     SnapshotInitializer,
-    UpdateWorkspaceRequest_UpdateTimeout, Workspace,
+    UpdateWorkspaceRequest_UpdateTimeout,
+    Workspace,
     WorkspaceClass,
     WorkspaceGitStatus,
     WorkspaceInitializer,
@@ -151,7 +154,7 @@ import {
     WorkspaceSpec_WorkspaceType,
     WorkspaceStatus,
     WorkspaceStatus_PrebuildResult,
-    WorkspaceStatus_WorkspaceConditions
+    WorkspaceStatus_WorkspaceConditions,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { getPrebuildLogPath } from "./prebuild-utils";
 import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
@@ -1216,22 +1219,23 @@ export class PublicAPIConverter {
 
         const capitalize = (input: string) => {
             return input.charAt(0).toUpperCase() + input.slice(1);
-        }
+        };
 
         // This is a hack mimicking the supervisor behavior of adding dynamic IDE tasks https://github.com/gitpod-io/gitpod/blob/e7d79c355e2cd6ac34056ea52d7bdcda45975839/components/ide-service/pkg/server/server.go#L508-L540
-        const jetbrainsIdes = prebuild.workspace.config.jetbrains;
-        if (jetbrainsIdes) {
-            for (const ide in jetbrainsIdes) {
-                const ideConfig = jetbrainsIdes[ide as keyof typeof jetbrainsIdes]!;
+        if (prebuild.workspace.config.jetbrains) {
+            const jetbrainsIdes = Object.entries(prebuild.workspace.config.jetbrains).sort(([a], [b]) =>
+                a.localeCompare(b),
+            ) as [string, JetBrainsProductConfig][];
+            for (const [ide, ideConfig] of jetbrainsIdes) {
                 if (!ideConfig.prebuilds) {
                     continue;
                 }
 
-                if (ideConfig.prebuilds.version === "latest" || ideConfig.prebuilds.version === "both") {
+                if (ideConfig.prebuilds.version !== "latest") {
                     tasks.push(
                         new TaskLog({
-                            taskId: `jb-warmup-${ide}-latest`,
-                            taskLabel: `JetBrains ${capitalize(ide)} warmup (latest)`,
+                            taskId: `jb-warmup-${ide}-stable`,
+                            taskLabel: `JetBrains ${capitalize(ide)} warmup (stable)`,
                             logUrl: new URL(
                                 getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
                                 gitpodHost,
@@ -1239,11 +1243,11 @@ export class PublicAPIConverter {
                         }),
                     );
                 }
-                if (ideConfig.prebuilds.version === "stable" || ideConfig.prebuilds.version === "both") {
+                if (ideConfig.prebuilds.version !== "stable") {
                     tasks.push(
                         new TaskLog({
-                            taskId: `jb-warmup-${ide}-stable`,
-                            taskLabel: `JetBrains ${capitalize(ide)} warmup (stable)`,
+                            taskId: `jb-warmup-${ide}-latest`,
+                            taskLabel: `JetBrains ${capitalize(ide)} warmup (latest)`,
                             logUrl: new URL(
                                 getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
                                 gitpodHost,

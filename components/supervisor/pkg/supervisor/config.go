@@ -8,12 +8,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
 
 	env "github.com/Netflix/go-env"
@@ -593,7 +594,7 @@ func loadDesktopIDEs(static *StaticConfig) ([]*IDEConfig, error) {
 		uniqueDesktopIDEs[desktopIDE.GetUniqueKey()] = struct{}{}
 	}
 
-	files, err := ioutil.ReadDir(static.DesktopIDERoot)
+	files, err := os.ReadDir(static.DesktopIDERoot)
 	if err != nil {
 		return nil, err
 	}
@@ -615,6 +616,10 @@ func loadDesktopIDEs(static *StaticConfig) ([]*IDEConfig, error) {
 			uniqueDesktopIDEs[desktopIDE.Name] = struct{}{}
 		}
 	}
+
+	slices.SortFunc(desktopIDEs, func(a, b *IDEConfig) int {
+		return strings.Compare(a.Name, b.Name)
+	})
 
 	return desktopIDEs, nil
 }
