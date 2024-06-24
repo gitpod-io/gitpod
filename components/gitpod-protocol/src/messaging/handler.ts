@@ -5,12 +5,13 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { UrlProvider } from "reconnecting-websocket";
 import { MessageConnection } from "vscode-jsonrpc";
 
 export const ConnectionHandler = Symbol("ConnectionHandler");
 
 export interface ConnectionHandler {
-    readonly path: string;
+    readonly path: UrlProvider;
     onConnection(connection: MessageConnection, session?: object): void;
 }
 

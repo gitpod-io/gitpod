@@ -32,14 +32,42 @@ import { sendTrackEvent } from "../Analytics";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
-function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
-    let host = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi();
+const gitpodHost = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi().toString();
 
+/**
+ * Retrieves the Gitpod host URL asynchronously.
+ * returns when the document is visible or after a random delay between 1 and 4 minutes.
+ * @returns A promise that resolves to the Gitpod host URL.
+ */
+const getGitpodHostUrl = () =>
+    new Promise<string>((resolve) => {
+        if (document.visibilityState === "visible") {
+            resolve(gitpodHost);
+            return;
+        }
+        const delay = Math.floor(Math.random() * 240000) + 60000; // between 1 and 4 minutes
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const eventHandler = () => {
+            if (document.visibilityState === "visible") {
+                resolve(gitpodHost);
+                if (timer) {
+                    clearTimeout(timer);
+                }
+            }
+        };
+        document.addEventListener("visibilitychange", eventHandler);
+        timer = setTimeout(() => {
+            resolve(gitpodHost);
+            document.removeEventListener("visibilitychange", eventHandler);
+        }, delay);
+    });
+
+function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     const connectionProvider = new WebSocketConnectionProvider();
     instrumentWebSocketConnection(connectionProvider);
     let numberOfErrors = 0;
     let onReconnect = () => {};
-    const proxy = connectionProvider.createProxy<S>(host.toString(), undefined, {
+    const proxy = connectionProvider.createProxy<S>(getGitpodHostUrl, undefined, {
         onerror: (event: any) => {
             log.error(event);
             // don't show alert if dashboard is inside iframe (workspace origin)
