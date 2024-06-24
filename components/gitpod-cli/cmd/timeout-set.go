@@ -25,7 +25,7 @@ var setTimeoutCmd = &cobra.Command{
 
 Duration must be in the format of <n>m (minutes), <n>h (hours) and cannot be longer than 24 hours.
 For example: 30m or 1h`,
-	Example: `gitpod timeout set 1h`,
+	Example: fmt.Sprintf("%s %s set 1h", rootCmd.Use, timeoutCmd.Use),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
