@@ -65,6 +65,7 @@ export type OrganizationPermission =
     | "delete"
     | "read_settings"
     | "write_settings"
+    | "read_audit_logs"
     | "read_members"
     | "invite_members"
     | "write_members"

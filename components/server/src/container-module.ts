@@ -133,6 +133,8 @@ import { ContextService } from "./workspace/context-service";
 import { RateLimitter } from "./rate-limitter";
 import { AnalyticsController } from "./analytics-controller";
 import { InstallationAdminCleanup } from "./jobs/installation-admin-cleanup";
+import { AuditLogService } from "./audit/AuditLogService";
+import { AuditLogGarbageCollectorJob } from "./jobs/auditlog-gc";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -178,13 +180,21 @@ export const productionContainerModule = new ContainerModule(
 
         bind(ContextService).toSelf().inSingletonScope();
 
+        bind(AuditLogService).toSelf().inSingletonScope();
+
         bind(GitpodServerImpl).toSelf();
         bind(WebsocketConnectionManager)
             .toDynamicValue((ctx) => {
                 const serverFactory = () => ctx.container.get<GitpodServerImpl>(GitpodServerImpl);
                 const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
                 const config = ctx.container.get<Config>(Config);
-                return new WebsocketConnectionManager(serverFactory, hostContextProvider, config.rateLimiter);
+                const auditLogService = ctx.container.get<AuditLogService>(AuditLogService);
+                return new WebsocketConnectionManager(
+                    serverFactory,
+                    hostContextProvider,
+                    config.rateLimiter,
+                    auditLogService,
+                );
             })
             .inSingletonScope();
 
@@ -364,6 +374,7 @@ export const productionContainerModule = new ContainerModule(
         bind(BillingModes).toSelf().inSingletonScope();
 
         // Periodic jobs
+        bind(AuditLogGarbageCollectorJob).toSelf().inSingletonScope();
         bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
         bind(TokenGarbageCollector).toSelf().inSingletonScope();
         bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();

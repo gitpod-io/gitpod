@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "gitpod/v1/pagination.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+option java_package = "io.gitpod.publicapi.v1";
+
+service AuditLogService {
+  // ListAuditLogs returns a list of audit logs
+  rpc ListAuditLogs(ListAuditLogsRequest) returns (ListAuditLogsResponse) {}
+}
+
+message ListAuditLogsRequest {
+  // pagination contains the pagination options for listing workspaces
+  PaginationRequest pagination = 1;
+
+  // organization_id is the ID of the organization that contains the workspaces
+  //
+  // +required
+  string organization_id = 2;
+
+  // from specifies the starting time range for this request.
+  // All sessions which existed starting at from will be returned.
+  google.protobuf.Timestamp from = 3;
+
+  // to specifies the end time range for this request.
+  // All sessions which existed ending at to will be returned.
+  google.protobuf.Timestamp to = 4;
+
+  // actor_id is the ID of the user that performed the action
+  string actor_id = 5;
+
+  // action is the action that was performed
+  string action = 6;
+}
+
+message ListAuditLogsResponse {
+  // pagination contains the pagination options for listing workspaces
+  PaginationResponse pagination = 1;
+
+  // audit_logs that matched the query
+  repeated AuditLog audit_logs = 2;
+}
+
+/**
+ * AuditLog represents an audit log entry
+ * typescript shape:
+ */
+message AuditLog {
+  // id is the unique identifier of the audit log
+  string id = 1;
+
+  // timestamp is the time when the audit log was created
+  google.protobuf.Timestamp timestamp = 2;
+
+  // action is the action that was performed
+  string action = 3;
+
+  // organization_id is the ID of the organization that contains the workspaces
+  string organization_id = 4;
+
+  // actor_id is the ID of the user that performed the action
+  string actor_id = 5;
+
+  // args contains a serialized JSON array off the arguments that were passed to the action
+  string args = 6;
+}

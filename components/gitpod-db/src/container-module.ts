@@ -45,6 +45,8 @@ import { LinkedInProfileDB } from "./linked-in-profile-db";
 import { DataCache, DataCacheNoop } from "./data-cache";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { EncryptionService, GlobalEncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
+import { AuditLogDB } from "./audit-log-db";
+import { AuditLogDBImpl } from "./typeorm/audit-log-db-impl";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = (cacheClass = DataCacheNoop) =>
@@ -111,6 +113,9 @@ export const dbContainerModule = (cacheClass = DataCacheNoop) =>
 
         bind(PersonalAccessTokenDBImpl).toSelf().inSingletonScope();
         bind(PersonalAccessTokenDB).toService(PersonalAccessTokenDBImpl);
+
+        bind(AuditLogDBImpl).toSelf().inSingletonScope();
+        bind(AuditLogDB).toService(AuditLogDBImpl);
 
         // com concerns
         bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
