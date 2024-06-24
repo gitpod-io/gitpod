@@ -189,7 +189,7 @@ jobs:
 
               cd "${TEST_PATH}"
               set +e
-              go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}.xml" -iocopy
+              go test -parallel=3 -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}.xml" -iocopy
               RC=${PIPESTATUS[0]}
               set -e
 
