@@ -8,7 +8,7 @@
         "type": "browser",
         "logo": "{{.IdeLogoBase}}/vscode.svg",
         "label": "Browser",
-        "image": "{{.Repository}}/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+        "image": "{{.Repository}}/ide/code:commit-940f23420544f76a67ae3ed32e726c9f9c9c4b3d",
         "latestImage": "{{.ResolvedCodeBrowserImageLatest}}",
         "imageLayers": [
           "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
@@ -20,6 +20,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "1.90.1",
+            "image": "{{.Repository}}/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+            "imageLayers": [
+              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/code-codehelper:commit-9d947b04ea167d7f41d5550a1684b52636bf72b8"
+            ]
+          },
           {
             "version": "1.90.0",
             "image": "{{.Repository}}/ide/code:commit-ece9c809ac703118bd86cc0b69191db74dcd3df4",
@@ -127,6 +135,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.1.3",
+            "image": "{{.Repository}}/ide/intellij:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+              "{{.Repository}}/ide/jb-launcher:commit-294b37ad7b93bcc347bf970a11e269e2b477f603"
+            ]
+          },
+          {
             "version": "2024.1.2",
             "image": "{{.Repository}}/ide/intellij:commit-9823a689c6259339239381e2840e29149fc8d195",
             "imageLayers": [
@@ -160,18 +176,6 @@
           }
         ]
       },
-      "intellij-previous": {
-        "orderKey": "041",
-        "title": "IntelliJ IDEA 2022.3.3",
-        "type": "desktop",
-        "logo": "{{.IdeLogoBase}}/intellijIdeaLogo.svg",
-        "label": "Ultimate",
-        "image": "{{.Repository}}/ide/intellij:2022.3.3",
-        "imageLayers": [
-          "{{.JetBrainsPluginImagePrevious}}",
-          "{{.JetBrainsLauncherImagePrevious}}"
-        ]
-      },
       "goland": {
         "orderKey": "050",
         "title": "GoLand",
@@ -191,6 +195,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.1.3",
+            "image": "{{.Repository}}/ide/goland:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+              "{{.Repository}}/ide/jb-launcher:commit-294b37ad7b93bcc347bf970a11e269e2b477f603"
+            ]
+          },
           {
             "version": "2024.1.2",
             "image": "{{.Repository}}/ide/goland:commit-9823a689c6259339239381e2840e29149fc8d195",
@@ -405,6 +417,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.1.4",
+            "image": "{{.Repository}}/ide/webstorm:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+              "{{.Repository}}/ide/jb-launcher:commit-294b37ad7b93bcc347bf970a11e269e2b477f603"
+            ]
+          },
+          {
             "version": "2024.1.3",
             "image": "{{.Repository}}/ide/webstorm:commit-9823a689c6259339239381e2840e29149fc8d195",
             "imageLayers": [
@@ -510,6 +530,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.1.3",
+            "image": "{{.Repository}}/ide/clion:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-294b37ad7b93bcc347bf970a11e269e2b477f603",
+              "{{.Repository}}/ide/jb-launcher:commit-294b37ad7b93bcc347bf970a11e269e2b477f603"
+            ]
+          },
           {
             "version": "2024.1.2",
             "image": "{{.Repository}}/ide/clion:commit-9823a689c6259339239381e2840e29149fc8d195",

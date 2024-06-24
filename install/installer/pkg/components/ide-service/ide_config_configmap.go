@@ -57,12 +57,10 @@ func GenerateIDEConfigmap(ctx *common.RenderContext) (*ide_config.IDEConfig, err
 		CodeHelperImage                string
 		CodeWebExtensionImage          string
 
-		JetBrainsPluginImage           string
-		JetBrainsPluginLatestImage     string
-		JetBrainsLauncherImage         string
-		JetBrainsPluginImagePrevious   string
-		JetBrainsLauncherImagePrevious string
-		ResolvedJBImageLatest          JBImages
+		JetBrainsPluginImage       string
+		JetBrainsPluginLatestImage string
+		JetBrainsLauncherImage     string
+		ResolvedJBImageLatest      JBImages
 
 		WorkspaceVersions versions.Components
 	}
@@ -75,11 +73,9 @@ func GenerateIDEConfigmap(ctx *common.RenderContext) (*ide_config.IDEConfig, err
 		CodeHelperImage:                ctx.ImageName(ctx.Config.Repository, ide.CodeHelperIDEImage, ctx.VersionManifest.Components.Workspace.CodeHelperImage.Version),
 		CodeWebExtensionImage:          ctx.ImageName(ctx.Config.Repository, ide.CodeWebExtensionImage, ctx.VersionManifest.Components.Workspace.CodeWebExtensionImage.Version),
 
-		JetBrainsPluginImage:           ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginImage.Version),
-		JetBrainsPluginLatestImage:     ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage.Version),
-		JetBrainsLauncherImage:         ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsLauncherImage.Version),
-		JetBrainsPluginImagePrevious:   ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-e7eb44545510a8293c5c6aa814a0ad4e81852e5f"),
-		JetBrainsLauncherImagePrevious: ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, "commit-92fccc81ef03c56615d0b14c49a7ac6ddd9216e6"),
+		JetBrainsPluginImage:       ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginImage.Version),
+		JetBrainsPluginLatestImage: ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage.Version),
+		JetBrainsLauncherImage:     ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsLauncherImage.Version),
 		ResolvedJBImageLatest: JBImages{
 			IntelliJ:  resolveLatestImage(ide.IntelliJDesktopIDEImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJLatestImage),
 			GoLand:    resolveLatestImage(ide.GoLandDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandLatestImage),
