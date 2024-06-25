@@ -9,7 +9,7 @@ import { AuditLogDB } from "@gitpod/gitpod-db/lib/audit-log-db";
 import { AuditLog } from "@gitpod/gitpod-protocol/lib/audit-log";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
+import { TrustedValue, scrubber } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 import { inject, injectable } from "inversify";
 import { v4 } from "uuid";
 import { Authorizer } from "../authorization/authorizer";
@@ -39,13 +39,15 @@ export class AuditLogService {
             return;
         }
 
+        const argsScrubbed = scrubber.scrub(args, true);
+
         const logEntry: AuditLog = {
             id: v4(),
             timestamp: new Date().toISOString(),
             actorId,
             organizationId: user.organizationId,
             action: method,
-            args,
+            args: argsScrubbed,
         };
         log.info("audit", new TrustedValue(logEntry));
         await this.dbAuditLog.recordAuditLog(logEntry);
