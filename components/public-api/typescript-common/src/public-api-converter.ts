@@ -40,6 +40,7 @@ import {
     WorkspaceInfo,
     WorkspaceSession as WorkspaceSessionProtocol,
 } from "@gitpod/gitpod-protocol/lib/protocol";
+import { AuditLog as AuditLogProtocol } from "@gitpod/gitpod-protocol/lib/audit-log";
 import {
     OrgMemberInfo,
     OrgMemberRole,
@@ -69,6 +70,9 @@ import {
     AuthProviderType,
     OAuth2Config,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import {
+    AuditLog,
+} from "@gitpod/public-api/lib/gitpod/v1/auditlogs_pb";
 import {
     BranchMatchingStrategy,
     Configuration,
@@ -1370,9 +1374,8 @@ export class PublicAPIConverter {
         const remainingMillisecondsAfterMinutes = remainingMillisecondsAfterHours % 60000;
         const secondsResult = Math.floor(remainingMillisecondsAfterMinutes / 1000);
 
-        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${
-            secondsResult > 0 ? secondsResult + "s" : ""
-        }`;
+        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${secondsResult > 0 ? secondsResult + "s" : ""
+            }`;
     }
 
     toUser(from: UserProtocol): User {
@@ -1570,6 +1573,17 @@ export class PublicAPIConverter {
     toOnboardingState(state: GitpodServer.OnboardingState): OnboardingState {
         return new OnboardingState({
             completed: state.isCompleted,
+        });
+    }
+
+    toAuditLog(input: AuditLogProtocol): AuditLog {
+        return new AuditLog({
+            id: input.id,
+            organizationId: input.organizationId,
+            actorId: input.actorId,
+            action: input.action,
+            timestamp: this.toTimestamp(input.timestamp),
+            args: JSON.stringify(input.args),
         });
     }
 }
