@@ -9,12 +9,13 @@ import * as chai from "chai";
 import { PrebuildStateMapper } from "./prebuild-state-mapper";
 import { WorkspaceConditionBool, WorkspacePhase, WorkspaceStatus } from "@gitpod/ws-manager/lib";
 import { PrebuiltWorkspace } from "@gitpod/gitpod-protocol";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 const expect = chai.expect;
 
 @suite
 class TestPrebuildStateMapper {
-    @test public testAll() {
+    @test public async testAll() {
         const id = "12345";
         const snapshot = "some-valid-snapshot";
         const failed = "some system error";
@@ -111,8 +112,9 @@ class TestPrebuildStateMapper {
         ];
 
         for (const test of table) {
-            const cut = new PrebuildStateMapper();
-            const actual = cut.mapWorkspaceStatusToPrebuild(test.status as WorkspaceStatus.AsObject);
+            const experimentsClient = getExperimentsClientForBackend();
+            const cut = new PrebuildStateMapper(experimentsClient);
+            const actual = await cut.mapWorkspaceStatusToPrebuild(test.status as WorkspaceStatus.AsObject);
             expect(!!actual?.update.error, test.name + ": hasError").to.be.equal(!!test.expected?.hasError);
             delete actual?.update.error;
             delete test.expected?.hasError;

@@ -26,7 +26,7 @@ export class PrebuildUpdater {
     ) {}
 
     async updatePrebuiltWorkspace(ctx: TraceContext, userId: string, status: WorkspaceStatus.AsObject) {
-        if (status.spec && status.spec.type != WorkspaceType.PREBUILD) {
+        if (status.spec && status.spec.type !== WorkspaceType.PREBUILD) {
             return;
         }
 
@@ -58,7 +58,7 @@ export class PrebuildUpdater {
             }
             prebuild.statusVersion = status.statusVersion;
 
-            const update = this.prebuildStateMapper.mapWorkspaceStatusToPrebuild(status);
+            const update = await this.prebuildStateMapper.mapWorkspaceStatusToPrebuild(status);
             const terminatingStates = ["available", "timeout", "aborted", "failed"];
             if (update) {
                 const updatedPrebuild = {
