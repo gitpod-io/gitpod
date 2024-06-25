@@ -31,6 +31,7 @@ components/versions/versions.json
 .helm-chart-release
 *.tgz
 
+
 # Symbolic links created by scripts for building docker images
 /.dockerignore
 

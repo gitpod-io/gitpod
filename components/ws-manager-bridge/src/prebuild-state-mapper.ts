@@ -18,27 +18,37 @@ export interface PrebuildUpdate {
 
 @injectable()
 export class PrebuildStateMapper {
-    constructor(@inject(ExperimentsClient) private readonly experimentsClient: ExperimentsClient) {}
+    constructor(
+        @inject(ExperimentsClient)
+        private readonly experimentsClient: ExperimentsClient,
+    ) {}
     async mapWorkspaceStatusToPrebuild(status: WorkspaceStatus.AsObject): Promise<PrebuildUpdate | undefined> {
         const canUseStoppedPhase = await this.experimentsClient.getValueAsync(
             "ws_manager_bridge_stopped_prebuild_statuses",
             false,
             {},
         );
-        if (!canUseStoppedPhase && status.phase === WorkspacePhase.STOPPED) {
-            return undefined;
-        }
-
-        if (
-            (canUseStoppedPhase && status.phase !== WorkspacePhase.STOPPED) ||
-            (!canUseStoppedPhase && status.phase !== WorkspacePhase.STOPPING)
-        ) {
-            return {
-                type: HeadlessWorkspaceEventType.Started,
-                update: {
-                    state: "building",
-                },
-            };
+        if (!canUseStoppedPhase) {
+            if (status.phase === WorkspacePhase.STOPPED) {
+                return undefined;
+            }
+            if (status.phase !== WorkspacePhase.STOPPING) {
+                return {
+                    type: HeadlessWorkspaceEventType.Started,
+                    update: {
+                        state: "building",
+                    },
+                };
+            }
+        } else {
+            if (status.phase !== WorkspacePhase.STOPPED) {
+                return {
+                    type: HeadlessWorkspaceEventType.Started,
+                    update: {
+                        state: "building",
+                    },
+                };
+            }
         }
 
         if (status.conditions?.timeout) {
