@@ -9,7 +9,6 @@ import * as chai from "chai";
 import { PrebuildStateMapper } from "./prebuild-state-mapper";
 import { WorkspaceConditionBool, WorkspacePhase, WorkspaceStatus } from "@gitpod/ws-manager/lib";
 import { PrebuiltWorkspace } from "@gitpod/gitpod-protocol";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 const expect = chai.expect;
 
