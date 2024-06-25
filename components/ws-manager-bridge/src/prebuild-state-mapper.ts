@@ -28,20 +28,27 @@ export class PrebuildStateMapper {
             false,
             {},
         );
-        if (!canUseStoppedPhase && status.phase === WorkspacePhase.STOPPED) {
-            return undefined;
-        }
-
-        if (
-            (canUseStoppedPhase && status.phase !== WorkspacePhase.STOPPED) ||
-            (!canUseStoppedPhase && status.phase !== WorkspacePhase.STOPPING)
-        ) {
-            return {
-                type: HeadlessWorkspaceEventType.Started,
-                update: {
-                    state: "building",
-                },
-            };
+        if (!canUseStoppedPhase) {
+            if (status.phase === WorkspacePhase.STOPPED) {
+                return undefined;
+            }
+            if (status.phase !== WorkspacePhase.STOPPING) {
+                return {
+                    type: HeadlessWorkspaceEventType.Started,
+                    update: {
+                        state: "building",
+                    },
+                };
+            }
+        } else {
+            if (status.phase !== WorkspacePhase.STOPPED) {
+                return {
+                    type: HeadlessWorkspaceEventType.Started,
+                    update: {
+                        state: "building",
+                    },
+                };
+            }
         }
 
         if (status.conditions?.timeout) {
