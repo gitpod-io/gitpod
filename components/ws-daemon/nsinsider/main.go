@@ -174,10 +174,13 @@ func main() {
 						return err
 					}
 
-					err = unix.Mknod("/dev/fuse", 0666|unix.S_IFCHR, int(unix.Mkdev(10, 229)))
-					if err != nil {
-						return err
+					if _, err := os.Stat("/dev/fuse"); os.IsNotExist(err) {
+						err = unix.Mknod("/dev/fuse", 0666|unix.S_IFCHR, int(unix.Mkdev(10, 229)))
+						if err != nil {
+							return err
+						}
 					}
+
 					err = os.Chmod("/dev/fuse", os.FileMode(0666))
 					if err != nil {
 						return err
