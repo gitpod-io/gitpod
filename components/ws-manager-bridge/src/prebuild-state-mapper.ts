@@ -18,7 +18,10 @@ export interface PrebuildUpdate {
 
 @injectable()
 export class PrebuildStateMapper {
-    constructor(@inject(ExperimentsClient) private readonly experimentsClient: ExperimentsClient) {}
+    constructor(
+        @inject(ExperimentsClient)
+        private readonly experimentsClient: ExperimentsClient,
+    ) {}
     async mapWorkspaceStatusToPrebuild(status: WorkspaceStatus.AsObject): Promise<PrebuildUpdate | undefined> {
         const canUseStoppedPhase = await this.experimentsClient.getValueAsync(
             "ws_manager_bridge_stopped_prebuild_statuses",
