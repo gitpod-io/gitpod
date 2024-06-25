@@ -52,29 +52,30 @@ interface Props {
 export const PrebuildDetailPage: FC = () => {
     const { prebuildId } = useParams<Props>();
 
-    const { data: prebuild, isLoading: isInfoLoading, error, refetch } = usePrebuildQuery(prebuildId);
+    const { data: initialPrebuild, isLoading: isInfoLoading, error, refetch } = usePrebuildQuery(prebuildId);
+    const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
+    const prebuild = currentPrebuild ?? initialPrebuild;
 
     const history = useHistory();
     const { toast, dismissToast } = useToast();
-    const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
     const [logNotFound, setLogNotFound] = useState(false);
     const [selectedTaskId, actuallySetSelectedTaskId] = useState<string | undefined>(
         window.location.hash.slice(1) || undefined,
     );
+    const [isWatching, setIsWatching] = useState(false);
 
     const isImageBuild =
-        currentPrebuild?.status?.phase?.name === PrebuildPhase_Phase.QUEUED &&
-        !!currentPrebuild.status.imageBuildLogUrl;
+        prebuild?.status?.phase?.name === PrebuildPhase_Phase.QUEUED && !!prebuild.status.imageBuildLogUrl;
     const taskId = useMemo(() => {
-        if (!currentPrebuild) {
+        if (!prebuild) {
             return undefined;
         }
         if (isImageBuild) {
             return "image-build";
         }
 
-        return selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? undefined;
-    }, [currentPrebuild, isImageBuild, selectedTaskId]);
+        return selectedTaskId ?? prebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? undefined;
+    }, [isImageBuild, prebuild, selectedTaskId]);
 
     const {
         isFetching: isTriggeringPrebuild,
@@ -101,34 +102,38 @@ export const PrebuildDetailPage: FC = () => {
     );
 
     useEffect(() => {
+        if (isWatching || !prebuild || (prebuild && isPrebuildDone(prebuild))) {
+            return;
+        }
+
         setLogNotFound(false);
         const disposable = watchPrebuild(prebuildId, (prebuild) => {
-            if (currentPrebuild?.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
-                return true;
-            }
             setCurrentPrebuild(prebuild);
 
             return isPrebuildDone(prebuild);
         });
+        setIsWatching(true);
 
         return () => {
             disposable.dispose();
+            setIsWatching(false);
         };
-    }, [prebuildId, currentPrebuild?.status?.phase?.name]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [prebuildId, prebuild?.status?.phase?.name]);
 
     const prebuildTasks = useMemo(() => {
         const validTasks: Omit<PlainMessage<TaskLog>, "taskJson">[] =
-            currentPrebuild?.status?.taskLogs.filter((t) => t.logUrl) ?? [];
+            prebuild?.status?.taskLogs.filter((t) => t.logUrl) ?? [];
         if (isImageBuild) {
             validTasks.unshift({
                 taskId: "image-build",
                 taskLabel: "Image Build",
-                logUrl: currentPrebuild?.status?.imageBuildLogUrl!, // we know this is defined because we're in the isImageBuild branch
+                logUrl: prebuild?.status?.imageBuildLogUrl!, // we know this is defined because we're in the isImageBuild branch
             });
         }
 
         return validTasks;
-    }, [currentPrebuild?.status, isImageBuild]);
+    }, [isImageBuild, prebuild?.status?.imageBuildLogUrl, prebuild?.status?.taskLogs]);
 
     useEffect(() => {
         history.listen(() => {
@@ -159,7 +164,8 @@ export const PrebuildDetailPage: FC = () => {
 
     const isError = logNotFound || prebuildTasks.length === 0;
 
-    if (newPrebuildID) {
+    // For some reason, we sometimes hit a case where the newPrebuildID is actually set without us triggering the query.
+    if (newPrebuildID && prebuild?.id !== newPrebuildID) {
         return <Redirect to={repositoriesRoutes.PrebuildDetail(newPrebuildID)} />;
     }
 
@@ -201,8 +207,7 @@ export const PrebuildDetailPage: FC = () => {
                         )}
                     </div>
                 ) : (
-                    prebuild &&
-                    currentPrebuild && (
+                    prebuild && (
                         <div className={"border border-pk-border-base rounded-xl py-6 divide-y"}>
                             <div className="px-6 pb-4">
                                 <div className="flex flex-col gap-2">
@@ -236,10 +241,10 @@ export const PrebuildDetailPage: FC = () => {
                             </div>
                             <div className="flex flex-col gap-1 border-pk-border-base">
                                 <div className="py-4 px-6 flex flex-col gap-1">
-                                    <PrebuildStatus prebuild={currentPrebuild} />
-                                    {currentPrebuild?.status?.message && (
+                                    <PrebuildStatus prebuild={prebuild} />
+                                    {prebuild?.status?.message && (
                                         <div className="text-pk-content-secondary truncate">
-                                            {currentPrebuild?.status.message}
+                                            {prebuild?.status.message}
                                         </div>
                                     )}
                                 </div>
@@ -262,7 +267,7 @@ export const PrebuildDetailPage: FC = () => {
                                             <PrebuildTaskTab
                                                 key={taskId}
                                                 taskId={taskId}
-                                                prebuild={currentPrebuild}
+                                                prebuild={prebuild}
                                                 onLogNotFound={() => setLogNotFound(true)}
                                             />
                                         ))
@@ -304,7 +309,7 @@ export const PrebuildDetailPage: FC = () => {
                             </div>
                             <div className="px-6 pt-6 flex justify-between border-pk-border-base">
                                 {[PrebuildPhase_Phase.BUILDING, PrebuildPhase_Phase.QUEUED].includes(
-                                    currentPrebuild?.status?.phase?.name ?? PrebuildPhase_Phase.UNSPECIFIED,
+                                    prebuild?.status?.phase?.name ?? PrebuildPhase_Phase.UNSPECIFIED,
                                 ) ? (
                                     <LoadingButton
                                         loading={cancelPrebuildMutation.isLoading}
