@@ -10,6 +10,7 @@ import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { Emitter } from "@gitpod/gitpod-protocol/lib/util/event";
 import { workspaceUrl, serverUrl } from "./urls";
 import { metricsReporter } from "../ide/ide-metrics-service-client";
+import { setUrlProviderReturnImmediately } from "../ide/ide-web-socket";
 
 export class FrontendDashboardServiceClient implements IDEFrontendDashboardService.IClient {
     public latestInfo!: IDEFrontendDashboardService.Info;
@@ -58,6 +59,9 @@ export class FrontendDashboardServiceClient implements IDEFrontendDashboardServi
             }
             if (IDEFrontendDashboardService.isOpenBrowserIDE(event.data)) {
                 this.onOpenBrowserIDEEmitter.fire(undefined);
+            }
+            if (IDEFrontendDashboardService.isFeatureFlags(event.data)) {
+                setUrlProviderReturnImmediately(event.data.flags.websocket_url_provider_returns_immediately);
             }
         });
     }

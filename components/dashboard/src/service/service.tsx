@@ -30,11 +30,14 @@ import {
 } from "../data/workspaces/listen-to-workspace-ws-messages2";
 import { Workspace, WorkspaceSpec_WorkspaceType, WorkspaceStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { sendTrackEvent } from "../Analytics";
+import { getFeatureFlagValue } from "../experiments/flags";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
 const gitpodHost = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi().toString();
-const urlProvider = getUrlProvider(gitpodHost);
+const urlProvider = getUrlProvider(gitpodHost, () =>
+    getFeatureFlagValue("websocket_url_provider_returns_immediately", {}),
+);
 
 function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     const connectionProvider = new WebSocketConnectionProvider();
@@ -186,6 +189,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         private clientWindow: Window,
     ) {
         this.processServerInfo();
+        this.syncFeatureFlagValues();
         window.addEventListener("message", (event: MessageEvent) => {
             if (IDEFrontendDashboardService.isTrackEventData(event.data)) {
                 this.trackEvent(event.data.msg);
@@ -321,6 +325,21 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         await fetch(url, {
             credentials: "include",
         });
+    }
+
+    private syncFeatureFlagValues() {
+        setInterval(async () => {
+            const flags: IDEFrontendDashboardService.FeatureFlags["flags"] = {
+                websocket_url_provider_returns_immediately: await getFeatureFlagValue(
+                    "websocket_url_provider_returns_immediately",
+                    {},
+                ),
+            };
+            this.clientWindow.postMessage(
+                { type: "ide-feature-flags", flags } as IDEFrontendDashboardService.FeatureFlags,
+                "*",
+            );
+        }, 60000); // 1 minute
     }
 
     private trackEvent(msg: RemoteTrackMessage): void {

@@ -31,6 +31,12 @@ function isGitpodOrigin(url: string): boolean {
     originUrl.protocol = window.location.protocol;
     return originUrl.origin === gitpodOrigin;
 }
+
+let urlProviderReturnImmediately: boolean = false;
+export const setUrlProviderReturnImmediately = (value: boolean) => {
+    urlProviderReturnImmediately = value;
+}
+
 /**
  * IDEWebSocket is a proxy to standard WebSocket
  * which allows to control when web sockets to the workspace
@@ -39,7 +45,7 @@ function isGitpodOrigin(url: string): boolean {
  */
 class IDEWebSocket extends ReconnectingWebSocket {
     constructor(url: string, protocol?: string | string[]) {
-        super(getUrlProvider(url), protocol, {
+        super(getUrlProvider(url, () => Promise.resolve(urlProviderReturnImmediately)), protocol, {
             WebSocket,
             startClosed: isWorkspaceOrigin(url) && !connected,
             maxRetries: 0,

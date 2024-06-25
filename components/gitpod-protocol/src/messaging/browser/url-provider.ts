@@ -10,9 +10,14 @@ import { UrlProvider } from "reconnecting-websocket";
  * UrlProvider of url, hold until the document or iframe's parent is visible.
  * returns when the document is visible or after a random delay between 1 and 4 minutes.
  */
-export const getUrlProvider = (url: string): UrlProvider => {
+export const getUrlProvider = (url: string, returnImmediately: () => Promise<boolean>): UrlProvider => {
     return () =>
-        new Promise<string>((resolve) => {
+        new Promise<string>(async (resolve) => {
+            if (await returnImmediately()) {
+                console.log(`hwen: [${url}] return immediately`);
+                resolve(url);
+                return;
+            }
             const checkVisibility = () =>
                 document.visibilityState === "visible" ||
                 (window.self !== window.top && window.parent.document.visibilityState === "visible");
@@ -21,7 +26,7 @@ export const getUrlProvider = (url: string): UrlProvider => {
                 resolve(url);
                 return;
             }
-            const delay = Math.floor(Math.random() * 240000) + 60000; // between 1 and 4 minutes
+            const delay = Math.floor(Math.random() * 240000) + 60000;
             let timer: ReturnType<typeof setTimeout> | undefined;
             const eventHandler = () => {
                 if (checkVisibility()) {
