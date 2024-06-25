@@ -29,7 +29,7 @@ import { IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { PrebuildStateMapper } from "./prebuild-state-mapper";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
-import { Client } from "@gitpod/gitpod-protocol/lib/experiments/types";
+import { Client as ExperimentsClient } from "@gitpod/gitpod-protocol/lib/experiments/types";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceInstanceController, WorkspaceInstanceControllerImpl } from "./workspace-instance-controller";
 import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
@@ -78,7 +78,7 @@ export const containerModule = new ContainerModule((bind) => {
 
     bind(DebugApp).toSelf().inSingletonScope();
 
-    bind(Client).toDynamicValue(getExperimentsClientForBackend).inSingletonScope();
+    bind(ExperimentsClient).toDynamicValue(getExperimentsClientForBackend).inSingletonScope();
 
     // transient to make sure we're creating a separate instance every time we ask for it
     bind(WorkspaceInstanceController).to(WorkspaceInstanceControllerImpl).inTransientScope();
