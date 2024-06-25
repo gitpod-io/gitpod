@@ -23,7 +23,8 @@ const mockExperimentsClient = (returnValue: boolean) => {
 
 @suite
 class TestPrebuildStateMapper {
-    @test public async testAll() {
+    // Tests with ws_manager_bridge_stopped_prebuild_statuses disabled
+    @test public async testWsManagerBridgeStoppedDisabled() {
         const id = "12345";
         const snapshot = "some-valid-snapshot";
         const failed = "some system error";
@@ -128,7 +129,8 @@ class TestPrebuildStateMapper {
             expect(actual?.update, test.name).to.deep.equal(test.expected);
         }
     }
-    @test public async testNew() {
+    // Tests with ws_manager_bridge_stopped_prebuild_statuses enabled
+    @test public async testWsManagerBridgeStoppedEnabled() {
         const id = "12345";
         const snapshot = "some-valid-snapshot";
         const failed = "some system error";
