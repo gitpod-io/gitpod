@@ -10,11 +10,12 @@ import { UrlProvider } from "reconnecting-websocket";
  * UrlProvider of url, hold until the document or iframe's parent is visible.
  * returns when the document is visible or after a random delay between 1 and 4 minutes.
  */
-export const getUrlProvider = (url: string, returnImmediately: () => Promise<boolean>): UrlProvider => {
+export const getUrlProvider = (url: string, returnImmediately: () => Promise<boolean>, cb: () => void): UrlProvider => {
     return () =>
         new Promise<string>(async (resolve) => {
             if (await returnImmediately()) {
                 console.log(`hwen: [${url}] return immediately`);
+                cb();
                 resolve(url);
                 return;
             }
@@ -23,6 +24,7 @@ export const getUrlProvider = (url: string, returnImmediately: () => Promise<boo
                 (window.self !== window.top && window.parent.document.visibilityState === "visible");
             if (checkVisibility()) {
                 console.log(`hwen: [${url}] is visible`);
+                cb();
                 resolve(url);
                 return;
             }
@@ -31,6 +33,7 @@ export const getUrlProvider = (url: string, returnImmediately: () => Promise<boo
             const eventHandler = () => {
                 if (checkVisibility()) {
                     console.log(`hwen: [${url}] become visible`);
+                    cb();
                     resolve(url);
                     cleanup();
                 }
@@ -55,6 +58,7 @@ export const getUrlProvider = (url: string, returnImmediately: () => Promise<boo
                     window.parent.document.addEventListener("visibilitychange", eventHandler);
                 } catch (err) {
                     console.warn(`hwen: [${url}] error adding event listener: ${err}, resolve immediately`);
+                    cb();
                     resolve(url);
                     cleanup();
                     return;
@@ -62,6 +66,7 @@ export const getUrlProvider = (url: string, returnImmediately: () => Promise<boo
             }
             timer = setTimeout(() => {
                 console.log(`hwen: [${url}] max delay reached`);
+                cb();
                 resolve(url);
                 cleanup();
             }, delay);

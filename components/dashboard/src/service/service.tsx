@@ -29,7 +29,7 @@ import {
     watchWorkspaceStatusInOrder,
 } from "../data/workspaces/listen-to-workspace-ws-messages2";
 import { Workspace, WorkspaceSpec_WorkspaceType, WorkspaceStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { sendTrackEvent } from "../Analytics";
+import { sendTrackEvent, trackEvent } from "../Analytics";
 import { getFeatureFlagValue } from "../experiments/flags";
 import UAParser from "ua-parser-js";
 
@@ -38,12 +38,24 @@ export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 const gitpodHost = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi().toString();
 
 const isFirefox = new UAParser().getBrowser().name?.toLowerCase().includes("firefox") ?? false;
-const urlProvider = getUrlProvider(gitpodHost, async () => {
-    if (!isFirefox) {
-        return true;
-    }
-    return await getFeatureFlagValue("websocket_url_provider_returns_immediately", {});
-});
+const urlProvider = getUrlProvider(
+    gitpodHost,
+    async () => {
+        if (!isFirefox) {
+            return true;
+        }
+        return await getFeatureFlagValue("websocket_url_provider_returns_immediately", {});
+    },
+    () => {
+        let parentWindowUrl: string | undefined;
+        try {
+            parentWindowUrl = window.parent.location.toString();
+        } catch (e) {
+            // ignore
+        }
+        trackEvent("websocket_try_connect", { url: window.location.toString(), parentWindowUrl });
+    },
+);
 
 function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     const connectionProvider = new WebSocketConnectionProvider();
