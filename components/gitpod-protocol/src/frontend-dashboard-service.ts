@@ -97,11 +97,6 @@ export namespace IDEFrontendDashboardService {
         url: string;
     }
 
-    export interface FeatureFlags {
-        type: "ide-feature-flags";
-        flags: { websocket_url_provider_returns_immediately: boolean };
-    }
-
     export function isInfoUpdateEventData(obj: any): obj is InfoUpdateEventData {
         return obj != null && typeof obj === "object" && obj.type === "ide-info-update";
     }
@@ -128,9 +123,5 @@ export namespace IDEFrontendDashboardService {
 
     export function isOpenDesktopIDE(obj: any): obj is OpenDesktopIDE {
         return obj != null && typeof obj === "object" && obj.type === "ide-open-desktop";
-    }
-
-    export function isFeatureFlags(obj: any): obj is FeatureFlags {
-        return obj != null && typeof obj === "object" && obj.type === "ide-feature-flags";
     }
 }

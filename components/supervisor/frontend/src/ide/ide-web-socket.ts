@@ -8,7 +8,6 @@ import { serverUrl } from "../shared/urls";
 import { metricsReporter } from "./ide-metrics-service-client";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { Disposable } from "@gitpod/gitpod-protocol/lib/util/disposable";
-import { getUrlProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/url-provider";
 
 let connected = false;
 const workspaceSockets = new Set<IDEWebSocket>();
@@ -31,12 +30,6 @@ function isGitpodOrigin(url: string): boolean {
     originUrl.protocol = window.location.protocol;
     return originUrl.origin === gitpodOrigin;
 }
-
-let urlProviderReturnImmediately: boolean = false;
-export const setUrlProviderReturnImmediately = (value: boolean) => {
-    urlProviderReturnImmediately = value;
-}
-
 /**
  * IDEWebSocket is a proxy to standard WebSocket
  * which allows to control when web sockets to the workspace
@@ -45,7 +38,7 @@ export const setUrlProviderReturnImmediately = (value: boolean) => {
  */
 class IDEWebSocket extends ReconnectingWebSocket {
     constructor(url: string, protocol?: string | string[]) {
-        super(getUrlProvider(url, () => Promise.resolve(urlProviderReturnImmediately)), protocol, {
+        super(url, protocol, {
             WebSocket,
             startClosed: isWorkspaceOrigin(url) && !connected,
             maxRetries: 0,

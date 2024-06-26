@@ -15,7 +15,9 @@ export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): Fe
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
     const project = useCurrentProject().project;
+
     const queryKey = ["featureFlag", featureFlag, user?.id || "", org?.id || "", project?.id || ""];
+
     const query = useQuery(queryKey, async () => {
         const flagValue = getFeatureFlagValue(featureFlag, {
             user: user && {
