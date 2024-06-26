@@ -5,7 +5,7 @@
  */
 
 import { TabsContent } from "@podkit/tabs/Tabs";
-import { PropsWithChildren, Suspense } from "react";
+import { PropsWithChildren } from "react";
 import { Text } from "@podkit/typography/Text";
 
 type Props = {
@@ -14,11 +14,9 @@ type Props = {
 export const PrebuildTaskErrorTab = ({ taskId, children }: PropsWithChildren<Props>) => {
     return (
         <TabsContent value={taskId ?? "empty-tab"} className="h-112 mt-0 border-pk-border-base">
-            <Suspense fallback={<div />}>
-                <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
-                    <Text className="w-80 text-center">{children}</Text>
-                </div>
-            </Suspense>
+            <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
+                <Text className="w-80 text-center">{children}</Text>
+            </div>
         </TabsContent>
     );
 };
