@@ -215,10 +215,8 @@ export class SessionHandler {
         };
     }
 
-    public clearSessionCookie(res: express.Response, config: Config): void {
-        res.clearCookie(getJWTCookieName(this.config), {
-            domain: getJWTCookieDomain(config),
-        });
+    public clearSessionCookie(res: express.Response): void {
+        res.clearCookie(getJWTCookieName(this.config));
     }
 }
 

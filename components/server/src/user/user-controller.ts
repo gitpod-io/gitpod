@@ -269,7 +269,7 @@ export class UserController {
             }
 
             // clear cookies
-            this.sessionHandler.clearSessionCookie(res, this.config);
+            this.sessionHandler.clearSessionCookie(res);
 
             // then redirect
             log.info(logContext, "(Logout) Redirecting...", { redirectToUrl, ...logPayload });
