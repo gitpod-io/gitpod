@@ -224,10 +224,6 @@ function getJWTCookieName(config: Config) {
     return config.auth.session.cookie.name;
 }
 
-function getJWTCookieDomain(config: Config): string {
-    return config.hostUrl.url.hostname;
-}
-
 function parseCookieHeader(c: string): { [key: string]: string[] } {
     return c
         .split("; ")
