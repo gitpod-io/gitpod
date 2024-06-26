@@ -9,5 +9,5 @@ import "regexp"
 func CookieNameFromDomain(domain string) string {
 	// replace all non-word characters with underscores
 	derived := regexp.MustCompile(`[\W_]+`).ReplaceAllString(domain, "_")
-	return "_" + derived + "_jwt2_"
+	return "__Host-_" + derived + "_jwt2_"
 }

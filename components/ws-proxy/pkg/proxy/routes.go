@@ -822,8 +822,8 @@ func removeSensitiveCookies(cookies []*http.Cookie, domain string) []*http.Cooki
 
 	n := 0
 	for _, c := range cookies {
-		if strings.HasPrefix(c.Name, hostnamePrefix) {
-			// skip session cookie
+		if strings.HasPrefix(c.Name, hostnamePrefix) || strings.HasPrefix(c.Name, "__Host-"+hostnamePrefix) {
+			// skip session cookies
 			continue
 		}
 		log.WithField("hostnamePrefix", hostnamePrefix).WithField("name", c.Name).Debug("keeping cookie")

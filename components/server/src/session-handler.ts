@@ -27,7 +27,7 @@ export class SessionHandler {
 
     public jwtSessionConvertor(): express.Handler {
         return async (req, res) => {
-            const user = req.user;
+            const { user } = req;
             if (!user) {
                 res.status(401);
                 res.send("User has no valid session.");
