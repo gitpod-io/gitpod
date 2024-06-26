@@ -6,9 +6,8 @@
 
 import { Prebuild, PrebuildPhase_Phase, TaskLog } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
-import { Text } from "@podkit/typography/Text";
 import { Button } from "@podkit/buttons/Button";
-import { FC, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
 import dayjs from "dayjs";
 import { useToast } from "../../components/toasts/Toasts";
@@ -26,9 +25,10 @@ import Alert from "../../components/Alert";
 import { PrebuildStatus } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@podkit/tabs/Tabs";
+import { Tabs, TabsList, TabsTrigger } from "@podkit/tabs/Tabs";
 import { PrebuildTaskTab } from "./PrebuildTaskTab";
 import type { PlainMessage } from "@bufbuild/protobuf";
+import { PrebuildTaskErrorTab } from "./PrebuildTaskErrorTab";
 
 /**
  * Formats a date. For today, it returns the time. For this year, it returns the month and day and time. Otherwise, it returns the full date and time.
@@ -58,11 +58,9 @@ export const PrebuildDetailPage: FC = () => {
 
     const history = useHistory();
     const { toast, dismissToast } = useToast();
-    const [logNotFound, setLogNotFound] = useState(false);
     const [selectedTaskId, actuallySetSelectedTaskId] = useState<string | undefined>(
         window.location.hash.slice(1) || undefined,
     );
-    const [isWatching, setIsWatching] = useState(false);
 
     const isImageBuild =
         prebuild?.status?.phase?.name === PrebuildPhase_Phase.QUEUED && !!prebuild.status.imageBuildLogUrl;
@@ -102,24 +100,16 @@ export const PrebuildDetailPage: FC = () => {
     );
 
     useEffect(() => {
-        if (isWatching || !prebuild || (prebuild && isPrebuildDone(prebuild))) {
-            return;
-        }
-
-        setLogNotFound(false);
         const disposable = watchPrebuild(prebuildId, (prebuild) => {
             setCurrentPrebuild(prebuild);
 
             return isPrebuildDone(prebuild);
         });
-        setIsWatching(true);
 
         return () => {
             disposable.dispose();
-            setIsWatching(false);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [prebuildId, prebuild?.status?.phase?.name]);
+    }, [prebuildId]);
 
     const prebuildTasks = useMemo(() => {
         const validTasks: Omit<PlainMessage<TaskLog>, "taskJson">[] =
@@ -161,8 +151,6 @@ export const PrebuildDetailPage: FC = () => {
             console.error("Could not cancel prebuild", error);
         }
     }, [prebuild, cancelPrebuildMutation]);
-
-    const isError = logNotFound || prebuildTasks.length === 0;
 
     // For some reason, we sometimes hit a case where the newPrebuildID is actually set without us triggering the query.
     if (newPrebuildID && prebuild?.id !== newPrebuildID) {
@@ -262,48 +250,14 @@ export const PrebuildDetailPage: FC = () => {
                                             </TabsTrigger>
                                         ))}
                                     </TabsList>
-                                    {!isError ? (
+                                    {prebuildTasks.length !== 0 ? (
                                         prebuildTasks.map(({ taskId }) => (
-                                            <PrebuildTaskTab
-                                                key={taskId}
-                                                taskId={taskId}
-                                                prebuild={prebuild}
-                                                onLogNotFound={() => setLogNotFound(true)}
-                                            />
+                                            <PrebuildTaskTab key={taskId} taskId={taskId} prebuild={prebuild} />
                                         ))
                                     ) : (
-                                        <TabsContent
-                                            value={taskId ?? "empty-tab"}
-                                            className="h-112 mt-0 border-pk-border-base"
-                                        >
-                                            <Suspense fallback={<div />}>
-                                                <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
-                                                    <Text className="w-80 text-center">
-                                                        {logNotFound ? (
-                                                            <>
-                                                                Logs of this prebuild are inaccessible. Use{" "}
-                                                                <code>gp validate --prebuild --headless</code> in a
-                                                                workspace to see logs and debug prebuild issues.{" "}
-                                                                <a
-                                                                    href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
-                                                                    target="_blank"
-                                                                    rel="noreferrer noopener"
-                                                                    className="gp-link"
-                                                                >
-                                                                    Learn more
-                                                                </a>
-                                                                .
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                No prebuild tasks defined in <code>.gitpod.yml</code>{" "}
-                                                                for this prebuild
-                                                            </>
-                                                        )}
-                                                    </Text>
-                                                </div>
-                                            </Suspense>
-                                        </TabsContent>
+                                        <PrebuildTaskErrorTab>
+                                            No prebuild tasks defined in <code>.gitpod.yml</code> for this prebuild
+                                        </PrebuildTaskErrorTab>
                                     )}
                                 </Tabs>
                             </div>

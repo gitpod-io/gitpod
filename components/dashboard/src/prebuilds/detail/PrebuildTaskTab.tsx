@@ -12,16 +12,17 @@ import { useToast } from "../../components/toasts/Toasts";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { TabsContent } from "@podkit/tabs/Tabs";
 import { PersistedToastID } from "./PrebuildDetailPage";
+import { PrebuildTaskErrorTab } from "./PrebuildTaskErrorTab";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
 type Props = {
     taskId: string;
     prebuild: Prebuild;
-    onLogNotFound: () => void;
 };
-export const PrebuildTaskTab = ({ taskId, prebuild, onLogNotFound }: Props) => {
+export const PrebuildTaskTab = ({ taskId, prebuild }: Props) => {
     const { emitter: logEmitter, disposable: disposeStreamingLogs } = usePrebuildLogsEmitter(prebuild.id, taskId);
+    const [error, setError] = React.useState<ApplicationError | undefined>();
     const { toast } = useToast();
 
     useEffect(() => {
@@ -36,7 +37,7 @@ export const PrebuildTaskTab = ({ taskId, prebuild, onLogNotFound }: Props) => {
                 return;
             }
             if (err instanceof ApplicationError && err.code === ErrorCodes.NOT_FOUND) {
-                // We don't want to show a toast for this error, because it's handled by `notFoundError` in `PrebuildDetailPage`
+                // We don't want to show a toast for this error, we handle it in the UI
                 return;
             }
             if (err?.message) {
@@ -46,7 +47,7 @@ export const PrebuildTaskTab = ({ taskId, prebuild, onLogNotFound }: Props) => {
 
         const logErrorListener = (err: ApplicationError) => {
             if (err.code === ErrorCodes.NOT_FOUND) {
-                onLogNotFound();
+                setError(err);
                 return;
             }
 
@@ -59,8 +60,27 @@ export const PrebuildTaskTab = ({ taskId, prebuild, onLogNotFound }: Props) => {
         return () => {
             logEmitter.removeListener("error", errorListener);
             logEmitter.removeListener("logs-error", logErrorListener);
+            setError(undefined);
         };
-    }, [logEmitter, onLogNotFound, taskId, toast]);
+    }, [logEmitter, taskId, toast]);
+
+    if (error) {
+        return (
+            <PrebuildTaskErrorTab taskId={taskId}>
+                Logs of this prebuild task are inaccessible. Use <code>gp validate --prebuild --headless</code> in a
+                workspace to see logs and debug prebuild issues.{" "}
+                <a
+                    href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="gp-link"
+                >
+                    Learn more
+                </a>
+                .
+            </PrebuildTaskErrorTab>
+        );
+    }
 
     return (
         <TabsContent value={taskId} className="h-112 mt-0 border-pk-border-base">
