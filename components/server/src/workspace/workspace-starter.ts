@@ -628,14 +628,6 @@ export class WorkspaceStarter {
                 },
                 timestamp: new Date(instance.creationTime),
             });
-
-            // update prebuild status hook
-            if (workspace.type === "prebuild") {
-                // do not await
-                this.notifyOnPrebuildQueued(ctx, workspace.id).catch((err) => {
-                    log.error("failed to notify on prebuild queued", err);
-                });
-            }
         } catch (err) {
             if (isGrpcError(err) && err.code === grpc.status.ALREADY_EXISTS) {
                 // This might happen because of timing: When we did the "workspaceAlreadyExists" check above, the DB state was not updated yet.
@@ -790,29 +782,6 @@ export class WorkspaceStarter {
             .filter((e) => e.length == 2)
             .forEach((e) => res.set(e[0], e[1]));
         return res;
-    }
-
-    private async notifyOnPrebuildQueued(ctx: TraceContext, workspaceId: string) {
-        const span = TraceContext.startSpan("notifyOnPrebuildQueued", ctx);
-        try {
-            const prebuild = await this.workspaceDb.trace({ span }).findPrebuildByWorkspaceID(workspaceId);
-            if (prebuild) {
-                const info = (await this.workspaceDb.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
-                if (info) {
-                    await this.publisher.publishPrebuildUpdate({
-                        prebuildID: prebuild.id,
-                        projectID: info.projectId,
-                        status: "queued",
-                        workspaceID: workspaceId,
-                    });
-                }
-            }
-        } catch (e) {
-            TraceContext.setError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
-        }
     }
 
     /**
