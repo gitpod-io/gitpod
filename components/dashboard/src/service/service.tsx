@@ -31,13 +31,19 @@ import {
 import { Workspace, WorkspaceSpec_WorkspaceType, WorkspaceStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { sendTrackEvent } from "../Analytics";
 import { getFeatureFlagValue } from "../experiments/flags";
+import UAParser from "ua-parser-js";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
 const gitpodHost = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi().toString();
-const urlProvider = getUrlProvider(gitpodHost, () =>
-    getFeatureFlagValue("websocket_url_provider_returns_immediately", {}),
-);
+
+const isFirefox = new UAParser().getBrowser().name?.toLowerCase().includes("firefox") ?? false;
+const urlProvider = getUrlProvider(gitpodHost, async () => {
+    if (!isFirefox) {
+        return true;
+    }
+    return await getFeatureFlagValue("websocket_url_provider_returns_immediately", {});
+});
 
 function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     const connectionProvider = new WebSocketConnectionProvider();
