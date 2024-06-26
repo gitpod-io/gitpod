@@ -3,283 +3,284 @@
 # See License.AGPL.txt in the project root for license information.
 
 schema: |-
-  definition user {
-    relation self: user
+    definition user {
+      relation self: user
 
-    // Only ONE of the following relations is ever present for a given user (XOR)
-    relation organization: organization
-    relation installation: installation
+      // Only ONE of the following relations is ever present for a given user (XOR)
+      relation organization: organization
+      relation installation: installation
 
-    // permissions
-    permission read_info = self + organization->member + organization->owner + installation->admin
-    permission write_info = self
-    permission delete = self + organization->owner + installation->admin
+      // permissions
+      permission read_info = self + organization->member + organization->owner + installation->admin
+      permission write_info = self
+      permission delete = self + organization->owner + installation->admin
 
-    permission make_admin = installation->admin + organization->installation_admin
+      permission make_admin = installation->admin + organization->installation_admin
 
-    // administrate is for changes such as blocking or verifiying, i.e. things that only admins can do on user
-    permission admin_control = installation->admin + organization->installation_admin
+      // administrate is for changes such as blocking or verifiying, i.e. things that only admins can do on user
+      permission admin_control = installation->admin + organization->installation_admin
 
-    permission read_ssh = self
-    permission write_ssh = self
+      permission read_ssh = self
+      permission write_ssh = self
 
-    permission read_tokens = self
-    permission write_tokens = self
+      permission read_tokens = self
+      permission write_tokens = self
 
-    permission read_env_var = self
-    permission write_env_var = self
+      permission read_env_var = self
+      permission write_env_var = self
 
-    // only used in specified cell, check EXP-1084
-    permission write_temporary_token = organization->installation_admin
+      // only used in specified cell, check EXP-1084
+      permission write_temporary_token = organization->installation_admin
 
-    permission code_sync = self
-  }
+      permission code_sync = self
+    }
 
-  // There's only one global installation
-  definition installation {
+    // There's only one global installation
+    definition installation {
 
-    // only users that are not owned by an org are considered installation-level users
-    relation member: user
-    relation admin: user
+      // only users that are not owned by an org are considered installation-level users
+      relation member: user
+      relation admin: user
 
-    // orgs can only be created by installation-level users
-    permission create_organization = member + admin
+      // orgs can only be created by installation-level users
+      permission create_organization = member + admin
 
-    // any global runtime configurations, such as the list of blocked repositories
-    permission configure = admin
-  }
+      // any global runtime configurations, such as the list of blocked repositories
+      permission configure = admin
+    }
 
-  definition organization {
-    relation installation: installation
+    definition organization {
+      relation installation: installation
 
-    // Every user in an organization is automatically a member
-    relation member: user
-    // Some users in an organization may additionally have the `owner` role
-    relation owner: user
-    // users who can snapshot workspaces
-    relation snapshoter: organization#member
-    // Some users in an organization may additionally have the `collaborator` role
-    // collaborator can't access members, projects and usage
-    relation collaborator: user
+      // Every user in an organization is automatically a member
+      relation member: user
+      // Some users in an organization may additionally have the `owner` role
+      relation owner: user
+      // users who can snapshot workspaces
+      relation snapshoter: organization#member
+      // Some users in an organization may additionally have the `collaborator` role
+      // collaborator can't access members, projects and usage
+      relation collaborator: user
 
 
-    // synthetic permission for installation->admin (because https://github.com/authzed/spicedb/issues/15)
-    permission installation_admin = installation->admin
-    permission installation_member = installation->member
+      // synthetic permission for installation->admin (because https://github.com/authzed/spicedb/issues/15)
+      permission installation_admin = installation->admin
+      permission installation_member = installation->member
 
-    // General operations on organization
-    permission read_info = member + owner + collaborator + installation->admin
-    permission write_info = owner + installation->admin
-    permission delete = owner + installation->admin
+      // General operations on organization
+      permission read_info = member + owner + collaborator + installation->admin
+      permission write_info = owner + installation->admin
+      permission delete = owner + installation->admin
 
-    permission read_settings = member + owner + collaborator + installation->admin
-    permission write_settings = owner + installation->admin
+      permission read_settings = member + owner + collaborator + installation->admin
+      permission write_settings = owner + installation->admin
 
-    // Operations on Organization's Members
-    permission read_members = member + owner + installation->admin
-    permission invite_members = member + owner + installation->admin
-    permission write_members = owner + installation->admin
-    permission leave = owner + member + collaborator + installation->admin
+      permission read_audit_logs = owner + installation->admin
 
-    // Permissions on (sub-)resources
-    permission create_project = member + owner + installation->admin
+      // Operations on Organization's Members
+      permission read_members = member + owner + installation->admin
+      permission invite_members = member + owner + installation->admin
+      permission write_members = owner + installation->admin
+      permission leave = owner + member + collaborator + installation->admin
 
-    permission read_git_provider = owner + member + collaborator + installation->admin
-    permission write_git_provider = owner + installation->admin
+      // Permissions on (sub-)resources
+      permission create_project = member + owner + installation->admin
 
-    permission read_billing = member + owner + installation->admin
-    permission write_billing = owner + installation->admin
+      permission read_git_provider = owner + member + collaborator + installation->admin
+      permission write_git_provider = owner + installation->admin
 
-    permission read_prebuild = member + owner + installation->admin
+      permission read_billing = member + owner + installation->admin
+      permission write_billing = owner + installation->admin
 
-    permission create_workspace = member + collaborator
+      permission read_prebuild = member + owner + installation->admin
 
-    permission read_sessions = owner + installation->admin
+      permission create_workspace = member + collaborator
 
-    // can add credit notes and change the spending limits even for free users
-    permission write_billing_admin = installation->admin
-  }
+      permission read_sessions = owner + installation->admin
 
-  definition project {
-    relation org: organization
+      // can add credit notes and change the spending limits even for free users
+      permission write_billing_admin = installation->admin
+    }
 
-    // A subject is a viewer, if:
-    //  * the users with access are directly assigned as a viewer
-    //  * the project has granted access to all members in an organization
-    //  * the project has granted access to _any_ user on this installation
-    relation viewer: user | organization#member | user:*
+    definition project {
+      relation org: organization
 
-    // All org members are editors for now, to model the existing behavior.
-    permission editor = org->member
+      // A subject is a viewer, if:
+      //  * the users with access are directly assigned as a viewer
+      //  * the project has granted access to all members in an organization
+      //  * the project has granted access to _any_ user on this installation
+      relation viewer: user | organization#member | user:*
 
-    permission read_info = viewer + editor + org->owner + org->installation_admin
-    permission write_info = editor + org->owner + org->installation_admin
-    permission delete = editor + org->owner + org->installation_admin
+      // All org members are editors for now, to model the existing behavior.
+      permission editor = org->member
 
-    permission read_env_var = viewer + editor + org->owner + org->installation_admin
-    permission write_env_var = editor + org->owner + org->installation_admin
+      permission read_info = viewer + editor + org->owner + org->installation_admin
+      permission write_info = editor + org->owner + org->installation_admin
+      permission delete = editor + org->owner + org->installation_admin
 
-    permission read_prebuild = viewer + editor + org->owner + org->installation_admin
-    permission write_prebuild = editor + org->owner
-  }
+      permission read_env_var = viewer + editor + org->owner + org->installation_admin
+      permission write_env_var = editor + org->owner + org->installation_admin
 
-  definition workspace {
-    relation org: organization
-    // The user that created the workspace
-    relation owner: user
-    // Whether this workspace is shared (globally)
-    relation shared: user:*
+      permission read_prebuild = viewer + editor + org->owner + org->installation_admin
+      permission write_prebuild = editor + org->owner
+    }
 
-    // Whether a user can access a workspace (with an IDE)
-    permission access = owner + shared + org->installation_admin
+    definition workspace {
+      relation org: organization
+      // The user that created the workspace
+      relation owner: user
+      // Whether this workspace is shared (globally)
+      relation shared: user:*
 
-    // Note: All of this is modelled after current behavior.
-    // There are a lot of improvements we can make here in the light of Organizations, but we explicitly do that as a separate step
-    permission start = owner
-    permission stop = owner + org->installation_admin
-    permission delete = owner
+      // Whether a user can access a workspace (with an IDE)
+      permission access = owner + shared + org->installation_admin
 
-    // Whether a user can read basic info/metadata of a workspace
-    permission read_info = owner + shared + org->member
+      // Note: All of this is modelled after current behavior.
+      // There are a lot of improvements we can make here in the light of Organizations, but we explicitly do that as a separate step
+      permission start = owner
+      permission stop = owner + org->installation_admin
+      permission delete = owner
 
-    permission create_snapshot = owner & org->snapshoter
+      // Whether a user can read basic info/metadata of a workspace
+      permission read_info = owner + shared + org->member
 
-    // Whether someone is allowed to do administrative tasks on a workspace, e.g. un-delete etc.
-    permission admin_control = org->installation_admin
-  }
+      permission create_snapshot = owner & org->snapshoter
+
+      // Whether someone is allowed to do administrative tasks on a workspace, e.g. un-delete etc.
+      permission admin_control = org->installation_admin
+    }
 # relationships to be used for assertions & validation
 relationships: |-
-  // we have one installation
-  installation:installation_0#member@user:user_0
-  user:user_0#installation@installation:installation_0
+    // we have one installation
+    installation:installation_0#member@user:user_0
+    user:user_0#installation@installation:installation_0
 
-  installation:installation_0#admin@user:user_admin
+    installation:installation_0#admin@user:user_admin
 
-  // We have an organization org_1, which has some members & owners
-  organization:org_1#installation@installation:installation_0
-  organization:org_1#member@user:user_0
-  organization:org_1#owner@user:user_0
-  organization:org_1#member@user:user_1
-  organization:org_1#member@user:user_2
-  user:user_0#organization@organization:org_1
-  user:user_1#organization@organization:org_1
-  user:user_2#organization@organization:org_1
+    // We have an organization org_1, which has some members & owners
+    organization:org_1#installation@installation:installation_0
+    organization:org_1#member@user:user_0
+    organization:org_1#owner@user:user_0
+    organization:org_1#member@user:user_1
+    organization:org_1#member@user:user_2
+    user:user_0#organization@organization:org_1
+    user:user_1#organization@organization:org_1
+    user:user_2#organization@organization:org_1
 
-  // org_1 has a project
-  project:project_1#org@organization:org_1
-  // project_1 can be accessed by anyone in the organization - it's visibility is public
-  project:project_1#viewer@organization:org_1#member
+    // org_1 has a project
+    project:project_1#org@organization:org_1
+    // project_1 can be accessed by anyone in the organization - it's visibility is public
+    project:project_1#viewer@organization:org_1#member
 
-  // We have another organization org_2, which has some users, some of which are also members of org_1
-  organization:org_2#member@user:user_0
-  organization:org_2#owner@user:user_0
-  organization:org_2#member@user:user_1
-  organization:org_2#member@user:user_10
-  // user_2 is a collaborator of org_2
-  organization:org_2#collaborator@user:user_2
-  user:user_10#organization@organization:org_2
+    // We have another organization org_2, which has some users, some of which are also members of org_1
+    organization:org_2#member@user:user_0
+    organization:org_2#owner@user:user_0
+    organization:org_2#member@user:user_1
+    organization:org_2#member@user:user_10
+    // user_2 is a collaborator of org_2
+    organization:org_2#collaborator@user:user_2
+    user:user_10#organization@organization:org_2
 
-  // org_2 has a project project_2
-  project:project_2#org@organization:org_2
-  // user_1 is viewer of project_2
-  project:project_2#viewer@user:user_1
+    // org_2 has a project project_2
+    project:project_2#org@organization:org_2
+    // user_1 is viewer of project_2
+    project:project_2#viewer@user:user_1
 
-  workspace:workspace_1#org@organization:org_1
-  workspace:workspace_1#owner@user:user_1
-  workspace:workspace_2_shared#org@organization:org_1
-  workspace:workspace_2_shared#owner@user:user_1
-  workspace:workspace_2_shared#shared@user:*
+    workspace:workspace_1#org@organization:org_1
+    workspace:workspace_1#owner@user:user_1
+    workspace:workspace_2_shared#org@organization:org_1
+    workspace:workspace_2_shared#owner@user:user_1
+    workspace:workspace_2_shared#shared@user:*
 
 # validation should assert that a particular relation exists between an entity, and a subject
 # validations are not used to assert that a permission exists
 validation:
-  installation:installation_0#member:
-    - "[user:user_0] is <installation:installation_0#member>"
-  installation:installation_0#admin:
-    - "[user:user_admin] is <installation:installation_0#admin>"
-  organization:org_1#member:
-    - "[user:user_0] is <organization:org_1#member>"
-    - "[user:user_1] is <organization:org_1#member>"
-    - "[user:user_2] is <organization:org_1#member>"
-  organization:org_1#owner:
-    - "[user:user_0] is <organization:org_1#owner>"
-  project:project_1#org:
-    - "[organization:org_1] is <project:project_1#org>"
-
+    installation:installation_0#member:
+        - "[user:user_0] is <installation:installation_0#member>"
+    installation:installation_0#admin:
+        - "[user:user_admin] is <installation:installation_0#admin>"
+    organization:org_1#member:
+        - "[user:user_0] is <organization:org_1#member>"
+        - "[user:user_1] is <organization:org_1#member>"
+        - "[user:user_2] is <organization:org_1#member>"
+    organization:org_1#owner:
+        - "[user:user_0] is <organization:org_1#owner>"
+    project:project_1#org:
+        - "[organization:org_1] is <project:project_1#org>"
 
 # assertions should assert that a particular permission holds, or not
 assertions:
-  assertTrue:
-    # user 0 can read org_1 because they are a member
-    - organization:org_1#read_info@user:user_0
-    # user 1 can read git providers because they are a member
-    - organization:org_1#read_git_provider@user:user_1
-    # user 0 can edit project_0, because they are the Org Owner
-    - project:project_1#write_info@user:user_0
-    - organization:org_1#write_settings@user:user_0
-    - organization:org_1#write_git_provider@user:user_0
-    # user 0 can invite members to the organization
-    - organization:org_1#read_members@user:user_0
-    - organization:org_1#write_members@user:user_0
-    - organization:org_1#invite_members@user:user_0
-    # user 1 can read and invite members to the organization
-    - organization:org_1#read_members@user:user_1
-    - organization:org_1#invite_members@user:user_1
-    # Org owner can delete the organization
-    - organization:org_1#delete@user:user_0
-    # Org owner can delete projects
-    - project:project_1#delete@user:user_0
-    # org members can delete project
-    - project:project_1#delete@user:user_1
-    # Org member can view projects
-    - project:project_1#read_info@user:user_1
-    # Org member can create projects
-    - organization:org_1#create_project@user:user_1
-    # user 10 can access project_2
-    - project:project_2#write_info@user:user_10
-    # installation user can create orgs
-    - installation:installation_0#create_organization@user:user_0
-    # Installation admin can do what org owners can
-    - project:project_1#delete@user:user_admin
-    - organization:org_1#delete@user:user_admin
-    - organization:org_1#write_settings@user:user_admin
-    - organization:org_1#write_git_provider@user:user_admin
-    # installation admin can create an org
-    - installation:installation_0#create_organization@user:user_admin
-    # owner can access their workspaces
-    - workspace:workspace_1#access@user:user_1
-    - workspace:workspace_2_shared#access@user:user_1
-    # stranger can access other's workspaces
-    - workspace:workspace_2_shared#access@user:user_2
-    # installation admin can create temp token
-    - user:user_0#write_temporary_token@user:user_admin
-    - user:user_1#write_temporary_token@user:user_admin
-    - user:user_2#write_temporary_token@user:user_admin
-  assertFalse:
-    # user 10 cannot access project_1
-    - project:project_1#read_info@user:user_10
-    # non-member/owner cannot access organization
-    - organization:org_1#read_info@user:user_3
-    - organization:org_1#write_info@user:user_3
-    - organization:org_1#write_settings@user:user_1
-    - organization:org_1#read_members@user:user_3
-    - organization:org_1#write_members@user:user_3
-    - organization:org_1#invite_members@user:user_3
-    # user 1 (member) can not write members
-    - organization:org_1#write_members@user:user_1
-    # members are not allowed to:
-    - organization:org_1#write_git_provider@user:user_1
-    # org member can not delete org
-    - organization:org_1#delete@user:user_1
-    # stranger can't access other's non-shared workspace
-    - workspace:workspace_1#access@user:user_2
-    # collaborator(user_2) can't access members, projects, usage
-    - organization:org_2#read_members@user:user_2
-    - project:project_2#read_info@user:user_2
-    - project:project_2#write_info@user:user_2
-    - project:project_2#delete@user:user_2
-    - organization:org_2#read_billing@user:user_2
-    # org owner cant write_temporary_token, because they are not installation admin
-    - user:user_1#write_temporary_token@user:user_0
-    # org_2 is not belong to installation_0
-    - user:user_10#write_temporary_token@user:user_admin
+    assertTrue:
+        # user 0 can read org_1 because they are a member
+        - organization:org_1#read_info@user:user_0
+        # user 1 can read git providers because they are a member
+        - organization:org_1#read_git_provider@user:user_1
+        # user 0 can edit project_0, because they are the Org Owner
+        - project:project_1#write_info@user:user_0
+        - organization:org_1#write_settings@user:user_0
+        - organization:org_1#write_git_provider@user:user_0
+        # user 0 can invite members to the organization
+        - organization:org_1#read_members@user:user_0
+        - organization:org_1#write_members@user:user_0
+        - organization:org_1#invite_members@user:user_0
+        # user 1 can read and invite members to the organization
+        - organization:org_1#read_members@user:user_1
+        - organization:org_1#invite_members@user:user_1
+        # Org owner can delete the organization
+        - organization:org_1#delete@user:user_0
+        # Org owner can delete projects
+        - project:project_1#delete@user:user_0
+        # org members can delete project
+        - project:project_1#delete@user:user_1
+        # Org member can view projects
+        - project:project_1#read_info@user:user_1
+        # Org member can create projects
+        - organization:org_1#create_project@user:user_1
+        # user 10 can access project_2
+        - project:project_2#write_info@user:user_10
+        # installation user can create orgs
+        - installation:installation_0#create_organization@user:user_0
+        # Installation admin can do what org owners can
+        - project:project_1#delete@user:user_admin
+        - organization:org_1#delete@user:user_admin
+        - organization:org_1#write_settings@user:user_admin
+        - organization:org_1#write_git_provider@user:user_admin
+        # installation admin can create an org
+        - installation:installation_0#create_organization@user:user_admin
+        # owner can access their workspaces
+        - workspace:workspace_1#access@user:user_1
+        - workspace:workspace_2_shared#access@user:user_1
+        # stranger can access other's workspaces
+        - workspace:workspace_2_shared#access@user:user_2
+        # installation admin can create temp token
+        - user:user_0#write_temporary_token@user:user_admin
+        - user:user_1#write_temporary_token@user:user_admin
+        - user:user_2#write_temporary_token@user:user_admin
+    assertFalse:
+        # user 10 cannot access project_1
+        - project:project_1#read_info@user:user_10
+        # non-member/owner cannot access organization
+        - organization:org_1#read_info@user:user_3
+        - organization:org_1#write_info@user:user_3
+        - organization:org_1#write_settings@user:user_1
+        - organization:org_1#read_members@user:user_3
+        - organization:org_1#write_members@user:user_3
+        - organization:org_1#invite_members@user:user_3
+        # user 1 (member) can not write members
+        - organization:org_1#write_members@user:user_1
+        # members are not allowed to:
+        - organization:org_1#write_git_provider@user:user_1
+        # org member can not delete org
+        - organization:org_1#delete@user:user_1
+        # stranger can't access other's non-shared workspace
+        - workspace:workspace_1#access@user:user_2
+        # collaborator(user_2) can't access members, projects, usage
+        - organization:org_2#read_members@user:user_2
+        - project:project_2#read_info@user:user_2
+        - project:project_2#write_info@user:user_2
+        - project:project_2#delete@user:user_2
+        - organization:org_2#read_billing@user:user_2
+        # org owner cant write_temporary_token, because they are not installation admin
+        - user:user_1#write_temporary_token@user:user_0
+        # org_2 is not belong to installation_0
+        - user:user_10#write_temporary_token@user:user_admin

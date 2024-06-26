@@ -59,7 +59,6 @@ import { installLogCountMetric } from "@gitpod/gitpod-protocol/lib/util/logging-
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { dbConnectionsEnqueued, dbConnectionsFree, dbConnectionsTotal } from "./prometheus-metrics";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { installCtxLogAugmenter } from "./util/log-context";
 if (process.env.NODE_ENV === "development") {
     require("longjohn");
@@ -71,11 +70,12 @@ installLogCountMetric();
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
-    let isEnabled = await getExperimentsClientForBackend().getValueAsync("google_cloud_profiler", false, {});
-    while (!isEnabled) {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        isEnabled = await getExperimentsClientForBackend().getValueAsync("google_cloud_profiler", false, {});
+    if (process.env.GOOGLE_CLOUD_PROFILER?.toLocaleLowerCase() !== "true") {
+        console.log("skipping cloud profiler, not enabled");
+        return;
     }
+    console.log("starting cloud profiler");
+
     try {
         const profiler = await import("@google-cloud/profiler");
         // there is no way to stop it: https://github.com/googleapis/cloud-profiler-nodejs/issues/876

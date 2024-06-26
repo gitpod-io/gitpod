@@ -12413,6 +12413,18 @@ public final class PrebuildOuterClass {
      */
     io.gitpod.publicapi.v1.PrebuildOuterClass.TaskLogOrBuilder getTaskLogsOrBuilder(
         int index);
+
+    /**
+     * <code>string image_build_log_url = 6 [json_name = "imageBuildLogUrl"];</code>
+     * @return The imageBuildLogUrl.
+     */
+    java.lang.String getImageBuildLogUrl();
+    /**
+     * <code>string image_build_log_url = 6 [json_name = "imageBuildLogUrl"];</code>
+     * @return The bytes for imageBuildLogUrl.
+     */
+    com.google.protobuf.ByteString
+        getImageBuildLogUrlBytes();
   }
   /**
    * Protobuf type {@code gitpod.v1.PrebuildStatus}
@@ -12439,6 +12451,7 @@ public final class PrebuildOuterClass {
       message_ = "";
       logUrl_ = "";
       taskLogs_ = java.util.Collections.emptyList();
+      imageBuildLogUrl_ = "";
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -12634,6 +12647,45 @@ public final class PrebuildOuterClass {
       return taskLogs_.get(index);
     }
 
+    public static final int IMAGE_BUILD_LOG_URL_FIELD_NUMBER = 6;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object imageBuildLogUrl_ = "";
+    /**
+     * <code>string image_build_log_url = 6 [json_name = "imageBuildLogUrl"];</code>
+     * @return The imageBuildLogUrl.
+     */
+    @java.lang.Override
+    public java.lang.String getImageBuildLogUrl() {
+      java.lang.Object ref = imageBuildLogUrl_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        imageBuildLogUrl_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string image_build_log_url = 6 [json_name = "imageBuildLogUrl"];</code>
+     * @return The bytes for imageBuildLogUrl.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getImageBuildLogUrlBytes() {
+      java.lang.Object ref = imageBuildLogUrl_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        imageBuildLogUrl_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -12663,6 +12715,9 @@ public final class PrebuildOuterClass {
       for (int i = 0; i < taskLogs_.size(); i++) {
         output.writeMessage(5, taskLogs_.get(i));
       }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(imageBuildLogUrl_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 6, imageBuildLogUrl_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -12689,6 +12744,9 @@ public final class PrebuildOuterClass {
       for (int i = 0; i < taskLogs_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(5, taskLogs_.get(i));
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(imageBuildLogUrl_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(6, imageBuildLogUrl_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -12721,6 +12779,8 @@ public final class PrebuildOuterClass {
           .equals(other.getLogUrl())) return false;
       if (!getTaskLogsList()
           .equals(other.getTaskLogsList())) return false;
+      if (!getImageBuildLogUrl()
+          .equals(other.getImageBuildLogUrl())) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -12748,6 +12808,8 @@ public final class PrebuildOuterClass {
         hash = (37 * hash) + TASK_LOGS_FIELD_NUMBER;
         hash = (53 * hash) + getTaskLogsList().hashCode();
       }
+      hash = (37 * hash) + IMAGE_BUILD_LOG_URL_FIELD_NUMBER;
+      hash = (53 * hash) + getImageBuildLogUrl().hashCode();
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -12906,6 +12968,7 @@ public final class PrebuildOuterClass {
           taskLogsBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000010);
+        imageBuildLogUrl_ = "";
         return this;
       }
 
@@ -12971,6 +13034,9 @@ public final class PrebuildOuterClass {
         if (((from_bitField0_ & 0x00000008) != 0)) {
           result.logUrl_ = logUrl_;
         }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.imageBuildLogUrl_ = imageBuildLogUrl_;
+        }
         result.bitField0_ |= to_bitField0_;
       }
 
@@ -13027,6 +13093,11 @@ public final class PrebuildOuterClass {
               taskLogsBuilder_.addAllMessages(other.taskLogs_);
             }
           }
+        }
+        if (!other.getImageBuildLogUrl().isEmpty()) {
+          imageBuildLogUrl_ = other.imageBuildLogUrl_;
+          bitField0_ |= 0x00000020;
+          onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -13091,6 +13162,11 @@ public final class PrebuildOuterClass {
                 }
                 break;
               } // case 42
+              case 50: {
+                imageBuildLogUrl_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -13752,6 +13828,78 @@ public final class PrebuildOuterClass {
           taskLogs_ = null;
         }
         return taskLogsBuilder_;
+      }
+
+      private java.lang.Object imageBuildLogUrl_ = "";
+      /**
+       * <code>string image_build_log_url = 6 [json_name = "imageBuildLogUrl"];</code>
+       * @return The imageBuildLogUrl.
+       */
+      public java.lang.String getImageBuildLogUrl() {
+        java.lang.Object ref = imageBuildLogUrl_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          imageBuildLogUrl_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string image_build_log_url = 6 [json_name = "imageBuildLogUrl"];</code>
+       * @return The bytes for imageBuildLogUrl.
+       */
+      public com.google.protobuf.ByteString
+          getImageBuildLogUrlBytes() {
+        java.lang.Object ref = imageBuildLogUrl_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          imageBuildLogUrl_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string image_build_log_url = 6 [json_name = "imageBuildLogUrl"];</code>
+       * @param value The imageBuildLogUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setImageBuildLogUrl(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        imageBuildLogUrl_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string image_build_log_url = 6 [json_name = "imageBuildLogUrl"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearImageBuildLogUrl() {
+        imageBuildLogUrl_ = getDefaultInstance().getImageBuildLogUrl();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string image_build_log_url = 6 [json_name = "imageBuildLogUrl"];</code>
+       * @param value The bytes for imageBuildLogUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setImageBuildLogUrlBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        imageBuildLogUrl_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
       }
 
       // @@protoc_insertion_point(builder_scope:gitpod.v1.PrebuildStatus)
@@ -15541,37 +15689,38 @@ public final class PrebuildOuterClass {
       "t_url\030\007 \001(\tR\ncontextUrl\0221\n\006status\030\010 \001(\0132" +
       "\031.gitpod.v1.PrebuildStatusR\006status\022-\n\022co" +
       "nfiguration_name\030\t \001(\tR\021configurationNam" +
-      "e\"\337\001\n\016PrebuildStatus\022.\n\005phase\030\001 \001(\0132\030.gi" +
+      "e\"\216\002\n\016PrebuildStatus\022.\n\005phase\030\001 \001(\0132\030.gi" +
       "tpod.v1.PrebuildPhaseR\005phase\0229\n\nstart_ti" +
       "me\030\002 \001(\0132\032.google.protobuf.TimestampR\tst" +
       "artTime\022\030\n\007message\030\003 \001(\tR\007message\022\027\n\007log" +
       "_url\030\004 \001(\tR\006logUrl\022/\n\ttask_logs\030\005 \003(\0132\022." +
-      "gitpod.v1.TaskLogR\010taskLogs\"w\n\007TaskLog\022\027" +
-      "\n\007task_id\030\001 \001(\tR\006taskId\022\035\n\ntask_label\030\002 " +
-      "\001(\tR\ttaskLabel\022\033\n\ttask_json\030\003 \001(\tR\010taskJ" +
-      "son\022\027\n\007log_url\030\004 \001(\tR\006logUrl\"\327\001\n\rPrebuil" +
-      "dPhase\0222\n\004name\030\001 \001(\0162\036.gitpod.v1.Prebuil" +
-      "dPhase.PhaseR\004name\"\221\001\n\005Phase\022\025\n\021PHASE_UN" +
-      "SPECIFIED\020\000\022\020\n\014PHASE_QUEUED\020\001\022\022\n\016PHASE_B" +
-      "UILDING\020\002\022\021\n\rPHASE_ABORTED\020\003\022\021\n\rPHASE_TI" +
-      "MEOUT\020\004\022\023\n\017PHASE_AVAILABLE\020\005\022\020\n\014PHASE_FA" +
-      "ILED\020\0062\270\004\n\017PrebuildService\022T\n\rStartPrebu" +
-      "ild\022\037.gitpod.v1.StartPrebuildRequest\032 .g" +
-      "itpod.v1.StartPrebuildResponse\"\000\022W\n\016Canc" +
-      "elPrebuild\022 .gitpod.v1.CancelPrebuildReq" +
-      "uest\032!.gitpod.v1.CancelPrebuildResponse\"" +
-      "\000\022N\n\013GetPrebuild\022\035.gitpod.v1.GetPrebuild" +
-      "Request\032\036.gitpod.v1.GetPrebuildResponse\"" +
-      "\000\022T\n\rListPrebuilds\022\037.gitpod.v1.ListPrebu" +
-      "ildsRequest\032 .gitpod.v1.ListPrebuildsRes" +
-      "ponse\"\000\022V\n\rWatchPrebuild\022\037.gitpod.v1.Wat" +
-      "chPrebuildRequest\032 .gitpod.v1.WatchPrebu" +
-      "ildResponse\"\0000\001\022x\n\031ListOrganizationPrebu" +
-      "ilds\022+.gitpod.v1.ListOrganizationPrebuil" +
-      "dsRequest\032,.gitpod.v1.ListOrganizationPr" +
-      "ebuildsResponse\"\000BQ\n\026io.gitpod.publicapi" +
-      ".v1Z7github.com/gitpod-io/gitpod/compone" +
-      "nts/public-api/go/v1b\006proto3"
+      "gitpod.v1.TaskLogR\010taskLogs\022-\n\023image_bui" +
+      "ld_log_url\030\006 \001(\tR\020imageBuildLogUrl\"w\n\007Ta" +
+      "skLog\022\027\n\007task_id\030\001 \001(\tR\006taskId\022\035\n\ntask_l" +
+      "abel\030\002 \001(\tR\ttaskLabel\022\033\n\ttask_json\030\003 \001(\t" +
+      "R\010taskJson\022\027\n\007log_url\030\004 \001(\tR\006logUrl\"\327\001\n\r" +
+      "PrebuildPhase\0222\n\004name\030\001 \001(\0162\036.gitpod.v1." +
+      "PrebuildPhase.PhaseR\004name\"\221\001\n\005Phase\022\025\n\021P" +
+      "HASE_UNSPECIFIED\020\000\022\020\n\014PHASE_QUEUED\020\001\022\022\n\016" +
+      "PHASE_BUILDING\020\002\022\021\n\rPHASE_ABORTED\020\003\022\021\n\rP" +
+      "HASE_TIMEOUT\020\004\022\023\n\017PHASE_AVAILABLE\020\005\022\020\n\014P" +
+      "HASE_FAILED\020\0062\270\004\n\017PrebuildService\022T\n\rSta" +
+      "rtPrebuild\022\037.gitpod.v1.StartPrebuildRequ" +
+      "est\032 .gitpod.v1.StartPrebuildResponse\"\000\022" +
+      "W\n\016CancelPrebuild\022 .gitpod.v1.CancelPreb" +
+      "uildRequest\032!.gitpod.v1.CancelPrebuildRe" +
+      "sponse\"\000\022N\n\013GetPrebuild\022\035.gitpod.v1.GetP" +
+      "rebuildRequest\032\036.gitpod.v1.GetPrebuildRe" +
+      "sponse\"\000\022T\n\rListPrebuilds\022\037.gitpod.v1.Li" +
+      "stPrebuildsRequest\032 .gitpod.v1.ListPrebu" +
+      "ildsResponse\"\000\022V\n\rWatchPrebuild\022\037.gitpod" +
+      ".v1.WatchPrebuildRequest\032 .gitpod.v1.Wat" +
+      "chPrebuildResponse\"\0000\001\022x\n\031ListOrganizati" +
+      "onPrebuilds\022+.gitpod.v1.ListOrganization" +
+      "PrebuildsRequest\032,.gitpod.v1.ListOrganiz" +
+      "ationPrebuildsResponse\"\000BQ\n\026io.gitpod.pu" +
+      "blicapi.v1Z7github.com/gitpod-io/gitpod/" +
+      "components/public-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -15676,7 +15825,7 @@ public final class PrebuildOuterClass {
     internal_static_gitpod_v1_PrebuildStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_PrebuildStatus_descriptor,
-        new java.lang.String[] { "Phase", "StartTime", "Message", "LogUrl", "TaskLogs", });
+        new java.lang.String[] { "Phase", "StartTime", "Message", "LogUrl", "TaskLogs", "ImageBuildLogUrl", });
     internal_static_gitpod_v1_TaskLog_descriptor =
       getDescriptor().getMessageTypes().get(14);
     internal_static_gitpod_v1_TaskLog_fieldAccessorTable = new

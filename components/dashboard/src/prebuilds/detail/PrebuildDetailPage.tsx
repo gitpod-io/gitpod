@@ -4,15 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild, PrebuildPhase_Phase, TaskLog } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Text } from "@podkit/typography/Text";
 import { Button } from "@podkit/buttons/Button";
 import { FC, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
 import dayjs from "dayjs";
-import { usePrebuildLogsEmitter } from "../../data/prebuilds/prebuild-logs-emitter";
-import React from "react";
 import { useToast } from "../../components/toasts/Toasts";
 import {
     isPrebuildDone,
@@ -29,8 +27,8 @@ import { PrebuildStatus } from "../../projects/prebuild-utils";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@podkit/tabs/Tabs";
-
-const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
+import { PrebuildTaskTab } from "./PrebuildTaskTab";
+import type { PlainMessage } from "@bufbuild/protobuf";
 
 /**
  * Formats a date. For today, it returns the time. For this year, it returns the month and day and time. Otherwise, it returns the full date and time.
@@ -47,8 +45,7 @@ const formatDate = (date: dayjs.Dayjs): string => {
     return date.format("MMM D, YYYY [at] h:mm A");
 };
 
-const PersistedToastID = "prebuild-logs-error";
-
+export const PersistedToastID = "prebuild-logs-error";
 interface Props {
     prebuildId: string;
 }
@@ -65,9 +62,20 @@ export const PrebuildDetailPage: FC = () => {
         window.location.hash.slice(1) || undefined,
     );
 
-    const taskId = selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? "0";
+    const isImageBuild =
+        currentPrebuild?.status?.phase?.name === PrebuildPhase_Phase.QUEUED &&
+        !!currentPrebuild.status.imageBuildLogUrl;
+    const taskId = useMemo(() => {
+        if (!currentPrebuild) {
+            return undefined;
+        }
+        if (isImageBuild) {
+            return "image-build";
+        }
 
-    const { emitter: logEmitter, disposable: disposeStreamingLogs } = usePrebuildLogsEmitter(prebuildId, taskId);
+        return selectedTaskId ?? currentPrebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? undefined;
+    }, [currentPrebuild, isImageBuild, selectedTaskId]);
+
     const {
         isFetching: isTriggeringPrebuild,
         refetch: triggerPrebuild,
@@ -96,7 +104,7 @@ export const PrebuildDetailPage: FC = () => {
         setLogNotFound(false);
         const disposable = watchPrebuild(prebuildId, (prebuild) => {
             if (currentPrebuild?.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
-                disposeStreamingLogs?.dispose();
+                return true;
             }
             setCurrentPrebuild(prebuild);
 
@@ -106,14 +114,21 @@ export const PrebuildDetailPage: FC = () => {
         return () => {
             disposable.dispose();
         };
-    }, [prebuildId, disposeStreamingLogs, currentPrebuild?.status?.phase?.name]);
+    }, [prebuildId, currentPrebuild?.status?.phase?.name]);
 
-    useEffect(() => {
-        const anyLogAvailable = currentPrebuild?.status?.taskLogs.some((t) => t.logUrl);
-        if (!anyLogAvailable) {
-            setLogNotFound(true);
+    const prebuildTasks = useMemo(() => {
+        const validTasks: Omit<PlainMessage<TaskLog>, "taskJson">[] =
+            currentPrebuild?.status?.taskLogs.filter((t) => t.logUrl) ?? [];
+        if (isImageBuild) {
+            validTasks.unshift({
+                taskId: "image-build",
+                taskLabel: "Image Build",
+                logUrl: currentPrebuild?.status?.imageBuildLogUrl!, // we know this is defined because we're in the isImageBuild branch
+            });
         }
-    }, [currentPrebuild?.status?.taskLogs]);
+
+        return validTasks;
+    }, [currentPrebuild?.status, isImageBuild]);
 
     useEffect(() => {
         history.listen(() => {
@@ -123,29 +138,6 @@ export const PrebuildDetailPage: FC = () => {
     }, []);
 
     const notFoundError = error instanceof ApplicationError && error.code === ErrorCodes.NOT_FOUND;
-
-    useEffect(() => {
-        logEmitter.on("error", (err: Error) => {
-            if (err?.name === "AbortError") {
-                return;
-            }
-            if (err instanceof ApplicationError && err.code === ErrorCodes.NOT_FOUND) {
-                // We don't want to show a toast for this error, because it's handled by `notFoundError`.
-                return;
-            }
-            if (err?.message) {
-                toast("Fetching logs failed: " + err.message);
-            }
-        });
-        logEmitter.on("logs-error", (err: ApplicationError) => {
-            if (err.code === ErrorCodes.NOT_FOUND) {
-                setLogNotFound(true);
-                return;
-            }
-
-            toast("Fetching logs failed: " + err.message, { autoHide: false, id: PersistedToastID });
-        });
-    }, [logEmitter, toast]);
 
     useEffect(() => {
         if (isTriggerError && triggerError?.message) {
@@ -164,6 +156,8 @@ export const PrebuildDetailPage: FC = () => {
             console.error("Could not cancel prebuild", error);
         }
     }, [prebuild, cancelPrebuildMutation]);
+
+    const isError = logNotFound || prebuildTasks.length === 0;
 
     if (newPrebuildID) {
         return <Redirect to={repositoriesRoutes.PrebuildDetail(newPrebuildID)} />;
@@ -207,7 +201,8 @@ export const PrebuildDetailPage: FC = () => {
                         )}
                     </div>
                 ) : (
-                    prebuild && (
+                    prebuild &&
+                    currentPrebuild && (
                         <div className={"border border-pk-border-base rounded-xl py-6 divide-y"}>
                             <div className="px-6 pb-4">
                                 <div className="flex flex-col gap-2">
@@ -248,57 +243,64 @@ export const PrebuildDetailPage: FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                {(currentPrebuild?.status?.taskLogs.some((t) => t.logUrl) || logNotFound) && (
-                                    <Tabs
-                                        value={taskId}
-                                        onValueChange={setSelectedTaskId}
-                                        className="p-0 bg-pk-surface-primary"
-                                    >
-                                        <TabsList className="overflow-x-auto max-w-full p-0 h-auto items-end">
-                                            {currentPrebuild?.status?.taskLogs
-                                                .filter((t) => t.logUrl)
-                                                .map((task) => (
-                                                    <TabsTrigger
-                                                        value={task.taskId}
-                                                        key={task.taskId}
-                                                        data-analytics={JSON.stringify({ dnt: true })}
-                                                        className="mt-1 font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative last:mr-1"
-                                                    >
-                                                        {task.taskLabel}
-                                                    </TabsTrigger>
-                                                ))}
-                                        </TabsList>
-                                        <TabsContent value={taskId} className="h-112 mt-0 border-pk-border-base">
+                                <Tabs value={taskId ?? "empty-tab"} onValueChange={setSelectedTaskId} className="p-0">
+                                    <TabsList className="overflow-x-auto max-w-full p-0 h-auto items-end">
+                                        {prebuildTasks.map((task) => (
+                                            <TabsTrigger
+                                                value={task.taskId}
+                                                key={task.taskId}
+                                                data-analytics={JSON.stringify({ dnt: true })}
+                                                className="mt-1 font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative last:mr-1"
+                                                disabled={task.taskId !== "image-build" && isImageBuild}
+                                            >
+                                                {task.taskLabel}
+                                            </TabsTrigger>
+                                        ))}
+                                    </TabsList>
+                                    {!isError ? (
+                                        prebuildTasks.map(({ taskId }) => (
+                                            <PrebuildTaskTab
+                                                key={taskId}
+                                                taskId={taskId}
+                                                prebuild={currentPrebuild}
+                                                onLogNotFound={() => setLogNotFound(true)}
+                                            />
+                                        ))
+                                    ) : (
+                                        <TabsContent
+                                            value={taskId ?? "empty-tab"}
+                                            className="h-112 mt-0 border-pk-border-base"
+                                        >
                                             <Suspense fallback={<div />}>
-                                                {logNotFound ? (
-                                                    <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
-                                                        <Text className="w-80 text-center">
-                                                            Logs of this prebuild are inaccessible. Use{" "}
-                                                            <code>gp validate --prebuild --headless</code> in a
-                                                            workspace to see logs and debug prebuild issues.{" "}
-                                                            <a
-                                                                href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
-                                                                target="_blank"
-                                                                rel="noreferrer noopener"
-                                                                className="gp-link"
-                                                            >
-                                                                Learn more
-                                                            </a>
-                                                            .
-                                                        </Text>
-                                                    </div>
-                                                ) : (
-                                                    <WorkspaceLogs
-                                                        classes="h-full w-full"
-                                                        xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0 mt-4"
-                                                        logsEmitter={logEmitter}
-                                                        key={taskId}
-                                                    />
-                                                )}
+                                                <div className="px-6 py-4 h-full w-full bg-pk-surface-primary text-base flex items-center justify-center">
+                                                    <Text className="w-80 text-center">
+                                                        {logNotFound ? (
+                                                            <>
+                                                                Logs of this prebuild are inaccessible. Use{" "}
+                                                                <code>gp validate --prebuild --headless</code> in a
+                                                                workspace to see logs and debug prebuild issues.{" "}
+                                                                <a
+                                                                    href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
+                                                                    target="_blank"
+                                                                    rel="noreferrer noopener"
+                                                                    className="gp-link"
+                                                                >
+                                                                    Learn more
+                                                                </a>
+                                                                .
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                No prebuild tasks defined in <code>.gitpod.yml</code>{" "}
+                                                                for this prebuild
+                                                            </>
+                                                        )}
+                                                    </Text>
+                                                </div>
                                             </Suspense>
                                         </TabsContent>
-                                    </Tabs>
-                                )}
+                                    )}
+                                </Tabs>
                             </div>
                             <div className="px-6 pt-6 flex justify-between border-pk-border-base">
                                 {[PrebuildPhase_Phase.BUILDING, PrebuildPhase_Phase.QUEUED].includes(

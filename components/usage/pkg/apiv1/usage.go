@@ -18,6 +18,7 @@ import (
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
@@ -29,6 +30,7 @@ type UsageService struct {
 	nowFunc           func() time.Time
 	pricer            *WorkspacePricer
 	costCenterManager *db.CostCenterManager
+	ledgerInterval    time.Duration
 
 	v1.UnimplementedUsageServiceServer
 }
@@ -167,9 +169,10 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	}
 
 	return &v1.ListUsageResponse{
-		UsageEntries: usageData,
-		CreditsUsed:  usageSummary.CreditCentsUsed.ToCredits(),
-		Pagination:   &pagination,
+		UsageEntries:   usageData,
+		CreditsUsed:    usageSummary.CreditCentsUsed.ToCredits(),
+		Pagination:     &pagination,
+		LedgerInterval: durationpb.New(s.ledgerInterval),
 	}, nil
 }
 
@@ -473,15 +476,22 @@ func dedupeWorkspaceInstancesForUsage(instances []db.WorkspaceInstanceForUsage) 
 	return set
 }
 
-func NewUsageService(conn *gorm.DB, pricer *WorkspacePricer, costCenterManager *db.CostCenterManager) *UsageService {
+func NewUsageService(conn *gorm.DB, pricer *WorkspacePricer, costCenterManager *db.CostCenterManager, ledgerIntervalStr string) (*UsageService, error) {
+
+	ledgerInterval, err := time.ParseDuration(ledgerIntervalStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse schedule duration: %w", err)
+	}
+
 	return &UsageService{
 		conn:              conn,
 		costCenterManager: costCenterManager,
 		nowFunc: func() time.Time {
 			return time.Now().UTC()
 		},
-		pricer: pricer,
-	}
+		pricer:         pricer,
+		ledgerInterval: ledgerInterval,
+	}, nil
 }
 
 func (s *UsageService) AddUsageCreditNote(ctx context.Context, req *v1.AddUsageCreditNoteRequest) (*v1.AddUsageCreditNoteResponse, error) {

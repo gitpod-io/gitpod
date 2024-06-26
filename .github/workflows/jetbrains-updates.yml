@@ -13,6 +13,8 @@ jobs:
             - uses: actions/checkout@v4
             - name: Install dependencies
               run: |
+                curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.1/oci-tool_0.2.1_linux_amd64.tar.gz | tar xz -C /usr/local/bin
+                chmod +x /usr/local/bin/oci-tool
                 cd ./components/ide/gha-update-image
                 yarn
                 npm i -g bun
@@ -43,7 +45,6 @@ jobs:
 
                       Merge if:
                       - [ ] Tests are green, if something breaks then add tests for regressions.
-                      - [ ] Warmup is working properly using IntelliJ and spring-petclinic project sample
 
                       <details>
                       <summary>if you want to test manually for some reasons</summary>
@@ -55,6 +56,7 @@ jobs:
                       5. Verify that the workspace starts successfully
                       6. Verify that the IDE opens successfully
                       7. Verify that the version of the IDE corresponds to the one being updated in this PR
+                      8. Warmup is working properly using IntelliJ and spring-petclinic project sample
 
                       The following resources should help, in case something goes wrong (e.g. workspaces don't start):
 

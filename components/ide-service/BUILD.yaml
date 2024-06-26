@@ -35,4 +35,5 @@ packages:
 scripts:
   - name: gen-golden-files
     script: |
-      go test -timeout 30s -run ./... github.com/gitpod-io/gitpod/ide-service/pkg/server --force --update
+      go test -timeout 120s -run ./... github.com/gitpod-io/gitpod/ide-service/pkg/server --force --update
+      git ls-files -- '*/**.golden' | xargs pre-commit run end-of-file-fixer --files || true

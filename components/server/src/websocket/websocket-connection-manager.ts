@@ -50,6 +50,7 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import { maskIp } from "../analytics";
 import { runWithRequestContext } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { AuditLogService } from "../audit/AuditLogService";
 
 export type GitpodServiceFactory = () => GitpodServerImpl;
 
@@ -200,11 +201,13 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         protected readonly serverFactory: GitpodServiceFactory,
         protected readonly hostContextProvider: HostContextProvider,
         protected readonly rateLimiterConfig: RateLimiterConfig,
+        protected readonly auditLogService: AuditLogService,
     ) {
         this.jsonRpcConnectionHandler = new GitpodJsonRpcConnectionHandler<GitpodApiClient>(
             this.path,
             this.createProxyTarget.bind(this),
             this.rateLimiterConfig,
+            this.auditLogService,
         );
     }
 
@@ -326,6 +329,7 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
         readonly path: string,
         readonly targetFactory: (proxy: JsonRpcProxy<T>, request?: object, connectionCtx?: TraceContext) => any,
         readonly rateLimiterConfig: RateLimiterConfig,
+        readonly auditLogService: AuditLogService,
     ) {
         super(path, targetFactory); // targetFactory has to adhere to the interface here, but is not used, because we override "onConnection" below
     }
@@ -347,6 +351,7 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
             this.createRateLimiter(clientMetadata.id, request),
             clientMetadata,
             ctx,
+            this.auditLogService,
         );
         const proxy = factory.createProxy();
         factory.target = this.targetFactory(proxy, request, ctx);
@@ -371,6 +376,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         protected readonly rateLimiter: RateLimiter,
         protected readonly clientMetadata: ClientMetadata,
         protected readonly connectionCtx: TraceContext,
+        protected readonly auditLogService: AuditLogService,
     ) {
         super();
     }
@@ -395,7 +401,12 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             async () => {
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                    return await this.internalOnRequest(span, method, ...args);
+                    const result = await this.internalOnRequest(span, method, ...args);
+                    if (userId) {
+                        // omit the last argument, which is the cancellation token
+                        this.auditLogService.recordAuditLog(userId, method, args.slice(0, -1));
+                    }
+                    return result;
                 } finally {
                     span.finish();
                 }

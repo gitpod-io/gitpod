@@ -21,13 +21,6 @@ const featureFlags = {
     gitpod_desktop_use_local_ssh_proxy: false,
     enabledOrbitalDiscoveries: "",
     repositoryFinderSearch: false,
-    createProjectModal: false,
-    configurationsAndPrebuilds: false,
-    showPrebuildsMenuItem: false,
-    // Whether to enable workspace class restrictions for configurations
-    configuration_workspace_class_restrictions: false,
-    org_level_editor_restriction_enabled: false,
-    org_level_editor_version_pinning_enabled: false,
     // dummy specified dataops feature, default false
     dataops: false,
     // Logging tracing for added for investigate hanging issue
@@ -62,51 +55,6 @@ export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): Fe
     return query.data !== undefined ? query.data : featureFlags[featureFlag];
 };
 
-export const useDedicatedFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] | boolean => {
-    const queryKey = ["dedicatedFeatureFlag", featureFlag];
-
-    const query = useQuery(queryKey, async () => {
-        const flagValue = await getExperimentsClient().getValueAsync(featureFlag, featureFlags[featureFlag], {
-            gitpodHost: window.location.host,
-        });
-        return flagValue;
-    });
-
-    return query.data !== undefined ? query.data : featureFlags[featureFlag];
-};
-
 export const useIsDataOps = () => {
     return useFeatureFlag("dataops");
-};
-
-export const useHasConfigurationsAndPrebuildsEnabled = () => {
-    return useFeatureFlag("configurationsAndPrebuilds");
-};
-
-export const useReportDashboardLoggingTracing = () => {
-    const enabled = useDedicatedFeatureFlag("dashboard_logging_tracing");
-
-    if (!enabled) {
-        return async <T>(fn: () => Promise<T>, _msg: string, _meta?: Record<string, any>) => {
-            return await fn();
-        };
-    }
-    return async <T>(fn: () => Promise<T>, msg: string, meta?: Record<string, any>) => {
-        try {
-            const result = await fn();
-            console.error("[dashboard_tracing] " + msg, {
-                ...meta,
-                time: performance.now(),
-            });
-            return result;
-        } catch (err) {
-            console.error("[dashboard_tracing] " + msg, {
-                ...meta,
-                err: err.toString(),
-                errorCode: (err as any)?.code,
-                time: performance.now(),
-            });
-            throw err;
-        }
-    };
 };

@@ -341,6 +341,7 @@ func Run(options ...RunOption) {
 		}
 	}
 
+	willShutdownCtx, fireWillShutdown := context.WithCancel(ctx)
 	termMux := terminal.NewMux()
 	termMuxSrv := terminal.NewMuxTerminalService(termMux)
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
@@ -378,7 +379,8 @@ func Run(options ...RunOption) {
 		go gitStatusService.Run(gitStatusCtx, gitStatusWg)
 	}
 
-	willShutdownCtx, fireWillShutdown := context.WithCancel(ctx)
+	taskServiceWg := &sync.WaitGroup{}
+
 	apiServices := []RegisterableService{
 		&statusService{
 			willShutdownCtx: willShutdownCtx,
@@ -395,7 +397,11 @@ func Run(options ...RunOption) {
 		NewInfoService(cfg, cstate, gitpodService),
 		&ControlService{portsManager: portMgmt},
 		&portService{portsManager: portMgmt},
-		&taskService{tasksManager: taskManager},
+		&taskService{
+			wg:              taskServiceWg,
+			tasksManager:    taskManager,
+			willShutdownCtx: willShutdownCtx,
+		},
 	}
 	apiServices = append(apiServices, additionalServices...)
 
@@ -524,6 +530,11 @@ func Run(options ...RunOption) {
 	stopGitStatus()
 	gitStatusWg.Wait()
 
+	cleanExit := waitWithTimeout(taskServiceWg, 2*time.Second)
+	if !cleanExit {
+		log.Warn("task service did not finish in time, force closing")
+	}
+
 	terminalShutdownCtx, cancelTermination := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
 	defer cancelTermination()
 	cancel()
@@ -532,6 +543,21 @@ func Run(options ...RunOption) {
 	termMux.Close(terminalShutdownCtx)
 
 	wg.Wait()
+}
+
+// Based off of https://stackoverflow.com/questions/32840687/timeout-for-waitgroup-wait/32843750#32843750
+func waitWithTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+	select {
+	case <-c:
+		return true
+	case <-time.After(timeout):
+		return false
+	}
 }
 
 func getIDENotReadyShutdownDuration(ctx context.Context, exps experiments.Client, gitpodHost string) (bool, time.Duration) {
@@ -1364,7 +1390,7 @@ func startAPIEndpoint(
 			reg.RegisterGRPC(grpcServer)
 		}
 		if reg, ok := reg.(RegisterableRESTService); ok {
-			err := reg.RegisterREST(restMux, grpcEndpoint)
+			err := reg.RegisterREST(ctx, restMux, grpcEndpoint)
 			if err != nil {
 				log.WithError(err).Fatal("cannot register REST service")
 			}
@@ -1480,13 +1506,19 @@ func startAPIEndpoint(
 		}))
 		routes.Handle("/_supervisor"+pprof.Path, http.StripPrefix("/_supervisor", pprof.Handler()))
 	}
-	go http.Serve(httpMux, routes)
+
+	server := &http.Server{Handler: routes}
+	go func(l net.Listener) {
+		if err := server.Serve(l); err != http.ErrServerClosed {
+			log.WithError(err).Error("API endpoint closed")
+		}
+	}(httpMux)
 
 	go m.Serve()
 
 	<-ctx.Done()
 	log.Info("shutting down API endpoint")
-	l.Close()
+	server.Shutdown(ctx)
 }
 
 func tunnelOverWebSocket(tunneled *ports.TunneledPortsService, conn *gitpod.WebsocketConnection) {

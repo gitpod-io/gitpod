@@ -85,7 +85,11 @@ func newUsageService(t *testing.T, dbconn *gorm.DB) v1.UsageServiceClient {
 		MinForUsersOnStripe: 1000,
 	})
 
-	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, DefaultWorkspacePricer, costCenterManager))
+	usageService, err := NewUsageService(dbconn, DefaultWorkspacePricer, costCenterManager, "1m")
+	if err != nil {
+		t.Fatal(err)
+	}
+	v1.RegisterUsageServiceServer(srv.GRPC(), usageService)
 	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))

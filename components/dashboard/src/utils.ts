@@ -4,6 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import EventEmitter from "events";
+
 export interface PollOptions<T> {
     backoffFactor: number;
     retryUntilSeconds: number;
@@ -147,5 +149,56 @@ export function storageAvailable(type: "localStorage" | "sessionStorage"): boole
             storage &&
             storage.length !== 0
         );
+    }
+}
+
+type EventMap = Record<string, any[]>;
+export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEmitter {
+    private eventLog: { [K in keyof EventTypes]?: EventTypes[K][] } = {};
+
+    emit(event: string | symbol, ...args: any[]): boolean;
+    emit<K extends keyof EventTypes>(event: K, ...args: EventTypes[K]): boolean;
+    emit(event: string | symbol, ...args: any[]): boolean {
+        const eventName = event as keyof EventTypes;
+        if (this.eventLog[eventName]) {
+            this.eventLog[eventName]!.push(args as any);
+        } else {
+            this.eventLog[eventName] = [args as any];
+        }
+        return super.emit(event, ...args);
+    }
+
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
+    on<K extends keyof EventTypes>(event: K, listener: (...args: EventTypes[K]) => void): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this {
+        const eventName = event as keyof EventTypes;
+        if (this.eventLog[eventName]) {
+            for (const args of this.eventLog[eventName]!) {
+                listener(...args);
+            }
+        }
+        super.on(event, listener);
+        return this;
+    }
+
+    once(event: string | symbol, listener: (...args: any[]) => void): this;
+    once<K extends keyof EventTypes>(event: K, listener: (...args: EventTypes[K]) => void): this;
+    once(event: string | symbol, listener: (...args: any[]) => void): this {
+        const eventName = event as keyof EventTypes;
+        if (this.eventLog[eventName]) {
+            for (const args of this.eventLog[eventName]!) {
+                listener(...args);
+            }
+        }
+        super.once(event, listener);
+        return this;
+    }
+
+    clearLog(event?: keyof EventTypes): void {
+        if (event) {
+            delete this.eventLog[event];
+        } else {
+            this.eventLog = {};
+        }
     }
 }

@@ -21,6 +21,7 @@ import {
     EnvVarWithValue,
     IDESettings,
     Identity as IdentityProtocol,
+    JetBrainsProductConfig,
     NamedWorkspaceFeatureFlag,
     PrebuiltWorkspaceState,
     ProjectEnvVar,
@@ -39,6 +40,7 @@ import {
     WorkspaceInfo,
     WorkspaceSession as WorkspaceSessionProtocol,
 } from "@gitpod/gitpod-protocol/lib/protocol";
+import { AuditLog as AuditLogProtocol } from "@gitpod/gitpod-protocol/lib/audit-log";
 import {
     OrgMemberInfo,
     OrgMemberRole,
@@ -68,6 +70,9 @@ import {
     AuthProviderType,
     OAuth2Config,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import {
+    AuditLog,
+} from "@gitpod/public-api/lib/gitpod/v1/auditlogs_pb";
 import {
     BranchMatchingStrategy,
     Configuration,
@@ -1196,8 +1201,10 @@ export class PublicAPIConverter {
 
     toPrebuildStatus(gitpodHost: string, prebuild: PrebuildWithStatus): PrebuildStatus {
         const tasks: TaskLog[] = [];
+        let taskIndex = 0;
         if (prebuild.workspace?.config?.tasks) {
             for (let i = 0; i < prebuild.workspace.config.tasks.length; i++) {
+                taskIndex = i;
                 const task = prebuild.workspace.config.tasks[i];
                 tasks.push(
                     new TaskLog({
@@ -1213,6 +1220,48 @@ export class PublicAPIConverter {
                 );
             }
         }
+
+        const capitalize = (input: string) => {
+            return input.charAt(0).toUpperCase() + input.slice(1);
+        };
+
+        // This is a hack mimicking the supervisor behavior of adding dynamic IDE tasks https://github.com/gitpod-io/gitpod/blob/e7d79c355e2cd6ac34056ea52d7bdcda45975839/components/ide-service/pkg/server/server.go#L508-L540
+        if (prebuild.workspace.config.jetbrains) {
+            const jetbrainsIdes = Object.entries(prebuild.workspace.config.jetbrains).sort(([a], [b]) =>
+                a.localeCompare(b),
+            ) as [string, JetBrainsProductConfig][];
+            for (const [ide, ideConfig] of jetbrainsIdes) {
+                if (!ideConfig.prebuilds) {
+                    continue;
+                }
+
+                if (ideConfig.prebuilds.version !== "latest") {
+                    tasks.push(
+                        new TaskLog({
+                            taskId: `jb-warmup-${ide}-stable`,
+                            taskLabel: `JetBrains ${capitalize(ide)} warmup (stable)`,
+                            logUrl: new URL(
+                                getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
+                                gitpodHost,
+                            ).toString(),
+                        }),
+                    );
+                }
+                if (ideConfig.prebuilds.version !== "stable") {
+                    tasks.push(
+                        new TaskLog({
+                            taskId: `jb-warmup-${ide}-latest`,
+                            taskLabel: `JetBrains ${capitalize(ide)} warmup (latest)`,
+                            logUrl: new URL(
+                                getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
+                                gitpodHost,
+                            ).toString(),
+                        }),
+                    );
+                }
+            }
+        }
+
         return new PrebuildStatus({
             phase: new PrebuildPhase({
                 name: this.toPrebuildPhase(prebuild.status),
@@ -1221,6 +1270,7 @@ export class PublicAPIConverter {
             message: prebuild.error,
             logUrl: new URL(getPrebuildLogPath(prebuild.info.id), gitpodHost).toString(),
             taskLogs: tasks,
+            imageBuildLogUrl: new URL(getPrebuildLogPath(prebuild.workspace.id, "image-build"), gitpodHost).toString(),
         });
     }
 
@@ -1324,9 +1374,8 @@ export class PublicAPIConverter {
         const remainingMillisecondsAfterMinutes = remainingMillisecondsAfterHours % 60000;
         const secondsResult = Math.floor(remainingMillisecondsAfterMinutes / 1000);
 
-        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${
-            secondsResult > 0 ? secondsResult + "s" : ""
-        }`;
+        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${secondsResult > 0 ? secondsResult + "s" : ""
+            }`;
     }
 
     toUser(from: UserProtocol): User {
@@ -1524,6 +1573,17 @@ export class PublicAPIConverter {
     toOnboardingState(state: GitpodServer.OnboardingState): OnboardingState {
         return new OnboardingState({
             completed: state.isCompleted,
+        });
+    }
+
+    toAuditLog(input: AuditLogProtocol): AuditLog {
+        return new AuditLog({
+            id: input.id,
+            organizationId: input.organizationId,
+            actorId: input.actorId,
+            action: input.action,
+            timestamp: this.toTimestamp(input.timestamp),
+            args: JSON.stringify(input.args),
         });
     }
 }

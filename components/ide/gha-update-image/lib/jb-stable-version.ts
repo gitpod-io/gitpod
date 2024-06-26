@@ -116,6 +116,7 @@ export const getStableVersionsInfo = async (ides: JetBrainsIDE[]) => {
 
     const uniqueMajorVersions = new Set<string>();
     const uniqueMajorBuildVersions = new Set<string>();
+    const updatedIDEs: string[] = [];
 
     await Promise.all(
         ides.map(async (ide) => {
@@ -149,6 +150,9 @@ export const getStableVersionsInfo = async (ides: JetBrainsIDE[]) => {
                 throw new Error("No download link found for the latest release");
             }
             rawWorkspace = rawWorkspace.replace(oldDownloadUrl, downloadLink);
+            if (oldDownloadUrl !== downloadLink) {
+                updatedIDEs.push(ide.productId);
+            }
 
             const currentBuildVersion = semver.parse(lastRelease.build);
             if (!currentBuildVersion) {
@@ -180,12 +184,12 @@ export const getStableVersionsInfo = async (ides: JetBrainsIDE[]) => {
     const majorVersion = majorVersions[0];
     console.log(`All IDEs are in the same major version: ${majorVersion}`);
 
-    return { buildVersion, majorVersion };
+    return { buildVersion, majorVersion, updatedIDEs };
 };
 
 export const upgradeStableVersionsInWorkspaceaAndGradle = async () => {
     try {
-        const { buildVersion, majorVersion } = await getStableVersionsInfo(ides);
+        const { buildVersion, majorVersion, updatedIDEs } = await getStableVersionsInfo(ides);
         await Bun.write(pathToWorkspaceYaml, rawWorkspace);
 
         await Bun.write(
@@ -205,6 +209,7 @@ platformVersion=${buildVersion.major}.${buildVersion.minor}-EAP-CANDIDATE-SNAPSH
 
         console.log(`File updated: ${pathToWorkspaceYaml}`);
         console.log(`File updated: ${pathToBackendPluginGradleStable}`);
+        return updatedIDEs;
     } catch (e) {
         if (e instanceof MultipleMajorVersionsError || e instanceof MultipleBuildVersionsError) {
             console.error(e.message);

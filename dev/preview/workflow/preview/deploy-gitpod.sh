@@ -447,6 +447,11 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.enforce 
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.connectionsPerMinute "3000"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.bucketSize "3000"
 
+#
+# Enable GCP profiling in server
+#
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.gcpProfilerEnabled "true"
+
 log_success "Generated config at $INSTALLER_CONFIG_PATH"
 
 # ========
