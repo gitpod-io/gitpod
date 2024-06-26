@@ -216,7 +216,12 @@ export class SessionHandler {
     }
 
     public clearSessionCookie(res: express.Response): void {
-        res.clearCookie(getJWTCookieName(this.config));
+        const { secure, sameSite, httpOnly } = this.config.auth.session.cookie;
+        res.clearCookie(getJWTCookieName(this.config), {
+            httpOnly,
+            sameSite,
+            secure,
+        });
     }
 }
 
