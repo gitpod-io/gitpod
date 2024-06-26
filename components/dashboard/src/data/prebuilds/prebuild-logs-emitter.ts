@@ -5,7 +5,7 @@
  */
 
 import { prebuildClient } from "../../service/public-api";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ReplayableEventEmitter } from "../../utils";
@@ -23,7 +23,12 @@ type LogEventTypes = {
  * @param taskId ID of the task to watch.
  */
 export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
-    const [emitter] = useState(new ReplayableEventEmitter<LogEventTypes>());
+    const emitter = useMemo(
+        () => new ReplayableEventEmitter<LogEventTypes>(),
+        // We would like to re-create the emitter when the prebuildId or taskId changes, so that logs of old tasks / prebuilds are not mixed with the new ones.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [prebuildId, taskId],
+    );
     const [disposable, setDisposable] = useState<Disposable | undefined>();
 
     useEffect(() => {
