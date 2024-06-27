@@ -6,8 +6,11 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"path"
 	"strconv"
 	"strings"
 
@@ -148,9 +151,58 @@ var clustersUpdateAdmissionConstraintCmd = &cobra.Command{
 	},
 }
 
+var clustersUpdateTLSConfigCmd = &cobra.Command{
+	Use:   "tls",
+	Short: "Updates a cluster's TLS configuration",
+	Args:  cobra.ExactArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
+		name := getClusterName()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		conn, client, err := getClustersClient(ctx)
+		if err != nil {
+			log.WithError(err).Fatal("cannot connect")
+		}
+		defer conn.Close()
+
+		tlsPath, err := cmd.Flags().GetString("tls-path")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if tlsPath == "" {
+			log.Fatal("tls-path is required")
+		}
+
+		readFileToBase64Str := func(filename string) string {
+			filepath := path.Join(tlsPath, filename)
+			content, err := ioutil.ReadFile(filepath)
+			if err != nil {
+				log.WithError(err).Fatalf("unable to read from: '%s'", filepath)
+			}
+			return base64.StdEncoding.EncodeToString(content)
+		}
+		request := &api.UpdateRequest{Name: name, Property: &api.UpdateRequest_Tls{Tls: &api.TlsConfig{
+			Ca:  readFileToBase64Str("ca.crt"),
+			Crt: readFileToBase64Str("tls.crt"),
+			Key: readFileToBase64Str("tls.key"),
+		}}}
+
+		_, err = client.Update(ctx, request)
+		if err != nil && err != io.EOF {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("cluster '%s' tls config updated\n", name)
+	},
+}
+
 func init() {
 	clustersCmd.AddCommand(clustersUpdateCmd)
 	clustersUpdateCmd.AddCommand(clustersUpdateScoreCmd)
 	clustersUpdateCmd.AddCommand(clustersUpdateMaxScoreCmd)
 	clustersUpdateCmd.AddCommand(clustersUpdateAdmissionConstraintCmd)
+	clustersUpdateTLSConfigCmd.Flags().String("tls-path", "", "folder containing the ws cluster's ca.crt, tls.crt and tls.key")
+	clustersUpdateCmd.AddCommand(clustersUpdateTLSConfigCmd)
 }

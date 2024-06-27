@@ -108,6 +108,8 @@ message UpdateRequest {
 
     // DEPRECATED
     // ModifyAdmissionPreference admission_preference = 6;
+
+    TlsConfig tls = 7;
   }
 }
 
