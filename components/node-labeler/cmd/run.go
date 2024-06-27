@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bombsimon/logrusr/v4"
+	"github.com/bombsimon/logrusr/v2"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -32,13 +32,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/components/scrubber"
 )
 
 const (
@@ -56,9 +56,7 @@ var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Starts the node labeler",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctrl.SetLogger(logrusr.New(log.Log, logrusr.WithFormatter(func(i interface{}) interface{} {
-			return &log.TrustedValueWrap{Value: scrubber.Default.DeepCopyStruct(i)}
-		})))
+		ctrl.SetLogger(logrusr.New(log.Log))
 
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 			Scheme:                 scheme,
@@ -111,6 +109,9 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("unable to bind controller watch event handler")
 		}
+
+		metrics.Registry.MustRegister(NodeLabelerCounterVec)
+		metrics.Registry.MustRegister(NodeLabelerTimeHistVec)
 
 		err = mgr.AddHealthzCheck("healthz", healthz.Ping)
 		if err != nil {
@@ -203,49 +204,48 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 		return reconcile.Result{}, err
 	}
 
+	if !IsPodReady(pod) {
+		// not ready. Wait until the next update.
+		return reconcile.Result{}, nil
+	}
+
 	var node corev1.Node
 	err = r.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
 	if err != nil {
 		return reconcile.Result{}, fmt.Errorf("obtaining node %s: %w", nodeName, err)
 	}
 
-	isReady, needRequeue := func() (bool, bool) {
-		if !IsPodReady(pod) {
-			return false, false
-		}
-		err = checkTCPPortIsReachable(ipAddress, port)
-		if err != nil {
-			log.WithField("host", ipAddress).WithField("port", port).WithField("pod", pod.Name).WithError(err).Error("checking if TCP port is open")
-			return false, true
-		}
-
-		if component == registryFacade {
-			err = checkRegistryFacade(ipAddress, port)
-			if err != nil {
-				log.WithError(err).Error("checking registry-facade")
-				return false, true
-			}
-
-			time.Sleep(1 * time.Second)
-		}
-		return true, false
-	}()
-
-	_, nodeLabelExists := node.Labels[labelToUpdate]
-
-	if isReady && nodeLabelExists || !isReady && !nodeLabelExists {
+	if labelValue, exists := node.Labels[labelToUpdate]; exists && labelValue == "true" {
+		// nothing to do, the label already exists.
 		return reconcile.Result{}, nil
 	}
 
-	err = updateLabel(labelToUpdate, isReady, nodeName, r)
+	err = checkTCPPortIsReachable(ipAddress, port)
 	if err != nil {
-		log.WithError(err).Error("updating node label")
-		return reconcile.Result{}, fmt.Errorf("trying to modify the label: %v", err)
-	}
-
-	if needRequeue {
+		log.WithField("host", ipAddress).WithField("port", port).WithField("pod", pod.Name).WithError(err).Error("checking if TCP port is open")
 		return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
 	}
+
+	if component == registryFacade {
+		err = checkRegistryFacade(ipAddress, port)
+		if err != nil {
+			log.WithError(err).Error("checking registry-facade")
+			return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	err = updateLabel(labelToUpdate, true, nodeName, r)
+	if err != nil {
+		log.WithError(err).Error("updating node label")
+		return reconcile.Result{}, fmt.Errorf("trying to add the label: %v", err)
+	}
+
+	readyIn := time.Since(pod.Status.StartTime.Time)
+	NodeLabelerTimeHistVec.WithLabelValues(component).Observe(readyIn.Seconds())
+	NodeLabelerCounterVec.WithLabelValues(component).Inc()
+
 	return reconcile.Result{}, nil
 }
 
