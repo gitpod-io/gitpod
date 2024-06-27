@@ -81,7 +81,7 @@ export class LoginCompletionHandler {
             );
         }
 
-        if (request.hostname !== this.config.hostUrl.url.hostname) {
+        if (!this.isBaseDomain(request)) {
             // (GitHub edge case) If we got redirected here onto a sub-domain (e.g. api.gitpod.io), we need to redirect to the base domain in order to Set-Cookie properly.
             const secret = crypto
                 .createHash("sha256")
@@ -108,6 +108,10 @@ export class LoginCompletionHandler {
         log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`);
         reportLoginCompleted("succeeded", "git");
         response.redirect(returnTo);
+    }
+
+    public isBaseDomain(req: express.Request): boolean {
+        return req.hostname === this.config.hostUrl.url.hostname;
     }
 
     public async updateAuthProviderAsVerified(hostname: string, user: User) {
