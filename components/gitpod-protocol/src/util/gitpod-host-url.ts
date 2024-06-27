@@ -216,4 +216,12 @@ export class GitpodHostUrl {
         }
         return newUrl.with((url) => ({ pathname: "/metrics-api" }));
     }
+
+    asLoginWithOTS(userId: string, key: string, returnToUrl?: string) {
+        const result = this.withApi({ pathname: `/login/ots/${userId}/${key}` });
+        if (returnToUrl) {
+            return result.with({ search: `returnTo=${encodeURIComponent(returnToUrl)}` });
+        }
+        return result;
+    }
 }
