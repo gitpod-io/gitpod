@@ -59,7 +59,7 @@ export const mockAuthConfig: AuthConfig = {
             secure: true,
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60,
-            sameSite: "strict",
+            sameSite: "lax",
         },
     },
 };

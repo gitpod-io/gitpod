@@ -163,9 +163,9 @@ describe("SessionHandler", () => {
             expect(opts.httpOnly).to.equal(true);
             expect(opts.secure).to.equal(true);
             expect(opts.maxAge).to.equal(maxAge * 1000);
-            expect(opts.sameSite).to.equal("strict");
+            expect(opts.sameSite).to.equal("lax");
 
-            expect(name, "Check cookie name").to.equal("_gitpod_dev_jwt_");
+            expect(name, "Check cookie name").to.equal("__Host-_gitpod_dev_jwt_");
         });
     });
     describe("jwtSessionConvertor", () => {
