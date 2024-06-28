@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:7a5b796ae54f72b78b7fc33c8fffee9a363af2c6796dac7c4ef65de8d67d348d as compress
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:34100efe6c082579d51b6d9b4ee53576e4497b7a047502544453d79676a356c3 as compress
 
 RUN apk add brotli gzip curl
 
