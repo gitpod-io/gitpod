@@ -14,17 +14,14 @@ const generatePackage = function (goos, goarch, binaryName, mainFile) {
             "components/local-app-api/go:lib",
             "components/public-api/go:lib",
         ],
-        env: ["GOOS=" + goos, "GOARCH=" + goarch, "CGO_ENABLED=0"],
+        env: [`GOOS=${goos}`, `GOARCH=${goarch}`, "CGO_ENABLED=0"],
         config: {
             packaging: "app",
             dontTest: dontTest,
             buildCommand: [
                 "sh",
                 "-c",
-                'go build -trimpath -ldflags "-X github.com/gitpod-io/local-app/pkg/constants.GitCommit=${__git_commit} -X github.com/gitpod-io/local-app/pkg/constants.BuildTime=$(date +%s)" -o ' +
-                    binaryName +
-                    " " +
-                    mainFile,
+                `GOOS=${goos} GOARCH=${goarch} CGO_ENABLED=0 go build -trimpath -ldflags "-X github.com/gitpod-io/local-app/pkg/constants.GitCommit=\${__git_commit\} -X github.com/gitpod-io/local-app/pkg/constants.BuildTime=$(date +%s)" -o ${binaryName} ${mainFile}`,
             ],
         },
         binaryName,
