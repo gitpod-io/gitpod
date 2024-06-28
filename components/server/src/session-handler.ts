@@ -239,6 +239,11 @@ export class SessionHandler {
             sameSite,
             secure,
         });
+
+        const secondaryCookieName = getSecondaryJWTCookieName(this.config);
+        if (secondaryCookieName) {
+            res.clearCookie(secondaryCookieName);
+        }
     }
 }
 
