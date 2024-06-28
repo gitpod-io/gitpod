@@ -242,7 +242,9 @@ export class SessionHandler {
 
         const secondaryCookieName = getSecondaryJWTCookieName(this.config);
         if (secondaryCookieName) {
-            res.clearCookie(secondaryCookieName);
+            res.clearCookie(secondaryCookieName, {
+                domain: this.config.hostUrl.url.hostname,
+            });
         }
     }
 }
