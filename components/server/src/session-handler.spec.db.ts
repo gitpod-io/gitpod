@@ -212,5 +212,35 @@ describe("SessionHandler", () => {
             expect(res.value).to.equal("JWT Session is invalid");
             expect(res.cookie).to.be.undefined;
         });
+
+        it("old JWT cookie is present, is accepted (!), and we get a new one", async () => {
+            const oldExpiredCookie = await sessionHandler.createJWTSessionCookie(existingUser.id, {
+                issuedAtMs: Date.now() - SessionHandler.JWT_REFRESH_THRESHOLD - 1,
+            });
+            oldExpiredCookie.name = "_gitpod_dev_jwt_";
+            const newCookie = await sessionHandler.createJWTSessionCookie(existingUser.id);
+
+            const res = await handle(existingUser, `${oldExpiredCookie.name}=${oldExpiredCookie.value}`);
+            expect(res.status).to.equal(200);
+            expect(res.value).to.equal("Refreshed JWT cookie issued.");
+            expect(res.cookie).to.not.be.undefined;
+            expect(res.cookie?.split("=")[0]).to.equal(newCookie.name);
+        });
+
+        it("old expired AND new one JWT cookies are present, new one is accepted", async () => {
+            const oldExpiredCookie = await sessionHandler.createJWTSessionCookie(existingUser.id, {
+                issuedAtMs: Date.now() - SessionHandler.JWT_REFRESH_THRESHOLD - 1,
+            });
+            oldExpiredCookie.name = "_gitpod_dev_jwt_";
+            const newCookie = await sessionHandler.createJWTSessionCookie(existingUser.id);
+
+            const res = await handle(
+                existingUser,
+                `${oldExpiredCookie.name}=${oldExpiredCookie.value}; ${newCookie.name}=${newCookie.value}`,
+            );
+            expect(res.status).to.equal(200);
+            expect(res.value).to.equal("User session already has a valid JWT session.");
+            expect(res.cookie).to.be.undefined;
+        });
     });
 });

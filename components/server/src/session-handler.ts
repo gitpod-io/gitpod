@@ -35,7 +35,7 @@ export class SessionHandler {
             }
 
             const cookies = parseCookieHeader(req.headers.cookie || "");
-            const jwtTokens = cookies[getJWTCookieName(this.config)];
+            const jwtTokens = this.filterCookieValues(cookies);
 
             let decoded: { payload: JwtPayload; keyId: string } | undefined = undefined;
             try {
@@ -146,10 +146,27 @@ export class SessionHandler {
      */
     async verifyJWTCookie(cookie: string): Promise<JwtPayload | undefined> {
         const cookies = parseCookieHeader(cookie);
-        const cookieValues = cookies[getJWTCookieName(this.config)];
+        const cookieValues = this.filterCookieValues(cookies);
 
         const token = await this.verifyFirstValidJwt(cookieValues);
         return token?.payload;
+    }
+
+    /**
+     * @param cookies
+     * @returns Primary (the cookie name we set) AND secondary cookie (old accepted cookie name) values (in that order).
+     */
+    private filterCookieValues(cookies: { [key: string]: string[] }): string[] {
+        const cookieValues = cookies[getPrimaryJWTCookieName(this.config)];
+
+        const secondaryCookieName = getSecondaryJWTCookieName(this.config);
+        if (secondaryCookieName) {
+            const secondaryCookieValues = cookies[secondaryCookieName];
+            if (secondaryCookieValues) {
+                cookieValues.push(...secondaryCookieValues);
+            }
+        }
+        return cookieValues;
     }
 
     /**
@@ -204,7 +221,7 @@ export class SessionHandler {
         const token = await this.authJWT.sign(userID, payload, options?.expirySeconds);
 
         return {
-            name: getJWTCookieName(this.config),
+            name: getPrimaryJWTCookieName(this.config),
             value: token,
             opts: {
                 maxAge: this.config.auth.session.cookie.maxAge * 1000, // express does not match the HTTP spec and uses milliseconds
@@ -217,7 +234,7 @@ export class SessionHandler {
 
     public clearSessionCookie(res: express.Response): void {
         const { secure, sameSite, httpOnly } = this.config.auth.session.cookie;
-        res.clearCookie(getJWTCookieName(this.config), {
+        res.clearCookie(getPrimaryJWTCookieName(this.config), {
             httpOnly,
             sameSite,
             secure,
@@ -225,8 +242,16 @@ export class SessionHandler {
     }
 }
 
-function getJWTCookieName(config: Config) {
+function getPrimaryJWTCookieName(config: Config) {
     return config.auth.session.cookie.name;
+}
+
+function getSecondaryJWTCookieName(config: Config) {
+    const PREFIX = "__Host-";
+    if (!config.auth.session.cookie.name.startsWith(PREFIX)) {
+        return undefined;
+    }
+    return config.auth.session.cookie.name.slice(PREFIX.length);
 }
 
 function parseCookieHeader(c: string): { [key: string]: string[] } {
