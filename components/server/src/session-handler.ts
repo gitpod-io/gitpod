@@ -157,7 +157,7 @@ export class SessionHandler {
      * @returns Primary (the cookie name we set) AND secondary cookie (old accepted cookie name) values (in that order).
      */
     private filterCookieValues(cookies: { [key: string]: string[] }): string[] {
-        const cookieValues = cookies[getPrimaryJWTCookieName(this.config)];
+        const cookieValues = cookies[getPrimaryJWTCookieName(this.config)] ?? [];
 
         const secondaryCookieName = getSecondaryJWTCookieName(this.config);
         if (secondaryCookieName) {
