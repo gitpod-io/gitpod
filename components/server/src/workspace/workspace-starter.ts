@@ -1484,6 +1484,17 @@ export class WorkspaceStarter {
         orgIdEnv.setValue(await this.configProvider.getDefaultImage(workspace.organizationId));
         sysEnvvars.push(orgIdEnv);
 
+        const client = getExperimentsClientForBackend();
+        const [isSetJavaXmx, isSetJavaProcessorCount] = await Promise.all([
+            client
+                .getValueAsync("supervisor_set_java_xmx", false, { user })
+                .then((v) => newEnvVar("GITPOD_IS_SET_JAVA_XMX", String(v))),
+            client
+                .getValueAsync("supervisor_set_java_processor_count", false, { user })
+                .then((v) => newEnvVar("GITPOD_IS_SET_JAVA_PROCESSOR_COUNT", String(v))),
+        ]);
+        sysEnvvars.push(isSetJavaXmx);
+        sysEnvvars.push(isSetJavaProcessorCount);
         const spec = new StartWorkspaceSpec();
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
@@ -1936,4 +1947,11 @@ export class ScmStartError extends Error {
     static isScmStartError(o: any): o is ScmStartError {
         return !!o && o["host"];
     }
+}
+
+function newEnvVar(key: string, value: string): EnvironmentVariable {
+    const env = new EnvironmentVariable();
+    env.setName(key);
+    env.setValue(value);
+    return env;
 }

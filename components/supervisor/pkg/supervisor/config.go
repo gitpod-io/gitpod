@@ -251,6 +251,14 @@ type WorkspaceConfig struct {
 	// DefaultWorkspaceImage is the default image of current workspace
 	DefaultWorkspaceImage string `env:"GITPOD_DEFAULT_WORKSPACE_IMAGE"`
 
+	// IsSetJavaXmx is a flag to indicate if the JAVA_XMX environment variable is set
+	// value retrieved from server with FeatureFlag
+	IsSetJavaXmx bool `env:"GITPOD_IS_SET_JAVA_XMX"`
+
+	// IsSetJavaProcessorCount is a flag to indicate if the JAVA_PROCESSOR_COUNT environment variable is set
+	// value retrieved from server with FeatureFlag
+	IsSetJavaProcessorCount bool `env:"GITPOD_IS_SET_JAVA_PROCESSOR_COUNT"`
+
 	// IDEPort is the port at which the IDE will need to run on. This is not an IDE config
 	// because Gitpod determines this port, not the IDE.
 	IDEPort int `env:"GITPOD_THEIA_PORT"`
