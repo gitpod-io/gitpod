@@ -85,6 +85,8 @@ type LoginCounterStatus =
     | "failed"
     // The login attempt succeeded
     | "succeeded"
+    // The login was successful, but we need to defer cookie creation via an OTS
+    | "succeeded_via_ots"
     // The login attempt failed, because the client failed to provide complete session information, for instance.
     | "failed_client";
 

@@ -983,7 +983,7 @@ func TestRemoveSensitiveCookies(t *testing.T) {
 	var (
 		domain                  = "test-domain.com"
 		sessionCookie           = &http.Cookie{Domain: domain, Name: "_test_domain_com_", Value: "fobar"}
-		sessionCookieJwt2       = &http.Cookie{Domain: domain, Name: "_test_domain_com_jwt2_", Value: "fobar"}
+		sessionCookieJwt2       = &http.Cookie{Domain: domain, Name: "__Host-_test_domain_com_jwt2_", Value: "fobar"}
 		realGitpodSessionCookie = &http.Cookie{Domain: domain, Name: server_lib.CookieNameFromDomain(domain), Value: "fobar"}
 		portAuthCookie          = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_port_auth_", Value: "some-token"}
 		ownerCookie             = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_owner_", Value: "some-other-token"}

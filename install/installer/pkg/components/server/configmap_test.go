@@ -69,7 +69,7 @@ func TestConfigMap(t *testing.T) {
 				LifetimeSeconds: int64((7 * 24 * time.Hour).Seconds()),
 				Issuer:          "https://awesome.domain",
 				Cookie: auth.CookieConfig{
-					Name:     "_awesome_domain_jwt2_",
+					Name:     "__Host-_awesome_domain_jwt2_",
 					MaxAge:   int64((7 * 24 * time.Hour).Seconds()),
 					SameSite: "lax",
 					Secure:   true,

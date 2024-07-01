@@ -302,6 +302,14 @@ export abstract class GenericAuthProvider implements AuthProvider {
             return;
         }
 
+        if (!this.loginCompletionHandler.isBaseDomain(request)) {
+            // For auth requests that are not targetting the base domain, we redirect to the base domain, so they come with our cookie.
+            log.info(`(${strategyName}) Auth request on subdomain, redirecting to base domain`, { clientInfo });
+            const target = new URL(request.url, this.config.hostUrl.url.toString()).toString();
+            response.redirect(target);
+            return;
+        }
+
         if (isAlreadyLoggedIn) {
             if (!authFlow) {
                 log.warn(

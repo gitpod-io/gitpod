@@ -55,11 +55,11 @@ export const mockAuthConfig: AuthConfig = {
         issuer: "https://mp-server-d7650ec945.preview.gitpod-dev.com",
         lifetimeSeconds: 7 * 24 * 60 * 60,
         cookie: {
-            name: "_gitpod_dev_jwt_",
+            name: "__Host-_gitpod_dev_jwt_",
             secure: true,
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60,
-            sameSite: "strict",
+            sameSite: "lax",
         },
     },
 };
