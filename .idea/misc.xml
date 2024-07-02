@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="FrameworkDetectionExcludesConfiguration">
+    <file type="web" url="file://$PROJECT_DIR$/components/gitpod-protocol/java" />
+    <file type="web" url="file://$PROJECT_DIR$/components/ide/jetbrains/backend-plugin" />
+    <file type="web" url="file://$PROJECT_DIR$/components/supervisor-api/java" />
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_18" project-jdk-name="17" project-jdk-type="JavaSDK" />
 </project>

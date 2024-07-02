@@ -41,7 +41,7 @@ packages:
       - components/gitpod-protocol/java:lib
     srcs:
       - "**/*.kt"
-      - "build.gradle.kts"
+      - "build.gradle-stable.kts"
       - "gradle.properties"
       - "gradle-stable.properties"
       - "gradle/wrapper/*"
@@ -55,6 +55,7 @@ packages:
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
     config:
       commands:
+        - ["mv", "build.gradle-stable.kts", "build.gradle.kts"]
         - ["./build.sh", "${__git_commit}"]
   - name: plugin-latest
     type: generic
@@ -65,7 +66,7 @@ packages:
       - components/gitpod-protocol/java:lib
     srcs:
       - "**/*.kt"
-      - "build.gradle.kts"
+      - "build.gradle-latest.kts"
       - "gradle.properties"
       - "gradle-latest.properties"
       - "gradle/wrapper/*"
@@ -79,6 +80,9 @@ packages:
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
     config:
       commands:
+      # TODO(hw): remove after `2024.2.*` is stable
+        - ["bash", "-c", "yes | sdk install java 21.0.3-zulu"]
+        - ["mv", "build.gradle-latest.kts", "build.gradle.kts"]
         - ["./build.sh", "${__git_commit}"]
   - name: latest-info
     type: generic
