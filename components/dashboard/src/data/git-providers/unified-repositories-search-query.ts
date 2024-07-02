@@ -31,12 +31,8 @@ export const useUnifiedRepositorySearch = ({
     const searchQuery = useSearchRepositories({ searchString, limit: searchLimit });
 
     const filteredRepos = useMemo(() => {
-        if (showExamples) {
-            return PREDEFINED_REPOS.filter(
-                (repo) =>
-                    repo.url.toLowerCase().includes(searchString.toLowerCase()) ||
-                    repo.repoName.toLowerCase().includes(searchString.toLowerCase()),
-            ).map(
+        if (showExamples && searchString.length === 0) {
+            return PREDEFINED_REPOS.map(
                 (repo) =>
                     new SuggestedRepository({
                         url: repo.url,
@@ -51,7 +47,7 @@ export const useUnifiedRepositorySearch = ({
 
     return {
         data: filteredRepos,
-        hasMore: !showExamples && searchQuery.data?.length === searchLimit,
+        hasMore: searchQuery.data?.length === searchLimit,
         isLoading: suggestedQuery.isLoading,
         isSearching: searchQuery.isFetching,
         isError: suggestedQuery.isError || searchQuery.isError,

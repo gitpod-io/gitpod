@@ -88,6 +88,8 @@ export default function RepositoryFinder({
     );
 
     const [selectedSuggestion, setSelectedSuggestion] = useState<SuggestedRepository | undefined>(undefined);
+    const [hasStartedSearching, setHasStartedSearching] = useState(false);
+    const [isShowingExamples, setIsShowingExamples] = useState(showExamples);
 
     type PredefinedRepositoryOptionProps = {
         repo: {
@@ -163,7 +165,7 @@ export default function RepositoryFinder({
 
         // If we put the selectedSuggestion in the dependency array, it will cause an infinite loop
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [repos, selectedContextURL, selectedConfigurationId]);
+    }, [repos, selectedContextURL, selectedConfigurationId, isShowingExamples]);
 
     const displayName = useMemo(() => {
         if (!selectedSuggestion) {
@@ -177,19 +179,35 @@ export default function RepositoryFinder({
         return selectedSuggestion?.configurationName;
     }, [selectedSuggestion]);
 
+    const handleSearchChange = (value: string) => {
+        setSearchString(value);
+        if (value.length > 0) {
+            setIsShowingExamples(false);
+            if (!hasStartedSearching) {
+                setHasStartedSearching(true);
+            }
+        } else {
+            setIsShowingExamples(showExamples);
+        }
+    };
+
     const getElements = useCallback(
         (searchString: string): ComboboxElement[] => {
+            if (isShowingExamples && searchString.length === 0) {
+                return PREDEFINED_REPOS.map((repo) => ({
+                    id: repo.url,
+                    element: <PredefinedRepositoryOption repo={repo} />,
+                    isSelectable: true,
+                }));
+            }
+
             const result = repos.map((repo) => ({
                 id: repo.configurationId || repo.url,
-                element: showExamples ? (
-                    <PredefinedRepositoryOption repo={PREDEFINED_REPOS.find((r) => r.url === repo.url)!} />
-                ) : (
-                    <SuggestedRepositoryOption repo={repo} />
-                ),
+                element: <SuggestedRepositoryOption repo={repo} />,
                 isSelectable: true,
             }));
 
-            if (hasMore && !showExamples) {
+            if (hasMore) {
                 result.push({
                     id: "more",
                     element: (
@@ -198,6 +216,7 @@ export default function RepositoryFinder({
                     isSelectable: false,
                 });
             }
+
             if (
                 searchString.length >= 3 &&
                 authProviders.data?.some((p) => p.type === AuthProviderType.BITBUCKET_SERVER) &&
@@ -228,9 +247,10 @@ export default function RepositoryFinder({
                     isSelectable: false,
                 });
             }
+
             return result;
         },
-        [repos, hasMore, authProviders.data, onlyConfigurations, showExamples],
+        [repos, hasMore, authProviders.data, onlyConfigurations, isShowingExamples],
     );
 
     const resolveIcon = useCallback((contextUrl?: string) => {
@@ -248,7 +268,7 @@ export default function RepositoryFinder({
             // Only consider the isLoading prop if we're including projects in list
             loading={isLoading || isSearching}
             searchPlaceholder="Search repos and demos or paste a repo URL"
-            onSearchChange={setSearchString}
+            onSearchChange={handleSearchChange}
         >
             <ComboboxSelectedItem
                 icon={resolveIcon(selectedContextURL)}
