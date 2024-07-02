@@ -107,7 +107,7 @@ export class HeadlessLogController {
                             await this.workspaceService.streamWorkspaceLogs(
                                 user.id,
                                 instanceId,
-                                terminalId,
+                                { terminalId },
                                 writeToResponse,
                                 async () => {
                                     const ws = await this.authorizeHeadlessLogAccess(span, user, instanceId, res);
@@ -299,13 +299,7 @@ export class HeadlessLogController {
                     const { taskId } = req.params;
                     const logCtx = { userId: user.id, prebuildId, taskId };
 
-                    const head = {
-                        "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
-                        "Transfer-Encoding": "chunked",
-                        "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
-                    };
-                    res.writeHead(200, head);
-
+                    let firstChunk = true;
                     const abortController = new AbortController();
                     const queue = new Queue(); // Make sure we forward in the correct order
                     const writeToResponse = async (chunk: string) =>
@@ -315,6 +309,16 @@ export class HeadlessLogController {
                                     if (ctxIsAborted()) {
                                         return;
                                     }
+                                    if (firstChunk) {
+                                        firstChunk = false;
+                                        const head = {
+                                            "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
+                                            "Transfer-Encoding": "chunked",
+                                            "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
+                                        };
+                                        res.writeHead(200, head);
+                                    }
+
                                     const done = res.write(chunk, "utf-8", (err?: Error | null) => {
                                         if (err) {
                                             // we don't reject in current promise to avoid floating error throws
@@ -330,9 +334,22 @@ export class HeadlessLogController {
                                 }),
                         );
                     try {
-                        await runWithSubSignal(abortController, async () => {
-                            await this.prebuildManager.watchPrebuildLogs(user.id, prebuildId, taskId, writeToResponse);
+                        const redirect = await runWithSubSignal(abortController, async () => {
+                            return await this.prebuildManager.watchPrebuildLogs(
+                                user.id,
+                                prebuildId,
+                                taskId,
+                                writeToResponse,
+                            );
                         });
+                        if (redirect) {
+                            res.redirect(302, redirect.taskUrl);
+                            return;
+                        }
+
+                        // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
+                        // So we resort to this hand-written solution
+                        res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
                     } catch (e) {
                         log.error(logCtx, "error streaming headless logs", e);
                         TraceContext.setError({ span }, e);

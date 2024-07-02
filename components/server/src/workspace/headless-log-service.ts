@@ -96,7 +96,10 @@ export class HeadlessLogService {
                 this.continueWhileRunning(wsi.id),
             );
             if (streamIds !== undefined) {
-                return streamIds;
+                return {
+                    ...streamIds,
+                    online: true,
+                };
             }
         }
 
@@ -134,6 +137,7 @@ export class HeadlessLogService {
         }
         return {
             streams,
+            online: false,
         };
     }
 
@@ -244,7 +248,7 @@ export class HeadlessLogService {
      * @param logCtx
      * @param logEndpoint
      * @param instanceId
-     * @param terminalID
+     * @param taskIdentifier
      * @param sink
      * @param doContinue
      * @param aborted
@@ -253,24 +257,24 @@ export class HeadlessLogService {
         logCtx: LogContext,
         logEndpoint: HeadlessLogEndpoint,
         instanceId: string,
-        terminalID: string,
+        taskIdentifier: { terminalId: string } | { taskId: string },
         sink: (chunk: string) => Promise<void>,
     ): Promise<void> {
-        await this.streamWorkspaceLog(logCtx, logEndpoint, terminalID, sink, this.continueWhileRunning(instanceId));
+        await this.streamWorkspaceLog(logCtx, logEndpoint, taskIdentifier, sink, this.continueWhileRunning(instanceId));
     }
 
     /**
      * For now, simply stream the supervisor data
      * @param logCtx
      * @param logEndpoint
-     * @param terminalID
+     * @param taskIdentifier
      * @param sink
      * @param doContinue
      */
     protected async streamWorkspaceLog(
         logCtx: LogContext,
         logEndpoint: HeadlessLogEndpoint,
-        terminalID: string,
+        taskIdentifier: { terminalId: string } | { taskId: string },
         sink: (chunk: string) => Promise<void>,
         doContinue: () => Promise<boolean>,
     ): Promise<void> {
@@ -278,15 +282,22 @@ export class HeadlessLogService {
             transport: WebsocketTransport(), // necessary because HTTPTransport causes caching issues
         });
 
-        const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
-        const taskIndex = tasks.findIndex((t) => t.getTerminal() === terminalID);
-        if (taskIndex < 0) {
-            log.warn(logCtx, "stream workspace logs: terminal not found", { terminalID, tasks });
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "terminal not found");
+        let taskId: string;
+        if ("terminalId" in taskIdentifier) {
+            const terminalId = taskIdentifier.terminalId;
+            const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
+            const taskIndex = tasks.findIndex((t) => t.getTerminal() === terminalId);
+            if (taskIndex < 0) {
+                log.warn(logCtx, "stream workspace logs: terminal not found", { terminalId, tasks });
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "terminal not found");
+            }
+            taskId = taskIndex.toString();
+        } else {
+            taskId = taskIdentifier.taskId;
         }
 
         const req = new ListenToOutputRequest();
-        req.setTaskId(taskIndex.toString());
+        req.setTaskId(taskId);
 
         const authHeaders = HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint);
 
@@ -347,7 +358,7 @@ export class HeadlessLogService {
 
         // we're just looking at the first stream; image builds just have one stream atm
         const task = tasks[0];
-        await this.streamWorkspaceLog(logCtx, logEndpoint, task.getTerminal(), sink, () => Promise.resolve(true));
+        await this.streamWorkspaceLog(logCtx, logEndpoint, { taskId: task.getId() }, sink, () => Promise.resolve(true));
     }
 
     /**

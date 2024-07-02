@@ -963,7 +963,7 @@ export class WorkspaceService {
     public async streamWorkspaceLogs(
         userId: string,
         instanceId: string,
-        terminalId: string,
+        taskIdentifier: { terminalId: string } | { taskId: string },
         sink: (chunk: string) => Promise<void>,
         check: () => Promise<void> = async () => {},
     ) {
@@ -995,7 +995,7 @@ export class WorkspaceService {
             { userId, instanceId, workspaceId: workspace!.id },
             logEndpoint,
             instanceId,
-            terminalId,
+            taskIdentifier,
             sink,
         );
     }
