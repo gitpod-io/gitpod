@@ -7,7 +7,7 @@
 import React, { useEffect } from "react";
 import { StartWorkspaceModalKeyBinding } from "../App";
 import { LinkButton } from "@podkit/buttons/LinkButton";
-import { Heading2, Subheading } from "@podkit/typography/Headings";
+import { Heading1, Heading2, Subheading } from "@podkit/typography/Headings";
 import { trackVideoClick } from "../Analytics";
 
 declare global {
@@ -43,7 +43,7 @@ export const EmptyWorkspacesContent = () => {
 
     return (
         <div className="app-container flex flex-col space-y-2">
-            <div className="px-6 py-3 flex flex-row items-center justify-center space-x-16">
+            <div className="px-6 mt-12 flex flex-row justify-center space-x-8">
                 <div>
                     <iframe
                         id="gitpod-video"
@@ -57,14 +57,24 @@ export const EmptyWorkspacesContent = () => {
                     ></iframe>
                 </div>
                 <div>
-                    <div className="flex flex-col items-left justify-center h-96 w-96 mx-auto">
-                        <Heading2 className="text-left pb-3">Create your first workspace</Heading2>
-                        <Subheading className="text-left pb-6">
-                            Write code in your personal development environment, running in the cloud
+                    <div className="flex flex-col items-left h-96 w-96">
+                        <Heading1 className="text-left mb-4 !font-semibold !text-2xl">Welcome to Gitpod</Heading1>
+                        <Heading2 className="text-left !mb-0 !font-semibold !text-lg">
+                            Create your first workspace
+                        </Heading2>
+                        <Subheading className="text-left max-w-xs">
+                            A workspace is a cloud development environment
                         </Subheading>
-                        <span>
+                        <span className="flex flex-col space-y-4 w-fit">
+                            <LinkButton
+                                variant="secondary"
+                                className="mt-4 border border-pk-content-secondary text-pk-content-secondary bg-pk-surface-secondary"
+                                href={"/new?showExamples=true"}
+                            >
+                                Try a configured demo repo
+                            </LinkButton>
                             <LinkButton href={"/new"} className="gap-1.5">
-                                New Workspace{" "}
+                                Open your repository{" "}
                                 <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
                             </LinkButton>
                         </span>
