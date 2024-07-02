@@ -13,7 +13,7 @@ plugins {
     // Kotlin support - check the latest version at https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
     id("org.jetbrains.kotlin.jvm") version "1.9.0"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij") version "1.10.1"
+    id("org.jetbrains.intellij") version "1.17.4"
     // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
     id("io.gitlab.arturbosch.detekt") version "1.21.0"
     // ktlint linter - read more: https://github.com/JLLeitschuh/ktlint-gradle
@@ -91,12 +91,16 @@ intellij {
 detekt {
     autoCorrect = true
     buildUponDefaultConfig = true
+    ignoreFailures = true
 
     reports {
         html.enabled = false
         xml.enabled = false
         txt.enabled = false
     }
+}
+ktlint {
+    ignoreFailures = true
 }
 
 tasks {

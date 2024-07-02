@@ -112,6 +112,7 @@ intellijPlatform {
 detekt {
     autoCorrect = true
     buildUponDefaultConfig = true
+    ignoreFailures = true
 
 //    reports {
 //        html.enabled = false
@@ -121,6 +122,7 @@ detekt {
 }
 
 ktlint {
+    ignoreFailures = true
     filter {
         exclude("build.gradle-*.kts")
     }

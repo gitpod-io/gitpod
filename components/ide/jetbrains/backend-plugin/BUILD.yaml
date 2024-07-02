@@ -82,10 +82,15 @@ packages:
       - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
-      # TODO(hw): remove after `2024.2.*` is stable
-        - ["bash", "-c", "source \"$SDKMAN_DIR/bin/sdkman-init.sh\" && yes | sdk install java 21.0.3.fx-zulu"]
+        # TODO(hw): remove after 2024.2.* is stable
         - ["mv", "build.gradle-latest.kts", "build.gradle.kts"]
-        - ["./build.sh", "${__git_commit}"]
+        - - "bash"
+          - "-c"
+          - >
+            echo java=21.0.3.fx-zulu > .sdkmanrc
+            && source "$SDKMAN_DIR/bin/sdkman-init.sh"
+            && sdk env install
+            && ./build.sh ${__git_commit}
   - name: latest-info
     type: generic
     srcs:

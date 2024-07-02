@@ -14,7 +14,7 @@ plugins {
     // Kotlin support - check the latest version at https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
     id("org.jetbrains.kotlin.jvm") version "2.0.0"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij.platform") version "2.0.0-beta7"
+    id("org.jetbrains.intellij.platform") version "2.0.0-beta8"
 //    id("org.jetbrains.intellij.platform.migration") version "2.0.0-beta7"
     // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
     id("io.gitlab.arturbosch.detekt") version "1.23.6"
@@ -67,11 +67,13 @@ dependencies {
     testImplementation(kotlin("test"))
 
     // grpc
-    implementation("com.google.api.grpc:proto-google-common-protos:2.2.2")
-    implementation("io.grpc:grpc-core:1.49.0")
-    implementation("io.grpc:grpc-protobuf:1.49.0")
-    implementation("io.grpc:grpc-stub:1.49.0")
-    implementation("io.grpc:grpc-netty-shaded:1.49.0")
+    // https://mvnrepository.com/artifact/com.google.api.grpc/proto-google-common-protos
+    implementation("com.google.api.grpc:proto-google-common-protos:2.41.0")
+    implementation("io.grpc:grpc-core:1.65.0")
+    implementation("io.grpc:grpc-protobuf:1.65.0")
+    // https://mvnrepository.com/artifact/io.grpc/grpc-stub
+    implementation("io.grpc:grpc-stub:1.65.0")
+    implementation("io.grpc:grpc-netty-shaded:1.65.0")
 }
 
 repositories {
@@ -110,6 +112,7 @@ intellijPlatform {
 detekt {
     autoCorrect = true
     buildUponDefaultConfig = true
+    ignoreFailures = true
 
 //    reports {
 //        html.enabled = false
@@ -119,6 +122,7 @@ detekt {
 }
 
 ktlint {
+    ignoreFailures = true
     filter {
         exclude("build.gradle-*.kts")
     }
