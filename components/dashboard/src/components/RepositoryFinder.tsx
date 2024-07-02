@@ -77,8 +77,20 @@ export default function RepositoryFinder({
 
                 return repo.url === selectedID;
             });
+            const matchingPredefinedRepo = PREDEFINED_REPOS.find((repo) => repo.url === selectedID);
+
             if (matchingSuggestion) {
                 onChange?.(matchingSuggestion);
+                return;
+            }
+
+            if (matchingPredefinedRepo) {
+                onChange?.(
+                    new SuggestedRepository({
+                        url: matchingPredefinedRepo.url,
+                        repoName: matchingPredefinedRepo.repoName,
+                    }),
+                );
                 return;
             }
 
@@ -88,7 +100,7 @@ export default function RepositoryFinder({
                 }),
             );
         },
-        [onChange, repos],
+        [onChange, repos, PREDEFINED_REPOS],
     );
 
     const [selectedSuggestion, setSelectedSuggestion] = useState<SuggestedRepository | undefined>(undefined);
@@ -133,9 +145,17 @@ export default function RepositoryFinder({
 
         // If no match, it's a context url that was typed/pasted in, so treat it like a suggestion w/ just a url
         if (!match && selectedContextURL) {
-            match = new SuggestedRepository({
-                url: selectedContextURL,
-            });
+            const predefinedMatch = PREDEFINED_REPOS.find((repo) => repo.url === selectedContextURL);
+            if (predefinedMatch) {
+                match = new SuggestedRepository({
+                    url: predefinedMatch.url,
+                    repoName: predefinedMatch.repoName,
+                });
+            } else {
+                match = new SuggestedRepository({
+                    url: selectedContextURL,
+                });
+            }
         }
 
         // This means we found a matching configuration, but the context url is different
