@@ -16,6 +16,7 @@ import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provide
 import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
+import { PREDEFINED_REPOS } from "../data/git-providers/predefined-repos";
 
 interface RepositoryFinderProps {
     selectedContextURL?: string;
@@ -24,6 +25,7 @@ interface RepositoryFinderProps {
     expanded?: boolean;
     excludeConfigurations?: boolean;
     onlyConfigurations?: boolean;
+    showExamples?: boolean;
     onChange?: (repo: SuggestedRepository) => void;
 }
 
@@ -34,6 +36,7 @@ export default function RepositoryFinder({
     expanded,
     excludeConfigurations = false,
     onlyConfigurations = false,
+    showExamples = false,
     onChange,
 }: RepositoryFinderProps) {
     const [searchString, setSearchString] = useState("");
@@ -46,44 +49,29 @@ export default function RepositoryFinder({
         searchString,
         excludeConfigurations: excludeConfigurations,
         onlyConfigurations: onlyConfigurations,
+        showExamples: showExamples,
     });
 
     const authProviders = useAuthProviderDescriptions();
-    const PREDEFINED_REPOS = useMemo(
-        () => [
-            {
-                url: "https://github.com/gitpod-demos/voting-app",
-                repoName: "demo-docker",
-                description: "A fully configured demo with Docker Compose, Redis and Postgres",
-                repoPath: "github.com/gitpod-demos/voting-app",
-            },
-            {
-                url: "https://github.com/gitpod-demos/spring-petclinic",
-                repoName: "demo-java",
-                description: "A fully configured demo with Java, Maven and Spring Boot",
-                repoPath: "github.com/gitpod-demos/spring-petclinic",
-            },
-        ],
-        [],
-    );
+
+    // This approach creates a memoized Map of the predefined repos,
+    // which can be more efficient for lookups if we would have a large number of predefined repos
+    const memoizedPredefinedRepos = useMemo(() => {
+        return new Map(PREDEFINED_REPOS.map((repo) => [repo.url, repo]));
+    }, []);
 
     const handleSelectionChange = useCallback(
         (selectedID: string) => {
-            // selectedId is either configurationId or repo url
-            const matchingSuggestion = repos?.find((repo) => {
-                if (repo.configurationId) {
-                    return repo.configurationId === selectedID;
-                }
-
-                return repo.url === selectedID;
-            });
-            const matchingPredefinedRepo = PREDEFINED_REPOS.find((repo) => repo.url === selectedID);
+            const matchingSuggestion = repos?.find(
+                (repo) => repo.configurationId === selectedID || repo.url === selectedID,
+            );
 
             if (matchingSuggestion) {
                 onChange?.(matchingSuggestion);
                 return;
             }
 
+            const matchingPredefinedRepo = memoizedPredefinedRepos.get(selectedID);
             if (matchingPredefinedRepo) {
                 onChange?.(
                     new SuggestedRepository({
@@ -94,13 +82,9 @@ export default function RepositoryFinder({
                 return;
             }
 
-            onChange?.(
-                new SuggestedRepository({
-                    url: selectedID,
-                }),
-            );
+            onChange?.(new SuggestedRepository({ url: selectedID }));
         },
-        [onChange, repos, PREDEFINED_REPOS],
+        [onChange, repos, memoizedPredefinedRepos],
     );
 
     const [selectedSuggestion, setSelectedSuggestion] = useState<SuggestedRepository | undefined>(undefined);
@@ -194,25 +178,25 @@ export default function RepositoryFinder({
     }, [selectedSuggestion]);
 
     const getElements = useCallback(
-        // searchString ignore here as list is already pre-filtered against it
-        // w/ mirrored state via useUnifiedRepositorySearch
-        (searchString: string) => {
-            const result = repos.map((repo) => {
-                return {
-                    id: repo.configurationId || repo.url,
-                    element: <SuggestedRepositoryOption repo={repo} />,
-                    isSelectable: true,
-                } as ComboboxElement;
-            });
-            if (hasMore) {
-                // add an element that tells the user to refine the search
+        (searchString: string): ComboboxElement[] => {
+            const result = repos.map((repo) => ({
+                id: repo.configurationId || repo.url,
+                element: showExamples ? (
+                    <PredefinedRepositoryOption repo={PREDEFINED_REPOS.find((r) => r.url === repo.url)!} />
+                ) : (
+                    <SuggestedRepositoryOption repo={repo} />
+                ),
+                isSelectable: true,
+            }));
+
+            if (hasMore && !showExamples) {
                 result.push({
                     id: "more",
                     element: (
                         <div className="text-sm text-pk-content-tertiary">Repo missing? Try refining your search.</div>
                     ),
                     isSelectable: false,
-                } as ComboboxElement);
+                });
             }
             if (
                 searchString.length >= 3 &&
@@ -223,30 +207,15 @@ export default function RepositoryFinder({
                 result.push({
                     id: "bitbucket-server",
                     element: (
-                        <div className="text-sm text-pk-content-tertiary">
-                            <div className="flex items-center">
-                                <Exclamation2 className="w-4 h-4"></Exclamation2>
-                                <span className="ml-2">Bitbucket Server only supports searching by prefix.</span>
-                            </div>
+                        <div className="text-sm text-pk-content-tertiary flex items-center">
+                            <Exclamation2 className="w-4 h-4 mr-2" />
+                            <span>Bitbucket Server only supports searching by prefix.</span>
                         </div>
                     ),
                     isSelectable: false,
-                } as ComboboxElement);
+                });
             }
 
-            // Add predefined repos if they match the search string
-            PREDEFINED_REPOS.forEach((repo) => {
-                if (
-                    repo.url.toLowerCase().includes(searchString.toLowerCase()) ||
-                    repo.repoName.toLowerCase().includes(searchString.toLowerCase())
-                ) {
-                    result.push({
-                        id: repo.url,
-                        element: <PredefinedRepositoryOption repo={repo} />,
-                        isSelectable: true,
-                    });
-                }
-            });
             if (searchString.length < 3) {
                 // add an element that tells the user to type more
                 result.push({
@@ -257,24 +226,17 @@ export default function RepositoryFinder({
                         </div>
                     ),
                     isSelectable: false,
-                } as ComboboxElement);
+                });
             }
             return result;
         },
-        [repos, hasMore, authProviders.data, onlyConfigurations, PREDEFINED_REPOS],
+        [repos, hasMore, authProviders.data, onlyConfigurations, showExamples],
     );
 
-    function resolveIcon(contextUrl?: string) {
-        if (!contextUrl) {
-            return RepositorySVG;
-        }
-        // check if the context url if from PREDEFINED_REPOS
-        const found = PREDEFINED_REPOS.find((repo) => repo.url === contextUrl);
-        if (found) {
-            return GitpodRepositoryTemplateSVG;
-        }
-        return RepositorySVG;
-    }
+    const resolveIcon = useCallback((contextUrl?: string) => {
+        if (!contextUrl) return RepositorySVG;
+        return PREDEFINED_REPOS.some((repo) => repo.url === contextUrl) ? GitpodRepositoryTemplateSVG : RepositorySVG;
+    }, []);
 
     return (
         <Combobox

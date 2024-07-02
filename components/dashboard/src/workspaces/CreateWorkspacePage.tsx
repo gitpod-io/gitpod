@@ -102,6 +102,7 @@ export function CreateWorkspacePage() {
         isLoading: isLoadingWorkspaceClasses,
     } = useAllowedWorkspaceClassesMemo(selectedProjectID);
     const defaultWorkspaceClass = props.workspaceClass ?? computedDefaultClass;
+    const showExamples = props.showExamples ?? false;
     const { data: orgSettings } = useOrgSettingsQuery();
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
     const [errorWsClass, setErrorWsClass] = useState<ReactNode | undefined>(undefined);
@@ -523,6 +524,7 @@ export function CreateWorkspacePage() {
                                 selectedConfigurationId={selectedProjectID}
                                 expanded={!contextURL}
                                 disabled={createWorkspaceMutation.isStarting}
+                                showExamples={showExamples}
                             />
                         </InputField>
 
