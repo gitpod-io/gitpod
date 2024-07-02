@@ -49,7 +49,7 @@ export const EmptyWorkspacesContent = () => {
                         id="gitpod-video"
                         width="535"
                         height="307"
-                        src="https://www.youtube.com/embed/R6FQ39sitAQ?enablejsapi=1&modestbranding=1&rel=0&controls=1&showinfo=0&fs=1"
+                        src="https://www.youtube.com/embed/1ZBN-b2cIB8?enablejsapi=1&modestbranding=1&rel=0&controls=1&showinfo=0&fs=1"
                         title="YouTube - Gitpod in 120 seconds"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         allowFullScreen
