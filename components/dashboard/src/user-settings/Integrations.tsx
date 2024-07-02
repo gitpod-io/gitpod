@@ -489,7 +489,7 @@ function GitIntegrations() {
                 <div>
                     <Heading2>Git Integrations</Heading2>
                     <Subheading>
-                        Manage Git integrations for self-managed instances of GitLab, GitHub, or Bitbucket.
+                        Manage Git integrations for self-managed instances of GitLab, GitHub, Gitea or Bitbucket.
                     </Subheading>
                 </div>
                 {/* Hide create button if ff is disabled */}
@@ -714,6 +714,9 @@ export function GitIntegrationModal(
                     settingsUrl = `${host}/-/profile/applications`;
                 }
                 break;
+            case "Gitea":
+                settingsUrl = `${host}/user/settings/applications`;
+                break;
             default:
                 return undefined;
         }
@@ -724,6 +727,9 @@ export function GitIntegrationModal(
                 break;
             case AuthProviderType.GITLAB:
                 docsUrl = `https://www.gitpod.io/docs/gitlab-integration/#oauth-application`;
+                break;
+            case "Gitea":
+                docsUrl = `https://www.gitpod.io/docs/gitea-integration/#oauth-application`;
                 break;
             default:
                 return undefined;
@@ -787,7 +793,7 @@ export function GitIntegrationModal(
                 <div className="flex flex-col">
                     <span className="text-gray-500">
                         {props.headerText ||
-                            "Configure an integration with a self-managed instance of GitLab, GitHub, or Bitbucket."}
+                            "Configure an integration with a self-managed instance of GitLab, GitHub, Bitbucket or Gitea."}
                     </span>
                 </div>
 
@@ -806,6 +812,7 @@ export function GitIntegrationModal(
                             >
                                 <option value={AuthProviderType.GITHUB}>GitHub</option>
                                 <option value={AuthProviderType.GITLAB}>GitLab</option>
+                                <option value={AuthProviderType.GITEA}>Gitea</option>
                                 <option value={AuthProviderType.BITBUCKET_SERVER}>Bitbucket Server</option>
                             </select>
                         </div>

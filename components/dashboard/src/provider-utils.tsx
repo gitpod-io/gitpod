@@ -5,9 +5,10 @@
  */
 
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import bitbucket from "./images/bitbucket.svg";
-import github from "./images/github.svg";
-import gitlab from "./images/gitlab.svg";
+import bitbucket from './images/bitbucket.svg';
+import github from './images/github.svg';
+import gitlab from './images/gitlab.svg';
+import gitea from './images/gitea.svg';
 import { gitpodHostUrl } from "./service/service";
 
 function iconForAuthProvider(type: string | AuthProviderType) {
@@ -18,6 +19,8 @@ function iconForAuthProvider(type: string | AuthProviderType) {
         case "GitLab":
         case AuthProviderType.GITLAB:
             return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitlab} alt="" />;
+        case "Gitea":
+            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitea} />;
         case "Bitbucket":
         case AuthProviderType.BITBUCKET:
             return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} alt="" />;
