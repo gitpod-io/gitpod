@@ -96,14 +96,6 @@ export class UserService {
         }
     }
 
-    async findNotBlockedUserById(userId: string, id: string): Promise<User> {
-        const user = await this.findUserById(userId, id);
-        if (user.blocked) {
-            throw new ApplicationError(ErrorCodes.USER_BLOCKED, `User ${id} is blocked`);
-        }
-        return user;
-    }
-
     async findTokensForIdentity(userId: string, identity: Identity): Promise<TokenEntry[]> {
         const result = await this.userDb.findTokensForIdentity(identity);
         return result;
