@@ -99,6 +99,10 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 	if _, err := os.Stat(openssh); err != nil {
 		return
 	}
+	sshdSession := filepath.Join(filepath.Dir(bin), "ssh", "sshd-session")
+	if _, err := os.Stat(sshdSession); err != nil {
+		sshdSession = ""
+	}
 
 	var args []string
 	args = append(args,
@@ -118,6 +122,9 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		"-oStrictModes no", // don't care for home directory and file permissions
 		"-oTrustedUserCAKeys "+s.caPath,
 	)
+	if sshdSession != "" {
+		args = append(args, "-oSshdSessionPath "+sshdSession)
+	}
 	// can be configured with gp env LOG_LEVEL=DEBUG to see SSH sessions/channels
 	sshdLogLevel := "ERROR"
 	switch log.Log.Logger.GetLevel() {
