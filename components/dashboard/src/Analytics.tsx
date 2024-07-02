@@ -22,7 +22,8 @@ export type Event =
     | "modal_dismiss"
     | "ide_configuration_changed"
     | "status_rendered"
-    | "error_rendered";
+    | "error_rendered"
+    | "websocket_try_connect";
 type InternalEvent = Event | "path_changed" | "dashboard_clicked";
 
 export type EventProperties =
@@ -140,6 +141,7 @@ export function trackEvent(event: "modal_dismiss", properties: TrackModalDismiss
 export function trackEvent(event: "ide_configuration_changed", properties: TrackIDEConfigurationChanged): void;
 export function trackEvent(event: "status_rendered", properties: TrackStatusRendered): void;
 export function trackEvent(event: "error_rendered", properties: TrackErrorRendered): void;
+export function trackEvent(event: "websocket_try_connect", properties: { url: string; parentWindowUrl?: string }): void;
 export function trackEvent(event: Event, properties: EventProperties): void {
     trackEventInternal(event, properties);
 }

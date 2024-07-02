@@ -11,7 +11,7 @@ import { AbstractMessageWriter } from "vscode-jsonrpc/lib/messageWriter";
 import { AbstractMessageReader } from "vscode-jsonrpc/lib/messageReader";
 import { JsonRpcProxyFactory, JsonRpcProxy } from "../proxy-factory";
 import { ConnectionEventHandler, ConnectionHandler } from "../handler";
-import ReconnectingWebSocket, { Event } from "reconnecting-websocket";
+import ReconnectingWebSocket, { Event, UrlProvider } from "reconnecting-websocket";
 import { log } from "../../util/logging";
 
 export interface WebSocketOptions {
@@ -27,13 +27,9 @@ export class WebSocketConnectionProvider {
      * An optional target can be provided to handle
      * notifications and requests from a remote side.
      */
-    createProxy<T extends object>(
-        path: string | Promise<string>,
-        target?: object,
-        options?: WebSocketOptions,
-    ): JsonRpcProxy<T> {
+    createProxy<T extends object>(path: UrlProvider, target?: object, options?: WebSocketOptions): JsonRpcProxy<T> {
         const factory = new JsonRpcProxyFactory<T>(target);
-        const startListening = (path: string) => {
+        const startListening = (path: UrlProvider) => {
             const socket = this.listen(
                 {
                     path,
@@ -50,11 +46,7 @@ export class WebSocketConnectionProvider {
             }
         };
 
-        if (typeof path === "string") {
-            startListening(path);
-        } else {
-            path.then((path) => startListening(path));
-        }
+        startListening(path);
         return factory.createProxy();
     }
 
@@ -87,7 +79,7 @@ export class WebSocketConnectionProvider {
     /**
      * Creates a web socket for the given url
      */
-    createWebSocket(url: string, WebSocketConstructor = WebSocket): WebSocket {
+    createWebSocket(url: UrlProvider, WebSocketConstructor = WebSocket): WebSocket {
         return new ReconnectingWebSocket(url, undefined, {
             maxReconnectionDelay: 10000,
             minReconnectionDelay: 1000,

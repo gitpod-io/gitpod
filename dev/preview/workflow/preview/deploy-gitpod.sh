@@ -412,6 +412,8 @@ if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
   yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
   yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
   yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
+elif [[ "${GITPOD_ANALYTICS}" == "log" ]]; then
+  yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer "log"
 else
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer ""
 fi

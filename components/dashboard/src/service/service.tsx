@@ -14,6 +14,7 @@ import {
     Disposable,
 } from "@gitpod/gitpod-protocol";
 import { WebSocketConnectionProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/connection";
+import { getUrlProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/url-provider";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
@@ -28,18 +29,40 @@ import {
     watchWorkspaceStatusInOrder,
 } from "../data/workspaces/listen-to-workspace-ws-messages2";
 import { Workspace, WorkspaceSpec_WorkspaceType, WorkspaceStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { sendTrackEvent } from "../Analytics";
+import { sendTrackEvent, trackEvent } from "../Analytics";
+import { getFeatureFlagValue } from "../experiments/flags";
+import UAParser from "ua-parser-js";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
-function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
-    let host = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi();
+const gitpodHost = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi().toString();
 
+const isFirefox = new UAParser().getBrowser().name?.toLowerCase().includes("firefox") ?? false;
+const urlProvider = getUrlProvider(
+    gitpodHost,
+    async () => {
+        if (!isFirefox) {
+            return true;
+        }
+        return await getFeatureFlagValue("websocket_url_provider_returns_immediately", {});
+    },
+    () => {
+        let parentWindowUrl: string | undefined;
+        try {
+            parentWindowUrl = window.parent.location.toString();
+        } catch (e) {
+            // ignore
+        }
+        trackEvent("websocket_try_connect", { url: window.location.toString(), parentWindowUrl });
+    },
+);
+
+function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     const connectionProvider = new WebSocketConnectionProvider();
     instrumentWebSocketConnection(connectionProvider);
     let numberOfErrors = 0;
     let onReconnect = () => {};
-    const proxy = connectionProvider.createProxy<S>(host.toString(), undefined, {
+    const proxy = connectionProvider.createProxy<S>(urlProvider, undefined, {
         onerror: (event: any) => {
             log.error(event);
             // don't show alert if dashboard is inside iframe (workspace origin)
