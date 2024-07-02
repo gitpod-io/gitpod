@@ -8,6 +8,8 @@ import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import RepositorySVG from "../icons/Repository.svg";
 import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.svg";
+import { ReactComponent as GitpodRepositoryTemplate } from "../icons/GitpodRepositoryTemplate.svg";
+import GitpodRepositoryTemplateSVG from "../icons/GitpodRepositoryTemplate.svg";
 import { MiddleDot } from "./typography/MiddleDot";
 import { useUnifiedRepositorySearch } from "../data/git-providers/unified-repositories-search-query";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
@@ -47,6 +49,23 @@ export default function RepositoryFinder({
     });
 
     const authProviders = useAuthProviderDescriptions();
+    const PREDEFINED_REPOS = useMemo(
+        () => [
+            {
+                url: "https://github.com/gitpod-demos/voting-app",
+                repoName: "demo-docker",
+                description: "A fully configured demo with Docker Compose, Redis and Postgres",
+                repoPath: "github.com/gitpod-demos/voting-app",
+            },
+            {
+                url: "https://github.com/gitpod-demos/spring-petclinic",
+                repoName: "demo-java",
+                description: "A fully configured demo with Java, Maven and Spring Boot",
+                repoPath: "github.com/gitpod-demos/spring-petclinic",
+            },
+        ],
+        [],
+    );
 
     const handleSelectionChange = useCallback(
         (selectedID: string) => {
@@ -73,6 +92,34 @@ export default function RepositoryFinder({
     );
 
     const [selectedSuggestion, setSelectedSuggestion] = useState<SuggestedRepository | undefined>(undefined);
+
+    type PredefinedRepositoryOptionProps = {
+        repo: {
+            url: string;
+            repoName: string;
+            description: string;
+            repoPath: string;
+        };
+    };
+
+    const PredefinedRepositoryOption: FC<PredefinedRepositoryOptionProps> = ({ repo }) => {
+        return (
+            <div className="flex flex-col overflow-hidden" aria-label={`Demo: ${repo.url}`}>
+                <div className="flex items-center">
+                    <GitpodRepositoryTemplate className="w-5 h-5 text-pk-content-tertiary mr-2" />
+                    <span className="text-sm font-semibold">{repo.repoName}</span>
+                    <MiddleDot className="px-0.5 text-pk-content-tertiary" />
+                    <span
+                        className="text-sm whitespace-nowrap truncate overflow-ellipsis text-pk-content-secondary"
+                        title={repo.repoPath}
+                    >
+                        {repo.repoPath}
+                    </span>
+                </div>
+                <span className="text-xs text-pk-content-secondary ml-7">{repo.description}</span>
+            </div>
+        );
+    };
 
     // Resolve the selected context url & configurationId id props to a suggestion entry
     useEffect(() => {
@@ -166,6 +213,20 @@ export default function RepositoryFinder({
                     isSelectable: false,
                 } as ComboboxElement);
             }
+
+            // Add predefined repos if they match the search string
+            PREDEFINED_REPOS.forEach((repo) => {
+                if (
+                    repo.url.toLowerCase().includes(searchString.toLowerCase()) ||
+                    repo.repoName.toLowerCase().includes(searchString.toLowerCase())
+                ) {
+                    result.push({
+                        id: repo.url,
+                        element: <PredefinedRepositoryOption repo={repo} />,
+                        isSelectable: true,
+                    });
+                }
+            });
             if (searchString.length < 3) {
                 // add an element that tells the user to type more
                 result.push({
@@ -180,8 +241,20 @@ export default function RepositoryFinder({
             }
             return result;
         },
-        [repos, hasMore, authProviders.data, onlyConfigurations],
+        [repos, hasMore, authProviders.data, onlyConfigurations, PREDEFINED_REPOS],
     );
+
+    function resolveIcon(contextUrl?: string) {
+        if (!contextUrl) {
+            return RepositorySVG;
+        }
+        // check if the context url if from PREDEFINED_REPOS
+        const found = PREDEFINED_REPOS.find((repo) => repo.url === contextUrl);
+        if (found) {
+            return GitpodRepositoryTemplateSVG;
+        }
+        return RepositorySVG;
+    }
 
     return (
         <Combobox
@@ -192,11 +265,11 @@ export default function RepositoryFinder({
             disabled={disabled}
             // Only consider the isLoading prop if we're including projects in list
             loading={isLoading || isSearching}
-            searchPlaceholder="Paste repository URL or type to find suggestions"
+            searchPlaceholder="Search repos and demos or paste a repo URL"
             onSearchChange={setSearchString}
         >
             <ComboboxSelectedItem
-                icon={RepositorySVG}
+                icon={resolveIcon(selectedContextURL)}
                 htmlTitle={displayContextUrl(selectedContextURL) || "Repository"}
                 title={<div className="truncate">{displayName || "Select a repository"}</div>}
                 subtitle={
