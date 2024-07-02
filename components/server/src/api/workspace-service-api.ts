@@ -159,7 +159,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "source is required");
         }
         const contextUrl = req.source.value;
-        const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
+        const user = await this.userService.findNotBlockedUserById(ctxUserId(), ctxUserId());
         const { context, project } = await this.contextService.parseContext(user, contextUrl.url, {
             projectId: req.metadata.configurationId,
             organizationId: req.metadata.organizationId,
@@ -200,7 +200,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         if (!req.workspaceId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
         }
-        const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
+        const user = await this.userService.findNotBlockedUserById(ctxUserId(), ctxUserId());
         const { workspace, latestInstance: instance } = await this.workspaceService.getWorkspace(
             ctxUserId(),
             req.workspaceId,
