@@ -3,6 +3,7 @@
 // See License.AGPL.txt in the project root for license information.
 
 import io.gitlab.arturbosch.detekt.Detekt
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = project.findProperty(key).toString()
@@ -102,11 +103,6 @@ intellijPlatform {
     }
     instrumentCode = false
 
-//    verifyPlugin{
-//        ides {
-//            ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("pluginVerifierIdeVersions"))
-//        }
-//    }
 }
 
 // Configure detekt plugin.
@@ -156,5 +152,8 @@ tasks {
         isScanForTestClasses = false
         include("**/*Test.class")
     }
+}
 
+tasks.register("runPluginVerifier") {
+    intellijPlatform.verifyPlugin.ides.ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("pluginVerifierIdeVersions"))
 }
