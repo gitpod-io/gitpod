@@ -78,10 +78,12 @@ packages:
     env:
       - JB_QUALIFIER=latest
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
+      # TODO(hw): remove after `2024.2.*` is stable
+      - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
       # TODO(hw): remove after `2024.2.*` is stable
-        - ["bash", "-c", "yes | sdk install java 21.0.3-zulu"]
+        - ["bash", "-c", "source \"$SDKMAN_DIR/bin/sdkman-init.sh\" && yes | sdk install java 21.0.3-zulu"]
         - ["mv", "build.gradle-latest.kts", "build.gradle.kts"]
         - ["./build.sh", "${__git_commit}"]
   - name: latest-info
