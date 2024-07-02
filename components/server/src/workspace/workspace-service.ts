@@ -705,6 +705,9 @@ export class WorkspaceService {
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<void> {
         let result: MayStartWorkspaceResult = {};
+        if (user.blocked) {
+            throw new ApplicationError(ErrorCodes.USER_BLOCKED, `User ${user.id} is blocked`);
+        }
         try {
             result = await this.entitlementService.mayStartWorkspace(user, organizationId, runningInstances);
             TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
