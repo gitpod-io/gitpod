@@ -84,6 +84,10 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 	if _, err := os.Stat(openssh); err != nil {
 		return
 	}
+	sshdSession := filepath.Join(filepath.Dir(bin), "ssh", "sshd-session")
+	if _, err := os.Stat(sshdSession); err != nil {
+		sshdSession = ""
+	}
 
 	args := []string{
 		"-ieD", "-f/dev/null",
@@ -101,6 +105,9 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		"-oSubsystem sftp internal-sftp",
 		"-oStrictModes no", // don't care for home directory and file permissions
 		"-oLogLevel DEBUG", // enabled DEBUG mode by default
+	}
+	if sshdSession != "" {
+		args = append(args, "-oSshdSessionPath "+sshdSession)
 	}
 
 	envs := make([]string, 0)
