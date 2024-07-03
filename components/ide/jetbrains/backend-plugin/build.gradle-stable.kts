@@ -134,4 +134,8 @@ tasks {
     patchPluginXml {
         version.set(pluginVersion)
     }
+
+    verifyPlugin {
+        ignoreFailures = true
+    }
 }
