@@ -40,6 +40,7 @@ class HeartbeatService : Disposable {
                 }
 
                 if (wasClosed != null) {
+                    thisLogger().warn("hwen:===============sendHeartBeat")
                     manager.client.server.sendHeartBeat(SendHeartBeatOptions(info.instanceId, wasClosed)).await()
                     if (wasClosed) {
                         manager.trackEvent("ide_close_signal", mapOf(
