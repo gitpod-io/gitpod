@@ -207,27 +207,32 @@ describe("SessionHandler", () => {
             expect(res.cookie).to.be.undefined;
         });
         it("JWT cookie is present but invalid", async () => {
-            const res = await handle(existingUser, "_gitpod_dev_jwt_=invalid");
+            const res = await handle(undefined, "__Host-_gitpod_dev_jwt_=invalid");
             expect(res.status).to.equal(401);
-            expect(res.value).to.equal("JWT Session is invalid");
+            expect(res.value).to.equal("User has no valid session.");
             expect(res.cookie).to.be.undefined;
         });
 
-        it("old JWT cookie is present, is accepted (!), and we get a new one", async () => {
+        it("old JWT cookie is ignored, new one is outdated and refreshed", async () => {
             const oldExpiredCookie = await sessionHandler.createJWTSessionCookie(existingUser.id, {
                 issuedAtMs: Date.now() - SessionHandler.JWT_REFRESH_THRESHOLD - 1,
             });
             oldExpiredCookie.name = "_gitpod_dev_jwt_";
-            const newCookie = await sessionHandler.createJWTSessionCookie(existingUser.id);
+            const newCookie = await sessionHandler.createJWTSessionCookie(existingUser.id, {
+                issuedAtMs: Date.now() - SessionHandler.JWT_REFRESH_THRESHOLD - 1,
+            });
 
-            const res = await handle(existingUser, `${oldExpiredCookie.name}=${oldExpiredCookie.value}`);
+            const res = await handle(
+                existingUser,
+                `${oldExpiredCookie.name}=${oldExpiredCookie.value}; ${newCookie.name}=${newCookie.value}`,
+            );
             expect(res.status).to.equal(200);
             expect(res.value).to.equal("Refreshed JWT cookie issued.");
             expect(res.cookie).to.not.be.undefined;
             expect(res.cookie?.split("=")[0]).to.equal(newCookie.name);
         });
 
-        it("old expired AND new one JWT cookies are present, new one is accepted", async () => {
+        it("ld JWT cookie is ignored, new one is accepted", async () => {
             const oldExpiredCookie = await sessionHandler.createJWTSessionCookie(existingUser.id, {
                 issuedAtMs: Date.now() - SessionHandler.JWT_REFRESH_THRESHOLD - 1,
             });

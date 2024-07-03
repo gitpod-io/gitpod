@@ -154,19 +154,10 @@ export class SessionHandler {
 
     /**
      * @param cookies
-     * @returns Primary (the cookie name we set) AND secondary cookie (old accepted cookie name) values (in that order).
+     * @returns Primary (the cookie name we set in config)
      */
     private filterCookieValues(cookies: { [key: string]: string[] }): string[] {
-        const cookieValues = cookies[getPrimaryJWTCookieName(this.config)] ?? [];
-
-        const secondaryCookieName = getSecondaryJWTCookieName(this.config);
-        if (secondaryCookieName) {
-            const secondaryCookieValues = cookies[secondaryCookieName];
-            if (secondaryCookieValues) {
-                cookieValues.push(...secondaryCookieValues);
-            }
-        }
-        return cookieValues;
+        return cookies[getPrimaryJWTCookieName(this.config)] ?? [];
     }
 
     /**
@@ -239,26 +230,11 @@ export class SessionHandler {
             sameSite,
             secure,
         });
-
-        const secondaryCookieName = getSecondaryJWTCookieName(this.config);
-        if (secondaryCookieName) {
-            res.clearCookie(secondaryCookieName, {
-                domain: this.config.hostUrl.url.hostname,
-            });
-        }
     }
 }
 
 function getPrimaryJWTCookieName(config: Config) {
     return config.auth.session.cookie.name;
-}
-
-function getSecondaryJWTCookieName(config: Config) {
-    const PREFIX = "__Host-";
-    if (!config.auth.session.cookie.name.startsWith(PREFIX)) {
-        return undefined;
-    }
-    return config.auth.session.cookie.name.slice(PREFIX.length);
 }
 
 function parseCookieHeader(c: string): { [key: string]: string[] } {
