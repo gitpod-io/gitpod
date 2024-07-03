@@ -282,13 +282,25 @@ export const PrebuildDetailPage: FC = () => {
                                         onClick={() => triggerPrebuild()}
                                     >{`Rerun Prebuild (${prebuild.ref})`}</LoadingButton>
                                 )}
-                                <LinkButton
-                                    disabled={!prebuild?.id}
-                                    href={repositoriesRoutes.PrebuildsSettings(prebuild.configurationId)}
-                                    variant="secondary"
-                                >
-                                    View Prebuild Settings
-                                </LinkButton>
+                                <div className="space-x-6 flex justify-right">
+                                    <LinkButton
+                                        disabled={!prebuild?.id}
+                                        href={repositoriesRoutes.PrebuildsSettings(prebuild.configurationId)}
+                                        variant="secondary"
+                                    >
+                                        View Prebuild Settings
+                                    </LinkButton>
+                                    <LoadingButton
+                                        loading={false}
+                                        disabled={prebuild?.status?.phase?.name !== PrebuildPhase_Phase.AVAILABLE}
+                                        onClick={() =>
+                                            (window.location.href = `/#open-prebuild/${prebuild?.id}/${prebuild?.contextUrl}`)
+                                        }
+                                        variant="default"
+                                    >
+                                        Open Debug Workspace
+                                    </LoadingButton>
+                                </div>
                             </div>
                         </div>
                     )
