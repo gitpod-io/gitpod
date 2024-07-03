@@ -302,7 +302,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		SnapshotName:      snapshotName,
 		BackupLogs:        ws.Spec.Type == workspacev1.WorkspaceTypePrebuild,
 		UpdateGitStatus:   ws.Spec.Type == workspacev1.WorkspaceTypeRegular,
-		SkipBackupContent: ws.Spec.Type == workspacev1.WorkspaceTypePrebuild && ws.IsConditionTrue(workspacev1.WorkspaceConditionsHeadlessTaskFailed),
+		SkipBackupContent: false,
 	})
 
 	err = retry.RetryOnConflict(retryParams, func() error {
