@@ -23,21 +23,19 @@
     </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationInitializedListener implementation="io.gitpod.jetbrains.remote.GitpodApplicationListener" />
-        <postStartupActivity implementation="io.gitpod.jetbrains.remote.GitpodProjectListener" />
+        <applicationService serviceImplementation="io.gitpod.jetbrains.remote.services.HeartbeatService"
+                            preload="true"/>
+        <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodManager" preload="true"/>
 
-        <applicationService serviceImplementation="io.gitpod.jetbrains.remote.services.HeartbeatService" />
-        <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodManager"/>
-
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodTerminalServiceImpl"
-                        client="controller" />
+        <projectService serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodTerminalServiceImpl" client="controller"
+                        preload="true"/>
 
         <notificationGroup id="Gitpod Notifications" displayType="BALLOON" isLogByDefault="false"/>
 
         <httpRequestHandler implementation="io.gitpod.jetbrains.remote.GitpodCLIService"/>
 
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodClientProjectSessionTracker"
-                        client="controller" />
+                        client="controller" preload="true"/>
 
         <gateway.customization.name
                 implementation="io.gitpod.jetbrains.remote.GitpodGatewayClientCustomizationProvider"/>
@@ -50,13 +48,9 @@
 
 
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService"
-                            serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodIgnoredPortsForNotificationServiceImpl" />
+                            serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodIgnoredPortsForNotificationServiceImpl"
+                            preload="true"/>
     </extensions>
-
-<!--    <applicationListeners>-->
-<!--        <listener class="io.gitpod.jetbrains.remote.GitpodApplicationListener"-->
-<!--                 topic="com.intellij.applicationInitializedListener"/>-->
-<!--    </applicationListeners>-->
 
     <actions>
         <action id="io.gitpod.jetbrains.remote.actions.StopWorkspaceAction"

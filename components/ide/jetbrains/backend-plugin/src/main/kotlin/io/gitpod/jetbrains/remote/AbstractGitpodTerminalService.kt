@@ -35,12 +35,7 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
     private val statusServiceStub = StatusServiceGrpc.newStub(GitpodManager.supervisorChannel)
 
     init {
-        thisLogger().warn("=======================hwen:terminal.1")
         start()
-    }
-
-    fun hello() {
-        thisLogger().warn("=======================hwen:terminal.world")
     }
 
     protected abstract fun runJob(lifetime: Lifetime, block: suspend CoroutineScope.() -> Unit): Job
@@ -51,10 +46,9 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
 
         runJob(lifetime) {
             try {
-                thisLogger().warn("=======================hwen:terminal")
                 val terminals = withTimeout(20000L) { getSupervisorTerminalsList() }
                 val tasks = withTimeout(20000L) { getSupervisorTasksList() }
-                thisLogger().warn("gitpod: attaching tasks ${tasks.size}, terminals ${terminals.size}")
+                thisLogger().info("gitpod: attaching tasks ${tasks.size}, terminals ${terminals.size}")
                 if (tasks.isEmpty() && terminals.isEmpty()) {
                     return@runJob
                 }
@@ -95,9 +89,9 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
                 return@forEachIndexed
             }
             val title = terminal.title.takeIf { !it.isNullOrBlank() } ?: "Gitpod Task ${index + 1}"
-            thisLogger().warn("gitpod: attaching task ${terminal.title} (${task.terminal}) with title $title")
+            thisLogger().info("gitpod: attaching task ${terminal.title} (${task.terminal}) with title $title")
             createAttachedSharedTerminal(title, terminal)
-            thisLogger().warn("gitpod: attached task ${terminal.title} (${task.terminal})")
+            thisLogger().info("gitpod: attached task ${terminal.title} (${task.terminal})")
         }
     }
 
@@ -264,7 +258,7 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
                 runJob(lifetime) {
                     delay(5000)
                     try {
-                        thisLogger().warn("gitpod: shutdown task ${supervisorTerminal.title} (${supervisorTerminal.alias})")
+                        thisLogger().info("gitpod: shutdown task ${supervisorTerminal.title} (${supervisorTerminal.alias})")
                         terminalServiceFutureStub.shutdown(
                             TerminalOuterClass.ShutdownTerminalRequest.newBuilder()
                                 .setAlias(supervisorTerminal.alias)
