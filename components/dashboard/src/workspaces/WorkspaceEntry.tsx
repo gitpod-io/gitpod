@@ -5,14 +5,16 @@
  */
 
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import { FunctionComponent, useMemo, useState } from "react";
-import { Item, ItemField, ItemFieldIcon } from "../components/ItemsList";
+import { FunctionComponent, useCallback, useMemo, useState } from "react";
+import { Item, ItemFieldIcon } from "../components/ItemsList";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import Tooltip from "../components/Tooltip";
 import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
 import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
 import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { GitBranchIcon, PinIcon } from "lucide-react";
+import { useUpdateWorkspaceMutation } from "../data/workspaces/update-workspace-mutation";
 
 type Props = {
     info: Workspace;
@@ -21,18 +23,26 @@ type Props = {
 
 export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion }) => {
     const [menuActive, setMenuActive] = useState(false);
+    const updateWorkspace = useUpdateWorkspaceMutation();
 
     const gitStatus = info.status?.gitStatus;
 
     const workspace = info;
     const currentBranch = gitStatus?.branch || "<unknown>";
     const project = getProjectPath(workspace);
-    const normalizedContextUrl = workspace.metadata!.originalContextUrl;
-    const normalizedContextUrlDescription = workspace.metadata!.originalContextUrl; // Instead of showing nothing, we prefer to show the raw content instead
 
     const changeMenuState = (state: boolean) => {
         setMenuActive(state);
     };
+
+    const togglePinned = useCallback(() => {
+        updateWorkspace.mutate({
+            workspaceId: workspace.id,
+            metadata: {
+                pinned: !workspace.metadata?.pinned,
+            },
+        });
+    }, [updateWorkspace, workspace.id, workspace.metadata?.pinned]);
 
     // Could this be `/start#${workspace.id}` instead?
     const startUrl = useMemo(
@@ -47,11 +57,11 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
     );
 
     return (
-        <Item className="whitespace-nowrap py-6 px-6" solid={menuActive}>
+        <Item className="whitespace-nowrap py-6" solid={menuActive}>
             <ItemFieldIcon>
                 <WorkspaceStatusIndicator status={workspace?.status} />
             </ItemFieldIcon>
-            <ItemField className="w-3/12 flex flex-col my-auto">
+            <div className="flex-grow flex flex-col h-full py-auto">
                 <a href={startUrl}>
                     <div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">
                         {info.id}
@@ -64,28 +74,19 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                         </div>
                     </a>
                 </Tooltip>
-            </ItemField>
+            </div>
             {!shortVersion && (
                 <>
-                    <ItemField className="w-4/12 flex flex-col my-auto">
-                        <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">
-                            {workspace.metadata!.name}
-                        </div>
-                        <a href={normalizedContextUrl}>
-                            <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">
-                                {normalizedContextUrlDescription}
-                            </div>
-                        </a>
-                    </ItemField>
-                    <ItemField className="w-2/12 flex flex-col my-auto">
-                        <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">
+                    <div className="w-3/12 flex flex-col lg:flex-row lg:items-center lg:gap-6 justify-between px-3">
+                        <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate flex flex-row gap-1 items-center">
+                            <GitBranchIcon className="h-4 w-4" />
                             <Tooltip content={currentBranch}>{currentBranch}</Tooltip>
                         </div>
                         <div className="mr-auto">
                             <PendingChangesDropdown gitStatus={gitStatus} />
                         </div>
-                    </ItemField>
-                    <ItemField className="w-2/12 flex my-auto">
+                    </div>
+                    <div className="w-2/12 px-3 flex items-center min-w">
                         <Tooltip
                             content={`Last Activate ${dayjs(
                                 info.status!.phase!.lastTransitionTime!.toDate(),
@@ -95,7 +96,26 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                                 {dayjs(info.status?.phase?.lastTransitionTime?.toDate() ?? new Date()).fromNow()}
                             </div>
                         </Tooltip>
-                    </ItemField>
+                    </div>
+                    <div className="px-3 flex items-center">
+                        <div
+                            className={
+                                "px-2 flex items-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer h-8 w-8"
+                            }
+                        >
+                            <Tooltip content={workspace.metadata?.pinned ? "Unpin" : "Pin"}>
+                                <PinIcon
+                                    onClick={togglePinned}
+                                    className={
+                                        "w-4 h-4 self-center " +
+                                        (workspace.metadata?.pinned
+                                            ? "text-gray-600 dark:text-gray-300"
+                                            : "text-gray-300 dark:text-500 hover:text-gray-600 dark:hover:text-gray-300")
+                                    }
+                                />
+                            </Tooltip>
+                        </div>
+                    </div>
                     <WorkspaceEntryOverflowMenu changeMenuState={changeMenuState} info={info} />
                 </>
             )}

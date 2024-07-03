@@ -41,7 +41,7 @@ export default function PendingChangesDropdown({ gitStatus }: { gitStatus?: Work
     }
     return (
         <ContextMenu menuEntries={menuEntries} customClasses="w-64 max-h-48 overflow-scroll mx-auto left-0 right-0">
-            <p className="flex justify-center text-gitpod-red">
+            <p className="flex items-center text-gitpod-red">
                 <span>
                     {totalChanges} Change{totalChanges === 1 ? "" : "s"}
                 </span>

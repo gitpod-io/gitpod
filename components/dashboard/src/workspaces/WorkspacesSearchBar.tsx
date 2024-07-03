@@ -68,7 +68,7 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
                 />
             </div>
             <Link to={"/new"}>
-                <Button className="ml-2 gap-1.5">
+                <Button className="ml-2 gap-1.5 h-10">
                     New Workspace <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
                 </Button>
             </Link>
