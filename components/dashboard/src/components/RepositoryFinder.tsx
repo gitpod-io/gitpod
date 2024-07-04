@@ -207,6 +207,20 @@ export default function RepositoryFinder({
                 isSelectable: true,
             }));
 
+            // Add predefined repos to end of the list.
+            PREDEFINED_REPOS.forEach((repo) => {
+                if (
+                    repo.url.toLowerCase().includes(searchString.toLowerCase()) ||
+                    repo.repoName.toLowerCase().includes(searchString.toLowerCase())
+                ) {
+                    result.push({
+                        id: repo.url,
+                        element: <PredefinedRepositoryOption repo={repo} />,
+                        isSelectable: true,
+                    });
+                }
+            });
+
             if (hasMore) {
                 result.push({
                     id: "more",
