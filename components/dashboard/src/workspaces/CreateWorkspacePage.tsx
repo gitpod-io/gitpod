@@ -738,10 +738,13 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
         })
         .toString();
 
+    const errorMessage = error.data?.errorMessage || error.message;
+
     if (!userScopes.includes(missingScope)) {
         return (
             <RepositoryInputError
                 title="The repository may be private. Please authorize Gitpod to access private repositories."
+                message={errorMessage}
                 linkText="Grant access"
                 linkHref={authorizeURL}
             />
@@ -749,7 +752,7 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
     }
 
     if (userIsOwner) {
-        return <RepositoryInputError title="The repository was not found in your account." />;
+        return <RepositoryInputError title="The repository was not found in your account." message={errorMessage} />;
     }
 
     let updatedRecently = false;
@@ -766,6 +769,7 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
         return (
             <RepositoryInputError
                 title={`Permission to access private repositories has been granted. If you are a member of '${owner}', please try to request access for Gitpod.`}
+                message={errorMessage}
                 linkText="Request access"
                 linkHref={authorizeURL}
             />
@@ -775,6 +779,7 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
         return (
             <RepositoryInputError
                 title={`Although you appear to have the correct authorization credentials, the '${owner}' organization has enabled OAuth App access restrictions, meaning that data access to third-parties is limited. For more information on these restrictions, including how to enable this app, visit https://docs.github.com/articles/restricting-access-to-your-organization-s-data/.`}
+                message={errorMessage}
                 linkText="Check Organization Permissions"
                 linkHref={"https://github.com/settings/connections/applications/484069277e293e6d2a2a"}
             />
@@ -784,6 +789,7 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
     return (
         <RepositoryInputError
             title={`Your access token was updated recently. Please try again if the repository exists and Gitpod was approved for '${owner}'.`}
+            message={errorMessage}
             linkText="Authorize again"
             linkHref={authorizeURL}
         />

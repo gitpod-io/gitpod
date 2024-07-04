@@ -378,6 +378,16 @@ export class RepositoryNotFoundError extends Message<RepositoryNotFoundError> {
    */
   lastUpdate = "";
 
+  /**
+   * @generated from field: string repo_name = 6;
+   */
+  repoName = "";
+
+  /**
+   * @generated from field: string error_message = 7;
+   */
+  errorMessage = "";
+
   constructor(data?: PartialMessage<RepositoryNotFoundError>) {
     super();
     proto3.util.initPartial(data, this);
@@ -391,6 +401,8 @@ export class RepositoryNotFoundError extends Message<RepositoryNotFoundError> {
     { no: 3, name: "user_is_owner", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 4, name: "user_scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 5, name: "last_update", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "repo_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "error_message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RepositoryNotFoundError {

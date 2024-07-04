@@ -351,6 +351,8 @@ describe("PublicAPIConverter", () => {
                     lastUpdate: "2021-06-28T10:48:28Z",
                     owner: "akosyakov",
                     userIsOwner: true,
+                    repoName: "gitpod",
+                    errorMessage: "Repository not found.",
                     userScopes: ["repo"],
                 }),
             );
