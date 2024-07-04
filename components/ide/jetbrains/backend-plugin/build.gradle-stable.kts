@@ -136,6 +136,7 @@ tasks {
     }
 
     verifyPlugin {
+        // TODO(hw): DO NOT IGNORE FAILURE AFTER UPGRADE
         ignoreFailures = true
     }
 }
