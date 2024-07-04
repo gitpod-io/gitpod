@@ -42,7 +42,7 @@ export const EmptyWorkspacesContent = () => {
 
     return (
         <div className="app-container flex flex-col space-y-2">
-            <div className="px-6 flex flex-row items-center justify-center space-x-14">
+            <div className="px-6 mt-16 flex flex-row items-center justify-center space-x-14">
                 <div>
                     <iframe
                         id="gitpod-video"
