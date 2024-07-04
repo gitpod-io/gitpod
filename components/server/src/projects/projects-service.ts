@@ -34,7 +34,11 @@ import { ScmService } from "../scm/scm-service";
 import { runWithSubjectId } from "../util/request-context";
 import { InstallationService } from "../auth/installation-service";
 import { IDEService } from "../ide-service";
-import { LazyPrebuildManager } from "../prebuilds/prebuild-manager";
+import type { PrebuildManager } from "../prebuilds/prebuild-manager";
+
+// // to resolve circular dependency issues
+export const LazyPrebuildManager = Symbol("LazyPrebuildManager");
+export type LazyPrebuildManager = () => PrebuildManager;
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 

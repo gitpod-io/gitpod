@@ -58,10 +58,6 @@ export interface PrebuildFilter {
     searchTerm?: string;
 }
 
-// to resolve circular dependency issues
-export const LazyPrebuildManager = Symbol("LazyPrebuildManager");
-export type LazyPrebuildManager = () => PrebuildManager;
-
 @injectable()
 export class PrebuildManager {
     constructor(
