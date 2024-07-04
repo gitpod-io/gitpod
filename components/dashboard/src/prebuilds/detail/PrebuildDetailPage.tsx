@@ -29,6 +29,7 @@ import { Tabs, TabsList, TabsTrigger } from "@podkit/tabs/Tabs";
 import { PrebuildTaskTab } from "./PrebuildTaskTab";
 import type { PlainMessage } from "@bufbuild/protobuf";
 import { PrebuildTaskErrorTab } from "./PrebuildTaskErrorTab";
+import Tooltip from "../../components/Tooltip";
 
 /**
  * Formats a date. For today, it returns the time. For this year, it returns the month and day and time. Otherwise, it returns the full date and time.
@@ -201,7 +202,26 @@ export const PrebuildDetailPage: FC = () => {
                                 <div className="flex flex-col gap-2">
                                     <div className="flex justify-between">
                                         <div className="font-semibold text-pk-content-primary truncate">
-                                            {prebuild.commit?.message}
+                                            {prebuild.commit?.message}{" "}
+                                            {prebuild.commit?.sha ? (
+                                                <span>
+                                                    <Tooltip content={prebuild.commit.sha}>
+                                                        ({prebuild.commit.sha.slice(0, 7)})
+                                                    </Tooltip>
+                                                </span>
+                                            ) : (
+                                                ""
+                                            )}
+                                            <div className="flex gap-1 items-center">
+                                                <img
+                                                    className="w-5 h-5 rounded-full"
+                                                    src={prebuild.commit?.author?.avatarUrl}
+                                                    alt=""
+                                                />
+                                                <span className="text-pk-content-secondary">
+                                                    {prebuild.commit?.author?.name}
+                                                </span>
+                                            </div>
                                         </div>
                                         {triggeredString && (
                                             <div className="text-pk-content-secondary flex-none">
@@ -214,16 +234,6 @@ export const PrebuildDetailPage: FC = () => {
                                                 </time>
                                             </div>
                                         )}
-                                    </div>
-                                    <div className="flex gap-1 items-center">
-                                        <img
-                                            className="w-5 h-5 rounded-full"
-                                            src={prebuild.commit?.author?.avatarUrl}
-                                            alt=""
-                                        />
-                                        <span className="text-pk-content-secondary">
-                                            {prebuild.commit?.author?.name}
-                                        </span>
                                     </div>
                                 </div>
                             </div>
