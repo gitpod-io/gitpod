@@ -145,6 +145,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                     this.config.host,
                     owner,
                     repoName,
+                    result.errors && result.errors.map((e: any) => e.message).join(", "),
                 );
             }
             const defaultBranch = result.data.repository.defaultBranchRef;
@@ -231,6 +232,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                         this.config.host,
                         owner,
                         repoName,
+                        result.errors && result.errors.map((e: any) => e.message).join(", "),
                     );
                 }
 
@@ -334,6 +336,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                     this.config.host,
                     owner,
                     repoName,
+                    result.errors && result.errors.map((e: any) => e.message).join(", "),
                 );
             }
 
@@ -427,6 +430,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                     this.config.host,
                     owner,
                     repoName,
+                    result.errors && result.errors.map((e: any) => e.message).join(", "),
                 );
             }
             const pr = result.data.repository.pullRequest;
@@ -510,6 +514,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                     this.config.host,
                     owner,
                     repoName,
+                    result.errors && result.errors.map((e: any) => e.message).join(", "),
                 );
             }
             const issue = result.data.repository.issue;

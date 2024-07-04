@@ -49,6 +49,8 @@ message RepositoryNotFoundError {
   bool user_is_owner = 3;
   repeated string user_scopes = 4;
   string last_update = 5;
+  string repo_name = 6;
+  string error_message = 7;
 }
 
 message RepositoryUnauthorizedError {
