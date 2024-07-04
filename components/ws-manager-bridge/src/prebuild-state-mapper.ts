@@ -33,6 +33,14 @@ export class PrebuildStateMapper {
                 return undefined;
             }
             if (status.phase !== WorkspacePhase.STOPPING) {
+                if (status.phase !== WorkspacePhase.RUNNING) {
+                    return {
+                        type: HeadlessWorkspaceEventType.Started,
+                        update: {
+                            state: "queued",
+                        },
+                    };
+                }
                 return {
                     type: HeadlessWorkspaceEventType.Started,
                     update: {
@@ -42,6 +50,14 @@ export class PrebuildStateMapper {
             }
         } else {
             if (status.phase !== WorkspacePhase.STOPPED) {
+                if (status.phase !== WorkspacePhase.RUNNING) {
+                    return {
+                        type: HeadlessWorkspaceEventType.Started,
+                        update: {
+                            state: "queued",
+                        },
+                    };
+                }
                 return {
                     type: HeadlessWorkspaceEventType.Started,
                     update: {
