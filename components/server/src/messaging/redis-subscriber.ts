@@ -15,7 +15,6 @@ import {
     DisposableCollection,
     HeadlessUpdatesChannel,
     PrebuildUpdatesChannel,
-    PrebuildWithStatus,
     RedisHeadlessUpdate,
     RedisPrebuildUpdate,
     RedisWorkspaceInstanceUpdate,
@@ -139,28 +138,11 @@ export class RedisSubscriber {
         }
 
         const ctx = {};
-        const info = (await this.workspaceDB.findPrebuildInfos([update.prebuildID]))[0];
-        if (!info) {
-            log.error("Failed to find prebuild info for prebuild", { ...update });
+        const prebuildWithStatus = await this.workspaceDB.findPrebuildWithStatus(update.prebuildID);
+        if (!prebuildWithStatus) {
+            log.error("Failed to find (all pieces of) prebuilt workspace", { ...update });
             return;
         }
-        const workspace = await this.workspaceDB.findById(update.workspaceID);
-        if (!workspace) {
-            log.error("Failed to find workspace for prebuild", { ...update });
-            return;
-        }
-        const pbws = await this.workspaceDB.findPrebuildByID(update.prebuildID);
-        if (!pbws) {
-            log.error("Failed to find prebuilt workspace", { ...update });
-            return;
-        }
-
-        const prebuildWithStatus: PrebuildWithStatus = {
-            info: info,
-            status: update.status,
-            workspace,
-            error: pbws.error,
-        };
 
         for (const l of listeners) {
             try {

@@ -84,7 +84,7 @@ import { GithubAppRules } from "./prebuilds/github-app-rules";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { GitLabApp } from "./prebuilds/gitlab-app";
 import { IncrementalWorkspaceService } from "./prebuilds/incremental-workspace-service";
-import { PrebuildManager } from "./prebuilds/prebuild-manager";
+import { LazyPrebuildManager, PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { ProjectsService } from "./projects/projects-service";
 import { RedisMutex } from "./redis/mutex";
@@ -310,7 +310,7 @@ export const productionContainerModule = new ContainerModule(
                         "*": {
                             retryBaseDelayMs: 200,
                             retryMaxAttempts: 15,
-                        },
+                        } as any,
                     });
             })
             .inSingletonScope();
@@ -356,6 +356,12 @@ export const productionContainerModule = new ContainerModule(
         bind(SignInJWT).toSelf().inSingletonScope();
 
         bind(PrebuildManager).toSelf().inSingletonScope();
+        bind(LazyPrebuildManager).toFactory((ctx) => {
+            return () => {
+                const prebuildManager = ctx.container.get<PrebuildManager>(PrebuildManager);
+                return prebuildManager;
+            };
+        });
         bind(GithubApp).toSelf().inSingletonScope();
         bind(GithubAppRules).toSelf().inSingletonScope();
         bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();

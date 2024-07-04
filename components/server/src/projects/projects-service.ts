@@ -34,6 +34,7 @@ import { ScmService } from "../scm/scm-service";
 import { runWithSubjectId } from "../util/request-context";
 import { InstallationService } from "../auth/installation-service";
 import { IDEService } from "../ide-service";
+import { LazyPrebuildManager } from "../prebuilds/prebuild-manager";
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
@@ -47,6 +48,7 @@ export class ProjectsService {
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(ScmService) private readonly scmService: ScmService,
         @inject(IDEService) private readonly ideService: IDEService,
+        @inject(LazyPrebuildManager) private readonly prebuildManager: LazyPrebuildManager,
 
         @inject(InstallationService) private readonly installationService: InstallationService,
     ) {}
@@ -357,17 +359,8 @@ export class ProjectsService {
         const result: PrebuildWithStatus[] = [];
 
         if (prebuildId) {
-            const pbws = await this.workspaceDb.trace({}).findPrebuiltWorkspaceById(prebuildId);
-            const info = (await this.workspaceDb.trace({}).findPrebuildInfos([prebuildId]))[0];
-            let workspace = undefined;
-            if (pbws) {
-                workspace = await this.workspaceDb.trace({}).findById(pbws.buildWorkspaceId);
-            }
-            if (info && pbws && workspace) {
-                const r: PrebuildWithStatus = { info, status: pbws.state, workspace };
-                if (pbws.error) {
-                    r.error = pbws.error;
-                }
+            const r = await this.prebuildManager().getPrebuild({}, userId, prebuildId);
+            if (r) {
                 result.push(r);
             }
         } else {
@@ -376,20 +369,15 @@ export class ProjectsService {
                 limit = 1;
             }
             const branch = params.branch;
-            const prebuilds = await this.workspaceDb
-                .trace({})
-                .findPrebuiltWorkspacesByProject(project.id, branch, limit);
-            const infos = await this.workspaceDb.trace({}).findPrebuildInfos([...prebuilds.map((p) => p.id)]);
-            result.push(
-                ...infos.map((info) => {
-                    const p = prebuilds.find((p) => p.id === info.id)!;
-                    const r: PrebuildWithStatus = { info, status: p.state, workspace: p.workspace };
-                    if (p.error) {
-                        r.error = p.error;
-                    }
-                    return r;
-                }),
+            const prebuilds = await this.prebuildManager().listPrebuilds(
+                {},
+                userId,
+                project.teamId,
+                { limit, offset: 0 },
+                { configuration: { id: project.id, branch } },
+                { field: "creationTime", order: "DESC" },
             );
+            result.push(...prebuilds);
         }
         return result;
     }

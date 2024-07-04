@@ -17,6 +17,7 @@ import {
     User,
     Workspace,
     WorkspaceConfig,
+    WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -56,6 +57,10 @@ export interface PrebuildFilter {
     state?: "failed" | "succeeded" | "unfinished";
     searchTerm?: string;
 }
+
+// to resolve circular dependency issues
+export const LazyPrebuildManager = Symbol("LazyPrebuildManager");
+export type LazyPrebuildManager = () => PrebuildManager;
 
 @injectable()
 export class PrebuildManager {
@@ -225,28 +230,20 @@ export class PrebuildManager {
         prebuildId: string,
         oldPermissionCheck?: (pbws: PrebuiltWorkspace, workspace: Workspace) => Promise<void>, // @deprecated
     ): Promise<PrebuildWithStatus | undefined> {
-        const pbws = await this.workspaceDB.trace(ctx).findPrebuiltWorkspaceById(prebuildId);
-        if (!pbws) {
+        const result = await this.workspaceDB.trace(ctx).findPrebuildWithStatus(prebuildId);
+        if (!result) {
             return undefined;
         }
-        const [info, workspace] = await Promise.all([
-            this.workspaceDB
-                .trace(ctx)
-                .findPrebuildInfos([prebuildId])
-                .then((infos) => (infos.length > 0 ? infos[0] : undefined)),
-            this.workspaceDB.trace(ctx).findById(pbws.buildWorkspaceId),
-        ]);
-        if (!info || !workspace) {
-            return undefined;
-        }
+
         if (oldPermissionCheck) {
-            await oldPermissionCheck(pbws, workspace);
+            const pbws = await this.workspaceDB.trace(ctx).findPrebuiltWorkspaceById(prebuildId);
+            if (!pbws) {
+                return undefined;
+            }
+            await oldPermissionCheck(pbws, result.workspace);
         }
-        await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId!);
-        const result: PrebuildWithStatus = { info, status: pbws.state, workspace };
-        if (pbws.error) {
-            result.error = pbws.error;
-        }
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", result.workspace.projectId!);
+
         return result;
     }
 
@@ -270,8 +267,24 @@ export class PrebuildManager {
             .trace(ctx)
             .findPrebuiltWorkspacesByOrganization(organizationId, pagination, filter, sort);
         const prebuildIds = prebuiltWorkspaces.map((prebuild) => prebuild.id);
-        const infos = await this.workspaceDB.trace({}).findPrebuildInfos(prebuildIds);
-        const prebuildInfosMap = new Map(infos.map((info) => [info.id, info]));
+        const [prebuildInfosMap, prebuildInstancesMap] = await Promise.all([
+            (async () => {
+                const infos = await this.workspaceDB.trace({}).findPrebuildInfos(prebuildIds);
+                return new Map(infos.map((info) => [info.id, info]));
+            })(),
+            (async () => {
+                const prebuildInstancesMap = new Map<string, WorkspaceInstance | undefined>();
+                await Promise.allSettled(
+                    prebuiltWorkspaces.map(async (prebuild) => {
+                        const instance = await this.workspaceDB
+                            .trace({})
+                            .findCurrentInstance(prebuild.buildWorkspaceId);
+                        prebuildInstancesMap.set(prebuild.id, instance);
+                    }),
+                );
+                return prebuildInstancesMap;
+            })(),
+        ]);
 
         return prebuiltWorkspaces
             .map((prebuild) => {
@@ -279,11 +292,13 @@ export class PrebuildManager {
                 if (!info) {
                     return;
                 }
+                const instance = prebuildInstancesMap.get(prebuild.id);
 
                 const fullPrebuild: PrebuildWithStatus = {
                     info,
                     status: prebuild.state,
                     workspace: prebuild.workspace,
+                    instance,
                 };
                 if (prebuild.error) {
                     fullPrebuild.error = prebuild.error;
