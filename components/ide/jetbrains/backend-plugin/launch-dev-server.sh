@@ -57,15 +57,8 @@ TEST_PLUGINS_DIR="$TEST_BACKEND_DIR/plugins"
 TEST_PLUGIN_DIR="$TEST_PLUGINS_DIR/gitpod-remote"
 rm -rf $TEST_PLUGIN_DIR
 
-
-BUILD_FILE="/workspace/gitpod/components/ide/jetbrains/backend-plugin/build.gradle.kts"
-
-if [ "$JB_QUALIFIER" == "stable" ]; then
-  BUILD_FILE="/workspace/gitpod/components/ide/jetbrains/backend-plugin/build.gradle-stable.kts"
-fi
-
 GITPOD_PLUGIN_DIR=/workspace/gitpod/components/ide/jetbrains/backend-plugin
-$GITPOD_PLUGIN_DIR/gradlew --build-file "$BUILD_FILE" -PenvironmentName="$JB_QUALIFIER" buildPlugin
+$GITPOD_PLUGIN_DIR/gradlew -PenvironmentName="$JB_QUALIFIER" buildPlugin
 
 # TODO(ak) actually should be gradle task to make use of output
 GITPOD_PLUGIN_DIST="$GITPOD_PLUGIN_DIR/build/distributions/gitpod-remote.zip"
