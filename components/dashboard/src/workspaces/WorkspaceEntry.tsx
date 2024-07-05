@@ -61,7 +61,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
             <ItemFieldIcon>
                 <WorkspaceStatusIndicator status={workspace?.status} />
             </ItemFieldIcon>
-            <div className="flex-grow flex flex-col h-full py-auto">
+            <div className="flex-grow flex flex-col h-full py-auto truncate">
                 <a href={startUrl}>
                     <div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">
                         {info.id}
@@ -77,40 +77,48 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
             </div>
             {!shortVersion && (
                 <>
-                    <div className="w-3/12 flex flex-col lg:flex-row lg:items-center lg:gap-6 justify-between px-3">
-                        <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate flex flex-row gap-1 items-center">
-                            <GitBranchIcon className="h-4 w-4" />
-                            <Tooltip content={currentBranch}>{currentBranch}</Tooltip>
+                    <div className="w-2/12 sm:w-3/12  xl:w-4/12 flex flex-col xl:flex-row xl:items-center xl:gap-6 justify-between px-1 md:px-3">
+                        <div className="text-gray-500 dark:text-gray-400 flex flex-row gap-1 items-center overflow-hidden">
+                            <div className="min-w-4">
+                                <GitBranchIcon className="h-4 w-4" />
+                            </div>
+                            <Tooltip content={currentBranch} className="truncate overflow-ellipsis">
+                                {currentBranch}
+                            </Tooltip>
                         </div>
-                        <div className="mr-auto">
+                        <div className="mr-auto xl:hidden">
                             <PendingChangesDropdown gitStatus={gitStatus} />
                         </div>
                     </div>
-                    <div className="w-2/12 px-3 flex items-center min-w">
+                    <div className="hidden xl:flex xl:items-center xl:min-w-46">
+                        <PendingChangesDropdown gitStatus={gitStatus} />
+                    </div>
+                    <div className="px-1 md:px-3 flex items-center min-w-96 w-28 lg:w-44 text-right">
                         <Tooltip
                             content={`Last Activate ${dayjs(
                                 info.status!.phase!.lastTransitionTime!.toDate(),
                             ).fromNow()}`}
+                            className="w-full"
                         >
                             <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">
                                 {dayjs(info.status?.phase?.lastTransitionTime?.toDate() ?? new Date()).fromNow()}
                             </div>
                         </Tooltip>
                     </div>
-                    <div className="px-3 flex items-center">
+                    <div className="px-1 md:px-3 flex items-center">
                         <div
+                            onClick={togglePinned}
                             className={
-                                "px-2 flex items-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer h-8 w-8"
+                                "group px-2 flex items-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer h-8 w-8"
                             }
                         >
                             <Tooltip content={workspace.metadata?.pinned ? "Unpin" : "Pin"}>
                                 <PinIcon
-                                    onClick={togglePinned}
                                     className={
                                         "w-4 h-4 self-center " +
                                         (workspace.metadata?.pinned
                                             ? "text-gray-600 dark:text-gray-300"
-                                            : "text-gray-300 dark:text-500 hover:text-gray-600 dark:hover:text-gray-300")
+                                            : "text-gray-300 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-300")
                                     }
                                 />
                             </Tooltip>

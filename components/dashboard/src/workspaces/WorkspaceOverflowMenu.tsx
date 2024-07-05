@@ -66,7 +66,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
             workspaceId: workspace.id,
             spec: {
                 admission: newLevel,
-            }
+            },
         });
     }, [updateWorkspace, workspace.id, workspace.spec?.admission]);
 
@@ -74,8 +74,8 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         updateWorkspace.mutate({
             workspaceId: workspace.id,
             metadata: {
-                pinned: !workspace.metadata?.pinned
-            }
+                pinned: !workspace.metadata?.pinned,
+            },
         });
     }, [updateWorkspace, workspace.id, workspace.metadata?.pinned]);
 
@@ -105,11 +105,11 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
             title: "Open",
             href: startUrl.toString(),
         },
-        {
-            title: "Rename",
-            href: "",
-            onClick: () => setRenameModalVisible(true),
-        },
+        // {
+        //     title: "Rename",
+        //     href: "",
+        //     onClick: () => setRenameModalVisible(true),
+        // },
     ];
 
     if (state === WorkspacePhase_Phase.RUNNING) {
