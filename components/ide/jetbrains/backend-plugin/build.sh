@@ -7,10 +7,16 @@ set -e
 
 JB_GP_VERSION=${1:-debug}
 
+BUILD_FILE="build.gradle.kts"
+
+if [ "$JB_QUALIFIER" == "stable" ]; then
+    BUILD_FILE="build.gradle-stable.kts"
+fi
+
 if [ "${NO_VERIFY_JB_PLUGIN}" == "true" ]; then
     echo "build.sh: skip verify plugin step"
 else
-    ./gradlew -PsupervisorApiProjectPath=components-supervisor-api-java--lib/ -PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/ -PenvironmentName="$JB_QUALIFIER" -Dgradle.user.home="/workspace/.gradle-$JB_QUALIFIER" -Dplugin.verifier.home.dir="$HOME/.cache/pluginVerifier-$JB_QUALIFIER" -PgitpodVersion="$JB_GP_VERSION" runPluginVerifier
+    ./gradlew --build-file "$BUILD_FILE"  -PsupervisorApiProjectPath=components-supervisor-api-java--lib/ -PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/ -PenvironmentName="$JB_QUALIFIER" -Dgradle.user.home="/workspace/.gradle-$JB_QUALIFIER" -Dplugin.verifier.home.dir="$HOME/.cache/pluginVerifier-$JB_QUALIFIER" -PgitpodVersion="$JB_GP_VERSION" runPluginVerifier
 fi
-./gradlew -PsupervisorApiProjectPath=components-supervisor-api-java--lib/ -PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/ -PenvironmentName="$JB_QUALIFIER" -Dgradle.user.home="/workspace/.gradle-$JB_QUALIFIER" -Dplugin.verifier.home.dir="$HOME/.cache/pluginVerifier-$JB_QUALIFIER" -PgitpodVersion="$JB_GP_VERSION" buildPlugin
+./gradlew --build-file "$BUILD_FILE" -PsupervisorApiProjectPath=components-supervisor-api-java--lib/ -PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/ -PenvironmentName="$JB_QUALIFIER" -Dgradle.user.home="/workspace/.gradle-$JB_QUALIFIER" -Dplugin.verifier.home.dir="$HOME/.cache/pluginVerifier-$JB_QUALIFIER" -PgitpodVersion="$JB_GP_VERSION" buildPlugin
 unzip ./build/distributions/gitpod-remote.zip -d ./build
