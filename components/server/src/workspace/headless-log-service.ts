@@ -91,7 +91,7 @@ export class HeadlessLogService {
             const aborted = new Deferred<boolean>();
             setTimeout(() => aborted.resolve(true), maxTimeoutSecs * 1000);
             const streamIds = await this.retryOnError(
-                () => this.supervisorListHeadlessLogs(logCtx, wsi.id, logEndpoint),
+                (cancel) => this.supervisorListHeadlessLogs(logCtx, wsi.id, logEndpoint, cancel),
                 "list headless log streams",
                 this.continueWhileRunning(wsi.id),
             );
@@ -145,14 +145,20 @@ export class HeadlessLogService {
         logCtx: LogContext,
         instanceId: string,
         logEndpoint: HeadlessLogEndpoint,
+        cancel?: (retry: boolean) => void,
     ): Promise<HeadlessLogUrls | undefined> {
-        const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
+        const tasks = await this.supervisorListTasks(logCtx, logEndpoint, cancel);
         return this.renderTasksHeadlessLogUrls(logCtx, instanceId, tasks);
     }
 
-    protected async supervisorListTasks(logCtx: LogContext, logEndpoint: HeadlessLogEndpoint): Promise<TaskStatus[]> {
+    protected async supervisorListTasks(
+        logCtx: LogContext,
+        logEndpoint: HeadlessLogEndpoint,
+        cancel?: (retry: boolean) => void,
+    ): Promise<TaskStatus[]> {
         if (logEndpoint.url === "") {
             // if ideUrl is not yet set we're too early and we deem the workspace not ready yet: retry later!
+            cancel?.(false);
             throw new Error(`instance's ${logCtx.instanceId} has no ideUrl, yet`);
         }
 
@@ -304,7 +310,7 @@ export class HeadlessLogService {
         let receivedDataYet = false;
         let stream: ResponseStream<ListenToOutputResponse> | undefined = undefined;
         ctxOnAbort(() => stream?.cancel());
-        const doStream = (retry: (doRetry?: boolean) => void) =>
+        const doStream = (cancel: (retry: boolean) => void) =>
             new Promise<void>((resolve, reject) => {
                 // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
                 const decoder = new TextDecoder("utf-8");
@@ -333,7 +339,7 @@ export class HeadlessLogService {
                         return;
                     }
 
-                    retry(false);
+                    cancel(false);
                     reject(err);
                 });
             });
@@ -372,18 +378,18 @@ export class HeadlessLogService {
      * @returns
      */
     protected async retryOnError<T>(
-        op: (cancel: () => void) => Promise<T>,
+        op: (cancel: (retry: boolean) => void) => Promise<T>,
         description: string,
         doContinue: () => Promise<boolean>,
     ): Promise<T | undefined> {
         let retry = true;
-        const retryFunction = (doRetry: boolean = true) => {
+        const cancelFunction = (doRetry: boolean) => {
             retry = doRetry;
         };
 
         while (retry && !ctxIsAborted()) {
             try {
-                return await op(retryFunction);
+                return await op(cancelFunction);
             } catch (err) {
                 if (!retry) {
                     throw err;
