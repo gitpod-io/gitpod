@@ -94,6 +94,7 @@ import {
 } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { ClientMetadata, traceClientMetadata } from "../websocket/websocket-connection-manager";
 import {
+    CommitContext,
     EmailDomainFilterEntry,
     EnvVarWithValue,
     LinkedInProfile,
@@ -886,6 +887,30 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             };
             const startWorkspaceResult = await this.workspaceService.startWorkspace(ctx, user, workspace.id, opts);
             ctx.span?.log({ event: "startWorkspaceComplete", ...startWorkspaceResult });
+
+            if (workspace.projectId) {
+                const project = await this.projectsService.getProject(user.id, workspace.projectId);
+                if (project) {
+                    const context = (await this.contextParser.handle(ctx, user, workspace.contextURL)) as CommitContext;
+                    log.info({ workspaceId: workspace.id }, "starting prebuild after workspace", {
+                        projectId: project.id,
+                        projectName: project.name,
+                        contextURL: workspace.contextURL,
+                        context,
+                    });
+                    this.prebuildManager
+                        .startPrebuild(ctx, { user, project, forcePrebuild: false, context })
+                        .then((prebuild) => {
+                            log.info("Prebuild ID", { prebuildId: prebuild.prebuildId });
+                        })
+                        .catch((err) => {
+                            log.error("Failed to start prebuild after workspace creation", {
+                                error: err,
+                                workspaceId: workspace.id,
+                            });
+                        });
+                }
+            }
 
             return {
                 workspaceURL: startWorkspaceResult.workspaceURL,
