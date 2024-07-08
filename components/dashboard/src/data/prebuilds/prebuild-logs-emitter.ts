@@ -4,101 +4,247 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { prebuildClient } from "../../service/public-api";
-import { useEffect, useMemo, useState } from "react";
-import { matchPrebuildError, onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
+import { useEffect, useMemo } from "react";
+import { matchPrebuildError } from "@gitpod/public-api-common/lib/prebuild-utils";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { ReplayableEventEmitter } from "../../utils";
-import { Disposable } from "@gitpod/gitpod-protocol";
+import { Disposable, DisposableCollection, HEADLESS_LOG_STREAM_STATUS_CODE_REGEX } from "@gitpod/gitpod-protocol";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import EventEmitter from "events";
+import { PlainMessage } from "@bufbuild/protobuf";
 
-type LogEventTypes = {
-    error: [Error];
-    logs: [string];
-    "logs-error": [ApplicationError];
-};
+// type LogEventTypes = {
+//     error: [Error];
+//     logs: [string];
+//     "logs-error": [ApplicationError];
+// };
+
+class LogEmitter extends EventEmitter {
+    private reachedEnd = false;
+    markReachedEnd() {
+        this.reachedEnd = true;
+    }
+
+    hasReachedEnd() {
+        return this.reachedEnd;
+    }
+}
 
 /**
  * Watches the logs of a prebuild task by returning an EventEmitter that emits logs, logs-error, and error events.
  * @param prebuildId ID of the prebuild to watch
  * @param taskId ID of the task to watch.
  */
-export function usePrebuildLogsEmitter(prebuildId: string, taskId: string) {
-    const emitter = useMemo(
-        () => new ReplayableEventEmitter<LogEventTypes>(),
+export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId: string) {
+    const [emitter] = useMemo(
+        () => {
+            console.log("creating new emitter");
+            return [new LogEmitter()];
+        },
         // We would like to re-create the emitter when the prebuildId or taskId changes, so that logs of old tasks / prebuilds are not mixed with the new ones.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [prebuildId, taskId],
+        [prebuild.id, taskId],
     );
-    const [disposable, setDisposable] = useState<Disposable | undefined>();
+
+    const shouldFetchLogs = useMemo(() => {
+        switch (prebuild.status?.phase?.name) {
+            case PrebuildPhase_Phase.QUEUED:
+            case PrebuildPhase_Phase.UNSPECIFIED:
+                return false;
+            // This is the online case: we do the actual streaming
+            // All others below are terminal states, where we get re-directed to the actual
+            case PrebuildPhase_Phase.BUILDING:
+            case PrebuildPhase_Phase.AVAILABLE:
+            case PrebuildPhase_Phase.FAILED:
+            case PrebuildPhase_Phase.ABORTED:
+            case PrebuildPhase_Phase.TIMEOUT:
+                return true;
+        }
+    }, [prebuild.status?.phase?.name]);
 
     useEffect(() => {
-        // The abortcontroller is meant to abort all activity on unmounting this effect
-        const abortController = new AbortController();
-        const watch = async () => {
-            let dispose: () => void | undefined;
-            abortController.signal.addEventListener("abort", () => {
-                dispose?.();
-            });
+        console.log(
+            "usePrebuildLogsEmitter",
+            prebuild.id,
+            taskId,
+            prebuild.status?.imageBuildLogUrl,
+            prebuild.status?.taskLogs,
+            shouldFetchLogs,
+        );
+        if (!shouldFetchLogs || emitter.hasReachedEnd()) {
+            return;
+        }
+        console.log("going to fetch logs for " + taskId);
 
-            const { prebuild } = await prebuildClient.getPrebuild({ prebuildId });
-            if (!prebuild) {
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, `Prebuild ${prebuildId} not found`);
+        // build streamUrl
+        const task = {
+            taskId,
+            logUrl: "",
+        };
+        if (taskId === "image-build") {
+            if (!prebuild.status?.imageBuildLogUrl) {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `Image build logs URL not found in response`);
+            }
+            task.logUrl = prebuild.status?.imageBuildLogUrl;
+        } else {
+            const logUrl = prebuild?.status?.taskLogs?.find((log) => log.taskId === taskId)?.logUrl;
+            if (!logUrl) {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `Task ${taskId} not found`);
             }
 
-            const task = {
-                taskId,
-                logUrl: "",
-            };
-            if (taskId === "image-build") {
-                if (!prebuild.status?.imageBuildLogUrl) {
-                    throw new ApplicationError(ErrorCodes.NOT_FOUND, `Image build logs URL not found in response`);
-                }
-                task.logUrl = prebuild.status?.imageBuildLogUrl;
-            } else {
-                const logUrl = prebuild?.status?.taskLogs?.find((log) => log.taskId === taskId)?.logUrl;
-                if (!logUrl) {
-                    throw new ApplicationError(ErrorCodes.NOT_FOUND, `Task ${taskId} not found`);
-                }
+            task.logUrl = logUrl;
+        }
 
-                task.logUrl = logUrl;
-            }
-
-            dispose = onDownloadPrebuildLogsUrl(
+        // stream
+        const disposables = new DisposableCollection();
+        disposables.push(
+            streamPrebuildLogs(
                 task.logUrl,
                 (msg) => {
-                    const error = matchPrebuildError(msg);
-                    if (!error) {
-                        emitter.emit("logs", msg);
-                    } else {
-                        emitter.emit("logs-error", error);
-                    }
+                    emitter.emit("logs", msg);
                 },
-                {
-                    includeCredentials: true,
-                    maxBackoffTimes: 3,
-                    onEnd: () => {},
+                async () => false,
+                () => {
+                    console.log("End reached");
+                    emitter.markReachedEnd();
                 },
-            );
-        };
-        watch()
-            .then(() => {})
-            .catch((err) => {
-                emitter.emit("error", err);
-            });
-
-        // The Disposable is meant as to give clients a way to stop watching logs before the component is unmounted. As such it decouples the individual AbortControllers that might get re-created multiple times.
-        setDisposable(
-            Disposable.create(() => {
-                abortController.abort();
-            }),
+            ),
         );
 
         return () => {
-            abortController.abort();
-            emitter.clearLog();
-            emitter.removeAllListeners();
+            disposables.dispose();
+            console.log("Disposing PrebuildLogsEmitter", prebuild.id, taskId);
+            if (!emitter.hasReachedEnd()) {
+                // If we haven't finished yet, but the page is re-rendered, clear the output we already got.
+                emitter.emit("reset");
+            }
         };
-    }, [emitter, prebuildId, taskId]);
+    }, [emitter, prebuild.id, taskId, prebuild.status?.imageBuildLogUrl, prebuild.status?.taskLogs, shouldFetchLogs]);
 
-    return { emitter, disposable };
+    return { emitter };
+}
+
+function streamPrebuildLogs(
+    streamUrl: string,
+    onLog: (chunk: string) => void,
+    checkIsDone: () => Promise<boolean>,
+    onEnd?: () => void,
+): DisposableCollection {
+    const disposables = new DisposableCollection();
+
+    // initializing non-empty here to use this as a stopping signal for the retries down below
+    disposables.push(Disposable.NULL);
+
+    // retry configuration goes here
+    const initialDelaySeconds = 1;
+    const backoffFactor = 1.2;
+    const maxBackoffSeconds = 5;
+    let delayInSeconds = initialDelaySeconds;
+
+    const startWatchingLogs = async () => {
+        if (await checkIsDone()) {
+            return;
+        }
+
+        const retryBackoff = async (reason: string, err?: Error) => {
+            delayInSeconds = Math.min(delayInSeconds * backoffFactor, maxBackoffSeconds);
+
+            console.debug("re-trying headless-logs because: " + reason, err);
+            await new Promise((resolve) => {
+                setTimeout(resolve, delayInSeconds * 1000);
+            });
+            if (disposables.disposed) {
+                return; // and stop retrying
+            }
+            startWatchingLogs().catch(console.error);
+        };
+
+        let response: Response | undefined = undefined;
+        let reader: ReadableStreamDefaultReader<Uint8Array> | undefined = undefined;
+        try {
+            console.log("fetching from streamUrl: " + streamUrl);
+            response = await fetch(streamUrl, {
+                method: "GET",
+                cache: "no-cache",
+                credentials: "include",
+                keepalive: true,
+                headers: {
+                    TE: "trailers", // necessary to receive stream status code
+                },
+                redirect: "follow",
+            });
+            reader = response.body?.getReader();
+            if (!reader) {
+                await retryBackoff("no reader");
+                return;
+            }
+            disposables.push({ dispose: () => reader?.cancel() });
+
+            const decoder = new TextDecoder("utf-8");
+            let chunk = await reader.read();
+            while (!chunk.done) {
+                const msg = decoder.decode(chunk.value, { stream: true });
+
+                // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
+                // So we resort to this hand-written solution:
+                const matches = msg.match(HEADLESS_LOG_STREAM_STATUS_CODE_REGEX);
+                const prebuildMatches = matchPrebuildError(msg);
+                if (matches) {
+                    if (matches.length < 2) {
+                        console.debug("error parsing log stream status code. msg: " + msg);
+                    } else {
+                        const code = parseStatusCode(matches[1]);
+                        if (code !== 200) {
+                            throw new StreamError(code);
+                        }
+                    }
+                } else if (prebuildMatches && prebuildMatches.code === ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE) {
+                    // reset backoff because this error is expected
+                    delayInSeconds = initialDelaySeconds;
+                    throw prebuildMatches;
+                } else {
+                    onLog(msg);
+                }
+
+                chunk = await reader.read();
+            }
+            reader.cancel();
+
+            if (await checkIsDone()) {
+                return;
+            }
+        } catch (err) {
+            reader?.cancel().catch(console.debug);
+            if (err.code === 400) {
+                // sth is really off, and we _should not_ retry
+                console.error("stopped watching headless logs", err);
+                return;
+            }
+            await retryBackoff("error while listening to stream", err);
+        } finally {
+            reader?.cancel().catch(console.debug);
+            if (onEnd) {
+                onEnd();
+            }
+        }
+    };
+    startWatchingLogs().catch(console.error);
+
+    return disposables;
+}
+
+class StreamError extends Error {
+    constructor(readonly code?: number) {
+        super(`stream status code: ${code}`);
+    }
+}
+
+function parseStatusCode(code: string | undefined): number | undefined {
+    try {
+        if (!code) {
+            return undefined;
+        }
+        return Number.parseInt(code);
+    } catch (err) {
+        return undefined;
+    }
 }

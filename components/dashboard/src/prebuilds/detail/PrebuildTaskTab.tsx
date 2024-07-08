@@ -4,32 +4,26 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { Suspense, useEffect } from "react";
 import { usePrebuildLogsEmitter } from "../../data/prebuilds/prebuild-logs-emitter";
 import React from "react";
 import { useToast } from "../../components/toasts/Toasts";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { TabsContent } from "@podkit/tabs/Tabs";
-import { PersistedToastID } from "./PrebuildDetailPage";
 import { PrebuildTaskErrorTab } from "./PrebuildTaskErrorTab";
+import { PlainMessage } from "@bufbuild/protobuf";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
 type Props = {
     taskId: string;
-    prebuild: Prebuild;
+    prebuild: PlainMessage<Prebuild>;
 };
 export const PrebuildTaskTab = ({ taskId, prebuild }: Props) => {
-    const { emitter: logEmitter, disposable: disposeStreamingLogs } = usePrebuildLogsEmitter(prebuild.id, taskId);
+    const { emitter: logEmitter } = usePrebuildLogsEmitter(prebuild, taskId);
     const [error, setError] = React.useState<ApplicationError | undefined>();
     const { toast } = useToast();
-
-    useEffect(() => {
-        if (prebuild.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
-            disposeStreamingLogs?.dispose();
-        }
-    }, [prebuild.status?.phase?.name, disposeStreamingLogs]);
 
     useEffect(() => {
         const errorListener = (err: Error) => {
@@ -51,7 +45,7 @@ export const PrebuildTaskTab = ({ taskId, prebuild }: Props) => {
                 return;
             }
 
-            toast("Fetching logs failed: " + err.message, { autoHide: false, id: PersistedToastID });
+            toast("Fetching logs failed: " + err.message, { autoHide: false });
         };
 
         logEmitter.on("error", errorListener);
@@ -82,14 +76,15 @@ export const PrebuildTaskTab = ({ taskId, prebuild }: Props) => {
         );
     }
 
+    console.log("PrebuildTaskTab render");
     return (
         <TabsContent value={taskId} className="h-112 mt-0 border-pk-border-base">
             <Suspense fallback={<div />}>
                 <WorkspaceLogs
+                    key={prebuild.id + taskId}
                     classes="w-full h-full"
                     xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0 mt-4"
                     logsEmitter={logEmitter}
-                    key={taskId}
                 />
             </Suspense>
         </TabsContent>
