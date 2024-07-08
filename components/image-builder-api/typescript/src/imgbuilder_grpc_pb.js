@@ -9,7 +9,7 @@
 'use strict';
 var grpc = require('@grpc/grpc-js');
 var imgbuilder_pb = require('./imgbuilder_pb.js');
-var content$service$api_initializer_pb = require('@gitpod/content-service/lib');
+var content$service$api_initializer_pb = require('./content-service-api/initializer_pb.js');
 
 function serialize_builder_BuildRequest(arg) {
   if (!(arg instanceof imgbuilder_pb.BuildRequest)) {

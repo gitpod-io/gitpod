@@ -11,7 +11,7 @@
 /* eslint-disable */
 
 import * as jspb from "google-protobuf";
-import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
+import * as content_service_api_initializer_pb from "./content-service-api/initializer_pb";
 
 export class BuildSource extends jspb.Message {
 
@@ -223,6 +223,8 @@ export class BuildRequest extends jspb.Message {
     setSupervisorRef(value: string): BuildRequest;
     getBaseImageNameResolved(): string;
     setBaseImageNameResolved(value: string): BuildRequest;
+    getWorkspaceClass(): string;
+    setWorkspaceClass(value: string): BuildRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): BuildRequest.AsObject;
@@ -242,6 +244,7 @@ export namespace BuildRequest {
         triggeredBy: string,
         supervisorRef: string,
         baseImageNameResolved: string,
+        workspaceClass: string,
     }
 }
 

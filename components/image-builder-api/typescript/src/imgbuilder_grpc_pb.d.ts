@@ -12,7 +12,7 @@
 
 import * as grpc from "@grpc/grpc-js";
 import * as imgbuilder_pb from "./imgbuilder_pb";
-import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
+import * as content_service_api_initializer_pb from "./content-service-api/initializer_pb";
 
 interface IImageBuilderService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     resolveBaseImage: IImageBuilderService_IResolveBaseImage;

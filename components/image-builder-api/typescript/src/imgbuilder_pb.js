@@ -21,7 +21,7 @@ var jspb = require('google-protobuf');
 var goog = jspb;
 var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
-var content$service$api_initializer_pb = require('@gitpod/content-service/lib');
+var content$service$api_initializer_pb = require('./content-service-api/initializer_pb.js');
 goog.object.extend(proto, content$service$api_initializer_pb);
 goog.exportSymbol('proto.builder.BuildInfo', null, global);
 goog.exportSymbol('proto.builder.BuildRegistryAuth', null, global);
@@ -1761,7 +1761,8 @@ proto.builder.BuildRequest.toObject = function(includeInstance, msg) {
     forceRebuild: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
     triggeredBy: jspb.Message.getFieldWithDefault(msg, 4, ""),
     supervisorRef: jspb.Message.getFieldWithDefault(msg, 5, ""),
-    baseImageNameResolved: jspb.Message.getFieldWithDefault(msg, 6, "")
+    baseImageNameResolved: jspb.Message.getFieldWithDefault(msg, 6, ""),
+    workspaceClass: jspb.Message.getFieldWithDefault(msg, 7, "")
   };
 
   if (includeInstance) {
@@ -1823,6 +1824,10 @@ proto.builder.BuildRequest.deserializeBinaryFromReader = function(msg, reader) {
     case 6:
       var value = /** @type {string} */ (reader.readString());
       msg.setBaseImageNameResolved(value);
+      break;
+    case 7:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setWorkspaceClass(value);
       break;
     default:
       reader.skipField();
@@ -1894,6 +1899,13 @@ proto.builder.BuildRequest.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       6,
+      f
+    );
+  }
+  f = message.getWorkspaceClass();
+  if (f.length > 0) {
+    writer.writeString(
+      7,
       f
     );
   }
@@ -2043,6 +2055,24 @@ proto.builder.BuildRequest.prototype.getBaseImageNameResolved = function() {
  */
 proto.builder.BuildRequest.prototype.setBaseImageNameResolved = function(value) {
   return jspb.Message.setProto3StringField(this, 6, value);
+};
+
+
+/**
+ * optional string workspace_class = 7;
+ * @return {string}
+ */
+proto.builder.BuildRequest.prototype.getWorkspaceClass = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.builder.BuildRequest} returns this
+ */
+proto.builder.BuildRequest.prototype.setWorkspaceClass = function(value) {
+  return jspb.Message.setProto3StringField(this, 7, value);
 };
 
 

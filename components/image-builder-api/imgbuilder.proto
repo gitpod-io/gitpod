@@ -68,6 +68,7 @@ message BuildRequest {
     string triggered_by = 4;
     string supervisor_ref = 5;
     string base_image_name_resolved = 6;
+    string workspace_class = 7;
 }
 
 message BuildRegistryAuth {
