@@ -4,7 +4,7 @@
  See License.AGPL.txt in the project root for license information.
 -->
 <idea-plugin>
-    <extensions defaultExtensionNs="com.intellij">
+    <!-- <extensions defaultExtensionNs="com.intellij">
         <backgroundPostStartupActivity implementation="io.gitpod.jetbrains.remote.optional.GitpodForceUpdateMavenProjectsActivity"/>
-    </extensions>
+    </extensions> -->
 </idea-plugin>
