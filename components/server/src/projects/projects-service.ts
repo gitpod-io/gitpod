@@ -36,7 +36,7 @@ import { InstallationService } from "../auth/installation-service";
 import { IDEService } from "../ide-service";
 import type { PrebuildManager } from "../prebuilds/prebuild-manager";
 
-// // to resolve circular dependency issues
+// to resolve circular dependency issues
 export const LazyPrebuildManager = Symbol("LazyPrebuildManager");
 export type LazyPrebuildManager = () => PrebuildManager;
 
