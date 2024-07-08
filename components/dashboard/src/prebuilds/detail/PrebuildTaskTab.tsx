@@ -4,15 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { Suspense, useEffect } from "react";
+import type { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Suspense, memo, useEffect } from "react";
 import { usePrebuildLogsEmitter } from "../../data/prebuilds/prebuild-logs-emitter";
 import React from "react";
 import { useToast } from "../../components/toasts/Toasts";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { TabsContent } from "@podkit/tabs/Tabs";
 import { PrebuildTaskErrorTab } from "./PrebuildTaskErrorTab";
-import { PlainMessage } from "@bufbuild/protobuf";
+import type { PlainMessage } from "@bufbuild/protobuf";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -20,7 +20,7 @@ type Props = {
     taskId: string;
     prebuild: PlainMessage<Prebuild>;
 };
-export const PrebuildTaskTab = ({ taskId, prebuild }: Props) => {
+export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
     const { emitter: logEmitter } = usePrebuildLogsEmitter(prebuild, taskId);
     const [error, setError] = React.useState<ApplicationError | undefined>();
     const { toast } = useToast();
@@ -89,4 +89,4 @@ export const PrebuildTaskTab = ({ taskId, prebuild }: Props) => {
             </Suspense>
         </TabsContent>
     );
-};
+});

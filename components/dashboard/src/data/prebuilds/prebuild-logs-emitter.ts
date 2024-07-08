@@ -9,25 +9,14 @@ import { matchPrebuildError } from "@gitpod/public-api-common/lib/prebuild-utils
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Disposable, DisposableCollection, HEADLESS_LOG_STREAM_STATUS_CODE_REGEX } from "@gitpod/gitpod-protocol";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import EventEmitter from "events";
 import { PlainMessage } from "@bufbuild/protobuf";
+import { ReplayableEventEmitter } from "../../utils";
 
-// type LogEventTypes = {
-//     error: [Error];
-//     logs: [string];
-//     "logs-error": [ApplicationError];
-// };
-
-class LogEmitter extends EventEmitter {
-    private reachedEnd = false;
-    markReachedEnd() {
-        this.reachedEnd = true;
-    }
-
-    hasReachedEnd() {
-        return this.reachedEnd;
-    }
-}
+type LogEventTypes = {
+    error: [Error];
+    logs: [string];
+    "logs-error": [ApplicationError];
+};
 
 /**
  * Watches the logs of a prebuild task by returning an EventEmitter that emits logs, logs-error, and error events.
@@ -35,10 +24,10 @@ class LogEmitter extends EventEmitter {
  * @param taskId ID of the task to watch.
  */
 export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId: string) {
-    const [emitter] = useMemo(
+    const emitter = useMemo(
         () => {
-            console.log("creating new emitter");
-            return [new LogEmitter()];
+            console.log("creating new emitter", { id: prebuild.id, taskId });
+            return new ReplayableEventEmitter<LogEventTypes>();
         },
         // We would like to re-create the emitter when the prebuildId or taskId changes, so that logs of old tasks / prebuilds are not mixed with the new ones.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -46,7 +35,11 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
     );
 
     const shouldFetchLogs = useMemo(() => {
-        switch (prebuild.status?.phase?.name) {
+        const phase = prebuild.status?.phase?.name;
+        if (phase === PrebuildPhase_Phase.QUEUED && taskId === "image-build") {
+            return true;
+        }
+        switch (phase) {
             case PrebuildPhase_Phase.QUEUED:
             case PrebuildPhase_Phase.UNSPECIFIED:
                 return false;
@@ -59,17 +52,14 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
             case PrebuildPhase_Phase.TIMEOUT:
                 return true;
         }
-    }, [prebuild.status?.phase?.name]);
+    }, [prebuild.status?.phase?.name, taskId]);
 
     useEffect(() => {
-        console.log(
-            "usePrebuildLogsEmitter",
-            prebuild.id,
+        console.log("usePrebuildLogsEmitter", {
+            id: prebuild.id,
             taskId,
-            prebuild.status?.imageBuildLogUrl,
-            prebuild.status?.taskLogs,
             shouldFetchLogs,
-        );
+        });
         if (!shouldFetchLogs || emitter.hasReachedEnd()) {
             return;
         }
@@ -104,7 +94,7 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
                 },
                 async () => false,
                 () => {
-                    console.log("End reached");
+                    console.log("End reached", { id: prebuild.id, taskId });
                     emitter.markReachedEnd();
                 },
             ),
@@ -118,7 +108,8 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
                 emitter.emit("reset");
             }
         };
-    }, [emitter, prebuild.id, taskId, prebuild.status?.imageBuildLogUrl, prebuild.status?.taskLogs, shouldFetchLogs]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [emitter, prebuild.id, taskId, shouldFetchLogs]);
 
     return { emitter };
 }

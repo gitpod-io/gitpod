@@ -50,7 +50,7 @@ export class PrebuildStateMapper {
             }
         } else {
             if (status.phase !== WorkspacePhase.STOPPED) {
-                if (status.phase !== WorkspacePhase.RUNNING) {
+                if (![WorkspacePhase.RUNNING, WorkspacePhase.STOPPING].includes(status.phase)) {
                     return {
                         type: HeadlessWorkspaceEventType.Started,
                         update: {
