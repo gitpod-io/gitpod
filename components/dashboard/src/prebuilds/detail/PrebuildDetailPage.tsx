@@ -228,7 +228,11 @@ export const PrebuildDetailPage: FC = () => {
                                             {prebuild.commit?.sha ? (
                                                 <span>
                                                     <Tooltip content={prebuild.commit.sha}>
-                                                        ({prebuild.commit.sha.slice(0, 7)})
+                                                        (
+                                                        <span className="font-mono">
+                                                            {prebuild.commit.sha.slice(0, 7)}
+                                                        </span>
+                                                        )
                                                     </Tooltip>
                                                 </span>
                                             ) : (
@@ -248,7 +252,7 @@ export const PrebuildDetailPage: FC = () => {
                                         <div className="text-pk-content-secondary flex-none">
                                             {triggeredString && (
                                                 <>
-                                                    <div className="">
+                                                    <div>
                                                         Triggered:{" "}
                                                         <time
                                                             dateTime={triggeredDate.toISOString()}
@@ -257,19 +261,20 @@ export const PrebuildDetailPage: FC = () => {
                                                             {triggeredString}
                                                         </time>
                                                     </div>
-                                                    <div className="">
-                                                        Stopped:{" "}
-                                                        {(stopDate && (
-                                                            <time
-                                                                dateTime={stopDate.toISOString()}
-                                                                title={stopDate.toString()}
-                                                            >
-                                                                {stopString}
-                                                            </time>
-                                                        )) ||
-                                                            "n/a"}
-                                                    </div>
-                                                    <div className="">Duration: {durationString || "n/a"}</div>
+                                                    {stopDate && (
+                                                        <>
+                                                            <div>
+                                                                Stopped:{" "}
+                                                                <time
+                                                                    dateTime={stopDate.toISOString()}
+                                                                    title={stopDate.toString()}
+                                                                >
+                                                                    {stopString}
+                                                                </time>
+                                                            </div>
+                                                            <div>Duration: {durationString}</div>
+                                                        </>
+                                                    )}
                                                 </>
                                             )}
                                         </div>
