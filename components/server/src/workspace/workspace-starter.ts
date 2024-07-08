@@ -135,6 +135,8 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { ctxIsAborted, runWithRequestContext, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { PrebuildManager } from "../prebuilds/prebuild-manager";
+import { ContextParser } from "./context-parser-service";
 
 export interface StartWorkspaceOptions extends Omit<GitpodServer.StartWorkspaceOptions, "ideSettings"> {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -229,6 +231,8 @@ export class WorkspaceStarter {
         @inject(RedisMutex) private readonly redisMutex: RedisMutex,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
+        @inject(PrebuildManager) private readonly prebuildManager: PrebuildManager,
+        @inject(ContextParser) private readonly contextParser: ContextParser,
     ) {}
 
     public async startWorkspace(
@@ -628,6 +632,31 @@ export class WorkspaceStarter {
                 },
                 timestamp: new Date(instance.creationTime),
             });
+
+            if (workspace.projectId) {
+                const project = await this.projectDB.findProjectById(workspace.projectId);
+                if (!project) {
+                    return;
+                }
+
+                const context = (await this.contextParser.handle(
+                    { span },
+                    user,
+                    workspace.contextURL,
+                )) as CommitContext;
+
+                log.info({ instanceId: instance.id, workspaceId: workspace.id }, "starting prebuild after workspace", {
+                    projectId: project.id,
+                    projectName: project.name,
+                    contextURL: workspace.contextURL,
+                    context,
+                });
+                const prebuild = await this.prebuildManager.startPrebuild(
+                    { span },
+                    { user, project, forcePrebuild: false, context },
+                );
+                log.info("Prebuild ID", { prebuildId: prebuild.prebuildId });
+            }
         } catch (err) {
             if (isGrpcError(err) && err.code === grpc.status.ALREADY_EXISTS) {
                 // This might happen because of timing: When we did the "workspaceAlreadyExists" check above, the DB state was not updated yet.
