@@ -135,8 +135,8 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { ctxIsAborted, runWithRequestContext, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { ContextParser } from "./context-parser-service";
+import { LazyPrebuildManager } from "../projects/projects-service";
 
 export interface StartWorkspaceOptions extends Omit<GitpodServer.StartWorkspaceOptions, "ideSettings"> {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -231,7 +231,7 @@ export class WorkspaceStarter {
         @inject(RedisMutex) private readonly redisMutex: RedisMutex,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
-        @inject(PrebuildManager) private readonly prebuildManager: PrebuildManager,
+        @inject(LazyPrebuildManager) private readonly prebuildManager: LazyPrebuildManager,
         @inject(ContextParser) private readonly contextParser: ContextParser,
     ) {}
 
@@ -651,7 +651,7 @@ export class WorkspaceStarter {
                     contextURL: workspace.contextURL,
                     context,
                 });
-                const prebuild = await this.prebuildManager.startPrebuild(
+                const prebuild = await this.prebuildManager().startPrebuild(
                     { span },
                     { user, project, forcePrebuild: false, context },
                 );
