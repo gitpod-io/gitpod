@@ -4,7 +4,8 @@
         "branchMatchingPattern": "",
         "branchStrategy": "BRANCH_MATCHING_STRATEGY_UNSPECIFIED",
         "prebuildInterval": 0,
-        "workspaceClass": ""
+        "workspaceClass": "",
+        "activationStrategy": "PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED"
     },
     "err": ""
 }
