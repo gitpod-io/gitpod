@@ -74,6 +74,7 @@ import { AuditLog } from "@gitpod/public-api/lib/gitpod/v1/auditlogs_pb";
 import {
     BranchMatchingStrategy,
     Configuration,
+    PrebuildActivationStrategy,
     PrebuildSettings,
     WorkspaceSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
@@ -1066,6 +1067,7 @@ export class PublicAPIConverter {
             result.branchStrategy = this.toBranchMatchingStrategy(prebuilds.branchStrategy);
             result.prebuildInterval = prebuilds.prebuildInterval ?? 20;
             result.workspaceClass = prebuilds.workspaceClass ?? "";
+            result.activationStrategy = this.toPrebuildActivationStrategy(prebuilds.activationStrategy);
         }
         return result;
     }
@@ -1080,6 +1082,17 @@ export class PublicAPIConverter {
                 return BranchMatchingStrategy.MATCHED_BRANCHES;
         }
         return BranchMatchingStrategy.DEFAULT_BRANCH;
+    }
+
+    toPrebuildActivationStrategy(strategy?: PrebuildSettingsProtocol.ActivationStrategy): PrebuildActivationStrategy {
+        switch (strategy) {
+            case "webhook-based":
+                return PrebuildActivationStrategy.UNSPECIFIED;
+            case "activity-based":
+                return PrebuildActivationStrategy.ACTIVITY_BASED;
+            default:
+                return PrebuildActivationStrategy.UNSPECIFIED;
+        }
     }
 
     toWorkspaceSettings(projectSettings: ProjectSettings | undefined): WorkspaceSettings {

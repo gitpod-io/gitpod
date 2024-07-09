@@ -30,6 +30,139 @@ public final class ConfigurationOuterClass {
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   /**
+   * Protobuf enum {@code gitpod.v1.PrebuildActivationStrategy}
+   */
+  public enum PrebuildActivationStrategy
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <pre>
+     * Default value. Implicitly applies to webhoook-based activation
+     * </pre>
+     *
+     * <code>PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED = 0;</code>
+     */
+    PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED(0),
+    /**
+     * <pre>
+     * Default value for newly enabled prebuilds.
+     * </pre>
+     *
+     * <code>PREBUILD_ACTIVATION_STRATEGY_ACTIVITY_BASED = 1;</code>
+     */
+    PREBUILD_ACTIVATION_STRATEGY_ACTIVITY_BASED(1),
+    UNRECOGNIZED(-1),
+    ;
+
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        PrebuildActivationStrategy.class.getName());
+    }
+    /**
+     * <pre>
+     * Default value. Implicitly applies to webhoook-based activation
+     * </pre>
+     *
+     * <code>PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED = 0;</code>
+     */
+    public static final int PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED_VALUE = 0;
+    /**
+     * <pre>
+     * Default value for newly enabled prebuilds.
+     * </pre>
+     *
+     * <code>PREBUILD_ACTIVATION_STRATEGY_ACTIVITY_BASED = 1;</code>
+     */
+    public static final int PREBUILD_ACTIVATION_STRATEGY_ACTIVITY_BASED_VALUE = 1;
+
+
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static PrebuildActivationStrategy valueOf(int value) {
+      return forNumber(value);
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     */
+    public static PrebuildActivationStrategy forNumber(int value) {
+      switch (value) {
+        case 0: return PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED;
+        case 1: return PREBUILD_ACTIVATION_STRATEGY_ACTIVITY_BASED;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<PrebuildActivationStrategy>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        PrebuildActivationStrategy> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<PrebuildActivationStrategy>() {
+            public PrebuildActivationStrategy findValueByNumber(int number) {
+              return PrebuildActivationStrategy.forNumber(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalStateException(
+            "Can't get the descriptor of an unrecognized enum value.");
+      }
+      return getDescriptor().getValues().get(ordinal());
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.ConfigurationOuterClass.getDescriptor().getEnumTypes().get(0);
+    }
+
+    private static final PrebuildActivationStrategy[] VALUES = values();
+
+    public static PrebuildActivationStrategy valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      if (desc.getIndex() == -1) {
+        return UNRECOGNIZED;
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int value;
+
+    private PrebuildActivationStrategy(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:gitpod.v1.PrebuildActivationStrategy)
+  }
+
+  /**
    * Protobuf enum {@code gitpod.v1.BranchMatchingStrategy}
    */
   public enum BranchMatchingStrategy
@@ -138,7 +271,7 @@ public final class ConfigurationOuterClass {
     }
     public static final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptor() {
-      return io.gitpod.publicapi.v1.ConfigurationOuterClass.getDescriptor().getEnumTypes().get(0);
+      return io.gitpod.publicapi.v1.ConfigurationOuterClass.getDescriptor().getEnumTypes().get(1);
     }
 
     private static final BranchMatchingStrategy[] VALUES = values();
@@ -1776,6 +1909,17 @@ public final class ConfigurationOuterClass {
      */
     com.google.protobuf.ByteString
         getWorkspaceClassBytes();
+
+    /**
+     * <code>.gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+     * @return The enum numeric value on the wire for activationStrategy.
+     */
+    int getActivationStrategyValue();
+    /**
+     * <code>.gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+     * @return The activationStrategy.
+     */
+    io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy getActivationStrategy();
   }
   /**
    * Protobuf type {@code gitpod.v1.PrebuildSettings}
@@ -1802,6 +1946,7 @@ public final class ConfigurationOuterClass {
       branchMatchingPattern_ = "";
       branchStrategy_ = 0;
       workspaceClass_ = "";
+      activationStrategy_ = 0;
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -1935,6 +2080,24 @@ public final class ConfigurationOuterClass {
       }
     }
 
+    public static final int ACTIVATION_STRATEGY_FIELD_NUMBER = 6;
+    private int activationStrategy_ = 0;
+    /**
+     * <code>.gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+     * @return The enum numeric value on the wire for activationStrategy.
+     */
+    @java.lang.Override public int getActivationStrategyValue() {
+      return activationStrategy_;
+    }
+    /**
+     * <code>.gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+     * @return The activationStrategy.
+     */
+    @java.lang.Override public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy getActivationStrategy() {
+      io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy result = io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy.forNumber(activationStrategy_);
+      return result == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy.UNRECOGNIZED : result;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -1964,6 +2127,9 @@ public final class ConfigurationOuterClass {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(workspaceClass_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 5, workspaceClass_);
       }
+      if (activationStrategy_ != io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy.PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED.getNumber()) {
+        output.writeEnum(6, activationStrategy_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -1991,6 +2157,10 @@ public final class ConfigurationOuterClass {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(workspaceClass_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(5, workspaceClass_);
       }
+      if (activationStrategy_ != io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy.PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(6, activationStrategy_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -2015,6 +2185,7 @@ public final class ConfigurationOuterClass {
           != other.getPrebuildInterval()) return false;
       if (!getWorkspaceClass()
           .equals(other.getWorkspaceClass())) return false;
+      if (activationStrategy_ != other.activationStrategy_) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -2037,6 +2208,8 @@ public final class ConfigurationOuterClass {
       hash = (53 * hash) + getPrebuildInterval();
       hash = (37 * hash) + WORKSPACE_CLASS_FIELD_NUMBER;
       hash = (53 * hash) + getWorkspaceClass().hashCode();
+      hash = (37 * hash) + ACTIVATION_STRATEGY_FIELD_NUMBER;
+      hash = (53 * hash) + activationStrategy_;
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -2173,6 +2346,7 @@ public final class ConfigurationOuterClass {
         branchStrategy_ = 0;
         prebuildInterval_ = 0;
         workspaceClass_ = "";
+        activationStrategy_ = 0;
         return this;
       }
 
@@ -2221,6 +2395,9 @@ public final class ConfigurationOuterClass {
         if (((from_bitField0_ & 0x00000010) != 0)) {
           result.workspaceClass_ = workspaceClass_;
         }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.activationStrategy_ = activationStrategy_;
+        }
       }
 
       @java.lang.Override
@@ -2253,6 +2430,9 @@ public final class ConfigurationOuterClass {
           workspaceClass_ = other.workspaceClass_;
           bitField0_ |= 0x00000010;
           onChanged();
+        }
+        if (other.activationStrategy_ != 0) {
+          setActivationStrategyValue(other.getActivationStrategyValue());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -2305,6 +2485,11 @@ public final class ConfigurationOuterClass {
                 bitField0_ |= 0x00000010;
                 break;
               } // case 42
+              case 48: {
+                activationStrategy_ = input.readEnum();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 48
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -2579,6 +2764,59 @@ public final class ConfigurationOuterClass {
         checkByteStringIsUtf8(value);
         workspaceClass_ = value;
         bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+
+      private int activationStrategy_ = 0;
+      /**
+       * <code>.gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+       * @return The enum numeric value on the wire for activationStrategy.
+       */
+      @java.lang.Override public int getActivationStrategyValue() {
+        return activationStrategy_;
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+       * @param value The enum numeric value on the wire for activationStrategy to set.
+       * @return This builder for chaining.
+       */
+      public Builder setActivationStrategyValue(int value) {
+        activationStrategy_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+       * @return The activationStrategy.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy getActivationStrategy() {
+        io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy result = io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy.forNumber(activationStrategy_);
+        return result == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+       * @param value The activationStrategy to set.
+       * @return This builder for chaining.
+       */
+      public Builder setActivationStrategy(io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000020;
+        activationStrategy_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearActivationStrategy() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        activationStrategy_ = 0;
         onChanged();
         return this;
       }
@@ -8643,6 +8881,22 @@ public final class ConfigurationOuterClass {
        */
       com.google.protobuf.ByteString
           getWorkspaceClassBytes();
+
+      /**
+       * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+       * @return Whether the activationStrategy field is set.
+       */
+      boolean hasActivationStrategy();
+      /**
+       * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+       * @return The enum numeric value on the wire for activationStrategy.
+       */
+      int getActivationStrategyValue();
+      /**
+       * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+       * @return The activationStrategy.
+       */
+      io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy getActivationStrategy();
     }
     /**
      * Protobuf type {@code gitpod.v1.UpdateConfigurationRequest.PrebuildSettings}
@@ -8669,6 +8923,7 @@ public final class ConfigurationOuterClass {
         branchMatchingPattern_ = "";
         branchStrategy_ = 0;
         workspaceClass_ = "";
+        activationStrategy_ = 0;
       }
 
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -8842,6 +9097,31 @@ public final class ConfigurationOuterClass {
         }
       }
 
+      public static final int ACTIVATION_STRATEGY_FIELD_NUMBER = 6;
+      private int activationStrategy_ = 0;
+      /**
+       * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+       * @return Whether the activationStrategy field is set.
+       */
+      @java.lang.Override public boolean hasActivationStrategy() {
+        return ((bitField0_ & 0x00000020) != 0);
+      }
+      /**
+       * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+       * @return The enum numeric value on the wire for activationStrategy.
+       */
+      @java.lang.Override public int getActivationStrategyValue() {
+        return activationStrategy_;
+      }
+      /**
+       * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+       * @return The activationStrategy.
+       */
+      @java.lang.Override public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy getActivationStrategy() {
+        io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy result = io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy.forNumber(activationStrategy_);
+        return result == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy.UNRECOGNIZED : result;
+      }
+
       private byte memoizedIsInitialized = -1;
       @java.lang.Override
       public final boolean isInitialized() {
@@ -8871,6 +9151,9 @@ public final class ConfigurationOuterClass {
         if (((bitField0_ & 0x00000010) != 0)) {
           com.google.protobuf.GeneratedMessage.writeString(output, 5, workspaceClass_);
         }
+        if (((bitField0_ & 0x00000020) != 0)) {
+          output.writeEnum(6, activationStrategy_);
+        }
         getUnknownFields().writeTo(output);
       }
 
@@ -8897,6 +9180,10 @@ public final class ConfigurationOuterClass {
         }
         if (((bitField0_ & 0x00000010) != 0)) {
           size += com.google.protobuf.GeneratedMessage.computeStringSize(5, workspaceClass_);
+        }
+        if (((bitField0_ & 0x00000020) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeEnumSize(6, activationStrategy_);
         }
         size += getUnknownFields().getSerializedSize();
         memoizedSize = size;
@@ -8937,6 +9224,10 @@ public final class ConfigurationOuterClass {
           if (!getWorkspaceClass()
               .equals(other.getWorkspaceClass())) return false;
         }
+        if (hasActivationStrategy() != other.hasActivationStrategy()) return false;
+        if (hasActivationStrategy()) {
+          if (activationStrategy_ != other.activationStrategy_) return false;
+        }
         if (!getUnknownFields().equals(other.getUnknownFields())) return false;
         return true;
       }
@@ -8968,6 +9259,10 @@ public final class ConfigurationOuterClass {
         if (hasWorkspaceClass()) {
           hash = (37 * hash) + WORKSPACE_CLASS_FIELD_NUMBER;
           hash = (53 * hash) + getWorkspaceClass().hashCode();
+        }
+        if (hasActivationStrategy()) {
+          hash = (37 * hash) + ACTIVATION_STRATEGY_FIELD_NUMBER;
+          hash = (53 * hash) + activationStrategy_;
         }
         hash = (29 * hash) + getUnknownFields().hashCode();
         memoizedHashCode = hash;
@@ -9105,6 +9400,7 @@ public final class ConfigurationOuterClass {
           branchStrategy_ = 0;
           prebuildInterval_ = 0;
           workspaceClass_ = "";
+          activationStrategy_ = 0;
           return this;
         }
 
@@ -9159,6 +9455,10 @@ public final class ConfigurationOuterClass {
             result.workspaceClass_ = workspaceClass_;
             to_bitField0_ |= 0x00000010;
           }
+          if (((from_bitField0_ & 0x00000020) != 0)) {
+            result.activationStrategy_ = activationStrategy_;
+            to_bitField0_ |= 0x00000020;
+          }
           result.bitField0_ |= to_bitField0_;
         }
 
@@ -9192,6 +9492,9 @@ public final class ConfigurationOuterClass {
             workspaceClass_ = other.workspaceClass_;
             bitField0_ |= 0x00000010;
             onChanged();
+          }
+          if (other.hasActivationStrategy()) {
+            setActivationStrategy(other.getActivationStrategy());
           }
           this.mergeUnknownFields(other.getUnknownFields());
           onChanged();
@@ -9244,6 +9547,11 @@ public final class ConfigurationOuterClass {
                   bitField0_ |= 0x00000010;
                   break;
                 } // case 42
+                case 48: {
+                  activationStrategy_ = input.readEnum();
+                  bitField0_ |= 0x00000020;
+                  break;
+                } // case 48
                 default: {
                   if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                     done = true; // was an endgroup tag
@@ -9555,6 +9863,66 @@ public final class ConfigurationOuterClass {
           checkByteStringIsUtf8(value);
           workspaceClass_ = value;
           bitField0_ |= 0x00000010;
+          onChanged();
+          return this;
+        }
+
+        private int activationStrategy_ = 0;
+        /**
+         * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+         * @return Whether the activationStrategy field is set.
+         */
+        @java.lang.Override public boolean hasActivationStrategy() {
+          return ((bitField0_ & 0x00000020) != 0);
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+         * @return The enum numeric value on the wire for activationStrategy.
+         */
+        @java.lang.Override public int getActivationStrategyValue() {
+          return activationStrategy_;
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+         * @param value The enum numeric value on the wire for activationStrategy to set.
+         * @return This builder for chaining.
+         */
+        public Builder setActivationStrategyValue(int value) {
+          activationStrategy_ = value;
+          bitField0_ |= 0x00000020;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+         * @return The activationStrategy.
+         */
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy getActivationStrategy() {
+          io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy result = io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy.forNumber(activationStrategy_);
+          return result == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy.UNRECOGNIZED : result;
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+         * @param value The activationStrategy to set.
+         * @return This builder for chaining.
+         */
+        public Builder setActivationStrategy(io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildActivationStrategy value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          bitField0_ |= 0x00000020;
+          activationStrategy_ = value.getNumber();
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildActivationStrategy activation_strategy = 6 [json_name = "activationStrategy"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearActivationStrategy() {
+          bitField0_ = (bitField0_ & ~0x00000020);
+          activationStrategy_ = 0;
           onChanged();
           return this;
         }
@@ -13565,94 +13933,103 @@ public final class ConfigurationOuterClass {
       "\021prebuild_settings\030\006 \001(\0132\033.gitpod.v1.Pre" +
       "buildSettingsR\020prebuildSettings\022K\n\022works" +
       "pace_settings\030\007 \001(\0132\034.gitpod.v1.Workspac" +
-      "eSettingsR\021workspaceSettings\"\206\002\n\020Prebuil" +
+      "eSettingsR\021workspaceSettings\"\336\002\n\020Prebuil" +
       "dSettings\022\030\n\007enabled\030\001 \001(\010R\007enabled\0226\n\027b" +
       "ranch_matching_pattern\030\002 \001(\tR\025branchMatc" +
       "hingPattern\022J\n\017branch_strategy\030\003 \001(\0162!.g" +
       "itpod.v1.BranchMatchingStrategyR\016branchS" +
       "trategy\022+\n\021prebuild_interval\030\004 \001(\005R\020preb" +
       "uildInterval\022\'\n\017workspace_class\030\005 \001(\tR\016w" +
-      "orkspaceClass\"\266\001\n\021WorkspaceSettings\022\'\n\017w" +
-      "orkspace_class\030\001 \001(\tR\016workspaceClass\022@\n\034" +
-      "restricted_workspace_classes\030\002 \003(\tR\032rest" +
-      "rictedWorkspaceClasses\0226\n\027restricted_edi" +
-      "tor_names\030\003 \003(\tR\025restrictedEditorNames\"v" +
-      "\n\032CreateConfigurationRequest\022\'\n\017organiza" +
-      "tion_id\030\001 \001(\tR\016organizationId\022\022\n\004name\030\002 " +
-      "\001(\tR\004name\022\033\n\tclone_url\030\003 \001(\tR\010cloneUrl\"]" +
-      "\n\033CreateConfigurationResponse\022>\n\rconfigu" +
-      "ration\030\001 \001(\0132\030.gitpod.v1.ConfigurationR\r" +
-      "configuration\"D\n\027GetConfigurationRequest" +
-      "\022)\n\020configuration_id\030\001 \001(\tR\017configuratio" +
-      "nId\"Z\n\030GetConfigurationResponse\022>\n\rconfi" +
-      "guration\030\001 \001(\0132\030.gitpod.v1.Configuration" +
-      "R\rconfiguration\"\220\002\n\031ListConfigurationsRe" +
-      "quest\022\'\n\017organization_id\030\001 \001(\tR\016organiza" +
-      "tionId\022\037\n\013search_term\030\002 \001(\tR\nsearchTerm\022" +
-      "<\n\npagination\030\003 \001(\0132\034.gitpod.v1.Paginati" +
-      "onRequestR\npagination\022#\n\004sort\030\004 \003(\0132\017.gi" +
-      "tpod.v1.SortR\004sort\0220\n\021prebuilds_enabled\030" +
-      "\005 \001(\010H\000R\020prebuildsEnabled\210\001\001B\024\n\022_prebuil" +
-      "ds_enabled\"\235\001\n\032ListConfigurationsRespons" +
-      "e\022@\n\016configurations\030\001 \003(\0132\030.gitpod.v1.Co" +
-      "nfigurationR\016configurations\022=\n\npaginatio" +
-      "n\030\002 \001(\0132\035.gitpod.v1.PaginationResponseR\n" +
-      "pagination\"\260\t\n\032UpdateConfigurationReques" +
-      "t\022)\n\020configuration_id\030\001 \001(\tR\017configurati" +
-      "onId\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001\022h\n\021prebuil" +
-      "d_settings\030\003 \001(\01326.gitpod.v1.UpdateConfi" +
-      "gurationRequest.PrebuildSettingsH\001R\020preb" +
-      "uildSettings\210\001\001\022k\n\022workspace_settings\030\004 " +
-      "\001(\01327.gitpod.v1.UpdateConfigurationReque" +
-      "st.WorkspaceSettingsH\002R\021workspaceSetting" +
-      "s\210\001\001\032\205\003\n\020PrebuildSettings\022\035\n\007enabled\030\001 \001" +
-      "(\010H\000R\007enabled\210\001\001\022;\n\027branch_matching_patt" +
-      "ern\030\002 \001(\tH\001R\025branchMatchingPattern\210\001\001\022O\n" +
-      "\017branch_strategy\030\003 \001(\0162!.gitpod.v1.Branc" +
-      "hMatchingStrategyH\002R\016branchStrategy\210\001\001\0220" +
-      "\n\021prebuild_interval\030\004 \001(\005H\003R\020prebuildInt" +
-      "erval\210\001\001\022,\n\017workspace_class\030\005 \001(\tH\004R\016wor" +
-      "kspaceClass\210\001\001B\n\n\010_enabledB\032\n\030_branch_ma" +
-      "tching_patternB\022\n\020_branch_strategyB\024\n\022_p" +
-      "rebuild_intervalB\022\n\020_workspace_class\032\270\003\n" +
-      "\021WorkspaceSettings\022,\n\017workspace_class\030\001 " +
-      "\001(\tH\000R\016workspaceClass\210\001\001\022@\n\034restricted_w" +
-      "orkspace_classes\030\002 \003(\tR\032restrictedWorksp" +
-      "aceClasses\022R\n#update_restricted_workspac" +
-      "e_classes\030\003 \001(\010H\001R updateRestrictedWorks" +
-      "paceClasses\210\001\001\0226\n\027restricted_editor_name" +
-      "s\030\004 \003(\tR\025restrictedEditorNames\022H\n\036update" +
-      "_restricted_editor_names\030\005 \001(\010H\002R\033update" +
-      "RestrictedEditorNames\210\001\001B\022\n\020_workspace_c" +
-      "lassB&\n$_update_restricted_workspace_cla" +
-      "ssesB!\n\037_update_restricted_editor_namesB" +
-      "\007\n\005_nameB\024\n\022_prebuild_settingsB\025\n\023_works" +
-      "pace_settings\"]\n\033UpdateConfigurationResp" +
-      "onse\022>\n\rconfiguration\030\001 \001(\0132\030.gitpod.v1." +
-      "ConfigurationR\rconfiguration\"G\n\032DeleteCo" +
-      "nfigurationRequest\022)\n\020configuration_id\030\001" +
-      " \001(\tR\017configurationId\"\035\n\033DeleteConfigura" +
-      "tionResponse*\311\001\n\026BranchMatchingStrategy\022" +
-      "(\n$BRANCH_MATCHING_STRATEGY_UNSPECIFIED\020" +
-      "\000\022+\n\'BRANCH_MATCHING_STRATEGY_DEFAULT_BR" +
-      "ANCH\020\001\022)\n%BRANCH_MATCHING_STRATEGY_ALL_B" +
-      "RANCHES\020\002\022-\n)BRANCH_MATCHING_STRATEGY_MA" +
-      "TCHED_BRANCHES\020\0032\222\004\n\024ConfigurationServic" +
-      "e\022f\n\023CreateConfiguration\022%.gitpod.v1.Cre" +
-      "ateConfigurationRequest\032&.gitpod.v1.Crea" +
-      "teConfigurationResponse\"\000\022]\n\020GetConfigur" +
-      "ation\022\".gitpod.v1.GetConfigurationReques" +
-      "t\032#.gitpod.v1.GetConfigurationResponse\"\000" +
-      "\022c\n\022ListConfigurations\022$.gitpod.v1.ListC" +
-      "onfigurationsRequest\032%.gitpod.v1.ListCon" +
-      "figurationsResponse\"\000\022f\n\023UpdateConfigura" +
-      "tion\022%.gitpod.v1.UpdateConfigurationRequ" +
-      "est\032&.gitpod.v1.UpdateConfigurationRespo" +
-      "nse\"\000\022f\n\023DeleteConfiguration\022%.gitpod.v1" +
-      ".DeleteConfigurationRequest\032&.gitpod.v1." +
-      "DeleteConfigurationResponse\"\000BQ\n\026io.gitp" +
-      "od.publicapi.v1Z7github.com/gitpod-io/gi" +
-      "tpod/components/public-api/go/v1b\006proto3"
+      "orkspaceClass\022V\n\023activation_strategy\030\006 \001" +
+      "(\0162%.gitpod.v1.PrebuildActivationStrateg" +
+      "yR\022activationStrategy\"\266\001\n\021WorkspaceSetti" +
+      "ngs\022\'\n\017workspace_class\030\001 \001(\tR\016workspaceC" +
+      "lass\022@\n\034restricted_workspace_classes\030\002 \003" +
+      "(\tR\032restrictedWorkspaceClasses\0226\n\027restri" +
+      "cted_editor_names\030\003 \003(\tR\025restrictedEdito" +
+      "rNames\"v\n\032CreateConfigurationRequest\022\'\n\017" +
+      "organization_id\030\001 \001(\tR\016organizationId\022\022\n" +
+      "\004name\030\002 \001(\tR\004name\022\033\n\tclone_url\030\003 \001(\tR\010cl" +
+      "oneUrl\"]\n\033CreateConfigurationResponse\022>\n" +
+      "\rconfiguration\030\001 \001(\0132\030.gitpod.v1.Configu" +
+      "rationR\rconfiguration\"D\n\027GetConfiguratio" +
+      "nRequest\022)\n\020configuration_id\030\001 \001(\tR\017conf" +
+      "igurationId\"Z\n\030GetConfigurationResponse\022" +
+      ">\n\rconfiguration\030\001 \001(\0132\030.gitpod.v1.Confi" +
+      "gurationR\rconfiguration\"\220\002\n\031ListConfigur" +
+      "ationsRequest\022\'\n\017organization_id\030\001 \001(\tR\016" +
+      "organizationId\022\037\n\013search_term\030\002 \001(\tR\nsea" +
+      "rchTerm\022<\n\npagination\030\003 \001(\0132\034.gitpod.v1." +
+      "PaginationRequestR\npagination\022#\n\004sort\030\004 " +
+      "\003(\0132\017.gitpod.v1.SortR\004sort\0220\n\021prebuilds_" +
+      "enabled\030\005 \001(\010H\000R\020prebuildsEnabled\210\001\001B\024\n\022" +
+      "_prebuilds_enabled\"\235\001\n\032ListConfiguration" +
+      "sResponse\022@\n\016configurations\030\001 \003(\0132\030.gitp" +
+      "od.v1.ConfigurationR\016configurations\022=\n\np" +
+      "agination\030\002 \001(\0132\035.gitpod.v1.PaginationRe" +
+      "sponseR\npagination\"\245\n\n\032UpdateConfigurati" +
+      "onRequest\022)\n\020configuration_id\030\001 \001(\tR\017con" +
+      "figurationId\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001\022h\n" +
+      "\021prebuild_settings\030\003 \001(\01326.gitpod.v1.Upd" +
+      "ateConfigurationRequest.PrebuildSettings" +
+      "H\001R\020prebuildSettings\210\001\001\022k\n\022workspace_set" +
+      "tings\030\004 \001(\01327.gitpod.v1.UpdateConfigurat" +
+      "ionRequest.WorkspaceSettingsH\002R\021workspac" +
+      "eSettings\210\001\001\032\372\003\n\020PrebuildSettings\022\035\n\007ena" +
+      "bled\030\001 \001(\010H\000R\007enabled\210\001\001\022;\n\027branch_match" +
+      "ing_pattern\030\002 \001(\tH\001R\025branchMatchingPatte" +
+      "rn\210\001\001\022O\n\017branch_strategy\030\003 \001(\0162!.gitpod." +
+      "v1.BranchMatchingStrategyH\002R\016branchStrat" +
+      "egy\210\001\001\0220\n\021prebuild_interval\030\004 \001(\005H\003R\020pre" +
+      "buildInterval\210\001\001\022,\n\017workspace_class\030\005 \001(" +
+      "\tH\004R\016workspaceClass\210\001\001\022[\n\023activation_str" +
+      "ategy\030\006 \001(\0162%.gitpod.v1.PrebuildActivati" +
+      "onStrategyH\005R\022activationStrategy\210\001\001B\n\n\010_" +
+      "enabledB\032\n\030_branch_matching_patternB\022\n\020_" +
+      "branch_strategyB\024\n\022_prebuild_intervalB\022\n" +
+      "\020_workspace_classB\026\n\024_activation_strateg" +
+      "y\032\270\003\n\021WorkspaceSettings\022,\n\017workspace_cla" +
+      "ss\030\001 \001(\tH\000R\016workspaceClass\210\001\001\022@\n\034restric" +
+      "ted_workspace_classes\030\002 \003(\tR\032restrictedW" +
+      "orkspaceClasses\022R\n#update_restricted_wor" +
+      "kspace_classes\030\003 \001(\010H\001R updateRestricted" +
+      "WorkspaceClasses\210\001\001\0226\n\027restricted_editor" +
+      "_names\030\004 \003(\tR\025restrictedEditorNames\022H\n\036u" +
+      "pdate_restricted_editor_names\030\005 \001(\010H\002R\033u" +
+      "pdateRestrictedEditorNames\210\001\001B\022\n\020_worksp" +
+      "ace_classB&\n$_update_restricted_workspac" +
+      "e_classesB!\n\037_update_restricted_editor_n" +
+      "amesB\007\n\005_nameB\024\n\022_prebuild_settingsB\025\n\023_" +
+      "workspace_settings\"]\n\033UpdateConfiguratio" +
+      "nResponse\022>\n\rconfiguration\030\001 \001(\0132\030.gitpo" +
+      "d.v1.ConfigurationR\rconfiguration\"G\n\032Del" +
+      "eteConfigurationRequest\022)\n\020configuration" +
+      "_id\030\001 \001(\tR\017configurationId\"\035\n\033DeleteConf" +
+      "igurationResponse*{\n\032PrebuildActivationS" +
+      "trategy\022,\n(PREBUILD_ACTIVATION_STRATEGY_" +
+      "UNSPECIFIED\020\000\022/\n+PREBUILD_ACTIVATION_STR" +
+      "ATEGY_ACTIVITY_BASED\020\001*\311\001\n\026BranchMatchin" +
+      "gStrategy\022(\n$BRANCH_MATCHING_STRATEGY_UN" +
+      "SPECIFIED\020\000\022+\n\'BRANCH_MATCHING_STRATEGY_" +
+      "DEFAULT_BRANCH\020\001\022)\n%BRANCH_MATCHING_STRA" +
+      "TEGY_ALL_BRANCHES\020\002\022-\n)BRANCH_MATCHING_S" +
+      "TRATEGY_MATCHED_BRANCHES\020\0032\222\004\n\024Configura" +
+      "tionService\022f\n\023CreateConfiguration\022%.git" +
+      "pod.v1.CreateConfigurationRequest\032&.gitp" +
+      "od.v1.CreateConfigurationResponse\"\000\022]\n\020G" +
+      "etConfiguration\022\".gitpod.v1.GetConfigura" +
+      "tionRequest\032#.gitpod.v1.GetConfiguration" +
+      "Response\"\000\022c\n\022ListConfigurations\022$.gitpo" +
+      "d.v1.ListConfigurationsRequest\032%.gitpod." +
+      "v1.ListConfigurationsResponse\"\000\022f\n\023Updat" +
+      "eConfiguration\022%.gitpod.v1.UpdateConfigu" +
+      "rationRequest\032&.gitpod.v1.UpdateConfigur" +
+      "ationResponse\"\000\022f\n\023DeleteConfiguration\022%" +
+      ".gitpod.v1.DeleteConfigurationRequest\032&." +
+      "gitpod.v1.DeleteConfigurationResponse\"\000B" +
+      "Q\n\026io.gitpod.publicapi.v1Z7github.com/gi" +
+      "tpod-io/gitpod/components/public-api/go/" +
+      "v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -13672,7 +14049,7 @@ public final class ConfigurationOuterClass {
     internal_static_gitpod_v1_PrebuildSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_PrebuildSettings_descriptor,
-        new java.lang.String[] { "Enabled", "BranchMatchingPattern", "BranchStrategy", "PrebuildInterval", "WorkspaceClass", });
+        new java.lang.String[] { "Enabled", "BranchMatchingPattern", "BranchStrategy", "PrebuildInterval", "WorkspaceClass", "ActivationStrategy", });
     internal_static_gitpod_v1_WorkspaceSettings_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_gitpod_v1_WorkspaceSettings_fieldAccessorTable = new
@@ -13726,7 +14103,7 @@ public final class ConfigurationOuterClass {
     internal_static_gitpod_v1_UpdateConfigurationRequest_PrebuildSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateConfigurationRequest_PrebuildSettings_descriptor,
-        new java.lang.String[] { "Enabled", "BranchMatchingPattern", "BranchStrategy", "PrebuildInterval", "WorkspaceClass", });
+        new java.lang.String[] { "Enabled", "BranchMatchingPattern", "BranchStrategy", "PrebuildInterval", "WorkspaceClass", "ActivationStrategy", });
     internal_static_gitpod_v1_UpdateConfigurationRequest_WorkspaceSettings_descriptor =
       internal_static_gitpod_v1_UpdateConfigurationRequest_descriptor.getNestedTypes().get(1);
     internal_static_gitpod_v1_UpdateConfigurationRequest_WorkspaceSettings_fieldAccessorTable = new

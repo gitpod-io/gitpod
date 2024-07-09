@@ -31,6 +31,7 @@ export interface ProjectSettings {
 }
 export namespace PrebuildSettings {
     export type BranchStrategy = "default-branch" | "all-branches" | "matched-branches";
+    export type ActivationStrategy = "activity-based" | "webhook-based";
 }
 
 export interface PrebuildSettings {
@@ -55,6 +56,11 @@ export interface PrebuildSettings {
      * Preferred workspace class for prebuilds.
      */
     workspaceClass?: string;
+
+    /**
+     * Activation strategy for prebuilds. Defaults to "webhook-based"
+     */
+    activationStrategy?: PrebuildSettings.ActivationStrategy;
 }
 
 export interface Project {
@@ -88,6 +94,7 @@ export namespace Project {
         branchMatchingPattern: "**",
         prebuildInterval: 20,
         branchStrategy: "all-branches",
+        activationStrategy: "activity-based",
     };
 
     /**

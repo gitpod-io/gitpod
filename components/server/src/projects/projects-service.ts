@@ -420,6 +420,7 @@ export class ProjectsService {
             partialProject.settings = deepmerge(toBeMerged, partialProject.settings);
             await this.checkProjectSettings(user.id, partialProject.settings);
         }
+        await this.handleEnablePrebuild(partialProject);
         return this.projectDB.updateProject(partialProject);
     }
     private async checkProjectSettings(userId: string, settings?: PartialProject["settings"]) {
@@ -445,6 +446,21 @@ export class ProjectsService {
             const options = settings.restrictedEditorNames.filter((e) => !!e) as string[];
             await this.ideService.checkEditorsAllowed(userId, options);
             settings.restrictedEditorNames = options;
+        }
+    }
+
+    private async handleEnablePrebuild(partialProject: PartialProject): Promise<void> {
+        const enablePrebuildsNew = partialProject?.settings?.prebuilds?.enable;
+        if (typeof enablePrebuildsNew === "boolean") {
+            const project = await this.projectDB.findProjectById(partialProject.id);
+            if (!project) {
+                return;
+            }
+            const enablePrebuildsPrev = !!project.settings?.prebuilds?.enable;
+            if (enablePrebuildsNew && !enablePrebuildsPrev && partialProject?.settings?.prebuilds) {
+                // new default
+                partialProject.settings.prebuilds.activationStrategy = "activity-based";
+            }
         }
     }
 

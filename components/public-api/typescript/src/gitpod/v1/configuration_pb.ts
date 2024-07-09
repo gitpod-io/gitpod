@@ -15,6 +15,30 @@ import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
 import { Sort } from "./sorting_pb.js";
 
 /**
+ * @generated from enum gitpod.v1.PrebuildActivationStrategy
+ */
+export enum PrebuildActivationStrategy {
+  /**
+   * Default value. Implicitly applies to webhoook-based activation
+   *
+   * @generated from enum value: PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Default value for newly enabled prebuilds.
+   *
+   * @generated from enum value: PREBUILD_ACTIVATION_STRATEGY_ACTIVITY_BASED = 1;
+   */
+  ACTIVITY_BASED = 1,
+}
+// Retrieve enum metadata with: proto3.getEnumType(PrebuildActivationStrategy)
+proto3.util.setEnumType(PrebuildActivationStrategy, "gitpod.v1.PrebuildActivationStrategy", [
+  { no: 0, name: "PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED" },
+  { no: 1, name: "PREBUILD_ACTIVATION_STRATEGY_ACTIVITY_BASED" },
+]);
+
+/**
  * @generated from enum gitpod.v1.BranchMatchingStrategy
  */
 export enum BranchMatchingStrategy {
@@ -148,6 +172,11 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
    */
   workspaceClass = "";
 
+  /**
+   * @generated from field: gitpod.v1.PrebuildActivationStrategy activation_strategy = 6;
+   */
+  activationStrategy = PrebuildActivationStrategy.UNSPECIFIED;
+
   constructor(data?: PartialMessage<PrebuildSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -161,6 +190,7 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
     { no: 3, name: "branch_strategy", kind: "enum", T: proto3.getEnumType(BranchMatchingStrategy) },
     { no: 4, name: "prebuild_interval", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 5, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "activation_strategy", kind: "enum", T: proto3.getEnumType(PrebuildActivationStrategy) },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildSettings {
@@ -581,6 +611,11 @@ export class UpdateConfigurationRequest_PrebuildSettings extends Message<UpdateC
    */
   workspaceClass?: string;
 
+  /**
+   * @generated from field: optional gitpod.v1.PrebuildActivationStrategy activation_strategy = 6;
+   */
+  activationStrategy?: PrebuildActivationStrategy;
+
   constructor(data?: PartialMessage<UpdateConfigurationRequest_PrebuildSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -594,6 +629,7 @@ export class UpdateConfigurationRequest_PrebuildSettings extends Message<UpdateC
     { no: 3, name: "branch_strategy", kind: "enum", T: proto3.getEnumType(BranchMatchingStrategy), opt: true },
     { no: 4, name: "prebuild_interval", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
     { no: 5, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 6, name: "activation_strategy", kind: "enum", T: proto3.getEnumType(PrebuildActivationStrategy), opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateConfigurationRequest_PrebuildSettings {
