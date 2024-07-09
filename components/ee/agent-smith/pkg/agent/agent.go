@@ -336,7 +336,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 	for _, p := range penalty {
 		switch p {
 		case config.PenaltyStopWorkspace:
-			log.WithField("infringement", ws.Infringements).WithFields(owi).Info("stopping workspace")
+			log.WithField("infringement", log.TrustedValueWrap{Value: ws.Infringements}).WithFields(owi).Info("stopping workspace")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.stopWorkspace(ws.SupervisorPID, ws.InstanceID)
 			if err != nil {
@@ -345,7 +345,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 			}
 			return penalty, err
 		case config.PenaltyStopWorkspaceAndBlockUser:
-			log.WithField("infringement", ws.Infringements).WithFields(owi).Info("stopping workspace and blocking user")
+			log.WithField("infringement", log.TrustedValueWrap{Value: ws.Infringements}).WithFields(owi).Info("stopping workspace and blocking user")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.stopWorkspaceAndBlockUser(ws.SupervisorPID, ws.Owner, ws.WorkspaceID, ws.InstanceID)
 			if err != nil {
@@ -354,7 +354,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 			}
 			return penalty, err
 		case config.PenaltyLimitCPU:
-			log.WithField("infringement", ws.Infringements).WithFields(owi).Info("limiting CPU")
+			log.WithField("infringement", log.TrustedValueWrap{Value: ws.Infringements}).WithFields(owi).Info("limiting CPU")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.limitCPUUse(ws.Pod)
 			if err != nil {
