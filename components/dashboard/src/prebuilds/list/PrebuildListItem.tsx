@@ -15,7 +15,6 @@ import { shortCommitMessage } from "../../projects/render-utils";
 import { Link } from "react-router-dom";
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { PrebuildStatus } from "../../projects/prebuild-utils";
-import Tooltip from "../../components/Tooltip";
 
 /**
  * Formats a date. For today, it returns the time. For this year, it returns the month, day and time. Otherwise, it returns the full date (month, day, year).
@@ -56,8 +55,7 @@ export const PrebuildListItem: FC<Props> = ({ prebuild }) => {
                 {prebuild.commit?.author && (
                     <div className="flex flex-col gap-1">
                         <Text className="text-sm text-pk-content-secondary">
-                            {shortCommitMessage(prebuild.commit.message)}{" "}
-                            <Tooltip content={prebuild.commit.sha}>({prebuild.commit.sha.slice(0, 7)})</Tooltip>
+                            {shortCommitMessage(prebuild.commit.message)}
                         </Text>
                         <div className="flex gap-1 items-center">
                             <img src={prebuild.commit.author.avatarUrl} className="w-5 h-5 rounded-full" alt="" />
