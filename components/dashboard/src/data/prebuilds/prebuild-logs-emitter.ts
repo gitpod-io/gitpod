@@ -44,7 +44,7 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
             case PrebuildPhase_Phase.UNSPECIFIED:
                 return false;
             // This is the online case: we do the actual streaming
-            // All others below are terminal states, where we get re-directed to the actual
+            // All others below are terminal states, where we get re-directed to the logs stored in content-service
             case PrebuildPhase_Phase.BUILDING:
             case PrebuildPhase_Phase.AVAILABLE:
             case PrebuildPhase_Phase.FAILED:
