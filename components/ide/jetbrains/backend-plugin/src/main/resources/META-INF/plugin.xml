@@ -15,6 +15,10 @@
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
+    <!-- Use old formatting to resolve class not found exception -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-dependencies.html#3-dependency-declaration-in-pluginxml -->
+    <depends>com.jetbrains.codeWithMe</depends>
+    <depends>org.jetbrains.plugins.terminal</depends>
     <depends optional="true" config-file="maven.xml">org.jetbrains.idea.maven</depends>
     <dependencies>
         <plugin id="Git4Idea"/>
