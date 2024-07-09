@@ -68,9 +68,6 @@ export const PrebuildDetailPage: FC = () => {
     const hashTaskId = window.location.hash.slice(1);
     useEffect(() => {
         actuallySetSelectedTaskId(hashTaskId || undefined);
-        return () => {
-            console.log("disposed hashTaskId");
-        };
     }, [hashTaskId]);
 
     const isImageBuild =
@@ -183,11 +180,9 @@ export const PrebuildDetailPage: FC = () => {
 
     // For some reason, we sometimes hit a case where the newPrebuildID is actually set without us triggering the query.
     if (newPrebuildID && prebuild?.id !== newPrebuildID) {
-        console.log("Redirecting to new prebuild", newPrebuildID);
         return <Redirect to={repositoriesRoutes.PrebuildDetail(newPrebuildID)} />;
     }
 
-    console.log("PrebuildDetailPage render", prebuild?.id, taskId);
     return (
         <div className="w-full">
             <BreadcrumbNav

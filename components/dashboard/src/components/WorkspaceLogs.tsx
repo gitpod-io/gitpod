@@ -60,12 +60,18 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
             }
         };
 
+        const resetListener = () => {
+            terminal.clear();
+        };
+
         const emitter = props.logsEmitter.on("logs", logListener);
+        emitter.on("reset", resetListener);
         fitAddon.fit();
 
         return () => {
             terminal.dispose();
             emitter.removeListener("logs", logListener);
+            emitter.removeListener("reset", resetListener);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.logsEmitter]);

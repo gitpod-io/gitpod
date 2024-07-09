@@ -16,6 +16,7 @@ type LogEventTypes = {
     error: [Error];
     logs: [string];
     "logs-error": [ApplicationError];
+    reset: [];
 };
 
 /**
@@ -26,7 +27,6 @@ type LogEventTypes = {
 export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId: string) {
     const emitter = useMemo(
         () => {
-            console.log("creating new emitter", { id: prebuild.id, taskId });
             return new ReplayableEventEmitter<LogEventTypes>();
         },
         // We would like to re-create the emitter when the prebuildId or taskId changes, so that logs of old tasks / prebuilds are not mixed with the new ones.
@@ -55,17 +55,10 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
     }, [prebuild.status?.phase?.name, taskId]);
 
     useEffect(() => {
-        console.log("usePrebuildLogsEmitter", {
-            id: prebuild.id,
-            taskId,
-            shouldFetchLogs,
-        });
         if (!shouldFetchLogs || emitter.hasReachedEnd()) {
             return;
         }
-        console.log("going to fetch logs for " + taskId);
 
-        // build streamUrl
         const task = {
             taskId,
             logUrl: "",
@@ -84,7 +77,6 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
             task.logUrl = logUrl;
         }
 
-        // stream
         const disposables = new DisposableCollection();
         disposables.push(
             streamPrebuildLogs(
@@ -99,7 +91,6 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
                 },
                 async () => false,
                 () => {
-                    console.log("End reached", { id: prebuild.id, taskId });
                     emitter.markReachedEnd();
                 },
             ),
@@ -107,7 +98,6 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
 
         return () => {
             disposables.dispose();
-            console.log("Disposing PrebuildLogsEmitter", prebuild.id, taskId);
             if (!emitter.hasReachedEnd()) {
                 // If we haven't finished yet, but the page is re-rendered, clear the output we already got.
                 emitter.emit("reset");
@@ -157,7 +147,7 @@ function streamPrebuildLogs(
         let response: Response | undefined = undefined;
         let reader: ReadableStreamDefaultReader<Uint8Array> | undefined = undefined;
         try {
-            console.log("fetching from streamUrl: " + streamUrl);
+            console.debug("fetching from streamUrl: " + streamUrl);
             response = await fetch(streamUrl, {
                 method: "GET",
                 cache: "no-cache",

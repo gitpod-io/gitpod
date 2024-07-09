@@ -91,7 +91,6 @@ export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
         );
     }
 
-    console.log("PrebuildTaskTab render");
     return (
         <TabsContent value={taskId} className="h-112 mt-0 border-pk-border-base">
             <Suspense fallback={<div />}>
