@@ -22,8 +22,8 @@
     <depends optional="true" config-file="maven.xml">org.jetbrains.idea.maven</depends>
     <dependencies>
         <plugin id="Git4Idea"/>
-        <!-- <plugin id="org.jetbrains.plugins.terminal"/> -->
-        <!-- <plugin id="com.jetbrains.codeWithMe"/>-->
+        <plugin id="org.jetbrains.plugins.terminal"/>
+        <plugin id="com.jetbrains.codeWithMe"/>
     </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
