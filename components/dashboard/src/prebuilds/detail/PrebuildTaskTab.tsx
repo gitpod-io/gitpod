@@ -13,6 +13,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { TabsContent } from "@podkit/tabs/Tabs";
 import { PrebuildTaskErrorTab } from "./PrebuildTaskErrorTab";
 import type { PlainMessage } from "@bufbuild/protobuf";
+import { useHistory } from "react-router";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -23,7 +24,9 @@ type Props = {
 export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
     const { emitter: logEmitter } = usePrebuildLogsEmitter(prebuild, taskId);
     const [error, setError] = React.useState<ApplicationError | undefined>();
-    const { toast } = useToast();
+    const { toast, dismissToast } = useToast();
+    const [activeToasts, setActiveToasts] = React.useState<Set<string>>(new Set());
+    const history = useHistory();
 
     useEffect(() => {
         const errorListener = (err: Error) => {
@@ -45,7 +48,9 @@ export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
                 return;
             }
 
-            toast("Fetching logs failed: " + err.message, { autoHide: false });
+            const toastId = crypto.randomUUID();
+            toast("Fetching logs failed: " + err.message, { autoHide: false, id: toastId });
+            setActiveToasts((prev) => new Set(prev).add(toastId));
         };
 
         logEmitter.on("error", errorListener);
@@ -57,6 +62,16 @@ export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
             setError(undefined);
         };
     }, [logEmitter, taskId, toast]);
+
+    useEffect(() => {
+        // When navigating away from the page, dismiss all toasts
+        history.listen(() => {
+            activeToasts.forEach((toastId) => {
+                dismissToast(toastId);
+            });
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     if (error) {
         return (

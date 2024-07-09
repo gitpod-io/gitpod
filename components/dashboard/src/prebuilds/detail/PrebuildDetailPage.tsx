@@ -113,7 +113,15 @@ export const PrebuildDetailPage: FC = () => {
             prebuild.status.stopTime.toDate().getTime() - prebuild.status.startTime.toDate().getTime(),
             "milliseconds",
         );
-        return `${duration.get("m")}m ${duration.get("s")}s`;
+
+        if (duration.asMinutes() < 1) {
+            return duration.format("s[s]");
+        }
+        if (duration.asHours() < 1) {
+            return duration.format("m[m] s[s]");
+        }
+
+        return duration.format("h[h] m[m] s[s]");
     }, [prebuild?.status?.startTime, prebuild?.status?.stopTime]);
 
     const setSelectedTaskId = useCallback(

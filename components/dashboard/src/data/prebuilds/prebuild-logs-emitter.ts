@@ -90,7 +90,12 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
             streamPrebuildLogs(
                 task.logUrl,
                 (msg) => {
-                    emitter.emit("logs", msg);
+                    const error = matchPrebuildError(msg);
+                    if (!error) {
+                        emitter.emit("logs", msg);
+                    } else {
+                        emitter.emit("logs-error", error);
+                    }
                 },
                 async () => false,
                 () => {
