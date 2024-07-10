@@ -15,6 +15,7 @@ import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
 import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { GitBranchIcon, PinIcon } from "lucide-react";
 import { useUpdateWorkspaceMutation } from "../data/workspaces/update-workspace-mutation";
+import { fromWorkspaceName } from "./RenameWorkspaceModal";
 
 type Props = {
     info: Workspace;
@@ -68,11 +69,13 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                 <WorkspaceStatusIndicator status={workspace?.status} />
             </ItemFieldIcon>
             <div className="flex-grow flex flex-col h-full py-auto truncate">
-                <a href={startUrl}>
-                    <div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">
-                        {info.id}
-                    </div>
-                </a>
+                <Tooltip content={info.id} allowWrap={true}>
+                    <a href={startUrl}>
+                        <div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">
+                            {fromWorkspaceName(info) || info.id}
+                        </div>
+                    </a>
+                </Tooltip>
                 <Tooltip content={project ? "https://" + project : ""} allowWrap={true}>
                     <a href={project ? "https://" + project : undefined}>
                         <div className="text-sm overflow-ellipsis truncate text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">

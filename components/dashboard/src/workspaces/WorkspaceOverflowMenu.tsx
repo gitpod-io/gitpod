@@ -105,11 +105,11 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
             title: "Open",
             href: startUrl.toString(),
         },
-        // {
-        //     title: "Rename",
-        //     href: "",
-        //     onClick: () => setRenameModalVisible(true),
-        // },
+        {
+            title: "Rename",
+            href: "",
+            onClick: () => setRenameModalVisible(true),
+        },
     ];
 
     if (state === WorkspacePhase_Phase.RUNNING) {
