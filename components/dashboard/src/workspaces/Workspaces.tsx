@@ -19,6 +19,8 @@ import { useToast } from "../components/toasts/Toasts";
 import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { Button } from "@podkit/buttons/Button";
 import { VideoCarousel } from "./VideoCarousel";
+import { BookOpen, Code } from "lucide-react";
+import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -107,7 +109,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                     onLimitUpdated={setLimit}
                                     onSearchTermUpdated={setSearchTerm}
                                 />
-                                <ItemsList className="app-container xl:!pr-2 pb-40">
+                                <ItemsList className="app-container xl:!pr-4 pb-40">
                                     <div className="border-t border-gray-200 dark:border-gray-800"></div>
                                     {filteredActiveWorkspaces.map((info) => {
                                         return <WorkspaceEntry key={info.id} info={info} />;
@@ -171,8 +173,38 @@ const WorkspacesPage: FunctionComponent = () => {
                                     )}
                                 </ItemsList>
                             </div>
-                            <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 px-6 py-5">
+                            <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 px-6 py-5 space-y-6">
                                 <VideoCarousel />
+                                <div className="flex flex-col gap-2">
+                                    <h3 className="text-lg font-semibold text-pk-content-primary">Documentation</h3>
+                                    <div className="flex flex-col gap-3 w-fit">
+                                        <a
+                                            href="https://www.gitpod.io/docs"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-base text-pk-content-primary items-center gap-x-2 flex flex-row"
+                                        >
+                                            <BookOpen width={20} /> Read the docs
+                                        </a>
+                                        <a
+                                            href="https://www.gitpod.io/docs/references/gitpod-yml"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-base text-pk-content-primary items-center gap-x-2 flex flex-row"
+                                        >
+                                            <Code width={20} /> .gitpod.yml reference
+                                        </a>
+                                        <a
+                                            href="https://www.gitpod.io/docs/configure/workspaces"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-base text-pk-content-primary items-center gap-x-2 flex flex-row"
+                                        >
+                                            <GitpodStrokedSVG />
+                                            Configuring a workspace
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </>
