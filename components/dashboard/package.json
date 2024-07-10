@@ -37,6 +37,7 @@
     "file-saver": "^2.0.5",
     "idb-keyval": "^6.2.0",
     "js-cookie": "^3.0.1",
+    "lite-youtube-embed": "^0.3.2",
     "lodash": "^4.17.21",
     "lucide-react": "^0.287.0",
     "monaco-editor": "^0.25.2",
