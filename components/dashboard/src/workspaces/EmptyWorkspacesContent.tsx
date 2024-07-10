@@ -30,7 +30,7 @@ export const EmptyWorkspacesContent = () => {
 
     return (
         <div className="app-container flex flex-col space-y-2">
-            <div className="px-6 mt-16 flex flex-row flex-wrap items-center justify-center gap-x-14 gap-y-10 min-h-96 min-w-96">
+            <div className="px-6 mt-16 flex flex-col xl:flex-row items-center justify-center gap-x-14 gap-y-10 min-h-96 min-w-96">
                 <lite-youtube
                     videoid="1ZBN-b2cIB8"
                     width="535"
@@ -43,9 +43,9 @@ export const EmptyWorkspacesContent = () => {
                     class="rounded-xl"
                     playlabel="Gitpod in under 120 seconds"
                 ></lite-youtube>
-                <div className="flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center xl:items-start justify-center">
                     <Heading2 className="mb-4 !font-semibold !text-lg">Create your first workspace</Heading2>
-                    <Subheading className="max-w-xs text-center">
+                    <Subheading className="max-w-xs xl:text-left text-center">
                         Write code in your personal development environment that’s running in the cloud
                     </Subheading>
                     <span className="flex flex-col space-y-4 w-fit">
