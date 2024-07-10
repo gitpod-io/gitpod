@@ -9,6 +9,7 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import { useDeleteWorkspaceMutation } from "../data/workspaces/delete-workspace-mutation";
 import { useToast } from "../components/toasts/Toasts";
 import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { fromWorkspaceName } from "./RenameWorkspaceModal";
 
 type Props = {
     workspace: Workspace;
@@ -33,7 +34,7 @@ export const DeleteWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
             areYouSureText="Are you sure you want to delete this workspace?"
             children={{
                 name: workspace.id,
-                description: workspace.metadata?.name,
+                description: fromWorkspaceName(workspace),
             }}
             buttonText="Delete Workspace"
             warningText={deleteWorkspace.isError ? "There was a problem deleting your workspace." : undefined}
