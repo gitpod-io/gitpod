@@ -150,7 +150,12 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
                     className="flex rounded p-2 mb-2 w-full"
                 >
                     The way prebuilds are triggered is changing.{" "}
-                    <a className="gp-link" target="_blank" href="https://www.gitpod.io/changelog/todo" rel="noreferrer">
+                    <a
+                        className="gp-link"
+                        target="_blank"
+                        href="https://www.gitpod.io/changelog/activity-based-prebuilds"
+                        rel="noreferrer"
+                    >
                         Learn more
                     </a>
                 </Alert>
