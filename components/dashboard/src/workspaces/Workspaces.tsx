@@ -175,7 +175,7 @@ const WorkspacesPage: FunctionComponent = () => {
                             </div>
                             <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 px-6 py-5 space-y-6">
                                 <VideoCarousel />
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col gap-3">
                                     <h3 className="text-lg font-semibold text-pk-content-primary">Documentation</h3>
                                     <div className="flex flex-col gap-3 w-fit">
                                         <a
@@ -202,6 +202,38 @@ const WorkspacesPage: FunctionComponent = () => {
                                         >
                                             <GitpodStrokedSVG />
                                             Configuring a workspace
+                                        </a>
+                                    </div>
+                                </div>
+                                {/* TODO: Create this section based on user submissions while onboarding form */}
+                                <div className="flex flex-col gap-3">
+                                    <h3 className="text-lg font-semibold text-pk-content-secondary">
+                                        Personalised for you
+                                    </h3>
+                                    <div className="flex flex-col gap-3 w-fit">
+                                        <a
+                                            href="https://www.gitpod.io/blog/whats-a-cloud-development-environment"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-base text-pk-content-secondary items-center"
+                                        >
+                                            What's a CDE
+                                        </a>
+                                        <a
+                                            href="https://www.gitpod.io/solutions/onboarding"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-base text-pk-content-secondary items-center"
+                                        >
+                                            Onboard developers in one click
+                                        </a>
+                                        <a
+                                            href="https://www.gitpod.io/blog/using-a-cde-roi-calculator"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-base text-pk-content-secondary items-center"
+                                        >
+                                            Building a business case for Gitpod
                                         </a>
                                     </div>
                                 </div>
