@@ -22,6 +22,7 @@ import {
     SnapshotState,
     WorkspaceSession,
     PrebuiltWorkspaceWithWorkspace,
+    PrebuildWithStatus,
 } from "@gitpod/gitpod-protocol";
 
 export type MaybeWorkspace = Workspace | undefined;
@@ -160,6 +161,7 @@ export interface WorkspaceDB {
         branch: string,
     ): Promise<PrebuildWithWorkspaceAndInstances[]>;
     findPrebuildsWithWorkspace(projectId: string): Promise<PrebuildWithWorkspace[]>;
+    findPrebuildWithStatus(prebuildId: string): Promise<PrebuildWithStatus | undefined>;
     findPrebuildByWorkspaceID(wsid: string): Promise<PrebuiltWorkspace | undefined>;
     findPrebuildByID(pwsid: string): Promise<PrebuiltWorkspace | undefined>;
     countUnabortedPrebuildsSince(projectId: string, date: Date): Promise<number>;
@@ -170,11 +172,6 @@ export interface WorkspaceDB {
 
     hardDeleteWorkspace(workspaceID: string): Promise<void>;
 
-    findPrebuiltWorkspacesByProject(
-        projectId: string,
-        branch?: string,
-        limit?: number,
-    ): Promise<PrebuiltWorkspaceWithWorkspace[]>;
     findPrebuiltWorkspacesByOrganization(
         organizationId: string,
         pagination: {

@@ -155,6 +155,7 @@ export function storageAvailable(type: "localStorage" | "sessionStorage"): boole
 type EventMap = Record<string, any[]>;
 export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEmitter {
     private eventLog: { [K in keyof EventTypes]?: EventTypes[K][] } = {};
+    private reachedEnd = false;
 
     emit(event: string | symbol, ...args: any[]): boolean;
     emit<K extends keyof EventTypes>(event: K, ...args: EventTypes[K]): boolean;
@@ -200,5 +201,13 @@ export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEm
         } else {
             this.eventLog = {};
         }
+    }
+
+    markReachedEnd() {
+        this.reachedEnd = true;
+    }
+
+    hasReachedEnd() {
+        return this.reachedEnd;
     }
 }

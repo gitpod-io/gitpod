@@ -17,6 +17,7 @@ import {
     User,
     Workspace,
     WorkspaceConfig,
+    WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -39,10 +40,6 @@ import { ContextParser } from "../workspace/context-parser-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
-import { ctxSignal } from "../util/request-context";
-import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "../workspace/headless-log-service";
-import { onDownloadPrebuildLogsUrl } from "@gitpod/public-api-common/lib/prebuild-utils";
 
 export interface StartPrebuildParams {
     user: User;
@@ -229,28 +226,20 @@ export class PrebuildManager {
         prebuildId: string,
         oldPermissionCheck?: (pbws: PrebuiltWorkspace, workspace: Workspace) => Promise<void>, // @deprecated
     ): Promise<PrebuildWithStatus | undefined> {
-        const pbws = await this.workspaceDB.trace(ctx).findPrebuiltWorkspaceById(prebuildId);
-        if (!pbws) {
+        const result = await this.workspaceDB.trace(ctx).findPrebuildWithStatus(prebuildId);
+        if (!result) {
             return undefined;
         }
-        const [info, workspace] = await Promise.all([
-            this.workspaceDB
-                .trace(ctx)
-                .findPrebuildInfos([prebuildId])
-                .then((infos) => (infos.length > 0 ? infos[0] : undefined)),
-            this.workspaceDB.trace(ctx).findById(pbws.buildWorkspaceId),
-        ]);
-        if (!info || !workspace) {
-            return undefined;
-        }
+
         if (oldPermissionCheck) {
-            await oldPermissionCheck(pbws, workspace);
+            const pbws = await this.workspaceDB.trace(ctx).findPrebuiltWorkspaceById(prebuildId);
+            if (!pbws) {
+                return undefined;
+            }
+            await oldPermissionCheck(pbws, result.workspace);
         }
-        await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId!);
-        const result: PrebuildWithStatus = { info, status: pbws.state, workspace };
-        if (pbws.error) {
-            result.error = pbws.error;
-        }
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", result.workspace.projectId!);
+
         return result;
     }
 
@@ -274,8 +263,24 @@ export class PrebuildManager {
             .trace(ctx)
             .findPrebuiltWorkspacesByOrganization(organizationId, pagination, filter, sort);
         const prebuildIds = prebuiltWorkspaces.map((prebuild) => prebuild.id);
-        const infos = await this.workspaceDB.trace({}).findPrebuildInfos(prebuildIds);
-        const prebuildInfosMap = new Map(infos.map((info) => [info.id, info]));
+        const [prebuildInfosMap, prebuildInstancesMap] = await Promise.all([
+            (async () => {
+                const infos = await this.workspaceDB.trace({}).findPrebuildInfos(prebuildIds);
+                return new Map(infos.map((info) => [info.id, info]));
+            })(),
+            (async () => {
+                const prebuildInstancesMap = new Map<string, WorkspaceInstance | undefined>();
+                await Promise.allSettled(
+                    prebuiltWorkspaces.map(async (prebuild) => {
+                        const instance = await this.workspaceDB
+                            .trace({})
+                            .findCurrentInstance(prebuild.buildWorkspaceId);
+                        prebuildInstancesMap.set(prebuild.id, instance);
+                    }),
+                );
+                return prebuildInstancesMap;
+            })(),
+        ]);
 
         return prebuiltWorkspaces
             .map((prebuild) => {
@@ -283,11 +288,13 @@ export class PrebuildManager {
                 if (!info) {
                     return;
                 }
+                const instance = prebuildInstancesMap.get(prebuild.id);
 
                 const fullPrebuild: PrebuildWithStatus = {
                     info,
                     status: prebuild.state,
                     workspace: prebuild.workspace,
+                    instance,
                 };
                 if (prebuild.error) {
                     fullPrebuild.error = prebuild.error;
@@ -643,172 +650,32 @@ export class PrebuildManager {
     public async watchPrebuildLogs(
         userId: string,
         prebuildId: string,
-        taskId: string | undefined,
+        taskId: string,
         onLog: (message: string) => Promise<void>,
-    ) {
-        const { workspaceId, organizationId } = await this.waitUntilPrebuildWorkspaceCreated(userId, prebuildId);
-        if (!workspaceId || !organizationId) {
+    ): Promise<{ taskUrl: string } | undefined> {
+        const prebuild = await this.getPrebuild({}, userId, prebuildId);
+        const organizationId = prebuild?.info.teamId;
+        if (!prebuild || !organizationId) {
             throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "prebuild workspace not found");
         }
         await this.auth.checkPermissionOnOrganization(userId, "read_prebuild", organizationId);
-        const workspaceStatusIt = this.workspaceService.getAndWatchWorkspaceStatus(userId, workspaceId, {
-            signal: ctxSignal(),
-            skipPermissionCheck: true,
-        });
-        let hasImageBuild = false;
-        for await (const itWsInfo of workspaceStatusIt) {
-            switch (itWsInfo.status?.phase?.name) {
-                case WorkspacePhase_Phase.IMAGEBUILD: {
-                    if (!hasImageBuild) {
-                        hasImageBuild = true;
-                        const imageBuildIt = this.workspaceService.getWorkspaceImageBuildLogsIterator(
-                            userId,
-                            itWsInfo.workspaceId,
-                            {
-                                signal: ctxSignal(),
-                            },
-                        );
-                        for await (const message of imageBuildIt) {
-                            await onLog(message);
-                        }
-                    }
-                    break;
-                }
-                case WorkspacePhase_Phase.RUNNING:
-                case WorkspacePhase_Phase.STOPPED: {
-                    const urls = await this.workspaceService.getHeadlessLog(
-                        userId,
-                        itWsInfo.status.instanceId,
-                        async () => {},
-                    );
 
-                    let taskUrl = Object.values(urls.streams)[0];
-                    if (taskId) {
-                        taskUrl = urls.streams[taskId];
-                    }
-                    if (!taskUrl) {
-                        throw new ApplicationError(ErrorCodes.NOT_FOUND, `no logs found for task ${taskId}`);
-                    }
+        const instance = await this.workspaceService.getCurrentInstance(userId, prebuild.workspace.id);
+        const urls = await this.workspaceService.getHeadlessLog(userId, instance.id, async () => {});
 
-                    const info = this.parsePrebuildLogUrl(taskUrl);
-                    if (!info) {
-                        throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "cannot parse prebuild log info");
-                    }
-                    const downloadUrl =
-                        info.type === "stopped"
-                            ? await this.workspaceService.getHeadlessLogDownloadUrl(
-                                  userId,
-                                  info.instanceId,
-                                  info.taskId,
-                              )
-                            : undefined;
-
-                    const it = generateAsyncGenerator<string>(
-                        (sink) => {
-                            try {
-                                if (info.type === "running") {
-                                    this.workspaceService
-                                        .streamWorkspaceLogs(userId, info.instanceId, info.terminalId, async (msg) =>
-                                            sink.push(msg),
-                                        )
-                                        .then(() => {
-                                            sink.stop();
-                                        })
-                                        .catch((err) => {
-                                            console.debug("error streaming running headless logs", err);
-                                            sink.fail(
-                                                new ApplicationError(
-                                                    ErrorCodes.INTERNAL_SERVER_ERROR,
-                                                    "error streaming running headless logs",
-                                                ),
-                                            );
-                                        });
-                                    return () => {};
-                                } else {
-                                    if (!downloadUrl) {
-                                        sink.fail(
-                                            new ApplicationError(
-                                                ErrorCodes.PRECONDITION_FAILED,
-                                                "cannot fetch prebuild log",
-                                            ),
-                                        );
-                                        return;
-                                    }
-                                    const cancel = onDownloadPrebuildLogsUrl(
-                                        downloadUrl,
-                                        (msg: string) => sink.push(msg),
-                                        {
-                                            includeCredentials: false,
-                                            maxBackoffTimes: 3,
-                                            onEnd: () => {
-                                                sink.stop();
-                                            },
-                                        },
-                                    );
-                                    return () => {
-                                        cancel();
-                                    };
-                                }
-                            } catch (e) {
-                                if (e instanceof Error) {
-                                    sink.fail(e);
-                                    return;
-                                } else {
-                                    sink.fail(new Error(String(e) || "unknown"));
-                                }
-                            }
-                        },
-                        { signal: ctxSignal() },
-                    );
-
-                    for await (const message of it) {
-                        await onLog(message);
-                    }
-                    // we don't care the case phase updates from `running` to `stopped` because their logs are the same
-                    // this may cause some logs lost, but better than duplicate?
-                    return;
-                }
-                case WorkspacePhase_Phase.INTERRUPTED: {
-                    return;
-                }
-                default: {
-                    break;
-                }
-            }
+        const taskUrl = urls.streams[taskId];
+        if (!taskUrl) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `no logs found for task ${taskId}`);
         }
-    }
 
-    private async waitUntilPrebuildWorkspaceCreated(userId: string, prebuildId: string) {
-        let workspaceId: string | undefined;
-        let organizationId: string | undefined;
-        const prebuildIt = this.getAndWatchPrebuildStatus(userId, { prebuildId }, { signal: ctxSignal() });
+        if (!urls.online) {
+            // The workspace is no longer running, we want the client to go elsewhere to fetch the logs
+            return {
+                taskUrl,
+            };
+        }
 
-        for await (const pb of prebuildIt) {
-            workspaceId = pb.info.buildWorkspaceId;
-            organizationId = pb.info.teamId;
-            if (workspaceId) {
-                break;
-            }
-            if (pb.status === "aborted" || pb.status === "failed" || pb.status === "timeout") {
-                break;
-            }
-        }
-        await prebuildIt.return();
-        return { workspaceId, organizationId };
-    }
-
-    private parsePrebuildLogUrl(url: string) {
-        // url of stopped prebuild workspaces
-        const downloadRegex = new RegExp(`${HEADLESS_LOG_DOWNLOAD_PATH_PREFIX}\/(?<instanceId>.*?)\/(?<taskId>.*?)$`);
-        if (downloadRegex.test(url)) {
-            const info = downloadRegex.exec(url)!.groups!;
-            return { type: "stopped" as const, instanceId: info.instanceId, taskId: info.taskId };
-        }
-        // url of running prebuild workspaces
-        const runningRegex = new RegExp(`${HEADLESS_LOGS_PATH_PREFIX}\/(?<instanceId>.*?)\/(?<terminalId>.*?)$`);
-        if (runningRegex.test(url)) {
-            const info = runningRegex.exec(url)!.groups!;
-            return { type: "running" as const, instanceId: info.instanceId, terminalId: info.terminalId };
-        }
+        // Technically we could point the client to the stream directly, but can't because of our central authz approach
+        await this.workspaceService.streamWorkspaceLogs(userId, instance.id, { taskId }, onLog);
     }
 }

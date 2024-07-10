@@ -263,7 +263,7 @@ function watchHeadlessLogs(
             }
 
             const streamUrl = logSources.streams[streamIds[0]];
-            console.log("fetching from streamUrl: " + streamUrl);
+            console.debug("fetching from streamUrl: " + streamUrl);
             response = await fetch(streamUrl, {
                 method: "GET",
                 cache: "no-cache",
