@@ -56,9 +56,15 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
         [workspace.id],
     );
 
+    let gridCol =
+        "grid-cols-[minmax(32px,32px),minmax(100px,auto),minmax(100px,300px),minmax(80px,160px),minmax(32px,32px),minmax(32px,32px)]";
+    if (shortVersion) {
+        gridCol = "grid-cols-[minmax(32px,32px),minmax(100px,auto)]";
+    }
+
     return (
-        <Item className="whitespace-nowrap py-6" solid={menuActive}>
-            <ItemFieldIcon>
+        <Item className={`whitespace-nowrap py-6 px-4 gap-3 grid ${gridCol}`} solid={menuActive}>
+            <ItemFieldIcon className="min-w-8">
                 <WorkspaceStatusIndicator status={workspace?.status} />
             </ItemFieldIcon>
             <div className="flex-grow flex flex-col h-full py-auto truncate">
@@ -77,7 +83,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
             </div>
             {!shortVersion && (
                 <>
-                    <div className="w-2/12 sm:w-3/12 xl:w-4/12 flex flex-col xl:items-center px-1 md:px-3">
+                    <div className="flex flex-col justify-between">
                         <div className="text-gray-500 dark:text-gray-400 flex flex-row gap-1 items-center overflow-hidden">
                             <div className="min-w-4">
                                 <GitBranchIcon className="h-4 w-4" />
@@ -89,14 +95,11 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                                 {currentBranch}
                             </Tooltip>
                         </div>
-                        <div className="mr-auto xl:hidden">
-                            <PendingChangesDropdown gitStatus={gitStatus} />
-                        </div>
-                        <div className="hidden xl:flex xl:items-center xl:min-w-46">
+                        <div className="mr-auto">
                             <PendingChangesDropdown gitStatus={gitStatus} />
                         </div>
                     </div>
-                    <div className="px-1 md:px-3 flex items-center min-w-96 w-28 lg:w-44 text-right">
+                    <div className="flex items-center">
                         <Tooltip
                             content={`Last Activate ${dayjs(
                                 info.status!.phase!.lastTransitionTime!.toDate(),
@@ -108,7 +111,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                             </div>
                         </Tooltip>
                     </div>
-                    <div className="px-1 md:px-3 flex items-center">
+                    <div className="min-w-8 flex items-center">
                         <div
                             onClick={togglePinned}
                             className={
