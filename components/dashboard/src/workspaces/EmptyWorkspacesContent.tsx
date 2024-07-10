@@ -12,10 +12,6 @@ import "lite-youtube-embed/src/lite-yt-embed.css";
 import "lite-youtube-embed/src/lite-yt-embed";
 
 declare global {
-    interface Window {
-        onYouTubeIframeAPIReady: () => void;
-        YT: any;
-    }
     namespace JSX {
         interface IntrinsicElements {
             "lite-youtube": any;

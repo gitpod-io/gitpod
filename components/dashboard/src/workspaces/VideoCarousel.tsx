@@ -4,8 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { trackVideoClick } from "../Analytics";
+
+import "lite-youtube-embed/src/lite-yt-embed.css";
+import "lite-youtube-embed/src/lite-yt-embed";
 
 interface Video {
     id: string;
@@ -21,56 +24,22 @@ const videos: Video[] = [
 ];
 
 declare global {
-    interface Window {
-        onYouTubeIframeAPIReady: () => void;
-        YT: any;
+    namespace JSX {
+        interface IntrinsicElements {
+            "lite-youtube": any;
+        }
     }
 }
 
 export const VideoCarousel: React.FC = () => {
     const [currentVideo, setCurrentVideo] = useState(0);
-    const playerRefs = useRef<any[]>([]);
-
-    useEffect(() => {
-        // Load the YouTube IFrame Player API code asynchronously
-        const tag = document.createElement("script");
-        tag.src = "https://www.youtube.com/iframe_api";
-        const firstScriptTag = document.getElementsByTagName("script")[0];
-        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-
-        // Create YouTube players when API is ready
-        window.onYouTubeIframeAPIReady = () => {
-            videos.forEach((video, index) => {
-                playerRefs.current[index] = new window.YT.Player(`gitpod-video-${index}`, {
-                    videoId: video.id,
-                    events: {
-                        onReady: (event: any) => {
-                            // Player is ready
-                            if (index !== currentVideo) {
-                                event.target.stopVideo();
-                            }
-                        },
-                        onStateChange: (event: any) => onPlayerStateChange(event, index),
-                    },
-                });
-            });
-        };
-    }, [currentVideo]);
-
-    const onPlayerStateChange = (event: any, videoIndex: number) => {
-        if (event.data === window.YT.PlayerState.PLAYING) {
-            trackVideoClick(videos[videoIndex].analyticsLabel);
-        }
-    };
 
     const handleDotClick = (index: number) => {
-        const currentPlayer = playerRefs.current[currentVideo];
-
-        if (currentPlayer && currentPlayer.pauseVideo) {
-            currentPlayer.pauseVideo();
-        }
-
         setCurrentVideo(index);
+    };
+
+    const onPlayerStateChange = (index: number) => {
+        trackVideoClick(videos[index].analyticsLabel);
     };
 
     return (
@@ -78,17 +47,16 @@ export const VideoCarousel: React.FC = () => {
             <div className="video-container">
                 {videos.map((video, index) => (
                     <div key={video.id} style={{ display: index === currentVideo ? "block" : "none" }}>
-                        <iframe
-                            id={`gitpod-video-${index}`}
-                            aspect-ratio="16 / 9"
-                            height="180px"
-                            width="320px"
-                            src={`https://www.youtube.com/embed/${video.id}?enablejsapi=1&modestbranding=1&rel=0&controls=1&showinfo=0&fs=1&color=white&disablekb=1&iv_load_policy=3`}
-                            title={video.title}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            className="rounded-lg"
-                        ></iframe>
+                        <lite-youtube
+                            videoid={video.id}
+                            style={{
+                                width: "320px",
+                                height: "180px",
+                            }}
+                            class="rounded-lg"
+                            playlabel={video.title}
+                            onClick={() => onPlayerStateChange(index)}
+                        ></lite-youtube>
                     </div>
                 ))}
             </div>
@@ -101,9 +69,7 @@ export const VideoCarousel: React.FC = () => {
                                 ? "bg-kumquat-dark"
                                 : "bg-gray-300 dark:bg-gray-600 hover:bg-kumquat-light dark:hover:bg-kumquat-light"
                         }`}
-                        onClick={() => {
-                            handleDotClick(index);
-                        }}
+                        onClick={() => handleDotClick(index)}
                         aria-label={`Go to video ${index + 1}`}
                     ></button>
                 ))}
