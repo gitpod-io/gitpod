@@ -15,6 +15,7 @@ import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
 import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { GitBranchIcon, PinIcon } from "lucide-react";
 import { useUpdateWorkspaceMutation } from "../data/workspaces/update-workspace-mutation";
+import { fromWorkspaceName } from "./RenameWorkspaceModal";
 
 type Props = {
     info: Workspace;
@@ -56,17 +57,25 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
         [workspace.id],
     );
 
+    let gridCol =
+        "grid-cols-[minmax(32px,32px),minmax(100px,auto),minmax(100px,300px),minmax(80px,160px),minmax(32px,32px),minmax(32px,32px)]";
+    if (shortVersion) {
+        gridCol = "grid-cols-[minmax(32px,32px),minmax(100px,auto)]";
+    }
+
     return (
-        <Item className="whitespace-nowrap py-6" solid={menuActive}>
-            <ItemFieldIcon>
+        <Item className={`whitespace-nowrap py-6 px-4 gap-3 grid ${gridCol}`} solid={menuActive}>
+            <ItemFieldIcon className="min-w-8">
                 <WorkspaceStatusIndicator status={workspace?.status} />
             </ItemFieldIcon>
             <div className="flex-grow flex flex-col h-full py-auto truncate">
-                <a href={startUrl}>
-                    <div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">
-                        {info.id}
-                    </div>
-                </a>
+                <Tooltip content={info.id} allowWrap={true}>
+                    <a href={startUrl}>
+                        <div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">
+                            {fromWorkspaceName(info) || info.id}
+                        </div>
+                    </a>
+                </Tooltip>
                 <Tooltip content={project ? "https://" + project : ""} allowWrap={true}>
                     <a href={project ? "https://" + project : undefined}>
                         <div className="text-sm overflow-ellipsis truncate text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">
@@ -77,7 +86,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
             </div>
             {!shortVersion && (
                 <>
-                    <div className="w-2/12 sm:w-3/12  xl:w-4/12 flex flex-col xl:flex-row xl:items-center xl:gap-6 justify-between px-1 md:px-3">
+                    <div className="flex flex-col justify-between">
                         <div className="text-gray-500 dark:text-gray-400 flex flex-row gap-1 items-center overflow-hidden">
                             <div className="min-w-4">
                                 <GitBranchIcon className="h-4 w-4" />
@@ -86,14 +95,11 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                                 {currentBranch}
                             </Tooltip>
                         </div>
-                        <div className="mr-auto xl:hidden">
+                        <div className="mr-auto">
                             <PendingChangesDropdown gitStatus={gitStatus} />
                         </div>
                     </div>
-                    <div className="hidden xl:flex xl:items-center xl:min-w-46">
-                        <PendingChangesDropdown gitStatus={gitStatus} />
-                    </div>
-                    <div className="px-1 md:px-3 flex items-center min-w-96 w-28 lg:w-44 text-right">
+                    <div className="flex items-center">
                         <Tooltip
                             content={`Last Activate ${dayjs(
                                 info.status!.phase!.lastTransitionTime!.toDate(),
@@ -105,7 +111,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                             </div>
                         </Tooltip>
                     </div>
-                    <div className="px-1 md:px-3 flex items-center">
+                    <div className="min-w-8 flex items-center">
                         <div
                             onClick={togglePinned}
                             className={
