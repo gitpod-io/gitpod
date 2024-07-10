@@ -222,7 +222,7 @@ export const PrebuildDetailPage: FC = () => {
                     </div>
                 ) : (
                     prebuild && (
-                        <div className={"border border-pk-border-base rounded-xl py-6 divide-y"}>
+                        <div className={"border border-pk-border-base rounded-xl pt-6 pb-3 divide-y"}>
                             <div className="px-6 pb-4">
                                 <div className="flex flex-col gap-2">
                                     <div className="flex justify-between">
@@ -320,7 +320,7 @@ export const PrebuildDetailPage: FC = () => {
                                     )}
                                 </Tabs>
                             </div>
-                            <div className="px-6 pt-6 flex justify-between border-pk-border-base">
+                            <div className="px-6 pt-6 pb-3 flex justify-between border-pk-border-base overflow-y-hidden gap-4">
                                 {[PrebuildPhase_Phase.BUILDING, PrebuildPhase_Phase.QUEUED].includes(
                                     prebuild?.status?.phase?.name ?? PrebuildPhase_Phase.UNSPECIFIED,
                                 ) ? (
@@ -341,7 +341,7 @@ export const PrebuildDetailPage: FC = () => {
                                         onClick={() => triggerPrebuild()}
                                     >{`Rerun Prebuild (${prebuild.ref})`}</LoadingButton>
                                 )}
-                                <div className="space-x-6 flex justify-right">
+                                <div className="gap-4 flex justify-right">
                                     <LinkButton
                                         disabled={!prebuild?.id}
                                         href={repositoriesRoutes.PrebuildsSettings(prebuild.configurationId)}
@@ -349,16 +349,15 @@ export const PrebuildDetailPage: FC = () => {
                                     >
                                         View Prebuild Settings
                                     </LinkButton>
-                                    <LoadingButton
-                                        loading={false}
+                                    <Button
                                         disabled={prebuild?.status?.phase?.name !== PrebuildPhase_Phase.AVAILABLE}
                                         onClick={() =>
                                             (window.location.href = `/#open-prebuild/${prebuild?.id}/${prebuild?.contextUrl}`)
                                         }
-                                        variant="default"
+                                        variant="secondary"
                                     >
                                         Open Debug Workspace
-                                    </LoadingButton>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
