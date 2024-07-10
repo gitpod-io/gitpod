@@ -26,15 +26,13 @@ type LogEventTypes = {
  */
 export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId: string) {
     const emitter = useMemo(
-        () => {
-            return new ReplayableEventEmitter<LogEventTypes>();
-        },
+        () => new ReplayableEventEmitter<LogEventTypes>(),
         // We would like to re-create the emitter when the prebuildId or taskId changes, so that logs of old tasks / prebuilds are not mixed with the new ones.
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [prebuild.id, taskId],
     );
 
-    const shouldFetchLogs = useMemo(() => {
+    const shouldFetchLogs = useMemo<boolean>(() => {
         const phase = prebuild.status?.phase?.name;
         if (phase === PrebuildPhase_Phase.QUEUED && taskId === "image-build") {
             return true;
@@ -52,6 +50,8 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
             case PrebuildPhase_Phase.TIMEOUT:
                 return true;
         }
+
+        return false;
     }, [prebuild.status?.phase?.name, taskId]);
 
     useEffect(() => {

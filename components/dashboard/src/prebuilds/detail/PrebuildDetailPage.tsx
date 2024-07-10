@@ -228,7 +228,7 @@ export const PrebuildDetailPage: FC = () => {
                                     <div className="flex justify-between">
                                         <div className="space-y-2 font-semibold text-pk-content-primary truncate">
                                             {prebuild.commit?.message}{" "}
-                                            {prebuild.commit?.sha ? (
+                                            {prebuild.commit?.sha && (
                                                 <span>
                                                     <Tooltip content={prebuild.commit.sha}>
                                                         (
@@ -238,8 +238,6 @@ export const PrebuildDetailPage: FC = () => {
                                                         )
                                                     </Tooltip>
                                                 </span>
-                                            ) : (
-                                                ""
                                             )}
                                             <div className="flex gap-1 items-center">
                                                 <img
