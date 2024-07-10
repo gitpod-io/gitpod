@@ -35,6 +35,7 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { PartialMessage } from "@bufbuild/protobuf";
 import { trackEvent } from "../Analytics";
+import { fromWorkspaceName } from "../workspaces/RenameWorkspaceModal";
 
 const sessionId = v4();
 
@@ -562,7 +563,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 <div className="rounded-full w-3 h-3 text-sm bg-green-500">&nbsp;</div>
                                 <div>
                                     <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
-                                        {this.state.workspace.id}
+                                        {fromWorkspaceName(this.state.workspace) || this.state.workspace.id}
                                     </p>
                                     <a target="_parent" href={contextURL}>
                                         <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
@@ -667,7 +668,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                             <div className="rounded-full w-3 h-3 text-sm bg-kumquat-ripe">&nbsp;</div>
                             <div>
                                 <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
-                                    {this.state.workspace.id}
+                                    {fromWorkspaceName(this.state.workspace) || this.state.workspace.id}
                                 </p>
                                 <a target="_parent" href={contextURL}>
                                     <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
@@ -712,7 +713,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
                             <div>
                                 <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
-                                    {this.state.workspace.id}
+                                    {fromWorkspaceName(this.state.workspace) || this.state.workspace.id}
                                 </p>
                                 <a target="_parent" href={contextURL}>
                                     <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
