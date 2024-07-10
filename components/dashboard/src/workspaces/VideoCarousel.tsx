@@ -14,10 +14,10 @@ interface Video {
 }
 
 const videos: Video[] = [
-    { id: "1ZBN-b2cIB8", title: "Video 1 Title", analyticsLabel: "intro-to-gitpod" },
-    { id: "ij1msCffQZA", title: "Video 2 Title", analyticsLabel: "gitpod-features" },
-    { id: "1ZBN-b2cIf8", title: "Video 3 Title", analyticsLabel: "gitpod-workflow" },
-    { id: "ij1msCffQCA", title: "Video 4 Title", analyticsLabel: "gitpod-integrations" },
+    { id: "1ZBN-b2cIB8", title: "Gitpod in 120 seconds", analyticsLabel: "gitpod-demo" },
+    { id: "zhZNnzFlZnY", title: "Getting started with Gitpod", analyticsLabel: "getting-started-with-gitpod" },
+    { id: "kuoHM2bpBqY", title: "Fully automate your dev setup", analyticsLabel: "automate-gitpod-setup" },
+    { id: "_CwFzCbAsoU", title: "Personalise your workspace", analyticsLabel: "personalise-gitpod-workspace" },
 ];
 
 declare global {
