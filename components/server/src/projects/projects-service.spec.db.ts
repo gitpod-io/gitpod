@@ -274,6 +274,7 @@ describe("ProjectsService", async () => {
                 workspaceClass: "ultra",
                 branchStrategy: "matched-branches",
                 branchMatchingPattern: "feature-*",
+                activationStrategy: "activity-based",
             },
             workspaceClasses: {},
         });
