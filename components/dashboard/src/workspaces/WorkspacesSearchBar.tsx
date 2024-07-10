@@ -25,7 +25,7 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
     onLimitUpdated,
 }) => {
     return (
-        <div className="app-container py-2 flex">
+        <div className="app-container xl:!pr-2 py-2 flex">
             <div className="flex relative h-10 my-auto">
                 <img src={search} title="Search" className="filter-grayscale absolute top-3 left-3" alt="search icon" />
                 <input

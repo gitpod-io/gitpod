@@ -188,7 +188,7 @@ export const trackButtonOrAnchor = (target: HTMLAnchorElement | HTMLButtonElemen
 
     let trackingMsg: TrackDashboardClick = {
         path: window.location.pathname,
-        label: target.textContent || undefined,
+        label: target.textContent || target.ariaLabel || undefined,
     };
 
     if (target instanceof HTMLButtonElement || target instanceof HTMLDivElement) {

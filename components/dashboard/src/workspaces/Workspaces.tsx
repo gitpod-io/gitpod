@@ -18,6 +18,7 @@ import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-i
 import { useToast } from "../components/toasts/Toasts";
 import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { Button } from "@podkit/buttons/Button";
+import { VideoCarousel } from "./VideoCarousel";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -98,75 +99,82 @@ const WorkspacesPage: FunctionComponent = () => {
             {!isLoading &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || searchTerm ? (
                     <>
-                        <WorkspacesSearchBar
-                            limit={limit}
-                            searchTerm={searchTerm}
-                            onLimitUpdated={setLimit}
-                            onSearchTermUpdated={setSearchTerm}
-                        />
-                        <ItemsList className="app-container pb-40">
-                            <div className="border-t border-gray-200 dark:border-gray-800"></div>
-                            {filteredActiveWorkspaces.map((info) => {
-                                return <WorkspaceEntry key={info.id} info={info} />;
-                            })}
-                            {filteredActiveWorkspaces.length > 0 && <div className="py-6"></div>}
-                            {filteredInactiveWorkspaces.length > 0 && (
-                                <div>
-                                    <div
-                                        onClick={() => setShowInactive(!showInactive)}
-                                        className="flex cursor-pointer py-6 px-6 flex-row text-gray-400 bg-gray-50  hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl mb-2"
-                                    >
-                                        <div className="pr-2">
-                                            <Arrow direction={showInactive ? "down" : "right"} />
-                                        </div>
-                                        <div className="flex flex-grow flex-col ">
-                                            <div className="font-medium text-gray-500 dark:text-gray-200 truncate">
-                                                <span>Inactive Workspaces&nbsp;</span>
-                                                <span className="text-gray-400 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 rounded-xl px-2 py-0.5 text-xs">
-                                                    {filteredInactiveWorkspaces.length}
-                                                </span>
+                        <div className="!px-0 app-container flex flex-row">
+                            <div className="xl:max-w-[820px] 2xl:max-w-5xl">
+                                <WorkspacesSearchBar
+                                    limit={limit}
+                                    searchTerm={searchTerm}
+                                    onLimitUpdated={setLimit}
+                                    onSearchTermUpdated={setSearchTerm}
+                                />
+                                <ItemsList className="app-container xl:!pr-2 pb-40">
+                                    <div className="border-t border-gray-200 dark:border-gray-800"></div>
+                                    {filteredActiveWorkspaces.map((info) => {
+                                        return <WorkspaceEntry key={info.id} info={info} />;
+                                    })}
+                                    {filteredActiveWorkspaces.length > 0 && <div className="py-6"></div>}
+                                    {filteredInactiveWorkspaces.length > 0 && (
+                                        <div>
+                                            <div
+                                                onClick={() => setShowInactive(!showInactive)}
+                                                className="flex cursor-pointer py-6 px-6 flex-row text-gray-400 bg-gray-50  hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl mb-2"
+                                            >
+                                                <div className="pr-2">
+                                                    <Arrow direction={showInactive ? "down" : "right"} />
+                                                </div>
+                                                <div className="flex flex-grow flex-col ">
+                                                    <div className="font-medium text-gray-500 dark:text-gray-200 truncate">
+                                                        <span>Inactive Workspaces&nbsp;</span>
+                                                        <span className="text-gray-400 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 rounded-xl px-2 py-0.5 text-xs">
+                                                            {filteredInactiveWorkspaces.length}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-sm flex-auto">
+                                                        Workspaces that have been stopped for more than 24 hours.
+                                                        Inactive workspaces are automatically deleted after 14 days.{" "}
+                                                        <a
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="gp-link"
+                                                            href="https://www.gitpod.io/docs/configure/workspaces/workspace-lifecycle#workspace-deletion"
+                                                            onClick={(evt) => evt.stopPropagation()}
+                                                        >
+                                                            Learn more
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div className="self-center">
+                                                    {showInactive ? (
+                                                        <Button
+                                                            variant="ghost"
+                                                            // TODO: Remove these classes once we decide on the new button style
+                                                            // Leaving these to emulate the old button's danger.secondary style until we decide if we want that style or not
+                                                            className="bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200 text-red-600 hover:text-red-700 hover:opacity-100"
+                                                            onClick={(evt) => {
+                                                                setDeleteModalVisible(true);
+                                                                evt.stopPropagation();
+                                                            }}
+                                                        >
+                                                            Delete Inactive Workspaces
+                                                        </Button>
+                                                    ) : null}
+                                                </div>
                                             </div>
-                                            <div className="text-sm flex-auto">
-                                                Workspaces that have been stopped for more than 24 hours. Inactive
-                                                workspaces are automatically deleted after 14 days.{" "}
-                                                <a
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="gp-link"
-                                                    href="https://www.gitpod.io/docs/configure/workspaces/workspace-lifecycle#workspace-deletion"
-                                                    onClick={(evt) => evt.stopPropagation()}
-                                                >
-                                                    Learn more
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div className="self-center">
                                             {showInactive ? (
-                                                <Button
-                                                    variant="ghost"
-                                                    // TODO: Remove these classes once we decide on the new button style
-                                                    // Leaving these to emulate the old button's danger.secondary style until we decide if we want that style or not
-                                                    className="bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200 text-red-600 hover:text-red-700 hover:opacity-100"
-                                                    onClick={(evt) => {
-                                                        setDeleteModalVisible(true);
-                                                        evt.stopPropagation();
-                                                    }}
-                                                >
-                                                    Delete Inactive Workspaces
-                                                </Button>
+                                                <>
+                                                    {filteredInactiveWorkspaces.map((info) => {
+                                                        return <WorkspaceEntry key={info.id} info={info} />;
+                                                    })}
+                                                </>
                                             ) : null}
                                         </div>
-                                    </div>
-                                    {showInactive ? (
-                                        <>
-                                            {filteredInactiveWorkspaces.map((info) => {
-                                                return <WorkspaceEntry key={info.id} info={info} />;
-                                            })}
-                                        </>
-                                    ) : null}
-                                </div>
-                            )}
-                        </ItemsList>
+                                    )}
+                                </ItemsList>
+                            </div>
+                            <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 px-6 py-5">
+                                <VideoCarousel />
+                            </div>
+                        </div>
                     </>
                 ) : (
                     <EmptyWorkspacesContent />

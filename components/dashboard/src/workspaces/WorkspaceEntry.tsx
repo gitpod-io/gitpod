@@ -77,21 +77,24 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
             </div>
             {!shortVersion && (
                 <>
-                    <div className="w-2/12 sm:w-3/12  xl:w-4/12 flex flex-col xl:flex-row xl:items-center xl:gap-6 justify-between px-1 md:px-3">
+                    <div className="w-2/12 sm:w-3/12 xl:w-4/12 flex flex-col xl:items-center px-1 md:px-3">
                         <div className="text-gray-500 dark:text-gray-400 flex flex-row gap-1 items-center overflow-hidden">
                             <div className="min-w-4">
                                 <GitBranchIcon className="h-4 w-4" />
                             </div>
-                            <Tooltip content={currentBranch} className="truncate overflow-ellipsis">
+                            <Tooltip
+                                content={currentBranch}
+                                className="truncate overflow-ellipsis max-w-[120px] w-auto"
+                            >
                                 {currentBranch}
                             </Tooltip>
                         </div>
                         <div className="mr-auto xl:hidden">
                             <PendingChangesDropdown gitStatus={gitStatus} />
                         </div>
-                    </div>
-                    <div className="hidden xl:flex xl:items-center xl:min-w-46">
-                        <PendingChangesDropdown gitStatus={gitStatus} />
+                        <div className="hidden xl:flex xl:items-center xl:min-w-46">
+                            <PendingChangesDropdown gitStatus={gitStatus} />
+                        </div>
                     </div>
                     <div className="px-1 md:px-3 flex items-center min-w-96 w-28 lg:w-44 text-right">
                         <Tooltip
