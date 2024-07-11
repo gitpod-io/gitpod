@@ -16,6 +16,8 @@ import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { GitBranchIcon, PinIcon } from "lucide-react";
 import { useUpdateWorkspaceMutation } from "../data/workspaces/update-workspace-mutation";
 import { fromWorkspaceName } from "./RenameWorkspaceModal";
+import { Button } from "@podkit/buttons/Button";
+import { cn } from "@podkit/lib/cn";
 
 type Props = {
     info: Workspace;
@@ -112,23 +114,24 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                         </Tooltip>
                     </div>
                     <div className="min-w-8 flex items-center">
-                        <div
-                            onClick={togglePinned}
-                            className={
-                                "group px-2 flex items-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer h-8 w-8"
-                            }
-                        >
-                            <Tooltip content={workspace.metadata?.pinned ? "Unpin" : "Pin"}>
+                        <Tooltip content={workspace.metadata?.pinned ? "Unpin" : "Pin"}>
+                            <Button
+                                onClick={togglePinned}
+                                variant={"ghost"}
+                                className={
+                                    "group px-2 flex items-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md w-8 h-8"
+                                }
+                            >
                                 <PinIcon
-                                    className={
-                                        "w-4 h-4 self-center " +
-                                        (workspace.metadata?.pinned
+                                    className={cn(
+                                        "w-4 h-4 self-center",
+                                        workspace.metadata?.pinned
                                             ? "text-gray-600 dark:text-gray-300"
-                                            : "text-gray-300 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-300")
-                                    }
+                                            : "text-gray-300 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-300",
+                                    )}
                                 />
-                            </Tooltip>
-                        </div>
+                            </Button>
+                        </Tooltip>
                     </div>
                     <WorkspaceEntryOverflowMenu changeMenuState={changeMenuState} info={info} />
                 </>
