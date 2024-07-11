@@ -86,7 +86,10 @@ const WorkspacesPage: FunctionComponent = () => {
 
     return (
         <>
-            <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
+            <Header
+                title="Workspaces"
+                subtitle="Manage, start and stop your personal development environments in the cloud."
+            />
 
             {deleteModalVisible && (
                 <ConfirmationModal
@@ -174,7 +177,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                     )}
                                 </ItemsList>
                             </div>
-                            <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 px-6 pt-5 pb-6 space-y-5">
+                            <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 px-6 pt-5 pb-4 space-y-5">
                                 <VideoCarousel />
                                 <div className="flex flex-col gap-3">
                                     <h3 className="text-lg font-semibold text-pk-content-primary">Documentation</h3>

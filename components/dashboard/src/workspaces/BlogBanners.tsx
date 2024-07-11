@@ -36,7 +36,7 @@ export const BlogBanners: React.FC = () => {
     const [currentBannerIndex, setCurrentBannerIndex] = useState(initialBannerIndex);
 
     useEffect(() => {
-        const storedBannerData = localStorage.getItem("bannerData");
+        const storedBannerData = localStorage.getItem("blog-banner-data");
         const currentTime = new Date().getTime();
 
         if (storedBannerData) {
@@ -46,14 +46,17 @@ export const BlogBanners: React.FC = () => {
                 // 2 days in milliseconds
                 const nextIndex = getRandomBannerIndex(lastIndex);
                 setCurrentBannerIndex(nextIndex);
-                localStorage.setItem("bannerData", JSON.stringify({ lastIndex: nextIndex, lastTime: currentTime }));
+                localStorage.setItem(
+                    "blog-banner-data",
+                    JSON.stringify({ lastIndex: nextIndex, lastTime: currentTime }),
+                );
             } else {
                 setCurrentBannerIndex(lastIndex);
             }
         } else {
             setCurrentBannerIndex(initialBannerIndex);
             localStorage.setItem(
-                "bannerData",
+                "blog-banner-data",
                 JSON.stringify({ lastIndex: initialBannerIndex, lastTime: currentTime }),
             );
         }
@@ -73,14 +76,19 @@ export const BlogBanners: React.FC = () => {
                 href={banners[currentBannerIndex].link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white rounded-lg overflow-hidden flex flex-col gap-2 text-decoration-none text-inherit max-w-[320px] border border-base pb-8"
+                className="bg-white rounded-lg overflow-hidden flex flex-col gap-2 text-decoration-none text-inherit max-w-[320px] border border-base"
+                style={{
+                    backgroundPosition: "top left",
+                    backgroundRepeat: "no-repeat",
+                    backgroundImage: `url(${blogBannerBg})`,
+                    backgroundSize: "contain",
+                }}
             >
-                <img className="overflow-hidden" src={blogBannerBg} alt="Blog banner background" />
-                <div className="flex flex-col gap-8 absolute mt-6 ml-4 max-w-[320px] overflow-wrap">
+                <div className="flex flex-col gap-8 mt-6 ml-4 max-w-[320px] overflow-wrap min-h-fit pb-4">
                     <div className="bg-pk-surface-invert w-fit text-pk-content-invert-primary text-sm leading-[18px] font-bold inline-block rounded-2xl py-1 px-4">
                         {banners[currentBannerIndex].type}
                     </div>
-                    <div className="text-lg font-semibold text-pk-content-primary max-w-[300px]">
+                    <div className="text-lg font-semibold text-pk-content-primary max-w-[296px]">
                         {banners[currentBannerIndex].title}
                     </div>
                 </div>
