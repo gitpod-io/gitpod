@@ -106,7 +106,7 @@ const WorkspacesPage: FunctionComponent = () => {
             {!isLoading &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || searchTerm ? (
                     <>
-                        <div className={isGitpodIo() ? "!pl-0 app-container flex flex-row w-full" : "app-container"}>
+                        <div className={isGitpodIo() ? "!pl-0 app-container flex flex-1 flex-row" : "app-container"}>
                             <div>
                                 <WorkspacesSearchBar
                                     limit={limit}
