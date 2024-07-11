@@ -722,7 +722,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 </a>
                             </div>
                         </div>
-                        <PendingChangesDropdown gitStatus={this.state.workspace.status.gitStatus} />
+                        <PendingChangesDropdown
+                            gitStatus={this.state.workspace.status.gitStatus}
+                            className="justify-center"
+                        />
                         <div className="mt-10 justify-center flex space-x-2">
                             <a target="_parent" href={gitpodHostUrl.asWorkspacePage().toString()}>
                                 <Button variant="secondary">Go to Dashboard</Button>
