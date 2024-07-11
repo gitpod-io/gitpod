@@ -93,7 +93,10 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                             <div className="min-w-4">
                                 <GitBranchIcon className="h-4 w-4" />
                             </div>
-                            <Tooltip content={currentBranch} className="truncate overflow-ellipsis">
+                            <Tooltip
+                                content={currentBranch}
+                                className="truncate overflow-ellipsis max-w-[120px] w-auto"
+                            >
                                 {currentBranch}
                             </Tooltip>
                         </div>

@@ -9,6 +9,7 @@ import { StartWorkspaceModalKeyBinding } from "../App";
 import DropDown from "../components/DropDown";
 import search from "../icons/search.svg";
 import { LinkButton } from "@podkit/buttons/LinkButton";
+import { isGitpodIo } from "../utils";
 
 type WorkspacesSearchBarProps = {
     searchTerm: string;
@@ -24,7 +25,7 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
     onLimitUpdated,
 }) => {
     return (
-        <div className="app-container py-2 flex">
+        <div className={isGitpodIo() ? "app-container xl:!pr-4 py-5 flex" : "py-5 flex"}>
             <div className="flex relative h-10 my-auto">
                 <img src={search} title="Search" className="filter-grayscale absolute top-3 left-3" alt="search icon" />
                 <input

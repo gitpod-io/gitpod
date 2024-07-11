@@ -13,7 +13,7 @@ type PageHeadingProps = {
 };
 export const PageHeading: FC<PageHeadingProps> = ({ title, subtitle }) => {
     return (
-        <div className="flex flex-row flex-wrap justify-between py-8 gap-2">
+        <div className="flex flex-row flex-wrap justify-between py-5 gap-2">
             <div>
                 <Heading1>{title}</Heading1>
                 {subtitle && <Subheading>{subtitle}</Subheading>}
