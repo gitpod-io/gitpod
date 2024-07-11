@@ -88,7 +88,7 @@ export const BlogBanners: React.FC = () => {
                     <div className="bg-pk-surface-invert w-fit text-pk-content-invert-primary text-sm leading-[18px] font-bold rounded-2xl py-1 px-4">
                         {banners[currentBannerIndex].type}
                     </div>
-                    <div className="text-base font-semibold text-pk-content-primary max-w-[296px]">
+                    <div className="text-base font-semibold text-pk-content-primary max-w-[285px]">
                         {banners[currentBannerIndex].title}
                     </div>
                 </div>
