@@ -7,6 +7,7 @@
 import { PrebuiltWorkspaceState, Workspace, WorkspaceClasses } from "./protocol";
 import { v4 as uuidv4 } from "uuid";
 import { DeepPartial } from "./util/deep-partial";
+import { WorkspaceInstance } from "./workspace-instance";
 
 export interface ProjectConfig {
     ".gitpod.yml": string;
@@ -149,6 +150,7 @@ export interface PrebuildWithStatus {
     info: PrebuildInfo;
     status: PrebuiltWorkspaceState;
     workspace: Workspace;
+    instance?: WorkspaceInstance;
     error?: string;
 }
 

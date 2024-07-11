@@ -29,6 +29,7 @@ import { Tabs, TabsList, TabsTrigger } from "@podkit/tabs/Tabs";
 import { PrebuildTaskTab } from "./PrebuildTaskTab";
 import type { PlainMessage } from "@bufbuild/protobuf";
 import { PrebuildTaskErrorTab } from "./PrebuildTaskErrorTab";
+import Tooltip from "../../components/Tooltip";
 
 /**
  * Formats a date. For today, it returns the time. For this year, it returns the month and day and time. Otherwise, it returns the full date and time.
@@ -45,7 +46,6 @@ const formatDate = (date: dayjs.Dayjs): string => {
     return date.format("MMM D, YYYY [at] h:mm A");
 };
 
-export const PersistedToastID = "prebuild-logs-error";
 interface Props {
     prebuildId: string;
 }
@@ -54,13 +54,21 @@ export const PrebuildDetailPage: FC = () => {
 
     const { data: initialPrebuild, isLoading: isInfoLoading, error, refetch } = usePrebuildQuery(prebuildId);
     const [currentPrebuild, setCurrentPrebuild] = useState<Prebuild | undefined>();
-    const prebuild = currentPrebuild ?? initialPrebuild;
+
+    let prebuild = initialPrebuild;
+    if (currentPrebuild && prebuildId === currentPrebuild.id) {
+        // Make sure we update only if it's the same prebuild
+        prebuild = currentPrebuild;
+    }
 
     const history = useHistory();
-    const { toast, dismissToast } = useToast();
-    const [selectedTaskId, actuallySetSelectedTaskId] = useState<string | undefined>(
-        window.location.hash.slice(1) || undefined,
-    );
+    const { toast } = useToast();
+    const [selectedTaskId, actuallySetSelectedTaskId] = useState<string | undefined>();
+
+    const hashTaskId = window.location.hash.slice(1);
+    useEffect(() => {
+        actuallySetSelectedTaskId(hashTaskId || undefined);
+    }, [hashTaskId]);
 
     const isImageBuild =
         prebuild?.status?.phase?.name === PrebuildPhase_Phase.QUEUED && !!prebuild.status.imageBuildLogUrl;
@@ -87,6 +95,31 @@ export const PrebuildDetailPage: FC = () => {
 
     const triggeredDate = useMemo(() => dayjs(prebuild?.status?.startTime?.toDate()), [prebuild?.status?.startTime]);
     const triggeredString = useMemo(() => formatDate(triggeredDate), [triggeredDate]);
+    const stopDate = useMemo(() => {
+        if (!prebuild?.status?.stopTime) {
+            return undefined;
+        }
+        return dayjs(prebuild.status.stopTime.toDate());
+    }, [prebuild?.status?.stopTime]);
+    const stopString = useMemo(() => (stopDate ? formatDate(stopDate) : undefined), [stopDate]);
+    const durationString = useMemo(() => {
+        if (!prebuild?.status?.startTime || !prebuild?.status?.stopTime) {
+            return undefined;
+        }
+        const duration = dayjs.duration(
+            prebuild.status.stopTime.toDate().getTime() - prebuild.status.startTime.toDate().getTime(),
+            "milliseconds",
+        );
+
+        if (duration.asMinutes() < 1) {
+            return duration.format("s[s]");
+        }
+        if (duration.asHours() < 1) {
+            return duration.format("m[m] s[s]");
+        }
+
+        return duration.format("h[h] m[m] s[s]");
+    }, [prebuild?.status?.startTime, prebuild?.status?.stopTime]);
 
     const setSelectedTaskId = useCallback(
         (taskId: string) => {
@@ -124,13 +157,6 @@ export const PrebuildDetailPage: FC = () => {
 
         return validTasks;
     }, [isImageBuild, prebuild?.status?.imageBuildLogUrl, prebuild?.status?.taskLogs]);
-
-    useEffect(() => {
-        history.listen(() => {
-            dismissToast(PersistedToastID);
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const notFoundError = error instanceof ApplicationError && error.code === ErrorCodes.NOT_FOUND;
 
@@ -200,30 +226,59 @@ export const PrebuildDetailPage: FC = () => {
                             <div className="px-6 pb-4">
                                 <div className="flex flex-col gap-2">
                                     <div className="flex justify-between">
-                                        <div className="font-semibold text-pk-content-primary truncate">
-                                            {prebuild.commit?.message}
-                                        </div>
-                                        {triggeredString && (
-                                            <div className="text-pk-content-secondary flex-none">
-                                                Triggered{" "}
-                                                <time
-                                                    dateTime={triggeredDate.toISOString()}
-                                                    title={triggeredDate.toString()}
-                                                >
-                                                    {triggeredString}
-                                                </time>
+                                        <div className="space-y-2 font-semibold text-pk-content-primary truncate">
+                                            {prebuild.commit?.message}{" "}
+                                            {prebuild.commit?.sha && (
+                                                <span>
+                                                    <Tooltip content={prebuild.commit.sha}>
+                                                        (
+                                                        <span className="font-mono">
+                                                            {prebuild.commit.sha.slice(0, 7)}
+                                                        </span>
+                                                        )
+                                                    </Tooltip>
+                                                </span>
+                                            )}
+                                            <div className="flex gap-1 items-center">
+                                                <img
+                                                    className="w-5 h-5 rounded-full"
+                                                    src={prebuild.commit?.author?.avatarUrl}
+                                                    alt=""
+                                                />
+                                                <span className="text-pk-content-secondary">
+                                                    {prebuild.commit?.author?.name}
+                                                </span>
                                             </div>
-                                        )}
-                                    </div>
-                                    <div className="flex gap-1 items-center">
-                                        <img
-                                            className="w-5 h-5 rounded-full"
-                                            src={prebuild.commit?.author?.avatarUrl}
-                                            alt=""
-                                        />
-                                        <span className="text-pk-content-secondary">
-                                            {prebuild.commit?.author?.name}
-                                        </span>
+                                        </div>
+                                        <div className="text-pk-content-secondary flex-none">
+                                            {triggeredString && (
+                                                <>
+                                                    <div>
+                                                        Triggered:{" "}
+                                                        <time
+                                                            dateTime={triggeredDate.toISOString()}
+                                                            title={triggeredDate.toString()}
+                                                        >
+                                                            {triggeredString}
+                                                        </time>
+                                                    </div>
+                                                    {stopDate && (
+                                                        <>
+                                                            <div>
+                                                                Stopped:{" "}
+                                                                <time
+                                                                    dateTime={stopDate.toISOString()}
+                                                                    title={stopDate.toString()}
+                                                                >
+                                                                    {stopString}
+                                                                </time>
+                                                            </div>
+                                                            <div>Duration: {durationString}</div>
+                                                        </>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -241,7 +296,7 @@ export const PrebuildDetailPage: FC = () => {
                                         {prebuildTasks.map((task) => (
                                             <TabsTrigger
                                                 value={task.taskId}
-                                                key={task.taskId}
+                                                key={prebuildId + task.taskId}
                                                 data-analytics={JSON.stringify({ dnt: true })}
                                                 className="mt-1 font-normal text-base pt-2 px-4 rounded-t-lg border border-pk-border-base border-b-0 border-l-0 data-[state=active]:bg-pk-surface-secondary data-[state=active]:z-10 data-[state=active]:relative last:mr-1"
                                                 disabled={task.taskId !== "image-build" && isImageBuild}
@@ -252,7 +307,11 @@ export const PrebuildDetailPage: FC = () => {
                                     </TabsList>
                                     {prebuildTasks.length !== 0 ? (
                                         prebuildTasks.map(({ taskId }) => (
-                                            <PrebuildTaskTab key={taskId} taskId={taskId} prebuild={prebuild} />
+                                            <PrebuildTaskTab
+                                                key={prebuildId + taskId}
+                                                taskId={taskId}
+                                                prebuild={prebuild}
+                                            />
                                         ))
                                     ) : (
                                         <PrebuildTaskErrorTab>
