@@ -66,7 +66,7 @@ export const VideoCarousel: React.FC = () => {
                 {videos.map((_, index) => (
                     <button
                         key={index}
-                        className={`w-3 h-3 rounded-full focus:outline-none transition-colors duration-200 ease-in-out ${
+                        className={`w-3 h-3 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-kumquat-dark transition-colors duration-200 ease-in-out ${
                             index === currentVideo
                                 ? "bg-kumquat-dark"
                                 : "bg-gray-300 dark:bg-gray-600 hover:bg-kumquat-light dark:hover:bg-kumquat-light"
