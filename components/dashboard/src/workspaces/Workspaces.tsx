@@ -197,17 +197,6 @@ const WorkspacesPage: FunctionComponent = () => {
                                                 </span>
                                             </a>
                                             <a
-                                                href="https://www.gitpod.io/docs/references/gitpod-yml"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
-                                            >
-                                                <Code width={20} />{" "}
-                                                <span className="hover:text-blue-600 dark:hover:text-blue-400">
-                                                    .gitpod.yml reference
-                                                </span>
-                                            </a>
-                                            <a
                                                 href="https://www.gitpod.io/docs/configure/workspaces"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -216,6 +205,17 @@ const WorkspacesPage: FunctionComponent = () => {
                                                 <GitpodStrokedSVG />
                                                 <span className="hover:text-blue-600 dark:hover:text-blue-400">
                                                     Configuring a workspace
+                                                </span>
+                                            </a>
+                                            <a
+                                                href="https://www.gitpod.io/docs/references/gitpod-yml"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
+                                            >
+                                                <Code width={20} />{" "}
+                                                <span className="hover:text-blue-600 dark:hover:text-blue-400">
+                                                    .gitpod.yml reference
                                                 </span>
                                             </a>
                                         </div>
