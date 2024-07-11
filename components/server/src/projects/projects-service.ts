@@ -445,7 +445,9 @@ export class ProjectsService {
             settings.restrictedWorkspaceClasses = classList;
         }
         if (settings.restrictedEditorNames) {
-            const options = settings.restrictedEditorNames.filter((e) => !!e) as string[];
+            const options = await this.ideService.toAvailableIDEArr(settings.restrictedEditorNames as string[], {
+                id: userId,
+            });
             await this.ideService.checkEditorsAllowed(userId, options);
             settings.restrictedEditorNames = options;
         }

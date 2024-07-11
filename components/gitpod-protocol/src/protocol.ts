@@ -74,36 +74,6 @@ export namespace User {
     export function isOrganizationOwned(user: User) {
         return !!user.organizationId;
     }
-
-    export function migrationIDESettings(user: User) {
-        if (
-            !user?.additionalData?.ideSettings ||
-            Object.keys(user.additionalData.ideSettings).length === 0 ||
-            user.additionalData.ideSettings.settingVersion === "2.0"
-        ) {
-            return;
-        }
-        const newIDESettings: IDESettings = {
-            settingVersion: "2.0",
-        };
-        const ideSettings = user.additionalData.ideSettings;
-        if (ideSettings.useDesktopIde) {
-            if (ideSettings.defaultDesktopIde === "code-desktop") {
-                newIDESettings.defaultIde = "code-desktop";
-            } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
-                newIDESettings.defaultIde = "code-desktop";
-                newIDESettings.useLatestVersion = true;
-            } else {
-                newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
-                newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
-            }
-        } else {
-            const useLatest = ideSettings.defaultIde === "code-latest";
-            newIDESettings.defaultIde = "code";
-            newIDESettings.useLatestVersion = useLatest;
-        }
-        user.additionalData.ideSettings = newIDESettings;
-    }
 }
 
 export interface WorkspaceTimeoutSetting {

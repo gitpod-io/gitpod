@@ -135,6 +135,7 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { ctxIsAborted, runWithRequestContext, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { IDESettingsVersion } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 
 export interface StartWorkspaceOptions extends Omit<GitpodServer.StartWorkspaceOptions, "ideSettings"> {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -433,7 +434,7 @@ export class WorkspaceStarter {
                 // A user does not have IDE settings configured yet configure it with a referrer ide as default.
                 const additionalData = user?.additionalData || {};
                 const settings = additionalData.ideSettings || {};
-                settings.settingVersion = "2.0";
+                settings.settingVersion = IDESettingsVersion;
                 settings.defaultIde = workspace.context.referrerIde;
                 additionalData.ideSettings = settings;
                 user.additionalData = additionalData;

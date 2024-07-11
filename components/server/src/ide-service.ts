@@ -5,7 +5,7 @@
  */
 
 import { IDESettings, User, Workspace } from "@gitpod/gitpod-protocol";
-import { IDEClient, IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { IDEClient, IDEOption, IDEOptions, IDESettingsVersion } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import * as IdeServiceApi from "@gitpod/ide-service-api/lib/ide.pb";
 import {
     IDEServiceClient,
@@ -67,12 +67,41 @@ export class IDEService {
         }
     }
 
+    async isIDEAvailable(ide: string, user: { id: string; email?: string }): Promise<boolean> {
+        if (ide.trim() === "") {
+            return false;
+        }
+        const allKeys = await this.listAvailableKeys(user);
+        return allKeys.includes(ide);
+    }
+
+    async toAvailableIDEArr(ides: string[], user: { id: string; email?: string }): Promise<string[]> {
+        const allKeys = await this.listAvailableKeys(user);
+        return ides.filter((ide) => !!ide && allKeys.includes(ide));
+    }
+
+    async toAvailableIDEMap<T>(
+        ides: { [key: string]: T },
+        user: { id: string; email?: string },
+    ): Promise<{ [key: string]: T }> {
+        const allKeys = await this.listAvailableKeys(user);
+        return Object.fromEntries(Object.entries(ides).filter(([key]) => allKeys.includes(key)));
+    }
+
+    private async listAvailableKeys(user: { id: string; email?: string }): Promise<string[]> {
+        const config = this.cacheConfig ?? (await this.getIDEConfig({ user }));
+        return Object.keys(config.ideOptions.options);
+    }
+
     migrateSettings(user: User): IDESettings | undefined {
-        if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.1") {
+        if (
+            !user?.additionalData?.ideSettings ||
+            user.additionalData.ideSettings.settingVersion === IDESettingsHelper.SettingVersion
+        ) {
             return undefined;
         }
         const newIDESettings: IDESettings = {
-            settingVersion: "2.1",
+            settingVersion: IDESettingsVersion,
         };
         const ideSettings = user.additionalData.ideSettings;
         if (ideSettings.useDesktopIde) {
@@ -90,8 +119,9 @@ export class IDEService {
             newIDESettings.defaultIde = "code";
             newIDESettings.useLatestVersion = useLatest;
         }
-        if (ideSettings.defaultIde === "intellij-previous") {
-            newIDESettings.defaultIde = "intellij";
+
+        if (ideSettings.defaultIde && !this.isIDEAvailable(ideSettings.defaultIde, user)) {
+            ideSettings.defaultIde = "code";
         }
         return newIDESettings;
     }
@@ -105,8 +135,8 @@ export class IDEService {
             workspace.type === "prebuild" ? IdeServiceApi.WorkspaceType.PREBUILD : IdeServiceApi.WorkspaceType.REGULAR;
 
         // in case users have `auto-start` options set
-        if (userSelectedIdeSettings?.defaultIde === "intellij-previous") {
-            userSelectedIdeSettings.defaultIde = "intellij";
+        if (userSelectedIdeSettings?.defaultIde && !this.isIDEAvailable(userSelectedIdeSettings.defaultIde, user)) {
+            userSelectedIdeSettings.defaultIde = "code";
         }
 
         const req: IdeServiceApi.ResolveWorkspaceConfigRequest = {
