@@ -10,7 +10,7 @@ import blogBannerBg from "../images/blog-banner-bg.png";
 const banners = [
     {
         type: "Blog Post",
-        title: "Gitpod Enterprise: Self-hosted, not self-managed",
+        title: "Gitpod Enterprise:<br/> Self-hosted, not self-managed",
         link: "https://www.gitpod.io/blog/self-hosted-not-self-managed",
     },
     {
@@ -77,6 +77,7 @@ export const BlogBanners: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-pk-surface rounded-lg overflow-hidden flex flex-col gap-2 text-decoration-none text-inherit max-w-[320px] border border-gray-200 dark:border-gray-800 hover:shadow"
+                aria-label={banners[currentBannerIndex].type + " - " + banners[currentBannerIndex].title}
                 style={{
                     backgroundPosition: "top left",
                     backgroundRepeat: "no-repeat",
@@ -88,9 +89,10 @@ export const BlogBanners: React.FC = () => {
                     <div className="bg-pk-surface-invert w-fit text-pk-content-invert-primary text-sm leading-[18px] font-bold rounded-2xl py-1 px-4">
                         {banners[currentBannerIndex].type}
                     </div>
-                    <div className="text-base font-semibold text-pk-content-primary max-w-[285px]">
-                        {banners[currentBannerIndex].title}
-                    </div>
+                    <div
+                        className="text-base font-semibold text-pk-content-primary max-w-[285px]"
+                        dangerouslySetInnerHTML={{ __html: banners[currentBannerIndex].title }}
+                    />
                 </div>
             </a>
         </div>

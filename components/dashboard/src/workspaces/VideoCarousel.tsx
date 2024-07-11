@@ -48,7 +48,8 @@ export const VideoCarousel: React.FC = () => {
                 {videos.map((video, index) => (
                     <div key={video.id} style={{ display: index === currentVideo ? "block" : "none" }}>
                         <lite-youtube
-                            videoid={video.id}
+                            key={videos[currentVideo].id}
+                            videoid={videos[currentVideo].id}
                             style={{
                                 width: "320px",
                                 height: "180px",
