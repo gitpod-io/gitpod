@@ -22,6 +22,7 @@ import { VideoCarousel } from "./VideoCarousel";
 import { BlogBanners } from "./BlogBanners";
 import { BookOpen, Code } from "lucide-react";
 import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
+import { isGitpodIo } from "../utils";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -105,15 +106,15 @@ const WorkspacesPage: FunctionComponent = () => {
             {!isLoading &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || searchTerm ? (
                     <>
-                        <div className="!px-0 app-container flex flex-row">
-                            <div className="xl:max-w-[820px] 2xl:max-w-5xl">
+                        <div className={isGitpodIo() ? "!px-0 app-container flex flex-row" : "app-container"}>
+                            <div className={isGitpodIo() ? "xl:max-w-[820px] 2xl:max-w-5xl" : ""}>
                                 <WorkspacesSearchBar
                                     limit={limit}
                                     searchTerm={searchTerm}
                                     onLimitUpdated={setLimit}
                                     onSearchTermUpdated={setSearchTerm}
                                 />
-                                <ItemsList className="app-container xl:!pr-4 pb-40">
+                                <ItemsList className={isGitpodIo() ? "app-container xl:!pr-4 pb-40" : ""}>
                                     <div className="border-t border-gray-200 dark:border-gray-800"></div>
                                     {filteredActiveWorkspaces.map((info) => {
                                         return <WorkspaceEntry key={info.id} info={info} />;
@@ -177,72 +178,83 @@ const WorkspacesPage: FunctionComponent = () => {
                                     )}
                                 </ItemsList>
                             </div>
-                            <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 px-6 pt-5 pb-4 space-y-5">
-                                <VideoCarousel />
-                                <div className="flex flex-col gap-3">
-                                    <h3 className="text-lg font-semibold text-pk-content-primary">Documentation</h3>
-                                    <div className="flex flex-col gap-2 w-fit">
-                                        <a
-                                            href="https://www.gitpod.io/docs"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-base text-pk-content-primary items-center gap-x-2 flex flex-row"
-                                        >
-                                            <BookOpen width={20} /> Read the docs
-                                        </a>
-                                        <a
-                                            href="https://www.gitpod.io/docs/references/gitpod-yml"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-base text-pk-content-primary items-center gap-x-2 flex flex-row"
-                                        >
-                                            <Code width={20} /> .gitpod.yml reference
-                                        </a>
-                                        <a
-                                            href="https://www.gitpod.io/docs/configure/workspaces"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-base text-pk-content-primary items-center gap-x-2 flex flex-row"
-                                        >
-                                            <GitpodStrokedSVG />
-                                            Configuring a workspace
-                                        </a>
+                            {/* Show Educational if user is in gitpodIo */}
+                            {isGitpodIo() && (
+                                <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 px-6 pt-5 pb-4 space-y-5">
+                                    <VideoCarousel />
+                                    <div className="flex flex-col gap-3">
+                                        <h3 className="text-lg font-semibold text-pk-content-primary">Documentation</h3>
+                                        <div className="flex flex-col gap-2 w-fit">
+                                            <a
+                                                href="https://www.gitpod.io/docs"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
+                                            >
+                                                <BookOpen width={20} />{" "}
+                                                <span className="hover:text-blue-600 dark:hover:text-blue-400">
+                                                    Read the docs
+                                                </span>
+                                            </a>
+                                            <a
+                                                href="https://www.gitpod.io/docs/references/gitpod-yml"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
+                                            >
+                                                <Code width={20} />{" "}
+                                                <span className="hover:text-blue-600 dark:hover:text-blue-400">
+                                                    .gitpod.yml reference
+                                                </span>
+                                            </a>
+                                            <a
+                                                href="https://www.gitpod.io/docs/configure/workspaces"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
+                                            >
+                                                <GitpodStrokedSVG />
+                                                <span className="hover:text-blue-600 dark:hover:text-blue-400">
+                                                    Configuring a workspace
+                                                </span>
+                                            </a>
+                                        </div>
                                     </div>
-                                </div>
-                                {/* TODO: Create this section based on user submissions while onboarding form */}
-                                <div className="flex flex-col gap-3">
-                                    <h3 className="text-lg font-semibold text-pk-content-secondary">
-                                        Personalised for you
-                                    </h3>
-                                    <div className="flex flex-col gap-2 w-fit">
-                                        <a
-                                            href="https://www.gitpod.io/blog/whats-a-cloud-development-environment"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-base text-pk-content-secondary items-center"
-                                        >
-                                            What's a CDE
-                                        </a>
-                                        <a
-                                            href="https://www.gitpod.io/solutions/onboarding"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-base text-pk-content-secondary items-center"
-                                        >
-                                            Onboard developers in one click
-                                        </a>
-                                        <a
-                                            href="https://www.gitpod.io/blog/using-a-cde-roi-calculator"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-base text-pk-content-secondary items-center"
-                                        >
-                                            Building a business case for Gitpod
-                                        </a>
+                                    {/* TODO: Create this section based on user submissions while onboarding form */}
+                                    <div className="flex flex-col gap-3">
+                                        <h3 className="text-lg font-semibold text-pk-content-secondary">
+                                            Personalised for you
+                                        </h3>
+                                        <div className="flex flex-col gap-2 w-fit">
+                                            <a
+                                                href="https://www.gitpod.io/blog/whats-a-cloud-development-environment"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-pk-content-secondary items-center hover:text-blue-600 dark:hover:text-blue-400"
+                                            >
+                                                What's a CDE
+                                            </a>
+                                            <a
+                                                href="https://www.gitpod.io/solutions/onboarding"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-pk-content-secondary items-center hover:text-blue-600 dark:hover:text-blue-400"
+                                            >
+                                                Onboard developers in one click
+                                            </a>
+                                            <a
+                                                href="https://www.gitpod.io/blog/using-a-cde-roi-calculator"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-pk-content-secondary items-center hover:text-blue-600 dark:hover:text-blue-400"
+                                            >
+                                                Building a business case for Gitpod
+                                            </a>
+                                        </div>
                                     </div>
+                                    <BlogBanners />
                                 </div>
-                                <BlogBanners />
-                            </div>
+                            )}
                         </div>
                     </>
                 ) : (

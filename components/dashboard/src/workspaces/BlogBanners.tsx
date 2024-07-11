@@ -76,7 +76,7 @@ export const BlogBanners: React.FC = () => {
                 href={banners[currentBannerIndex].link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white rounded-lg overflow-hidden flex flex-col gap-2 text-decoration-none text-inherit max-w-[320px] border border-base"
+                className="bg-pk-surface rounded-lg overflow-hidden flex flex-col gap-2 text-decoration-none text-inherit max-w-[320px] border border-pk-border-base hover:shadow"
                 style={{
                     backgroundPosition: "top left",
                     backgroundRepeat: "no-repeat",
@@ -85,10 +85,10 @@ export const BlogBanners: React.FC = () => {
                 }}
             >
                 <div className="flex flex-col gap-8 mt-6 ml-4 max-w-[320px] overflow-wrap min-h-fit pb-4">
-                    <div className="bg-pk-surface-invert w-fit text-pk-content-invert-primary text-sm leading-[18px] font-bold inline-block rounded-2xl py-1 px-4">
+                    <div className="bg-pk-surface-invert w-fit text-pk-content-invert-primary text-sm leading-[18px] font-bold rounded-2xl py-1 px-4">
                         {banners[currentBannerIndex].type}
                     </div>
-                    <div className="text-lg font-semibold text-pk-content-primary max-w-[296px]">
+                    <div className="text-base font-semibold text-pk-content-primary max-w-[296px]">
                         {banners[currentBannerIndex].title}
                     </div>
                 </div>
