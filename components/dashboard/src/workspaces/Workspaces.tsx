@@ -19,6 +19,7 @@ import { useToast } from "../components/toasts/Toasts";
 import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { Button } from "@podkit/buttons/Button";
 import { VideoCarousel } from "./VideoCarousel";
+import { BlogBanners } from "./BlogBanners";
 import { BookOpen, Code } from "lucide-react";
 import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
 
@@ -173,11 +174,11 @@ const WorkspacesPage: FunctionComponent = () => {
                                     )}
                                 </ItemsList>
                             </div>
-                            <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 px-6 py-5 space-y-6">
+                            <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 px-6 pt-5 pb-6 space-y-5">
                                 <VideoCarousel />
                                 <div className="flex flex-col gap-3">
                                     <h3 className="text-lg font-semibold text-pk-content-primary">Documentation</h3>
-                                    <div className="flex flex-col gap-3 w-fit">
+                                    <div className="flex flex-col gap-2 w-fit">
                                         <a
                                             href="https://www.gitpod.io/docs"
                                             target="_blank"
@@ -210,7 +211,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                     <h3 className="text-lg font-semibold text-pk-content-secondary">
                                         Personalised for you
                                     </h3>
-                                    <div className="flex flex-col gap-3 w-fit">
+                                    <div className="flex flex-col gap-2 w-fit">
                                         <a
                                             href="https://www.gitpod.io/blog/whats-a-cloud-development-environment"
                                             target="_blank"
@@ -237,6 +238,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                         </a>
                                     </div>
                                 </div>
+                                <BlogBanners />
                             </div>
                         </div>
                     </>

@@ -60,7 +60,7 @@ export const VideoCarousel: React.FC = () => {
                     </div>
                 ))}
             </div>
-            <div className="flex justify-center space-x-2 mt-4">
+            <div className="flex justify-center space-x-2 mt-2">
                 {videos.map((_, index) => (
                     <button
                         key={index}
