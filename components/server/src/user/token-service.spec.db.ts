@@ -88,9 +88,6 @@ describe("TokenService", async () => {
                                 },
                             },
                             services: {
-                                repositoryService: {
-                                    installAutomatedPrebuilds: async (user: any, cloneUrl: string) => {},
-                                },
                                 repositoryProvider: {
                                     hasReadAccess: async (user: any, owner: string, repo: string) => {
                                         return true;
@@ -116,9 +113,6 @@ describe("TokenService", async () => {
                                 },
                             },
                             services: {
-                                repositoryService: {
-                                    installAutomatedPrebuilds: async (user: any, cloneUrl: string) => {},
-                                },
                                 repositoryProvider: {
                                     hasReadAccess: async (user: any, owner: string, repo: string) => {
                                         return true;
