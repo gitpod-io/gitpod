@@ -222,7 +222,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                     </div>
                                     {/* TODO: Create this section based on user submissions while onboarding form */}
                                     <div className="flex flex-col gap-3">
-                                        <h3 className="text-lg font-semibold text-pk-content-secondary">
+                                        <h3 className="text-lg font-semibold text-pk-content-primary">
                                             Personalised for you
                                         </h3>
                                         <div className="flex flex-col gap-2 w-fit">
@@ -230,7 +230,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                                 href="https://www.gitpod.io/blog/whats-a-cloud-development-environment"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-sm text-pk-content-secondary items-center hover:text-blue-600 dark:hover:text-blue-400"
+                                                className="text-sm text-pk-content-primary items-center hover:text-blue-600 dark:hover:text-blue-400"
                                             >
                                                 What's a CDE
                                             </a>
@@ -238,7 +238,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                                 href="https://www.gitpod.io/solutions/onboarding"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-sm text-pk-content-secondary items-center hover:text-blue-600 dark:hover:text-blue-400"
+                                                className="text-sm text-pk-content-primary items-center hover:text-blue-600 dark:hover:text-blue-400"
                                             >
                                                 Onboard developers in one click
                                             </a>
@@ -246,7 +246,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                                 href="https://www.gitpod.io/blog/using-a-cde-roi-calculator"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-sm text-pk-content-secondary items-center hover:text-blue-600 dark:hover:text-blue-400"
+                                                className="text-sm text-pk-content-primary items-center hover:text-blue-600 dark:hover:text-blue-400"
                                             >
                                                 Building a business case for Gitpod
                                             </a>
