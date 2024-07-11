@@ -87,10 +87,7 @@ const WorkspacesPage: FunctionComponent = () => {
 
     return (
         <>
-            <Header
-                title="Workspaces"
-                subtitle="Manage, start and stop your personal development environments in the cloud."
-            />
+            <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
 
             {deleteModalVisible && (
                 <ConfirmationModal
