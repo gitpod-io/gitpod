@@ -76,7 +76,7 @@ export const BlogBanners: React.FC = () => {
                 href={banners[currentBannerIndex].link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-pk-surface rounded-lg overflow-hidden flex flex-col gap-2 text-decoration-none text-inherit max-w-[320px] border border-pk-border-base hover:shadow"
+                className="bg-pk-surface rounded-lg overflow-hidden flex flex-col gap-2 text-decoration-none text-inherit max-w-[320px] border border-gray-200 dark:border-gray-800 hover:shadow"
                 style={{
                     backgroundPosition: "top left",
                     backgroundRepeat: "no-repeat",
