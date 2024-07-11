@@ -177,11 +177,11 @@ const WorkspacesPage: FunctionComponent = () => {
                             </div>
                             {/* Show Educational if user is in gitpodIo */}
                             {isGitpodIo() && (
-                                <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 pl-6 pt-5 pb-4 space-y-5">
+                                <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 pl-6 pt-5 pb-4 space-y-8">
                                     <VideoCarousel />
-                                    <div className="flex flex-col gap-3">
+                                    <div className="flex flex-col gap-2">
                                         <h3 className="text-lg font-semibold text-pk-content-primary">Documentation</h3>
-                                        <div className="flex flex-col gap-2 w-fit">
+                                        <div className="flex flex-col gap-1 w-fit">
                                             <a
                                                 href="https://www.gitpod.io/docs"
                                                 target="_blank"
@@ -218,11 +218,11 @@ const WorkspacesPage: FunctionComponent = () => {
                                         </div>
                                     </div>
                                     {/* TODO: Create this section based on user submissions while onboarding form */}
-                                    <div className="flex flex-col gap-3">
+                                    <div className="flex flex-col gap-2">
                                         <h3 className="text-lg font-semibold text-pk-content-primary">
                                             Personalised for you
                                         </h3>
-                                        <div className="flex flex-col gap-2 w-fit">
+                                        <div className="flex flex-col gap-1 w-fit">
                                             <a
                                                 href="https://www.gitpod.io/blog/whats-a-cloud-development-environment"
                                                 target="_blank"
