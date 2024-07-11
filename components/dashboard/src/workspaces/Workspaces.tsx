@@ -106,8 +106,8 @@ const WorkspacesPage: FunctionComponent = () => {
             {!isLoading &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || searchTerm ? (
                     <>
-                        <div className={isGitpodIo() ? "!px-0 app-container flex flex-row" : "app-container"}>
-                            <div className={isGitpodIo() ? "xl:max-w-[820px] 2xl:max-w-5xl" : ""}>
+                        <div className={isGitpodIo() ? "!pl-0 app-container flex flex-row w-full" : "app-container"}>
+                            <div>
                                 <WorkspacesSearchBar
                                     limit={limit}
                                     searchTerm={searchTerm}
@@ -180,7 +180,7 @@ const WorkspacesPage: FunctionComponent = () => {
                             </div>
                             {/* Show Educational if user is in gitpodIo */}
                             {isGitpodIo() && (
-                                <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 px-6 pt-5 pb-4 space-y-5">
+                                <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 pl-6 pt-5 pb-4 space-y-5">
                                     <VideoCarousel />
                                     <div className="flex flex-col gap-3">
                                         <h3 className="text-lg font-semibold text-pk-content-primary">Documentation</h3>
