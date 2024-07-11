@@ -4,29 +4,32 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import type { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { Suspense, memo, useEffect } from "react";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Suspense, useEffect } from "react";
 import { usePrebuildLogsEmitter } from "../../data/prebuilds/prebuild-logs-emitter";
 import React from "react";
 import { useToast } from "../../components/toasts/Toasts";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { TabsContent } from "@podkit/tabs/Tabs";
+import { PersistedToastID } from "./PrebuildDetailPage";
 import { PrebuildTaskErrorTab } from "./PrebuildTaskErrorTab";
-import type { PlainMessage } from "@bufbuild/protobuf";
-import { useHistory } from "react-router";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
 type Props = {
     taskId: string;
-    prebuild: PlainMessage<Prebuild>;
+    prebuild: Prebuild;
 };
-export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
-    const { emitter: logEmitter } = usePrebuildLogsEmitter(prebuild, taskId);
+export const PrebuildTaskTab = ({ taskId, prebuild }: Props) => {
+    const { emitter: logEmitter, disposable: disposeStreamingLogs } = usePrebuildLogsEmitter(prebuild.id, taskId);
     const [error, setError] = React.useState<ApplicationError | undefined>();
-    const { toast, dismissToast } = useToast();
-    const [activeToasts, setActiveToasts] = React.useState<Set<string>>(new Set());
-    const history = useHistory();
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (prebuild.status?.phase?.name === PrebuildPhase_Phase.ABORTED) {
+            disposeStreamingLogs?.dispose();
+        }
+    }, [prebuild.status?.phase?.name, disposeStreamingLogs]);
 
     useEffect(() => {
         const errorListener = (err: Error) => {
@@ -48,9 +51,7 @@ export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
                 return;
             }
 
-            const toastId = crypto.randomUUID();
-            toast("Fetching logs failed: " + err.message, { autoHide: false, id: toastId });
-            setActiveToasts((prev) => new Set(prev).add(toastId));
+            toast("Fetching logs failed: " + err.message, { autoHide: false, id: PersistedToastID });
         };
 
         logEmitter.on("error", errorListener);
@@ -62,16 +63,6 @@ export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
             setError(undefined);
         };
     }, [logEmitter, taskId, toast]);
-
-    useEffect(() => {
-        // When navigating away from the page, dismiss all toasts
-        history.listen(() => {
-            activeToasts.forEach((toastId) => {
-                dismissToast(toastId);
-            });
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     if (error) {
         return (
@@ -95,12 +86,12 @@ export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
         <TabsContent value={taskId} className="h-112 mt-0 border-pk-border-base">
             <Suspense fallback={<div />}>
                 <WorkspaceLogs
-                    key={prebuild.id + taskId}
                     classes="w-full h-full"
                     xtermClasses="absolute top-0 left-0 bottom-0 right-0 ml-6 my-0 mt-4"
                     logsEmitter={logEmitter}
+                    key={taskId}
                 />
             </Suspense>
         </TabsContent>
     );
-});
+};

@@ -99,7 +99,6 @@ export function onDownloadPrebuildLogsUrl(
                 headers: {
                     TE: "trailers", // necessary to receive stream status code
                 },
-                redirect: "follow",
             });
             reader = response.body?.getReader();
             if (!reader) {

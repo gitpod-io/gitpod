@@ -91,15 +91,12 @@ export class HeadlessLogService {
             const aborted = new Deferred<boolean>();
             setTimeout(() => aborted.resolve(true), maxTimeoutSecs * 1000);
             const streamIds = await this.retryOnError(
-                (cancel) => this.supervisorListHeadlessLogs(logCtx, wsi.id, logEndpoint, cancel),
+                () => this.supervisorListHeadlessLogs(logCtx, wsi.id, logEndpoint),
                 "list headless log streams",
                 this.continueWhileRunning(wsi.id),
             );
             if (streamIds !== undefined) {
-                return {
-                    ...streamIds,
-                    online: true,
-                };
+                return streamIds;
             }
         }
 
@@ -137,7 +134,6 @@ export class HeadlessLogService {
         }
         return {
             streams,
-            online: false,
         };
     }
 
@@ -145,20 +141,14 @@ export class HeadlessLogService {
         logCtx: LogContext,
         instanceId: string,
         logEndpoint: HeadlessLogEndpoint,
-        cancel?: (retry: boolean) => void,
     ): Promise<HeadlessLogUrls | undefined> {
-        const tasks = await this.supervisorListTasks(logCtx, logEndpoint, cancel);
+        const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
         return this.renderTasksHeadlessLogUrls(logCtx, instanceId, tasks);
     }
 
-    protected async supervisorListTasks(
-        logCtx: LogContext,
-        logEndpoint: HeadlessLogEndpoint,
-        cancel?: (retry: boolean) => void,
-    ): Promise<TaskStatus[]> {
+    protected async supervisorListTasks(logCtx: LogContext, logEndpoint: HeadlessLogEndpoint): Promise<TaskStatus[]> {
         if (logEndpoint.url === "") {
             // if ideUrl is not yet set we're too early and we deem the workspace not ready yet: retry later!
-            cancel?.(false);
             throw new Error(`instance's ${logCtx.instanceId} has no ideUrl, yet`);
         }
 
@@ -254,7 +244,7 @@ export class HeadlessLogService {
      * @param logCtx
      * @param logEndpoint
      * @param instanceId
-     * @param taskIdentifier
+     * @param terminalID
      * @param sink
      * @param doContinue
      * @param aborted
@@ -263,24 +253,24 @@ export class HeadlessLogService {
         logCtx: LogContext,
         logEndpoint: HeadlessLogEndpoint,
         instanceId: string,
-        taskIdentifier: { terminalId: string } | { taskId: string },
+        terminalID: string,
         sink: (chunk: string) => Promise<void>,
     ): Promise<void> {
-        await this.streamWorkspaceLog(logCtx, logEndpoint, taskIdentifier, sink, this.continueWhileRunning(instanceId));
+        await this.streamWorkspaceLog(logCtx, logEndpoint, terminalID, sink, this.continueWhileRunning(instanceId));
     }
 
     /**
      * For now, simply stream the supervisor data
      * @param logCtx
      * @param logEndpoint
-     * @param taskIdentifier
+     * @param terminalID
      * @param sink
      * @param doContinue
      */
     protected async streamWorkspaceLog(
         logCtx: LogContext,
         logEndpoint: HeadlessLogEndpoint,
-        taskIdentifier: { terminalId: string } | { taskId: string },
+        terminalID: string,
         sink: (chunk: string) => Promise<void>,
         doContinue: () => Promise<boolean>,
     ): Promise<void> {
@@ -288,29 +278,22 @@ export class HeadlessLogService {
             transport: WebsocketTransport(), // necessary because HTTPTransport causes caching issues
         });
 
-        let taskId: string;
-        if ("terminalId" in taskIdentifier) {
-            const terminalId = taskIdentifier.terminalId;
-            const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
-            const taskIndex = tasks.findIndex((t) => t.getTerminal() === terminalId);
-            if (taskIndex < 0) {
-                log.warn(logCtx, "stream workspace logs: terminal not found", { terminalId, tasks });
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, "terminal not found");
-            }
-            taskId = taskIndex.toString();
-        } else {
-            taskId = taskIdentifier.taskId;
+        const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
+        const taskIndex = tasks.findIndex((t) => t.getTerminal() === terminalID);
+        if (taskIndex < 0) {
+            log.warn(logCtx, "stream workspace logs: terminal not found", { terminalID, tasks });
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "terminal not found");
         }
 
         const req = new ListenToOutputRequest();
-        req.setTaskId(taskId);
+        req.setTaskId(taskIndex.toString());
 
         const authHeaders = HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint);
 
         let receivedDataYet = false;
         let stream: ResponseStream<ListenToOutputResponse> | undefined = undefined;
         ctxOnAbort(() => stream?.cancel());
-        const doStream = (cancel: (retry: boolean) => void) =>
+        const doStream = (retry: (doRetry?: boolean) => void) =>
             new Promise<void>((resolve, reject) => {
                 // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
                 const decoder = new TextDecoder("utf-8");
@@ -339,7 +322,7 @@ export class HeadlessLogService {
                         return;
                     }
 
-                    cancel(false);
+                    retry(false);
                     reject(err);
                 });
             });
@@ -364,7 +347,7 @@ export class HeadlessLogService {
 
         // we're just looking at the first stream; image builds just have one stream atm
         const task = tasks[0];
-        await this.streamWorkspaceLog(logCtx, logEndpoint, { taskId: task.getId() }, sink, () => Promise.resolve(true));
+        await this.streamWorkspaceLog(logCtx, logEndpoint, task.getTerminal(), sink, () => Promise.resolve(true));
     }
 
     /**
@@ -378,18 +361,18 @@ export class HeadlessLogService {
      * @returns
      */
     protected async retryOnError<T>(
-        op: (cancel: (retry: boolean) => void) => Promise<T>,
+        op: (cancel: () => void) => Promise<T>,
         description: string,
         doContinue: () => Promise<boolean>,
     ): Promise<T | undefined> {
         let retry = true;
-        const cancelFunction = (doRetry: boolean) => {
+        const retryFunction = (doRetry: boolean = true) => {
             retry = doRetry;
         };
 
         while (retry && !ctxIsAborted()) {
             try {
-                return await op(cancelFunction);
+                return await op(retryFunction);
             } catch (err) {
                 if (!retry) {
                     throw err;

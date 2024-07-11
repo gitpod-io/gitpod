@@ -121,7 +121,6 @@ message PrebuildStatus {
   string log_url = 4;
   repeated TaskLog task_logs = 5;
   string image_build_log_url = 6;
-  google.protobuf.Timestamp stop_time = 7;
 }
 
 message TaskLog {

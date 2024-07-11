@@ -8,7 +8,6 @@ import {
     AdminGetWorkspacesQuery,
     CommitContext,
     PrebuildInfo,
-    PrebuildWithStatus,
     PrebuiltWorkspace,
     PrebuiltWorkspaceState,
     PrebuiltWorkspaceUpdatable,
@@ -749,26 +748,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         });
     }
 
-    public async findPrebuildWithStatus(prebuildId: string): Promise<PrebuildWithStatus | undefined> {
-        const pbws = await this.findPrebuiltWorkspaceById(prebuildId);
-        if (!pbws) {
-            return undefined;
-        }
-        const [info, workspace, instance] = await Promise.all([
-            this.findPrebuildInfos([prebuildId]).then((infos) => (infos.length > 0 ? infos[0] : undefined)),
-            this.findById(pbws.buildWorkspaceId),
-            this.findCurrentInstance(pbws.buildWorkspaceId),
-        ]);
-        if (!info || !workspace) {
-            return undefined;
-        }
-        const result: PrebuildWithStatus = { info, status: pbws.state, workspace, instance };
-        if (pbws.error) {
-            result.error = pbws.error;
-        }
-        return result;
-    }
-
     public async countUnabortedPrebuildsSince(projectId: string, date: Date): Promise<number> {
         const abortedState: PrebuiltWorkspaceState = "aborted";
         const repo = await this.getPrebuiltWorkspaceRepo();
@@ -1021,6 +1000,30 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .where("wsi.deleted != TRUE")
             .andWhere("wsi.phasePersisted IN (:phases)", { phases });
         return qb.getMany();
+    }
+
+    async findPrebuiltWorkspacesByProject(
+        projectId: string,
+        branch?: string,
+        limit?: number,
+    ): Promise<PrebuiltWorkspaceWithWorkspace[]> {
+        const repo = await this.getPrebuiltWorkspaceRepo();
+
+        const query = repo
+            .createQueryBuilder("pws")
+            .orderBy("pws.creationTime", "DESC")
+            .innerJoinAndMapOne("pws.workspace", DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id")
+            .andWhere("pws.projectId = :projectId", { projectId });
+
+        if (branch) {
+            query.andWhere("pws.branch = :branch", { branch });
+        }
+        if (limit) {
+            query.limit(limit);
+        }
+
+        const res = await query.getMany();
+        return res as PrebuiltWorkspaceWithWorkspace[];
     }
 
     /**

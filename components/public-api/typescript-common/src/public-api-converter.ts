@@ -70,7 +70,9 @@ import {
     AuthProviderType,
     OAuth2Config,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { AuditLog } from "@gitpod/public-api/lib/gitpod/v1/auditlogs_pb";
+import {
+    AuditLog,
+} from "@gitpod/public-api/lib/gitpod/v1/auditlogs_pb";
 import {
     BranchMatchingStrategy,
     Configuration,
@@ -1260,17 +1262,11 @@ export class PublicAPIConverter {
             }
         }
 
-        let stopTime: Timestamp | undefined;
-        if (prebuild.instance?.stoppedTime) {
-            stopTime = Timestamp.fromDate(new Date(prebuild.instance.stoppedTime));
-        }
-
         return new PrebuildStatus({
             phase: new PrebuildPhase({
                 name: this.toPrebuildPhase(prebuild.status),
             }),
             startTime: Timestamp.fromDate(new Date(prebuild.info.startedAt)),
-            stopTime,
             message: prebuild.error,
             logUrl: new URL(getPrebuildLogPath(prebuild.info.id), gitpodHost).toString(),
             taskLogs: tasks,
@@ -1378,9 +1374,8 @@ export class PublicAPIConverter {
         const remainingMillisecondsAfterMinutes = remainingMillisecondsAfterHours % 60000;
         const secondsResult = Math.floor(remainingMillisecondsAfterMinutes / 1000);
 
-        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${
-            secondsResult > 0 ? secondsResult + "s" : ""
-        }`;
+        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${secondsResult > 0 ? secondsResult + "s" : ""
+            }`;
     }
 
     toUser(from: UserProtocol): User {

@@ -775,11 +775,6 @@ export class PrebuildStatus extends Message<PrebuildStatus> {
    */
   imageBuildLogUrl = "";
 
-  /**
-   * @generated from field: google.protobuf.Timestamp stop_time = 7;
-   */
-  stopTime?: Timestamp;
-
   constructor(data?: PartialMessage<PrebuildStatus>) {
     super();
     proto3.util.initPartial(data, this);
@@ -794,7 +789,6 @@ export class PrebuildStatus extends Message<PrebuildStatus> {
     { no: 4, name: "log_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "task_logs", kind: "message", T: TaskLog, repeated: true },
     { no: 6, name: "image_build_log_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 7, name: "stop_time", kind: "message", T: Timestamp },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildStatus {
