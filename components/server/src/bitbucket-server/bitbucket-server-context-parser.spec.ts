@@ -333,6 +333,31 @@ class TestBitbucketServerContextParser {
         });
     }
 
+    @test async test_tag_context_01() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            "https://bitbucket.gitpod-dev.com/users/filip/repos/repodepo/browse?at=refs%2Ftags%2Fv0.0.1",
+        );
+
+        expect(result).to.deep.include({
+            title: "filip/repodepo - v0.0.1",
+            ref: "v0.0.1",
+            refType: "tag",
+            revision: "c16d4d0049545e7d8908302c07550f9d325fbed4",
+            repository: {
+                host: "bitbucket.gitpod-dev.com",
+                owner: "filip",
+                name: "RepoDepo",
+                cloneUrl: "https://bitbucket.gitpod-dev.com/scm/~filip/repodepo.git",
+                webUrl: "https://bitbucket.gitpod-dev.com/users/filip/repos/repodepo",
+                defaultBranch: "main",
+                private: true,
+                repoKind: "users",
+            },
+        });
+    }
+
     @test test_toSimpleBranchName() {
         const url = new URL(
             "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123/browse?at=refs%2Fheads%2Ffoo",
