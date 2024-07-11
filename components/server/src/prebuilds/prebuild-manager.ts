@@ -660,7 +660,9 @@ export class PrebuildManager {
         }
         await this.auth.checkPermissionOnOrganization(userId, "read_prebuild", organizationId);
 
-        const instance = await this.workspaceService.getCurrentInstance(userId, prebuild.workspace.id);
+        const instance = await this.workspaceService.getCurrentInstance(userId, prebuild.workspace.id, {
+            skipPermissionCheck: true,
+        });
         const urls = await this.workspaceService.getHeadlessLog(userId, instance.id, async () => {});
 
         const taskUrl = urls.streams[taskId];
