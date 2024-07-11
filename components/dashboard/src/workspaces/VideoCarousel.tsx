@@ -47,17 +47,18 @@ export const VideoCarousel: React.FC = () => {
             <div className="video-container">
                 {videos.map((video, index) => (
                     <div key={video.id} style={{ display: index === currentVideo ? "block" : "none" }}>
-                        <lite-youtube
-                            key={videos[currentVideo].id}
-                            videoid={videos[currentVideo].id}
-                            style={{
-                                width: "320px",
-                                height: "180px",
-                            }}
-                            class="rounded-lg"
-                            playlabel={video.title}
-                            onClick={() => onPlayerStateChange(index)}
-                        ></lite-youtube>
+                        {index === currentVideo && (
+                            <lite-youtube
+                                videoid={video.id}
+                                style={{
+                                    width: "320px",
+                                    height: "180px",
+                                }}
+                                class="rounded-lg"
+                                playlabel={video.title}
+                                onClick={() => onPlayerStateChange(index)}
+                            ></lite-youtube>
+                        )}
                     </div>
                 ))}
             </div>
