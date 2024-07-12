@@ -7,6 +7,7 @@
 import React, { useEffect, useState } from "react";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { useCurrentUser } from "../user-context";
+import { storageAvailable } from "../utils";
 
 type ContentItem = {
     url: string;
@@ -85,14 +86,20 @@ const PersonalizedContent: React.FC = () => {
     const [selectedContent, setSelectedContent] = useState<ContentItem[]>([]);
 
     useEffect(() => {
-        const storedContentData = localStorage.getItem("personalized-content-data");
-        const currentTime = new Date().getTime();
+        if (!storageAvailable("localStorage")) {
+            // Handle the case where localStorage is not available
+            setSelectedContent(getFirstWeekContent(user));
+            return;
+        }
 
         let content: ContentItem[] = [];
         let lastShownContent: string[] = [];
 
-        if (storedContentData) {
-            try {
+        try {
+            const storedContentData = localStorage.getItem("personalized-content-data");
+            const currentTime = new Date().getTime();
+
+            if (storedContentData) {
                 const { lastTime, lastContent } = JSON.parse(storedContentData);
                 const WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
                 const weeksPassed = Math.floor((currentTime - lastTime) / WEEK_IN_MS);
@@ -103,23 +110,23 @@ const PersonalizedContent: React.FC = () => {
                 } else {
                     content = getFirstWeekContent(user);
                 }
-            } catch (error) {
-                console.error("Error parsing stored content data: ", error);
-                content = getRandomContent(contentList, 3, lastShownContent);
+            } else {
+                content = getFirstWeekContent(user);
             }
-        } else {
-            content = getFirstWeekContent(user);
+
+            localStorage.setItem(
+                "personalized-content-data",
+                JSON.stringify({
+                    lastContent: content.map((item) => item.label),
+                    lastTime: currentTime,
+                }),
+            );
+
+            setSelectedContent(content);
+        } catch (error) {
+            console.error("Error handling personalized content: ", error);
+            setSelectedContent(getRandomContent(contentList, 3, []));
         }
-
-        localStorage.setItem(
-            "personalized-content-data",
-            JSON.stringify({
-                lastContent: content.map((item) => item.label),
-                lastTime: currentTime,
-            }),
-        );
-
-        setSelectedContent(content);
     }, [user]);
 
     return (
