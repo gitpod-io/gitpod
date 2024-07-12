@@ -427,6 +427,7 @@ export class WorkspaceService {
                 project,
                 forcePrebuild: false,
                 context,
+                trigger: "lastWorkspaceStart",
             });
         })().catch((err) =>
             log.error(

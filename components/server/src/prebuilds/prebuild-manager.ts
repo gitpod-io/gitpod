@@ -11,6 +11,7 @@ import {
     PrebuildWithStatus,
     PrebuiltWorkspace,
     Project,
+    ProjectUsage,
     StartPrebuildContext,
     StartPrebuildResult,
     TaskConfig,
@@ -47,6 +48,7 @@ export interface StartPrebuildParams {
     project: Project;
     commitInfo?: CommitInfo;
     forcePrebuild?: boolean;
+    trigger?: keyof ProjectUsage;
 }
 
 export interface PrebuildFilter {
@@ -327,7 +329,7 @@ export class PrebuildManager {
 
     async startPrebuild(
         ctx: TraceContext,
-        { context, project, user, commitInfo, forcePrebuild }: StartPrebuildParams,
+        { context, project, user, commitInfo, forcePrebuild, trigger = "lastWebhookReceived" }: StartPrebuildParams,
     ): Promise<StartPrebuildResult> {
         const span = TraceContext.startSpan("startPrebuild", ctx);
         const cloneURL = context.repository.cloneUrl;
@@ -338,7 +340,7 @@ export class PrebuildManager {
         // TODO figure out right place to mark activity of a project. For now, just moving at the beginning
         // of `startPrebuild` to remain previous semantics when it was happening on call sites.
         this.projectService
-            .markActive(user.id, project.id, "lastWebhookReceived")
+            .markActive(user.id, project.id, trigger)
             .catch((e) => log.error("cannot update project usage", e));
 
         try {

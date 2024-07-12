@@ -19,11 +19,11 @@ message Configuration {
   WorkspaceSettings workspace_settings = 7;
 }
 
-enum PrebuildActivationStrategy {
+enum PrebuildTriggerStrategy {
   // Default value. Implicitly applies to webhoook-based activation
-  PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED = 0;
+  PREBUILD_TRIGGER_STRATEGY_UNSPECIFIED = 0;
   // Default value for newly enabled prebuilds.
-  PREBUILD_ACTIVATION_STRATEGY_ACTIVITY_BASED = 1;
+  PREBUILD_TRIGGER_STRATEGY_ACTIVITY_BASED = 1;
 }
 
 message PrebuildSettings {
@@ -32,7 +32,7 @@ message PrebuildSettings {
   BranchMatchingStrategy branch_strategy = 3;
   int32 prebuild_interval = 4;
   string workspace_class = 5;
-  PrebuildActivationStrategy activation_strategy = 6;
+  PrebuildTriggerStrategy trigger_strategy = 6;
 }
 
 enum BranchMatchingStrategy {
@@ -105,7 +105,7 @@ message UpdateConfigurationRequest {
     optional BranchMatchingStrategy branch_strategy = 3;
     optional int32 prebuild_interval = 4;
     optional string workspace_class = 5;
-    optional PrebuildActivationStrategy activation_strategy = 6;
+    optional PrebuildTriggerStrategy trigger_strategy = 6;
   }
   message WorkspaceSettings {
     optional string workspace_class = 1;

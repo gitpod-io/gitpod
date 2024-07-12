@@ -5506,6 +5506,30 @@ public final class Error {
      */
     com.google.protobuf.ByteString
         getLastUpdateBytes();
+
+    /**
+     * <code>string repo_name = 6 [json_name = "repoName"];</code>
+     * @return The repoName.
+     */
+    java.lang.String getRepoName();
+    /**
+     * <code>string repo_name = 6 [json_name = "repoName"];</code>
+     * @return The bytes for repoName.
+     */
+    com.google.protobuf.ByteString
+        getRepoNameBytes();
+
+    /**
+     * <code>string error_message = 7 [json_name = "errorMessage"];</code>
+     * @return The errorMessage.
+     */
+    java.lang.String getErrorMessage();
+    /**
+     * <code>string error_message = 7 [json_name = "errorMessage"];</code>
+     * @return The bytes for errorMessage.
+     */
+    com.google.protobuf.ByteString
+        getErrorMessageBytes();
   }
   /**
    * Protobuf type {@code gitpod.v1.RepositoryNotFoundError}
@@ -5534,6 +5558,8 @@ public final class Error {
       userScopes_ =
           com.google.protobuf.LazyStringArrayList.emptyList();
       lastUpdate_ = "";
+      repoName_ = "";
+      errorMessage_ = "";
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -5714,6 +5740,84 @@ public final class Error {
       }
     }
 
+    public static final int REPO_NAME_FIELD_NUMBER = 6;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object repoName_ = "";
+    /**
+     * <code>string repo_name = 6 [json_name = "repoName"];</code>
+     * @return The repoName.
+     */
+    @java.lang.Override
+    public java.lang.String getRepoName() {
+      java.lang.Object ref = repoName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        repoName_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string repo_name = 6 [json_name = "repoName"];</code>
+     * @return The bytes for repoName.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getRepoNameBytes() {
+      java.lang.Object ref = repoName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        repoName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int ERROR_MESSAGE_FIELD_NUMBER = 7;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object errorMessage_ = "";
+    /**
+     * <code>string error_message = 7 [json_name = "errorMessage"];</code>
+     * @return The errorMessage.
+     */
+    @java.lang.Override
+    public java.lang.String getErrorMessage() {
+      java.lang.Object ref = errorMessage_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        errorMessage_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error_message = 7 [json_name = "errorMessage"];</code>
+     * @return The bytes for errorMessage.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorMessageBytes() {
+      java.lang.Object ref = errorMessage_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        errorMessage_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -5742,6 +5846,12 @@ public final class Error {
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(lastUpdate_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 5, lastUpdate_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(repoName_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 6, repoName_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(errorMessage_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 7, errorMessage_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -5773,6 +5883,12 @@ public final class Error {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(lastUpdate_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(5, lastUpdate_);
       }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(repoName_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(6, repoName_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(errorMessage_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(7, errorMessage_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -5798,6 +5914,10 @@ public final class Error {
           .equals(other.getUserScopesList())) return false;
       if (!getLastUpdate()
           .equals(other.getLastUpdate())) return false;
+      if (!getRepoName()
+          .equals(other.getRepoName())) return false;
+      if (!getErrorMessage()
+          .equals(other.getErrorMessage())) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -5822,6 +5942,10 @@ public final class Error {
       }
       hash = (37 * hash) + LAST_UPDATE_FIELD_NUMBER;
       hash = (53 * hash) + getLastUpdate().hashCode();
+      hash = (37 * hash) + REPO_NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getRepoName().hashCode();
+      hash = (37 * hash) + ERROR_MESSAGE_FIELD_NUMBER;
+      hash = (53 * hash) + getErrorMessage().hashCode();
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -5959,6 +6083,8 @@ public final class Error {
         userScopes_ =
             com.google.protobuf.LazyStringArrayList.emptyList();
         lastUpdate_ = "";
+        repoName_ = "";
+        errorMessage_ = "";
         return this;
       }
 
@@ -6008,6 +6134,12 @@ public final class Error {
         if (((from_bitField0_ & 0x00000010) != 0)) {
           result.lastUpdate_ = lastUpdate_;
         }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.repoName_ = repoName_;
+        }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.errorMessage_ = errorMessage_;
+        }
       }
 
       @java.lang.Override
@@ -6048,6 +6180,16 @@ public final class Error {
         if (!other.getLastUpdate().isEmpty()) {
           lastUpdate_ = other.lastUpdate_;
           bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        if (!other.getRepoName().isEmpty()) {
+          repoName_ = other.repoName_;
+          bitField0_ |= 0x00000020;
+          onChanged();
+        }
+        if (!other.getErrorMessage().isEmpty()) {
+          errorMessage_ = other.errorMessage_;
+          bitField0_ |= 0x00000040;
           onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
@@ -6102,6 +6244,16 @@ public final class Error {
                 bitField0_ |= 0x00000010;
                 break;
               } // case 42
+              case 50: {
+                repoName_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
+              case 58: {
+                errorMessage_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 58
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -6474,6 +6626,150 @@ public final class Error {
         checkByteStringIsUtf8(value);
         lastUpdate_ = value;
         bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object repoName_ = "";
+      /**
+       * <code>string repo_name = 6 [json_name = "repoName"];</code>
+       * @return The repoName.
+       */
+      public java.lang.String getRepoName() {
+        java.lang.Object ref = repoName_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          repoName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string repo_name = 6 [json_name = "repoName"];</code>
+       * @return The bytes for repoName.
+       */
+      public com.google.protobuf.ByteString
+          getRepoNameBytes() {
+        java.lang.Object ref = repoName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          repoName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string repo_name = 6 [json_name = "repoName"];</code>
+       * @param value The repoName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRepoName(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        repoName_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string repo_name = 6 [json_name = "repoName"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRepoName() {
+        repoName_ = getDefaultInstance().getRepoName();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string repo_name = 6 [json_name = "repoName"];</code>
+       * @param value The bytes for repoName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRepoNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        repoName_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object errorMessage_ = "";
+      /**
+       * <code>string error_message = 7 [json_name = "errorMessage"];</code>
+       * @return The errorMessage.
+       */
+      public java.lang.String getErrorMessage() {
+        java.lang.Object ref = errorMessage_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          errorMessage_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error_message = 7 [json_name = "errorMessage"];</code>
+       * @return The bytes for errorMessage.
+       */
+      public com.google.protobuf.ByteString
+          getErrorMessageBytes() {
+        java.lang.Object ref = errorMessage_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          errorMessage_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error_message = 7 [json_name = "errorMessage"];</code>
+       * @param value The errorMessage to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorMessage(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        errorMessage_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error_message = 7 [json_name = "errorMessage"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearErrorMessage() {
+        errorMessage_ = getDefaultInstance().getErrorMessage();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error_message = 7 [json_name = "errorMessage"];</code>
+       * @param value The bytes for errorMessage to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        errorMessage_ = value;
+        bitField0_ |= 0x00000040;
         onChanged();
         return this;
       }
@@ -8144,21 +8440,23 @@ public final class Error {
       "?\n\026InvalidCostCenterError\022%\n\016attribution" +
       "_id\030\001 \001(\tR\rattributionId\"\037\n\035TooManyRunni" +
       "ngWorkspacesError\"7\n\025InvalidGitpodYMLErr" +
-      "or\022\036\n\nviolations\030\001 \003(\tR\nviolations\"\251\001\n\027R" +
+      "or\022\036\n\nviolations\030\001 \003(\tR\nviolations\"\353\001\n\027R" +
       "epositoryNotFoundError\022\022\n\004host\030\001 \001(\tR\004ho" +
       "st\022\024\n\005owner\030\002 \001(\tR\005owner\022\"\n\ruser_is_owne" +
       "r\030\003 \001(\010R\013userIsOwner\022\037\n\013user_scopes\030\004 \003(" +
       "\tR\nuserScopes\022\037\n\013last_update\030\005 \001(\tR\nlast" +
-      "Update\"\374\001\n\033RepositoryUnauthorizedError\022\022" +
-      "\n\004host\030\001 \001(\tR\004host\022\'\n\017required_scopes\030\002 " +
-      "\003(\tR\016requiredScopes\022#\n\rprovider_type\030\003 \001" +
-      "(\tR\014providerType\022\033\n\trepo_name\030\004 \001(\tR\010rep" +
-      "oName\0222\n\025provider_is_connected\030\005 \001(\010R\023pr" +
-      "oviderIsConnected\022*\n\021is_missing_scopes\030\006" +
-      " \001(\010R\017isMissingScopes\"$\n\"ImageBuildLogsN" +
-      "otYetAvailableErrorBQ\n\026io.gitpod.publica" +
-      "pi.v1Z7github.com/gitpod-io/gitpod/compo" +
-      "nents/public-api/go/v1b\006proto3"
+      "Update\022\033\n\trepo_name\030\006 \001(\tR\010repoName\022#\n\re" +
+      "rror_message\030\007 \001(\tR\014errorMessage\"\374\001\n\033Rep" +
+      "ositoryUnauthorizedError\022\022\n\004host\030\001 \001(\tR\004" +
+      "host\022\'\n\017required_scopes\030\002 \003(\tR\016requiredS" +
+      "copes\022#\n\rprovider_type\030\003 \001(\tR\014providerTy" +
+      "pe\022\033\n\trepo_name\030\004 \001(\tR\010repoName\0222\n\025provi" +
+      "der_is_connected\030\005 \001(\010R\023providerIsConnec" +
+      "ted\022*\n\021is_missing_scopes\030\006 \001(\010R\017isMissin" +
+      "gScopes\"$\n\"ImageBuildLogsNotYetAvailable" +
+      "ErrorBQ\n\026io.gitpod.publicapi.v1Z7github." +
+      "com/gitpod-io/gitpod/components/public-a" +
+      "pi/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -8218,7 +8516,7 @@ public final class Error {
     internal_static_gitpod_v1_RepositoryNotFoundError_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_RepositoryNotFoundError_descriptor,
-        new java.lang.String[] { "Host", "Owner", "UserIsOwner", "UserScopes", "LastUpdate", });
+        new java.lang.String[] { "Host", "Owner", "UserIsOwner", "UserScopes", "LastUpdate", "RepoName", "ErrorMessage", });
     internal_static_gitpod_v1_RepositoryUnauthorizedError_descriptor =
       getDescriptor().getMessageTypes().get(9);
     internal_static_gitpod_v1_RepositoryUnauthorizedError_fieldAccessorTable = new

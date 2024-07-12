@@ -424,7 +424,7 @@ export class ProjectsService {
             const enablePrebuildsPrev = !!existingProject.settings?.prebuilds?.enable;
             if (!enablePrebuildsPrev) {
                 // new default
-                partialProject.settings.prebuilds.activationStrategy = "activity-based";
+                partialProject.settings.prebuilds.triggerStrategy = "activity-based";
             }
         }
         return this.projectDB.updateProject(partialProject);

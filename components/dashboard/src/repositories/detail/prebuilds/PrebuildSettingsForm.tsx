@@ -7,7 +7,7 @@
 import {
     BranchMatchingStrategy,
     Configuration,
-    PrebuildActivationStrategy,
+    PrebuildTriggerStrategy,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { FC, FormEvent, useCallback, useMemo, useState } from "react";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
@@ -122,7 +122,7 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
             return false;
         }
 
-        if (configuration.prebuildSettings?.activationStrategy === PrebuildActivationStrategy.ACTIVITY_BASED) {
+        if (configuration.prebuildSettings?.triggerStrategy === PrebuildTriggerStrategy.ACTIVITY_BASED) {
             return false;
         }
 
@@ -132,12 +132,7 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
         }
 
         return !user.profile?.coachmarksDismissals[COACHMARK_KEY];
-    }, [
-        configuration.creationTime,
-        configuration.prebuildSettings?.activationStrategy,
-        isTriggerNotificationOpen,
-        user,
-    ]);
+    }, [configuration.creationTime, configuration.prebuildSettings?.triggerStrategy, isTriggerNotificationOpen, user]);
 
     return (
         <ConfigurationSettingsField>
