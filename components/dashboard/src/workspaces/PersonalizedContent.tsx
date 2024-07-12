@@ -65,54 +65,43 @@ const contentList = [
     },
 ];
 
-// const defaultContent = [
-//     { url: "https://www.gitpod.io/blog/whats-a-cloud-development-environment", title: "What's a CDE" },
-//     { url: "https://www.gitpod.io/solutions/onboarding", title: "Onboarding developers in one click" },
-//     { url: "https://www.gitpod.io/blog/using-a-cde-roi-calculator", title: "Building a business case for Gitpod" },
-// ];
+const defaultContent = [
+    { url: "https://www.gitpod.io/blog/whats-a-cloud-development-environment", title: "What's a CDE" },
+    { url: "https://www.gitpod.io/solutions/onboarding", title: "Onboarding developers in one click" },
+    { url: "https://www.gitpod.io/blog/using-a-cde-roi-calculator", title: "Building a business case for Gitpod" },
+];
 
 const PersonalizedContent: React.FC = () => {
     const user = useCurrentUser();
     const [selectedContent, setSelectedContent] = useState<Array<{ url: string; title: string }>>([]);
 
-    console.log("User: ", user?.profile);
-
     useEffect(() => {
         const storedContentData = localStorage.getItem("personalized-content-data");
         const currentTime = new Date().getTime();
 
-        let content: Array<{ url: string; title: string; priority?: number }> = [];
+        let content: Array<{ url: string; title: string }> = [];
+        let phase: string;
 
         if (storedContentData) {
-            const { lastTime /* , phase */ } = JSON.parse(storedContentData);
+            const { lastTime } = JSON.parse(storedContentData);
             const weeksPassed = Math.floor((currentTime - lastTime) / (7 * 24 * 60 * 60 * 1000));
 
             if (weeksPassed >= 2) {
-                // After 2 weeks, show random content
                 content = getRandomContent(contentList, 3);
+                phase = "random";
             } else if (weeksPassed >= 1) {
-                // After 1 week, show second set of content
-                content = getSecondSetContent(user);
+                content = getSecondWeekContent(user);
+                phase = "second";
             } else {
-                // First week, show personalized content
-                content = getPersonalizedContent(user);
+                content = getFirstWeekContent(user);
+                phase = "first";
             }
-
-            localStorage.setItem(
-                "personalized-content-data",
-                JSON.stringify({
-                    lastTime: currentTime,
-                    phase: weeksPassed >= 2 ? "random" : weeksPassed >= 1 ? "second" : "first",
-                }),
-            );
         } else {
-            // First visit, show personalized content
-            content = getPersonalizedContent(user);
-            localStorage.setItem(
-                "personalized-content-data",
-                JSON.stringify({ lastTime: currentTime, phase: "first" }),
-            );
+            content = getFirstWeekContent(user);
+            phase = "first";
         }
+
+        localStorage.setItem("personalized-content-data", JSON.stringify({ lastTime: currentTime, lastPhase: phase }));
 
         setSelectedContent(content);
     }, [user]);
@@ -137,40 +126,52 @@ const PersonalizedContent: React.FC = () => {
     );
 };
 
-function getPersonalizedContent(user: User | undefined) {
-    let content: Array<{ url: string; title: string; priority?: number }> = [];
+function getFirstWeekContent(user: User | undefined): Array<{ url: string; title: string }> {
+    if (!user || !user.profile) return defaultContent;
 
-    if (
-        user?.profile?.explorationReasons?.includes("explore-professional") ||
-        user?.profile?.explorationReasons?.includes("replace-remote-dev")
-    ) {
-        content = contentList.filter((item) =>
-            ["vdi-replacement", "vdi-and-cde", "onboard-contractors"].includes(item.label),
-        );
-    } else if (user?.profile?.jobRole === "data") {
-        content = [contentList.find((item) => item.label === "luminus-case-study")!];
-    } else if (user?.profile?.jobRole === "team-lead") {
-        content = contentList.filter((item) => ["onboard-contractors", "ephemeral-security"].includes(item.label));
+    let content: Array<{ url: string; title: string }> = [];
+
+    if (user.profile.explorationReasons?.includes("replace-remote-dev")) {
+        content.push(contentList.find((item) => item.label === "vdi-replacement")!);
+        content.push(contentList.find((item) => item.label === "vdi-and-cde")!);
     }
 
-    if (user?.profile?.signupGoals?.includes("onboarding")) {
-        content.push(
-            ...contentList.filter((item) => ["onboard-contractors", "onboarding-solutions"].includes(item.label)),
-        );
+    if (user.profile.signupGoals?.includes("onboarding")) {
+        content.push(contentList.find((item) => item.label === "onboard-contractors")!);
+        content.push(contentList.find((item) => item.label === "onboarding-solutions")!);
     }
 
-    return content.slice(0, 3);
+    if (user.profile.jobRole === "data") {
+        content.push(contentList.find((item) => item.label === "luminus-case-study")!);
+    }
+
+    if (user.profile.jobRole === "team-lead") {
+        content.push(contentList.find((item) => item.label === "cde-roi-calculator")!);
+    }
+
+    content = content.slice(0, 3);
+
+    return content.length === 3 ? content : defaultContent;
 }
 
-function getSecondSetContent(user: User | undefined) {
-    return [
-        contentList.find((item) => item.label === "onboarding-solutions")!,
-        contentList.find((item) => item.label === "cde-roi-calculator")!,
-        contentList.find((item) => item.label === "what-is-cde")!,
-    ];
+function getSecondWeekContent(user: User | undefined): Array<{ url: string; title: string }> {
+    if (!user || !user.profile) return defaultContent;
+
+    let content: Array<{ url: string; title: string }> = [];
+
+    if (user.profile.explorationReasons?.includes("security")) {
+        content.push(contentList.find((item) => item.label === "kingland-case-study")!);
+        content.push(contentList.find((item) => item.label === "ephemeral-security")!);
+    }
+
+    content.push(contentList.find((item) => item.label === "what-is-cde")!);
+
+    content = content.slice(0, 3);
+
+    return content.length === 3 ? content : defaultContent;
 }
 
-function getRandomContent(list: Array<{ url: string; title: string; priority?: number }>, count: number) {
+function getRandomContent(list: Array<{ url: string; title: string }>, count: number) {
     const shuffled = [...list].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
 }
