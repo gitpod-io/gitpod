@@ -15,7 +15,6 @@ import { TokenService } from "../user/token-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { CommitContext, CommitInfo, Project, User, WebhookEvent } from "@gitpod/gitpod-protocol";
-import { GitHubService } from "./github-service";
 import { URL } from "url";
 import { ContextParser } from "../workspace/context-parser-service";
 import { RepoURL } from "../repohost";
@@ -25,6 +24,7 @@ import { ProjectsService } from "../projects/projects-service";
 import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { PREBUILD_TOKEN_SCOPE } from "./constants";
 
 @injectable()
 export class GitHubEnterpriseApp {
@@ -119,7 +119,7 @@ export class GitHubEnterpriseApp {
                 const body = (req as any).rawBody;
                 const tokenEntries = (await this.userService.findTokensForIdentity(user.id, gitpodIdentity)).filter(
                     (tokenEntry) => {
-                        return tokenEntry.token.scopes.includes(GitHubService.PREBUILD_TOKEN_SCOPE);
+                        return tokenEntry.token.scopes.includes(PREBUILD_TOKEN_SCOPE);
                     },
                 );
                 const signatureMatched = tokenEntries.some((tokenEntry) => {

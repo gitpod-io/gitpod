@@ -179,41 +179,6 @@ describe("ProjectsService", async () => {
         );
     });
 
-    describe("enablePrebuild handling", async () => {
-        it("should install webhook on new projects", async () => {
-            const webhooks = container.get<Set<String>>("webhooks");
-            webhooks.clear();
-            const ps = container.get(ProjectsService);
-            const project = await createTestProject(ps, org, owner); // using new default settings
-            await ps.updateProject(owner, {
-                id: project.id,
-                settings: {
-                    prebuilds: { enable: true },
-                },
-            });
-            expect(webhooks).to.contain(project.cloneUrl);
-        });
-
-        it("should install webhook on pre-existing projects", async () => {
-            const webhooks = container.get<Set<String>>("webhooks");
-            webhooks.clear();
-            const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
-            const ps = container.get(ProjectsService);
-            const project = await createTestProject(ps, org, owner, {
-                name: "test-pro",
-                cloneUrl,
-                settings: {},
-            });
-            await ps.updateProject(owner, {
-                id: project.id,
-                settings: {
-                    prebuilds: { enable: true },
-                },
-            });
-            expect(webhooks).to.contain(project.cloneUrl);
-        });
-    });
-
     it("should findProjects", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
@@ -309,6 +274,7 @@ describe("ProjectsService", async () => {
                 workspaceClass: "ultra",
                 branchStrategy: "matched-branches",
                 branchMatchingPattern: "feature-*",
+                triggerStrategy: "activity-based",
             },
             workspaceClasses: {},
         });

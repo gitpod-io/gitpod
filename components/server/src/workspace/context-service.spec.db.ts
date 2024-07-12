@@ -138,10 +138,6 @@ describe("ContextService", async () => {
                         },
                     },
                     services: {
-                        repositoryService: {
-                            installAutomatedPrebuilds: () => {},
-                            canInstallAutomatedPrebuilds: async () => {},
-                        },
                         repositoryProvider: {
                             hasReadAccess: async (user: any, owner: string, repo: string) => {
                                 return true;

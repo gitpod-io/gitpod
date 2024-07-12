@@ -8,6 +8,7 @@ import { inject, injectable } from "inversify";
 import * as grpc from "@grpc/grpc-js";
 import { RedisPublisher, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
+    CommitContext,
     GetWorkspaceTimeoutResult,
     GitpodClient,
     GitpodServer,
@@ -61,7 +62,7 @@ import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlem
 import * as crypto from "crypto";
 import { WorkspaceRegion, isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { RegionService } from "./region-service";
-import { ProjectsService } from "../projects/projects-service";
+import { LazyPrebuildManager, ProjectsService } from "../projects/projects-service";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { Config } from "../config";
@@ -75,6 +76,7 @@ import { SnapshotService } from "./snapshot-service";
 import { InstallationService } from "../auth/installation-service";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { WatchWorkspaceStatusResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { ContextParser } from "./context-parser-service";
 
 export const GIT_STATUS_LENGTH_CAP_BYTES = 4096;
 
@@ -103,6 +105,8 @@ export class WorkspaceService {
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
         @inject(Authorizer) private readonly auth: Authorizer,
+        @inject(ContextParser) private readonly contextParser: ContextParser,
+        @inject(LazyPrebuildManager) private readonly prebuildManager: LazyPrebuildManager,
 
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
         @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter,
@@ -193,6 +197,9 @@ export class WorkspaceService {
         }
         this.asyncUpdateDeletionEligabilityTime(user.id, workspace.id);
         this.asyncUpdateDeletionEligabilityTimeForUsedPrebuild(user.id, workspace);
+        if (project) {
+            this.asyncStartPrebuild({ ctx, project, workspace, user });
+        }
         return workspace;
     }
 
@@ -378,6 +385,54 @@ export class WorkspaceService {
             log.error(
                 { userId, workspaceId: workspace.id },
                 "Failed to update deletion eligibility time for prebuild",
+                err,
+            ),
+        );
+    }
+
+    private asyncStartPrebuild({
+        ctx,
+        project,
+        workspace,
+        user,
+    }: {
+        ctx: TraceContext;
+        project: Project;
+        workspace: Workspace;
+        user: User;
+    }): void {
+        (async () => {
+            const prebuildManager = this.prebuildManager();
+
+            const context = (await this.contextParser.handle(ctx, user, workspace.contextURL)) as CommitContext;
+            log.info({ workspaceId: workspace.id }, "starting prebuild after workspace creation", {
+                projectId: project.id,
+                projectName: project.name,
+                contextURL: workspace.contextURL,
+                context,
+            });
+            const config = await prebuildManager.fetchConfig(ctx, user, context, project?.teamId);
+            const prebuildPrecondition = prebuildManager.checkPrebuildPrecondition({
+                config,
+                project,
+                context,
+            });
+            if (!prebuildPrecondition.shouldRun) {
+                log.info("Workspace create event: No prebuild.", { config, context });
+                return;
+            }
+
+            await prebuildManager.startPrebuild(ctx, {
+                user,
+                project,
+                forcePrebuild: false,
+                context,
+                trigger: "lastWorkspaceStart",
+            });
+        })().catch((err) =>
+            log.error(
+                { userId: user.id, workspaceId: workspace.id },
+                "Failed to start prebuild after workspace creation",
                 err,
             ),
         );
