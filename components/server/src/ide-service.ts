@@ -67,36 +67,18 @@ export class IDEService {
         }
     }
 
-    async isIDEAvailable(ide: string, user: { id: string; email?: string }): Promise<boolean> {
-        if (ide.trim() === "") {
+    async isIDEAvailable(ide: string, request: { user: { id: string; email?: string } }): Promise<boolean> {
+        if (!ide) {
             return false;
         }
-        const allKeys = await this.listAvailableKeys(user);
-        return allKeys.includes(ide);
-    }
-
-    async toAvailableIDEArr(ides: string[], user: { id: string; email?: string }): Promise<string[]> {
-        const allKeys = await this.listAvailableKeys(user);
-        return ides.filter((ide) => !!ide && allKeys.includes(ide));
-    }
-
-    async toAvailableIDEMap<T>(
-        ides: { [key: string]: T },
-        user: { id: string; email?: string },
-    ): Promise<{ [key: string]: T }> {
-        const allKeys = await this.listAvailableKeys(user);
-        return Object.fromEntries(Object.entries(ides).filter(([key]) => allKeys.includes(key)));
-    }
-
-    private async listAvailableKeys(user: { id: string; email?: string }): Promise<string[]> {
-        const config = this.cacheConfig ?? (await this.getIDEConfig({ user }));
-        return Object.keys(config.ideOptions.options);
+        const config = await this.getIDEConfig({ user: request.user });
+        return Object.keys(config.ideOptions.options).includes(ide);
     }
 
     migrateSettings(user: User): IDESettings | undefined {
         if (
             !user?.additionalData?.ideSettings ||
-            user.additionalData.ideSettings.settingVersion === IDESettingsHelper.SettingVersion
+            user.additionalData.ideSettings.settingVersion === IDESettingsVersion
         ) {
             return undefined;
         }
@@ -120,7 +102,7 @@ export class IDEService {
             newIDESettings.useLatestVersion = useLatest;
         }
 
-        if (ideSettings.defaultIde && !this.isIDEAvailable(ideSettings.defaultIde, user)) {
+        if (ideSettings.defaultIde && !this.isIDEAvailable(ideSettings.defaultIde, { user })) {
             ideSettings.defaultIde = "code";
         }
         return newIDESettings;
@@ -135,7 +117,7 @@ export class IDEService {
             workspace.type === "prebuild" ? IdeServiceApi.WorkspaceType.PREBUILD : IdeServiceApi.WorkspaceType.REGULAR;
 
         // in case users have `auto-start` options set
-        if (userSelectedIdeSettings?.defaultIde && !this.isIDEAvailable(userSelectedIdeSettings.defaultIde, user)) {
+        if (userSelectedIdeSettings?.defaultIde && !this.isIDEAvailable(userSelectedIdeSettings.defaultIde, { user })) {
             userSelectedIdeSettings.defaultIde = "code";
         }
 

@@ -455,9 +455,6 @@ export class OrganizationService {
             }
         }
         if (settings.pinnedEditorVersions) {
-            settings.pinnedEditorVersions = await this.ideService.toAvailableIDEMap(settings.pinnedEditorVersions, {
-                id: userId,
-            });
             const ideConfig = await this.ideService.getIDEConfig({ user: { id: userId } });
             for (const [key, version] of Object.entries(settings.pinnedEditorVersions)) {
                 if (
@@ -471,10 +468,6 @@ export class OrganizationService {
 
         if (settings.restrictedEditorNames) {
             if (settings.restrictedEditorNames.length > 0) {
-                settings.restrictedEditorNames = await this.ideService.toAvailableIDEArr(
-                    settings.restrictedEditorNames,
-                    { id: userId },
-                );
                 await this.ideService.checkEditorsAllowed(userId, settings.restrictedEditorNames);
             }
         }

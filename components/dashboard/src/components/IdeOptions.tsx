@@ -110,8 +110,10 @@ export const IdeOptionsModifyModal = ({
         if (computedError) {
             return;
         }
+        const availableKeys = ideOptions?.map((e) => e.id) || [];
+        const editors = new Set([...restrictedEditors].filter((e) => availableKeys.includes(e)));
         updateMutation.mutate(
-            { restrictedEditors, pinnedEditorVersions },
+            { restrictedEditors: editors, pinnedEditorVersions },
             {
                 onSuccess: () => {
                     toast({ message: "Editor options updated" });
