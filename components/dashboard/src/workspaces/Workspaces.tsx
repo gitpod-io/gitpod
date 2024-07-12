@@ -23,6 +23,7 @@ import { BlogBanners } from "./BlogBanners";
 import { BookOpen, Code } from "lucide-react";
 import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
 import { isGitpodIo } from "../utils";
+import PersonalizedContent from "./PersonalizedContent";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -217,38 +218,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                             </a>
                                         </div>
                                     </div>
-                                    {/* TODO: Create this section based on user submissions while onboarding form */}
-                                    <div className="flex flex-col gap-2">
-                                        <h3 className="text-lg font-semibold text-pk-content-primary">
-                                            Personalised for you
-                                        </h3>
-                                        <div className="flex flex-col gap-1 w-fit">
-                                            <a
-                                                href="https://www.gitpod.io/blog/whats-a-cloud-development-environment"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-sm text-pk-content-primary items-center hover:text-blue-600 dark:hover:text-blue-400"
-                                            >
-                                                What's a CDE
-                                            </a>
-                                            <a
-                                                href="https://www.gitpod.io/solutions/onboarding"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-sm text-pk-content-primary items-center hover:text-blue-600 dark:hover:text-blue-400"
-                                            >
-                                                Onboard developers in one click
-                                            </a>
-                                            <a
-                                                href="https://www.gitpod.io/blog/using-a-cde-roi-calculator"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-sm text-pk-content-primary items-center hover:text-blue-600 dark:hover:text-blue-400"
-                                            >
-                                                Building a business case for Gitpod
-                                            </a>
-                                        </div>
-                                    </div>
+                                    <PersonalizedContent />
                                     <BlogBanners />
                                 </div>
                             )}
