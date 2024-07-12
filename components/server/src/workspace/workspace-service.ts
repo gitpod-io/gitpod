@@ -402,6 +402,8 @@ export class WorkspaceService {
         user: User;
     }): void {
         (async () => {
+            const prebuildManager = this.prebuildManager();
+
             const context = (await this.contextParser.handle(ctx, user, workspace.contextURL)) as CommitContext;
             log.info({ workspaceId: workspace.id }, "starting prebuild after workspace creation", {
                 projectId: project.id,
@@ -409,7 +411,18 @@ export class WorkspaceService {
                 contextURL: workspace.contextURL,
                 context,
             });
-            await this.prebuildManager().startPrebuild(ctx, {
+            const config = await prebuildManager.fetchConfig(ctx, user, context, project?.teamId);
+            const prebuildPrecondition = prebuildManager.checkPrebuildPrecondition({
+                config,
+                project,
+                context,
+            });
+            if (!prebuildPrecondition.shouldRun) {
+                log.info("Workspace create event: No prebuild.", { config, context });
+                return;
+            }
+
+            await prebuildManager.startPrebuild(ctx, {
                 user,
                 project,
                 forcePrebuild: false,
