@@ -146,18 +146,17 @@ const PersonalizedContent: React.FC = () => {
  * Content Selection Logic:
  *
  * Week 1:
- * 1. If exploration reason is not "explore-professional" -> Show default content
- * 2. If signup goal is efficiency-collab & job role is enabling/team-lead & exploration reason is replace-remote-dev:
+ * 1. If signup goal is efficiency-collab & job role is enabling/team-lead & exploration reason is replace-remote-dev:
  *    - Show 3 specific articles related to VDI replacement, VDI and CDE, and onboarding contractors
- * 3. If signup goal is (onboarding or powerful resources) and job role is data:
+ * 2. If signup goal is (onboarding or powerful resources) and job role is data:
  *    - Show 3 specific articles related to Python dependencies, onboarding, and Gitpod solutions
- * 4. If signup goal is powerful resources:
+ * 3. If signup goal is powerful resources:
  *    - Show 3 specific articles related to VDI replacement, onboarding, and ROI calculator
- * 5. If signup goal is security:
+ * 4. If signup goal is security:
  *    - Show 3 specific articles related to VDI replacement, case study, and ephemeral security
- * 6. If job role is enabling/team-lead and signup goal is security:
+ * 5. If job role is enabling/team-lead and signup goal is security:
  *    - Show 3 specific articles related to onboarding, ROI calculator, and CDE introduction
- * 7. For all other cases -> Show default content
+ * 6. For all other cases -> Show default content
  *
  * After Week 1:
  * - Show random 3 articles from the entire content list
@@ -169,10 +168,6 @@ function getFirstWeekContent(user: User | undefined): ContentItem[] {
     if (!user?.profile) return defaultContent;
 
     const { explorationReasons, signupGoals, jobRole } = user.profile;
-
-    if (!explorationReasons?.includes("explore-professional")) {
-        return defaultContent;
-    }
 
     let content: ContentItem[] = [];
 
