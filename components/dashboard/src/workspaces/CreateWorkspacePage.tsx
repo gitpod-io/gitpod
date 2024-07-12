@@ -350,8 +350,11 @@ export function CreateWorkspacePage() {
         );
         if (rememberedOptions) {
             if (!selectedIdeIsDirty) {
-                if (rememberedOptions.editorSettings?.name === "intellij-previous") {
-                    rememberedOptions.editorSettings.name = "intellij";
+                if (
+                    rememberedOptions.editorSettings?.name &&
+                    !availableEditorOptions.includes(rememberedOptions.editorSettings.name)
+                ) {
+                    rememberedOptions.editorSettings.name = "code";
                 }
                 setSelectedIde(rememberedOptions.editorSettings?.name, false);
                 setUseLatestIde(rememberedOptions.editorSettings?.version === "latest");

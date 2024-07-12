@@ -7,6 +7,7 @@
 import { User } from "@gitpod/gitpod-protocol";
 import * as chai from "chai";
 import { IDEService } from "./ide-service";
+import { IDESettingsVersion } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 const expect = chai.expect;
 
 describe("ide-service", function () {
@@ -24,7 +25,7 @@ describe("ide-service", function () {
             expect(result).to.undefined;
         });
 
-        it("with settingVersion 2.0 should be 2.1", function () {
+        it("with settingVersion 2.0 should be latest", function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -39,13 +40,13 @@ describe("ide-service", function () {
             };
             const result = ideService.migrateSettings(user);
             expect(result).to.deep.equal({
-                settingVersion: "2.1",
+                settingVersion: IDESettingsVersion,
                 defaultIde: "code",
                 useLatestVersion: true,
             });
         });
 
-        it("with settingVersion 2.0 should be 2.1 and remove intellij-previous", function () {
+        it("with settingVersion 2.0 should be latest and remove intellij-previous", function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -60,20 +61,20 @@ describe("ide-service", function () {
             };
             const result = ideService.migrateSettings(user);
             expect(result).to.deep.equal({
-                settingVersion: "2.1",
-                defaultIde: "intellij",
+                settingVersion: IDESettingsVersion,
+                defaultIde: "code",
                 useLatestVersion: false,
             });
         });
 
-        it("with settingVersion 2.1 should be undefined", function () {
+        it("with settingVersion latest should be undefined", function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
                 identities: [],
                 additionalData: {
                     ideSettings: {
-                        settingVersion: "2.1",
+                        settingVersion: IDESettingsVersion,
                         defaultIde: "code-latest",
                         useDesktopIde: false,
                     },

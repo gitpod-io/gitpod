@@ -49,6 +49,8 @@ export namespace IDEOptions {
     }
 }
 
+export const IDESettingsVersion = "2.2";
+
 export interface IDEClient {
     /**
      * The default desktop IDE when the user has not specified one.
