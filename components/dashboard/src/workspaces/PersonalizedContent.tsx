@@ -176,7 +176,7 @@ function getFirstWeekContent(user: User | undefined): ContentItem[] {
 
     const { explorationReasons, signupGoals, jobRole } = user.profile;
 
-    let content: ContentItem[] = [];
+    const content: ContentItem[] = [];
 
     if (
         signupGoals?.includes("efficiency-collab") &&
