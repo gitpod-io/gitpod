@@ -203,10 +203,11 @@ const PersonalizedContent: React.FC = () => {
  *    - Match jobRole if specified
  *    - Match any explorationReasons if specified
  *    - Match any signupGoals if specified
- * 2. If matches found:
- *    - Sort matched content by priority (lower number = higher priority)
- *    - Select top 3 items
- * 3. If no matches found:
+ * 2. Sort matched content by priority (lower number = higher priority)
+ * 3. Select top 3 items from matched content
+ * 4. If less than 3 items selected:
+ *    - Fill remaining slots with unique items from defaultContent
+ * 5. If no matches found:
  *    - Show default content
  *
  * After Week 1:
@@ -232,11 +233,22 @@ function getFirstWeekContent(user: User | undefined): ContentItem[] {
         return jobRoleMatch && reasonsMatch && goalsMatch;
     });
 
-    if (matchingContent.length === 0) return defaultContent;
-
     const sortedContent = matchingContent.sort((a, b) => (a.priority || Infinity) - (b.priority || Infinity));
 
-    return sortedContent.slice(0, 3);
+    let selectedContent = sortedContent.slice(0, 3);
+
+    if (selectedContent.length < 3) {
+        const remainingCount = 3 - selectedContent.length;
+        const selectedLabels = new Set(selectedContent.map((item) => item.label));
+
+        const additionalContent = defaultContent
+            .filter((item) => !selectedLabels.has(item.label))
+            .slice(0, remainingCount);
+
+        selectedContent = [...selectedContent, ...additionalContent];
+    }
+
+    return selectedContent;
 }
 
 function getRandomContent(list: ContentItem[], count: number, lastShown: string[]): ContentItem[] {
