@@ -82,7 +82,7 @@ const defaultContent: ContentItem[] = [
 ];
 
 const PersonalizedContent: React.FC = () => {
-    const user: User | undefined = useCurrentUser();
+    const user = useCurrentUser();
     const [selectedContent, setSelectedContent] = useState<ContentItem[]>([]);
 
     useEffect(() => {
