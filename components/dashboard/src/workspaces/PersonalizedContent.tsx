@@ -13,6 +13,12 @@ type ContentItem = {
     url: string;
     title: string;
     label: string;
+    priority?: number;
+    recommended?: {
+        jobRole?: string[];
+        explorationReasons?: string[];
+        signupGoals?: string[];
+    };
 };
 
 const contentList: ContentItem[] = [
@@ -20,46 +26,87 @@ const contentList: ContentItem[] = [
         url: "https://www.gitpod.io/blog/writing-software-with-chopsticks-an-intro-to-vdi",
         title: "Why replace your VDI with CDE",
         label: "vdi-replacement",
+        priority: 1,
+        recommended: {
+            explorationReasons: ["replace-remote-dev"],
+            signupGoals: ["efficiency-collab", "security"],
+        },
     },
     {
         url: "https://www.gitpod.io/customers/luminus",
         title: "Solve python dependency issues with Gitpod",
         label: "luminus-case-study",
+        priority: 2,
+        recommended: {
+            jobRole: ["data"],
+        },
     },
     {
         url: "https://www.gitpod.io/blog/how-to-use-vdis-and-cdes-together",
         title: "Using VDIs and Gitpod together",
         label: "vdi-and-cde",
+        priority: 3,
+        recommended: {
+            explorationReasons: ["replace-remote-dev"],
+            signupGoals: ["security"],
+        },
     },
     {
         url: "https://www.gitpod.io/blog/onboard-contractors-securely-and-quickly-using-gitpod",
         title: "Onboard contractors with Gitpod",
         label: "onboard-contractors",
+        priority: 4,
+        recommended: {
+            jobRole: ["enabling", "team-lead"],
+            signupGoals: ["onboarding", "security"],
+        },
     },
     {
         url: "https://www.gitpod.io/solutions/onboarding",
         title: "Onboarding developers in one click",
         label: "onboarding-solutions",
+        priority: 5,
+        recommended: {
+            signupGoals: ["onboarding", "efficiency-collab"],
+        },
     },
     {
         url: "https://www.gitpod.io/customers/kingland",
         title: "How Gitpod impacts supply chain security",
         label: "kingland-case-study",
+        priority: 6,
+        recommended: {
+            signupGoals: ["security"],
+        },
     },
     {
         url: "https://www.gitpod.io/blog/improve-security-using-ephemeral-development-environments",
         title: "Improve security with ephemeral environments",
         label: "ephemeral-security",
+        priority: 7,
+        recommended: {
+            signupGoals: ["security"],
+        },
     },
     {
         url: "https://www.gitpod.io/blog/using-a-cde-roi-calculator",
         title: "Building a business case for Gitpod",
         label: "cde-roi-calculator",
+        priority: 8,
+        recommended: {
+            jobRole: ["enabling", "team-lead"],
+            explorationReasons: ["replace-remote-dev"],
+            signupGoals: ["efficiency-collab", "security"],
+        },
     },
     {
         url: "https://www.gitpod.io/blog/whats-a-cloud-development-environment",
         title: "What's a CDE",
         label: "what-is-cde",
+        priority: 9,
+        recommended: {
+            jobRole: ["enabling", "team-lead"],
+        },
     },
 ];
 
@@ -152,18 +199,15 @@ const PersonalizedContent: React.FC = () => {
 /**
  * Content Selection Logic:
  *
- * Week 1:
- * 1. If signup goal is efficiency-collab & job role is enabling/team-lead & exploration reason is replace-remote-dev:
- *    - Show 3 specific articles related to VDI replacement, VDI and CDE, and onboarding contractors
- * 2. If signup goal is (onboarding or powerful resources) and job role is data:
- *    - Show 3 specific articles related to Python dependencies, onboarding, and Gitpod solutions
- * 3. If signup goal is powerful resources:
- *    - Show 3 specific articles related to VDI replacement, onboarding, and ROI calculator
- * 4. If signup goal is security:
- *    - Show 3 specific articles related to VDI replacement, case study, and ephemeral security
- * 5. If job role is enabling/team-lead and signup goal is security:
- *    - Show 3 specific articles related to onboarding, ROI calculator, and CDE introduction
- * 6. For all other cases -> Show default content
+ * 1. Filter contentList based on user profile:
+ *    - Match jobRole if specified
+ *    - Match any explorationReasons if specified
+ *    - Match any signupGoals if specified
+ * 2. If matches found:
+ *    - Sort matched content by priority (lower number = higher priority)
+ *    - Select top 3 items
+ * 3. If no matches found:
+ *    - Show default content
  *
  * After Week 1:
  * - Show random 3 articles from the entire content list
@@ -176,48 +220,23 @@ function getFirstWeekContent(user: User | undefined): ContentItem[] {
 
     const { explorationReasons, signupGoals, jobRole } = user.profile;
 
-    const content: ContentItem[] = [];
+    const matchingContent = contentList.filter((item) => {
+        const rec = item.recommended;
+        if (!rec) return false;
 
-    if (
-        signupGoals?.includes("efficiency-collab") &&
-        (jobRole === "enabling" || jobRole === "team-lead") &&
-        explorationReasons?.includes("replace-remote-dev")
-    ) {
-        content.push(
-            contentList.find((item) => item.label === "vdi-replacement")!,
-            contentList.find((item) => item.label === "vdi-and-cde")!,
-            contentList.find((item) => item.label === "onboard-contractors")!,
-        );
-    } else if (
-        (signupGoals?.includes("onboarding") || signupGoals?.includes("powerful-resources")) &&
-        jobRole === "data"
-    ) {
-        content.push(
-            contentList.find((item) => item.label === "luminus-case-study")!,
-            contentList.find((item) => item.label === "onboard-contractors")!,
-            contentList.find((item) => item.label === "onboarding-solutions")!,
-        );
-    } else if (signupGoals?.includes("powerful-resources")) {
-        content.push(
-            contentList.find((item) => item.label === "vdi-replacement")!,
-            contentList.find((item) => item.label === "onboarding-solutions")!,
-            contentList.find((item) => item.label === "cde-roi-calculator")!,
-        );
-    } else if (signupGoals?.includes("security")) {
-        content.push(
-            contentList.find((item) => item.label === "vdi-replacement")!,
-            contentList.find((item) => item.label === "kingland-case-study")!,
-            contentList.find((item) => item.label === "ephemeral-security")!,
-        );
-    } else if ((jobRole === "enabling" || jobRole === "team-lead") && signupGoals?.includes("security")) {
-        content.push(
-            contentList.find((item) => item.label === "onboard-contractors")!,
-            contentList.find((item) => item.label === "cde-roi-calculator")!,
-            contentList.find((item) => item.label === "what-is-cde")!,
-        );
-    }
+        const jobRoleMatch = !rec.jobRole || rec.jobRole.includes(jobRole);
+        const reasonsMatch =
+            !rec.explorationReasons || rec.explorationReasons.some((r) => explorationReasons?.includes(r));
+        const goalsMatch = !rec.signupGoals || rec.signupGoals.some((g) => signupGoals?.includes(g));
 
-    return content.length > 0 ? content : defaultContent;
+        return jobRoleMatch && reasonsMatch && goalsMatch;
+    });
+
+    if (matchingContent.length === 0) return defaultContent;
+
+    const sortedContent = matchingContent.sort((a, b) => (a.priority || Infinity) - (b.priority || Infinity));
+
+    return sortedContent.slice(0, 3);
 }
 
 function getRandomContent(list: ContentItem[], count: number, lastShown: string[]): ContentItem[] {
