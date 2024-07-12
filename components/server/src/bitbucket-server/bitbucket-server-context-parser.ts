@@ -31,14 +31,15 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
                 contextUrl,
             );
 
-            if (searchParams.has("at")) {
-                const branchName = this.toSimpleBranchName(decodeURIComponent(searchParams.get("at")!));
-                more.ref = branchName;
-                more.refType = "branch";
-            } else if (searchParams.has("until")) {
-                const branchName = this.toSimpleBranchName(decodeURIComponent(searchParams.get("until")!));
-                more.ref = branchName;
-                more.refType = "branch";
+            const searchParamsRef = searchParams.get("at") ?? searchParams.get("until");
+            if (searchParamsRef) {
+                if (searchParamsRef.startsWith("refs/tags/")) {
+                    more.ref = this.toSimplifiedTagName(searchParamsRef);
+                    more.refType = "tag";
+                } else {
+                    more.ref = this.toSimpleBranchName(searchParamsRef);
+                    more.refType = "branch";
+                }
             }
 
             if (moreSegments[0] === "pull-requests" && !!moreSegments[1]) {
@@ -67,6 +68,12 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
     // we need to parse the simple branch name `foo`.
     public toSimpleBranchName(qualifiedBranchName: string | undefined) {
         return qualifiedBranchName?.replace("refs/heads/", "");
+    }
+
+    // Example: For a given context URL https://HOST/projects/FOO/repos/repo123/browse?at=refs%2tags%2Ffoo
+    // we need to parse the simple tag name `foo`.
+    public toSimplifiedTagName(qualifiedTagName?: string) {
+        return qualifiedTagName?.replace("refs/tags/", "");
     }
 
     public async parseURL(user: User, contextUrl: string): Promise<{ repoKind: "projects" | "users" } & URLParts> {
