@@ -5,7 +5,7 @@
         "branchStrategy": "BRANCH_MATCHING_STRATEGY_DEFAULT_BRANCH",
         "prebuildInterval": 42,
         "workspaceClass": "dev",
-        "activationStrategy": "PREBUILD_ACTIVATION_STRATEGY_ACTIVITY_BASED"
+        "triggerStrategy": "PREBUILD_TRIGGER_STRATEGY_UNSPECIFIED"
     },
     "err": ""
 }
