@@ -11,7 +11,7 @@
             "branchStrategy": "BRANCH_MATCHING_STRATEGY_DEFAULT_BRANCH",
             "prebuildInterval": 20,
             "workspaceClass": "dev",
-            "activationStrategy": "PREBUILD_ACTIVATION_STRATEGY_UNSPECIFIED"
+            "triggerStrategy": "PREBUILD_TRIGGER_STRATEGY_UNSPECIFIED"
         },
         "workspaceSettings": {
             "workspaceClass": "dev",
