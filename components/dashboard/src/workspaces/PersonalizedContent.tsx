@@ -25,7 +25,7 @@ type ContentItem = {
 const contentList: ContentItem[] = [
     {
         url: "https://www.gitpod.io/blog/writing-software-with-chopsticks-an-intro-to-vdi",
-        title: "Why replace your VDI with CDE",
+        title: "Why replace a VDI with Gitpod",
         label: "vdi-replacement",
         priority: 1,
         recommended: {
@@ -54,7 +54,7 @@ const contentList: ContentItem[] = [
     },
     {
         url: "https://www.gitpod.io/blog/onboard-contractors-securely-and-quickly-using-gitpod",
-        title: "Onboard contractors with Gitpod",
+        title: "Onboard contractors securely with Gitpod",
         label: "onboard-contractors",
         priority: 4,
         recommended: {
@@ -64,7 +64,7 @@ const contentList: ContentItem[] = [
     },
     {
         url: "https://www.gitpod.io/solutions/onboarding",
-        title: "Onboarding developers in one click",
+        title: "Onboard developers in one click with Gitpod",
         label: "onboarding-solutions",
         priority: 5,
         recommended: {
@@ -73,7 +73,7 @@ const contentList: ContentItem[] = [
     },
     {
         url: "https://www.gitpod.io/customers/kingland",
-        title: "How Gitpod impacts supply chain security",
+        title: "The impact of Gitpod on supply-chain security",
         label: "kingland-case-study",
         priority: 6,
         recommended: {
@@ -102,7 +102,7 @@ const contentList: ContentItem[] = [
     },
     {
         url: "https://www.gitpod.io/blog/whats-a-cloud-development-environment",
-        title: "What's a CDE",
+        title: "What is a cloud development environment",
         label: "what-is-cde",
         priority: 9,
         recommended: {
