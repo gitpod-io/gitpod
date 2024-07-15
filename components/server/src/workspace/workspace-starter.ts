@@ -60,7 +60,7 @@ import {
     WorkspaceInstanceStatus,
     WorkspaceTimeoutDuration,
 } from "@gitpod/gitpod-protocol";
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { IAnalyticsWriter, TrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -616,20 +616,27 @@ export class WorkspaceStarter {
             }
             increaseSuccessfulInstanceStartCounter(retries);
 
+            const trackProperties: TrackMessage["properties"] = {
+                workspaceId: workspace.id,
+                instanceId: instance.id,
+                projectId: workspace.projectId,
+                contextURL: workspace.contextURL,
+                type: workspace.type,
+                class: instance.workspaceClass,
+                ideConfig: instance.configuration?.ideConfig,
+                usesPrebuild: startRequest.getSpec()?.getInitializer()?.hasPrebuild(),
+            };
+
+            if (workspace.projectId && trackProperties.usesPrebuild && workspace.type === "regular") {
+                const project = await this.projectDB.findProjectById(workspace.projectId);
+                trackProperties.prebuildTriggerStrategy = project?.settings?.prebuilds?.triggerStrategy;
+            }
+
             // update analytics
             this.analytics.track({
                 userId: user.id,
                 event: "workspace_started",
-                properties: {
-                    workspaceId: workspace.id,
-                    instanceId: instance.id,
-                    projectId: workspace.projectId,
-                    contextURL: workspace.contextURL,
-                    type: workspace.type,
-                    class: instance.workspaceClass,
-                    ideConfig: instance.configuration?.ideConfig,
-                    usesPrebuild: startRequest.getSpec()?.getInitializer()?.hasPrebuild(),
-                },
+                properties: trackProperties,
                 timestamp: new Date(instance.creationTime),
             });
         } catch (err) {
