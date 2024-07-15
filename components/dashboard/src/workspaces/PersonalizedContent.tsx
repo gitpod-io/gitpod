@@ -91,7 +91,7 @@ const contentList: ContentItem[] = [
     },
     {
         url: "https://www.gitpod.io/blog/using-a-cde-roi-calculator",
-        title: "Building a business case for Gitpod",
+        title: "What is the business case for a CDE",
         label: "cde-roi-calculator",
         priority: 8,
         recommended: {
