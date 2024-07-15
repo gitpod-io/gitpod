@@ -307,7 +307,10 @@ export class WorkspaceStarter {
                     ideSettings = {
                         ...ideSettings,
                         defaultIde: ideConfig.ide,
-                        useLatestVersion: ideSettings?.useLatestVersion ?? !!ideConfig.useLatest,
+                        useLatestVersion:
+                            ideSettings?.useLatestVersion ??
+                            user.additionalData?.ideSettings?.useLatestVersion ??
+                            !!ideConfig.useLatest,
                     };
                 }
             }
