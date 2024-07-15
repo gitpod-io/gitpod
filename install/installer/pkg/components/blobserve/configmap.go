@@ -35,6 +35,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Search:      "{{WORKBENCH_WEB_BASE_URL}}",
 						Replacement: "${ide}",
 					}, {
+						Search:      "{{WORKBENCH_NLS_FALLBACK_URL}}",
+						Replacement: "${ide}/out/nls.messages.js",
+					}, {
+						Search:      "{{WORKBENCH_NLS_URL}}",
+						Replacement: "${ide}/out/nls.messages.js",
+					}, {
 						Search:      "/_supervisor/frontend",
 						Replacement: "${supervisor}",
 					}},
