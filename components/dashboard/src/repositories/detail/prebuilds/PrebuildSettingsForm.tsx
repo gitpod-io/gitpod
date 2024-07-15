@@ -4,8 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { BranchMatchingStrategy, Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { FC, FormEvent, useCallback, useState } from "react";
+import {
+    BranchMatchingStrategy,
+    Configuration,
+    PrebuildTriggerStrategy,
+} from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { FC, FormEvent, useCallback, useMemo, useState } from "react";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { InputField } from "../../../components/forms/InputField";
@@ -17,6 +21,11 @@ import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { InputFieldHint } from "../../../components/forms/InputFieldHint";
 import { DEFAULT_WS_CLASS } from "../../../data/workspaces/workspace-classes-query";
 import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from "@podkit/select/Select";
+import Alert from "../../../components/Alert";
+import { useUserLoader } from "../../../hooks/use-user-loader";
+import { useUpdateCurrentUserMutation } from "../../../data/current-user/update-mutation";
+import { trackEvent } from "../../../Analytics";
+import dayjs from "dayjs";
 
 const DEFAULT_PREBUILD_COMMIT_INTERVAL = 20;
 
@@ -24,8 +33,14 @@ type Props = {
     configuration: Configuration;
 };
 
+const COACHMARK_KEY = "new_prebuilds_trigger_notification";
+
 export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
     const { toast } = useToast();
+
+    const { user } = useUserLoader();
+    const { mutate: updateUser } = useUpdateCurrentUserMutation();
+
     const updateConfiguration = useConfigurationMutation();
 
     const [interval, setInterval] = useState<string>(
@@ -40,6 +55,8 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
     const [workspaceClass, setWorkspaceClass] = useState<string>(
         configuration.prebuildSettings?.workspaceClass || DEFAULT_WS_CLASS,
     );
+
+    const [isTriggerNotificationOpen, setIsTriggerNotificationOpen] = useState(true);
 
     const handleSubmit = useCallback(
         (e: FormEvent) => {
@@ -83,8 +100,61 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
         setBranchStrategy(parseInt(val, 10) as BranchMatchingStrategy);
     }, []);
 
+    const dismissNotification = useCallback(() => {
+        updateUser(
+            {
+                additionalData: { profile: { coachmarksDismissals: { [COACHMARK_KEY]: dayjs().toISOString() } } },
+            },
+            {
+                onSettled: (_, error) => {
+                    trackEvent("coachmark_dismissed", {
+                        name: COACHMARK_KEY,
+                        success: !(error instanceof Error),
+                    });
+                    setIsTriggerNotificationOpen(false);
+                },
+            },
+        );
+    }, [updateUser]);
+
+    const showTriggerNotification = useMemo<boolean>(() => {
+        if (!isTriggerNotificationOpen || !user) {
+            return false;
+        }
+
+        if (configuration.prebuildSettings?.triggerStrategy === PrebuildTriggerStrategy.ACTIVITY_BASED) {
+            return false;
+        }
+
+        // For repositories created after activity-based prebuilds were introduced, don't show it
+        if (configuration.creationTime && configuration.creationTime.toDate() > new Date("7/15/2024")) {
+            return false;
+        }
+
+        return !user.profile?.coachmarksDismissals[COACHMARK_KEY];
+    }, [configuration.creationTime, configuration.prebuildSettings?.triggerStrategy, isTriggerNotificationOpen, user]);
+
     return (
         <ConfigurationSettingsField>
+            {showTriggerNotification && (
+                <Alert
+                    type={"info"}
+                    closable={true}
+                    onClose={() => dismissNotification()}
+                    showIcon={true}
+                    className="flex rounded p-2 mb-2 w-full"
+                >
+                    The way prebuilds are triggered is changing.{" "}
+                    <a
+                        className="gp-link"
+                        target="_blank"
+                        href="https://www.gitpod.io/changelog/activity-based-prebuilds"
+                        rel="noreferrer"
+                    >
+                        Learn more
+                    </a>
+                </Alert>
+            )}
             <form onSubmit={handleSubmit}>
                 <Heading3>Prebuild settings</Heading3>
                 <Subheading className="max-w-lg">These settings will be applied on every Prebuild.</Subheading>

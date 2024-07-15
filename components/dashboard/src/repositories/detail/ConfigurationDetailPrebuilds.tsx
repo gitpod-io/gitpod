@@ -9,11 +9,11 @@ import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb
 import { ConfigurationSettingsField } from "./ConfigurationSettingsField";
 import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { SwitchInputField } from "@podkit/switch/Switch";
-import { TextMuted } from "@podkit/typography/TextMuted";
 import { PrebuildSettingsForm } from "./prebuilds/PrebuildSettingsForm";
 import { useConfigurationMutation } from "../../data/configurations/configuration-queries";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { EnablePrebuildsError } from "./prebuilds/EnablePrebuildsError";
+import { TextMuted } from "@podkit/typography/TextMuted";
 import { Link } from "react-router-dom";
 
 type Props = {
@@ -68,21 +68,9 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                     label={configuration.prebuildSettings?.enabled ? "Prebuilds are enabled" : "Prebuilds are disabled"}
                     description={
                         <TextMuted>
-                            Enabling requires permissions to configure repository webhooks.{" "}
-                            <a
-                                href="https://www.gitpod.io/docs/configure/repositories/prebuilds"
-                                className="gp-link"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Learn more
-                            </a>
-                            .
-                            <br />
                             <Link to={`/prebuilds?configurationId=${configuration.id}`} className="gp-link">
                                 View prebuild history
                             </Link>
-                            .
                         </TextMuted>
                     }
                 />

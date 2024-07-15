@@ -30,7 +30,6 @@ import { Authorizer, SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/author
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import deepmerge from "deepmerge";
-import { ScmService } from "../scm/scm-service";
 import { runWithSubjectId } from "../util/request-context";
 import { InstallationService } from "../auth/installation-service";
 import { IDEService } from "../ide-service";
@@ -50,7 +49,6 @@ export class ProjectsService {
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(Authorizer) private readonly auth: Authorizer,
-        @inject(ScmService) private readonly scmService: ScmService,
         @inject(IDEService) private readonly ideService: IDEService,
         @inject(LazyPrebuildManager) private readonly prebuildManager: LazyPrebuildManager,
 
@@ -422,7 +420,13 @@ export class ProjectsService {
             partialProject.settings = deepmerge(toBeMerged, partialProject.settings);
             await this.checkProjectSettings(user.id, partialProject.settings);
         }
-        await this.handleEnablePrebuild(user, partialProject);
+        if (partialProject?.settings?.prebuilds?.enable) {
+            const enablePrebuildsPrev = !!existingProject.settings?.prebuilds?.enable;
+            if (!enablePrebuildsPrev) {
+                // new default
+                partialProject.settings.prebuilds.triggerStrategy = "activity-based";
+            }
+        }
         return this.projectDB.updateProject(partialProject);
     }
     private async checkProjectSettings(userId: string, settings?: PartialProject["settings"]) {
@@ -448,26 +452,6 @@ export class ProjectsService {
             const options = settings.restrictedEditorNames.filter((e) => !!e) as string[];
             await this.ideService.checkEditorsAllowed(userId, options);
             settings.restrictedEditorNames = options;
-        }
-    }
-
-    private async handleEnablePrebuild(user: User, partialProject: PartialProject): Promise<void> {
-        const enablePrebuildsNew = partialProject?.settings?.prebuilds?.enable;
-        if (typeof enablePrebuildsNew === "boolean") {
-            const project = await this.projectDB.findProjectById(partialProject.id);
-            if (!project) {
-                return;
-            }
-            const enablePrebuildsPrev = !!project.settings?.prebuilds?.enable;
-            const installWebhook = enablePrebuildsNew && !enablePrebuildsPrev;
-            const uninstallWebhook = !enablePrebuildsNew && enablePrebuildsPrev;
-            if (installWebhook) {
-                await this.scmService.installWebhookForPrebuilds(project, user);
-            }
-            if (uninstallWebhook) {
-                // TODO
-                // await this.scmService.uninstallWebhookForPrebuilds(project, user);
-            }
         }
     }
 

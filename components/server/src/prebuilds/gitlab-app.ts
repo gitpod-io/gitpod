@@ -12,7 +12,6 @@ import { PrebuildManager } from "./prebuild-manager";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TokenService } from "../user/token-service";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { GitlabService } from "./gitlab-service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { ContextParser } from "../workspace/context-parser-service";
 import { RepoURL } from "../repohost";
@@ -22,6 +21,7 @@ import { ProjectsService } from "../projects/projects-service";
 import { runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
 import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
+import { PREBUILD_TOKEN_SCOPE } from "./constants";
 
 @injectable()
 export class GitLabApp {
@@ -122,8 +122,8 @@ export class GitLabApp {
                 throw new Error(`User ${user.id} has no token with given value.`);
             }
             if (
-                token.token.scopes.indexOf(GitlabService.PREBUILD_TOKEN_SCOPE) === -1 ||
-                token.token.scopes.indexOf(context.repository.git_http_url) === -1
+                !token.token.scopes.includes(PREBUILD_TOKEN_SCOPE) ||
+                !token.token.scopes.includes(context.repository.git_http_url)
             ) {
                 throw new Error(
                     `The provided token is not valid for the repository ${context.repository.git_http_url}.`,

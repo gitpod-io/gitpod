@@ -110,11 +110,6 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
                     },
                 },
                 services: {
-                    repositoryService: {
-                        installAutomatedPrebuilds: async (user: any, cloneUrl: string) => {
-                            webhooks.add(cloneUrl);
-                        },
-                    },
                     repositoryProvider: {
                         hasReadAccess: async (user: any, owner: string, repo: string) => {
                             return true;
