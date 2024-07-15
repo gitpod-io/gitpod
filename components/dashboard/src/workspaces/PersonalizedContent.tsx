@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { useCurrentUser } from "../user-context";
 import { storageAvailable } from "../utils";
+import { Heading3 } from "@podkit/typography/Headings";
 
 type ContentItem = {
     url: string;
@@ -178,7 +179,7 @@ const PersonalizedContent: React.FC = () => {
 
     return (
         <div className="flex flex-col gap-2">
-            <h3 className="text-lg font-semibold text-pk-content-primary">Personalised for you</h3>
+            <Heading3> Personalised for you </Heading3>
             <div className="flex flex-col gap-1 w-fit">
                 {selectedContent.map((item, index) => (
                     <a
