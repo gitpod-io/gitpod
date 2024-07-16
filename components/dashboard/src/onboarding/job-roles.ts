@@ -12,7 +12,7 @@ export const getJobRoleOptions = () => {
         { value: "software-eng", label: "Software Engineering" },
         { value: "data", label: "Data / Analytics" },
         { value: "academics", label: "Academia (Student, Researcher)" },
-        { value: "enabling", label: "Platform or Developer Experience" },
+        { value: "enabling", label: "DevOps / Platform / DevX" },
         { value: "team-lead", label: "A Team Lead or Function Lead role" },
         { value: "devrel", label: "DevRel" },
         { value: "product-design", label: "Product" },
