@@ -629,7 +629,8 @@ export class WorkspaceStarter {
 
             if (workspace.projectId && trackProperties.usesPrebuild && workspace.type === "regular") {
                 const project = await this.projectDB.findProjectById(workspace.projectId);
-                trackProperties.prebuildTriggerStrategy = project?.settings?.prebuilds?.triggerStrategy;
+                trackProperties.prebuildTriggerStrategy =
+                    project?.settings?.prebuilds?.triggerStrategy ?? "webhook-based";
             }
 
             // update analytics
