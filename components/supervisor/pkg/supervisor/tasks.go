@@ -34,7 +34,7 @@ func (sub *tasksSubscription) Updates() <-chan []*api.TaskStatus {
 	return sub.updates
 }
 
-const maxSubscriptions = 10
+const maxSubscriptions = 100
 
 func (tm *tasksManager) Subscribe() *tasksSubscription {
 	tm.mu.Lock()

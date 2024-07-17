@@ -213,13 +213,14 @@ export class PrebuildManager {
 
     async cancelPrebuild(ctx: TraceContext, userId: string, prebuildId: string): Promise<void> {
         const prebuild = await this.workspaceDB.trace(ctx).findPrebuildByID(prebuildId);
-        if (prebuild) {
-            await this.auth.checkPermissionOnProject(userId, "write_prebuild", prebuild.projectId!);
-        }
         if (!prebuild) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `prebuild ${prebuildId} not found`);
         }
-        await this.workspaceService.stopWorkspace(userId, prebuild.buildWorkspaceId, "stopped via API");
+
+        await this.auth.checkPermissionOnProject(userId, "write_prebuild", prebuild.projectId!);
+        await this.workspaceService.stopWorkspace(userId, prebuild.buildWorkspaceId, "stopped via API", undefined, {
+            skipPermissionCheck: true,
+        });
     }
 
     async getPrebuild(
