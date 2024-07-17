@@ -333,8 +333,11 @@ export class WorkspaceService {
         workspaceId: string,
         reason: string,
         policy?: StopWorkspacePolicy,
+        options: { skipPermissionCheck?: boolean } = {},
     ): Promise<void> {
-        await this.auth.checkPermissionOnWorkspace(userId, "stop", workspaceId);
+        if (!options.skipPermissionCheck) {
+            await this.auth.checkPermissionOnWorkspace(userId, "stop", workspaceId);
+        }
 
         const workspace = await this.doGetWorkspace(userId, workspaceId);
         const instance = await this.db.findRunningInstance(workspace.id);
