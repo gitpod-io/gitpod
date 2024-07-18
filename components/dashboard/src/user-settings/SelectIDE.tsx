@@ -14,6 +14,7 @@ import { converter } from "../service/public-api";
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 import Alert from "../components/Alert";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { IDESettingsVersion } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -50,7 +51,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                 additionalData: {
                     workspaceAutostartOptions,
                     ideSettings: {
-                        settingVersion: "2.1",
+                        settingVersion: IDESettingsVersion,
                         defaultIde: selectedIde,
                         useLatestVersion: useLatestVersion,
                         preferToolbox: preferToolbox,
