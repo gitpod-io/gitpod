@@ -301,10 +301,22 @@ export class WorkspaceStarter {
 
             let ideSettings = options.ideSettings;
 
+            const enableExperimentalJBTB = await getExperimentsClientForBackend().getValueAsync(
+                "enable_experimental_jbtb",
+                false,
+                { user },
+            );
+
             // if no explicit ideSettings are passed, we use the one from the last workspace instance
             if (lastValidWorkspaceInstance) {
                 const ideConfig = lastValidWorkspaceInstance.configuration?.ideConfig;
                 if (ideConfig?.ide) {
+                    const preferToolbox = !enableExperimentalJBTB
+                        ? false
+                        : ideSettings?.preferToolbox ??
+                          user.additionalData?.ideSettings?.preferToolbox ??
+                          ideConfig.preferToolbox ??
+                          false;
                     ideSettings = {
                         ...ideSettings,
                         defaultIde: ideConfig.ide,
@@ -312,11 +324,7 @@ export class WorkspaceStarter {
                             ideSettings?.useLatestVersion ??
                             user.additionalData?.ideSettings?.useLatestVersion ??
                             !!ideConfig.useLatest,
-                        preferToolbox:
-                            ideSettings?.preferToolbox ??
-                            user.additionalData?.ideSettings?.preferToolbox ??
-                            ideConfig.preferToolbox ??
-                            false,
+                        preferToolbox,
                     };
                 }
             }
@@ -914,10 +922,17 @@ export class WorkspaceStarter {
             };
             if (ideConfig.ideSettings && ideConfig.ideSettings.trim() !== "") {
                 try {
+                    const enableExperimentalJBTB = await getExperimentsClientForBackend().getValueAsync(
+                        "enable_experimental_jbtb",
+                        false,
+                        { user },
+                    );
                     const ideSettings: IDESettings = JSON.parse(ideConfig.ideSettings);
                     configuration.ideConfig!.ide = ideSettings.defaultIde;
                     configuration.ideConfig!.useLatest = !!ideSettings.useLatestVersion;
-                    configuration.ideConfig!.preferToolbox = ideSettings.preferToolbox ?? false;
+                    configuration.ideConfig!.preferToolbox = !enableExperimentalJBTB
+                        ? false
+                        : ideSettings.preferToolbox ?? false;
                 } catch (error) {
                     log.error({ userId: user.id, workspaceId: workspace.id }, "cannot parse ideSettings", error);
                 }

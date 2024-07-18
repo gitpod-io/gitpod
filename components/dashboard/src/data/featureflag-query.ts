@@ -27,6 +27,7 @@ const featureFlags = {
     dashboard_logging_tracing: false,
     showBrowserExtensionPromotion: false,
     usage_update_scheduler_duration: "15m",
+    enable_experimental_jbtb: false,
 };
 
 type FeatureFlags = typeof featureFlags;

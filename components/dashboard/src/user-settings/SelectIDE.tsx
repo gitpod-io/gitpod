@@ -13,6 +13,7 @@ import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutati
 import { converter } from "../service/public-api";
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 import Alert from "../components/Alert";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -27,6 +28,7 @@ export default function SelectIDE(props: SelectIDEProps) {
     const [useLatestVersion, setUseLatestVersion] = useState<boolean>(user?.editorSettings?.version === "latest");
     const [preferToolbox, setPreferToolbox] = useState<boolean>(user?.editorSettings?.preferToolbox || false);
     const [ideWarning, setIdeWarning] = useState<ReactNode | undefined>(undefined);
+    const enableExperimentalJBTB = useFeatureFlag("enable_experimental_jbtb");
 
     const isOrgOwnedUser = user && isOrganizationOwned(user);
 
@@ -154,21 +156,23 @@ export default function SelectIDE(props: SelectIDEProps) {
                 onChange={(checked) => actuallySetUseLatestVersion(checked)}
             />
 
-            <CheckboxInputField
-                label={
-                    <span className="flex items-center gap-2">
-                        Launch in JetBrains Toolbox{" "}
-                        <PillLabel type="warn">
-                            <a href="https://www.gitpod.io/docs/references/gitpod-releases">
-                                <span className="text-xs">BETA</span>
-                            </a>
-                        </PillLabel>
-                    </span>
-                }
-                hint={<span>Launch JetBrains IDEs in the JetBrains Toolbox.</span>}
-                checked={preferToolbox}
-                onChange={(checked) => actuallySetPreferToolbox(checked)}
-            />
+            {enableExperimentalJBTB && (
+                <CheckboxInputField
+                    label={
+                        <span className="flex items-center gap-2">
+                            Launch in JetBrains Toolbox{" "}
+                            <PillLabel type="warn">
+                                <a href="https://www.gitpod.io/docs/references/gitpod-releases">
+                                    <span className="text-xs">BETA</span>
+                                </a>
+                            </PillLabel>
+                        </span>
+                    }
+                    hint={<span>Launch JetBrains IDEs in the JetBrains Toolbox.</span>}
+                    checked={preferToolbox}
+                    onChange={(checked) => actuallySetPreferToolbox(checked)}
+                />
+            )}
         </>
     );
 }
