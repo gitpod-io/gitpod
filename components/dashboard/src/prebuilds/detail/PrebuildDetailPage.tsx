@@ -8,14 +8,14 @@ import { Prebuild, PrebuildPhase_Phase, TaskLog } from "@gitpod/public-api/lib/g
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Button } from "@podkit/buttons/Button";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { Redirect, useHistory, useParams } from "react-router";
+import { useHistory, useParams } from "react-router";
 import dayjs from "dayjs";
 import { useToast } from "../../components/toasts/Toasts";
 import {
     isPrebuildDone,
     useCancelPrebuildMutation,
     usePrebuildQuery,
-    useTriggerPrebuildQuery,
+    useTriggerPrebuildMutation,
     watchPrebuild,
 } from "../../data/prebuilds/prebuild-queries";
 import { LinkButton } from "@podkit/buttons/LinkButton";
@@ -83,15 +83,34 @@ export const PrebuildDetailPage: FC = () => {
         return selectedTaskId ?? prebuild?.status?.taskLogs.filter((f) => f.logUrl)[0]?.taskId ?? undefined;
     }, [isImageBuild, prebuild, selectedTaskId]);
 
-    const {
-        isFetching: isTriggeringPrebuild,
-        refetch: triggerPrebuild,
-        isError: isTriggerError,
-        error: triggerError,
-        isRefetching: isTriggeringRefetch,
-        data: newPrebuildID,
-    } = useTriggerPrebuildQuery(prebuild?.configurationId, prebuild?.ref);
+    const triggerPrebuildMutation = useTriggerPrebuildMutation(prebuild?.configurationId, prebuild?.ref);
     const cancelPrebuildMutation = useCancelPrebuildMutation();
+
+    const [isTriggeringNewPrebuild, setTriggeringNewPrebuild] = useState(false);
+    const triggerPrebuild = useCallback(async () => {
+        if (!prebuild) {
+            return;
+        }
+
+        try {
+            setTriggeringNewPrebuild(true);
+            await triggerPrebuildMutation.mutateAsync(undefined, {
+                onSuccess: (newPrebuildId) => {
+                    history.push(repositoriesRoutes.PrebuildDetail(newPrebuildId));
+                },
+                onError: (error) => {
+                    if (error instanceof ApplicationError) {
+                        toast("Failed to trigger prebuild: " + error.message);
+                    }
+                },
+                onSettled: () => {
+                    setTriggeringNewPrebuild(false);
+                },
+            });
+        } catch (error) {
+            console.error("Could not trigger prebuild", error);
+        }
+    }, [history, prebuild, toast, triggerPrebuildMutation]);
 
     const triggeredDate = useMemo(() => dayjs(prebuild?.status?.startTime?.toDate()), [prebuild?.status?.startTime]);
     const triggeredString = useMemo(() => formatDate(triggeredDate), [triggeredDate]);
@@ -160,12 +179,6 @@ export const PrebuildDetailPage: FC = () => {
 
     const notFoundError = error instanceof ApplicationError && error.code === ErrorCodes.NOT_FOUND;
 
-    useEffect(() => {
-        if (isTriggerError && triggerError?.message) {
-            toast("Failed to trigger prebuild: " + triggerError.message);
-        }
-    }, [isTriggerError, triggerError, toast]);
-
     const cancelPrebuild = useCallback(async () => {
         if (!prebuild) {
             return;
@@ -177,11 +190,6 @@ export const PrebuildDetailPage: FC = () => {
             console.error("Could not cancel prebuild", error);
         }
     }, [prebuild, cancelPrebuildMutation]);
-
-    // For some reason, we sometimes hit a case where the newPrebuildID is actually set without us triggering the query.
-    if (newPrebuildID && prebuild?.id !== newPrebuildID) {
-        return <Redirect to={repositoriesRoutes.PrebuildDetail(newPrebuildID)} />;
-    }
 
     return (
         <div className="w-full">
@@ -334,9 +342,11 @@ export const PrebuildDetailPage: FC = () => {
                                     </LoadingButton>
                                 ) : (
                                     <LoadingButton
-                                        loading={isTriggeringRefetch}
+                                        loading={isTriggeringNewPrebuild}
                                         disabled={
-                                            isTriggeringPrebuild || !prebuild.configurationId || !prebuild.commit?.sha
+                                            isTriggeringNewPrebuild ||
+                                            !prebuild.configurationId ||
+                                            !prebuild.commit?.sha
                                         }
                                         onClick={() => triggerPrebuild()}
                                     >{`Rerun Prebuild (${prebuild.ref})`}</LoadingButton>

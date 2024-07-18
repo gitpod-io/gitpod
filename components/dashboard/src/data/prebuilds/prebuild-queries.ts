@@ -64,21 +64,14 @@ export function useCancelPrebuildMutation() {
     });
 }
 
-export function useTriggerPrebuildQuery(configurationId?: string, gitRef?: string) {
-    // we use useQuery instead of useMutation so that we can get data (prebuildId) directly outside
-    return useQuery<string, Error, string>(
-        ["prebuild-trigger", configurationId, gitRef],
-        async () => {
+export function useTriggerPrebuildMutation(configurationId?: string, gitRef?: string) {
+    return useMutation({
+        mutationFn: async () => {
             if (!configurationId) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "prebuild configurationId is missing");
             }
 
             return prebuildClient.startPrebuild({ configurationId, gitRef }).then((resp) => resp.prebuildId);
         },
-        {
-            enabled: false,
-            cacheTime: 0,
-            retry: false,
-        },
-    );
+    });
 }
