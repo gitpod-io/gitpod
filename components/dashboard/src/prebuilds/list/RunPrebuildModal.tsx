@@ -11,12 +11,13 @@ import { InputField } from "../../components/forms/InputField";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../../components/AuthorizeGit";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { Button } from "@podkit/buttons/Button";
-import { useTriggerPrebuildQuery } from "../../data/prebuilds/prebuild-queries";
+import { useTriggerPrebuildMutation } from "../../data/prebuilds/prebuild-queries";
 import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { useConfiguration } from "../../data/configurations/configuration-queries";
 import { Link } from "react-router-dom";
 import { repositoriesRoutes } from "../../repositories/repositories.routes";
 import { TextInputField } from "../../components/forms/TextInputField";
+import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 type Props = {
     defaultRepositoryId?: string;
@@ -34,14 +35,29 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
         [defaultConfigurationId, selectedRepo?.configurationId],
     );
 
-    const {
-        isFetching,
-        refetch: startPrebuild,
-        isError,
-        error,
-        isRefetching,
-        data: prebuildId,
-    } = useTriggerPrebuildQuery(configurationId, branchName);
+    const triggerPrebuildMutation = useTriggerPrebuildMutation(configurationId, branchName);
+    const [isTriggeringNewPrebuild, setTriggeringNewPrebuild] = useState(false);
+    const triggerPrebuild = useCallback(async () => {
+        try {
+            setTriggeringNewPrebuild(true);
+            await triggerPrebuildMutation.mutateAsync(undefined, {
+                onSuccess: (newPrebuildId) => {
+                    onRun(newPrebuildId);
+                    onClose();
+                },
+                onError: (error) => {
+                    if (error instanceof ApplicationError) {
+                        setCreateErrorMsg(<>Failed to trigger prebuild: {error.message}</>);
+                    }
+                },
+                onSettled: () => {
+                    setTriggeringNewPrebuild(false);
+                },
+            });
+        } catch (error) {
+            console.error("Could not trigger prebuild", error);
+        }
+    }, [onClose, onRun, triggerPrebuildMutation]);
 
     const { data: configuration } = useConfiguration(configurationId);
 
@@ -65,15 +81,8 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
             return;
         }
 
-        startPrebuild();
-    }, [configuration, configurationId, startPrebuild]);
-
-    const errorMessage = createErrorMsg || (isError && (error?.message ?? "There was a problem running the prebuild"));
-
-    if (prebuildId) {
-        onRun(prebuildId);
-        onClose();
-    }
+        triggerPrebuild();
+    }, [configuration, configurationId, triggerPrebuild]);
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleSubmit}>
@@ -102,7 +111,7 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
                                 }
                                 value={branchName}
                                 onChange={setBranchName}
-                                disabled={isFetching || isRefetching}
+                                disabled={isTriggeringNewPrebuild}
                             />
                         </>
                     )}
@@ -110,9 +119,9 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
             </ModalBody>
             <ModalFooter
                 alert={
-                    errorMessage && (
+                    createErrorMsg && (
                         <ModalFooterAlert type="danger" onClose={() => setCreateErrorMsg(undefined)}>
-                            {errorMessage}
+                            {createErrorMsg}
                         </ModalFooterAlert>
                     )
                 }
@@ -120,7 +129,7 @@ export const RunPrebuildModal: FC<Props> = ({ defaultRepositoryId: defaultConfig
                 <Button variant="secondary" onClick={onClose}>
                     Cancel
                 </Button>
-                <LoadingButton type="submit" loading={isFetching || isRefetching}>
+                <LoadingButton type="submit" loading={isTriggeringNewPrebuild}>
                     Run prebuild
                 </LoadingButton>
             </ModalFooter>
