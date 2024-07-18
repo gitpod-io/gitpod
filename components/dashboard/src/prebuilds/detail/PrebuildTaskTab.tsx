@@ -78,7 +78,7 @@ export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
         if (error.code === ErrorCodes.NOT_FOUND && taskId === "image-build") {
             return (
                 <PrebuildTaskErrorTab taskId={taskId}>
-                    <span className="flex justify-center items-center gap-1">
+                    <span className="flex justify-center items-center gap-2">
                         Pulling container image <LoadingState delay={false} size={16} />
                     </span>
                 </PrebuildTaskErrorTab>
