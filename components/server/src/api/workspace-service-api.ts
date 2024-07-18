@@ -185,6 +185,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
                 useLatestVersion: req.source.value.editor?.version
                     ? req.source.value.editor?.version === "latest"
                     : undefined,
+                preferToolbox: req.source.value.editor?.preferToolbox ?? false,
             },
             clientRegionCode: ctxClientRegion(),
         });

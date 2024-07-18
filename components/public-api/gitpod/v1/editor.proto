@@ -8,4 +8,8 @@ option java_package = "io.gitpod.publicapi.v1";
 message EditorReference {
   string name = 1;
   string version = 2;
+
+  // prefer_toolbox indicates whether the editor should be launched with the
+  // JetBrains Toolbox instead of JetBrains Gateway
+  bool prefer_toolbox = 3;
 }

@@ -269,6 +269,7 @@ export namespace WorkspaceInstanceRepoStatus {
 export interface ConfigurationIdeConfig {
     useLatest?: boolean;
     ide?: string;
+    preferToolbox?: boolean;
 }
 
 export interface IdeSetup {

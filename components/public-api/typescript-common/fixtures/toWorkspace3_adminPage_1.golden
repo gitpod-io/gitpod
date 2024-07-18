@@ -62,7 +62,8 @@
             "logUrl": "",
             "editor": {
                 "name": "code",
-                "version": "stable"
+                "version": "stable",
+                "preferToolbox": false
             }
         },
         "status": {

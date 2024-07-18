@@ -25,18 +25,20 @@ export default function SelectIDE(props: SelectIDEProps) {
 
     const [defaultIde, setDefaultIde] = useState<string>(user?.editorSettings?.name || "code");
     const [useLatestVersion, setUseLatestVersion] = useState<boolean>(user?.editorSettings?.version === "latest");
+    const [preferToolbox, setPreferToolbox] = useState<boolean>(user?.editorSettings?.preferToolbox || false);
     const [ideWarning, setIdeWarning] = useState<ReactNode | undefined>(undefined);
 
     const isOrgOwnedUser = user && isOrganizationOwned(user);
 
     const actualUpdateUserIDEInfo = useCallback(
-        async (selectedIde: string, useLatestVersion: boolean) => {
+        async (selectedIde: string, useLatestVersion: boolean, preferToolbox: boolean) => {
             // update stored autostart options to match useLatestVersion value set here
             const workspaceAutostartOptions = user?.workspaceAutostartOptions?.map((o) => {
                 const option = converter.fromWorkspaceAutostartOption(o);
 
                 if (option.ideSettings) {
                     option.ideSettings.useLatestVersion = useLatestVersion;
+                    option.ideSettings.preferToolbox = preferToolbox;
                 }
 
                 return option;
@@ -46,9 +48,10 @@ export default function SelectIDE(props: SelectIDEProps) {
                 additionalData: {
                     workspaceAutostartOptions,
                     ideSettings: {
-                        settingVersion: "2.0",
+                        settingVersion: "2.1",
                         defaultIde: selectedIde,
                         useLatestVersion: useLatestVersion,
+                        preferToolbox: preferToolbox,
                     },
                 },
             });
@@ -59,18 +62,26 @@ export default function SelectIDE(props: SelectIDEProps) {
 
     const actuallySetDefaultIde = useCallback(
         async (value: string) => {
-            await actualUpdateUserIDEInfo(value, useLatestVersion);
+            await actualUpdateUserIDEInfo(value, useLatestVersion, preferToolbox);
             setDefaultIde(value);
         },
-        [actualUpdateUserIDEInfo, useLatestVersion],
+        [actualUpdateUserIDEInfo, useLatestVersion, preferToolbox],
     );
 
     const actuallySetUseLatestVersion = useCallback(
         async (value: boolean) => {
-            await actualUpdateUserIDEInfo(defaultIde, value);
+            await actualUpdateUserIDEInfo(defaultIde, value, preferToolbox);
             setUseLatestVersion(value);
         },
-        [actualUpdateUserIDEInfo, defaultIde],
+        [actualUpdateUserIDEInfo, defaultIde, preferToolbox],
+    );
+
+    const actuallySetPreferToolbox = useCallback(
+        async (value: boolean) => {
+            await actualUpdateUserIDEInfo(defaultIde, useLatestVersion, value);
+            setPreferToolbox(value);
+        },
+        [actualUpdateUserIDEInfo, defaultIde, useLatestVersion],
     );
 
     const shouldShowJetbrainsNotice = isJetbrains(defaultIde);
@@ -141,6 +152,22 @@ export default function SelectIDE(props: SelectIDEProps) {
                 }
                 checked={useLatestVersion}
                 onChange={(checked) => actuallySetUseLatestVersion(checked)}
+            />
+
+            <CheckboxInputField
+                label={
+                    <span className="flex items-center gap-2">
+                        Launch in JetBrains Toolbox{" "}
+                        <PillLabel type="warn">
+                            <a href="https://www.gitpod.io/docs/references/gitpod-releases">
+                                <span className="text-xs">BETA</span>
+                            </a>
+                        </PillLabel>
+                    </span>
+                }
+                hint={<span>Launch JetBrains IDEs in the JetBrains Toolbox.</span>}
+                checked={preferToolbox}
+                onChange={(checked) => actuallySetPreferToolbox(checked)}
             />
         </>
     );

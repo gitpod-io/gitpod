@@ -56,6 +56,17 @@ public final class Editor {
      */
     com.google.protobuf.ByteString
         getVersionBytes();
+
+    /**
+     * <pre>
+     * prefer_toolbox indicates whether the editor should be launched with the
+     * JetBrains Toolbox instead of JetBrains Gateway
+     * </pre>
+     *
+     * <code>bool prefer_toolbox = 3 [json_name = "preferToolbox"];</code>
+     * @return The preferToolbox.
+     */
+    boolean getPreferToolbox();
   }
   /**
    * Protobuf type {@code gitpod.v1.EditorReference}
@@ -174,6 +185,22 @@ public final class Editor {
       }
     }
 
+    public static final int PREFER_TOOLBOX_FIELD_NUMBER = 3;
+    private boolean preferToolbox_ = false;
+    /**
+     * <pre>
+     * prefer_toolbox indicates whether the editor should be launched with the
+     * JetBrains Toolbox instead of JetBrains Gateway
+     * </pre>
+     *
+     * <code>bool prefer_toolbox = 3 [json_name = "preferToolbox"];</code>
+     * @return The preferToolbox.
+     */
+    @java.lang.Override
+    public boolean getPreferToolbox() {
+      return preferToolbox_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -194,6 +221,9 @@ public final class Editor {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(version_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 2, version_);
       }
+      if (preferToolbox_ != false) {
+        output.writeBool(3, preferToolbox_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -208,6 +238,10 @@ public final class Editor {
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(version_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(2, version_);
+      }
+      if (preferToolbox_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(3, preferToolbox_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -228,6 +262,8 @@ public final class Editor {
           .equals(other.getName())) return false;
       if (!getVersion()
           .equals(other.getVersion())) return false;
+      if (getPreferToolbox()
+          != other.getPreferToolbox()) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -243,6 +279,9 @@ public final class Editor {
       hash = (53 * hash) + getName().hashCode();
       hash = (37 * hash) + VERSION_FIELD_NUMBER;
       hash = (53 * hash) + getVersion().hashCode();
+      hash = (37 * hash) + PREFER_TOOLBOX_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getPreferToolbox());
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -376,6 +415,7 @@ public final class Editor {
         bitField0_ = 0;
         name_ = "";
         version_ = "";
+        preferToolbox_ = false;
         return this;
       }
 
@@ -415,6 +455,9 @@ public final class Editor {
         if (((from_bitField0_ & 0x00000002) != 0)) {
           result.version_ = version_;
         }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.preferToolbox_ = preferToolbox_;
+        }
       }
 
       @java.lang.Override
@@ -438,6 +481,9 @@ public final class Editor {
           version_ = other.version_;
           bitField0_ |= 0x00000002;
           onChanged();
+        }
+        if (other.getPreferToolbox() != false) {
+          setPreferToolbox(other.getPreferToolbox());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -475,6 +521,11 @@ public final class Editor {
                 bitField0_ |= 0x00000002;
                 break;
               } // case 18
+              case 24: {
+                preferToolbox_ = input.readBool();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 24
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -636,6 +687,53 @@ public final class Editor {
         return this;
       }
 
+      private boolean preferToolbox_ ;
+      /**
+       * <pre>
+       * prefer_toolbox indicates whether the editor should be launched with the
+       * JetBrains Toolbox instead of JetBrains Gateway
+       * </pre>
+       *
+       * <code>bool prefer_toolbox = 3 [json_name = "preferToolbox"];</code>
+       * @return The preferToolbox.
+       */
+      @java.lang.Override
+      public boolean getPreferToolbox() {
+        return preferToolbox_;
+      }
+      /**
+       * <pre>
+       * prefer_toolbox indicates whether the editor should be launched with the
+       * JetBrains Toolbox instead of JetBrains Gateway
+       * </pre>
+       *
+       * <code>bool prefer_toolbox = 3 [json_name = "preferToolbox"];</code>
+       * @param value The preferToolbox to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPreferToolbox(boolean value) {
+
+        preferToolbox_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * prefer_toolbox indicates whether the editor should be launched with the
+       * JetBrains Toolbox instead of JetBrains Gateway
+       * </pre>
+       *
+       * <code>bool prefer_toolbox = 3 [json_name = "preferToolbox"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPreferToolbox() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        preferToolbox_ = false;
+        onChanged();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:gitpod.v1.EditorReference)
     }
 
@@ -701,11 +799,12 @@ public final class Editor {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\026gitpod/v1/editor.proto\022\tgitpod.v1\"?\n\017E" +
+      "\n\026gitpod/v1/editor.proto\022\tgitpod.v1\"f\n\017E" +
       "ditorReference\022\022\n\004name\030\001 \001(\tR\004name\022\030\n\007ve" +
-      "rsion\030\002 \001(\tR\007versionBQ\n\026io.gitpod.public" +
-      "api.v1Z7github.com/gitpod-io/gitpod/comp" +
-      "onents/public-api/go/v1b\006proto3"
+      "rsion\030\002 \001(\tR\007version\022%\n\016prefer_toolbox\030\003" +
+      " \001(\010R\rpreferToolboxBQ\n\026io.gitpod.publica" +
+      "pi.v1Z7github.com/gitpod-io/gitpod/compo" +
+      "nents/public-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -716,7 +815,7 @@ public final class Editor {
     internal_static_gitpod_v1_EditorReference_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_EditorReference_descriptor,
-        new java.lang.String[] { "Name", "Version", });
+        new java.lang.String[] { "Name", "Version", "PreferToolbox", });
     descriptor.resolveAllFeaturesImmutable();
   }
 

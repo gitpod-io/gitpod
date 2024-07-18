@@ -27,7 +27,9 @@ plugins:
       opt: target=ts
       path: typescript/node_modules/.bin/protoc-gen-connect-es
 
-    - plugin: buf.build/connectrpc/kotlin
+    # https://buf.build/connectrpc/kotlin?version=v0.7.0
+    - plugin: buf.build/connectrpc/kotlin:v0.7.0
       out: java/src/main/java
-    - plugin: buf.build/protocolbuffers/java
+    # https://buf.build/protocolbuffers/java?version=v27.2
+    - plugin: buf.build/protocolbuffers/java:v27.2
       out: java/src/main/java

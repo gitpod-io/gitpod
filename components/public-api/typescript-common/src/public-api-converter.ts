@@ -449,6 +449,7 @@ export class PublicAPIConverter {
         const result = new EditorReference();
         result.name = ideConfig.ide;
         result.version = ideConfig.useLatest ? "latest" : "stable";
+        result.preferToolbox = ideConfig.preferToolbox ?? false
         return result;
     }
 
@@ -1542,6 +1543,7 @@ export class PublicAPIConverter {
         return new EditorReference({
             name: from.defaultIde,
             version: from.useLatestVersion ? "latest" : "stable",
+            preferToolbox: from.preferToolbox,
         });
     }
 
@@ -1552,6 +1554,7 @@ export class PublicAPIConverter {
         return {
             defaultIde: e.name,
             useLatestVersion: e.version === "latest",
+            preferToolbox: e.preferToolbox,
         };
     }
 

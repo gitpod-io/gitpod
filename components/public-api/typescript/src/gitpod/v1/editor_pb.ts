@@ -26,6 +26,14 @@ export class EditorReference extends Message<EditorReference> {
    */
   version = "";
 
+  /**
+   * prefer_toolbox indicates whether the editor should be launched with the
+   * JetBrains Toolbox instead of JetBrains Gateway
+   *
+   * @generated from field: bool prefer_toolbox = 3;
+   */
+  preferToolbox = false;
+
   constructor(data?: PartialMessage<EditorReference>) {
     super();
     proto3.util.initPartial(data, this);
@@ -36,6 +44,7 @@ export class EditorReference extends Message<EditorReference> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "prefer_toolbox", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EditorReference {

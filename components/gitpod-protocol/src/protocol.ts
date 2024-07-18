@@ -171,6 +171,7 @@ export type IDESettings = {
     settingVersion?: string;
     defaultIde?: string;
     useLatestVersion?: boolean;
+    preferToolbox?: boolean;
     // DEPRECATED: Use defaultIde after `settingVersion: 2.0`, no more specialify desktop or browser.
     useDesktopIde?: boolean;
     // DEPRECATED: Same with useDesktopIde.

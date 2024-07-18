@@ -50,7 +50,8 @@
     "ideSettings": {
       "settingVersion": "2.0",
       "defaultIde": "code",
-      "useLatestVersion": true
+      "useLatestVersion": true,
+      "preferToolbox": true
     },
     "workspaceAutostartOptions": [
       {

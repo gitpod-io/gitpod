@@ -81,7 +81,9 @@ export function CreateWorkspacePage() {
         props.ideSettings?.useLatestVersion !== undefined
             ? props.ideSettings.useLatestVersion
             : user?.editorSettings?.version === "latest";
+    const defaultPreferToolbox = props.ideSettings?.preferToolbox ?? user?.editorSettings?.preferToolbox ?? false;
     const [useLatestIde, setUseLatestIde] = useState(defaultLatestIde);
+    const [preferToolbox, setPreferToolbox] = useState(defaultPreferToolbox);
     // Note: it has data fetching and UI rendering race between the updating of `selectedProjectId` and `selectedIde`
     // We have to stored the using repositoryId locally so that we can know selectedIde is updated because if which repo
     // so that it doesn't show ide error messages in middle state
@@ -145,6 +147,7 @@ export function CreateWorkspacePage() {
                 editorSettings: new EditorReference({
                     name: selectedIde,
                     version: useLatestIde ? "latest" : "stable",
+                    preferToolbox: preferToolbox,
                 }),
             }),
         );
@@ -156,7 +159,17 @@ export function CreateWorkspacePage() {
             },
         });
         setUser(updatedUser);
-    }, [updateUser, currentOrg, selectedIde, selectedWsClass, setUser, useLatestIde, user, workspaceContext.data]);
+    }, [
+        updateUser,
+        currentOrg,
+        selectedIde,
+        selectedWsClass,
+        setUser,
+        useLatestIde,
+        preferToolbox,
+        user,
+        workspaceContext.data,
+    ]);
 
     // see if we have a matching project based on context url and project's repo url
     const project = useMemo(() => {
@@ -271,6 +284,7 @@ export function CreateWorkspacePage() {
                     contextUrlSource.editor = {
                         name: selectedIde,
                         version: useLatestIde ? "latest" : undefined,
+                        preferToolbox: preferToolbox,
                     };
                 }
                 opts.source = {
@@ -301,6 +315,7 @@ export function CreateWorkspacePage() {
             selectedWsClass,
             selectedIde,
             useLatestIde,
+            preferToolbox,
             createWorkspaceMutation,
             selectedProjectID,
             storeAutoStartOptions,
@@ -358,6 +373,7 @@ export function CreateWorkspacePage() {
                 }
                 setSelectedIde(rememberedOptions.editorSettings?.name, false);
                 setUseLatestIde(rememberedOptions.editorSettings?.version === "latest");
+                setPreferToolbox(rememberedOptions.editorSettings?.preferToolbox || false);
             }
 
             if (!selectedWsClassIsDirty) {
@@ -374,6 +390,7 @@ export function CreateWorkspacePage() {
             if (!selectedIdeIsDirty) {
                 setSelectedIde(defaultIde, false);
                 setUseLatestIde(defaultLatestIde);
+                setPreferToolbox(defaultPreferToolbox);
             }
             if (!selectedWsClassIsDirty) {
                 const projectWsClass = project?.settings?.workspaceClasses?.regular;

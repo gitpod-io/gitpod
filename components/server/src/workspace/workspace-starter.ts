@@ -312,6 +312,11 @@ export class WorkspaceStarter {
                             ideSettings?.useLatestVersion ??
                             user.additionalData?.ideSettings?.useLatestVersion ??
                             !!ideConfig.useLatest,
+                        preferToolbox:
+                            ideSettings?.preferToolbox ??
+                            user.additionalData?.ideSettings?.preferToolbox ??
+                            ideConfig.preferToolbox ??
+                            false,
                     };
                 }
             }
@@ -912,6 +917,7 @@ export class WorkspaceStarter {
                     const ideSettings: IDESettings = JSON.parse(ideConfig.ideSettings);
                     configuration.ideConfig!.ide = ideSettings.defaultIde;
                     configuration.ideConfig!.useLatest = !!ideSettings.useLatestVersion;
+                    configuration.ideConfig!.preferToolbox = ideSettings.preferToolbox ?? false;
                 } catch (error) {
                     log.error({ userId: user.id, workspaceId: workspace.id }, "cannot parse ideSettings", error);
                 }

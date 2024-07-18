@@ -57,6 +57,7 @@ type LaunchContext struct {
 	label  string
 	warmup bool
 
+	preferToolbox  bool
 	qualifier      string
 	productDir     string
 	backendDir     string
@@ -98,6 +99,7 @@ func main() {
 	// supervisor refer see https://github.com/gitpod-io/gitpod/blob/main/components/supervisor/pkg/supervisor/supervisor.go#L961
 	shouldWaitBackendPlugin := os.Getenv("GITPOD_WAIT_IDE_BACKEND") == "true"
 	debugEnabled := os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true"
+	preferToolbox := os.Getenv("GITPOD_PREFER_TOOLBOX") == "true"
 	log.Init(ServiceName, constant.Version, true, debugEnabled)
 	log.Info(ServiceName + ": " + constant.Version)
 	startTime := time.Now()
@@ -165,6 +167,7 @@ func main() {
 		alias:  alias,
 		label:  label,
 
+		preferToolbox:           preferToolbox,
 		qualifier:               qualifier,
 		productDir:              productDir,
 		backendDir:              backendDir,
@@ -178,6 +181,15 @@ func main() {
 		launch(launchCtx)
 		return
 	}
+
+	if preferToolbox {
+		err = configureToolboxCliProperties(backendDir)
+		if err != nil {
+			log.WithError(err).Error("failed to write toolbox cli config file")
+			return
+		}
+	}
+
 	// we should start serving immediately and postpone launch
 	// in order to enable a JB Gateway to connect as soon as possible
 	go launch(launchCtx)
@@ -277,6 +289,22 @@ func serve(launchCtx *LaunchContext) {
 		fmt.Fprint(w, jsonLink)
 	})
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		if launchCtx.preferToolbox {
+			response := make(map[string]string)
+			toolboxLink, err := resolveToolboxLink(launchCtx.wsInfo)
+			if err != nil {
+				log.WithError(err).Error("cannot resolve toolbox link")
+				http.Error(w, err.Error(), http.StatusServiceUnavailable)
+				return
+			}
+			response["link"] = toolboxLink
+			response["label"] = launchCtx.label
+			response["clientID"] = "jetbrains-toolbox"
+			response["kind"] = launchCtx.alias
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(response)
+			return
+		}
 		backendPort := r.URL.Query().Get("backendPort")
 		if backendPort == "" {
 			backendPort = defaultBackendPort
@@ -357,6 +385,21 @@ type Response struct {
 type JoinLinkResponse struct {
 	AppPid   int    `json:"appPid"`
 	JoinLink string `json:"joinLink"`
+}
+
+func resolveToolboxLink(wsInfo *supervisor.WorkspaceInfoResponse) (string, error) {
+	gitpodUrl, err := url.Parse(wsInfo.GitpodHost)
+	if err != nil {
+		return "", err
+	}
+	debugWorkspace := wsInfo.DebugWorkspaceType != supervisor.DebugWorkspaceType_noDebug
+	link := url.URL{
+		Scheme:   "jetbrains",
+		Host:     "gateway",
+		Path:     "io.gitpod.toolbox.gateway/open-in-toolbox",
+		RawQuery: fmt.Sprintf("host=%s&workspaceId=%s&debugWorkspace=%t", gitpodUrl.Hostname(), wsInfo.WorkspaceId, debugWorkspace),
+	}
+	return link.String(), nil
 }
 
 func resolveGatewayLink(backendPort string, wsInfo *supervisor.WorkspaceInfoResponse) (string, error) {
@@ -554,6 +597,8 @@ func run(launchCtx *LaunchContext) {
 	var args []string
 	if launchCtx.warmup {
 		args = append(args, "warmup")
+	} else if launchCtx.preferToolbox {
+		args = append(args, "serverMode")
 	} else {
 		args = append(args, "run")
 	}
@@ -1183,4 +1228,39 @@ func resolveProjectContextDir(launchCtx *LaunchContext) string {
 	}
 
 	return launchCtx.projectDir
+}
+
+func configureToolboxCliProperties(backendDir string) error {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	toolboxCliPropertiesDir := fmt.Sprintf("%s/.local/share/JetBrains/Toolbox", userHomeDir)
+	_, err = os.Stat(toolboxCliPropertiesDir)
+	if !os.IsNotExist(err) {
+		return err
+	}
+	err = os.MkdirAll(toolboxCliPropertiesDir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	toolboxCliPropertiesFilePath := fmt.Sprintf("%s/environment.json", toolboxCliPropertiesDir)
+
+	// TODO(hw): restrict IDE installation
+	content := fmt.Sprintf(`{
+    "tools": {
+        "allowInstallation": true,
+        "allowUpdate": false,
+        "allowUninstallation": true,
+        "location": [
+            {
+                "path": "%s"
+            }
+        ]
+    }
+}`, backendDir)
+
+	return os.WriteFile(toolboxCliPropertiesFilePath, []byte(content), 0o644)
 }
