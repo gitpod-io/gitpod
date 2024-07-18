@@ -14,6 +14,7 @@ import { TabsContent } from "@podkit/tabs/Tabs";
 import { PrebuildTaskErrorTab } from "./PrebuildTaskErrorTab";
 import type { PlainMessage } from "@bufbuild/protobuf";
 import { useHistory } from "react-router";
+import { LoadingState } from "@podkit/loading/LoadingState";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -74,6 +75,16 @@ export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
     }, []);
 
     if (error) {
+        if (error.code === ErrorCodes.NOT_FOUND && taskId === "image-build") {
+            return (
+                <PrebuildTaskErrorTab taskId={taskId}>
+                    <span className="flex justify-center items-center gap-1">
+                        Pulling container image <LoadingState delay={false} size={16} />
+                    </span>
+                </PrebuildTaskErrorTab>
+            );
+        }
+
         return (
             <PrebuildTaskErrorTab taskId={taskId}>
                 Logs of this prebuild task are inaccessible. Use <code>gp validate --prebuild --headless</code> in a
