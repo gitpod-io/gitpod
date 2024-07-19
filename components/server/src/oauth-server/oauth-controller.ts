@@ -16,7 +16,7 @@ import { URL } from "url";
 import { Config } from "../config";
 import { clientRepository, createAuthorizationServer } from "./oauth-authorization-server";
 import { inMemoryDatabase, toolboxClient } from "./db";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { getFeatureFlagEnableExperimentalJBTB } from "../util/featureflags";
 
 @injectable()
 export class OAuthController {
@@ -149,11 +149,7 @@ export class OAuthController {
             }
 
             if (clientID === toolboxClient.id) {
-                const enableExperimentalJBTB = await getExperimentsClientForBackend().getValueAsync(
-                    "enable_experimental_jbtb",
-                    false,
-                    { user },
-                );
+                const enableExperimentalJBTB = await getFeatureFlagEnableExperimentalJBTB(user.id);
                 if (!enableExperimentalJBTB) {
                     res.sendStatus(400);
                     return false;

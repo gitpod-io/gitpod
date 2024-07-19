@@ -136,6 +136,7 @@ import { ctxIsAborted, runWithRequestContext, runWithSubjectId } from "../util/r
 import { SubjectId } from "../auth/subject-id";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { IDESettingsVersion } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { getFeatureFlagEnableExperimentalJBTB } from "../util/featureflags";
 
 export interface StartWorkspaceOptions extends Omit<GitpodServer.StartWorkspaceOptions, "ideSettings"> {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -301,16 +302,11 @@ export class WorkspaceStarter {
 
             let ideSettings = options.ideSettings;
 
-            const enableExperimentalJBTB = await getExperimentsClientForBackend().getValueAsync(
-                "enable_experimental_jbtb",
-                false,
-                { user },
-            );
-
             // if no explicit ideSettings are passed, we use the one from the last workspace instance
             if (lastValidWorkspaceInstance) {
                 const ideConfig = lastValidWorkspaceInstance.configuration?.ideConfig;
                 if (ideConfig?.ide) {
+                    const enableExperimentalJBTB = await getFeatureFlagEnableExperimentalJBTB(user.id);
                     const preferToolbox = !enableExperimentalJBTB
                         ? false
                         : ideSettings?.preferToolbox ??
@@ -922,11 +918,7 @@ export class WorkspaceStarter {
             };
             if (ideConfig.ideSettings && ideConfig.ideSettings.trim() !== "") {
                 try {
-                    const enableExperimentalJBTB = await getExperimentsClientForBackend().getValueAsync(
-                        "enable_experimental_jbtb",
-                        false,
-                        { user },
-                    );
+                    const enableExperimentalJBTB = await getFeatureFlagEnableExperimentalJBTB(user.id);
                     const ideSettings: IDESettings = JSON.parse(ideConfig.ideSettings);
                     configuration.ideConfig!.ide = ideSettings.defaultIde;
                     configuration.ideConfig!.useLatest = !!ideSettings.useLatestVersion;
