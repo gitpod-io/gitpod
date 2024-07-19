@@ -47,9 +47,9 @@ export default function RepositoryFinder({
         hasMore,
     } = useUnifiedRepositorySearch({
         searchString,
-        excludeConfigurations: excludeConfigurations,
-        onlyConfigurations: onlyConfigurations,
-        showExamples: showExamples,
+        excludeConfigurations,
+        onlyConfigurations,
+        showExamples,
     });
 
     const authProviders = useAuthProviderDescriptions();
@@ -193,7 +193,7 @@ export default function RepositoryFinder({
 
     const getElements = useCallback(
         (searchString: string): ComboboxElement[] => {
-            if (isShowingExamples && searchString.length === 0) {
+            if (isShowingExamples && searchString.length === 0 && !onlyConfigurations) {
                 return PREDEFINED_REPOS.map((repo) => ({
                     id: repo.url,
                     element: <PredefinedRepositoryOption repo={repo} />,
@@ -207,19 +207,21 @@ export default function RepositoryFinder({
                 isSelectable: true,
             }));
 
-            // Add predefined repos to end of the list.
-            PREDEFINED_REPOS.forEach((repo) => {
-                if (
-                    repo.url.toLowerCase().includes(searchString.toLowerCase()) ||
-                    repo.repoName.toLowerCase().includes(searchString.toLowerCase())
-                ) {
-                    result.push({
-                        id: repo.url,
-                        element: <PredefinedRepositoryOption repo={repo} />,
-                        isSelectable: true,
-                    });
-                }
-            });
+            if (!onlyConfigurations) {
+                // Add predefined repos to end of the list.
+                PREDEFINED_REPOS.forEach((repo) => {
+                    if (
+                        repo.url.toLowerCase().includes(searchString.toLowerCase()) ||
+                        repo.repoName.toLowerCase().includes(searchString.toLowerCase())
+                    ) {
+                        result.push({
+                            id: repo.url,
+                            element: <PredefinedRepositoryOption repo={repo} />,
+                            isSelectable: true,
+                        });
+                    }
+                });
+            }
 
             if (hasMore) {
                 result.push({
