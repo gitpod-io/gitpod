@@ -15,7 +15,8 @@ import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { Config } from "../config";
 import { clientRepository, createAuthorizationServer } from "./oauth-authorization-server";
-import { inMemoryDatabase } from "./db";
+import { inMemoryDatabase, toolboxClient } from "./db";
+import { getFeatureFlagEnableExperimentalJBTB } from "../util/featureflags";
 
 @injectable()
 export class OAuthController {
@@ -145,6 +146,14 @@ export class OAuthController {
             if (!(await this.hasApproval(user, clientID.toString(), req, res))) {
                 res.sendStatus(400);
                 return;
+            }
+
+            if (clientID === toolboxClient.id) {
+                const enableExperimentalJBTB = await getFeatureFlagEnableExperimentalJBTB(user.id);
+                if (!enableExperimentalJBTB) {
+                    res.sendStatus(400);
+                    return false;
+                }
             }
 
             const request = new OAuthRequest(req);

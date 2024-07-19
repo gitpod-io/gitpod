@@ -179,3 +179,5 @@ for (const clientId in inMemoryDatabase.clients) {
         inMemoryDatabase.scopes[scope.name] = scope;
     }
 }
+
+export const toolboxClient = toolbox;

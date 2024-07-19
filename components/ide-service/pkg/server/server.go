@@ -303,6 +303,7 @@ func grpcProbe(cfg baseserver.ServerConfiguration) func() error {
 type IDESettings struct {
 	DefaultIde        string            `json:"defaultIde,omitempty"`
 	UseLatestVersion  bool              `json:"useLatestVersion,omitempty"`
+	PreferToolbox     bool              `json:"preferToolbox,omitempty"`
 	PinnedIDEversions map[string]string `json:"pinnedIDEversions,omitempty"`
 }
 
@@ -440,12 +441,22 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 
 		userIdeName := ""
 		useLatest := false
+		preferToolbox := false
 		resultingIdeName := ideConfig.IdeOptions.DefaultIde
 		chosenIDE := ideConfig.IdeOptions.Options[resultingIdeName]
 
 		if ideSettings != nil {
 			userIdeName = ideSettings.DefaultIde
 			useLatest = ideSettings.UseLatestVersion
+			preferToolbox = ideSettings.PreferToolbox
+		}
+
+		if preferToolbox {
+			preferToolboxEnv := api.EnvironmentVariable{
+				Name:  "GITPOD_PREFER_TOOLBOX",
+				Value: "true",
+			}
+			resp.Envvars = append(resp.Envvars, &preferToolboxEnv)
 		}
 
 		if userIdeName != "" {
@@ -499,6 +510,7 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 		resultingIdeSettings := &IDESettings{
 			DefaultIde:       resultingIdeName,
 			UseLatestVersion: useLatest,
+			PreferToolbox:    preferToolbox,
 		}
 
 		err = enc.Encode(resultingIdeSettings)

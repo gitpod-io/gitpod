@@ -56,7 +56,8 @@
             "logUrl": "",
             "editor": {
                 "name": "code",
-                "version": "latest"
+                "version": "latest",
+                "preferToolbox": false
             }
         },
         "status": {

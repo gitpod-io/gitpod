@@ -344,8 +344,15 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             const desktopLink = new URL(url);
             // allow to redirect only for whitelisted trusted protocols
             // IDE-69
-            const trustedProtocols = ["vscode:", "vscode-insiders:", "jetbrains-gateway:"];
+            const trustedProtocols = ["vscode:", "vscode-insiders:", "jetbrains-gateway:", "jetbrains:"];
             redirect = trustedProtocols.includes(desktopLink.protocol);
+            if (
+                redirect &&
+                desktopLink.protocol === "jetbrains:" &&
+                !desktopLink.href.startsWith("jetbrains://gateway/io.gitpod.toolbox.gateway/")
+            ) {
+                redirect = false;
+            }
         } catch (e) {
             console.error("invalid desktop link:", e);
         }

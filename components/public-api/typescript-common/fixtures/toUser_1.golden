@@ -27,7 +27,8 @@
         },
         "editorSettings": {
             "name": "code",
-            "version": "latest"
+            "version": "latest",
+            "preferToolbox": true
         },
         "dotfileRepo": "https://github.com/gitpod-samples/demo-dotfiles-with-gitpod",
         "workspaceClass": "XXXL",
@@ -58,7 +59,8 @@
                 "workspaceClass": "XXXL",
                 "editorSettings": {
                     "name": "code",
-                    "version": "stable"
+                    "version": "stable",
+                    "preferToolbox": false
                 },
                 "region": ""
             }
