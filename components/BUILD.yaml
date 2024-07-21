@@ -69,7 +69,7 @@ packages:
       # - components/registry-facade/ca-updater:docker
       - components/server:docker
       # - components/service-waiter:docker
-      # - components/supervisor:docker
+      - components/supervisor:docker
       # - components/toxic-config:docker
       # - components/installation-telemetry:docker
       # - components/workspacekit:docker
