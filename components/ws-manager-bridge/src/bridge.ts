@@ -394,10 +394,10 @@ export class WorkspaceManagerBridge implements Disposable {
 
             span.setTag("after", JSON.stringify(instance));
 
+            await this.workspaceDB.trace(ctx).storeInstance(instance);
+
             // now notify all prebuild listeners about updates - and update DB if needed
             await this.prebuildUpdater.updatePrebuiltWorkspace({ span }, userId, status);
-
-            await this.workspaceDB.trace(ctx).storeInstance(instance);
 
             // cleanup
             // important: call this after the DB update
