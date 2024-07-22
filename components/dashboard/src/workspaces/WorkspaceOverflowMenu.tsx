@@ -104,6 +104,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         {
             title: "Open",
             href: startUrl.toString(),
+            target: "_blank",
         },
         {
             title: "Rename",

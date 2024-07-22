@@ -295,10 +295,11 @@ export function CreateWorkspacePage() {
                 await storeAutoStartOptions();
                 await timeout;
                 if (result.workspace?.status?.workspaceUrl) {
-                    window.location.href = result.workspace.status.workspaceUrl;
+                    window.open(result.workspace.status.workspaceUrl, "_blank");
                 } else if (result.workspace!.id) {
-                    history.push(`/start/#${result.workspace!.id}`);
+                    window.open(`${window.location.origin}/start/#${result.workspace!.id}`, "_blank");
                 }
+                history.push("/workspaces");
             } catch (error) {
                 console.log(error);
             } finally {
@@ -309,17 +310,17 @@ export function CreateWorkspacePage() {
             }
         },
         [
-            workspaceContext.error,
             contextURL,
             currentOrg?.id,
+            workspaceContext.error,
+            createWorkspaceMutation,
+            selectedProjectID,
             selectedWsClass,
+            storeAutoStartOptions,
+            history,
             selectedIde,
             useLatestIde,
             preferToolbox,
-            createWorkspaceMutation,
-            selectedProjectID,
-            storeAutoStartOptions,
-            history,
             autostart,
         ],
     );
@@ -600,7 +601,9 @@ export function CreateWorkspacePage() {
                                 return (
                                     <a
                                         key={w.id}
-                                        href={w.status?.workspaceUrl || `/start/${w.id}}`}
+                                        href={w.status?.workspaceUrl || `/start/${w.id}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex"
                                     >
                                         <WorkspaceEntry info={w} shortVersion={true} />

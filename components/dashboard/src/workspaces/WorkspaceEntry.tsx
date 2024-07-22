@@ -72,7 +72,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
             </ItemFieldIcon>
             <div className="flex-grow flex flex-col h-full py-auto truncate">
                 <Tooltip content={info.id} allowWrap={true}>
-                    <a href={startUrl}>
+                    <a href={startUrl} target="_blank" rel="noreferrer">
                         <div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">
                             {fromWorkspaceName(info) || info.id}
                         </div>
