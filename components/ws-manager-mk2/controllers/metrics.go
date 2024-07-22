@@ -228,6 +228,8 @@ func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
+	log.Info("workspace stop reason", "type", tpe, "class", class, "reason", reason)
+
 	m.totalStopsCounterVec.WithLabelValues(reason, tpe, class).Inc()
 }
 
