@@ -145,17 +145,25 @@ function streamPrebuildLogs(
         };
 
         let response: Response | undefined = undefined;
+        let abortController: AbortController | undefined = undefined;
         let reader: ReadableStreamDefaultReader<Uint8Array> | undefined = undefined;
         try {
+            abortController = new AbortController();
+            disposables.push({
+                dispose: () => {
+                    abortController?.abort();
+                    reader?.cancel();
+                },
+            });
             console.debug("fetching from streamUrl: " + streamUrl);
             response = await fetch(streamUrl, {
                 method: "GET",
                 cache: "no-cache",
                 credentials: "include",
-                keepalive: true,
                 headers: {
                     TE: "trailers", // necessary to receive stream status code
                 },
+                signal: abortController.signal,
                 redirect: "follow",
             });
             reader = response.body?.getReader();
@@ -163,7 +171,6 @@ function streamPrebuildLogs(
                 await retryBackoff("no reader");
                 return;
             }
-            disposables.push({ dispose: () => reader?.cancel() });
 
             const decoder = new TextDecoder("utf-8");
             let chunk = await reader.read();
