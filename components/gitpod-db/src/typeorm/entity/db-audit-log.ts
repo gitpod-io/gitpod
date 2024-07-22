@@ -7,6 +7,7 @@
 import { Entity, Column, PrimaryColumn } from "typeorm";
 import { TypeORM } from "../typeorm";
 import { AuditLog } from "@gitpod/gitpod-protocol/lib/audit-log";
+import { BigIntToJson } from "@gitpod/gitpod-protocol/lib/util/stringify";
 import { Transformer } from "../transformer";
 
 @Entity()
@@ -28,22 +29,7 @@ export class DBAuditLog implements AuditLog {
 
     @Column({
         type: "text", // it's JSON on DB, but we aim to disable the Typeorm-internal JSON-transformer we can't control and can't disable otherwise
-        transformer: Transformer.SIMPLE_JSON_CUSTOM(
-            [],
-            function (key: string, value: any) {
-                if (typeof value === "bigint") {
-                    return `bigint:${value.toString()}`;
-                }
-                return value;
-            },
-            function (key: string, value: any) {
-                if (typeof value === "string" && value.startsWith("bigint:")) {
-                    const v: string = value.substring(7);
-                    return BigInt(v);
-                }
-                return value;
-            },
-        ),
+        transformer: Transformer.SIMPLE_JSON_CUSTOM([], BigIntToJson.replacer, BigIntToJson.reviver),
     })
     args: object[];
 }
