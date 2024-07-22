@@ -323,8 +323,13 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 			return true
 		})
 
+		taskWatchWg := &sync.WaitGroup{}
+
 		go func(t *task, term *terminal.Term) {
 			state, err := term.Wait()
+			taskLog.Info("task terminal has been closed. Waiting for watch() to finish...")
+			taskWatchWg.Wait()
+			taskLog.Info("watch() has finished, setting task state to closed")
 			if state != nil {
 				if state.Success() {
 					t.successChan <- taskSuccessful
@@ -341,11 +346,10 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 
 				t.successChan <- taskFailed(fmt.Sprintf("%s: %s", msg, t.lastOutput))
 			}
-			taskLog.Info("task terminal has been closed")
 			tm.setTaskState(t, api.TaskState_closed)
 		}(t, term)
 
-		tm.watch(t, term)
+		tm.watch(t, term, taskWatchWg)
 
 		if t.command != "" {
 			term.PTY.Write([]byte(t.command + "\n"))
@@ -446,7 +450,7 @@ func prebuildLogFileName(task *task, storeLocation string) string {
 	return logs.PrebuildLogFileName(storeLocation, task.Id)
 }
 
-func (tm *tasksManager) watch(task *task, term *terminal.Term) {
+func (tm *tasksManager) watch(task *task, term *terminal.Term, wg *sync.WaitGroup) {
 	if !tm.config.isPrebuild() {
 		return
 	}
@@ -461,6 +465,9 @@ func (tm *tasksManager) watch(task *task, term *terminal.Term) {
 	)
 	go func() {
 		defer stdout.Close()
+
+		wg.Add(1)
+		defer wg.Done()
 
 		var (
 			fileName    = prebuildLogFileName(task, tm.storeLocation)
@@ -514,10 +521,12 @@ func (tm *tasksManager) watch(task *task, term *terminal.Term) {
 			duration += "\r\n"
 		}
 
+		log.Error("Adding kumquat line to prebuild log")
 		endMessage := "\r\n🍊 This task ran as a workspace prebuild\r\n" + duration + "\r\n"
 		_, _ = writer.Write([]byte(endMessage))
 
 		if tm.reporter != nil {
+			log.Error("Reporting prebuild completion inside .lastOutput")
 			task.lastOutput = endMessage
 		}
 	}()
