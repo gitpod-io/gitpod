@@ -22,6 +22,8 @@
 # This Dockerfile was taken from https://github.com/ep76/docker-openssh-static and adapted.
 FROM alpine:3.16 AS builder
 
+ARG REBUILD_TRIGGER=1
+
 ARG openssh_url=https://github.com/openssh/openssh-portable/archive/refs/tags/V_9_8_P1.tar.gz
 
 WORKDIR /build
