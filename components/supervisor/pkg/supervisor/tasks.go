@@ -523,7 +523,6 @@ func (tm *tasksManager) watch(task *task, term *terminal.Term, wg *sync.WaitGrou
 
 		endMessage := "\r\n🍊 This task ran as a workspace prebuild\r\n" + duration + "\r\n"
 		_, _ = writer.Write([]byte(endMessage))
-		log.Error("Added kumquat line to prebuild log")
 
 		if tm.reporter != nil {
 			task.lastOutput = endMessage
