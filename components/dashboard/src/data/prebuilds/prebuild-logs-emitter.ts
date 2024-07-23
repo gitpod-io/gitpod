@@ -211,7 +211,7 @@ function streamPrebuildLogs(
             }
         } catch (err) {
             if (err instanceof DOMException && err.name === "AbortError") {
-                console.debug("aborted watching headless logs");
+                console.debug("stopped watching headless logs, not retrying: method got disposed of");
                 return;
             }
             reader?.cancel().catch(console.debug);
