@@ -69,8 +69,7 @@ export class HeadlessLogController {
                 const user = req.user as User; // verified by authenticateAndAuthorize
                 await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
                     try {
-                        const instanceId = req.params.instanceId;
-                        const terminalId = req.params.terminalId;
+                        const { instanceId, terminalId } = req.params;
 
                         const logCtx = { userId: user.id, instanceId };
                         try {
@@ -291,12 +290,11 @@ export class HeadlessLogController {
                         return;
                     }
 
-                    const prebuildId = req.params.prebuildId;
+                    const { prebuildId, taskId } = req.params;
                     if (!uuidValidate(prebuildId)) {
                         res.status(400).send("prebuildId is invalid");
                         return;
                     }
-                    const { taskId } = req.params;
                     const logCtx = { userId: user.id, prebuildId, taskId };
 
                     let firstChunk = true;
