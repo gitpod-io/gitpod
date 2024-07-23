@@ -5,7 +5,11 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"net/url"
 	"strconv"
 
@@ -21,6 +25,36 @@ var defaultJetBrainsBackendPluginPort = 63342
 
 var jetBrainsOptions struct {
 	Port int
+}
+
+type operator string
+
+const (
+	operatorProjectBuild      operator = "project-build"
+	operatorProjectRebuildAll operator = "project-rebuild-all"
+)
+
+func callJetBrainsBackendCLI(ctx context.Context, operator operator, params url.Values) error {
+	url := getJetBrainsBackendPluginCliApiUrl()
+	params.Add("op", string(operator))
+	url.RawQuery = params.Encode()
+
+	client := http.DefaultClient
+	req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(body))
+	}
+	return nil
 }
 
 func getJetBrainsBackendPluginCliApiUrl() *url.URL {
