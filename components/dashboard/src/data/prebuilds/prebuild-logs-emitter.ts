@@ -212,6 +212,10 @@ function streamPrebuildLogs(
                 console.error("stopped watching headless logs", err);
                 return;
             }
+            if (err instanceof DOMException && err.name === "AbortError") {
+                console.debug("aborted watching headless logs");
+                return;
+            }
             await retryBackoff("error while listening to stream", err);
         } finally {
             reader?.cancel().catch(console.debug);
