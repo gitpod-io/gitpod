@@ -116,7 +116,6 @@ class GitpodCLIService : RestService() {
                 if (project == null) {
                     throw Exception("project not found")
                 }
-                thisLogger().warn("gitpod: triggered project build")
                 val action = BuiltinProjectBuildAction()
                 val dataContext = SimpleDataContext.getProjectContext(project)
                 val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataContext)
@@ -128,7 +127,6 @@ class GitpodCLIService : RestService() {
                 if (project == null) {
                     throw Exception("project not found")
                 }
-                thisLogger().warn("gitpod: triggered project rebuild all modules")
                 val action = BuiltinProjectRebuildAllModulesAction()
                 val dataContext = SimpleDataContext.getProjectContext(project)
                 val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataContext)
