@@ -5,6 +5,7 @@
 package supervisor
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -17,7 +18,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/filiptronicek/go-tail" // revert to upstream after https://github.com/nxadm/tail/pull/71 is merged
+	"github.com/fsnotify/fsnotify"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -1067,12 +1068,11 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 		return status.Error(codes.Internal, "task file not found")
 	}
 
-	t, err := tail.TailFile(fileLocation, tail.Config{Follow: true, ReOpen: false, MustExist: true, CompleteLines: true})
+	file, err := os.Open(fileLocation)
 	if err != nil {
-		return status.Error(codes.Internal, fmt.Sprintf("Error tailing file: %s", err.Error()))
+		return status.Error(codes.Internal, err.Error())
 	}
-	defer t.Stop()
-	defer t.Cleanup()
+	defer file.Close()
 
 	// Determine when the task is done
 	var isClosed atomic.Bool
@@ -1113,7 +1113,41 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 		}
 	}()
 
+	// Setup fs watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("Error creating the watcher: %s", err.Error()))
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(fileLocation)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("Error adding file to the watcher: %s", err.Error()))
+	}
+
+	// Do the actual reading
+	buf := make([]byte, 4096)
+	reader := bufio.NewReader(file)
 	for {
+		n, err := reader.Read(buf)
+		if err == io.EOF {
+			if isClosed.Load() {
+				// We are done
+				log.Println("[prebuildlog]: closing because task state is done and we are done reading")
+				return nil
+			}
+		}
+		if err != nil && err != io.EOF {
+			return status.Error(codes.Internal, fmt.Sprintf("Error reading log file: %s", err.Error()))
+		}
+		if n > 0 {
+			if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
+
+			continue
+		}
+
 		select {
 		case <-srv.Context().Done():
 			log.Println("[prebuildlog]: closing because context done")
@@ -1122,18 +1156,18 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 			log.Println("[prebuildlog]: closing because willShutdownCtx fired")
 			return nil
 		case <-closedChannel:
-			_ = t.StopAtEOF()
 			continue
-		case line, ok := <-t.Lines:
-			if !ok {
-				return nil
+		case event := <-watcher.Events:
+			if event.Op&fsnotify.Write == fsnotify.Write && event.Name == fileLocation {
+				// File was written to
+				continue
 			}
-			chunk := line.Text + "\n" // a limitation of the tailing library, since it does some minor line processing (https://github.com/nxadm/tail/blob/ba755e4d73b6b3e768ccb943df8d4656cdd971fc/tail.go#L244)
-			if err := srv.Send(&api.ListenToOutputResponse{Data: []byte(chunk)}); err != nil {
-				return status.Error(codes.Internal, err.Error())
+
+		case err := <-watcher.Errors:
+			if err != nil {
+				log.Println("error:", err)
+				return status.Error(codes.Internal, fmt.Sprintf("Error watching log file: %s", err.Error()))
 			}
-		case <-t.Dead():
-			return nil
 		}
 	}
 }
