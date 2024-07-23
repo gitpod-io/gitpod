@@ -7,6 +7,9 @@ package io.gitpod.jetbrains.remote
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.CommandLineProcessor
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSession
 import com.intellij.openapi.client.ClientSessionsManager
@@ -21,6 +24,7 @@ import com.intellij.util.withFragment
 import com.intellij.util.withPath
 import com.intellij.util.withQuery
 import com.jetbrains.rd.util.URI
+import io.gitpod.jetbrains.remote.actions.BuiltinProjectBuildAction
 import io.gitpod.jetbrains.remote.utils.LocalHostUri
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
@@ -104,6 +108,17 @@ class GitpodCLIService : RestService() {
                 }
 
                 BrowserUtil.browse(resolvedUrl, project)
+            }
+        }
+        if (operation == "project-build") {
+            return withClient(request, context) { project ->
+                if (project == null) {
+                    throw Exception("project not found")
+                }
+                val action = BuiltinProjectBuildAction()
+                val dataContext = SimpleDataContext.getProjectContext(project)
+                val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataContext)
+                action.actionPerformed(actionEvent)
             }
         }
         return "invalid operation"

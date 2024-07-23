@@ -142,5 +142,11 @@
             <add-to-group group-id="PortForwardingPortGroup" anchor="last"/>
             <add-to-group group-id="PortForwardingSuggestionGroup" anchor="last"/>
         </action>
+        <action id="io.gitpod.jetbrains.remote.actions.BuiltinProjectBuildAction"
+                class="io.gitpod.jetbrains.remote.actions.BuiltinProjectBuildAction"
+                text="Gitpod: Builtin Project Build"
+                icon="AllIcons.General.Settings">
+            <add-to-group group-id="BuiltinProjectActions" anchor="last"/>
+        </action>
     </actions>
 </idea-plugin>
