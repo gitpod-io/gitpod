@@ -35,12 +35,18 @@ const (
 )
 
 func callJetBrainsBackendCLI(ctx context.Context, operator operator, params url.Values) error {
-	url := getJetBrainsBackendPluginCliApiUrl()
+	if err := waitForPort(ctx, uint64(jetBrainsOptions.Port)); err != nil {
+		return err
+	}
+	cliUrl := getJetBrainsBackendPluginCliApiUrl()
+	if params == nil {
+		params = url.Values{}
+	}
 	params.Add("op", string(operator))
-	url.RawQuery = params.Encode()
+	cliUrl.RawQuery = params.Encode()
 
 	client := http.DefaultClient
-	req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", cliUrl.String(), nil)
 	if err != nil {
 		return err
 	}

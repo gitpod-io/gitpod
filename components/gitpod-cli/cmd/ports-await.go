@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -30,42 +31,45 @@ var awaitPortCmd = &cobra.Command{
 		if err != nil {
 			return GpError{Err: xerrors.Errorf("port cannot be parsed as int: %w", err), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
-
-		// Expected format: local port (in hex), remote address (irrelevant here), connection state ("0A" is "TCP_LISTEN")
-		pattern, err := regexp.Compile(fmt.Sprintf(":[0]*%X \\w+:\\w+ 0A ", port))
-		if err != nil {
-			return GpError{Err: xerrors.Errorf("cannot compile regexp pattern"), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
-		}
-
-		var protos []string
-		for _, path := range []string{fnNetTCP, fnNetTCP6} {
-			if _, err := os.Stat(path); err == nil {
-				protos = append(protos, path)
-			}
-		}
-
-		fmt.Printf("Awaiting port %d... ", port)
-		t := time.NewTicker(time.Second * 2)
-		for cmd.Context().Err() == nil {
-			for _, proto := range protos {
-				tcp, err := os.ReadFile(proto)
-				if err != nil {
-					return xerrors.Errorf("cannot read %v: %w", proto, err)
-				}
-
-				if pattern.MatchString(string(tcp)) {
-					fmt.Println("ok")
-					return nil
-				}
-			}
-			select {
-			case <-cmd.Context().Done():
-				return nil
-			case <-t.C:
-			}
-		}
-		return nil
+		return waitForPort(cmd.Context(), port)
 	},
+}
+
+func waitForPort(ctx context.Context, port uint64) error {
+	// Expected format: local port (in hex), remote address (irrelevant here), connection state ("0A" is "TCP_LISTEN")
+	pattern, err := regexp.Compile(fmt.Sprintf(":[0]*%X \\w+:\\w+ 0A ", port))
+	if err != nil {
+		return GpError{Err: xerrors.Errorf("cannot compile regexp pattern"), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
+	}
+
+	var protos []string
+	for _, path := range []string{fnNetTCP, fnNetTCP6} {
+		if _, err := os.Stat(path); err == nil {
+			protos = append(protos, path)
+		}
+	}
+
+	fmt.Printf("Awaiting port %d... ", port)
+	t := time.NewTicker(time.Second * 2)
+	for ctx.Err() == nil {
+		for _, proto := range protos {
+			tcp, err := os.ReadFile(proto)
+			if err != nil {
+				return xerrors.Errorf("cannot read %v: %w", proto, err)
+			}
+
+			if pattern.MatchString(string(tcp)) {
+				fmt.Println("ok")
+				return nil
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-t.C:
+		}
+	}
+	return nil
 }
 
 var awaitPortCmdAlias = &cobra.Command{
