@@ -25,7 +25,7 @@
     "webpack-cli": "^3.1.1"
   },
   "scripts": {
-    "build": "tsc && webpack --mode=production",
+    "build": "export NODE_OPTIONS=--openssl-legacy-provider; tsc && webpack --mode=production",
     "watch": "concurrently \"tsc --watch --preserveWatchOutput\" \"webpack --mode=development\"",
     "clean": "rm -rf lib && rm -rf dist"
   }
