@@ -15,3 +15,11 @@ class BuiltinProjectBuildAction : AnAction() {
         projectTaskManager.buildAllModules()
     }
 }
+
+class BuiltinProjectRebuildAllModulesAction : AnAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: throw Exception("project not found")
+        val projectTaskManager = ProjectTaskManager.getInstance(project)
+        projectTaskManager.rebuildAllModules()
+    }
+}

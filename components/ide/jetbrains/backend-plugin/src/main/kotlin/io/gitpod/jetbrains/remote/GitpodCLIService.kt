@@ -25,6 +25,7 @@ import com.intellij.util.withPath
 import com.intellij.util.withQuery
 import com.jetbrains.rd.util.URI
 import io.gitpod.jetbrains.remote.actions.BuiltinProjectBuildAction
+import io.gitpod.jetbrains.remote.actions.BuiltinProjectRebuildAllModulesAction
 import io.gitpod.jetbrains.remote.utils.LocalHostUri
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
@@ -115,7 +116,20 @@ class GitpodCLIService : RestService() {
                 if (project == null) {
                     throw Exception("project not found")
                 }
+                thisLogger().warn("gitpod: triggered project build")
                 val action = BuiltinProjectBuildAction()
+                val dataContext = SimpleDataContext.getProjectContext(project)
+                val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataContext)
+                action.actionPerformed(actionEvent)
+            }
+        }
+        if (operation == "project-rebuild-all") {
+            return withClient(request, context) { project ->
+                if (project == null) {
+                    throw Exception("project not found")
+                }
+                thisLogger().warn("gitpod: triggered project rebuild all modules")
+                val action = BuiltinProjectRebuildAllModulesAction()
                 val dataContext = SimpleDataContext.getProjectContext(project)
                 val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataContext)
                 action.actionPerformed(actionEvent)

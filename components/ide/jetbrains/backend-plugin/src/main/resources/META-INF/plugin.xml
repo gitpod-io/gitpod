@@ -148,5 +148,11 @@
                 icon="AllIcons.General.Settings">
             <add-to-group group-id="BuiltinProjectActions" anchor="last"/>
         </action>
+        <action id="io.gitpod.jetbrains.remote.actions.BuiltinProjectRebuildAllModulesAction"
+                class="io.gitpod.jetbrains.remote.actions.BuiltinProjectRebuildAllModulesAction"
+                text="Gitpod: Builtin Project Rebuild All Modules"
+                icon="AllIcons.General.Settings">
+            <add-to-group group-id="BuiltinProjectActions" anchor="last"/>
+        </action>
     </actions>
 </idea-plugin>
