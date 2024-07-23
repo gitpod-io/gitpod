@@ -150,15 +150,15 @@ function streamPrebuildLogs(
         try {
             abortController = new AbortController();
             disposables.push({
-                dispose: () => {
+                dispose: async () => {
                     abortController?.abort();
-                    reader?.cancel();
+                    await reader?.cancel();
                 },
             });
             console.debug("fetching from streamUrl: " + streamUrl);
             response = await fetch(streamUrl, {
                 method: "GET",
-                cache: "no-cache",
+                cache: "reload",
                 credentials: "include",
                 headers: {
                     TE: "trailers", // necessary to receive stream status code
@@ -175,6 +175,10 @@ function streamPrebuildLogs(
             const decoder = new TextDecoder("utf-8");
             let chunk = await reader.read();
             while (!chunk.done) {
+                if (disposables.disposed) {
+                    // stop reading when disposed
+                    return;
+                }
                 const msg = decoder.decode(chunk.value, { stream: true });
 
                 // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
@@ -206,14 +210,14 @@ function streamPrebuildLogs(
                 return;
             }
         } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") {
+                console.debug("aborted watching headless logs");
+                return;
+            }
             reader?.cancel().catch(console.debug);
             if (err.code === 400) {
                 // sth is really off, and we _should not_ retry
                 console.error("stopped watching headless logs", err);
-                return;
-            }
-            if (err instanceof DOMException && err.name === "AbortError") {
-                console.debug("aborted watching headless logs");
                 return;
             }
             await retryBackoff("error while listening to stream", err);

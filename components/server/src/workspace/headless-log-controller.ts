@@ -76,7 +76,7 @@ export class HeadlessLogController {
                             const head = {
                                 "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
                                 "Transfer-Encoding": "chunked",
-                                "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
+                                "Cache-Control": "no-cache, no-store, must-revalidate", // make sure streams are not re-used on reconnect
                             };
                             res.writeHead(200, head);
 
