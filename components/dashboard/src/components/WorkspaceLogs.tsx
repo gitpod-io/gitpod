@@ -6,10 +6,10 @@
 
 import EventEmitter from "events";
 import { useContext, useEffect, useMemo, useRef } from "react";
-import { Terminal, ITerminalOptions, ITheme } from "xterm";
+import { Terminal, ITerminalOptions, ITheme } from "@xterm/xterm";
 import debounce from "lodash/debounce";
-import { FitAddon } from "xterm-addon-fit";
-import "xterm/css/xterm.css";
+import { FitAddon } from "@xterm/addon-fit";
+import "@xterm/xterm/css/xterm.css";
 import { ThemeContext } from "../theme-context";
 import { cn } from "@podkit/lib/cn";
 
