@@ -17,7 +17,7 @@ import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-
 import { prebuildClient, watchPrebuild, workspaceClient } from "../service/public-api";
 import { GetWorkspaceRequest, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { ReplayableEventEmitter } from "../utils";
+import EventEmitter from "events";
 
 const WorkspaceLogs = React.lazy(() => import("./WorkspaceLogs"));
 
@@ -37,7 +37,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
         | undefined
     >();
     const [error, setError] = useState<Error | undefined>();
-    const logsEmitter = useMemo(() => new ReplayableEventEmitter(), []);
+    const logsEmitter = useMemo(() => new EventEmitter(), []);
     const [prebuild, setPrebuild] = useState<Prebuild | undefined>();
 
     const handlePrebuildUpdate = useCallback(

@@ -11,8 +11,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { ThemeContext } from "../theme-context";
 import { cn } from "@podkit/lib/cn";
-import { ReplayableEventEmitter } from "../utils";
-import type { LogEventTypes } from "../data/prebuilds/prebuild-logs-emitter";
+import EventEmitter from "events";
 
 const darkTheme: ITheme = {
     // What written on DevTool dark:bg-gray-800 is
@@ -27,7 +26,7 @@ const lightTheme: ITheme = {
 };
 
 export interface Props {
-    logsEmitter: ReplayableEventEmitter<LogEventTypes>;
+    logsEmitter: EventEmitter;
     errorMessage?: string;
     classes?: string;
     xtermClasses?: string;

@@ -35,7 +35,7 @@ import {
 import { PartialMessage } from "@bufbuild/protobuf";
 import { trackEvent } from "../Analytics";
 import { fromWorkspaceName } from "../workspaces/RenameWorkspaceModal";
-import { ReplayableEventEmitter } from "../utils";
+import EventEmitter from "events";
 
 const sessionId = v4();
 
@@ -760,7 +760,7 @@ interface ImageBuildViewProps {
 }
 
 function ImageBuildView(props: ImageBuildViewProps) {
-    const logsEmitter = useMemo(() => new ReplayableEventEmitter(), []);
+    const logsEmitter = useMemo(() => new EventEmitter(), []);
 
     useEffect(() => {
         let registered = false;
