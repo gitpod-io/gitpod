@@ -33,6 +33,8 @@ export interface Props {
     xtermClasses?: string;
 }
 
+const MAX_CHUNK_SIZE = 1024 * 4; // 4KB
+
 export default function WorkspaceLogs({ logsEmitter, errorMessage, classes, xtermClasses }: Props) {
     const xTermParentRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal>();
@@ -55,18 +57,34 @@ export default function WorkspaceLogs({ logsEmitter, errorMessage, classes, xter
         terminal.loadAddon(fitAddon);
         terminal.open(xTermParentRef.current);
 
-        const logListener = (logs: string) => {
-            if (terminal && logs) {
+        let logBuffer = "";
+        let isWriting = false;
+
+        const processNextLog = () => {
+            if (isWriting || logBuffer.length === 0) return;
+
+            isWriting = true;
+            const logs = logBuffer.slice(0, MAX_CHUNK_SIZE);
+            logBuffer = logBuffer.slice(logs.length);
+            if (logs) {
                 terminal.write(logs, () => {
-                    if (logsEmitter.lock.isAcquired()) {
-                        logsEmitter.lock.release();
-                    }
+                    isWriting = false;
+                    processNextLog();
                 });
             }
         };
 
+        const logListener = (logs: string) => {
+            if (!logs) return;
+
+            logBuffer += logs;
+            processNextLog();
+        };
+
         const resetListener = () => {
             terminal.clear();
+            logBuffer = "";
+            isWriting = false;
         };
 
         const emitter = logsEmitter.on("logs", logListener);
