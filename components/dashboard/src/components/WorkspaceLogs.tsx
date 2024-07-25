@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import EventEmitter from "events";
 import { useContext, useEffect, useMemo, useRef } from "react";
 import { Terminal, ITerminalOptions, ITheme } from "@xterm/xterm";
 import debounce from "lodash/debounce";
@@ -11,7 +12,6 @@ import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { ThemeContext } from "../theme-context";
 import { cn } from "@podkit/lib/cn";
-import EventEmitter from "events";
 
 const darkTheme: ITheme = {
     // What written on DevTool dark:bg-gray-800 is

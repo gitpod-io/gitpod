@@ -7,6 +7,7 @@
 import { DisposableCollection, RateLimiterError, WorkspaceImageBuild } from "@gitpod/gitpod-protocol";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import EventEmitter from "events";
 import * as queryString from "query-string";
 import React, { Suspense, useEffect, useMemo } from "react";
 import { v4 } from "uuid";
@@ -35,7 +36,6 @@ import {
 import { PartialMessage } from "@bufbuild/protobuf";
 import { trackEvent } from "../Analytics";
 import { fromWorkspaceName } from "../workspaces/RenameWorkspaceModal";
-import EventEmitter from "events";
 
 const sessionId = v4();
 

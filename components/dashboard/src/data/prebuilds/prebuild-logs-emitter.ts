@@ -12,7 +12,7 @@ import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/
 import { PlainMessage } from "@bufbuild/protobuf";
 import { ReplayableEventEmitter } from "../../utils";
 
-export type LogEventTypes = {
+type LogEventTypes = {
     error: [Error];
     logs: [string];
     "logs-error": [ApplicationError];
