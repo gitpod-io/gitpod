@@ -5,6 +5,7 @@
  */
 
 import EventEmitter from "events";
+import { Lock } from "async-await-mutex-lock";
 
 export interface PollOptions<T> {
     backoffFactor: number;
@@ -156,6 +157,7 @@ type EventMap = Record<string, any[]>;
 export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEmitter {
     private eventLog: { [K in keyof EventTypes]?: EventTypes[K][] } = {};
     private reachedEnd = false;
+    public lock = new Lock();
 
     emit(event: string | symbol, ...args: any[]): boolean;
     emit<K extends keyof EventTypes>(event: K, ...args: EventTypes[K]): boolean;
@@ -173,12 +175,19 @@ export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEm
     on<K extends keyof EventTypes>(event: K, listener: (...args: EventTypes[K]) => void): this;
     on(event: string | symbol, listener: (...args: any[]) => void): this {
         const eventName = event as keyof EventTypes;
-        if (this.eventLog[eventName]) {
-            for (const args of this.eventLog[eventName]!) {
-                listener(...args);
+        const eventLog = this.eventLog[eventName];
+
+        (async () => {
+            if (eventLog && eventLog.length > 0) {
+                for (const args of eventLog) {
+                    await this.lock.acquire();
+                    listener(...args);
+                }
             }
-        }
-        super.on(event, listener);
+
+            super.on(event, listener);
+        })();
+
         return this;
     }
 
@@ -186,12 +195,20 @@ export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEm
     once<K extends keyof EventTypes>(event: K, listener: (...args: EventTypes[K]) => void): this;
     once(event: string | symbol, listener: (...args: any[]) => void): this {
         const eventName = event as keyof EventTypes;
+
+        const replayListener = (...args: any[]) => {
+            listener(...args);
+            super.off(event, replayListener);
+        };
+
         if (this.eventLog[eventName]) {
             for (const args of this.eventLog[eventName]!) {
                 listener(...args);
             }
+            super.off(event, replayListener); // Ensure listener is removed after replaying
         }
-        super.once(event, listener);
+
+        super.once(event, replayListener);
         return this;
     }
 

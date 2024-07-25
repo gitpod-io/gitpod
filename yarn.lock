@@ -4864,6 +4864,11 @@ ast-types-flow@^0.0.7:
   resolved "https://registry.npmjs.org/ast-types-flow/-/ast-types-flow-0.0.7.tgz"
   integrity sha1-9wtzXGvKGlycItmCw+Oef+ujva0=
 
+async-await-mutex-lock@^1.0.11:
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/async-await-mutex-lock/-/async-await-mutex-lock-1.0.11.tgz#445f8ebdcac0bbbf9aecb537c83005a1b0c1fe07"
+  integrity sha512-R2R6ITf/q3o/cU6XknJCG+5ya2UgdC/73mTVkYvoyoJP6B0+K6FG9MuxIycR627Exn4fA/nqgHhDw58txzkfgw==
+
 async-batch@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/async-batch/-/async-batch-1.1.2.tgz#ecac7dee0f02a1a3a846438ba7d3f96746239d79"

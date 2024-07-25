@@ -4,8 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import EventEmitter from "events";
-import React, { Suspense, useCallback, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
     DisposableCollection,
     WorkspaceImageBuild,
@@ -18,6 +17,7 @@ import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-
 import { prebuildClient, watchPrebuild, workspaceClient } from "../service/public-api";
 import { GetWorkspaceRequest, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { ReplayableEventEmitter } from "../utils";
 
 const WorkspaceLogs = React.lazy(() => import("./WorkspaceLogs"));
 
@@ -37,7 +37,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
         | undefined
     >();
     const [error, setError] = useState<Error | undefined>();
-    const [logsEmitter] = useState(new EventEmitter());
+    const logsEmitter = useMemo(() => new ReplayableEventEmitter(), []);
     const [prebuild, setPrebuild] = useState<Prebuild | undefined>();
 
     const handlePrebuildUpdate = useCallback(

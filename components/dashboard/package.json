@@ -26,6 +26,7 @@
     "@tanstack/react-query-persist-client": "^4.29.19",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
+    "async-await-mutex-lock": "^1.0.11",
     "buffer": "^4.3.0",
     "class-variance-authority": "^0.7.0",
     "classnames": "^2.3.1",
