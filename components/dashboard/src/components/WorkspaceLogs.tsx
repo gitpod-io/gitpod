@@ -63,8 +63,8 @@ export default function WorkspaceLogs({ logsEmitter, errorMessage, classes, xter
         const processNextLog = () => {
             if (isWriting || logBuffer.length === 0) return;
 
-            const logs = logBuffer.slice(0, MAX_CHUNK_SIZE);
-            logBuffer = logBuffer.slice(logs.length);
+            const logs = logBuffer.subarray(0, MAX_CHUNK_SIZE);
+            logBuffer = logBuffer.subarray(logs.length);
             if (logs) {
                 isWriting = true;
                 terminal.write(logs, () => {
@@ -77,7 +77,11 @@ export default function WorkspaceLogs({ logsEmitter, errorMessage, classes, xter
         const logListener = (logs: Uint8Array) => {
             if (!logs) return;
 
-            logBuffer = new Uint8Array([...logBuffer, ...logs]);
+            const newBuffer = new Uint8Array(logBuffer.length + logs.length);
+            newBuffer.set(logBuffer);
+            newBuffer.set(logs, logBuffer.length);
+            logBuffer = newBuffer;
+
             processNextLog();
         };
 
