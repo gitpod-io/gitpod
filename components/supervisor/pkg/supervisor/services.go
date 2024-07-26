@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -1075,9 +1074,10 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	defer file.Close()
 
 	// Determine when the task is done
-	var isClosed atomic.Bool
 	closedChannel := make(chan struct{})
-	isClosed.Store(taskStatus.State == api.TaskState_closed)
+	closeClosedChannel := sync.OnceFunc(func() {
+		close(closedChannel)
+	})
 
 	sub := s.tasksManager.Subscribe()
 	if sub == nil {
@@ -1087,8 +1087,7 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 
 	go func() {
 		defer func() {
-			isClosed.Store(true)
-			close(closedChannel)
+			closeClosedChannel()
 			_ = sub.Close()
 		}()
 
@@ -1113,6 +1112,15 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 		}
 	}()
 
+	// Read taskStatus again to make sure we did not miss it closing
+	freshTaskStatus := s.tasksManager.getTaskStatus(req.TaskId)
+	if freshTaskStatus == nil || freshTaskStatus.State == api.TaskState_closed {
+		// The task was present, but has been closed already: We close the channel here to:
+		//  - read until we hit EOF,
+		//  - and stop right after
+		closeClosedChannel()
+	}
+
 	// Setup fs watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -1126,12 +1134,21 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 	}
 
 	// Do the actual reading
+	isClosed := false
 	buf := make([]byte, 4096)
 	reader := bufio.NewReader(file)
 	for {
+		continueReading := false
 		n, err := reader.Read(buf)
-		if err == io.EOF {
-			if isClosed.Load() {
+		if n > 0 {
+			if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
+				log.Printf("[prebuildlog]: error sending chunk: %s\n", err.Error())
+				return status.Error(codes.Internal, err.Error())
+			}
+
+			continueReading = true
+		} else if err == io.EOF {
+			if isClosed {
 				// We are done
 				log.Println("[prebuildlog]: closing because task state is done and we are done reading")
 				return nil
@@ -1140,14 +1157,12 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 		if err != nil && err != io.EOF {
 			return status.Error(codes.Internal, fmt.Sprintf("Error reading log file: %s", err.Error()))
 		}
-		if n > 0 {
-			if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
-				return status.Error(codes.Internal, err.Error())
-			}
 
+		if continueReading {
 			continue
 		}
 
+	SELECT:
 		select {
 		case <-srv.Context().Done():
 			log.Println("[prebuildlog]: closing because context done")
@@ -1156,12 +1171,16 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 			log.Println("[prebuildlog]: closing because willShutdownCtx fired")
 			return nil
 		case <-closedChannel:
+			isClosed = true
+			// The task got closed: Let's try to read one last time, to make sure we do not miss anything
 			continue
 		case event := <-watcher.Events:
-			if event.Op&fsnotify.Write == fsnotify.Write && event.Name == fileLocation {
-				// File was written to
-				continue
+			if event.Op&fsnotify.Write != fsnotify.Write {
+				// Not relevant: select again
+				break SELECT
 			}
+			// File was written to, let's read it
+			continue
 
 		case err := <-watcher.Errors:
 			if err != nil {
