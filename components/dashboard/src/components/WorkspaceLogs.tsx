@@ -62,10 +62,10 @@ export default function WorkspaceLogs({ logsEmitter, errorMessage, classes, xter
         const processNextLog = () => {
             if (isWriting || logBuffer.length === 0) return;
 
-            isWriting = true;
             const logs = logBuffer.slice(0, MAX_CHUNK_SIZE);
             logBuffer = logBuffer.slice(logs.length);
             if (logs) {
+                isWriting = true;
                 terminal.write(logs, () => {
                     isWriting = false;
                     processNextLog();
