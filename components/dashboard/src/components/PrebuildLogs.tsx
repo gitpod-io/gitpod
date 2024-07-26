@@ -5,7 +5,7 @@
  */
 
 import EventEmitter from "events";
-import React, { Suspense, useCallback, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
     DisposableCollection,
     WorkspaceImageBuild,
@@ -37,7 +37,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
         | undefined
     >();
     const [error, setError] = useState<Error | undefined>();
-    const [logsEmitter] = useState(new EventEmitter());
+    const logsEmitter = useMemo(() => new EventEmitter(), []);
     const [prebuild, setPrebuild] = useState<Prebuild | undefined>();
 
     const handlePrebuildUpdate = useCallback(
