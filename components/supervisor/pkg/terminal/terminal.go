@@ -83,7 +83,7 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 	go func() {
 		term.waitErr = cmd.Wait()
 		close(term.waitDone)
-		_ = m.CloseTerminal(context.Background(), alias)
+		_ = m.CloseTerminal(context.Background(), alias, false)
 	}()
 
 	return alias, nil
@@ -117,11 +117,11 @@ func (m *Mux) Close(ctx context.Context) {
 }
 
 // CloseTerminal closes a terminal and ends the process that runs in it.
-func (m *Mux) CloseTerminal(ctx context.Context, alias string) error {
+func (m *Mux) CloseTerminal(ctx context.Context, alias string, forceSuccess bool) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	return m.doClose(ctx, alias)
+	return m.doClose(ctx, alias, forceSuccess)
 }
 
 // doClose closes a terminal and ends the process that runs in it.
@@ -129,7 +129,7 @@ func (m *Mux) CloseTerminal(ctx context.Context, alias string) error {
 // to stop. If it still runs after that time, it receives SIGKILL.
 //
 // Callers are expected to hold mu.
-func (m *Mux) doClose(ctx context.Context, alias string) error {
+func (m *Mux) doClose(ctx context.Context, alias string, forceSuccess bool) error {
 	term, ok := m.terms[alias]
 	if !ok {
 		return ErrNotFound
@@ -137,6 +137,10 @@ func (m *Mux) doClose(ctx context.Context, alias string) error {
 
 	log := log.WithField("alias", alias)
 	log.Info("closing terminal")
+
+	if forceSuccess {
+		term.ForceSuccess = true
+	}
 
 	err := term.Close(ctx)
 	if err != nil {
@@ -314,6 +318,9 @@ type Term struct {
 	annotations  map[string]string
 	defaultTitle string
 	title        string
+
+	// ForceSuccess overrides the process' exit code to 0
+	ForceSuccess bool
 
 	Stdout *multiWriter
 
