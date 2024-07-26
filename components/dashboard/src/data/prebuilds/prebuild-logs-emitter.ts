@@ -88,7 +88,6 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
                 (err) => {
                     emitter.emit("logs-error", err);
                 },
-                async () => false,
                 () => {
                     emitter.markReachedEnd();
                 },
@@ -113,7 +112,6 @@ function streamPrebuildLogs(
     streamUrl: string,
     onLog: (chunk: Uint8Array) => void,
     onError: (err: Error) => void,
-    checkIsDone: () => Promise<boolean>,
     onEnd?: () => void,
 ): DisposableCollection {
     const disposables = new DisposableCollection();
@@ -128,10 +126,6 @@ function streamPrebuildLogs(
     let delayInSeconds = initialDelaySeconds;
 
     const startWatchingLogs = async () => {
-        if (await checkIsDone()) {
-            return;
-        }
-
         const retryBackoff = async (reason: string, err?: Error) => {
             delayInSeconds = Math.min(delayInSeconds * backoffFactor, maxBackoffSeconds);
 
@@ -146,25 +140,21 @@ function streamPrebuildLogs(
         };
 
         let response: Response | undefined = undefined;
-        let abortController: AbortController | undefined = undefined;
         let reader: ReadableStreamDefaultReader<Uint8Array> | undefined = undefined;
         try {
-            abortController = new AbortController();
             disposables.push({
                 dispose: async () => {
-                    abortController?.abort();
                     await reader?.cancel();
                 },
             });
             console.debug("fetching from streamUrl: " + streamUrl);
             response = await fetch(streamUrl, {
                 method: "GET",
-                cache: "reload",
+                cache: "no-store", // we don't want the browser to a) look at the cache, or b) update the cache (which would interrupt any running fetches to that resource!)
                 credentials: "include",
                 headers: {
                     TE: "trailers", // necessary to receive stream status code
                 },
-                signal: abortController.signal,
                 redirect: "follow",
             });
             reader = response.body?.getReader();
@@ -175,6 +165,7 @@ function streamPrebuildLogs(
 
             const decoder = new TextDecoder("utf-8");
             let chunk = await reader.read();
+            let received200 = false;
             while (!chunk.done) {
                 if (disposables.disposed) {
                     // stop reading when disposed
@@ -190,9 +181,18 @@ function streamPrebuildLogs(
                     if (matches.length < 2) {
                         console.debug("error parsing log stream status code. msg: " + msg);
                     } else {
+                        const prefix = msg.substring(0, matches.index);
+                        if (prefix) {
+                            const prefixChunk = new TextEncoder().encode(prefix);
+                            onLog(prefixChunk);
+                        }
                         const code = parseStatusCode(matches[1]);
                         if (code !== 200) {
                             throw new StreamError(code);
+                        }
+                        if (code === 200) {
+                            received200 = true;
+                            break;
                         }
                     }
                 } else if (prebuildMatches) {
@@ -208,11 +208,8 @@ function streamPrebuildLogs(
 
                 chunk = await reader.read();
             }
+            console.info("[stream] end of stream", { received200 });
             reader.cancel();
-
-            if (await checkIsDone()) {
-                return;
-            }
         } catch (err) {
             if (err instanceof DOMException && err.name === "AbortError") {
                 console.debug("stopped watching headless logs, not retrying: method got disposed of");
