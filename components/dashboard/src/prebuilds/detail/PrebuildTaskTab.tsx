@@ -15,7 +15,6 @@ import { PrebuildTaskErrorTab } from "./PrebuildTaskErrorTab";
 import type { PlainMessage } from "@bufbuild/protobuf";
 import { useHistory } from "react-router";
 import { LoadingState } from "@podkit/loading/LoadingState";
-import { createHash } from "crypto";
 
 const WorkspaceLogs = React.lazy(() => import("../../components/WorkspaceLogs"));
 
@@ -31,16 +30,14 @@ export const PrebuildTaskTab = memo(({ taskId, prebuild }: Props) => {
     const history = useHistory();
 
     useEffect(() => {
-        const logErrorListener = (err: ApplicationError) => {
+        const logErrorListener = async (err: ApplicationError) => {
             if (err.code === ErrorCodes.NOT_FOUND) {
                 setError(err);
                 return;
             }
 
-            const hasher = createHash("sha256");
-            hasher.update(err.message);
-            hasher.update(err.code + "");
-            const toastId = hasher.digest("hex");
+            const digest = await crypto.subtle.digest("sha256", new TextEncoder().encode(err.message + ":" + err.code));
+            const toastId = new TextDecoder().decode(digest);
             toast("Fetching logs failed: " + err.message, { autoHide: false, id: toastId });
             setActiveToasts((prev) => new Set(prev).add(toastId));
         };
