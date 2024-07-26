@@ -138,13 +138,13 @@ func (m *Mux) doClose(ctx context.Context, alias string, forceSuccess bool) erro
 	log := log.WithField("alias", alias)
 	log.Info("closing terminal")
 
+	if forceSuccess {
+		term.ForceSuccess = true
+	}
+
 	err := term.Close(ctx)
 	if err != nil {
 		log.WithError(err).Warn("Error while closing pseudo-terminal")
-	}
-
-	if forceSuccess {
-		term.ForceSuccess = true
 	}
 
 	i := 0
