@@ -330,7 +330,11 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 			taskLog.Info("task terminal has been closed. Waiting for watch() to finish...")
 			taskWatchWg.Wait()
 			taskLog.Info("watch() has finished, setting task state to closed")
-			if state != nil {
+
+			if term.ForceSuccess {
+				// Simulate state.Success()
+				t.successChan <- taskSuccessful
+			} else if state != nil {
 				if state.Success() {
 					t.successChan <- taskSuccessful
 				} else {
