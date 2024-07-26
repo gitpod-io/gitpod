@@ -42,7 +42,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { WorkspaceService } from "./workspace-service";
-import { ctxIsAborted, ctxTrySubjectId, runWithSubSignal, runWithSubjectId } from "../util/request-context";
+import { ctxIsAborted, ctxOnAbort, ctxTrySubjectId, runWithSubSignal, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { validate as uuidValidate } from "uuid";
@@ -91,11 +91,7 @@ export class HeadlessLogController {
                             // Wait until we finished writing all chunks in our queue
                             await queue.enqueue(() => Promise.resolve());
 
-                            // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
-                            // So we resort to this hand-written solution
-                            res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
-
-                            res.end();
+                            await endStreamingResponse(res);
                         } catch (err) {
                             log.debug(logCtx, "error streaming headless logs", err);
 
@@ -270,9 +266,7 @@ export class HeadlessLogController {
                         // Wait until we finished writing all chunks in our queue
                         await queue.enqueue(() => Promise.resolve());
 
-                        // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
-                        // So we resort to this hand-written solution
-                        res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
+                        await endStreamingResponse(res);
                     } catch (e) {
                         log.error(logCtx, "error streaming headless logs", e);
                         TraceContext.setError({ span }, e);
@@ -280,9 +274,9 @@ export class HeadlessLogController {
                         const encoder = new TextEncoder();
                         const errMsg = encoder.encode(getPrebuildErrorMessage(e));
                         await writeToResponse(errMsg).catch(() => {});
+                        res.end();
                     } finally {
                         span.finish();
-                        res.end();
                     }
                 });
             }),
@@ -353,7 +347,7 @@ function createStreamingResponseWriter(logCtx: LogContext, res: express.Response
             if (firstChunk) {
                 firstChunk = false;
                 const head = {
-                    "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
+                    "Content-Type": "application/octet-stream",
                     "Transfer-Encoding": "chunked",
                     "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
                 };
@@ -380,6 +374,26 @@ function createStreamingResponseWriter(logCtx: LogContext, res: express.Response
             info.hasWritten = true;
         });
     return { writeToResponse, queue, abortController, info };
+}
+
+async function endStreamingResponse(res: express.Response) {
+    // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
+    // So we resort to this hand-written solution
+    await new Promise((resolve) => {
+        res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`, resolve);
+    });
+
+    // TODO(gpl): Not sure why we can't call res.end() directly, but it does not work. This caddy issues looks very closely related, but not sure what to do about it: https://github.com/caddyserver/caddy/issues/4922
+    // We are _not_ calling res.end() directly here, but keep the connection open for 30s to give until the client has finished reading all parts.
+    // If we call it earlier, as a result the client reader is closed, before receiving all chunks, even if we make sure to have written all chunks.
+    const timeout = setTimeout(() => {
+        res.end();
+    }, 30000);
+    ctxOnAbort(() => {
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+    });
 }
 
 function authenticateAndAuthorize(req: express.Request, res: express.Response, next: express.NextFunction) {
