@@ -173,8 +173,9 @@ export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEm
     on<K extends keyof EventTypes>(event: K, listener: (...args: EventTypes[K]) => void): this;
     on(event: string | symbol, listener: (...args: any[]) => void): this {
         const eventName = event as keyof EventTypes;
-        if (this.eventLog[eventName]) {
-            for (const args of this.eventLog[eventName]!) {
+        const eventLog = this.eventLog[eventName];
+        if (eventLog) {
+            for (const args of eventLog) {
                 listener(...args);
             }
         }
@@ -186,8 +187,9 @@ export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEm
     once<K extends keyof EventTypes>(event: K, listener: (...args: EventTypes[K]) => void): this;
     once(event: string | symbol, listener: (...args: any[]) => void): this {
         const eventName = event as keyof EventTypes;
-        if (this.eventLog[eventName]) {
-            for (const args of this.eventLog[eventName]!) {
+        const eventLog = this.eventLog[eventName];
+        if (eventLog) {
+            for (const args of eventLog) {
                 listener(...args);
             }
         }

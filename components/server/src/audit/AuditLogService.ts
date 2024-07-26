@@ -23,6 +23,10 @@ export class AuditLogService {
         @inject(UserDB) private readonly dbUser: UserDB,
     ) {}
 
+    asyncRecordAuditLog(actorId: string, method: string, args: any[]): void {
+        this.recordAuditLog(actorId, method, args).catch((err) => log.error("failed to record audit log", err));
+    }
+
     async recordAuditLog(actorId: string, method: string, args: any[]): Promise<void> {
         if (
             !(await getExperimentsClientForBackend().getValueAsync("audit_logs", false, {

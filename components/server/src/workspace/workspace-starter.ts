@@ -851,13 +851,19 @@ export class WorkspaceStarter {
         try {
             if (workspace.type === "prebuild") {
                 const prebuild = await this.workspaceDb.trace({ span }).findPrebuildByWorkspaceID(workspace.id);
-                if (prebuild && prebuild.state !== "failed") {
+                if (prebuild && prebuild.state !== "failed" && prebuild.projectId) {
                     prebuild.state = "failed";
                     prebuild.error = err.toString();
 
                     await this.workspaceDb.trace({ span }).storePrebuiltWorkspace(prebuild);
                     await this.publisher.publishHeadlessUpdate({
                         type: HeadlessWorkspaceEventType.Failed,
+                        workspaceID: workspace.id,
+                    });
+                    await this.publisher.publishPrebuildUpdate({
+                        status: "failed",
+                        prebuildID: prebuild.id,
+                        projectID: prebuild.projectId,
                         workspaceID: workspace.id,
                     });
                 }

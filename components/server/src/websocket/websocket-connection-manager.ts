@@ -404,7 +404,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                     const result = await this.internalOnRequest(span, method, ...args);
                     if (userId) {
                         // omit the last argument, which is the cancellation token
-                        this.auditLogService.recordAuditLog(userId, method, args.slice(0, -1));
+                        this.auditLogService.asyncRecordAuditLog(userId, method, args.slice(0, -1));
                     }
                     return result;
                 } finally {

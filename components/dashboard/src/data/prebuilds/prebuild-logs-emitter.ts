@@ -145,17 +145,25 @@ function streamPrebuildLogs(
         };
 
         let response: Response | undefined = undefined;
+        let abortController: AbortController | undefined = undefined;
         let reader: ReadableStreamDefaultReader<Uint8Array> | undefined = undefined;
         try {
+            abortController = new AbortController();
+            disposables.push({
+                dispose: async () => {
+                    abortController?.abort();
+                    await reader?.cancel();
+                },
+            });
             console.debug("fetching from streamUrl: " + streamUrl);
             response = await fetch(streamUrl, {
                 method: "GET",
-                cache: "no-cache",
+                cache: "reload",
                 credentials: "include",
-                keepalive: true,
                 headers: {
                     TE: "trailers", // necessary to receive stream status code
                 },
+                signal: abortController.signal,
                 redirect: "follow",
             });
             reader = response.body?.getReader();
@@ -163,11 +171,14 @@ function streamPrebuildLogs(
                 await retryBackoff("no reader");
                 return;
             }
-            disposables.push({ dispose: () => reader?.cancel() });
 
             const decoder = new TextDecoder("utf-8");
             let chunk = await reader.read();
             while (!chunk.done) {
+                if (disposables.disposed) {
+                    // stop reading when disposed
+                    return;
+                }
                 const msg = decoder.decode(chunk.value, { stream: true });
 
                 // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
@@ -199,6 +210,10 @@ function streamPrebuildLogs(
                 return;
             }
         } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") {
+                console.debug("stopped watching headless logs, not retrying: method got disposed of");
+                return;
+            }
             reader?.cancel().catch(console.debug);
             if (err.code === 400) {
                 // sth is really off, and we _should not_ retry

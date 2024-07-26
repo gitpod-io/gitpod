@@ -1133,6 +1133,7 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 		if err == io.EOF {
 			if isClosed.Load() {
 				// We are done
+				log.Println("[prebuildlog]: closing because task state is done and we are done reading")
 				return nil
 			}
 		}
@@ -1149,8 +1150,10 @@ func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.Tas
 
 		select {
 		case <-srv.Context().Done():
+			log.Println("[prebuildlog]: closing because context done")
 			return nil
 		case <-s.willShutdownCtx.Done():
+			log.Println("[prebuildlog]: closing because willShutdownCtx fired")
 			return nil
 		case <-closedChannel:
 			continue

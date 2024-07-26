@@ -9,7 +9,7 @@ import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import EventEmitter from "events";
 import * as queryString from "query-string";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useMemo } from "react";
 import { v4 } from "uuid";
 import Arrow from "../components/Arrow";
 import ContextMenu from "../components/ContextMenu";
@@ -760,7 +760,7 @@ interface ImageBuildViewProps {
 }
 
 function ImageBuildView(props: ImageBuildViewProps) {
-    const [logsEmitter] = useState(new EventEmitter());
+    const logsEmitter = useMemo(() => new EventEmitter(), []);
 
     useEffect(() => {
         let registered = false;

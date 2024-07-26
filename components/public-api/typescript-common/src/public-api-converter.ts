@@ -159,6 +159,7 @@ import {
     WorkspaceStatus_PrebuildResult,
     WorkspaceStatus_WorkspaceConditions,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { BigIntToJson } from "@gitpod/gitpod-protocol/lib/util/stringify";
 import { getPrebuildLogPath } from "./prebuild-utils";
 import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
 const URL = require("url").URL || window.URL;
@@ -1604,7 +1605,7 @@ export class PublicAPIConverter {
             actorId: input.actorId,
             action: input.action,
             timestamp: this.toTimestamp(input.timestamp),
-            args: JSON.stringify(input.args),
+            args: JSON.stringify(input.args, BigIntToJson.replacer),
         });
     }
 }

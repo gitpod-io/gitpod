@@ -37,14 +37,14 @@
   "dependencies": {
     "@gitpod/gitpod-protocol": "0.1.5",
     "@jmondi/oauth2-server": "^2.6.1",
+    "ioredis": "^5.3.2",
+    "ioredis-mock": "^8.7.0",
     "mysql": "^2.18.1",
+    "prom-client": "^14.2.0",
     "reflect-metadata": "^0.1.13",
     "slugify": "^1.6.5",
     "the-big-username-blacklist": "^1.5.2",
-    "typeorm": "0.2.38",
-    "ioredis": "^5.3.2",
-    "ioredis-mock": "^8.7.0",
-    "prom-client": "^14.2.0"
+    "typeorm": "0.2.38"
   },
   "devDependencies": {
     "@testdeck/mocha": "^0.3.3",

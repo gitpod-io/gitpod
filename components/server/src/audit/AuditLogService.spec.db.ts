@@ -15,6 +15,7 @@ import { createTestContainer } from "../test/service-testing-container-module";
 import { UserService } from "../user/user-service";
 import { AuditLogService } from "./AuditLogService";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { Timestamp } from "@bufbuild/protobuf";
 
 describe("AuditLogService", () => {
     let container: Container;
@@ -92,6 +93,22 @@ describe("AuditLogService", () => {
         const logs = await auditLogService.listAuditLogs(owner.id, org.id);
 
         expect(logs.length).to.eq(1);
+    });
+
+    it("should record audit log containing timestamp args (like listWorkspaceSessions)", async () => {
+        const t1 = new Timestamp({ seconds: 100n, nanos: 0 });
+        await auditLogService.recordAuditLog(owner.id, "action1", [
+            {
+                organizationId: org.id,
+            },
+            t1,
+        ]);
+
+        const logs = await auditLogService.listAuditLogs(owner.id, org.id);
+
+        expect(logs.length).to.eq(1);
+        expect(logs[0].args.length).to.eq(2);
+        expect(logs[0].args[1]).to.deep.equal(t1);
     });
 
     it("should list audit logs", async () => {

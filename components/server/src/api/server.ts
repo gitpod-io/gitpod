@@ -306,15 +306,11 @@ export class API {
                                     const promise = await apply<Promise<any>>();
                                     const result = await promise;
                                     if (subjectId) {
-                                        try {
-                                            self.auditLogService.recordAuditLog(
-                                                subjectId!.userId()!,
-                                                requestContext.requestMethod,
-                                                [args[0]],
-                                            );
-                                        } catch (error) {
-                                            log.error("Failed to record audit log", error);
-                                        }
+                                        self.auditLogService.asyncRecordAuditLog(
+                                            subjectId!.userId()!,
+                                            requestContext.requestMethod,
+                                            [args[0]],
+                                        );
                                     }
                                     done();
                                     return result;
