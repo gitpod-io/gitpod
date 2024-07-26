@@ -80,14 +80,13 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
         const disposables = new DisposableCollection();
         disposables.push(
             streamPrebuildLogs(
+                taskId,
                 task.logUrl,
-                (msg) => {
-                    const error = matchPrebuildError(msg);
-                    if (!error) {
-                        emitter.emit("logs", msg);
-                    } else {
-                        emitter.emit("logs-error", error);
-                    }
+                (chunk) => {
+                    emitter.emit("logs", chunk);
+                },
+                (err) => {
+                    emitter.emit("logs-error", err);
                 },
                 async () => false,
                 () => {
@@ -110,8 +109,10 @@ export function usePrebuildLogsEmitter(prebuild: PlainMessage<Prebuild>, taskId:
 }
 
 function streamPrebuildLogs(
+    taskId: string,
     streamUrl: string,
-    onLog: (chunk: string) => void,
+    onLog: (chunk: Uint8Array) => void,
+    onError: (err: Error) => void,
     checkIsDone: () => Promise<boolean>,
     onEnd?: () => void,
 ): DisposableCollection {
@@ -179,10 +180,10 @@ function streamPrebuildLogs(
                     // stop reading when disposed
                     return;
                 }
-                const msg = decoder.decode(chunk.value, { stream: true });
 
                 // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
                 // So we resort to this hand-written solution:
+                const msg = decoder.decode(chunk.value, { stream: true });
                 const matches = msg.match(HEADLESS_LOG_STREAM_STATUS_CODE_REGEX);
                 const prebuildMatches = matchPrebuildError(msg);
                 if (matches) {
@@ -194,12 +195,15 @@ function streamPrebuildLogs(
                             throw new StreamError(code);
                         }
                     }
-                } else if (prebuildMatches && prebuildMatches.code === ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE) {
-                    // reset backoff because this error is expected
-                    delayInSeconds = initialDelaySeconds;
-                    throw prebuildMatches;
+                } else if (prebuildMatches) {
+                    if (prebuildMatches.code === ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE) {
+                        // reset backoff because this error is expected
+                        delayInSeconds = initialDelaySeconds;
+                        throw prebuildMatches;
+                    }
+                    onError(prebuildMatches);
                 } else {
-                    onLog(msg);
+                    onLog(chunk.value);
                 }
 
                 chunk = await reader.read();

@@ -24,7 +24,6 @@ import {
     WithPrebuild,
     Workspace,
     WorkspaceContext,
-    WorkspaceImageBuild,
     WorkspaceInfo,
     WorkspaceInstance,
     WorkspaceInstancePort,
@@ -1022,7 +1021,7 @@ export class WorkspaceService {
         userId: string,
         instanceId: string,
         taskIdentifier: { terminalId: string } | { taskId: string },
-        sink: (chunk: string) => Promise<void>,
+        sink: (chunk: Uint8Array) => Promise<void>,
         check: () => Promise<void> = async () => {},
     ) {
         const workspace = await this.db.findByInstanceId(instanceId);
@@ -1162,21 +1161,15 @@ export class WorkspaceService {
                 url: logInfo.url,
                 headers: logInfo.headers,
             };
-            let lineCount = 0;
             await this.headlessLogService.streamImageBuildLog(logCtx, logEndpoint, async (chunk) => {
                 if (aborted.isResolved) {
                     return;
                 }
 
                 try {
-                    chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
-                    lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
-
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     client.onWorkspaceImageBuildLogs(undefined as any, {
-                        text: chunk,
-                        isDiff: true,
-                        upToLine: lineCount,
+                        data: chunk,
                     });
                 } catch (err) {
                     log.error("error while streaming imagebuild logs", err);
@@ -1193,30 +1186,6 @@ export class WorkspaceService {
         } finally {
             aborted.resolve(false);
         }
-    }
-
-    public getWorkspaceImageBuildLogsIterator(userId: string, workspaceId: string, opts: { signal: AbortSignal }) {
-        return generateAsyncGenerator<string>((sink) => {
-            this.watchWorkspaceImageBuildLogs(userId, workspaceId, {
-                onWorkspaceImageBuildLogs: (_info, content) => {
-                    if (content?.text) {
-                        sink.push(content.text);
-                    }
-                },
-            })
-                .then(() => {
-                    sink.stop();
-                })
-                .catch((err) => {
-                    if (err instanceof Error) {
-                        sink.fail(err);
-                        return;
-                    } else {
-                        sink.fail(new Error(String(err) || "unknown"));
-                    }
-                });
-            return () => {};
-        }, opts);
     }
 
     public async sendHeartBeat(

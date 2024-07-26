@@ -23,7 +23,6 @@ import * as grpc from "@grpc/grpc-js";
 import { Config } from "../config";
 import * as browserHeaders from "browser-headers";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { TextDecoder } from "util";
 import { WebsocketTransport } from "../util/grpc-web-ws-transport";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import {
@@ -264,7 +263,7 @@ export class HeadlessLogService {
         logEndpoint: HeadlessLogEndpoint,
         instanceId: string,
         taskIdentifier: { terminalId: string } | { taskId: string },
-        sink: (chunk: string) => Promise<void>,
+        sink: (chunk: Uint8Array) => Promise<void>,
     ): Promise<void> {
         await this.streamWorkspaceLog(logCtx, logEndpoint, taskIdentifier, sink, this.continueWhileRunning(instanceId));
     }
@@ -281,7 +280,7 @@ export class HeadlessLogService {
         logCtx: LogContext,
         logEndpoint: HeadlessLogEndpoint,
         taskIdentifier: { terminalId: string } | { taskId: string },
-        sink: (chunk: string) => Promise<void>,
+        sink: (chunk: Uint8Array) => Promise<void>,
         doContinue: () => Promise<boolean>,
     ): Promise<void> {
         const taskClient = new TaskServiceClient(toSupervisorURL(logEndpoint.url), {
@@ -313,13 +312,13 @@ export class HeadlessLogService {
         const doStream = (cancel: (retry: boolean) => void) =>
             new Promise<void>((resolve, reject) => {
                 // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
-                const decoder = new TextDecoder("utf-8");
+                const encoder = new TextEncoder();
                 stream = taskClient.listenToOutput(req, authHeaders);
                 stream.on("data", (resp: ListenToOutputResponse) => {
                     receivedDataYet = true;
 
                     const raw = resp.getData();
-                    const data: string = typeof raw === "string" ? raw : decoder.decode(raw);
+                    const data: Uint8Array = typeof raw === "string" ? encoder.encode(raw) : raw;
                     sink(data).catch((err) => {
                         stream?.cancel(); // If downstream reports an error: cancel connection to upstream
                         log.debug(logCtx, "stream cancelled", err);
@@ -355,7 +354,7 @@ export class HeadlessLogService {
     async streamImageBuildLog(
         logCtx: LogContext,
         logEndpoint: HeadlessLogEndpoint,
-        sink: (chunk: string) => Promise<void>,
+        sink: (chunk: Uint8Array) => Promise<void>,
     ): Promise<void> {
         const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
         if (tasks.length === 0) {

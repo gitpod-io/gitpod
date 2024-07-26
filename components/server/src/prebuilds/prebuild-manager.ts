@@ -654,7 +654,7 @@ export class PrebuildManager {
         userId: string,
         prebuildId: string,
         taskId: string,
-        onLog: (message: string) => Promise<void>,
+        onLog: (chunk: Uint8Array) => Promise<void>,
     ): Promise<{ taskUrl: string } | undefined> {
         const prebuild = await this.getPrebuild({}, userId, prebuildId);
         const organizationId = prebuild?.info.teamId;

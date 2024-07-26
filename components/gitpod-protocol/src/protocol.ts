@@ -974,9 +974,7 @@ export namespace WorkspaceImageBuild {
         maxSteps?: number;
     }
     export interface LogContent {
-        text: string;
-        upToLine?: number;
-        isDiff?: boolean;
+        data: Uint8Array;
     }
     export type LogCallback = (info: StateInfo, content: LogContent | undefined) => void;
     export namespace LogLine {

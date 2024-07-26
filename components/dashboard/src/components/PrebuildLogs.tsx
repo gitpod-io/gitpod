@@ -103,7 +103,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                         if (!content) {
                             return;
                         }
-                        logsEmitter.emit("logs", content.text);
+                        logsEmitter.emit("logs", content.data);
                     },
                 }),
             );
@@ -173,7 +173,12 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
         <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col mb-8">
             <div className="h-96 flex">
                 <Suspense fallback={<div />}>
-                    <WorkspaceLogs classes="h-full w-full" logsEmitter={logsEmitter} errorMessage={error?.message} />
+                    <WorkspaceLogs
+                        taskId="undefined"
+                        classes="h-full w-full"
+                        logsEmitter={logsEmitter}
+                        errorMessage={error?.message}
+                    />
                 </Suspense>
             </div>
             <div className="w-full bottom-0 h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex flex-row items-center space-x-2">
