@@ -23,6 +23,12 @@ type WorkspaceEntryOverflowMenuProps = {
     changeMenuState: (state: boolean) => void;
 };
 
+const openDashboardOnStartUrlClick = (e: React.MouseEvent, startUrl: string) => {
+    e.preventDefault();
+    window.open("/workspaces", "_blank");
+    window.location.href = startUrl;
+};
+
 export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflowMenuProps> = ({
     info,
     changeMenuState,
@@ -104,7 +110,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         {
             title: "Open",
             href: startUrl.toString(),
-            target: "_blank",
+            onClick: (e: React.MouseEvent) => openDashboardOnStartUrlClick(e, startUrl.toString()),
         },
         {
             title: "Rename",
