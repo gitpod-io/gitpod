@@ -26,6 +26,7 @@ const lightTheme: ITheme = {
 };
 
 export interface Props {
+    taskId: string;
     logsEmitter: EventEmitter;
     errorMessage?: string;
     classes?: string;
@@ -56,14 +57,14 @@ export default function WorkspaceLogs({ logsEmitter, errorMessage, classes, xter
         terminal.loadAddon(fitAddon);
         terminal.open(xTermParentRef.current);
 
-        let logBuffer = "";
+        let logBuffer = new Uint8Array();
         let isWriting = false;
 
         const processNextLog = () => {
             if (isWriting || logBuffer.length === 0) return;
 
-            const logs = logBuffer.slice(0, MAX_CHUNK_SIZE);
-            logBuffer = logBuffer.slice(logs.length);
+            const logs = logBuffer.subarray(0, MAX_CHUNK_SIZE);
+            logBuffer = logBuffer.subarray(logs.length);
             if (logs) {
                 isWriting = true;
                 terminal.write(logs, () => {
@@ -73,16 +74,20 @@ export default function WorkspaceLogs({ logsEmitter, errorMessage, classes, xter
             }
         };
 
-        const logListener = (logs: string) => {
+        const logListener = (logs: Uint8Array) => {
             if (!logs) return;
 
-            logBuffer += logs;
+            const newBuffer = new Uint8Array(logBuffer.length + logs.length);
+            newBuffer.set(logBuffer);
+            newBuffer.set(logs, logBuffer.length);
+            logBuffer = newBuffer;
+
             processNextLog();
         };
 
         const resetListener = () => {
             terminal.clear();
-            logBuffer = "";
+            logBuffer = new Uint8Array();
             isWriting = false;
         };
 

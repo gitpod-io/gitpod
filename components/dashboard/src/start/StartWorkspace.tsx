@@ -794,7 +794,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
                 if (!content) {
                     return;
                 }
-                logsEmitter.emit("logs", content.text);
+                logsEmitter.emit("logs", content.data);
             },
         });
 
@@ -807,7 +807,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
     return (
         <StartPage title="Building Image" phase={props.phase} workspaceId={props.workspaceId}>
             <Suspense fallback={<div />}>
-                <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
+                <WorkspaceLogs taskId="image-build" logsEmitter={logsEmitter} errorMessage={props.error?.message} />
             </Suspense>
             {!!props.onStartWithDefaultImage && (
                 <>
