@@ -10,9 +10,8 @@ jobs:
         with:
             pluginName: JetBrains Backend Plugin (EAP)
             pluginId: latest-backend-plugin
-            productCode: IIU
-            productType: eap,rc,release
-            gradlePropertiesPath: components/ide/jetbrains/backend-plugin/gradle-latest.properties
+            taskId: 1
+            isBackendPlugin: true
         secrets:
             slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
             roboquatRepoPat: ${{ secrets.ROBOQUAT_REPO_PAT }}
@@ -21,9 +20,8 @@ jobs:
         with:
             pluginName: JetBrains Gateway Plugin (EAP)
             pluginId: latest-gateway-plugin
-            productCode: GW
-            productType: eap,rc,release
-            gradlePropertiesPath: components/ide/jetbrains/gateway-plugin/gradle-latest.properties
+            taskId: 2
+            isBackendPlugin: false
         secrets:
             slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
             roboquatRepoPat: ${{ secrets.ROBOQUAT_REPO_PAT }}
@@ -32,9 +30,8 @@ jobs:
         with:
             pluginName: JetBrains Gateway Plugin (Stable)
             pluginId: stable-gateway-plugin
-            productCode: GW
-            productType: release
-            gradlePropertiesPath: components/ide/jetbrains/gateway-plugin/gradle-stable.properties
+            taskId: 3
+            isBackendPlugin: false
         secrets:
             slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
             roboquatRepoPat: ${{ secrets.ROBOQUAT_REPO_PAT }}
