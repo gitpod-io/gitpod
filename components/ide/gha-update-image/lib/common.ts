@@ -7,14 +7,14 @@ import path from "path";
 import yaml from "yaml";
 import { z } from "zod";
 
-const pathToProjectRoot = path.resolve(__dirname, "../../../../");
+export const pathToProjectRoot = path.resolve(__dirname, "../../../../");
 
 const pathToOutput = path.resolve("/tmp/__gh_output.txt");
 
 export const appendGitHubOutput = async (kv: string) => {
     console.log("Appending to GitHub output:", kv);
     return await $`echo ${kv} >> ${pathToOutput}`;
-}
+};
 
 // WORKSPACE.yaml
 export const pathToWorkspaceYaml = path.resolve(pathToProjectRoot, "WORKSPACE.yaml");
@@ -119,15 +119,18 @@ const getInstallerVersion = async (version: string | undefined) => {
                 throw new Error("Failed to parse installer version from git tag: " + e);
             });
     return installationVersion.replaceAll("\n", "");
-}
+};
 
 // installer versions
 export const getLatestInstallerVersions = async (version?: string) => {
     const installationVersion = await getInstallerVersion(version);
     console.log("Fetching installer versions for", installationVersion);
-    const versionData = await $`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${installationVersion} cat /versions.yaml`.text().catch((e) => {
-        throw new Error("Failed to get installer versions: " + e);
-    });
+    const versionData =
+        await $`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${installationVersion} cat /versions.yaml`
+            .text()
+            .catch((e) => {
+                throw new Error("Failed to get installer versions: " + e);
+            });
 
     const versionObj = z.object({ version: z.string() });
     return z
@@ -172,22 +175,33 @@ export const getLatestInstallerVersions = async (version?: string) => {
 
 export const renderInstallerIDEConfigMap = async (version?: string) => {
     const installationVersion = await getInstallerVersion(version);
-    await $`docker run --rm -v /tmp:/tmp eu.gcr.io/gitpod-core-dev/build/installer:${installationVersion} config init --overwrite --log-level=error -c /tmp/gitpod.config.yaml`.catch((e) => {
-        throw new Error("Failed to render gitpod.config.yaml: " + e);
-    })
-    const ideConfigMapStr = await $`cat /tmp/gitpod.config.yaml | docker run -i --rm eu.gcr.io/gitpod-core-dev/build/installer:${installationVersion} ide-configmap -c -`.text().catch((e) => {
-        throw new Error(`Failed to render ide-configmap: ` + e);
-    });
+    await $`docker run --rm -v /tmp:/tmp eu.gcr.io/gitpod-core-dev/build/installer:${installationVersion} config init --overwrite --log-level=error -c /tmp/gitpod.config.yaml`.catch(
+        (e) => {
+            throw new Error("Failed to render gitpod.config.yaml: " + e);
+        },
+    );
+    const ideConfigMapStr =
+        await $`cat /tmp/gitpod.config.yaml | docker run -i --rm eu.gcr.io/gitpod-core-dev/build/installer:${installationVersion} ide-configmap -c -`
+            .text()
+            .catch((e) => {
+                throw new Error(`Failed to render ide-configmap: ` + e);
+            });
     const ideConfigmapJsonObj = JSON.parse(ideConfigMapStr);
     const ideConfigmapJson = ideConfigmapJsonSchema.parse(ideConfigmapJsonObj);
     return ideConfigmapJson;
-}
+};
 
 export const getIDEVersionOfImage = async (img: string) => {
-    console.log("Fetching IDE version in image:", `oci-tool fetch image ${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`)
-    const version = await $`oci-tool fetch image ${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`.text().catch((e) => {
-        throw new Error("Failed to fetch ide version in image: " + e);
-    }).then(str => str.replaceAll("\n", ""));
+    console.log(
+        "Fetching IDE version in image:",
+        `oci-tool fetch image ${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`,
+    );
+    const version = await $`oci-tool fetch image ${img} | jq -r '.config.Labels["io.gitpod.ide.version"]'`
+        .text()
+        .catch((e) => {
+            throw new Error("Failed to fetch ide version in image: " + e);
+        })
+        .then((str) => str.replaceAll("\n", ""));
     console.log("IDE version in image:", version);
     return version;
-}
+};
