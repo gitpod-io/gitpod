@@ -161,8 +161,10 @@ tasks {
 
     register("buildFromLeeway") {
         if ("true" == System.getenv("DO_PUBLISH")) {
+            print("publishing $pluginVersion...")
             dependsOn("publishPlugin")
         } else {
+            print("building $pluginVersion...")
             dependsOn("buildPlugin")
         }
     }
