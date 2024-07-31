@@ -17,6 +17,7 @@ packages:
       - publishToJBMarketplace
     env:
       - DO_PUBLISH=${publishToJBMarketplace}
+      - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
         - ["mv", "build.gradle-stable.kts", "build.gradle.kts"]
