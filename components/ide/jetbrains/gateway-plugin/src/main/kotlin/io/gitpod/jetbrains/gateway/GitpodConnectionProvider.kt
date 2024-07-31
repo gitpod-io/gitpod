@@ -21,9 +21,9 @@ import com.intellij.ssh.OpenSshLikeHostKeyVerifier
 import com.intellij.ssh.connectionBuilder
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.application
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.await
@@ -138,17 +138,16 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                     resizableRow()
                     panel {
                         row {
-                            icon(GitpodIcons.Logo2x)
-                                    .horizontalAlign(HorizontalAlign.CENTER)
+                            icon(GitpodIcons.Logo2x).align(AlignX.CENTER)
                         }
                         row {
                             cell(phaseMessage)
                                     .bold()
-                                    .horizontalAlign(HorizontalAlign.CENTER)
+                                    .align(AlignX.CENTER)
                         }
                         row {
                             cell(statusMessage)
-                                    .horizontalAlign(HorizontalAlign.CENTER)
+                                    .align(AlignX.CENTER)
                                     .applyToComponent {
                                         foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
                                     }
@@ -166,13 +165,13 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                     browserLink(it, it)
                                 }
                             }
-                        }.horizontalAlign(HorizontalAlign.CENTER)
+                        }.align(AlignX.CENTER)
                         row {
                             cell(JBScrollPane(errorMessage).apply {
                                 border = null
-                            }).horizontalAlign(HorizontalAlign.CENTER)
+                            }).align(AlignX.CENTER)
                         }
-                    }.verticalAlign(VerticalAlign.CENTER)
+                    }.align(AlignY.CENTER)
                 }
             }
         }
