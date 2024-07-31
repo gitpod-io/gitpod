@@ -19,6 +19,7 @@ packages:
       - DO_PUBLISH=${publishToJBMarketplace}
     config:
       commands:
+        - ["mv", "build.gradle-stable.kts", "build.gradle.kts"]
         - [ "./gradlew", "-PpluginVersion=0.0.1-${version}", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=stable", "-Dgradle.user.home=/workspace/.gradle-stable", "-Dplugin.verifier.home.dir=$HOME/.cache/pluginVerifier-stable", "buildFromLeeway" ]
   - name: publish-latest
     type: generic
@@ -38,6 +39,17 @@ packages:
       - publishToJBMarketplace
     env:
       - DO_PUBLISH=${publishToJBMarketplace}
+      # TODO(hw): remove after `2024.2.*` is stable
+      - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
-        - [ "./gradlew", "-PpluginVersion=0.0.1-${version}", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=latest", "-Dgradle.user.home=/workspace/.gradle-latest", "-Dplugin.verifier.home.dir=$HOME/.cache/pluginVerifier-latest", "buildFromLeeway" ]
+        # TODO(hw): remove after 2024.2.* is stable
+        - ["mv", "build.gradle-latest.kts", "build.gradle.kts"]
+        -
+          - bash
+          - "-c"
+          - >
+            echo java=21.0.3.fx-zulu > .sdkmanrc
+            && source "$SDKMAN_DIR/bin/sdkman-init.sh"
+            && sdk env install
+            && ./gradlew -PpluginVersion=0.0.1-${version} -PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/ -PenvironmentName=latest -Dgradle.user.home=/workspace/.gradle-latest -Dplugin.verifier.home.dir=$HOME/.cache/pluginVerifier-latest buildFromLeeway
