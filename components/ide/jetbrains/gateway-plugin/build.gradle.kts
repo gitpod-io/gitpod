@@ -1,9 +1,11 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
 import io.gitlab.arturbosch.detekt.Detekt
+import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = project.findProperty(key).toString()
@@ -12,13 +14,14 @@ plugins {
     // Java support
     id("java")
     // Kotlin support - check the latest version at https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
-    id("org.jetbrains.kotlin.jvm") version "1.9.10"
+    id("org.jetbrains.kotlin.jvm") version "2.0.0"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij") version "1.11.0"
+    id("org.jetbrains.intellij.platform") version "2.0.0"
+//    id("org.jetbrains.intellij.platform.migration") version "2.0.0-beta8"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
     id("org.jetbrains.changelog") version "1.1.2"
     // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
-    id("io.gitlab.arturbosch.detekt") version "1.17.1"
+    id("io.gitlab.arturbosch.detekt") version "1.23.6"
     // ktlint linter - read more: https://github.com/JLLeitschuh/ktlint-gradle
     id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
     // Gradle Properties Plugin - read more: https://github.com/stevesaliman/gradle-properties-plugin
@@ -46,10 +49,13 @@ project(":") {
     }
 }
 
-// Configure project's dependencies
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
+
 dependencies {
     implementation(project(":gitpod-protocol")) {
         artifact {
@@ -60,25 +66,64 @@ dependencies {
     compileOnly("org.eclipse.jetty.websocket:websocket-api:9.4.44.v20210927")
     testImplementation(kotlin("test"))
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
+    // https://mvnrepository.com/artifact/org.eclipse.jetty.websocket/javax-websocket-client-impl
     implementation("org.eclipse.jetty.websocket:javax-websocket-client-impl:9.4.44.v20210927")
 }
 
-// Configure gradle-intellij-plugin plugin.
-// Read more: https://github.com/JetBrains/gradle-intellij-plugin
-intellij {
-    pluginName.set(properties("pluginName"))
-    version.set(properties("platformVersion"))
-    type.set(properties("platformType"))
-    downloadSources.set(properties("platformDownloadSources").toBoolean())
-    updateSinceUntilBuild.set(true)
-    instrumentCode.set(false)
-
-    // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
-    plugins.set(properties("platformPlugins").split(',').map(String::trim).filter(String::isNotEmpty))
+dependencies {
+    intellijPlatform {
+        // https://www.jetbrains.com/updates/updates.xml
+        create(IntelliJPlatformType.Gateway, properties("platformVersion"))
+//        create(IntelliJPlatformType.Gateway)
+        bundledPlugins(properties("platformBundledPlugins").split(',').map{ it.trim() })
+    }
 }
 
-// Configure gradle-changelog-plugin plugin.
-// Read more: https://github.com/JetBrains/gradle-changelog-plugin
+// Configure gradle-intellij-plugin plugin.
+intellijPlatform {
+    pluginConfiguration {
+        name = properties("pluginName")
+        version = pluginVersion
+
+        description = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
+            val start = "<!-- Plugin description -->"
+            val end = "<!-- Plugin description end -->"
+
+            with(it.lines()) {
+                if (!containsAll(listOf(start, end))) {
+                    throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
+                }
+                subList(indexOf(start) + 1, indexOf(end)).joinToString("\n").let(::markdownToHTML)
+            }
+        }
+
+        changeNotes = changelog.getLatest().toHTML()
+
+        ideaVersion {
+            sinceBuild = properties("pluginSinceBuild")
+            untilBuild = properties("pluginUntilBuild")
+        }
+    }
+
+    verifyPlugin {
+        ides {
+            properties("pluginVerifierIdeVersions").split(',').map(String::trim).forEach { version ->
+                ide(IntelliJPlatformType.Gateway, version)
+            }
+        }
+    }
+
+    publishing {
+        token = providers.environmentVariable("JB_MARKETPLACE_PUBLISH_TOKEN").getOrElse("")
+        var pluginChannels = providers.environmentVariable("JB_GATEWAY_GITPOD_PLUGIN_CHANNEL").getOrElse("Dev")
+        if (pluginChannels.contains("-main-gha.")) {
+            pluginChannels = "Stable"
+        }
+        channels = listOf(pluginChannels)
+    }
+    instrumentCode = false
+}
+
 changelog {
     version = pluginVersion
     groups = emptyList()
@@ -89,29 +134,22 @@ changelog {
 detekt {
     autoCorrect = true
     buildUponDefaultConfig = true
+}
 
-    reports {
-        html.enabled = false
-        xml.enabled = false
-        txt.enabled = false
-    }
+tasks.withType<Detekt> {
+    jvmTarget = "21"
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "21"
+}
+
+tasks.withType<JavaCompile> {
+    sourceCompatibility = "21"
+    targetCompatibility = "21"
 }
 
 tasks {
-    // JetBrains Gateway 2022.3+ requires Source Compatibility set to 17.
-    // Set the compatibility versions to 1.8
-    withType<JavaCompile> {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
-    }
-    withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
-        kotlinOptions.freeCompilerArgs = listOf("-Xjvm-default=all")
-    }
-
-    withType<Detekt> {
-        jvmTarget = "17"
-    }
 
     buildSearchableOptions {
         enabled = false
@@ -119,48 +157,6 @@ tasks {
 
     test {
         useJUnitPlatform()
-    }
-
-    patchPluginXml {
-        version.set(pluginVersion)
-        sinceBuild.set(properties("pluginSinceBuild"))
-        untilBuild.set(properties("pluginUntilBuild"))
-
-        // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
-        pluginDescription.set(
-            File(projectDir, "README.md").readText().lines().run {
-                val start = "<!-- Plugin description -->"
-                val end = "<!-- Plugin description end -->"
-
-                if (!containsAll(listOf(start, end))) {
-                    throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
-                }
-                subList(indexOf(start) + 1, indexOf(end))
-            }.joinToString("\n").run { markdownToHTML(this) }
-        )
-
-        // Get the latest available change notes from the changelog file
-        changeNotes.set(provider { changelog.getLatest().toHTML() })
-    }
-
-    runPluginVerifier {
-        ideVersions.set(properties("pluginVerifierIdeVersions").split(',').map(String::trim).filter(String::isNotEmpty))
-    }
-
-    publishPlugin {
-        token.set(System.getenv("JB_MARKETPLACE_PUBLISH_TOKEN"))
-        // pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
-        // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
-        // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
-        var pluginChannel: String? = System.getenv("JB_GATEWAY_GITPOD_PLUGIN_CHANNEL")
-        if (pluginChannel.isNullOrBlank()) {
-            pluginChannel = if (pluginVersion.contains("-main-gha.")) {
-                "Stable"
-            } else {
-                "Dev"
-            }
-        }
-        channels.set(listOf(pluginChannel))
     }
 
     register("buildFromLeeway") {

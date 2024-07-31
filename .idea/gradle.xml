@@ -4,9 +4,6 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="delegatedBuild" value="true" />
-        <option name="testRunner" value="GRADLE" />
-        <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/components/ide/jetbrains/backend-plugin" />
         <option name="modules">
           <set>
@@ -17,14 +14,19 @@
         </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
-        <option name="delegatedBuild" value="true" />
-        <option name="testRunner" value="GRADLE" />
-        <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/components/ide/jetbrains/gateway-plugin" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/components/gitpod-protocol/java" />
             <option value="$PROJECT_DIR$/components/ide/jetbrains/gateway-plugin" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/components/public-api/java" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/components/public-api/java" />
           </set>
         </option>
       </GradleProjectSettings>
