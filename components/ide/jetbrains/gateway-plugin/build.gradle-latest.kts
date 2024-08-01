@@ -115,9 +115,13 @@ intellijPlatform {
 
     publishing {
         token = providers.environmentVariable("JB_MARKETPLACE_PUBLISH_TOKEN").getOrElse("")
-        var pluginChannels = providers.environmentVariable("JB_GATEWAY_GITPOD_PLUGIN_CHANNEL").getOrElse("Dev")
-        if (pluginChannels.contains("-main-gha.")) {
-            pluginChannels = "Stable"
+        var pluginChannels = providers.environmentVariable("JB_GATEWAY_GITPOD_PLUGIN_CHANNEL").getOrElse("")
+        if (pluginChannels.isBlank()) {
+            pluginChannels = if (pluginVersion.contains("-main-gha.")) {
+                "Stable"
+            } else {
+                "Dev"
+            }
         }
         channels = listOf(pluginChannels)
     }
