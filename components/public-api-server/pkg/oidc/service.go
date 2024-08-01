@@ -397,11 +397,16 @@ func (s *Service) verifyCelExpression(ctx context.Context, celExpression string,
 		log.WithError(err).Error("failed to create CEL program")
 		return false, fmt.Errorf("failed to create CEL program")
 	}
-
+	// TODO: REMOVE ME
+	log.WithField("claims", claims).Info("========claim")
+	// TODO: REMOVE ME
 	input := map[string]interface{}{
 		"claims": claims,
 	}
-	val, _, err := prg.ContextEval(ctx, input)
+	val, details, err := prg.ContextEval(ctx, input)
+	// TODO: REMOVE ME
+	log.WithField("details", details).WithField("val", val).Info("========details")
+	// TODO: REMOVE ME
 	if err != nil {
 		return false, fmt.Errorf("failed to evaluate CEL program: %v", err)
 	}
