@@ -4,9 +4,9 @@
 
 package io.gitpod.jetbrains.gateway
 
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.jetbrains.gateway.api.GatewayRecentConnections
 import com.jetbrains.rd.util.lifetime.Lifetime
 import io.gitpod.jetbrains.icons.GitpodIcons
@@ -24,8 +24,8 @@ class GitpodRecentConnections : GatewayRecentConnections {
                 resizableRow()
                 cell(view.component)
                     .resizableColumn()
-                    .horizontalAlign(HorizontalAlign.FILL)
-                    .verticalAlign(VerticalAlign.FILL)
+                    .align(AlignX.FILL)
+                    .align(AlignY.FILL)
                 cell()
             }
         }
