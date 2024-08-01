@@ -21,6 +21,8 @@ import (
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
@@ -49,6 +51,7 @@ type ClientConfig struct {
 	Active         bool
 	OAuth2Config   *oauth2.Config
 	VerifierConfig *goidc.Config
+	CelExpression  string
 }
 
 type StartParams struct {
@@ -248,6 +251,7 @@ func (s *Service) convertClientConfig(ctx context.Context, dbEntry db.OIDCClient
 			Endpoint:     provider.Endpoint(),
 			Scopes:       spec.Scopes,
 		},
+		CelExpression: spec.CelExpression,
 		VerifierConfig: &goidc.Config{
 			ClientID: spec.ClientID,
 		},
@@ -284,6 +288,13 @@ func (s *Service) authenticate(ctx context.Context, params authenticateParams) (
 	validatedClaims, err := s.validateRequiredClaims(ctx, provider, idToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate required claims: %w", err)
+	}
+	validatedCelExpression, err := s.verifyCelExpression(ctx, params.Config.CelExpression, validatedClaims)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify CEL expression: %w", err)
+	}
+	if validatedCelExpression == false {
+		return nil, fmt.Errorf("CEL expression did not evaluate to true")
 	}
 	return &AuthFlowResult{
 		IDToken: idToken,
@@ -362,6 +373,43 @@ func (s *Service) validateRequiredClaims(ctx context.Context, provider *oidc.Pro
 		}
 	}
 	return claims, nil
+}
+
+func (s *Service) verifyCelExpression(ctx context.Context, celExpression string, claims jwt.MapClaims) (bool, error) {
+	if celExpression == "" {
+		return true, nil
+	}
+	env, err := cel.NewEnv(cel.Declarations(decls.NewVar("claims", decls.NewMapType(decls.String, decls.Dyn))))
+	if err != nil {
+		return false, err
+	}
+	ast, issues := env.Compile(celExpression)
+	if issues != nil {
+		if issues.Err() != nil {
+			return false, issues.Err()
+		}
+		// should not happen
+		log.WithField("issues", issues).Error("failed to compile CEL Expression")
+		return false, fmt.Errorf("failed to compile CEL Expression")
+	}
+	prg, err := env.Program(ast)
+	if err != nil {
+		log.WithError(err).Error("failed to create CEL program")
+		return false, fmt.Errorf("failed to create CEL program")
+	}
+
+	input := map[string]interface{}{
+		"claims": claims,
+	}
+	val, _, err := prg.ContextEval(ctx, input)
+	if err != nil {
+		return false, fmt.Errorf("failed to evaluate CEL program: %v", err)
+	}
+	result, ok := val.Value().(bool)
+	if !ok {
+		return false, fmt.Errorf("CEL Expression did not evaluate to a boolean")
+	}
+	return result, nil
 }
 
 func (s *Service) fillClaims(ctx context.Context, provider *oidc.Provider, claims jwt.MapClaims, missingClaims []string) error {
