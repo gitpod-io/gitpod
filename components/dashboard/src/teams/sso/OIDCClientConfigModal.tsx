@@ -26,6 +26,7 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onSaved, onClos
         issuer: clientConfig?.oidcConfig?.issuer ?? "",
         clientId: clientConfig?.oauth2Config?.clientId ?? "",
         clientSecret: clientConfig?.oauth2Config?.clientSecret ?? "",
+        celExpression: clientConfig?.oauth2Config?.celExpression ?? "",
     });
     const configIsValid = isValid(ssoConfig);
 

@@ -27,6 +27,7 @@ export const SSOConfigForm: FC<Props> = ({ config, readOnly = false, onChange })
     const issuerError = useOnBlurError(`Please enter a valid URL.`, isValidIssuer(config.issuer));
     const clientIdError = useOnBlurError("Client ID is missing.", isValidClientID(config.clientId));
     const clientSecretError = useOnBlurError("Client Secret is missing.", isValidClientSecret(config.clientSecret));
+    const celExpressionError = useOnBlurError("Client Secret is missing.", isValidCelExpression(config.celExpression));
 
     return (
         <>
@@ -71,6 +72,15 @@ export const SSOConfigForm: FC<Props> = ({ config, readOnly = false, onChange })
                 onBlur={clientSecretError.onBlur}
                 onChange={(val) => onChange({ clientSecret: val })}
             />
+
+            {/* TODO(hw): SSO */}
+            <TextInputField
+                label="CEL Expression"
+                value={config.celExpression}
+                error={celExpressionError.message}
+                onBlur={celExpressionError.onBlur}
+                onChange={(val) => onChange({ celExpression: val })}
+            />
         </>
     );
 };
@@ -80,6 +90,7 @@ export type SSOConfig = {
     issuer: string;
     clientId: string;
     clientSecret: string;
+    celExpression?: string;
 };
 
 export const ssoConfigReducer = (state: SSOConfig, action: Partial<SSOConfig>) => {
@@ -102,6 +113,14 @@ const isValidClientSecret = (clientSecret: SSOConfig["clientSecret"]) => {
     return clientSecret.trim().length > 0;
 };
 
+const isValidCelExpression = (celExpression: SSOConfig["celExpression"]) => {
+    if (!celExpression) {
+        return true;
+    }
+    // TODO(hw): use lib to validate CEL expression
+    return celExpression.trim().length > 0;
+};
+
 export const useSaveSSOConfig = () => {
     const { data: org } = useCurrentOrg();
     const upsertClientConfig = useUpsertOIDCClientMutation();
@@ -122,6 +141,7 @@ export const useSaveSSOConfig = () => {
             const trimmedIssuer = ssoConfig.issuer.trim();
             const trimmedClientId = ssoConfig.clientId.trim();
             const trimmedClientSecret = ssoConfig.clientSecret.trim();
+            const trimmedCelExpression = ssoConfig.celExpression?.trim();
 
             return upsertClientConfig.mutateAsync({
                 config: !ssoConfig.id
@@ -130,6 +150,7 @@ export const useSaveSSOConfig = () => {
                           oauth2Config: {
                               clientId: trimmedClientId,
                               clientSecret: trimmedClientSecret,
+                              celExpression: trimmedCelExpression,
                           },
                           oidcConfig: {
                               issuer: trimmedIssuer,
@@ -142,6 +163,7 @@ export const useSaveSSOConfig = () => {
                               clientId: trimmedClientId,
                               // TODO: determine how we should handle when user doesn't change their secret
                               clientSecret: trimmedClientSecret.toLowerCase() === "redacted" ? "" : trimmedClientSecret,
+                              celExpression: trimmedCelExpression,
                           },
                           oidcConfig: {
                               issuer: trimmedIssuer,
