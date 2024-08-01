@@ -9,17 +9,13 @@ on:
                 description: ID of the plugin in lowercase and without spaces.
                 type: string
                 required: true
-            productCode:
-                description: JB Product Code
+            taskId:
+                description: ID of task to exec
                 type: string
                 required: true
-            productType:
-                description: JB Product Type
-                type: string
-                required: true
-            gradlePropertiesPath:
-                description: Path for the gradle.properties file of the plugin.
-                type: string
+            isBackendPlugin:
+                description: Action is execing for Gitpod JetBrains Backend Plugin or not
+                type: boolean
                 required: true
         secrets:
             slackWebhook:
@@ -33,45 +29,34 @@ jobs:
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
-            - name: Get Current Platform Version
-              id: current-version
+            - name: Install dependencies
               run: |
-                  CURRENT_VERSION=$(cat ${{ inputs.gradlePropertiesPath }} | grep platformVersion= | sed 's/platformVersion=//')
-                  echo "Current platform version: $CURRENT_VERSION"
-                  echo "::set-output name=result::$CURRENT_VERSION"
-            - name: Get Latest Platform Version
-              id: latest-version
+                curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.1/oci-tool_0.2.1_linux_amd64.tar.gz | tar xz -C /usr/local/bin
+                chmod +x /usr/local/bin/oci-tool
+                cd ./components/ide/gha-update-image/
+                yarn
+                npm i -g bun
+            - name: Check for Update
+              id: change
               run: |
-                URL="https://data.services.jetbrains.com/products/releases?code=${{ inputs.productCode }}&type=${{ inputs.productType }}&platform=linux"
-                echo "URL: $URL"
-                RELEASE=$(curl -s "$URL" |jq ".${{ inputs.productCode }}[0]")
-                MAJOR_VERSION=$(echo $RELEASE |jq -r ".majorVersion")
-                echo "MAJOR_VERSION: $MAJOR_VERSION"
+                cd ./components/ide/gha-update-image/
+                bun run index-jb-platform-update.ts --task=${{ inputs.taskId }}
 
-                BUILD=$(echo $RELEASE |jq -r ".build")
-                echo "BUILD: $BUILD"
-                MAJOR=$(cut -d. -f1 <<< $BUILD)
-                echo "MAJOR: $MAJOR"
-                MINOR=$(cut -d. -f2 <<< $BUILD)
-                echo "MINOR: $MINOR"
-                LATEST_VERSION="$MAJOR.$MINOR-EAP-CANDIDATE-SNAPSHOT"
-                echo "Latest platform version: $LATEST_VERSION"
-
-                echo "::set-output name=sinceBuild::$MAJOR.$MINOR"
-                echo "::set-output name=untilBuild::$MAJOR.*"
-                echo "::set-output name=majorVersion::$MAJOR_VERSION"
-                echo "::set-output name=result::$LATEST_VERSION"
-            - name: Update ${{ inputs.gradlePropertiesPath }}
-              if: ${{ steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+                if [ -f /tmp/__gh_output.txt ]
+                then
+                  cat /tmp/__gh_output.txt >> $GITHUB_OUTPUT
+                fi
+            - name: Detect file changes
+              id: changes
               run: |
-                  sed -i "s/pluginSinceBuild=.*/pluginSinceBuild=${{ steps.latest-version.outputs.sinceBuild }}/" ${{ inputs.gradlePropertiesPath }}
-                  sed -i "s/pluginUntilBuild=.*/pluginUntilBuild=${{ steps.latest-version.outputs.untilBuild }}/" ${{ inputs.gradlePropertiesPath }}
-                  sed -i "s/pluginVerifierIdeVersions=.*/pluginVerifierIdeVersions=${{ steps.latest-version.outputs.majorVersion }}/" ${{ inputs.gradlePropertiesPath }}
-                  sed -i 's/platformVersion=${{ steps.current-version.outputs.result }}/platformVersion=${{ steps.latest-version.outputs.result }}/' ${{ inputs.gradlePropertiesPath }}
-                  git diff
+                if [ $(git status --porcelain | wc -l) -gt 0 ]; then
+                  echo "dirty=true" >> $GITHUB_OUTPUT
+                else
+                  echo "dirty=false" >> $GITHUB_OUTPUT
+                fi
             - name: Create Pull Request for Gateway Plugin
               id: create-gateway-pr
-              if: ${{ contains(inputs.pluginId, 'gateway-plugin') && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+              if: ${{ steps.changes.outputs.dirty && !inputs.isBackendPlugin }}
               uses: peter-evans/create-pull-request@v6
               with:
                   title: "[JetBrains] Update Platform Version from ${{ inputs.pluginName }}"
@@ -118,7 +103,7 @@ jobs:
                   author: Robo Quat <roboquat@gitpod.io>
             - name: Create Pull Request for Backend Plugin
               id: create-backend-pr
-              if: ${{ contains(inputs.pluginId, 'backend-plugin') && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+              if: ${{ steps.changes.outputs.dirty && inputs.isBackendPlugin }}
               uses: peter-evans/create-pull-request@v6
               with:
                   title: "[JetBrains] Update Platform Version from ${{ inputs.pluginName }}"
