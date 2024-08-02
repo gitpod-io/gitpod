@@ -293,7 +293,7 @@ func (s *Service) authenticate(ctx context.Context, params authenticateParams) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify CEL expression: %w", err)
 	}
-	if validatedCelExpression == false {
+	if !validatedCelExpression {
 		return nil, fmt.Errorf("CEL expression did not evaluate to true")
 	}
 	return &AuthFlowResult{
