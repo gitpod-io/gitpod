@@ -48,7 +48,6 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
                     type: converter.fromAuthProviderType(request.type),
                     clientId: request.oauth2Config?.clientId,
                     clientSecret: request.oauth2Config?.clientSecret,
-                    celExpression: request.oauth2Config?.celExpression,
                 },
             });
             return new CreateAuthProviderResponse({ authProvider: converter.toAuthProvider(result) });
@@ -61,7 +60,6 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
                     type: converter.fromAuthProviderType(request.type),
                     clientId: request.oauth2Config?.clientId,
                     clientSecret: request.oauth2Config?.clientSecret,
-                    celExpression: request.oauth2Config?.celExpression,
                 },
             });
             return new CreateAuthProviderResponse({ authProvider: converter.toAuthProvider(result) });
@@ -125,7 +123,6 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
         const entry = await getGitpodService().server.updateAuthProvider(request.authProviderId, {
             clientId,
             clientSecret,
-            celExpression: request.celExpression,
         });
         return new UpdateAuthProviderResponse({
             authProvider: converter.toAuthProvider(entry),
