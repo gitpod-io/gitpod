@@ -264,6 +264,14 @@ type authenticateParams struct {
 	NonceCookieValue string
 }
 
+type CelExprError struct {
+	Msg string
+}
+
+func (e *CelExprError) Error() string {
+	return e.Msg
+}
+
 func (s *Service) authenticate(ctx context.Context, params authenticateParams) (*AuthFlowResult, error) {
 	rawIDToken, ok := params.OAuth2Result.OAuth2Token.Extra("id_token").(string)
 	if !ok {
@@ -291,10 +299,10 @@ func (s *Service) authenticate(ctx context.Context, params authenticateParams) (
 	}
 	validatedCelExpression, err := s.verifyCelExpression(ctx, params.Config.CelExpression, validatedClaims)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify CEL expression: %w", err)
+		return nil, &CelExprError{Msg: fmt.Errorf("failed to validate CEL expression: %w", err).Error()}
 	}
 	if !validatedCelExpression {
-		return nil, fmt.Errorf("CEL expression did not evaluate to true")
+		return nil, &CelExprError{Msg: "CEL expression did not evaluate to true"}
 	}
 	return &AuthFlowResult{
 		IDToken: idToken,
@@ -397,16 +405,10 @@ func (s *Service) verifyCelExpression(ctx context.Context, celExpression string,
 		log.WithError(err).Error("failed to create CEL program")
 		return false, fmt.Errorf("failed to create CEL program")
 	}
-	// TODO: REMOVE ME
-	log.WithField("claims", claims).Info("========claim")
-	// TODO: REMOVE ME
 	input := map[string]interface{}{
 		"claims": claims,
 	}
-	val, details, err := prg.ContextEval(ctx, input)
-	// TODO: REMOVE ME
-	log.WithField("details", details).WithField("val", val).Info("========details")
-	// TODO: REMOVE ME
+	val, _, err := prg.ContextEval(ctx, input)
 	if err != nil {
 		return false, fmt.Errorf("failed to evaluate CEL program: %v", err)
 	}
