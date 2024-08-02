@@ -27,7 +27,6 @@ export const SSOConfigForm: FC<Props> = ({ config, readOnly = false, onChange })
     const issuerError = useOnBlurError(`Please enter a valid URL.`, isValidIssuer(config.issuer));
     const clientIdError = useOnBlurError("Client ID is missing.", isValidClientID(config.clientId));
     const clientSecretError = useOnBlurError("Client Secret is missing.", isValidClientSecret(config.clientSecret));
-    const celExpressionError = useOnBlurError("Client Secret is missing.", isValidCelExpression(config.celExpression));
 
     return (
         <>
@@ -73,14 +72,27 @@ export const SSOConfigForm: FC<Props> = ({ config, readOnly = false, onChange })
                 onChange={(val) => onChange({ clientSecret: val })}
             />
 
-            {/* TODO(hw): SSO */}
-            <TextInputField
-                label="CEL Expression"
-                value={config.celExpression}
-                error={celExpressionError.message}
-                onBlur={celExpressionError.onBlur}
-                onChange={(val) => onChange({ celExpression: val })}
-            />
+            <Subheading className="mt-8">
+                <strong>3.</strong> Customize <strong>claims</strong> validation with a{" "}
+                <a
+                    href="https://github.com/google/cel-spec/blob/master/doc/langdef.md#syntax"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="gp-link"
+                >
+                    CEL expression
+                </a>
+                .
+            </Subheading>
+
+            <InputField label="CEL Expression (optional)">
+                <textarea
+                    style={{ height: "160px" }}
+                    className="w-full resize-none"
+                    value={config.celExpression}
+                    onChange={(val) => onChange({ celExpression: val.target.value })}
+                />
+            </InputField>
         </>
     );
 };
@@ -111,14 +123,6 @@ const isValidClientID = (clientID: SSOConfig["clientId"]) => {
 
 const isValidClientSecret = (clientSecret: SSOConfig["clientSecret"]) => {
     return clientSecret.trim().length > 0;
-};
-
-const isValidCelExpression = (celExpression: SSOConfig["celExpression"]) => {
-    if (!celExpression) {
-        return true;
-    }
-    // TODO(hw): use lib to validate CEL expression
-    return celExpression.trim().length > 0;
 };
 
 export const useSaveSSOConfig = () => {
