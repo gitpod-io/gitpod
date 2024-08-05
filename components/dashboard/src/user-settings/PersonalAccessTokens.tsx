@@ -162,14 +162,7 @@ function ListAccessTokensView() {
         <>
             <div className="flex items-center sm:justify-between mb-4">
                 <div>
-                    <Heading2 className="flex gap-4 items-center">
-                        Access Tokens
-                        <PillLabel type="warn">
-                            <a href="https://www.gitpod.io/docs/references/gitpod-releases">
-                                <span className="text-xs">BETA</span>
-                            </a>
-                        </PillLabel>
-                    </Heading2>
+                    <Heading2 className="flex gap-4 items-center">Access Tokens</Heading2>
                     <Subheading>
                         Create or regenerate access tokens.{" "}
                         <a
@@ -179,15 +172,6 @@ function ListAccessTokensView() {
                             rel="noreferrer"
                         >
                             Learn more
-                        </a>
-                        &nbsp;&middot;&nbsp;
-                        <a
-                            className="gp-link"
-                            href="https://github.com/gitpod-io/gitpod/issues/15433"
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            Send feedback
                         </a>
                     </Subheading>
                 </div>
