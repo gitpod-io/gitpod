@@ -139,7 +139,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			reportLoginCompleted("failed_client", "sso")
 			responseMsg := "We've not been able to authenticate you with the OIDC Provider."
 			if celExprErr, ok := err.(*CelExprError); ok {
-				responseMsg = fmt.Sprintf("We've not been able to authenticate you with the OIDC Provider: %s.", celExprErr.Error())
+				responseMsg = fmt.Sprintf("%s [%s]", responseMsg, celExprErr.Code)
 			}
 			respondeWithError(rw, r, responseMsg, http.StatusInternalServerError, useHttpErrors)
 			return

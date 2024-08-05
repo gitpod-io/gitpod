@@ -265,11 +265,12 @@ type authenticateParams struct {
 }
 
 type CelExprError struct {
-	Msg string
+	Msg  string
+	Code string
 }
 
 func (e *CelExprError) Error() string {
-	return e.Msg
+	return fmt.Sprintf("%s [%s]", e.Msg, e.Code)
 }
 
 func (s *Service) authenticate(ctx context.Context, params authenticateParams) (*AuthFlowResult, error) {
@@ -299,10 +300,10 @@ func (s *Service) authenticate(ctx context.Context, params authenticateParams) (
 	}
 	validatedCelExpression, err := s.verifyCelExpression(ctx, params.Config.CelExpression, validatedClaims)
 	if err != nil {
-		return nil, &CelExprError{Msg: fmt.Errorf("failed to validate CEL expression: %w", err).Error()}
+		return nil, err
 	}
 	if !validatedCelExpression {
-		return nil, &CelExprError{Msg: "CEL expression did not evaluate to true"}
+		return nil, &CelExprError{Msg: "CEL expression did not evaluate to true", Code: "CEL:EVAL_FALSE"}
 	}
 	return &AuthFlowResult{
 		IDToken: idToken,
@@ -389,32 +390,35 @@ func (s *Service) verifyCelExpression(ctx context.Context, celExpression string,
 	}
 	env, err := cel.NewEnv(cel.Declarations(decls.NewVar("claims", decls.NewMapType(decls.String, decls.Dyn))))
 	if err != nil {
-		return false, err
+		return false, &CelExprError{Msg: fmt.Errorf("failed to create claims env: %w", err).Error(), Code: "CEL:INVALIDATE"}
 	}
 	ast, issues := env.Compile(celExpression)
 	if issues != nil {
 		if issues.Err() != nil {
-			return false, issues.Err()
+			return false, &CelExprError{Msg: fmt.Errorf("failed to compile CEL Expression: %w", issues.Err()).Error(), Code: "CEL:INVALIDATE"}
 		}
 		// should not happen
 		log.WithField("issues", issues).Error("failed to compile CEL Expression")
-		return false, fmt.Errorf("failed to compile CEL Expression")
+		return false, &CelExprError{Msg: fmt.Errorf("failed to compile CEL Expression").Error(), Code: "CEL:INVALIDATE"}
 	}
 	prg, err := env.Program(ast)
 	if err != nil {
 		log.WithError(err).Error("failed to create CEL program")
-		return false, fmt.Errorf("failed to create CEL program")
+		return false, &CelExprError{Msg: fmt.Errorf("failed to create CEL program").Error(), Code: "CEL:INVALIDATE"}
 	}
 	input := map[string]interface{}{
 		"claims": claims,
 	}
 	val, _, err := prg.ContextEval(ctx, input)
 	if err != nil {
-		return false, fmt.Errorf("failed to evaluate CEL program: %v", err)
+		return false, &CelExprError{Msg: fmt.Errorf("failed to evaluate CEL program: %w", err).Error(), Code: "CEL:EVAL_ERR"}
 	}
 	result, ok := val.Value().(bool)
 	if !ok {
-		return false, fmt.Errorf("CEL Expression did not evaluate to a boolean")
+		return false, &CelExprError{Msg: fmt.Errorf("CEL Expression did not evaluate to a boolean").Error(), Code: "CEL:EVAL_NOT_BOOL"}
+	}
+	if !result {
+		return false, &CelExprError{Msg: fmt.Errorf("CEL Expression did not evaluate to true").Error(), Code: "CEL:EVAL_FALSE"}
 	}
 	return result, nil
 }

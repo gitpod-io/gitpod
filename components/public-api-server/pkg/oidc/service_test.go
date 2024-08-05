@@ -355,6 +355,105 @@ func Test_validateRequiredClaims(t *testing.T) {
 	}
 }
 
+func Test_verifyCelExpression(t *testing.T) {
+	service, _ := setupOIDCServiceForTests(t)
+
+	testCases := []struct {
+		Label             string
+		ExpectedError     bool
+		ExpectedErrorMsg  string
+		ExpectedErrorCode string
+		ExpectedResult    bool
+		Claims            jwt.MapClaims
+		CEL               string
+	}{
+		{
+			Label:             "email verify",
+			ExpectedError:     true,
+			ExpectedErrorMsg:  "CEL Expression did not evaluate to true [CEL:EVAL_FALSE]",
+			ExpectedErrorCode: "CEL:EVAL_FALSE",
+			ExpectedResult:    false,
+			Claims: jwt.MapClaims{
+				"Audience": []string{"audience"},
+				"groups_direct": []string{
+					"gitpod-team",
+					"gitpod-team2/sub_group",
+				},
+				"email":          "test@gitpod.io",
+				"email_verified": false,
+			},
+			CEL: "claims.email_verified && claims.email_verified.email.endsWith('@gitpod.io')",
+		},
+		{
+			Label:          "GitLab: groups restriction",
+			ExpectedError:  false,
+			ExpectedResult: true,
+			Claims: jwt.MapClaims{
+				"Audience": []string{"audience"},
+				"groups_direct": []string{
+					"gitpod-team",
+					"gitpod-team2/sub_group",
+				},
+				"email":          "test@gitpod.io",
+				"email_verified": false,
+			},
+			CEL: "(claims.email_verified && claims.email_verified.email.endsWith('@gitpod.io')) || 'gitpod-team' in claims.groups_direct",
+		},
+		{
+			Label:             "GitLab: groups restriction (not allowed)",
+			ExpectedError:     true,
+			ExpectedErrorMsg:  "CEL Expression did not evaluate to true [CEL:EVAL_FALSE]",
+			ExpectedErrorCode: "CEL:EVAL_FALSE",
+			ExpectedResult:    false,
+			Claims: jwt.MapClaims{
+				"Audience": []string{"audience"},
+				"groups_direct": []string{
+					"gitpod-team2/sub_group",
+				},
+				"email":          "test@gitpod.io",
+				"email_verified": false,
+			},
+			CEL: "(claims.email_verified && claims.email_verified.email.endsWith('@gitpod.io')) || 'gitpod-team2' in claims.groups_direct",
+		},
+		{
+			Label:             "invalidate cel",
+			ExpectedError:     true,
+			ExpectedErrorCode: "CEL:INVALIDATE",
+			ExpectedResult:    false,
+			Claims: jwt.MapClaims{
+				"Audience": []string{"audience"},
+				"groups_direct": []string{
+					"gitpod-team",
+					"gitpod-team2/sub_group",
+				},
+				"email":          "test@gitpod.io",
+				"email_verified": false,
+			},
+			CEL: "foo",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Label, func(t *testing.T) {
+			result, err := service.verifyCelExpression(context.Background(), tc.CEL, tc.Claims)
+			if tc.ExpectedErrorCode != "" {
+				if celExprErr, ok := err.(*CelExprError); ok {
+					require.Equal(t, celExprErr.Code, tc.ExpectedErrorCode, "Unexpected CEL error code")
+				}
+			}
+			if !tc.ExpectedError {
+				require.NoError(t, err)
+			} else {
+				require.True(t, err != nil, "Should return error")
+				if tc.ExpectedErrorMsg != "" {
+					require.Equal(t, err.Error(), tc.ExpectedErrorMsg)
+				}
+			}
+			require.Equal(t, result, tc.ExpectedResult, "Unexpected result")
+		})
+	}
+}
+
 func createTestIDToken(t *testing.T, claims jwt.Claims) *goidc.IDToken {
 	t.Helper()
 
