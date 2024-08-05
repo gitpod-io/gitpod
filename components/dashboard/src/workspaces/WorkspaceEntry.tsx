@@ -105,10 +105,22 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                         </div>
                     </div>
                     <div className="flex items-center">
+                        {/*
+                         * Tooltip for workspace last active time
+                         * Displays relative time (e.g. "2 days ago") as visible text
+                         * Shows exact date and time with GMT offset on hover
+                         * Uses dayjs for date formatting and relative time calculation
+                         * Handles potential undefined dates with fallback to current date
+                         * Removes leading zero from single-digit GMT hour offsets
+                         */}
                         <Tooltip
-                            content={`Last Activate ${dayjs(
-                                info.status!.phase!.lastTransitionTime!.toDate(),
-                            ).fromNow()}`}
+                            content={`Last active: ${dayjs(
+                                info.status?.phase?.lastTransitionTime?.toDate() ?? new Date(),
+                            ).format("MMM D, YYYY, h:mm A")} GMT${dayjs(
+                                info.status?.phase?.lastTransitionTime?.toDate() ?? new Date(),
+                            )
+                                .format("Z")
+                                .replace(/^([+-])0/, "$1")}`}
                             className="w-full"
                         >
                             <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">
