@@ -73,14 +73,14 @@ export const SSOConfigForm: FC<Props> = ({ config, readOnly = false, onChange })
             />
 
             <Subheading className="mt-8">
-                <strong>3.</strong> Customize <strong>claims</strong> validation with a{" "}
+                <strong>3.</strong> Restrict available accounts in your Identity Providers.
                 <a
-                    href="https://github.com/google/cel-spec/blob/master/doc/langdef.md#syntax"
+                    href="https://www.gitpod.io/docs/enterprise/setup-gitpod/configure-sso#restrict-available-accounts-in-your-identity-providers"
                     target="_blank"
                     rel="noreferrer noopener"
                     className="gp-link"
                 >
-                    CEL expression
+                    Learn more
                 </a>
                 .
             </Subheading>
