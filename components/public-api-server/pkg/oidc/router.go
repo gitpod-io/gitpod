@@ -32,8 +32,9 @@ func Router(s *Service) *chi.Mux {
 }
 
 const (
-	stateCookieName = "state"
-	nonceCookieName = "nonce"
+	stateCookieName    = "state"
+	nonceCookieName    = "nonce"
+	verifierCookieName = "verifier"
 )
 
 func (s *Service) getStartHandler() http.HandlerFunc {
@@ -83,6 +84,7 @@ func (s *Service) getStartHandler() http.HandlerFunc {
 
 		http.SetCookie(rw, newCallbackCookie(r, nonceCookieName, startParams.Nonce))
 		http.SetCookie(rw, newCallbackCookie(r, stateCookieName, startParams.State))
+		http.SetCookie(rw, newCallbackCookie(r, verifierCookieName, startParams.CodeVerifier))
 
 		http.Redirect(rw, r, startParams.AuthCodeURL, http.StatusTemporaryRedirect)
 	}

@@ -52,12 +52,14 @@ type ClientConfig struct {
 	OAuth2Config   *oauth2.Config
 	VerifierConfig *goidc.Config
 	CelExpression  string
+	UsePKCE        bool
 }
 
 type StartParams struct {
-	State       string
-	Nonce       string
-	AuthCodeURL string
+	State        string
+	Nonce        string
+	CodeVerifier string
+	AuthCodeURL  string
 }
 
 type AuthFlowResult struct {
@@ -92,12 +94,21 @@ func (s *Service) getStartParams(config *ClientConfig, redirectURL string, state
 
 	// Configuring `AuthCodeOption`s, e.g. nonce
 	config.OAuth2Config.RedirectURL = redirectURL
-	authCodeURL := config.OAuth2Config.AuthCodeURL(state, goidc.Nonce(nonce))
+
+	opts := []oauth2.AuthCodeOption{goidc.Nonce(nonce)}
+	var verifier string
+	if config.UsePKCE {
+		verifier = oauth2.GenerateVerifier()
+		opts = append(opts, oauth2.S256ChallengeOption(verifier))
+	}
+
+	authCodeURL := config.OAuth2Config.AuthCodeURL(state, opts...)
 
 	return &StartParams{
-		AuthCodeURL: authCodeURL,
-		State:       state,
-		Nonce:       nonce,
+		AuthCodeURL:  authCodeURL,
+		State:        state,
+		Nonce:        nonce,
+		CodeVerifier: verifier,
 	}, nil
 }
 
@@ -252,6 +263,7 @@ func (s *Service) convertClientConfig(ctx context.Context, dbEntry db.OIDCClient
 			Scopes:       spec.Scopes,
 		},
 		CelExpression: spec.CelExpression,
+		UsePKCE:       spec.UsePKCE,
 		VerifierConfig: &goidc.Config{
 			ClientID: spec.ClientID,
 		},

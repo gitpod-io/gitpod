@@ -84,8 +84,18 @@ func (s *Service) OAuth2Middleware(next http.Handler) http.Handler {
 			return
 		}
 
+		opts := []oauth2.AuthCodeOption{}
+		if config.UsePKCE {
+			codeVerifier, err := r.Cookie(verifierCookieName)
+			if err != nil {
+				http.Error(rw, "code_verifier cookie not found", http.StatusBadRequest)
+				return
+			}
+			opts = append(opts, oauth2.VerifierOption(codeVerifier.Value))
+		}
+
 		config.OAuth2Config.RedirectURL = getCallbackURL(r.Host)
-		oauth2Token, err := config.OAuth2Config.Exchange(r.Context(), code)
+		oauth2Token, err := config.OAuth2Config.Exchange(r.Context(), code, opts...)
 		if err != nil {
 			log.WithError(err).Warn("Failed to exchange OAuth2 token.")
 			respondeWithError(rw, r, "Failed to exchange OAuth2 token: "+err.Error(), http.StatusInternalServerError, useHttpErrors)

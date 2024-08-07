@@ -5886,6 +5886,16 @@ public final class Oidc {
      */
     com.google.protobuf.ByteString
         getCelExpressionBytes();
+
+    /**
+     * <pre>
+     * Use PKCE for the OAuth2 flow.
+     * </pre>
+     *
+     * <code>bool use_pkce = 10 [json_name = "usePkce"];</code>
+     * @return The usePkce.
+     */
+    boolean getUsePkce();
   }
   /**
    * <pre>
@@ -6321,6 +6331,21 @@ public final class Oidc {
       }
     }
 
+    public static final int USE_PKCE_FIELD_NUMBER = 10;
+    private boolean usePkce_ = false;
+    /**
+     * <pre>
+     * Use PKCE for the OAuth2 flow.
+     * </pre>
+     *
+     * <code>bool use_pkce = 10 [json_name = "usePkce"];</code>
+     * @return The usePkce.
+     */
+    @java.lang.Override
+    public boolean getUsePkce() {
+      return usePkce_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -6358,6 +6383,9 @@ public final class Oidc {
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(celExpression_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 9, celExpression_);
+      }
+      if (usePkce_ != false) {
+        output.writeBool(10, usePkce_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -6398,6 +6426,10 @@ public final class Oidc {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(celExpression_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(9, celExpression_);
       }
+      if (usePkce_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(10, usePkce_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -6432,6 +6464,8 @@ public final class Oidc {
       }
       if (!getCelExpression()
           .equals(other.getCelExpression())) return false;
+      if (getUsePkce()
+          != other.getUsePkce()) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -6463,6 +6497,9 @@ public final class Oidc {
       }
       hash = (37 * hash) + CEL_EXPRESSION_FIELD_NUMBER;
       hash = (53 * hash) + getCelExpression().hashCode();
+      hash = (37 * hash) + USE_PKCE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getUsePkce());
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -6617,6 +6654,7 @@ public final class Oidc {
           userinfoKeysBuilder_ = null;
         }
         celExpression_ = "";
+        usePkce_ = false;
         return this;
       }
 
@@ -6679,6 +6717,9 @@ public final class Oidc {
         if (((from_bitField0_ & 0x00000080) != 0)) {
           result.celExpression_ = celExpression_;
         }
+        if (((from_bitField0_ & 0x00000100) != 0)) {
+          result.usePkce_ = usePkce_;
+        }
         result.bitField0_ |= to_bitField0_;
       }
 
@@ -6736,6 +6777,9 @@ public final class Oidc {
           celExpression_ = other.celExpression_;
           bitField0_ |= 0x00000080;
           onChanged();
+        }
+        if (other.getUsePkce() != false) {
+          setUsePkce(other.getUsePkce());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -6806,6 +6850,11 @@ public final class Oidc {
                 bitField0_ |= 0x00000080;
                 break;
               } // case 74
+              case 80: {
+                usePkce_ = input.readBool();
+                bitField0_ |= 0x00000100;
+                break;
+              } // case 80
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -7704,6 +7753,50 @@ public final class Oidc {
         checkByteStringIsUtf8(value);
         celExpression_ = value;
         bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+
+      private boolean usePkce_ ;
+      /**
+       * <pre>
+       * Use PKCE for the OAuth2 flow.
+       * </pre>
+       *
+       * <code>bool use_pkce = 10 [json_name = "usePkce"];</code>
+       * @return The usePkce.
+       */
+      @java.lang.Override
+      public boolean getUsePkce() {
+        return usePkce_;
+      }
+      /**
+       * <pre>
+       * Use PKCE for the OAuth2 flow.
+       * </pre>
+       *
+       * <code>bool use_pkce = 10 [json_name = "usePkce"];</code>
+       * @param value The usePkce to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUsePkce(boolean value) {
+
+        usePkce_ = value;
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Use PKCE for the OAuth2 flow.
+       * </pre>
+       *
+       * <code>bool use_pkce = 10 [json_name = "usePkce"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUsePkce() {
+        bitField0_ = (bitField0_ & ~0x00000100);
+        usePkce_ = false;
         onChanged();
         return this;
       }
@@ -16069,7 +16162,7 @@ public final class Oidc {
       "ide\022&\n\017claim_email_key\030\001 \001(\tR\rclaimEmail" +
       "Key\022(\n\020claim_groups_key\030\002 \001(\tR\016claimGrou" +
       "psKey\022,\n\022claim_username_key\030\003 \001(\tR\020claim" +
-      "UsernameKey\"\345\002\n\014OAuth2Config\022\033\n\tclient_i" +
+      "UsernameKey\"\200\003\n\014OAuth2Config\022\033\n\tclient_i" +
       "d\030\001 \001(\tR\010clientId\022#\n\rclient_secret\030\002 \001(\t" +
       "R\014clientSecret\0225\n\026authorization_endpoint" +
       "\030\003 \001(\tR\025authorizationEndpoint\022%\n\016token_e" +
@@ -16078,60 +16171,60 @@ public final class Oidc {
       "\020userinfoEndpoint\022I\n\ruserinfo_keys\030\007 \001(\013" +
       "2$.gitpod.experimental.v1.UserInfoKeysR\014" +
       "userinfoKeys\022%\n\016cel_expression\030\t \001(\tR\rce" +
-      "lExpression\"b\n\014UserInfoKeys\022&\n\017userinfo_" +
-      "id_key\030\001 \001(\tR\ruserinfoIdKey\022*\n\021userinfo_" +
-      "name_key\030\002 \001(\tR\017userinfoNameKey\"\030\n\026OIDCC" +
-      "lientConfigStatus\"\202\001\n\031CreateClientConfig" +
-      "Request\022@\n\006config\030\001 \001(\0132(.gitpod.experim" +
-      "ental.v1.OIDCClientConfigR\006config\022#\n\ruse" +
-      "_discovery\030\002 \001(\010R\014useDiscovery\"^\n\032Create" +
-      "ClientConfigResponse\022@\n\006config\030\001 \001(\0132(.g" +
-      "itpod.experimental.v1.OIDCClientConfigR\006" +
-      "config\"Q\n\026GetClientConfigRequest\022\016\n\002id\030\001" +
-      " \001(\tR\002id\022\'\n\017organization_id\030\002 \001(\tR\016organ" +
-      "izationId\"[\n\027GetClientConfigResponse\022@\n\006" +
-      "config\030\001 \001(\0132(.gitpod.experimental.v1.OI" +
-      "DCClientConfigR\006config\"\207\001\n\030ListClientCon" +
-      "figsRequest\022\'\n\017organization_id\030\001 \001(\tR\016or" +
-      "ganizationId\022B\n\npagination\030\002 \001(\0132\".gitpo" +
-      "d.experimental.v1.PaginationR\npagination" +
-      "\"\221\001\n\031ListClientConfigsResponse\022O\n\016client" +
-      "_configs\030\001 \003(\0132(.gitpod.experimental.v1." +
-      "OIDCClientConfigR\rclientConfigs\022#\n\rtotal" +
-      "_results\030\002 \001(\003R\014totalResults\"]\n\031UpdateCl" +
-      "ientConfigRequest\022@\n\006config\030\001 \001(\0132(.gitp" +
-      "od.experimental.v1.OIDCClientConfigR\006con" +
-      "fig\"\034\n\032UpdateClientConfigResponse\"T\n\031Del" +
-      "eteClientConfigRequest\022\016\n\002id\030\001 \001(\tR\002id\022\'" +
-      "\n\017organization_id\030\002 \001(\tR\016organizationId\"" +
-      "\034\n\032DeleteClientConfigResponse\"w\n SetClie" +
-      "ntConfigActivationRequest\022\016\n\002id\030\001 \001(\tR\002i" +
-      "d\022\'\n\017organization_id\030\002 \001(\tR\016organization" +
-      "Id\022\032\n\010activate\030\003 \001(\010R\010activate\"#\n!SetCli" +
-      "entConfigActivationResponse2\221\006\n\013OIDCServ" +
-      "ice\022}\n\022CreateClientConfig\0221.gitpod.exper" +
-      "imental.v1.CreateClientConfigRequest\0322.g" +
-      "itpod.experimental.v1.CreateClientConfig" +
-      "Response\"\000\022t\n\017GetClientConfig\022..gitpod.e" +
-      "xperimental.v1.GetClientConfigRequest\032/." +
-      "gitpod.experimental.v1.GetClientConfigRe" +
-      "sponse\"\000\022z\n\021ListClientConfigs\0220.gitpod.e" +
-      "xperimental.v1.ListClientConfigsRequest\032" +
-      "1.gitpod.experimental.v1.ListClientConfi" +
-      "gsResponse\"\000\022}\n\022UpdateClientConfig\0221.git" +
-      "pod.experimental.v1.UpdateClientConfigRe" +
-      "quest\0322.gitpod.experimental.v1.UpdateCli" +
-      "entConfigResponse\"\000\022}\n\022DeleteClientConfi" +
-      "g\0221.gitpod.experimental.v1.DeleteClientC" +
-      "onfigRequest\0322.gitpod.experimental.v1.De" +
-      "leteClientConfigResponse\"\000\022\222\001\n\031SetClient" +
-      "ConfigActivation\0228.gitpod.experimental.v" +
-      "1.SetClientConfigActivationRequest\0329.git" +
-      "pod.experimental.v1.SetClientConfigActiv" +
-      "ationResponse\"\000Bk\n#io.gitpod.publicapi.e" +
-      "xperimental.v1ZDgithub.com/gitpod-io/git" +
-      "pod/components/public-api/go/experimenta" +
-      "l/v1b\006proto3"
+      "lExpression\022\031\n\010use_pkce\030\n \001(\010R\007usePkce\"b" +
+      "\n\014UserInfoKeys\022&\n\017userinfo_id_key\030\001 \001(\tR" +
+      "\ruserinfoIdKey\022*\n\021userinfo_name_key\030\002 \001(" +
+      "\tR\017userinfoNameKey\"\030\n\026OIDCClientConfigSt" +
+      "atus\"\202\001\n\031CreateClientConfigRequest\022@\n\006co" +
+      "nfig\030\001 \001(\0132(.gitpod.experimental.v1.OIDC" +
+      "ClientConfigR\006config\022#\n\ruse_discovery\030\002 " +
+      "\001(\010R\014useDiscovery\"^\n\032CreateClientConfigR" +
+      "esponse\022@\n\006config\030\001 \001(\0132(.gitpod.experim" +
+      "ental.v1.OIDCClientConfigR\006config\"Q\n\026Get" +
+      "ClientConfigRequest\022\016\n\002id\030\001 \001(\tR\002id\022\'\n\017o" +
+      "rganization_id\030\002 \001(\tR\016organizationId\"[\n\027" +
+      "GetClientConfigResponse\022@\n\006config\030\001 \001(\0132" +
+      "(.gitpod.experimental.v1.OIDCClientConfi" +
+      "gR\006config\"\207\001\n\030ListClientConfigsRequest\022\'" +
+      "\n\017organization_id\030\001 \001(\tR\016organizationId\022" +
+      "B\n\npagination\030\002 \001(\0132\".gitpod.experimenta" +
+      "l.v1.PaginationR\npagination\"\221\001\n\031ListClie" +
+      "ntConfigsResponse\022O\n\016client_configs\030\001 \003(" +
+      "\0132(.gitpod.experimental.v1.OIDCClientCon" +
+      "figR\rclientConfigs\022#\n\rtotal_results\030\002 \001(" +
+      "\003R\014totalResults\"]\n\031UpdateClientConfigReq" +
+      "uest\022@\n\006config\030\001 \001(\0132(.gitpod.experiment" +
+      "al.v1.OIDCClientConfigR\006config\"\034\n\032Update" +
+      "ClientConfigResponse\"T\n\031DeleteClientConf" +
+      "igRequest\022\016\n\002id\030\001 \001(\tR\002id\022\'\n\017organizatio" +
+      "n_id\030\002 \001(\tR\016organizationId\"\034\n\032DeleteClie" +
+      "ntConfigResponse\"w\n SetClientConfigActiv" +
+      "ationRequest\022\016\n\002id\030\001 \001(\tR\002id\022\'\n\017organiza" +
+      "tion_id\030\002 \001(\tR\016organizationId\022\032\n\010activat" +
+      "e\030\003 \001(\010R\010activate\"#\n!SetClientConfigActi" +
+      "vationResponse2\221\006\n\013OIDCService\022}\n\022Create" +
+      "ClientConfig\0221.gitpod.experimental.v1.Cr" +
+      "eateClientConfigRequest\0322.gitpod.experim" +
+      "ental.v1.CreateClientConfigResponse\"\000\022t\n" +
+      "\017GetClientConfig\022..gitpod.experimental.v" +
+      "1.GetClientConfigRequest\032/.gitpod.experi" +
+      "mental.v1.GetClientConfigResponse\"\000\022z\n\021L" +
+      "istClientConfigs\0220.gitpod.experimental.v" +
+      "1.ListClientConfigsRequest\0321.gitpod.expe" +
+      "rimental.v1.ListClientConfigsResponse\"\000\022" +
+      "}\n\022UpdateClientConfig\0221.gitpod.experimen" +
+      "tal.v1.UpdateClientConfigRequest\0322.gitpo" +
+      "d.experimental.v1.UpdateClientConfigResp" +
+      "onse\"\000\022}\n\022DeleteClientConfig\0221.gitpod.ex" +
+      "perimental.v1.DeleteClientConfigRequest\032" +
+      "2.gitpod.experimental.v1.DeleteClientCon" +
+      "figResponse\"\000\022\222\001\n\031SetClientConfigActivat" +
+      "ion\0228.gitpod.experimental.v1.SetClientCo" +
+      "nfigActivationRequest\0329.gitpod.experimen" +
+      "tal.v1.SetClientConfigActivationResponse" +
+      "\"\000Bk\n#io.gitpod.publicapi.experimental.v" +
+      "1ZDgithub.com/gitpod-io/gitpod/component" +
+      "s/public-api/go/experimental/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -16168,7 +16261,7 @@ public final class Oidc {
     internal_static_gitpod_experimental_v1_OAuth2Config_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_experimental_v1_OAuth2Config_descriptor,
-        new java.lang.String[] { "ClientId", "ClientSecret", "AuthorizationEndpoint", "TokenEndpoint", "Scopes", "UserinfoEndpoint", "UserinfoKeys", "CelExpression", });
+        new java.lang.String[] { "ClientId", "ClientSecret", "AuthorizationEndpoint", "TokenEndpoint", "Scopes", "UserinfoEndpoint", "UserinfoKeys", "CelExpression", "UsePkce", });
     internal_static_gitpod_experimental_v1_UserInfoKeys_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_gitpod_experimental_v1_UserInfoKeys_fieldAccessorTable = new
