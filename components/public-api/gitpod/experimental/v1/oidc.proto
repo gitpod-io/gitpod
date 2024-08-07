@@ -117,6 +117,10 @@ message OAuth2Config {
   // Keys of the userinfo result to extract a profile from.
   // Optional.
   UserInfoKeys userinfo_keys = 7;
+
+  // CEL expression to verify a profile.
+  // Optional.
+  string cel_expression = 9;
 }
 
 // Description of keys of a userinfo result.

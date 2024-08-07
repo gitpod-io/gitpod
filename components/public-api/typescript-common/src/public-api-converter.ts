@@ -450,7 +450,7 @@ export class PublicAPIConverter {
         const result = new EditorReference();
         result.name = ideConfig.ide;
         result.version = ideConfig.useLatest ? "latest" : "stable";
-        result.preferToolbox = ideConfig.preferToolbox ?? false
+        result.preferToolbox = ideConfig.preferToolbox ?? false;
         return result;
     }
 

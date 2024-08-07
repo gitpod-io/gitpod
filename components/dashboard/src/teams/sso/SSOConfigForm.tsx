@@ -71,6 +71,28 @@ export const SSOConfigForm: FC<Props> = ({ config, readOnly = false, onChange })
                 onBlur={clientSecretError.onBlur}
                 onChange={(val) => onChange({ clientSecret: val })}
             />
+
+            <Subheading className="mt-8">
+                <strong>3.</strong> Restrict available accounts in your Identity Providers.
+                <a
+                    href="https://www.gitpod.io/docs/enterprise/setup-gitpod/configure-sso#restrict-available-accounts-in-your-identity-providers"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="gp-link"
+                >
+                    Learn more
+                </a>
+                .
+            </Subheading>
+
+            <InputField label="CEL Expression (optional)">
+                <textarea
+                    style={{ height: "160px" }}
+                    className="w-full resize-none"
+                    value={config.celExpression}
+                    onChange={(val) => onChange({ celExpression: val.target.value })}
+                />
+            </InputField>
         </>
     );
 };
@@ -80,6 +102,7 @@ export type SSOConfig = {
     issuer: string;
     clientId: string;
     clientSecret: string;
+    celExpression?: string;
 };
 
 export const ssoConfigReducer = (state: SSOConfig, action: Partial<SSOConfig>) => {
@@ -122,6 +145,7 @@ export const useSaveSSOConfig = () => {
             const trimmedIssuer = ssoConfig.issuer.trim();
             const trimmedClientId = ssoConfig.clientId.trim();
             const trimmedClientSecret = ssoConfig.clientSecret.trim();
+            const trimmedCelExpression = ssoConfig.celExpression?.trim();
 
             return upsertClientConfig.mutateAsync({
                 config: !ssoConfig.id
@@ -130,6 +154,7 @@ export const useSaveSSOConfig = () => {
                           oauth2Config: {
                               clientId: trimmedClientId,
                               clientSecret: trimmedClientSecret,
+                              celExpression: trimmedCelExpression,
                           },
                           oidcConfig: {
                               issuer: trimmedIssuer,
@@ -142,6 +167,7 @@ export const useSaveSSOConfig = () => {
                               clientId: trimmedClientId,
                               // TODO: determine how we should handle when user doesn't change their secret
                               clientSecret: trimmedClientSecret.toLowerCase() === "redacted" ? "" : trimmedClientSecret,
+                              celExpression: trimmedCelExpression,
                           },
                           oidcConfig: {
                               issuer: trimmedIssuer,

@@ -137,7 +137,11 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		if err != nil {
 			log.WithError(err).Warn("OIDC authentication failed")
 			reportLoginCompleted("failed_client", "sso")
-			respondeWithError(rw, r, "We've not been able to authenticate you with the OIDC Provider.", http.StatusInternalServerError, useHttpErrors)
+			responseMsg := "We've not been able to authenticate you with the OIDC Provider."
+			if celExprErr, ok := err.(*CelExprError); ok {
+				responseMsg = fmt.Sprintf("%s [%s]", responseMsg, celExprErr.Code)
+			}
+			respondeWithError(rw, r, responseMsg, http.StatusInternalServerError, useHttpErrors)
 			return
 		}
 
