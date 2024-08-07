@@ -55,7 +55,7 @@ export class WorkspaceGarbageCollector implements Job {
             return;
         }
 
-        // Move eligibale "regular" workspace -> softDeleted
+        // Move eligible "regular" workspace -> softDeleted
         try {
             await this.softDeleteEligibleWorkspaces();
         } catch (error) {
@@ -69,7 +69,7 @@ export class WorkspaceGarbageCollector implements Job {
             log.error("workspace-gc: error during content deletion", error);
         }
 
-        // Move eligibale "prebuild" workspaces -> contentDeleted (jumping over softDeleted)
+        // Move eligible "prebuild" workspaces -> contentDeleted (jumping over softDeleted)
         // At this point, Prebuilds are no longer visible nor usable.
         try {
             await this.deleteEligiblePrebuilds();
