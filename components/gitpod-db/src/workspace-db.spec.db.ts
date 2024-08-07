@@ -235,42 +235,50 @@ class WorkspaceDBSpec {
     }
 
     @test(timeout(10000))
-    public async testFindPrebuildsForGC_oldPrebuildNoUsage() {
-        await this.createPrebuild(2);
-        const dbResult = await this.db.findPrebuiltWorkspacesForGC(1, 10);
-        expect(dbResult.length).to.eq(1);
-        expect(dbResult[0].id).to.eq("12345");
-        expect(dbResult[0].ownerId).to.eq("1221423");
+    public async testFindEligableWorkspacesForSoftDeletion_markedEligable_Prebuild() {
+        const { ws } = await this.createPrebuild(20, 15);
+        const dbResult = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(), 10, "prebuild");
+        expect(dbResult.length).to.equal(1);
+        expect(dbResult[0].id).to.eq(ws.id);
+        expect(dbResult[0].ownerId).to.eq(ws.ownerId);
     }
 
     @test(timeout(10000))
-    public async testFindPrebuildsForGC_newPrebuildNoUsage() {
-        await this.createPrebuild(0);
-        const dbResult = await this.db.findPrebuiltWorkspacesForGC(1, 10);
+    public async testFindEligableWorkspacesForSoftDeletion_notMarkedEligable_Prebuild() {
+        await this.createPrebuild(20, -7);
+        const dbResult = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(), 10, "prebuild");
         expect(dbResult.length).to.eq(0);
     }
 
     @test(timeout(10000))
-    public async testFindPrebuildsForGC_oldPrebuildOldUsage() {
-        await this.createPrebuild(2, 2);
-        const dbResult = await this.db.findPrebuiltWorkspacesForGC(1, 10);
-        expect(dbResult.length).to.eq(1);
-        expect(dbResult[0].id).to.eq("12345");
-        expect(dbResult[0].ownerId).to.eq("1221423");
+    public async testPrebuildGarbageCollection() {
+        const { pbws } = await this.createPrebuild(20, 15);
+
+        // mimick the behavior of the Garbage Collector
+        const gcWorkspaces = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(), 10, "prebuild");
+        expect(gcWorkspaces.length).to.equal(1);
+
+        const now = new Date().toISOString();
+        await this.db.updatePartial(gcWorkspaces[0].id, {
+            contentDeletedTime: now,
+            softDeletedTime: now,
+            softDeleted: "gc",
+        });
+
+        // next cycle is empty
+        const nextGcCycle = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(), 10, "prebuild");
+        expect(nextGcCycle.length).to.equal(0);
+
+        // prebuild can't be discovered anymore because it's workspace has been GC'ed
+        const prebuild = await this.db.findPrebuildByID(pbws.id);
+        expect(prebuild).to.be.undefined;
     }
 
-    @test(timeout(10000))
-    public async testFindPrebuildsForGC_oldPrebuildNewUsage() {
-        await this.createPrebuild(12, 0);
-        const dbResult = await this.db.findPrebuiltWorkspacesForGC(1, 10);
-        expect(dbResult.length).to.eq(0);
-    }
-
-    protected async createPrebuild(createdDaysAgo: number, usageDaysAgo?: number) {
+    protected async createPrebuild(createdDaysAgo: number, deletionEligibilityTimeDaysAgo?: number) {
         const now = new Date();
         now.setDate(now.getDate() - createdDaysAgo);
         const creationTime = now.toISOString();
-        await this.db.store({
+        const ws = await this.db.store({
             id: "12345",
             creationTime,
             description: "something",
@@ -283,33 +291,23 @@ class WorkspaceDBSpec {
             config: {},
             type: "prebuild",
         });
-        await this.db.storePrebuiltWorkspace({
+        const pbws = await this.db.storePrebuiltWorkspace({
             id: "prebuild123",
             buildWorkspaceId: "12345",
             creationTime,
-            cloneURL: "",
+            cloneURL: "https://github.com/foo/bar",
             commit: "",
             state: "available",
             statusVersion: 0,
         });
-        if (usageDaysAgo !== undefined) {
-            const now = new Date();
-            now.setDate(now.getDate() - usageDaysAgo);
-            await this.db.store({
-                id: "usage-of-12345",
-                creationTime: now.toISOString(),
-                description: "something",
-                contextURL: "https://github.com/foo/bar",
-                ownerId: "1221423",
-                organizationId: "org123",
-                context: {
-                    title: "my title",
-                },
-                config: {},
-                basedOnPrebuildId: "prebuild123",
-                type: "regular",
-            });
+
+        if (deletionEligibilityTimeDaysAgo !== undefined) {
+            const deletionEligibilityTime = new Date();
+            deletionEligibilityTime.setDate(deletionEligibilityTime.getDate() - deletionEligibilityTimeDaysAgo);
+            await this.db.updatePartial(ws.id, { deletionEligibilityTime: deletionEligibilityTime.toISOString() });
         }
+
+        return { ws, pbws };
     }
 
     @test(timeout(10000))

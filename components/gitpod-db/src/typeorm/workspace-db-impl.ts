@@ -498,7 +498,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                        ws.ownerId AS ownerId
                     FROM d_b_workspace AS ws
                     WHERE ws.deleted = 0
-                        AND ws.type= ?
+                        AND ws.type = ?
                         AND ws.softDeleted IS NULL
                         AND ws.softDeletedTime = ''
                         AND ws.pinned = 0
@@ -554,35 +554,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         );
 
         return dbResults as WorkspaceOwnerAndSoftDeleted[];
-    }
-
-    /**
-     * @deprecated delete me end of June 2024
-     */
-    public async findPrebuiltWorkspacesForGC(daysUnused: number, limit: number): Promise<WorkspaceAndOwner[]> {
-        const workspaceRepo = await this.getWorkspaceRepo();
-        const dbResults = await workspaceRepo.query(
-            `
-                SELECT ws.id AS id,
-                    ws.ownerId AS ownerId
-                FROM d_b_workspace AS ws,
-                    d_b_prebuilt_workspace AS pb
-                LEFT OUTER JOIN d_b_workspace AS usages ON usages.basedOnPrebuildId = pb.id
-                WHERE
-                        pb.buildworkspaceId = ws.id
-                    AND ws.type = 'prebuild'
-                    AND ws.contentDeletedTime = ''
-                    AND ws.deletionEligibilityTime = ''
-                    AND ws.pinned = 0
-                    AND ws.creationTime < NOW() - INTERVAL ? DAY
-                GROUP BY ws.id, ws.ownerId
-                HAVING
-                    max(usages.creationTime) IS NULL or max(usages.creationTime) < NOW() - INTERVAL ? DAY
-                LIMIT ?;
-            `,
-            [daysUnused, daysUnused, limit],
-        );
-        return dbResults as WorkspaceAndOwner[];
     }
 
     private async doJoinInstanceWithWorkspace<T>(
@@ -722,11 +693,22 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
 
     public async findPrebuildByWorkspaceID(wsid: string): Promise<PrebuiltWorkspace | undefined> {
         const repo = await this.getPrebuiltWorkspaceRepo();
-        return await repo.createQueryBuilder("pws").where("pws.buildWorkspaceId = :wsid", { wsid }).getOne();
+        return await repo
+            .createQueryBuilder("pws")
+            .innerJoin(DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id")
+            .where("pws.buildWorkspaceId = :wsid", { wsid })
+            .andWhere("ws.contentDeletedTime = ''")
+            .getOne();
     }
+
     public async findPrebuildByID(pwsid: string): Promise<PrebuiltWorkspace | undefined> {
         const repo = await this.getPrebuiltWorkspaceRepo();
-        return await repo.findOne(pwsid);
+        return await repo
+            .createQueryBuilder("pws")
+            .innerJoin(DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id")
+            .where("pws.id = :pwsid", { pwsid })
+            .andWhere("ws.contentDeletedTime = ''")
+            .getOne();
     }
 
     public async findPrebuildsWithWorkspace(projectId: string): Promise<PrebuildWithWorkspace[]> {
@@ -1063,6 +1045,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .innerJoinAndMapOne("pws.project", DBProject, "project", "pws.projectId = project.id")
             .where("project.markedDeleted = false")
             .andWhere("project.id IS NOT NULL")
+            .andWhere("ws.contentDeletedTime = ''")
             .skip(pagination.offset)
             .take(pagination.limit)
             .orderBy("pws.creationTime", sort.order); // todo: take sort field into account
@@ -1130,7 +1113,8 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .createQueryBuilder("pws")
             .orderBy("pws.creationTime", "DESC")
             .innerJoinAndMapOne("pws.workspace", DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id")
-            .andWhere("pws.id = :id", { id });
+            .andWhere("pws.id = :id", { id })
+            .andWhere("ws.contentDeletedTime = ''");
 
         return query.getOne();
     }

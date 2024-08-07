@@ -65,12 +65,6 @@ export class WorkspaceGarbageCollector implements Job {
             log.error("workspace-gc: error during hard deletion of workspaces", err);
         }
         try {
-            //TODO (se) delete this end of June 2024
-            await this.deleteOldPrebuilds();
-        } catch (err) {
-            log.error("workspace-gc: error during prebuild deletion", err);
-        }
-        try {
             await this.deleteEligiblePrebuilds();
         } catch (err) {
             log.error("workspace-gc: error during eligible prebuild deletion", err);
@@ -218,40 +212,6 @@ export class WorkspaceGarbageCollector implements Job {
             const afterDelete = new Date();
 
             log.info(`workspace-gc: successfully deleted ${workspaces.length} eligible prebuilds`, {
-                selectionTimeMs: afterSelect.getTime() - now.getTime(),
-                deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
-            });
-            span.addTags({ nrOfCollectedPrebuilds: workspaces.length });
-        } catch (err) {
-            TraceContext.setError({ span }, err);
-            throw err;
-        } finally {
-            span.finish();
-        }
-    }
-
-    private async deleteOldPrebuilds() {
-        const span = opentracing.globalTracer().startSpan("deleteOldPrebuilds");
-        try {
-            const now = new Date();
-            const workspaces = await this.workspaceDB
-                .trace({ span })
-                .findPrebuiltWorkspacesForGC(
-                    this.config.workspaceGarbageCollection.minAgePrebuildDays,
-                    this.config.workspaceGarbageCollection.chunkLimit,
-                );
-            const afterSelect = new Date();
-            log.info(`workspace-gc: about to delete ${workspaces.length} prebuilds`);
-            for (const ws of workspaces) {
-                try {
-                    await this.garbageCollectPrebuild({ span }, ws);
-                } catch (err) {
-                    log.error({ workspaceId: ws.id }, "workspace-gc: failed to delete prebuild", err);
-                }
-            }
-            const afterDelete = new Date();
-
-            log.info(`workspace-gc: successfully deleted ${workspaces.length} prebuilds`, {
                 selectionTimeMs: afterSelect.getTime() - now.getTime(),
                 deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
             });

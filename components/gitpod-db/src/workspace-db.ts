@@ -112,7 +112,6 @@ export interface WorkspaceDB {
         limit: number,
         now: Date,
     ): Promise<WorkspaceAndOwner[]>;
-    findPrebuiltWorkspacesForGC(daysUnused: number, limit: number): Promise<WorkspaceAndOwner[]>;
     findAllWorkspaces(
         offset: number,
         limit: number,
