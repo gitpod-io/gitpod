@@ -27,6 +27,7 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onSaved, onClos
         clientId: clientConfig?.oauth2Config?.clientId ?? "",
         clientSecret: clientConfig?.oauth2Config?.clientSecret ?? "",
         celExpression: clientConfig?.oauth2Config?.celExpression ?? "",
+        usePKCE: clientConfig?.oauth2Config?.usePkce ?? false,
     });
     const configIsValid = isValid(ssoConfig);
 

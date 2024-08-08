@@ -28,6 +28,7 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete, progressCurrent, p
         clientId: config?.oauth2Config?.clientId ?? "",
         clientSecret: config?.oauth2Config?.clientSecret ?? "",
         celExpression: config?.oauth2Config?.celExpression ?? "",
+        usePKCE: config?.oauth2Config?.usePkce ?? false,
     });
     const configIsValid = isValid(ssoConfig);
 

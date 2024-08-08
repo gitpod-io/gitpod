@@ -60,6 +60,9 @@ type OIDCSpec struct {
 
 	// CelExpression is an optional expression that can be used to determine if the client should be allowed to authenticate.
 	CelExpression string `json:"celExpression"`
+
+	// UsePKCE specifies if the client should use PKCE for the OAuth flow.
+	UsePKCE bool `json:"usePKCE"`
 }
 
 func CreateOIDCClientConfig(ctx context.Context, conn *gorm.DB, cfg OIDCClientConfig) (OIDCClientConfig, error) {
@@ -352,6 +355,7 @@ func partialUpdateOIDCSpec(old, new OIDCSpec) OIDCSpec {
 	}
 
 	old.CelExpression = new.CelExpression
+	old.UsePKCE = new.UsePKCE
 
 	if !oidcScopesEqual(old.Scopes, new.Scopes) {
 		old.Scopes = new.Scopes

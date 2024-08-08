@@ -121,6 +121,9 @@ message OAuth2Config {
   // CEL expression to verify a profile.
   // Optional.
   string cel_expression = 9;
+
+  // Use PKCE for the OAuth2 flow.
+  bool use_pkce = 10;
 }
 
 // Description of keys of a userinfo result.

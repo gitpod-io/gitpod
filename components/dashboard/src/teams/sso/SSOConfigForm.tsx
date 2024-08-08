@@ -14,6 +14,7 @@ import isURL from "validator/lib/isURL";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { useUpsertOIDCClientMutation } from "../../data/oidc-clients/upsert-oidc-client-mutation";
 import { Subheading } from "../../components/typography/headings";
+import { CheckboxInputField } from "../../components/forms/CheckboxInputField";
 
 type Props = {
     config: SSOConfig;
@@ -72,6 +73,13 @@ export const SSOConfigForm: FC<Props> = ({ config, readOnly = false, onChange })
                 onChange={(val) => onChange({ clientSecret: val })}
             />
 
+            <CheckboxInputField
+                label="Use PKCE"
+                checked={config.usePKCE}
+                disabled={readOnly}
+                onChange={(val) => onChange({ usePKCE: val })}
+            />
+
             <Subheading className="mt-8">
                 <strong>3.</strong> Restrict available accounts in your Identity Providers.
                 <a
@@ -103,6 +111,7 @@ export type SSOConfig = {
     clientId: string;
     clientSecret: string;
     celExpression?: string;
+    usePKCE: boolean;
 };
 
 export const ssoConfigReducer = (state: SSOConfig, action: Partial<SSOConfig>) => {
@@ -155,6 +164,7 @@ export const useSaveSSOConfig = () => {
                               clientId: trimmedClientId,
                               clientSecret: trimmedClientSecret,
                               celExpression: trimmedCelExpression,
+                              usePkce: ssoConfig.usePKCE,
                           },
                           oidcConfig: {
                               issuer: trimmedIssuer,
@@ -168,6 +178,7 @@ export const useSaveSSOConfig = () => {
                               // TODO: determine how we should handle when user doesn't change their secret
                               clientSecret: trimmedClientSecret.toLowerCase() === "redacted" ? "" : trimmedClientSecret,
                               celExpression: trimmedCelExpression,
+                              usePkce: ssoConfig.usePKCE,
                           },
                           oidcConfig: {
                               issuer: trimmedIssuer,
