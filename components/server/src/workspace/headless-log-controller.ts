@@ -12,7 +12,6 @@ import {
     TeamMemberInfo,
     User,
     Workspace,
-    WorkspaceImageBuild,
     WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -183,20 +182,14 @@ export class HeadlessLogController {
                         res,
                         "image-build",
                     );
-                    const client = {
-                        onWorkspaceImageBuildLogs: async (
-                            _info: WorkspaceImageBuild.StateInfo,
-                            content?: WorkspaceImageBuild.LogContent,
-                        ) => {
-                            if (!content) return;
-
-                            await writeToResponse(content.data);
-                        },
-                    };
 
                     try {
                         await runWithSubSignal(abortController, async () => {
-                            await this.workspaceService.watchWorkspaceImageBuildLogs(user.id, workspaceId, client);
+                            await this.workspaceService.watchWorkspaceImageBuildLogs(
+                                user.id,
+                                workspaceId,
+                                writeToResponse,
+                            );
                         });
 
                         // Wait until we finished writing all chunks in our queue

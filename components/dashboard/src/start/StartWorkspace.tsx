@@ -791,10 +791,11 @@ function ImageBuildView(props: ImageBuildViewProps) {
                 info: WorkspaceImageBuild.StateInfo,
                 content?: WorkspaceImageBuild.LogContent,
             ) => {
-                if (!content) {
+                if (!content?.data) {
                     return;
                 }
-                logsEmitter.emit("logs", content.data);
+                const chunk = new Uint8Array(content.data);
+                logsEmitter.emit("logs", chunk);
             },
         });
 

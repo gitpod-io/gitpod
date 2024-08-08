@@ -10,7 +10,6 @@ import { RedisPublisher, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
     GetWorkspaceTimeoutResult,
-    GitpodClient,
     GitpodServer,
     HeadlessLogUrls,
     PortProtocol,
@@ -1116,7 +1115,7 @@ export class WorkspaceService {
     public async watchWorkspaceImageBuildLogs(
         userId: string,
         workspaceId: string,
-        client: Pick<GitpodClient, "onWorkspaceImageBuildLogs">,
+        receiver: (chunk: Uint8Array) => Promise<void>,
     ): Promise<void> {
         // check access
         await this.getWorkspace(userId, workspaceId);
@@ -1168,9 +1167,7 @@ export class WorkspaceService {
 
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                    client.onWorkspaceImageBuildLogs(undefined as any, {
-                        data: chunk,
-                    });
+                    await receiver(chunk);
                 } catch (err) {
                     log.error("error while streaming imagebuild logs", err);
                     aborted.resolve(true);

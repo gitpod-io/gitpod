@@ -12,7 +12,6 @@ import {
     Project,
     User,
     WorkspaceConfig,
-    WorkspaceImageBuild,
     WorkspaceInstancePort,
 } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
@@ -489,24 +488,19 @@ describe("WorkspaceService", async () => {
     it("should watchWorkspaceImageBuildLogs", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
-        const client = {
-            onWorkspaceImageBuildLogs: (
-                info: WorkspaceImageBuild.StateInfo,
-                content: WorkspaceImageBuild.LogContent | undefined,
-            ) => {},
-        };
+        const receiver = async (chunk: Uint8Array) => {};
 
-        await svc.watchWorkspaceImageBuildLogs(owner.id, ws.id, client); // returns without error in case of non-running workspace
+        await svc.watchWorkspaceImageBuildLogs(owner.id, ws.id, receiver); // returns without error in case of non-running workspace
 
         await expectError(
             ErrorCodes.PERMISSION_DENIED,
-            svc.watchWorkspaceImageBuildLogs(member.id, ws.id, client),
+            svc.watchWorkspaceImageBuildLogs(member.id, ws.id, receiver),
             "should fail for member on not-shared workspace",
         );
 
         await expectError(
             ErrorCodes.NOT_FOUND,
-            svc.watchWorkspaceImageBuildLogs(stranger.id, ws.id, client),
+            svc.watchWorkspaceImageBuildLogs(stranger.id, ws.id, receiver),
             "should fail for stranger on not-shared workspace",
         );
     });
@@ -514,18 +508,13 @@ describe("WorkspaceService", async () => {
     it("should watchWorkspaceImageBuildLogs - shared", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
-        const client = {
-            onWorkspaceImageBuildLogs: (
-                info: WorkspaceImageBuild.StateInfo,
-                content: WorkspaceImageBuild.LogContent | undefined,
-            ) => {},
-        };
+        const receiver = async (chunk: Uint8Array) => {};
 
         await svc.controlAdmission(owner.id, ws.id, "everyone");
 
-        await svc.watchWorkspaceImageBuildLogs(owner.id, ws.id, client); // returns without error in case of non-running workspace
-        await svc.watchWorkspaceImageBuildLogs(member.id, ws.id, client);
-        await svc.watchWorkspaceImageBuildLogs(stranger.id, ws.id, client);
+        await svc.watchWorkspaceImageBuildLogs(owner.id, ws.id, receiver); // returns without error in case of non-running workspace
+        await svc.watchWorkspaceImageBuildLogs(member.id, ws.id, receiver);
+        await svc.watchWorkspaceImageBuildLogs(stranger.id, ws.id, receiver);
     });
 
     it("should sendHeartBeat", async () => {
