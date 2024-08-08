@@ -132,7 +132,7 @@ function StartError(props: { error: StartWorkspaceError }) {
 }
 
 function WarningView(props: { workspaceId?: string; showLatestIdeWarning?: boolean; error?: StartWorkspaceError }) {
-    const { data: imageInfo } = useWorkspaceDefaultImageQuery(props.workspaceId ?? "");
+    const { data: imageInfo } = useWorkspaceDefaultImageQuery(props.workspaceId);
     let useWarning: "latestIde" | "orgImage" | undefined = props.showLatestIdeWarning ? "latestIde" : undefined;
     if (
         props.error &&
