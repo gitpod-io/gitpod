@@ -1166,7 +1166,6 @@ export class WorkspaceService {
                 }
 
                 try {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     await receiver(chunk);
                 } catch (err) {
                     log.error("error while streaming imagebuild logs", err);
