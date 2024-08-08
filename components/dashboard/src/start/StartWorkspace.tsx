@@ -322,8 +322,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         this.setState({ ideOptions });
     }
 
-    private async onWorkspaceUpdate(workspace: Workspace) {
-        if (!workspace.status?.instanceId) {
+    private async onWorkspaceUpdate(workspace?: Workspace) {
+        if (!workspace?.status?.instanceId || !workspace.id) {
             return;
         }
         // Here we filter out updates to instances we haven't started to avoid issues with updates coming in out-of-order
@@ -791,10 +791,11 @@ function ImageBuildView(props: ImageBuildViewProps) {
                 info: WorkspaceImageBuild.StateInfo,
                 content?: WorkspaceImageBuild.LogContent,
             ) => {
-                if (!content) {
+                if (!content?.data) {
                     return;
                 }
-                logsEmitter.emit("logs", content.data);
+                const chunk = new Uint8Array(content.data);
+                logsEmitter.emit("logs", chunk);
             },
         });
 

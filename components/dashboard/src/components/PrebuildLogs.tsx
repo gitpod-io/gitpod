@@ -100,10 +100,11 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                         info: WorkspaceImageBuild.StateInfo,
                         content?: WorkspaceImageBuild.LogContent,
                     ) => {
-                        if (!content) {
+                        if (!content?.data) {
                             return;
                         }
-                        logsEmitter.emit("logs", content.data);
+                        const uintArray = new Uint8Array(content.data);
+                        logsEmitter.emit("logs", uintArray);
                     },
                 }),
             );

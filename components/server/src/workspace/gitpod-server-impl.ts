@@ -100,6 +100,7 @@ import {
     ProjectEnvVar,
     UserEnvVar,
     UserFeatureSettings,
+    WorkspaceImageBuild,
     WorkspaceTimeoutSetting,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
@@ -1096,7 +1097,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
         await this.guardAccess({ kind: "workspaceLog", subject: workspace, teamMembers }, "get");
 
-        await this.workspaceService.watchWorkspaceImageBuildLogs(user.id, workspaceId, client);
+        const receiver = async (chunk: Uint8Array) => {
+            client.onWorkspaceImageBuildLogs(undefined as any as WorkspaceImageBuild.StateInfo, {
+                data: Array.from(chunk), // json-rpc can't handle objects, so we convert back-and-forth here
+            });
+        };
+        await this.workspaceService.watchWorkspaceImageBuildLogs(user.id, workspaceId, receiver);
     }
 
     async getHeadlessLog(ctx: TraceContext, instanceId: string): Promise<HeadlessLogUrls> {

@@ -974,7 +974,7 @@ export namespace WorkspaceImageBuild {
         maxSteps?: number;
     }
     export interface LogContent {
-        data: Uint8Array;
+        data: number[]; // encode with "Array.from(UInt8Array)"", decode with "new UInt8Array(data)"
     }
     export type LogCallback = (info: StateInfo, content: LogContent | undefined) => void;
     export namespace LogLine {
