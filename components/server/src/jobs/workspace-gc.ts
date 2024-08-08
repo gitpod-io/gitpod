@@ -22,9 +22,15 @@ import { SYSTEM_USER_ID } from "../authorization/authorizer";
 import { StorageClient } from "../storage/storage-client";
 
 /**
- * The WorkspaceGarbageCollector has two tasks:
- *  - mark old, unused workspaces as 'softDeleted = "gc"' after a certain period (initially: 21)
- *  - actually delete softDeleted workspaces if they are older than a configured time (initially: 7)
+ * The WorkspaceGarbageCollector is responsible for moving workspaces (also affecting Prebuilds) through the following state machine:
+ *  - every action (create, start, stop, use as prebuild) updates the workspace.deletionEligibilityTime, which is set to some date into the future
+ *  - the GC has multiple sub-tasks to:
+ *    - find _regular_ workspaces "to delete" (with deletionEligibilityTime < now) -> move to "softDeleted"
+ *    - find _any_ workspace "softDeleted" for long enough -> move to "contentDeleted"
+ *    - find _any_ workspace "contentDeleted" for long enough -> move to "purged"
+ *  - prebuilds are special in that:
+ *    - the GC has a dedicated sub-task to move workspace of type "prebuid" from "to delete" (with a different threshold) -> to "contentDeleted" directly
+ *    - the "purging" takes care of all Prebuild-related sub-resources, too
  */
 @injectable()
 export class WorkspaceGarbageCollector implements Job {
@@ -49,31 +55,33 @@ export class WorkspaceGarbageCollector implements Job {
             return;
         }
 
+        // Move eligible "regular" workspace -> softDeleted
         try {
             await this.softDeleteEligibleWorkspaces();
         } catch (error) {
             log.error("workspace-gc: error during eligible workspace deletion", error);
         }
+
+        // Move softDeleted workspaces -> contentDeleted
         try {
             await this.deleteWorkspaceContentAfterRetentionPeriod();
         } catch (error) {
             log.error("workspace-gc: error during content deletion", error);
         }
-        try {
-            await this.purgeWorkspacesAfterPurgeRetentionPeriod();
-        } catch (err) {
-            log.error("workspace-gc: error during hard deletion of workspaces", err);
-        }
-        try {
-            //TODO (se) delete this end of June 2024
-            await this.deleteOldPrebuilds();
-        } catch (err) {
-            log.error("workspace-gc: error during prebuild deletion", err);
-        }
+
+        // Move eligible "prebuild" workspaces -> contentDeleted (jumping over softDeleted)
+        // At this point, Prebuilds are no longer visible nor usable.
         try {
             await this.deleteEligiblePrebuilds();
         } catch (err) {
             log.error("workspace-gc: error during eligible prebuild deletion", err);
+        }
+
+        // Move contentDeleted workspaces -> purged (calling workspaceService.hardDeleteWorkspace)
+        try {
+            await this.purgeWorkspacesAfterPurgeRetentionPeriod();
+        } catch (err) {
+            log.error("workspace-gc: error during hard deletion of workspaces", err);
         }
 
         return undefined;
@@ -218,40 +226,6 @@ export class WorkspaceGarbageCollector implements Job {
             const afterDelete = new Date();
 
             log.info(`workspace-gc: successfully deleted ${workspaces.length} eligible prebuilds`, {
-                selectionTimeMs: afterSelect.getTime() - now.getTime(),
-                deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
-            });
-            span.addTags({ nrOfCollectedPrebuilds: workspaces.length });
-        } catch (err) {
-            TraceContext.setError({ span }, err);
-            throw err;
-        } finally {
-            span.finish();
-        }
-    }
-
-    private async deleteOldPrebuilds() {
-        const span = opentracing.globalTracer().startSpan("deleteOldPrebuilds");
-        try {
-            const now = new Date();
-            const workspaces = await this.workspaceDB
-                .trace({ span })
-                .findPrebuiltWorkspacesForGC(
-                    this.config.workspaceGarbageCollection.minAgePrebuildDays,
-                    this.config.workspaceGarbageCollection.chunkLimit,
-                );
-            const afterSelect = new Date();
-            log.info(`workspace-gc: about to delete ${workspaces.length} prebuilds`);
-            for (const ws of workspaces) {
-                try {
-                    await this.garbageCollectPrebuild({ span }, ws);
-                } catch (err) {
-                    log.error({ workspaceId: ws.id }, "workspace-gc: failed to delete prebuild", err);
-                }
-            }
-            const afterDelete = new Date();
-
-            log.info(`workspace-gc: successfully deleted ${workspaces.length} prebuilds`, {
                 selectionTimeMs: afterSelect.getTime() - now.getTime(),
                 deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
             });
