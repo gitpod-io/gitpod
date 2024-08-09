@@ -35,6 +35,8 @@ import { PlainMessage } from "@bufbuild/protobuf";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { WorkspaceTimeoutDuration } from "@gitpod/gitpod-protocol";
 import { useToast } from "../components/toasts/Toasts";
+import { Link } from "react-router-dom";
+import { useIsOrgOnPaidPlan } from "../data/billing/paid-plan-query";
 
 export default function TeamSettingsPage() {
     useDocumentTitle("Organization Settings - General");
@@ -49,6 +51,7 @@ export default function TeamSettingsPage() {
     const [teamName, setTeamName] = useState(org?.name || "");
     const [updated, setUpdated] = useState(false);
 
+    const { data: isOrgOnPaidPlan } = useIsOrgOnPaidPlan();
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string | undefined>(undefined);
     const [allowTimeoutChangeByMembers, setAllowTimeoutChangeByMembers] = useState<boolean | undefined>(undefined);
     const [workspaceTimeoutSettingError, setWorkspaceTimeoutSettingError] = useState<string | undefined>(undefined);
@@ -247,6 +250,15 @@ export default function TeamSettingsPage() {
 
                     <ConfigurationSettingsField>
                         <Heading3>Workspace timeouts</Heading3>
+                        {isOrgOnPaidPlan === false && (
+                            <Alert type="info" className="my-3">
+                                Setting Workspace timeouts is only available for organizations on a paid plan. Visit{" "}
+                                <Link to={"/billing"} className="gp-link">
+                                    Billing
+                                </Link>{" "}
+                                to upgrade your plan.
+                            </Alert>
+                        )}
                         <form onSubmit={handleUpdateOrganizationTimeoutSettings}>
                             <InputField
                                 label="Default workspace timeout"
@@ -265,7 +277,7 @@ export default function TeamSettingsPage() {
                                     }
                                     placeholder="e.g. 30m"
                                     onChange={setWorkspaceTimeout}
-                                    disabled={updateTeamSettings.isLoading || !isOwner}
+                                    disabled={updateTeamSettings.isLoading || !isOwner || !isOrgOnPaidPlan}
                                 />
                             </InputField>
                             <CheckboxInputField
