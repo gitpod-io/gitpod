@@ -295,8 +295,11 @@ export function CreateWorkspacePage() {
                 await storeAutoStartOptions();
                 await timeout;
                 if (result.workspace?.status?.workspaceUrl) {
+                    window.open("/workspaces", "_blank");
                     window.location.href = result.workspace.status.workspaceUrl;
                 } else if (result.workspace!.id) {
+                    window.open("/workspaces", "_blank");
+                    window.location.href = `${window.location.origin}/start/#${result.workspace!.id}`;
                     history.push(`/start/#${result.workspace!.id}`);
                 }
             } catch (error) {
