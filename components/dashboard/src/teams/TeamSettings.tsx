@@ -5,13 +5,13 @@
  */
 
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import React, { Children, ReactNode, useCallback, useMemo, useState } from "react";
+import React, { Children, FormEvent, ReactNode, useCallback, useMemo, useState } from "react";
 import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { InputWithCopy } from "../components/InputWithCopy";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { InputField } from "../components/forms/InputField";
-import { TextInputField } from "../components/forms/TextInputField";
+import { TextInput, TextInputField } from "../components/forms/TextInputField";
 import { Heading2, Heading3, Subheading } from "../components/typography/headings";
 import { useIsOwner } from "../data/organizations/members-query";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
@@ -20,7 +20,7 @@ import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation"
 import { useUpdateOrgSettingsMutation } from "../data/organizations/update-org-settings-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { ReactComponent as Stack } from "../icons/Stack.svg";
-import { organizationClient } from "../service/public-api";
+import { converter, organizationClient } from "../service/public-api";
 import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
@@ -30,17 +30,29 @@ import { useInstallationDefaultWorkspaceImageQuery } from "../data/installation/
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
 import { useDocumentTitle } from "../hooks/use-document-title";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { PlainMessage } from "@bufbuild/protobuf";
+import { CheckboxInputField } from "../components/forms/CheckboxInputField";
+import { WorkspaceTimeoutDuration } from "@gitpod/gitpod-protocol";
+import { useToast } from "../components/toasts/Toasts";
 
 export default function TeamSettingsPage() {
     useDocumentTitle("Organization Settings - General");
+    const { toast } = useToast();
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
     const isOwner = useIsOwner();
     const invalidateOrgs = useOrganizationsInvalidator();
+
     const [modal, setModal] = useState(false);
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
     const [teamName, setTeamName] = useState(org?.name || "");
     const [updated, setUpdated] = useState(false);
+
+    const [workspaceTimeout, setWorkspaceTimeout] = useState<string | undefined>(undefined);
+    const [allowTimeoutChangeByMembers, setAllowTimeoutChangeByMembers] = useState<boolean | undefined>(undefined);
+    const [workspaceTimeoutSettingError, setWorkspaceTimeoutSettingError] = useState<string | undefined>(undefined);
+
     const updateOrg = useUpdateOrgMutation();
 
     const close = () => setModal(false);
@@ -93,7 +105,7 @@ export default function TeamSettingsPage() {
     const [showImageEditModal, setShowImageEditModal] = useState(false);
 
     const handleUpdateTeamSettings = useCallback(
-        async (newSettings: Partial<OrganizationSettings>, options?: { throwMutateError?: boolean }) => {
+        async (newSettings: Partial<PlainMessage<OrganizationSettings>>, options?: { throwMutateError?: boolean }) => {
             if (!org?.id) {
                 throw new Error("no organization selected");
             }
@@ -105,14 +117,47 @@ export default function TeamSettingsPage() {
                     ...settings,
                     ...newSettings,
                 });
+                setWorkspaceTimeoutSettingError(undefined);
+                toast("Organization settings updated");
             } catch (error) {
                 if (options?.throwMutateError) {
                     throw error;
                 }
+                toast(`Failed to update organization settings: ${error.message}`);
                 console.error(error);
             }
         },
-        [updateTeamSettings, org?.id, isOwner, settings],
+        [updateTeamSettings, org?.id, isOwner, settings, toast],
+    );
+
+    const handleUpdateOrganizationTimeoutSettings = useCallback(
+        (e: FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+            try {
+                if (workspaceTimeout) {
+                    WorkspaceTimeoutDuration.validate(workspaceTimeout);
+                }
+            } catch (error) {
+                setWorkspaceTimeoutSettingError(error.message);
+                return;
+            }
+
+            // Nothing has changed
+            if (workspaceTimeout === undefined && allowTimeoutChangeByMembers === undefined) {
+                return;
+            }
+
+            handleUpdateTeamSettings({
+                timeoutSettings: {
+                    inactivity: workspaceTimeout
+                        ? converter.toDuration(workspaceTimeout)
+                        : settings?.timeoutSettings?.inactivity,
+                    allowChangeByMembers:
+                        allowTimeoutChangeByMembers ?? settings?.timeoutSettings?.allowChangeByMembers,
+                },
+            });
+        },
+        [workspaceTimeout, allowTimeoutChangeByMembers, settings, handleUpdateTeamSettings],
     );
 
     return (
@@ -198,6 +243,54 @@ export default function TeamSettingsPage() {
                             installationDefaultWorkspaceImage={installationDefaultImage}
                             onClick={() => setShowImageEditModal(true)}
                         />
+                    </ConfigurationSettingsField>
+
+                    <ConfigurationSettingsField>
+                        <Heading3>Workspace timeouts</Heading3>
+                        <form onSubmit={handleUpdateOrganizationTimeoutSettings}>
+                            <InputField
+                                label="Default workspace timeout"
+                                error={workspaceTimeoutSettingError}
+                                hint={
+                                    <span>
+                                        Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
+                                        <span className="font-semibold">2h</span>
+                                    </span>
+                                }
+                            >
+                                <TextInput
+                                    value={
+                                        workspaceTimeout ??
+                                        converter.toDurationString(settings?.timeoutSettings?.inactivity)
+                                    }
+                                    placeholder="e.g. 30m"
+                                    onChange={setWorkspaceTimeout}
+                                    disabled={updateTeamSettings.isLoading || !isOwner}
+                                />
+                            </InputField>
+                            <CheckboxInputField
+                                label="Allow members to change workspace timeouts"
+                                hint="Allow users to change the timeout duration for their workspaces as well as setting a default one in their user settings."
+                                checked={
+                                    allowTimeoutChangeByMembers ??
+                                    settings?.timeoutSettings?.allowChangeByMembers ??
+                                    true
+                                }
+                                containerClassName="my-4"
+                                onChange={setAllowTimeoutChangeByMembers}
+                                disabled={updateTeamSettings.isLoading || !isOwner}
+                            />
+                            <LoadingButton
+                                type="submit"
+                                loading={updateTeamSettings.isLoading}
+                                disabled={
+                                    workspaceTimeout ===
+                                        converter.toDurationString(user?.workspaceTimeoutSettings?.inactivity) ?? ""
+                                }
+                            >
+                                Save
+                            </LoadingButton>
+                        </form>
                     </ConfigurationSettingsField>
 
                     {showImageEditModal && (
