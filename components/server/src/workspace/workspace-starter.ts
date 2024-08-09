@@ -1840,7 +1840,7 @@ export class WorkspaceStarter {
         } else if (RefType.getRefType(context) === "tag") {
             targetMode = CloneTargetMode.REMOTE_COMMIT;
             cloneTarget = context.revision;
-        } else if (context.ref) {
+        } else if (RefType.getRefType(context) === "branch" && context.ref) {
             targetMode = CloneTargetMode.REMOTE_BRANCH;
             cloneTarget = context.ref;
         } else if (context.revision) {

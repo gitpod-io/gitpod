@@ -45,6 +45,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
                         const isHash = await this.isValidCommitHash(user, owner, repoName, branchTagOrHash);
                         if (isHash) {
                             more.revision = branchTagOrHash;
+                            more.refType = "revision";
                             if (searchParams.has("at")) {
                                 more.ref = searchParams.get("at")!;
                                 more.refType = "branch";
