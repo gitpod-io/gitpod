@@ -189,23 +189,23 @@ export class WorkspaceService {
             ownerId: workspace.ownerId,
             organizationId: workspace.organizationId,
             projectId: project?.id,
-            projectName: scrubber.scrubValue(project?.name || ""),
+            projectName: scrubValue(project?.name),
             contextURL: workspace.contextURL,
             context: new TrustedValue<Partial<CommitContext & WithPrebuild>>({
-                normalizedContextURL: scrubber.scrubValue(context.normalizedContextURL as string),
+                normalizedContextURL: scrubValue(context.normalizedContextURL),
                 repository: CommitContext.is(context)
                     ? {
-                          cloneUrl: scrubber.scrubValue(context.repository?.cloneUrl as string),
-                          host: scrubber.scrubValue(context.repository?.host as string),
-                          owner: scrubber.scrubValue(context.repository?.owner as string),
-                          name: scrubber.scrubValue(context.repository?.name as string),
-                          private: context.repository?.private,
-                          defaultBranch: scrubber.scrubValue(context.repository?.defaultBranch as string),
+                          cloneUrl: scrubber.scrubValue(context.repository.cloneUrl),
+                          host: scrubber.scrubValue(context.repository.host),
+                          owner: scrubber.scrubValue(context.repository.owner),
+                          name: scrubber.scrubValue(context.repository.name),
+                          private: context.repository.private,
+                          defaultBranch: scrubValue(context.repository.defaultBranch),
                       }
                     : undefined,
-                ref: scrubber.scrubValue(context.ref as string),
+                ref: scrubValue(context.ref),
                 refType: CommitContext.is(context) ? context.refType : undefined,
-                revision: CommitContext.is(context) ? scrubber.scrubValue(context.revision as string) : undefined,
+                revision: CommitContext.is(context) ? scrubValue(context.revision) : undefined,
                 wasPrebuilt: WithPrebuild.is(context) ? context.wasPrebuilt : undefined,
                 forceCreateNewWorkspace: context.forceCreateNewWorkspace,
                 forceImageBuild: context.forceImageBuild,
@@ -456,10 +456,10 @@ export class WorkspaceService {
             });
             log.info(logCtx, "starting prebuild after workspace creation", {
                 projectId: project.id,
-                projectName: scrubber.scrubValue(project.name),
+                projectName: scrubValue(project.name),
                 result: new TrustedValue({
                     prebuildId: new TrustedValue(res.prebuildId),
-                    wsid: scrubber.scrubValue(res.wsid),
+                    wsid: scrubValue(res.wsid),
                     done: res.done,
                 }),
             });
@@ -1418,4 +1418,11 @@ export function mapGrpcError(err: any): Error {
         default:
             return new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, err.details);
     }
+}
+
+function scrubValue(value: string | undefined): string | undefined {
+    if (value === undefined) {
+        return undefined;
+    }
+    return scrubber.scrubValue(value);
 }
