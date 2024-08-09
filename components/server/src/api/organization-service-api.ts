@@ -284,6 +284,19 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             }
         }
 
+        if (
+            typeof req.timeoutSettings?.allowChangeByMembers === "boolean" ||
+            typeof req.timeoutSettings?.inactivity === "object"
+        ) {
+            update.timeoutSettings = {};
+        }
+        if (typeof req.timeoutSettings?.allowChangeByMembers === "boolean") {
+            update.timeoutSettings!.allowChangeByMembers = req.timeoutSettings.allowChangeByMembers;
+        }
+        if (typeof req.timeoutSettings?.inactivity === "object") {
+            update.timeoutSettings!.inactivity = this.apiConverter.toDurationString(req.timeoutSettings.inactivity);
+        }
+
         if (Object.keys(update).length === 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");
         }
