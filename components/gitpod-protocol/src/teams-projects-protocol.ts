@@ -223,7 +223,15 @@ export interface OrganizationSettings {
 
     // what role new members will get, default is "member"
     defaultRole?: OrgMemberRole;
+
+    // the default organization-wide timeout settings for workspaces
+    timeoutSettings?: TimeoutSettings;
 }
+
+export type TimeoutSettings = {
+    inactivity?: string;
+    allowChangeByMembers?: boolean;
+};
 
 export type TeamMemberRole = OrgMemberRole;
 export type OrgMemberRole = "owner" | "member" | "collaborator";

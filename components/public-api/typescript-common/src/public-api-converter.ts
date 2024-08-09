@@ -1046,6 +1046,10 @@ export class PublicAPIConverter {
             pinnedEditorVersions: settings.pinnedEditorVersions || {},
             restrictedEditorNames: settings.restrictedEditorNames || [],
             defaultRole: settings.defaultRole || undefined,
+            timeoutSettings: {
+                inactivity: settings.timeoutSettings?.inactivity ? this.toDuration(settings.timeoutSettings?.inactivity) : undefined,
+                allowChangeByMembers: settings.timeoutSettings?.allowChangeByMembers,
+            }
         });
     }
 
@@ -1393,9 +1397,8 @@ export class PublicAPIConverter {
         const remainingMillisecondsAfterMinutes = remainingMillisecondsAfterHours % 60000;
         const secondsResult = Math.floor(remainingMillisecondsAfterMinutes / 1000);
 
-        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${
-            secondsResult > 0 ? secondsResult + "s" : ""
-        }`;
+        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${secondsResult > 0 ? secondsResult + "s" : ""
+            }`;
     }
 
     toUser(from: UserProtocol): User {

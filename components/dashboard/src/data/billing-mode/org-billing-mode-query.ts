@@ -12,17 +12,17 @@ import { useCurrentOrg } from "../organizations/orgs-query";
 type OrgBillingModeQueryResult = BillingMode;
 
 export const useOrgBillingMode = () => {
-    const team = useCurrentOrg().data;
+    const organization = useCurrentOrg().data;
 
     return useQuery<OrgBillingModeQueryResult>({
-        queryKey: getOrgBillingModeQueryKey(team?.id ?? ""),
+        queryKey: getOrgBillingModeQueryKey(organization?.id ?? ""),
         queryFn: async () => {
-            if (!team) {
+            if (!organization) {
                 throw new Error("No current organization selected");
             }
-            return await getGitpodService().server.getBillingModeForTeam(team.id);
+            return await getGitpodService().server.getBillingModeForTeam(organization.id);
         },
-        enabled: !!team,
+        enabled: !!organization,
     });
 };
 
