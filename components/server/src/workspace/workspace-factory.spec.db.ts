@@ -38,11 +38,8 @@ const expect = chai.expect;
 
 @injectable()
 export class MockIncrementalWorkspaceService extends IncrementalWorkspaceService {
-    public commitHistory: string[];
     public async getCommitHistoryForContext(context: CommitContext, user: User): Promise<WithCommitHistory> {
-        return {
-            commitHistory: this.commitHistory,
-        };
+        throw new Error("Method not implemented.");
     }
 }
 
@@ -62,7 +59,6 @@ export class MockImageSourceProvider extends ImageSourceProvider {
 describe("WorkspaceFactory", async () => {
     let container: Container;
     let db: WorkspaceDB;
-    let mockIncrementalWorkspaceService: MockIncrementalWorkspaceService;
     // let mockImageSourceProvider: MockImageSourceProvider;
 
     let owner: User;
@@ -83,7 +79,6 @@ describe("WorkspaceFactory", async () => {
         } as any as ConfigProvider);
         container.rebind(IncrementalWorkspaceService).to(MockIncrementalWorkspaceService);
         container.rebind(ImageSourceProvider).to(MockImageSourceProvider);
-        mockIncrementalWorkspaceService = container.get(IncrementalWorkspaceService) as MockIncrementalWorkspaceService;
         // mockImageSourceProvider = container.get(ImageSourceProvider) as MockImageSourceProvider;
         Experiments.configureTestingClient({});
         db = container.get(WorkspaceDB);
@@ -154,7 +149,6 @@ describe("WorkspaceFactory", async () => {
         const contextURL = "https://github.com/gitpod-io/gitpod/tree/gpl/test";
 
         // prepare
-        mockIncrementalWorkspaceService.commitHistory = [revision];
 
         // test
         const f = container.get(WorkspaceFactory);
@@ -166,7 +160,7 @@ describe("WorkspaceFactory", async () => {
         expect((ws.context as CommitContext).refType).to.equal("branch");
     });
 
-    it("createForPrebuiltWorkspace_perfectHit", async () => {
+    it("createForPrebuiltWorkspace_perfectHit_withRef_branch", async () => {
         // data
         const revision = "asdf";
         const context = <CommitContext>{
@@ -189,7 +183,6 @@ describe("WorkspaceFactory", async () => {
         };
 
         // prepare prebuild for "perfect hit"
-        mockIncrementalWorkspaceService.commitHistory = [revision];
         const { pbws } = await createPrebuild({
             context,
             contextURL,
@@ -209,6 +202,210 @@ describe("WorkspaceFactory", async () => {
         expect(WithPrebuild.is(ws.context)).to.be.true;
         expect((ws.context as CommitContext).ref).to.equal("gpl/test");
         expect((ws.context as CommitContext).refType).to.equal("branch");
+    });
+
+    it("createForPrebuiltWorkspace_perfectHit_withRef_revision", async () => {
+        // data
+        const revision = "asdf";
+        const context = <CommitContext>{
+            title: "gitpod",
+            repository: {
+                host: "github.com",
+                owner: "gitpod-io",
+                name: "gitpod",
+                cloneUrl: "https://github.com/gitpod-io/gitpod",
+                defaultBranch: "main",
+                private: false,
+            },
+            revision,
+            ref: "gpl/test",
+            refType: "branch",
+        };
+        const contextURL = "https://github.com/gitpod-io/gitpod/tree/gpl/test";
+        const config = <WorkspaceConfig>{
+            image: "gitpod/workspace-full:latest",
+        };
+
+        // prepare prebuild for "perfect hit"
+        const { pbws } = await createPrebuild({
+            context,
+            contextURL,
+            state: "available",
+            config,
+        });
+        const prebuiltContext = <PrebuiltWorkspaceContext>{
+            title: context.title,
+            originalContext: {
+                ...context,
+                ref: undefined,
+                refType: "revision",
+            },
+            prebuiltWorkspace: pbws,
+        };
+
+        const f = container.get(WorkspaceFactory);
+
+        const ws = await f.createForContext({}, owner, org.id, project, prebuiltContext, contextURL);
+        expect(CommitContext.is(ws.context)).to.be.true;
+        expect(WithPrebuild.is(ws.context)).to.be.true;
+        expect(
+            (ws.context as CommitContext).ref,
+            "ref should match the one from the started context, not the Prebuild's",
+        ).to.be.undefined;
+        expect(
+            (ws.context as CommitContext).refType,
+            "refType should match the one from the started context, not the Prebuild's",
+        ).to.equal("revision");
+    });
+
+    it("createForPrebuiltWorkspace_perfectHit_noRef_branch", async () => {
+        // data
+        const revision = "asdf";
+        const context = <CommitContext>{
+            title: "gitpod",
+            repository: {
+                host: "github.com",
+                owner: "gitpod-io",
+                name: "gitpod",
+                cloneUrl: "https://github.com/gitpod-io/gitpod",
+                defaultBranch: "main",
+                private: false,
+            },
+            revision,
+            // NO REF
+            // ref: "gpl/test",
+            refType: "revision",
+        };
+        const contextURL = "https://github.com/gitpod-io/gitpod/tree/gpl/test";
+        const config = <WorkspaceConfig>{
+            image: "gitpod/workspace-full:latest",
+        };
+
+        // prepare prebuild for "perfect hit"
+        const { pbws } = await createPrebuild({
+            context,
+            contextURL,
+            state: "available",
+            config,
+        });
+        const prebuiltContext = <PrebuiltWorkspaceContext>{
+            title: context.title,
+            originalContext: {
+                ...context,
+                ref: "gpl/test",
+                refType: "branch",
+            },
+            prebuiltWorkspace: pbws,
+        };
+
+        const f = container.get(WorkspaceFactory);
+
+        const ws = await f.createForContext({}, owner, org.id, project, prebuiltContext, contextURL);
+        expect(CommitContext.is(ws.context)).to.be.true;
+        expect(WithPrebuild.is(ws.context)).to.be.true;
+        expect(
+            (ws.context as CommitContext).ref,
+            "ref should match the one from the started context, not the Prebuild's",
+        ).to.equal("gpl/test");
+        expect(
+            (ws.context as CommitContext).refType,
+            "refType should match the one from the started context, not the Prebuild's",
+        ).to.equal("branch");
+    });
+
+    it("createForPrebuiltWorkspace_perfectHit_noRef_revision", async () => {
+        // data
+        const revision = "asdf";
+        const context = <CommitContext>{
+            title: "gitpod",
+            repository: {
+                host: "github.com",
+                owner: "gitpod-io",
+                name: "gitpod",
+                cloneUrl: "https://github.com/gitpod-io/gitpod",
+                defaultBranch: "main",
+                private: false,
+            },
+            revision,
+            // NO REF
+            // ref: "gpl/test",
+            refType: "revision",
+        };
+        const contextURL = "https://github.com/gitpod-io/gitpod/tree/gpl/test";
+        const config = <WorkspaceConfig>{
+            image: "gitpod/workspace-full:latest",
+        };
+
+        // prepare prebuild for "perfect hit"
+        const { pbws } = await createPrebuild({
+            context,
+            contextURL,
+            state: "available",
+            config,
+        });
+        const prebuiltContext = <PrebuiltWorkspaceContext>{
+            title: context.title,
+            originalContext: context,
+            prebuiltWorkspace: pbws,
+        };
+
+        const f = container.get(WorkspaceFactory);
+
+        const ws = await f.createForContext({}, owner, org.id, project, prebuiltContext, contextURL);
+        expect(CommitContext.is(ws.context)).to.be.true;
+        expect(WithPrebuild.is(ws.context)).to.be.true;
+        expect((ws.context as CommitContext).ref).to.be.undefined;
+        expect((ws.context as CommitContext).refType).to.equal("revision");
+    });
+
+    it("createForPrebuiltWorkspace_incremental_withRef_sameBranch", async () => {
+        // data
+        const prebuildRevision = "asdf";
+        const workspaceRevision = "qwer";
+        const context = <CommitContext>{
+            title: "gitpod",
+            repository: {
+                host: "github.com",
+                owner: "gitpod-io",
+                name: "gitpod",
+                cloneUrl: "https://github.com/gitpod-io/gitpod",
+                defaultBranch: "main",
+                private: false,
+            },
+            revision: prebuildRevision,
+            ref: "gpl/test",
+            refType: "branch",
+        };
+        const contextURL = "https://github.com/gitpod-io/gitpod/tree/gpl/test";
+        const config = <WorkspaceConfig>{
+            image: "gitpod/workspace-full:latest",
+        };
+
+        // prepare prebuild for "perfect hit"
+        const { pbws } = await createPrebuild({
+            context,
+            contextURL,
+            state: "available",
+            config,
+        });
+        const originalContext: CommitContext = {
+            ...context,
+            revision: workspaceRevision,
+        };
+        const prebuiltContext = <PrebuiltWorkspaceContext>{
+            title: context.title,
+            originalContext,
+            prebuiltWorkspace: pbws,
+        };
+
+        const f = container.get(WorkspaceFactory);
+
+        const ws = await f.createForContext({}, owner, org.id, project, prebuiltContext, contextURL);
+        expect(CommitContext.is(ws.context)).to.be.true;
+        expect(WithPrebuild.is(ws.context)).to.be.true;
+        expect((ws.context as CommitContext).ref).to.equal("gpl/test");
+        expect((ws.context as CommitContext).refType).to.equal("branch");
+        expect((ws.context as CommitContext).revision).to.equal(workspaceRevision);
     });
 
     const createPrebuild = async (
