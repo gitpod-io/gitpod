@@ -18,7 +18,6 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PrebuiltWorkspaceState, WithCommitHistory } from "@gitpod/gitpod-protocol/lib/protocol";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
-import { ConfigProvider } from "../workspace/config-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ImageSourceProvider } from "../workspace/image-source-provider";
 
@@ -27,7 +26,6 @@ const MAX_HISTORY_DEPTH = 100;
 @injectable()
 export class IncrementalWorkspaceService {
     @inject(Config) protected readonly config: Config;
-    @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(ImageSourceProvider) protected readonly imageSourceProvider: ImageSourceProvider;
     @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
