@@ -75,6 +75,7 @@ import { InstallationService } from "../auth/installation-service";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { WatchWorkspaceStatusResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { ContextParser } from "./context-parser-service";
+import { scrubber, TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 export const GIT_STATUS_LENGTH_CAP_BYTES = 4096;
 
@@ -183,6 +184,34 @@ export class WorkspaceService {
             context,
             normalizedContextURL,
         );
+        log.info({ userId: user.id, workspaceId: workspace.id }, "workspace created", {
+            type: workspace.type,
+            ownerId: workspace.ownerId,
+            organizationId: workspace.organizationId,
+            projectId: project?.id,
+            projectName: scrubValue(project?.name),
+            contextURL: workspace.contextURL,
+            context: new TrustedValue<Partial<CommitContext & WithPrebuild>>({
+                normalizedContextURL: scrubValue(context.normalizedContextURL),
+                repository: CommitContext.is(context)
+                    ? {
+                          cloneUrl: scrubber.scrubValue(context.repository.cloneUrl),
+                          host: scrubber.scrubValue(context.repository.host),
+                          owner: scrubber.scrubValue(context.repository.owner),
+                          name: scrubber.scrubValue(context.repository.name),
+                          private: context.repository.private,
+                          defaultBranch: scrubValue(context.repository.defaultBranch),
+                      }
+                    : undefined,
+                ref: scrubValue(context.ref),
+                refType: CommitContext.is(context) ? context.refType : undefined,
+                revision: CommitContext.is(context) ? scrubValue(context.revision) : undefined,
+                wasPrebuilt: WithPrebuild.is(context) ? context.wasPrebuilt : undefined,
+                forceCreateNewWorkspace: context.forceCreateNewWorkspace,
+                forceImageBuild: context.forceImageBuild,
+                snapshotBucketId: WithPrebuild.is(context) ? scrubber.scrubValue(context.snapshotBucketId) : undefined,
+            }),
+        });
 
         // Instead, we fall back to removing access in case something goes wrong.
         try {
@@ -195,7 +224,7 @@ export class WorkspaceService {
         }
         this.asyncUpdateDeletionEligabilityTime(user.id, workspace.id);
         this.asyncUpdateDeletionEligabilityTimeForUsedPrebuild(user.id, workspace);
-        if (project) {
+        if (project && workspace.type === "regular") {
             this.asyncStartPrebuild({ ctx, project, workspace, user });
         }
         return workspace;
@@ -403,15 +432,10 @@ export class WorkspaceService {
         user: User;
     }): void {
         (async () => {
+            const logCtx = { userId: user.id, workspaceId: workspace.id };
             const prebuildManager = this.prebuildManager();
 
             const context = (await this.contextParser.handle(ctx, user, workspace.contextURL)) as CommitContext;
-            log.info({ workspaceId: workspace.id }, "starting prebuild after workspace creation", {
-                projectId: project.id,
-                projectName: project.name,
-                contextURL: workspace.contextURL,
-                context,
-            });
             const config = await prebuildManager.fetchConfig(ctx, user, context, project?.teamId);
             const prebuildPrecondition = prebuildManager.checkPrebuildPrecondition({
                 config,
@@ -419,16 +443,25 @@ export class WorkspaceService {
                 context,
             });
             if (!prebuildPrecondition.shouldRun) {
-                log.info("Workspace create event: No prebuild.", { config, context });
+                log.info(logCtx, "Workspace create event: No prebuild.", { config, context });
                 return;
             }
 
-            await prebuildManager.startPrebuild(ctx, {
+            const res = await prebuildManager.startPrebuild(ctx, {
                 user,
                 project,
                 forcePrebuild: false,
                 context,
                 trigger: "lastWorkspaceStart",
+            });
+            log.info(logCtx, "starting prebuild after workspace creation", {
+                projectId: project.id,
+                projectName: scrubValue(project.name),
+                result: new TrustedValue({
+                    prebuildId: new TrustedValue(res.prebuildId),
+                    wsid: scrubValue(res.wsid),
+                    done: res.done,
+                }),
             });
         })().catch((err) =>
             log.error(
@@ -1385,4 +1418,11 @@ export function mapGrpcError(err: any): Error {
         default:
             return new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, err.details);
     }
+}
+
+function scrubValue(value: string | undefined): string | undefined {
+    if (value === undefined) {
+        return undefined;
+    }
+    return scrubber.scrubValue(value);
 }
