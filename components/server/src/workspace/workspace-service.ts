@@ -936,7 +936,7 @@ export class WorkspaceService {
         if (!!orgSettings.timeoutSettings?.denyUserTimeouts) {
             throw new ApplicationError(
                 ErrorCodes.PRECONDITION_FAILED,
-                "User Timeouts are disabled by organization settings",
+                "User timeouts are disabled by organization settings",
             );
         }
 
