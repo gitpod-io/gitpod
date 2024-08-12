@@ -59,11 +59,9 @@ export class MockImageSourceProvider extends ImageSourceProvider {
 describe("WorkspaceFactory", async () => {
     let container: Container;
     let db: WorkspaceDB;
-    // let mockImageSourceProvider: MockImageSourceProvider;
 
     let owner: User;
     let member: User;
-    // let stranger: User;
     let org: Organization;
     let project: Project;
 
@@ -79,7 +77,6 @@ describe("WorkspaceFactory", async () => {
         } as any as ConfigProvider);
         container.rebind(IncrementalWorkspaceService).to(MockIncrementalWorkspaceService);
         container.rebind(ImageSourceProvider).to(MockImageSourceProvider);
-        // mockImageSourceProvider = container.get(ImageSourceProvider) as MockImageSourceProvider;
         Experiments.configureTestingClient({});
         db = container.get(WorkspaceDB);
         const userService = container.get(UserService);
