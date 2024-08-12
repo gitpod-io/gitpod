@@ -36,7 +36,7 @@ import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { WorkspaceTimeoutDuration } from "@gitpod/gitpod-protocol";
 import { useToast } from "../components/toasts/Toasts";
 import { Link } from "react-router-dom";
-import { useIsOrgOnPaidPlan } from "../data/billing/paid-plan-query";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 
 export default function TeamSettingsPage() {
     useDocumentTitle("Organization Settings - General");
@@ -51,7 +51,7 @@ export default function TeamSettingsPage() {
     const [teamName, setTeamName] = useState(org?.name || "");
     const [updated, setUpdated] = useState(false);
 
-    const { data: isOrgOnPaidPlan } = useIsOrgOnPaidPlan();
+    const billingMode = useOrgBillingMode();
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string | undefined>(undefined);
     const [allowTimeoutChangeByMembers, setAllowTimeoutChangeByMembers] = useState<boolean | undefined>(undefined);
     const [workspaceTimeoutSettingError, setWorkspaceTimeoutSettingError] = useState<string | undefined>(undefined);
@@ -169,6 +169,9 @@ export default function TeamSettingsPage() {
         [workspaceTimeout, allowTimeoutChangeByMembers, handleUpdateTeamSettings],
     );
 
+    const billingModeAllowsWorkspaceTimeouts =
+        billingMode.data?.mode === "none" || (billingMode.data?.mode === "usage-based" && billingMode.data?.paid);
+
     return (
         <>
             <OrgSettingsPage>
@@ -256,7 +259,7 @@ export default function TeamSettingsPage() {
 
                     <ConfigurationSettingsField>
                         <Heading3>Workspace timeouts</Heading3>
-                        {isOrgOnPaidPlan === false && (
+                        {!billingModeAllowsWorkspaceTimeouts && (
                             <Alert type="info" className="my-3">
                                 Setting Workspace timeouts is only available for organizations on a paid plan. Visit{" "}
                                 <Link to={"/billing"} className="gp-link">
@@ -280,7 +283,9 @@ export default function TeamSettingsPage() {
                                     value={workspaceTimeout ?? ""}
                                     placeholder="e.g. 30m"
                                     onChange={setWorkspaceTimeout}
-                                    disabled={updateTeamSettings.isLoading || !isOwner || !isOrgOnPaidPlan}
+                                    disabled={
+                                        updateTeamSettings.isLoading || !isOwner || !billingModeAllowsWorkspaceTimeouts
+                                    }
                                 />
                             </InputField>
                             <CheckboxInputField
@@ -289,7 +294,9 @@ export default function TeamSettingsPage() {
                                 checked={!!allowTimeoutChangeByMembers}
                                 containerClassName="my-4"
                                 onChange={setAllowTimeoutChangeByMembers}
-                                disabled={updateTeamSettings.isLoading || !isOwner}
+                                disabled={
+                                    updateTeamSettings.isLoading || !isOwner || !billingModeAllowsWorkspaceTimeouts
+                                }
                             />
                             <LoadingButton
                                 type="submit"
