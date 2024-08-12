@@ -1565,10 +1565,7 @@ export class WorkspaceStarter {
                 }
 
                 // Users can optionally override the organization-wide timeout default if the organization allows it
-                if (
-                    organizationSettings.timeoutSettings?.allowChangeByMembers === true &&
-                    user.additionalData?.workspaceTimeout
-                ) {
+                if (!organizationSettings.timeoutSettings?.denyUserTimeouts && user.additionalData?.workspaceTimeout) {
                     try {
                         const timeout = WorkspaceTimeoutDuration.validate(user.additionalData?.workspaceTimeout);
                         spec.setTimeout(timeout);

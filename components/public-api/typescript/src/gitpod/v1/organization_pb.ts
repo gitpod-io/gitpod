@@ -433,11 +433,11 @@ export class TimeoutSettings extends Message<TimeoutSettings> {
   inactivity?: Duration;
 
   /**
-   * allow_change_by_members specifies whether organization members are allowed to change the inactivity timeout in their user settings
+   * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
    *
-   * @generated from field: optional bool allow_change_by_members = 2;
+   * @generated from field: optional bool deny_user_timeouts = 2;
    */
-  allowChangeByMembers?: boolean;
+  denyUserTimeouts?: boolean;
 
   constructor(data?: PartialMessage<TimeoutSettings>) {
     super();
@@ -448,7 +448,7 @@ export class TimeoutSettings extends Message<TimeoutSettings> {
   static readonly typeName = "gitpod.v1.TimeoutSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "inactivity", kind: "message", T: Duration, opt: true },
-    { no: 2, name: "allow_change_by_members", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 2, name: "deny_user_timeouts", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TimeoutSettings {

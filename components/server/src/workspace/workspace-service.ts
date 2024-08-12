@@ -933,10 +933,10 @@ export class WorkspaceService {
         }
 
         const orgSettings = await this.orgService.getSettings(userId, workspace.organizationId);
-        if (!orgSettings.timeoutSettings?.allowChangeByMembers) {
+        if (!!orgSettings.timeoutSettings?.denyUserTimeouts) {
             throw new ApplicationError(
                 ErrorCodes.PRECONDITION_FAILED,
-                "Timeout change is disabled by organization settings",
+                "User Timeouts are disabled by organization settings",
             );
         }
 

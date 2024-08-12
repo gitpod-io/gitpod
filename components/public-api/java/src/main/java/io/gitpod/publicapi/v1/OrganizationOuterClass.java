@@ -7335,22 +7335,22 @@ java.lang.String defaultValue) {
 
     /**
      * <pre>
-     * allow_change_by_members specifies whether organization members are allowed to change the inactivity timeout in their user settings
+     * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
      * </pre>
      *
-     * <code>optional bool allow_change_by_members = 2 [json_name = "allowChangeByMembers"];</code>
-     * @return Whether the allowChangeByMembers field is set.
+     * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+     * @return Whether the denyUserTimeouts field is set.
      */
-    boolean hasAllowChangeByMembers();
+    boolean hasDenyUserTimeouts();
     /**
      * <pre>
-     * allow_change_by_members specifies whether organization members are allowed to change the inactivity timeout in their user settings
+     * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
      * </pre>
      *
-     * <code>optional bool allow_change_by_members = 2 [json_name = "allowChangeByMembers"];</code>
-     * @return The allowChangeByMembers.
+     * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+     * @return The denyUserTimeouts.
      */
-    boolean getAllowChangeByMembers();
+    boolean getDenyUserTimeouts();
   }
   /**
    * Protobuf type {@code gitpod.v1.TimeoutSettings}
@@ -7428,31 +7428,31 @@ java.lang.String defaultValue) {
       return inactivity_ == null ? com.google.protobuf.Duration.getDefaultInstance() : inactivity_;
     }
 
-    public static final int ALLOW_CHANGE_BY_MEMBERS_FIELD_NUMBER = 2;
-    private boolean allowChangeByMembers_ = false;
+    public static final int DENY_USER_TIMEOUTS_FIELD_NUMBER = 2;
+    private boolean denyUserTimeouts_ = false;
     /**
      * <pre>
-     * allow_change_by_members specifies whether organization members are allowed to change the inactivity timeout in their user settings
+     * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
      * </pre>
      *
-     * <code>optional bool allow_change_by_members = 2 [json_name = "allowChangeByMembers"];</code>
-     * @return Whether the allowChangeByMembers field is set.
+     * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+     * @return Whether the denyUserTimeouts field is set.
      */
     @java.lang.Override
-    public boolean hasAllowChangeByMembers() {
+    public boolean hasDenyUserTimeouts() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <pre>
-     * allow_change_by_members specifies whether organization members are allowed to change the inactivity timeout in their user settings
+     * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
      * </pre>
      *
-     * <code>optional bool allow_change_by_members = 2 [json_name = "allowChangeByMembers"];</code>
-     * @return The allowChangeByMembers.
+     * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+     * @return The denyUserTimeouts.
      */
     @java.lang.Override
-    public boolean getAllowChangeByMembers() {
-      return allowChangeByMembers_;
+    public boolean getDenyUserTimeouts() {
+      return denyUserTimeouts_;
     }
 
     private byte memoizedIsInitialized = -1;
@@ -7473,7 +7473,7 @@ java.lang.String defaultValue) {
         output.writeMessage(1, getInactivity());
       }
       if (((bitField0_ & 0x00000002) != 0)) {
-        output.writeBool(2, allowChangeByMembers_);
+        output.writeBool(2, denyUserTimeouts_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -7490,7 +7490,7 @@ java.lang.String defaultValue) {
       }
       if (((bitField0_ & 0x00000002) != 0)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(2, allowChangeByMembers_);
+          .computeBoolSize(2, denyUserTimeouts_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -7512,10 +7512,10 @@ java.lang.String defaultValue) {
         if (!getInactivity()
             .equals(other.getInactivity())) return false;
       }
-      if (hasAllowChangeByMembers() != other.hasAllowChangeByMembers()) return false;
-      if (hasAllowChangeByMembers()) {
-        if (getAllowChangeByMembers()
-            != other.getAllowChangeByMembers()) return false;
+      if (hasDenyUserTimeouts() != other.hasDenyUserTimeouts()) return false;
+      if (hasDenyUserTimeouts()) {
+        if (getDenyUserTimeouts()
+            != other.getDenyUserTimeouts()) return false;
       }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
@@ -7532,10 +7532,10 @@ java.lang.String defaultValue) {
         hash = (37 * hash) + INACTIVITY_FIELD_NUMBER;
         hash = (53 * hash) + getInactivity().hashCode();
       }
-      if (hasAllowChangeByMembers()) {
-        hash = (37 * hash) + ALLOW_CHANGE_BY_MEMBERS_FIELD_NUMBER;
+      if (hasDenyUserTimeouts()) {
+        hash = (37 * hash) + DENY_USER_TIMEOUTS_FIELD_NUMBER;
         hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-            getAllowChangeByMembers());
+            getDenyUserTimeouts());
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -7679,7 +7679,7 @@ java.lang.String defaultValue) {
           inactivityBuilder_.dispose();
           inactivityBuilder_ = null;
         }
-        allowChangeByMembers_ = false;
+        denyUserTimeouts_ = false;
         return this;
       }
 
@@ -7721,7 +7721,7 @@ java.lang.String defaultValue) {
           to_bitField0_ |= 0x00000001;
         }
         if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.allowChangeByMembers_ = allowChangeByMembers_;
+          result.denyUserTimeouts_ = denyUserTimeouts_;
           to_bitField0_ |= 0x00000002;
         }
         result.bitField0_ |= to_bitField0_;
@@ -7742,8 +7742,8 @@ java.lang.String defaultValue) {
         if (other.hasInactivity()) {
           mergeInactivity(other.getInactivity());
         }
-        if (other.hasAllowChangeByMembers()) {
-          setAllowChangeByMembers(other.getAllowChangeByMembers());
+        if (other.hasDenyUserTimeouts()) {
+          setDenyUserTimeouts(other.getDenyUserTimeouts());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -7779,7 +7779,7 @@ java.lang.String defaultValue) {
                 break;
               } // case 10
               case 16: {
-                allowChangeByMembers_ = input.readBool();
+                denyUserTimeouts_ = input.readBool();
                 bitField0_ |= 0x00000002;
                 break;
               } // case 16
@@ -7957,58 +7957,58 @@ java.lang.String defaultValue) {
         return inactivityBuilder_;
       }
 
-      private boolean allowChangeByMembers_ ;
+      private boolean denyUserTimeouts_ ;
       /**
        * <pre>
-       * allow_change_by_members specifies whether organization members are allowed to change the inactivity timeout in their user settings
+       * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
        * </pre>
        *
-       * <code>optional bool allow_change_by_members = 2 [json_name = "allowChangeByMembers"];</code>
-       * @return Whether the allowChangeByMembers field is set.
+       * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+       * @return Whether the denyUserTimeouts field is set.
        */
       @java.lang.Override
-      public boolean hasAllowChangeByMembers() {
+      public boolean hasDenyUserTimeouts() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <pre>
-       * allow_change_by_members specifies whether organization members are allowed to change the inactivity timeout in their user settings
+       * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
        * </pre>
        *
-       * <code>optional bool allow_change_by_members = 2 [json_name = "allowChangeByMembers"];</code>
-       * @return The allowChangeByMembers.
+       * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+       * @return The denyUserTimeouts.
        */
       @java.lang.Override
-      public boolean getAllowChangeByMembers() {
-        return allowChangeByMembers_;
+      public boolean getDenyUserTimeouts() {
+        return denyUserTimeouts_;
       }
       /**
        * <pre>
-       * allow_change_by_members specifies whether organization members are allowed to change the inactivity timeout in their user settings
+       * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
        * </pre>
        *
-       * <code>optional bool allow_change_by_members = 2 [json_name = "allowChangeByMembers"];</code>
-       * @param value The allowChangeByMembers to set.
+       * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+       * @param value The denyUserTimeouts to set.
        * @return This builder for chaining.
        */
-      public Builder setAllowChangeByMembers(boolean value) {
+      public Builder setDenyUserTimeouts(boolean value) {
 
-        allowChangeByMembers_ = value;
+        denyUserTimeouts_ = value;
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
       /**
        * <pre>
-       * allow_change_by_members specifies whether organization members are allowed to change the inactivity timeout in their user settings
+       * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
        * </pre>
        *
-       * <code>optional bool allow_change_by_members = 2 [json_name = "allowChangeByMembers"];</code>
+       * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
        * @return This builder for chaining.
        */
-      public Builder clearAllowChangeByMembers() {
+      public Builder clearDenyUserTimeouts() {
         bitField0_ = (bitField0_ & ~0x00000002);
-        allowChangeByMembers_ = false;
+        denyUserTimeouts_ = false;
         onChanged();
         return this;
       }
@@ -25769,136 +25769,135 @@ java.lang.String defaultValue) {
       "\001 \001(\tR\016organizationId\022\027\n\004name\030\002 \001(\tH\000R\004n" +
       "ame\210\001\001B\007\n\005_name\"Y\n\032UpdateOrganizationRes" +
       "ponse\022;\n\014organization\030\001 \001(\0132\027.gitpod.v1." +
-      "OrganizationR\014organization\"\270\001\n\017TimeoutSe" +
+      "OrganizationR\014organization\"\252\001\n\017TimeoutSe" +
       "ttings\022>\n\ninactivity\030\001 \001(\0132\031.google.prot" +
-      "obuf.DurationH\000R\ninactivity\210\001\001\022:\n\027allow_" +
-      "change_by_members\030\002 \001(\010H\001R\024allowChangeBy" +
-      "Members\210\001\001B\r\n\013_inactivityB\032\n\030_allow_chan" +
-      "ge_by_members\"\263\007\n!UpdateOrganizationSett" +
-      "ingsRequest\022\'\n\017organization_id\030\001 \001(\tR\016or" +
-      "ganizationId\022A\n\032workspace_sharing_disabl" +
-      "ed\030\003 \001(\010H\000R\030workspaceSharingDisabled\210\001\001\022" +
-      ";\n\027default_workspace_image\030\004 \001(\tH\001R\025defa" +
-      "ultWorkspaceImage\210\001\001\022:\n\031allowed_workspac" +
-      "e_classes\030\005 \003(\tR\027allowedWorkspaceClasses" +
-      "\0226\n\027restricted_editor_names\030\006 \003(\tR\025restr" +
-      "ictedEditorNames\022H\n\036update_restricted_ed" +
-      "itor_names\030\007 \001(\010H\002R\033updateRestrictedEdit" +
-      "orNames\210\001\001\022|\n\026pinned_editor_versions\030\010 \003" +
-      "(\0132F.gitpod.v1.UpdateOrganizationSetting" +
-      "sRequest.PinnedEditorVersionsEntryR\024pinn" +
-      "edEditorVersions\022F\n\035update_pinned_editor" +
-      "_versions\030\t \001(\010H\003R\032updatePinnedEditorVer" +
-      "sions\210\001\001\022&\n\014default_role\030\n \001(\tH\004R\013defaul" +
-      "tRole\210\001\001\022J\n\020timeout_settings\030\013 \001(\0132\032.git" +
-      "pod.v1.TimeoutSettingsH\005R\017timeoutSetting" +
-      "s\210\001\001\032G\n\031PinnedEditorVersionsEntry\022\020\n\003key" +
-      "\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005value:\0028\001B\035\n" +
-      "\033_workspace_sharing_disabledB\032\n\030_default" +
-      "_workspace_imageB!\n\037_update_restricted_e" +
-      "ditor_namesB \n\036_update_pinned_editor_ver" +
-      "sionsB\017\n\r_default_roleB\023\n\021_timeout_setti" +
-      "ngs\"a\n\"UpdateOrganizationSettingsRespons" +
-      "e\022;\n\010settings\030\001 \001(\0132\037.gitpod.v1.Organiza" +
-      "tionSettingsR\010settings\"I\n\036GetOrganizatio" +
-      "nSettingsRequest\022\'\n\017organization_id\030\001 \001(" +
-      "\tR\016organizationId\"^\n\037GetOrganizationSett" +
-      "ingsResponse\022;\n\010settings\030\001 \001(\0132\037.gitpod." +
-      "v1.OrganizationSettingsR\010settings\"/\n\031Cre" +
-      "ateOrganizationRequest\022\022\n\004name\030\001 \001(\tR\004na" +
-      "me\"Y\n\032CreateOrganizationResponse\022;\n\014orga" +
-      "nization\030\001 \001(\0132\027.gitpod.v1.OrganizationR" +
-      "\014organization\"A\n\026GetOrganizationRequest\022" +
-      "\'\n\017organization_id\030\001 \001(\tR\016organizationId" +
-      "\"V\n\027GetOrganizationResponse\022;\n\014organizat" +
-      "ion\030\001 \001(\0132\027.gitpod.v1.OrganizationR\014orga" +
-      "nization\"\332\001\n\030ListOrganizationsRequest\022<\n" +
-      "\npagination\030\001 \001(\0132\034.gitpod.v1.Pagination" +
-      "RequestR\npagination\022?\n\005scope\030\002 \001(\0162).git" +
-      "pod.v1.ListOrganizationsRequest.ScopeR\005s" +
-      "cope\"?\n\005Scope\022\025\n\021SCOPE_UNSPECIFIED\020\000\022\020\n\014" +
-      "SCOPE_MEMBER\020\001\022\r\n\tSCOPE_ALL\020\002\"\231\001\n\031ListOr" +
-      "ganizationsResponse\022=\n\rorganizations\030\001 \003" +
-      "(\0132\027.gitpod.v1.OrganizationR\rorganizatio" +
-      "ns\022=\n\npagination\030\002 \001(\0132\035.gitpod.v1.Pagin" +
-      "ationResponseR\npagination\"D\n\031DeleteOrgan" +
-      "izationRequest\022\'\n\017organization_id\030\001 \001(\tR" +
-      "\016organizationId\"\034\n\032DeleteOrganizationRes" +
-      "ponse\"K\n GetOrganizationInvitationReques" +
-      "t\022\'\n\017organization_id\030\001 \001(\tR\016organization" +
-      "Id\"H\n!GetOrganizationInvitationResponse\022" +
-      "#\n\rinvitation_id\030\001 \001(\tR\014invitationId\">\n\027" +
-      "JoinOrganizationRequest\022#\n\rinvitation_id" +
-      "\030\001 \001(\tR\014invitationId\"C\n\030JoinOrganization" +
-      "Response\022\'\n\017organization_id\030\001 \001(\tR\016organ" +
-      "izationId\"M\n\"ResetOrganizationInvitation" +
-      "Request\022\'\n\017organization_id\030\001 \001(\tR\016organi" +
-      "zationId\"J\n#ResetOrganizationInvitationR" +
-      "esponse\022#\n\rinvitation_id\030\001 \001(\tR\014invitati" +
-      "onId\"\207\001\n\036ListOrganizationMembersRequest\022" +
-      "\'\n\017organization_id\030\001 \001(\tR\016organizationId" +
-      "\022<\n\npagination\030\002 \001(\0132\034.gitpod.v1.Paginat" +
-      "ionRequestR\npagination\"\231\001\n\037ListOrganizat" +
-      "ionMembersResponse\0227\n\007members\030\001 \003(\0132\035.gi" +
-      "tpod.v1.OrganizationMemberR\007members\022=\n\np" +
-      "agination\030\002 \001(\0132\035.gitpod.v1.PaginationRe" +
-      "sponseR\npagination\"\242\001\n\037UpdateOrganizatio" +
-      "nMemberRequest\022\'\n\017organization_id\030\001 \001(\tR" +
-      "\016organizationId\022\027\n\007user_id\030\002 \001(\tR\006userId" +
-      "\0224\n\004role\030\003 \001(\0162\033.gitpod.v1.OrganizationR" +
-      "oleH\000R\004role\210\001\001B\007\n\005_role\"Y\n UpdateOrganiz" +
-      "ationMemberResponse\0225\n\006member\030\001 \001(\0132\035.gi" +
-      "tpod.v1.OrganizationMemberR\006member\"c\n\037De" +
-      "leteOrganizationMemberRequest\022\'\n\017organiz" +
-      "ation_id\030\001 \001(\tR\016organizationId\022\027\n\007user_i" +
-      "d\030\002 \001(\tR\006userId\"\"\n DeleteOrganizationMem" +
-      "berResponse*\224\001\n\020OrganizationRole\022!\n\035ORGA" +
-      "NIZATION_ROLE_UNSPECIFIED\020\000\022\033\n\027ORGANIZAT" +
-      "ION_ROLE_OWNER\020\001\022\034\n\030ORGANIZATION_ROLE_ME" +
-      "MBER\020\002\022\"\n\036ORGANIZATION_ROLE_COLLABORATOR" +
-      "\020\0032\276\014\n\023OrganizationService\022c\n\022CreateOrga" +
-      "nization\022$.gitpod.v1.CreateOrganizationR" +
-      "equest\032%.gitpod.v1.CreateOrganizationRes" +
-      "ponse\"\000\022Z\n\017GetOrganization\022!.gitpod.v1.G" +
-      "etOrganizationRequest\032\".gitpod.v1.GetOrg" +
-      "anizationResponse\"\000\022c\n\022UpdateOrganizatio" +
-      "n\022$.gitpod.v1.UpdateOrganizationRequest\032" +
-      "%.gitpod.v1.UpdateOrganizationResponse\"\000" +
-      "\022`\n\021ListOrganizations\022#.gitpod.v1.ListOr" +
-      "ganizationsRequest\032$.gitpod.v1.ListOrgan" +
-      "izationsResponse\"\000\022c\n\022DeleteOrganization" +
-      "\022$.gitpod.v1.DeleteOrganizationRequest\032%" +
-      ".gitpod.v1.DeleteOrganizationResponse\"\000\022" +
-      "x\n\031GetOrganizationInvitation\022+.gitpod.v1" +
-      ".GetOrganizationInvitationRequest\032,.gitp" +
-      "od.v1.GetOrganizationInvitationResponse\"" +
-      "\000\022]\n\020JoinOrganization\022\".gitpod.v1.JoinOr" +
-      "ganizationRequest\032#.gitpod.v1.JoinOrgani" +
-      "zationResponse\"\000\022~\n\033ResetOrganizationInv" +
-      "itation\022-.gitpod.v1.ResetOrganizationInv" +
-      "itationRequest\032..gitpod.v1.ResetOrganiza" +
-      "tionInvitationResponse\"\000\022r\n\027ListOrganiza" +
-      "tionMembers\022).gitpod.v1.ListOrganization" +
-      "MembersRequest\032*.gitpod.v1.ListOrganizat" +
-      "ionMembersResponse\"\000\022u\n\030UpdateOrganizati" +
-      "onMember\022*.gitpod.v1.UpdateOrganizationM" +
-      "emberRequest\032+.gitpod.v1.UpdateOrganizat" +
-      "ionMemberResponse\"\000\022u\n\030DeleteOrganizatio" +
-      "nMember\022*.gitpod.v1.DeleteOrganizationMe" +
-      "mberRequest\032+.gitpod.v1.DeleteOrganizati" +
-      "onMemberResponse\"\000\022r\n\027GetOrganizationSet" +
-      "tings\022).gitpod.v1.GetOrganizationSetting" +
-      "sRequest\032*.gitpod.v1.GetOrganizationSett" +
-      "ingsResponse\"\000\022{\n\032UpdateOrganizationSett" +
-      "ings\022,.gitpod.v1.UpdateOrganizationSetti" +
-      "ngsRequest\032-.gitpod.v1.UpdateOrganizatio" +
-      "nSettingsResponse\"\000\022\215\001\n ListOrganization" +
-      "WorkspaceClasses\0222.gitpod.v1.ListOrganiz" +
-      "ationWorkspaceClassesRequest\0323.gitpod.v1" +
-      ".ListOrganizationWorkspaceClassesRespons" +
-      "e\"\000BQ\n\026io.gitpod.publicapi.v1Z7github.co" +
-      "m/gitpod-io/gitpod/components/public-api" +
-      "/go/v1b\006proto3"
+      "obuf.DurationH\000R\ninactivity\210\001\001\0221\n\022deny_u" +
+      "ser_timeouts\030\002 \001(\010H\001R\020denyUserTimeouts\210\001" +
+      "\001B\r\n\013_inactivityB\025\n\023_deny_user_timeouts\"" +
+      "\263\007\n!UpdateOrganizationSettingsRequest\022\'\n" +
+      "\017organization_id\030\001 \001(\tR\016organizationId\022A" +
+      "\n\032workspace_sharing_disabled\030\003 \001(\010H\000R\030wo" +
+      "rkspaceSharingDisabled\210\001\001\022;\n\027default_wor" +
+      "kspace_image\030\004 \001(\tH\001R\025defaultWorkspaceIm" +
+      "age\210\001\001\022:\n\031allowed_workspace_classes\030\005 \003(" +
+      "\tR\027allowedWorkspaceClasses\0226\n\027restricted" +
+      "_editor_names\030\006 \003(\tR\025restrictedEditorNam" +
+      "es\022H\n\036update_restricted_editor_names\030\007 \001" +
+      "(\010H\002R\033updateRestrictedEditorNames\210\001\001\022|\n\026" +
+      "pinned_editor_versions\030\010 \003(\0132F.gitpod.v1" +
+      ".UpdateOrganizationSettingsRequest.Pinne" +
+      "dEditorVersionsEntryR\024pinnedEditorVersio" +
+      "ns\022F\n\035update_pinned_editor_versions\030\t \001(" +
+      "\010H\003R\032updatePinnedEditorVersions\210\001\001\022&\n\014de" +
+      "fault_role\030\n \001(\tH\004R\013defaultRole\210\001\001\022J\n\020ti" +
+      "meout_settings\030\013 \001(\0132\032.gitpod.v1.Timeout" +
+      "SettingsH\005R\017timeoutSettings\210\001\001\032G\n\031Pinned" +
+      "EditorVersionsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n" +
+      "\005value\030\002 \001(\tR\005value:\0028\001B\035\n\033_workspace_sh" +
+      "aring_disabledB\032\n\030_default_workspace_ima" +
+      "geB!\n\037_update_restricted_editor_namesB \n" +
+      "\036_update_pinned_editor_versionsB\017\n\r_defa" +
+      "ult_roleB\023\n\021_timeout_settings\"a\n\"UpdateO" +
+      "rganizationSettingsResponse\022;\n\010settings\030" +
+      "\001 \001(\0132\037.gitpod.v1.OrganizationSettingsR\010" +
+      "settings\"I\n\036GetOrganizationSettingsReque" +
+      "st\022\'\n\017organization_id\030\001 \001(\tR\016organizatio" +
+      "nId\"^\n\037GetOrganizationSettingsResponse\022;" +
+      "\n\010settings\030\001 \001(\0132\037.gitpod.v1.Organizatio" +
+      "nSettingsR\010settings\"/\n\031CreateOrganizatio" +
+      "nRequest\022\022\n\004name\030\001 \001(\tR\004name\"Y\n\032CreateOr" +
+      "ganizationResponse\022;\n\014organization\030\001 \001(\013" +
+      "2\027.gitpod.v1.OrganizationR\014organization\"" +
+      "A\n\026GetOrganizationRequest\022\'\n\017organizatio" +
+      "n_id\030\001 \001(\tR\016organizationId\"V\n\027GetOrganiz" +
+      "ationResponse\022;\n\014organization\030\001 \001(\0132\027.gi" +
+      "tpod.v1.OrganizationR\014organization\"\332\001\n\030L" +
+      "istOrganizationsRequest\022<\n\npagination\030\001 " +
+      "\001(\0132\034.gitpod.v1.PaginationRequestR\npagin" +
+      "ation\022?\n\005scope\030\002 \001(\0162).gitpod.v1.ListOrg" +
+      "anizationsRequest.ScopeR\005scope\"?\n\005Scope\022" +
+      "\025\n\021SCOPE_UNSPECIFIED\020\000\022\020\n\014SCOPE_MEMBER\020\001" +
+      "\022\r\n\tSCOPE_ALL\020\002\"\231\001\n\031ListOrganizationsRes" +
+      "ponse\022=\n\rorganizations\030\001 \003(\0132\027.gitpod.v1" +
+      ".OrganizationR\rorganizations\022=\n\npaginati" +
+      "on\030\002 \001(\0132\035.gitpod.v1.PaginationResponseR" +
+      "\npagination\"D\n\031DeleteOrganizationRequest" +
+      "\022\'\n\017organization_id\030\001 \001(\tR\016organizationI" +
+      "d\"\034\n\032DeleteOrganizationResponse\"K\n GetOr" +
+      "ganizationInvitationRequest\022\'\n\017organizat" +
+      "ion_id\030\001 \001(\tR\016organizationId\"H\n!GetOrgan" +
+      "izationInvitationResponse\022#\n\rinvitation_" +
+      "id\030\001 \001(\tR\014invitationId\">\n\027JoinOrganizati" +
+      "onRequest\022#\n\rinvitation_id\030\001 \001(\tR\014invita" +
+      "tionId\"C\n\030JoinOrganizationResponse\022\'\n\017or" +
+      "ganization_id\030\001 \001(\tR\016organizationId\"M\n\"R" +
+      "esetOrganizationInvitationRequest\022\'\n\017org" +
+      "anization_id\030\001 \001(\tR\016organizationId\"J\n#Re" +
+      "setOrganizationInvitationResponse\022#\n\rinv" +
+      "itation_id\030\001 \001(\tR\014invitationId\"\207\001\n\036ListO" +
+      "rganizationMembersRequest\022\'\n\017organizatio" +
+      "n_id\030\001 \001(\tR\016organizationId\022<\n\npagination" +
+      "\030\002 \001(\0132\034.gitpod.v1.PaginationRequestR\npa" +
+      "gination\"\231\001\n\037ListOrganizationMembersResp" +
+      "onse\0227\n\007members\030\001 \003(\0132\035.gitpod.v1.Organi" +
+      "zationMemberR\007members\022=\n\npagination\030\002 \001(" +
+      "\0132\035.gitpod.v1.PaginationResponseR\npagina" +
+      "tion\"\242\001\n\037UpdateOrganizationMemberRequest" +
+      "\022\'\n\017organization_id\030\001 \001(\tR\016organizationI" +
+      "d\022\027\n\007user_id\030\002 \001(\tR\006userId\0224\n\004role\030\003 \001(\016" +
+      "2\033.gitpod.v1.OrganizationRoleH\000R\004role\210\001\001" +
+      "B\007\n\005_role\"Y\n UpdateOrganizationMemberRes" +
+      "ponse\0225\n\006member\030\001 \001(\0132\035.gitpod.v1.Organi" +
+      "zationMemberR\006member\"c\n\037DeleteOrganizati" +
+      "onMemberRequest\022\'\n\017organization_id\030\001 \001(\t" +
+      "R\016organizationId\022\027\n\007user_id\030\002 \001(\tR\006userI" +
+      "d\"\"\n DeleteOrganizationMemberResponse*\224\001" +
+      "\n\020OrganizationRole\022!\n\035ORGANIZATION_ROLE_" +
+      "UNSPECIFIED\020\000\022\033\n\027ORGANIZATION_ROLE_OWNER" +
+      "\020\001\022\034\n\030ORGANIZATION_ROLE_MEMBER\020\002\022\"\n\036ORGA" +
+      "NIZATION_ROLE_COLLABORATOR\020\0032\276\014\n\023Organiz" +
+      "ationService\022c\n\022CreateOrganization\022$.git" +
+      "pod.v1.CreateOrganizationRequest\032%.gitpo" +
+      "d.v1.CreateOrganizationResponse\"\000\022Z\n\017Get" +
+      "Organization\022!.gitpod.v1.GetOrganization" +
+      "Request\032\".gitpod.v1.GetOrganizationRespo" +
+      "nse\"\000\022c\n\022UpdateOrganization\022$.gitpod.v1." +
+      "UpdateOrganizationRequest\032%.gitpod.v1.Up" +
+      "dateOrganizationResponse\"\000\022`\n\021ListOrgani" +
+      "zations\022#.gitpod.v1.ListOrganizationsReq" +
+      "uest\032$.gitpod.v1.ListOrganizationsRespon" +
+      "se\"\000\022c\n\022DeleteOrganization\022$.gitpod.v1.D" +
+      "eleteOrganizationRequest\032%.gitpod.v1.Del" +
+      "eteOrganizationResponse\"\000\022x\n\031GetOrganiza" +
+      "tionInvitation\022+.gitpod.v1.GetOrganizati" +
+      "onInvitationRequest\032,.gitpod.v1.GetOrgan" +
+      "izationInvitationResponse\"\000\022]\n\020JoinOrgan" +
+      "ization\022\".gitpod.v1.JoinOrganizationRequ" +
+      "est\032#.gitpod.v1.JoinOrganizationResponse" +
+      "\"\000\022~\n\033ResetOrganizationInvitation\022-.gitp" +
+      "od.v1.ResetOrganizationInvitationRequest" +
+      "\032..gitpod.v1.ResetOrganizationInvitation" +
+      "Response\"\000\022r\n\027ListOrganizationMembers\022)." +
+      "gitpod.v1.ListOrganizationMembersRequest" +
+      "\032*.gitpod.v1.ListOrganizationMembersResp" +
+      "onse\"\000\022u\n\030UpdateOrganizationMember\022*.git" +
+      "pod.v1.UpdateOrganizationMemberRequest\032+" +
+      ".gitpod.v1.UpdateOrganizationMemberRespo" +
+      "nse\"\000\022u\n\030DeleteOrganizationMember\022*.gitp" +
+      "od.v1.DeleteOrganizationMemberRequest\032+." +
+      "gitpod.v1.DeleteOrganizationMemberRespon" +
+      "se\"\000\022r\n\027GetOrganizationSettings\022).gitpod" +
+      ".v1.GetOrganizationSettingsRequest\032*.git" +
+      "pod.v1.GetOrganizationSettingsResponse\"\000" +
+      "\022{\n\032UpdateOrganizationSettings\022,.gitpod." +
+      "v1.UpdateOrganizationSettingsRequest\032-.g" +
+      "itpod.v1.UpdateOrganizationSettingsRespo" +
+      "nse\"\000\022\215\001\n ListOrganizationWorkspaceClass" +
+      "es\0222.gitpod.v1.ListOrganizationWorkspace" +
+      "ClassesRequest\0323.gitpod.v1.ListOrganizat" +
+      "ionWorkspaceClassesResponse\"\000BQ\n\026io.gitp" +
+      "od.publicapi.v1Z7github.com/gitpod-io/gi" +
+      "tpod/components/public-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -25961,7 +25960,7 @@ java.lang.String defaultValue) {
     internal_static_gitpod_v1_TimeoutSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_TimeoutSettings_descriptor,
-        new java.lang.String[] { "Inactivity", "AllowChangeByMembers", });
+        new java.lang.String[] { "Inactivity", "DenyUserTimeouts", });
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor =
       getDescriptor().getMessageTypes().get(8);
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_fieldAccessorTable = new

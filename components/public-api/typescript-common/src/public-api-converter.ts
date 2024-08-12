@@ -1047,9 +1047,11 @@ export class PublicAPIConverter {
             restrictedEditorNames: settings.restrictedEditorNames || [],
             defaultRole: settings.defaultRole || undefined,
             timeoutSettings: {
-                inactivity: settings.timeoutSettings?.inactivity ? this.toDuration(settings.timeoutSettings?.inactivity) : undefined,
-                allowChangeByMembers: settings.timeoutSettings?.allowChangeByMembers,
-            }
+                inactivity: settings.timeoutSettings?.inactivity
+                    ? this.toDuration(settings.timeoutSettings?.inactivity)
+                    : undefined,
+                denyUserTimeouts: settings.timeoutSettings?.denyUserTimeouts,
+            },
         });
     }
 
@@ -1397,8 +1399,9 @@ export class PublicAPIConverter {
         const remainingMillisecondsAfterMinutes = remainingMillisecondsAfterHours % 60000;
         const secondsResult = Math.floor(remainingMillisecondsAfterMinutes / 1000);
 
-        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${secondsResult > 0 ? secondsResult + "s" : ""
-            }`;
+        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${
+            secondsResult > 0 ? secondsResult + "s" : ""
+        }`;
     }
 
     toUser(from: UserProtocol): User {

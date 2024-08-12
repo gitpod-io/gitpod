@@ -107,6 +107,15 @@ export default function TeamSettingsPage() {
 
     const [showImageEditModal, setShowImageEditModal] = useState(false);
 
+    useMemo(() => {
+        setWorkspaceTimeout(
+            settings?.timeoutSettings?.inactivity
+                ? converter.toDurationString(settings.timeoutSettings.inactivity)
+                : undefined,
+        );
+        setAllowTimeoutChangeByMembers(settings?.timeoutSettings?.denyUserTimeouts);
+    }, [settings?.timeoutSettings]);
+
     const handleUpdateTeamSettings = useCallback(
         async (newSettings: Partial<PlainMessage<OrganizationSettings>>, options?: { throwMutateError?: boolean }) => {
             if (!org?.id) {
@@ -152,15 +161,12 @@ export default function TeamSettingsPage() {
 
             handleUpdateTeamSettings({
                 timeoutSettings: {
-                    inactivity: workspaceTimeout
-                        ? converter.toDuration(workspaceTimeout)
-                        : settings?.timeoutSettings?.inactivity,
-                    allowChangeByMembers:
-                        allowTimeoutChangeByMembers ?? settings?.timeoutSettings?.allowChangeByMembers,
+                    inactivity: workspaceTimeout ? converter.toDuration(workspaceTimeout) : undefined,
+                    denyUserTimeouts: !allowTimeoutChangeByMembers,
                 },
             });
         },
-        [workspaceTimeout, allowTimeoutChangeByMembers, settings, handleUpdateTeamSettings],
+        [workspaceTimeout, allowTimeoutChangeByMembers, handleUpdateTeamSettings],
     );
 
     return (
@@ -271,10 +277,7 @@ export default function TeamSettingsPage() {
                                 }
                             >
                                 <TextInput
-                                    value={
-                                        workspaceTimeout ??
-                                        converter.toDurationString(settings?.timeoutSettings?.inactivity)
-                                    }
+                                    value={workspaceTimeout ?? ""}
                                     placeholder="e.g. 30m"
                                     onChange={setWorkspaceTimeout}
                                     disabled={updateTeamSettings.isLoading || !isOwner || !isOrgOnPaidPlan}
@@ -283,11 +286,7 @@ export default function TeamSettingsPage() {
                             <CheckboxInputField
                                 label="Allow members to change workspace timeouts"
                                 hint="Allow users to change the timeout duration for their workspaces as well as setting a default one in their user settings."
-                                checked={
-                                    allowTimeoutChangeByMembers ??
-                                    settings?.timeoutSettings?.allowChangeByMembers ??
-                                    true
-                                }
+                                checked={!!allowTimeoutChangeByMembers}
                                 containerClassName="my-4"
                                 onChange={setAllowTimeoutChangeByMembers}
                                 disabled={updateTeamSettings.isLoading || !isOwner}

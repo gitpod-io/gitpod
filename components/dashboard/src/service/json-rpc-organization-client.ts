@@ -256,7 +256,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
             defaultRole: request.defaultRole as OrgMemberRole,
             timeoutSettings: {
                 inactivity: converter.toDurationString(request.timeoutSettings?.inactivity),
-                allowChangeByMembers: request.timeoutSettings?.allowChangeByMembers,
+                denyUserTimeouts: request.timeoutSettings?.denyUserTimeouts,
             },
         });
         return new UpdateOrganizationSettingsResponse();

@@ -120,8 +120,8 @@ message TimeoutSettings {
   // inactivity is the duration of inactivity after which a workspace is stopped
   optional google.protobuf.Duration inactivity = 1;
 
-  // allow_change_by_members specifies whether organization members are allowed to change the inactivity timeout in their user settings
-  optional bool allow_change_by_members = 2;
+  // deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+  optional bool deny_user_timeouts = 2;
 }
 
 message UpdateOrganizationSettingsRequest {

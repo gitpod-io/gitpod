@@ -508,12 +508,10 @@ export class OrganizationService {
         if (settings.defaultRole) {
             result.defaultRole = settings.defaultRole;
         }
-        if (settings.timeoutSettings) {
-            result.timeoutSettings = {
-                allowChangeByMembers: settings.timeoutSettings.allowChangeByMembers ?? true,
-                inactivity: settings.timeoutSettings.inactivity,
-            };
-        }
+        result.timeoutSettings = {
+            denyUserTimeouts: settings.timeoutSettings?.denyUserTimeouts,
+            inactivity: settings.timeoutSettings?.inactivity,
+        };
         return result;
     }
 

@@ -229,8 +229,11 @@ export interface OrganizationSettings {
 }
 
 export type TimeoutSettings = {
+    // default per-org workspace timeout
     inactivity?: string;
-    allowChangeByMembers?: boolean;
+
+    // If this field is true, workspaces neither a) pick up user-defined workspace timeouts, nor b) members can set custom timeouts during workspace runtime.
+    denyUserTimeouts?: boolean;
 };
 
 export type TeamMemberRole = OrgMemberRole;

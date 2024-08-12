@@ -169,7 +169,7 @@ export default function Preferences() {
                 <Subheading>Workspaces will stop after a period of inactivity without any user input.</Subheading>
 
                 <div className="mt-4 max-w-xl">
-                    {!settings?.timeoutSettings?.allowChangeByMembers && (
+                    {!!settings?.timeoutSettings?.denyUserTimeouts && (
                         <Alert type="warning" className="mb-4">
                             The currently selected organization does not allow members to set custom workspace timeouts,
                             so for workspaces created in it, its default timeout of{" "}
