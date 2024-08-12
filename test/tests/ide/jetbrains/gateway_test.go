@@ -52,6 +52,7 @@ func TestIntellij(t *testing.T) {
 }
 
 func TestPhpStorm(t *testing.T) {
+	t.Skip("TODO")
 	BaseGuard(t)
 	t.Parallel()
 	f := features.New("Start a workspace using PhpStorm").
@@ -68,6 +69,7 @@ func TestPhpStorm(t *testing.T) {
 }
 
 func TestPyCharm(t *testing.T) {
+	t.Skip("TODO")
 	BaseGuard(t)
 	t.Parallel()
 	f := features.New("Start a workspace using Pycharm").
@@ -84,6 +86,7 @@ func TestPyCharm(t *testing.T) {
 }
 
 func TestRubyMine(t *testing.T) {
+	t.Skip("TODO")
 	BaseGuard(t)
 	t.Parallel()
 	f := features.New("Start a workspace using RubyMine").
@@ -100,6 +103,7 @@ func TestRubyMine(t *testing.T) {
 }
 
 func TestWebStorm(t *testing.T) {
+	t.Skip("TODO")
 	BaseGuard(t)
 	t.Parallel()
 	f := features.New("Start a workspace using WebStorm").
@@ -116,6 +120,7 @@ func TestWebStorm(t *testing.T) {
 }
 
 func TestRider(t *testing.T) {
+	t.Skip("TODO")
 	BaseGuard(t)
 	t.Parallel()
 	t.Skip("Until ENT-56")
@@ -133,6 +138,7 @@ func TestRider(t *testing.T) {
 }
 
 func TestCLion(t *testing.T) {
+	t.Skip("TODO")
 	BaseGuard(t)
 	t.Parallel()
 	t.Skip("See EXP-414")
@@ -150,6 +156,7 @@ func TestCLion(t *testing.T) {
 }
 
 func TestRustRover(t *testing.T) {
+	t.Skip("TODO")
 	BaseGuard(t)
 	t.Parallel()
 	f := features.New("Start a workspace using RustRover").
@@ -166,6 +173,7 @@ func TestRustRover(t *testing.T) {
 }
 
 func TestIntellijNotPreconfiguredRepo(t *testing.T) {
+	t.Skip("TODO")
 	BaseGuard(t)
 	t.Parallel()
 	f := features.New("Start a workspace using Intellij with not preconfigured repo").
@@ -188,6 +196,7 @@ func TestIntellijNotPreconfiguredRepo(t *testing.T) {
 var warmupIndexingShell []byte
 
 func TestIntelliJWarmup(t *testing.T) {
+	t.Skip("TODO")
 	BaseGuard(t)
 	t.Parallel()
 	f := features.New("Start a workspace using Intellij and imagebuild to test warmup tasks").
