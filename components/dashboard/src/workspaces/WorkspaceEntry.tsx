@@ -70,7 +70,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
             <ItemFieldIcon className="min-w-8">
                 <WorkspaceStatusIndicator status={workspace?.status} />
             </ItemFieldIcon>
-            <div className="flex-grow flex flex-col h-full py-auto truncate">
+            <div className="flex-grow flex flex-col py-auto truncate">
                 <Tooltip content={info.id} allowWrap={true}>
                     <a href={startUrl}>
                         <div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">
