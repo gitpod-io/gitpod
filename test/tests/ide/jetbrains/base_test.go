@@ -189,6 +189,9 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, op
 		go testWithoutGithubAction(ctx, gatewayLink, oauthToken, strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"), useLatest)
 	} else {
 		t.Logf("trigger github action")
+		// Note: For manually trigger github action purpose
+		// t.Logf("secret_gateway_link %s\nsecret_access_token %s\nsecret_endpoint %s\njb_product %s\nuse_latest %v\nbuild_id %s\nbuild_url %s", gatewayLink, oauthToken, strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"), option.IDE, useLatest, os.Getenv("TEST_BUILD_ID"), os.Getenv("TEST_BUILD_URL"))
+		// time.Sleep(30 * time.Minute)
 		_, err = githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, "gitpod-io", "gitpod", "jetbrains-integration-test.yml", github.CreateWorkflowDispatchEventRequest{
 			Ref: os.Getenv("TEST_BUILD_REF"),
 			Inputs: map[string]interface{}{
