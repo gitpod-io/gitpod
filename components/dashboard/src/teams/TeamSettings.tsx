@@ -113,7 +113,7 @@ export default function TeamSettingsPage() {
                 ? converter.toDurationString(settings.timeoutSettings.inactivity)
                 : undefined,
         );
-        setAllowTimeoutChangeByMembers(settings?.timeoutSettings?.denyUserTimeouts);
+        setAllowTimeoutChangeByMembers(!settings?.timeoutSettings?.denyUserTimeouts);
     }, [settings?.timeoutSettings]);
 
     const handleUpdateTeamSettings = useCallback(
