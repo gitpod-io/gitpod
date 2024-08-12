@@ -17,7 +17,6 @@ import { inject, injectable } from "inversify";
 import { BillingModes } from "./billing-mode";
 import { EntitlementServiceUBP } from "./entitlement-service-ubp";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export interface MayStartWorkspaceResult {
     hitParallelWorkspaceLimit?: HitParallelWorkspaceLimit;
@@ -125,14 +124,7 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingMode(userId, organizationId);
             switch (billingMode.mode) {
                 case "none":
-                    const disable_set_timeout = await getExperimentsClientForBackend().getValueAsync(
-                        "disable_set_timeout",
-                        false,
-                        {
-                            gitpodHost: process.env.GITPOD_HOST,
-                        },
-                    );
-                    return !disable_set_timeout;
+                    return true;
                 case "usage-based":
                     return this.ubp.maySetTimeout(userId, organizationId);
             }
