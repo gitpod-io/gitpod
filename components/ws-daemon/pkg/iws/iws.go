@@ -757,6 +757,23 @@ func (wbs *InWorkspaceServiceServer) MountNfs(ctx context.Context, req *api.Moun
 		return nil, xerrors.Errorf("cannot mount nfs: %w", err)
 	}
 
+	stat, err := os.Stat(nodeStaging)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot stat staging: %w", err)
+	}
+
+	sys, ok := stat.Sys().(*syscall.Stat_t)
+	if !ok {
+		return nil, xerrors.Errorf("cast to stat failed")
+	}
+
+	if sys.Uid != 133332 || sys.Gid != 133332 {
+		err = os.Chown(nodeStaging, 133332, 133332)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot chown %s for %s", nodeStaging, req.Source)
+		}
+	}
+
 	err = moveMount(wbs.Session.InstanceID, int(nfsPID), nodeStaging, req.Target)
 	if err != nil {
 		return nil, err
