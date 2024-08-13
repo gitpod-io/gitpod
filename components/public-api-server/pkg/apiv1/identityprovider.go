@@ -93,7 +93,7 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 	userInfo.SetName(user.Name)
 	userInfo.AppendClaims("user_id", user.ID)
 	userInfo.AppendClaims("org_id", workspace.Workspace.OrganizationId)
-	userInfo.AppendClaims("context", workspace.Workspace.ContextURL)
+	userInfo.AppendClaims("context", getContext(workspace))
 	userInfo.AppendClaims("workspace_id", workspaceID)
 
 	if req.Msg.GetScope() != "" {
@@ -127,7 +127,7 @@ func (srv *IdentityProviderService) getOIDCSubject(ctx context.Context, userInfo
 		UserID: user.ID,
 		TeamID: workspace.Workspace.OrganizationId,
 	})
-	subject := workspace.Workspace.ContextURL
+	subject := getContext(workspace)
 	if len(claimKeys) != 0 {
 		subArr := []string{}
 		for _, key := range claimKeys {
@@ -140,4 +140,13 @@ func (srv *IdentityProviderService) getOIDCSubject(ctx context.Context, userInfo
 		subject = strings.Join(subArr, ":")
 	}
 	return subject
+}
+
+func getContext(workspace *protocol.WorkspaceInfo) string {
+	context := "no-context"
+	if workspace.Workspace.Context != nil && workspace.Workspace.Context.NormalizedContextURL != "" {
+		// using Workspace.Context.NormalizedContextURL to not include prefixes (like "referrer:jetbrains-gateway", or other prefix contexts)
+		context = workspace.Workspace.Context.NormalizedContextURL
+	}
+	return context
 }
