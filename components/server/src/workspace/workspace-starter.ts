@@ -138,6 +138,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { IDESettingsVersion } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { getFeatureFlagEnableExperimentalJBTB } from "../util/featureflags";
 import { OrganizationService } from "../orgs/organization-service";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 export interface StartWorkspaceOptions extends Omit<GitpodServer.StartWorkspaceOptions, "ideSettings"> {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -1381,6 +1382,7 @@ export class WorkspaceStarter {
             ev.setValue(JSON.stringify(tasks));
             envvars.push(ev);
         }
+        log.info("Resolved tasks", new TrustedValue({ tasks, workspace, instance }));
 
         const vsxRegistryUrl = new EnvironmentVariable();
         vsxRegistryUrl.setName("VSX_REGISTRY_URL");
