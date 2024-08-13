@@ -15,7 +15,7 @@ scripts:
       - components/ide/jetbrains/gateway-plugin:publish-latest
     workdir: origin
     script: |
-        cp $COMPONENTS_IDE_JETBRAINS_GATEWAY_PLUGIN__PUBLISH_LATEST/build/distributions/gitpod-gateway.zip gitpod-gateway.zip
+        cp $COMPONENTS_IDE_JETBRAINS_GATEWAY_PLUGIN__PUBLISH_LATEST/build/distributions/jetbrains-gateway-gitpod-plugin.zip gitpod-gateway.zip
         ./test.sh
   - name: install-gui-dependencies
     script: |

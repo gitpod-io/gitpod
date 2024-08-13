@@ -82,6 +82,7 @@ dependencies {
 // Configure gradle-intellij-plugin plugin.
 intellijPlatform {
     pluginConfiguration {
+        id = properties("pluginId")
         name = properties("pluginName")
         version = pluginVersion
 
