@@ -193,10 +193,12 @@ export default function TeamPoliciesPage() {
                                 type="submit"
                                 loading={updateTeamSettings.isLoading}
                                 disabled={
-                                    (workspaceTimeout ===
+                                    !isOwner ||
+                                    !billingModeAllowsWorkspaceTimeouts ||
+                                    ((workspaceTimeout ===
                                         converter.toDurationString(settings?.timeoutSettings?.inactivity) ??
                                         "") &&
-                                    allowTimeoutChangeByMembers === !settings?.timeoutSettings?.denyUserTimeouts
+                                        allowTimeoutChangeByMembers === !settings?.timeoutSettings?.denyUserTimeouts)
                                 }
                             >
                                 Save
