@@ -64,6 +64,7 @@ func TestGetIDToken(t *testing.T) {
 								Repository: &protocol.Repository{
 									CloneURL: "https://github.com/gitpod-io/gitpod.git",
 								},
+								NormalizedContextURL: "https://github.com/gitpod-io/gitpod",
 							},
 						},
 					},
@@ -112,6 +113,7 @@ func TestGetIDToken(t *testing.T) {
 								Repository: &protocol.Repository{
 									CloneURL: "https://github.com/gitpod-io/gitpod.git",
 								},
+								NormalizedContextURL: "https://github.com/gitpod-io/gitpod",
 							},
 						},
 					},
@@ -174,6 +176,9 @@ func TestGetIDToken(t *testing.T) {
 					&protocol.WorkspaceInfo{
 						Workspace: &protocol.Workspace{
 							ContextURL: "https://github.com/gitpod-io/gitpod",
+							Context: &protocol.WorkspaceContext{
+								NormalizedContextURL: "https://github.com/gitpod-io/gitpod",
+							},
 						},
 					},
 					nil,
@@ -226,6 +231,7 @@ func TestGetIDToken(t *testing.T) {
 								Repository: &protocol.Repository{
 									CloneURL: "https://github.com/gitpod-io/gitpod.git",
 								},
+								NormalizedContextURL: "https://github.com/gitpod-io/gitpod",
 							},
 						},
 					},
@@ -268,6 +274,9 @@ func TestGetIDToken(t *testing.T) {
 					&protocol.WorkspaceInfo{
 						Workspace: &protocol.Workspace{
 							ContextURL: "https://github.com/gitpod-io/gitpod",
+							Context: &protocol.WorkspaceContext{
+								NormalizedContextURL: "https://github.com/gitpod-io/gitpod",
+							},
 						},
 					},
 					nil,
@@ -344,36 +353,64 @@ func (f functionIDTokenSource) IDToken(ctx context.Context, org string, audience
 }
 
 func TestGetOIDCSubject(t *testing.T) {
-	contextUrl := "https://github.com/gitpod-io/gitpod"
+	normalizedContextUrl := "https://github.com/gitpod-io/gitpod"
+	defaultWorkspace := &protocol.Workspace{
+		ContextURL: "SOME_ENV=test/" + normalizedContextUrl,
+		Context: &protocol.WorkspaceContext{
+			NormalizedContextURL: normalizedContextUrl,
+		}}
 	tests := []struct {
-		Name    string
-		Keys    string
-		Claims  map[string]interface{}
-		Subject string
+		Name      string
+		Keys      string
+		Claims    map[string]interface{}
+		Subject   string
+		Workspace *protocol.Workspace
 	}{
 		{
-			Name:    "happy path",
+			Name:      "happy path",
+			Keys:      "",
+			Claims:    map[string]interface{}{},
+			Subject:   normalizedContextUrl,
+			Workspace: defaultWorkspace,
+		},
+		{
+			Name:      "happy path 2",
+			Keys:      "undefined",
+			Claims:    map[string]interface{}{},
+			Subject:   normalizedContextUrl,
+			Workspace: defaultWorkspace,
+		},
+		{
+			Name:      "with custom keys",
+			Keys:      "key1,key3,key2",
+			Claims:    map[string]interface{}{"key1": 1, "key2": "hello"},
+			Subject:   "key1:1:key3::key2:hello",
+			Workspace: defaultWorkspace,
+		},
+		{
+			Name:      "with custom keys",
+			Keys:      "key1,key3,key2",
+			Claims:    map[string]interface{}{"key1": 1, "key3": errors.New("test")},
+			Subject:   "key1:1:key3:test:key2:",
+			Workspace: defaultWorkspace,
+		},
+		{
+			Name:    "happy path with strange prefix",
 			Keys:    "",
 			Claims:  map[string]interface{}{},
-			Subject: contextUrl,
+			Subject: normalizedContextUrl,
+			Workspace: &protocol.Workspace{ContextURL: "referrer:jetbrains-gateway:intellij/" + normalizedContextUrl, Context: &protocol.WorkspaceContext{
+				NormalizedContextURL: normalizedContextUrl,
+			}},
 		},
 		{
-			Name:    "happy path 2",
-			Keys:    "undefined",
+			Name:    "happy path without NormalizedContextURL",
+			Keys:    "",
 			Claims:  map[string]interface{}{},
-			Subject: contextUrl,
-		},
-		{
-			Name:    "with custom keys",
-			Keys:    "key1,key3,key2",
-			Claims:  map[string]interface{}{"key1": 1, "key2": "hello"},
-			Subject: "key1:1:key3::key2:hello",
-		},
-		{
-			Name:    "with custom keys",
-			Keys:    "key1,key3,key2",
-			Claims:  map[string]interface{}{"key1": 1, "key3": errors.New("test")},
-			Subject: "key1:1:key3:test:key2:",
+			Subject: "no-context",
+			Workspace: &protocol.Workspace{ContextURL: "referrer:jetbrains-gateway:intellij/" + normalizedContextUrl, Context: &protocol.WorkspaceContext{
+				NormalizedContextURL: "",
+			}},
 		},
 	}
 
@@ -389,7 +426,7 @@ func TestGetOIDCSubject(t *testing.T) {
 				userinfo.AppendClaims(k, v)
 			}
 			act := svc.getOIDCSubject(context.Background(), userinfo, &protocol.User{}, &protocol.WorkspaceInfo{
-				Workspace: &protocol.Workspace{ContextURL: contextUrl},
+				Workspace: test.Workspace,
 			})
 			if diff := cmp.Diff(test.Subject, act); diff != "" {
 				t.Errorf("getOIDCSubject() mismatch (-want +got):\n%s", diff)
