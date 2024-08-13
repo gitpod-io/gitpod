@@ -82,7 +82,8 @@ dependencies {
 // Configure gradle-intellij-plugin plugin.
 intellijPlatform {
     pluginConfiguration {
-        name = properties("pluginName")
+        id = properties("pluginId")
+        name = properties("latestPluginName")
         version = pluginVersion
 
         description = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {

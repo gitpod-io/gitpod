@@ -6,6 +6,7 @@ scripts:
       - components/ide/jetbrains/gateway-plugin:publish-stable
     workdir: origin
     script: |
+        # TODO(hw): replace source gitpod-gateway.zip with jetbrains-gateway-gitpod-plugin.zip after 2024.2 is stable
         cp $COMPONENTS_IDE_JETBRAINS_GATEWAY_PLUGIN__PUBLISH_STABLE/build/distributions/gitpod-gateway.zip gitpod-gateway.zip
         ./test.sh
   - name: test-latest
@@ -15,7 +16,7 @@ scripts:
       - components/ide/jetbrains/gateway-plugin:publish-latest
     workdir: origin
     script: |
-        cp $COMPONENTS_IDE_JETBRAINS_GATEWAY_PLUGIN__PUBLISH_LATEST/build/distributions/gitpod-gateway.zip gitpod-gateway.zip
+        cp $COMPONENTS_IDE_JETBRAINS_GATEWAY_PLUGIN__PUBLISH_LATEST/build/distributions/jetbrains-gateway-gitpod-plugin.zip gitpod-gateway.zip
         ./test.sh
   - name: install-gui-dependencies
     script: |
