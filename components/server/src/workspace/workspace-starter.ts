@@ -137,6 +137,7 @@ import { SubjectId } from "../auth/subject-id";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { IDESettingsVersion } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { getFeatureFlagEnableExperimentalJBTB } from "../util/featureflags";
+import { OrganizationService } from "../orgs/organization-service";
 
 export interface StartWorkspaceOptions extends Omit<GitpodServer.StartWorkspaceOptions, "ideSettings"> {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -231,6 +232,7 @@ export class WorkspaceStarter {
         @inject(RedisMutex) private readonly redisMutex: RedisMutex,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
+        @inject(OrganizationService) private readonly orgService: OrganizationService,
     ) {}
 
     public async startWorkspace(
@@ -1552,7 +1554,18 @@ export class WorkspaceStarter {
             spec.setTimeout(defaultTimeout);
             spec.setMaximumLifetime(workspaceLifetime);
             if (allowSetTimeout) {
-                if (user.additionalData?.workspaceTimeout) {
+                const organizationSettings = await this.orgService.getSettings(user.id, workspace.organizationId);
+                if (organizationSettings.timeoutSettings?.inactivity) {
+                    try {
+                        const timeout = WorkspaceTimeoutDuration.validate(
+                            organizationSettings.timeoutSettings.inactivity,
+                        );
+                        spec.setTimeout(timeout);
+                    } catch (err) {}
+                }
+
+                // Users can optionally override the organization-wide timeout default if the organization allows it
+                if (!organizationSettings.timeoutSettings?.denyUserTimeouts && user.additionalData?.workspaceTimeout) {
                     try {
                         const timeout = WorkspaceTimeoutDuration.validate(user.additionalData?.workspaceTimeout);
                         spec.setTimeout(timeout);

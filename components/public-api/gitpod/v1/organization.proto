@@ -4,6 +4,7 @@ package gitpod.v1;
 
 import "gitpod/v1/pagination.proto";
 import "gitpod/v1/workspace.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
@@ -40,6 +41,7 @@ message OrganizationSettings {
   repeated string restricted_editor_names = 4;
   map<string, string> pinned_editor_versions = 5;
   string default_role = 6;
+  TimeoutSettings timeout_settings = 7;
 }
 
 service OrganizationService {
@@ -114,6 +116,14 @@ message UpdateOrganizationResponse {
   Organization organization = 1;
 }
 
+message TimeoutSettings {
+  // inactivity is the duration of inactivity after which a workspace is stopped
+  optional google.protobuf.Duration inactivity = 1;
+
+  // deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+  optional bool deny_user_timeouts = 2;
+}
+
 message UpdateOrganizationSettingsRequest {
   // organization_id is the ID of the organization to update the settings for.
   string organization_id = 1;
@@ -146,6 +156,9 @@ message UpdateOrganizationSettingsRequest {
 
   // default_role is the default role for new members in the organization.
   optional string default_role = 10;
+
+  // timeout_settings are the settings for workspace timeouts
+  optional TimeoutSettings timeout_settings = 11;
 }
 
 message UpdateOrganizationSettingsResponse {

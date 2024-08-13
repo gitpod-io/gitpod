@@ -156,7 +156,6 @@ export class UserService {
     async listUsers(
         userId: string,
         req: {
-            //
             offset?: number;
             limit?: number;
             orderBy?: keyof User;

@@ -223,7 +223,18 @@ export interface OrganizationSettings {
 
     // what role new members will get, default is "member"
     defaultRole?: OrgMemberRole;
+
+    // the default organization-wide timeout settings for workspaces
+    timeoutSettings?: TimeoutSettings;
 }
+
+export type TimeoutSettings = {
+    // default per-org workspace timeout
+    inactivity?: string;
+
+    // If this field is true, workspaces neither a) pick up user-defined workspace timeouts, nor b) members can set custom timeouts during workspace runtime.
+    denyUserTimeouts?: boolean;
+};
 
 export type TeamMemberRole = OrgMemberRole;
 export type OrgMemberRole = "owner" | "member" | "collaborator";

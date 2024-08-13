@@ -6,7 +6,7 @@
 
 import { isGitpodIo } from "../utils";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import React, { useCallback, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Alert from "../components/Alert";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { Heading2, Heading3, Subheading } from "../components/typography/headings";
@@ -29,17 +29,32 @@ import { IdeOptions, IdeOptionsModifyModal, IdeOptionsModifyModalProps } from ".
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 import PillLabel from "../components/PillLabel";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
+import { converter } from "../service/public-api";
+import { useToast } from "../components/toasts/Toasts";
+import type { PlainMessage } from "@bufbuild/protobuf";
+import { WorkspaceTimeoutDuration } from "@gitpod/gitpod-protocol";
+import { Link } from "react-router-dom";
+import { InputField } from "../components/forms/InputField";
+import { TextInput } from "../components/forms/TextInputField";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 export default function TeamPoliciesPage() {
     useDocumentTitle("Organization Settings - Policies");
+    const { toast } = useToast();
     const org = useCurrentOrg().data;
     const isOwner = useIsOwner();
 
     const { data: settings, isLoading } = useOrgSettingsQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
 
+    const billingMode = useOrgBillingMode();
+    const [workspaceTimeout, setWorkspaceTimeout] = useState<string | undefined>(undefined);
+    const [allowTimeoutChangeByMembers, setAllowTimeoutChangeByMembers] = useState<boolean | undefined>(undefined);
+    const [workspaceTimeoutSettingError, setWorkspaceTimeoutSettingError] = useState<string | undefined>(undefined);
+
     const handleUpdateTeamSettings = useCallback(
-        async (newSettings: Partial<OrganizationSettings>, options?: { throwMutateError?: boolean }) => {
+        async (newSettings: Partial<PlainMessage<OrganizationSettings>>, options?: { throwMutateError?: boolean }) => {
             if (!org?.id) {
                 throw new Error("no organization selected");
             }
@@ -51,15 +66,57 @@ export default function TeamPoliciesPage() {
                     ...settings,
                     ...newSettings,
                 });
+                setWorkspaceTimeoutSettingError(undefined);
+                toast("Organization settings updated");
             } catch (error) {
                 if (options?.throwMutateError) {
                     throw error;
                 }
+                toast(`Failed to update organization settings: ${error.message}`);
                 console.error(error);
             }
         },
-        [updateTeamSettings, org?.id, isOwner, settings],
+        [updateTeamSettings, org?.id, isOwner, settings, toast],
     );
+
+    useEffect(() => {
+        setWorkspaceTimeout(
+            settings?.timeoutSettings?.inactivity
+                ? converter.toDurationString(settings.timeoutSettings.inactivity)
+                : undefined,
+        );
+        setAllowTimeoutChangeByMembers(!settings?.timeoutSettings?.denyUserTimeouts);
+    }, [settings?.timeoutSettings]);
+
+    const handleUpdateOrganizationTimeoutSettings = useCallback(
+        (e: FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+            try {
+                if (workspaceTimeout) {
+                    WorkspaceTimeoutDuration.validate(workspaceTimeout);
+                }
+            } catch (error) {
+                setWorkspaceTimeoutSettingError(error.message);
+                return;
+            }
+
+            // Nothing has changed
+            if (workspaceTimeout === undefined && allowTimeoutChangeByMembers === undefined) {
+                return;
+            }
+
+            handleUpdateTeamSettings({
+                timeoutSettings: {
+                    inactivity: workspaceTimeout ? converter.toDuration(workspaceTimeout) : undefined,
+                    denyUserTimeouts: !allowTimeoutChangeByMembers,
+                },
+            });
+        },
+        [workspaceTimeout, allowTimeoutChangeByMembers, handleUpdateTeamSettings],
+    );
+
+    const billingModeAllowsWorkspaceTimeouts =
+        billingMode.data?.mode === "none" || (billingMode.data?.mode === "usage-based" && billingMode.data?.paid);
 
     return (
         <>
@@ -89,6 +146,64 @@ export default function TeamPoliciesPage() {
                             onChange={(checked) => handleUpdateTeamSettings({ workspaceSharingDisabled: !checked })}
                             disabled={isLoading || !isOwner}
                         />
+                    </ConfigurationSettingsField>
+
+                    <ConfigurationSettingsField>
+                        <Heading3>Workspace timeouts</Heading3>
+                        {!billingModeAllowsWorkspaceTimeouts && (
+                            <Alert type="info" className="my-3">
+                                Setting Workspace timeouts is only available for organizations on a paid plan. Visit{" "}
+                                <Link to={"/billing"} className="gp-link">
+                                    Billing
+                                </Link>{" "}
+                                to upgrade your plan.
+                            </Alert>
+                        )}
+                        <form onSubmit={handleUpdateOrganizationTimeoutSettings}>
+                            <InputField
+                                label="Default workspace timeout"
+                                error={workspaceTimeoutSettingError}
+                                hint={
+                                    <span>
+                                        Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
+                                        <span className="font-semibold">2h</span>
+                                    </span>
+                                }
+                            >
+                                <TextInput
+                                    value={workspaceTimeout ?? ""}
+                                    placeholder="e.g. 30m"
+                                    onChange={setWorkspaceTimeout}
+                                    disabled={
+                                        updateTeamSettings.isLoading || !isOwner || !billingModeAllowsWorkspaceTimeouts
+                                    }
+                                />
+                            </InputField>
+                            <CheckboxInputField
+                                label="Allow members to change workspace timeouts"
+                                hint="Allow users to change the timeout duration for their workspaces as well as setting a default one in their user settings."
+                                checked={!!allowTimeoutChangeByMembers}
+                                containerClassName="my-4"
+                                onChange={setAllowTimeoutChangeByMembers}
+                                disabled={
+                                    updateTeamSettings.isLoading || !isOwner || !billingModeAllowsWorkspaceTimeouts
+                                }
+                            />
+                            <LoadingButton
+                                type="submit"
+                                loading={updateTeamSettings.isLoading}
+                                disabled={
+                                    !isOwner ||
+                                    !billingModeAllowsWorkspaceTimeouts ||
+                                    ((workspaceTimeout ===
+                                        converter.toDurationString(settings?.timeoutSettings?.inactivity) ??
+                                        "") &&
+                                        allowTimeoutChangeByMembers === !settings?.timeoutSettings?.denyUserTimeouts)
+                                }
+                            >
+                                Save
+                            </LoadingButton>
+                        </form>
                     </ConfigurationSettingsField>
 
                     <OrgWorkspaceClassesOptions

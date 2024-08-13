@@ -2635,6 +2635,21 @@ java.lang.String defaultValue);
      */
     com.google.protobuf.ByteString
         getDefaultRoleBytes();
+
+    /**
+     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     * @return Whether the timeoutSettings field is set.
+     */
+    boolean hasTimeoutSettings();
+    /**
+     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     * @return The timeoutSettings.
+     */
+    io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getTimeoutSettings();
+    /**
+     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     */
+    io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder();
   }
   /**
    * Protobuf type {@code gitpod.v1.OrganizationSettings}
@@ -2691,6 +2706,7 @@ java.lang.String defaultValue);
               io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.class, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.Builder.class);
     }
 
+    private int bitField0_;
     public static final int WORKSPACE_SHARING_DISABLED_FIELD_NUMBER = 1;
     private boolean workspaceSharingDisabled_ = false;
     /**
@@ -2933,6 +2949,32 @@ java.lang.String defaultValue) {
       }
     }
 
+    public static final int TIMEOUT_SETTINGS_FIELD_NUMBER = 7;
+    private io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings timeoutSettings_;
+    /**
+     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     * @return Whether the timeoutSettings field is set.
+     */
+    @java.lang.Override
+    public boolean hasTimeoutSettings() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     * @return The timeoutSettings.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getTimeoutSettings() {
+      return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
+    }
+    /**
+     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder() {
+      return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -2967,6 +3009,9 @@ java.lang.String defaultValue) {
           5);
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(defaultRole_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 6, defaultRole_);
+      }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        output.writeMessage(7, getTimeoutSettings());
       }
       getUnknownFields().writeTo(output);
     }
@@ -3013,6 +3058,10 @@ java.lang.String defaultValue) {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(defaultRole_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(6, defaultRole_);
       }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(7, getTimeoutSettings());
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -3040,6 +3089,11 @@ java.lang.String defaultValue) {
           other.internalGetPinnedEditorVersions())) return false;
       if (!getDefaultRole()
           .equals(other.getDefaultRole())) return false;
+      if (hasTimeoutSettings() != other.hasTimeoutSettings()) return false;
+      if (hasTimeoutSettings()) {
+        if (!getTimeoutSettings()
+            .equals(other.getTimeoutSettings())) return false;
+      }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -3070,6 +3124,10 @@ java.lang.String defaultValue) {
       }
       hash = (37 * hash) + DEFAULT_ROLE_FIELD_NUMBER;
       hash = (53 * hash) + getDefaultRole().hashCode();
+      if (hasTimeoutSettings()) {
+        hash = (37 * hash) + TIMEOUT_SETTINGS_FIELD_NUMBER;
+        hash = (53 * hash) + getTimeoutSettings().hashCode();
+      }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -3211,13 +3269,19 @@ java.lang.String defaultValue) {
 
       // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessage.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage
+                .alwaysUseFieldBuilders) {
+          getTimeoutSettingsFieldBuilder();
+        }
       }
       @java.lang.Override
       public Builder clear() {
@@ -3231,6 +3295,11 @@ java.lang.String defaultValue) {
             com.google.protobuf.LazyStringArrayList.emptyList();
         internalGetMutablePinnedEditorVersions().clear();
         defaultRole_ = "";
+        timeoutSettings_ = null;
+        if (timeoutSettingsBuilder_ != null) {
+          timeoutSettingsBuilder_.dispose();
+          timeoutSettingsBuilder_ = null;
+        }
         return this;
       }
 
@@ -3285,6 +3354,14 @@ java.lang.String defaultValue) {
         if (((from_bitField0_ & 0x00000020) != 0)) {
           result.defaultRole_ = defaultRole_;
         }
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.timeoutSettings_ = timeoutSettingsBuilder_ == null
+              ? timeoutSettings_
+              : timeoutSettingsBuilder_.build();
+          to_bitField0_ |= 0x00000001;
+        }
+        result.bitField0_ |= to_bitField0_;
       }
 
       @java.lang.Override
@@ -3334,6 +3411,9 @@ java.lang.String defaultValue) {
           defaultRole_ = other.defaultRole_;
           bitField0_ |= 0x00000020;
           onChanged();
+        }
+        if (other.hasTimeoutSettings()) {
+          mergeTimeoutSettings(other.getTimeoutSettings());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -3397,6 +3477,13 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000020;
                 break;
               } // case 50
+              case 58: {
+                input.readMessage(
+                    getTimeoutSettingsFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 58
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -3937,6 +4024,127 @@ java.lang.String defaultValue) {
         bitField0_ |= 0x00000020;
         onChanged();
         return this;
+      }
+
+      private io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings timeoutSettings_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder> timeoutSettingsBuilder_;
+      /**
+       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       * @return Whether the timeoutSettings field is set.
+       */
+      public boolean hasTimeoutSettings() {
+        return ((bitField0_ & 0x00000040) != 0);
+      }
+      /**
+       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       * @return The timeoutSettings.
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getTimeoutSettings() {
+        if (timeoutSettingsBuilder_ == null) {
+          return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
+        } else {
+          return timeoutSettingsBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       */
+      public Builder setTimeoutSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings value) {
+        if (timeoutSettingsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          timeoutSettings_ = value;
+        } else {
+          timeoutSettingsBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       */
+      public Builder setTimeoutSettings(
+          io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder builderForValue) {
+        if (timeoutSettingsBuilder_ == null) {
+          timeoutSettings_ = builderForValue.build();
+        } else {
+          timeoutSettingsBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       */
+      public Builder mergeTimeoutSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings value) {
+        if (timeoutSettingsBuilder_ == null) {
+          if (((bitField0_ & 0x00000040) != 0) &&
+            timeoutSettings_ != null &&
+            timeoutSettings_ != io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance()) {
+            getTimeoutSettingsBuilder().mergeFrom(value);
+          } else {
+            timeoutSettings_ = value;
+          }
+        } else {
+          timeoutSettingsBuilder_.mergeFrom(value);
+        }
+        if (timeoutSettings_ != null) {
+          bitField0_ |= 0x00000040;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       */
+      public Builder clearTimeoutSettings() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        timeoutSettings_ = null;
+        if (timeoutSettingsBuilder_ != null) {
+          timeoutSettingsBuilder_.dispose();
+          timeoutSettingsBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder getTimeoutSettingsBuilder() {
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return getTimeoutSettingsFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder() {
+        if (timeoutSettingsBuilder_ != null) {
+          return timeoutSettingsBuilder_.getMessageOrBuilder();
+        } else {
+          return timeoutSettings_ == null ?
+              io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
+        }
+      }
+      /**
+       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder>
+          getTimeoutSettingsFieldBuilder() {
+        if (timeoutSettingsBuilder_ == null) {
+          timeoutSettingsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder>(
+                  getTimeoutSettings(),
+                  getParentForChildren(),
+                  isClean());
+          timeoutSettings_ = null;
+        }
+        return timeoutSettingsBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:gitpod.v1.OrganizationSettings)
@@ -7094,6 +7302,768 @@ java.lang.String defaultValue) {
 
   }
 
+  public interface TimeoutSettingsOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.TimeoutSettings)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * inactivity is the duration of inactivity after which a workspace is stopped
+     * </pre>
+     *
+     * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+     * @return Whether the inactivity field is set.
+     */
+    boolean hasInactivity();
+    /**
+     * <pre>
+     * inactivity is the duration of inactivity after which a workspace is stopped
+     * </pre>
+     *
+     * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+     * @return The inactivity.
+     */
+    com.google.protobuf.Duration getInactivity();
+    /**
+     * <pre>
+     * inactivity is the duration of inactivity after which a workspace is stopped
+     * </pre>
+     *
+     * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+     */
+    com.google.protobuf.DurationOrBuilder getInactivityOrBuilder();
+
+    /**
+     * <pre>
+     * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+     * </pre>
+     *
+     * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+     * @return Whether the denyUserTimeouts field is set.
+     */
+    boolean hasDenyUserTimeouts();
+    /**
+     * <pre>
+     * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+     * </pre>
+     *
+     * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+     * @return The denyUserTimeouts.
+     */
+    boolean getDenyUserTimeouts();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.TimeoutSettings}
+   */
+  public static final class TimeoutSettings extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.TimeoutSettings)
+      TimeoutSettingsOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        TimeoutSettings.class.getName());
+    }
+    // Use TimeoutSettings.newBuilder() to construct.
+    private TimeoutSettings(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private TimeoutSettings() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_TimeoutSettings_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_TimeoutSettings_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.class, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int INACTIVITY_FIELD_NUMBER = 1;
+    private com.google.protobuf.Duration inactivity_;
+    /**
+     * <pre>
+     * inactivity is the duration of inactivity after which a workspace is stopped
+     * </pre>
+     *
+     * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+     * @return Whether the inactivity field is set.
+     */
+    @java.lang.Override
+    public boolean hasInactivity() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <pre>
+     * inactivity is the duration of inactivity after which a workspace is stopped
+     * </pre>
+     *
+     * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+     * @return The inactivity.
+     */
+    @java.lang.Override
+    public com.google.protobuf.Duration getInactivity() {
+      return inactivity_ == null ? com.google.protobuf.Duration.getDefaultInstance() : inactivity_;
+    }
+    /**
+     * <pre>
+     * inactivity is the duration of inactivity after which a workspace is stopped
+     * </pre>
+     *
+     * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+     */
+    @java.lang.Override
+    public com.google.protobuf.DurationOrBuilder getInactivityOrBuilder() {
+      return inactivity_ == null ? com.google.protobuf.Duration.getDefaultInstance() : inactivity_;
+    }
+
+    public static final int DENY_USER_TIMEOUTS_FIELD_NUMBER = 2;
+    private boolean denyUserTimeouts_ = false;
+    /**
+     * <pre>
+     * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+     * </pre>
+     *
+     * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+     * @return Whether the denyUserTimeouts field is set.
+     */
+    @java.lang.Override
+    public boolean hasDenyUserTimeouts() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <pre>
+     * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+     * </pre>
+     *
+     * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+     * @return The denyUserTimeouts.
+     */
+    @java.lang.Override
+    public boolean getDenyUserTimeouts() {
+      return denyUserTimeouts_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (((bitField0_ & 0x00000001) != 0)) {
+        output.writeMessage(1, getInactivity());
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        output.writeBool(2, denyUserTimeouts_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, getInactivity());
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(2, denyUserTimeouts_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings other = (io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings) obj;
+
+      if (hasInactivity() != other.hasInactivity()) return false;
+      if (hasInactivity()) {
+        if (!getInactivity()
+            .equals(other.getInactivity())) return false;
+      }
+      if (hasDenyUserTimeouts() != other.hasDenyUserTimeouts()) return false;
+      if (hasDenyUserTimeouts()) {
+        if (getDenyUserTimeouts()
+            != other.getDenyUserTimeouts()) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasInactivity()) {
+        hash = (37 * hash) + INACTIVITY_FIELD_NUMBER;
+        hash = (53 * hash) + getInactivity().hashCode();
+      }
+      if (hasDenyUserTimeouts()) {
+        hash = (37 * hash) + DENY_USER_TIMEOUTS_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getDenyUserTimeouts());
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.TimeoutSettings}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.TimeoutSettings)
+        io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_TimeoutSettings_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_TimeoutSettings_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.class, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage
+                .alwaysUseFieldBuilders) {
+          getInactivityFieldBuilder();
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        inactivity_ = null;
+        if (inactivityBuilder_ != null) {
+          inactivityBuilder_.dispose();
+          inactivityBuilder_ = null;
+        }
+        denyUserTimeouts_ = false;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_TimeoutSettings_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings build() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings buildPartial() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings result = new io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings result) {
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.inactivity_ = inactivityBuilder_ == null
+              ? inactivity_
+              : inactivityBuilder_.build();
+          to_bitField0_ |= 0x00000001;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.denyUserTimeouts_ = denyUserTimeouts_;
+          to_bitField0_ |= 0x00000002;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings) {
+          return mergeFrom((io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings other) {
+        if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance()) return this;
+        if (other.hasInactivity()) {
+          mergeInactivity(other.getInactivity());
+        }
+        if (other.hasDenyUserTimeouts()) {
+          setDenyUserTimeouts(other.getDenyUserTimeouts());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                input.readMessage(
+                    getInactivityFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 16: {
+                denyUserTimeouts_ = input.readBool();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private com.google.protobuf.Duration inactivity_;
+      private com.google.protobuf.SingleFieldBuilder<
+          com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> inactivityBuilder_;
+      /**
+       * <pre>
+       * inactivity is the duration of inactivity after which a workspace is stopped
+       * </pre>
+       *
+       * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+       * @return Whether the inactivity field is set.
+       */
+      public boolean hasInactivity() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <pre>
+       * inactivity is the duration of inactivity after which a workspace is stopped
+       * </pre>
+       *
+       * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+       * @return The inactivity.
+       */
+      public com.google.protobuf.Duration getInactivity() {
+        if (inactivityBuilder_ == null) {
+          return inactivity_ == null ? com.google.protobuf.Duration.getDefaultInstance() : inactivity_;
+        } else {
+          return inactivityBuilder_.getMessage();
+        }
+      }
+      /**
+       * <pre>
+       * inactivity is the duration of inactivity after which a workspace is stopped
+       * </pre>
+       *
+       * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+       */
+      public Builder setInactivity(com.google.protobuf.Duration value) {
+        if (inactivityBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          inactivity_ = value;
+        } else {
+          inactivityBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * inactivity is the duration of inactivity after which a workspace is stopped
+       * </pre>
+       *
+       * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+       */
+      public Builder setInactivity(
+          com.google.protobuf.Duration.Builder builderForValue) {
+        if (inactivityBuilder_ == null) {
+          inactivity_ = builderForValue.build();
+        } else {
+          inactivityBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * inactivity is the duration of inactivity after which a workspace is stopped
+       * </pre>
+       *
+       * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+       */
+      public Builder mergeInactivity(com.google.protobuf.Duration value) {
+        if (inactivityBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) != 0) &&
+            inactivity_ != null &&
+            inactivity_ != com.google.protobuf.Duration.getDefaultInstance()) {
+            getInactivityBuilder().mergeFrom(value);
+          } else {
+            inactivity_ = value;
+          }
+        } else {
+          inactivityBuilder_.mergeFrom(value);
+        }
+        if (inactivity_ != null) {
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * inactivity is the duration of inactivity after which a workspace is stopped
+       * </pre>
+       *
+       * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+       */
+      public Builder clearInactivity() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        inactivity_ = null;
+        if (inactivityBuilder_ != null) {
+          inactivityBuilder_.dispose();
+          inactivityBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * inactivity is the duration of inactivity after which a workspace is stopped
+       * </pre>
+       *
+       * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+       */
+      public com.google.protobuf.Duration.Builder getInactivityBuilder() {
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return getInactivityFieldBuilder().getBuilder();
+      }
+      /**
+       * <pre>
+       * inactivity is the duration of inactivity after which a workspace is stopped
+       * </pre>
+       *
+       * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+       */
+      public com.google.protobuf.DurationOrBuilder getInactivityOrBuilder() {
+        if (inactivityBuilder_ != null) {
+          return inactivityBuilder_.getMessageOrBuilder();
+        } else {
+          return inactivity_ == null ?
+              com.google.protobuf.Duration.getDefaultInstance() : inactivity_;
+        }
+      }
+      /**
+       * <pre>
+       * inactivity is the duration of inactivity after which a workspace is stopped
+       * </pre>
+       *
+       * <code>optional .google.protobuf.Duration inactivity = 1 [json_name = "inactivity"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder>
+          getInactivityFieldBuilder() {
+        if (inactivityBuilder_ == null) {
+          inactivityBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder>(
+                  getInactivity(),
+                  getParentForChildren(),
+                  isClean());
+          inactivity_ = null;
+        }
+        return inactivityBuilder_;
+      }
+
+      private boolean denyUserTimeouts_ ;
+      /**
+       * <pre>
+       * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+       * </pre>
+       *
+       * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+       * @return Whether the denyUserTimeouts field is set.
+       */
+      @java.lang.Override
+      public boolean hasDenyUserTimeouts() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <pre>
+       * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+       * </pre>
+       *
+       * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+       * @return The denyUserTimeouts.
+       */
+      @java.lang.Override
+      public boolean getDenyUserTimeouts() {
+        return denyUserTimeouts_;
+      }
+      /**
+       * <pre>
+       * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+       * </pre>
+       *
+       * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+       * @param value The denyUserTimeouts to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDenyUserTimeouts(boolean value) {
+
+        denyUserTimeouts_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+       * </pre>
+       *
+       * <code>optional bool deny_user_timeouts = 2 [json_name = "denyUserTimeouts"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDenyUserTimeouts() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        denyUserTimeouts_ = false;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.TimeoutSettings)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.TimeoutSettings)
+    private static final io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings();
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<TimeoutSettings>
+        PARSER = new com.google.protobuf.AbstractParser<TimeoutSettings>() {
+      @java.lang.Override
+      public TimeoutSettings parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<TimeoutSettings> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TimeoutSettings> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface UpdateOrganizationSettingsRequestOrBuilder extends
       // @@protoc_insertion_point(interface_extends:gitpod.v1.UpdateOrganizationSettingsRequest)
       com.google.protobuf.MessageOrBuilder {
@@ -7385,6 +8355,33 @@ java.lang.String defaultValue);
      */
     com.google.protobuf.ByteString
         getDefaultRoleBytes();
+
+    /**
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+     * @return Whether the timeoutSettings field is set.
+     */
+    boolean hasTimeoutSettings();
+    /**
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+     * @return The timeoutSettings.
+     */
+    io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getTimeoutSettings();
+    /**
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+     */
+    io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder();
   }
   /**
    * Protobuf type {@code gitpod.v1.UpdateOrganizationSettingsRequest}
@@ -7906,6 +8903,44 @@ java.lang.String defaultValue) {
       }
     }
 
+    public static final int TIMEOUT_SETTINGS_FIELD_NUMBER = 11;
+    private io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings timeoutSettings_;
+    /**
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+     * @return Whether the timeoutSettings field is set.
+     */
+    @java.lang.Override
+    public boolean hasTimeoutSettings() {
+      return ((bitField0_ & 0x00000020) != 0);
+    }
+    /**
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+     * @return The timeoutSettings.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getTimeoutSettings() {
+      return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
+    }
+    /**
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder() {
+      return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -7949,6 +8984,9 @@ java.lang.String defaultValue) {
       }
       if (((bitField0_ & 0x00000010) != 0)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 10, defaultRole_);
+      }
+      if (((bitField0_ & 0x00000020) != 0)) {
+        output.writeMessage(11, getTimeoutSettings());
       }
       getUnknownFields().writeTo(output);
     }
@@ -8006,6 +9044,10 @@ java.lang.String defaultValue) {
       if (((bitField0_ & 0x00000010) != 0)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(10, defaultRole_);
       }
+      if (((bitField0_ & 0x00000020) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(11, getTimeoutSettings());
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -8054,6 +9096,11 @@ java.lang.String defaultValue) {
         if (!getDefaultRole()
             .equals(other.getDefaultRole())) return false;
       }
+      if (hasTimeoutSettings() != other.hasTimeoutSettings()) return false;
+      if (hasTimeoutSettings()) {
+        if (!getTimeoutSettings()
+            .equals(other.getTimeoutSettings())) return false;
+      }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -8101,6 +9148,10 @@ java.lang.String defaultValue) {
       if (hasDefaultRole()) {
         hash = (37 * hash) + DEFAULT_ROLE_FIELD_NUMBER;
         hash = (53 * hash) + getDefaultRole().hashCode();
+      }
+      if (hasTimeoutSettings()) {
+        hash = (37 * hash) + TIMEOUT_SETTINGS_FIELD_NUMBER;
+        hash = (53 * hash) + getTimeoutSettings().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -8243,13 +9294,19 @@ java.lang.String defaultValue) {
 
       // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.UpdateOrganizationSettingsRequest.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessage.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage
+                .alwaysUseFieldBuilders) {
+          getTimeoutSettingsFieldBuilder();
+        }
       }
       @java.lang.Override
       public Builder clear() {
@@ -8266,6 +9323,11 @@ java.lang.String defaultValue) {
         internalGetMutablePinnedEditorVersions().clear();
         updatePinnedEditorVersions_ = false;
         defaultRole_ = "";
+        timeoutSettings_ = null;
+        if (timeoutSettingsBuilder_ != null) {
+          timeoutSettingsBuilder_.dispose();
+          timeoutSettingsBuilder_ = null;
+        }
         return this;
       }
 
@@ -8335,6 +9397,12 @@ java.lang.String defaultValue) {
           result.defaultRole_ = defaultRole_;
           to_bitField0_ |= 0x00000010;
         }
+        if (((from_bitField0_ & 0x00000200) != 0)) {
+          result.timeoutSettings_ = timeoutSettingsBuilder_ == null
+              ? timeoutSettings_
+              : timeoutSettingsBuilder_.build();
+          to_bitField0_ |= 0x00000020;
+        }
         result.bitField0_ |= to_bitField0_;
       }
 
@@ -8396,6 +9464,9 @@ java.lang.String defaultValue) {
           defaultRole_ = other.defaultRole_;
           bitField0_ |= 0x00000100;
           onChanged();
+        }
+        if (other.hasTimeoutSettings()) {
+          mergeTimeoutSettings(other.getTimeoutSettings());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -8474,6 +9545,13 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000100;
                 break;
               } // case 82
+              case 90: {
+                input.readMessage(
+                    getTimeoutSettingsFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000200;
+                break;
+              } // case 90
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -9440,6 +10518,163 @@ java.lang.String defaultValue) {
         bitField0_ |= 0x00000100;
         onChanged();
         return this;
+      }
+
+      private io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings timeoutSettings_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder> timeoutSettingsBuilder_;
+      /**
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+       * @return Whether the timeoutSettings field is set.
+       */
+      public boolean hasTimeoutSettings() {
+        return ((bitField0_ & 0x00000200) != 0);
+      }
+      /**
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+       * @return The timeoutSettings.
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getTimeoutSettings() {
+        if (timeoutSettingsBuilder_ == null) {
+          return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
+        } else {
+          return timeoutSettingsBuilder_.getMessage();
+        }
+      }
+      /**
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+       */
+      public Builder setTimeoutSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings value) {
+        if (timeoutSettingsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          timeoutSettings_ = value;
+        } else {
+          timeoutSettingsBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000200;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+       */
+      public Builder setTimeoutSettings(
+          io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder builderForValue) {
+        if (timeoutSettingsBuilder_ == null) {
+          timeoutSettings_ = builderForValue.build();
+        } else {
+          timeoutSettingsBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000200;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+       */
+      public Builder mergeTimeoutSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings value) {
+        if (timeoutSettingsBuilder_ == null) {
+          if (((bitField0_ & 0x00000200) != 0) &&
+            timeoutSettings_ != null &&
+            timeoutSettings_ != io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance()) {
+            getTimeoutSettingsBuilder().mergeFrom(value);
+          } else {
+            timeoutSettings_ = value;
+          }
+        } else {
+          timeoutSettingsBuilder_.mergeFrom(value);
+        }
+        if (timeoutSettings_ != null) {
+          bitField0_ |= 0x00000200;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+       */
+      public Builder clearTimeoutSettings() {
+        bitField0_ = (bitField0_ & ~0x00000200);
+        timeoutSettings_ = null;
+        if (timeoutSettingsBuilder_ != null) {
+          timeoutSettingsBuilder_.dispose();
+          timeoutSettingsBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder getTimeoutSettingsBuilder() {
+        bitField0_ |= 0x00000200;
+        onChanged();
+        return getTimeoutSettingsFieldBuilder().getBuilder();
+      }
+      /**
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder() {
+        if (timeoutSettingsBuilder_ != null) {
+          return timeoutSettingsBuilder_.getMessageOrBuilder();
+        } else {
+          return timeoutSettings_ == null ?
+              io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
+        }
+      }
+      /**
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder>
+          getTimeoutSettingsFieldBuilder() {
+        if (timeoutSettingsBuilder_ == null) {
+          timeoutSettingsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder>(
+                  getTimeoutSettings(),
+                  getParentForChildren(),
+                  isClean());
+          timeoutSettings_ = null;
+        }
+        return timeoutSettingsBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:gitpod.v1.UpdateOrganizationSettingsRequest)
@@ -24355,6 +25590,11 @@ java.lang.String defaultValue) {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_UpdateOrganizationResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_TimeoutSettings_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_TimeoutSettings_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor;
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -24490,171 +25730,181 @@ java.lang.String defaultValue) {
     java.lang.String[] descriptorData = {
       "\n\034gitpod/v1/organization.proto\022\tgitpod.v" +
       "1\032\032gitpod/v1/pagination.proto\032\031gitpod/v1" +
-      "/workspace.proto\032\037google/protobuf/timest" +
-      "amp.proto\"\207\001\n\014Organization\022\016\n\002id\030\001 \001(\tR\002" +
-      "id\022\022\n\004name\030\002 \001(\tR\004name\022?\n\rcreation_time\030" +
-      "\003 \001(\0132\032.google.protobuf.TimestampR\014creat" +
-      "ionTime\022\022\n\004slug\030\004 \001(\tR\004slug\"\243\002\n\022Organiza" +
-      "tionMember\022\027\n\007user_id\030\001 \001(\tR\006userId\022/\n\004r" +
-      "ole\030\002 \001(\0162\033.gitpod.v1.OrganizationRoleR\004" +
-      "role\022=\n\014member_since\030\003 \001(\0132\032.google.prot" +
-      "obuf.TimestampR\013memberSince\022\035\n\navatar_ur" +
-      "l\030\004 \001(\tR\tavatarUrl\022\033\n\tfull_name\030\005 \001(\tR\010f" +
-      "ullName\022\024\n\005email\030\006 \001(\tR\005email\0222\n\025owned_b" +
-      "y_organization\030\007 \001(\010R\023ownedByOrganizatio" +
-      "n\"\335\003\n\024OrganizationSettings\022<\n\032workspace_" +
-      "sharing_disabled\030\001 \001(\010R\030workspaceSharing" +
-      "Disabled\0226\n\027default_workspace_image\030\002 \001(" +
-      "\tR\025defaultWorkspaceImage\022:\n\031allowed_work" +
-      "space_classes\030\003 \003(\tR\027allowedWorkspaceCla" +
-      "sses\0226\n\027restricted_editor_names\030\004 \003(\tR\025r" +
-      "estrictedEditorNames\022o\n\026pinned_editor_ve" +
-      "rsions\030\005 \003(\01329.gitpod.v1.OrganizationSet" +
-      "tings.PinnedEditorVersionsEntryR\024pinnedE" +
-      "ditorVersions\022!\n\014default_role\030\006 \001(\tR\013def" +
-      "aultRole\032G\n\031PinnedEditorVersionsEntry\022\020\n" +
-      "\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005value:\0028" +
-      "\001\"\220\001\n\'ListOrganizationWorkspaceClassesRe" +
-      "quest\022<\n\npagination\030\001 \001(\0132\034.gitpod.v1.Pa" +
-      "ginationRequestR\npagination\022\'\n\017organizat" +
-      "ion_id\030\002 \001(\tR\016organizationId\"\261\001\n(ListOrg" +
-      "anizationWorkspaceClassesResponse\022=\n\npag" +
-      "ination\030\001 \001(\0132\035.gitpod.v1.PaginationResp" +
-      "onseR\npagination\022F\n\021workspace_classes\030\002 " +
-      "\003(\0132\031.gitpod.v1.WorkspaceClassR\020workspac" +
-      "eClasses\"f\n\031UpdateOrganizationRequest\022\'\n" +
-      "\017organization_id\030\001 \001(\tR\016organizationId\022\027" +
-      "\n\004name\030\002 \001(\tH\000R\004name\210\001\001B\007\n\005_name\"Y\n\032Upda" +
-      "teOrganizationResponse\022;\n\014organization\030\001" +
-      " \001(\0132\027.gitpod.v1.OrganizationR\014organizat" +
-      "ion\"\322\006\n!UpdateOrganizationSettingsReques" +
-      "t\022\'\n\017organization_id\030\001 \001(\tR\016organization" +
-      "Id\022A\n\032workspace_sharing_disabled\030\003 \001(\010H\000" +
-      "R\030workspaceSharingDisabled\210\001\001\022;\n\027default" +
-      "_workspace_image\030\004 \001(\tH\001R\025defaultWorkspa" +
-      "ceImage\210\001\001\022:\n\031allowed_workspace_classes\030" +
-      "\005 \003(\tR\027allowedWorkspaceClasses\0226\n\027restri" +
-      "cted_editor_names\030\006 \003(\tR\025restrictedEdito" +
-      "rNames\022H\n\036update_restricted_editor_names" +
-      "\030\007 \001(\010H\002R\033updateRestrictedEditorNames\210\001\001" +
-      "\022|\n\026pinned_editor_versions\030\010 \003(\0132F.gitpo" +
-      "d.v1.UpdateOrganizationSettingsRequest.P" +
-      "innedEditorVersionsEntryR\024pinnedEditorVe" +
-      "rsions\022F\n\035update_pinned_editor_versions\030" +
-      "\t \001(\010H\003R\032updatePinnedEditorVersions\210\001\001\022&" +
-      "\n\014default_role\030\n \001(\tH\004R\013defaultRole\210\001\001\032G" +
-      "\n\031PinnedEditorVersionsEntry\022\020\n\003key\030\001 \001(\t" +
-      "R\003key\022\024\n\005value\030\002 \001(\tR\005value:\0028\001B\035\n\033_work" +
-      "space_sharing_disabledB\032\n\030_default_works" +
-      "pace_imageB!\n\037_update_restricted_editor_" +
-      "namesB \n\036_update_pinned_editor_versionsB" +
-      "\017\n\r_default_role\"a\n\"UpdateOrganizationSe" +
-      "ttingsResponse\022;\n\010settings\030\001 \001(\0132\037.gitpo" +
-      "d.v1.OrganizationSettingsR\010settings\"I\n\036G" +
-      "etOrganizationSettingsRequest\022\'\n\017organiz" +
-      "ation_id\030\001 \001(\tR\016organizationId\"^\n\037GetOrg" +
-      "anizationSettingsResponse\022;\n\010settings\030\001 " +
-      "\001(\0132\037.gitpod.v1.OrganizationSettingsR\010se" +
-      "ttings\"/\n\031CreateOrganizationRequest\022\022\n\004n" +
-      "ame\030\001 \001(\tR\004name\"Y\n\032CreateOrganizationRes" +
+      "/workspace.proto\032\036google/protobuf/durati" +
+      "on.proto\032\037google/protobuf/timestamp.prot" +
+      "o\"\207\001\n\014Organization\022\016\n\002id\030\001 \001(\tR\002id\022\022\n\004na" +
+      "me\030\002 \001(\tR\004name\022?\n\rcreation_time\030\003 \001(\0132\032." +
+      "google.protobuf.TimestampR\014creationTime\022" +
+      "\022\n\004slug\030\004 \001(\tR\004slug\"\243\002\n\022OrganizationMemb" +
+      "er\022\027\n\007user_id\030\001 \001(\tR\006userId\022/\n\004role\030\002 \001(" +
+      "\0162\033.gitpod.v1.OrganizationRoleR\004role\022=\n\014" +
+      "member_since\030\003 \001(\0132\032.google.protobuf.Tim" +
+      "estampR\013memberSince\022\035\n\navatar_url\030\004 \001(\tR" +
+      "\tavatarUrl\022\033\n\tfull_name\030\005 \001(\tR\010fullName\022" +
+      "\024\n\005email\030\006 \001(\tR\005email\0222\n\025owned_by_organi" +
+      "zation\030\007 \001(\010R\023ownedByOrganization\"\244\004\n\024Or" +
+      "ganizationSettings\022<\n\032workspace_sharing_" +
+      "disabled\030\001 \001(\010R\030workspaceSharingDisabled" +
+      "\0226\n\027default_workspace_image\030\002 \001(\tR\025defau" +
+      "ltWorkspaceImage\022:\n\031allowed_workspace_cl" +
+      "asses\030\003 \003(\tR\027allowedWorkspaceClasses\0226\n\027" +
+      "restricted_editor_names\030\004 \003(\tR\025restricte" +
+      "dEditorNames\022o\n\026pinned_editor_versions\030\005" +
+      " \003(\01329.gitpod.v1.OrganizationSettings.Pi" +
+      "nnedEditorVersionsEntryR\024pinnedEditorVer" +
+      "sions\022!\n\014default_role\030\006 \001(\tR\013defaultRole" +
+      "\022E\n\020timeout_settings\030\007 \001(\0132\032.gitpod.v1.T" +
+      "imeoutSettingsR\017timeoutSettings\032G\n\031Pinne" +
+      "dEditorVersionsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024" +
+      "\n\005value\030\002 \001(\tR\005value:\0028\001\"\220\001\n\'ListOrganiz" +
+      "ationWorkspaceClassesRequest\022<\n\npaginati" +
+      "on\030\001 \001(\0132\034.gitpod.v1.PaginationRequestR\n" +
+      "pagination\022\'\n\017organization_id\030\002 \001(\tR\016org" +
+      "anizationId\"\261\001\n(ListOrganizationWorkspac" +
+      "eClassesResponse\022=\n\npagination\030\001 \001(\0132\035.g" +
+      "itpod.v1.PaginationResponseR\npagination\022" +
+      "F\n\021workspace_classes\030\002 \003(\0132\031.gitpod.v1.W" +
+      "orkspaceClassR\020workspaceClasses\"f\n\031Updat" +
+      "eOrganizationRequest\022\'\n\017organization_id\030" +
+      "\001 \001(\tR\016organizationId\022\027\n\004name\030\002 \001(\tH\000R\004n" +
+      "ame\210\001\001B\007\n\005_name\"Y\n\032UpdateOrganizationRes" +
       "ponse\022;\n\014organization\030\001 \001(\0132\027.gitpod.v1." +
-      "OrganizationR\014organization\"A\n\026GetOrganiz" +
-      "ationRequest\022\'\n\017organization_id\030\001 \001(\tR\016o" +
-      "rganizationId\"V\n\027GetOrganizationResponse" +
-      "\022;\n\014organization\030\001 \001(\0132\027.gitpod.v1.Organ" +
-      "izationR\014organization\"\332\001\n\030ListOrganizati" +
-      "onsRequest\022<\n\npagination\030\001 \001(\0132\034.gitpod." +
-      "v1.PaginationRequestR\npagination\022?\n\005scop" +
-      "e\030\002 \001(\0162).gitpod.v1.ListOrganizationsReq" +
-      "uest.ScopeR\005scope\"?\n\005Scope\022\025\n\021SCOPE_UNSP" +
-      "ECIFIED\020\000\022\020\n\014SCOPE_MEMBER\020\001\022\r\n\tSCOPE_ALL" +
-      "\020\002\"\231\001\n\031ListOrganizationsResponse\022=\n\rorga" +
-      "nizations\030\001 \003(\0132\027.gitpod.v1.Organization" +
-      "R\rorganizations\022=\n\npagination\030\002 \001(\0132\035.gi" +
-      "tpod.v1.PaginationResponseR\npagination\"D" +
-      "\n\031DeleteOrganizationRequest\022\'\n\017organizat" +
-      "ion_id\030\001 \001(\tR\016organizationId\"\034\n\032DeleteOr" +
-      "ganizationResponse\"K\n GetOrganizationInv" +
-      "itationRequest\022\'\n\017organization_id\030\001 \001(\tR" +
-      "\016organizationId\"H\n!GetOrganizationInvita" +
-      "tionResponse\022#\n\rinvitation_id\030\001 \001(\tR\014inv" +
-      "itationId\">\n\027JoinOrganizationRequest\022#\n\r" +
-      "invitation_id\030\001 \001(\tR\014invitationId\"C\n\030Joi" +
-      "nOrganizationResponse\022\'\n\017organization_id" +
-      "\030\001 \001(\tR\016organizationId\"M\n\"ResetOrganizat" +
-      "ionInvitationRequest\022\'\n\017organization_id\030" +
-      "\001 \001(\tR\016organizationId\"J\n#ResetOrganizati" +
-      "onInvitationResponse\022#\n\rinvitation_id\030\001 " +
-      "\001(\tR\014invitationId\"\207\001\n\036ListOrganizationMe" +
-      "mbersRequest\022\'\n\017organization_id\030\001 \001(\tR\016o" +
-      "rganizationId\022<\n\npagination\030\002 \001(\0132\034.gitp" +
-      "od.v1.PaginationRequestR\npagination\"\231\001\n\037" +
-      "ListOrganizationMembersResponse\0227\n\007membe" +
-      "rs\030\001 \003(\0132\035.gitpod.v1.OrganizationMemberR" +
-      "\007members\022=\n\npagination\030\002 \001(\0132\035.gitpod.v1" +
-      ".PaginationResponseR\npagination\"\242\001\n\037Upda" +
-      "teOrganizationMemberRequest\022\'\n\017organizat" +
-      "ion_id\030\001 \001(\tR\016organizationId\022\027\n\007user_id\030" +
-      "\002 \001(\tR\006userId\0224\n\004role\030\003 \001(\0162\033.gitpod.v1." +
-      "OrganizationRoleH\000R\004role\210\001\001B\007\n\005_role\"Y\n " +
-      "UpdateOrganizationMemberResponse\0225\n\006memb" +
-      "er\030\001 \001(\0132\035.gitpod.v1.OrganizationMemberR" +
-      "\006member\"c\n\037DeleteOrganizationMemberReque" +
+      "OrganizationR\014organization\"\252\001\n\017TimeoutSe" +
+      "ttings\022>\n\ninactivity\030\001 \001(\0132\031.google.prot" +
+      "obuf.DurationH\000R\ninactivity\210\001\001\0221\n\022deny_u" +
+      "ser_timeouts\030\002 \001(\010H\001R\020denyUserTimeouts\210\001" +
+      "\001B\r\n\013_inactivityB\025\n\023_deny_user_timeouts\"" +
+      "\263\007\n!UpdateOrganizationSettingsRequest\022\'\n" +
+      "\017organization_id\030\001 \001(\tR\016organizationId\022A" +
+      "\n\032workspace_sharing_disabled\030\003 \001(\010H\000R\030wo" +
+      "rkspaceSharingDisabled\210\001\001\022;\n\027default_wor" +
+      "kspace_image\030\004 \001(\tH\001R\025defaultWorkspaceIm" +
+      "age\210\001\001\022:\n\031allowed_workspace_classes\030\005 \003(" +
+      "\tR\027allowedWorkspaceClasses\0226\n\027restricted" +
+      "_editor_names\030\006 \003(\tR\025restrictedEditorNam" +
+      "es\022H\n\036update_restricted_editor_names\030\007 \001" +
+      "(\010H\002R\033updateRestrictedEditorNames\210\001\001\022|\n\026" +
+      "pinned_editor_versions\030\010 \003(\0132F.gitpod.v1" +
+      ".UpdateOrganizationSettingsRequest.Pinne" +
+      "dEditorVersionsEntryR\024pinnedEditorVersio" +
+      "ns\022F\n\035update_pinned_editor_versions\030\t \001(" +
+      "\010H\003R\032updatePinnedEditorVersions\210\001\001\022&\n\014de" +
+      "fault_role\030\n \001(\tH\004R\013defaultRole\210\001\001\022J\n\020ti" +
+      "meout_settings\030\013 \001(\0132\032.gitpod.v1.Timeout" +
+      "SettingsH\005R\017timeoutSettings\210\001\001\032G\n\031Pinned" +
+      "EditorVersionsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n" +
+      "\005value\030\002 \001(\tR\005value:\0028\001B\035\n\033_workspace_sh" +
+      "aring_disabledB\032\n\030_default_workspace_ima" +
+      "geB!\n\037_update_restricted_editor_namesB \n" +
+      "\036_update_pinned_editor_versionsB\017\n\r_defa" +
+      "ult_roleB\023\n\021_timeout_settings\"a\n\"UpdateO" +
+      "rganizationSettingsResponse\022;\n\010settings\030" +
+      "\001 \001(\0132\037.gitpod.v1.OrganizationSettingsR\010" +
+      "settings\"I\n\036GetOrganizationSettingsReque" +
       "st\022\'\n\017organization_id\030\001 \001(\tR\016organizatio" +
-      "nId\022\027\n\007user_id\030\002 \001(\tR\006userId\"\"\n DeleteOr" +
-      "ganizationMemberResponse*\224\001\n\020Organizatio" +
-      "nRole\022!\n\035ORGANIZATION_ROLE_UNSPECIFIED\020\000" +
-      "\022\033\n\027ORGANIZATION_ROLE_OWNER\020\001\022\034\n\030ORGANIZ" +
-      "ATION_ROLE_MEMBER\020\002\022\"\n\036ORGANIZATION_ROLE" +
-      "_COLLABORATOR\020\0032\276\014\n\023OrganizationService\022" +
-      "c\n\022CreateOrganization\022$.gitpod.v1.Create" +
-      "OrganizationRequest\032%.gitpod.v1.CreateOr" +
-      "ganizationResponse\"\000\022Z\n\017GetOrganization\022" +
-      "!.gitpod.v1.GetOrganizationRequest\032\".git" +
-      "pod.v1.GetOrganizationResponse\"\000\022c\n\022Upda" +
-      "teOrganization\022$.gitpod.v1.UpdateOrganiz" +
-      "ationRequest\032%.gitpod.v1.UpdateOrganizat" +
-      "ionResponse\"\000\022`\n\021ListOrganizations\022#.git" +
-      "pod.v1.ListOrganizationsRequest\032$.gitpod" +
-      ".v1.ListOrganizationsResponse\"\000\022c\n\022Delet" +
-      "eOrganization\022$.gitpod.v1.DeleteOrganiza" +
-      "tionRequest\032%.gitpod.v1.DeleteOrganizati" +
-      "onResponse\"\000\022x\n\031GetOrganizationInvitatio" +
-      "n\022+.gitpod.v1.GetOrganizationInvitationR" +
-      "equest\032,.gitpod.v1.GetOrganizationInvita" +
-      "tionResponse\"\000\022]\n\020JoinOrganization\022\".git" +
-      "pod.v1.JoinOrganizationRequest\032#.gitpod." +
-      "v1.JoinOrganizationResponse\"\000\022~\n\033ResetOr" +
-      "ganizationInvitation\022-.gitpod.v1.ResetOr" +
-      "ganizationInvitationRequest\032..gitpod.v1." +
-      "ResetOrganizationInvitationResponse\"\000\022r\n" +
-      "\027ListOrganizationMembers\022).gitpod.v1.Lis" +
-      "tOrganizationMembersRequest\032*.gitpod.v1." +
-      "ListOrganizationMembersResponse\"\000\022u\n\030Upd" +
-      "ateOrganizationMember\022*.gitpod.v1.Update" +
-      "OrganizationMemberRequest\032+.gitpod.v1.Up" +
-      "dateOrganizationMemberResponse\"\000\022u\n\030Dele" +
-      "teOrganizationMember\022*.gitpod.v1.DeleteO" +
-      "rganizationMemberRequest\032+.gitpod.v1.Del" +
-      "eteOrganizationMemberResponse\"\000\022r\n\027GetOr" +
-      "ganizationSettings\022).gitpod.v1.GetOrgani" +
-      "zationSettingsRequest\032*.gitpod.v1.GetOrg" +
-      "anizationSettingsResponse\"\000\022{\n\032UpdateOrg" +
-      "anizationSettings\022,.gitpod.v1.UpdateOrga" +
-      "nizationSettingsRequest\032-.gitpod.v1.Upda" +
-      "teOrganizationSettingsResponse\"\000\022\215\001\n Lis" +
-      "tOrganizationWorkspaceClasses\0222.gitpod.v" +
-      "1.ListOrganizationWorkspaceClassesReques" +
-      "t\0323.gitpod.v1.ListOrganizationWorkspaceC" +
-      "lassesResponse\"\000BQ\n\026io.gitpod.publicapi." +
-      "v1Z7github.com/gitpod-io/gitpod/componen" +
-      "ts/public-api/go/v1b\006proto3"
+      "nId\"^\n\037GetOrganizationSettingsResponse\022;" +
+      "\n\010settings\030\001 \001(\0132\037.gitpod.v1.Organizatio" +
+      "nSettingsR\010settings\"/\n\031CreateOrganizatio" +
+      "nRequest\022\022\n\004name\030\001 \001(\tR\004name\"Y\n\032CreateOr" +
+      "ganizationResponse\022;\n\014organization\030\001 \001(\013" +
+      "2\027.gitpod.v1.OrganizationR\014organization\"" +
+      "A\n\026GetOrganizationRequest\022\'\n\017organizatio" +
+      "n_id\030\001 \001(\tR\016organizationId\"V\n\027GetOrganiz" +
+      "ationResponse\022;\n\014organization\030\001 \001(\0132\027.gi" +
+      "tpod.v1.OrganizationR\014organization\"\332\001\n\030L" +
+      "istOrganizationsRequest\022<\n\npagination\030\001 " +
+      "\001(\0132\034.gitpod.v1.PaginationRequestR\npagin" +
+      "ation\022?\n\005scope\030\002 \001(\0162).gitpod.v1.ListOrg" +
+      "anizationsRequest.ScopeR\005scope\"?\n\005Scope\022" +
+      "\025\n\021SCOPE_UNSPECIFIED\020\000\022\020\n\014SCOPE_MEMBER\020\001" +
+      "\022\r\n\tSCOPE_ALL\020\002\"\231\001\n\031ListOrganizationsRes" +
+      "ponse\022=\n\rorganizations\030\001 \003(\0132\027.gitpod.v1" +
+      ".OrganizationR\rorganizations\022=\n\npaginati" +
+      "on\030\002 \001(\0132\035.gitpod.v1.PaginationResponseR" +
+      "\npagination\"D\n\031DeleteOrganizationRequest" +
+      "\022\'\n\017organization_id\030\001 \001(\tR\016organizationI" +
+      "d\"\034\n\032DeleteOrganizationResponse\"K\n GetOr" +
+      "ganizationInvitationRequest\022\'\n\017organizat" +
+      "ion_id\030\001 \001(\tR\016organizationId\"H\n!GetOrgan" +
+      "izationInvitationResponse\022#\n\rinvitation_" +
+      "id\030\001 \001(\tR\014invitationId\">\n\027JoinOrganizati" +
+      "onRequest\022#\n\rinvitation_id\030\001 \001(\tR\014invita" +
+      "tionId\"C\n\030JoinOrganizationResponse\022\'\n\017or" +
+      "ganization_id\030\001 \001(\tR\016organizationId\"M\n\"R" +
+      "esetOrganizationInvitationRequest\022\'\n\017org" +
+      "anization_id\030\001 \001(\tR\016organizationId\"J\n#Re" +
+      "setOrganizationInvitationResponse\022#\n\rinv" +
+      "itation_id\030\001 \001(\tR\014invitationId\"\207\001\n\036ListO" +
+      "rganizationMembersRequest\022\'\n\017organizatio" +
+      "n_id\030\001 \001(\tR\016organizationId\022<\n\npagination" +
+      "\030\002 \001(\0132\034.gitpod.v1.PaginationRequestR\npa" +
+      "gination\"\231\001\n\037ListOrganizationMembersResp" +
+      "onse\0227\n\007members\030\001 \003(\0132\035.gitpod.v1.Organi" +
+      "zationMemberR\007members\022=\n\npagination\030\002 \001(" +
+      "\0132\035.gitpod.v1.PaginationResponseR\npagina" +
+      "tion\"\242\001\n\037UpdateOrganizationMemberRequest" +
+      "\022\'\n\017organization_id\030\001 \001(\tR\016organizationI" +
+      "d\022\027\n\007user_id\030\002 \001(\tR\006userId\0224\n\004role\030\003 \001(\016" +
+      "2\033.gitpod.v1.OrganizationRoleH\000R\004role\210\001\001" +
+      "B\007\n\005_role\"Y\n UpdateOrganizationMemberRes" +
+      "ponse\0225\n\006member\030\001 \001(\0132\035.gitpod.v1.Organi" +
+      "zationMemberR\006member\"c\n\037DeleteOrganizati" +
+      "onMemberRequest\022\'\n\017organization_id\030\001 \001(\t" +
+      "R\016organizationId\022\027\n\007user_id\030\002 \001(\tR\006userI" +
+      "d\"\"\n DeleteOrganizationMemberResponse*\224\001" +
+      "\n\020OrganizationRole\022!\n\035ORGANIZATION_ROLE_" +
+      "UNSPECIFIED\020\000\022\033\n\027ORGANIZATION_ROLE_OWNER" +
+      "\020\001\022\034\n\030ORGANIZATION_ROLE_MEMBER\020\002\022\"\n\036ORGA" +
+      "NIZATION_ROLE_COLLABORATOR\020\0032\276\014\n\023Organiz" +
+      "ationService\022c\n\022CreateOrganization\022$.git" +
+      "pod.v1.CreateOrganizationRequest\032%.gitpo" +
+      "d.v1.CreateOrganizationResponse\"\000\022Z\n\017Get" +
+      "Organization\022!.gitpod.v1.GetOrganization" +
+      "Request\032\".gitpod.v1.GetOrganizationRespo" +
+      "nse\"\000\022c\n\022UpdateOrganization\022$.gitpod.v1." +
+      "UpdateOrganizationRequest\032%.gitpod.v1.Up" +
+      "dateOrganizationResponse\"\000\022`\n\021ListOrgani" +
+      "zations\022#.gitpod.v1.ListOrganizationsReq" +
+      "uest\032$.gitpod.v1.ListOrganizationsRespon" +
+      "se\"\000\022c\n\022DeleteOrganization\022$.gitpod.v1.D" +
+      "eleteOrganizationRequest\032%.gitpod.v1.Del" +
+      "eteOrganizationResponse\"\000\022x\n\031GetOrganiza" +
+      "tionInvitation\022+.gitpod.v1.GetOrganizati" +
+      "onInvitationRequest\032,.gitpod.v1.GetOrgan" +
+      "izationInvitationResponse\"\000\022]\n\020JoinOrgan" +
+      "ization\022\".gitpod.v1.JoinOrganizationRequ" +
+      "est\032#.gitpod.v1.JoinOrganizationResponse" +
+      "\"\000\022~\n\033ResetOrganizationInvitation\022-.gitp" +
+      "od.v1.ResetOrganizationInvitationRequest" +
+      "\032..gitpod.v1.ResetOrganizationInvitation" +
+      "Response\"\000\022r\n\027ListOrganizationMembers\022)." +
+      "gitpod.v1.ListOrganizationMembersRequest" +
+      "\032*.gitpod.v1.ListOrganizationMembersResp" +
+      "onse\"\000\022u\n\030UpdateOrganizationMember\022*.git" +
+      "pod.v1.UpdateOrganizationMemberRequest\032+" +
+      ".gitpod.v1.UpdateOrganizationMemberRespo" +
+      "nse\"\000\022u\n\030DeleteOrganizationMember\022*.gitp" +
+      "od.v1.DeleteOrganizationMemberRequest\032+." +
+      "gitpod.v1.DeleteOrganizationMemberRespon" +
+      "se\"\000\022r\n\027GetOrganizationSettings\022).gitpod" +
+      ".v1.GetOrganizationSettingsRequest\032*.git" +
+      "pod.v1.GetOrganizationSettingsResponse\"\000" +
+      "\022{\n\032UpdateOrganizationSettings\022,.gitpod." +
+      "v1.UpdateOrganizationSettingsRequest\032-.g" +
+      "itpod.v1.UpdateOrganizationSettingsRespo" +
+      "nse\"\000\022\215\001\n ListOrganizationWorkspaceClass" +
+      "es\0222.gitpod.v1.ListOrganizationWorkspace" +
+      "ClassesRequest\0323.gitpod.v1.ListOrganizat" +
+      "ionWorkspaceClassesResponse\"\000BQ\n\026io.gitp" +
+      "od.publicapi.v1Z7github.com/gitpod-io/gi" +
+      "tpod/components/public-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
           io.gitpod.publicapi.v1.Pagination.getDescriptor(),
           io.gitpod.publicapi.v1.WorkspaceOuterClass.getDescriptor(),
+          com.google.protobuf.DurationProto.getDescriptor(),
           com.google.protobuf.TimestampProto.getDescriptor(),
         });
     internal_static_gitpod_v1_Organization_descriptor =
@@ -24674,7 +25924,7 @@ java.lang.String defaultValue) {
     internal_static_gitpod_v1_OrganizationSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_OrganizationSettings_descriptor,
-        new java.lang.String[] { "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "PinnedEditorVersions", "DefaultRole", });
+        new java.lang.String[] { "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "PinnedEditorVersions", "DefaultRole", "TimeoutSettings", });
     internal_static_gitpod_v1_OrganizationSettings_PinnedEditorVersionsEntry_descriptor =
       internal_static_gitpod_v1_OrganizationSettings_descriptor.getNestedTypes().get(0);
     internal_static_gitpod_v1_OrganizationSettings_PinnedEditorVersionsEntry_fieldAccessorTable = new
@@ -24705,12 +25955,18 @@ java.lang.String defaultValue) {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationResponse_descriptor,
         new java.lang.String[] { "Organization", });
-    internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor =
+    internal_static_gitpod_v1_TimeoutSettings_descriptor =
       getDescriptor().getMessageTypes().get(7);
+    internal_static_gitpod_v1_TimeoutSettings_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_TimeoutSettings_descriptor,
+        new java.lang.String[] { "Inactivity", "DenyUserTimeouts", });
+    internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor =
+      getDescriptor().getMessageTypes().get(8);
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor,
-        new java.lang.String[] { "OrganizationId", "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "UpdateRestrictedEditorNames", "PinnedEditorVersions", "UpdatePinnedEditorVersions", "DefaultRole", });
+        new java.lang.String[] { "OrganizationId", "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "UpdateRestrictedEditorNames", "PinnedEditorVersions", "UpdatePinnedEditorVersions", "DefaultRole", "TimeoutSettings", });
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_descriptor =
       internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor.getNestedTypes().get(0);
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_fieldAccessorTable = new
@@ -24718,139 +25974,139 @@ java.lang.String defaultValue) {
         internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_gitpod_v1_UpdateOrganizationSettingsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_gitpod_v1_UpdateOrganizationSettingsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationSettingsResponse_descriptor,
         new java.lang.String[] { "Settings", });
     internal_static_gitpod_v1_GetOrganizationSettingsRequest_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_gitpod_v1_GetOrganizationSettingsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationSettingsRequest_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_GetOrganizationSettingsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_gitpod_v1_GetOrganizationSettingsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationSettingsResponse_descriptor,
         new java.lang.String[] { "Settings", });
     internal_static_gitpod_v1_CreateOrganizationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_gitpod_v1_CreateOrganizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_CreateOrganizationRequest_descriptor,
         new java.lang.String[] { "Name", });
     internal_static_gitpod_v1_CreateOrganizationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_gitpod_v1_CreateOrganizationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_CreateOrganizationResponse_descriptor,
         new java.lang.String[] { "Organization", });
     internal_static_gitpod_v1_GetOrganizationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(13);
+      getDescriptor().getMessageTypes().get(14);
     internal_static_gitpod_v1_GetOrganizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationRequest_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_GetOrganizationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(14);
+      getDescriptor().getMessageTypes().get(15);
     internal_static_gitpod_v1_GetOrganizationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationResponse_descriptor,
         new java.lang.String[] { "Organization", });
     internal_static_gitpod_v1_ListOrganizationsRequest_descriptor =
-      getDescriptor().getMessageTypes().get(15);
+      getDescriptor().getMessageTypes().get(16);
     internal_static_gitpod_v1_ListOrganizationsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListOrganizationsRequest_descriptor,
         new java.lang.String[] { "Pagination", "Scope", });
     internal_static_gitpod_v1_ListOrganizationsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(16);
+      getDescriptor().getMessageTypes().get(17);
     internal_static_gitpod_v1_ListOrganizationsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListOrganizationsResponse_descriptor,
         new java.lang.String[] { "Organizations", "Pagination", });
     internal_static_gitpod_v1_DeleteOrganizationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(17);
+      getDescriptor().getMessageTypes().get(18);
     internal_static_gitpod_v1_DeleteOrganizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteOrganizationRequest_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_DeleteOrganizationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(18);
+      getDescriptor().getMessageTypes().get(19);
     internal_static_gitpod_v1_DeleteOrganizationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteOrganizationResponse_descriptor,
         new java.lang.String[] { });
     internal_static_gitpod_v1_GetOrganizationInvitationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(19);
+      getDescriptor().getMessageTypes().get(20);
     internal_static_gitpod_v1_GetOrganizationInvitationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationInvitationRequest_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_GetOrganizationInvitationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(20);
+      getDescriptor().getMessageTypes().get(21);
     internal_static_gitpod_v1_GetOrganizationInvitationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationInvitationResponse_descriptor,
         new java.lang.String[] { "InvitationId", });
     internal_static_gitpod_v1_JoinOrganizationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(21);
+      getDescriptor().getMessageTypes().get(22);
     internal_static_gitpod_v1_JoinOrganizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_JoinOrganizationRequest_descriptor,
         new java.lang.String[] { "InvitationId", });
     internal_static_gitpod_v1_JoinOrganizationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(22);
+      getDescriptor().getMessageTypes().get(23);
     internal_static_gitpod_v1_JoinOrganizationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_JoinOrganizationResponse_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_ResetOrganizationInvitationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(23);
+      getDescriptor().getMessageTypes().get(24);
     internal_static_gitpod_v1_ResetOrganizationInvitationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ResetOrganizationInvitationRequest_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_ResetOrganizationInvitationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(24);
+      getDescriptor().getMessageTypes().get(25);
     internal_static_gitpod_v1_ResetOrganizationInvitationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ResetOrganizationInvitationResponse_descriptor,
         new java.lang.String[] { "InvitationId", });
     internal_static_gitpod_v1_ListOrganizationMembersRequest_descriptor =
-      getDescriptor().getMessageTypes().get(25);
+      getDescriptor().getMessageTypes().get(26);
     internal_static_gitpod_v1_ListOrganizationMembersRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListOrganizationMembersRequest_descriptor,
         new java.lang.String[] { "OrganizationId", "Pagination", });
     internal_static_gitpod_v1_ListOrganizationMembersResponse_descriptor =
-      getDescriptor().getMessageTypes().get(26);
+      getDescriptor().getMessageTypes().get(27);
     internal_static_gitpod_v1_ListOrganizationMembersResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListOrganizationMembersResponse_descriptor,
         new java.lang.String[] { "Members", "Pagination", });
     internal_static_gitpod_v1_UpdateOrganizationMemberRequest_descriptor =
-      getDescriptor().getMessageTypes().get(27);
+      getDescriptor().getMessageTypes().get(28);
     internal_static_gitpod_v1_UpdateOrganizationMemberRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationMemberRequest_descriptor,
         new java.lang.String[] { "OrganizationId", "UserId", "Role", });
     internal_static_gitpod_v1_UpdateOrganizationMemberResponse_descriptor =
-      getDescriptor().getMessageTypes().get(28);
+      getDescriptor().getMessageTypes().get(29);
     internal_static_gitpod_v1_UpdateOrganizationMemberResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationMemberResponse_descriptor,
         new java.lang.String[] { "Member", });
     internal_static_gitpod_v1_DeleteOrganizationMemberRequest_descriptor =
-      getDescriptor().getMessageTypes().get(29);
+      getDescriptor().getMessageTypes().get(30);
     internal_static_gitpod_v1_DeleteOrganizationMemberRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteOrganizationMemberRequest_descriptor,
         new java.lang.String[] { "OrganizationId", "UserId", });
     internal_static_gitpod_v1_DeleteOrganizationMemberResponse_descriptor =
-      getDescriptor().getMessageTypes().get(30);
+      getDescriptor().getMessageTypes().get(31);
     internal_static_gitpod_v1_DeleteOrganizationMemberResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteOrganizationMemberResponse_descriptor,
@@ -24858,6 +26114,7 @@ java.lang.String defaultValue) {
     descriptor.resolveAllFeaturesImmutable();
     io.gitpod.publicapi.v1.Pagination.getDescriptor();
     io.gitpod.publicapi.v1.WorkspaceOuterClass.getDescriptor();
+    com.google.protobuf.DurationProto.getDescriptor();
     com.google.protobuf.TimestampProto.getDescriptor();
   }
 

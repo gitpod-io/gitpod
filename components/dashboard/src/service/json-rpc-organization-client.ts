@@ -254,6 +254,10 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         await getGitpodService().server.updateOrgSettings(request.organizationId, {
             ...update,
             defaultRole: request.defaultRole as OrgMemberRole,
+            timeoutSettings: {
+                inactivity: converter.toDurationString(request.timeoutSettings?.inactivity),
+                denyUserTimeouts: request.timeoutSettings?.denyUserTimeouts,
+            },
         });
         return new UpdateOrganizationSettingsResponse();
     }

@@ -1046,6 +1046,12 @@ export class PublicAPIConverter {
             pinnedEditorVersions: settings.pinnedEditorVersions || {},
             restrictedEditorNames: settings.restrictedEditorNames || [],
             defaultRole: settings.defaultRole || undefined,
+            timeoutSettings: {
+                inactivity: settings.timeoutSettings?.inactivity
+                    ? this.toDuration(settings.timeoutSettings?.inactivity)
+                    : undefined,
+                denyUserTimeouts: settings.timeoutSettings?.denyUserTimeouts,
+            },
         });
     }
 

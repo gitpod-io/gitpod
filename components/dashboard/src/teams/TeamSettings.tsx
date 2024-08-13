@@ -30,17 +30,22 @@ import { useInstallationDefaultWorkspaceImageQuery } from "../data/installation/
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
 import { useDocumentTitle } from "../hooks/use-document-title";
+import { PlainMessage } from "@bufbuild/protobuf";
+import { useToast } from "../components/toasts/Toasts";
 
 export default function TeamSettingsPage() {
     useDocumentTitle("Organization Settings - General");
+    const { toast } = useToast();
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
     const isOwner = useIsOwner();
     const invalidateOrgs = useOrganizationsInvalidator();
+
     const [modal, setModal] = useState(false);
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
     const [teamName, setTeamName] = useState(org?.name || "");
     const [updated, setUpdated] = useState(false);
+
     const updateOrg = useUpdateOrgMutation();
 
     const close = () => setModal(false);
@@ -93,7 +98,7 @@ export default function TeamSettingsPage() {
     const [showImageEditModal, setShowImageEditModal] = useState(false);
 
     const handleUpdateTeamSettings = useCallback(
-        async (newSettings: Partial<OrganizationSettings>, options?: { throwMutateError?: boolean }) => {
+        async (newSettings: Partial<PlainMessage<OrganizationSettings>>, options?: { throwMutateError?: boolean }) => {
             if (!org?.id) {
                 throw new Error("no organization selected");
             }
@@ -105,14 +110,16 @@ export default function TeamSettingsPage() {
                     ...settings,
                     ...newSettings,
                 });
+                toast("Organization settings updated");
             } catch (error) {
                 if (options?.throwMutateError) {
                     throw error;
                 }
+                toast(`Failed to update organization settings: ${error.message}`);
                 console.error(error);
             }
         },
-        [updateTeamSettings, org?.id, isOwner, settings],
+        [updateTeamSettings, org?.id, isOwner, settings, toast],
     );
 
     return (

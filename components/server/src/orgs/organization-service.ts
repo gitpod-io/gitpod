@@ -12,6 +12,7 @@ import {
     OrganizationSettings,
     TeamMemberRole,
     TeamMembershipInvite,
+    WorkspaceTimeoutDuration,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -471,9 +472,19 @@ export class OrganizationService {
                 await this.ideService.checkEditorsAllowed(userId, settings.restrictedEditorNames);
             }
         }
+
         if (settings.defaultRole && !TeamMemberRole.isValid(settings.defaultRole)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid default role");
         }
+
+        if (settings.timeoutSettings?.inactivity) {
+            try {
+                WorkspaceTimeoutDuration.validate(settings.timeoutSettings.inactivity);
+            } catch (error) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid inactivity timeout: ${error.message}`);
+            }
+        }
+
         return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
     }
 
@@ -496,6 +507,12 @@ export class OrganizationService {
         }
         if (settings.defaultRole) {
             result.defaultRole = settings.defaultRole;
+        }
+        if (settings.timeoutSettings) {
+            result.timeoutSettings = {
+                denyUserTimeouts: settings.timeoutSettings?.denyUserTimeouts,
+                inactivity: settings.timeoutSettings?.inactivity,
+            };
         }
         return result;
     }

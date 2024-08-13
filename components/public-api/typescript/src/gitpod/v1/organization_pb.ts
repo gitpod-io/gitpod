@@ -10,7 +10,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
+import { Duration, Message, proto3, Timestamp } from "@bufbuild/protobuf";
 import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
 import { WorkspaceClass } from "./workspace_pb.js";
 
@@ -208,6 +208,11 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
    */
   defaultRole = "";
 
+  /**
+   * @generated from field: gitpod.v1.TimeoutSettings timeout_settings = 7;
+   */
+  timeoutSettings?: TimeoutSettings;
+
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -222,6 +227,7 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
     { no: 4, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 5, name: "pinned_editor_versions", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
     { no: 6, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "timeout_settings", kind: "message", T: TimeoutSettings },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {
@@ -416,6 +422,53 @@ export class UpdateOrganizationResponse extends Message<UpdateOrganizationRespon
 }
 
 /**
+ * @generated from message gitpod.v1.TimeoutSettings
+ */
+export class TimeoutSettings extends Message<TimeoutSettings> {
+  /**
+   * inactivity is the duration of inactivity after which a workspace is stopped
+   *
+   * @generated from field: optional google.protobuf.Duration inactivity = 1;
+   */
+  inactivity?: Duration;
+
+  /**
+   * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+   *
+   * @generated from field: optional bool deny_user_timeouts = 2;
+   */
+  denyUserTimeouts?: boolean;
+
+  constructor(data?: PartialMessage<TimeoutSettings>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.TimeoutSettings";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "inactivity", kind: "message", T: Duration, opt: true },
+    { no: 2, name: "deny_user_timeouts", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TimeoutSettings {
+    return new TimeoutSettings().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TimeoutSettings {
+    return new TimeoutSettings().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TimeoutSettings {
+    return new TimeoutSettings().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: TimeoutSettings | PlainMessage<TimeoutSettings> | undefined, b: TimeoutSettings | PlainMessage<TimeoutSettings> | undefined): boolean {
+    return proto3.util.equals(TimeoutSettings, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.UpdateOrganizationSettingsRequest
  */
 export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizationSettingsRequest> {
@@ -486,6 +539,13 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
    */
   defaultRole?: string;
 
+  /**
+   * timeout_settings are the settings for workspace timeouts
+   *
+   * @generated from field: optional gitpod.v1.TimeoutSettings timeout_settings = 11;
+   */
+  timeoutSettings?: TimeoutSettings;
+
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -503,6 +563,7 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
     { no: 8, name: "pinned_editor_versions", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
     { no: 9, name: "update_pinned_editor_versions", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 10, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 11, name: "timeout_settings", kind: "message", T: TimeoutSettings, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {
