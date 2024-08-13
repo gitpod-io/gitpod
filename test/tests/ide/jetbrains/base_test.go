@@ -264,9 +264,9 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, op
 			t.Fatal("idea.log file not found in the expected location")
 		}
 
-		pluginLoadedRegex := regexp.MustCompile(`Loaded custom plugins:.* Gitpod Remote`)
+		pluginLoadedRegex := regexp.MustCompile(`Loaded custom plugins:.* (Gitpod Remote|gitpod-remote)`)
 		pluginStartedRegex := regexp.MustCompile(`Gitpod gateway link`)
-		pluginIncompatibleRegex := regexp.MustCompile(`Plugin 'Gitpod Remote' .* is not compatible`)
+		pluginIncompatibleRegex := regexp.MustCompile(`Plugin '(Gitpod Remote|gitpod-remote)' .* is not compatible`)
 
 		ideaLogs := []byte(resp.Stdout)
 		if pluginLoadedRegex.Match(ideaLogs) {

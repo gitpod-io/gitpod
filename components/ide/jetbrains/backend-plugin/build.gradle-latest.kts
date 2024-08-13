@@ -96,7 +96,7 @@ dependencies {
 // Read more: https://github.com/JetBrains/gradle-intellij-plugin
 intellijPlatform {
     pluginConfiguration {
-        name = properties("pluginName")
+        name = properties("latestPluginName")
         version = pluginVersion
         ideaVersion {
             sinceBuild = properties("pluginSinceBuild")

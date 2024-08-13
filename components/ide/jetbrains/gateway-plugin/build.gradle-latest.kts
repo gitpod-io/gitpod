@@ -83,7 +83,7 @@ dependencies {
 intellijPlatform {
     pluginConfiguration {
         id = properties("pluginId")
-        name = properties("pluginName")
+        name = properties("latestPluginName")
         version = pluginVersion
 
         description = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
