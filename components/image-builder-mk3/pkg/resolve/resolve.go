@@ -32,6 +32,14 @@ var (
 
 	// ErrNotFound is returned when we're not authorized to return the reference
 	ErrUnauthorized = xerrors.Errorf("not authorized")
+
+	// TooManyRequestsMatcher returns true if an error is a code 429 "Too Many Requests" error
+	TooManyRequestsMatcher = func(err error) bool {
+		if err == nil {
+			return false
+		}
+		return strings.Contains(err.Error(), "429 Too Many Requests")
+	}
 )
 
 // StandaloneRefResolver can resolve image references without a Docker daemon
