@@ -555,6 +555,6 @@ leeway run components:add-smith-token \
 
 log_success "Installation is happy: https://${DOMAIN}/workspaces"
 
-leeway run dev/preview:deploy-monitoring-satellite
+# leeway run dev/preview:deploy-monitoring-satellite
 
 log_success "Installation is still happy: https://${DOMAIN}/workspaces"
