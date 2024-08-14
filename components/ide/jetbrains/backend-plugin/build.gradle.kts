@@ -105,6 +105,22 @@ intellijPlatform {
     }
     instrumentCode = false
 
+
+    publishing {
+        token = providers.environmentVariable("JB_MARKETPLACE_PUBLISH_TOKEN").getOrElse("")
+        var pluginChannels = providers.environmentVariable("JB_GATEWAY_GITPOD_PLUGIN_CHANNEL").getOrElse("")
+        if (pluginChannels.isBlank()) {
+            pluginChannels = if (pluginVersion.contains("-main-gha.")) {
+                "Stable"
+            } else {
+                "Dev"
+            }
+        }
+        // TODO(hw):
+        pluginChannels = "Dev"
+        channels = listOf(pluginChannels)
+    }
+
 }
 
 // Configure detekt plugin.
@@ -155,6 +171,16 @@ tasks {
         // Read more: https://youtrack.jetbrains.com/issue/IDEA-278926/All-inheritors-of-UsefulTestCase-are-invisible-for-Gradle#focus=Comments-27-5561012.0-0
         isScanForTestClasses = false
         include("**/*Test.class")
+    }
+
+    register("buildFromLeeway") {
+        if ("true" == System.getenv("DO_PUBLISH")) {
+            print("publishing $pluginVersion...")
+            dependsOn("publishPlugin")
+        } else {
+            print("building $pluginVersion...")
+            dependsOn("buildPlugin")
+        }
     }
 }
 

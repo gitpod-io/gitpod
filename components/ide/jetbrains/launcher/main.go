@@ -1091,12 +1091,14 @@ func unzipArchive(src, dest string) error {
 func installPlugins(config *gitpod.GitpodConfig, launchCtx *LaunchContext) error {
 	plugins, err := getPlugins(config, launchCtx.alias)
 	if err != nil {
-		return err
+		log.WithError(err).Error("failed to get plugins from .gitpod.yml")
+		plugins = []string{}
 	}
+	// Install Gitpod backend plugin
+	plugins = append(plugins, "io.gitpod.jetbrains.remote")
 	if len(plugins) <= 0 {
 		return nil
 	}
-
 	var args []string
 	args = append(args, "installPlugins")
 	args = append(args, launchCtx.projectContextDir)

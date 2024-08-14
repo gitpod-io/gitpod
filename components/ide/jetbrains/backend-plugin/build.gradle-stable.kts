@@ -135,6 +135,34 @@ tasks {
         version.set(pluginVersion)
     }
 
+    publishPlugin {
+        token.set(System.getenv("JB_MARKETPLACE_PUBLISH_TOKEN"))
+        // pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
+        // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
+        // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
+        var pluginChannel: String? = System.getenv("JB_GATEWAY_GITPOD_PLUGIN_CHANNEL")
+        if (pluginChannel.isNullOrBlank()) {
+            pluginChannel = if (pluginVersion.contains("-main-gha.")) {
+                "Stable"
+            } else {
+                "Dev"
+            }
+        }
+        // TODO(hw):
+        pluginChannel = "Dev"
+        channels.set(listOf(pluginChannel))
+    }
+
+    register("buildFromLeeway") {
+        if ("true" == System.getenv("DO_PUBLISH")) {
+            print("publishing $pluginVersion...")
+            dependsOn("publishPlugin")
+        } else {
+            print("building $pluginVersion...")
+            dependsOn("buildPlugin")
+        }
+    }
+
     verifyPlugin {
         // TODO(hw): DO NOT IGNORE FAILURE AFTER UPGRADE
         ignoreFailures = true
