@@ -124,6 +124,16 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	}
 
 	if failure != "" && !workspace.IsConditionTrue(workspacev1.WorkspaceConditionFailed) {
+		// Check: A situation where we want to retry?
+		if pod.Status.Phase == corev1.PodFailed && (pod.Status.Reason == "NodeAffinity" || pod.Status.Reason == "OutOfCPU") && strings.HasPrefix(pod.Status.Message, "Pod was rejected") {
+			// This is a situation where we want to re-create the pod!
+			log.Info("workspace scheduling failed", "workspace", workspace.Name, "reason", failure)
+			workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionPodRejected(failure, metav1.ConditionTrue))
+			r.Recorder.Event(workspace, corev1.EventTypeWarning, "PodRejected", failure)
+		}
+	}
+
+	if failure != "" && !workspace.IsConditionTrue(workspacev1.WorkspaceConditionFailed) {
 		// workspaces can fail only once - once there is a failed condition set, stick with it
 		log.Info("workspace failed", "workspace", workspace.Name, "reason", failure)
 		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionFailed(failure))

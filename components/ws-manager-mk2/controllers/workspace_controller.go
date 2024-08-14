@@ -204,8 +204,6 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				log.Error(err, "unable to create Pod for Workspace", "pod", pod)
 				return ctrl.Result{Requeue: true}, err
 			} else {
-				// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
-				//			 need to be deleted and re-created
 				// Must increment and persist the pod starts, and ensure we retry on conflict.
 				// If we fail to persist this value, it's possible that the Pod gets recreated
 				// when the workspace stops, due to PodStarts still being 0 when the original Pod
@@ -220,6 +218,34 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 				r.Recorder.Event(workspace, corev1.EventTypeNormal, "Creating", "")
 			}
+
+		case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped && workspace.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected):
+			if workspace.Status.PodRecreated > r.Config.PodRecreationMaxRetries {
+				workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionPodRejected(fmt.Sprintf("Pod reached maximum recreations %d, failing", workspace.Status.PodRecreated), metav1.ConditionFalse))
+				return ctrl.Result{Requeue: true}, nil // requeue so we end up in the "Stopped" case below
+			}
+
+			// Must persist the modification pod starts, and ensure we retry on conflict.
+			// If we fail to persist this value, it's possible that the Pod gets recreated endlessly
+			// when the workspace stops, due to PodStarts still being 0 when the original Pod
+			// disappears.
+			// Use a Patch instead of an Update, to prevent conflicts.
+			patch := client.MergeFrom(workspace.DeepCopy())
+			workspace.Status.PodStarts = 0
+			workspace.Status.PodRecreated++
+			workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionPodRejected(fmt.Sprintf("Recreating pod... (%d retry)", workspace.Status.PodRecreated), metav1.ConditionFalse))
+			if err := r.Status().Patch(ctx, workspace, patch); err != nil {
+				log.Error(err, "Failed to patch PodStarts=0,PodRecreated++ in workspace status")
+				return ctrl.Result{}, err
+			}
+
+			requeueAfter := 5 * time.Second
+			if r.Config.PodRecreationBackoff != 0 {
+				requeueAfter = time.Duration(r.Config.PodRecreationBackoff)
+			}
+
+			r.Recorder.Event(workspace, corev1.EventTypeNormal, "Recreating", "")
+			return ctrl.Result{Requeue: true, RequeueAfter: requeueAfter}, nil
 
 		case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
 			if err := r.deleteWorkspaceSecrets(ctx, workspace); err != nil {
@@ -403,7 +429,9 @@ func isStartFailure(ws *workspacev1.Workspace) bool {
 	isAborted := ws.IsConditionTrue(workspacev1.WorkspaceConditionAborted)
 	// Also ignore workspaces that are requested to be stopped before they became ready.
 	isStoppedByRequest := ws.IsConditionTrue(workspacev1.WorkspaceConditionStoppedByRequest)
-	return !everReady && !isAborted && !isStoppedByRequest
+	// Also ignore pods that got rejected by the node
+	isPodRejected := ws.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected)
+	return !everReady && !isAborted && !isStoppedByRequest && !isPodRejected
 }
 
 func (r *WorkspaceReconciler) emitPhaseEvents(ctx context.Context, ws *workspacev1.Workspace, old *workspacev1.WorkspaceStatus) {
