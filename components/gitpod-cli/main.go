@@ -9,5 +9,6 @@ import (
 )
 
 func main() {
+	// test
 	cmd.Execute()
 }
