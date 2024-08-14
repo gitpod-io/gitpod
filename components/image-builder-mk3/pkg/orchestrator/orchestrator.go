@@ -624,6 +624,9 @@ func (o *Orchestrator) getAbsoluteImageRef(ctx context.Context, ref string, allo
 		}
 		return "", status.Error(codes.Unauthenticated, "cannot resolve image")
 	}
+	if resolve.TooManyRequestsMatcher(err) {
+		return "", status.Errorf(codes.Unavailable, "upstream registry responds with 'too many request': %v", err)
+	}
 	if err != nil {
 		return "", status.Errorf(codes.Internal, "cannot resolve image: %v", err)
 	}

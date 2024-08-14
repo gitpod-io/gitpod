@@ -20,14 +20,16 @@ import (
 	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 func TestStandaloneRefResolverResolve(t *testing.T) {
 	type Expectation struct {
-		Ref   string
-		Error string
+		Ref          string
+		Error        string
+		ErrorMatcher func(error) bool
 	}
 	type ResolveResponse struct {
 		Error         error
@@ -104,6 +106,16 @@ func TestStandaloneRefResolverResolve(t *testing.T) {
 			},
 			Expectation: Expectation{
 				Error: resolve.ErrUnauthorized.Error(),
+			},
+		},
+		{
+			Name: "dockerhub rate limit",
+			Ref:  "registry-1.docker.io:5000/gitpod/gitpod/workspace-full:latest-pulled-too-often",
+			ResolveResponse: ResolveResponse{
+				Error: errors.New("httpReadSeeker: failed open: unexpected status code https://registry-1.docker.io/v2/gitpod/workspace-full/manifests/sha256:279f925ad6395f11f6b60e63d7efa5c0b26a853c6052327efbe29bbcc0bafd6a: 429 Too Many Requests - Server message: toomanyrequests: You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit"),
+			},
+			Expectation: Expectation{
+				ErrorMatcher: resolve.TooManyRequestsMatcher,
 			},
 		},
 		{
@@ -195,7 +207,16 @@ func TestStandaloneRefResolverResolve(t *testing.T) {
 				act.Error = err.Error()
 			}
 
-			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+			// ErrorMatcher?
+			if err != nil && test.Expectation.ErrorMatcher != nil {
+				if test.Expectation.ErrorMatcher(err) {
+					test.Expectation.Error = act.Error
+				} else {
+					test.Expectation.Error = "ErrorMatcher failed"
+				}
+			}
+
+			if diff := cmp.Diff(test.Expectation, act, cmpopts.IgnoreFields(Expectation{}, "ErrorMatcher")); diff != "" {
 				t.Errorf("Resolve() mismatch (-want +got):\n%s", diff)
 			}
 		})
