@@ -157,11 +157,9 @@
         "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
-          "{{.JetBrainsPluginImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
         "latestImageLayers": [
-          "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
         "allowPin": true,
