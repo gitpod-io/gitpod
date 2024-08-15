@@ -1172,22 +1172,26 @@ func linkRemotePlugin(launchCtx *LaunchContext) error {
 		remotePluginsFolder = launchCtx.backendDir + "/plugins"
 	}
 	remotePluginDir := remotePluginsFolder + "/gitpod-remote"
-	_, err := os.Stat(remotePluginDir)
-	if err == nil || !errors.Is(err, os.ErrNotExist) {
-		return nil
-	}
 	if err := os.MkdirAll(remotePluginsFolder, 0755); err != nil {
 		return err
 	}
 
 	// added for backwards compatibility, can be removed in the future
 	sourceDir := "/ide-desktop-plugins/gitpod-remote-" + os.Getenv("JETBRAINS_BACKEND_QUALIFIER")
-	_, err = os.Stat(sourceDir)
+	_, err := os.Stat(sourceDir)
 	if err == nil {
-		return os.Symlink(sourceDir, remotePluginDir)
+		return safeLink(sourceDir, remotePluginDir)
 	}
 
-	return os.Symlink("/ide-desktop-plugins/gitpod-remote", remotePluginDir)
+	return safeLink("/ide-desktop-plugins/gitpod-remote", remotePluginDir)
+}
+
+func safeLink(source, target string) error {
+	if _, err := os.Stat(target); err == nil {
+		// unlink the old symlink
+		_ = os.RemoveAll(target)
+	}
+	return os.Symlink(source, target)
 }
 
 // TODO(andreafalzetti): remove dir scanning once this is implemented https://youtrack.jetbrains.com/issue/GTW-2402/Rider-Open-Project-dialog-not-displaying-in-remote-dev
