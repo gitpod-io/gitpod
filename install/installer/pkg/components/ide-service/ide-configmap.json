@@ -154,10 +154,10 @@
         "label": "Ultimate",
         "image": "{{.Repository}}/ide/intellij:{{.WorkspaceVersions.Workspace.DesktopIdeImages.IntelliJImage.Version}}",
         "latestImage": "{{.ResolvedJBImageLatest.IntelliJ}}",
-        "pluginImage": "{{.JetBrainsPluginLatestImage}}",
+        "pluginImage": "{{.Repository}}/ide/jb-backend-plugin:commit-2d67254d5aa110bc2c76cd807b85b272e3d54d97-latest",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
-          "{{.JetBrainsPluginLatestImage}}",
+          "{{.Repository}}/ide/jb-backend-plugin:commit-2d67254d5aa110bc2c76cd807b85b272e3d54d97-latest",
           "{{.JetBrainsLauncherImage}}"
         ],
         "latestImageLayers": [
