@@ -1189,7 +1189,9 @@ func linkRemotePlugin(launchCtx *LaunchContext) error {
 func safeLink(source, target string) error {
 	if _, err := os.Stat(target); err == nil {
 		// unlink the old symlink
-		_ = os.RemoveAll(target)
+		if err2 := os.RemoveAll(target); err2 != nil {
+			log.WithError(err).Error("failed to remove old symlink")
+		}
 	}
 	return os.Symlink(source, target)
 }
