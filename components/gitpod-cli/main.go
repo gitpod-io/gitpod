@@ -9,5 +9,6 @@ import (
 )
 
 func main() {
+	println("123")
 	cmd.Execute()
 }
