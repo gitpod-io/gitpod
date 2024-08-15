@@ -13,7 +13,7 @@ defaultArgs:
   codeWebExtensionCommit: 7ff72a2938a7a06cbdf3964590f7e9b7525958f3
   xtermCommit: 8f10c5febf0162a3c2309076302f770fbad38fde
   noVerifyJBPlugin: false
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2024.1.4.tar.gz"
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2024.2.tar.gz"
   golandDownloadUrl: "https://download.jetbrains.com/go/goland-2024.1.4.tar.gz"
   pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2024.1.4.tar.gz"
   phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2024.1.4.tar.gz"
