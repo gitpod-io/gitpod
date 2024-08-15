@@ -9,31 +9,29 @@ function replaceImage(image) {
     return image.replace("gitpod-dev-artifact", "gitpod-core-dev");
 }
 
-// TODO(hw): remove me
-function replaceImage2(image) {
-    if (image.includes("jb-backend-plugin:commit-2d67254d5aa110bc2c76cd807b85b272e3d54d97-latest")) {
-        return image.replace("gitpod-dev-artifact", "gitpod-core-dev");
-    }
-    return image;
-}
+const JetBrainsIDEs = [
+    "clion",
+    "goland",
+    "intellij",
+    "phpstorm",
+    "pycharm",
+    "rider",
+    "rubymine",
+    "webstorm",
+    "rustrover",
+];
 
 for (let ide in json.ideOptions.options) {
-    if (
-        ["clion", "goland", "intellij", "phpstorm", "pycharm", "rider", "rubymine", "webstorm", "rustrover"].includes(
-            ide,
-        )
-    ) {
+    if (JetBrainsIDEs.includes(ide)) {
         json.ideOptions.options[ide].versions = json.ideOptions.options[ide].versions?.map((version) => {
             version.image = replaceImage(version.image);
             version.imageLayers = version.imageLayers.map(replaceImage);
             return version;
         });
-    }
-
-    // TODO(hw): remove me
-    if (["intellij"].includes(ide)) {
-        json.ideOptions.options[ide].pluginImage = replaceImage2(json.ideOptions.options[ide].pluginImage);
-        json.ideOptions.options[ide].imageLayers = json.ideOptions.options[ide].imageLayers.map(replaceImage2);
+        if (json.ideOptions.options[ide]._mainBuilt === true) {
+            json.ideOptions.options[ide].pluginImage = replaceImage(json.ideOptions.options[ide].pluginImage);
+            json.ideOptions.options[ide].imageLayers = json.ideOptions.options[ide].imageLayers.map(replaceImage);
+        }
     }
 
     if (["code", "code1_85"].includes(ide)) {

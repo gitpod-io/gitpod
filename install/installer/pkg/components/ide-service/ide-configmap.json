@@ -164,6 +164,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
+        "_mainBuilt": true,
         "allowPin": true,
         "versions": [
           {
@@ -225,6 +226,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
+        "_mainBuilt": false,
         "allowPin": true,
         "versions": [
           {
@@ -287,6 +289,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
+        "_mainBuilt": false,
         "allowPin": true,
         "versions": [
           {
@@ -348,6 +351,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
+        "_mainBuilt": false,
         "allowPin": true,
         "versions": [
           {
@@ -409,6 +413,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
+        "_mainBuilt": false,
         "allowPin": true,
         "versions": [
           {
@@ -470,6 +475,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
+        "_mainBuilt": false,
         "allowPin": true,
         "versions": [
           {
@@ -539,6 +545,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
+        "_mainBuilt": false,
         "allowPin": true,
         "versions": [
           {
@@ -592,6 +599,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
+        "_mainBuilt": false,
         "allowPin": true,
         "versions": [
           {
@@ -645,6 +653,7 @@
           "{{.JetBrainsPluginLatestImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
+        "_mainBuilt": false,
         "allowPin": true,
         "versions": [
           {
