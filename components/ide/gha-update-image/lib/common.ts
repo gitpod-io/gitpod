@@ -62,6 +62,8 @@ export const pathToConfigmap = path.resolve(
 const IDEOptionSchema = z.object({
     image: z.string(),
     imageLayers: z.array(z.string()),
+    // JetBrains IDEs only
+    pluginImage: z.string().optional(),
     versions: z.array(
         z.object({
             version: z.string(),

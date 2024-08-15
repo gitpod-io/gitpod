@@ -1,0 +1,13 @@
+{
+    "versions": [
+        {
+            "pluginSinceBuild": "241.17890",
+            "backendPlugin": "commit-2d67254d5aa110bc2c76cd807b85b272e3d54d97"
+        },
+        {
+            "pluginSinceBuild": "242.19533",
+            "backendPlugin": "commit-2d67254d5aa110bc2c76cd807b85b272e3d54d97-latest"
+        }
+    ],
+    "minimumBuildSince": "241.17890"
+}
