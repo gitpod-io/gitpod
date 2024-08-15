@@ -1186,11 +1186,12 @@ func linkRemotePlugin(launchCtx *LaunchContext) error {
 	return safeLink("/ide-desktop-plugins/gitpod-remote", remotePluginDir)
 }
 
+// safeLink creates a symlink from source to target, removing the old target if it exists
 func safeLink(source, target string) error {
 	if _, err := os.Lstat(target); err == nil {
 		// unlink the old symlink
 		if err2 := os.RemoveAll(target); err2 != nil {
-			log.WithError(err).Error("failed to remove old symlink")
+			log.WithError(err).Error("failed to unlink old symlink")
 		}
 	}
 	return os.Symlink(source, target)
