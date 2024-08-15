@@ -6,6 +6,9 @@ const fs = require("fs");
 let json = JSON.parse(fs.readFileSync(process.argv[2]).toString());
 
 function replaceImage(image) {
+    if (image.includes("jb-backend-plugin:commit-2d67254d5aa110bc2c76cd807b85b272e3d54d97-latest")) {
+        return image;
+    }
     return image.replace("gitpod-dev-artifact", "gitpod-core-dev");
 }
 
