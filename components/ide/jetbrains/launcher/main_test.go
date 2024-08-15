@@ -5,6 +5,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -104,4 +107,43 @@ func TestUpdatePlatformProperties(t *testing.T) {
 			assert.Equal(t, content, newContent)
 		}
 	})
+}
+
+func Test_safeLink(t *testing.T) {
+	type args struct {
+		changeSource bool
+	}
+	t.Log("link folders twice")
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{name: "happy path", args: args{changeSource: true}, wantErr: false},
+		{name: "happy path 2", args: args{changeSource: false}, wantErr: false},
+	}
+	for index, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			source := createTempDir(t, fmt.Sprintf("source_%d", index))
+			target := createTempDir(t, fmt.Sprintf("target_%d", index))
+			safeLink(source, target)
+			os.RemoveAll(source)
+			if tt.args.changeSource {
+				source = createTempDir(t, fmt.Sprintf("source_new_%d", index))
+			} else {
+				source = createTempDir(t, fmt.Sprintf("source_%d", index))
+			}
+			if err := safeLink(source, target); (err != nil) != tt.wantErr {
+				t.Errorf("safeLink() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func createTempDir(t *testing.T, dir string) string {
+	path := filepath.Join(t.TempDir(), dir)
+	if err := os.Mkdir(path, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return path
 }
