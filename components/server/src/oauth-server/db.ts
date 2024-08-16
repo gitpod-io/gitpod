@@ -147,8 +147,17 @@ const toolbox: OAuthClient = {
     redirectUris: ["jetbrains://gateway/io.gitpod.toolbox.gateway/auth"],
     allowedGrants: ["authorization_code"],
     scopes: [
-        // We scope all so that it can work in papi like a PAT
-        { name: "function:*" },
+        { name: "function:getGitpodTokenScopes" },
+        { name: "function:getLoggedInUser" },
+        { name: "function:getOwnerToken" },
+        { name: "function:getWorkspace" },
+        { name: "function:getWorkspaces" },
+        { name: "function:listenForWorkspaceInstanceUpdates" },
+        { name: "function:startWorkspace" },
+        { name: "function:stopWorkspace" },
+        { name: "function:deleteWorkspace" },
+        { name: "function:getToken" },
+        { name: "resource:default" },
     ],
 };
 
