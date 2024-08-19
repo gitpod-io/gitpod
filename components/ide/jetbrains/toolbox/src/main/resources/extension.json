@@ -1,0 +1,20 @@
+{
+  "id": "io.gitpod.toolbox.gateway",
+  "version": "0.0.1",
+  "meta": {
+    "readableName": "Gitpod plugin",
+    "description": "Gitpod CDE(Cloud Development Environment) integration into JetBrains Toolbox App",
+    "vendor": "Toolbox + Gateway",
+    "url": "https://github.com/gitpod-io/gitpod",
+    "backgroundColors": {
+      "start": { "hex": "#FFB45B", "opacity": 0.7 },
+      "top": { "hex": "#FFB45B", "opacity": 0.6 },
+      "end": { "hex": "#FFB45B", "opacity": 0.8 }
+    }
+  },
+  "apiVersion": "0.1.0",
+  "compatibleVersionRange": {
+    "from": "2.1.0",
+    "to": "2.6.0"
+  }
+}
