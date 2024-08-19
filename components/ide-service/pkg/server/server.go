@@ -456,7 +456,11 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 				Name:  "GITPOD_PREFER_TOOLBOX",
 				Value: "true",
 			}
-			resp.Envvars = append(resp.Envvars, &preferToolboxEnv)
+			debuggingEnv := api.EnvironmentVariable{
+				Name:  "GITPOD_TOOLBOX_DEBUGGING",
+				Value: s.experimentsClient.GetStringValue(ctx, "enable_experimental_jbtb_debugging", "", experiments.Attributes{UserID: req.User.Id}),
+			}
+			resp.Envvars = append(resp.Envvars, &preferToolboxEnv, &debuggingEnv)
 		}
 
 		if userIdeName != "" {
