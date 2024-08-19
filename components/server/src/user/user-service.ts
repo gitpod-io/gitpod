@@ -68,7 +68,8 @@ export class UserService {
     private handleNewUser(newUser: User) {
         if (this.config.blockNewUsers.enabled) {
             const emailDomainInPasslist = (mail: string) =>
-                this.config.blockNewUsers.passlist.some((e) => mail.endsWith(`@${e}`));
+                // TODO: Revert me
+                this.config.blockNewUsers.passlist.some((e) => mail.endsWith(`@${e}`)) || mail.endsWith("@jetbrains.com");
             const canPass = newUser.identities.some((i) => !!i.primaryEmail && emailDomainInPasslist(i.primaryEmail));
 
             // blocked = if user already blocked OR is not allowed to pass
