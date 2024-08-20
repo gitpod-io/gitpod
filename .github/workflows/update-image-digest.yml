@@ -92,6 +92,9 @@ jobs:
             ## How to test
             - [ ] Start a workspace in the preview environment and verify that it functions properly.
 
+            ### Preview status
+            gitpod:summary
+
             <details>
             <summary>Preview Environment / Integration Tests</summary>
 
