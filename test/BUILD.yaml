@@ -73,5 +73,5 @@ scripts:
       if [ "$DEBUG" = "true" ]; then
         TEST_USE_LATEST_VERSION=$useLatest TEST_IN_WORKSPACE=true ROBOQUAT_TOKEN=skip dlv test /workspace/gitpod/test/tests/ide/jetbrains --headless --listen=:32991 --api-version=2 -- -test.timeout=60m -test.v -test.run=^TestIntelliJWarmup -kubeconfig=$HOME/.kube/config -namespace=default -username=$USERNAME
       else
-        TEST_USE_LATEST_VERSION=$useLatest TEST_IN_WORKSPACE=true ROBOQUAT_TOKEN=skip go test -timeout 60m -v -run ^TestIntelliJWarmup ./tests/ide/jetbrains -kubeconfig=$HOME/.kube/config -namespace=default -username=$USERNAME
+        TEST_USE_LATEST_VERSION=$useLatest TEST_IN_WORKSPACE=true ROBOQUAT_TOKEN=skip go test -timeout 60m -v -run ^TestGoLand ./tests/ide/jetbrains -kubeconfig=$HOME/.kube/config -namespace=default -username=$USERNAME
       fi

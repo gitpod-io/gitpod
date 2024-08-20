@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-GATEWAY_PLUGIN_PATH=$(pwd)/gitpod-gateway.zip
+GATEWAY_PLUGIN_PATH=$(pwd)/jetbrains-gateway-gitpod-plugin.zip
 export GATEWAY_PLUGIN_PATH
 HOME=/home/gitpod
 
