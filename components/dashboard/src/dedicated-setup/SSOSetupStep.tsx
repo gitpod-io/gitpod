@@ -88,7 +88,7 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete, progressCurrent, p
                 <Subheading>
                     Enable single sign-on for your organization using the OpenID Connect (OIDC) standard.{" "}
                     <a
-                        href="https://gitpod.io/docs/dedicated/sso-setup-8f7696e0"
+                        href="https://www.gitpod.io/docs/enterprise/setup-gitpod/configure-sso"
                         target="_blank"
                         rel="noreferrer noopener"
                         className="gp-link"
