@@ -54,6 +54,10 @@ project(":") {
     }
 }
 
+tasks.named<ProcessResources>("processResources") {
+    duplicatesStrategy = DuplicatesStrategy.WARN
+}
+
 // Configure project's dependencies
 repositories {
     mavenCentral()

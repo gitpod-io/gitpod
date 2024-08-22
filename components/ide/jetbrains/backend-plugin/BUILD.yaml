@@ -132,12 +132,13 @@ packages:
       - "**/*.kt"
       - "build.gradle-stable.kts"
       - "gradle.properties"
-      - "gradle-stable.properties"
+      - "gradle-stable-rider.properties"
       - "gradle/wrapper/*"
       - "gradlew"
       - "settings.gradle.kts"
       - "src/main/resources/*"
       - "src/main/resources-stable/*"
+      - "src/main/resources-rider/*"
       - "build.sh"
     env:
       - JB_QUALIFIER=stable-rider
@@ -158,14 +159,18 @@ packages:
       - "build.gradle-latest.kts"
       - "gradle.properties"
       - "gradle-latest.properties"
+      - "gradle-latest-rider.properties"
       - "gradle/wrapper/*"
       - "gradlew"
       - "settings.gradle.kts"
       - "src/main/resources/*"
       - "src/main/resources-latest/*"
+      - "src/main/resources-rider/*"
       - "build.sh"
     env:
-      - JB_QUALIFIER=latest-rider
+      # TODO(hw): uncomment next line after Rider fix codeWithMe issue
+      # - JB_QUALIFIER=latest-rider
+      - JB_QUALIFIER=latest
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
       # TODO(hw): remove after `2024.2.*` is stable
       - SDKMAN_DIR=/home/gitpod/.sdkman
