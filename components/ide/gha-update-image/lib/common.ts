@@ -153,6 +153,8 @@ export const getLatestInstallerVersions = async (version?: string) => {
                         intellijLatest: versionObj,
                         jbBackendPlugin: versionObj,
                         jbBackendPluginLatest: versionObj,
+                        jbBackendPluginRider: versionObj,
+                        jbBackendPluginLatestRider: versionObj,
                         jbLauncher: versionObj,
                         phpstorm: versionObj,
                         phpstormLatest: versionObj,

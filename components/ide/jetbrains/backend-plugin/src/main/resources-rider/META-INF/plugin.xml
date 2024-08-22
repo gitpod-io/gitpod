@@ -1,0 +1,146 @@
+<!--
+ Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ Licensed under the GNU Affero General Public License (AGPL).
+ See License.AGPL.txt in the project root for license information.
+-->
+<!--suppress PluginXmlValidity -->
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:include href="/META-INF/extensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <id>io.gitpod.jetbrains.remote</id>
+    <name>Gitpod Remote</name>
+    <vendor>Gitpod</vendor>
+    <description>Provides integrations within a Gitpod workspace.</description>
+
+    <!-- Product and plugin compatibility requirements -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+    <!-- Use old formatting to resolve class not found exception -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-dependencies.html#3-dependency-declaration-in-pluginxml -->
+    <depends>intellij.rider.plugins.cwm</depends>
+    <depends>org.jetbrains.plugins.terminal</depends>
+    <depends optional="true" config-file="maven.xml">org.jetbrains.idea.maven</depends>
+    <dependencies>
+        <plugin id="Git4Idea"/>
+        <plugin id="org.jetbrains.plugins.terminal"/>
+        <plugin id="intellij.rider.plugins.cwm"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="io.gitpod.jetbrains.remote.services.HeartbeatService"
+                            preload="true"/>
+        <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodManager" preload="true"/>
+
+        <projectService serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodTerminalServiceImpl" client="controller"
+                        preload="true"/>
+
+        <notificationGroup id="Gitpod Notifications" displayType="BALLOON" isLogByDefault="false"/>
+
+        <httpRequestHandler implementation="io.gitpod.jetbrains.remote.GitpodCLIService"/>
+
+        <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodClientProjectSessionTracker"
+                        client="controller" preload="true"/>
+
+        <gateway.customization.name
+                implementation="io.gitpod.jetbrains.remote.GitpodGatewayClientCustomizationProvider"/>
+        <gateway.customization.metrics id="gitpodMetricsProvider"
+                                       implementation="io.gitpod.jetbrains.remote.GitpodMetricProvider"/>
+
+        <registryKey key="gitpod.forceUpdateMavenProjects.disabled" defaultValue="false"
+                     description="Disable the forced update of Maven projects when IDE opens."
+                     restartRequired="true"/>
+
+
+        <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService"
+                            serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodIgnoredPortsForNotificationServiceImpl"
+                            preload="true"/>
+    </extensions>
+
+    <actions>
+        <action id="io.gitpod.jetbrains.remote.actions.StopWorkspaceAction"
+                class="io.gitpod.jetbrains.remote.actions.StopWorkspaceAction"
+                text="Gitpod: Stop Workspace"
+                icon="AllIcons.Actions.Pause">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.DashboardAction"
+                class="io.gitpod.jetbrains.remote.actions.DashboardAction"
+                text="Gitpod: Open Dashboard"
+                icon="AllIcons.General.ProjectTab">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.ExtendWorkspaceTimeoutAction"
+                class="io.gitpod.jetbrains.remote.actions.ExtendWorkspaceTimeoutAction"
+                text="Gitpod: Extend Workspace Timeout"
+                icon="AllIcons.Vcs.History">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.ContextAction"
+                class="io.gitpod.jetbrains.remote.actions.ContextAction"
+                text="Gitpod: Open Context"
+                icon="AllIcons.General.FitContent">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.SettingsAction"
+                class="io.gitpod.jetbrains.remote.actions.SettingsAction"
+                text="Gitpod: Open Settings"
+                icon="AllIcons.General.Settings">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.ShareWorkspaceSnapshotAction"
+                class="io.gitpod.jetbrains.remote.actions.ShareWorkspaceSnapshotAction"
+                text="Gitpod: Share Workspace Snapshot"
+                icon="AllIcons.Actions.Dump">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.AccessControlAction"
+                class="io.gitpod.jetbrains.remote.actions.AccessControlAction"
+                text="Gitpod: Open Access Control"
+                icon="AllIcons.Actions.Properties">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.DocumentationAction"
+                class="io.gitpod.jetbrains.remote.actions.DocumentationAction"
+                text="Gitpod: Documentation"
+                icon="AllIcons.General.ReaderMode">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.UpgradeSubscriptionAction"
+                class="io.gitpod.jetbrains.remote.actions.UpgradeSubscriptionAction"
+                text="Gitpod: Upgrade Subscription"
+                icon="AllIcons.Actions.PreviousOccurence">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.CommunityChatAction"
+                class="io.gitpod.jetbrains.remote.actions.CommunityChatAction"
+                text="Gitpod: Open Community Chat"
+                icon="AllIcons.General.Balloon">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.ReportIssueAction"
+                class="io.gitpod.jetbrains.remote.actions.ReportIssueAction"
+                text="Gitpod: Report Issue"
+                icon="AllIcons.General.ShowWarning">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.FollowUsOnTwitterAction"
+                class="io.gitpod.jetbrains.remote.actions.FollowUsOnTwitterAction"
+                text="Gitpod: Follow Us On Twitter"
+                icon="AllIcons.Gutter.ExtAnnotation">
+            <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.GitpodCopyUrlAction"
+                class="io.gitpod.jetbrains.remote.actions.GitpodCopyUrlAction"
+                text="Copy URL"
+                icon="AllIcons.Actions.Copy">
+            <add-to-group group-id="PortForwardingPortGroup" anchor="last"/>
+        </action>
+        <action id="io.gitpod.jetbrains.remote.actions.GitpodCopyWebUrlAction"
+                class="io.gitpod.jetbrains.remote.actions.GitpodCopyWebUrlAction"
+                text="Copy Web URL"
+                icon="AllIcons.Actions.Copy">
+            <add-to-group group-id="PortForwardingPortGroup" anchor="last"/>
+            <add-to-group group-id="PortForwardingSuggestionGroup" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

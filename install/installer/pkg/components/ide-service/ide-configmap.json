@@ -537,14 +537,14 @@
         "logo": "{{.IdeLogoBase}}/riderLogo.svg",
         "image": "{{.Repository}}/ide/rider:{{.WorkspaceVersions.Workspace.DesktopIdeImages.RiderImage.Version}}",
         "latestImage": "{{.ResolvedJBImageLatest.Rider}}",
-        "pluginImage": "{{.JetBrainsPluginImage}}",
-        "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
+        "pluginImage": "{{.JetBrainsPluginImageRider}}",
+        "pluginLatestImage": "{{.JetBrainsPluginLatestRiderImage}}",
         "imageLayers": [
-          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsPluginRiderImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
         "latestImageLayers": [
-          "{{.JetBrainsPluginLatestImage}}",
+          "{{.JetBrainsPluginLatestRiderImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
         "allowPin": true,
