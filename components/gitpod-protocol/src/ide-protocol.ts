@@ -49,7 +49,7 @@ export namespace IDEOptions {
     }
 }
 
-export const IDESettingsVersion = "2.2";
+export const IDESettingsVersion = "2.3";
 
 export interface IDEClient {
     /**

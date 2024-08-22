@@ -764,7 +764,6 @@ export interface JetBrainsConfig {
     phpstorm?: JetBrainsProductConfig;
     rubymine?: JetBrainsProductConfig;
     webstorm?: JetBrainsProductConfig;
-    rider?: JetBrainsProductConfig;
     clion?: JetBrainsProductConfig;
     rustrover?: JetBrainsProductConfig;
 }

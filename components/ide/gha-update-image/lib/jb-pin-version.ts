@@ -29,6 +29,9 @@ export const appendPinVersionsIntoIDEConfigMap = async (updatedIDEs: string[] | 
     const workspaceYaml = await readWorkspaceYaml().then((d) => d.parsedObj);
 
     for (const [ide, versionObject] of Object.entries(latestInstallerVersions.components.workspace.desktopIdeImages)) {
+        if (ide === "rider") {
+            continue;
+        }
         if (
             ide.includes("Latest") ||
             ["codeDesktop", "codeDesktopInsiders", "jbLauncher", "jbBackendPlugin", "jbBackendPluginLatest"].includes(

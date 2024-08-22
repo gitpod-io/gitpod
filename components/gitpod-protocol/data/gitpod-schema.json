@@ -290,10 +290,6 @@
                     "$ref": "#/definitions/jetbrainsProduct",
                     "description": "Configure WebStorm integration"
                 },
-                "rider": {
-                    "$ref": "#/definitions/jetbrainsProduct",
-                    "description": "Configure Rider integration"
-                },
                 "clion": {
                     "$ref": "#/definitions/jetbrainsProduct",
                     "description": "Configure CLion integration"

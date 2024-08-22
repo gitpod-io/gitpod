@@ -67,6 +67,27 @@ describe("ide-service", function () {
             });
         });
 
+        it("with settingVersion 2.0 should be latest and remove rider", function () {
+            const user: User = {
+                id: "string",
+                creationDate: "string",
+                identities: [],
+                additionalData: {
+                    ideSettings: {
+                        settingVersion: "2.0",
+                        defaultIde: "rider",
+                        useDesktopIde: false,
+                    },
+                },
+            };
+            const result = ideService.migrateSettings(user);
+            expect(result).to.deep.equal({
+                settingVersion: IDESettingsVersion,
+                defaultIde: "code",
+                useLatestVersion: false,
+            });
+        });
+
         it("with settingVersion latest should be undefined", function () {
             const user: User = {
                 id: "string",

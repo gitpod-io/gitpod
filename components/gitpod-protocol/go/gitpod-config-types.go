@@ -112,9 +112,6 @@ type Jetbrains struct {
 	// Configure PyCharm integration
 	Pycharm *JetbrainsProduct `yaml:"pycharm,omitempty" json:"pycharm,omitempty"`
 
-	// Configure Rider integration
-	Rider *JetbrainsProduct `yaml:"rider,omitempty" json:"rider,omitempty"`
-
 	// Configure RubyMine integration
 	Rubymine *JetbrainsProduct `yaml:"rubymine,omitempty" json:"rubymine,omitempty"`
 

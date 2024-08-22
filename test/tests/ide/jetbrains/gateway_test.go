@@ -115,23 +115,6 @@ func TestWebStorm(t *testing.T) {
 	testEnv.Test(t, f)
 }
 
-func TestRider(t *testing.T) {
-	BaseGuard(t)
-	t.Parallel()
-	t.Skip("Until ENT-56")
-	f := features.New("Start a workspace using Rider").
-		WithLabel("component", "IDE").
-		WithLabel("ide", "Rider").
-		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
-			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, WithIDE("rider"))
-			return testCtx
-		}).
-		Feature()
-	testEnv.Test(t, f)
-}
-
 func TestCLion(t *testing.T) {
 	BaseGuard(t)
 	t.Parallel()

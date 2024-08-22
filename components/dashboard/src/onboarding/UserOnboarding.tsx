@@ -17,6 +17,7 @@ import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutati
 import Alert from "../components/Alert";
 import { useConfetti } from "../contexts/ConfettiContext";
 import { trackEvent } from "../Analytics";
+import { IDESettingsVersion } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 
 // This param is optionally present to force an onboarding flow
 // Can be used if other conditions aren't true, i.e. if user has already onboarded, but we want to force the flow again
@@ -60,7 +61,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                             onboardedTimestamp: new Date().toISOString(),
                         },
                         ideSettings: {
-                            settingVersion: "2.0",
+                            settingVersion: IDESettingsVersion,
                             defaultIde: ideOptions.ide,
                             useLatestVersion: ideOptions.useLatest,
                         },

@@ -18,11 +18,7 @@ function replaceImage2(image) {
 }
 
 for (let ide in json.ideOptions.options) {
-    if (
-        ["clion", "goland", "intellij", "phpstorm", "pycharm", "rider", "rubymine", "webstorm", "rustrover"].includes(
-            ide,
-        )
-    ) {
+    if (["clion", "goland", "intellij", "phpstorm", "pycharm", "rubymine", "webstorm", "rustrover"].includes(ide)) {
         json.ideOptions.options[ide].versions = json.ideOptions.options[ide].versions?.map((version) => {
             version.image = replaceImage(version.image);
             version.imageLayers = version.imageLayers.map(replaceImage);
