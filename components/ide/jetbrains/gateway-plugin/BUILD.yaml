@@ -20,12 +20,10 @@ packages:
       - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
-        - ["rm", "-rf", "build.gradle.kts"]
-        - ["mv", "build.gradle-stable.kts", "build.gradle.kts"]
         - - bash
           - "-c"
           - >
-            echo java=17.0.12.fx-zulu > .sdkmanrc
+            echo java=21.0.3.fx-zulu > .sdkmanrc
             && source "$SDKMAN_DIR/bin/sdkman-init.sh"
             && sdk env install
             && ./gradlew "-PpluginVersion=0.0.1-${version}" "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/" "-PenvironmentName=stable" "-Dgradle.user.home=/workspace/.gradle-stable" "-Dplugin.verifier.home.dir=$HOME/.cache/pluginVerifier-stable" "buildFromLeeway"
@@ -47,13 +45,9 @@ packages:
       - publishToJBMarketplace
     env:
       - DO_PUBLISH=${publishToJBMarketplace}
-      # TODO(hw): remove after `2024.2.*` is stable
       - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
-        # TODO(hw): remove after 2024.2.* is stable
-        - ["rm", "-rf", "build.gradle.kts"]
-        - ["mv", "build.gradle-latest.kts", "build.gradle.kts"]
         - - bash
           - "-c"
           - >
