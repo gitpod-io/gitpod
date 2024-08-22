@@ -45,7 +45,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.jbBackendPluginRider
       buildArgs:
-        JETBRAINS_BACKEND_QUALIFIER: stable
+        JETBRAINS_BACKEND_QUALIFIER: stable-rider
       image:
         - ${imageRepoBase}/ide/jb-backend-plugin:commit-${__git_commit}-rider
   - name: latest-rider
@@ -59,7 +59,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.jbBackendPluginLatestRider
       buildArgs:
-        JETBRAINS_BACKEND_QUALIFIER: latest
+        JETBRAINS_BACKEND_QUALIFIER: latest-rider
       image:
         - ${imageRepoBase}/ide/jb-backend-plugin:commit-${__git_commit}-rider-latest
   - name: plugin-stable

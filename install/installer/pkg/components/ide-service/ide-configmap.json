@@ -537,7 +537,7 @@
         "logo": "{{.IdeLogoBase}}/riderLogo.svg",
         "image": "{{.Repository}}/ide/rider:{{.WorkspaceVersions.Workspace.DesktopIdeImages.RiderImage.Version}}",
         "latestImage": "{{.ResolvedJBImageLatest.Rider}}",
-        "pluginImage": "{{.JetBrainsPluginImageRider}}",
+        "pluginImage": "{{.JetBrainsPluginRiderImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestRiderImage}}",
         "imageLayers": [
           "{{.JetBrainsPluginRiderImage}}",
