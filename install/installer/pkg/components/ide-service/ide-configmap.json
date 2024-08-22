@@ -167,6 +167,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.2",
+            "image": "{{.Repository}}/ide/intellij:commit-f3193519fdae872d64a2a708f5338eeaabb3b6b7",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-2d67254d5aa110bc2c76cd807b85b272e3d54d97-latest",
+              "{{.Repository}}/ide/jb-launcher:commit-f3193519fdae872d64a2a708f5338eeaabb3b6b7"
+            ]
+          },
+          {
             "version": "2024.1.4",
             "image": "{{.Repository}}/ide/intellij:commit-80f3b3e47fc065d521be745b5795841d5e883667",
             "imageLayers": [

@@ -43,24 +43,29 @@ export const appendPinVersionsIntoIDEConfigMap = async (updatedIDEs: string[] | 
 
         console.debug(`Processing ${ide} ${ideVersion}...`);
 
-        const ideConfigMap = await renderInstallerIDEConfigMap(undefined)
+        const ideConfigMap = await renderInstallerIDEConfigMap(undefined);
 
         if (Object.keys(configmap.ideOptions.options).includes(ide)) {
             const { version: installerImageVersion } = versionObject;
-
-            const previousVersion = await getIDEVersionOfImage(ideConfigMap.ideOptions.options[ide].image);
-            const previousInfo = {
-                version: previousVersion,
-                image: ideConfigMap.ideOptions.options[ide].image.replaceAll("eu.gcr.io/gitpod-core-dev/build", "{{.Repository}}"),
-                imageLayers: ideConfigMap.ideOptions.options[ide].imageLayers.map((e: string) => e.replaceAll("eu.gcr.io/gitpod-core-dev/build", "{{.Repository}}")),
-            };
 
             if (!updatedIDEs || !updatedIDEs.includes(ide)) {
                 console.log(`Ignore latest version (${ide}:${installerImageVersion})`);
                 continue;
             }
+
+            const previousVersion = await getIDEVersionOfImage(ideConfigMap.ideOptions.options[ide].image);
+            const previousInfo = {
+                version: previousVersion,
+                image: ideConfigMap.ideOptions.options[ide].image.replaceAll(
+                    "eu.gcr.io/gitpod-core-dev/build",
+                    "{{.Repository}}",
+                ),
+                imageLayers: ideConfigMap.ideOptions.options[ide].imageLayers.map((e: string) =>
+                    e.replaceAll("eu.gcr.io/gitpod-core-dev/build", "{{.Repository}}"),
+                ),
+            };
             if (!configmap.ideOptions.options[ide].versions) {
-                configmap.ideOptions.options[ide].versions = []
+                configmap.ideOptions.options[ide].versions = [];
             }
             console.log(`Added ${ide} (new ${previousInfo.image})`);
             configmap.ideOptions.options[ide].versions.unshift(previousInfo);
