@@ -709,15 +709,15 @@ func (wbs *InWorkspaceServiceServer) MountSysfs(ctx context.Context, req *api.Mo
 
 func (wbs *InWorkspaceServiceServer) MountNfs(ctx context.Context, req *api.MountNfsRequest) (resp *api.MountNfsResponse, err error) {
 	var (
-		reqPID = req.Pid
-		nfsPID uint64
+		reqPID        = req.Pid
+		supervisorPID uint64
 	)
 	defer func() {
 		if err == nil {
 			return
 		}
 
-		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("procPID", nfsPID).WithField("reqPID", reqPID).WithFields(wbs.Session.OWI()).Error("cannot mount nfs")
+		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("procPID", supervisorPID).WithField("reqPID", reqPID).WithFields(wbs.Session.OWI()).Error("cannot mount nfs")
 		if _, ok := status.FromError(err); !ok {
 			err = status.Error(codes.Internal, "cannot mount nfs")
 		}
@@ -737,9 +737,9 @@ func (wbs *InWorkspaceServiceServer) MountNfs(ctx context.Context, req *api.Moun
 		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID, err)
 	}
 
-	nfsPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
+	supervisorPID, err = wbs.Uidmapper.findSupervisorPID(containerPID)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
+		return nil, xerrors.Errorf("cannot map supervisor PID %d (container PID: %d): %w", req.Pid, containerPID, err)
 	}
 
 	nodeStaging, err := os.MkdirTemp("", "nfs-staging")
@@ -774,7 +774,7 @@ func (wbs *InWorkspaceServiceServer) MountNfs(ctx context.Context, req *api.Moun
 		}
 	}
 
-	err = moveMount(wbs.Session.InstanceID, int(nfsPID), nodeStaging, req.Target)
+	err = moveMount(wbs.Session.InstanceID, int(supervisorPID), nodeStaging, req.Target)
 	if err != nil {
 		return nil, err
 	}
