@@ -43,6 +43,8 @@ packages:
       - components/ide/jetbrains/launcher:docker
       - components/ide/jetbrains/backend-plugin:stable
       - components/ide/jetbrains/backend-plugin:latest
+      - components/ide/jetbrains/backend-plugin:stable-rider
+      - components/ide/jetbrains/backend-plugin:latest-rider
       - components/ide/jetbrains/image:goland
       - components/ide/jetbrains/image:goland-latest
       - components/ide/jetbrains/image:intellij

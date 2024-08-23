@@ -4,6 +4,8 @@ packages:
     deps:
       - :stable
       - :latest
+      - :stable-rider
+      - :latest-rider
   - name: stable
     type: docker
     deps:
@@ -32,6 +34,34 @@ packages:
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
         - ${imageRepoBase}/ide/jb-backend-plugin:commit-${__git_commit}-latest
+  - name: stable-rider
+    type: docker
+    deps:
+      - :plugin-stable-rider
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.jbBackendPluginRider
+      buildArgs:
+        JETBRAINS_BACKEND_QUALIFIER: stable-rider
+      image:
+        - ${imageRepoBase}/ide/jb-backend-plugin:commit-${__git_commit}-rider
+  - name: latest-rider
+    type: docker
+    deps:
+      - :plugin-latest-rider
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.jbBackendPluginLatestRider
+      buildArgs:
+        JETBRAINS_BACKEND_QUALIFIER: latest-rider
+      image:
+        - ${imageRepoBase}/ide/jb-backend-plugin:commit-${__git_commit}-rider-latest
   - name: plugin-stable
     type: generic
     argdeps:
@@ -76,6 +106,70 @@ packages:
       - "src/main/resources-latest/*"
       - "build.sh"
     env:
+      - JB_QUALIFIER=latest
+      - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
+      # TODO(hw): remove after `2024.2.*` is stable
+      - SDKMAN_DIR=/home/gitpod/.sdkman
+    config:
+      commands:
+        # TODO(hw): remove after 2024.2.* is stable
+        - ["mv", "build.gradle-latest.kts", "build.gradle.kts"]
+        - - "bash"
+          - "-c"
+          - >
+            echo java=21.0.3.fx-zulu > .sdkmanrc
+            && source "$SDKMAN_DIR/bin/sdkman-init.sh"
+            && sdk env install
+            && ./build.sh ${__git_commit}
+  - name: plugin-stable-rider
+    type: generic
+    argdeps:
+      - noVerifyJBPlugin
+    deps:
+      - components/supervisor-api/java:lib
+      - components/gitpod-protocol/java:lib
+    srcs:
+      - "**/*.kt"
+      - "build.gradle-stable.kts"
+      - "gradle.properties"
+      - "gradle-stable-rider.properties"
+      - "gradle/wrapper/*"
+      - "gradlew"
+      - "settings.gradle.kts"
+      - "src/main/resources/*"
+      - "src/main/resources-stable/*"
+      - "src/main/resources-rider/*"
+      - "build.sh"
+    env:
+      - JB_QUALIFIER=stable-rider
+      - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
+    config:
+      commands:
+        - ["mv", "build.gradle-stable.kts", "build.gradle.kts"]
+        - ["./build.sh", "${__git_commit}"]
+  - name: plugin-latest-rider
+    type: generic
+    argdeps:
+      - noVerifyJBPlugin
+    deps:
+      - components/supervisor-api/java:lib
+      - components/gitpod-protocol/java:lib
+    srcs:
+      - "**/*.kt"
+      - "build.gradle-latest.kts"
+      - "gradle.properties"
+      - "gradle-latest.properties"
+      - "gradle-latest-rider.properties"
+      - "gradle/wrapper/*"
+      - "gradlew"
+      - "settings.gradle.kts"
+      - "src/main/resources/*"
+      - "src/main/resources-latest/*"
+      - "src/main/resources-rider/*"
+      - "build.sh"
+    env:
+      # TODO(hw): uncomment next line after Rider fix codeWithMe issue
+      # - JB_QUALIFIER=latest-rider
       - JB_QUALIFIER=latest
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
       # TODO(hw): remove after `2024.2.*` is stable
