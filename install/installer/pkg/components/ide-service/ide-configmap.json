@@ -553,7 +553,7 @@
             "version": "2024.1.3",
             "image": "{{.Repository}}/ide/rider:commit-c295f8299fd17f99913512ec5db5d8a60a1e5d98",
             "imageLayers": [
-              "{{.Repository}}/ide/jb-backend-plugin:commit-c295f8299fd17f99913512ec5db5d8a60a1e5d98",
+              "{{.Repository}}/ide/jb-backend-plugin:commit-6e78b49260501f3ccf1fb8081f4de2a9d2a54732-rider",
               "{{.Repository}}/ide/jb-launcher:commit-c295f8299fd17f99913512ec5db5d8a60a1e5d98"
             ]
           },
@@ -561,7 +561,7 @@
             "version": "2024.1.2",
             "image": "{{.Repository}}/ide/rider:commit-9823a689c6259339239381e2840e29149fc8d195",
             "imageLayers": [
-              "{{.Repository}}/ide/jb-backend-plugin:commit-eaa51e9f5c19696330459f0b646c1e9c9aeabdca",
+              "{{.Repository}}/ide/jb-backend-plugin:commit-6e78b49260501f3ccf1fb8081f4de2a9d2a54732-rider",
               "{{.Repository}}/ide/jb-launcher:commit-b94aec12634259de91e0e3d1b6208f348f1ffe30"
             ]
           },
@@ -569,7 +569,7 @@
             "version": "2024.1.1",
             "image": "{{.Repository}}/ide/rider:commit-9382d33ee521e6a72d763f906b24dd53893103df",
             "imageLayers": [
-              "{{.Repository}}/ide/jb-backend-plugin:commit-355c91ab71d87a57c5d9abf70e992b6a1b94461e",
+              "{{.Repository}}/ide/jb-backend-plugin:commit-6e78b49260501f3ccf1fb8081f4de2a9d2a54732-rider",
               "{{.Repository}}/ide/jb-launcher:commit-b94aec12634259de91e0e3d1b6208f348f1ffe30"
             ]
           },
@@ -577,7 +577,7 @@
             "version": "2024.1",
             "image": "{{.Repository}}/ide/rider:commit-ef400309563b040b84d9588862805ce2f26d688a",
             "imageLayers": [
-              "{{.Repository}}/ide/jb-backend-plugin:commit-ef400309563b040b84d9588862805ce2f26d688a",
+              "{{.Repository}}/ide/jb-backend-plugin:commit-6e78b49260501f3ccf1fb8081f4de2a9d2a54732-rider",
               "{{.Repository}}/ide/jb-launcher:commit-b94aec12634259de91e0e3d1b6208f348f1ffe30"
             ]
           }

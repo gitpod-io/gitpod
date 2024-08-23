@@ -118,7 +118,6 @@ func TestWebStorm(t *testing.T) {
 func TestRider(t *testing.T) {
 	BaseGuard(t)
 	t.Parallel()
-	t.Skip("Until ENT-56")
 	f := features.New("Start a workspace using Rider").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Rider").
