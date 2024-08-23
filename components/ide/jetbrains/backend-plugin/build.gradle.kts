@@ -174,5 +174,9 @@ tasks {
 }
 
 tasks.register("runPluginVerifier") {
-    intellijPlatform.verifyPlugin.ides.ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("pluginVerifierIdeVersions"))
+    if (properties("platformType") == "RD") {
+        intellijPlatform.verifyPlugin.ides.ide(IntelliJPlatformType.Rider, properties("pluginVerifierIdeVersions"))
+    } else {
+        intellijPlatform.verifyPlugin.ides.ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("pluginVerifierIdeVersions"))
+    }
 }
