@@ -243,6 +243,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!this.client) {
             return;
         }
+
+        // todo(ft) disable registering for all updates from all projects by default and only listen to updates when the client is explicity interested in them
+        const disableWebsocketPrebuildUpdates = await getExperimentsClientForBackend().getValueAsync(
+            "disableWebsocketPrebuildUpdates",
+            false,
+            {
+                gitpodHost: this.config.hostUrl.url.host,
+            },
+        );
+        if (disableWebsocketPrebuildUpdates) {
+            log.info("ws prebuild updates disabled by feature flag");
+            return;
+        }
+
         // 'registering for prebuild updates for all projects this user has access to
         const projects = await this.getAccessibleProjects();
 
