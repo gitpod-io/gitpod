@@ -22,7 +22,6 @@ import { InputField } from "../components/forms/InputField";
 import { Heading1 } from "../components/typography/headings";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
-import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
 import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
 import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
@@ -55,6 +54,7 @@ import Menu from "../menu/Menu";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
 import { isGitpodIo } from "../utils";
+import { useListConfigurations } from "../data/configurations/configuration-queries";
 
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
 
@@ -64,7 +64,6 @@ export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
     const currentOrg = useCurrentOrg().data;
-    const projects = useListAllProjectsQuery();
     const workspaces = useListWorkspacesQuery({ limit: 50 });
     const location = useLocation();
     const history = useHistory();
@@ -123,11 +122,23 @@ export function CreateWorkspacePage() {
         setNextLoadOption("searchParams");
     }, [location.hash]);
 
+    const cloneURL = workspaceContext.data?.cloneUrl;
+
+    const paginatedProjects = useListConfigurations({
+        sortBy: "name",
+        sortOrder: "desc",
+        pageSize: 100,
+        searchTerm: cloneURL,
+    });
+    const projects = useMemo(
+        () => paginatedProjects.data?.pages.flatMap((p) => p.configurations) ?? [],
+        [paginatedProjects.data],
+    );
+
     const storeAutoStartOptions = useCallback(async () => {
         if (!workspaceContext.data || !user || !currentOrg) {
             return;
         }
-        const cloneURL = workspaceContext.data.cloneUrl;
         if (!cloneURL) {
             return;
         }
@@ -160,20 +171,21 @@ export function CreateWorkspacePage() {
         });
         setUser(updatedUser);
     }, [
-        updateUser,
+        workspaceContext.data,
+        user,
         currentOrg,
-        selectedIde,
+        cloneURL,
         selectedWsClass,
-        setUser,
+        selectedIde,
         useLatestIde,
         preferToolbox,
-        user,
-        workspaceContext.data,
+        updateUser,
+        setUser,
     ]);
 
     // see if we have a matching project based on context url and project's repo url
     const project = useMemo(() => {
-        if (!workspaceContext.data || !projects.data) {
+        if (!workspaceContext.data || !projects) {
             return undefined;
         }
         const cloneUrl = workspaceContext.data.cloneUrl;
@@ -181,8 +193,8 @@ export function CreateWorkspacePage() {
             return;
         }
         // TODO: Account for multiple projects w/ the same cloneUrl
-        return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
-    }, [projects.data, workspaceContext.data]);
+        return projects.find((p) => p.cloneUrl === cloneUrl);
+    }, [projects, workspaceContext.data]);
 
     // Handle the case where the context url in the hash matches a project and we don't have that project selected yet
     useEffect(() => {
@@ -393,7 +405,7 @@ export function CreateWorkspacePage() {
                 setPreferToolbox(defaultPreferToolbox);
             }
             if (!selectedWsClassIsDirty) {
-                const projectWsClass = project?.settings?.workspaceClasses?.regular;
+                const projectWsClass = project?.workspaceSettings?.workspaceClass;
                 const targetClass = projectWsClass || defaultWorkspaceClass;
                 if (allowedWorkspaceClasses.some((cls) => cls.id === targetClass && !cls.isDisabledInScope)) {
                     setSelectedWsClass(targetClass, false);

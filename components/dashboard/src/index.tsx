@@ -23,7 +23,6 @@ import { ConfettiContextProvider } from "./contexts/ConfettiContext";
 import { setupQueryClientProvider } from "./data/setup";
 import "./index.css";
 import { PaymentContextProvider } from "./payment-context";
-import { ProjectContextProvider } from "./projects/project-context";
 import { ThemeContextProvider } from "./theme-context";
 import { UserContextProvider } from "./user-context";
 import { getURLHash, isGitpodIo, isWebsiteSlug } from "./utils";
@@ -69,9 +68,7 @@ const bootApp = () => {
                                     <ToastContextProvider>
                                         <UserContextProvider>
                                             <PaymentContextProvider>
-                                                <ProjectContextProvider>
-                                                    <RootAppRouter />
-                                                </ProjectContextProvider>
+                                                <RootAppRouter />
                                             </PaymentContextProvider>
                                         </UserContextProvider>
                                     </ToastContextProvider>
