@@ -81,7 +81,7 @@ export class ScmServiceAPI implements ServiceImpl<typeof ScmServiceInterface> {
         }
 
         const projectsPromise: Promise<Project[]> = !excludeConfigurations
-            ? this.projectService.getProjects(userId, organizationId)
+            ? this.projectService.getProjects(userId, organizationId, { limit: request.pagination?.pageSize })
             : Promise.resolve([]);
         const workspacesPromise = this.workspaceService.getWorkspaces(userId, { organizationId });
         const repos = await this.scmService.listSuggestedRepositories(userId, { projectsPromise, workspacesPromise });
@@ -89,7 +89,6 @@ export class ScmServiceAPI implements ServiceImpl<typeof ScmServiceInterface> {
             repositories: repos.map((r) => this.apiConverter.toSuggestedRepository(r)),
             pagination: new PaginationResponse({
                 nextToken: "",
-                total: repos.length,
             }),
         });
     }
