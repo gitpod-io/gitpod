@@ -10,7 +10,7 @@ import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "./provider-utils";
 import exclamation from "./images/exclamation.svg";
-import { getURLHash } from "./utils";
+import { getURLHash, isTrustedUrlOrPath } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
 import { SSOLoginForm } from "./login/SSOLoginForm";
@@ -84,7 +84,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
         const returnToPath = new URLSearchParams(window.location.search).get("returnToPath");
         if (returnToPath) {
             const isAbsoluteURL = /^https?:\/\//i.test(returnToPath);
-            if (!isAbsoluteURL) {
+            if (!isAbsoluteURL && isTrustedUrlOrPath(returnToPath)) {
                 window.location.replace(returnToPath);
             }
         }

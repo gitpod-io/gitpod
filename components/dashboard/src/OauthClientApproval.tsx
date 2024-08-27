@@ -7,6 +7,7 @@
 import { Button } from "@podkit/buttons/Button";
 import gitpodIcon from "./icons/gitpod.svg";
 import { Heading1, Subheading } from "@podkit/typography/Headings";
+import { isTrustedUrlOrPath } from "./utils";
 
 export default function OAuthClientApproval() {
     const params = new URLSearchParams(window.location.search);
@@ -23,8 +24,12 @@ export default function OAuthClientApproval() {
     const updateClientApproval = async (isApproved: boolean) => {
         if (redirectTo === "/") {
             window.location.replace(redirectTo);
+            return;
         }
-        window.location.replace(`${redirectTo}&approved=${isApproved ? "yes" : "no"}`);
+        const url = `${redirectTo}&approved=${isApproved ? "yes" : "no"}`;
+        if (isTrustedUrlOrPath(url)) {
+            window.location.replace(url);
+        }
     };
 
     return (
