@@ -214,9 +214,18 @@ export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEm
     }
 }
 
+function isValidURL(url: string) {
+    try {
+        new URL(url);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
 export function isTrustedUrlOrPath(urlOrPath: string) {
     try {
-        const ok = URL.canParse(urlOrPath);
+        const ok = isValidURL(urlOrPath);
         if (ok) {
             const u = new URL(urlOrPath);
             const isTrusted = window.location.hostname === u.hostname;
