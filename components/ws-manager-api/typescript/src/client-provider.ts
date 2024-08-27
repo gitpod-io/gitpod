@@ -34,7 +34,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
     @optional()
     protected readonly clientCallMetrics: IClientCallMetrics;
 
-    // gRPC connections maintain their connectivity themselves, i.e. they reconnect when neccesary.
+    // gRPC connections maintain their connectivity themselves, i.e. they reconnect when necessary.
     // They can also be used concurrently, even across services.
     // Thus it makes sense to cache them rather than create a new connection for each request.
     protected readonly connectionCache = new Map<string, WorkspaceManagerClient>();
