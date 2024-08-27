@@ -214,30 +214,19 @@ export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEm
     }
 }
 
-function isValidURL(url: string) {
+function parseUrl(url: string): URL | null {
     try {
-        new URL(url);
-        return true;
+        return new URL(url);
     } catch (_) {
-        return false;
+        return null;
     }
 }
 
 export function isTrustedUrlOrPath(urlOrPath: string) {
-    try {
-        const ok = isValidURL(urlOrPath);
-        if (ok) {
-            const u = new URL(urlOrPath);
-            const isTrusted = window.location.hostname === u.hostname;
-            if (!isTrusted) {
-                console.warn("Untrusted URL", urlOrPath);
-            }
-            return isTrusted;
-        } else {
-            return urlOrPath.startsWith("/");
-        }
-    } catch (e) {
-        console.error("Invalid URL", urlOrPath);
-        return false;
+    const url = parseUrl(urlOrPath);
+    const isTrusted = url ? window.location.hostname === url.hostname : urlOrPath.startsWith("/");
+    if (!isTrusted) {
+        console.warn("Untrusted URL", urlOrPath);
     }
+    return isTrusted;
 }

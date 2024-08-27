@@ -47,7 +47,6 @@ test("urlHash and isTrustedUrlOrPath", () => {
         { location: "javascript:alert(1)", trusted: false },
     ];
     isTrustedUrlOrPathCases.forEach(({ location, trusted }) => {
-        console.log(location, trusted);
         expect(isTrustedUrlOrPath(location)).toBe(trusted);
     });
 });
