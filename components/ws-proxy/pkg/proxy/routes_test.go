@@ -450,7 +450,7 @@ func TestRoutes(t *testing.T) {
 			},
 		},
 		{
-			Desc:   "CORS preflight",
+			Desc:   "no CORS allow in workspace urls",
 			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"somewhere/in/the/ide", nil),
 				addHostHeader,
@@ -462,12 +462,9 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Access-Control-Allow-Credentials": {"true"},
-					"Access-Control-Allow-Origin":      {"test-domain.com"},
-					"Access-Control-Expose-Headers":    {"Authorization"},
-					"Content-Length":                   {"37"},
-					"Content-Type":                     {"text/plain; charset=utf-8"},
-					"Vary":                             {"Accept-Encoding"},
+					"Content-Length": {"37"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "workspace hit: /somewhere/in/the/ide\n",
 			},
