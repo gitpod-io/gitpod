@@ -111,10 +111,9 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         if (normalizedSearchTerm) {
             queryBuilder.andWhere(
                 new Brackets((qb) => {
-                    qb.where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${normalizedSearchTerm}%` }).orWhere(
-                        "project.name LIKE :searchTerm",
-                        { searchTerm: `%${normalizedSearchTerm}%` },
-                    );
+                    qb.where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${normalizedSearchTerm}%` })
+                        .orWhere("project.name LIKE :searchTerm", { searchTerm: `%${normalizedSearchTerm}%` })
+                        .orWhere("project.id LIKE :searchTerm", { searchTerm: `%${normalizedSearchTerm}%` });
                 }),
             );
         }

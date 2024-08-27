@@ -10,6 +10,14 @@ import { useSuggestedRepositories } from "./suggested-repositories-query";
 import { PREDEFINED_REPOS } from "./predefined-repos";
 import { useMemo } from "react";
 import { useListConfigurations } from "../configurations/configuration-queries";
+import type { UseInfiniteQueryResult } from "@tanstack/react-query";
+import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+
+const flattenPagedConfigurations = (
+    data: UseInfiniteQueryResult<{ configurations: Configuration[] }>["data"],
+): Configuration[] => {
+    return data?.pages.flatMap((p) => p.configurations) ?? [];
+};
 
 type UnifiedRepositorySearchArgs = {
     searchString: string;
@@ -40,36 +48,34 @@ export const useUnifiedRepositorySearch = ({
         pageSize: searchLimit,
         searchTerm: searchString,
     });
-    const flattenedConfigurations = useMemo(
-        () =>
-            (configurationSearch.data?.pages.flatMap((p) => p.configurations) ?? []).map(
-                (repo) =>
-                    new SuggestedRepository({
-                        configurationId: repo.id,
-                        configurationName: repo.name,
-                        url: repo.cloneUrl,
-                    }),
-            ),
-        [configurationSearch.data],
-    );
+    const flattenedConfigurations = useMemo(() => {
+        const flattened = flattenPagedConfigurations(configurationSearch.data);
+        return flattened.map(
+            (repo) =>
+                new SuggestedRepository({
+                    configurationId: repo.id,
+                    configurationName: repo.name,
+                    url: repo.cloneUrl,
+                }),
+        );
+    }, [configurationSearch.data]);
     const selectedItemSearch = useListConfigurations({
         sortBy: "name",
         sortOrder: "desc",
         pageSize: searchLimit,
         searchTerm: selectedConfigurationId ?? selectedContextURL,
     });
-    const flattenedSelectedItem = useMemo(
-        () =>
-            (selectedItemSearch.data?.pages.flatMap((p) => p.configurations) ?? []).map(
-                (repo) =>
-                    new SuggestedRepository({
-                        configurationId: repo.id,
-                        configurationName: repo.name,
-                        url: repo.cloneUrl,
-                    }),
-            ),
-        [selectedItemSearch.data],
-    );
+    const flattenedSelectedItem = useMemo(() => {
+        const flattened = flattenPagedConfigurations(selectedItemSearch.data);
+        return flattened.map(
+            (repo) =>
+                new SuggestedRepository({
+                    configurationId: repo.id,
+                    configurationName: repo.name,
+                    url: repo.cloneUrl,
+                }),
+        );
+    }, [selectedItemSearch.data]);
 
     const filteredRepos = useMemo(() => {
         if (showExamples && searchString.length === 0) {
@@ -88,7 +94,6 @@ export const useUnifiedRepositorySearch = ({
             flattenedConfigurations ?? [],
             flattenedSelectedItem ?? [],
         ].flat();
-        console.log(deduplicateAndFilterRepositories(searchString, excludeConfigurations, onlyConfigurations, repos));
         return deduplicateAndFilterRepositories(searchString, excludeConfigurations, onlyConfigurations, repos);
     }, [
         showExamples,
@@ -128,6 +133,11 @@ export function deduplicateAndFilterRepositories(
         });
     }
     for (const repo of suggestedRepos) {
+        // normalize URLs
+        if (repo.url.endsWith(".git")) {
+            repo.url = repo.url.slice(0, -4);
+        }
+
         // filter out configuration-less entries if an entry with a configuration exists, and we're not excluding configurations
         if (!repo.configurationId) {
             if (reposWithConfiguration.has(repo.url) || onlyConfigurations) {

@@ -128,6 +128,10 @@ export default function RepositoryFinder({
                 return repo.configurationId === selectedConfigurationId;
             }
 
+            if (repo.url.endsWith(".git")) {
+                repo.url = repo.url.slice(0, -4);
+            }
+
             return repo.url === selectedContextURL;
         });
 
@@ -174,14 +178,12 @@ export default function RepositoryFinder({
             return;
         }
 
-        console.debug("Trying to display", { selectedSuggestion, selectedConfigurationId });
-
         if (!selectedSuggestion?.configurationName) {
             return displayContextUrl(selectedSuggestion?.repoName || selectedSuggestion?.url);
         }
 
         return selectedSuggestion?.configurationName;
-    }, [selectedConfigurationId, selectedSuggestion]);
+    }, [selectedSuggestion]);
 
     const handleSearchChange = (value: string) => {
         setSearchString(value);
