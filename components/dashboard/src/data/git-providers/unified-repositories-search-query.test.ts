@@ -45,7 +45,7 @@ test("it should exclude project entries", () => {
     expect(deduplicated[1].repoName).toEqual("foo2");
 });
 
-test("it should match entries in url as well as poject name", () => {
+test("it should match entries in url as well as project name", () => {
     const suggestedRepos: SuggestedRepository[] = [
         repo("somefOOtest"),
         repo("Footest"),
@@ -54,7 +54,7 @@ test("it should match entries in url as well as poject name", () => {
         repo("bar", "someFootest"),
         repo("bar", "FOOtest"),
     ];
-    var deduplicated = deduplicateAndFilterRepositories("foo", false, false, suggestedRepos);
+    let deduplicated = deduplicateAndFilterRepositories("foo", false, false, suggestedRepos);
     expect(deduplicated.length).toEqual(6);
     deduplicated = deduplicateAndFilterRepositories("foot", false, false, suggestedRepos);
     expect(deduplicated.length).toEqual(4);

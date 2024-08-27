@@ -185,16 +185,15 @@ export function CreateWorkspacePage() {
 
     // see if we have a matching project based on context url and project's repo url
     const project = useMemo(() => {
-        if (!workspaceContext.data || !projects) {
+        if (!workspaceContext.data || projects.length === 0) {
             return undefined;
         }
-        const cloneUrl = workspaceContext.data.cloneUrl;
-        if (!cloneUrl) {
+        if (!cloneURL) {
             return;
         }
         // TODO: Account for multiple projects w/ the same cloneUrl
-        return projects.find((p) => p.cloneUrl === cloneUrl);
-    }, [projects, workspaceContext.data]);
+        return projects.find((p) => p.cloneUrl === cloneURL);
+    }, [workspaceContext.data, projects, cloneURL]);
 
     // Handle the case where the context url in the hash matches a project and we don't have that project selected yet
     useEffect(() => {
@@ -202,6 +201,8 @@ export function CreateWorkspacePage() {
             setSelectedProjectID(project.id);
         }
     }, [project, selectedProjectID]);
+
+    console.log({ cloneURL, projects, project, setSelectedProjectID });
 
     // In addition to updating state, we want to update the url hash as well
     // This allows the contextURL to persist if user changes orgs, or copies/shares url

@@ -75,6 +75,7 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         const queryBuilder = repo
             .createQueryBuilder("project")
             .where("project.teamId = :teamId", { teamId: orgId })
+            .orderBy("project.creationTime", "DESC")
             .andWhere("project.markedDeleted = false");
 
         if (limit) {

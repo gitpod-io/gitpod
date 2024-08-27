@@ -50,6 +50,8 @@ export default function RepositoryFinder({
         excludeConfigurations,
         onlyConfigurations,
         showExamples,
+        selectedContextURL,
+        selectedConfigurationId,
     });
 
     const authProviders = useAuthProviderDescriptions();
@@ -172,12 +174,14 @@ export default function RepositoryFinder({
             return;
         }
 
+        console.debug("Trying to display", { selectedSuggestion, selectedConfigurationId });
+
         if (!selectedSuggestion?.configurationName) {
             return displayContextUrl(selectedSuggestion?.repoName || selectedSuggestion?.url);
         }
 
         return selectedSuggestion?.configurationName;
-    }, [selectedSuggestion]);
+    }, [selectedConfigurationId, selectedSuggestion]);
 
     const handleSearchChange = (value: string) => {
         setSearchString(value);
