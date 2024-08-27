@@ -213,3 +213,20 @@ export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEm
         return this.reachedEnd;
     }
 }
+
+function parseUrl(url: string): URL | null {
+    try {
+        return new URL(url);
+    } catch (_) {
+        return null;
+    }
+}
+
+export function isTrustedUrlOrPath(urlOrPath: string) {
+    const url = parseUrl(urlOrPath);
+    const isTrusted = url ? window.location.hostname === url.hostname : urlOrPath.startsWith("/");
+    if (!isTrusted) {
+        console.warn("Untrusted URL", urlOrPath);
+    }
+    return isTrusted;
+}
