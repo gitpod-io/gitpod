@@ -49,16 +49,9 @@ export default function RepositoryFinder({
         searchString,
         excludeConfigurations,
         onlyConfigurations,
-        showExamples,
     });
 
     const authProviders = useAuthProviderDescriptions();
-
-    // This approach creates a memoized Map of the predefined repos,
-    // which can be more efficient for lookups if we would have a large number of predefined repos
-    const memoizedPredefinedRepos = useMemo(() => {
-        return new Map(PREDEFINED_REPOS.map((repo) => [repo.url, repo]));
-    }, []);
 
     const handleSelectionChange = useCallback(
         (selectedID: string) => {
@@ -71,7 +64,7 @@ export default function RepositoryFinder({
                 return;
             }
 
-            const matchingPredefinedRepo = memoizedPredefinedRepos.get(selectedID);
+            const matchingPredefinedRepo = PREDEFINED_REPOS.find((repo) => repo.url === selectedID);
             if (matchingPredefinedRepo) {
                 onChange?.(
                     new SuggestedRepository({
@@ -84,7 +77,7 @@ export default function RepositoryFinder({
 
             onChange?.(new SuggestedRepository({ url: selectedID }));
         },
-        [onChange, repos, memoizedPredefinedRepos],
+        [onChange, repos],
     );
 
     const [selectedSuggestion, setSelectedSuggestion] = useState<SuggestedRepository | undefined>(undefined);
@@ -92,12 +85,7 @@ export default function RepositoryFinder({
     const [isShowingExamples, setIsShowingExamples] = useState(showExamples);
 
     type PredefinedRepositoryOptionProps = {
-        repo: {
-            url: string;
-            repoName: string;
-            description: string;
-            repoPath: string;
-        };
+        repo: typeof PREDEFINED_REPOS[number];
     };
 
     const PredefinedRepositoryOption: FC<PredefinedRepositoryOptionProps> = ({ repo }) => {
@@ -193,7 +181,7 @@ export default function RepositoryFinder({
 
     const getElements = useCallback(
         (searchString: string): ComboboxElement[] => {
-            if (isShowingExamples && searchString.length === 0 && !onlyConfigurations) {
+            if (isShowingExamples && !onlyConfigurations) {
                 return PREDEFINED_REPOS.map((repo) => ({
                     id: repo.url,
                     element: <PredefinedRepositoryOption repo={repo} />,

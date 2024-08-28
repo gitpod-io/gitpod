@@ -17,4 +17,4 @@ export const PREDEFINED_REPOS = [
         description: "A fully configured demo with Java, Maven and Spring Boot",
         repoPath: "github.com/gitpod-demos/spring-petclinic",
     },
-];
+] as const;
