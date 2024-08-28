@@ -202,8 +202,6 @@ export function CreateWorkspacePage() {
         }
     }, [project, selectedProjectID]);
 
-    console.log({ cloneURL, projects, project, setSelectedProjectID });
-
     // In addition to updating state, we want to update the url hash as well
     // This allows the contextURL to persist if user changes orgs, or copies/shares url
     const handleContextURLChange = useCallback(
