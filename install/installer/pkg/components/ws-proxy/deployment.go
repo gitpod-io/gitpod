@@ -142,6 +142,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				common.DefaultEnv(&ctx.Config),
 				common.WorkspaceTracingEnv(ctx, Component),
 				common.AnalyticsEnv(&ctx.Config),
+				common.ConfigcatEnv(ctx),
 			)),
 			ReadinessProbe: &corev1.Probe{
 				InitialDelaySeconds: int32(2),

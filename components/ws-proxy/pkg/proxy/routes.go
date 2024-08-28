@@ -34,6 +34,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
@@ -47,7 +48,11 @@ type RouteHandlerConfig struct {
 	DefaultTransport     http.RoundTripper
 	CorsHandler          mux.MiddlewareFunc
 	WorkspaceAuthHandler mux.MiddlewareFunc
+
+	CorsEnabled bool
 }
+
+const experimentsCorsEnabled = "ws_proxy_cors_enabled"
 
 // RouteHandlerConfigOpt modifies the router handler config.
 type RouteHandlerConfigOpt func(*Config, *RouteHandlerConfig)
@@ -65,12 +70,19 @@ func NewRouteHandlerConfig(config *Config, opts ...RouteHandlerConfigOpt) (*Rout
 	if err != nil {
 		return nil, err
 	}
+	experimentsClient := experiments.NewClient(experiments.WithPollInterval(time.Second * 3))
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Minute*5))
+	defer cancel()
+	ffValue := waitStringValue(ctx, experimentsClient, experimentsCorsEnabled, "nope", experiments.Attributes{})
+	corsEnabled := ffValue == "true"
+	log.WithField("ffValue", ffValue).WithField("corsEnabled", corsEnabled).Info("feature flag final value")
 
 	cfg := &RouteHandlerConfig{
 		Config:               config,
 		DefaultTransport:     createDefaultTransport(config.TransportConfig),
 		CorsHandler:          corsHandler,
 		WorkspaceAuthHandler: func(h http.Handler) http.Handler { return h },
+		CorsEnabled:          corsEnabled,
 	}
 	for _, o := range opts {
 		o(config, cfg)
@@ -163,6 +175,22 @@ type ideRoutes struct {
 	workspaceMustExistHandler mux.MiddlewareFunc
 }
 
+func waitStringValue(ctx context.Context, client experiments.Client, experimentName, nopeValue string, attributes experiments.Attributes) string {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nopeValue
+		case <-ticker.C:
+			value := client.GetStringValue(ctx, experimentName, nopeValue, attributes)
+			if value != nopeValue {
+				return value
+			}
+		}
+	}
+}
+
 func (ir *ideRoutes) HandleSSHHostKeyRoute(route *mux.Route, hostKeyList []ssh.Signer) {
 	shk := make([]struct {
 		Type    string `json:"type"`
@@ -179,7 +207,9 @@ func (ir *ideRoutes) HandleSSHHostKeyRoute(route *mux.Route, hostKeyList []ssh.S
 	}
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("HandleSSHHostKeyRoute"))
-	r.Use(ir.Config.CorsHandler)
+	if ir.Config.CorsEnabled {
+		r.Use(ir.Config.CorsHandler)
+	}
 	r.NewRoute().HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Add("Content-Type", "application/json")
 		rw.Write(byt)
@@ -189,7 +219,9 @@ func (ir *ideRoutes) HandleSSHHostKeyRoute(route *mux.Route, hostKeyList []ssh.S
 func (ir *ideRoutes) HandleCreateKeyRoute(route *mux.Route, hostKeyList []ssh.Signer) {
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("HandleCreateKeyRoute"))
-	r.Use(ir.Config.CorsHandler)
+	if ir.Config.CorsEnabled {
+		r.Use(ir.Config.CorsHandler)
+	}
 	r.Use(ir.workspaceMustExistHandler)
 	r.Use(ir.Config.WorkspaceAuthHandler)
 
@@ -253,7 +285,9 @@ func extractCloseErrorCode(errStr string) string {
 func (ir *ideRoutes) HandleSSHOverWebsocketTunnel(route *mux.Route, sshGatewayServer *sshproxy.Server) {
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("HandleSSHOverWebsocketTunnel"))
-	r.Use(ir.Config.CorsHandler)
+	if ir.Config.CorsEnabled {
+		r.Use(ir.Config.CorsHandler)
+	}
 	r.Use(ir.workspaceMustExistHandler)
 	r.Use(ir.Config.WorkspaceAuthHandler)
 
@@ -297,7 +331,9 @@ func (ir *ideRoutes) HandleSSHOverWebsocketTunnel(route *mux.Route, sshGatewaySe
 func (ir *ideRoutes) HandleDirectSupervisorRoute(route *mux.Route, authenticated bool) {
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler(fmt.Sprintf("HandleDirectSupervisorRoute (authenticated: %v)", authenticated)))
-	r.Use(ir.Config.CorsHandler)
+	if ir.Config.CorsEnabled {
+		r.Use(ir.Config.CorsHandler)
+	}
 	r.Use(ir.workspaceMustExistHandler)
 	if authenticated {
 		r.Use(ir.Config.WorkspaceAuthHandler)
@@ -382,7 +418,9 @@ type BlobserveInlineVars struct {
 func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("handleRoot"))
-	r.Use(ir.Config.CorsHandler)
+	if ir.Config.CorsEnabled {
+		r.Use(ir.Config.CorsHandler)
+	}
 	r.Use(ir.workspaceMustExistHandler)
 
 	proxyPassWoSensitiveCookies := sensitiveCookieHandler(ir.Config.Config.GitpodInstallation.HostName)(proxyPass(ir.Config, ir.InfoProvider, workspacePodResolver))
@@ -516,7 +554,9 @@ func installDebugWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, info
 	}
 
 	r.Use(logHandler)
-	r.Use(config.CorsHandler)
+	if config.CorsEnabled {
+		r.Use(config.CorsHandler)
+	}
 	r.Use(config.WorkspaceAuthHandler)
 	// filter all session cookies
 	r.Use(sensitiveCookieHandler(config.Config.GitpodInstallation.HostName))
