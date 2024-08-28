@@ -45,6 +45,7 @@ import (
 type RouteHandlerConfig struct {
 	Config               *Config
 	DefaultTransport     http.RoundTripper
+	CorsHandler          mux.MiddlewareFunc
 	WorkspaceAuthHandler mux.MiddlewareFunc
 }
 
@@ -60,9 +61,15 @@ func WithDefaultAuth(infoprov common.WorkspaceInfoProvider) RouteHandlerConfigOp
 
 // NewRouteHandlerConfig creates a new instance.
 func NewRouteHandlerConfig(config *Config, opts ...RouteHandlerConfigOpt) (*RouteHandlerConfig, error) {
+	corsHandler, err := corsHandler(config.GitpodInstallation.Scheme, config.GitpodInstallation.HostName)
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &RouteHandlerConfig{
 		Config:               config,
 		DefaultTransport:     createDefaultTransport(config.TransportConfig),
+		CorsHandler:          corsHandler,
 		WorkspaceAuthHandler: func(h http.Handler) http.Handler { return h },
 	}
 	for _, o := range opts {
@@ -172,6 +179,7 @@ func (ir *ideRoutes) HandleSSHHostKeyRoute(route *mux.Route, hostKeyList []ssh.S
 	}
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("HandleSSHHostKeyRoute"))
+	r.Use(ir.Config.CorsHandler)
 	r.NewRoute().HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Add("Content-Type", "application/json")
 		rw.Write(byt)
@@ -181,6 +189,7 @@ func (ir *ideRoutes) HandleSSHHostKeyRoute(route *mux.Route, hostKeyList []ssh.S
 func (ir *ideRoutes) HandleCreateKeyRoute(route *mux.Route, hostKeyList []ssh.Signer) {
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("HandleCreateKeyRoute"))
+	r.Use(ir.Config.CorsHandler)
 	r.Use(ir.workspaceMustExistHandler)
 	r.Use(ir.Config.WorkspaceAuthHandler)
 
@@ -244,6 +253,7 @@ func extractCloseErrorCode(errStr string) string {
 func (ir *ideRoutes) HandleSSHOverWebsocketTunnel(route *mux.Route, sshGatewayServer *sshproxy.Server) {
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("HandleSSHOverWebsocketTunnel"))
+	r.Use(ir.Config.CorsHandler)
 	r.Use(ir.workspaceMustExistHandler)
 	r.Use(ir.Config.WorkspaceAuthHandler)
 
@@ -287,6 +297,7 @@ func (ir *ideRoutes) HandleSSHOverWebsocketTunnel(route *mux.Route, sshGatewaySe
 func (ir *ideRoutes) HandleDirectSupervisorRoute(route *mux.Route, authenticated bool) {
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler(fmt.Sprintf("HandleDirectSupervisorRoute (authenticated: %v)", authenticated)))
+	r.Use(ir.Config.CorsHandler)
 	r.Use(ir.workspaceMustExistHandler)
 	if authenticated {
 		r.Use(ir.Config.WorkspaceAuthHandler)
@@ -371,6 +382,7 @@ type BlobserveInlineVars struct {
 func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("handleRoot"))
+	r.Use(ir.Config.CorsHandler)
 	r.Use(ir.workspaceMustExistHandler)
 
 	proxyPassWoSensitiveCookies := sensitiveCookieHandler(ir.Config.Config.GitpodInstallation.HostName)(proxyPass(ir.Config, ir.InfoProvider, workspacePodResolver))
@@ -504,6 +516,7 @@ func installDebugWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, info
 	}
 
 	r.Use(logHandler)
+	r.Use(config.CorsHandler)
 	r.Use(config.WorkspaceAuthHandler)
 	// filter all session cookies
 	r.Use(sensitiveCookieHandler(config.Config.GitpodInstallation.HostName))
@@ -639,6 +652,48 @@ func buildWorkspacePodURL(protocol api.PortProtocol, ipAddress string, port stri
 		return nil, xerrors.Errorf("protocol not supported")
 	}
 	return url.Parse(fmt.Sprintf("%v://%v:%v", portProtocol, ipAddress, port))
+}
+
+// corsHandler produces the CORS handler for workspaces.
+func corsHandler(scheme, hostname string) (mux.MiddlewareFunc, error) {
+	origin := fmt.Sprintf("%s://%s", scheme, hostname)
+
+	domainRegex := strings.ReplaceAll(hostname, ".", "\\.")
+	originRegex, err := regexp.Compile(".*" + domainRegex)
+	if err != nil {
+		return nil, err
+	}
+
+	return handlers.CORS(
+		handlers.AllowedOriginValidator(func(origin string) bool {
+			// Is the origin a subdomain of the installations hostname?
+			matches := originRegex.Match([]byte(origin))
+			return matches
+		}),
+		// TODO(gpl) For domain-based workspace access with authentication (for accessing the IDE) we need to respond with the precise Origin header that was sent
+		handlers.AllowedOrigins([]string{origin}),
+		handlers.AllowedMethods([]string{
+			"GET",
+			"POST",
+			"OPTIONS",
+		}),
+		handlers.AllowedHeaders([]string{
+			// "Accept", "Accept-Language", "Content-Language" are allowed per default
+			"Cache-Control",
+			"Content-Type",
+			"DNT",
+			"If-Modified-Since",
+			"Keep-Alive",
+			"Origin",
+			"User-Agent",
+			"X-Requested-With",
+		}),
+		handlers.AllowCredentials(),
+		// required to be able to read Authorization header in frontend
+		handlers.ExposedHeaders([]string{"Authorization"}),
+		handlers.MaxAge(60),
+		handlers.OptionStatusCode(200),
+	), nil
 }
 
 type wsproxyContextKey struct{}
