@@ -92,6 +92,9 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		if err != nil {
 			return err
 		}
+		if image == "" {
+			image = "gitpod/workspace-full:latest"
+		}
 		fmt.Println("Using default workspace image:", image)
 	case string:
 		image = img
