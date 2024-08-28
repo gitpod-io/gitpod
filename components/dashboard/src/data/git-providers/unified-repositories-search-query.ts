@@ -13,7 +13,7 @@ import { useListConfigurations } from "../configurations/configuration-queries";
 import type { UseInfiniteQueryResult } from "@tanstack/react-query";
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
-const flattenPagedConfigurations = (
+export const flattenPagedConfigurations = (
     data: UseInfiniteQueryResult<{ configurations: Configuration[] }>["data"],
 ): Configuration[] => {
     return data?.pages.flatMap((p) => p.configurations) ?? [];
@@ -27,8 +27,6 @@ type UnifiedRepositorySearchArgs = {
     onlyConfigurations?: boolean;
     // If true, only shows example repositories
     showExamples?: boolean;
-    selectedContextURL?: string;
-    selectedConfigurationId?: string;
 };
 // Combines the suggested repositories and the search repositories query into one hook
 export const useUnifiedRepositorySearch = ({
@@ -36,10 +34,8 @@ export const useUnifiedRepositorySearch = ({
     excludeConfigurations = false,
     onlyConfigurations = false,
     showExamples = false,
-    selectedContextURL,
-    selectedConfigurationId,
 }: UnifiedRepositorySearchArgs) => {
-    const suggestedQuery = useSuggestedRepositories({ excludeConfigurations });
+    const suggestedQuery = useSuggestedRepositories({ excludeConfigurations: true });
     const searchLimit = 30;
     const searchQuery = useSearchRepositories({ searchString, limit: searchLimit });
     const configurationSearch = useListConfigurations({
@@ -49,6 +45,10 @@ export const useUnifiedRepositorySearch = ({
         searchTerm: searchString,
     });
     const flattenedConfigurations = useMemo(() => {
+        if (excludeConfigurations) {
+            return [];
+        }
+
         const flattened = flattenPagedConfigurations(configurationSearch.data);
         return flattened.map(
             (repo) =>
@@ -58,24 +58,7 @@ export const useUnifiedRepositorySearch = ({
                     url: repo.cloneUrl,
                 }),
         );
-    }, [configurationSearch.data]);
-    const selectedItemSearch = useListConfigurations({
-        sortBy: "name",
-        sortOrder: "desc",
-        pageSize: searchLimit,
-        searchTerm: selectedConfigurationId ?? selectedContextURL,
-    });
-    const flattenedSelectedItem = useMemo(() => {
-        const flattened = flattenPagedConfigurations(selectedItemSearch.data);
-        return flattened.map(
-            (repo) =>
-                new SuggestedRepository({
-                    configurationId: repo.id,
-                    configurationName: repo.name,
-                    url: repo.cloneUrl,
-                }),
-        );
-    }, [selectedItemSearch.data]);
+    }, [configurationSearch.data, excludeConfigurations]);
 
     const filteredRepos = useMemo(() => {
         if (showExamples && searchString.length === 0) {
@@ -88,12 +71,7 @@ export const useUnifiedRepositorySearch = ({
             );
         }
 
-        const repos = [
-            suggestedQuery.data || [],
-            searchQuery.data || [],
-            flattenedConfigurations ?? [],
-            flattenedSelectedItem ?? [],
-        ].flat();
+        const repos = [suggestedQuery.data || [], searchQuery.data || [], flattenedConfigurations ?? []].flat();
         return deduplicateAndFilterRepositories(searchString, excludeConfigurations, onlyConfigurations, repos);
     }, [
         showExamples,
@@ -101,7 +79,6 @@ export const useUnifiedRepositorySearch = ({
         suggestedQuery.data,
         searchQuery.data,
         flattenedConfigurations,
-        flattenedSelectedItem,
         excludeConfigurations,
         onlyConfigurations,
     ]);

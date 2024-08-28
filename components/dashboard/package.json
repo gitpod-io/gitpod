@@ -97,7 +97,7 @@
     "react-scripts": "^5.0.1",
     "tailwind-underline-utils": "^1.1.2",
     "tailwindcss-filters": "^3.0.0",
-    "typescript": "^5.4.5",
+    "typescript": "^5.5.4",
     "web-vitals": "^1.1.1"
   },
   "scripts": {
