@@ -71,18 +71,19 @@ func GetConfig(fn string) (*Config, error) {
 	}
 
 	timeout := time.Minute * 5
-	log.WithField("timeout", timeout).Info("nil CorsEnabled, wait for Feature Flag")
+	log.WithField("timeout", timeout).Info("waiting for Feature Flag")
 	experimentsClient := experiments.NewClient(experiments.WithPollInterval(time.Second * 3))
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	ffValue := waitStringValue(ctx, experimentsClient, experimentsCorsEnabled, "nope", experiments.Attributes{})
+	ffValue := waitExperimentsStringValue(ctx, experimentsClient, experimentsCorsEnabled, "nope", experiments.Attributes{})
 	corsEnabled := ffValue == "true"
-	log.WithField("ffValue", ffValue).WithField("corsEnabled", corsEnabled).Info("feature flag final value")
+	cfg.Proxy.CorsEnabled = corsEnabled
+	log.WithField("ffValue", ffValue).WithField("corsEnabled", cfg.Proxy.CorsEnabled).Info("feature flag final value")
 
 	return &cfg, nil
 }
 
-func waitStringValue(ctx context.Context, client experiments.Client, experimentName, nopeValue string, attributes experiments.Attributes) string {
+func waitExperimentsStringValue(ctx context.Context, client experiments.Client, experimentName, nopeValue string, attributes experiments.Attributes) string {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 	for {
