@@ -29,6 +29,7 @@ type Config struct {
 
 	BuiltinPages        BuiltinPagesConfig `json:"builtinPages"`
 	SSHGatewayCAKeyFile string             `json:"sshCAKeyFile"`
+	CorsEnabled         bool
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime.

@@ -95,6 +95,7 @@ var (
 		BuiltinPages: BuiltinPagesConfig{
 			Location: "../../public",
 		},
+		CorsEnabled: false,
 	}
 )
 
