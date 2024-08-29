@@ -70,7 +70,7 @@ func GetConfig(fn string) (*Config, error) {
 		return nil, xerrors.Errorf("config validation error: %w", err)
 	}
 
-	timeout := time.Minute * 5
+	timeout := time.Second * 45
 	log.WithField("timeout", timeout).Info("waiting for Feature Flag")
 	experimentsClient := experiments.NewClient(experiments.WithPollInterval(time.Second * 3))
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
