@@ -409,6 +409,31 @@ func ConfigcatEnv(ctx *RenderContext) []corev1.EnvVar {
 	}
 }
 
+func ConfigcatEnvOutOfCluster(ctx *RenderContext) []corev1.EnvVar {
+	var sdkKey string
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.ConfigcatKey != "" {
+			sdkKey = cfg.WebApp.ConfigcatKey
+		}
+		return nil
+	})
+
+	if sdkKey == "" {
+		return nil
+	}
+
+	return []corev1.EnvVar{
+		{
+			Name:  "CONFIGCAT_SDK_KEY",
+			Value: "gitpod",
+		},
+		{
+			Name:  "CONFIGCAT_BASE_URL",
+			Value: fmt.Sprintf("https://%s/configcat", ctx.Config.Domain),
+		},
+	}
+}
+
 func ConfigcatProxyEnv(ctx *RenderContext) []corev1.EnvVar {
 	var (
 		sdkKey        string

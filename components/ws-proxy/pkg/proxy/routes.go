@@ -61,11 +61,10 @@ func WithDefaultAuth(infoprov common.WorkspaceInfoProvider) RouteHandlerConfigOp
 
 // NewRouteHandlerConfig creates a new instance.
 func NewRouteHandlerConfig(config *Config, opts ...RouteHandlerConfigOpt) (*RouteHandlerConfig, error) {
-	corsHandler, err := corsHandler(config.GitpodInstallation.Scheme, config.GitpodInstallation.HostName)
+	corsHandler, err := corsHandler(config.CorsEnabled, config.GitpodInstallation.Scheme, config.GitpodInstallation.HostName)
 	if err != nil {
 		return nil, err
 	}
-
 	cfg := &RouteHandlerConfig{
 		Config:               config,
 		DefaultTransport:     createDefaultTransport(config.TransportConfig),
@@ -190,6 +189,7 @@ func (ir *ideRoutes) HandleCreateKeyRoute(route *mux.Route, hostKeyList []ssh.Si
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("HandleCreateKeyRoute"))
 	r.Use(ir.Config.CorsHandler)
+
 	r.Use(ir.workspaceMustExistHandler)
 	r.Use(ir.Config.WorkspaceAuthHandler)
 
@@ -655,7 +655,13 @@ func buildWorkspacePodURL(protocol api.PortProtocol, ipAddress string, port stri
 }
 
 // corsHandler produces the CORS handler for workspaces.
-func corsHandler(scheme, hostname string) (mux.MiddlewareFunc, error) {
+func corsHandler(enabled bool, scheme, hostname string) (mux.MiddlewareFunc, error) {
+	if !enabled {
+		// empty handler
+		return func(h http.Handler) http.Handler {
+			return h
+		}, nil
+	}
 	origin := fmt.Sprintf("%s://%s", scheme, hostname)
 
 	domainRegex := strings.ReplaceAll(hostname, ".", "\\.")
