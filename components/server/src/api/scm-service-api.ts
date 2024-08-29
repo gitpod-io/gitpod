@@ -80,6 +80,10 @@ export class ScmServiceAPI implements ServiceImpl<typeof ScmServiceInterface> {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId must be a valid UUID");
         }
 
+        if (request.pagination?.pageSize && request.pagination?.pageSize > 100) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Pagesize must not exceed 100");
+        }
+
         const projectsPromise: Promise<Project[]> = !excludeConfigurations
             ? this.projectService.getProjects(userId, organizationId, { limit: request.pagination?.pageSize })
             : Promise.resolve([]);
