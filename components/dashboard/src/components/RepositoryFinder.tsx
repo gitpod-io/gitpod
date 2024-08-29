@@ -184,6 +184,7 @@ export default function RepositoryFinder({
                 return repo.configurationId === selectedConfigurationId;
             }
 
+            // todo(ft): normalize this more centrally
             if (repo.url.endsWith(".git")) {
                 repo.url = repo.url.slice(0, -4);
             }
