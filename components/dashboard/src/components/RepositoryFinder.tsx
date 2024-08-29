@@ -18,8 +18,13 @@ import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_
 import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { PREDEFINED_REPOS } from "../data/git-providers/predefined-repos";
 
-const isPredefined = (repo: SuggestedRepository) => {
+const isPredefined = (repo: SuggestedRepository): boolean => {
     return PREDEFINED_REPOS.some((predefined) => predefined.url === repo.url) && !repo.configurationId;
+};
+
+const resolveIcon = (contextUrl?: string): string => {
+    if (!contextUrl) return RepositorySVG;
+    return PREDEFINED_REPOS.some((repo) => repo.url === contextUrl) ? GitpodRepositoryTemplateSVG : RepositorySVG;
 };
 
 interface RepositoryFinderProps {
@@ -209,6 +214,8 @@ export default function RepositoryFinder({
                         repo.url.toLowerCase().includes(searchString.toLowerCase()) ||
                         repo.repoName.toLowerCase().includes(searchString.toLowerCase())
                     ) {
+                        repos.push(new SuggestedRepository({ url: repo.url, repoName: repo.repoName }));
+
                         result.push({
                             id: repo.url,
                             element: <PredefinedRepositoryOption repo={repo} />,
@@ -263,11 +270,6 @@ export default function RepositoryFinder({
         },
         [repos, hasMore, authProviders.data, onlyConfigurations, isShowingExamples],
     );
-
-    const resolveIcon = useCallback((contextUrl?: string) => {
-        if (!contextUrl) return RepositorySVG;
-        return PREDEFINED_REPOS.some((repo) => repo.url === contextUrl) ? GitpodRepositoryTemplateSVG : RepositorySVG;
-    }, []);
 
     return (
         <Combobox
