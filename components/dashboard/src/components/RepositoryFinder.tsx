@@ -169,6 +169,10 @@ export default function RepositoryFinder({
             return;
         }
 
+        if (isPredefined(selectedSuggestion)) {
+            return PREDEFINED_REPOS.find((repo) => repo.url === selectedSuggestion.url)?.repoName;
+        }
+
         if (!selectedSuggestion?.configurationName) {
             return displayContextUrl(selectedSuggestion?.repoName || selectedSuggestion?.url);
         }
@@ -214,8 +218,6 @@ export default function RepositoryFinder({
                         repo.url.toLowerCase().includes(searchString.toLowerCase()) ||
                         repo.repoName.toLowerCase().includes(searchString.toLowerCase())
                     ) {
-                        repos.push(new SuggestedRepository({ url: repo.url, repoName: repo.repoName }));
-
                         result.push({
                             id: repo.url,
                             element: <PredefinedRepositoryOption repo={repo} />,
