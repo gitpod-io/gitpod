@@ -99,7 +99,7 @@ export default function RepositoryFinder({
             searchString,
             excludeConfigurations,
             onlyConfigurations,
-            [selectedConfigurationSuggestion, flattenedSelectedItem, unifiedRepos].flat().filter((r) => !!r),
+            [unifiedRepos, selectedConfigurationSuggestion, flattenedSelectedItem].flat().filter((r) => !!r),
         );
     }, [
         searchString,
