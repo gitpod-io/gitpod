@@ -18,6 +18,10 @@ import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_
 import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { PREDEFINED_REPOS } from "../data/git-providers/predefined-repos";
 
+const isPredefined = (repo: SuggestedRepository) => {
+    return PREDEFINED_REPOS.some((predefined) => predefined.url === repo.url) && !repo.configurationId;
+};
+
 interface RepositoryFinderProps {
     selectedContextURL?: string;
     selectedConfigurationId?: string;
@@ -189,11 +193,14 @@ export default function RepositoryFinder({
                 }));
             }
 
-            const result = repos.map((repo) => ({
-                id: repo.configurationId || repo.url,
-                element: <SuggestedRepositoryOption repo={repo} />,
-                isSelectable: true,
-            }));
+            // We deduplicate predefined repos, because we artificially add them to the list just below
+            const result = repos
+                .filter((repo) => !isPredefined(repo))
+                .map((repo) => ({
+                    id: repo.configurationId || repo.url,
+                    element: <SuggestedRepositoryOption repo={repo} />,
+                    isSelectable: true,
+                }));
 
             if (!onlyConfigurations) {
                 // Add predefined repos to end of the list.
