@@ -37,7 +37,7 @@ export const useUnifiedRepositorySearch = ({
 }: UnifiedRepositorySearchArgs) => {
     // 1st data source: suggested SCM repos + up to 100 imported repos.
     // todo(ft): look into deduplicating and merging these on the server
-    const suggestedQuery = useSuggestedRepositories({ excludeConfigurations: true });
+    const suggestedQuery = useSuggestedRepositories({ excludeConfigurations });
     const searchLimit = 30;
     // 2nd data source: SCM repos according to `searchString`
     const searchQuery = useSearchRepositories({ searchString, limit: searchLimit });
@@ -92,8 +92,8 @@ export const useUnifiedRepositorySearch = ({
         hasMore: (searchQuery.data?.length ?? 0) >= searchLimit,
         isLoading: suggestedQuery.isLoading,
         isSearching: searchQuery.isFetching,
-        isError: suggestedQuery.isError || searchQuery.isError,
-        error: suggestedQuery.error || searchQuery.error,
+        isError: suggestedQuery.isError || searchQuery.isError || configurationSearch.isError,
+        error: suggestedQuery.error || searchQuery.error || configurationSearch.error,
     };
 };
 
