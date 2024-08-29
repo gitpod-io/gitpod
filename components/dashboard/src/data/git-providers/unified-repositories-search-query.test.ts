@@ -78,7 +78,8 @@ test("it keeps the order", () => {
     expect(deduplicated[2].configurationName).toEqual("someFootest");
     expect(deduplicated[3].configurationName).toEqual("FOOtest");
 
-    expect(deduplicated.length).toEqual(6);
+    const deduplicatedNoSearch = deduplicateAndFilterRepositories("", false, false, suggestedRepos);
+    expect(deduplicatedNoSearch.length).toEqual(6);
 });
 
 test("it should return all repositories without duplicates when excludeProjects is true", () => {
