@@ -9,6 +9,15 @@ import { useSearchRepositories } from "./search-repositories-query";
 import { useSuggestedRepositories } from "./suggested-repositories-query";
 import { PREDEFINED_REPOS } from "./predefined-repos";
 import { useMemo } from "react";
+import { useListConfigurations } from "../configurations/configuration-queries";
+import type { UseInfiniteQueryResult } from "@tanstack/react-query";
+import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+
+export const flattenPagedConfigurations = (
+    data: UseInfiniteQueryResult<{ configurations: Configuration[] }>["data"],
+): Configuration[] => {
+    return data?.pages.flatMap((p) => p.configurations) ?? [];
+};
 
 type UnifiedRepositorySearchArgs = {
     searchString: string;
@@ -26,9 +35,34 @@ export const useUnifiedRepositorySearch = ({
     onlyConfigurations = false,
     showExamples = false,
 }: UnifiedRepositorySearchArgs) => {
+    // 1st data source: suggested SCM repos + up to 100 imported repos.
+    // todo(ft): look into deduplicating and merging these on the server
     const suggestedQuery = useSuggestedRepositories({ excludeConfigurations });
     const searchLimit = 30;
+    // 2nd data source: SCM repos according to `searchString`
     const searchQuery = useSearchRepositories({ searchString, limit: searchLimit });
+    // 3rd data source: imported repos according to `searchString`
+    const configurationSearch = useListConfigurations({
+        sortBy: "name",
+        sortOrder: "desc",
+        pageSize: searchLimit,
+        searchTerm: searchString,
+    });
+    const flattenedConfigurations = useMemo(() => {
+        if (excludeConfigurations) {
+            return [];
+        }
+
+        const flattened = flattenPagedConfigurations(configurationSearch.data);
+        return flattened.map(
+            (repo) =>
+                new SuggestedRepository({
+                    configurationId: repo.id,
+                    configurationName: repo.name,
+                    url: repo.cloneUrl,
+                }),
+        );
+    }, [configurationSearch.data, excludeConfigurations]);
 
     const filteredRepos = useMemo(() => {
         if (showExamples && searchString.length === 0) {
@@ -41,17 +75,25 @@ export const useUnifiedRepositorySearch = ({
             );
         }
 
-        const repos = [suggestedQuery.data || [], searchQuery.data || []].flat();
+        const repos = [suggestedQuery.data || [], searchQuery.data || [], flattenedConfigurations ?? []].flat();
         return deduplicateAndFilterRepositories(searchString, excludeConfigurations, onlyConfigurations, repos);
-    }, [excludeConfigurations, onlyConfigurations, showExamples, searchQuery.data, searchString, suggestedQuery.data]);
+    }, [
+        showExamples,
+        searchString,
+        suggestedQuery.data,
+        searchQuery.data,
+        flattenedConfigurations,
+        excludeConfigurations,
+        onlyConfigurations,
+    ]);
 
     return {
         data: filteredRepos,
-        hasMore: searchQuery.data?.length === searchLimit,
+        hasMore: (searchQuery.data?.length ?? 0) >= searchLimit,
         isLoading: suggestedQuery.isLoading,
         isSearching: searchQuery.isFetching,
-        isError: suggestedQuery.isError || searchQuery.isError,
-        error: suggestedQuery.error || searchQuery.error,
+        isError: suggestedQuery.isError || searchQuery.isError || configurationSearch.isError,
+        error: suggestedQuery.error || searchQuery.error || configurationSearch.error,
     };
 };
 
@@ -72,6 +114,11 @@ export function deduplicateAndFilterRepositories(
         });
     }
     for (const repo of suggestedRepos) {
+        // normalize URLs
+        if (repo.url.endsWith(".git")) {
+            repo.url = repo.url.slice(0, -4);
+        }
+
         // filter out configuration-less entries if an entry with a configuration exists, and we're not excluding configurations
         if (!repo.configurationId) {
             if (reposWithConfiguration.has(repo.url) || onlyConfigurations) {

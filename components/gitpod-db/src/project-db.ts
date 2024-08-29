@@ -11,7 +11,7 @@ export const ProjectDB = Symbol("ProjectDB");
 export interface ProjectDB extends TransactionalDB<ProjectDB> {
     findProjectById(projectId: string): Promise<Project | undefined>;
     findProjectsByCloneUrl(cloneUrl: string, organizationId?: string): Promise<Project[]>;
-    findProjects(orgID: string): Promise<Project[]>;
+    findProjects(orgID: string, limit?: number): Promise<Project[]>;
     findProjectsBySearchTerm(args: FindProjectsBySearchTermArgs): Promise<{ total: number; rows: Project[] }>;
     storeProject(project: Project): Promise<Project>;
     updateProject(partialProject: PartialProject): Promise<Project>;

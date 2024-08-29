@@ -24,6 +24,9 @@ export const useSuggestedRepositories = ({ excludeConfigurations }: Props) => {
             const { repositories } = await scmClient.listSuggestedRepositories({
                 organizationId: org.id,
                 excludeConfigurations,
+                pagination: {
+                    pageSize: 100,
+                },
             });
             return repositories;
         },
