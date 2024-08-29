@@ -55,7 +55,7 @@ export function parseProps(workspaceId: string, search?: string): StartWorkspace
     const runsInIFrame = window.top !== window.self;
     return {
         workspaceId,
-        runsInIFrame: window.top !== window.self,
+        runsInIFrame,
         // Either:
         //  - not_found: we were sent back from a workspace cluster/IDE URL where we expected a workspace to be running but it wasn't because either:
         //    - this is a (very) old tab and the workspace already timed out
@@ -228,7 +228,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 return;
             }
             // TODO: Remove this once we use `useStartWorkspaceMutation`
-            // Start listening too instance updates - and explicitly query state once to guarantee we get at least one update
+            // Start listening to instance updates - and explicitly query state once to guarantee we get at least one update
             // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
             this.fetchWorkspaceInfo(result.workspace?.status?.instanceId);
         } catch (error) {
