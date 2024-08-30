@@ -64,9 +64,9 @@ export class ProjectsService {
         return this.migratePrebuildSettingsOnDemand(project);
     }
 
-    async getProjects(userId: string, orgId: string): Promise<Project[]> {
+    async getProjects(userId: string, orgId: string, paginationOptions?: { limit?: number }): Promise<Project[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
-        const projects = await this.projectDB.findProjects(orgId);
+        const projects = await this.projectDB.findProjects(orgId, paginationOptions?.limit);
         const filteredProjects = await this.filterByReadAccess(userId, projects);
         return Promise.all(filteredProjects.map((p) => this.migratePrebuildSettingsOnDemand(p)));
     }

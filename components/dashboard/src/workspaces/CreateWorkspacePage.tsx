@@ -22,7 +22,6 @@ import { InputField } from "../components/forms/InputField";
 import { Heading1 } from "../components/typography/headings";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
-import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
 import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
 import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
@@ -55,6 +54,9 @@ import Menu from "../menu/Menu";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
 import { isGitpodIo } from "../utils";
+import { useListConfigurations } from "../data/configurations/configuration-queries";
+import { flattenPagedConfigurations } from "../data/git-providers/unified-repositories-search-query";
+import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
 
@@ -64,7 +66,6 @@ export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
     const currentOrg = useCurrentOrg().data;
-    const projects = useListAllProjectsQuery();
     const workspaces = useListWorkspacesQuery({ limit: 50 });
     const location = useLocation();
     const history = useHistory();
@@ -123,11 +124,23 @@ export function CreateWorkspacePage() {
         setNextLoadOption("searchParams");
     }, [location.hash]);
 
+    const cloneURL = workspaceContext.data?.cloneUrl;
+
+    const paginatedConfigurations = useListConfigurations({
+        sortBy: "name",
+        sortOrder: "desc",
+        pageSize: 100,
+        searchTerm: cloneURL,
+    });
+    const configurations = useMemo<Configuration[]>(
+        () => flattenPagedConfigurations(paginatedConfigurations.data),
+        [paginatedConfigurations.data],
+    );
+
     const storeAutoStartOptions = useCallback(async () => {
         if (!workspaceContext.data || !user || !currentOrg) {
             return;
         }
-        const cloneURL = workspaceContext.data.cloneUrl;
         if (!cloneURL) {
             return;
         }
@@ -160,36 +173,36 @@ export function CreateWorkspacePage() {
         });
         setUser(updatedUser);
     }, [
-        updateUser,
+        workspaceContext.data,
+        user,
         currentOrg,
-        selectedIde,
+        cloneURL,
         selectedWsClass,
-        setUser,
+        selectedIde,
         useLatestIde,
         preferToolbox,
-        user,
-        workspaceContext.data,
+        updateUser,
+        setUser,
     ]);
 
-    // see if we have a matching project based on context url and project's repo url
-    const project = useMemo(() => {
-        if (!workspaceContext.data || !projects.data) {
+    // see if we have a matching configuration based on context url and configuration's repo url
+    const configuration = useMemo(() => {
+        if (!workspaceContext.data || configurations.length === 0) {
             return undefined;
         }
-        const cloneUrl = workspaceContext.data.cloneUrl;
-        if (!cloneUrl) {
+        if (!cloneURL) {
             return;
         }
-        // TODO: Account for multiple projects w/ the same cloneUrl
-        return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
-    }, [projects.data, workspaceContext.data]);
+        // TODO: Account for multiple configurations w/ the same cloneUrl
+        return configurations.find((p) => p.cloneUrl === cloneURL);
+    }, [workspaceContext.data, configurations, cloneURL]);
 
     // Handle the case where the context url in the hash matches a project and we don't have that project selected yet
     useEffect(() => {
-        if (project && !selectedProjectID) {
-            setSelectedProjectID(project.id);
+        if (configuration && !selectedProjectID) {
+            setSelectedProjectID(configuration.id);
         }
-    }, [project, selectedProjectID]);
+    }, [configuration, selectedProjectID]);
 
     // In addition to updating state, we want to update the url hash as well
     // This allows the contextURL to persist if user changes orgs, or copies/shares url
@@ -200,7 +213,7 @@ export function CreateWorkspacePage() {
             // TODO: consider storing SuggestedRepository as state vs. discrete props
             setContextURL(repo?.url);
             setSelectedProjectID(repo?.configurationId);
-            // TOOD: consider dropping this - it's a lossy conversion
+            // TODO: consider dropping this - it's a lossy conversion
             history.replace(`#${repo?.url}`);
             // reset load options
             setNextLoadOption("searchParams");
@@ -393,7 +406,7 @@ export function CreateWorkspacePage() {
                 setPreferToolbox(defaultPreferToolbox);
             }
             if (!selectedWsClassIsDirty) {
-                const projectWsClass = project?.settings?.workspaceClasses?.regular;
+                const projectWsClass = configuration?.workspaceSettings?.workspaceClass;
                 const targetClass = projectWsClass || defaultWorkspaceClass;
                 if (allowedWorkspaceClasses.some((cls) => cls.id === targetClass && !cls.isDisabledInScope)) {
                     setSelectedWsClass(targetClass, false);
@@ -404,7 +417,7 @@ export function CreateWorkspacePage() {
         setNextLoadOption("allDone");
         // we only update the remembered options when the workspaceContext changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [workspaceContext.data, nextLoadOption, project, isLoadingWorkspaceClasses, allowedWorkspaceClasses]);
+    }, [workspaceContext.data, nextLoadOption, configuration, isLoadingWorkspaceClasses, allowedWorkspaceClasses]);
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);

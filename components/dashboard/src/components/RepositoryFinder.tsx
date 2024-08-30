@@ -11,12 +11,17 @@ import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.s
 import { ReactComponent as GitpodRepositoryTemplate } from "../icons/GitpodRepositoryTemplate.svg";
 import GitpodRepositoryTemplateSVG from "../icons/GitpodRepositoryTemplate.svg";
 import { MiddleDot } from "./typography/MiddleDot";
-import { useUnifiedRepositorySearch } from "../data/git-providers/unified-repositories-search-query";
+import {
+    deduplicateAndFilterRepositories,
+    flattenPagedConfigurations,
+    useUnifiedRepositorySearch,
+} from "../data/git-providers/unified-repositories-search-query";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { PREDEFINED_REPOS } from "../data/git-providers/predefined-repos";
+import { useConfiguration, useListConfigurations } from "../data/configurations/configuration-queries";
 
 const isPredefined = (repo: SuggestedRepository): boolean => {
     return PREDEFINED_REPOS.some((predefined) => predefined.url === repo.url) && !repo.configurationId;
@@ -50,7 +55,7 @@ export default function RepositoryFinder({
 }: RepositoryFinderProps) {
     const [searchString, setSearchString] = useState("");
     const {
-        data: repos,
+        data: unifiedRepos,
         isLoading,
         isSearching,
         hasMore,
@@ -59,6 +64,59 @@ export default function RepositoryFinder({
         excludeConfigurations,
         onlyConfigurations,
     });
+
+    // We search for the current context URL in order to have data for the selected suggestion
+    const selectedItemSearch = useListConfigurations({
+        sortBy: "name",
+        sortOrder: "desc",
+        pageSize: 30,
+        searchTerm: selectedContextURL,
+    });
+    const flattenedSelectedItem = useMemo(() => {
+        if (excludeConfigurations) {
+            return [];
+        }
+
+        const flattened = flattenPagedConfigurations(selectedItemSearch.data);
+        return flattened.map(
+            (repo) =>
+                new SuggestedRepository({
+                    configurationId: repo.id,
+                    configurationName: repo.name,
+                    url: repo.cloneUrl,
+                }),
+        );
+    }, [excludeConfigurations, selectedItemSearch.data]);
+
+    // We get the configuration by ID if one is selected
+    const selectedConfiguration = useConfiguration(selectedConfigurationId);
+    const selectedConfigurationSuggestion = useMemo(() => {
+        if (!selectedConfiguration.data) {
+            return undefined;
+        }
+
+        return new SuggestedRepository({
+            configurationId: selectedConfiguration.data.id,
+            configurationName: selectedConfiguration.data.name,
+            url: selectedConfiguration.data.cloneUrl,
+        });
+    }, [selectedConfiguration.data]);
+
+    const repos = useMemo(() => {
+        return deduplicateAndFilterRepositories(
+            searchString,
+            excludeConfigurations,
+            onlyConfigurations,
+            [unifiedRepos, selectedConfigurationSuggestion, flattenedSelectedItem].flat().filter((r) => !!r),
+        );
+    }, [
+        searchString,
+        excludeConfigurations,
+        onlyConfigurations,
+        selectedConfigurationSuggestion,
+        flattenedSelectedItem,
+        unifiedRepos,
+    ]);
 
     const authProviders = useAuthProviderDescriptions();
 
@@ -121,6 +179,11 @@ export default function RepositoryFinder({
         let match = repos?.find((repo) => {
             if (selectedConfigurationId) {
                 return repo.configurationId === selectedConfigurationId;
+            }
+
+            // todo(ft): normalize this more centrally
+            if (repo.url.endsWith(".git")) {
+                repo.url = repo.url.slice(0, -4);
             }
 
             return repo.url === selectedContextURL;
