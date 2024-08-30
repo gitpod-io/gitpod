@@ -262,6 +262,11 @@ export class OrganizationService {
         if (await this.teamDB.hasActiveSSO(invite.teamId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
+        const user = await this.userDB.findUserById(userId);
+        if (!user) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `User ${userId} not found`);
+        }
+
         // set skipRoleUpdate=true to avoid member/owner click join link again cause role change
         await runWithSubjectId(SYSTEM_USER, () =>
             this.addOrUpdateMember(SYSTEM_USER_ID, invite.teamId, userId, invite.role, {
@@ -269,6 +274,20 @@ export class OrganizationService {
                 skipRoleUpdate: true,
             }),
         );
+
+        try {
+            // verify the new member if this org is a paying customer
+            if (
+                (await this.stripeService.findUncancelledSubscriptionByAttributionId(
+                    AttributionId.render({ kind: "team", teamId: invite.teamId }),
+                )) !== undefined
+            ) {
+                await this.userService.markUserAsVerified(user, undefined);
+            }
+        } catch (e) {
+            log.warn("Failed to verify new org member", e);
+        }
+
         this.analytics.track({
             userId: userId,
             event: "team_joined",
