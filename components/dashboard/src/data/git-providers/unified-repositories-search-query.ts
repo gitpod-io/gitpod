@@ -7,7 +7,6 @@
 import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { useSearchRepositories } from "./search-repositories-query";
 import { useSuggestedRepositories } from "./suggested-repositories-query";
-import { PREDEFINED_REPOS } from "./predefined-repos";
 import { useMemo } from "react";
 import { useListConfigurations } from "../configurations/configuration-queries";
 import type { UseInfiniteQueryResult } from "@tanstack/react-query";
@@ -25,15 +24,12 @@ type UnifiedRepositorySearchArgs = {
     excludeConfigurations?: boolean;
     // If true, only shows entries with a corresponding configuration
     onlyConfigurations?: boolean;
-    // If true, only shows example repositories
-    showExamples?: boolean;
 };
 // Combines the suggested repositories and the search repositories query into one hook
 export const useUnifiedRepositorySearch = ({
     searchString,
     excludeConfigurations = false,
     onlyConfigurations = false,
-    showExamples = false,
 }: UnifiedRepositorySearchArgs) => {
     // 1st data source: suggested SCM repos + up to 100 imported repos.
     // todo(ft): look into deduplicating and merging these on the server
@@ -65,20 +61,9 @@ export const useUnifiedRepositorySearch = ({
     }, [configurationSearch.data, excludeConfigurations]);
 
     const filteredRepos = useMemo(() => {
-        if (showExamples && searchString.length === 0) {
-            return PREDEFINED_REPOS.map(
-                (repo) =>
-                    new SuggestedRepository({
-                        url: repo.url,
-                        repoName: repo.repoName,
-                    }),
-            );
-        }
-
         const repos = [suggestedQuery.data || [], searchQuery.data || [], flattenedConfigurations ?? []].flat();
         return deduplicateAndFilterRepositories(searchString, excludeConfigurations, onlyConfigurations, repos);
     }, [
-        showExamples,
         searchString,
         suggestedQuery.data,
         searchQuery.data,
