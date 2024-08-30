@@ -70,6 +70,7 @@ export class IDEMetricsServiceClient {
                 method: "POST",
                 body: JSON.stringify(params),
                 credentials: "omit",
+                priority: "low",
             });
             if (!response.ok) {
                 const data = await response.json(); // { code: number; message: string; }
