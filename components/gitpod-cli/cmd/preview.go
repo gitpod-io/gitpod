@@ -84,6 +84,8 @@ func openPreview(gpBrowserEnvVar string, url string) error {
 	args = append(args, url)
 
 	previewCmd := exec.Command(pcmd, args...)
+	previewCmd.Stdout = os.Stdout
+	previewCmd.Stderr = os.Stderr
 	err = previewCmd.Run()
 	if err != nil {
 		return err
