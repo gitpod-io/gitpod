@@ -275,6 +275,7 @@ func TestIntelliJWarmup(t *testing.T) {
 							string(warmupIndexingShell),
 							"--",
 							jbCtx.SystemDir,
+							"1",
 						},
 					}, &resp)
 					if err != nil {
