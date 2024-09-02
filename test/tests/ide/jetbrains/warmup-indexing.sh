@@ -28,7 +28,7 @@ mapfile -t sortedFiles < <(printf "%s\n" "${FilteredJsonFiles[@]}" | sort -r)
 targetFile=${sortedFiles[0]}
 echo "Target indexing json file: $targetFile"
 scheduledIndexing=$(jq '.projectIndexingActivityHistory.fileCount.numberOfFilesScheduledForIndexingAfterScan' "$targetFile")
-echo "Scheduled indexing count: $scheduledIndexing"
+echo "Scheduled indexing count: $scheduledIndexing, threshold: $Threshold"
 
 if [ "$scheduledIndexing" -gt "$Threshold" ]; then
     echo "Error: Scheduled indexing count $scheduledIndexing > $Threshold" >&2

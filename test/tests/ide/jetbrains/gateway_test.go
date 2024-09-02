@@ -281,10 +281,10 @@ func TestIntelliJWarmup(t *testing.T) {
 					if err != nil {
 						return fmt.Errorf("failed to warmup indexing: %v", err)
 					}
+					t.Logf("stdout:\n%s", string(resp.Stdout))
 					if resp.ExitCode != 0 {
 						return fmt.Errorf("failed to warmup indexing: %s, %d", resp.Stderr, resp.ExitCode)
 					}
-					t.Logf("output:\n%s", string(resp.Stdout))
 					return nil
 				}))
 			return testCtx
