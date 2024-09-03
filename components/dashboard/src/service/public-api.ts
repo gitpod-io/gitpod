@@ -275,12 +275,24 @@ export function stream<Response>(
     (async () => {
         while (!abort.signal.aborted) {
             try {
+                let dataReceived = false;
+                let attemptTimeoutId: NodeJS.Timeout | null;
+                attemptTimeoutId = setTimeout(() => {
+                    if (!dataReceived) {
+                        throw new Error("Attempt Timeout: No initial data received within 10 seconds");
+                    }
+                }, 10_000);
+
                 for await (const response of factory({
                     signal: abort.signal,
                     // GCP timeout is 10 minutes, we timeout 3 mins earlier
                     // to avoid unknown network errors and reconnect gracefully
                     timeoutMs: 7 * 60 * 1000,
                 })) {
+                    dataReceived = true;
+                    attemptTimeoutId && clearTimeout(attemptTimeoutId);
+                    attemptTimeoutId = null;
+
                     backoff = BASE_BACKOFF;
                     cb(response);
                 }
