@@ -268,17 +268,18 @@ export function watchPrebuild(
 export function stream<Response>(
     factory: (options: CallOptions) => AsyncIterable<Response>,
     cb: (response: Response) => void,
-    options?: {
-        disablePendingTimeout?: boolean;
-    },
 ): Disposable {
     const MAX_BACKOFF = 60000;
     const BASE_BACKOFF = 3000;
     let backoff = BASE_BACKOFF;
     const abort = new AbortController();
     (async () => {
+        // Only timeout after 10 seconds with no data in some environments
+        const experiments = getExperimentsClient();
+        const enableTimeout = await experiments.getValueAsync("supervisor_check_ready_retry", false, {});
+
         while (!abort.signal.aborted) {
-            const connectionTimeout = new Timeout(options?.disablePendingTimeout ? Infinity : 10_000);
+            const connectionTimeout = new Timeout(10_000, () => enableTimeout);
             try {
                 connectionTimeout.start();
                 connectionTimeout.signal?.addEventListener("abort", () => {
