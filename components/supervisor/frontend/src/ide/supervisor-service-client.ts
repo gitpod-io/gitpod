@@ -11,23 +11,17 @@ import {
 } from "@gitpod/supervisor-api-grpc/lib/status_pb";
 import { WorkspaceInfoResponse } from "@gitpod/supervisor-api-grpc/lib/info_pb";
 import { workspaceUrl } from "../shared/urls";
+import { FrontendDashboardServiceClient } from "../shared/frontend-dashboard-service";
+import { Timeout } from "@gitpod/gitpod-protocol/lib/util/timeout";
 
 export class SupervisorServiceClient {
-    private static _instance: SupervisorServiceClient | undefined;
-    static get(): SupervisorServiceClient {
-        if (!SupervisorServiceClient._instance) {
-            SupervisorServiceClient._instance = new SupervisorServiceClient();
-        }
-        return SupervisorServiceClient._instance;
-    }
-
     readonly supervisorReady = this.checkReady("supervisor");
     readonly ideReady = this.supervisorReady.then(() => this.checkReady("ide"));
     readonly contentReady = Promise.all([this.supervisorReady]).then(() => this.checkReady("content"));
     readonly getWorkspaceInfoPromise = this.supervisorReady.then(() => this.getWorkspaceInfo());
     private _supervisorWillShutdown: Promise<void> | undefined;
 
-    private constructor() {}
+    constructor(readonly serviceClient: FrontendDashboardServiceClient) {}
 
     public get supervisorWillShutdown() {
         if (!this._supervisorWillShutdown) {
@@ -84,13 +78,44 @@ export class SupervisorServiceClient {
         if (kind == "supervisor") {
             wait = "";
         }
+
+        // track whenever a) we are done, or b) we try to connect (again)
+        const trackCheckReady = (p: { aborted?: boolean }, err?: any): void => {
+            const props: Record<string, string> = {
+                component: "supervisor-frontend",
+                instanceId: this.serviceClient.latestInfo?.instanceId ?? "",
+                userId: this.serviceClient.latestInfo?.loggedUserId ?? "",
+                readyKind: kind,
+            };
+            if (err) {
+                props.errorName = err.name;
+                props.errorStack = err.message ?? String(err);
+            }
+
+            props.aborted = String(!!p.aborted);
+            props.wait = wait;
+
+            this.serviceClient.trackEvent({
+                event: "supervisor_check_ready",
+                properties: props,
+            });
+        };
+
+        // setup a timeout, which is meant to re-establish the connection every 5 seconds
+        let isError = false;
+        const timeout = new Timeout(5000);
         try {
+            timeout.restart();
+
             const wsSupervisorStatusUrl = workspaceUrl.with(() => {
                 return {
                     pathname: "/_supervisor/v1/status/" + kind + wait,
                 };
             });
-            const response = await fetch(wsSupervisorStatusUrl.toString(), { credentials: "include" });
+            const response = await fetch(wsSupervisorStatusUrl.toString(), {
+                credentials: "include",
+                signal: timeout.signal(),
+            });
             let result;
             if (response.ok) {
                 result = await response.json();
@@ -112,6 +137,16 @@ export class SupervisorServiceClient {
             );
         } catch (e) {
             console.debug(`failed to check whether ${kind} is ready, trying again...`, e);
+
+            // we want to track this kind of errors, as they are on the critical path (of revealing the workspace)
+            isError = true;
+            trackCheckReady({ aborted: timeout.signal()?.aborted }, e);
+        } finally {
+            if (!isError) {
+                // make sure we don't track twice in case of an error
+                trackCheckReady({ aborted: timeout.signal()?.aborted });
+            }
+            timeout.clear();
         }
         return this.checkReady(kind, true);
     }
