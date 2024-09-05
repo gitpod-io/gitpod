@@ -278,9 +278,12 @@ export function stream<Response>(
             const connectionTimeout = new Timeout(10_000);
             try {
                 connectionTimeout.start();
+                connectionTimeout.signal?.addEventListener("abort", () => {
+                    console.error("Connection timed out after no response for 10s");
+                });
 
                 for await (const response of factory({
-                    signal: AbortSignal.any([abort.signal, connectionTimeout.signal()!]),
+                    signal: AbortSignal.any([abort.signal, connectionTimeout.signal!]),
                     // GCP timeout is 10 minutes, we timeout 3 mins earlier
                     // to avoid unknown network errors and reconnect gracefully
                     timeoutMs: 7 * 60 * 1000,
