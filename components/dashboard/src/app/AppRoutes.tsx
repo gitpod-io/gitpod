@@ -33,7 +33,6 @@ import { Blocked } from "./Blocked";
 import { BlockedRepositories } from "../admin/BlockedRepositories";
 import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokensCreateView";
 import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
-import { WebsocketClients } from "./WebsocketClients";
 import { BlockedEmailDomains } from "../admin/BlockedEmailDomains";
 import { AppNotifications } from "../AppNotifications";
 import { projectsPathInstallGitHubApp } from "../projects/projects.routes";
@@ -263,7 +262,6 @@ export const AppRoutes = () => {
                             />
                         </Switch>
                     </div>
-                    <WebsocketClients />
                 </Route>
             </Switch>
         </Route>

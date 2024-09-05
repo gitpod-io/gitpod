@@ -53,5 +53,8 @@ export function watchWorkspaceStatus(workspaceId: string | undefined, cb: WatchW
     return stream<WatchWorkspaceStatusResponse>(
         (options) => workspaceClient.watchWorkspaceStatus({ workspaceId }, options),
         cb,
+        {
+            disablePendingTimeout: true,
+        },
     );
 }

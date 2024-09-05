@@ -34,6 +34,9 @@ export class Timeout {
 
         const abortController = new AbortController();
         this._abortController = abortController;
+        if (this.timeout === Infinity) {
+            return;
+        }
         this._timer = setTimeout(() => {
             if (this.abortCondition && !this.abortCondition()) {
                 return;

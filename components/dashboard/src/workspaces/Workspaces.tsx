@@ -24,14 +24,18 @@ import { BookOpen, Code } from "lucide-react";
 import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
 import { isGitpodIo } from "../utils";
 import PersonalizedContent from "./PersonalizedContent";
+import { useListenToWorkspacesWSMessages as useListenToWorkspacesStatusUpdates } from "../data/workspaces/listen-to-workspace-ws-messages";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
     const [searchTerm, setSearchTerm] = useState("");
     const [showInactive, setShowInactive] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
     const { data, isLoading } = useListWorkspacesQuery({ limit });
     const deleteInactiveWorkspaces = useDeleteInactiveWorkspacesMutation();
+    useListenToWorkspacesStatusUpdates();
+
     const { toast } = useToast();
 
     // Sort workspaces into active/inactive groups

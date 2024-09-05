@@ -268,6 +268,9 @@ export function watchPrebuild(
 export function stream<Response>(
     factory: (options: CallOptions) => AsyncIterable<Response>,
     cb: (response: Response) => void,
+    options?: {
+        disablePendingTimeout?: boolean;
+    },
 ): Disposable {
     const MAX_BACKOFF = 60000;
     const BASE_BACKOFF = 3000;
@@ -275,7 +278,7 @@ export function stream<Response>(
     const abort = new AbortController();
     (async () => {
         while (!abort.signal.aborted) {
-            const connectionTimeout = new Timeout(10_000);
+            const connectionTimeout = new Timeout(options?.disablePendingTimeout ? Infinity : 10_000);
             try {
                 connectionTimeout.start();
                 connectionTimeout.signal?.addEventListener("abort", () => {
