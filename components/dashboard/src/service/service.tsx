@@ -184,6 +184,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         private clientWindow: Window,
     ) {
         this.processServerInfo();
+        this.sendFeatureFlagsUpdate();
         window.addEventListener("message", (event: MessageEvent) => {
             if (IDEFrontendDashboardService.isTrackEventData(event.data)) {
                 this.trackEvent(event.data.msg);
@@ -199,6 +200,9 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             }
             if (IDEFrontendDashboardService.isOpenDesktopIDE(event.data)) {
                 this.openDesktopIDE(event.data.url);
+            }
+            if (IDEFrontendDashboardService.isFeatureFlagsRequestEventData(event.data)) {
+                this.sendFeatureFlagsUpdate();
             }
         });
         window.addEventListener("unload", () => {
@@ -372,6 +376,23 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
                 type: "ide-info-update",
                 info,
             } as IDEFrontendDashboardService.InfoUpdateEventData,
+            "*",
+        );
+    }
+
+    private async sendFeatureFlagsUpdate() {
+        const supervisor_check_ready_retry = await getExperimentsClient().getValueAsync(
+            "supervisor_check_ready_retry",
+            false,
+            {
+                gitpodHost: gitpodHostUrl.toString(),
+            },
+        );
+        this.clientWindow.postMessage(
+            {
+                type: "ide-feature-flag-update",
+                flags: { supervisor_check_ready_retry },
+            } as IDEFrontendDashboardService.FeatureFlagsUpdateEventData,
             "*",
         );
     }

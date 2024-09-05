@@ -16,8 +16,7 @@
             "es6",
             "es2018",
             "dom",
-            "ES2018.Regexp",
-            "DOM.AsyncIterable"
+            "ES2018.Regexp"
         ],
         "sourceMap": true,
         "declaration": true,

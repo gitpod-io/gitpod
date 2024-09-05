@@ -69,6 +69,15 @@ export namespace IDEFrontendDashboardService {
         info: Info;
     }
 
+    export interface FeatureFlagsUpdateEventData {
+        type: "ide-feature-flag-update";
+        flags: { supervisor_check_ready_retry: boolean };
+    }
+
+    export interface FeatureFlagsRequestEventData {
+        type: "ide-feature-flag-request";
+    }
+
     export interface HeartbeatEventData {
         type: "ide-heartbeat";
     }
@@ -99,6 +108,14 @@ export namespace IDEFrontendDashboardService {
 
     export function isInfoUpdateEventData(obj: any): obj is InfoUpdateEventData {
         return obj != null && typeof obj === "object" && obj.type === "ide-info-update";
+    }
+
+    export function isFeatureFlagsUpdateEventData(obj: any): obj is FeatureFlagsUpdateEventData {
+        return obj != null && typeof obj === "object" && obj.type === "ide-feature-flag-update";
+    }
+
+    export function isFeatureFlagsRequestEventData(obj: any): obj is FeatureFlagsRequestEventData {
+        return obj != null && typeof obj === "object" && obj.type === "ide-feature-flag-request";
     }
 
     export function isHeartbeatEventData(obj: any): obj is HeartbeatEventData {

@@ -115,8 +115,15 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip common
 	}), false)
 	routes.HandleSupervisorFrontendRoute(enableCompression(r).PathPrefix("/_supervisor/frontend"))
 
-	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/supervisor"), false)
-	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/ide"), false)
+	statusErrorHandler := func(rw http.ResponseWriter, req *http.Request, connectErr error) {
+		log.Infof("status handler: could not connect to backend %s: %s", req.URL.String(), connectErrorToCause(connectErr))
+
+		rw.WriteHeader(http.StatusBadGateway)
+	}
+
+	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/supervisor"), false, withErrorHandler(statusErrorHandler))
+	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/ide"), false, withErrorHandler(statusErrorHandler))
+	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/content"), true, withErrorHandler(statusErrorHandler))
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1"), true)
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor"), true)
 
@@ -294,7 +301,7 @@ func (ir *ideRoutes) HandleSSHOverWebsocketTunnel(route *mux.Route, sshGatewaySe
 	})
 }
 
-func (ir *ideRoutes) HandleDirectSupervisorRoute(route *mux.Route, authenticated bool) {
+func (ir *ideRoutes) HandleDirectSupervisorRoute(route *mux.Route, authenticated bool, proxyPassOpts ...proxyPassOpt) {
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler(fmt.Sprintf("HandleDirectSupervisorRoute (authenticated: %v)", authenticated)))
 	r.Use(ir.Config.CorsHandler)
@@ -303,7 +310,7 @@ func (ir *ideRoutes) HandleDirectSupervisorRoute(route *mux.Route, authenticated
 		r.Use(ir.Config.WorkspaceAuthHandler)
 	}
 
-	r.NewRoute().HandlerFunc(proxyPass(ir.Config, ir.InfoProvider, workspacePodSupervisorResolver))
+	r.NewRoute().HandlerFunc(proxyPass(ir.Config, ir.InfoProvider, workspacePodSupervisorResolver, proxyPassOpts...))
 }
 
 func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
