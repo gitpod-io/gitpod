@@ -103,7 +103,7 @@ export class SupervisorServiceClient {
 
         // setup a timeout, which is meant to re-establish the connection every 5 seconds
         let isError = false;
-        const timeout = new Timeout(5000);
+        const timeout = new Timeout(5000, () => this.serviceClient.isCheckReadyRetryEnabled());
         try {
             timeout.restart();
 
