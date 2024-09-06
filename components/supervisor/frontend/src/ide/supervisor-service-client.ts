@@ -114,7 +114,7 @@ export class SupervisorServiceClient {
             });
             const response = await fetch(wsSupervisorStatusUrl.toString(), {
                 credentials: "include",
-                signal: timeout.signal(),
+                signal: timeout.signal,
             });
             let result;
             if (response.ok) {
@@ -140,11 +140,11 @@ export class SupervisorServiceClient {
 
             // we want to track this kind of errors, as they are on the critical path (of revealing the workspace)
             isError = true;
-            trackCheckReady({ aborted: timeout.signal()?.aborted }, e);
+            trackCheckReady({ aborted: timeout.signal?.aborted }, e);
         } finally {
             if (!isError) {
                 // make sure we don't track twice in case of an error
-                trackCheckReady({ aborted: timeout.signal()?.aborted });
+                trackCheckReady({ aborted: timeout.signal?.aborted });
             }
             timeout.clear();
         }
