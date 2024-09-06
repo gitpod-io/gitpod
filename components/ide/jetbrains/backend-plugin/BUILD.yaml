@@ -71,7 +71,7 @@ packages:
       - components/gitpod-protocol/java:lib
     srcs:
       - "**/*.kt"
-      - "build.gradle-stable.kts"
+      - "build.gradle.kts"
       - "gradle.properties"
       - "gradle-stable.properties"
       - "gradle/wrapper/*"
@@ -83,10 +83,17 @@ packages:
     env:
       - JB_QUALIFIER=stable
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
+      # TODO(hw): remove me after java 21 is default version in dev image
+      - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
-        - ["mv", "build.gradle-stable.kts", "build.gradle.kts"]
-        - ["./build.sh", "${__git_commit}"]
+        - - "bash"
+          - "-c"
+          - >
+            echo java=21.0.3.fx-zulu > .sdkmanrc
+            && source "$SDKMAN_DIR/bin/sdkman-init.sh"
+            && sdk env install
+            && ./build.sh ${__git_commit}
   - name: plugin-latest
     type: generic
     argdeps:
@@ -96,7 +103,7 @@ packages:
       - components/gitpod-protocol/java:lib
     srcs:
       - "**/*.kt"
-      - "build.gradle-latest.kts"
+      - "build.gradle.kts"
       - "gradle.properties"
       - "gradle-latest.properties"
       - "gradle/wrapper/*"
@@ -108,12 +115,10 @@ packages:
     env:
       - JB_QUALIFIER=latest
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
-      # TODO(hw): remove after `2024.2.*` is stable
+      # TODO(hw): remove me after java 21 is default version in dev image
       - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
-        # TODO(hw): remove after 2024.2.* is stable
-        - ["mv", "build.gradle-latest.kts", "build.gradle.kts"]
         - - "bash"
           - "-c"
           - >
