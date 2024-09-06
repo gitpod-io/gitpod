@@ -41,6 +41,7 @@ import { VerificationService } from "@gitpod/public-api/lib/gitpod/v1/verificati
 import { JsonRpcInstallationClient } from "./json-rpc-installation-client";
 import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
 import { JsonRpcUserClient } from "./json-rpc-user-client";
+import { Timeout } from "@gitpod/gitpod-protocol/lib/util/timeout";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -273,14 +274,26 @@ export function stream<Response>(
     let backoff = BASE_BACKOFF;
     const abort = new AbortController();
     (async () => {
+        // Only timeout after 10 seconds with no data in some environments
+        const experiments = getExperimentsClient();
+        const enableTimeout = await experiments.getValueAsync("supervisor_check_ready_retry", false, {});
+
         while (!abort.signal.aborted) {
+            const connectionTimeout = new Timeout(10_000, () => enableTimeout);
             try {
+                connectionTimeout.start();
+                connectionTimeout.signal?.addEventListener("abort", () => {
+                    console.error("Connection timed out after no response for 10s");
+                });
+
                 for await (const response of factory({
-                    signal: abort.signal,
+                    signal: AbortSignal.any([abort.signal, connectionTimeout.signal!]),
                     // GCP timeout is 10 minutes, we timeout 3 mins earlier
                     // to avoid unknown network errors and reconnect gracefully
                     timeoutMs: 7 * 60 * 1000,
                 })) {
+                    connectionTimeout.clear(); // connection is alive now, clear timeout
+
                     backoff = BASE_BACKOFF;
                     cb(response);
                 }
@@ -302,6 +315,8 @@ export function stream<Response>(
                     backoff = Math.min(2 * backoff, MAX_BACKOFF);
                     console.error(e);
                 }
+            } finally {
+                connectionTimeout.clear();
             }
             const jitter = Math.random() * 0.3 * backoff;
             const delay = backoff + jitter;

@@ -16,14 +16,14 @@ export class TimeoutSpec {
         const timeout = new Timeout(1);
         timeout.start();
         await timeout.await();
-        expect(timeout.signal()?.aborted).to.be.true;
+        expect(timeout.signal?.aborted).to.be.true;
     }
 
     @test
     async testSimpleRunNotStarted() {
         const timeout = new Timeout(1);
         await timeout.await();
-        expect(timeout.signal()).to.be.undefined;
+        expect(timeout.signal).to.be.undefined;
     }
 
     @test
@@ -31,13 +31,13 @@ export class TimeoutSpec {
         const timeout = new Timeout(20);
         timeout.start();
         await timeout.await();
-        expect(timeout.signal()?.aborted).to.be.true;
+        expect(timeout.signal?.aborted).to.be.true;
 
         timeout.restart();
-        expect(timeout.signal()).to.not.be.undefined;
-        expect(timeout.signal()?.aborted).to.be.false;
+        expect(timeout.signal).to.not.be.undefined;
+        expect(timeout.signal?.aborted).to.be.false;
         await timeout.await();
-        expect(timeout.signal()?.aborted).to.be.true;
+        expect(timeout.signal?.aborted).to.be.true;
     }
 
     @test
@@ -45,7 +45,7 @@ export class TimeoutSpec {
         const timeout = new Timeout(1000);
         timeout.restart();
         timeout.clear();
-        expect(timeout.signal()).to.be.undefined;
+        expect(timeout.signal).to.be.undefined;
     }
 
     @test
@@ -53,7 +53,7 @@ export class TimeoutSpec {
         const timeout = new Timeout(1, () => false); // will never trigger abort
         timeout.start();
         await new Promise((resolve) => setTimeout(resolve, 50));
-        expect(timeout.signal()).to.not.be.undefined;
-        expect(timeout.signal()?.aborted).to.be.false;
+        expect(timeout.signal).to.not.be.undefined;
+        expect(timeout.signal?.aborted).to.be.false;
     }
 }

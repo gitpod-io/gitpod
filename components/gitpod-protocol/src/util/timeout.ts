@@ -34,6 +34,9 @@ export class Timeout {
 
         const abortController = new AbortController();
         this._abortController = abortController;
+        if (this.timeout === Infinity) {
+            return;
+        }
         this._timer = setTimeout(() => {
             if (this.abortCondition && !this.abortCondition()) {
                 return;
@@ -74,7 +77,7 @@ export class Timeout {
     /**
      * @returns The AbortSignal of the current timeout, if one is active.
      */
-    public signal(): AbortSignal | undefined {
+    get signal() {
         return this._abortController?.signal;
     }
 }

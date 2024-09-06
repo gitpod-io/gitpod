@@ -1133,6 +1133,9 @@ export class WorkspaceService {
                 response.status = status;
                 yield response;
             }
+        } else {
+            // we initially send an empty status update to let clients know the connection is alive
+            yield {} as WatchWorkspaceStatusResponse;
         }
         const it = this.watchWorkspaceStatus(userId, opts);
         for await (const instance of it) {
