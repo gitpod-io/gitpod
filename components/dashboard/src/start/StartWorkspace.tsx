@@ -144,6 +144,11 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                     await this.onWorkspaceUpdate(
                         new Workspace({
                             ...this.state.workspace,
+                            // NOTE: this.state.workspace might be undefined here, leaving Workspace.id, Workspace.metadata and Workspace.spec undefined empty.
+                            // Thus we:
+                            //  - fill in ID
+                            //  - wait for fetchWorkspaceInfo to fill in metadata and spec in later render cycles
+                            id: resp.workspaceId,
                             status: resp.status,
                         }),
                     );
