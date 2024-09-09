@@ -27,6 +27,14 @@ import (
 
 var exportEnvs = false
 var unsetEnvs = false
+var scope = string(envScopeRepo)
+
+type envScope string
+
+var (
+	envScopeRepo envScope = "repo"
+	envScopeUser envScope = "user"
+)
 
 // envCmd represents the env command
 var envCmd = &cobra.Command{
@@ -67,7 +75,8 @@ delete environment variables with a repository pattern of */foo, foo/* or */*.
 			if unsetEnvs {
 				err = deleteEnvs(ctx, args)
 			} else {
-				err = setEnvs(ctx, args)
+				scopeUser := scope == string(envScopeUser)
+				err = setEnvs(ctx, scopeUser, args)
 			}
 		} else {
 			err = getEnvs(ctx)
@@ -86,6 +95,8 @@ type connectToServerOptions struct {
 	supervisorClient *supervisor.SupervisorClient
 	wsInfo           *api.WorkspaceInfoResponse
 	log              *log.Entry
+
+	setEnvScopeUser bool
 }
 
 func connectToServer(ctx context.Context, options *connectToServerOptions) (*connectToServerResult, error) {
@@ -121,6 +132,13 @@ func connectToServer(ctx context.Context, options *connectToServerOptions) (*con
 	}
 	repositoryPattern := wsinfo.Repository.Owner + "/" + wsinfo.Repository.Name
 
+	operations := "create/get/update/delete"
+	if options != nil && options.setEnvScopeUser {
+		// Updating user env vars requires a different token with a special scope
+		repositoryPattern = "*/*"
+		operations = "update"
+	}
+
 	clientToken, err := supervisorClient.Token.GetToken(ctx, &supervisorapi.GetTokenRequest{
 		Host: wsinfo.GitpodApi.Host,
 		Kind: "gitpod",
@@ -128,7 +146,7 @@ func connectToServer(ctx context.Context, options *connectToServerOptions) (*con
 			"function:getWorkspaceEnvVars",
 			"function:setEnvVar",
 			"function:deleteEnvVar",
-			"resource:envVar::" + repositoryPattern + "::create/get/update/delete",
+			"resource:envVar::" + repositoryPattern + "::" + operations,
 		},
 	})
 	if err != nil {
@@ -174,8 +192,11 @@ func getEnvs(ctx context.Context) error {
 	return nil
 }
 
-func setEnvs(ctx context.Context, args []string) error {
-	result, err := connectToServer(ctx, nil)
+func setEnvs(ctx context.Context, scopeUser bool, args []string) error {
+	options := connectToServerOptions{
+		setEnvScopeUser: scopeUser,
+	}
+	result, err := connectToServer(ctx, &options)
 	if err != nil {
 		return err
 	}
@@ -271,4 +292,5 @@ func init() {
 
 	envCmd.Flags().BoolVarP(&exportEnvs, "export", "e", false, "produce a script that can be eval'ed in Bash")
 	envCmd.Flags().BoolVarP(&unsetEnvs, "unset", "u", false, "deletes/unsets persisted environment variables")
+	envCmd.Flags().StringVarP(&scope, "scope", "s", "repo", "deletes/unsets persisted environment variables")
 }

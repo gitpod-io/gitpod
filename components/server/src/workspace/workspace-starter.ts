@@ -1665,6 +1665,8 @@ export class WorkspaceStarter {
                     operations: ["create", "get"],
                 }),
         ];
+        // By intention, we only limit the token passed down to the workspace to the env vars scoped to that workspace.
+        // This is meant to maintain the "workspace as a unit of isolation" principle on the API level.
         if (CommitContext.is(workspace.context)) {
             const subjectID = workspace.context.repository.owner + "/" + workspace.context.repository.name;
             scopes.push(
@@ -1676,6 +1678,15 @@ export class WorkspaceStarter {
                     }),
             );
         }
+        // The only exception is "updates", which we allow to be made to all env vars (that exist).
+        scopes.push(
+            "resource:" +
+                ScopedResourceGuard.marshalResourceScope({
+                    kind: "envVar",
+                    subjectID: "*/*",
+                    operations: ["update"],
+                }),
+        );
         return scopes;
     }
 
