@@ -80,8 +80,6 @@ type connectToServerResult struct {
 	repositoryPattern string
 	wsInfo            *supervisorapi.WorkspaceInfoResponse
 	client            *serverapi.APIoverJSONRPC
-
-	useDeprecatedGetEnvVar bool
 }
 
 type connectToServerOptions struct {
@@ -123,7 +121,6 @@ func connectToServer(ctx context.Context, options *connectToServerOptions) (*con
 	}
 	repositoryPattern := wsinfo.Repository.Owner + "/" + wsinfo.Repository.Name
 
-	var useDeprecatedGetEnvVar bool
 	clientToken, err := supervisorClient.Token.GetToken(ctx, &supervisorapi.GetTokenRequest{
 		Host: wsinfo.GitpodApi.Host,
 		Kind: "gitpod",
@@ -134,20 +131,6 @@ func connectToServer(ctx context.Context, options *connectToServerOptions) (*con
 			"resource:envVar::" + repositoryPattern + "::create/get/update/delete",
 		},
 	})
-	if err != nil {
-		// TODO remove then GetWorkspaceEnvVars is deployed
-		clientToken, err = supervisorClient.Token.GetToken(ctx, &supervisorapi.GetTokenRequest{
-			Host: wsinfo.GitpodApi.Host,
-			Kind: "gitpod",
-			Scope: []string{
-				"function:getEnvVars", // TODO remove then getWorkspaceEnvVars is deployed
-				"function:setEnvVar",
-				"function:deleteEnvVar",
-				"resource:envVar::" + repositoryPattern + "::create/get/update/delete",
-			},
-		})
-		useDeprecatedGetEnvVar = true
-	}
 	if err != nil {
 		return nil, xerrors.Errorf("failed getting token from supervisor: %w", err)
 	}
@@ -165,7 +148,7 @@ func connectToServer(ctx context.Context, options *connectToServerOptions) (*con
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to server: %w", err)
 	}
-	return &connectToServerResult{repositoryPattern, wsinfo, client, useDeprecatedGetEnvVar}, nil
+	return &connectToServerResult{repositoryPattern, wsinfo, client}, nil
 }
 
 func getWorkspaceEnvs(ctx context.Context, options *connectToServerOptions) ([]*serverapi.EnvVar, error) {
@@ -175,10 +158,7 @@ func getWorkspaceEnvs(ctx context.Context, options *connectToServerOptions) ([]*
 	}
 	defer result.client.Close()
 
-	if !result.useDeprecatedGetEnvVar {
-		return result.client.GetWorkspaceEnvVars(ctx, result.wsInfo.WorkspaceId)
-	}
-	return result.client.GetEnvVars(ctx)
+	return result.client.GetWorkspaceEnvVars(ctx, result.wsInfo.WorkspaceId)
 }
 
 func getEnvs(ctx context.Context) error {
