@@ -9,7 +9,13 @@ mkdir -p $INSTALL_DIR
 echo "Fetching the latest version manifest..."
 MANIFEST=$(curl -s $MANIFEST_URL)
 
-PLATFORM=$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)
+# Fix for x86_64 to amd64 mapping
+ARCH=$(uname -m)
+if [ "$ARCH" = "x86_64" ]; then
+  ARCH="amd64"
+fi
+
+PLATFORM=$(uname -s | tr '[:upper:]' '[:lower:]')-$ARCH
 
 DOWNLOAD_URL=$(echo "$MANIFEST" | sed -n "/\"$PLATFORM\"/,/url/ s/.*\"url\": \"\([^\"]*\)\".*/\1/p" | head -n 1)
 
