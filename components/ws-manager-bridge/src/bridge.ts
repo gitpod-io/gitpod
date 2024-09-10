@@ -316,6 +316,11 @@ export class WorkspaceManagerBridge implements Disposable {
             }
             instance.status.conditions.pullingImages = toBool(status.conditions.pullingImages!);
             instance.status.conditions.deployed = toBool(status.conditions.deployed);
+            if (!instance.deployedTime && instance.status.conditions.deployed) {
+                // This is the first time we see the workspace pod being deployed.
+                // Like all other timestamps, it's set when bridge observes it, not when it actually happened (which only ws-manager could decide).
+                instance.deployedTime = new Date().toISOString();
+            }
             instance.status.conditions.timeout = status.conditions.timeout;
             instance.status.conditions.firstUserActivity = mapFirstUserActivity(
                 rawStatus.getConditions()!.getFirstUserActivity(),
