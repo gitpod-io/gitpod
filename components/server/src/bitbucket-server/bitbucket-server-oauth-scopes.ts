@@ -23,6 +23,6 @@ export namespace BitbucketServerOAuthScopes {
         /**
          * Minimal required permission.
          */
-        DEFAULT: ALL,
+        DEFAULT: [PUBLIC_REPOS, REPO_READ, REPO_WRITE],
     };
 }

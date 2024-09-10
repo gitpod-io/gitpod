@@ -37,7 +37,7 @@ export namespace GitHubScope {
 export namespace BitbucketOAuthScopes {
     // https://confluence.atlassian.com/bitbucket/oauth-on-bitbucket-cloud-238027431.html
 
-    /** Read user info like name, e-mail adresses etc. */
+    /** Read user info like name, e-mail addresses etc. */
     export const ACCOUNT_READ = "account";
     /** Access repo info, clone repo over https, read and write issues */
     export const REPOSITORY_READ = "repository";
@@ -47,8 +47,6 @@ export namespace BitbucketOAuthScopes {
     export const PULL_REQUEST_READ = "pullrequest";
     /** Create, comment and merge pull requests */
     export const PULL_REQUEST_WRITE = "pullrequest:write";
-    /** Create, list web hooks */
-    export const WEBHOOK = "webhook";
 
     export const ALL = [
         ACCOUNT_READ,
@@ -56,7 +54,6 @@ export namespace BitbucketOAuthScopes {
         REPOSITORY_WRITE,
         PULL_REQUEST_READ,
         PULL_REQUEST_WRITE,
-        WEBHOOK,
     ];
 
     export const DEFAULT = ALL;
