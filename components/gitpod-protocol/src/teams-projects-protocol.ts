@@ -32,6 +32,9 @@ export interface ProjectSettings {
 export namespace PrebuildSettings {
     export type BranchStrategy = "default-branch" | "all-branches" | "matched-branches";
     export type TriggerStrategy = "activity-based" | "webhook-based";
+    export interface CloneSettings {
+        fullClone?: boolean;
+    }
 }
 
 export interface PrebuildSettings {
@@ -61,6 +64,8 @@ export interface PrebuildSettings {
      * The activation strategy for prebuilds. Defaults to "webhook-based"
      */
     triggerStrategy?: PrebuildSettings.TriggerStrategy;
+
+    cloneSettings?: PrebuildSettings.CloneSettings;
 }
 
 export interface Project {

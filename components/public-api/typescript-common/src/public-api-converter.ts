@@ -77,6 +77,7 @@ import {
     PrebuildTriggerStrategy,
     PrebuildSettings,
     WorkspaceSettings,
+    PrebuildCloneSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
 import {
@@ -996,6 +997,7 @@ export class PublicAPIConverter {
             result.branchStrategy = this.fromBranchMatchingStrategy(prebuilds.branchStrategy);
             result.prebuildInterval = prebuilds.prebuildInterval;
             result.workspaceClass = prebuilds.workspaceClass;
+            result.cloneSettings = this.fromPrebuildCloneSettings(prebuilds.cloneSettings);
         }
         return result;
     }
@@ -1076,6 +1078,7 @@ export class PublicAPIConverter {
             result.prebuildInterval = prebuilds.prebuildInterval ?? 20;
             result.workspaceClass = prebuilds.workspaceClass ?? "";
             result.triggerStrategy = this.toPrebuildTriggerStrategy(prebuilds.triggerStrategy);
+            result.cloneSettings = this.toPrebuildCloneSettings(prebuilds.cloneSettings);
         }
         return result;
     }
@@ -1101,6 +1104,18 @@ export class PublicAPIConverter {
             default:
                 return PrebuildTriggerStrategy.UNSPECIFIED;
         }
+    }
+
+    fromPrebuildCloneSettings(settings?: DeepPartial<PrebuildCloneSettings>): PrebuildSettingsProtocol.CloneSettings {
+        return {
+            fullClone: settings?.fullClone ?? false,
+        };
+    }
+
+    toPrebuildCloneSettings(settings?: PrebuildSettingsProtocol.CloneSettings): PrebuildCloneSettings {
+        return new PrebuildCloneSettings({
+            fullClone: settings?.fullClone ?? false,
+        });
     }
 
     toWorkspaceSettings(projectSettings: ProjectSettings | undefined): WorkspaceSettings {

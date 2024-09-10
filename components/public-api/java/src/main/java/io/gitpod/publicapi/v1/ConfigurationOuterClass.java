@@ -1920,6 +1920,21 @@ public final class ConfigurationOuterClass {
      * @return The triggerStrategy.
      */
     io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildTriggerStrategy getTriggerStrategy();
+
+    /**
+     * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+     * @return Whether the cloneSettings field is set.
+     */
+    boolean hasCloneSettings();
+    /**
+     * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+     * @return The cloneSettings.
+     */
+    io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings getCloneSettings();
+    /**
+     * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+     */
+    io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder getCloneSettingsOrBuilder();
   }
   /**
    * Protobuf type {@code gitpod.v1.PrebuildSettings}
@@ -1962,6 +1977,7 @@ public final class ConfigurationOuterClass {
               io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildSettings.class, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildSettings.Builder.class);
     }
 
+    private int bitField0_;
     public static final int ENABLED_FIELD_NUMBER = 1;
     private boolean enabled_ = false;
     /**
@@ -2098,6 +2114,32 @@ public final class ConfigurationOuterClass {
       return result == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildTriggerStrategy.UNRECOGNIZED : result;
     }
 
+    public static final int CLONE_SETTINGS_FIELD_NUMBER = 7;
+    private io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings cloneSettings_;
+    /**
+     * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+     * @return Whether the cloneSettings field is set.
+     */
+    @java.lang.Override
+    public boolean hasCloneSettings() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+     * @return The cloneSettings.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings getCloneSettings() {
+      return cloneSettings_ == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance() : cloneSettings_;
+    }
+    /**
+     * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder getCloneSettingsOrBuilder() {
+      return cloneSettings_ == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance() : cloneSettings_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -2130,6 +2172,9 @@ public final class ConfigurationOuterClass {
       if (triggerStrategy_ != io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildTriggerStrategy.PREBUILD_TRIGGER_STRATEGY_UNSPECIFIED.getNumber()) {
         output.writeEnum(6, triggerStrategy_);
       }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        output.writeMessage(7, getCloneSettings());
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -2161,6 +2206,10 @@ public final class ConfigurationOuterClass {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(6, triggerStrategy_);
       }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(7, getCloneSettings());
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -2186,6 +2235,11 @@ public final class ConfigurationOuterClass {
       if (!getWorkspaceClass()
           .equals(other.getWorkspaceClass())) return false;
       if (triggerStrategy_ != other.triggerStrategy_) return false;
+      if (hasCloneSettings() != other.hasCloneSettings()) return false;
+      if (hasCloneSettings()) {
+        if (!getCloneSettings()
+            .equals(other.getCloneSettings())) return false;
+      }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -2210,6 +2264,10 @@ public final class ConfigurationOuterClass {
       hash = (53 * hash) + getWorkspaceClass().hashCode();
       hash = (37 * hash) + TRIGGER_STRATEGY_FIELD_NUMBER;
       hash = (53 * hash) + triggerStrategy_;
+      if (hasCloneSettings()) {
+        hash = (37 * hash) + CLONE_SETTINGS_FIELD_NUMBER;
+        hash = (53 * hash) + getCloneSettings().hashCode();
+      }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -2329,13 +2387,19 @@ public final class ConfigurationOuterClass {
 
       // Construct using io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildSettings.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessage.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage
+                .alwaysUseFieldBuilders) {
+          getCloneSettingsFieldBuilder();
+        }
       }
       @java.lang.Override
       public Builder clear() {
@@ -2347,6 +2411,11 @@ public final class ConfigurationOuterClass {
         prebuildInterval_ = 0;
         workspaceClass_ = "";
         triggerStrategy_ = 0;
+        cloneSettings_ = null;
+        if (cloneSettingsBuilder_ != null) {
+          cloneSettingsBuilder_.dispose();
+          cloneSettingsBuilder_ = null;
+        }
         return this;
       }
 
@@ -2398,6 +2467,14 @@ public final class ConfigurationOuterClass {
         if (((from_bitField0_ & 0x00000020) != 0)) {
           result.triggerStrategy_ = triggerStrategy_;
         }
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.cloneSettings_ = cloneSettingsBuilder_ == null
+              ? cloneSettings_
+              : cloneSettingsBuilder_.build();
+          to_bitField0_ |= 0x00000001;
+        }
+        result.bitField0_ |= to_bitField0_;
       }
 
       @java.lang.Override
@@ -2433,6 +2510,9 @@ public final class ConfigurationOuterClass {
         }
         if (other.triggerStrategy_ != 0) {
           setTriggerStrategyValue(other.getTriggerStrategyValue());
+        }
+        if (other.hasCloneSettings()) {
+          mergeCloneSettings(other.getCloneSettings());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -2490,6 +2570,13 @@ public final class ConfigurationOuterClass {
                 bitField0_ |= 0x00000020;
                 break;
               } // case 48
+              case 58: {
+                input.readMessage(
+                    getCloneSettingsFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 58
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -2821,6 +2908,127 @@ public final class ConfigurationOuterClass {
         return this;
       }
 
+      private io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings cloneSettings_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder> cloneSettingsBuilder_;
+      /**
+       * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       * @return Whether the cloneSettings field is set.
+       */
+      public boolean hasCloneSettings() {
+        return ((bitField0_ & 0x00000040) != 0);
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       * @return The cloneSettings.
+       */
+      public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings getCloneSettings() {
+        if (cloneSettingsBuilder_ == null) {
+          return cloneSettings_ == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance() : cloneSettings_;
+        } else {
+          return cloneSettingsBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       */
+      public Builder setCloneSettings(io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings value) {
+        if (cloneSettingsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          cloneSettings_ = value;
+        } else {
+          cloneSettingsBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       */
+      public Builder setCloneSettings(
+          io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder builderForValue) {
+        if (cloneSettingsBuilder_ == null) {
+          cloneSettings_ = builderForValue.build();
+        } else {
+          cloneSettingsBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       */
+      public Builder mergeCloneSettings(io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings value) {
+        if (cloneSettingsBuilder_ == null) {
+          if (((bitField0_ & 0x00000040) != 0) &&
+            cloneSettings_ != null &&
+            cloneSettings_ != io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance()) {
+            getCloneSettingsBuilder().mergeFrom(value);
+          } else {
+            cloneSettings_ = value;
+          }
+        } else {
+          cloneSettingsBuilder_.mergeFrom(value);
+        }
+        if (cloneSettings_ != null) {
+          bitField0_ |= 0x00000040;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       */
+      public Builder clearCloneSettings() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        cloneSettings_ = null;
+        if (cloneSettingsBuilder_ != null) {
+          cloneSettingsBuilder_.dispose();
+          cloneSettingsBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       */
+      public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder getCloneSettingsBuilder() {
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return getCloneSettingsFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       */
+      public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder getCloneSettingsOrBuilder() {
+        if (cloneSettingsBuilder_ != null) {
+          return cloneSettingsBuilder_.getMessageOrBuilder();
+        } else {
+          return cloneSettings_ == null ?
+              io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance() : cloneSettings_;
+        }
+      }
+      /**
+       * <code>.gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder>
+          getCloneSettingsFieldBuilder() {
+        if (cloneSettingsBuilder_ == null) {
+          cloneSettingsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder>(
+                  getCloneSettings(),
+                  getParentForChildren(),
+                  isClean());
+          cloneSettings_ = null;
+        }
+        return cloneSettingsBuilder_;
+      }
+
       // @@protoc_insertion_point(builder_scope:gitpod.v1.PrebuildSettings)
     }
 
@@ -2867,6 +3075,461 @@ public final class ConfigurationOuterClass {
 
     @java.lang.Override
     public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildSettings getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface PrebuildCloneSettingsOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.PrebuildCloneSettings)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * full_clone determines if the entire repository should be cloned, instead of with `--depth=1`
+     * </pre>
+     *
+     * <code>bool full_clone = 1 [json_name = "fullClone"];</code>
+     * @return The fullClone.
+     */
+    boolean getFullClone();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.PrebuildCloneSettings}
+   */
+  public static final class PrebuildCloneSettings extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.PrebuildCloneSettings)
+      PrebuildCloneSettingsOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        PrebuildCloneSettings.class.getName());
+    }
+    // Use PrebuildCloneSettings.newBuilder() to construct.
+    private PrebuildCloneSettings(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private PrebuildCloneSettings() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.ConfigurationOuterClass.internal_static_gitpod_v1_PrebuildCloneSettings_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.ConfigurationOuterClass.internal_static_gitpod_v1_PrebuildCloneSettings_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.class, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder.class);
+    }
+
+    public static final int FULL_CLONE_FIELD_NUMBER = 1;
+    private boolean fullClone_ = false;
+    /**
+     * <pre>
+     * full_clone determines if the entire repository should be cloned, instead of with `--depth=1`
+     * </pre>
+     *
+     * <code>bool full_clone = 1 [json_name = "fullClone"];</code>
+     * @return The fullClone.
+     */
+    @java.lang.Override
+    public boolean getFullClone() {
+      return fullClone_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (fullClone_ != false) {
+        output.writeBool(1, fullClone_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (fullClone_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, fullClone_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings other = (io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings) obj;
+
+      if (getFullClone()
+          != other.getFullClone()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + FULL_CLONE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getFullClone());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.PrebuildCloneSettings}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.PrebuildCloneSettings)
+        io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.ConfigurationOuterClass.internal_static_gitpod_v1_PrebuildCloneSettings_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.ConfigurationOuterClass.internal_static_gitpod_v1_PrebuildCloneSettings_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.class, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        fullClone_ = false;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.ConfigurationOuterClass.internal_static_gitpod_v1_PrebuildCloneSettings_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings build() {
+        io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings buildPartial() {
+        io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings result = new io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.fullClone_ = fullClone_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings) {
+          return mergeFrom((io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings other) {
+        if (other == io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance()) return this;
+        if (other.getFullClone() != false) {
+          setFullClone(other.getFullClone());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                fullClone_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean fullClone_ ;
+      /**
+       * <pre>
+       * full_clone determines if the entire repository should be cloned, instead of with `--depth=1`
+       * </pre>
+       *
+       * <code>bool full_clone = 1 [json_name = "fullClone"];</code>
+       * @return The fullClone.
+       */
+      @java.lang.Override
+      public boolean getFullClone() {
+        return fullClone_;
+      }
+      /**
+       * <pre>
+       * full_clone determines if the entire repository should be cloned, instead of with `--depth=1`
+       * </pre>
+       *
+       * <code>bool full_clone = 1 [json_name = "fullClone"];</code>
+       * @param value The fullClone to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFullClone(boolean value) {
+
+        fullClone_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * full_clone determines if the entire repository should be cloned, instead of with `--depth=1`
+       * </pre>
+       *
+       * <code>bool full_clone = 1 [json_name = "fullClone"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearFullClone() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        fullClone_ = false;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.PrebuildCloneSettings)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.PrebuildCloneSettings)
+    private static final io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings();
+    }
+
+    public static io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<PrebuildCloneSettings>
+        PARSER = new com.google.protobuf.AbstractParser<PrebuildCloneSettings>() {
+      @java.lang.Override
+      public PrebuildCloneSettings parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<PrebuildCloneSettings> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<PrebuildCloneSettings> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -8897,6 +9560,21 @@ public final class ConfigurationOuterClass {
        * @return The triggerStrategy.
        */
       io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildTriggerStrategy getTriggerStrategy();
+
+      /**
+       * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       * @return Whether the cloneSettings field is set.
+       */
+      boolean hasCloneSettings();
+      /**
+       * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       * @return The cloneSettings.
+       */
+      io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings getCloneSettings();
+      /**
+       * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       */
+      io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder getCloneSettingsOrBuilder();
     }
     /**
      * Protobuf type {@code gitpod.v1.UpdateConfigurationRequest.PrebuildSettings}
@@ -9122,6 +9800,32 @@ public final class ConfigurationOuterClass {
         return result == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildTriggerStrategy.UNRECOGNIZED : result;
       }
 
+      public static final int CLONE_SETTINGS_FIELD_NUMBER = 7;
+      private io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings cloneSettings_;
+      /**
+       * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       * @return Whether the cloneSettings field is set.
+       */
+      @java.lang.Override
+      public boolean hasCloneSettings() {
+        return ((bitField0_ & 0x00000040) != 0);
+      }
+      /**
+       * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       * @return The cloneSettings.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings getCloneSettings() {
+        return cloneSettings_ == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance() : cloneSettings_;
+      }
+      /**
+       * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder getCloneSettingsOrBuilder() {
+        return cloneSettings_ == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance() : cloneSettings_;
+      }
+
       private byte memoizedIsInitialized = -1;
       @java.lang.Override
       public final boolean isInitialized() {
@@ -9154,6 +9858,9 @@ public final class ConfigurationOuterClass {
         if (((bitField0_ & 0x00000020) != 0)) {
           output.writeEnum(6, triggerStrategy_);
         }
+        if (((bitField0_ & 0x00000040) != 0)) {
+          output.writeMessage(7, getCloneSettings());
+        }
         getUnknownFields().writeTo(output);
       }
 
@@ -9184,6 +9891,10 @@ public final class ConfigurationOuterClass {
         if (((bitField0_ & 0x00000020) != 0)) {
           size += com.google.protobuf.CodedOutputStream
             .computeEnumSize(6, triggerStrategy_);
+        }
+        if (((bitField0_ & 0x00000040) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(7, getCloneSettings());
         }
         size += getUnknownFields().getSerializedSize();
         memoizedSize = size;
@@ -9228,6 +9939,11 @@ public final class ConfigurationOuterClass {
         if (hasTriggerStrategy()) {
           if (triggerStrategy_ != other.triggerStrategy_) return false;
         }
+        if (hasCloneSettings() != other.hasCloneSettings()) return false;
+        if (hasCloneSettings()) {
+          if (!getCloneSettings()
+              .equals(other.getCloneSettings())) return false;
+        }
         if (!getUnknownFields().equals(other.getUnknownFields())) return false;
         return true;
       }
@@ -9263,6 +9979,10 @@ public final class ConfigurationOuterClass {
         if (hasTriggerStrategy()) {
           hash = (37 * hash) + TRIGGER_STRATEGY_FIELD_NUMBER;
           hash = (53 * hash) + triggerStrategy_;
+        }
+        if (hasCloneSettings()) {
+          hash = (37 * hash) + CLONE_SETTINGS_FIELD_NUMBER;
+          hash = (53 * hash) + getCloneSettings().hashCode();
         }
         hash = (29 * hash) + getUnknownFields().hashCode();
         memoizedHashCode = hash;
@@ -9383,13 +10103,19 @@ public final class ConfigurationOuterClass {
 
         // Construct using io.gitpod.publicapi.v1.ConfigurationOuterClass.UpdateConfigurationRequest.PrebuildSettings.newBuilder()
         private Builder() {
-
+          maybeForceBuilderInitialization();
         }
 
         private Builder(
             com.google.protobuf.GeneratedMessage.BuilderParent parent) {
           super(parent);
-
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessage
+                  .alwaysUseFieldBuilders) {
+            getCloneSettingsFieldBuilder();
+          }
         }
         @java.lang.Override
         public Builder clear() {
@@ -9401,6 +10127,11 @@ public final class ConfigurationOuterClass {
           prebuildInterval_ = 0;
           workspaceClass_ = "";
           triggerStrategy_ = 0;
+          cloneSettings_ = null;
+          if (cloneSettingsBuilder_ != null) {
+            cloneSettingsBuilder_.dispose();
+            cloneSettingsBuilder_ = null;
+          }
           return this;
         }
 
@@ -9459,6 +10190,12 @@ public final class ConfigurationOuterClass {
             result.triggerStrategy_ = triggerStrategy_;
             to_bitField0_ |= 0x00000020;
           }
+          if (((from_bitField0_ & 0x00000040) != 0)) {
+            result.cloneSettings_ = cloneSettingsBuilder_ == null
+                ? cloneSettings_
+                : cloneSettingsBuilder_.build();
+            to_bitField0_ |= 0x00000040;
+          }
           result.bitField0_ |= to_bitField0_;
         }
 
@@ -9495,6 +10232,9 @@ public final class ConfigurationOuterClass {
           }
           if (other.hasTriggerStrategy()) {
             setTriggerStrategy(other.getTriggerStrategy());
+          }
+          if (other.hasCloneSettings()) {
+            mergeCloneSettings(other.getCloneSettings());
           }
           this.mergeUnknownFields(other.getUnknownFields());
           onChanged();
@@ -9552,6 +10292,13 @@ public final class ConfigurationOuterClass {
                   bitField0_ |= 0x00000020;
                   break;
                 } // case 48
+                case 58: {
+                  input.readMessage(
+                      getCloneSettingsFieldBuilder().getBuilder(),
+                      extensionRegistry);
+                  bitField0_ |= 0x00000040;
+                  break;
+                } // case 58
                 default: {
                   if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                     done = true; // was an endgroup tag
@@ -9925,6 +10672,127 @@ public final class ConfigurationOuterClass {
           triggerStrategy_ = 0;
           onChanged();
           return this;
+        }
+
+        private io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings cloneSettings_;
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder> cloneSettingsBuilder_;
+        /**
+         * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+         * @return Whether the cloneSettings field is set.
+         */
+        public boolean hasCloneSettings() {
+          return ((bitField0_ & 0x00000040) != 0);
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+         * @return The cloneSettings.
+         */
+        public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings getCloneSettings() {
+          if (cloneSettingsBuilder_ == null) {
+            return cloneSettings_ == null ? io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance() : cloneSettings_;
+          } else {
+            return cloneSettingsBuilder_.getMessage();
+          }
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+         */
+        public Builder setCloneSettings(io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings value) {
+          if (cloneSettingsBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            cloneSettings_ = value;
+          } else {
+            cloneSettingsBuilder_.setMessage(value);
+          }
+          bitField0_ |= 0x00000040;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+         */
+        public Builder setCloneSettings(
+            io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder builderForValue) {
+          if (cloneSettingsBuilder_ == null) {
+            cloneSettings_ = builderForValue.build();
+          } else {
+            cloneSettingsBuilder_.setMessage(builderForValue.build());
+          }
+          bitField0_ |= 0x00000040;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+         */
+        public Builder mergeCloneSettings(io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings value) {
+          if (cloneSettingsBuilder_ == null) {
+            if (((bitField0_ & 0x00000040) != 0) &&
+              cloneSettings_ != null &&
+              cloneSettings_ != io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance()) {
+              getCloneSettingsBuilder().mergeFrom(value);
+            } else {
+              cloneSettings_ = value;
+            }
+          } else {
+            cloneSettingsBuilder_.mergeFrom(value);
+          }
+          if (cloneSettings_ != null) {
+            bitField0_ |= 0x00000040;
+            onChanged();
+          }
+          return this;
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+         */
+        public Builder clearCloneSettings() {
+          bitField0_ = (bitField0_ & ~0x00000040);
+          cloneSettings_ = null;
+          if (cloneSettingsBuilder_ != null) {
+            cloneSettingsBuilder_.dispose();
+            cloneSettingsBuilder_ = null;
+          }
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+         */
+        public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder getCloneSettingsBuilder() {
+          bitField0_ |= 0x00000040;
+          onChanged();
+          return getCloneSettingsFieldBuilder().getBuilder();
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+         */
+        public io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder getCloneSettingsOrBuilder() {
+          if (cloneSettingsBuilder_ != null) {
+            return cloneSettingsBuilder_.getMessageOrBuilder();
+          } else {
+            return cloneSettings_ == null ?
+                io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.getDefaultInstance() : cloneSettings_;
+          }
+        }
+        /**
+         * <code>optional .gitpod.v1.PrebuildCloneSettings clone_settings = 7 [json_name = "cloneSettings"];</code>
+         */
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder>
+            getCloneSettingsFieldBuilder() {
+          if (cloneSettingsBuilder_ == null) {
+            cloneSettingsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+                io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettings.Builder, io.gitpod.publicapi.v1.ConfigurationOuterClass.PrebuildCloneSettingsOrBuilder>(
+                    getCloneSettings(),
+                    getParentForChildren(),
+                    isClean());
+            cloneSettings_ = null;
+          }
+          return cloneSettingsBuilder_;
         }
 
         // @@protoc_insertion_point(builder_scope:gitpod.v1.UpdateConfigurationRequest.PrebuildSettings)
@@ -13849,6 +14717,11 @@ public final class ConfigurationOuterClass {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_PrebuildSettings_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_PrebuildCloneSettings_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_PrebuildCloneSettings_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_v1_WorkspaceSettings_descriptor;
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -13933,7 +14806,7 @@ public final class ConfigurationOuterClass {
       "\021prebuild_settings\030\006 \001(\0132\033.gitpod.v1.Pre" +
       "buildSettingsR\020prebuildSettings\022K\n\022works" +
       "pace_settings\030\007 \001(\0132\034.gitpod.v1.Workspac" +
-      "eSettingsR\021workspaceSettings\"\325\002\n\020Prebuil" +
+      "eSettingsR\021workspaceSettings\"\236\003\n\020Prebuil" +
       "dSettings\022\030\n\007enabled\030\001 \001(\010R\007enabled\0226\n\027b" +
       "ranch_matching_pattern\030\002 \001(\tR\025branchMatc" +
       "hingPattern\022J\n\017branch_strategy\030\003 \001(\0162!.g" +
@@ -13942,93 +14815,99 @@ public final class ConfigurationOuterClass {
       "uildInterval\022\'\n\017workspace_class\030\005 \001(\tR\016w" +
       "orkspaceClass\022M\n\020trigger_strategy\030\006 \001(\0162" +
       "\".gitpod.v1.PrebuildTriggerStrategyR\017tri" +
-      "ggerStrategy\"\266\001\n\021WorkspaceSettings\022\'\n\017wo" +
-      "rkspace_class\030\001 \001(\tR\016workspaceClass\022@\n\034r" +
-      "estricted_workspace_classes\030\002 \003(\tR\032restr" +
-      "ictedWorkspaceClasses\0226\n\027restricted_edit" +
-      "or_names\030\003 \003(\tR\025restrictedEditorNames\"v\n" +
-      "\032CreateConfigurationRequest\022\'\n\017organizat" +
-      "ion_id\030\001 \001(\tR\016organizationId\022\022\n\004name\030\002 \001" +
-      "(\tR\004name\022\033\n\tclone_url\030\003 \001(\tR\010cloneUrl\"]\n" +
-      "\033CreateConfigurationResponse\022>\n\rconfigur" +
-      "ation\030\001 \001(\0132\030.gitpod.v1.ConfigurationR\rc" +
-      "onfiguration\"D\n\027GetConfigurationRequest\022" +
-      ")\n\020configuration_id\030\001 \001(\tR\017configuration" +
-      "Id\"Z\n\030GetConfigurationResponse\022>\n\rconfig" +
-      "uration\030\001 \001(\0132\030.gitpod.v1.ConfigurationR" +
-      "\rconfiguration\"\220\002\n\031ListConfigurationsReq" +
-      "uest\022\'\n\017organization_id\030\001 \001(\tR\016organizat" +
-      "ionId\022\037\n\013search_term\030\002 \001(\tR\nsearchTerm\022<" +
-      "\n\npagination\030\003 \001(\0132\034.gitpod.v1.Paginatio" +
-      "nRequestR\npagination\022#\n\004sort\030\004 \003(\0132\017.git" +
-      "pod.v1.SortR\004sort\0220\n\021prebuilds_enabled\030\005" +
-      " \001(\010H\000R\020prebuildsEnabled\210\001\001B\024\n\022_prebuild" +
-      "s_enabled\"\235\001\n\032ListConfigurationsResponse" +
-      "\022@\n\016configurations\030\001 \003(\0132\030.gitpod.v1.Con" +
-      "figurationR\016configurations\022=\n\npagination" +
-      "\030\002 \001(\0132\035.gitpod.v1.PaginationResponseR\np" +
-      "agination\"\231\n\n\032UpdateConfigurationRequest" +
-      "\022)\n\020configuration_id\030\001 \001(\tR\017configuratio" +
-      "nId\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001\022h\n\021prebuild" +
-      "_settings\030\003 \001(\01326.gitpod.v1.UpdateConfig" +
-      "urationRequest.PrebuildSettingsH\001R\020prebu" +
-      "ildSettings\210\001\001\022k\n\022workspace_settings\030\004 \001" +
-      "(\01327.gitpod.v1.UpdateConfigurationReques" +
-      "t.WorkspaceSettingsH\002R\021workspaceSettings" +
-      "\210\001\001\032\356\003\n\020PrebuildSettings\022\035\n\007enabled\030\001 \001(" +
-      "\010H\000R\007enabled\210\001\001\022;\n\027branch_matching_patte" +
-      "rn\030\002 \001(\tH\001R\025branchMatchingPattern\210\001\001\022O\n\017" +
-      "branch_strategy\030\003 \001(\0162!.gitpod.v1.Branch" +
-      "MatchingStrategyH\002R\016branchStrategy\210\001\001\0220\n" +
-      "\021prebuild_interval\030\004 \001(\005H\003R\020prebuildInte" +
-      "rval\210\001\001\022,\n\017workspace_class\030\005 \001(\tH\004R\016work" +
-      "spaceClass\210\001\001\022R\n\020trigger_strategy\030\006 \001(\0162" +
-      "\".gitpod.v1.PrebuildTriggerStrategyH\005R\017t" +
-      "riggerStrategy\210\001\001B\n\n\010_enabledB\032\n\030_branch" +
-      "_matching_patternB\022\n\020_branch_strategyB\024\n" +
-      "\022_prebuild_intervalB\022\n\020_workspace_classB" +
-      "\023\n\021_trigger_strategy\032\270\003\n\021WorkspaceSettin" +
-      "gs\022,\n\017workspace_class\030\001 \001(\tH\000R\016workspace" +
-      "Class\210\001\001\022@\n\034restricted_workspace_classes" +
-      "\030\002 \003(\tR\032restrictedWorkspaceClasses\022R\n#up" +
-      "date_restricted_workspace_classes\030\003 \001(\010H" +
-      "\001R updateRestrictedWorkspaceClasses\210\001\001\0226" +
-      "\n\027restricted_editor_names\030\004 \003(\tR\025restric" +
-      "tedEditorNames\022H\n\036update_restricted_edit" +
-      "or_names\030\005 \001(\010H\002R\033updateRestrictedEditor" +
-      "Names\210\001\001B\022\n\020_workspace_classB&\n$_update_" +
-      "restricted_workspace_classesB!\n\037_update_" +
-      "restricted_editor_namesB\007\n\005_nameB\024\n\022_pre" +
-      "build_settingsB\025\n\023_workspace_settings\"]\n" +
-      "\033UpdateConfigurationResponse\022>\n\rconfigur" +
-      "ation\030\001 \001(\0132\030.gitpod.v1.ConfigurationR\rc" +
-      "onfiguration\"G\n\032DeleteConfigurationReque" +
-      "st\022)\n\020configuration_id\030\001 \001(\tR\017configurat" +
-      "ionId\"\035\n\033DeleteConfigurationResponse*r\n\027" +
-      "PrebuildTriggerStrategy\022)\n%PREBUILD_TRIG" +
-      "GER_STRATEGY_UNSPECIFIED\020\000\022,\n(PREBUILD_T" +
-      "RIGGER_STRATEGY_ACTIVITY_BASED\020\001*\311\001\n\026Bra" +
-      "nchMatchingStrategy\022(\n$BRANCH_MATCHING_S" +
-      "TRATEGY_UNSPECIFIED\020\000\022+\n\'BRANCH_MATCHING" +
-      "_STRATEGY_DEFAULT_BRANCH\020\001\022)\n%BRANCH_MAT" +
-      "CHING_STRATEGY_ALL_BRANCHES\020\002\022-\n)BRANCH_" +
-      "MATCHING_STRATEGY_MATCHED_BRANCHES\020\0032\222\004\n" +
-      "\024ConfigurationService\022f\n\023CreateConfigura" +
-      "tion\022%.gitpod.v1.CreateConfigurationRequ" +
-      "est\032&.gitpod.v1.CreateConfigurationRespo" +
-      "nse\"\000\022]\n\020GetConfiguration\022\".gitpod.v1.Ge" +
-      "tConfigurationRequest\032#.gitpod.v1.GetCon" +
-      "figurationResponse\"\000\022c\n\022ListConfiguratio" +
-      "ns\022$.gitpod.v1.ListConfigurationsRequest" +
-      "\032%.gitpod.v1.ListConfigurationsResponse\"" +
-      "\000\022f\n\023UpdateConfiguration\022%.gitpod.v1.Upd" +
-      "ateConfigurationRequest\032&.gitpod.v1.Upda" +
-      "teConfigurationResponse\"\000\022f\n\023DeleteConfi" +
-      "guration\022%.gitpod.v1.DeleteConfiguration" +
-      "Request\032&.gitpod.v1.DeleteConfigurationR" +
-      "esponse\"\000BQ\n\026io.gitpod.publicapi.v1Z7git" +
-      "hub.com/gitpod-io/gitpod/components/publ" +
-      "ic-api/go/v1b\006proto3"
+      "ggerStrategy\022G\n\016clone_settings\030\007 \001(\0132 .g" +
+      "itpod.v1.PrebuildCloneSettingsR\rcloneSet" +
+      "tings\"6\n\025PrebuildCloneSettings\022\035\n\nfull_c" +
+      "lone\030\001 \001(\010R\tfullClone\"\266\001\n\021WorkspaceSetti" +
+      "ngs\022\'\n\017workspace_class\030\001 \001(\tR\016workspaceC" +
+      "lass\022@\n\034restricted_workspace_classes\030\002 \003" +
+      "(\tR\032restrictedWorkspaceClasses\0226\n\027restri" +
+      "cted_editor_names\030\003 \003(\tR\025restrictedEdito" +
+      "rNames\"v\n\032CreateConfigurationRequest\022\'\n\017" +
+      "organization_id\030\001 \001(\tR\016organizationId\022\022\n" +
+      "\004name\030\002 \001(\tR\004name\022\033\n\tclone_url\030\003 \001(\tR\010cl" +
+      "oneUrl\"]\n\033CreateConfigurationResponse\022>\n" +
+      "\rconfiguration\030\001 \001(\0132\030.gitpod.v1.Configu" +
+      "rationR\rconfiguration\"D\n\027GetConfiguratio" +
+      "nRequest\022)\n\020configuration_id\030\001 \001(\tR\017conf" +
+      "igurationId\"Z\n\030GetConfigurationResponse\022" +
+      ">\n\rconfiguration\030\001 \001(\0132\030.gitpod.v1.Confi" +
+      "gurationR\rconfiguration\"\220\002\n\031ListConfigur" +
+      "ationsRequest\022\'\n\017organization_id\030\001 \001(\tR\016" +
+      "organizationId\022\037\n\013search_term\030\002 \001(\tR\nsea" +
+      "rchTerm\022<\n\npagination\030\003 \001(\0132\034.gitpod.v1." +
+      "PaginationRequestR\npagination\022#\n\004sort\030\004 " +
+      "\003(\0132\017.gitpod.v1.SortR\004sort\0220\n\021prebuilds_" +
+      "enabled\030\005 \001(\010H\000R\020prebuildsEnabled\210\001\001B\024\n\022" +
+      "_prebuilds_enabled\"\235\001\n\032ListConfiguration" +
+      "sResponse\022@\n\016configurations\030\001 \003(\0132\030.gitp" +
+      "od.v1.ConfigurationR\016configurations\022=\n\np" +
+      "agination\030\002 \001(\0132\035.gitpod.v1.PaginationRe" +
+      "sponseR\npagination\"\372\n\n\032UpdateConfigurati" +
+      "onRequest\022)\n\020configuration_id\030\001 \001(\tR\017con" +
+      "figurationId\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001\022h\n" +
+      "\021prebuild_settings\030\003 \001(\01326.gitpod.v1.Upd" +
+      "ateConfigurationRequest.PrebuildSettings" +
+      "H\001R\020prebuildSettings\210\001\001\022k\n\022workspace_set" +
+      "tings\030\004 \001(\01327.gitpod.v1.UpdateConfigurat" +
+      "ionRequest.WorkspaceSettingsH\002R\021workspac" +
+      "eSettings\210\001\001\032\317\004\n\020PrebuildSettings\022\035\n\007ena" +
+      "bled\030\001 \001(\010H\000R\007enabled\210\001\001\022;\n\027branch_match" +
+      "ing_pattern\030\002 \001(\tH\001R\025branchMatchingPatte" +
+      "rn\210\001\001\022O\n\017branch_strategy\030\003 \001(\0162!.gitpod." +
+      "v1.BranchMatchingStrategyH\002R\016branchStrat" +
+      "egy\210\001\001\0220\n\021prebuild_interval\030\004 \001(\005H\003R\020pre" +
+      "buildInterval\210\001\001\022,\n\017workspace_class\030\005 \001(" +
+      "\tH\004R\016workspaceClass\210\001\001\022R\n\020trigger_strate" +
+      "gy\030\006 \001(\0162\".gitpod.v1.PrebuildTriggerStra" +
+      "tegyH\005R\017triggerStrategy\210\001\001\022L\n\016clone_sett" +
+      "ings\030\007 \001(\0132 .gitpod.v1.PrebuildCloneSett" +
+      "ingsH\006R\rcloneSettings\210\001\001B\n\n\010_enabledB\032\n\030" +
+      "_branch_matching_patternB\022\n\020_branch_stra" +
+      "tegyB\024\n\022_prebuild_intervalB\022\n\020_workspace" +
+      "_classB\023\n\021_trigger_strategyB\021\n\017_clone_se" +
+      "ttings\032\270\003\n\021WorkspaceSettings\022,\n\017workspac" +
+      "e_class\030\001 \001(\tH\000R\016workspaceClass\210\001\001\022@\n\034re" +
+      "stricted_workspace_classes\030\002 \003(\tR\032restri" +
+      "ctedWorkspaceClasses\022R\n#update_restricte" +
+      "d_workspace_classes\030\003 \001(\010H\001R updateRestr" +
+      "ictedWorkspaceClasses\210\001\001\0226\n\027restricted_e" +
+      "ditor_names\030\004 \003(\tR\025restrictedEditorNames" +
+      "\022H\n\036update_restricted_editor_names\030\005 \001(\010" +
+      "H\002R\033updateRestrictedEditorNames\210\001\001B\022\n\020_w" +
+      "orkspace_classB&\n$_update_restricted_wor" +
+      "kspace_classesB!\n\037_update_restricted_edi" +
+      "tor_namesB\007\n\005_nameB\024\n\022_prebuild_settings" +
+      "B\025\n\023_workspace_settings\"]\n\033UpdateConfigu" +
+      "rationResponse\022>\n\rconfiguration\030\001 \001(\0132\030." +
+      "gitpod.v1.ConfigurationR\rconfiguration\"G" +
+      "\n\032DeleteConfigurationRequest\022)\n\020configur" +
+      "ation_id\030\001 \001(\tR\017configurationId\"\035\n\033Delet" +
+      "eConfigurationResponse*r\n\027PrebuildTrigge" +
+      "rStrategy\022)\n%PREBUILD_TRIGGER_STRATEGY_U" +
+      "NSPECIFIED\020\000\022,\n(PREBUILD_TRIGGER_STRATEG" +
+      "Y_ACTIVITY_BASED\020\001*\311\001\n\026BranchMatchingStr" +
+      "ategy\022(\n$BRANCH_MATCHING_STRATEGY_UNSPEC" +
+      "IFIED\020\000\022+\n\'BRANCH_MATCHING_STRATEGY_DEFA" +
+      "ULT_BRANCH\020\001\022)\n%BRANCH_MATCHING_STRATEGY" +
+      "_ALL_BRANCHES\020\002\022-\n)BRANCH_MATCHING_STRAT" +
+      "EGY_MATCHED_BRANCHES\020\0032\222\004\n\024Configuration" +
+      "Service\022f\n\023CreateConfiguration\022%.gitpod." +
+      "v1.CreateConfigurationRequest\032&.gitpod.v" +
+      "1.CreateConfigurationResponse\"\000\022]\n\020GetCo" +
+      "nfiguration\022\".gitpod.v1.GetConfiguration" +
+      "Request\032#.gitpod.v1.GetConfigurationResp" +
+      "onse\"\000\022c\n\022ListConfigurations\022$.gitpod.v1" +
+      ".ListConfigurationsRequest\032%.gitpod.v1.L" +
+      "istConfigurationsResponse\"\000\022f\n\023UpdateCon" +
+      "figuration\022%.gitpod.v1.UpdateConfigurati" +
+      "onRequest\032&.gitpod.v1.UpdateConfiguratio" +
+      "nResponse\"\000\022f\n\023DeleteConfiguration\022%.git" +
+      "pod.v1.DeleteConfigurationRequest\032&.gitp" +
+      "od.v1.DeleteConfigurationResponse\"\000BQ\n\026i" +
+      "o.gitpod.publicapi.v1Z7github.com/gitpod" +
+      "-io/gitpod/components/public-api/go/v1b\006" +
+      "proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -14048,51 +14927,57 @@ public final class ConfigurationOuterClass {
     internal_static_gitpod_v1_PrebuildSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_PrebuildSettings_descriptor,
-        new java.lang.String[] { "Enabled", "BranchMatchingPattern", "BranchStrategy", "PrebuildInterval", "WorkspaceClass", "TriggerStrategy", });
-    internal_static_gitpod_v1_WorkspaceSettings_descriptor =
+        new java.lang.String[] { "Enabled", "BranchMatchingPattern", "BranchStrategy", "PrebuildInterval", "WorkspaceClass", "TriggerStrategy", "CloneSettings", });
+    internal_static_gitpod_v1_PrebuildCloneSettings_descriptor =
       getDescriptor().getMessageTypes().get(2);
+    internal_static_gitpod_v1_PrebuildCloneSettings_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_PrebuildCloneSettings_descriptor,
+        new java.lang.String[] { "FullClone", });
+    internal_static_gitpod_v1_WorkspaceSettings_descriptor =
+      getDescriptor().getMessageTypes().get(3);
     internal_static_gitpod_v1_WorkspaceSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceSettings_descriptor,
         new java.lang.String[] { "WorkspaceClass", "RestrictedWorkspaceClasses", "RestrictedEditorNames", });
     internal_static_gitpod_v1_CreateConfigurationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_gitpod_v1_CreateConfigurationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_CreateConfigurationRequest_descriptor,
         new java.lang.String[] { "OrganizationId", "Name", "CloneUrl", });
     internal_static_gitpod_v1_CreateConfigurationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_gitpod_v1_CreateConfigurationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_CreateConfigurationResponse_descriptor,
         new java.lang.String[] { "Configuration", });
     internal_static_gitpod_v1_GetConfigurationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_gitpod_v1_GetConfigurationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetConfigurationRequest_descriptor,
         new java.lang.String[] { "ConfigurationId", });
     internal_static_gitpod_v1_GetConfigurationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_gitpod_v1_GetConfigurationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetConfigurationResponse_descriptor,
         new java.lang.String[] { "Configuration", });
     internal_static_gitpod_v1_ListConfigurationsRequest_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_gitpod_v1_ListConfigurationsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListConfigurationsRequest_descriptor,
         new java.lang.String[] { "OrganizationId", "SearchTerm", "Pagination", "Sort", "PrebuildsEnabled", });
     internal_static_gitpod_v1_ListConfigurationsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_gitpod_v1_ListConfigurationsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListConfigurationsResponse_descriptor,
         new java.lang.String[] { "Configurations", "Pagination", });
     internal_static_gitpod_v1_UpdateConfigurationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_gitpod_v1_UpdateConfigurationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateConfigurationRequest_descriptor,
@@ -14102,7 +14987,7 @@ public final class ConfigurationOuterClass {
     internal_static_gitpod_v1_UpdateConfigurationRequest_PrebuildSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateConfigurationRequest_PrebuildSettings_descriptor,
-        new java.lang.String[] { "Enabled", "BranchMatchingPattern", "BranchStrategy", "PrebuildInterval", "WorkspaceClass", "TriggerStrategy", });
+        new java.lang.String[] { "Enabled", "BranchMatchingPattern", "BranchStrategy", "PrebuildInterval", "WorkspaceClass", "TriggerStrategy", "CloneSettings", });
     internal_static_gitpod_v1_UpdateConfigurationRequest_WorkspaceSettings_descriptor =
       internal_static_gitpod_v1_UpdateConfigurationRequest_descriptor.getNestedTypes().get(1);
     internal_static_gitpod_v1_UpdateConfigurationRequest_WorkspaceSettings_fieldAccessorTable = new
@@ -14110,19 +14995,19 @@ public final class ConfigurationOuterClass {
         internal_static_gitpod_v1_UpdateConfigurationRequest_WorkspaceSettings_descriptor,
         new java.lang.String[] { "WorkspaceClass", "RestrictedWorkspaceClasses", "UpdateRestrictedWorkspaceClasses", "RestrictedEditorNames", "UpdateRestrictedEditorNames", });
     internal_static_gitpod_v1_UpdateConfigurationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_gitpod_v1_UpdateConfigurationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateConfigurationResponse_descriptor,
         new java.lang.String[] { "Configuration", });
     internal_static_gitpod_v1_DeleteConfigurationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_gitpod_v1_DeleteConfigurationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteConfigurationRequest_descriptor,
         new java.lang.String[] { "ConfigurationId", });
     internal_static_gitpod_v1_DeleteConfigurationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_gitpod_v1_DeleteConfigurationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteConfigurationResponse_descriptor,

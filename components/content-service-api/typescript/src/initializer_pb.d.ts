@@ -193,6 +193,8 @@ export class GitInitializer extends jspb.Message {
     clearConfig(): void;
     getConfig(): GitConfig | undefined;
     setConfig(value?: GitConfig): GitInitializer;
+    getFullClone(): boolean;
+    setFullClone(value: boolean): GitInitializer;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): GitInitializer.AsObject;
@@ -212,6 +214,7 @@ export namespace GitInitializer {
         cloneTaget: string,
         checkoutLocation: string,
         config?: GitConfig.AsObject,
+        fullClone: boolean,
     }
 }
 
