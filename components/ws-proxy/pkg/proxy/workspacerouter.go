@@ -26,8 +26,6 @@ const (
 	workspacePortRegex = "(?P<" + common.WorkspacePortIdentifier + ">[0-9]+)-"
 
 	debugWorkspaceRegex = "(?P<" + common.DebugWorkspaceIdentifier + ">debug-)?"
-
-	foreignContentRegex = "(?P<" + common.ForeignContentIdentifier + ">foreign-)?"
 )
 
 // This pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21).
