@@ -41,7 +41,7 @@ type proxyPassOpt func(h *proxyPassConfig)
 type errorHandler func(http.ResponseWriter, *http.Request, error)
 
 // targetResolver is a function that determines to which target to forward the given HTTP request to.
-type targetResolver func(*Config, common.WorkspaceInfoProvider, *http.Request) (*url.URL, error)
+type targetResolver func(*Config, common.WorkspaceInfoProvider, *http.Request) (*url.URL, string, error)
 
 type responseHandler func(*http.Response, *http.Request) error
 
@@ -119,7 +119,7 @@ func proxyPass(config *RouteHandlerConfig, infoProvider common.WorkspaceInfoProv
 	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
-		targetURL, err := h.TargetResolver(config.Config, infoProvider, req)
+		targetURL, targetResource, err := h.TargetResolver(config.Config, infoProvider, req)
 		if err != nil {
 			if h.ErrorHandler != nil {
 				h.ErrorHandler(w, req, err)
@@ -128,6 +128,7 @@ func proxyPass(config *RouteHandlerConfig, infoProvider common.WorkspaceInfoProv
 			}
 			return
 		}
+		req = withResource(req, targetResource)
 
 		originalURL := *req.URL
 
@@ -216,10 +217,10 @@ func withErrorHandler(h errorHandler) proxyPassOpt {
 	}
 }
 
-func createDefaultTransport(config *TransportConfig) *http.Transport {
+func createDefaultTransport(config *TransportConfig) http.RoundTripper {
 	// TODO equivalent of client_max_body_size 2048m; necessary ???
 	// this is based on http.DefaultTransport, with some values exposed to config
-	return &http.Transport{
+	return instrumentClientMetrics(&http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout:   time.Duration(config.ConnectTimeout), // default: 30s
@@ -232,7 +233,7 @@ func createDefaultTransport(config *TransportConfig) *http.Transport {
 		IdleConnTimeout:       time.Duration(config.IdleConnTimeout), // default: 90s
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
-	}
+	})
 }
 
 // tell the browser to cache for 1 year and don't ask the server during this period.
