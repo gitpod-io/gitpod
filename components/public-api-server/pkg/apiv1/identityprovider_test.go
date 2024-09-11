@@ -76,7 +76,7 @@ func TestGetIDToken(t *testing.T) {
 						Identities: []*protocol.Identity{
 							nil,
 							{Deleted: true, PrimaryEmail: "nonsense@gitpod.io"},
-							{Deleted: false, PrimaryEmail: "correct@gitpod.io"},
+							{Deleted: false, PrimaryEmail: "correct@gitpod.io", LastSigninTime: "2021-01-01T00:00:00Z"},
 						},
 						OrganizationId: "test",
 					},
@@ -125,7 +125,7 @@ func TestGetIDToken(t *testing.T) {
 						Identities: []*protocol.Identity{
 							nil,
 							{Deleted: true, PrimaryEmail: "nonsense@gitpod.io"},
-							{Deleted: false, PrimaryEmail: "correct@gitpod.io"},
+							{Deleted: false, PrimaryEmail: "correct@gitpod.io", LastSigninTime: "2021-01-01T00:00:00Z"},
 						},
 					},
 					nil,
@@ -243,7 +243,7 @@ func TestGetIDToken(t *testing.T) {
 						Identities: []*protocol.Identity{
 							nil,
 							{Deleted: true, PrimaryEmail: "nonsense@gitpod.io"},
-							{Deleted: false, PrimaryEmail: "correct@gitpod.io"},
+							{Deleted: false, PrimaryEmail: "correct@gitpod.io", LastSigninTime: "2021-01-01T00:00:00Z"},
 						},
 						OrganizationId: "test",
 					},

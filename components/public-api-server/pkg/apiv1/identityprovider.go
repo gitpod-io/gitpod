@@ -75,15 +75,6 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 		return nil, proxy.ConvertError(err)
 	}
 
-	var email string
-	for _, id := range user.Identities {
-		if id == nil || id.Deleted || id.PrimaryEmail == "" {
-			continue
-		}
-		email = id.PrimaryEmail
-		break
-	}
-
 	if workspace.Workspace == nil {
 		log.Extract(ctx).WithError(err).Error("Server did not return a workspace.")
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
@@ -103,8 +94,21 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 	if workspace.Workspace.Context != nil && workspace.Workspace.Context.Repository != nil && workspace.Workspace.Context.Repository.CloneURL != "" {
 		userInfo.AppendClaims("repository", workspace.Workspace.Context.Repository.CloneURL)
 	}
+
+	var email string
+	var emailVerified bool
+	if user.OrganizationId != "" {
+		emailVerified = true
+		email = user.GetSSOEmail()
+		if email == "" {
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("SSO email is empty"))
+		}
+	} else {
+		emailVerified = false
+		email = user.GetRandomEmail()
+	}
 	if email != "" {
-		userInfo.SetEmail(email, user.OrganizationId != "")
+		userInfo.SetEmail(email, emailVerified)
 		userInfo.AppendClaims("email", email)
 	}
 
