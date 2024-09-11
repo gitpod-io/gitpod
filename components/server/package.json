@@ -67,6 +67,7 @@
     "@probot/get-private-key": "^1.1.1",
     "@types/jaeger-client": "^3.18.3",
     "async-batch": "^1.1.2",
+    "azure-devops-node-api": "^14.0.2",
     "base-64": "^1.0.0",
     "bitbucket": "^2.7.0",
     "body-parser": "^1.19.2",
