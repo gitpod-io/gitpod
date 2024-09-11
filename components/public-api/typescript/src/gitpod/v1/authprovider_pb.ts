@@ -43,6 +43,11 @@ export enum AuthProviderType {
    * @generated from enum value: AUTH_PROVIDER_TYPE_BITBUCKET_SERVER = 4;
    */
   BITBUCKET_SERVER = 4,
+
+  /**
+   * @generated from enum value: AUTH_PROVIDER_TYPE_AZURE_DEVOPS = 5;
+   */
+  AZURE_DEVOPS = 5,
 }
 // Retrieve enum metadata with: proto3.getEnumType(AuthProviderType)
 proto3.util.setEnumType(AuthProviderType, "gitpod.v1.AuthProviderType", [
@@ -51,6 +56,7 @@ proto3.util.setEnumType(AuthProviderType, "gitpod.v1.AuthProviderType", [
   { no: 2, name: "AUTH_PROVIDER_TYPE_GITLAB" },
   { no: 3, name: "AUTH_PROVIDER_TYPE_BITBUCKET" },
   { no: 4, name: "AUTH_PROVIDER_TYPE_BITBUCKET_SERVER" },
+  { no: 5, name: "AUTH_PROVIDER_TYPE_AZURE_DEVOPS" },
 ]);
 
 /**

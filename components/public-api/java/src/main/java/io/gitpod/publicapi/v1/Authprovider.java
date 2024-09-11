@@ -58,6 +58,10 @@ public final class Authprovider {
      * <code>AUTH_PROVIDER_TYPE_BITBUCKET_SERVER = 4;</code>
      */
     AUTH_PROVIDER_TYPE_BITBUCKET_SERVER(4),
+    /**
+     * <code>AUTH_PROVIDER_TYPE_AZURE_DEVOPS = 5;</code>
+     */
+    AUTH_PROVIDER_TYPE_AZURE_DEVOPS(5),
     UNRECOGNIZED(-1),
     ;
 
@@ -94,6 +98,10 @@ public final class Authprovider {
      * <code>AUTH_PROVIDER_TYPE_BITBUCKET_SERVER = 4;</code>
      */
     public static final int AUTH_PROVIDER_TYPE_BITBUCKET_SERVER_VALUE = 4;
+    /**
+     * <code>AUTH_PROVIDER_TYPE_AZURE_DEVOPS = 5;</code>
+     */
+    public static final int AUTH_PROVIDER_TYPE_AZURE_DEVOPS_VALUE = 5;
 
 
     public final int getNumber() {
@@ -125,6 +133,7 @@ public final class Authprovider {
         case 2: return AUTH_PROVIDER_TYPE_GITLAB;
         case 3: return AUTH_PROVIDER_TYPE_BITBUCKET;
         case 4: return AUTH_PROVIDER_TYPE_BITBUCKET_SERVER;
+        case 5: return AUTH_PROVIDER_TYPE_AZURE_DEVOPS;
         default: return null;
       }
     }
@@ -13449,30 +13458,31 @@ public final class Authprovider {
       ".v1.OAuth2ConfigR\014oauth2ConfigB\007\n\005owner\"" +
       "P\n\014OAuth2Config\022\033\n\tclient_id\030\001 \001(\tR\010clie" +
       "ntId\022#\n\rclient_secret\030\002 \001(\tR\014clientSecre" +
-      "t*\277\001\n\020AuthProviderType\022\"\n\036AUTH_PROVIDER_" +
+      "t*\344\001\n\020AuthProviderType\022\"\n\036AUTH_PROVIDER_" +
       "TYPE_UNSPECIFIED\020\000\022\035\n\031AUTH_PROVIDER_TYPE" +
       "_GITHUB\020\001\022\035\n\031AUTH_PROVIDER_TYPE_GITLAB\020\002" +
       "\022 \n\034AUTH_PROVIDER_TYPE_BITBUCKET\020\003\022\'\n#AU" +
-      "TH_PROVIDER_TYPE_BITBUCKET_SERVER\020\0042\206\005\n\023" +
-      "AuthProviderService\022c\n\022CreateAuthProvide" +
-      "r\022$.gitpod.v1.CreateAuthProviderRequest\032" +
-      "%.gitpod.v1.CreateAuthProviderResponse\"\000" +
-      "\022Z\n\017GetAuthProvider\022!.gitpod.v1.GetAuthP" +
-      "roviderRequest\032\".gitpod.v1.GetAuthProvid" +
-      "erResponse\"\000\022`\n\021ListAuthProviders\022#.gitp" +
-      "od.v1.ListAuthProvidersRequest\032$.gitpod." +
-      "v1.ListAuthProvidersResponse\"\000\022\201\001\n\034ListA" +
-      "uthProviderDescriptions\022..gitpod.v1.List" +
-      "AuthProviderDescriptionsRequest\032/.gitpod" +
-      ".v1.ListAuthProviderDescriptionsResponse" +
-      "\"\000\022c\n\022UpdateAuthProvider\022$.gitpod.v1.Upd" +
-      "ateAuthProviderRequest\032%.gitpod.v1.Updat" +
-      "eAuthProviderResponse\"\000\022c\n\022DeleteAuthPro" +
-      "vider\022$.gitpod.v1.DeleteAuthProviderRequ" +
-      "est\032%.gitpod.v1.DeleteAuthProviderRespon" +
-      "se\"\000BQ\n\026io.gitpod.publicapi.v1Z7github.c" +
-      "om/gitpod-io/gitpod/components/public-ap" +
-      "i/go/v1b\006proto3"
+      "TH_PROVIDER_TYPE_BITBUCKET_SERVER\020\004\022#\n\037A" +
+      "UTH_PROVIDER_TYPE_AZURE_DEVOPS\020\0052\206\005\n\023Aut" +
+      "hProviderService\022c\n\022CreateAuthProvider\022$" +
+      ".gitpod.v1.CreateAuthProviderRequest\032%.g" +
+      "itpod.v1.CreateAuthProviderResponse\"\000\022Z\n" +
+      "\017GetAuthProvider\022!.gitpod.v1.GetAuthProv" +
+      "iderRequest\032\".gitpod.v1.GetAuthProviderR" +
+      "esponse\"\000\022`\n\021ListAuthProviders\022#.gitpod." +
+      "v1.ListAuthProvidersRequest\032$.gitpod.v1." +
+      "ListAuthProvidersResponse\"\000\022\201\001\n\034ListAuth" +
+      "ProviderDescriptions\022..gitpod.v1.ListAut" +
+      "hProviderDescriptionsRequest\032/.gitpod.v1" +
+      ".ListAuthProviderDescriptionsResponse\"\000\022" +
+      "c\n\022UpdateAuthProvider\022$.gitpod.v1.Update" +
+      "AuthProviderRequest\032%.gitpod.v1.UpdateAu" +
+      "thProviderResponse\"\000\022c\n\022DeleteAuthProvid" +
+      "er\022$.gitpod.v1.DeleteAuthProviderRequest" +
+      "\032%.gitpod.v1.DeleteAuthProviderResponse\"" +
+      "\000BQ\n\026io.gitpod.publicapi.v1Z7github.com/" +
+      "gitpod-io/gitpod/components/public-api/g" +
+      "o/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,

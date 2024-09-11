@@ -701,6 +701,22 @@ export function GitIntegrationModal(
     };
 
     const getRedirectUrlDescription = (type: AuthProviderType, host: string) => {
+        if (type === AuthProviderType.AZURE_DEVOPS) {
+            return (
+                <span>
+                    Use this redirect URI to update the OAuth application and set it up.&nbsp;
+                    <a
+                        href="https://www.gitpod.io/docs/azure-devops-integration/#oauth-application"
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="gp-link"
+                    >
+                        Learn more
+                    </a>
+                    .
+                </span>
+            );
+        }
         let settingsUrl = ``;
         switch (type) {
             case AuthProviderType.GITHUB:
@@ -759,6 +775,8 @@ export function GitIntegrationModal(
                 return "bitbucket.org";
             case AuthProviderType.BITBUCKET_SERVER:
                 return "bitbucket.example.com";
+            case AuthProviderType.AZURE_DEVOPS:
+                return "dev.azure.com/your-organization";
             default:
                 return "";
         }
@@ -812,6 +830,7 @@ export function GitIntegrationModal(
                                 <option value={AuthProviderType.GITHUB}>GitHub</option>
                                 <option value={AuthProviderType.GITLAB}>GitLab</option>
                                 <option value={AuthProviderType.BITBUCKET_SERVER}>Bitbucket Server</option>
+                                <option value={AuthProviderType.AZURE_DEVOPS}>Azure DevOps</option>
                             </select>
                         </div>
                     )}
