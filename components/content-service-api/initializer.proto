@@ -61,6 +61,9 @@ message GitInitializer {
 
     // config specifies the Git configuration for this workspace
     GitConfig config = 6;
+
+    // full_clone determines if the entire repository should be cloned, instead of with `--depth=1`
+    bool full_clone = 7;
 }
 
 // CloneTargetMode is the target state in which we want to leave a GitWorkspace

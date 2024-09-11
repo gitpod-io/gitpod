@@ -5,7 +5,10 @@
         "branchStrategy": "BRANCH_MATCHING_STRATEGY_DEFAULT_BRANCH",
         "prebuildInterval": 42,
         "workspaceClass": "dev",
-        "triggerStrategy": "PREBUILD_TRIGGER_STRATEGY_UNSPECIFIED"
+        "triggerStrategy": "PREBUILD_TRIGGER_STRATEGY_UNSPECIFIED",
+        "cloneSettings": {
+            "fullClone": false
+        }
     },
     "err": ""
 }

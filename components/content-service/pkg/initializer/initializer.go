@@ -304,6 +304,7 @@ func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitialize
 			AuthMethod:        authMethod,
 			AuthProvider:      authProvider,
 			RunAsGitpodUser:   forceGitpodUser,
+			FullClone:         req.FullClone,
 		},
 		TargetMode:  targetMode,
 		CloneTarget: req.CloneTaget,

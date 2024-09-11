@@ -4,7 +4,10 @@
         "settings": {
             "prebuilds": {
                 "enable": true,
-                "prebuildInterval": 5
+                "prebuildInterval": 5,
+                "cloneSettings": {
+                    "fullClone": false
+                }
             },
             "workspaceClasses": {
                 "regular": "huge"

@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -95,6 +96,9 @@ type Client struct {
 
 	// if true will run git command as gitpod user (should be executed as root that has access to sudo in this case)
 	RunAsGitpodUser bool
+
+	// FullClone indicates whether we should do a full checkout or a shallow clone
+	FullClone bool
 }
 
 // Status describes the status of a Git repo/working copy akin to "git status"
@@ -338,7 +342,17 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 		log.WithError(err).Error("cannot create clone location")
 	}
 
+	now := time.Now()
+
+	defer func() {
+		log.WithField("duration", time.Since(now).String()).WithField("FullClone", c.FullClone).Info("clone repository took")
+	}()
+
 	args := []string{"--depth=1", "--shallow-submodules", c.RemoteURI}
+
+	if c.FullClone {
+		args = []string{c.RemoteURI}
+	}
 
 	for key, value := range c.Config {
 		args = append(args, "--config")

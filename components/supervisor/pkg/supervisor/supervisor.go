@@ -490,7 +490,7 @@ func Run(options ...RunOption) {
 
 				start := time.Now()
 				defer func() {
-					log.Debugf("unshallow of local repository took %v", time.Since(start))
+					log.WithField("duration", time.Since(start).String()).Debugf("unshallow of local repository took %v", time.Since(start))
 				}()
 
 				if !isShallowRepository(repoRoot) {

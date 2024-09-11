@@ -33,6 +33,12 @@ message PrebuildSettings {
   int32 prebuild_interval = 4;
   string workspace_class = 5;
   PrebuildTriggerStrategy trigger_strategy = 6;
+  PrebuildCloneSettings clone_settings = 7;
+}
+
+message PrebuildCloneSettings {
+  // full_clone determines if the entire repository should be cloned, instead of with `--depth=1`
+  bool full_clone = 1;
 }
 
 enum BranchMatchingStrategy {
@@ -106,6 +112,7 @@ message UpdateConfigurationRequest {
     optional int32 prebuild_interval = 4;
     optional string workspace_class = 5;
     optional PrebuildTriggerStrategy trigger_strategy = 6;
+    optional PrebuildCloneSettings clone_settings = 7;
   }
   message WorkspaceSettings {
     optional string workspace_class = 1;
