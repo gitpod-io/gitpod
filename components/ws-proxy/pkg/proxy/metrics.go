@@ -84,12 +84,28 @@ func withResourceLabel() promhttp.Option {
 	})
 }
 
+func withHttpVersionLabel() promhttp.Option {
+	return promhttp.WithLabelFromCtx("http_version", func(ctx context.Context) string {
+		if v := ctx.Value(resourceKey); v != nil {
+			if resources, ok := v.([]string); ok {
+				if len(resources) > 0 {
+					return resources[0]
+				}
+			}
+		}
+		return "unknown"
+	})
+}
+
 func instrumentClientMetrics(transport http.RoundTripper) http.RoundTripper {
 	return promhttp.InstrumentRoundTripperCounter(clientMetrics.requestsTotal,
 		promhttp.InstrumentRoundTripperDuration(clientMetrics.requestsDuration,
 			transport,
-			withResourceLabel()),
+			withResourceLabel(),
+			withHttpVersionLabel(),
+		),
 		withResourceLabel(),
+		withHttpVersionLabel(),
 	)
 }
 
@@ -107,8 +123,11 @@ func instrumentServerMetrics(next http.Handler) http.Handler {
 	instrumented := promhttp.InstrumentHandlerCounter(serverMetrics.requestsTotal,
 		promhttp.InstrumentHandlerDuration(serverMetrics.requestsDuration,
 			handler,
-			withResourceLabel()),
+			withResourceLabel(),
+			withHttpVersionLabel(),
+		),
 		withResourceLabel(),
+		withHttpVersionLabel(),
 	)
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := context.WithValue(req.Context(), resourceKey, []string{"unknown"})
