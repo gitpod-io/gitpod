@@ -84,13 +84,14 @@ export const ides: JetBrainsIDE[] = [
         productType: "release",
         exampleRepo: "https://github.com/gitpod-samples/template-typescript-react",
     },
-    {
-        productName: "Rider",
-        productId: "rider",
-        productCode: "RD",
-        productType: "release",
-        exampleRepo: "https://github.com/gitpod-samples/template-dotnet-core-cli-csharp",
-    },
+    // TODO(hw): ENT-777 We don't upgrade Rider until we can build backend-plugin for it
+    // {
+    //     productName: "Rider",
+    //     productId: "rider",
+    //     productCode: "RD",
+    //     productType: "release",
+    //     exampleRepo: "https://github.com/gitpod-samples/template-dotnet-core-cli-csharp",
+    // },
     {
         productName: "CLion",
         productId: "clion",
