@@ -12,6 +12,7 @@ interface TargetInfo {
     xmlName: string;
     xmlChannels: string[];
     useXml: boolean;
+    useHumanreadableVersion: boolean;
     gradlePropertiesPath: string;
     gradlePropertiesTemplate: string;
 }
@@ -41,7 +42,8 @@ const productReleaseZod = z.record(
 );
 
 async function fetchLatestVersionFromProductReleases(info: TargetInfo) {
-    const { productCode, productType, useXml } = info;
+    const { productCode, productType, useXml, useHumanreadableVersion } = info;
+    // https://data.services.jetbrains.com/products/releases?code=GW&type=eap,rc,release&platform=linux
     const url = `https://data.services.jetbrains.com/products/releases?code=${productCode}&type=${productType}&platform=linux`;
     const response = await axios.get(url);
     const data = productReleaseZod.parse(response.data);
@@ -55,11 +57,12 @@ async function fetchLatestVersionFromProductReleases(info: TargetInfo) {
         throw new Error(`Invalid build version ${build}`);
     }
     const latestPlatformVersion = !useXml ? `${buildSem.major}.${buildSem.minor}-EAP-CANDIDATE-SNAPSHOT` : build;
+    const latestHumanreadablePlatfromVersion = latestBuild.version;
     return {
         pluginSinceBuild: `${buildSem.major}.${buildSem.minor}`,
         pluginUntilBuild: `${buildSem.major}.*`,
         pluginVerifierIdeVersions: latestBuild.majorVersion,
-        platformVersion: latestPlatformVersion,
+        platformVersion: useHumanreadableVersion ? latestHumanreadablePlatfromVersion : latestPlatformVersion,
     };
 }
 

@@ -16,8 +16,8 @@ plugins {
     // Kotlin support - check the latest version at https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
     id("org.jetbrains.kotlin.jvm") version "2.0.0"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij.platform") version "2.0.0"
-//    id("org.jetbrains.intellij.platform.migration") version "2.0.0-beta8"
+    id("org.jetbrains.intellij.platform") version "2.0.1"
+//    id("org.jetbrains.intellij.platform.migration") version "2.0.1"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
     id("org.jetbrains.changelog") version "1.1.2"
     // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
@@ -72,9 +72,9 @@ dependencies {
 
 dependencies {
     intellijPlatform {
+        // https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html#target-platforms
         // https://www.jetbrains.com/updates/updates.xml
         create(IntelliJPlatformType.Gateway, properties("platformVersion"))
-//        create(IntelliJPlatformType.Gateway)
         bundledPlugins(properties("platformBundledPlugins").split(',').map{ it.trim() })
     }
 }
@@ -106,7 +106,7 @@ intellijPlatform {
         }
     }
 
-    verifyPlugin {
+    pluginVerification {
         ides {
             properties("pluginVerifierIdeVersions").split(',').map(String::trim).forEach { version ->
                 ide(IntelliJPlatformType.Gateway, version)

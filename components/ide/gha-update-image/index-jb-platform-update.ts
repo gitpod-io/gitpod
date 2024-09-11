@@ -43,6 +43,7 @@ platformVersion={{platformVersion}}
         xmlName: "Gateway",
         xmlChannels: ["GW-EAP-licensing-EAP", "GW-RELEASE-licensing-RELEASE", "GW-EAP-licensing-RELEASE"],
         useXml: true,
+        useHumanreadableVersion: true,
         gradlePropertiesPath: path.resolve(
             pathToProjectRoot,
             "components/ide/jetbrains/gateway-plugin/gradle-latest.properties",
@@ -68,6 +69,7 @@ platformVersion={{platformVersion}}
         xmlName: "Gateway",
         xmlChannels: ["GW-RELEASE-licensing-RELEASE"],
         useXml: true,
+        useHumanreadableVersion: true,
         gradlePropertiesPath: path.resolve(
             pathToProjectRoot,
             "components/ide/jetbrains/gateway-plugin/gradle-stable.properties",
