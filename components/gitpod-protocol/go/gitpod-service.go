@@ -61,7 +61,6 @@ type APIInterface interface {
 	ClosePort(ctx context.Context, workspaceID string, port float32) (err error)
 	UpdateGitStatus(ctx context.Context, workspaceID string, status *WorkspaceInstanceRepoStatus) (err error)
 	GetWorkspaceEnvVars(ctx context.Context, workspaceID string) (res []*EnvVar, err error)
-	GetEnvVars(ctx context.Context) (res []*EnvVar, err error)
 	SetEnvVar(ctx context.Context, variable *UserEnvVarValue) (err error)
 	DeleteEnvVar(ctx context.Context, variable *UserEnvVarValue) (err error)
 	HasSSHPublicKey(ctx context.Context) (res bool, err error)
@@ -179,8 +178,6 @@ const (
 	FunctionOpenPort FunctionName = "openPort"
 	// FunctionClosePort is the name of the closePort function
 	FunctionClosePort FunctionName = "closePort"
-	// FunctionGetEnvVars is the name of the getEnvVars function
-	FunctionGetEnvVars FunctionName = "getEnvVars"
 	// FunctionSetEnvVar is the name of the setEnvVar function
 	FunctionSetEnvVar FunctionName = "setEnvVar"
 	// FunctionDeleteEnvVar is the name of the deleteEnvVar function
@@ -1080,24 +1077,6 @@ func (gp *APIoverJSONRPC) GetWorkspaceEnvVars(ctx context.Context, workspaceID s
 
 	var result []*EnvVar
 	err = gp.C.Call(ctx, "getWorkspaceEnvVars", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
-
-	return
-}
-
-// GetEnvVars calls getEnvVars on the server
-func (gp *APIoverJSONRPC) GetEnvVars(ctx context.Context) (res []*EnvVar, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	var result []*EnvVar
-	err = gp.C.Call(ctx, "getEnvVars", _params, &result)
 	if err != nil {
 		return
 	}

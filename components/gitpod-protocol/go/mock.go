@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -327,19 +327,19 @@ func (mr *MockAPIInterfaceMockRecorder) GetConfiguration(ctx interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfiguration", reflect.TypeOf((*MockAPIInterface)(nil).GetConfiguration), ctx)
 }
 
-// GetEnvVars mocks base method.
-func (m *MockAPIInterface) GetEnvVars(ctx context.Context) ([]*EnvVar, error) {
+// GetDefaultWorkspaceImage mocks base method.
+func (m *MockAPIInterface) GetDefaultWorkspaceImage(ctx context.Context, params *GetDefaultWorkspaceImageParams) (*GetDefaultWorkspaceImageResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEnvVars", ctx)
-	ret0, _ := ret[0].([]*EnvVar)
+	ret := m.ctrl.Call(m, "GetDefaultWorkspaceImage", ctx, params)
+	ret0, _ := ret[0].(*GetDefaultWorkspaceImageResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetEnvVars indicates an expected call of GetEnvVars.
-func (mr *MockAPIInterfaceMockRecorder) GetEnvVars(ctx interface{}) *gomock.Call {
+// GetDefaultWorkspaceImage indicates an expected call of GetDefaultWorkspaceImage.
+func (mr *MockAPIInterfaceMockRecorder) GetDefaultWorkspaceImage(ctx, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvVars", reflect.TypeOf((*MockAPIInterface)(nil).GetEnvVars), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDefaultWorkspaceImage", reflect.TypeOf((*MockAPIInterface)(nil).GetDefaultWorkspaceImage), ctx, params)
 }
 
 // GetGenericInvite mocks base method.
@@ -444,6 +444,21 @@ func (m *MockAPIInterface) GetOpenPorts(ctx context.Context, workspaceID string)
 func (mr *MockAPIInterfaceMockRecorder) GetOpenPorts(ctx, workspaceID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpenPorts", reflect.TypeOf((*MockAPIInterface)(nil).GetOpenPorts), ctx, workspaceID)
+}
+
+// GetOrgSettings mocks base method.
+func (m *MockAPIInterface) GetOrgSettings(ctx context.Context, orgID string) (*OrganizationSettings, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrgSettings", ctx, orgID)
+	ret0, _ := ret[0].(*OrganizationSettings)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrgSettings indicates an expected call of GetOrgSettings.
+func (mr *MockAPIInterfaceMockRecorder) GetOrgSettings(ctx, orgID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgSettings", reflect.TypeOf((*MockAPIInterface)(nil).GetOrgSettings), ctx, orgID)
 }
 
 // GetOwnAuthProviders mocks base method.
@@ -802,36 +817,6 @@ func (m *MockAPIInterface) RemoveTeamMember(ctx context.Context, teamID, userID 
 func (mr *MockAPIInterfaceMockRecorder) RemoveTeamMember(ctx, teamID, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveTeamMember", reflect.TypeOf((*MockAPIInterface)(nil).RemoveTeamMember), ctx, teamID, userID)
-}
-
-// GetOrgSettings mocks base method.
-func (m *MockAPIInterface) GetOrgSettings(ctx context.Context, orgID string) (*OrganizationSettings, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrgSettings", ctx, orgID)
-	ret0, _ := ret[0].(*OrganizationSettings)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetOrgSettings indicates an expected call of GetOrgSettings.
-func (mr *MockAPIInterfaceMockRecorder) GetOrgSettings(ctx, orgID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgSettings", reflect.TypeOf((*MockAPIInterface)(nil).GetOrgSettings), ctx, orgID)
-}
-
-// GetDefaultWorkspaceImage mocks base method.
-func (m *MockAPIInterface) GetDefaultWorkspaceImage(ctx context.Context, params *GetDefaultWorkspaceImageParams) (*GetDefaultWorkspaceImageResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDefaultWorkspaceImage", ctx)
-	ret0, _ := ret[0].(*GetDefaultWorkspaceImageResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetDefaultWorkspaceImage indicates an expected call of GetDefaultWorkspaceImage.
-func (mr *MockAPIInterfaceMockRecorder) GetDefaultWorkspaceImage(ctx, params *GetDefaultWorkspaceImageParams) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDefaultWorkspaceImage", reflect.TypeOf((*MockAPIInterface)(nil).GetDefaultWorkspaceImage), ctx, params)
 }
 
 // ResetGenericInvite mocks base method.
