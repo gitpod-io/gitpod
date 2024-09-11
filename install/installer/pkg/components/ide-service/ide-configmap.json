@@ -252,6 +252,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.2.1",
+            "image": "{{.Repository}}/ide/goland:commit-ee9bda60ffb3d400a3f6b9d812026548638b6587",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-ee9bda60ffb3d400a3f6b9d812026548638b6587",
+              "{{.Repository}}/ide/jb-launcher:commit-c489f17fc97b5ae34656a5961235d40550bf0d90"
+            ]
+          },
+          {
             "version": "2024.1.4",
             "image": "{{.Repository}}/ide/goland:commit-f3193519fdae872d64a2a708f5338eeaabb3b6b7",
             "imageLayers": [
@@ -605,6 +613,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.1.4",
+            "image": "{{.Repository}}/ide/rider:commit-f3193519fdae872d64a2a708f5338eeaabb3b6b7",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-6e78b49260501f3ccf1fb8081f4de2a9d2a54732-rider",
+              "{{.Repository}}/ide/jb-launcher:commit-c489f17fc97b5ae34656a5961235d40550bf0d90"
+            ]
+          },
           {
             "version": "2024.1.3",
             "image": "{{.Repository}}/ide/rider:commit-c295f8299fd17f99913512ec5db5d8a60a1e5d98",
