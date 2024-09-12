@@ -2052,10 +2052,11 @@ type Identity struct {
 	AuthProviderID string `json:"authProviderId,omitempty"`
 
 	// This is a flag that triggers the HARD DELETION of this entity
-	Deleted      bool     `json:"deleted,omitempty"`
-	PrimaryEmail string   `json:"primaryEmail,omitempty"`
-	Readonly     bool     `json:"readonly,omitempty"`
-	Tokens       []*Token `json:"tokens,omitempty"`
+	Deleted        bool     `json:"deleted,omitempty"`
+	PrimaryEmail   string   `json:"primaryEmail,omitempty"`
+	Readonly       bool     `json:"readonly,omitempty"`
+	Tokens         []*Token `json:"tokens,omitempty"`
+	LastSigninTime string   `json:"lastSigninTime,omitempty"`
 }
 
 // User is the User message type
