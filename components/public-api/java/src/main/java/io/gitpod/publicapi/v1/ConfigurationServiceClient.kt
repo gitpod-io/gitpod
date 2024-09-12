@@ -105,4 +105,24 @@ public class ConfigurationServiceClient(
     ),
   )
 
+
+  /**
+   *  GetConfigurationWebhookActivityStatus returns the observed status of installed prebuild
+   * webhooks on the configuration
+   */
+  override suspend
+      fun getConfigurationWebhookActivityStatus(request: ConfigurationOuterClass.GetConfigurationWebhookActivityStatusRequest,
+      headers: Headers):
+      ResponseMessage<ConfigurationOuterClass.GetConfigurationWebhookActivityStatusResponse> =
+      client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.ConfigurationService/GetConfigurationWebhookActivityStatus",
+      io.gitpod.publicapi.v1.ConfigurationOuterClass.GetConfigurationWebhookActivityStatusRequest::class,
+      io.gitpod.publicapi.v1.ConfigurationOuterClass.GetConfigurationWebhookActivityStatusResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
 }

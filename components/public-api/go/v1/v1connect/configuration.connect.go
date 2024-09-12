@@ -41,6 +41,8 @@ type ConfigurationServiceClient interface {
 	UpdateConfiguration(context.Context, *connect_go.Request[v1.UpdateConfigurationRequest]) (*connect_go.Response[v1.UpdateConfigurationResponse], error)
 	// Deletes a configuration.
 	DeleteConfiguration(context.Context, *connect_go.Request[v1.DeleteConfigurationRequest]) (*connect_go.Response[v1.DeleteConfigurationResponse], error)
+	// GetConfigurationWebhookActivityStatus returns the observed status of installed prebuild webhooks on the configuration
+	GetConfigurationWebhookActivityStatus(context.Context, *connect_go.Request[v1.GetConfigurationWebhookActivityStatusRequest]) (*connect_go.Response[v1.GetConfigurationWebhookActivityStatusResponse], error)
 }
 
 // NewConfigurationServiceClient constructs a client for the gitpod.v1.ConfigurationService service.
@@ -78,16 +80,22 @@ func NewConfigurationServiceClient(httpClient connect_go.HTTPClient, baseURL str
 			baseURL+"/gitpod.v1.ConfigurationService/DeleteConfiguration",
 			opts...,
 		),
+		getConfigurationWebhookActivityStatus: connect_go.NewClient[v1.GetConfigurationWebhookActivityStatusRequest, v1.GetConfigurationWebhookActivityStatusResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.ConfigurationService/GetConfigurationWebhookActivityStatus",
+			opts...,
+		),
 	}
 }
 
 // configurationServiceClient implements ConfigurationServiceClient.
 type configurationServiceClient struct {
-	createConfiguration *connect_go.Client[v1.CreateConfigurationRequest, v1.CreateConfigurationResponse]
-	getConfiguration    *connect_go.Client[v1.GetConfigurationRequest, v1.GetConfigurationResponse]
-	listConfigurations  *connect_go.Client[v1.ListConfigurationsRequest, v1.ListConfigurationsResponse]
-	updateConfiguration *connect_go.Client[v1.UpdateConfigurationRequest, v1.UpdateConfigurationResponse]
-	deleteConfiguration *connect_go.Client[v1.DeleteConfigurationRequest, v1.DeleteConfigurationResponse]
+	createConfiguration                   *connect_go.Client[v1.CreateConfigurationRequest, v1.CreateConfigurationResponse]
+	getConfiguration                      *connect_go.Client[v1.GetConfigurationRequest, v1.GetConfigurationResponse]
+	listConfigurations                    *connect_go.Client[v1.ListConfigurationsRequest, v1.ListConfigurationsResponse]
+	updateConfiguration                   *connect_go.Client[v1.UpdateConfigurationRequest, v1.UpdateConfigurationResponse]
+	deleteConfiguration                   *connect_go.Client[v1.DeleteConfigurationRequest, v1.DeleteConfigurationResponse]
+	getConfigurationWebhookActivityStatus *connect_go.Client[v1.GetConfigurationWebhookActivityStatusRequest, v1.GetConfigurationWebhookActivityStatusResponse]
 }
 
 // CreateConfiguration calls gitpod.v1.ConfigurationService.CreateConfiguration.
@@ -115,6 +123,12 @@ func (c *configurationServiceClient) DeleteConfiguration(ctx context.Context, re
 	return c.deleteConfiguration.CallUnary(ctx, req)
 }
 
+// GetConfigurationWebhookActivityStatus calls
+// gitpod.v1.ConfigurationService.GetConfigurationWebhookActivityStatus.
+func (c *configurationServiceClient) GetConfigurationWebhookActivityStatus(ctx context.Context, req *connect_go.Request[v1.GetConfigurationWebhookActivityStatusRequest]) (*connect_go.Response[v1.GetConfigurationWebhookActivityStatusResponse], error) {
+	return c.getConfigurationWebhookActivityStatus.CallUnary(ctx, req)
+}
+
 // ConfigurationServiceHandler is an implementation of the gitpod.v1.ConfigurationService service.
 type ConfigurationServiceHandler interface {
 	// Creates a new configuration.
@@ -127,6 +141,8 @@ type ConfigurationServiceHandler interface {
 	UpdateConfiguration(context.Context, *connect_go.Request[v1.UpdateConfigurationRequest]) (*connect_go.Response[v1.UpdateConfigurationResponse], error)
 	// Deletes a configuration.
 	DeleteConfiguration(context.Context, *connect_go.Request[v1.DeleteConfigurationRequest]) (*connect_go.Response[v1.DeleteConfigurationResponse], error)
+	// GetConfigurationWebhookActivityStatus returns the observed status of installed prebuild webhooks on the configuration
+	GetConfigurationWebhookActivityStatus(context.Context, *connect_go.Request[v1.GetConfigurationWebhookActivityStatusRequest]) (*connect_go.Response[v1.GetConfigurationWebhookActivityStatusResponse], error)
 }
 
 // NewConfigurationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -161,6 +177,11 @@ func NewConfigurationServiceHandler(svc ConfigurationServiceHandler, opts ...con
 		svc.DeleteConfiguration,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.ConfigurationService/GetConfigurationWebhookActivityStatus", connect_go.NewUnaryHandler(
+		"/gitpod.v1.ConfigurationService/GetConfigurationWebhookActivityStatus",
+		svc.GetConfigurationWebhookActivityStatus,
+		opts...,
+	))
 	return "/gitpod.v1.ConfigurationService/", mux
 }
 
@@ -185,4 +206,8 @@ func (UnimplementedConfigurationServiceHandler) UpdateConfiguration(context.Cont
 
 func (UnimplementedConfigurationServiceHandler) DeleteConfiguration(context.Context, *connect_go.Request[v1.DeleteConfigurationRequest]) (*connect_go.Response[v1.DeleteConfigurationResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.ConfigurationService.DeleteConfiguration is not implemented"))
+}
+
+func (UnimplementedConfigurationServiceHandler) GetConfigurationWebhookActivityStatus(context.Context, *connect_go.Request[v1.GetConfigurationWebhookActivityStatusRequest]) (*connect_go.Response[v1.GetConfigurationWebhookActivityStatusResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.ConfigurationService.GetConfigurationWebhookActivityStatus is not implemented"))
 }

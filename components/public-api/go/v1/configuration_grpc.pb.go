@@ -36,6 +36,8 @@ type ConfigurationServiceClient interface {
 	UpdateConfiguration(ctx context.Context, in *UpdateConfigurationRequest, opts ...grpc.CallOption) (*UpdateConfigurationResponse, error)
 	// Deletes a configuration.
 	DeleteConfiguration(ctx context.Context, in *DeleteConfigurationRequest, opts ...grpc.CallOption) (*DeleteConfigurationResponse, error)
+	// GetConfigurationWebhookActivityStatus returns the observed status of installed prebuild webhooks on the configuration
+	GetConfigurationWebhookActivityStatus(ctx context.Context, in *GetConfigurationWebhookActivityStatusRequest, opts ...grpc.CallOption) (*GetConfigurationWebhookActivityStatusResponse, error)
 }
 
 type configurationServiceClient struct {
@@ -91,6 +93,15 @@ func (c *configurationServiceClient) DeleteConfiguration(ctx context.Context, in
 	return out, nil
 }
 
+func (c *configurationServiceClient) GetConfigurationWebhookActivityStatus(ctx context.Context, in *GetConfigurationWebhookActivityStatusRequest, opts ...grpc.CallOption) (*GetConfigurationWebhookActivityStatusResponse, error) {
+	out := new(GetConfigurationWebhookActivityStatusResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.ConfigurationService/GetConfigurationWebhookActivityStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConfigurationServiceServer is the server API for ConfigurationService service.
 // All implementations must embed UnimplementedConfigurationServiceServer
 // for forward compatibility
@@ -105,6 +116,8 @@ type ConfigurationServiceServer interface {
 	UpdateConfiguration(context.Context, *UpdateConfigurationRequest) (*UpdateConfigurationResponse, error)
 	// Deletes a configuration.
 	DeleteConfiguration(context.Context, *DeleteConfigurationRequest) (*DeleteConfigurationResponse, error)
+	// GetConfigurationWebhookActivityStatus returns the observed status of installed prebuild webhooks on the configuration
+	GetConfigurationWebhookActivityStatus(context.Context, *GetConfigurationWebhookActivityStatusRequest) (*GetConfigurationWebhookActivityStatusResponse, error)
 	mustEmbedUnimplementedConfigurationServiceServer()
 }
 
@@ -126,6 +139,9 @@ func (UnimplementedConfigurationServiceServer) UpdateConfiguration(context.Conte
 }
 func (UnimplementedConfigurationServiceServer) DeleteConfiguration(context.Context, *DeleteConfigurationRequest) (*DeleteConfigurationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteConfiguration not implemented")
+}
+func (UnimplementedConfigurationServiceServer) GetConfigurationWebhookActivityStatus(context.Context, *GetConfigurationWebhookActivityStatusRequest) (*GetConfigurationWebhookActivityStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConfigurationWebhookActivityStatus not implemented")
 }
 func (UnimplementedConfigurationServiceServer) mustEmbedUnimplementedConfigurationServiceServer() {}
 
@@ -230,6 +246,24 @@ func _ConfigurationService_DeleteConfiguration_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConfigurationService_GetConfigurationWebhookActivityStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConfigurationWebhookActivityStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigurationServiceServer).GetConfigurationWebhookActivityStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.ConfigurationService/GetConfigurationWebhookActivityStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigurationServiceServer).GetConfigurationWebhookActivityStatus(ctx, req.(*GetConfigurationWebhookActivityStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConfigurationService_ServiceDesc is the grpc.ServiceDesc for ConfigurationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -256,6 +290,10 @@ var ConfigurationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteConfiguration",
 			Handler:    _ConfigurationService_DeleteConfiguration_Handler,
+		},
+		{
+			MethodName: "GetConfigurationWebhookActivityStatus",
+			Handler:    _ConfigurationService_GetConfigurationWebhookActivityStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
