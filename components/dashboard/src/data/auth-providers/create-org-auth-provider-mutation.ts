@@ -6,7 +6,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getOrgAuthProvidersQueryKey } from "./org-auth-providers-query";
-import { CreateAuthProviderRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { AuthProviderType, CreateAuthProviderRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { authProviderClient } from "../../service/public-api";
 
 type CreateAuthProviderArgs = {
@@ -14,6 +14,8 @@ type CreateAuthProviderArgs = {
         clientId: string;
         clientSecret: string;
         orgId: string;
+        authorizationUrl?: string;
+        tokenUrl?: string;
     };
 };
 export const useCreateOrgAuthProviderMutation = () => {
@@ -21,6 +23,9 @@ export const useCreateOrgAuthProviderMutation = () => {
 
     return useMutation({
         mutationFn: async ({ provider }: CreateAuthProviderArgs) => {
+            const authorizationUrl =
+                provider.type === AuthProviderType.AZURE_DEVOPS ? provider.authorizationUrl : undefined;
+            const tokenUrl = provider.type === AuthProviderType.AZURE_DEVOPS ? provider.tokenUrl : undefined;
             const response = await authProviderClient.createAuthProvider(
                 new CreateAuthProviderRequest({
                     owner: { case: "organizationId", value: provider.orgId },
@@ -28,6 +33,8 @@ export const useCreateOrgAuthProviderMutation = () => {
                     oauth2Config: {
                         clientId: provider.clientId,
                         clientSecret: provider.clientSecret,
+                        authorizationUrl,
+                        tokenUrl,
                     },
                     type: provider.type,
                 }),

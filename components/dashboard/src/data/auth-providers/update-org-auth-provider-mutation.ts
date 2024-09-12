@@ -6,7 +6,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getOrgAuthProvidersQueryKey } from "./org-auth-providers-query";
-import { UpdateAuthProviderRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { AuthProviderType, UpdateAuthProviderRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { authProviderClient } from "../../service/public-api";
 
 type UpdateAuthProviderArgs = {
@@ -14,6 +14,10 @@ type UpdateAuthProviderArgs = {
         id: string;
         clientId: string;
         clientSecret: string;
+        /** verify locally only, will not be update */
+        type: AuthProviderType;
+        authorizationUrl?: string;
+        tokenUrl?: string;
     };
 };
 export const useUpdateOrgAuthProviderMutation = () => {
@@ -21,11 +25,16 @@ export const useUpdateOrgAuthProviderMutation = () => {
 
     return useMutation({
         mutationFn: async ({ provider }: UpdateAuthProviderArgs) => {
+            const authorizationUrl =
+                provider.type === AuthProviderType.AZURE_DEVOPS ? provider.authorizationUrl : undefined;
+            const tokenUrl = provider.type === AuthProviderType.AZURE_DEVOPS ? provider.tokenUrl : undefined;
             const response = await authProviderClient.updateAuthProvider(
                 new UpdateAuthProviderRequest({
                     authProviderId: provider.id,
                     clientId: provider.clientId,
                     clientSecret: provider.clientSecret,
+                    authorizationUrl,
+                    tokenUrl,
                 }),
             );
             return response.authProvider!;
