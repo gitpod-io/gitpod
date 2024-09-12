@@ -57,6 +57,8 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
                 type: this.apiConverter.fromAuthProviderType(request.type),
                 clientId: request.oauth2Config?.clientId,
                 clientSecret: request.oauth2Config?.clientSecret,
+                tokenUrl: request.oauth2Config?.tokenUrl,
+                authorizationUrl: request.oauth2Config?.authorizationUrl,
             });
 
             return new CreateAuthProviderResponse({ authProvider: this.apiConverter.toAuthProvider(result) });
@@ -67,6 +69,8 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
                 type: this.apiConverter.fromAuthProviderType(request.type),
                 clientId: request.oauth2Config?.clientId,
                 clientSecret: request.oauth2Config?.clientSecret,
+                tokenUrl: request.oauth2Config?.tokenUrl,
+                authorizationUrl: request.oauth2Config?.authorizationUrl,
             });
 
             return new CreateAuthProviderResponse({ authProvider: this.apiConverter.toAuthProvider(result) });
@@ -162,6 +166,8 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
                 organizationId: authProvider.organizationId,
                 clientId: clientId,
                 clientSecret: clientSecret,
+                authorizationUrl: request.authorizationUrl,
+                tokenUrl: request.tokenUrl,
             });
         } else {
             entry = await this.authProviderService.updateAuthProviderOfUser(ctxUserId(), {
@@ -169,6 +175,8 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
                 ownerId: ctxUserId(),
                 clientId: clientId,
                 clientSecret: clientSecret,
+                authorizationUrl: request.authorizationUrl,
+                tokenUrl: request.tokenUrl,
             });
         }
 
