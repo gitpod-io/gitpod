@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -24,6 +24,9 @@ import (
 var userInfoCmdOpts struct {
 	// Json configures whether the command output is printed as JSON, to make it machine-readable.
 	Json bool
+
+	// EmailOnly returns only the email address of the user
+	EmailOnly bool
 }
 
 // infoCmd represents the info command.
@@ -53,6 +56,11 @@ var userInfoCmd = &cobra.Command{
 		data := &userInfoData{
 			UserId: user.ID,
 			Email:  email,
+		}
+
+		if userInfoCmdOpts.EmailOnly {
+			fmt.Println(data.Email)
+			return nil
 		}
 
 		if userInfoCmdOpts.Json {
@@ -117,5 +125,6 @@ func connectToAPI(ctx context.Context) (*serverapi.APIoverJSONRPC, error) {
 
 func init() {
 	userInfoCmd.Flags().BoolVarP(&userInfoCmdOpts.Json, "json", "j", false, "Output in JSON format")
+	userInfoCmd.Flags().BoolVar(&userInfoCmdOpts.EmailOnly, "email", false, "Only emit the email address of the user")
 	rootCmd.AddCommand(userInfoCmd)
 }
