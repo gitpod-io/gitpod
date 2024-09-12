@@ -16,6 +16,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
+const (
+	metricsNamespace = "gitpod"
+	metricsSubsystem = "ws_proxy"
+)
+
 type httpMetrics struct {
 	requestsTotal    *prometheus.CounterVec
 	requestsDuration *prometheus.HistogramVec
@@ -34,24 +39,32 @@ func (m *httpMetrics) Collect(ch chan<- prometheus.Metric) {
 var (
 	serverMetrics = &httpMetrics{
 		requestsTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "http_server_requests_total",
-			Help: "Total number of incoming HTTP requests",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "http_server_requests_total",
+			Help:      "Total number of incoming HTTP requests",
 		}, []string{"method", "resource", "code", "http_version"}),
 		requestsDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "http_server_requests_duration_seconds",
-			Help:    "Duration of incoming HTTP requests in seconds",
-			Buckets: []float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600},
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "http_server_requests_duration_seconds",
+			Help:      "Duration of incoming HTTP requests in seconds",
+			Buckets:   []float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600},
 		}, []string{"method", "resource", "code", "http_version"}),
 	}
 	clientMetrics = &httpMetrics{
 		requestsTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "http_client_requests_total",
-			Help: "Total number of outgoing HTTP requests",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "http_client_requests_total",
+			Help:      "Total number of outgoing HTTP requests",
 		}, []string{"method", "resource", "code", "http_version"}),
 		requestsDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "http_client_requests_duration_seconds",
-			Help:    "Duration of outgoing HTTP requests in seconds",
-			Buckets: []float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600},
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "http_client_requests_duration_seconds",
+			Help:      "Duration of outgoing HTTP requests in seconds",
+			Buckets:   []float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600},
 		}, []string{"method", "resource", "code", "http_version"}),
 	}
 )
