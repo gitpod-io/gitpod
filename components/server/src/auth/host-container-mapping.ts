@@ -26,7 +26,7 @@ export class HostContainerMapping {
                 return [bitbucketContainerModule];
             case "BitbucketServer":
                 return [bitbucketServerContainerModule];
-            case "Azure DevOps":
+            case "AzureDevOps":
                 return [azureDevOpsContainerModule];
             default:
                 return undefined;

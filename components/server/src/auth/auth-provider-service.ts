@@ -339,7 +339,7 @@ export class AuthProviderService {
             case "Bitbucket":
                 urls = bbUrls(host);
                 break;
-            case "Azure DevOps":
+            case "AzureDevOps":
                 const { authorizationUrl, tokenUrl } = newEntry;
                 if (!authorizationUrl || !tokenUrl) {
                     throw new ApplicationError(ErrorCodes.BAD_REQUEST, "authorizationUrl and tokenUrl are required.");
