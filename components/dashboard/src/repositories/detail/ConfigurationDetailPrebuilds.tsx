@@ -5,7 +5,7 @@
  */
 
 import { FC, useCallback, useState } from "react";
-import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { Configuration, PrebuildTriggerStrategy } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { ConfigurationSettingsField } from "./ConfigurationSettingsField";
 import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { SwitchInputField } from "@podkit/switch/Switch";
@@ -15,6 +15,9 @@ import { LoadingState } from "@podkit/loading/LoadingState";
 import { EnablePrebuildsError } from "./prebuilds/EnablePrebuildsError";
 import { TextMuted } from "@podkit/typography/TextMuted";
 import { Link } from "react-router-dom";
+import { useWebhookActivityStatusQuery } from "../../data/prebuilds/prebuild-queries";
+import Alert from "../../components/Alert";
+import { useToast } from "../../components/toasts/Toasts";
 
 type Props = {
     configuration: Configuration;
@@ -59,6 +62,10 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
             <ConfigurationSettingsField>
                 <Heading3>Prebuilds</Heading3>
                 <Subheading className="max-w-lg">Prebuilds reduce wait time for new workspaces.</Subheading>
+                {configuration.prebuildSettings?.enabled &&
+                    configuration.prebuildSettings.triggerStrategy !== PrebuildTriggerStrategy.ACTIVITY_BASED && (
+                        <WebhookTriggerMessage configurationId={configuration.id} />
+                    )}
 
                 <SwitchInputField
                     className="mt-6"
@@ -93,5 +100,41 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                 <PrebuildSettingsForm configuration={configuration} />
             )}
         </>
+    );
+};
+
+export const WebhookTriggerMessage = ({ configurationId }: { configurationId: string }) => {
+    const integrationStatus = useWebhookActivityStatusQuery(configurationId);
+    const { toast } = useToast();
+
+    if (integrationStatus.isError) {
+        toast("Failed to load webhook activity status");
+        return null;
+    }
+    if (!integrationStatus?.data?.isWebhookActive) {
+        return null;
+    }
+
+    return (
+        <Alert type="warning">
+            <div className="flex flex-row gap-2 items-center">
+                <span>
+                    We have gotten webhook activity from your repository recently, indicating you have webhooks
+                    installed on your repo. To optimize prebuilds usage, you might want to consider enabling Activity
+                    based prebuilds by removing our webhook. If you remove them, it might take a new commit for this
+                    message to disappear, although activity based prebuilds will start working right away.
+                </span>
+                <div>
+                    <a
+                        href="https://www.gitpod.io/changelog/activity-based-prebuilds"
+                        className="gp-link"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        Learn more about Activity based prebuilds
+                    </a>
+                </div>
+            </div>
+        </Alert>
     );
 };
