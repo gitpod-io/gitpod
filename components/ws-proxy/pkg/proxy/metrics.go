@@ -76,7 +76,8 @@ func init() {
 type contextKey int
 
 var (
-	resourceKey = contextKey(0)
+	resourceKey    = contextKey(0)
+	httpVersionKey = contextKey(1)
 )
 
 func withResource(r *http.Request, resource string) *http.Request {
@@ -97,12 +98,17 @@ func withResourceLabel() promhttp.Option {
 	})
 }
 
+func withHttpVersion(r *http.Request) *http.Request {
+	ctx := context.WithValue(r.Context(), httpVersionKey, []string{r.Proto})
+	return r.WithContext(ctx)
+}
+
 func withHttpVersionLabel() promhttp.Option {
 	return promhttp.WithLabelFromCtx("http_version", func(ctx context.Context) string {
-		if v := ctx.Value(resourceKey); v != nil {
-			if resources, ok := v.([]string); ok {
-				if len(resources) > 0 {
-					return resources[0]
+		if v := ctx.Value(httpVersionKey); v != nil {
+			if versions, ok := v.([]string); ok {
+				if len(versions) > 0 {
+					return versions[0]
 				}
 			}
 		}

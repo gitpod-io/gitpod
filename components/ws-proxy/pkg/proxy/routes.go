@@ -428,6 +428,7 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 					return image
 				}
 				preloadSupervisorReq = withResource(preloadSupervisorReq, supervisorResource)
+				preloadSupervisorReq = withHttpVersion(preloadSupervisorReq)
 				resp, err := t.DoRoundTrip(preloadSupervisorReq)
 				if err != nil {
 					log.WithField("supervisorURL", supervisorURL).WithError(err).Error("could not preload supervisor")
