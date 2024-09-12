@@ -455,6 +455,16 @@ export class UpdateAuthProviderRequest extends Message<UpdateAuthProviderRequest
    */
   clientSecret?: string;
 
+  /**
+   * @generated from field: optional string authorization_url = 4;
+   */
+  authorizationUrl?: string;
+
+  /**
+   * @generated from field: optional string token_url = 5;
+   */
+  tokenUrl?: string;
+
   constructor(data?: PartialMessage<UpdateAuthProviderRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -466,6 +476,8 @@ export class UpdateAuthProviderRequest extends Message<UpdateAuthProviderRequest
     { no: 1, name: "auth_provider_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "client_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 3, name: "client_secret", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 4, name: "authorization_url", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 5, name: "token_url", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateAuthProviderRequest {
@@ -775,6 +787,16 @@ export class OAuth2Config extends Message<OAuth2Config> {
    */
   clientSecret = "";
 
+  /**
+   * @generated from field: string authorization_url = 3;
+   */
+  authorizationUrl = "";
+
+  /**
+   * @generated from field: string token_url = 4;
+   */
+  tokenUrl = "";
+
   constructor(data?: PartialMessage<OAuth2Config>) {
     super();
     proto3.util.initPartial(data, this);
@@ -785,6 +807,8 @@ export class OAuth2Config extends Message<OAuth2Config> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "client_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "client_secret", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "authorization_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "token_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OAuth2Config {

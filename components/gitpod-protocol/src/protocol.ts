@@ -1406,14 +1406,18 @@ export interface OAuth2Config {
 export namespace AuthProviderEntry {
     export type Type = "GitHub" | "GitLab" | "Bitbucket" | "BitbucketServer" | "AzureDevOps" | string;
     export type Status = "pending" | "verified";
+    export interface OAuth2CustomConfig {
+        authorizationUrl?: string;
+        tokenUrl?: string;
+    }
     export type NewEntry = Pick<AuthProviderEntry, "ownerId" | "host" | "type"> & {
         clientId?: string;
         clientSecret?: string;
-    };
+    } & CustomOAuth2Config;
     export type UpdateEntry = Pick<AuthProviderEntry, "id" | "ownerId"> & {
         clientId?: string;
         clientSecret?: string;
-    };
+    } & CustomOAuth2Config;
     export type NewOrgEntry = NewEntry & {
         organizationId: string;
     };
@@ -1421,8 +1425,8 @@ export namespace AuthProviderEntry {
         clientId?: string;
         clientSecret?: string;
         organizationId: string;
-    };
-    export type UpdateOAuth2Config = Pick<OAuth2Config, "clientId" | "clientSecret">;
+    } & CustomOAuth2Config;
+    export type UpdateOAuth2Config = Pick<OAuth2Config, "clientId" | "clientSecret"> & CustomOAuth2Config;
     export function redact(entry: AuthProviderEntry): AuthProviderEntry {
         return {
             ...entry,
