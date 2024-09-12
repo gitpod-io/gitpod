@@ -138,6 +138,13 @@ func instrumentServerMetrics(next http.Handler) http.Handler {
 				}
 			}
 		}
+		if v := req.Context().Value(httpVersionKey); v != nil {
+			if versions, ok := v.([]string); ok {
+				if len(versions) > 0 {
+					versions[0] = req.Proto
+				}
+			}
+		}
 	})
 	instrumented := promhttp.InstrumentHandlerCounter(serverMetrics.requestsTotal,
 		promhttp.InstrumentHandlerDuration(serverMetrics.requestsDuration,
@@ -150,6 +157,7 @@ func instrumentServerMetrics(next http.Handler) http.Handler {
 	)
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := context.WithValue(req.Context(), resourceKey, []string{"unknown"})
+		ctx = context.WithValue(ctx, httpVersionKey, []string{"unknown"})
 		instrumented.ServeHTTP(w, req.WithContext(ctx))
 	})
 }
