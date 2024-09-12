@@ -604,6 +604,7 @@ export function GitIntegrationModal(
                 newProvider = await updateProvider.mutateAsync({
                     provider: {
                         id: providerEntry?.id || "",
+                        type: providerEntry?.type ?? AuthProviderType.UNSPECIFIED,
                         clientId,
                         clientSecret: clientSecret === "redacted" ? "" : clientSecret,
                     },
