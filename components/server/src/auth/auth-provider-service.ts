@@ -14,6 +14,7 @@ import { oauthUrls as githubUrls } from "../github/github-urls";
 import { oauthUrls as gitlabUrls } from "../gitlab/gitlab-urls";
 import { oauthUrls as bbsUrls } from "../bitbucket-server/bitbucket-server-urls";
 import { oauthUrls as bbUrls } from "../bitbucket/bitbucket-urls";
+import { oauthUrls as azureUrls } from "../azure-devops/azure-urls";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import fetch from "node-fetch";
 import { Authorizer } from "../authorization/authorizer";
@@ -337,6 +338,13 @@ export class AuthProviderService {
                 break;
             case "Bitbucket":
                 urls = bbUrls(host);
+                break;
+            case "Azure DevOps":
+                const { authorizationUrl, tokenUrl } = newEntry;
+                if (!authorizationUrl || !tokenUrl) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "authorizationUrl and tokenUrl are required.");
+                }
+                urls = azureUrls({ authorizationUrl, tokenUrl });
                 break;
         }
         if (!urls) {
