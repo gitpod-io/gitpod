@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, TracedWorkspaceDB, WebhookEventDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
     CommitInfo,
@@ -16,6 +16,7 @@ import {
     StartPrebuildResult,
     TaskConfig,
     User,
+    WebhookEvent,
     Workspace,
     WorkspaceConfig,
     WorkspaceInstance,
@@ -75,6 +76,7 @@ export class PrebuildManager {
         @inject(ContextParser) private contextParser: ContextParser,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
+        @inject(WebhookEventDB) private readonly webhookEventDb: WebhookEventDB,
     ) {}
 
     private async findNonFailedPrebuiltWorkspace(ctx: TraceContext, projectId: string, commitSHA: string) {
@@ -113,6 +115,42 @@ export class PrebuildManager {
                 }
             }
         }, opts);
+    }
+
+    /**
+     * getRecentWebhookEvent checks if the webhook integration is active for the given user and project by querying the webhook event database and seeing if for any of the latest n commits a webhook event exists.
+     */
+    public async getRecentWebhookEvent(
+        ctx: TraceContext,
+        user: User,
+        project: Project,
+    ): Promise<WebhookEvent | undefined> {
+        const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
+        const maxDepth = 15;
+
+        const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, maxDepth);
+        if (events.length === 0) {
+            // return undefined;
+        }
+
+        const hostContext = this.hostContextProvider.get(context.repository.host);
+        const repoProvider = hostContext?.services?.repositoryProvider;
+        if (!repoProvider) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `repository provider not found`);
+        }
+        const history = await repoProvider.getCommitHistory(
+            user,
+            context.repository.owner,
+            context.repository.name,
+            context.revision,
+            maxDepth,
+        );
+        if (!history) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `commit history not found`);
+        }
+        const matchingEvent = events.find((event) => history.find((commit) => commit === event.commit));
+
+        return matchingEvent;
     }
 
     public async *getAndWatchPrebuildStatus(

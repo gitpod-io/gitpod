@@ -15,6 +15,8 @@ import {
     DeleteConfigurationRequest,
     DeleteConfigurationResponse,
     GetConfigurationRequest,
+    GetConfigurationWebhookActivityStatusRequest,
+    GetConfigurationWebhookActivityStatusResponse,
     ListConfigurationsRequest,
     ListConfigurationsResponse,
     PrebuildSettings,
@@ -30,6 +32,8 @@ import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 import { Project } from "@gitpod/gitpod-protocol";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { ContextService } from "../workspace/context-service";
+import { PrebuildManager } from "../prebuilds/prebuild-manager";
+import { Timestamp } from "@bufbuild/protobuf";
 
 function buildUpdateObject<T extends Record<string, any>>(obj: T): Partial<T> {
     const update: Partial<T> = {};
@@ -58,6 +62,8 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         private readonly userService: UserService,
         @inject(ContextService)
         private readonly contextService: ContextService,
+        @inject(PrebuildManager)
+        private readonly prebuildManager: PrebuildManager,
     ) {}
 
     async createConfiguration(
@@ -237,5 +243,28 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         await this.projectService.deleteProject(ctxUserId(), req.configurationId);
 
         return new DeleteConfigurationResponse();
+    }
+
+    async getConfigurationWebhookActivityStatus(req: GetConfigurationWebhookActivityStatusRequest, _: HandlerContext) {
+        if (!req.configurationId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configuration_id is required");
+        }
+
+        const configuration = await this.projectService.getProject(ctxUserId(), req.configurationId);
+        if (!configuration) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "configuration not found");
+        }
+        const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
+        const event = await this.prebuildManager.getRecentWebhookEvent({}, user, configuration);
+
+        const resp = new GetConfigurationWebhookActivityStatusResponse({
+            isWebhookActive: event !== undefined,
+            latestWebhookEvent: {
+                commit: event?.commit,
+                creationTime: event?.creationTime ? Timestamp.fromDate(new Date(event.creationTime)) : undefined,
+            },
+        });
+
+        return resp;
     }
 }
