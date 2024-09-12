@@ -69,6 +69,9 @@ service ConfigurationService {
 
   // Deletes a configuration.
   rpc DeleteConfiguration(DeleteConfigurationRequest) returns (DeleteConfigurationResponse) {}
+
+  // GetConfigurationWebhookActivityStatus returns the observed status of installed prebuild webhooks on the configuration
+  rpc GetConfigurationWebhookActivityStatus(GetConfigurationWebhookActivityStatusRequest) returns (GetConfigurationWebhookActivityStatusResponse) {}
 }
 
 message CreateConfigurationRequest {
@@ -147,3 +150,20 @@ message DeleteConfigurationRequest {
 }
 
 message DeleteConfigurationResponse {}
+
+message GetConfigurationWebhookActivityStatusRequest {
+  string configuration_id = 1;
+}
+
+message GetConfigurationWebhookActivityStatusResponse {
+  message WebhookEvent {
+    string commit = 1;
+    google.protobuf.Timestamp creation_time = 2;
+  }
+
+  // is_webhook_active determines whether the webhook is active or not for the configuration.
+  bool is_webhook_active = 1;
+
+  // latest_webhook_event is the latest event that was observed by the webhook. Only set if is_webhook_active is true.
+  WebhookEvent latest_webhook_event = 2;
+}
