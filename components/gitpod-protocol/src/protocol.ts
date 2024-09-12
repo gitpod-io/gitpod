@@ -1413,11 +1413,11 @@ export namespace AuthProviderEntry {
     export type NewEntry = Pick<AuthProviderEntry, "ownerId" | "host" | "type"> & {
         clientId?: string;
         clientSecret?: string;
-    } & CustomOAuth2Config;
+    } & OAuth2CustomConfig;
     export type UpdateEntry = Pick<AuthProviderEntry, "id" | "ownerId"> & {
         clientId?: string;
         clientSecret?: string;
-    } & CustomOAuth2Config;
+    } & OAuth2CustomConfig;
     export type NewOrgEntry = NewEntry & {
         organizationId: string;
     };
@@ -1425,8 +1425,8 @@ export namespace AuthProviderEntry {
         clientId?: string;
         clientSecret?: string;
         organizationId: string;
-    } & CustomOAuth2Config;
-    export type UpdateOAuth2Config = Pick<OAuth2Config, "clientId" | "clientSecret"> & CustomOAuth2Config;
+    } & OAuth2CustomConfig;
+    export type UpdateOAuth2Config = Pick<OAuth2Config, "clientId" | "clientSecret"> & OAuth2CustomConfig;
     export function redact(entry: AuthProviderEntry): AuthProviderEntry {
         return {
             ...entry,
