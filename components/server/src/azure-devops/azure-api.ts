@@ -31,7 +31,7 @@ export class AzureDevOpsApi {
             );
             bearerToken = azureToken.value;
         }
-        return new WebApi(this.config.host, getBearerHandler(bearerToken));
+        return new WebApi(serverUrl ?? this.config.host, getBearerHandler(bearerToken));
     }
 
     private async createGitApi(userOrToken: User | string) {
@@ -114,11 +114,17 @@ export class AzureDevOpsApi {
         }
     }
 
+    /**
+     * @see https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/list
+     */
     async getRepositories(userOrToken: User | string, azProject: string) {
         const gitApi = await this.createGitApi(userOrToken);
         return gitApi.getRepositories(azProject);
     }
 
+    /**
+     * @see https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/get-repository
+     */
     async getRepository(userOrToken: User | string, azProject: string, repository: string) {
         const gitApi = await this.createGitApi(userOrToken);
         return gitApi.getRepository(repository, azProject);
@@ -159,11 +165,17 @@ export class AzureDevOpsApi {
         return commits[0];
     }
 
+    /**
+     * @see https://learn.microsoft.com/en-us/rest/api/azure/devops/git/commits/get
+     */
     async getCommit(userOrToken: User | string, azProject: string, repository: string, commitId: string) {
         const gitApi = await this.createGitApi(userOrToken);
         return gitApi.getCommit(commitId, repository, azProject);
     }
 
+    /**
+     * @see https://learn.microsoft.com/en-us/rest/api/azure/devops/git/pull-requests/get-pull-request?view=azure-devops-rest-7.1
+     */
     async getPullRequest(userOrToken: User | string, azProject: string, repository: string, prId: number) {
         const gitApi = await this.createGitApi(userOrToken);
         return gitApi.getPullRequest(repository, prId, azProject);
