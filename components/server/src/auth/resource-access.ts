@@ -23,8 +23,8 @@ import { UnauthorizedError } from "../errors";
 import { RepoURL } from "../repohost";
 import { HostContextProvider } from "./host-context-provider";
 import { reportGuardAccessCheck } from "../prometheus-metrics";
-import { getRequiredScopes } from "./auth-provider-scopes";
 import { FunctionAccessGuard } from "./function-access";
+import { getRequiredScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 declare let resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
@@ -585,7 +585,7 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
                 const identity = User.getIdentity(this.user, authProvider.authProviderId);
                 if (!identity) {
                     const providerType = authProvider.info.authProviderType;
-                    const requiredScopes = getRequiredScopes({ type: providerType })?.default;
+                    const requiredScopes = getRequiredScopes(providerType)?.default;
                     throw UnauthorizedError.create({
                         host: repoUrl.host,
                         repoName: repoUrl.repo,

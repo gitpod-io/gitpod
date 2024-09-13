@@ -10,8 +10,8 @@ import express from "express";
 import { inject, injectable } from "inversify";
 import { AuthUserSetup } from "../auth/auth-provider";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
-import { BitbucketServerOAuthScopes } from "./bitbucket-server-oauth-scopes";
 import { BitbucketServerApi } from "./bitbucket-server-api";
+import { BitbucketServerOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class BitbucketServerAuthProvider extends GenericAuthProvider {

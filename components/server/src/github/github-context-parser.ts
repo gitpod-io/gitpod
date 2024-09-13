@@ -19,12 +19,12 @@ import { GitHubGraphQlEndpoint, QueryResult } from "./api";
 import { NotFoundError, UnauthorizedError } from "../errors";
 import { log, LogContext, LogPayload } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IContextParser, IssueContexts, AbstractContextParser } from "../workspace/context-parser";
-import { GitHubScope } from "./scopes";
 import { GitHubTokenHelper } from "./github-token-helper";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { RepoURL } from "../repohost";
 import { containsScopes } from "../prebuilds/token-scopes-inclusion";
 import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
+import { GitHubOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class GithubContextParser extends AbstractContextParser implements IContextParser {
@@ -95,10 +95,10 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 throw UnauthorizedError.create({
                     host: this.config.host,
                     providerType: "GitHub",
-                    requiredScopes: GitHubScope.Requirements.PUBLIC_REPO,
+                    requiredScopes: GitHubOAuthScopes.Requirements.PUBLIC_REPO,
                     repoName: RepoURL.parseRepoUrl(contextUrl)?.repo,
                     providerIsConnected: !!token,
-                    isMissingScopes: containsScopes(token?.scopes, GitHubScope.Requirements.PUBLIC_REPO),
+                    isMissingScopes: containsScopes(token?.scopes, GitHubOAuthScopes.Requirements.PUBLIC_REPO),
                 });
             }
             throw error;

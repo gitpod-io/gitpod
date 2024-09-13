@@ -5,8 +5,7 @@
  */
 
 import { IssueContext, User, PullRequestContext, Repository, Token } from "@gitpod/gitpod-protocol";
-import { GitHubScope } from "../github/scopes";
-import { GitLabScope } from "../gitlab/scopes";
+import { GitHubOAuthScopes, GitLabOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 export namespace DevData {
     export function createTestUser(): User {
@@ -41,7 +40,7 @@ export namespace DevData {
     export function createGitHubTestToken(): Token {
         return {
             ...getTokenFromEnv("GITPOD_TEST_TOKEN_GITHUB"),
-            scopes: [GitHubScope.EMAIL, GitHubScope.PUBLIC, GitHubScope.PRIVATE],
+            scopes: [GitHubOAuthScopes.EMAIL, GitHubOAuthScopes.PUBLIC, GitHubOAuthScopes.PRIVATE],
         };
     }
 
@@ -61,7 +60,7 @@ export namespace DevData {
     export function createGitlabTestToken(): Token {
         return {
             ...getTokenFromEnv("GITPOD_TEST_TOKEN_GITLAB"),
-            scopes: [GitLabScope.READ_USER, GitLabScope.API],
+            scopes: [GitLabOAuthScopes.READ_USER, GitLabOAuthScopes.API],
         };
     }
 

@@ -17,7 +17,7 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { GitLabApi, GitLab } from "./api";
 import { UnauthorizedError, NotFoundError } from "../errors";
-import { GitLabScope } from "./scopes";
+import { GitLabOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 import { IContextParser, IssueContexts, AbstractContextParser, URLParts } from "../workspace/context-parser";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitLabTokenHelper } from "./gitlab-token-helper";
@@ -74,10 +74,10 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                 throw UnauthorizedError.create({
                     host: this.config.host,
                     providerType: "Gitlab",
-                    requiredScopes: GitLabScope.Requirements.DEFAULT,
+                    requiredScopes: GitLabOAuthScopes.Requirements.DEFAULT,
                     repoName: RepoURL.parseRepoUrl(contextUrl)?.repo,
                     providerIsConnected: !!token,
-                    isMissingScopes: containsScopes(token?.scopes, GitLabScope.Requirements.DEFAULT),
+                    isMissingScopes: containsScopes(token?.scopes, GitLabOAuthScopes.Requirements.DEFAULT),
                 });
             }
             throw error;
