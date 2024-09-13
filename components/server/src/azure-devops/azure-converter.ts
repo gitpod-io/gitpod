@@ -25,6 +25,11 @@ export function normalizeBranchName(ref: string | undefined): string {
     return ref?.replace("refs/heads/", "") ?? "main";
 }
 
+export function getProjectAndRepoName(projectAndRepo: Repository["name"]) {
+    const [azProject, repoName] = projectAndRepo.split("/");
+    return [azProject, repoName] as const;
+}
+
 export function toBranch(d: GitBranchStats): Branch | undefined {
     if (!d.commit) {
         return;

@@ -13,7 +13,7 @@ import { NavigatorContext, PullRequestContext, User, WorkspaceContext } from "@g
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { NotFoundError, UnauthorizedError } from "../errors";
-import { normalizeBranchName, toBranch, toRepository } from "./azure-converter";
+import { getProjectAndRepoName, normalizeBranchName, toBranch, toRepository } from "./azure-converter";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { AuthProviderParams } from "../auth/auth-provider";
 
@@ -28,20 +28,35 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
         span.setTag("contextUrl", contextUrl);
 
         try {
-            const { host, owner, repoName, moreSegments, searchParams } = await this.parseURL(user, contextUrl);
+            const {
+                host,
+                owner: azOrganization,
+                repoName: projectAndRepo,
+                moreSegments,
+                searchParams,
+            } = await this.parseURL(user, contextUrl);
+            const [azProject, repoName] = getProjectAndRepoName(projectAndRepo);
             if (moreSegments.length > 0) {
                 switch (moreSegments[0]) {
                     case "pullrequest": {
                         return await this.handlePullRequestContext(
                             user,
                             host,
-                            owner,
+                            azOrganization,
+                            azProject,
                             repoName,
                             parseInt(moreSegments[1]),
                         );
                     }
                     case "commit": {
-                        return await this.handleCommitContext(user, host, owner, repoName, moreSegments[1]);
+                        return await this.handleCommitContext(
+                            user,
+                            host,
+                            azOrganization,
+                            azProject,
+                            repoName,
+                            moreSegments[1],
+                        );
                     }
                     default: {
                         const version = searchParams.get("version");
@@ -49,16 +64,30 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
                             break;
                         }
                         if (version.startsWith("GB")) {
-                            return await this.handleBranchContext(user, host, owner, repoName, version.slice(2));
+                            return await this.handleBranchContext(
+                                user,
+                                host,
+                                azOrganization,
+                                azProject,
+                                repoName,
+                                version.slice(2),
+                            );
                         }
                         if (version.startsWith("GT")) {
-                            return await this.handleTagContext(user, host, owner, repoName, version.slice(2));
+                            return await this.handleTagContext(
+                                user,
+                                host,
+                                azOrganization,
+                                azProject,
+                                repoName,
+                                version.slice(2),
+                            );
                         }
                     }
                 }
             }
 
-            return await this.handleDefaultContext(user, host, owner, repoName);
+            return await this.handleDefaultContext(user, host, azOrganization, azProject, repoName);
         } catch (error) {
             // TODO(hw): [AZ] proper handle errors
             // if (error && error.code === 401) {
@@ -86,12 +115,13 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
         // case when there is only one repository in the project
         // https://dev.azure.com/services-azure/_git/project2
         if (segments.length === 3 && segments[1] === "_git") {
+            const azOrganization = segments[0];
             const azProject = segments[2];
             const repo = azProject;
             return {
                 host,
-                owner: azProject,
-                repoName: repo,
+                owner: azOrganization,
+                repoName: `${azProject}/${repo}`,
                 moreSegments: segments.slice(3),
                 searchParams: url.searchParams,
             };
@@ -99,13 +129,13 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
         if (segments.length < 4 || segments[2] !== "_git") {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid Azure DevOps URL");
         }
-        // const azOrganization = segments[0];
+        const azOrganization = segments[0];
         const azProject = segments[1];
         const repo = segments[3];
         return {
             host,
-            owner: azProject,
-            repoName: repo,
+            owner: azOrganization,
+            repoName: `${azProject}/${repo}`,
             moreSegments: segments.slice(4),
             searchParams: url.searchParams,
         };
@@ -115,11 +145,12 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
     protected async handleDefaultContext(
         user: User,
         host: string,
+        azOrganization: string,
         azProject: string,
         repo: string,
     ): Promise<NavigatorContext> {
         try {
-            const repository = await this.azureDevOpsApi.getRepository(user, azProject, repo);
+            const repository = await this.azureDevOpsApi.getRepository(user, azOrganization, azProject, repo);
             const result: NavigatorContext = {
                 path: "",
                 isFile: false,
@@ -132,7 +163,9 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             }
             try {
                 const branchName = normalizeBranchName(repository.defaultBranch);
-                const branch = toBranch(await this.azureDevOpsApi.getBranch(user, azProject, repo, branchName));
+                const branch = toBranch(
+                    await this.azureDevOpsApi.getBranch(user, azOrganization, azProject, repo, branchName),
+                );
                 if (!branch) {
                     return result;
                 }
@@ -166,11 +199,12 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
     protected async handlePullRequestContext(
         user: User,
         host: string,
+        azOrganization: string,
         azProject: string,
         repo: string,
         pr: number,
     ): Promise<PullRequestContext> {
-        const pullRequest = await this.azureDevOpsApi.getPullRequest(user, azProject, repo, pr);
+        const pullRequest = await this.azureDevOpsApi.getPullRequest(user, azOrganization, azProject, repo, pr);
         const sourceRepo = toRepository(
             this.config.host,
             pullRequest.forkSource?.repository ?? pullRequest.repository!,
@@ -199,13 +233,14 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
     protected async handleBranchContext(
         user: User,
         host: string,
+        azOrganization: string,
         azProject: string,
         repo: string,
         branch: string,
     ): Promise<NavigatorContext> {
         const [repository, branchInfo] = await Promise.all([
-            this.azureDevOpsApi.getRepository(user, azProject, repo),
-            this.azureDevOpsApi.getBranch(user, azProject, repo, branch),
+            this.azureDevOpsApi.getRepository(user, azOrganization, azProject, repo),
+            this.azureDevOpsApi.getBranch(user, azOrganization, azProject, repo, branch),
         ]);
         const result: NavigatorContext = {
             path: "",
@@ -226,13 +261,14 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
     protected async handleTagContext(
         user: User,
         host: string,
+        azOrganization: string,
         azProject: string,
         repo: string,
         tag: string,
     ): Promise<NavigatorContext> {
         const [repository, tagCommit] = await Promise.all([
-            this.azureDevOpsApi.getRepository(user, azProject, repo),
-            this.azureDevOpsApi.getTagCommit(user, azProject, repo, tag),
+            this.azureDevOpsApi.getRepository(user, azOrganization, azProject, repo),
+            this.azureDevOpsApi.getTagCommit(user, azOrganization, azProject, repo, tag),
         ]);
         const result: NavigatorContext = {
             path: "",
@@ -253,13 +289,14 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
     protected async handleCommitContext(
         user: User,
         host: string,
+        azOrganization: string,
         azProject: string,
         repo: string,
         commit: string,
     ): Promise<NavigatorContext> {
         const [repoInfo, commitInfo] = await Promise.all([
-            this.azureDevOpsApi.getRepository(user, azProject, repo),
-            this.azureDevOpsApi.getCommit(user, azProject, repo, commit),
+            this.azureDevOpsApi.getRepository(user, azOrganization, azProject, repo),
+            this.azureDevOpsApi.getCommit(user, azOrganization, azProject, repo, commit),
         ]);
         const result: NavigatorContext = {
             path: "",

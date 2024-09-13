@@ -10,15 +10,17 @@ import { FileProvider, MaybeContent } from "../repohost/file-provider";
 import { Commit, User, Repository } from "@gitpod/gitpod-protocol";
 import { AzureDevOpsApi } from "./azure-api";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { getProjectAndRepoName } from "./azure-converter";
 
 @injectable()
 export class AzureDevOpsFileProvider implements FileProvider {
-    @inject(AzureDevOpsApi) protected readonly api: AzureDevOpsApi;
+    @inject(AzureDevOpsApi) protected readonly azureDevOpsApi: AzureDevOpsApi;
 
     public async getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent> {
+        const azOrgId = commit.repository.owner;
         const yamlVersion1 = await Promise.all([
-            this.api.getFileContent(user, commit, ".gitpod.yml"),
-            this.api.getFileContent(user, commit, ".gitpod"),
+            this.azureDevOpsApi.getFileContent(user, azOrgId, commit, ".gitpod.yml"),
+            this.azureDevOpsApi.getFileContent(user, azOrgId, commit, ".gitpod"),
         ]);
         return yamlVersion1.filter((f) => !!f)[0];
     }
@@ -29,8 +31,10 @@ export class AzureDevOpsFileProvider implements FileProvider {
         user: User,
         path: string,
     ): Promise<string> {
+        const azOrgId = repository.owner;
+        const [azProject, repoName] = getProjectAndRepoName(repository.name);
         const results = await Promise.allSettled([
-            this.api.getCommits(user, repository.name, "test-project", {
+            this.azureDevOpsApi.getCommits(user, azOrgId, azProject, repoName, {
                 filterCommit: {
                     revision: revisionOrBranch,
                     refType: "revision",
@@ -38,7 +42,7 @@ export class AzureDevOpsFileProvider implements FileProvider {
                 $top: 1,
                 itemPath: path,
             }),
-            this.api.getCommits(user, repository.name, "test-project", {
+            this.azureDevOpsApi.getCommits(user, azOrgId, azProject, repoName, {
                 filterCommit: {
                     revision: "",
                     ref: revisionOrBranch,
@@ -47,7 +51,7 @@ export class AzureDevOpsFileProvider implements FileProvider {
                 $top: 1,
                 itemPath: path,
             }),
-            this.api.getCommits(user, repository.name, "test-project", {
+            this.azureDevOpsApi.getCommits(user, azOrgId, azProject, repoName, {
                 filterCommit: {
                     revision: "",
                     ref: revisionOrBranch,
@@ -71,7 +75,8 @@ export class AzureDevOpsFileProvider implements FileProvider {
 
     public async getFileContent(commit: Commit, user: User, path: string): Promise<MaybeContent> {
         try {
-            const result = await this.api.getFileContent(user, commit, path);
+            const azOrgId = commit.repository.owner;
+            const result = await this.azureDevOpsApi.getFileContent(user, azOrgId, commit, path);
             return result;
         } catch (error) {
             log.debug(error);

@@ -20,7 +20,10 @@ export class AzureDevOpsApi {
     @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(AzureDevOpsTokenHelper) protected readonly tokenHelper: AzureDevOpsTokenHelper;
 
-    private async create(userOrToken: User | string, serverUrl?: string) {
+    private async create(userOrToken: User | string, opts: { serverUrl?: string; orgId?: string } = {}) {
+        if (!opts.serverUrl && !opts.orgId) {
+            throw new Error("Either serverUrl or orgId must be provided");
+        }
         let bearerToken: string | undefined;
         if (typeof userOrToken === "string") {
             bearerToken = userOrToken;
@@ -31,11 +34,11 @@ export class AzureDevOpsApi {
             );
             bearerToken = azureToken.value;
         }
-        return new WebApi(serverUrl ?? `https://${this.config.host}`, getBearerHandler(bearerToken));
+        return new WebApi(opts.serverUrl ?? `https://${this.config.host}/${opts.orgId}`, getBearerHandler(bearerToken));
     }
 
-    private async createGitApi(userOrToken: User | string) {
-        const api = await this.create(userOrToken);
+    private async createGitApi(userOrToken: User | string, orgId: string) {
+        const api = await this.create(userOrToken, { orgId });
         return api.getGitApi();
     }
 
@@ -62,15 +65,16 @@ export class AzureDevOpsApi {
      */
     async getCommits(
         userOrToken: User | string,
-        repository: string,
+        azOrgId: string,
         azProject: string,
+        repository: string,
         opts?: Partial<{
             filterCommit: Pick<Commit, "ref" | "refType" | "revision">;
             $top: number;
             itemPath: string;
         }>,
     ) {
-        const gitApi = await this.createGitApi(userOrToken);
+        const gitApi = await this.createGitApi(userOrToken, azOrgId);
         return gitApi.getCommits(
             repository,
             {
@@ -87,10 +91,11 @@ export class AzureDevOpsApi {
      */
     async getFileContent(
         userOrToken: User | string,
+        azOrgId: string,
         commit: Pick<Commit, "repository" | "ref" | "refType" | "revision">,
         path: string,
     ): Promise<MaybeContent> {
-        const gitApi = await this.createGitApi(userOrToken);
+        const gitApi = await this.createGitApi(userOrToken, azOrgId);
         try {
             const readableStream = await gitApi.getItemContent(
                 commit.repository.name,
@@ -117,26 +122,27 @@ export class AzureDevOpsApi {
     /**
      * @see https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/list
      */
-    async getRepositories(userOrToken: User | string, azProject: string) {
-        const gitApi = await this.createGitApi(userOrToken);
+    async getRepositories(userOrToken: User | string, azOrgId: string, azProject: string) {
+        const gitApi = await this.createGitApi(userOrToken, azOrgId);
         return gitApi.getRepositories(azProject);
     }
 
     /**
      * @see https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/get-repository
      */
-    async getRepository(userOrToken: User | string, azProject: string, repository: string) {
-        const gitApi = await this.createGitApi(userOrToken);
+    async getRepository(userOrToken: User | string, azOrgId: string, azProject: string, repository: string) {
+        const gitApi = await this.createGitApi(userOrToken, azOrgId);
         return gitApi.getRepository(repository, azProject);
     }
 
     async getBranches(
         userOrToken: User | string,
+        azOrgId: string,
         azProject: string,
         repository: string,
         opts?: { filterBranch?: string },
     ) {
-        const gitApi = await this.createGitApi(userOrToken);
+        const gitApi = await this.createGitApi(userOrToken, azOrgId);
         // If not found, sdk will return null
         return (
             (await gitApi.getBranches(
@@ -149,13 +155,25 @@ export class AzureDevOpsApi {
         );
     }
 
-    async getBranch(userOrToken: User | string, azProject: string, repository: string, branch: string) {
-        const gitApi = await this.createGitApi(userOrToken);
+    async getBranch(
+        userOrToken: User | string,
+        azOrgId: string,
+        azProject: string,
+        repository: string,
+        branch: string,
+    ) {
+        const gitApi = await this.createGitApi(userOrToken, azOrgId);
         return gitApi.getBranch(repository, branch, azProject);
     }
 
-    async getTagCommit(userOrToken: User | string, azProject: string, repository: string, tag: string) {
-        const commits = await this.getCommits(userOrToken, repository, azProject, {
+    async getTagCommit(
+        userOrToken: User | string,
+        azOrgId: string,
+        azProject: string,
+        repository: string,
+        tag: string,
+    ) {
+        const commits = await this.getCommits(userOrToken, azOrgId, azProject, repository, {
             filterCommit: { ref: tag, refType: "tag", revision: "" },
             $top: 1,
         });
@@ -168,16 +186,28 @@ export class AzureDevOpsApi {
     /**
      * @see https://learn.microsoft.com/en-us/rest/api/azure/devops/git/commits/get
      */
-    async getCommit(userOrToken: User | string, azProject: string, repository: string, commitId: string) {
-        const gitApi = await this.createGitApi(userOrToken);
+    async getCommit(
+        userOrToken: User | string,
+        azOrgId: string,
+        azProject: string,
+        repository: string,
+        commitId: string,
+    ) {
+        const gitApi = await this.createGitApi(userOrToken, azOrgId);
         return gitApi.getCommit(commitId, repository, azProject);
     }
 
     /**
      * @see https://learn.microsoft.com/en-us/rest/api/azure/devops/git/pull-requests/get-pull-request?view=azure-devops-rest-7.1
      */
-    async getPullRequest(userOrToken: User | string, azProject: string, repository: string, prId: number) {
-        const gitApi = await this.createGitApi(userOrToken);
+    async getPullRequest(
+        userOrToken: User | string,
+        azOrgId: string,
+        azProject: string,
+        repository: string,
+        prId: number,
+    ) {
+        const gitApi = await this.createGitApi(userOrToken, azOrgId);
         return gitApi.getPullRequest(repository, prId, azProject);
     }
 
@@ -185,7 +215,7 @@ export class AzureDevOpsApi {
      * @see https://learn.microsoft.com/en-us/rest/api/azure/devops/profile/profiles/get
      */
     async getAuthenticatedUser(userOrToken: User | string) {
-        const api = await this.create(userOrToken, "https://app.vssps.visualstudio.com");
+        const api = await this.create(userOrToken, { serverUrl: "https://app.vssps.visualstudio.com" });
         const profileApi = await api.getProfileApi();
         // official <Profile> interface has no `displayName` field although it's exists in the response
         const profile = await profileApi.getProfile("me", true);

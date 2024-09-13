@@ -8,6 +8,7 @@ import { injectable, inject } from "inversify";
 import { CheckWriteAccessResult, IGitTokenValidator, IGitTokenValidatorParams } from "../workspace/git-token-validator";
 import { AzureDevOpsApi } from "./azure-api";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { getProjectAndRepoName } from "./azure-converter";
 
 @injectable()
 export class AzureDevOpsTokenValidator implements IGitTokenValidator {
@@ -18,7 +19,8 @@ export class AzureDevOpsTokenValidator implements IGitTokenValidator {
         let isPrivateRepo: boolean | undefined;
         let writeAccessToRepo: boolean | undefined = false;
         try {
-            await this.azureDevOpsApi.getRepository(params.token, params.owner, params.repo);
+            const [azProject, repoName] = getProjectAndRepoName(params.repo);
+            await this.azureDevOpsApi.getRepository(params.token, params.owner, azProject, repoName);
             found = true;
             isPrivateRepo = true;
             writeAccessToRepo = true;

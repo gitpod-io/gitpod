@@ -16,7 +16,7 @@ import { oauthUrls } from "./azure-urls";
 
 @injectable()
 export class AzureDevOpsAuthProvider extends GenericAuthProvider {
-    @inject(AzureDevOpsApi) protected readonly api: AzureDevOpsApi;
+    @inject(AzureDevOpsApi) protected readonly azureDevOpsApi: AzureDevOpsApi;
 
     get info(): AuthProviderInfo {
         return {
@@ -66,7 +66,7 @@ export class AzureDevOpsAuthProvider extends GenericAuthProvider {
 
     protected async readAuthUserSetup(accessToken: string, tokenResponse: object) {
         try {
-            const profile = await this.api.getAuthenticatedUser(accessToken);
+            const profile = await this.azureDevOpsApi.getAuthenticatedUser(accessToken);
             return <AuthUserSetup>{
                 authUser: {
                     authId: profile.id,

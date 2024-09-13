@@ -11,7 +11,7 @@ import { AzureDevOpsApi } from "./azure-api";
 import { RepositoryProvider } from "../repohost/repository-provider";
 
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { toBranch, toCommit, toRepository } from "./azure-converter";
+import { getProjectAndRepoName, toBranch, toCommit, toRepository } from "./azure-converter";
 import { AuthProviderParams } from "../auth/auth-provider";
 
 @injectable()
@@ -20,12 +20,14 @@ export class AzureDevOpsRepositoryProvider implements RepositoryProvider {
     @inject(AzureDevOpsApi) protected readonly azureDevOpsApi: AzureDevOpsApi;
 
     async getRepo(user: User, owner: string, name: string): Promise<Repository> {
-        const resp = await this.azureDevOpsApi.getRepository(user, owner, name);
+        const [azProject, repoName] = getProjectAndRepoName(name);
+        const resp = await this.azureDevOpsApi.getRepository(user, owner, azProject, repoName);
         return toRepository(this.config.host, resp);
     }
 
     async getBranch(user: User, owner: string, repo: string, branch: string): Promise<Branch> {
-        const response = await this.azureDevOpsApi.getBranch(user, owner, repo, branch);
+        const [azProject, repoName] = getProjectAndRepoName(repo);
+        const response = await this.azureDevOpsApi.getBranch(user, owner, azProject, repoName, branch);
         const item = toBranch(response);
         if (!item) {
             // TODO(hw): [AZ]
@@ -36,7 +38,8 @@ export class AzureDevOpsRepositoryProvider implements RepositoryProvider {
 
     async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
         const branches: Branch[] = [];
-        const response = await this.azureDevOpsApi.getBranches(user, owner, repo);
+        const [azProject, repoName] = getProjectAndRepoName(repo);
+        const response = await this.azureDevOpsApi.getBranches(user, owner, azProject, repoName);
         for (const b of response) {
             const item = toBranch(b);
             if (!item) {
@@ -48,7 +51,8 @@ export class AzureDevOpsRepositoryProvider implements RepositoryProvider {
     }
 
     async getCommitInfo(user: User, owner: string, repo: string, ref: string): Promise<CommitInfo | undefined> {
-        const response = await this.azureDevOpsApi.getCommit(user, owner, repo, ref);
+        const [azProject, repoName] = getProjectAndRepoName(repo);
+        const response = await this.azureDevOpsApi.getCommit(user, owner, azProject, repoName, ref);
         return toCommit(response);
     }
 
@@ -59,7 +63,8 @@ export class AzureDevOpsRepositoryProvider implements RepositoryProvider {
 
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
         try {
-            const response = await this.azureDevOpsApi.getRepository(user, owner, repo);
+            const [azProject, repoName] = getProjectAndRepoName(repo);
+            const response = await this.azureDevOpsApi.getRepository(user, owner, azProject, repoName);
             return !!response.id;
         } catch (err) {
             log.warn({ userId: user.id }, "hasReadAccess error", err, { owner, repo });
@@ -74,7 +79,8 @@ export class AzureDevOpsRepositoryProvider implements RepositoryProvider {
         revision: string,
         maxDepth: number = 100,
     ): Promise<string[]> {
-        const result = await this.azureDevOpsApi.getCommits(user, repo, owner, {
+        const [azProject, repoName] = getProjectAndRepoName(repo);
+        const result = await this.azureDevOpsApi.getCommits(user, owner, azProject, repoName, {
             filterCommit: revision ? { revision, refType: "revision" } : undefined,
             $top: maxDepth,
         });
