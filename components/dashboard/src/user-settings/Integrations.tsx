@@ -777,7 +777,7 @@ export function GitIntegrationModal(
             case AuthProviderType.BITBUCKET_SERVER:
                 return "bitbucket.example.com";
             case AuthProviderType.AZURE_DEVOPS:
-                return "dev.azure.com/your-organization";
+                return "dev.azure.com";
             default:
                 return "";
         }
