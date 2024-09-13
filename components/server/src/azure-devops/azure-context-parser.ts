@@ -126,6 +126,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
                 searchParams: url.searchParams,
             };
         }
+        console.log(segments);
         if (segments.length < 4 || segments[2] !== "_git") {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid Azure DevOps URL");
         }
