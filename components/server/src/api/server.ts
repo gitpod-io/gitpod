@@ -284,7 +284,7 @@ export class API {
                             await rateLimit(subjectId.toString());
                             await self.ensureFgaMigration(subjectId);
                         }
-                        // TODO(at) if unauthenticated, we still need to apply enforece a rate limit
+                        // TODO(at) if unauthenticated, we still need to apply enforce a rate limit
 
                         return subjectId;
                     };
@@ -293,6 +293,11 @@ export class API {
                         return Reflect.apply(target[prop as any], target, args);
                     };
                     if (grpc_type === "unary" || grpc_type === "client_stream") {
+                        const isCellDisabled = true; // todo(ft): add checking from cell spec. Please don't merge :P
+                        if (isCellDisabled) {
+                            throw new ApplicationError(ErrorCodes.CELL_EXPIRED, "Cell is disabled");
+                        }
+
                         return withRequestContext(async () => {
                             let subjectId: SubjectId | undefined = undefined;
                             try {

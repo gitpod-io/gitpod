@@ -81,6 +81,10 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
         return <Login onLoggedIn={resetErrorBoundary} />;
     }
 
+    if (caughtError.code === ErrorCodes.CELL_EXPIRED) {
+        return "hahaaa loser your cell is a goner";
+    }
+
     // Otherwise throw the error for default error boundary to catch and handle
     throw error;
 };

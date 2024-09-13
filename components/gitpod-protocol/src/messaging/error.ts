@@ -128,6 +128,9 @@ export const ErrorCodes = {
     // 555 EE License Required
     EE_LICENSE_REQUIRED: 555 as const,
 
+    // 556 Cell Expired
+    CELL_EXPIRED: 556 as const,
+
     // 601 SaaS Feature
     SAAS_FEATURE: 601 as const,
 
