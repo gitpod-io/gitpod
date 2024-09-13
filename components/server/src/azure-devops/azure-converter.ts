@@ -8,16 +8,21 @@ import { Branch, CommitInfo, Repository } from "@gitpod/gitpod-protocol";
 import { GitBranchStats, GitCommitRef } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { GitRepository } from "azure-devops-node-api/interfaces/TfvcInterfaces";
 
-export function toRepository(d: GitRepository): Repository {
+export function toRepository(host: string, d: GitRepository): Repository {
+    const branchName = normalizeBranchName(d.defaultBranch);
     return {
-        host: d.remoteUrl!,
+        host,
         owner: d.project?.name ?? "unknown",
         name: d.name ?? "unknown",
         cloneUrl: d.remoteUrl!,
-        description: d.defaultBranch,
+        description: branchName,
         webUrl: d.webUrl,
-        defaultBranch: d.defaultBranch,
+        defaultBranch: branchName,
     };
+}
+
+export function normalizeBranchName(ref: string | undefined): string {
+    return ref?.replace("refs/heads/", "") ?? "main";
 }
 
 export function toBranch(d: GitBranchStats): Branch | undefined {

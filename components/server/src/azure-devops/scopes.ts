@@ -15,7 +15,10 @@ export namespace AzureDevOpsScopes {
 
     export const All = [READ_USER, READ_REPO];
     export const Requirements = {
-        DEFAULT: [READ_USER, OFFLINE_ACCESS],
+        DEFAULT: [READ_USER],
+
+        // offline_access is required but will not respond as scopes
+        APPEND_WHEN_FETCHING: [OFFLINE_ACCESS],
 
         REPO: [READ_REPO],
     };

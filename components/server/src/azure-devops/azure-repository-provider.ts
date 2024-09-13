@@ -12,14 +12,16 @@ import { RepositoryProvider } from "../repohost/repository-provider";
 
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { toBranch, toCommit, toRepository } from "./azure-converter";
+import { AuthProviderParams } from "../auth/auth-provider";
 
 @injectable()
 export class AzureDevOpsRepositoryProvider implements RepositoryProvider {
+    @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(AzureDevOpsApi) protected readonly azureDevOpsApi: AzureDevOpsApi;
 
     async getRepo(user: User, owner: string, name: string): Promise<Repository> {
         const resp = await this.azureDevOpsApi.getRepository(user, owner, name);
-        return toRepository(resp);
+        return toRepository(this.config.host, resp);
     }
 
     async getBranch(user: User, owner: string, repo: string, branch: string): Promise<Branch> {

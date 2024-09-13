@@ -31,7 +31,7 @@ export class AzureDevOpsApi {
             );
             bearerToken = azureToken.value;
         }
-        return new WebApi(serverUrl ?? this.config.host, getBearerHandler(bearerToken));
+        return new WebApi(serverUrl ?? `https://${this.config.host}`, getBearerHandler(bearerToken));
     }
 
     private async createGitApi(userOrToken: User | string) {

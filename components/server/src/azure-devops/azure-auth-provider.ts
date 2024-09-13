@@ -42,7 +42,10 @@ export class AzureDevOpsAuthProvider extends GenericAuthProvider {
             authorizationUrl: oauth.authorizationUrl || defaultUrls.authorizationUrl,
             tokenUrl: oauth.tokenUrl || defaultUrls.tokenUrl,
             settingsUrl: oauth.settingsUrl || defaultUrls.settingsUrl,
-            scope: AzureDevOpsScopes.All.join(scopeSeparator),
+            // offline_access is required but will not respond as scopes
+            scope: [...AzureDevOpsScopes.All, ...AzureDevOpsScopes.Requirements.APPEND_WHEN_FETCHING].join(
+                scopeSeparator,
+            ),
             scopeSeparator,
         };
     }

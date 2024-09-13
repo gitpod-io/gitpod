@@ -13,13 +13,15 @@ import { NavigatorContext, PullRequestContext, User, WorkspaceContext } from "@g
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { NotFoundError, UnauthorizedError } from "../errors";
-import { toBranch, toRepository } from "./azure-converter";
+import { normalizeBranchName, toBranch, toRepository } from "./azure-converter";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { AuthProviderParams } from "../auth/auth-provider";
 
 @injectable()
 export class AzureDevOpsContextParser extends AbstractContextParser implements IContextParser {
     @inject(AzureDevOpsApi) protected readonly azureDevOpsApi: AzureDevOpsApi;
     @inject(AzureDevOpsTokenHelper) protected readonly tokenHelper: AzureDevOpsTokenHelper;
+    @inject(AuthProviderParams) readonly config: AuthProviderParams;
 
     public async handle(ctx: TraceContext, user: User, contextUrl: string): Promise<WorkspaceContext> {
         const span = TraceContext.startSpan("AzureDevOpsContextParser", ctx);
@@ -81,6 +83,19 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
         const pathname = url.pathname.replace(/^\//, "").replace(/\/$/, "");
         const segments = pathname.split("/").filter((e) => e !== "");
         const host = this.host;
+        // case when there is only one repository in the project
+        // https://dev.azure.com/services-azure/_git/project2
+        if (segments.length === 3 && segments[1] === "_git") {
+            const azProject = segments[2];
+            const repo = azProject;
+            return {
+                host,
+                owner: azProject,
+                repoName: repo,
+                moreSegments: segments.slice(3),
+                searchParams: url.searchParams,
+            };
+        }
         if (segments.length < 4 || segments[2] !== "_git") {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid Azure DevOps URL");
         }
@@ -109,24 +124,22 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
                 path: "",
                 isFile: false,
                 title: `${azProject}/${repo}`,
-                repository: toRepository(repository),
+                repository: toRepository(this.config.host, repository),
                 revision: "",
             };
             if (!repository.defaultBranch) {
                 return result;
             }
             try {
-                const branch = toBranch(
-                    await this.azureDevOpsApi.getBranch(user, azProject, repo, repository.defaultBranch),
-                );
+                const branchName = normalizeBranchName(repository.defaultBranch);
+                const branch = toBranch(await this.azureDevOpsApi.getBranch(user, azProject, repo, branchName));
                 if (!branch) {
                     return result;
                 }
                 result.revision = branch.commit.sha;
-                result.title = `${result.title} - ${branch.name}`;
-                result.ref = branch.name;
-                // TODO(hw): [AZ] support other refType
-                result.refType = "revision";
+                result.title = `${result.title} - ${branchName}`;
+                result.ref = branchName;
+                result.refType = "branch";
                 return result;
             } catch (error) {
                 // TODO(hw): [AZ] specific error handling
@@ -158,18 +171,21 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
         pr: number,
     ): Promise<PullRequestContext> {
         const pullRequest = await this.azureDevOpsApi.getPullRequest(user, azProject, repo, pr);
-        const sourceRepo = toRepository(pullRequest.forkSource?.repository ?? pullRequest.repository!);
-        const targetRepo = toRepository(pullRequest.repository!);
+        const sourceRepo = toRepository(
+            this.config.host,
+            pullRequest.forkSource?.repository ?? pullRequest.repository!,
+        );
+        const targetRepo = toRepository(this.config.host, pullRequest.repository!);
         const result: PullRequestContext = {
             nr: pr,
             base: {
                 repository: targetRepo,
-                ref: pullRequest.targetRefName!.replace("refs/headers/", ""),
+                ref: normalizeBranchName(pullRequest.targetRefName!),
                 refType: "branch",
             } as any as PullRequestContext["base"],
             title: "",
             repository: sourceRepo,
-            ref: pullRequest.sourceRefName!.replace("refs/headers/", ""),
+            ref: normalizeBranchName(pullRequest.sourceRefName!),
             refType: "branch",
             revision: pullRequest.lastMergeSourceCommit!.commitId!,
         };
@@ -199,7 +215,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             revision: branchInfo.commit?.commitId ?? "",
             isFile: false,
             title: `${azProject}/${repo} - ${branch}`,
-            repository: toRepository(repository),
+            repository: toRepository(this.config.host, repository),
         };
         return result;
     }
@@ -225,7 +241,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             revision: tagCommit.commitId!,
             isFile: false,
             title: `${azProject}/${repo} - ${tag}`,
-            repository: toRepository(repository),
+            repository: toRepository(this.config.host, repository),
         };
         return result;
     }
@@ -254,7 +270,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             title: `${azProject}/${repo} - ${commitInfo.comment}`,
             // @ts-ignore
             owner: azProject,
-            repository: toRepository(repoInfo),
+            repository: toRepository(this.config.host, repoInfo),
         };
         return result;
     }
