@@ -58,32 +58,30 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
                             moreSegments[1],
                         );
                     }
-                    default: {
-                        const version = searchParams.get("version");
-                        if (!version) {
-                            break;
-                        }
-                        if (version.startsWith("GB")) {
-                            return await this.handleBranchContext(
-                                user,
-                                host,
-                                azOrganization,
-                                azProject,
-                                repoName,
-                                version.slice(2),
-                            );
-                        }
-                        if (version.startsWith("GT")) {
-                            return await this.handleTagContext(
-                                user,
-                                host,
-                                azOrganization,
-                                azProject,
-                                repoName,
-                                version.slice(2),
-                            );
-                        }
-                    }
+                }
+            }
+
+            const version = searchParams.get("version");
+            if (version) {
+                if (version.startsWith("GB")) {
+                    return await this.handleBranchContext(
+                        user,
+                        host,
+                        azOrganization,
+                        azProject,
+                        repoName,
+                        version.slice(2),
+                    );
+                }
+                if (version.startsWith("GT")) {
+                    return await this.handleTagContext(
+                        user,
+                        host,
+                        azOrganization,
+                        azProject,
+                        repoName,
+                        version.slice(2),
+                    );
                 }
             }
 

@@ -120,7 +120,7 @@ class TestAzureDevOpsContextParser {
         expect(result1).to.deep.include({
             path: "",
             isFile: false,
-            title: "test-project/repo2 - main",
+            title: "test-project/repo2 - develop-2",
             repository: {
                 host: "dev.azure.com",
                 owner: "services-azure",
@@ -130,8 +130,8 @@ class TestAzureDevOpsContextParser {
                 webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2",
                 defaultBranch: "main",
             },
-            revision: "288dba56ce090ada9ee9338d016eb09a853fb49c",
-            ref: "main",
+            revision: "5e6eb73e1f15e40b1d5fce35a16c1f4dee27b56a",
+            ref: "develop-2",
             refType: "branch",
         });
 
@@ -143,7 +143,7 @@ class TestAzureDevOpsContextParser {
         expect(result2).to.deep.include({
             path: "",
             isFile: false,
-            title: "test-project/repo2 - main",
+            title: "test-project/repo2 - develop-2",
             repository: {
                 host: "dev.azure.com",
                 owner: "services-azure",
@@ -153,8 +153,8 @@ class TestAzureDevOpsContextParser {
                 webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2",
                 defaultBranch: "main",
             },
-            revision: "288dba56ce090ada9ee9338d016eb09a853fb49c",
-            ref: "main",
+            revision: "5e6eb73e1f15e40b1d5fce35a16c1f4dee27b56a",
+            ref: "develop-2",
             refType: "branch",
         });
 
@@ -166,7 +166,7 @@ class TestAzureDevOpsContextParser {
         expect(result3).to.deep.include({
             path: "",
             isFile: false,
-            title: "test-project/repo2-fork - main",
+            title: "test-project/repo2-fork - develop-2",
             repository: {
                 host: "dev.azure.com",
                 owner: "services-azure",
@@ -176,8 +176,8 @@ class TestAzureDevOpsContextParser {
                 webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2-fork",
                 defaultBranch: "main",
             },
-            revision: "dafbf184f68e7ee4dc6d1174d962cab84b605eb2",
-            ref: "main",
+            revision: "5e6eb73e1f15e40b1d5fce35a16c1f4dee27b56a",
+            ref: "develop-2",
             refType: "branch",
         });
     }
@@ -191,7 +191,7 @@ class TestAzureDevOpsContextParser {
         expect(result).to.deep.include({
             path: "",
             isFile: false,
-            title: "test-project/repo2-fork - main",
+            title: "test-project/repo2-fork - v0.0.1",
             repository: {
                 host: "dev.azure.com",
                 owner: "services-azure",
@@ -201,9 +201,9 @@ class TestAzureDevOpsContextParser {
                 webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2-fork",
                 defaultBranch: "main",
             },
-            revision: "dafbf184f68e7ee4dc6d1174d962cab84b605eb2",
-            ref: "main",
-            refType: "branch",
+            revision: "a4b191cb2e90201b65acc13e3cbb841ce1c1b5ef",
+            ref: "v0.0.1",
+            refType: "tag",
         });
 
         const result2 = await this.parser.handle(
@@ -214,7 +214,7 @@ class TestAzureDevOpsContextParser {
         expect(result2).to.deep.include({
             path: "",
             isFile: false,
-            title: "test-project/repo2-fork - main",
+            title: "test-project/repo2-fork - v0.0.1",
             repository: {
                 host: "dev.azure.com",
                 owner: "services-azure",
@@ -224,9 +224,9 @@ class TestAzureDevOpsContextParser {
                 webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2-fork",
                 defaultBranch: "main",
             },
-            revision: "dafbf184f68e7ee4dc6d1174d962cab84b605eb2",
-            ref: "main",
-            refType: "branch",
+            revision: "a4b191cb2e90201b65acc13e3cbb841ce1c1b5ef",
+            ref: "v0.0.1",
+            refType: "tag",
         });
     }
 
