@@ -19,7 +19,7 @@
     "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
     "test:leeway": "yarn build && yarn test",
     "test": "yarn test:unit && yarn test:db",
-    "test:unit": "mocha './**/*/azure-context-parser.spec.js' --exclude './node_modules/**' --exit",
+    "test:unit": "mocha './**/*.js' --exclude './node_modules/**' --exit",
     "test:db": "cleanup() { echo 'Cleanup started'; yarn stop-services; }; trap cleanup EXIT; . $(leeway run components/gitpod-db:db-test-env) && yarn start-services && mocha './**/*.spec.db.js'  --exclude './node_modules/**' --exit",
     "start-services": "yarn start-testdb && yarn start-redis && yarn start-spicedb",
     "stop-services": "yarn stop-redis && yarn stop-spicedb",

@@ -22,7 +22,7 @@ export class AzureDevOpsRepositoryProvider implements RepositoryProvider {
     async getRepo(user: User, owner: string, name: string): Promise<Repository> {
         const [azProject, repoName] = getProjectAndRepoName(name);
         const resp = await this.azureDevOpsApi.getRepository(user, owner, azProject, repoName);
-        return toRepository(this.config.host, resp);
+        return toRepository(this.config.host, resp, owner);
     }
 
     async getBranch(user: User, owner: string, repo: string, branch: string): Promise<Branch> {

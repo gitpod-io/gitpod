@@ -1,69 +1,44 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
 
-// import { User } from "@gitpod/gitpod-protocol";
-// import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
-// import { expect } from "chai";
-// import { Container, ContainerModule } from "inversify";
-// import { suite, retries, test, timeout, skip } from "@testdeck/mocha";
-// import { AuthProviderParams } from "../auth/auth-provider";
-// import { HostContextProvider } from "../auth/host-context-provider";
-// import { DevData } from "../dev/dev-data";
-// import { TokenProvider } from "../user/token-provider";
-// import { GitLabApi } from "./azure-api";
-// import { GitlabContextParser } from "./azure-context-parser";
-// import { GitlabRepositoryProvider } from "./azure-repository-provider";
-// import { GitLabTokenHelper } from "./azure-token-helper";
+import { User } from "@gitpod/gitpod-protocol";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { expect } from "chai";
+import { suite, test, timeout, skip } from "@testdeck/mocha";
+import { DevData, DevTestHelper } from "../dev/dev-data";
+import { AzureDevOpsRepositoryProvider } from "./azure-repository-provider";
 
-// @suite(timeout(10000), retries(2), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_GITLAB")))
-// class TestGitlabRepositoryProvider {
-//     static readonly AUTH_HOST_CONFIG: Partial<AuthProviderParams> = {
-//         id: "Public-GitLab",
-//         type: "GitLab",
-//         verified: true,
-//         description: "",
-//         icon: "",
-//         host: "gitlab.com",
-//     };
+DevTestHelper.echoAzureTestTips();
 
-//     protected repositoryProvider: GitlabRepositoryProvider;
-//     protected user: User;
+@suite(timeout(10000), skip(ifEnvVarNotSet(DevTestHelper.AzureTestEnv)))
+class TestAzureDevOpsRepositoryProvider {
+    protected repositoryProvider: AzureDevOpsRepositoryProvider;
+    protected user: User;
 
-//     public before() {
-//         const container = new Container();
-//         container.load(
-//             new ContainerModule((bind, unbind, isBound, rebind) => {
-//                 bind(GitlabContextParser).toSelf().inSingletonScope();
-//                 bind(GitLabApi).toSelf().inSingletonScope();
-//                 bind(AuthProviderParams).toConstantValue(TestGitlabRepositoryProvider.AUTH_HOST_CONFIG);
-//                 bind(GitLabTokenHelper).toSelf().inSingletonScope();
-//                 bind(TokenProvider).toConstantValue(<TokenProvider>{
-//                     getTokenForHost: async () => DevData.createGitlabTestToken(),
-//                 });
-//                 bind(HostContextProvider).toConstantValue(DevData.createDummyHostContextProvider());
-//                 bind(GitlabRepositoryProvider).toSelf().inSingletonScope();
-//             }),
-//         );
-//         this.repositoryProvider = container.get(GitlabRepositoryProvider);
-//         this.user = DevData.createTestUser();
-//     }
+    public before() {
+        const container = DevTestHelper.createAzureSCMContainer();
+        this.repositoryProvider = container.get(AzureDevOpsRepositoryProvider);
+        this.user = DevData.createTestUser();
+    }
 
-//     @test public async testFetchCommitHistory() {
-//         const result = await this.repositoryProvider.getCommitHistory(
-//             this.user,
-//             "AlexTugarev",
-//             "gp-test",
-//             "80948e8cc8f0e851e89a10bc7c2ee234d1a5fbe7",
-//             100,
-//         );
-//         expect(result).to.deep.equal([
-//             "4447fbc4d46e6fd1ee41fb1b992702521ae078eb",
-//             "f2d9790f2752a794517b949c65a773eb864844cd",
-//         ]);
-//     }
-// }
+    @test public async testFetchCommitHistory() {
+        const result = await this.repositoryProvider.getCommitHistory(
+            this.user,
+            "services-azure",
+            "test-project/repo2-fork",
+            "dafbf184f68e7ee4dc6d1174d962cab84b605eb2",
+            100,
+        );
+        expect(result).to.deep.equal([
+            "a4b191cb2e90201b65acc13e3cbb841ce1c1b5ef",
+            "5107e928e0970c5f04b32e110d0cf8e147fcc596",
+            "05f492e633098e4348468c97940cc68dcd566403",
+            "6e18c86b251982d5a289a362ce9eb5a270932b60",
+        ]);
+    }
+}
 
-// module.exports = new TestGitlabRepositoryProvider();
+module.exports = new TestAzureDevOpsRepositoryProvider();

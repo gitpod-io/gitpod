@@ -126,7 +126,6 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
                 searchParams: url.searchParams,
             };
         }
-        console.log(segments);
         if (segments.length < 4 || segments[2] !== "_git") {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid Azure DevOps URL");
         }
@@ -156,7 +155,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
                 path: "",
                 isFile: false,
                 title: `${azProject}/${repo}`,
-                repository: toRepository(this.config.host, repository),
+                repository: toRepository(this.config.host, repository, azOrganization),
                 revision: "",
             };
             if (!repository.defaultBranch) {
@@ -209,8 +208,9 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
         const sourceRepo = toRepository(
             this.config.host,
             pullRequest.forkSource?.repository ?? pullRequest.repository!,
+            azOrganization,
         );
-        const targetRepo = toRepository(this.config.host, pullRequest.repository!);
+        const targetRepo = toRepository(this.config.host, pullRequest.repository!, azOrganization);
         const result: PullRequestContext = {
             nr: pr,
             base: {
@@ -251,7 +251,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             revision: branchInfo.commit?.commitId ?? "",
             isFile: false,
             title: `${azProject}/${repo} - ${branch}`,
-            repository: toRepository(this.config.host, repository),
+            repository: toRepository(this.config.host, repository, azOrganization),
         };
         return result;
     }
@@ -278,7 +278,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             revision: tagCommit.commitId!,
             isFile: false,
             title: `${azProject}/${repo} - ${tag}`,
-            repository: toRepository(this.config.host, repository),
+            repository: toRepository(this.config.host, repository, azOrganization),
         };
         return result;
     }
@@ -307,8 +307,8 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             isFile: false,
             title: `${azProject}/${repo} - ${commitInfo.comment}`,
             // @ts-ignore
-            owner: azProject,
-            repository: toRepository(this.config.host, repoInfo),
+            owner: azOrganization,
+            repository: toRepository(this.config.host, repoInfo, azOrganization),
         };
         return result;
     }

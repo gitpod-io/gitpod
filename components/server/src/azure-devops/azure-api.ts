@@ -92,15 +92,18 @@ export class AzureDevOpsApi {
     async getFileContent(
         userOrToken: User | string,
         azOrgId: string,
+        azProject: string,
+        repository: string,
         commit: Pick<Commit, "repository" | "ref" | "refType" | "revision">,
         path: string,
     ): Promise<MaybeContent> {
         const gitApi = await this.createGitApi(userOrToken, azOrgId);
+        const azPath = "/" + path;
         try {
             const readableStream = await gitApi.getItemContent(
-                commit.repository.name,
-                path,
-                commit.repository.owner,
+                repository,
+                azPath,
+                azProject,
                 undefined,
                 undefined,
                 undefined,
@@ -112,8 +115,18 @@ export class AzureDevOpsApi {
             for await (const chunk of readableStream) {
                 content += chunk.toString();
             }
+            const err = AzureReadableStreamError.tryCreate(content);
+            if (err) {
+                throw err;
+            }
             return content;
         } catch (err) {
+            if (err instanceof AzureReadableStreamError) {
+                if (err.type === "not_found") {
+                    return undefined;
+                }
+                throw err;
+            }
             log.error("Error while fetching file content", err);
             throw new Error(`Failed to fetch file content: ${err}`);
         }
@@ -231,5 +244,29 @@ export class AzureDevOpsApi {
              */
             timeStamp: profile.timeStamp,
         };
+    }
+}
+
+export class AzureReadableStreamError extends Error {
+    constructor(message: string, public type: "not_found" | "unknown" = "unknown") {
+        super(message);
+    }
+
+    /**
+     * SDK will respond exception (json string) into readableStream
+     */
+    static tryCreate(content: string): AzureReadableStreamError | undefined {
+        try {
+            // `{"$id":"1","innerException":null,"message":"TF400813: The user 'a9f4cac8-b940-6b73-be49-ec49d5d15535' is not authorized to access this resource.","typeName":"Microsoft.TeamFoundation.Framework.Server.UnauthorizedRequestException, Microsoft.TeamFoundation.Framework.Server","typeKey":"UnauthorizedRequestException","errorCode":0,"eventId":3000}`
+            const obj = JSON.parse(content);
+            if (!!obj && typeof obj === "object" && "message" in obj && typeof obj.message === "string") {
+                const msg = obj.message as string;
+                const type = msg.includes("could not be found") ? "not_found" : "unknown";
+                return new AzureReadableStreamError(msg, type);
+            }
+            return;
+        } catch (error) {
+            return;
+        }
     }
 }

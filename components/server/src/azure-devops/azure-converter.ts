@@ -8,12 +8,14 @@ import { Branch, CommitInfo, Repository } from "@gitpod/gitpod-protocol";
 import { GitBranchStats, GitCommitRef } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { GitRepository } from "azure-devops-node-api/interfaces/TfvcInterfaces";
 
-export function toRepository(host: string, d: GitRepository): Repository {
+export function toRepository(host: string, d: GitRepository, azOrgId?: string): Repository {
+    const owner = azOrgId ?? d.webUrl?.replace("https://dev.azure.com/", "").split("/").pop() ?? "unknown"; // should not be unknown
     const branchName = normalizeBranchName(d.defaultBranch);
+    const name = [d.project?.name, d.name ?? "unknown"].join("/");
     return {
         host,
-        owner: d.project?.name ?? "unknown",
-        name: d.name ?? "unknown",
+        owner,
+        name,
         cloneUrl: d.remoteUrl!,
         description: branchName,
         webUrl: d.webUrl,

@@ -1,62 +1,30 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { suite, test, timeout, retries, skip } from "@testdeck/mocha";
+import { suite, test, timeout, skip } from "@testdeck/mocha";
 import * as chai from "chai";
 const expect = chai.expect;
 
 import { AzureDevOpsContextParser } from "./azure-context-parser";
 import { User } from "@gitpod/gitpod-protocol";
-import { ContainerModule, Container } from "inversify";
-import { DevData } from "../dev/dev-data";
-import { AzureDevOpsApi } from "./azure-api";
-import { AuthProviderParams } from "../auth/auth-provider";
-import { AzureDevOpsTokenHelper } from "./azure-token-helper";
-import { TokenProvider } from "../user/token-provider";
-import { HostContextProvider } from "../auth/host-context-provider";
+import { DevData, DevTestHelper } from "../dev/dev-data";
 import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 
-@suite(timeout(10000), retries(2), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_AZURE_DEVOPS")))
+DevTestHelper.echoAzureTestTips();
+
+@suite(timeout(10000), skip(ifEnvVarNotSet(DevTestHelper.AzureTestEnv)))
 class TestAzureDevOpsContextParser {
     protected parser: AzureDevOpsContextParser;
     protected user: User;
 
     public before() {
-        const container = new Container();
-        container.load(
-            new ContainerModule((bind, unbind, isBound, rebind) => {
-                bind(AzureDevOpsContextParser).toSelf().inSingletonScope();
-                bind(AzureDevOpsApi).toSelf().inSingletonScope();
-                bind(AuthProviderParams).toConstantValue(TestAzureDevOpsContextParser.AUTH_HOST_CONFIG);
-                bind(AzureDevOpsTokenHelper).toSelf().inSingletonScope();
-                bind(TokenProvider).toConstantValue(<TokenProvider>{
-                    getTokenForHost: async () => DevData.createAzureDevOpsTestToken(),
-                });
-                bind(HostContextProvider).toConstantValue(DevData.createDummyHostContextProvider());
-            }),
-        );
+        const container = DevTestHelper.createAzureSCMContainer();
         this.parser = container.get(AzureDevOpsContextParser);
         this.user = DevData.createTestUser();
     }
-    static readonly AUTH_HOST_CONFIG: Partial<AuthProviderParams> = {
-        id: "Public-GitHub",
-        type: "AzureDevOps",
-        verified: true,
-        description: "",
-        icon: "",
-        host: "dev.azure.com",
-    };
-    static readonly BLO_BLA_ERROR_DATA = {
-        host: "dev.azure.com",
-        lastUpdate: undefined,
-        owner: "blo",
-        repoName: "bla",
-        userIsOwner: false,
-        userScopes: ["read_user", "api"],
-    };
 
     @test public async testEmptyProoject() {
         const result = await this.parser.handle(
@@ -65,16 +33,274 @@ class TestAzureDevOpsContextParser {
             "https://dev.azure.com/services-azure/_git/empty-project",
         );
         expect(result).to.deep.include({
+            path: "",
             isFile: false,
+            title: "empty-project/empty-project",
             repository: {
                 host: "dev.azure.com",
                 owner: "services-azure",
                 name: "empty-project/empty-project",
-                cloneUrl: "https://gitlab.com/blo/bla.git",
-                private: false,
-                defaultBranch: "master",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/empty-project/_git/empty-project",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/empty-project/_git/empty-project",
+                defaultBranch: "main",
             },
-            title: "blo/bla - master",
+            revision: "",
+        });
+    }
+
+    @test public async testDefault() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            "https://dev.azure.com/services-azure/test-project/_git/repo2",
+        );
+        expect(result).to.deep.include({
+            path: "",
+            isFile: false,
+            title: "test-project/repo2 - main",
+            repository: {
+                host: "dev.azure.com",
+                owner: "services-azure",
+                name: "test-project/repo2",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2",
+                defaultBranch: "main",
+            },
+            revision: "288dba56ce090ada9ee9338d016eb09a853fb49c",
+            ref: "main",
+            refType: "branch",
+        });
+    }
+
+    @test public async testPR() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            "https://dev.azure.com/services-azure/test-project/_git/repo2/pullrequest/1",
+        );
+        expect(result).to.deep.include({
+            nr: 1,
+            base: {
+                repository: {
+                    host: "dev.azure.com",
+                    owner: "services-azure",
+                    name: "test-project/repo2",
+                    cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2",
+                    description: "main",
+                    webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2",
+                    defaultBranch: "main",
+                },
+                ref: "main",
+                refType: "branch",
+            },
+            title: "",
+            repository: {
+                host: "dev.azure.com",
+                owner: "services-azure",
+                name: "test-project/repo2",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2",
+                defaultBranch: "main",
+            },
+            ref: "develop-2",
+            refType: "branch",
+            revision: "5e6eb73e1f15e40b1d5fce35a16c1f4dee27b56a",
+        });
+    }
+
+    @test public async testBranch() {
+        const result1 = await this.parser.handle(
+            {},
+            this.user,
+            "https://dev.azure.com/services-azure/test-project/_git/repo2?path=%2F&version=GBdevelop-2&_a=contents",
+        );
+        expect(result1).to.deep.include({
+            path: "",
+            isFile: false,
+            title: "test-project/repo2 - main",
+            repository: {
+                host: "dev.azure.com",
+                owner: "services-azure",
+                name: "test-project/repo2",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2",
+                defaultBranch: "main",
+            },
+            revision: "288dba56ce090ada9ee9338d016eb09a853fb49c",
+            ref: "main",
+            refType: "branch",
+        });
+
+        const result2 = await this.parser.handle(
+            {},
+            this.user,
+            "https://dev.azure.com/services-azure/test-project/_git/repo2?path=/.gitpod.yml&version=GBdevelop-2&_a=contents",
+        );
+        expect(result2).to.deep.include({
+            path: "",
+            isFile: false,
+            title: "test-project/repo2 - main",
+            repository: {
+                host: "dev.azure.com",
+                owner: "services-azure",
+                name: "test-project/repo2",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2",
+                defaultBranch: "main",
+            },
+            revision: "288dba56ce090ada9ee9338d016eb09a853fb49c",
+            ref: "main",
+            refType: "branch",
+        });
+
+        const result3 = await this.parser.handle(
+            {},
+            this.user,
+            "https://dev.azure.com/services-azure/test-project/_git/repo2-fork?path=/src/index.js&version=GBdevelop-2",
+        );
+        expect(result3).to.deep.include({
+            path: "",
+            isFile: false,
+            title: "test-project/repo2-fork - main",
+            repository: {
+                host: "dev.azure.com",
+                owner: "services-azure",
+                name: "test-project/repo2-fork",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                defaultBranch: "main",
+            },
+            revision: "dafbf184f68e7ee4dc6d1174d962cab84b605eb2",
+            ref: "main",
+            refType: "branch",
+        });
+    }
+
+    @test public async testTag() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            "https://dev.azure.com/services-azure/test-project/_git/repo2-fork?version=GTv0.0.1",
+        );
+        expect(result).to.deep.include({
+            path: "",
+            isFile: false,
+            title: "test-project/repo2-fork - main",
+            repository: {
+                host: "dev.azure.com",
+                owner: "services-azure",
+                name: "test-project/repo2-fork",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                defaultBranch: "main",
+            },
+            revision: "dafbf184f68e7ee4dc6d1174d962cab84b605eb2",
+            ref: "main",
+            refType: "branch",
+        });
+
+        const result2 = await this.parser.handle(
+            {},
+            this.user,
+            "https://dev.azure.com/services-azure/test-project/_git/repo2-fork?version=GTv0.0.1&path=/.gitpod.yml",
+        );
+        expect(result2).to.deep.include({
+            path: "",
+            isFile: false,
+            title: "test-project/repo2-fork - main",
+            repository: {
+                host: "dev.azure.com",
+                owner: "services-azure",
+                name: "test-project/repo2-fork",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                defaultBranch: "main",
+            },
+            revision: "dafbf184f68e7ee4dc6d1174d962cab84b605eb2",
+            ref: "main",
+            refType: "branch",
+        });
+    }
+
+    @test public async testCommit() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            "https://dev.azure.com/services-azure/test-project/_git/repo2-fork/commit/4c47246a2eacd9700aab401902775c248e85aee7",
+        );
+        expect(result).to.deep.include({
+            path: "",
+            ref: "",
+            refType: "revision",
+            revision: "4c47246a2eacd9700aab401902775c248e85aee7",
+            isFile: false,
+            title: "test-project/repo2-fork - Updated .gitpod.yml",
+            owner: "services-azure",
+            repository: {
+                host: "dev.azure.com",
+                owner: "services-azure",
+                name: "test-project/repo2-fork",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                defaultBranch: "main",
+            },
+        });
+
+        const result2 = await this.parser.handle(
+            {},
+            this.user,
+            "https://dev.azure.com/services-azure/test-project/_git/repo2-fork/commit/4c47246a2eacd9700aab401902775c248e85aee7?refName=refs%2Fheads%2Fdevelop",
+        );
+        expect(result2).to.deep.include({
+            path: "",
+            ref: "",
+            refType: "revision",
+            revision: "4c47246a2eacd9700aab401902775c248e85aee7",
+            isFile: false,
+            title: "test-project/repo2-fork - Updated .gitpod.yml",
+            owner: "services-azure",
+            repository: {
+                host: "dev.azure.com",
+                owner: "services-azure",
+                name: "test-project/repo2-fork",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                defaultBranch: "main",
+            },
+        });
+
+        const result3 = await this.parser.handle(
+            {},
+            this.user,
+            "https://dev.azure.com/services-azure/test-project/_git/repo2-fork/commit/4c47246a2eacd9700aab401902775c248e85aee7?refName=refs/heads/develop&path=/.gitpod.yml",
+        );
+        expect(result3).to.deep.include({
+            path: "",
+            ref: "",
+            refType: "revision",
+            revision: "4c47246a2eacd9700aab401902775c248e85aee7",
+            isFile: false,
+            title: "test-project/repo2-fork - Updated .gitpod.yml",
+            owner: "services-azure",
+            repository: {
+                host: "dev.azure.com",
+                owner: "services-azure",
+                name: "test-project/repo2-fork",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2-fork",
+                defaultBranch: "main",
+            },
         });
     }
 }

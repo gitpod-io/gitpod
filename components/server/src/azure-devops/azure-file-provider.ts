@@ -18,9 +18,10 @@ export class AzureDevOpsFileProvider implements FileProvider {
 
     public async getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent> {
         const azOrgId = commit.repository.owner;
+        const [azProject, repoName] = getProjectAndRepoName(commit.repository.name);
         const yamlVersion1 = await Promise.all([
-            this.azureDevOpsApi.getFileContent(user, azOrgId, commit, ".gitpod.yml"),
-            this.azureDevOpsApi.getFileContent(user, azOrgId, commit, ".gitpod"),
+            this.azureDevOpsApi.getFileContent(user, azOrgId, azProject, repoName, commit, ".gitpod.yml"),
+            this.azureDevOpsApi.getFileContent(user, azOrgId, azProject, repoName, commit, ".gitpod"),
         ]);
         return yamlVersion1.filter((f) => !!f)[0];
     }
@@ -76,8 +77,8 @@ export class AzureDevOpsFileProvider implements FileProvider {
     public async getFileContent(commit: Commit, user: User, path: string): Promise<MaybeContent> {
         try {
             const azOrgId = commit.repository.owner;
-            const result = await this.azureDevOpsApi.getFileContent(user, azOrgId, commit, path);
-            return result;
+            const [azProject, repoName] = getProjectAndRepoName(commit.repository.name);
+            return await this.azureDevOpsApi.getFileContent(user, azOrgId, azProject, repoName, commit, path);
         } catch (error) {
             log.debug(error);
         }

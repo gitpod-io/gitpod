@@ -10,6 +10,15 @@ import {
     GitLabOAuthScopes,
     AzureDevOpsOAuthScopes,
 } from "@gitpod/public-api-common/lib/auth-providers";
+import { AzureDevOpsContextParser } from "../azure-devops/azure-context-parser";
+import { AzureDevOpsApi } from "../azure-devops/azure-api";
+import { AuthProviderParams } from "../auth/auth-provider";
+import { AzureDevOpsTokenHelper } from "../azure-devops/azure-token-helper";
+import { TokenProvider } from "../user/token-provider";
+import { HostContextProvider } from "../auth/host-context-provider";
+import { Container, ContainerModule } from "inversify";
+import { AzureDevOpsFileProvider } from "../azure-devops/azure-file-provider";
+import { AzureDevOpsRepositoryProvider } from "../azure-devops/azure-repository-provider";
 
 export namespace DevData {
     export function createTestUser(): User {
@@ -130,5 +139,42 @@ export namespace DevData {
             nr: 15,
             revision: "",
         };
+    }
+}
+
+export namespace DevTestHelper {
+    export const AzureTestEnv = "GITPOD_TEST_TOKEN_AZURE_DEVOPS";
+    export function echoAzureTestTips() {
+        if (!process.env[AzureTestEnv]) {
+            console.warn(
+                `No Azure DevOps test token set. Skipping Azure DevOps tests.\n\t export AZURE_TOKEN=<your-token>\nexport ${AzureTestEnv}='{"value": "'$AZURE_TOKEN'"}'`,
+            );
+        }
+    }
+    export function createAzureSCMContainer() {
+        const container = new Container();
+        const AUTH_HOST_CONFIG: Partial<AuthProviderParams> = {
+            id: "Public-GitHub",
+            type: "AzureDevOps",
+            verified: true,
+            description: "",
+            icon: "",
+            host: "dev.azure.com",
+        };
+        container.load(
+            new ContainerModule((bind, unbind, isBound, rebind) => {
+                bind(AzureDevOpsContextParser).toSelf().inSingletonScope();
+                bind(AzureDevOpsApi).toSelf().inSingletonScope();
+                bind(AuthProviderParams).toConstantValue(AUTH_HOST_CONFIG);
+                bind(AzureDevOpsTokenHelper).toSelf().inSingletonScope();
+                bind(TokenProvider).toConstantValue(<TokenProvider>{
+                    getTokenForHost: async () => DevData.createAzureDevOpsTestToken(),
+                });
+                bind(HostContextProvider).toConstantValue(DevData.createDummyHostContextProvider());
+                bind(AzureDevOpsFileProvider).toSelf().inSingletonScope();
+                bind(AzureDevOpsRepositoryProvider).toSelf().inSingletonScope();
+            }),
+        );
+        return container;
     }
 }
