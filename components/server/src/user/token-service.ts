@@ -95,7 +95,7 @@ export class TokenService implements TokenProvider {
                         const doOpportunisticRefresh =
                             !!authProvider.requiresOpportunisticRefresh && authProvider.requiresOpportunisticRefresh();
                         if (!doOpportunisticRefresh) {
-                            // No opportunistic refresh? Update reserveation and we are done.
+                            // No opportunistic refresh? Update reservation and we are done.
                             await updateReservation(tokenEntry.uid, token, requestedLifetimeDate);
                             reportScmTokenRefreshRequest(host, opportunisticRefresh, "still_valid");
                             return token;

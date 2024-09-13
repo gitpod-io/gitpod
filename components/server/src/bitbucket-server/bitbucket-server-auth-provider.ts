@@ -63,7 +63,7 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
         try {
             const username = await this.api.currentUsername(accessToken);
             const userProfile = await this.api.getUserProfile(accessToken, username);
-            const avatarUrl = await this.api.getAvatarUrl(username);
+            const avatarUrl = this.api.getAvatarUrl(username);
             return <AuthUserSetup>{
                 authUser: {
                     // e.g. 105
@@ -74,7 +74,7 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
                     name: userProfile.displayName!,
                     avatarUrl,
                 },
-                currentScopes: BitbucketServerOAuthScopes.ALL,
+                currentScopes: BitbucketServerOAuthScopes.Requirements.DEFAULT,
             };
         } catch (error) {
             log.error(`(${this.strategyName}) Reading current user info failed`, error, { error });
