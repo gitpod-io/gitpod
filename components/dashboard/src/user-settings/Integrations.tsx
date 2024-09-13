@@ -556,6 +556,9 @@ export function GitIntegrationModal(
     const [host, setHost] = useState<string>("");
     const [clientId, setClientId] = useState<string>("");
     const [clientSecret, setClientSecret] = useState<string>("");
+    const [authorizationUrl, setAuthorizationUrl] = useState("");
+    const [tokenUrl, setTokenUrl] = useState("");
+
     const [busy, setBusy] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
     const [validationError, setValidationError] = useState<string | undefined>();
@@ -571,6 +574,8 @@ export function GitIntegrationModal(
             setHost(props.provider.host);
             setClientId(props.provider.oauth2Config?.clientId || "");
             setClientSecret(props.provider.oauth2Config?.clientSecret || "");
+            setAuthorizationUrl(props.provider.oauth2Config?.authorizationUrl || "");
+            setTokenUrl(props.provider.oauth2Config?.tokenUrl || "");
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -579,7 +584,7 @@ export function GitIntegrationModal(
         setErrorMessage(undefined);
         validate();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [clientId, clientSecret, type]);
+    }, [clientId, clientSecret, authorizationUrl, tokenUrl, type]);
 
     const onClose = () => props.onClose && props.onClose();
     const onUpdate = () => props.onUpdate && props.onUpdate();
@@ -595,6 +600,8 @@ export function GitIntegrationModal(
                     provider: {
                         clientId,
                         clientSecret,
+                        authorizationUrl,
+                        tokenUrl,
                         type,
                         host,
                         userId: props.userId,
@@ -607,6 +614,8 @@ export function GitIntegrationModal(
                         type: providerEntry?.type ?? AuthProviderType.UNSPECIFIED,
                         clientId,
                         clientSecret: clientSecret === "redacted" ? "" : clientSecret,
+                        authorizationUrl,
+                        tokenUrl,
                     },
                 });
             }
@@ -683,6 +692,12 @@ export function GitIntegrationModal(
     const updateClientSecret = (value: string) => {
         setClientSecret(value.trim());
     };
+    const updateAuthorizationUrl = (value: string) => {
+        setAuthorizationUrl(value.trim());
+    };
+    const updateTokenUrl = (value: string) => {
+        setTokenUrl(value.trim());
+    };
 
     const validate = () => {
         const errors: string[] = [];
@@ -691,6 +706,14 @@ export function GitIntegrationModal(
         }
         if (clientSecret.trim().length === 0) {
             errors.push(`${type === AuthProviderType.GITLAB ? "Secret" : "Client Secret"} is missing.`);
+        }
+        if (type === AuthProviderType.AZURE_DEVOPS) {
+            if (authorizationUrl.trim().length === 0) {
+                errors.push("Authorization URL is missing.");
+            }
+            if (tokenUrl.trim().length === 0) {
+                errors.push("Token URL is missing.");
+            }
         }
         if (errors.length === 0) {
             setValidationError(undefined);
@@ -869,6 +892,30 @@ export function GitIntegrationModal(
                         <InputWithCopy value={callbackUrl} tip="Copy the redirect URI to clipboard" />
                         <span className="text-gray-500 text-sm">{getRedirectUrlDescription(type, host)}</span>
                     </div>
+                    {type === AuthProviderType.AZURE_DEVOPS && (
+                        <>
+                            <div className="flex flex-col space-y-2">
+                                <label htmlFor="authorizationUrl" className="font-medium">{`Authorization URL`}</label>
+                                <input
+                                    name="Authorization URL"
+                                    type="text"
+                                    value={authorizationUrl}
+                                    className="w-full"
+                                    onChange={(e) => updateAuthorizationUrl(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex flex-col space-y-2">
+                                <label htmlFor="tokenUrl" className="font-medium">{`Token URL`}</label>
+                                <input
+                                    name="Token URL"
+                                    type="text"
+                                    value={tokenUrl}
+                                    className="w-full"
+                                    onChange={(e) => updateTokenUrl(e.target.value)}
+                                />
+                            </div>
+                        </>
+                    )}
                     <div className="flex flex-col space-y-2">
                         <label htmlFor="clientId" className="font-medium">{`${
                             type === AuthProviderType.GITLAB ? "Application ID" : "Client ID"
