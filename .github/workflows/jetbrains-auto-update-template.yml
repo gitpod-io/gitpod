@@ -47,6 +47,7 @@ jobs:
           if [ -f /tmp/__gh_output.txt ]
           then
             cat /tmp/__gh_output.txt >> $GITHUB_OUTPUT
+            cat /tmp/__gh_output.txt >> $GITHUB_STEP_SUMMARY
           fi
 
   update-jetbrains:
@@ -85,17 +86,22 @@ jobs:
         run: |
           imageRepoBase=${{ github.ref == 'refs/heads/main' && 'eu.gcr.io/gitpod-core-dev/build' || 'eu.gcr.io/gitpod-dev-artifact/build' }}
           echo "leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${{ steps.ide-version.outputs.ideBuildVersion }} components/ide/jetbrains/image:${{ inputs.productId }}-latest -DjbBackendVersion=${{ steps.ide-version.outputs.ideVersion }}"
-      - name: Get previous job's status
-        id: lastrun
-        uses: filiptronicek/get-last-job-status@main
-      - name: Slack Notification
-        if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
-          SLACK_COLOR: ${{ job.status }}
-          SLACK_TITLE: ${{ inputs.productId }}
-          SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
+          echo "leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${{ steps.ide-version.outputs.ideBuildVersion }} components/ide/jetbrains/image:${{ inputs.productId }}-latest -DjbBackendVersion=${{ steps.ide-version.outputs.ideVersion }}" >> $GITHUB_STEP_SUMMARY
+      - name: Mock slack content
+        run: |
+          content=$(cat $GITHUB_STEP_SUMMARY)
+          echo "Content from summary: $content"
+      # - name: Get previous job's status
+      #   id: lastrun
+      #   uses: filiptronicek/get-last-job-status@main
+      # - name: Slack Notification
+      #   if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
+      #   uses: rtCamp/action-slack-notify@v2
+      #   env:
+      #     SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
+      #     SLACK_COLOR: ${{ job.status }}
+      #     SLACK_TITLE: ${{ inputs.productId }}
+      #     SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
 
   delete-runner:
     if: always()
