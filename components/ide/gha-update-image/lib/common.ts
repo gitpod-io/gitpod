@@ -53,6 +53,14 @@ export const pathToBackendPluginGradleStable = path.resolve(
     "components/ide/jetbrains/backend-plugin/gradle-stable.properties",
 );
 
+// gradle-latest.properties
+export const pathToBackendPluginGradleLatest = path.resolve(
+    pathToProjectRoot,
+    "components/ide/jetbrains/backend-plugin/gradle-latest.properties",
+);
+
+export const pathToBackendPluginDir = path.resolve(pathToProjectRoot, "components/ide/jetbrains/backend-plugin");
+
 // ide-configmap.json
 export const pathToConfigmap = path.resolve(
     pathToProjectRoot,

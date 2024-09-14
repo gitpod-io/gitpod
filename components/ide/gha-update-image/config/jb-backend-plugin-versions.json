@@ -1,0 +1,16 @@
+[
+  {
+    "image": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:commit-d54058956db3274084249bdbc4f508ab111b8c51",
+    "detail": {
+      "pluginSinceBuild": "242.19533",
+      "pluginUntilBuild":"242.*"
+    }
+  },
+  {
+    "image": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:commit-d54058956db3274084249bdbc4f508ab111b8c51-latest",
+    "detail": {
+      "pluginSinceBuild": "242.19533",
+      "pluginUntilBuild":"242.*"
+    }
+  }
+]
