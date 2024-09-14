@@ -188,6 +188,7 @@ export const getStableVersionsInfo = async (ides: JetBrainsIDE[]) => {
     return { buildVersion, majorVersion, updatedIDEs };
 };
 
+// TODO: remove me and use jb-gradle-task-config.ts
 export const upgradeStableVersionsInWorkspaceaAndGradle = async () => {
     try {
         const { buildVersion, majorVersion, updatedIDEs } = await getStableVersionsInfo(ides);
