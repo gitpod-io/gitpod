@@ -74,3 +74,4 @@ console.log(
 appendGitHubOutput(`buildNumber=${targetConfig.platformVersion}`);
 appendGitHubOutput(`image=${task.productId}`);
 appendGitHubOutput(`jbBackendVersion=${targetRelease.version}`);
+appendGitHubOutput(`editorSummary=${releaseItemStr(targetRelease)}`);
