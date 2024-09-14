@@ -9,7 +9,7 @@
 // ```
 
 import { $ } from "bun";
-import { pathToBackendPluginGradleLatest, readWorkspaceYaml } from "./lib/common";
+import { appendGitHubOutput, pathToBackendPluginGradleLatest, readWorkspaceYaml } from "./lib/common";
 import { maybeCompatible, parseGradleProperties, parseGradlePropertiesFromTaskConfig } from "./lib/jb-helper/jb-helper";
 import { fetchProductReleases, ReleaseItem, releaseItemStr } from "./lib/jb-helper/jb-releases";
 import { getTaskFromArgs } from "./lib/jb-helper/jb-gradle-task-config";
@@ -70,3 +70,7 @@ const targetConfig = parseGradlePropertiesFromTaskConfig(task, targetRelease);
 console.log(
     `Going to exec \`leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${targetConfig.platformVersion} components/ide/jetbrains/image:${task.productId}-latest -DjbBackendVersion=${targetRelease.version}\``,
 );
+
+appendGitHubOutput(`buildNumber=${targetConfig.platformVersion}`);
+appendGitHubOutput(`image=${task.productId}`);
+appendGitHubOutput(`jbBackendVersion=${targetRelease.version}`);
