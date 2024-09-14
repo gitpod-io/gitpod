@@ -37,6 +37,7 @@ const productReleaseZod = z.record(
             whatsnew: z.string().nullish(),
             majorVersion: z.string(), // 2024.2
             build: z.string(), // 242.20224.159
+            version: z.string(), // 2024.2.1
         }),
     ),
 );
