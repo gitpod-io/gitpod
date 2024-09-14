@@ -57,17 +57,17 @@ jobs:
           imageRepoBase=${{ github.ref == 'refs/heads/main' && 'eu.gcr.io/gitpod-core-dev/build' || 'eu.gcr.io/gitpod-dev-artifact/build' }}
           echo "Upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}" >> $GITHUB_STEP_SUMMARY
           leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${{ steps.find-target.outputs.buildNumber }} components/ide/jetbrains/image:${{ steps.find-target.outputs.image }}-latest -DjbBackendVersion=${{ steps.find-target.outputs.jbBackendVersion }}
-      # - name: Get previous job's status
-      #   id: lastrun
-      #   uses: filiptronicek/get-last-job-status@main
-      # - name: Slack Notification
-      #   if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
-      #   uses: rtCamp/action-slack-notify@v2
-      #   env:
-      #     SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
-      #     SLACK_COLOR: ${{ job.status }}
-      #     SLACK_TITLE: Upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}
-      #     SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
+      - name: Get previous job's status
+        id: lastrun
+        uses: filiptronicek/get-last-job-status@main
+      - name: Slack Notification
+        if: ${{ (success() && steps.find-target.outputs.buildNumber) || failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: Upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}
+          SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
 
   delete-runner:
     if: always()

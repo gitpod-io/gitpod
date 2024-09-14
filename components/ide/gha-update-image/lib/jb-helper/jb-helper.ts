@@ -18,7 +18,7 @@ export const AllProductIDs = [
     "webstorm",
     "rider",
     "clion",
-    "resharper",
+    "rustrover",
 ] as const;
 export type ProductIDs = (typeof AllProductIDs)[number];
 
