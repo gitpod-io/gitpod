@@ -13,12 +13,12 @@ import { Branch, CommitInfo, User } from "@gitpod/gitpod-protocol";
 import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
 import { injectable, inject } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { GitHubScope } from "./scopes";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { GitHubTokenHelper } from "./github-token-helper";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 
 import { URL } from "url";
+import { GitHubOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 export class GitHubApiError extends Error {
     readonly code: number;
@@ -149,7 +149,7 @@ export class GitHubRestApi {
         } else {
             const githubToken = await this.tokenHelper.getTokenWithScopes(
                 userOrToken,
-                GitHubScope.Requirements.DEFAULT,
+                GitHubOAuthScopes.Requirements.DEFAULT,
             );
             token = githubToken.value;
         }

@@ -571,7 +571,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
             accessTokenExpiresAt: expiry,
             client,
             user,
-            scopes: scopes,
+            scopes,
         };
     }
     async issueRefreshToken(accessToken: OAuthToken): Promise<OAuthToken> {

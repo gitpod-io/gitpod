@@ -8,23 +8,23 @@ import express from "express";
 import { injectable } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
-import { GitLabScope } from "./scopes";
 import { UnconfirmedUserException } from "../auth/errors";
 import { GitLab } from "./api";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
 import { AuthUserSetup } from "../auth/auth-provider";
 import { oauthUrls } from "./gitlab-urls";
+import { GitLabOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class GitLabAuthProvider extends GenericAuthProvider {
     get info(): AuthProviderInfo {
         return {
             ...this.defaultInfo(),
-            scopes: GitLabScope.All,
+            scopes: GitLabOAuthScopes.ALL,
             requirements: {
-                default: GitLabScope.Requirements.DEFAULT,
-                publicRepo: GitLabScope.Requirements.REPO,
-                privateRepo: GitLabScope.Requirements.REPO,
+                default: GitLabOAuthScopes.Requirements.DEFAULT,
+                publicRepo: GitLabOAuthScopes.Requirements.REPO,
+                privateRepo: GitLabOAuthScopes.Requirements.REPO,
             },
         };
     }
@@ -41,7 +41,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
             authorizationUrl: oauth.authorizationUrl || defaultUrls.authorizationUrl,
             tokenUrl: oauth.tokenUrl || defaultUrls.tokenUrl,
             settingsUrl: oauth.settingsUrl || defaultUrls.settingsUrl,
-            scope: GitLabScope.All.join(scopeSeparator),
+            scope: GitLabOAuthScopes.ALL.join(scopeSeparator),
             scopeSeparator,
         };
     }
@@ -53,7 +53,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
         state: string,
         scope?: string[],
     ) {
-        super.authorize(req, res, next, state, scope ? scope : GitLabScope.Requirements.DEFAULT);
+        super.authorize(req, res, next, state, scope ? scope : GitLabOAuthScopes.Requirements.DEFAULT);
     }
 
     protected get baseURL() {

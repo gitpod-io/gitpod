@@ -6,21 +6,25 @@
 
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
-export namespace GitLabScope {
+export namespace GitLabOAuthScopes {
     export const READ_USER = "read_user";
     export const API = "api";
     export const READ_REPO = "read_repository";
 
     export const ALL = [READ_USER, API, READ_REPO];
-    /**
-     * Minimal required permission.
-     * GitLab API usage requires the permission of a user.
-     */
-    export const DEFAULT = [READ_USER, API];
-    export const REPO = [API, READ_REPO];
+
+    export const Requirements = {
+        /**
+         * Minimal required permission.
+         * GitLab API usage requires the permission of a user.
+         */
+        DEFAULT: [READ_USER, API],
+
+        REPO: [API, READ_REPO],
+    };
 }
 
-export namespace GitHubScope {
+export namespace GitHubOAuthScopes {
     export const EMAIL = "user:email";
     export const READ_USER = "read:user";
     export const PUBLIC = "public_repo";
@@ -29,9 +33,17 @@ export namespace GitHubScope {
     export const WORKFLOW = "workflow";
 
     export const ALL = [EMAIL, READ_USER, PUBLIC, PRIVATE, ORGS, WORKFLOW];
-    export const DEFAULT = ALL;
-    export const PUBLIC_REPO = ALL;
-    export const PRIVATE_REPO = ALL;
+
+    export const Requirements = {
+        /**
+         * Minimal required permission.
+         * GitHub's API is not restricted any further.
+         */
+        DEFAULT: [EMAIL],
+
+        PUBLIC_REPO: [PUBLIC],
+        PRIVATE_REPO: [PRIVATE],
+    };
 }
 
 export namespace BitbucketOAuthScopes {
@@ -48,15 +60,14 @@ export namespace BitbucketOAuthScopes {
     /** Create, comment and merge pull requests */
     export const PULL_REQUEST_WRITE = "pullrequest:write";
 
-    export const ALL = [
-        ACCOUNT_READ,
-        REPOSITORY_READ,
-        REPOSITORY_WRITE,
-        PULL_REQUEST_READ,
-        PULL_REQUEST_WRITE,
-    ];
+    export const ALL = [ACCOUNT_READ, REPOSITORY_READ, REPOSITORY_WRITE, PULL_REQUEST_READ, PULL_REQUEST_WRITE];
 
-    export const DEFAULT = ALL;
+    export const Requirements = {
+        /**
+         * Minimal required permission.
+         */
+        DEFAULT: ALL,
+    };
 }
 
 export namespace BitbucketServerOAuthScopes {
@@ -74,17 +85,22 @@ export namespace BitbucketServerOAuthScopes {
 
     export const ALL = [PUBLIC_REPOS, REPO_READ, REPO_WRITE, REPO_ADMIN, PROJECT_ADMIN];
 
-    export const DEFAULT = ALL;
+    export const Requirements = {
+        /**
+         * Minimal required permission.
+         */
+        DEFAULT: [PUBLIC_REPOS, REPO_READ, REPO_WRITE],
+    };
 }
 
 export function getScopesForAuthProviderType(type: AuthProviderType | string) {
     switch (type) {
         case AuthProviderType.GITHUB:
         case "GitHub":
-            return GitHubScope.ALL;
+            return GitHubOAuthScopes.ALL;
         case AuthProviderType.GITLAB:
         case "GitLab":
-            return GitLabScope.ALL;
+            return GitLabOAuthScopes.ALL;
         case AuthProviderType.BITBUCKET:
         case "Bitbucket":
             return BitbucketOAuthScopes.ALL;
@@ -99,30 +115,30 @@ export function getRequiredScopes(type: AuthProviderType | string) {
         case AuthProviderType.GITHUB:
         case "GitHub":
             return {
-                default: GitHubScope.DEFAULT,
-                publicRepo: GitHubScope.PUBLIC_REPO,
-                privateRepo: GitHubScope.PRIVATE_REPO,
+                default: GitHubOAuthScopes.Requirements.DEFAULT,
+                publicRepo: GitHubOAuthScopes.Requirements.PUBLIC_REPO,
+                privateRepo: GitHubOAuthScopes.Requirements.PRIVATE_REPO,
             };
         case AuthProviderType.GITLAB:
         case "GitLab":
             return {
-                default: GitLabScope.DEFAULT,
-                publicRepo: GitLabScope.DEFAULT,
-                privateRepo: GitLabScope.REPO,
+                default: GitLabOAuthScopes.Requirements.DEFAULT,
+                publicRepo: GitLabOAuthScopes.Requirements.DEFAULT,
+                privateRepo: GitLabOAuthScopes.Requirements.REPO,
             };
         case AuthProviderType.BITBUCKET:
         case "Bitbucket":
             return {
-                default: BitbucketOAuthScopes.DEFAULT,
-                publicRepo: BitbucketOAuthScopes.DEFAULT,
-                privateRepo: BitbucketOAuthScopes.DEFAULT,
+                default: BitbucketOAuthScopes.Requirements.DEFAULT,
+                publicRepo: BitbucketOAuthScopes.Requirements.DEFAULT,
+                privateRepo: BitbucketOAuthScopes.Requirements.DEFAULT,
             };
         case AuthProviderType.BITBUCKET_SERVER:
         case "BitbucketServer":
             return {
-                default: BitbucketServerOAuthScopes.DEFAULT,
-                publicRepo: BitbucketServerOAuthScopes.DEFAULT,
-                privateRepo: BitbucketServerOAuthScopes.DEFAULT,
+                default: BitbucketServerOAuthScopes.Requirements.DEFAULT,
+                publicRepo: BitbucketServerOAuthScopes.Requirements.DEFAULT,
+                privateRepo: BitbucketServerOAuthScopes.Requirements.DEFAULT,
             };
     }
 }

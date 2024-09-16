@@ -18,7 +18,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import fetch from "node-fetch";
 import { Authorizer } from "../authorization/authorizer";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { getRequiredScopes, getScopesOfProvider } from "./auth-provider-scopes";
+import { getRequiredScopes, getScopesForAuthProviderType } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class AuthProviderService {
@@ -106,8 +106,8 @@ export class AuthProviderService {
             hiddenOnDashboard: ap.hiddenOnDashboard,
             disallowLogin: ap.disallowLogin,
             description: ap.description,
-            scopes: getScopesOfProvider(ap),
-            requirements: getRequiredScopes(ap),
+            scopes: getScopesForAuthProviderType(ap.type),
+            requirements: getRequiredScopes(ap.type),
         };
     }
 

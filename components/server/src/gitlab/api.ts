@@ -26,9 +26,9 @@ import {
     SimpleProjectSchema,
 } from "@gitbeaker/core";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { GitLabScope } from "./scopes";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { GitLabTokenHelper } from "./gitlab-token-helper";
+import { GitLabOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class GitLabApi {
@@ -42,7 +42,7 @@ export class GitLabApi {
         } else {
             const gitlabToken = await this.tokenHelper.getTokenWithScopes(
                 userOrToken,
-                GitLabScope.Requirements.DEFAULT,
+                GitLabOAuthScopes.Requirements.DEFAULT,
             );
             oauthToken = gitlabToken.value;
         }

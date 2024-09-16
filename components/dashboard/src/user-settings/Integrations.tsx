@@ -4,10 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { getScopesForAuthProviderType } from "@gitpod/public-api-common/lib/auth-providers";
+import { getRequiredScopes, getScopesForAuthProviderType } from "@gitpod/public-api-common/lib/auth-providers";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import Alert from "../components/Alert";
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -53,6 +53,46 @@ export default function Integrations() {
         </div>
     );
 }
+
+const getDescriptionForScope = (scope: string) => {
+    switch (scope) {
+        // GitHub
+        case "user:email":
+            return "Read-only access to your email addresses";
+        case "read:user":
+            return "Read-only access to your profile information";
+        case "public_repo":
+            return "Write access to code in public repositories and organizations";
+        case "repo":
+            return "Read/write access to code in private repositories and organizations";
+        case "read:org":
+            return "Read-only access to organizations (used to suggest organizations when forking a repository)";
+        case "workflow":
+            return "Allow updating GitHub Actions workflow files";
+        // GitLab
+        case "read_user":
+            return "Read-only access to your email addresses";
+        case "api":
+            return "Allow making API calls (used to set up a webhook when enabling prebuilds for a repository)";
+        case "read_repository":
+            return "Read/write access to your repositories";
+        // Bitbucket
+        case "account":
+            return "Read-only access to your account information";
+        case "repository":
+            return "Read-only access to your repositories (note: Bitbucket doesn't support revoking scopes)";
+        case "repository:write":
+            return "Read/write access to your repositories (note: Bitbucket doesn't support revoking scopes)";
+        case "pullrequest":
+            return "Read access to pull requests and ability to collaborate via comments, tasks, and approvals (note: Bitbucket doesn't support revoking scopes)";
+        case "pullrequest:write":
+            return "Allow creating, merging and declining pull requests (note: Bitbucket doesn't support revoking scopes)";
+        case "webhook":
+            return "Allow installing webhooks (used when enabling prebuilds for a repository, note: Bitbucket doesn't support revoking scopes)";
+        default:
+            return "";
+    }
+};
 
 function GitProviders() {
     const { user, setUser } = useContext(UserContext);
@@ -250,45 +290,6 @@ function GitProviders() {
         setEditModal({ ...editModal, nextScopes });
     };
 
-    const getDescriptionForScope = (scope: string) => {
-        switch (scope) {
-            case "user:email":
-                return "Read-only access to your email addresses";
-            case "read:user":
-                return "Read-only access to your profile information";
-            case "public_repo":
-                return "Write access to code in public repositories and organizations";
-            case "repo":
-                return "Read/write access to code in private repositories and organizations";
-            case "read:org":
-                return "Read-only access to organizations (used to suggest organizations when forking a repository)";
-            case "workflow":
-                return "Allow updating GitHub Actions workflow files";
-            // GitLab
-            case "read_user":
-                return "Read-only access to your email addresses";
-            case "api":
-                return "Allow making API calls (used to set up a webhook when enabling prebuilds for a repository)";
-            case "read_repository":
-                return "Read/write access to your repositories";
-            // Bitbucket
-            case "account":
-                return "Read-only access to your account information";
-            case "repository":
-                return "Read-only access to your repositories (note: Bitbucket doesn't support revoking scopes)";
-            case "repository:write":
-                return "Read/write access to your repositories (note: Bitbucket doesn't support revoking scopes)";
-            case "pullrequest":
-                return "Read access to pull requests and ability to collaborate via comments, tasks, and approvals (note: Bitbucket doesn't support revoking scopes)";
-            case "pullrequest:write":
-                return "Allow creating, merging and declining pull requests (note: Bitbucket doesn't support revoking scopes)";
-            case "webhook":
-                return "Allow installing webhooks (used when enabling prebuilds for a repository, note: Bitbucket doesn't support revoking scopes)";
-            default:
-                return "";
-        }
-    };
-
     return (
         <div>
             {selectAccountModal && (
@@ -325,18 +326,22 @@ function GitProviders() {
                     <ModalHeader>Edit Permissions</ModalHeader>
                     <ModalBody>
                         <CheckboxListField label="Configure provider permissions.">
-                            {(getScopesForAuthProviderType(editModal.provider.type) || []).map((scope) => (
-                                <CheckboxInputField
-                                    key={scope}
-                                    value={scope}
-                                    label={scope}
-                                    hint={getDescriptionForScope(scope)}
-                                    checked={editModal.nextScopes.has(scope)}
-                                    // disabled={editModal.provider.requirements?.default.includes(scope)} // what?!
-                                    topMargin={false}
-                                    onChange={(checked) => onChangeScopeHandler(checked, scope)}
-                                />
-                            ))}
+                            {(getScopesForAuthProviderType(editModal.provider.type) || []).map((scope) => {
+                                const isRequired = getRequiredScopes(editModal.provider.type)?.default.includes(scope);
+
+                                return (
+                                    <CheckboxInputField
+                                        key={scope}
+                                        value={scope}
+                                        label={scope + (isRequired ? " (required)" : "")}
+                                        hint={getDescriptionForScope(scope)}
+                                        checked={editModal.nextScopes.has(scope)}
+                                        disabled={isRequired}
+                                        topMargin={false}
+                                        onChange={(checked) => onChangeScopeHandler(checked, scope)}
+                                    />
+                                );
+                            })}
                         </CheckboxListField>
                     </ModalBody>
                     <ModalFooter>
