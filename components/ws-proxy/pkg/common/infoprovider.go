@@ -23,6 +23,8 @@ const (
 	WorkspacePathPrefixIdentifier = "workspacePathPrefix"
 
 	WorkspaceInfoIdentifier = "workspaceInfo"
+
+	ForeignContentIdentifier = "foreignContent"
 )
 
 // WorkspaceCoords represents the coordinates of a workspace (port).
@@ -33,6 +35,8 @@ type WorkspaceCoords struct {
 	Port string
 	// Debug workspace
 	Debug bool
+	// Foreign content
+	Foreign bool
 }
 
 // WorkspaceInfoProvider is an entity that is able to provide workspaces related information.
