@@ -13,6 +13,7 @@ import { isGitpodIo } from "../../utils";
 import { CaughtError } from "./ReloadPageErrorBoundary";
 import { gitpodHostUrl } from "../../service/service";
 import QuickStart from "../QuickStart";
+import { DisabledCell } from "../../cell-disabled/DisabledCell";
 
 // Error boundary intended to catch and handle expected errors from api calls
 export const QueryErrorBoundary: FC = ({ children }) => {
@@ -57,6 +58,11 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
         return <div></div>;
     }
 
+    if (caughtError.code === ErrorCodes.CELL_EXPIRED) {
+        // resetErrorBoundary();
+        return <DisabledCell />;
+    }
+
     // User needs to Login
     if (caughtError.code === ErrorCodes.NOT_AUTHENTICATED) {
         console.log("clearing query cache for unauthenticated user");
@@ -79,10 +85,6 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
         }
 
         return <Login onLoggedIn={resetErrorBoundary} />;
-    }
-
-    if (caughtError.code === ErrorCodes.CELL_EXPIRED) {
-        return "hahaaa loser your cell is a goner";
     }
 
     // Otherwise throw the error for default error boundary to catch and handle

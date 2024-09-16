@@ -107,6 +107,9 @@ export const ErrorCodes = {
     // 481 Professional plan is required for this operation
     PLAN_PROFESSIONAL_REQUIRED: 481 as const,
 
+    // 482 Cell Expired
+    CELL_EXPIRED: 482 as const,
+
     // 490 Too Many Running Workspace
     TOO_MANY_RUNNING_WORKSPACES: 490 as const,
 
@@ -127,9 +130,6 @@ export const ErrorCodes = {
 
     // 555 EE License Required
     EE_LICENSE_REQUIRED: 555 as const,
-
-    // 556 Cell Expired
-    CELL_EXPIRED: 556 as const,
 
     // 601 SaaS Feature
     SAAS_FEATURE: 601 as const,

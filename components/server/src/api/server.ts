@@ -65,6 +65,7 @@ import { TokenServiceAPI } from "./token-service-api";
 import { TokenService } from "@gitpod/public-api/lib/gitpod/v1/token_connect";
 import { AuditLogService } from "../audit/AuditLogService";
 import { AuditLogServiceAPI } from "./audit-log-service-api";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -293,12 +294,23 @@ export class API {
                         return Reflect.apply(target[prop as any], target, args);
                     };
                     if (grpc_type === "unary" || grpc_type === "client_stream") {
-                        const isCellDisabled = true; // todo(ft): add checking from cell spec. Please don't merge :P
-                        if (isCellDisabled) {
-                            throw new ApplicationError(ErrorCodes.CELL_EXPIRED, "Cell is disabled");
-                        }
-
                         return withRequestContext(async () => {
+                            const isCellDisabled = await getExperimentsClientForBackend().getValueAsync(
+                                "cell_disabled",
+                                false,
+                                {},
+                            );
+                            if (
+                                isCellDisabled &&
+                                requestContext.requestMethod === "gitpod.v1.UserService/getAuthenticatedUser"
+                            ) {
+                                const error = self.apiConverter.toError(
+                                    new ApplicationError(ErrorCodes.CELL_EXPIRED, "Cell is disabled"),
+                                );
+                                done(error);
+                                throw error;
+                            }
+
                             let subjectId: SubjectId | undefined = undefined;
                             try {
                                 subjectId = await auth();

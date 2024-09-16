@@ -1741,6 +1741,21 @@ public final class Error {
      */
     io.gitpod.publicapi.v1.Error.ImageBuildLogsNotYetAvailableErrorOrBuilder getImageBuildLogsNotYetAvailableOrBuilder();
 
+    /**
+     * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+     * @return Whether the cellIsDisabled field is set.
+     */
+    boolean hasCellIsDisabled();
+    /**
+     * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+     * @return The cellIsDisabled.
+     */
+    io.gitpod.publicapi.v1.Error.CellDisabledError getCellIsDisabled();
+    /**
+     * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+     */
+    io.gitpod.publicapi.v1.Error.CellDisabledErrorOrBuilder getCellIsDisabledOrBuilder();
+
     io.gitpod.publicapi.v1.Error.FailedPreconditionDetails.ReasonCase getReasonCase();
   }
   /**
@@ -1797,6 +1812,7 @@ public final class Error {
       REPOSITORY_NOT_FOUND(5),
       REPOSITORY_UNAUTHORIZED(6),
       IMAGE_BUILD_LOGS_NOT_YET_AVAILABLE(7),
+      CELL_IS_DISABLED(8),
       REASON_NOT_SET(0);
       private final int value;
       private ReasonCase(int value) {
@@ -1821,6 +1837,7 @@ public final class Error {
           case 5: return REPOSITORY_NOT_FOUND;
           case 6: return REPOSITORY_UNAUTHORIZED;
           case 7: return IMAGE_BUILD_LOGS_NOT_YET_AVAILABLE;
+          case 8: return CELL_IS_DISABLED;
           case 0: return REASON_NOT_SET;
           default: return null;
         }
@@ -2053,6 +2070,37 @@ public final class Error {
       return io.gitpod.publicapi.v1.Error.ImageBuildLogsNotYetAvailableError.getDefaultInstance();
     }
 
+    public static final int CELL_IS_DISABLED_FIELD_NUMBER = 8;
+    /**
+     * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+     * @return Whether the cellIsDisabled field is set.
+     */
+    @java.lang.Override
+    public boolean hasCellIsDisabled() {
+      return reasonCase_ == 8;
+    }
+    /**
+     * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+     * @return The cellIsDisabled.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Error.CellDisabledError getCellIsDisabled() {
+      if (reasonCase_ == 8) {
+         return (io.gitpod.publicapi.v1.Error.CellDisabledError) reason_;
+      }
+      return io.gitpod.publicapi.v1.Error.CellDisabledError.getDefaultInstance();
+    }
+    /**
+     * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Error.CellDisabledErrorOrBuilder getCellIsDisabledOrBuilder() {
+      if (reasonCase_ == 8) {
+         return (io.gitpod.publicapi.v1.Error.CellDisabledError) reason_;
+      }
+      return io.gitpod.publicapi.v1.Error.CellDisabledError.getDefaultInstance();
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -2087,6 +2135,9 @@ public final class Error {
       }
       if (reasonCase_ == 7) {
         output.writeMessage(7, (io.gitpod.publicapi.v1.Error.ImageBuildLogsNotYetAvailableError) reason_);
+      }
+      if (reasonCase_ == 8) {
+        output.writeMessage(8, (io.gitpod.publicapi.v1.Error.CellDisabledError) reason_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -2124,6 +2175,10 @@ public final class Error {
       if (reasonCase_ == 7) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(7, (io.gitpod.publicapi.v1.Error.ImageBuildLogsNotYetAvailableError) reason_);
+      }
+      if (reasonCase_ == 8) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(8, (io.gitpod.publicapi.v1.Error.CellDisabledError) reason_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -2170,6 +2225,10 @@ public final class Error {
           if (!getImageBuildLogsNotYetAvailable()
               .equals(other.getImageBuildLogsNotYetAvailable())) return false;
           break;
+        case 8:
+          if (!getCellIsDisabled()
+              .equals(other.getCellIsDisabled())) return false;
+          break;
         case 0:
         default:
       }
@@ -2212,6 +2271,10 @@ public final class Error {
         case 7:
           hash = (37 * hash) + IMAGE_BUILD_LOGS_NOT_YET_AVAILABLE_FIELD_NUMBER;
           hash = (53 * hash) + getImageBuildLogsNotYetAvailable().hashCode();
+          break;
+        case 8:
+          hash = (37 * hash) + CELL_IS_DISABLED_FIELD_NUMBER;
+          hash = (53 * hash) + getCellIsDisabled().hashCode();
           break;
         case 0:
         default:
@@ -2372,6 +2435,9 @@ public final class Error {
         if (imageBuildLogsNotYetAvailableBuilder_ != null) {
           imageBuildLogsNotYetAvailableBuilder_.clear();
         }
+        if (cellIsDisabledBuilder_ != null) {
+          cellIsDisabledBuilder_.clear();
+        }
         reasonCase_ = 0;
         reason_ = null;
         return this;
@@ -2441,6 +2507,10 @@ public final class Error {
             imageBuildLogsNotYetAvailableBuilder_ != null) {
           result.reason_ = imageBuildLogsNotYetAvailableBuilder_.build();
         }
+        if (reasonCase_ == 8 &&
+            cellIsDisabledBuilder_ != null) {
+          result.reason_ = cellIsDisabledBuilder_.build();
+        }
       }
 
       @java.lang.Override
@@ -2482,6 +2552,10 @@ public final class Error {
           }
           case IMAGE_BUILD_LOGS_NOT_YET_AVAILABLE: {
             mergeImageBuildLogsNotYetAvailable(other.getImageBuildLogsNotYetAvailable());
+            break;
+          }
+          case CELL_IS_DISABLED: {
+            mergeCellIsDisabled(other.getCellIsDisabled());
             break;
           }
           case REASON_NOT_SET: {
@@ -2563,6 +2637,13 @@ public final class Error {
                 reasonCase_ = 7;
                 break;
               } // case 58
+              case 66: {
+                input.readMessage(
+                    getCellIsDisabledFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                reasonCase_ = 8;
+                break;
+              } // case 66
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -3587,6 +3668,148 @@ public final class Error {
         reasonCase_ = 7;
         onChanged();
         return imageBuildLogsNotYetAvailableBuilder_;
+      }
+
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Error.CellDisabledError, io.gitpod.publicapi.v1.Error.CellDisabledError.Builder, io.gitpod.publicapi.v1.Error.CellDisabledErrorOrBuilder> cellIsDisabledBuilder_;
+      /**
+       * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+       * @return Whether the cellIsDisabled field is set.
+       */
+      @java.lang.Override
+      public boolean hasCellIsDisabled() {
+        return reasonCase_ == 8;
+      }
+      /**
+       * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+       * @return The cellIsDisabled.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.CellDisabledError getCellIsDisabled() {
+        if (cellIsDisabledBuilder_ == null) {
+          if (reasonCase_ == 8) {
+            return (io.gitpod.publicapi.v1.Error.CellDisabledError) reason_;
+          }
+          return io.gitpod.publicapi.v1.Error.CellDisabledError.getDefaultInstance();
+        } else {
+          if (reasonCase_ == 8) {
+            return cellIsDisabledBuilder_.getMessage();
+          }
+          return io.gitpod.publicapi.v1.Error.CellDisabledError.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+       */
+      public Builder setCellIsDisabled(io.gitpod.publicapi.v1.Error.CellDisabledError value) {
+        if (cellIsDisabledBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          reason_ = value;
+          onChanged();
+        } else {
+          cellIsDisabledBuilder_.setMessage(value);
+        }
+        reasonCase_ = 8;
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+       */
+      public Builder setCellIsDisabled(
+          io.gitpod.publicapi.v1.Error.CellDisabledError.Builder builderForValue) {
+        if (cellIsDisabledBuilder_ == null) {
+          reason_ = builderForValue.build();
+          onChanged();
+        } else {
+          cellIsDisabledBuilder_.setMessage(builderForValue.build());
+        }
+        reasonCase_ = 8;
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+       */
+      public Builder mergeCellIsDisabled(io.gitpod.publicapi.v1.Error.CellDisabledError value) {
+        if (cellIsDisabledBuilder_ == null) {
+          if (reasonCase_ == 8 &&
+              reason_ != io.gitpod.publicapi.v1.Error.CellDisabledError.getDefaultInstance()) {
+            reason_ = io.gitpod.publicapi.v1.Error.CellDisabledError.newBuilder((io.gitpod.publicapi.v1.Error.CellDisabledError) reason_)
+                .mergeFrom(value).buildPartial();
+          } else {
+            reason_ = value;
+          }
+          onChanged();
+        } else {
+          if (reasonCase_ == 8) {
+            cellIsDisabledBuilder_.mergeFrom(value);
+          } else {
+            cellIsDisabledBuilder_.setMessage(value);
+          }
+        }
+        reasonCase_ = 8;
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+       */
+      public Builder clearCellIsDisabled() {
+        if (cellIsDisabledBuilder_ == null) {
+          if (reasonCase_ == 8) {
+            reasonCase_ = 0;
+            reason_ = null;
+            onChanged();
+          }
+        } else {
+          if (reasonCase_ == 8) {
+            reasonCase_ = 0;
+            reason_ = null;
+          }
+          cellIsDisabledBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+       */
+      public io.gitpod.publicapi.v1.Error.CellDisabledError.Builder getCellIsDisabledBuilder() {
+        return getCellIsDisabledFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.CellDisabledErrorOrBuilder getCellIsDisabledOrBuilder() {
+        if ((reasonCase_ == 8) && (cellIsDisabledBuilder_ != null)) {
+          return cellIsDisabledBuilder_.getMessageOrBuilder();
+        } else {
+          if (reasonCase_ == 8) {
+            return (io.gitpod.publicapi.v1.Error.CellDisabledError) reason_;
+          }
+          return io.gitpod.publicapi.v1.Error.CellDisabledError.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.CellDisabledError cell_is_disabled = 8 [json_name = "cellIsDisabled"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Error.CellDisabledError, io.gitpod.publicapi.v1.Error.CellDisabledError.Builder, io.gitpod.publicapi.v1.Error.CellDisabledErrorOrBuilder>
+          getCellIsDisabledFieldBuilder() {
+        if (cellIsDisabledBuilder_ == null) {
+          if (!(reasonCase_ == 8)) {
+            reason_ = io.gitpod.publicapi.v1.Error.CellDisabledError.getDefaultInstance();
+          }
+          cellIsDisabledBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.Error.CellDisabledError, io.gitpod.publicapi.v1.Error.CellDisabledError.Builder, io.gitpod.publicapi.v1.Error.CellDisabledErrorOrBuilder>(
+                  (io.gitpod.publicapi.v1.Error.CellDisabledError) reason_,
+                  getParentForChildren(),
+                  isClean());
+          reason_ = null;
+        }
+        reasonCase_ = 8;
+        onChanged();
+        return cellIsDisabledBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:gitpod.v1.FailedPreconditionDetails)
@@ -8346,6 +8569,361 @@ public final class Error {
 
   }
 
+  public interface CellDisabledErrorOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.CellDisabledError)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.CellDisabledError}
+   */
+  public static final class CellDisabledError extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.CellDisabledError)
+      CellDisabledErrorOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        CellDisabledError.class.getName());
+    }
+    // Use CellDisabledError.newBuilder() to construct.
+    private CellDisabledError(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private CellDisabledError() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_CellDisabledError_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_CellDisabledError_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Error.CellDisabledError.class, io.gitpod.publicapi.v1.Error.CellDisabledError.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Error.CellDisabledError)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Error.CellDisabledError other = (io.gitpod.publicapi.v1.Error.CellDisabledError) obj;
+
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Error.CellDisabledError prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.CellDisabledError}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.CellDisabledError)
+        io.gitpod.publicapi.v1.Error.CellDisabledErrorOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_CellDisabledError_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_CellDisabledError_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Error.CellDisabledError.class, io.gitpod.publicapi.v1.Error.CellDisabledError.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Error.CellDisabledError.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_CellDisabledError_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.CellDisabledError getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Error.CellDisabledError.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.CellDisabledError build() {
+        io.gitpod.publicapi.v1.Error.CellDisabledError result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.CellDisabledError buildPartial() {
+        io.gitpod.publicapi.v1.Error.CellDisabledError result = new io.gitpod.publicapi.v1.Error.CellDisabledError(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Error.CellDisabledError) {
+          return mergeFrom((io.gitpod.publicapi.v1.Error.CellDisabledError)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Error.CellDisabledError other) {
+        if (other == io.gitpod.publicapi.v1.Error.CellDisabledError.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.CellDisabledError)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.CellDisabledError)
+    private static final io.gitpod.publicapi.v1.Error.CellDisabledError DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Error.CellDisabledError();
+    }
+
+    public static io.gitpod.publicapi.v1.Error.CellDisabledError getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<CellDisabledError>
+        PARSER = new com.google.protobuf.AbstractParser<CellDisabledError>() {
+      @java.lang.Override
+      public CellDisabledError parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<CellDisabledError> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<CellDisabledError> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Error.CellDisabledError getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_v1_PermissionDeniedDetails_descriptor;
   private static final
@@ -8401,6 +8979,11 @@ public final class Error {
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_ImageBuildLogsNotYetAvailableError_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_CellDisabledError_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_CellDisabledError_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -8417,7 +9000,7 @@ public final class Error {
       "ed\022R\n\022needs_verification\030\002 \001(\0132!.gitpod." +
       "v1.NeedsVerificationErrorH\000R\021needsVerifi" +
       "cationB\010\n\006reason\"\022\n\020UserBlockedError\"\030\n\026" +
-      "NeedsVerificationError\"\342\005\n\031FailedPrecond" +
+      "NeedsVerificationError\"\254\006\n\031FailedPrecond" +
       "itionDetails\022r\n\036payment_spending_limit_r" +
       "eached\030\001 \001(\0132+.gitpod.v1.PaymentSpending" +
       "LimitReachedErrorH\000R\033paymentSpendingLimi" +
@@ -8435,28 +9018,30 @@ public final class Error {
       "rorH\000R\026repositoryUnauthorized\022z\n\"image_b" +
       "uild_logs_not_yet_available\030\007 \001(\0132-.gitp" +
       "od.v1.ImageBuildLogsNotYetAvailableError" +
-      "H\000R\035imageBuildLogsNotYetAvailableB\010\n\006rea" +
-      "son\"\"\n PaymentSpendingLimitReachedError\"" +
-      "?\n\026InvalidCostCenterError\022%\n\016attribution" +
-      "_id\030\001 \001(\tR\rattributionId\"\037\n\035TooManyRunni" +
-      "ngWorkspacesError\"7\n\025InvalidGitpodYMLErr" +
-      "or\022\036\n\nviolations\030\001 \003(\tR\nviolations\"\353\001\n\027R" +
-      "epositoryNotFoundError\022\022\n\004host\030\001 \001(\tR\004ho" +
-      "st\022\024\n\005owner\030\002 \001(\tR\005owner\022\"\n\ruser_is_owne" +
-      "r\030\003 \001(\010R\013userIsOwner\022\037\n\013user_scopes\030\004 \003(" +
-      "\tR\nuserScopes\022\037\n\013last_update\030\005 \001(\tR\nlast" +
-      "Update\022\033\n\trepo_name\030\006 \001(\tR\010repoName\022#\n\re" +
-      "rror_message\030\007 \001(\tR\014errorMessage\"\374\001\n\033Rep" +
-      "ositoryUnauthorizedError\022\022\n\004host\030\001 \001(\tR\004" +
-      "host\022\'\n\017required_scopes\030\002 \003(\tR\016requiredS" +
-      "copes\022#\n\rprovider_type\030\003 \001(\tR\014providerTy" +
-      "pe\022\033\n\trepo_name\030\004 \001(\tR\010repoName\0222\n\025provi" +
-      "der_is_connected\030\005 \001(\010R\023providerIsConnec" +
-      "ted\022*\n\021is_missing_scopes\030\006 \001(\010R\017isMissin" +
-      "gScopes\"$\n\"ImageBuildLogsNotYetAvailable" +
-      "ErrorBQ\n\026io.gitpod.publicapi.v1Z7github." +
-      "com/gitpod-io/gitpod/components/public-a" +
-      "pi/go/v1b\006proto3"
+      "H\000R\035imageBuildLogsNotYetAvailable\022H\n\020cel" +
+      "l_is_disabled\030\010 \001(\0132\034.gitpod.v1.CellDisa" +
+      "bledErrorH\000R\016cellIsDisabledB\010\n\006reason\"\"\n" +
+      " PaymentSpendingLimitReachedError\"?\n\026Inv" +
+      "alidCostCenterError\022%\n\016attribution_id\030\001 " +
+      "\001(\tR\rattributionId\"\037\n\035TooManyRunningWork" +
+      "spacesError\"7\n\025InvalidGitpodYMLError\022\036\n\n" +
+      "violations\030\001 \003(\tR\nviolations\"\353\001\n\027Reposit" +
+      "oryNotFoundError\022\022\n\004host\030\001 \001(\tR\004host\022\024\n\005" +
+      "owner\030\002 \001(\tR\005owner\022\"\n\ruser_is_owner\030\003 \001(" +
+      "\010R\013userIsOwner\022\037\n\013user_scopes\030\004 \003(\tR\nuse" +
+      "rScopes\022\037\n\013last_update\030\005 \001(\tR\nlastUpdate" +
+      "\022\033\n\trepo_name\030\006 \001(\tR\010repoName\022#\n\rerror_m" +
+      "essage\030\007 \001(\tR\014errorMessage\"\374\001\n\033Repositor" +
+      "yUnauthorizedError\022\022\n\004host\030\001 \001(\tR\004host\022\'" +
+      "\n\017required_scopes\030\002 \003(\tR\016requiredScopes\022" +
+      "#\n\rprovider_type\030\003 \001(\tR\014providerType\022\033\n\t" +
+      "repo_name\030\004 \001(\tR\010repoName\0222\n\025provider_is" +
+      "_connected\030\005 \001(\010R\023providerIsConnected\022*\n" +
+      "\021is_missing_scopes\030\006 \001(\010R\017isMissingScope" +
+      "s\"$\n\"ImageBuildLogsNotYetAvailableError\"" +
+      "\023\n\021CellDisabledErrorBQ\n\026io.gitpod.public" +
+      "api.v1Z7github.com/gitpod-io/gitpod/comp" +
+      "onents/public-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -8486,7 +9071,7 @@ public final class Error {
     internal_static_gitpod_v1_FailedPreconditionDetails_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_FailedPreconditionDetails_descriptor,
-        new java.lang.String[] { "PaymentSpendingLimitReached", "InvalidCostCenter", "TooManyRunningWorkspaces", "InvalidGitpodYml", "RepositoryNotFound", "RepositoryUnauthorized", "ImageBuildLogsNotYetAvailable", "Reason", });
+        new java.lang.String[] { "PaymentSpendingLimitReached", "InvalidCostCenter", "TooManyRunningWorkspaces", "InvalidGitpodYml", "RepositoryNotFound", "RepositoryUnauthorized", "ImageBuildLogsNotYetAvailable", "CellIsDisabled", "Reason", });
     internal_static_gitpod_v1_PaymentSpendingLimitReachedError_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_gitpod_v1_PaymentSpendingLimitReachedError_fieldAccessorTable = new
@@ -8528,6 +9113,12 @@ public final class Error {
     internal_static_gitpod_v1_ImageBuildLogsNotYetAvailableError_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ImageBuildLogsNotYetAvailableError_descriptor,
+        new java.lang.String[] { });
+    internal_static_gitpod_v1_CellDisabledError_descriptor =
+      getDescriptor().getMessageTypes().get(11);
+    internal_static_gitpod_v1_CellDisabledError_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_CellDisabledError_descriptor,
         new java.lang.String[] { });
     descriptor.resolveAllFeaturesImmutable();
     com.google.protobuf.DescriptorProtos.getDescriptor();
