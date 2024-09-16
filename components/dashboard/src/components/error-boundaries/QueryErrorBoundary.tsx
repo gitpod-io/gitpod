@@ -59,7 +59,6 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
     }
 
     if (caughtError.code === ErrorCodes.CELL_EXPIRED) {
-        // resetErrorBoundary();
         return <DisabledCell />;
     }
 
