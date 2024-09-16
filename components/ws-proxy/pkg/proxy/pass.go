@@ -128,8 +128,8 @@ func proxyPass(config *RouteHandlerConfig, infoProvider common.WorkspaceInfoProv
 			}
 			return
 		}
-		req = withResource(req, targetResource)
-		req = withHttpVersion(req)
+		req = withResourceMetricsLabel(req, targetResource)
+		req = withHttpVersionMetricsLabel(req)
 
 		originalURL := *req.URL
 

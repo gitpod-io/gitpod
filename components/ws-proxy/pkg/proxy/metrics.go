@@ -80,7 +80,7 @@ var (
 	httpVersionKey = contextKey(1)
 )
 
-func withResource(r *http.Request, resource string) *http.Request {
+func withResourceMetricsLabel(r *http.Request, resource string) *http.Request {
 	ctx := context.WithValue(r.Context(), resourceKey, []string{resource})
 	return r.WithContext(ctx)
 }
@@ -98,7 +98,7 @@ func withResourceLabel() promhttp.Option {
 	})
 }
 
-func withHttpVersion(r *http.Request) *http.Request {
+func withHttpVersionMetricsLabel(r *http.Request) *http.Request {
 	ctx := context.WithValue(r.Context(), httpVersionKey, []string{r.Proto})
 	return r.WithContext(ctx)
 }
