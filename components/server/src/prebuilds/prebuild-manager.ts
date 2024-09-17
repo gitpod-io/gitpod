@@ -124,9 +124,9 @@ export class PrebuildManager {
         ctx: TraceContext,
         user: User,
         project: Project,
+        maxAge?: number,
     ): Promise<WebhookEvent | undefined> {
         const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
-        const maxAge = 7 * 24 * 60 * 60 * 1000; // 1 week
 
         const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, 1);
         if (events.length === 0) {
@@ -139,7 +139,7 @@ export class PrebuildManager {
             throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `repo provider unavailable`);
         }
         const matchingEvent = events.find((event) => {
-            if (Date.now() - new Date(event.creationTime).getTime() > maxAge) {
+            if (maxAge && Date.now() - new Date(event.creationTime).getTime() > maxAge) {
                 return false;
             }
 
