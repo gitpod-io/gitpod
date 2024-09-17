@@ -6,7 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import * as grpc from "@grpc/grpc-js";
-import { RedisPublisher, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { ProjectDB, RedisPublisher, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
     GetWorkspaceTimeoutResult,
@@ -106,6 +106,7 @@ export class WorkspaceService {
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(ContextParser) private readonly contextParser: ContextParser,
         @inject(LazyPrebuildManager) private readonly prebuildManager: LazyPrebuildManager,
+        @inject(ProjectDB) private readonly projectDB: ProjectDB,
 
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
         @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter,
@@ -175,7 +176,7 @@ export class WorkspaceService {
         await this.workspaceClassChecking(ctx, user.id, organizationId, undefined, project, workspaceClass);
 
         // We don't want to be doing this in a transaction, because it calls out to external systems.
-        // TODO(gpl) Would be great to sepearate workspace creation from external calls
+        // TODO(gpl) Would be great to separate workspace creation from external calls
         const workspace = await this.factory.createForContext(
             ctx,
             user,
@@ -225,6 +226,7 @@ export class WorkspaceService {
         this.asyncUpdateDeletionEligabilityTime(user.id, workspace.id);
         this.asyncUpdateDeletionEligabilityTimeForUsedPrebuild(user.id, workspace);
         if (project && workspace.type === "regular") {
+            this.asyncHandleUpdatePrebuildTriggerStrategy({ ctx, project, workspace, user });
             this.asyncStartPrebuild({ ctx, project, workspace, user });
         }
         return workspace;
@@ -472,6 +474,50 @@ export class WorkspaceService {
         );
     }
 
+    private asyncHandleUpdatePrebuildTriggerStrategy({
+        ctx,
+        project,
+        workspace,
+        user,
+    }: {
+        ctx: TraceContext;
+        project: Project;
+        workspace: Workspace;
+        user: User;
+    }): void {
+        if (project.settings?.prebuilds?.triggerStrategy === "activity-based") {
+            return;
+        }
+
+        const logCtx = { userId: user.id, workspaceId: workspace.id };
+        log.info(logCtx, "Workspace create event: Checking prebuild trigger strategy");
+
+        (async () => {
+            const prebuildManager = this.prebuildManager();
+
+            const event = await prebuildManager.getRecentWebhookEvent(ctx, user, project);
+            if (!event) {
+                await this.projectDB.updateProject({
+                    id: project.id,
+                    settings: {
+                        ...project.settings,
+                        prebuilds: {
+                            ...project.settings?.prebuilds,
+                            triggerStrategy: "activity-based",
+                        },
+                    },
+                });
+                log.info(logCtx, "Updated project prebuild trigger strategy to 'activity-based'");
+            }
+        })().catch((err) =>
+            log.error(
+                { userId: user.id, workspaceId: workspace.id },
+                "Failed to update prebuild trigger strategy after workspace creation",
+                err,
+            ),
+        );
+    }
+
     private asyncUpdateDeletionEligabilityTime(userId: string, workspaceId: string): void {
         this.updateDeletionEligabilityTime(userId, workspaceId).catch((err) =>
             log.error({ userId, workspaceId }, "Failed to update deletion eligibility time", err),
@@ -479,7 +525,7 @@ export class WorkspaceService {
     }
 
     /**
-     * Sets the deletionEligibilityTime of the workspace, depening of the current state of the workspace and the configuration.
+     * Sets the deletionEligibilityTime of the workspace, depending on the current state of the workspace and the configuration.
      *
      * @param userId sets the
      * @param workspaceId
