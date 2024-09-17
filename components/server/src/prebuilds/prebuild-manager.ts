@@ -118,7 +118,7 @@ export class PrebuildManager {
     }
 
     /**
-     * getRecentWebhookEvent checks if the webhook integration is active for the given user and project by querying the webhook event database and seeing if for any of the latest n commits a webhook event exists.
+     * getRecentWebhookEvent checks if the webhook integration is active for the given user and project by querying the webhook event database and seeing if for the latest commit on the repository there exists a webhook event.
      */
     public async getRecentWebhookEvent(
         ctx: TraceContext,
@@ -126,10 +126,9 @@ export class PrebuildManager {
         project: Project,
     ): Promise<WebhookEvent | undefined> {
         const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
-        const maxDepth = 15;
-        const maxAge = 7 * 24 * 60 * 60; // 1 week
+        const maxAge = 7 * 24 * 60 * 60 * 1000; // 1 week
 
-        const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, maxDepth);
+        const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, 1);
         if (events.length === 0) {
             return undefined;
         }
@@ -137,27 +136,15 @@ export class PrebuildManager {
         const hostContext = this.hostContextProvider.get(context.repository.host);
         const repoProvider = hostContext?.services?.repositoryProvider;
         if (!repoProvider) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `repository provider not found`);
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `repo provider unavailable`);
         }
-        const history = await repoProvider.getCommitHistory(
-            user,
-            context.repository.owner,
-            context.repository.name,
-            context.revision,
-            maxDepth,
-        );
-        if (!history) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `commit history not found`);
-        }
-        const matchingEvent = events.find((event) =>
-            history.find((commit) => {
-                if (Date.now() - new Date(event.creationTime).getTime() > maxAge) {
-                    return false;
-                }
+        const matchingEvent = events.find((event) => {
+            if (Date.now() - new Date(event.creationTime).getTime() > maxAge) {
+                return false;
+            }
 
-                return commit === event.commit;
-            }),
-        );
+            return context.revision === event.commit;
+        });
 
         return matchingEvent;
     }

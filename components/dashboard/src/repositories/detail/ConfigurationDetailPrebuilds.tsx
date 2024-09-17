@@ -119,10 +119,8 @@ export const WebhookTriggerMessage = ({ configurationId }: { configurationId: st
         <Alert type="warning">
             <div className="flex flex-row gap-2 items-center">
                 <span>
-                    We have gotten webhook activity from your repository recently, indicating you have webhooks
-                    installed on your repo. To optimize prebuilds usage, you might want to consider enabling Activity
-                    based prebuilds by removing our webhook. If you remove them, it might take a new commit for this
-                    message to disappear, although activity based prebuilds will start working right away.
+                    We have gotten webhook activity for your most recent commit. You should consider removing webhooks
+                    from the repository in favor of activity-based prebuilds.
                 </span>
                 <div>
                     <a
@@ -131,7 +129,7 @@ export const WebhookTriggerMessage = ({ configurationId }: { configurationId: st
                         target="_blank"
                         rel="noreferrer"
                     >
-                        Learn more about Activity based prebuilds
+                        Learn more
                     </a>
                 </div>
             </div>
