@@ -18,6 +18,7 @@ import { Config } from "./config";
 import { RateLimited } from "./api/rate-limited";
 import { RateLimitter } from "./rate-limitter";
 import { RateLimiterRes } from "rate-limiter-flexible";
+import * as crypto from "crypto";
 
 @injectable()
 export class AnalyticsController {
@@ -69,6 +70,7 @@ export class AnalyticsController {
                 const clientHeaderFields = toClientHeaderFields(req);
                 const event = req.body as RemoteIdentifyMessage;
                 this.identifyUser(req.user.id, event, clientHeaderFields);
+                this.setHashedUserIdCookie(req.user.id, res);
                 res.sendStatus(200);
             } catch (e) {
                 console.error("failed to identify user", e);
@@ -176,5 +178,17 @@ export class AnalyticsController {
             }
             throw e;
         }
+    }
+
+    private setHashedUserIdCookie(userId: string, res: express.Response): void {
+        const hashedUserId = crypto.createHash("md5").update(userId).digest("hex");
+        const oneYearInSeconds = 365 * 24 * 60 * 60;
+        res.cookie("gitpod_hashed_user_id", hashedUserId, {
+            domain: ".gitpod.io",
+            maxAge: oneYearInSeconds * 1000, // Convert to milliseconds
+            httpOnly: true,
+            secure: true,
+            sameSite: "lax",
+        });
     }
 }
