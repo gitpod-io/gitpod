@@ -15,8 +15,8 @@ import { TokenService } from "../user/token-service";
 import { RepoURL } from "../repohost";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UnauthorizedError } from "../errors";
-import { GitHubScope } from "../github/scopes";
 import { containsScopes } from "./token-scopes-inclusion";
+import { GitHubOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class GitHubService extends RepositoryService {
@@ -66,9 +66,12 @@ export class GitHubService extends RepositoryService {
                     host: parsedRepoUrl.host,
                     providerType: "GitHub",
                     repoName: parsedRepoUrl.repo,
-                    requiredScopes: GitHubScope.Requirements.PRIVATE_REPO,
+                    requiredScopes: GitHubOAuthScopes.Requirements.DEFAULT,
                     providerIsConnected: true,
-                    isMissingScopes: containsScopes(tokenEntry?.token.scopes, GitHubScope.Requirements.PRIVATE_REPO),
+                    isMissingScopes: containsScopes(
+                        tokenEntry?.token.scopes,
+                        GitHubOAuthScopes.Requirements.PRIVATE_REPO,
+                    ),
                 });
             }
             throw error;
