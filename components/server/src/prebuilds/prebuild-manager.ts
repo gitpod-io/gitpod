@@ -127,10 +127,11 @@ export class PrebuildManager {
     ): Promise<WebhookEvent | undefined> {
         const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
         const maxDepth = 15;
+        const maxAge = 7 * 24 * 60 * 60; // 1 week
 
         const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, maxDepth);
         if (events.length === 0) {
-            // return undefined;
+            return undefined;
         }
 
         const hostContext = this.hostContextProvider.get(context.repository.host);
@@ -148,7 +149,15 @@ export class PrebuildManager {
         if (!history) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `commit history not found`);
         }
-        const matchingEvent = events.find((event) => history.find((commit) => commit === event.commit));
+        const matchingEvent = events.find((event) =>
+            history.find((commit) => {
+                if (Date.now() - new Date(event.creationTime).getTime() > maxAge) {
+                    return false;
+                }
+
+                return commit === event.commit;
+            }),
+        );
 
         return matchingEvent;
     }
