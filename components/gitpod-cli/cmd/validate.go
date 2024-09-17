@@ -238,7 +238,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	serverLog := logrus.NewEntry(logrus.New())
 	serverLog.Logger.SetLevel(logLevel)
 	setLoggerFormatter(serverLog.Logger)
-	workspaceEnvs, err := getWorkspaceEnvs(ctx, &connectToServerOptions{supervisorClient, wsInfo, serverLog, false})
+	workspaceEnvs, err := getWorkspaceEnvs(ctx, &connectToServerOptions{supervisorClient, wsInfo, serverLog, envScopeRepo})
 	if err != nil {
 		return err
 	}
