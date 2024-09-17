@@ -230,7 +230,7 @@ func setEnvs(ctx context.Context, setEnvScope envScope, args []string) error {
 				if ferr, ok := err.(*jsonrpc2.Error); ok && ferr.Code == http.StatusForbidden && setEnvScope == envScopeUser {
 					return fmt.Errorf(""+
 						"Can't automatically create Env Var `%s` for security reasons.\n"+
-						"Please create the var manullay under %s/user/variables using Name=%s, Scope=*/*, Value=foobar", v.Name, result.gitpodHost, v.Name)
+						"Please create the var manually under %s/user/variables using Name=%s, Scope=*/*, Value=foobar", v.Name, result.gitpodHost, v.Name)
 				}
 				return err
 			}
