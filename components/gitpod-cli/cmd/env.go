@@ -8,12 +8,14 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/sourcegraph/jsonrpc2"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
@@ -35,6 +37,17 @@ var (
 	envScopeRepo envScope = "repo"
 	envScopeUser envScope = "user"
 )
+
+func envScopeFromString(s string) envScope {
+	switch s {
+	case string(envScopeRepo):
+		return envScopeRepo
+	case string(envScopeUser):
+		return envScopeUser
+	default:
+		return envScopeRepo
+	}
+}
 
 // envCmd represents the env command
 var envCmd = &cobra.Command{
@@ -75,8 +88,8 @@ delete environment variables with a repository pattern of */foo, foo/* or */*.
 			if unsetEnvs {
 				err = deleteEnvs(ctx, args)
 			} else {
-				scopeUser := scope == string(envScopeUser)
-				err = setEnvs(ctx, scopeUser, args)
+				setEnvScope := envScopeFromString(scope)
+				err = setEnvs(ctx, setEnvScope, args)
 			}
 		} else {
 			err = getEnvs(ctx)
@@ -89,6 +102,7 @@ type connectToServerResult struct {
 	repositoryPattern string
 	wsInfo            *supervisorapi.WorkspaceInfoResponse
 	client            *serverapi.APIoverJSONRPC
+	gitpodHost        string
 }
 
 type connectToServerOptions struct {
@@ -96,7 +110,7 @@ type connectToServerOptions struct {
 	wsInfo           *api.WorkspaceInfoResponse
 	log              *log.Entry
 
-	setEnvScopeUser bool
+	setEnvScope envScope
 }
 
 func connectToServer(ctx context.Context, options *connectToServerOptions) (*connectToServerResult, error) {
@@ -133,7 +147,7 @@ func connectToServer(ctx context.Context, options *connectToServerOptions) (*con
 	repositoryPattern := wsinfo.Repository.Owner + "/" + wsinfo.Repository.Name
 
 	operations := "create/get/update/delete"
-	if options != nil && options.setEnvScopeUser {
+	if options != nil && options.setEnvScope == envScopeUser {
 		// Updating user env vars requires a different token with a special scope
 		repositoryPattern = "*/*"
 		operations = "update"
@@ -166,7 +180,7 @@ func connectToServer(ctx context.Context, options *connectToServerOptions) (*con
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to server: %w", err)
 	}
-	return &connectToServerResult{repositoryPattern, wsinfo, client}, nil
+	return &connectToServerResult{repositoryPattern, wsinfo, client, wsinfo.GitpodHost}, nil
 }
 
 func getWorkspaceEnvs(ctx context.Context, options *connectToServerOptions) ([]*serverapi.EnvVar, error) {
@@ -192,9 +206,9 @@ func getEnvs(ctx context.Context) error {
 	return nil
 }
 
-func setEnvs(ctx context.Context, scopeUser bool, args []string) error {
+func setEnvs(ctx context.Context, setEnvScope envScope, args []string) error {
 	options := connectToServerOptions{
-		setEnvScopeUser: scopeUser,
+		setEnvScope: setEnvScope,
 	}
 	result, err := connectToServer(ctx, &options)
 	if err != nil {
@@ -213,6 +227,11 @@ func setEnvs(ctx context.Context, scopeUser bool, args []string) error {
 		g.Go(func() error {
 			err = result.client.SetEnvVar(ctx, v)
 			if err != nil {
+				if ferr, ok := err.(*jsonrpc2.Error); ok && ferr.Code == http.StatusForbidden && setEnvScope == envScopeUser {
+					return fmt.Errorf(""+
+						"Can't automatically create Env Var `%s` for security reasons.\n"+
+						"Please create the var manullay under %s/user/variables using Name=%s, Scope=*/*, Value=foobar", v.Name, result.gitpodHost, v.Name)
+				}
 				return err
 			}
 			printVar(v.Name, v.Value, exportEnvs)
