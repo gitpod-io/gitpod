@@ -14,6 +14,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HostContainerMapping } from "./host-container-mapping";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { RepositoryService } from "../repohost/repo-service";
 
 @injectable()
 export class HostContextProviderImpl implements HostContextProvider {
@@ -152,6 +153,7 @@ export class HostContextProviderImpl implements HostContextProvider {
         const container = parentContainer.createChild();
         container.bind(AuthProviderParams).toConstantValue(authProviderConfig);
         container.bind(HostContext).toSelf().inSingletonScope();
+        container.bind(RepositoryService).toSelf().inSingletonScope();
 
         const hostContainerMapping = parentContainer.get(HostContainerMapping);
         const containerModules = hostContainerMapping.get(authProviderConfig.type);

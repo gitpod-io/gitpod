@@ -8,7 +8,7 @@ import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
 import { Config } from "../config";
 import { TokenProvider } from "../user/token-provider";
-import { CommitContext, Project, SuggestedRepository, Token, WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { CommitContext, Project, SuggestedRepository, Token, User, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AuthProviderService } from "../auth/auth-provider-service";
@@ -22,6 +22,7 @@ import {
     suggestionFromRecentWorkspace,
     suggestionFromUserRepo,
 } from "../workspace/suggested-repos-sorter";
+import { RepoURL } from "../repohost";
 
 @injectable()
 export class ScmService {
@@ -50,6 +51,29 @@ export class ScmService {
         const { host } = query;
         const token = await this.tokenProvider.getTokenForHost(userId, host);
         return token;
+    }
+
+    public async installWebhookForPrebuilds(project: Project, installer: User) {
+        // Install the prebuilds webhook if possible
+        const { teamId, cloneUrl } = project;
+        const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
+        const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
+
+        if (!hostContext) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `SCM provider not found.`);
+        }
+
+        const repositoryService = hostContext.services?.repositoryService;
+        if (repositoryService) {
+            const logPayload = { organizationId: teamId, installer: installer.id, cloneUrl: project.cloneUrl };
+            try {
+                await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
+                log.info("Webhook for prebuilds installed.", logPayload);
+            } catch (error) {
+                log.error("Failed to install webhook for prebuilds.", error, logPayload);
+                throw error;
+            }
+        }
     }
 
     /**
