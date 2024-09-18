@@ -51,6 +51,7 @@ export class SessionHandler {
             if (!decoded) {
                 const cookie = await this.createJWTSessionCookie(user.id);
                 res.cookie(cookie.name, cookie.value, cookie.opts);
+                this.setHashedUserIdCookie(req, res);
 
                 reportJWTCookieIssued();
                 res.status(200);
