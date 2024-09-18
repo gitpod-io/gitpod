@@ -233,6 +233,12 @@ export class SessionHandler {
             sameSite,
             secure,
         });
+        res.clearCookie("gitpod_hashed_user_id", {
+            domain: `.${res.req.hostname}`,
+            httpOnly: true,
+            secure: true,
+            sameSite: "lax",
+        });
     }
 
     private setHashedUserIdCookie(req: express.Request, res: express.Response): void {
