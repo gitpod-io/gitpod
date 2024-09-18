@@ -198,14 +198,7 @@ export class AnalyticsController {
             hostname.endsWith("gitpod-dev.com") ||
             hostname.endsWith("gitpod-io-dev.com")
         ) {
-            const domain =
-                hostname === "gitpod.io"
-                    ? ".gitpod.io"
-                    : hostname === "gitpod-staging.com"
-                    ? ".gitpod-staging.com"
-                    : hostname.endsWith("gitpod-dev.com")
-                    ? ".gitpod-dev.com"
-                    : ".gitpod-io-dev.com";
+            const domain = `.${hostname}`;
 
             res.cookie("gitpod_hashed_user_id", hashedUserId, {
                 domain: domain,
