@@ -28,6 +28,7 @@ message FailedPreconditionDetails {
     RepositoryNotFoundError repository_not_found = 5;
     RepositoryUnauthorizedError repository_unauthorized = 6;
     ImageBuildLogsNotYetAvailableError image_build_logs_not_yet_available = 7;
+    CellDisabledError cell_is_disabled = 8;
   }
 }
 
@@ -63,6 +64,8 @@ message RepositoryUnauthorizedError {
 }
 
 message ImageBuildLogsNotYetAvailableError {}
+
+message CellDisabledError {}
 
 /*
 // details for INVALID_ARGUMENT status code

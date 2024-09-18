@@ -382,6 +382,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     private async checkUser(methodName?: string, logPayload?: {}, ctx?: LogContext): Promise<User> {
+        const cellDisabled = await getExperimentsClientForBackend().getValueAsync("cell_disabled", false, {});
+        if (cellDisabled) {
+            throw new ApplicationError(ErrorCodes.CELL_EXPIRED, "Cell is disabled");
+        }
+
         // Generally, a user session is required.
         const userId = this.userID;
         if (!userId) {

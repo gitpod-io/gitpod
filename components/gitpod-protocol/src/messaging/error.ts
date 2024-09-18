@@ -107,6 +107,9 @@ export const ErrorCodes = {
     // 481 Professional plan is required for this operation
     PLAN_PROFESSIONAL_REQUIRED: 481 as const,
 
+    // 482 Cell Expired
+    CELL_EXPIRED: 482 as const,
+
     // 490 Too Many Running Workspace
     TOO_MANY_RUNNING_WORKSPACES: 490 as const,
 

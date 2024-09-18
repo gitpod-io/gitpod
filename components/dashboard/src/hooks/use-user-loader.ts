@@ -22,13 +22,17 @@ export const useUserLoader = () => {
         queryFn: async () => {
             const user = (await userClient.getAuthenticatedUser({})).user;
 
-            return user || null;
+            return user ?? null;
         },
         // We'll let an ErrorBoundary catch the error
         useErrorBoundary: true,
         // It's important we don't retry as we want to show the login screen as quickly as possible if a 401
         retry: (_failureCount: number, error: Error & { code?: number }) => {
-            return error.code !== ErrorCodes.NOT_AUTHENTICATED && error.code !== ErrorCodes.USER_DELETED;
+            return (
+                error.code !== ErrorCodes.NOT_AUTHENTICATED &&
+                error.code !== ErrorCodes.USER_DELETED &&
+                error.code !== ErrorCodes.CELL_EXPIRED
+            );
         },
         // docs: https://tanstack.com/query/v4/docs/react/guides/query-retries
         // backoff by doubling, max. 10s
