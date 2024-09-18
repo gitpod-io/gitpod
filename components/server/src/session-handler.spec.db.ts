@@ -53,9 +53,20 @@ describe("SessionHandler", () => {
         return await deferred.promise;
     };
 
+    class TestSessionHandler extends SessionHandler {
+        public testSetHashedUserIdCookie() {
+            // Empty implementation for testing
+            return;
+        }
+    }
+
     beforeEach(async () => {
         container = createTestContainer();
         sessionHandler = container.get(SessionHandler);
+        (sessionHandler as TestSessionHandler).testSetHashedUserIdCookie = () => {
+            return;
+        };
+
         jwtSessionHandler = sessionHandler.jwtSessionConvertor();
         const userService = container.get(UserService);
         // insert some users to the DB to reproduce INC-379
