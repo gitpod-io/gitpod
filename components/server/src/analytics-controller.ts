@@ -37,7 +37,7 @@ export class AnalyticsController {
                 }
                 const clientHeaderFields = toClientHeaderFields(req);
                 const event = req.body as RemoteTrackMessage;
-                this.trackEvent(req.user?.id, event, clientHeaderFields);
+                this.trackEvent(req.user?.id, event, clientHeaderFields, req, res);
                 res.sendStatus(200);
             } catch (e) {
                 console.error("failed to track event", e);
@@ -84,6 +84,8 @@ export class AnalyticsController {
         userId: string | undefined,
         event: RemoteTrackMessage,
         clientHeaderFields: ClientHeaderFields,
+        req: express.Request,
+        res: express.Response,
     ): void {
         // Beware: DO NOT just event... the message, but consume it individually as the message is coming from
         //         the wire and we have no idea what's in it. Even passing the context and properties directly
@@ -106,6 +108,7 @@ export class AnalyticsController {
                 anonymousId: anonymousId,
                 ...msg,
             });
+            this.setHashedUserIdCookie(userId, req, res);
         } else if (anonymousId) {
             this.analytics.track({
                 anonymousId: anonymousId as string | number,
@@ -203,7 +206,7 @@ export class AnalyticsController {
             res.cookie("gitpod_hashed_user_id", hashedUserId, {
                 domain: domain,
                 maxAge: oneYearInSeconds * 1000, // Convert to milliseconds
-                httpOnly: true,
+                httpOnly: false,
                 secure: true,
                 sameSite: "lax",
             });
