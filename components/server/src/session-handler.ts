@@ -7,6 +7,7 @@
 import express from "express";
 import { inject, injectable } from "inversify";
 import websocket from "ws";
+import * as crypto from "crypto";
 
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -80,6 +81,8 @@ export class SessionHandler {
                     return;
                 }
             }
+
+            this.setHashedUserIdCookie(req, res);
 
             res.status(200);
             res.send("User session already has a valid JWT session.");
@@ -230,6 +233,33 @@ export class SessionHandler {
             sameSite,
             secure,
         });
+    }
+
+    private setHashedUserIdCookie(req: express.Request, res: express.Response): void {
+        const user = req.user as User;
+        if (!user) return;
+
+        const hostname = req.hostname;
+        if (
+            hostname === "gitpod.io" ||
+            hostname === "gitpod-staging.com" ||
+            hostname.endsWith("gitpod-dev.com") ||
+            hostname.endsWith("gitpod-io-dev.com")
+        ) {
+            const existingHashedId = req.cookies["gitpod_hashed_user_id"];
+            if (!existingHashedId) {
+                const hashedUserId = crypto.createHash("md5").update(user.id).digest("hex");
+                const oneYearInMilliseconds = 365 * 24 * 60 * 60 * 1000;
+
+                res.cookie("gitpod_hashed_user_id", hashedUserId, {
+                    domain: `.${hostname}`,
+                    maxAge: oneYearInMilliseconds,
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: "lax",
+                });
+            }
+        }
     }
 }
 
