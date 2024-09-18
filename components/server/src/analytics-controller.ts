@@ -70,7 +70,7 @@ export class AnalyticsController {
                 const clientHeaderFields = toClientHeaderFields(req);
                 const event = req.body as RemoteIdentifyMessage;
                 this.identifyUser(req.user.id, event, clientHeaderFields);
-                this.setHashedUserIdCookie(req.user.id, res);
+                this.setHashedUserIdCookie(req.user.id, req, res);
                 res.sendStatus(200);
             } catch (e) {
                 console.error("failed to identify user", e);
@@ -180,15 +180,40 @@ export class AnalyticsController {
         }
     }
 
-    private setHashedUserIdCookie(userId: string, res: express.Response): void {
+    private setHashedUserIdCookie(userId: string, req: express.Request, res: express.Response): void {
         const hashedUserId = crypto.createHash("md5").update(userId).digest("hex");
         const oneYearInSeconds = 365 * 24 * 60 * 60;
-        res.cookie("gitpod_hashed_user_id", hashedUserId, {
-            domain: ".gitpod.io",
-            maxAge: oneYearInSeconds * 1000, // Convert to milliseconds
-            httpOnly: true,
-            secure: true,
-            sameSite: "lax",
-        });
+
+        /**
+         * This implementation is inspired by isGitpodIo() from /workspace/gitpod/components/dashboard/src/utils.ts
+         * We're using a server-side equivalent here because:
+         * 1. The original function is client-side code using window.location
+         * 2. This is server-side code that needs to use the request object
+         * 3. We need to determine the appropriate domain for setting the cookie
+         */
+        const hostname = req.hostname;
+        if (
+            hostname === "gitpod.io" ||
+            hostname === "gitpod-staging.com" ||
+            hostname.endsWith("gitpod-dev.com") ||
+            hostname.endsWith("gitpod-io-dev.com")
+        ) {
+            const domain =
+                hostname === "gitpod.io"
+                    ? ".gitpod.io"
+                    : hostname === "gitpod-staging.com"
+                    ? ".gitpod-staging.com"
+                    : hostname.endsWith("gitpod-dev.com")
+                    ? ".gitpod-dev.com"
+                    : ".gitpod-io-dev.com";
+
+            res.cookie("gitpod_hashed_user_id", hashedUserId, {
+                domain: domain,
+                maxAge: oneYearInSeconds * 1000, // Convert to milliseconds
+                httpOnly: true,
+                secure: true,
+                sameSite: "lax",
+            });
+        }
     }
 }
