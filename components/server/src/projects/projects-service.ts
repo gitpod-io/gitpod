@@ -5,7 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WebhookEventDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     Branch,
     PrebuildWithStatus,
@@ -13,6 +13,8 @@ import {
     FindPrebuildsParams,
     Project,
     User,
+    WebhookEvent,
+    CommitContext,
 } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
@@ -35,6 +37,8 @@ import { InstallationService } from "../auth/installation-service";
 import { IDEService } from "../ide-service";
 import type { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { ScmService } from "../scm/scm-service";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { ContextParser } from "../workspace/context-parser-service";
 
 // to resolve circular dependency issues
 export const LazyPrebuildManager = Symbol("LazyPrebuildManager");
@@ -53,6 +57,8 @@ export class ProjectsService {
         @inject(ScmService) private readonly scmService: ScmService,
         @inject(IDEService) private readonly ideService: IDEService,
         @inject(LazyPrebuildManager) private readonly prebuildManager: LazyPrebuildManager,
+        @inject(WebhookEventDB) private readonly webhookEventDb: WebhookEventDB,
+        @inject(ContextParser) private contextParser: ContextParser,
 
         @inject(InstallationService) private readonly installationService: InstallationService,
     ) {}
@@ -538,6 +544,38 @@ export class ProjectsService {
             });
             return project;
         }
+    }
+
+    /**
+     * getRecentWebhookEvent checks if the webhook integration is active for the given user and project by querying the webhook event database and seeing if for the latest commit on the repository there exists a webhook event.
+     */
+    public async getRecentWebhookEvent(
+        ctx: TraceContext,
+        user: User,
+        project: Project,
+        maxAge?: number,
+    ): Promise<WebhookEvent | undefined> {
+        const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
+
+        const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, 1);
+        if (events.length === 0) {
+            return undefined;
+        }
+
+        const hostContext = this.hostContextProvider.get(context.repository.host);
+        const repoProvider = hostContext?.services?.repositoryProvider;
+        if (!repoProvider) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `repo provider unavailable`);
+        }
+        const matchingEvent = events.find((event) => {
+            if (maxAge && Date.now() - new Date(event.creationTime).getTime() > maxAge) {
+                return false;
+            }
+
+            return context.revision === event.commit;
+        });
+
+        return matchingEvent;
     }
 }
 

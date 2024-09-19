@@ -493,9 +493,7 @@ export class WorkspaceService {
         log.info(logCtx, "Workspace create event: Checking prebuild trigger strategy");
 
         (async () => {
-            const prebuildManager = this.prebuildManager();
-
-            const event = await prebuildManager.getRecentWebhookEvent(ctx, user, project);
+            const event = await this.projectsService.getRecentWebhookEvent(ctx, user, project);
             if (!event) {
                 await this.projectDB.updateProject({
                     id: project.id,

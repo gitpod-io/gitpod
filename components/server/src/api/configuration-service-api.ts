@@ -32,7 +32,6 @@ import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 import { Project } from "@gitpod/gitpod-protocol";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { ContextService } from "../workspace/context-service";
-import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { Timestamp } from "@bufbuild/protobuf";
 
 function buildUpdateObject<T extends Record<string, any>>(obj: T): Partial<T> {
@@ -62,8 +61,6 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         private readonly userService: UserService,
         @inject(ContextService)
         private readonly contextService: ContextService,
-        @inject(PrebuildManager)
-        private readonly prebuildManager: PrebuildManager,
     ) {}
 
     async createConfiguration(
@@ -255,12 +252,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "configuration not found");
         }
         const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
-        const event = await this.prebuildManager.getRecentWebhookEvent(
-            {},
-            user,
-            configuration,
-            7 * 24 * 60 * 60 * 1000,
-        );
+        const event = await this.projectService.getRecentWebhookEvent({}, user, configuration, 7 * 24 * 60 * 60 * 1000);
 
         const resp = new GetConfigurationWebhookActivityStatusResponse({
             isWebhookActive: event !== undefined,

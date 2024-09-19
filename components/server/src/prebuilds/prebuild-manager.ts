@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBWithTracing, TracedWorkspaceDB, WebhookEventDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
     CommitInfo,
@@ -16,7 +16,6 @@ import {
     StartPrebuildResult,
     TaskConfig,
     User,
-    WebhookEvent,
     Workspace,
     WorkspaceConfig,
     WorkspaceInstance,
@@ -76,7 +75,6 @@ export class PrebuildManager {
         @inject(ContextParser) private contextParser: ContextParser,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
-        @inject(WebhookEventDB) private readonly webhookEventDb: WebhookEventDB,
     ) {}
 
     private async findNonFailedPrebuiltWorkspace(ctx: TraceContext, projectId: string, commitSHA: string) {
@@ -115,38 +113,6 @@ export class PrebuildManager {
                 }
             }
         }, opts);
-    }
-
-    /**
-     * getRecentWebhookEvent checks if the webhook integration is active for the given user and project by querying the webhook event database and seeing if for the latest commit on the repository there exists a webhook event.
-     */
-    public async getRecentWebhookEvent(
-        ctx: TraceContext,
-        user: User,
-        project: Project,
-        maxAge?: number,
-    ): Promise<WebhookEvent | undefined> {
-        const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
-
-        const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, 1);
-        if (events.length === 0) {
-            return undefined;
-        }
-
-        const hostContext = this.hostContextProvider.get(context.repository.host);
-        const repoProvider = hostContext?.services?.repositoryProvider;
-        if (!repoProvider) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `repo provider unavailable`);
-        }
-        const matchingEvent = events.find((event) => {
-            if (maxAge && Date.now() - new Date(event.creationTime).getTime() > maxAge) {
-                return false;
-            }
-
-            return context.revision === event.commit;
-        });
-
-        return matchingEvent;
     }
 
     public async *getAndWatchPrebuildStatus(
