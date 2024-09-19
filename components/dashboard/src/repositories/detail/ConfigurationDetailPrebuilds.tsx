@@ -116,22 +116,21 @@ export const WebhookTriggerMessage = ({ configurationId }: { configurationId: st
     }
 
     return (
-        <Alert type="warning">
+        <Alert type="info">
             <div className="flex flex-row gap-2 items-center">
                 <span>
-                    We have gotten webhook activity for your most recent commit. You should consider removing webhooks
-                    from the repository in favor of activity-based prebuilds.
-                </span>
-                <div>
+                    Did you know "Activity-based Prebuilds" can reduce your cost, increase availability and improve your
+                    security posture? See the{" "}
                     <a
                         href="https://www.gitpod.io/changelog/activity-based-prebuilds"
                         className="gp-link"
                         target="_blank"
                         rel="noreferrer"
                     >
-                        Learn more
-                    </a>
-                </div>
+                        changelog entry
+                    </a>{" "}
+                    on how to enable them.
+                </span>
             </div>
         </Alert>
     );
