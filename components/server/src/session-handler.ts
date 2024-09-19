@@ -241,7 +241,7 @@ export class SessionHandler {
         });
     }
 
-    private setHashedUserIdCookie(req: express.Request, res: express.Response): void {
+    public setHashedUserIdCookie(req: express.Request, res: express.Response): void {
         const user = req.user as User;
         if (!user) return;
 

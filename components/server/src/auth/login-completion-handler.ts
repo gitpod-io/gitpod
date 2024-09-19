@@ -103,6 +103,7 @@ export class LoginCompletionHandler {
         // (default case) If we got redirected here onto the base domain of the Gitpod installation, we can just issue the cookie right away.
         const cookie = await this.session.createJWTSessionCookie(user.id);
         response.cookie(cookie.name, cookie.value, cookie.opts);
+        this.session.setHashedUserIdCookie(request, response);
         reportJWTCookieIssued();
 
         log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`);
