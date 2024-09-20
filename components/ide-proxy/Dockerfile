@@ -14,7 +14,7 @@ RUN for FILE in `ls /bin/gitpod-local-companion*`;do \
 done
 
 RUN mkdir -p static/code
-RUN curl -o static/code/marketplace.json "https://raw.githubusercontent.com/open-vsx/publish-extensions/a5957f7f8ab9a05d87e81467aa4375c17e8f10e5/extension-control/extensions.json"
+RUN curl -o static/code/marketplace.json "https://raw.githubusercontent.com/open-vsx/publish-extensions/dfa20ca6716282d799c58d10751f94cbc3471775/extension-control/extensions.json"
 
 FROM caddy/caddy:2.7.6-alpine
 
