@@ -34,6 +34,20 @@ enum OrganizationRole {
   ORGANIZATION_ROLE_COLLABORATOR = 3;
 }
 
+// OrganizationPermissions define permissions that are restrictable using RoleRestrictions
+enum OrganizationPermission {
+  ORGANIZATION_PERMISSION_UNSPECIFIED = 0;
+  ORGANIZATION_PERMISSION_START_ARBITRARY_REPOS = 1;
+}
+
+message RoleRestrictionEntry {
+  // role is the role that is restricted
+  OrganizationRole role = 1;
+
+  // permissions are the permissions that are restricted
+  repeated OrganizationPermission permissions = 2;
+}
+
 message OrganizationSettings {
   bool workspace_sharing_disabled = 1;
   string default_workspace_image = 2;
@@ -42,6 +56,7 @@ message OrganizationSettings {
   map<string, string> pinned_editor_versions = 5;
   string default_role = 6;
   TimeoutSettings timeout_settings = 7;
+  repeated RoleRestrictionEntry role_restrictions = 8;
 }
 
 service OrganizationService {
@@ -159,6 +174,11 @@ message UpdateOrganizationSettingsRequest {
 
   // timeout_settings are the settings for workspace timeouts
   optional TimeoutSettings timeout_settings = 11;
+
+  repeated RoleRestrictionEntry role_restrictions = 12;
+
+  // Specifies whether role_restrictions should be updated.
+  optional bool update_role_restrictions = 13;
 }
 
 message UpdateOrganizationSettingsResponse {
