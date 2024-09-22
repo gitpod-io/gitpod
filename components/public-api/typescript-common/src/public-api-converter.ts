@@ -43,7 +43,6 @@ import {
 import { AuditLog as AuditLogProtocol } from "@gitpod/gitpod-protocol/lib/audit-log";
 import {
     OrgMemberInfo,
-    OrgMemberRole,
     OrganizationSettings as OrganizationSettingsProtocol,
     PartialProject,
     PrebuildSettings as PrebuildSettingsProtocol,
@@ -51,6 +50,8 @@ import {
     Project,
     ProjectSettings,
     Organization as ProtocolOrganization,
+    OrgMemberPermission,
+    OrgMemberRole,
 } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
@@ -108,6 +109,7 @@ import {
 import {
     Organization,
     OrganizationMember,
+    OrganizationPermission,
     OrganizationRole,
     OrganizationSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
@@ -1392,6 +1394,15 @@ export class PublicAPIConverter {
             scopes: t.scopes,
             idToken: t.idToken,
         });
+    }
+
+    fromOrganizationPermission = (permission: OrganizationPermission): OrgMemberPermission => {
+        switch (permission) {
+            case OrganizationPermission.START_ARBITRARY_REPOS:
+                return "start_arbitrary_repositories";
+            default:
+                throw new Error(`unknown org member permission ${permission}`);
+        }
     }
 
     toSuggestedRepository(r: SuggestedRepositoryProtocol): SuggestedRepository {

@@ -231,6 +231,8 @@ export interface OrganizationSettings {
 
     // the default organization-wide timeout settings for workspaces
     timeoutSettings?: TimeoutSettings;
+
+    roleRestrictions?: RoleRestrictions;
 }
 
 export type TimeoutSettings = {
@@ -241,12 +243,17 @@ export type TimeoutSettings = {
     denyUserTimeouts?: boolean;
 };
 
+export const VALID_ORG_MEMBER_ROLES = ["owner", "member", "collaborator"] as const;
+
 export type TeamMemberRole = OrgMemberRole;
-export type OrgMemberRole = "owner" | "member" | "collaborator";
+export type OrgMemberRole = typeof VALID_ORG_MEMBER_ROLES[number];
+
+export type OrgMemberPermission = "start_arbitrary_repositories";
+export type RoleRestrictions = Partial<Record<OrgMemberRole, OrgMemberPermission[]>>;
 
 export namespace TeamMemberRole {
-    export function isValid(role: any): role is TeamMemberRole {
-        return role === "owner" || role === "member" || role === "collaborator";
+    export function isValid(role: unknown): role is TeamMemberRole {
+        return VALID_ORG_MEMBER_ROLES.includes(role as TeamMemberRole);
     }
 }
 
