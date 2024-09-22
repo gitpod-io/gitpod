@@ -1075,6 +1075,10 @@ export class PublicAPIConverter {
                     : undefined,
                 denyUserTimeouts: settings.timeoutSettings?.denyUserTimeouts,
             },
+            roleRestrictions: Object.entries(settings.roleRestrictions ?? {}).map(([role, permissions]) => ({
+                role: this.toOrgMemberRole(role as OrgMemberRole),
+                permissions: permissions.map((permission) => this.toOrganizationPermission(permission)),
+            })),
         });
     }
 
@@ -1403,7 +1407,16 @@ export class PublicAPIConverter {
             default:
                 throw new Error(`unknown org member permission ${permission}`);
         }
-    }
+    };
+
+    toOrganizationPermission = (permission: OrgMemberPermission): OrganizationPermission => {
+        switch (permission) {
+            case "start_arbitrary_repositories":
+                return OrganizationPermission.START_ARBITRARY_REPOS;
+            default:
+                throw new Error(`unknown org member permission ${permission}`);
+        }
+    };
 
     toSuggestedRepository(r: SuggestedRepositoryProtocol): SuggestedRepository {
         return new SuggestedRepository({

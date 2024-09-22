@@ -533,6 +533,10 @@ export class OrganizationService {
                 inactivity: settings.timeoutSettings?.inactivity,
             };
         }
+        if (settings.roleRestrictions) {
+            result.roleRestrictions = settings.roleRestrictions;
+        }
+
         return result;
     }
 
