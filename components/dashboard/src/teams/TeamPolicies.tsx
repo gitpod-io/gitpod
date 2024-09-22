@@ -38,6 +38,11 @@ import { Link } from "react-router-dom";
 import { InputField } from "../components/forms/InputField";
 import { TextInput } from "../components/forms/TextInputField";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import {
+    OrganizationRoleRestrictionModal,
+    OrganizationRoleRestrictionModalProps,
+    OrgMemberPermissionRestrictionsOptions,
+} from "../components/OrgMemberPermissionsOptions";
 
 export default function TeamPoliciesPage() {
     useDocumentTitle("Organization Settings - Policies");
@@ -219,6 +224,12 @@ export default function TeamPoliciesPage() {
                         settings={settings}
                         handleUpdateTeamSettings={handleUpdateTeamSettings}
                     />
+
+                    <RolePermissionsRestrictions
+                        settings={settings}
+                        isOwner={isOwner}
+                        handleUpdateTeamSettings={handleUpdateTeamSettings}
+                    />
                 </div>
             </OrgSettingsPage>
         </>
@@ -306,6 +317,60 @@ const OrgWorkspaceClassesOptions = ({
                     showSwitchTitle={false}
                     restrictedWorkspaceClasses={restrictedWorkspaceClasses}
                     allowedClasses={allowedClassesInInstallation}
+                    updateMutation={updateMutation}
+                    onClose={() => setShowModal(false)}
+                />
+            )}
+        </ConfigurationSettingsField>
+    );
+};
+
+type RolePermissionsRestrictionsProps = {
+    settings: OrganizationSettings | undefined;
+    isOwner: boolean;
+    handleUpdateTeamSettings: (
+        newSettings: Partial<PlainMessage<OrganizationSettings>>,
+        options?: { throwMutateError?: boolean },
+    ) => Promise<void>;
+};
+
+const RolePermissionsRestrictions = ({
+    settings,
+    isOwner,
+    handleUpdateTeamSettings,
+}: RolePermissionsRestrictionsProps) => {
+    const [showModal, setShowModal] = useState(false);
+
+    const updateMutation: OrganizationRoleRestrictionModalProps["updateMutation"] = useMutation({
+        mutationFn: async ({ roleRestrictions }) => {
+            await handleUpdateTeamSettings({ roleRestrictions }, { throwMutateError: true });
+        },
+    });
+
+    return (
+        <ConfigurationSettingsField>
+            <Heading3>Role permissions restrictions</Heading3>
+            <Subheading>
+                Limit the permissions of certain roles in your organization. Requires{" "}
+                <span className="font-medium">Owner</span> permissions to change.
+            </Subheading>
+
+            <OrgMemberPermissionRestrictionsOptions roleRestrictions={settings?.roleRestrictions ?? []} />
+
+            {isOwner && (
+                <Button className="mt-6" onClick={() => setShowModal(true)}>
+                    Manage Permissions
+                </Button>
+            )}
+
+            {showModal && (
+                <OrganizationRoleRestrictionModal
+                    isLoading={false}
+                    defaultClass={""}
+                    roleRestrictions={settings?.roleRestrictions ?? []}
+                    showSetDefaultButton={false}
+                    showSwitchTitle={false}
+                    allowedClasses={[]}
                     updateMutation={updateMutation}
                     onClose={() => setShowModal(false)}
                 />
