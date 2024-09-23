@@ -227,19 +227,21 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
                     </InputField>
                 )}
 
-                <Text className="mt-8 font-semibold text-md text-pk-content-secondary">Prebuild trigger strategy</Text>
-                <TextMuted className="flex flex-row gap-1 items-center">
-                    {configuration.prebuildSettings?.triggerStrategy === PrebuildTriggerStrategy.ACTIVITY_BASED
-                        ? "Activity-based"
-                        : "Webhook-based"}
-                    <a
-                        href="https://www.gitpod.io/docs/configure/repositories/prebuilds#triggers"
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        <InfoIcon size={20} />
-                    </a>
-                </TextMuted>
+                <div className="mt-4">
+                    <Text className="font-semibold text-md text-pk-content-secondary">Prebuild trigger strategy</Text>
+                    <TextMuted className="text-sm mt-1 flex flex-row gap-1 items-center">
+                        {configuration.prebuildSettings?.triggerStrategy === PrebuildTriggerStrategy.ACTIVITY_BASED
+                            ? "Activity-based"
+                            : "Webhook-based"}
+                        <a
+                            href="https://www.gitpod.io/docs/configure/repositories/prebuilds#triggers"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <InfoIcon size={14} />
+                        </a>
+                    </TextMuted>
+                </div>
 
                 <Heading3 className="mt-8">Machine type</Heading3>
                 <Subheading>Choose the workspace machine type for your prebuilds.</Subheading>
