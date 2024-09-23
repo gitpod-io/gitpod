@@ -12,6 +12,7 @@ import {
 import { FC, FormEvent, useCallback, useMemo, useState } from "react";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 import { Heading3, Subheading } from "@podkit/typography/Headings";
+import { Text } from "@podkit/typography/Text";
 import { InputField } from "../../../components/forms/InputField";
 import { PartialConfiguration, useConfigurationMutation } from "../../../data/configurations/configuration-queries";
 import { useToast } from "../../../components/toasts/Toasts";
@@ -28,6 +29,8 @@ import { trackEvent } from "../../../Analytics";
 import dayjs from "dayjs";
 import { SwitchInputField } from "@podkit/switch/Switch";
 import { useFeatureFlag } from "../../../data/featureflag-query";
+import { TextMuted } from "@podkit/typography/TextMuted";
+import { InfoIcon } from "lucide-react";
 
 const DEFAULT_PREBUILD_COMMIT_INTERVAL = 20;
 
@@ -223,6 +226,20 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
                         />
                     </InputField>
                 )}
+
+                <Text className="mt-8 font-semibold text-md text-pk-content-secondary">Prebuild trigger strategy</Text>
+                <TextMuted className="flex flex-row gap-1 items-center">
+                    {configuration.prebuildSettings?.triggerStrategy === PrebuildTriggerStrategy.ACTIVITY_BASED
+                        ? "Activity-based"
+                        : "Webhook-based"}
+                    <a
+                        href="https://www.gitpod.io/docs/configure/repositories/prebuilds#triggers"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        <InfoIcon size={20} />
+                    </a>
+                </TextMuted>
 
                 <Heading3 className="mt-8">Machine type</Heading3>
                 <Subheading>Choose the workspace machine type for your prebuilds.</Subheading>

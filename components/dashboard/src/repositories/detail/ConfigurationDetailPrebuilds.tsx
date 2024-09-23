@@ -5,7 +5,7 @@
  */
 
 import { FC, useCallback, useState } from "react";
-import { Configuration, PrebuildTriggerStrategy } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { ConfigurationSettingsField } from "./ConfigurationSettingsField";
 import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { SwitchInputField } from "@podkit/switch/Switch";
@@ -15,9 +15,6 @@ import { LoadingState } from "@podkit/loading/LoadingState";
 import { EnablePrebuildsError } from "./prebuilds/EnablePrebuildsError";
 import { TextMuted } from "@podkit/typography/TextMuted";
 import { Link } from "react-router-dom";
-import { useWebhookActivityStatusQuery } from "../../data/prebuilds/prebuild-queries";
-import Alert from "../../components/Alert";
-import { useToast } from "../../components/toasts/Toasts";
 
 type Props = {
     configuration: Configuration;
@@ -61,11 +58,17 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
         <>
             <ConfigurationSettingsField>
                 <Heading3>Prebuilds</Heading3>
-                <Subheading className="max-w-lg">Prebuilds reduce wait time for new workspaces.</Subheading>
-                {configuration.prebuildSettings?.enabled &&
-                    configuration.prebuildSettings.triggerStrategy !== PrebuildTriggerStrategy.ACTIVITY_BASED && (
-                        <WebhookTriggerMessage configurationId={configuration.id} />
-                    )}
+                <Subheading className="max-w-lg">
+                    Prebuilds reduce wait time for new workspaces.{" "}
+                    <a
+                        href="https://www.gitpod.io/docs/configure/repositories/prebuilds"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="gp-link"
+                    >
+                        Learn more
+                    </a>
+                </Subheading>
 
                 <SwitchInputField
                     className="mt-6"
@@ -100,38 +103,5 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                 <PrebuildSettingsForm configuration={configuration} />
             )}
         </>
-    );
-};
-
-export const WebhookTriggerMessage = ({ configurationId }: { configurationId: string }) => {
-    const integrationStatus = useWebhookActivityStatusQuery(configurationId);
-    const { toast } = useToast();
-
-    if (integrationStatus.isError) {
-        toast("Failed to load webhook activity status");
-        return null;
-    }
-    if (!integrationStatus?.data?.isWebhookActive) {
-        return null;
-    }
-
-    return (
-        <Alert type="info">
-            <div className="flex flex-row gap-2 items-center">
-                <span>
-                    Did you know "Activity-based Prebuilds" can reduce your cost, increase availability and improve your
-                    security posture? See the{" "}
-                    <a
-                        href="https://www.gitpod.io/changelog/activity-based-prebuilds"
-                        className="gp-link"
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        changelog entry
-                    </a>{" "}
-                    on how to enable them.
-                </span>
-            </div>
-        </Alert>
     );
 };
