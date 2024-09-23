@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -27,7 +27,10 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.prometheus.client.exporter.common.TextFormat
-import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
 import java.io.OutputStreamWriter
@@ -113,7 +116,9 @@ class GitpodCLIService : RestService() {
         GlobalScope.launch {
             getClientSessionAndProjectAsync().let { (session, project) ->
                 ClientId.withClientId(session.clientId) {
-                    action(project)
+                    runBlocking {
+                        action(project)
+                    }
                     sendOk(request, context)
                 }
             }
