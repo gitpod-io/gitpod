@@ -151,6 +151,20 @@ export class GitLabApp {
                 try {
                     const projectOwner = await this.findProjectOwner(project, user);
 
+                    if (project.settings?.prebuilds?.triggerStrategy === "activity-based") {
+                        await this.projectService.updateProject(projectOwner, {
+                            id: project.id,
+                            settings: {
+                                ...project.settings,
+                                prebuilds: {
+                                    ...project.settings.prebuilds,
+                                    triggerStrategy: "webhook-based",
+                                },
+                            },
+                        });
+                        log.info(`Reverted configuration ${project.id} to webhook-based prebuilds`);
+                    }
+
                     const contextURL = this.createBranchContextUrl(body);
                     log.debug({ userId: user.id }, "GitLab push hook: Context URL", { context: body, contextURL });
                     span.setTag("contextURL", contextURL);

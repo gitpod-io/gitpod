@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateConfigurationRequest, CreateConfigurationResponse, DeleteConfigurationRequest, DeleteConfigurationResponse, GetConfigurationRequest, GetConfigurationResponse, ListConfigurationsRequest, ListConfigurationsResponse, UpdateConfigurationRequest, UpdateConfigurationResponse } from "./configuration_pb.js";
+import { CreateConfigurationRequest, CreateConfigurationResponse, DeleteConfigurationRequest, DeleteConfigurationResponse, GetConfigurationRequest, GetConfigurationResponse, GetConfigurationWebhookActivityStatusRequest, GetConfigurationWebhookActivityStatusResponse, ListConfigurationsRequest, ListConfigurationsResponse, UpdateConfigurationRequest, UpdateConfigurationResponse } from "./configuration_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -71,6 +71,17 @@ export const ConfigurationService = {
       name: "DeleteConfiguration",
       I: DeleteConfigurationRequest,
       O: DeleteConfigurationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetConfigurationWebhookActivityStatus returns the observed status of installed prebuild webhooks on the configuration
+     *
+     * @generated from rpc gitpod.v1.ConfigurationService.GetConfigurationWebhookActivityStatus
+     */
+    getConfigurationWebhookActivityStatus: {
+      name: "GetConfigurationWebhookActivityStatus",
+      I: GetConfigurationWebhookActivityStatusRequest,
+      O: GetConfigurationWebhookActivityStatusResponse,
       kind: MethodKind.Unary,
     },
   }

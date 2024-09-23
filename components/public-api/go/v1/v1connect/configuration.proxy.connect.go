@@ -68,3 +68,13 @@ func (s *ProxyConfigurationServiceHandler) DeleteConfiguration(ctx context.Conte
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyConfigurationServiceHandler) GetConfigurationWebhookActivityStatus(ctx context.Context, req *connect_go.Request[v1.GetConfigurationWebhookActivityStatusRequest]) (*connect_go.Response[v1.GetConfigurationWebhookActivityStatusResponse], error) {
+	resp, err := s.Client.GetConfigurationWebhookActivityStatus(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

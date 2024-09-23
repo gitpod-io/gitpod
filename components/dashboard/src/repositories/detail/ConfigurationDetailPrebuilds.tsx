@@ -58,7 +58,17 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
         <>
             <ConfigurationSettingsField>
                 <Heading3>Prebuilds</Heading3>
-                <Subheading className="max-w-lg">Prebuilds reduce wait time for new workspaces.</Subheading>
+                <Subheading className="max-w-lg">
+                    Prebuilds reduce wait time for new workspaces.{" "}
+                    <a
+                        href="https://www.gitpod.io/docs/configure/repositories/prebuilds"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="gp-link"
+                    >
+                        Learn more
+                    </a>
+                </Subheading>
 
                 <SwitchInputField
                     className="mt-6"
