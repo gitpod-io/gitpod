@@ -14,7 +14,7 @@ import com.jetbrains.rd.ui.bedsl.dsl.withMargin
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rdserver.unattendedHost.customization.controlCenter.performance.createProgressRow
-import com.jetbrains.rdserver.unattendedHost.diagnostics.BackendDiagnosticsService
+import com.jetbrains.rdserver.diagnostics.BackendDiagnosticsService
 import io.gitpod.jetbrains.remote.AbstractGitpodMetricControlProvider
 import io.gitpod.jetbrains.remote.IBackendDiagnosticsService
 
