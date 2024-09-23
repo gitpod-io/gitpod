@@ -79,3 +79,20 @@ export function inResource(pathname: string, resources: string[]): boolean {
     // E.g. "api/userspace/resource" path is a part of resource "api/userspace"
     return resources.map((res) => trimmedResource.startsWith(trimResource(res))).some(Boolean);
 }
+
+function parseUrl(url: string): URL | null {
+    try {
+        return new URL(url);
+    } catch (_) {
+        return null;
+    }
+}
+
+export function isTrustedUrlOrPath(urlOrPath: string) {
+    const url = parseUrl(urlOrPath);
+    const isTrusted = url ? window.location.hostname === url.hostname : urlOrPath.startsWith("/");
+    if (!isTrusted) {
+        console.warn("Untrusted URL", urlOrPath);
+    }
+    return isTrusted;
+}

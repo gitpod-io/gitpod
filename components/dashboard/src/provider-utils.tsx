@@ -8,6 +8,7 @@ import bitbucket from "./images/bitbucket.svg";
 import github from "./images/github.svg";
 import gitlab from "./images/gitlab.svg";
 import { gitpodHostUrl } from "./service/service";
+import { isTrustedUrlOrPath } from "./utils";
 
 function iconForAuthProvider(type: string) {
     switch (type) {
@@ -121,11 +122,10 @@ const getSafeURLRedirect = (source?: string) => {
     const returnToURL: string | null = new URLSearchParams(source ? source : window.location.search).get("returnTo");
     if (returnToURL) {
         // Only allow oauth on the same host
-        if (
-            returnToURL
-                .toLowerCase()
-                .startsWith(`${window.location.protocol}//${window.location.host}/api/oauth/`.toLowerCase())
-        ) {
+        const sameHost = returnToURL
+            .toLowerCase()
+            .startsWith(`${window.location.protocol}//${window.location.host}/api/oauth/`.toLowerCase());
+        if (sameHost && isTrustedUrlOrPath(returnToURL)) {
             return returnToURL;
         }
     }
