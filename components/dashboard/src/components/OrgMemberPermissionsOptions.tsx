@@ -9,7 +9,7 @@ import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { Button } from "@podkit/buttons/Button";
 import { SwitchInputField } from "@podkit/switch/Switch";
 import { cn } from "@podkit/lib/cn";
-import { CpuIcon } from "lucide-react";
+import { UserIcon } from "lucide-react";
 import { UseMutationResult } from "@tanstack/react-query";
 import { AllowedWorkspaceClass } from "../data/workspaces/workspace-classes-query";
 import { useToast } from "./toasts/Toasts";
@@ -19,6 +19,8 @@ import { VALID_ORG_MEMBER_ROLES } from "@gitpod/gitpod-protocol";
 import { OrganizationPermission, RoleRestrictionEntry } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { PlainMessage } from "@bufbuild/protobuf";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
+
+const converter = new PublicAPIConverter();
 
 interface WorkspaceClassesOptionsProps {
     roleRestrictions: RoleRestrictionEntry[];
@@ -35,17 +37,18 @@ export const OrgMemberPermissionRestrictionsOptions = ({
     const rolesRestrictingArbitraryRepositories = roleRestrictions.filter((entry) =>
         entry.permissions.includes(OrganizationPermission.START_ARBITRARY_REPOS),
     );
-    if (rolesRestrictingArbitraryRepositories.length === 0) {
-        return <>{emptyState}</>;
-    }
+    const rolesAllowedToOpenArbitraryRepositories = VALID_ORG_MEMBER_ROLES.filter(
+        (role) =>
+            !rolesRestrictingArbitraryRepositories.some((entry) => entry.role === converter.toOrgMemberRole(role)),
+    );
 
     return (
         <div className={cn("space-y-2", className)}>
-            {rolesRestrictingArbitraryRepositories.map((entry) => (
+            {rolesAllowedToOpenArbitraryRepositories.map((entry) => (
                 <div className="flex gap-2 items-center">
-                    <CpuIcon size={20} />
+                    <UserIcon size={20} />
                     <div>
-                        <span className="font-medium text-pk-content-primary capitalize">{entry.role}</span>
+                        <span className="font-medium text-pk-content-primary capitalize">{entry}</span>
                     </div>
                 </div>
             ))}
@@ -65,8 +68,6 @@ export type OrganizationRoleRestrictionModalProps = {
 
     onClose: () => void;
 };
-
-const converter = new PublicAPIConverter();
 
 export const OrganizationRoleRestrictionModal = ({
     onClose,

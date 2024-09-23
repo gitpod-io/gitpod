@@ -350,9 +350,9 @@ const RolePermissionsRestrictions = ({
     return (
         <ConfigurationSettingsField>
             <Heading3>Role permissions restrictions</Heading3>
-            <Subheading>
-                Limit the permissions of certain roles in your organization. Requires{" "}
-                <span className="font-medium">Owner</span> permissions to change.
+            <Subheading className="mb-2">
+                Limit the ability of certain roles for starting workspaces from repositories that are not imported.
+                Requires <span className="font-medium">Owner</span> permissions to change.
             </Subheading>
 
             <OrgMemberPermissionRestrictionsOptions roleRestrictions={settings?.roleRestrictions ?? []} />
