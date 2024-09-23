@@ -5,24 +5,27 @@
 package io.gitpod.jetbrains.remote
 
 import com.jetbrains.ide.model.uiautomation.BeControl
-import com.jetbrains.ide.model.uiautomation.BeMargin
 import com.jetbrains.ide.model.uiautomation.DefiniteProgress
 import com.jetbrains.rd.platform.codeWithMe.unattendedHost.metrics.Metric
 import com.jetbrains.rd.ui.bedsl.dsl.*
-import com.jetbrains.rd.ui.bedsl.dsl.util.BeMarginsBuilder
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Property
-import com.jetbrains.rdserver.diagnostics.BackendDiagnosticsService
 import com.jetbrains.rdserver.unattendedHost.customization.controlCenter.performance.MetricControlProvider
 import com.jetbrains.rdserver.unattendedHost.customization.controlCenter.performance.createProgressBar
+
+interface IBackendDiagnosticsService {
+    fun getMetric(name: String): com.jetbrains.rd.platform.codeWithMe.unattendedHost.metrics.Metric
+}
 
 abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
     override val id: String = "gitpodMetricsControl"
 
     abstract fun setMargin(element: BeControl, left: Int, top: Int, right: Int, bottom: Int): BeControl;
 
+    abstract fun getBackendDiagnosticsService(): IBackendDiagnosticsService
+
     override fun getControl(lifetime: Lifetime): BeControl {
-        val backendDiagnosticsService = BackendDiagnosticsService.Companion.getInstance()
+        val backendDiagnosticsService = this.getBackendDiagnosticsService()
         return verticalGrid {
             row {
                 horizontalGrid {
@@ -49,7 +52,7 @@ abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
         }
     }
 
-    private fun createWorkspaceHeaderRow(ctx: VerticalGridBuilder, backendDiagnosticsService: BackendDiagnosticsService, lifetime: Lifetime) {
+    private fun createWorkspaceHeaderRow(ctx: VerticalGridBuilder, backendDiagnosticsService: IBackendDiagnosticsService, lifetime: Lifetime) {
         val labelProperty = Property("")
 
         val workspaceClassMetric = backendDiagnosticsService.getMetric("gitpod_workspace_class")
@@ -78,7 +81,7 @@ abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
         }
     }
 
-    private fun createCpuControl(ctx: VerticalGridBuilder, backendDiagnosticsService: BackendDiagnosticsService, lifetime: Lifetime) {
+    private fun createCpuControl(ctx: VerticalGridBuilder, backendDiagnosticsService: IBackendDiagnosticsService, lifetime: Lifetime) {
         val cpuUsed = backendDiagnosticsService.getMetric("gitpod_workspace_cpu_used")
         val cpuTotal = backendDiagnosticsService.getMetric("gitpod_workspace_cpu_total")
         val cpuPercentage = backendDiagnosticsService.getMetric("gitpod_workspace_cpu_percentage")
@@ -100,7 +103,7 @@ abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
         createProgressControl(ctx, lifetime, label, cpuPercentage, labelProperty, cpuPercentageProperty, progressBar)
     }
 
-    private fun createMemoryControl(ctx: VerticalGridBuilder, backendDiagnosticsService: BackendDiagnosticsService, lifetime: Lifetime) {
+    private fun createMemoryControl(ctx: VerticalGridBuilder, backendDiagnosticsService: IBackendDiagnosticsService, lifetime: Lifetime) {
         val memoryUsed = backendDiagnosticsService.getMetric("gitpod_workspace_memory_used")
         val memoryTotal = backendDiagnosticsService.getMetric("gitpod_workspace_memory_total")
         val memoryPercentage = backendDiagnosticsService.getMetric("gitpod_workspace_memory_percentage")

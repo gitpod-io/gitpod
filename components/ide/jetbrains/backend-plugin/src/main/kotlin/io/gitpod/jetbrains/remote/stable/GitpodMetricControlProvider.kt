@@ -8,18 +8,30 @@ import com.jetbrains.ide.model.uiautomation.BeControl
 import com.jetbrains.ide.model.uiautomation.BeMargin
 import com.jetbrains.ide.model.uiautomation.DefiniteProgress
 import com.jetbrains.rd.platform.codeWithMe.unattendedHost.metrics.Metric
-import com.jetbrains.rd.ui.bedsl.dsl.*
+import com.jetbrains.rd.ui.bedsl.dsl.VerticalGridBuilder
 import com.jetbrains.rd.ui.bedsl.dsl.util.BeMarginsBuilder
+import com.jetbrains.rd.ui.bedsl.dsl.withMargin
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rdserver.unattendedHost.customization.controlCenter.performance.createProgressRow
+import com.jetbrains.rdserver.diagnostics.BackendDiagnosticsService
 import io.gitpod.jetbrains.remote.AbstractGitpodMetricControlProvider
+import io.gitpod.jetbrains.remote.IBackendDiagnosticsService
 
 class GitpodMetricControlProvider: AbstractGitpodMetricControlProvider() {
     override fun setMargin(element: BeControl, left: Int, top: Int, right: Int, bottom: Int): BeControl {
         val result: BeMarginsBuilder.() -> BeMargin = { margin(left, top, right, bottom) }
         element.withMargin(result)
         return element
+    }
+
+    override fun getBackendDiagnosticsService(): IBackendDiagnosticsService {
+        val obj = BackendDiagnosticsService.Companion.getInstance()
+        return object : IBackendDiagnosticsService {
+            override fun getMetric(name: String): Metric {
+                return obj.getMetric(name)
+            }
+        }
     }
 
     override fun createProgressControl(ctx: VerticalGridBuilder, lifetime: Lifetime, label: String, cpuPercentage: Metric, labelProperty: Property<String>, cpuPercentageProperty: Property<String>, progressBar: DefiniteProgress) {
