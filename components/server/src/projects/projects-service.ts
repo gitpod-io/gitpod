@@ -36,7 +36,6 @@ import { runWithSubjectId } from "../util/request-context";
 import { InstallationService } from "../auth/installation-service";
 import { IDEService } from "../ide-service";
 import type { PrebuildManager } from "../prebuilds/prebuild-manager";
-import { ScmService } from "../scm/scm-service";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ContextParser } from "../workspace/context-parser-service";
 
@@ -54,7 +53,6 @@ export class ProjectsService {
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(Authorizer) private readonly auth: Authorizer,
-        @inject(ScmService) private readonly scmService: ScmService,
         @inject(IDEService) private readonly ideService: IDEService,
         @inject(LazyPrebuildManager) private readonly prebuildManager: LazyPrebuildManager,
         @inject(WebhookEventDB) private readonly webhookEventDb: WebhookEventDB,
@@ -432,8 +430,7 @@ export class ProjectsService {
             const enablePrebuildsPrev = !!existingProject.settings?.prebuilds?.enable;
             if (!enablePrebuildsPrev) {
                 // new default
-                await this.scmService.installWebhookForPrebuilds(existingProject, user);
-                partialProject.settings.prebuilds.triggerStrategy = "webhook-based";
+                partialProject.settings.prebuilds.triggerStrategy = "activity-based";
             }
         }
         return this.projectDB.updateProject(partialProject);
