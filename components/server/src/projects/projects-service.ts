@@ -13,8 +13,8 @@ import {
     FindPrebuildsParams,
     Project,
     User,
-    WebhookEvent,
     CommitContext,
+    WebhookEvent,
 } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
@@ -38,6 +38,7 @@ import { IDEService } from "../ide-service";
 import type { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ContextParser } from "../workspace/context-parser-service";
+import { UnauthorizedError } from "../errors";
 
 // to resolve circular dependency issues
 export const LazyPrebuildManager = Symbol("LazyPrebuildManager");
@@ -55,8 +56,8 @@ export class ProjectsService {
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(IDEService) private readonly ideService: IDEService,
         @inject(LazyPrebuildManager) private readonly prebuildManager: LazyPrebuildManager,
+        @inject(ContextParser) private readonly contextParser: ContextParser,
         @inject(WebhookEventDB) private readonly webhookEventDb: WebhookEventDB,
-        @inject(ContextParser) private contextParser: ContextParser,
 
         @inject(InstallationService) private readonly installationService: InstallationService,
     ) {}
@@ -554,21 +555,38 @@ export class ProjectsService {
     ): Promise<WebhookEvent | undefined> {
         const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
 
-        const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, 1);
+        const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, 50);
         if (events.length === 0) {
             return undefined;
         }
 
         const hostContext = this.hostContextProvider.get(context.repository.host);
-        const repoProvider = hostContext?.services?.repositoryProvider;
-        if (!repoProvider) {
+        const repoService = hostContext?.services?.repositoryService;
+        if (!repoService) {
             throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `repo provider unavailable`);
         }
+
+        try {
+            const webhookEnabled = await repoService.isGitpodWebhookEnabled(user, project.cloneUrl);
+            return webhookEnabled ? events[0] : undefined; // todo(ft): figure out what to return if webhook is enabled but we have no events
+        } catch (error) {
+            if (!UnauthorizedError.is(error) && error.message !== "unsupported") {
+                throw error;
+            }
+        }
+
         const matchingEvent = events.find((event) => {
             if (maxAge && Date.now() - new Date(event.creationTime).getTime() > maxAge) {
                 return false;
             }
 
+            // If we know when the source repository was last pushed to, we can figure out if we received the push event after that
+            if (context.repository.pushedAt && new Date(event.creationTime) >= new Date(context.repository.pushedAt)) {
+                return true;
+            }
+
+            // If we know the commit hash, we can check if latest commit in the event matches the one we know.
+            // We do this check second, because pushing to the non-default branch might throw this off.
             return context.revision === event.commit;
         });
 
