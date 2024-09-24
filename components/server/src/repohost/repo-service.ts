@@ -12,4 +12,8 @@ export class RepositoryService {
     async isGitpodWebhookEnabled(user: User, cloneUrl: string): Promise<boolean> {
         throw new Error("unsupported");
     }
+
+    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
+        throw new Error("unsupported");
+    }
 }
