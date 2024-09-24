@@ -252,10 +252,14 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "configuration not found");
         }
         const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
-        const event = await this.projectService.getRecentWebhookEvent({}, user, configuration, 7 * 24 * 60 * 60 * 1000);
+        let event = await this.projectService.getRecentWebhookEvent({}, user, configuration, 7 * 24 * 60 * 60 * 1000);
+        const isWebhookActive = event !== undefined;
+        if (event?.id === "n/a") {
+            event = undefined; // if we know webhooks are enabled but we never received an event,
+        }
 
         const resp = new GetConfigurationWebhookActivityStatusResponse({
-            isWebhookActive: event !== undefined,
+            isWebhookActive,
             latestWebhookEvent: {
                 commit: event?.commit,
                 creationTime: event?.creationTime ? Timestamp.fromDate(new Date(event.creationTime)) : undefined,

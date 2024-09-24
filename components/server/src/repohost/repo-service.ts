@@ -9,9 +9,6 @@ import { injectable } from "inversify";
 
 @injectable()
 export class RepositoryService {
-    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
-        throw new Error("unsupported");
-    }
     async isGitpodWebhookEnabled(user: User, cloneUrl: string): Promise<boolean> {
         throw new Error("unsupported");
     }

@@ -556,10 +556,6 @@ export class ProjectsService {
         const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
 
         const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, 50);
-        if (events.length === 0) {
-            return undefined;
-        }
-
         const hostContext = this.hostContextProvider.get(context.repository.host);
         const repoService = hostContext?.services?.repositoryService;
         if (!repoService) {
@@ -568,7 +564,16 @@ export class ProjectsService {
 
         try {
             const webhookEnabled = await repoService.isGitpodWebhookEnabled(user, project.cloneUrl);
-            return webhookEnabled ? events[0] : undefined; // todo(ft): figure out what to return if webhook is enabled but we have no events
+            return webhookEnabled
+                ? events[0] ?? {
+                      commit: "n/a",
+                      creationTime: "",
+                      id: "initial_data",
+                      type: "initial_data",
+                      rawEvent: "{}",
+                      status: "processed",
+                  }
+                : undefined;
         } catch (error) {
             if (!UnauthorizedError.is(error) && error.message !== "unsupported") {
                 throw error;
