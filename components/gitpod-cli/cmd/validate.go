@@ -566,23 +566,27 @@ func pipeTask(ctx context.Context, task *api.TaskStatus, supervisor *supervisor.
 	}
 }
 
-func listenTerminal(ctx context.Context, task *api.TaskStatus, supervisor *supervisor.SupervisorClient, runLog *logrus.Entry) error {
-	listen, err := supervisor.Terminal.Listen(ctx, &api.ListenTerminalRequest{Alias: task.Terminal})
-	if err != nil {
-		return err
-	}
+// TerminalReader is an interface for anything that can receive terminal data (this is abstracted for use in testing)
+type TerminalReader interface {
+	Recv() ([]byte, error)
+}
 
+type LinePrinter func(string)
+
+// processTerminalOutput reads from a TerminalReader, processes the output, and calls the provided LinePrinter for each complete line.
+// It handles UTF-8 decoding of characters split across chunks and control characters (\n \r \b).
+func processTerminalOutput(reader TerminalReader, printLine LinePrinter) error {
 	var buffer, line bytes.Buffer
 
 	flushLine := func() {
 		if line.Len() > 0 {
-			runLog.Infof("%s: %s", task.Presentation.Name, line.String())
+			printLine(line.String())
 			line.Reset()
 		}
 	}
 
 	for {
-		resp, err := listen.Recv()
+		data, err := reader.Recv()
 		if err != nil {
 			if err == io.EOF {
 				flushLine()
@@ -591,34 +595,56 @@ func listenTerminal(ctx context.Context, task *api.TaskStatus, supervisor *super
 			return err
 		}
 
-		if title := resp.GetTitle(); title != "" {
-			task.Presentation.Name = title
-		}
+		buffer.Write(data)
 
-		if exitCode := resp.GetExitCode(); exitCode != 0 {
-			flushLine()
-			runLog.Infof("%s: exited with code %d", task.Presentation.Name, exitCode)
-		}
+		for {
+			r, size := utf8.DecodeRune(buffer.Bytes())
+			if r == utf8.RuneError && size == 0 {
+				break // incomplete character at the end
+			}
 
-		if data := resp.GetData(); len(data) > 0 {
-			buffer.Write(data)
+			char := buffer.Next(size)
 
-			for {
-				r, size := utf8.DecodeRune(buffer.Bytes())
-				if r == utf8.RuneError && size == 0 {
-					break // incomplete character at the end
+			switch r {
+			case '\r':
+				flushLine()
+			case '\n':
+				flushLine()
+			case '\b':
+				if line.Len() > 0 {
+					line.Truncate(line.Len() - 1)
 				}
-
-				char := buffer.Next(size)
-
-				if r == '\n' || r == '\r' {
-					flushLine()
-				} else {
-					line.Write(char)
-				}
+			default:
+				line.Write(char)
 			}
 		}
 	}
+}
+
+func listenTerminal(ctx context.Context, task *api.TaskStatus, supervisor *supervisor.SupervisorClient, runLog *logrus.Entry) error {
+	listen, err := supervisor.Terminal.Listen(ctx, &api.ListenTerminalRequest{Alias: task.Terminal})
+	if err != nil {
+		return err
+	}
+
+	terminalReader := &TerminalReaderAdapter{listen}
+	printLine := func(line string) {
+		runLog.Infof("%s: %s", task.Presentation.Name, line)
+	}
+
+	return processTerminalOutput(terminalReader, printLine)
+}
+
+type TerminalReaderAdapter struct {
+	client api.TerminalService_ListenClient
+}
+
+func (t *TerminalReaderAdapter) Recv() ([]byte, error) {
+	resp, err := t.client.Recv()
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetData(), nil
 }
 
 var validateOpts struct {
