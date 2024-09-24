@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
@@ -565,58 +567,58 @@ func pipeTask(ctx context.Context, task *api.TaskStatus, supervisor *supervisor.
 }
 
 func listenTerminal(ctx context.Context, task *api.TaskStatus, supervisor *supervisor.SupervisorClient, runLog *logrus.Entry) error {
-	listen, err := supervisor.Terminal.Listen(ctx, &api.ListenTerminalRequest{
-		Alias: task.Terminal,
-	})
+	listen, err := supervisor.Terminal.Listen(ctx, &api.ListenTerminalRequest{Alias: task.Terminal})
 	if err != nil {
 		return err
 	}
 
-	pr, pw := io.Pipe()
-	defer pr.Close()
-	defer pw.Close()
+	var buffer, line bytes.Buffer
 
-	scanner := bufio.NewScanner(pr)
-	const maxTokenSize = 1 * 1024 * 1024 // 1 MB
-	buf := make([]byte, maxTokenSize)
-	scanner.Buffer(buf, maxTokenSize)
+	flushLine := func() {
+		if line.Len() > 0 {
+			runLog.Infof("%s: %s", task.Presentation.Name, line.String())
+			line.Reset()
+		}
+	}
 
-	go func() {
-		defer pw.Close()
-		for {
-			resp, err := listen.Recv()
-			if err != nil {
-				_ = pw.CloseWithError(err)
-				return
+	for {
+		resp, err := listen.Recv()
+		if err != nil {
+			if err == io.EOF {
+				flushLine()
+				return nil
 			}
+			return err
+		}
 
-			title := resp.GetTitle()
-			if title != "" {
-				task.Presentation.Name = title
-			}
+		if title := resp.GetTitle(); title != "" {
+			task.Presentation.Name = title
+		}
 
-			exitCode := resp.GetExitCode()
-			if exitCode != 0 {
-				runLog.Infof("%s: exited with code %d", task.Presentation.Name, exitCode)
-			}
+		if exitCode := resp.GetExitCode(); exitCode != 0 {
+			flushLine()
+			runLog.Infof("%s: exited with code %d", task.Presentation.Name, exitCode)
+		}
 
-			data := resp.GetData()
-			if len(data) > 0 {
-				_, err := pw.Write(data)
-				if err != nil {
-					_ = pw.CloseWithError(err)
-					return
+		if data := resp.GetData(); len(data) > 0 {
+			buffer.Write(data)
+
+			for {
+				r, size := utf8.DecodeRune(buffer.Bytes())
+				if r == utf8.RuneError && size == 0 {
+					break // incomplete character at the end
+				}
+
+				char := buffer.Next(size)
+
+				if r == '\n' || r == '\r' {
+					flushLine()
+				} else {
+					line.Write(char)
 				}
 			}
 		}
-	}()
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		runLog.Infof("%s: %s", task.Presentation.Name, line)
 	}
-
-	return scanner.Err()
 }
 
 var validateOpts struct {
