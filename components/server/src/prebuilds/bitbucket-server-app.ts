@@ -127,6 +127,20 @@ export class BitbucketServerApp {
                 try {
                     const projectOwner = await this.findProjectOwner(project, user);
 
+                    if (project.settings?.prebuilds?.triggerStrategy === "activity-based") {
+                        await this.projectService.updateProject(projectOwner, {
+                            id: project.id,
+                            settings: {
+                                ...project.settings,
+                                prebuilds: {
+                                    ...project.settings.prebuilds,
+                                    triggerStrategy: "webhook-based",
+                                },
+                            },
+                        });
+                        log.info(`Reverted configuration ${project.id} to webhook-based prebuilds`);
+                    }
+
                     const contextUrl = this.createBranchContextUrl(payload);
                     span.setTag("contextUrl", contextUrl);
                     const context = await this.contextParser.handle({ span }, user, contextUrl);

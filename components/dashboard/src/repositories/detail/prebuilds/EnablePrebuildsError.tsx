@@ -22,7 +22,7 @@ export const EnablePrebuildsError: FC<Props> = ({ error, onReconnect }) => {
     // We need to authorize with the provider to acquire the correct scopes to install webhooks
     if (error instanceof ApplicationError && error.code === ErrorCodes.NOT_AUTHENTICATED) {
         return (
-            <RepositoryUnauthroizedErrorMessage
+            <RepositoryUnauthorizedErrorMessage
                 error={error.data as RepositoryUnauthorizedError}
                 onReconnect={onReconnect}
             />
@@ -63,11 +63,11 @@ const GenericErrorMessage: FC<GenericErrorMessageProps> = ({ message }) => {
     );
 };
 
-type RepositoryUnauthroizedErrorMessageProps = {
+type RepositoryUnauthorizedErrorMessageProps = {
     error: RepositoryUnauthorizedError;
     onReconnect: () => void;
 };
-const RepositoryUnauthroizedErrorMessage: FC<RepositoryUnauthroizedErrorMessageProps> = ({ error, onReconnect }) => {
+const RepositoryUnauthorizedErrorMessage: FC<RepositoryUnauthorizedErrorMessageProps> = ({ error, onReconnect }) => {
     const { toast } = useToast();
 
     const authorizeWithProvider = useCallback(async () => {
@@ -106,7 +106,7 @@ const RepositoryUnauthroizedErrorMessage: FC<RepositoryUnauthroizedErrorMessageP
                     </span>
                 ) : (
                     <span>
-                        Unable to enable prebuilds. This could be because you don’t have admin/write premissions for
+                        Unable to enable prebuilds. This could be because you don’t have admin/write permissions for
                         this repo or it could be an invalid token. Please try to reconnect. If the problem persists, you
                         can contact support.
                     </span>

@@ -147,7 +147,8 @@ packages:
       - "build.sh"
     env:
       - JB_QUALIFIER=stable-rider
-      - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
+      # Force skip plugin verification for Rider
+      - NO_VERIFY_JB_PLUGIN=true
     config:
       commands:
         - ["mv", "build.gradle-stable.kts", "build.gradle.kts"]

@@ -9,7 +9,7 @@ import { Container, ContainerModule } from "inversify";
 import "mocha";
 import * as chai from "chai";
 import { PrebuildManager } from "./prebuild-manager";
-import { TracedWorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { TracedWorkspaceDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ConfigProvider } from "../workspace/config-provider";
@@ -41,6 +41,7 @@ const containerModule = new ContainerModule((bind) => {
     bind(ContextParser).toConstantValue({} as any);
     bind(IAnalyticsWriter).toConstantValue({} as any);
     bind(RedisSubscriber).toConstantValue({} as any);
+    bind(WebhookEventDB).toConstantValue({} as any);
     // #endregion
 });
 
