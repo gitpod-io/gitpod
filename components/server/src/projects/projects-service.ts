@@ -558,29 +558,31 @@ export class ProjectsService {
     ): Promise<WebhookEvent | undefined> {
         const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
 
+        // We fetch the most recent 50 events so to maximalize the propability
+        // of hitting a commit on the default branch and not just one on some
+        // separate feature branch.
         const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, 50);
         const hostContext = this.hostContextProvider.get(context.repository.host);
         const repoService = hostContext?.services?.repositoryService;
-        if (!repoService) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `repo provider unavailable`);
-        }
-
-        try {
-            const webhookEnabled = await repoService.isGitpodWebhookEnabled(user, project.cloneUrl);
-            return webhookEnabled
-                ? events[0] ?? {
-                      commit: "n/a",
-                      creationTime: "",
-                      id: "initial_data",
-                      type: "initial_data",
-                      rawEvent: "{}",
-                      status: "processed",
-                  }
-                : undefined;
-        } catch (error) {
-            if (!UnauthorizedError.is(error) && error.message !== "unsupported") {
-                throw error;
+        if (repoService) {
+            try {
+                const webhookEnabled = await repoService.isGitpodWebhookEnabled(user, project.cloneUrl);
+                return webhookEnabled
+                    ? events[0] ?? {
+                          commit: "n/a",
+                          creationTime: "",
+                          id: "initial_data",
+                          type: "initial_data",
+                          rawEvent: "{}",
+                          status: "processed",
+                      }
+                    : undefined;
+            } catch (error) {
+                if (!UnauthorizedError.is(error) && error.message !== "unsupported") {
+                    throw error;
+                }
             }
+            1;
         }
 
         const matchingEvent = events.find((event) => {
