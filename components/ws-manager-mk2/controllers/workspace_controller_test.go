@@ -389,6 +389,155 @@ var _ = Describe("WorkspaceController", func() {
 			})
 		})
 
+		It("pod rejection should result in a retry", func() {
+			ws := newWorkspace(uuid.NewString(), "default")
+			m := collectMetricCounts(wsMetrics, ws)
+			su := collectSubscriberUpdates()
+
+			// ### prepare block start
+			By("creating workspace")
+			// Simulate pod getting scheduled to a node.
+			var node corev1.Node
+			node.Name = uuid.NewString()
+			Expect(k8sClient.Create(ctx, &node)).To(Succeed())
+			// Manually create the workspace pod with the node name.
+			// We can't update the pod with the node name, as this operation
+			// is only allowed for the scheduler. So as a hack, we manually
+			// create the workspace's pod.
+			pod := &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       fmt.Sprintf("ws-%s", ws.Name),
+					Namespace:  ws.Namespace,
+					Finalizers: []string{workspacev1.GitpodFinalizerName},
+					Labels: map[string]string{
+						wsk8s.WorkspaceManagedByLabel: constants.ManagedBy,
+					},
+				},
+				Spec: corev1.PodSpec{
+					NodeName: node.Name,
+					Containers: []corev1.Container{{
+						Name:  "workspace",
+						Image: "someimage",
+					}},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, pod)).To(Succeed())
+			pod = createWorkspaceExpectPod(ws)
+			updateObjWithRetries(k8sClient, pod, false, func(pod *corev1.Pod) {
+				Expect(ctrl.SetControllerReference(ws, pod, k8sClient.Scheme())).To(Succeed())
+			})
+			// mimic the regular "start" phase
+			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
+				ws.Status.PodStarts = 1
+				ws.Status.PodRecreated = 0
+			})
+
+			// Wait until controller has reconciled at least once (by waiting for the runtime status to get updated).
+			// This is necessary for the metrics to get recorded correctly. If we don't wait, the first reconciliation
+			// might be once the Pod is already in a running state, and hence the metric state might not record e.g. content
+			// restore.
+			// This is only necessary because we manually created the pod, normally the Pod creation is the controller's
+			// first reconciliation which ensures the metrics are recorded from the workspace's initial state.
+
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
+				g.Expect(ws.Status.Runtime).ToNot(BeNil())
+				g.Expect(ws.Status.Runtime.PodName).To(Equal(pod.Name))
+			}, timeout, interval).Should(Succeed())
+
+			// Await "deployed" condition, and check we are good
+			expectConditionEventually(ws, string(workspacev1.WorkspaceConditionDeployed), metav1.ConditionTrue, "")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
+				g.Expect(ws.Status.PodStarts).To(Equal(1))
+				g.Expect(ws.Status.PodRecreated).To(Equal(0))
+			}, timeout, interval).Should(Succeed())
+
+			// ### prepare block end
+
+			// ### trigger block start
+			// Make pod be rejected 🪄
+			By("rejecting pod")
+			rejectPod(pod)
+
+			By("await pod being in stopping")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
+				g.Expect(ws.Status.Phase).To(Equal(workspacev1.WorkspacePhaseStopping))
+			}, timeout, interval).Should(Succeed())
+
+			// when a rejected workspace pod is in stopping, ws-daemon wipes the state before it's moved to "stopped"
+			// mimic this ws-daemon behavior
+			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionStateWiped("", metav1.ConditionTrue))
+			})
+
+			By("await pod recreation")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
+				g.Expect(ws.Status.PodRecreated).To(Equal(1))
+				g.Expect(ws.Status.Phase).To(Equal(workspacev1.WorkspacePhasePending))
+			}, timeout, interval).Should(Succeed())
+			// ### trigger block end
+
+			// ### retry block start
+			// Transition Pod to pending, and expect workspace to reach Creating phase.
+			// This should also cause create time metrics to be recorded.
+			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
+				pod.Status.Phase = corev1.PodPending
+				pod.Status.ContainerStatuses = []corev1.ContainerStatus{{
+					State: corev1.ContainerState{
+						Waiting: &corev1.ContainerStateWaiting{
+							Reason: "ContainerCreating",
+						},
+					},
+					Name: "workspace",
+				}}
+			})
+
+			expectPhaseEventually(ws, workspacev1.WorkspacePhaseCreating)
+			// ### retry block end
+
+			// ### move to running start
+			// Transition Pod to running, and expect workspace to reach Running phase.
+			// This should also cause e.g. startup time metrics to be recorded.
+			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
+				pod.Status.Phase = corev1.PodRunning
+				pod.Status.ContainerStatuses = []corev1.ContainerStatus{{
+					Name:  "workspace",
+					Ready: true,
+				}}
+			})
+
+			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionTrue, workspacev1.ReasonInitializationSuccess, ""))
+			})
+
+			expectPhaseEventually(ws, workspacev1.WorkspacePhaseRunning)
+			// ### move to running end
+
+			// ### validate start
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
+				g.Expect(ws.Status.PodStarts).To(Equal(2))
+				g.Expect(ws.Status.PodRecreated).To(Equal(1))
+			}, timeout, interval).Should(Succeed())
+
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				restores:       1,
+				backups:        0,
+				backupFailures: 0,
+				failures:       1,
+				creatingCounts: 1,
+				stops:          map[StopReason]int{StopReasonStartFailure: 1},
+				starts:         1, // this is NOT PodStarts, but merely an artifact of how we count it in the tests
+				recreations:    map[int]int{1: 1},
+			})
+
+			expectPhaseTransitions(su, []workspacev1.WorkspacePhase{workspacev1.WorkspacePhasePending, workspacev1.WorkspacePhaseCreating, workspacev1.WorkspacePhaseInitializing, workspacev1.WorkspacePhaseRunning})
+			// ### validate end
+		})
 	})
 
 	Context("with headless workspaces", func() {
@@ -634,6 +783,16 @@ func requestStop(ws *workspacev1.Workspace) {
 	})
 }
 
+func rejectPod(pod *corev1.Pod) {
+	GinkgoHelper()
+	By("adding pod rejected condition")
+	updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
+		pod.Status.Phase = corev1.PodFailed
+		pod.Status.Reason = "OutOfcpu"
+		pod.Status.Message = "Pod was rejected"
+	})
+}
+
 func markReady(ws *workspacev1.Workspace) {
 	GinkgoHelper()
 	By("adding content ready condition")
@@ -829,6 +988,7 @@ type metricCounts struct {
 	startFailures   int
 	failures        int
 	stops           map[StopReason]int
+	recreations     map[int]int
 	backups         int
 	backupFailures  int
 	restores        int
@@ -855,12 +1015,17 @@ func collectMetricCounts(wsMetrics *controllerMetrics, ws *workspacev1.Workspace
 	for _, reason := range stopReasons {
 		stopCounts[reason] = int(testutil.ToFloat64(wsMetrics.totalStopsCounterVec.WithLabelValues(string(reason), tpe, cls)))
 	}
+	recreations := make(map[int]int)
+	for _, attempts := range []int{1, 2, 3, 4, 5} {
+		recreations[attempts] = int(testutil.ToFloat64(wsMetrics.totalRecreationsCounterVec.WithLabelValues(tpe, cls, fmt.Sprint(attempts))))
+	}
 	return metricCounts{
 		starts:          int(collectHistCount(startHist)),
 		creatingCounts:  int(collectHistCount(creatingHist)),
 		startFailures:   int(testutil.ToFloat64(wsMetrics.totalStartsFailureCounterVec.WithLabelValues(tpe, cls))),
 		failures:        int(testutil.ToFloat64(wsMetrics.totalFailuresCounterVec.WithLabelValues(tpe, cls))),
 		stops:           stopCounts,
+		recreations:     recreations,
 		backups:         int(testutil.ToFloat64(wsMetrics.totalBackupCounterVec.WithLabelValues(tpe, cls))),
 		backupFailures:  int(testutil.ToFloat64(wsMetrics.totalBackupFailureCounterVec.WithLabelValues(tpe, cls))),
 		restores:        int(testutil.ToFloat64(wsMetrics.totalRestoreCounterVec.WithLabelValues(tpe, cls))),
@@ -882,4 +1047,36 @@ func expectMetricsDelta(initial metricCounts, cur metricCounts, expectedDelta me
 	Expect(cur.backupFailures-initial.backupFailures).To(Equal(expectedDelta.backupFailures), "expected metric count delta for backupFailures")
 	Expect(cur.restores-initial.restores).To(Equal(expectedDelta.restores), "expected metric count delta for restores")
 	Expect(cur.restoreFailures-initial.restoreFailures).To(Equal(expectedDelta.restoreFailures), "expected metric count delta for restoreFailures")
+}
+
+type subscriberUpdates struct {
+	phaseTransitions []workspacev1.WorkspacePhase
+}
+
+func collectSubscriberUpdates() *subscriberUpdates {
+	su := subscriberUpdates{}
+	recordPhaseTransition := func(su *subscriberUpdates, ws *workspacev1.Workspace) {
+		phase := ws.Status.Phase
+
+		var lastPhase workspacev1.WorkspacePhase
+		lenPhases := len(su.phaseTransitions)
+		if lenPhases > 0 {
+			lastPhase = su.phaseTransitions[lenPhases-1]
+		}
+
+		if lastPhase != phase {
+			su.phaseTransitions = append(su.phaseTransitions, phase)
+		}
+	}
+
+	RegisterSubscriber(func(ws *workspacev1.Workspace) {
+		recordPhaseTransition(&su, ws)
+	})
+	return &su
+}
+
+func expectPhaseTransitions(su *subscriberUpdates, expectation []workspacev1.WorkspacePhase) {
+	GinkgoHelper()
+	By("checking recorded phase transitions")
+	Expect(su.phaseTransitions).To(HaveExactElements(expectation), "expected list of recorded phase transitions")
 }

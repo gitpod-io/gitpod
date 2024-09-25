@@ -128,8 +128,11 @@ func (c *ConnLimiter) limitWorkspace(ctx context.Context, ws *dispatch.Workspace
 		return fmt.Errorf("no dispatch available")
 	}
 
-	pid, err := disp.Runtime.ContainerPID(context.Background(), ws.ContainerID)
+	pid, err := disp.Runtime.ContainerPID(ctx, ws.ContainerID)
 	if err != nil {
+		if dispatch.IsCancelled(ctx) {
+			return nil
+		}
 		return fmt.Errorf("could not get pid for container %s of workspace %s", ws.ContainerID, ws.WorkspaceID)
 	}
 
@@ -141,12 +144,18 @@ func (c *ConnLimiter) limitWorkspace(ctx context.Context, ws *dispatch.Workspace
 		}
 	}, nsinsider.EnterMountNS(false), nsinsider.EnterNetNS(true))
 	if err != nil {
+		if dispatch.IsCancelled(ctx) {
+			return nil
+		}
 		log.WithError(err).WithFields(ws.OWI()).Error("cannot enable connection limiting")
 		return err
 	}
 	c.limited[ws.InstanceID] = struct{}{}
 
+	dispatch.GetDispatchWaitGroup(ctx).Add(1)
 	go func(*dispatch.Workspace) {
+		defer dispatch.GetDispatchWaitGroup(ctx).Done()
+
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 

@@ -509,6 +509,26 @@ func (mr *MockInWorkspaceServiceClientMockRecorder) UmountSysfs(arg0, arg1 inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UmountSysfs", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).UmountSysfs), varargs...)
 }
 
+// WipingTeardown mocks base method.
+func (m *MockInWorkspaceServiceClient) WipingTeardown(arg0 context.Context, arg1 *api.WipingTeardownRequest, arg2 ...grpc.CallOption) (*api.WipingTeardownResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WipingTeardown", varargs...)
+	ret0, _ := ret[0].(*api.WipingTeardownResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WipingTeardown indicates an expected call of WipingTeardown.
+func (mr *MockInWorkspaceServiceClientMockRecorder) WipingTeardown(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WipingTeardown", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).WipingTeardown), varargs...)
+}
+
 // WorkspaceInfo mocks base method.
 func (m *MockInWorkspaceServiceClient) WorkspaceInfo(arg0 context.Context, arg1 *api.WorkspaceInfoRequest, arg2 ...grpc.CallOption) (*api.WorkspaceInfoResponse, error) {
 	m.ctrl.T.Helper()

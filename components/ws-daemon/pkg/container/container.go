@@ -51,6 +51,9 @@ type Runtime interface {
 	IsContainerdReady(ctx context.Context) (bool, error)
 
 	GetContainerImageInfo(ctx context.Context, id ID) (*workspacev1.WorkspaceImageInfo, error)
+
+	// DisposeContainer removes a stopped container, and everything we know about it
+	DisposeContainer(ctx context.Context, workspaceInstanceID string)
 }
 
 var (

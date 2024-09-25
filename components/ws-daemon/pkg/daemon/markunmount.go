@@ -101,8 +101,24 @@ func (c *MarkUnmountFallback) WorkspaceUpdated(ctx context.Context, ws *dispatch
 	}
 	ttl := time.Duration(gracePeriod)*time.Second + propagationGracePeriod
 
+	dispatch.GetDispatchWaitGroup(ctx).Add(1)
 	go func() {
-		time.Sleep(ttl)
+		defer dispatch.GetDispatchWaitGroup(ctx).Done()
+
+		defer func() {
+			// We expect the container to be gone now. Don't keep its referenec in memory.
+			c.mu.Lock()
+			delete(c.handled, ws.InstanceID)
+			c.mu.Unlock()
+		}()
+
+		wait := time.NewTicker(ttl)
+		defer wait.Stop()
+		select {
+		case <-ctx.Done():
+			return
+		case <-wait.C:
+		}
 
 		dsp := dispatch.GetFromContext(ctx)
 		if !dsp.WorkspaceExistsOnNode(ws.InstanceID) {
@@ -111,17 +127,12 @@ func (c *MarkUnmountFallback) WorkspaceUpdated(ctx context.Context, ws *dispatch
 		}
 
 		err := unmountMark(ws.InstanceID)
-		if err != nil {
+		if err != nil && !dispatch.IsCancelled(ctx) {
 			log.WithFields(ws.OWI()).WithError(err).Error("cannot unmount mark mount from within ws-daemon")
 			c.activityCounter.WithLabelValues("false").Inc()
 		} else {
 			c.activityCounter.WithLabelValues("true").Inc()
 		}
-
-		// We expect the container to be gone now. Don't keep its referenec in memory.
-		c.mu.Lock()
-		delete(c.handled, ws.InstanceID)
-		c.mu.Unlock()
 	}()
 
 	return nil

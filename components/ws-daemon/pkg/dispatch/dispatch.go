@@ -7,6 +7,7 @@ package dispatch
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -59,7 +60,8 @@ func NewDispatch(runtime container.Runtime, kubernetes kubernetes.Interface, k8s
 		Listener:            listener,
 		NodeName:            nodename,
 
-		ctxs: make(map[string]*workspaceState),
+		ctxs:         make(map[string]*workspaceState),
+		disposedCtxs: make(map[string]struct{}),
 	}
 
 	return d, nil
@@ -76,9 +78,10 @@ type Dispatch struct {
 
 	Listener []Listener
 
-	stopchan chan struct{}
-	ctxs     map[string]*workspaceState
-	mu       sync.Mutex
+	stopchan     chan struct{}
+	ctxs         map[string]*workspaceState
+	disposedCtxs map[string]struct{}
+	mu           sync.Mutex
 }
 
 type workspaceState struct {
@@ -86,6 +89,9 @@ type workspaceState struct {
 	Context        context.Context
 	Cancel         context.CancelFunc
 	Workspace      *Workspace
+
+	// this WaitGroup keeps track of when each handler is finished. It's only relied upon in DisposeWorkspace() to determine when work on a given instanceID has commenced.
+	HandlerWaitGroup sync.WaitGroup
 }
 
 type contextKey struct{}
@@ -97,6 +103,20 @@ var (
 // GetFromContext retrieves the issuing dispatch from the listener context
 func GetFromContext(ctx context.Context) *Dispatch {
 	return ctx.Value(contextDispatch).(*Dispatch)
+}
+
+type dispacthHandlerWaitGroupKey struct{}
+
+var (
+	contextDispatchWaitGroup = dispacthHandlerWaitGroupKey{}
+)
+
+func GetDispatchWaitGroup(ctx context.Context) *sync.WaitGroup {
+	return ctx.Value(contextDispatchWaitGroup).(*sync.WaitGroup)
+}
+
+func IsCancelled(ctx context.Context) bool {
+	return context.Cause(ctx) != nil
 }
 
 // Start starts the dispatch
@@ -170,6 +190,39 @@ func (d *Dispatch) WorkspaceExistsOnNode(instanceID string) (ok bool) {
 	return
 }
 
+// DisposeWorkspace disposes the workspace incl. all running handler code for that pod
+func (d *Dispatch) DisposeWorkspace(ctx context.Context, instanceID string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	log.WithField("instanceID", instanceID).Debug("WS DISPOSE")
+	defer log.WithField("instanceID", instanceID).Debug("WS DISPOSE DONE")
+
+	// If we have that instanceID present, cancel it's context
+	state, present := d.ctxs[instanceID]
+	if !present {
+		return
+	}
+	if state.Cancel != nil {
+		state.Cancel()
+	}
+
+	// ...and wait for all long-running/async processes/go-routines to finish
+	state.HandlerWaitGroup.Wait()
+
+	// Make the runtome drop all state it might still have about this workspace
+	d.Runtime.DisposeContainer(ctx, instanceID)
+
+	// Mark as disposed, so we do not handle any further updates for it (except deletion)
+	d.disposedCtxs[disposedKey(instanceID, state.Workspace.Pod)] = struct{}{}
+
+	delete(d.ctxs, instanceID)
+}
+
+func disposedKey(instanceID string, pod *corev1.Pod) string {
+	return fmt.Sprintf("%s-%s", instanceID, pod.CreationTimestamp.String())
+}
+
 func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 	workspaceID, ok := newPod.Labels[wsk8s.MetaIDLabel]
 	if !ok {
@@ -182,6 +235,12 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 	if d.NodeName != "" && newPod.Spec.NodeName != d.NodeName {
 		return
 	}
+	disposedKey := disposedKey(workspaceInstanceID, newPod)
+	if _, alreadyDisposed := d.disposedCtxs[disposedKey]; alreadyDisposed {
+		log.WithField("disposedKey", disposedKey).Debug("DROPPING POD UPDATE FOR DISPOSED POD")
+		return
+	}
+	log.WithField("instanceID", workspaceInstanceID).Debugf("POD UPDATE: %s", workspaceInstanceID)
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -190,7 +249,7 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 	if !ok {
 		// we haven't seen this pod before - add it, and wait for the container
 		owi := wsk8s.GetOWIFromObject(&newPod.ObjectMeta)
-		d.ctxs[workspaceInstanceID] = &workspaceState{
+		s := &workspaceState{
 			WorkspaceAdded: false,
 			Workspace: &Workspace{
 				InstanceID:  workspaceInstanceID,
@@ -198,11 +257,13 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 				Pod:         newPod,
 			},
 		}
+		d.ctxs[workspaceInstanceID] = s
 
-		// Important!!!!: ideally this timeout must be equal to ws-manager https://github.com/gitpod-io/gitpod/blob/main/components/ws-manager/pkg/manager/manager.go#L171
-		waitForPodCtx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		containerCtx, containerCtxCancel := context.WithCancel(context.Background())
 		containerCtx = context.WithValue(containerCtx, contextDispatch, d)
+		containerCtx = context.WithValue(containerCtx, contextDispatchWaitGroup, &s.HandlerWaitGroup)
+		// Important!!!!: ideally this timeout must be equal to ws-manager https://github.com/gitpod-io/gitpod/blob/main/components/ws-manager/pkg/manager/manager.go#L171
+		waitForPodCtx, cancel := context.WithTimeout(containerCtx, 10*time.Minute)
 		go func() {
 			containerID, err := d.Runtime.WaitForContainer(waitForPodCtx, workspaceInstanceID)
 			if err != nil && err != context.Canceled {
@@ -217,12 +278,19 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 				d.mu.Unlock()
 				return
 			}
+			// Only register with the WaitGroup _after_ acquiring the lock to avoid DeadLocks
+			s.HandlerWaitGroup.Add(1)
+			defer s.HandlerWaitGroup.Done()
+
 			s.Context = containerCtx
-			s.Cancel = containerCtxCancel
+			s.Cancel = sync.OnceFunc(containerCtxCancel)
 			s.Workspace.ContainerID = containerID
 
 			for _, l := range d.Listener {
+				s.HandlerWaitGroup.Add(1)
 				go func(listener Listener) {
+					defer s.HandlerWaitGroup.Done()
+
 					err := listener.WorkspaceAdded(containerCtx, s.Workspace)
 					if err != nil {
 						log.WithError(err).WithFields(owi).Error("dispatch listener failed")
@@ -259,13 +327,17 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 			continue
 		}
 
+		state.HandlerWaitGroup.Add(1)
 		go func() {
+			defer state.HandlerWaitGroup.Done()
+
 			err := lu.WorkspaceUpdated(state.Context, state.Workspace)
 			if err != nil {
 				log.WithError(err).WithFields(wsk8s.GetOWIFromObject(&oldPod.ObjectMeta)).Error("dispatch listener failed")
 			}
 		}()
 	}
+	log.WithField("instanceID", workspaceInstanceID).Debugf("POD UPDATE DONE: %s", workspaceInstanceID)
 }
 
 func (d *Dispatch) handlePodDeleted(pod *corev1.Pod) {
@@ -273,6 +345,7 @@ func (d *Dispatch) handlePodDeleted(pod *corev1.Pod) {
 	if !ok {
 		return
 	}
+	log.WithField("instanceID", instanceID).Debugf("POD DELETED: %s", instanceID)
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -285,5 +358,8 @@ func (d *Dispatch) handlePodDeleted(pod *corev1.Pod) {
 	if state.Cancel != nil {
 		state.Cancel()
 	}
+
 	delete(d.ctxs, instanceID)
+
+	log.WithField("instanceID", instanceID).Debugf("POD DELETED DONE: %s", instanceID)
 }

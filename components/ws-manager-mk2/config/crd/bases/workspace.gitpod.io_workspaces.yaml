@@ -550,6 +550,11 @@ spec:
                 type: string
               podStarts:
                 type: integer
+              podRecreated:
+                type: integer
+              podDeletionTime:
+                format: date-time
+                type: string
               runtime:
                 properties:
                   hostIP:

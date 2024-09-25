@@ -262,6 +262,63 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceStop")
 	defer tracing.FinishSpan(span, &err)
 
+	if ws.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected) {
+		if ws.IsConditionPresent(workspacev1.WorkspaceConditionStateWiped) {
+			// we are done here
+			return ctrl.Result{}, nil
+		}
+
+		// in this case we are not interested in any backups, but instead are concerned with completely wiping all state that might be dangling somewhere
+		if ws.IsConditionTrue(workspacev1.WorkspaceConditionContainerRunning) {
+			// Container is still running, we need to wait for it to stop.
+			// We should get an event when the condition changes, but requeue
+			// anyways to make sure we act on it in time.
+			return ctrl.Result{RequeueAfter: 500 * time.Millisecond}, nil
+		}
+
+		if wsc.latestWorkspace(ctx, ws) != nil {
+			return ctrl.Result{Requeue: true, RequeueAfter: 100 * time.Millisecond}, nil
+		}
+
+		setStateWipedCondition := func(s bool) {
+			err := retry.RetryOnConflict(retryParams, func() error {
+				if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {
+					return err
+				}
+
+				if s {
+					ws.Status.SetCondition(workspacev1.NewWorkspaceConditionStateWiped("", metav1.ConditionTrue))
+				} else {
+					ws.Status.SetCondition(workspacev1.NewWorkspaceConditionStateWiped("", metav1.ConditionFalse))
+				}
+				return wsc.Client.Status().Update(ctx, ws)
+			})
+			if err != nil {
+				log.Error(err, "failed to set StateWiped condition")
+			}
+		}
+		log.Info("handling workspace stop - wiping mode")
+
+		err = wsc.operations.WipeWorkspace(ctx, ws.Name)
+		if err != nil {
+			setStateWipedCondition(false)
+			wsc.emitEvent(ws, "Wiping", fmt.Errorf("failed to wipe workspace: %w", err))
+			return ctrl.Result{}, fmt.Errorf("failed to wipe workspace: %w", err)
+		}
+
+		setStateWipedCondition(true)
+
+		log.Info("handling workspace stop - wiping done.")
+		return ctrl.Result{}, nil
+	}
+
+	// regular case
+	return wsc.doWorkspaceContentBackup(ctx, span, ws, req)
+}
+
+func (wsc *WorkspaceController) doWorkspaceContentBackup(ctx context.Context, span opentracing.Span, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
+	log := log.FromContext(ctx)
+
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil || c.Status == metav1.ConditionFalse {
 		return ctrl.Result{}, fmt.Errorf("workspace content was never ready")
 	}
