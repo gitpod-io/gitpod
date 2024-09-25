@@ -47,8 +47,7 @@ ENV DISABLE_V8_COMPILE_CACHE=1
 # ENV npm_config_arch=x64
 RUN mkdir -p .build \
     && npm config set registry "$NPM_REGISTRY" \
-    && npm ci \
-    && npm run compile
+    && npm ci
 
 # check that the provided codeVersion is the correct one for the given codeCommit
 RUN commitVersion=$(cat package.json | jq -r .version) \
@@ -76,24 +75,26 @@ RUN npm run gulp compile-build \
     && npm run gulp vscode-web-min-ci \
     && npm run gulp vscode-reh-linux-x64-min-ci
 
+# RUN ls -l
+
 # config for first layer needed by blobserve
 # this custom urls will be then replaced by blobserve.
 # Check pkg/blobserve/blobserve.go, `inlineVars` method
 RUN cp /vscode-web/out/vs/gitpod/browser/workbench/workbench.html /vscode-web/index.html \
-    && cp /vscode-web/out/vs/gitpod/browser/workbench/callback.html /vscode-web/callback.html \
-    && sed -i -e "s/{{VERSION}}/$CODE_QUALITY-$CODE_COMMIT/g" /vscode-web/index.html
+&& cp /vscode-web/out/vs/gitpod/browser/workbench/callback.html /vscode-web/callback.html \
+&& sed -i -e "s/{{VERSION}}/$CODE_QUALITY-$CODE_COMMIT/g" /vscode-web/index.html
 
 # cli config: alises to gitpod-code
 RUN cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/code \
-    && cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/gp-code \
-    && cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/open
+&& cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/gp-code \
+&& cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/open
 
 # grant write permissions for built-in extensions
 RUN chmod -R ugo+w /vscode-reh-linux-x64/extensions
 
 FROM scratch
 # copy static web resources in first layer to serve from blobserve
-COPY --from=code_builder --chown=33333:33333 /gp-code/ /ide/
+COPY --from=code_builder --chown=33333:33333 /vscode-web/ /ide/
 COPY --from=code_builder --chown=33333:33333 /vscode-reh-linux-x64/ /ide/
 
 ARG CODE_VERSION
