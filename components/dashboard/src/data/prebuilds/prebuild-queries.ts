@@ -5,11 +5,9 @@
  */
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { configurationClient, prebuildClient, stream } from "../../service/public-api";
+import { prebuildClient, stream } from "../../service/public-api";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { PlainMessage, toPlainMessage } from "@bufbuild/protobuf";
-import { GetConfigurationWebhookActivityStatusResponse } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 export function usePrebuildQuery(prebuildId: string) {
     return useQuery<Prebuild, Error>(
@@ -76,19 +74,4 @@ export function useTriggerPrebuildMutation(configurationId?: string, gitRef?: st
             return prebuildClient.startPrebuild({ configurationId, gitRef }).then((resp) => resp.prebuildId);
         },
     });
-}
-
-export function useWebhookActivityStatusQuery(configurationId: string) {
-    return useQuery<PlainMessage<GetConfigurationWebhookActivityStatusResponse>, Error>(
-        ["webhookActivityStatus", configurationId],
-        async () => {
-            const resp = await configurationClient.getConfigurationWebhookActivityStatus({ configurationId });
-            return toPlainMessage(resp);
-        },
-        {
-            retry: false,
-            staleTime: 1000 * 60, // 1 minute
-            cacheTime: 1000 * 60 * 15, // 15 minutes
-        },
-    );
 }

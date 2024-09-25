@@ -1282,6 +1282,10 @@ export interface Repository {
         // The direct parent of this fork
         parent: Repository;
     };
+    /**
+     * Optional date when the repository was last pushed to.
+     */
+    pushedAt?: string;
 }
 
 export interface RepositoryInfo {
