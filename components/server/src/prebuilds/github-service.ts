@@ -17,6 +17,7 @@ import { GitHubOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers"
 import { containsScopes } from "./token-scopes-inclusion";
 import { TokenService } from "../user/token-service";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { PREBUILD_TOKEN_SCOPE } from "./constants";
 
 @injectable()
 export class GitHubService extends RepositoryService {
@@ -64,7 +65,7 @@ export class GitHubService extends RepositoryService {
                     );
                 }
             }
-            tokenEntry = await this.tokenService.createGitpodToken(user, "prebuild", cloneUrl);
+            tokenEntry = await this.tokenService.createGitpodToken(user, PREBUILD_TOKEN_SCOPE, cloneUrl);
             const config = {
                 url: this.getHookUrl(),
                 content_type: "json",
