@@ -548,7 +548,7 @@ export class ProjectsService {
     }
 
     /**
-     * getRecentWebhookEvent checks if the webhook integration is active for the given user and project by querying the webhook event database and seeing if for the latest commit on the repository there exists a webhook event.
+     * getRecentWebhookEvent checks if the webhook integration is active for the given user and project by querying the webhook event database and seeing if for the latest commit on the repository there exists a webhook event. Additionally, if the necessary SCM permissions are given, the latest commit check is skipped and the most recent event is returned.
      */
     public async getRecentWebhookEvent(
         ctx: TraceContext,
