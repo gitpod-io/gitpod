@@ -79,9 +79,9 @@ RUN npm run gulp compile-build \
 # config for first layer needed by blobserve
 # this custom urls will be then replaced by blobserve.
 # Check pkg/blobserve/blobserve.go, `inlineVars` method
-RUN cp /gp-code/out/vs/gitpod/browser/workbench/workbench.html /gp-code/index.html \
-    && cp /gp-code/out/vs/gitpod/browser/workbench/callback.html /gp-code/callback.html \
-    && sed -i -e "s/{{VERSION}}/$CODE_QUALITY-$CODE_COMMIT/g" /gp-code/index.html
+RUN cp /vscode-web/out/vs/gitpod/browser/workbench/workbench.html /vscode-web/index.html \
+    && cp /vscode-web/out/vs/gitpod/browser/workbench/callback.html /vscode-web/callback.html \
+    && sed -i -e "s/{{VERSION}}/$CODE_QUALITY-$CODE_COMMIT/g" /vscode-web/index.html
 
 # cli config: alises to gitpod-code
 RUN cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/code \
