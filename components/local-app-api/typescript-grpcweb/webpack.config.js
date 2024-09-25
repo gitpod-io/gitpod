@@ -30,8 +30,6 @@ module.exports = {
         libraryTarget: "umd",
         globalObject: "typeof self !== 'undefined' ? self : this",
     },
-    externals: {
-        "@improbable-eng/grpc-web": "commonjs2 @improbable-eng/grpc-web",
-    },
+    externals: {},
     mode: "production",
 };
