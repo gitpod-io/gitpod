@@ -49,13 +49,4 @@ public interface ConfigurationServiceClientInterface {
       fun deleteConfiguration(request: ConfigurationOuterClass.DeleteConfigurationRequest,
       headers: Headers = emptyMap()):
       ResponseMessage<ConfigurationOuterClass.DeleteConfigurationResponse>
-
-  /**
-   *  GetConfigurationWebhookActivityStatus returns the observed status of installed prebuild
-   * webhooks on the configuration
-   */
-  public suspend
-      fun getConfigurationWebhookActivityStatus(request: ConfigurationOuterClass.GetConfigurationWebhookActivityStatusRequest,
-      headers: Headers = emptyMap()):
-      ResponseMessage<ConfigurationOuterClass.GetConfigurationWebhookActivityStatusResponse>
 }
