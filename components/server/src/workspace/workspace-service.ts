@@ -489,8 +489,7 @@ export class WorkspaceService {
             return;
         }
 
-        const logCtx = { userId: user.id, workspaceId: workspace.id };
-        log.info(logCtx, "Workspace create event: Checking prebuild trigger strategy");
+        const logCtx = { userId: user.id, workspaceId: workspace.id, projectId: project.id };
 
         (async () => {
             const event = await this.projectsService.getRecentWebhookEvent(ctx, user, project);
