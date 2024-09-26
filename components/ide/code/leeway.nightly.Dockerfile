@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 FROM gitpod/openvscode-server-linux-build-agent:focal-x64 as code_builder
@@ -75,12 +75,10 @@ RUN npm run gulp compile-build \
     && npm run gulp vscode-web-min-ci \
     && npm run gulp vscode-reh-linux-x64-min-ci
 
-# RUN ls -l
-
 # config for first layer needed by blobserve
 # this custom urls will be then replaced by blobserve.
 # Check pkg/blobserve/blobserve.go, `inlineVars` method
-RUN cp /vscode-web/out/vs/gitpod/browser/workbench/workbench.html /vscode-web/index.html \
+RUN cp /vscode-web/out/vs/gitpod/browser/workbench/workbench.esm.html /vscode-web/index.html \
 && cp /vscode-web/out/vs/gitpod/browser/workbench/callback.html /vscode-web/callback.html \
 && sed -i -e "s/{{VERSION}}/$CODE_QUALITY-$CODE_COMMIT/g" /vscode-web/index.html
 
