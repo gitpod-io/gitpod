@@ -8,11 +8,11 @@ import express from "express";
 import { injectable, inject } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
-import { AzureDevOpsScopes } from "./scopes";
 import { AzureDevOpsApi } from "./azure-api";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
 import { AuthUserSetup } from "../auth/auth-provider";
 import { oauthUrls } from "./azure-urls";
+import { AzureDevOpsOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class AzureDevOpsAuthProvider extends GenericAuthProvider {
@@ -21,11 +21,11 @@ export class AzureDevOpsAuthProvider extends GenericAuthProvider {
     get info(): AuthProviderInfo {
         return {
             ...this.defaultInfo(),
-            scopes: AzureDevOpsScopes.All,
+            scopes: AzureDevOpsOAuthScopes.ALL,
             requirements: {
-                default: AzureDevOpsScopes.Requirements.DEFAULT,
-                publicRepo: AzureDevOpsScopes.Requirements.REPO,
-                privateRepo: AzureDevOpsScopes.Requirements.REPO,
+                default: AzureDevOpsOAuthScopes.DEFAULT,
+                publicRepo: AzureDevOpsOAuthScopes.REPO,
+                privateRepo: AzureDevOpsOAuthScopes.REPO,
             },
         };
     }
@@ -43,9 +43,7 @@ export class AzureDevOpsAuthProvider extends GenericAuthProvider {
             tokenUrl: oauth.tokenUrl || defaultUrls.tokenUrl,
             settingsUrl: oauth.settingsUrl || defaultUrls.settingsUrl,
             // offline_access is required but will not respond as scopes
-            scope: [...AzureDevOpsScopes.All, ...AzureDevOpsScopes.Requirements.APPEND_WHEN_FETCHING].join(
-                scopeSeparator,
-            ),
+            scope: [...AzureDevOpsOAuthScopes.ALL, ...AzureDevOpsOAuthScopes.APPEND_WHEN_FETCHING].join(scopeSeparator),
             scopeSeparator,
         };
     }
@@ -57,7 +55,7 @@ export class AzureDevOpsAuthProvider extends GenericAuthProvider {
         state: string,
         scope?: string[],
     ) {
-        super.authorize(req, res, next, state, scope ? scope : AzureDevOpsScopes.Requirements.DEFAULT);
+        super.authorize(req, res, next, state, scope ? scope : AzureDevOpsOAuthScopes.DEFAULT);
     }
 
     protected get baseURL() {

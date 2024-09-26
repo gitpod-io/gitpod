@@ -1406,8 +1406,18 @@ export interface OAuth2Config {
 export namespace AuthProviderEntry {
     export type Type = "GitHub" | "GitLab" | "Bitbucket" | "BitbucketServer" | "AzureDevOps" | string;
     export type Status = "pending" | "verified";
+
+    /**
+     * Some auth providers require additional configuration like Azure DevOps.
+     */
     export interface OAuth2CustomConfig {
+        /**
+         * The URL to the authorize endpoint of the provider.
+         */
         authorizationUrl?: string;
+        /**
+         * The URL to the oauth token endpoint of the provider.
+         */
         tokenUrl?: string;
     }
     export type NewEntry = Pick<AuthProviderEntry, "ownerId" | "host" | "type"> & {

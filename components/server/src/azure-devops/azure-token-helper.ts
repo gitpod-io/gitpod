@@ -8,8 +8,8 @@ import { User, Token } from "@gitpod/gitpod-protocol";
 import { UnauthorizedError } from "../errors";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { injectable, inject } from "inversify";
-import { AzureDevOpsScopes } from "./scopes";
 import { TokenProvider } from "../user/token-provider";
+import { AzureDevOpsOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class AzureDevOpsTokenHelper {
@@ -36,13 +36,14 @@ export class AzureDevOpsTokenHelper {
         } catch (e) {
             console.error(e);
         }
+
         if (requiredScopes.length === 0) {
-            requiredScopes = AzureDevOpsScopes.Requirements.DEFAULT;
+            requiredScopes = AzureDevOpsOAuthScopes.DEFAULT;
         }
         throw UnauthorizedError.create({
             host,
             providerType: "AzureDevOps",
-            requiredScopes: AzureDevOpsScopes.Requirements.DEFAULT,
+            requiredScopes: AzureDevOpsOAuthScopes.DEFAULT,
             providerIsConnected: false,
             isMissingScopes: true,
         });

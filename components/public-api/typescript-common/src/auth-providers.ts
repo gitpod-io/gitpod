@@ -94,10 +94,15 @@ export namespace BitbucketServerOAuthScopes {
 }
 
 export namespace AzureDevOpsOAuthScopes {
-    export const READ_USER = "https://app.vssps.visualstudio.com/vso.profile";
-    export const READ_REPO = "https://app.vssps.visualstudio.com/vso.code_write";
+    const READ_USER = "https://app.vssps.visualstudio.com/vso.profile";
+    const READ_REPO = "https://app.vssps.visualstudio.com/vso.code_write";
+
+    // extend token lifetime
+    const OFFLINE_ACCESS = "offline_access";
+    export const APPEND_WHEN_FETCHING = [OFFLINE_ACCESS];
 
     export const ALL = [READ_USER, READ_REPO];
+    export const REPO = [READ_REPO];
     export const DEFAULT = ALL;
 }
 
