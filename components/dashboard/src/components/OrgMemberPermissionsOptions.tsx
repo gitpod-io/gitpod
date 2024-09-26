@@ -42,6 +42,10 @@ export const OrgMemberPermissionRestrictionsOptions = ({
             !rolesRestrictingArbitraryRepositories.some((entry) => entry.role === converter.toOrgMemberRole(role)),
     );
 
+    if (rolesAllowedToOpenArbitraryRepositories.length === 0) {
+        return <>Nobody in the organization can open repositories that are not imported</>;
+    }
+
     return (
         <div className={cn("space-y-2", className)}>
             {rolesAllowedToOpenArbitraryRepositories.map((entry) => (
