@@ -25,16 +25,13 @@ export const useUpdateUserAuthProviderMutation = () => {
 
     return useMutation({
         mutationFn: async ({ provider }: UpdateAuthProviderArgs) => {
-            const authorizationUrl =
-                provider.type === AuthProviderType.AZURE_DEVOPS ? provider.authorizationUrl : undefined;
-            const tokenUrl = provider.type === AuthProviderType.AZURE_DEVOPS ? provider.tokenUrl : undefined;
             const response = await authProviderClient.updateAuthProvider(
                 new UpdateAuthProviderRequest({
                     authProviderId: provider.id,
                     clientId: provider.clientId,
                     clientSecret: provider.clientSecret,
-                    authorizationUrl,
-                    tokenUrl,
+                    authorizationUrl: provider.authorizationUrl,
+                    tokenUrl: provider.tokenUrl,
                 }),
             );
             return response.authProvider!;
