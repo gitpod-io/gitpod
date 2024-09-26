@@ -36,9 +36,40 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
                 if (searchParamsRef.startsWith("refs/tags/")) {
                     more.ref = this.toSimplifiedTagName(searchParamsRef);
                     more.refType = "tag";
-                } else {
+                } else if (searchParamsRef.startsWith("refs/heads/")) {
                     more.ref = this.toSimpleBranchName(searchParamsRef);
                     more.refType = "branch";
+                } else {
+                    const branchCandidate = await this.api
+                        .getBranch(user, {
+                            repoKind,
+                            branchName: searchParamsRef,
+                            owner,
+                            repositorySlug: repoName,
+                        })
+                        .catch((error) => {
+                            if (error?.message?.startsWith("Could not find branch")) {
+                                return undefined;
+                            }
+
+                            throw error;
+                        });
+
+                    if (branchCandidate) {
+                        more.ref = branchCandidate.displayId;
+                        more.refType = "branch";
+                    } else {
+                        const tagCandidate = await this.api.getTagLatestCommit(user, {
+                            repoKind,
+                            tag: searchParamsRef,
+                            owner,
+                            repositorySlug: repoName,
+                        });
+                        if (tagCandidate) {
+                            more.ref = tagCandidate.displayId;
+                            more.refType = "tag";
+                        }
+                    }
                 }
             }
 
@@ -171,7 +202,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             if (!more.revision) {
                 more.ref = more.ref || repository.defaultBranch;
             }
-            more.refType = more.refType || "branch";
+            more.refType = more.refType ?? "branch";
             if (!more.revision) {
                 switch (more.refType) {
                     case "branch": {

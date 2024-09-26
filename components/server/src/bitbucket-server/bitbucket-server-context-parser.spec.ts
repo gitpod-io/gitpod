@@ -265,6 +265,34 @@ class TestBitbucketServerContextParser {
         });
     }
 
+    @test async test_branch_context_02() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            // here we don't provide the `refs/heads/` prefix, forcing the context parser to query the API to figure out the refType
+            "https://bitbucket.gitpod-dev.com/users/svenefftinge/repos/browser-extension-test/commits?until=my-branch&merges=include",
+        );
+
+        expect(result).to.deep.include({
+            ref: "my-branch",
+            refType: "branch",
+            revision: "3ca42b45bc693973cb21a112a418c13f8b4d11a5",
+            path: "",
+            isFile: false,
+            repository: {
+                cloneUrl: "https://bitbucket.gitpod-dev.com/scm/~svenefftinge/browser-extension-test.git",
+                defaultBranch: "main",
+                host: "bitbucket.gitpod-dev.com",
+                name: "browser-extension-test",
+                owner: "svenefftinge",
+                repoKind: "users",
+                private: false,
+                webUrl: "https://bitbucket.gitpod-dev.com/users/svenefftinge/repos/browser-extension-test",
+            },
+            title: "svenefftinge/browser-extension-test - my-branch",
+        });
+    }
+
     @test async test_PR_context_01() {
         const result = await this.parser.handle(
             {},
@@ -350,6 +378,32 @@ class TestBitbucketServerContextParser {
             {},
             this.user,
             "https://bitbucket.gitpod-dev.com/projects/GIT/repos/gitpod-test-repo/browse?at=refs%2Ftags%2Ftest-tag-v1.0.1",
+        );
+
+        expect(result).to.deep.include({
+            title: "GIT/gitpod-test-repo - test-tag-v1.0.1",
+            ref: "test-tag-v1.0.1",
+            refType: "tag",
+            revision: "506e5aed317f28023994ecf8ca6ed91430e9c1a4",
+            repository: {
+                host: "bitbucket.gitpod-dev.com",
+                owner: "GIT",
+                name: "gitpod-test-repo",
+                cloneUrl: "https://bitbucket.gitpod-dev.com/scm/git/gitpod-test-repo.git",
+                webUrl: "https://bitbucket.gitpod-dev.com/projects/GIT/repos/gitpod-test-repo",
+                defaultBranch: "master",
+                private: true,
+                repoKind: "projects",
+            },
+        });
+    }
+
+    @test async test_tag_context_02() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            // here we don't provide the `refs/tags/` prefix, forcing the context parser to query the API to figure out the refType
+            "https://bitbucket.gitpod-dev.com/projects/GIT/repos/gitpod-test-repo/browse?at=test-tag-v1.0.1",
         );
 
         expect(result).to.deep.include({
