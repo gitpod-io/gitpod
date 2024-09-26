@@ -19,6 +19,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { Container, ContainerModule } from "inversify";
 import { AzureDevOpsFileProvider } from "../azure-devops/azure-file-provider";
 import { AzureDevOpsRepositoryProvider } from "../azure-devops/azure-repository-provider";
+import { Config } from "../config";
 
 export namespace DevData {
     export function createTestUser(): User {
@@ -163,6 +164,7 @@ export namespace DevTestHelper {
         };
         container.load(
             new ContainerModule((bind, unbind, isBound, rebind) => {
+                bind(Config).toConstantValue({});
                 bind(AzureDevOpsContextParser).toSelf().inSingletonScope();
                 bind(AzureDevOpsApi).toSelf().inSingletonScope();
                 bind(AuthProviderParams).toConstantValue(AUTH_HOST_CONFIG);
