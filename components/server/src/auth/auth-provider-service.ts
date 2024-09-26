@@ -20,6 +20,8 @@ import fetch from "node-fetch";
 import { Authorizer } from "../authorization/authorizer";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { getRequiredScopes, getScopesForAuthProviderType } from "@gitpod/public-api-common/lib/auth-providers";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
+import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 @injectable()
 export class AuthProviderService {
@@ -28,6 +30,7 @@ export class AuthProviderService {
         @inject(TeamDB) private readonly teamDB: TeamDB,
         @inject(Config) protected readonly config: Config,
         @inject(Authorizer) private readonly auth: Authorizer,
+        @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter,
     ) {}
 
     /**
@@ -237,10 +240,19 @@ export class AuthProviderService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
         }
 
+        const isAzure = this.apiConverter.toAuthProviderType(existing.type) === AuthProviderType.AZURE_DEVOPS;
+        if (!isAzure) {
+            entry.authorizationUrl = undefined;
+            entry.tokenUrl = undefined;
+        }
+
         // Explicitly check if any update needs to be performed
         const changedId = entry.clientId && entry.clientId !== existing.oauth.clientId;
         const changedSecret = entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret;
-        const changed = changedId || changedSecret;
+        const azureChanged =
+            isAzure &&
+            (existing.oauth.authorizationUrl !== entry.authorizationUrl || existing.oauth.tokenUrl !== entry.tokenUrl);
+        const changed = changedId || changedSecret || azureChanged;
 
         if (!changed) {
             return existing;
@@ -251,6 +263,8 @@ export class AuthProviderService {
             ...existing.oauth,
             clientId: entry.clientId || existing.oauth?.clientId,
             clientSecret: entry.clientSecret || existing.oauth?.clientSecret, // FE may send empty ("") if not changed
+            authorizationUrl: entry.authorizationUrl || existing.oauth?.authorizationUrl,
+            tokenUrl: entry.tokenUrl || existing.oauth?.tokenUrl,
         };
         const authProvider: AuthProviderEntry = {
             ...existing,
@@ -299,9 +313,20 @@ export class AuthProviderService {
         if (!existing) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
         }
+
+        const isAzure = this.apiConverter.toAuthProviderType(existing.type) === AuthProviderType.AZURE_DEVOPS;
+        if (!isAzure) {
+            entry.authorizationUrl = undefined;
+            entry.tokenUrl = undefined;
+        }
+
+        const azureChanged =
+            isAzure &&
+            (existing.oauth.authorizationUrl !== entry.authorizationUrl || existing.oauth.tokenUrl !== entry.tokenUrl);
         const changed =
             entry.clientId !== existing.oauth.clientId ||
-            (entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret);
+            (entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret) ||
+            azureChanged;
 
         if (!changed) {
             return existing;
@@ -312,6 +337,8 @@ export class AuthProviderService {
             ...existing.oauth,
             clientId: entry.clientId || existing.oauth?.clientId,
             clientSecret: entry.clientSecret || existing.oauth?.clientSecret, // FE may send empty ("") if not changed
+            authorizationUrl: entry.authorizationUrl || existing.oauth.authorizationUrl,
+            tokenUrl: entry.tokenUrl || existing.oauth.tokenUrl,
         };
         const authProvider: AuthProviderEntry = {
             ...existing,
