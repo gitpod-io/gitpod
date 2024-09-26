@@ -570,7 +570,7 @@ export class WorkspaceStarter {
         if (projects.length === 0) {
             throw new ApplicationError(
                 ErrorCodes.PRECONDITION_FAILED,
-                "You don't have permission to start this workspace.",
+                "Unable to start workspace: This repository has not been imported. Your role is restricted to using only imported repositories for workspace creation. Please contact your organization owner to import this repository or modify permissions.",
             );
         }
     }

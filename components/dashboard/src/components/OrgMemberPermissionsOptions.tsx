@@ -109,7 +109,7 @@ export const OrganizationRoleRestrictionModal = ({
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleUpdate}>
-            <ModalHeader>Restricted organization roles from opening non-imported repositories</ModalHeader>
+            <ModalHeader>Allow roles to start workspaces from non-imported repos</ModalHeader>
             <ModalBody>
                 {props.isLoading ? (
                     <LoadingState />

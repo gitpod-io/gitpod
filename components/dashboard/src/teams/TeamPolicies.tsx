@@ -43,6 +43,7 @@ import {
     OrganizationRoleRestrictionModalProps,
     OrgMemberPermissionRestrictionsOptions,
 } from "../components/OrgMemberPermissionsOptions";
+import { LightbulbIcon } from "lucide-react";
 
 export default function TeamPoliciesPage() {
     useDocumentTitle("Organization Settings - Policies");
@@ -349,10 +350,17 @@ const RolePermissionsRestrictions = ({
 
     return (
         <ConfigurationSettingsField>
-            <Heading3>Role permissions restrictions</Heading3>
+            <Heading3>Roles allowed to start workspaces from non-imported repos</Heading3>
             <Subheading className="mb-2">
-                Limit the ability of certain roles for starting workspaces from repositories that are not imported.
-                Requires <span className="font-medium">Owner</span> permissions to change.
+                Restrict specific roles from initiating workspaces using non-imported repositories. This setting
+                requires <span className="font-medium">Owner</span> permissions to modify.
+                <br />
+                <span className="flex flex-row items-center gap-1">
+                    <LightbulbIcon size={20} /> Tip: Imported repositories are those listed under{" "}
+                    <Link to={"/repositories"} className="gp-link">
+                        Repository settings
+                    </Link>
+                </span>
             </Subheading>
 
             <OrgMemberPermissionRestrictionsOptions roleRestrictions={settings?.roleRestrictions ?? []} />
