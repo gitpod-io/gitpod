@@ -32,6 +32,10 @@ export namespace RepoURL {
                 repoKind = "users";
                 owner = owner.substring(1);
             }
+            // Azure DevOps
+            if (owner.endsWith("/_git")) {
+                owner = owner.slice(0, -5);
+            }
             const repo = endSegment.endsWith(".git") ? endSegment.slice(0, -4) : endSegment;
             return { host, owner, repo, repoKind };
         }

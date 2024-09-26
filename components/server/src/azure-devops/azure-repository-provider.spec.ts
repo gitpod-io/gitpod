@@ -27,8 +27,8 @@ class TestAzureDevOpsRepositoryProvider {
     @test public async testFetchCommitHistory() {
         const result = await this.repositoryProvider.getCommitHistory(
             this.user,
-            "services-azure",
-            "test-project/repo2-fork",
+            "services-azure/test-project",
+            "repo2-fork",
             "dafbf184f68e7ee4dc6d1174d962cab84b605eb2",
             100,
         );

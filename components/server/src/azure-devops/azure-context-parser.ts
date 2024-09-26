@@ -13,7 +13,7 @@ import { NavigatorContext, PullRequestContext, User, WorkspaceContext } from "@g
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { NotFoundError, UnauthorizedError } from "../errors";
-import { getProjectAndRepoName, normalizeBranchName, toBranch, toRepository } from "./azure-converter";
+import { getOrgAndProject, normalizeBranchName, toBranch, toRepository } from "./azure-converter";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { AuthProviderParams } from "../auth/auth-provider";
 
@@ -30,12 +30,12 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
         try {
             const {
                 host,
-                owner: azOrganization,
-                repoName: projectAndRepo,
+                owner: orgAndProject,
+                repoName,
                 moreSegments,
                 searchParams,
             } = await this.parseURL(user, contextUrl);
-            const [azProject, repoName] = getProjectAndRepoName(projectAndRepo);
+            const [azOrganization, azProject] = getOrgAndProject(orgAndProject);
             if (moreSegments.length > 0) {
                 switch (moreSegments[0]) {
                     case "pullrequest": {
@@ -118,8 +118,8 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             const repo = azProject;
             return {
                 host,
-                owner: azOrganization,
-                repoName: `${azProject}/${repo}`,
+                owner: `${azOrganization}/${azProject}`,
+                repoName: repo,
                 moreSegments: segments.slice(3),
                 searchParams: url.searchParams,
             };
@@ -132,8 +132,8 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
         const repo = segments[3];
         return {
             host,
-            owner: azOrganization,
-            repoName: `${azProject}/${repo}`,
+            owner: `${azOrganization}/${azProject}`,
+            repoName: repo,
             moreSegments: segments.slice(4),
             searchParams: url.searchParams,
         };
@@ -208,6 +208,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             pullRequest.forkSource?.repository ?? pullRequest.repository!,
             azOrganization,
         );
+
         const targetRepo = toRepository(this.config.host, pullRequest.repository!, azOrganization);
         const result: PullRequestContext = {
             nr: pr,
@@ -216,7 +217,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
                 ref: normalizeBranchName(pullRequest.targetRefName!),
                 refType: "branch",
             } as any as PullRequestContext["base"],
-            title: "",
+            title: pullRequest.title ?? `${targetRepo.name} #${pr}`,
             repository: sourceRepo,
             ref: normalizeBranchName(pullRequest.sourceRefName!),
             refType: "branch",
@@ -305,7 +306,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             isFile: false,
             title: `${azProject}/${repo} - ${commitInfo.comment}`,
             // @ts-ignore
-            owner: azOrganization,
+            owner: `${azOrganization}/${azProject}`,
             repository: toRepository(this.config.host, repoInfo, azOrganization),
         };
         return result;

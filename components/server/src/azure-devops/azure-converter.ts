@@ -9,9 +9,17 @@ import { GitBranchStats, GitCommitRef } from "azure-devops-node-api/interfaces/G
 import { GitRepository } from "azure-devops-node-api/interfaces/TfvcInterfaces";
 
 export function toRepository(host: string, d: GitRepository, azOrgId?: string): Repository {
-    const owner = azOrgId ?? d.webUrl?.replace("https://dev.azure.com/", "").split("/").pop() ?? "unknown"; // should not be unknown
+    const azOrg = azOrgId ?? d.webUrl?.replace("https://dev.azure.com/", "").split("/").pop();
+    const azProject = d.project?.name;
+    if (!azOrg || !azProject) {
+        throw new Error("Invalid repository owner");
+    }
+    if (!d.name) {
+        throw new Error("Invalid repository name");
+    }
+    const owner = `${azOrg}/${azProject}`;
     const branchName = normalizeBranchName(d.defaultBranch);
-    const name = [d.project?.name, d.name ?? "unknown"].join("/");
+    const name = d.name ?? "unknown";
     return {
         host,
         owner,
@@ -27,9 +35,13 @@ export function normalizeBranchName(ref: string | undefined): string {
     return ref?.replace("refs/heads/", "") ?? "main";
 }
 
-export function getProjectAndRepoName(projectAndRepo: Repository["name"]) {
-    const [azProject, repoName] = projectAndRepo.split("/");
-    return [azProject, repoName] as const;
+export function getOrgAndProject(orgAndProject: Repository["owner"]) {
+    const parts = orgAndProject.split("/");
+    if (parts.length < 2) {
+        throw new Error(`Invalid owner format: ${orgAndProject}`);
+    }
+    const [azOrg, azProject] = parts;
+    return [azOrg, azProject] as const;
 }
 
 export function toBranch(d: GitBranchStats): Branch | undefined {

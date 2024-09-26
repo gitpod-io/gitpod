@@ -31,8 +31,8 @@ class TestAzureDevOpsFileProvider {
             {
                 repository: {
                     host: "dev.azure.com",
-                    owner: "services-azure",
-                    name: "test-project/repo2",
+                    owner: "services-azure/test-project",
+                    name: "repo2",
                     cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2",
                     description: "main",
                     webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2",
@@ -58,8 +58,8 @@ class TestAzureDevOpsFileProvider {
             {
                 repository: {
                     host: "dev.azure.com",
-                    owner: "services-azure",
-                    name: "test-project/repo2",
+                    owner: "services-azure/test-project",
+                    name: "repo2",
                     cloneUrl: "https://services-azure@dev.azure.com/services-azure/test-project/_git/repo2",
                     description: "main",
                     webUrl: "https://dev.azure.com/services-azure/test-project/_git/repo2",
