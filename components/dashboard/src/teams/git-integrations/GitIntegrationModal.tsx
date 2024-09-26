@@ -43,7 +43,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     const [clientSecret, setClientSecret] = useState<string>(props.provider?.oauth2Config?.clientSecret ?? "");
     const [authorizationUrl, setAuthorizationUrl] = useState(props.provider?.oauth2Config?.authorizationUrl ?? "");
     const [tokenUrl, setTokenUrl] = useState(props.provider?.oauth2Config?.tokenUrl ?? "");
-    const availableProviderOptions = useAuthProviderOptionsQuery();
+    const availableProviderOptions = useAuthProviderOptionsQuery(true);
     const supportAzureDevOps = isSupportAzureDevOpsIntegration();
 
     const [savedProvider, setSavedProvider] = useState(props.provider);

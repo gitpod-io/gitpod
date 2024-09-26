@@ -21,9 +21,16 @@ export const isSupportAzureDevOpsIntegration = () => {
     return isGitpodIo();
 };
 
-export const useAuthProviderOptionsQuery = () => {
+export const useAuthProviderOptionsQuery = (isOrgLevel: boolean) => {
     return useMemo(() => {
         const isPAYG = isGitpodIo();
-        return isPAYG ? optionsForPAYG : optionsForEnterprise;
-    }, []);
+        // Azure DevOps is not supported for PAYG users and is only available for org-level integrations
+        // because auth flow is identified by auth provider's host, which will always be `dev.azure.com`
+        //
+        // Don't remove this until we can setup an generial application for Azure DevOps (investigate needed)
+        if (isPAYG || !isOrgLevel) {
+            return optionsForPAYG;
+        }
+        return optionsForEnterprise;
+    }, [isOrgLevel]);
 };

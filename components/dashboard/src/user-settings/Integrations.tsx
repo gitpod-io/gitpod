@@ -577,7 +577,7 @@ export function GitIntegrationModal(
     const createProvider = useCreateUserAuthProviderMutation();
     const updateProvider = useUpdateUserAuthProviderMutation();
 
-    const availableProviderOptions = useAuthProviderOptionsQuery();
+    const availableProviderOptions = useAuthProviderOptionsQuery(false);
 
     useEffect(() => {
         setMode(props.mode);
