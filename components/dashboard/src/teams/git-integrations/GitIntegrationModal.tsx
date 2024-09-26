@@ -24,6 +24,7 @@ import { useCreateOrgAuthProviderMutation } from "../../data/auth-providers/crea
 import { useUpdateOrgAuthProviderMutation } from "../../data/auth-providers/update-org-auth-provider-mutation";
 import { authProviderClient, userClient } from "../../service/public-api";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { useAuthProviderOptionsQuery } from "../../data/auth-providers/auth-provider-options-query";
 
 type Props = {
     provider?: AuthProvider;
@@ -39,6 +40,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     const [clientSecret, setClientSecret] = useState<string>(props.provider?.oauth2Config?.clientSecret ?? "");
     const [authorizationUrl, setAuthorizationUrl] = useState(props.provider?.oauth2Config?.authorizationUrl ?? "");
     const [tokenUrl, setTokenUrl] = useState(props.provider?.oauth2Config?.tokenUrl ?? "");
+    const availableProviderOptions = useAuthProviderOptionsQuery();
 
     const [savedProvider, setSavedProvider] = useState(props.provider);
     const isNew = !savedProvider;
@@ -261,11 +263,11 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                         topMargin={false}
                         onChange={(val) => setType(getNumber(val))}
                     >
-                        <option value={AuthProviderType.GITHUB}>GitHub</option>
-                        <option value={AuthProviderType.GITLAB}>GitLab</option>
-                        <option value={AuthProviderType.BITBUCKET}>Bitbucket Cloud</option>
-                        <option value={AuthProviderType.BITBUCKET_SERVER}>Bitbucket Server</option>
-                        <option value={AuthProviderType.AZURE_DEVOPS}>Azure DevOps</option>
+                        {availableProviderOptions.map((option) => (
+                            <option key={option.type} value={option.type}>
+                                {option.label}
+                            </option>
+                        ))}
                     </SelectInputField>
                     <TextInputField
                         label="Provider Host Name"

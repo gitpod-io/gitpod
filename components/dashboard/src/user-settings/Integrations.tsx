@@ -41,6 +41,7 @@ import { useDeleteUserAuthProviderMutation } from "../data/auth-providers/delete
 import { Button } from "@podkit/buttons/Button";
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 import { InputWithCopy } from "../components/InputWithCopy";
+import { useAuthProviderOptionsQuery } from "../data/auth-providers/auth-provider-options-query";
 
 export default function Integrations() {
     return (
@@ -566,6 +567,8 @@ export function GitIntegrationModal(
     const createProvider = useCreateUserAuthProviderMutation();
     const updateProvider = useUpdateUserAuthProviderMutation();
 
+    const availableProviderOptions = useAuthProviderOptionsQuery();
+
     useEffect(() => {
         setMode(props.mode);
         if (props.mode === "edit") {
@@ -851,10 +854,11 @@ export function GitIntegrationModal(
                                 className="w-full"
                                 onChange={(e) => setType(getNumber(e.target.value))}
                             >
-                                <option value={AuthProviderType.GITHUB}>GitHub</option>
-                                <option value={AuthProviderType.GITLAB}>GitLab</option>
-                                <option value={AuthProviderType.BITBUCKET_SERVER}>Bitbucket Server</option>
-                                <option value={AuthProviderType.AZURE_DEVOPS}>Azure DevOps</option>
+                                {availableProviderOptions.map((options) => (
+                                    <option key={options.type} value={options.type}>
+                                        {options.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     )}
