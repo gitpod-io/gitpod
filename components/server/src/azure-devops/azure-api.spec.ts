@@ -11,6 +11,7 @@ import { Container } from "inversify";
 import { suite, test, timeout, skip } from "@testdeck/mocha";
 import { DevData, DevTestHelper } from "../dev/dev-data";
 import { AzureDevOpsApi } from "./azure-api";
+import { RepositoryNotFoundError } from "@gitpod/public-api-common/lib/public-api-errors";
 
 DevTestHelper.echoAzureTestTips();
 
@@ -29,6 +30,24 @@ class TestAzureDevOpsFileProvider {
     @test public async happyPath() {
         const result = await this.azureDevOpsApi.getRepository(this.user, "services-azure", "test-project", "repo2");
         expect(result.name).to.equal("repo2");
+    }
+
+    @test public async test401() {
+        try {
+            await this.azureDevOpsApi.getPullRequest("not-a-user", "services-azure", "test-project", "repo2", 5);
+            expect.fail("should have failed");
+        } catch (error) {
+            expect(error.statusCode).to.equal(401);
+        }
+    }
+
+    @test public async test404() {
+        try {
+            await this.azureDevOpsApi.getRepository(this.user, "services-azure", "test-project", "must_be_repo_404");
+            expect.fail("should have failed");
+        } catch (error) {
+            expect(error instanceof RepositoryNotFoundError).to.equal(true);
+        }
     }
 }
 

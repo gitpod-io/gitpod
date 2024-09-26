@@ -5,6 +5,7 @@
  */
 
 import { Branch, CommitInfo, Repository } from "@gitpod/gitpod-protocol";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { GitBranchStats, GitCommitRef } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { GitRepository } from "azure-devops-node-api/interfaces/TfvcInterfaces";
 
@@ -12,14 +13,14 @@ export function toRepository(host: string, d: GitRepository, azOrgId?: string): 
     const azOrg = azOrgId ?? d.webUrl?.replace("https://dev.azure.com/", "").split("/").pop();
     const azProject = d.project?.name;
     if (!azOrg || !azProject) {
-        throw new Error("Invalid repository owner");
+        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid repository owner");
     }
     if (!d.name) {
-        throw new Error("Invalid repository name");
+        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid repository name");
     }
     const owner = `${azOrg}/${azProject}`;
     const branchName = normalizeBranchName(d.defaultBranch);
-    const name = d.name ?? "unknown";
+    const name = d.name;
     return {
         host,
         owner,
@@ -38,7 +39,7 @@ export function normalizeBranchName(ref: string | undefined): string {
 export function getOrgAndProject(orgAndProject: Repository["owner"]) {
     const parts = orgAndProject.split("/");
     if (parts.length < 2) {
-        throw new Error(`Invalid owner format: ${orgAndProject}`);
+        throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid owner format`);
     }
     const [azOrg, azProject] = parts;
     return [azOrg, azProject] as const;

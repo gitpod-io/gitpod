@@ -16,6 +16,9 @@ import { NotFoundError, UnauthorizedError } from "../errors";
 import { getOrgAndProject, normalizeBranchName, toBranch, toRepository } from "./azure-converter";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { AuthProviderParams } from "../auth/auth-provider";
+import { AzureDevOpsOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
+import { RepoURL } from "../repohost";
+import { containsScopes } from "../prebuilds/token-scopes-inclusion";
 
 @injectable()
 export class AzureDevOpsContextParser extends AbstractContextParser implements IContextParser {
@@ -87,18 +90,18 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
 
             return await this.handleDefaultContext(user, host, azOrganization, azProject, repoName);
         } catch (error) {
-            // TODO(hw): [AZ] proper handle errors
-            // if (error && error.code === 401) {
-            //     const token = await this.tokenHelper.getCurrentToken(user);
-            //     throw UnauthorizedError.create({
-            //         host: this.config.host,
-            //         providerType: "Gitlab",
-            //         requiredScopes: GitLabScope.Requirements.DEFAULT,
-            //         repoName: RepoURL.parseRepoUrl(contextUrl)?.repo,
-            //         providerIsConnected: !!token,
-            //         isMissingScopes: containsScopes(token?.scopes, GitLabScope.Requirements.DEFAULT),
-            //     });
-            // }
+            if (error && error.statusCode === 401) {
+                const token = await this.tokenHelper.getCurrentToken(user);
+                throw UnauthorizedError.create({
+                    host: this.config.host,
+                    providerType: "AzureDevOps",
+                    requiredScopes: AzureDevOpsOAuthScopes.DEFAULT,
+                    repoName: RepoURL.parseRepoUrl(contextUrl)?.repo,
+                    providerIsConnected: !!token,
+                    isMissingScopes: containsScopes(token?.scopes, AzureDevOpsOAuthScopes.DEFAULT),
+                });
+            }
+            log.debug("AzureDevOps context parser: Failed to parse.", error);
             throw error;
         } finally {
             span.finish();
@@ -125,7 +128,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             };
         }
         if (segments.length < 4 || segments[2] !== "_git") {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid Azure DevOps URL");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid Azure DevOps repository URL");
         }
         const azOrganization = segments[0];
         const azProject = segments[1];

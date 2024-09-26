@@ -14,6 +14,7 @@ import { WebApi, getPersonalAccessTokenHandler } from "azure-devops-node-api";
 import { MaybeContent } from "../repohost";
 import { GitVersionDescriptor, GitVersionType } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { AzureDevOpsOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
+import { RepositoryNotFoundError } from "@gitpod/public-api-common/lib/public-api-errors";
 
 @injectable()
 export class AzureDevOpsApi {
@@ -145,7 +146,19 @@ export class AzureDevOpsApi {
      */
     async getRepository(userOrToken: User | string, azOrgId: string, azProject: string, repository: string) {
         const gitApi = await this.createGitApi(userOrToken, azOrgId);
-        return gitApi.getRepository(repository, azProject);
+        const repo = await gitApi.getRepository(repository, azProject);
+        if (!repo) {
+            throw new RepositoryNotFoundError({
+                host: this.config.host,
+                owner: `${azOrgId}/${azProject}`,
+                repoName: repository,
+                userIsOwner: false,
+                userScopes: [],
+                lastUpdate: "",
+                errorMessage: "Repository not found.",
+            });
+        }
+        return repo;
     }
 
     async getBranches(
