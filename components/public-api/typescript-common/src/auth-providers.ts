@@ -94,15 +94,15 @@ export namespace BitbucketServerOAuthScopes {
 }
 
 export namespace AzureDevOpsOAuthScopes {
-    const READ_USER = "https://app.vssps.visualstudio.com/vso.profile";
-    const READ_REPO = "https://app.vssps.visualstudio.com/vso.code_write";
+    export const READ_USER = "https://app.vssps.visualstudio.com/vso.profile";
+    export const WRITE_REPO = "https://app.vssps.visualstudio.com/vso.code_write";
 
     // extend token lifetime
     const OFFLINE_ACCESS = "offline_access";
     export const APPEND_WHEN_FETCHING = [OFFLINE_ACCESS];
 
-    export const ALL = [READ_USER, READ_REPO];
-    export const REPO = [READ_REPO];
+    export const ALL = [READ_USER, WRITE_REPO];
+    export const REPO = [WRITE_REPO];
     export const DEFAULT = ALL;
 }
 
@@ -164,4 +164,12 @@ export function getRequiredScopes(type: AuthProviderType | string) {
                 privateRepo: AzureDevOpsOAuthScopes.DEFAULT,
             };
     }
+}
+
+export function getScopeNameForScope(scope: string) {
+    // Azure DevOps scopes are URLs, we only want to display the last part
+    if (scope.startsWith("https://app.vssps.visualstudio.com/")) {
+        return scope.replace("https://app.vssps.visualstudio.com/", "");
+    }
+    return scope;
 }

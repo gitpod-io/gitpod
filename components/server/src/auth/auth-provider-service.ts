@@ -367,6 +367,10 @@ export class AuthProviderService {
                 urls = bbUrls(host);
                 break;
             case "AzureDevOps":
+                // We don't support Azure DevOps for PAYG users yet because our auth flow is based on provider's host
+                if (this.config.hostUrl.url.host === "gitpod.io") {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unexpected service type.");
+                }
                 const { authorizationUrl, tokenUrl } = newEntry;
                 if (!authorizationUrl || !tokenUrl) {
                     throw new ApplicationError(ErrorCodes.BAD_REQUEST, "authorizationUrl and tokenUrl are required.");

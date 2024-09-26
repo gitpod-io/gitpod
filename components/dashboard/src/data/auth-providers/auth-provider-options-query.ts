@@ -17,9 +17,13 @@ const optionsForPAYG = [
 
 const optionsForEnterprise = [...optionsForPAYG, { type: AuthProviderType.AZURE_DEVOPS, label: "Azure DevOps" }];
 
+export const isSupportAzureDevOpsIntegration = () => {
+    return isGitpodIo();
+};
+
 export const useAuthProviderOptionsQuery = () => {
-    const isPAYG = isGitpodIo();
     return useMemo(() => {
+        const isPAYG = isGitpodIo();
         return isPAYG ? optionsForPAYG : optionsForEnterprise;
-    }, [isPAYG]);
+    }, []);
 };

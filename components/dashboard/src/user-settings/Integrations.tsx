@@ -4,7 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { getRequiredScopes, getScopesForAuthProviderType } from "@gitpod/public-api-common/lib/auth-providers";
+import {
+    AzureDevOpsOAuthScopes,
+    getRequiredScopes,
+    getScopeNameForScope,
+    getScopesForAuthProviderType,
+} from "@gitpod/public-api-common/lib/auth-providers";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -90,6 +95,11 @@ const getDescriptionForScope = (scope: string) => {
             return "Allow creating, merging and declining pull requests (note: Bitbucket doesn't support revoking scopes)";
         case "webhook":
             return "Allow installing webhooks (used when enabling prebuilds for a repository, note: Bitbucket doesn't support revoking scopes)";
+        // Azure DevOps
+        case AzureDevOpsOAuthScopes.WRITE_REPO:
+            return "Code read and write permissions";
+        case AzureDevOpsOAuthScopes.READ_USER:
+            return "Read user profile";
         default:
             return "";
     }
@@ -334,7 +344,7 @@ function GitProviders() {
                                     <CheckboxInputField
                                         key={scope}
                                         value={scope}
-                                        label={scope + (isRequired ? " (required)" : "")}
+                                        label={getScopeNameForScope(scope) + (isRequired ? " (required)" : "")}
                                         hint={getDescriptionForScope(scope)}
                                         checked={editModal.nextScopes.has(scope)}
                                         disabled={isRequired}
