@@ -355,11 +355,15 @@ const RolePermissionsRestrictions = ({
                 Restrict specific roles from initiating workspaces using non-imported repositories. This setting
                 requires <span className="font-medium">Owner</span> permissions to modify.
                 <br />
-                <span className="flex flex-row items-center gap-1">
-                    <LightbulbIcon size={20} /> Tip: Imported repositories are those listed under{" "}
-                    <Link to={"/repositories"} className="gp-link">
-                        Repository settings
-                    </Link>
+                <span className="flex flex-row items-center gap-1 my-2">
+                    <LightbulbIcon size={20} />{" "}
+                    <span>
+                        Tip: Imported repositories are those listed under{" "}
+                        <Link to={"/repositories"} className="gp-link">
+                            Repository settings
+                        </Link>
+                        .
+                    </span>
                 </span>
             </Subheading>
 
