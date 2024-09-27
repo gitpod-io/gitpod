@@ -861,6 +861,12 @@ func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *common.Workspace
 	return nil
 }
 
+func (p *fakeWsInfoProvider) AcquireContext(ctx context.Context, workspaceID string, port string) (context.Context, string, error) {
+	return ctx, "", nil
+}
+func (p *fakeWsInfoProvider) ReleaseContext(id string) {
+}
+
 // WorkspaceCoords returns the workspace coords for a public port.
 func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *common.WorkspaceCoords {
 	for _, info := range p.infos {
