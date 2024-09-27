@@ -15,6 +15,7 @@ import { MaybeContent } from "../repohost";
 import { GitVersionDescriptor, GitVersionType } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { AzureDevOpsOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 import { RepositoryNotFoundError } from "@gitpod/public-api-common/lib/public-api-errors";
+import { IncomingMessage } from "node:http";
 
 @injectable()
 export class AzureDevOpsApi {
@@ -112,13 +113,13 @@ export class AzureDevOpsApi {
                 undefined,
                 this.getVersionDescriptor(commit),
             );
+            const err = AzureReadableStreamError.tryCreate(readableStream);
+            if (err) {
+                throw err;
+            }
             let content = "";
             for await (const chunk of readableStream) {
                 content += chunk.toString();
-            }
-            const err = AzureReadableStreamError.tryCreate(content);
-            if (err) {
-                throw err;
             }
             return content;
         } catch (err) {
@@ -265,21 +266,16 @@ export class AzureReadableStreamError extends Error {
         super(message);
     }
 
-    /**
-     * SDK will respond exception (json string) into readableStream
-     */
-    static tryCreate(content: string): AzureReadableStreamError | undefined {
-        try {
-            // `{"$id":"1","innerException":null,"message":"TF400813: The user 'a9f4cac8-b940-6b73-be49-ec49d5d15535' is not authorized to access this resource.","typeName":"Microsoft.TeamFoundation.Framework.Server.UnauthorizedRequestException, Microsoft.TeamFoundation.Framework.Server","typeKey":"UnauthorizedRequestException","errorCode":0,"eventId":3000}`
-            const obj = JSON.parse(content);
-            if (!!obj && typeof obj === "object" && "message" in obj && typeof obj.message === "string") {
-                const msg = obj.message as string;
-                const type = msg.includes("could not be found") ? "not_found" : "unknown";
-                return new AzureReadableStreamError(msg, type);
-            }
-            return;
-        } catch (error) {
-            return;
+    private static isIncomingMessage(stream: NodeJS.ReadableStream): stream is IncomingMessage {
+        return "statusCode" in stream && typeof (stream as any).statusCode === "number";
+    }
+
+    static tryCreate(stream: NodeJS.ReadableStream): AzureReadableStreamError | undefined {
+        if (AzureReadableStreamError.isIncomingMessage(stream)) {
+            return new AzureReadableStreamError(
+                `HTTP ${stream.statusCode} ${stream.statusMessage}`,
+                stream.statusCode === 404 ? "not_found" : "unknown",
+            );
         }
     }
 }
