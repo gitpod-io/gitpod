@@ -311,10 +311,7 @@ const LeftPanel = () => {
                 <div className="justify-center md:justify-start mb-6 md:mb-8">
                     <ProductLogo className="h-8 mb-4" />
                     <h2 className="text-2xl font-medium mb-2 dark:text-white inline-flex items-center gap-x-2">
-                        Gitpod Flex{" "}
-                        <span className="inline-block px-2 py-1 bg-[#EFFBEF] dark:bg-green-900 text-pk-content-primary dark:text-green-100 rounded-full text-xs font-medium border border-[#D6D6D6] dark:border-green-700">
-                            Early access
-                        </span>
+                        Gitpod Flex
                     </h2>
                     <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
                         Automated, standardized
@@ -385,8 +382,10 @@ const LeftPanel = () => {
             </div>
             <div className="justify-center items-center max-w-fit mx-auto flex flex-col">
                 <img src={GitpodEngraved} alt="Gitpod Engraved icon" className="h-6 w-6 dark:filter-invert" />
-                <div className="inline-flex max-w-fit mx-auto mt-1.5 items-center justify-center px-1 py-0.5 text-xs font-medium bg-transparent text-[#191A1A]/20 rounded border border-[#191A1A]/10 dark:filter-invert">
-                    early access
+                <div className="inline-flex max-w-fit mx-auto mt-1 items-center justify-center px-1 py-0.5 text-xs font-medium bg-transparent text-[#191A1A33] dark:filter-invert">
+                    <span className="bg-gradient-to-l from-[#191A1A33] to-[#191A1A33] text-transparent bg-clip-text">
+                        early access
+                    </span>
                 </div>
             </div>
         </div>
