@@ -158,7 +158,6 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                         id: savedProvider.id,
                         clientId: trimmedId,
                         clientSecret: clientSecret === "redacted" ? "" : trimmedSecret,
-                        type,
                         authorizationUrl: trimmedAuthorizationUrl,
                         tokenUrl: trimmedTokenUrl,
                     },

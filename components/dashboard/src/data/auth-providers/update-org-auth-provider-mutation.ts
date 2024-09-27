@@ -6,7 +6,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getOrgAuthProvidersQueryKey } from "./org-auth-providers-query";
-import { AuthProviderType, UpdateAuthProviderRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { UpdateAuthProviderRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { authProviderClient } from "../../service/public-api";
 
 type UpdateAuthProviderArgs = {
@@ -14,8 +14,6 @@ type UpdateAuthProviderArgs = {
         id: string;
         clientId: string;
         clientSecret: string;
-        /** verify locally only, will not be update */
-        type: AuthProviderType;
         authorizationUrl?: string;
         tokenUrl?: string;
     };

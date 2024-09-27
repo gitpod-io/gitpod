@@ -155,7 +155,7 @@ export namespace DevTestHelper {
     export function createAzureSCMContainer() {
         const container = new Container();
         const AUTH_HOST_CONFIG: Partial<AuthProviderParams> = {
-            id: "Public-GitHub",
+            id: "0000-Azure-DevOps",
             type: "AzureDevOps",
             verified: true,
             description: "",

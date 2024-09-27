@@ -21,8 +21,12 @@ export class AzureDevOpsTokenValidator implements IGitTokenValidator {
         try {
             const [azOrg, azProject] = getOrgAndProject(params.owner);
             await this.azureDevOpsApi.getRepository(params.token, azOrg, azProject, params.repo);
+            // once repository is found, we know the token is valid
             found = true;
+            // we don't know if the repository is private or public from API
             isPrivateRepo = true;
+            // there's no API to check if the token has write access to the repository
+            // we required vso.code_write scope, so default should be true
             writeAccessToRepo = true;
         } catch (error) {
             log.error(error);

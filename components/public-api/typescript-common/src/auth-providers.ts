@@ -104,6 +104,9 @@ export namespace AzureDevOpsOAuthScopes {
     export const ALL = [READ_USER, WRITE_REPO];
     export const REPO = [WRITE_REPO];
     export const DEFAULT = ALL;
+    export const Requirements = {
+        DEFAULT: [READ_USER, WRITE_REPO],
+    };
 }
 
 export function getScopesForAuthProviderType(type: AuthProviderType | string) {
@@ -159,9 +162,9 @@ export function getRequiredScopes(type: AuthProviderType | string) {
         case AuthProviderType.AZURE_DEVOPS:
         case "AzureDevOps":
             return {
-                default: AzureDevOpsOAuthScopes.DEFAULT,
-                publicRepo: AzureDevOpsOAuthScopes.DEFAULT,
-                privateRepo: AzureDevOpsOAuthScopes.DEFAULT,
+                default: AzureDevOpsOAuthScopes.Requirements.DEFAULT,
+                publicRepo: AzureDevOpsOAuthScopes.Requirements.DEFAULT,
+                privateRepo: AzureDevOpsOAuthScopes.Requirements.DEFAULT,
             };
     }
 }

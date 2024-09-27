@@ -57,7 +57,7 @@ export class AzureDevOpsRepositoryProvider implements RepositoryProvider {
     }
 
     async getUserRepos(user: User): Promise<RepositoryInfo[]> {
-        // FIXME(janx): Not implemented yet
+        // FIXME(hw): Not implemented yet
         return [];
     }
 

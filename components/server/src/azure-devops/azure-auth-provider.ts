@@ -23,7 +23,7 @@ export class AzureDevOpsAuthProvider extends GenericAuthProvider {
             ...this.defaultInfo(),
             scopes: AzureDevOpsOAuthScopes.ALL,
             requirements: {
-                default: AzureDevOpsOAuthScopes.DEFAULT,
+                default: AzureDevOpsOAuthScopes.Requirements.DEFAULT,
                 publicRepo: AzureDevOpsOAuthScopes.REPO,
                 privateRepo: AzureDevOpsOAuthScopes.REPO,
             },

@@ -54,7 +54,7 @@ export function toBranch(d: GitBranchStats): Branch | undefined {
         return;
     }
     return {
-        htmlUrl: d.commit!.url!,
+        htmlUrl: d.commit.url!,
         name: d.name!,
         commit,
     };
