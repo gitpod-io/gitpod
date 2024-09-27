@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	ErrTokenNotFound  = fmt.Errorf("no owner cookie present")
-	ErrTokenMissmatch = fmt.Errorf("owner token mismatch")
-	ErrTokenDecode    = fmt.Errorf("cannot decode owner token")
+	ErrTokenNotFound = fmt.Errorf("no owner cookie present")
+	ErrTokenMismatch = fmt.Errorf("owner token mismatch")
+	ErrTokenDecode   = fmt.Errorf("cannot decode owner token")
 )
 
 // WorkspaceAuthHandler rejects requests which are not authenticated or authorized to access a workspace.
@@ -87,7 +87,7 @@ func WorkspaceAuthHandler(domain string, info common.WorkspaceInfoProvider) mux.
 				}
 
 				if tkn != ws.Auth.OwnerToken {
-					return false, ErrTokenMissmatch
+					return false, ErrTokenMismatch
 				}
 				return true, nil
 			}
@@ -99,7 +99,7 @@ func WorkspaceAuthHandler(domain string, info common.WorkspaceInfoProvider) mux.
 						resp.WriteHeader(http.StatusUnauthorized)
 						return
 					}
-					if errors.Is(err, ErrTokenMissmatch) {
+					if errors.Is(err, ErrTokenMismatch) {
 						log.Warn("owner token mismatch")
 						resp.WriteHeader(http.StatusForbidden)
 						return
