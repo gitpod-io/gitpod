@@ -38,6 +38,12 @@ import { Link } from "react-router-dom";
 import { InputField } from "../components/forms/InputField";
 import { TextInput } from "../components/forms/TextInputField";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import {
+    OrganizationRoleRestrictionModal,
+    OrganizationRoleRestrictionModalProps,
+    OrgMemberPermissionRestrictionsOptions,
+} from "../components/OrgMemberPermissionsOptions";
+import { LightbulbIcon } from "lucide-react";
 
 export default function TeamPoliciesPage() {
     useDocumentTitle("Organization Settings - Policies");
@@ -219,6 +225,12 @@ export default function TeamPoliciesPage() {
                         settings={settings}
                         handleUpdateTeamSettings={handleUpdateTeamSettings}
                     />
+
+                    <RolePermissionsRestrictions
+                        settings={settings}
+                        isOwner={isOwner}
+                        handleUpdateTeamSettings={handleUpdateTeamSettings}
+                    />
                 </div>
             </OrgSettingsPage>
         </>
@@ -306,6 +318,71 @@ const OrgWorkspaceClassesOptions = ({
                     showSwitchTitle={false}
                     restrictedWorkspaceClasses={restrictedWorkspaceClasses}
                     allowedClasses={allowedClassesInInstallation}
+                    updateMutation={updateMutation}
+                    onClose={() => setShowModal(false)}
+                />
+            )}
+        </ConfigurationSettingsField>
+    );
+};
+
+type RolePermissionsRestrictionsProps = {
+    settings: OrganizationSettings | undefined;
+    isOwner: boolean;
+    handleUpdateTeamSettings: (
+        newSettings: Partial<PlainMessage<OrganizationSettings>>,
+        options?: { throwMutateError?: boolean },
+    ) => Promise<void>;
+};
+
+const RolePermissionsRestrictions = ({
+    settings,
+    isOwner,
+    handleUpdateTeamSettings,
+}: RolePermissionsRestrictionsProps) => {
+    const [showModal, setShowModal] = useState(false);
+
+    const updateMutation: OrganizationRoleRestrictionModalProps["updateMutation"] = useMutation({
+        mutationFn: async ({ roleRestrictions }) => {
+            await handleUpdateTeamSettings({ roleRestrictions }, { throwMutateError: true });
+        },
+    });
+
+    return (
+        <ConfigurationSettingsField>
+            <Heading3>Roles allowed to start workspaces from non-imported repos</Heading3>
+            <Subheading className="mb-2">
+                Restrict specific roles from initiating workspaces using non-imported repositories. This setting
+                requires <span className="font-medium">Owner</span> permissions to modify.
+                <br />
+                <span className="flex flex-row items-center gap-1 my-2">
+                    <LightbulbIcon size={20} />{" "}
+                    <span>
+                        Tip: Imported repositories are those listed under{" "}
+                        <Link to={"/repositories"} className="gp-link">
+                            Repository settings
+                        </Link>
+                        .
+                    </span>
+                </span>
+            </Subheading>
+
+            <OrgMemberPermissionRestrictionsOptions roleRestrictions={settings?.roleRestrictions ?? []} />
+
+            {isOwner && (
+                <Button className="mt-6" onClick={() => setShowModal(true)}>
+                    Manage Permissions
+                </Button>
+            )}
+
+            {showModal && (
+                <OrganizationRoleRestrictionModal
+                    isLoading={false}
+                    defaultClass={""}
+                    roleRestrictions={settings?.roleRestrictions ?? []}
+                    showSetDefaultButton={false}
+                    showSwitchTitle={false}
+                    allowedClasses={[]}
                     updateMutation={updateMutation}
                     onClose={() => setShowModal(false)}
                 />

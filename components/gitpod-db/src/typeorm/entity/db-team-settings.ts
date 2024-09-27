@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { OrgMemberRole, OrganizationSettings, TimeoutSettings } from "@gitpod/gitpod-protocol";
+import { OrgMemberRole, OrganizationSettings, RoleRestrictions, TimeoutSettings } from "@gitpod/gitpod-protocol";
 import { Entity, Column, PrimaryColumn } from "typeorm";
 import { TypeORM } from "../typeorm";
 
@@ -35,6 +35,9 @@ export class DBOrgSettings implements OrganizationSettings {
 
     @Column("json", { nullable: true })
     timeoutSettings?: TimeoutSettings | undefined;
+
+    @Column("json", { nullable: true })
+    roleRestrictions?: RoleRestrictions | undefined;
 
     @Column()
     deleted: boolean;

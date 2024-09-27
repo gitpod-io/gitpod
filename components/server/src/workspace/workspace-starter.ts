@@ -19,6 +19,7 @@ import {
     DBWithTracing,
     ProjectDB,
     RedisPublisher,
+    TeamDB,
     TracedUserDB,
     TracedWorkspaceDB,
     UserDB,
@@ -228,6 +229,7 @@ export class WorkspaceStarter {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(OneTimeSecretServer) private readonly otsServer: OneTimeSecretServer,
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
+        @inject(TeamDB) private readonly orgDB: TeamDB,
         @inject(BlockedRepositoryDB) private readonly blockedRepositoryDB: BlockedRepositoryDB,
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(RedisMutex) private readonly redisMutex: RedisMutex,
@@ -257,6 +259,7 @@ export class WorkspaceStarter {
 
         let instanceId: string | undefined = undefined;
         try {
+            await this.checkStartPermission(user, workspace, project);
             await this.checkBlockedRepository(user, workspace);
 
             // Some workspaces do not have an image source.
@@ -540,6 +543,35 @@ export class WorkspaceStarter {
         }
         if (!blockedRepository.blockFreeUsage) {
             throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, `${contextURL} is blocklisted on Gitpod.`);
+        }
+    }
+
+    private async checkStartPermission(user: User, workspace: Workspace, project?: Project) {
+        // explicit project
+        if (project) {
+            return;
+        }
+
+        const { organizationId, contextURL } = workspace;
+
+        const membership = await this.orgDB.findTeamMembership(user.id, organizationId);
+        if (!membership) {
+            return;
+        }
+
+        // check if user's role is restricted from starting arbitrary repositories
+        const organizationSettings = await this.orgService.getSettings(user.id, organizationId);
+        if (!organizationSettings?.roleRestrictions?.[membership.role]?.includes("start_arbitrary_repositories")) {
+            return;
+        }
+
+        // implicit project (existing on the same clone URL)
+        const projects = await this.projectService.findProjectsByCloneUrl(user.id, contextURL, organizationId);
+        if (projects.length === 0) {
+            throw new ApplicationError(
+                ErrorCodes.PRECONDITION_FAILED,
+                "Unable to start workspace: This repository has not been imported. Your role is restricted to using only imported repositories for workspace creation. Please contact your organization owner to import this repository or modify permissions.",
+            );
         }
     }
 

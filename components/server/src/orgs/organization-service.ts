@@ -7,12 +7,12 @@
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import {
     OrgMemberInfo,
-    OrgMemberRole,
     Organization,
     OrganizationSettings,
     TeamMemberRole,
     TeamMembershipInvite,
     WorkspaceTimeoutDuration,
+    OrgMemberRole,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -533,6 +533,10 @@ export class OrganizationService {
                 inactivity: settings.timeoutSettings?.inactivity,
             };
         }
+        if (settings.roleRestrictions) {
+            result.roleRestrictions = settings.roleRestrictions;
+        }
+
         return result;
     }
 

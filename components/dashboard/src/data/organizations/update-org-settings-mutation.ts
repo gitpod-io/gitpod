@@ -23,6 +23,7 @@ type UpdateOrganizationSettingsArgs = Partial<
         | "restrictedEditorNames"
         | "defaultRole"
         | "timeoutSettings"
+        | "roleRestrictions"
     >
 >;
 
@@ -41,6 +42,7 @@ export const useUpdateOrgSettingsMutation = () => {
             restrictedEditorNames,
             defaultRole,
             timeoutSettings,
+            roleRestrictions,
         }) => {
             const settings = await organizationClient.updateOrganizationSettings({
                 organizationId: teamId,
@@ -53,6 +55,8 @@ export const useUpdateOrgSettingsMutation = () => {
                 updateRestrictedEditorNames: !!restrictedEditorNames,
                 defaultRole,
                 timeoutSettings,
+                roleRestrictions,
+                updateRoleRestrictions: !!roleRestrictions,
             });
             return settings.settings!;
         },

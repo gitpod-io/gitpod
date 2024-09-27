@@ -6,7 +6,7 @@
 
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
-import { Team, TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { Team, TeamMemberInfo, TeamMemberRole, VALID_ORG_MEMBER_ROLES } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import DropDown from "../components/DropDown";
@@ -205,20 +205,10 @@ export default function TeamDetail(props: { team: Team }) {
                                     <DropDown
                                         customClasses="w-32"
                                         activeEntry={m.role}
-                                        entries={[
-                                            {
-                                                title: "owner",
-                                                onClick: () => setTeamMemberRole(m.userId, "owner"),
-                                            },
-                                            {
-                                                title: "member",
-                                                onClick: () => setTeamMemberRole(m.userId, "member"),
-                                            },
-                                            {
-                                                title: "collaborator",
-                                                onClick: () => setTeamMemberRole(m.userId, "collaborator"),
-                                            },
-                                        ]}
+                                        entries={VALID_ORG_MEMBER_ROLES.map((role) => ({
+                                            title: role,
+                                            onClick: () => setTeamMemberRole(m.userId, role),
+                                        }))}
                                     />
                                 </span>
                             </ItemField>

@@ -293,6 +293,23 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             update.timeoutSettings.inactivity = this.apiConverter.toDurationString(req.timeoutSettings.inactivity);
         }
 
+        if (req.roleRestrictions.length > 0 && !req.updateRoleRestrictions) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "updateRoleRestrictions is required to be true when updating roleRestrictions",
+            );
+        }
+        if (req.updateRoleRestrictions) {
+            update.roleRestrictions = update.roleRestrictions ?? {};
+            for (const roleRestriction of req.roleRestrictions) {
+                const role = this.apiConverter.fromOrgMemberRole(roleRestriction.role);
+                const permissions = roleRestriction.permissions.map((p) =>
+                    this.apiConverter.fromOrganizationPermission(p),
+                );
+                update.roleRestrictions[role] = permissions;
+            }
+        }
+
         if (Object.keys(update).length === 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");
         }

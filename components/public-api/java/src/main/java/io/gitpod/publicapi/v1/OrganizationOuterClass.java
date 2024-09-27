@@ -164,6 +164,127 @@ public final class OrganizationOuterClass {
     // @@protoc_insertion_point(enum_scope:gitpod.v1.OrganizationRole)
   }
 
+  /**
+   * <pre>
+   * OrganizationPermissions define permissions that are restrictable using RoleRestrictions
+   * </pre>
+   *
+   * Protobuf enum {@code gitpod.v1.OrganizationPermission}
+   */
+  public enum OrganizationPermission
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>ORGANIZATION_PERMISSION_UNSPECIFIED = 0;</code>
+     */
+    ORGANIZATION_PERMISSION_UNSPECIFIED(0),
+    /**
+     * <code>ORGANIZATION_PERMISSION_START_ARBITRARY_REPOS = 1;</code>
+     */
+    ORGANIZATION_PERMISSION_START_ARBITRARY_REPOS(1),
+    UNRECOGNIZED(-1),
+    ;
+
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        OrganizationPermission.class.getName());
+    }
+    /**
+     * <code>ORGANIZATION_PERMISSION_UNSPECIFIED = 0;</code>
+     */
+    public static final int ORGANIZATION_PERMISSION_UNSPECIFIED_VALUE = 0;
+    /**
+     * <code>ORGANIZATION_PERMISSION_START_ARBITRARY_REPOS = 1;</code>
+     */
+    public static final int ORGANIZATION_PERMISSION_START_ARBITRARY_REPOS_VALUE = 1;
+
+
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static OrganizationPermission valueOf(int value) {
+      return forNumber(value);
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     */
+    public static OrganizationPermission forNumber(int value) {
+      switch (value) {
+        case 0: return ORGANIZATION_PERMISSION_UNSPECIFIED;
+        case 1: return ORGANIZATION_PERMISSION_START_ARBITRARY_REPOS;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<OrganizationPermission>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        OrganizationPermission> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<OrganizationPermission>() {
+            public OrganizationPermission findValueByNumber(int number) {
+              return OrganizationPermission.forNumber(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalStateException(
+            "Can't get the descriptor of an unrecognized enum value.");
+      }
+      return getDescriptor().getValues().get(ordinal());
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.getDescriptor().getEnumTypes().get(1);
+    }
+
+    private static final OrganizationPermission[] VALUES = values();
+
+    public static OrganizationPermission valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      if (desc.getIndex() == -1) {
+        return UNRECOGNIZED;
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int value;
+
+    private OrganizationPermission(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:gitpod.v1.OrganizationPermission)
+  }
+
   public interface OrganizationOrBuilder extends
       // @@protoc_insertion_point(interface_extends:gitpod.v1.Organization)
       com.google.protobuf.MessageOrBuilder {
@@ -2518,6 +2639,888 @@ public final class OrganizationOuterClass {
 
   }
 
+  public interface RoleRestrictionEntryOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.RoleRestrictionEntry)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * role is the role that is restricted
+     * </pre>
+     *
+     * <code>.gitpod.v1.OrganizationRole role = 1 [json_name = "role"];</code>
+     * @return The enum numeric value on the wire for role.
+     */
+    int getRoleValue();
+    /**
+     * <pre>
+     * role is the role that is restricted
+     * </pre>
+     *
+     * <code>.gitpod.v1.OrganizationRole role = 1 [json_name = "role"];</code>
+     * @return The role.
+     */
+    io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole getRole();
+
+    /**
+     * <pre>
+     * permissions are the permissions that are restricted
+     * </pre>
+     *
+     * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+     * @return A list containing the permissions.
+     */
+    java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission> getPermissionsList();
+    /**
+     * <pre>
+     * permissions are the permissions that are restricted
+     * </pre>
+     *
+     * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+     * @return The count of permissions.
+     */
+    int getPermissionsCount();
+    /**
+     * <pre>
+     * permissions are the permissions that are restricted
+     * </pre>
+     *
+     * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+     * @param index The index of the element to return.
+     * @return The permissions at the given index.
+     */
+    io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission getPermissions(int index);
+    /**
+     * <pre>
+     * permissions are the permissions that are restricted
+     * </pre>
+     *
+     * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+     * @return A list containing the enum numeric values on the wire for permissions.
+     */
+    java.util.List<java.lang.Integer>
+    getPermissionsValueList();
+    /**
+     * <pre>
+     * permissions are the permissions that are restricted
+     * </pre>
+     *
+     * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+     * @param index The index of the value to return.
+     * @return The enum numeric value on the wire of permissions at the given index.
+     */
+    int getPermissionsValue(int index);
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.RoleRestrictionEntry}
+   */
+  public static final class RoleRestrictionEntry extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.RoleRestrictionEntry)
+      RoleRestrictionEntryOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        RoleRestrictionEntry.class.getName());
+    }
+    // Use RoleRestrictionEntry.newBuilder() to construct.
+    private RoleRestrictionEntry(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private RoleRestrictionEntry() {
+      role_ = 0;
+      permissions_ = java.util.Collections.emptyList();
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_RoleRestrictionEntry_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_RoleRestrictionEntry_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.class, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder.class);
+    }
+
+    public static final int ROLE_FIELD_NUMBER = 1;
+    private int role_ = 0;
+    /**
+     * <pre>
+     * role is the role that is restricted
+     * </pre>
+     *
+     * <code>.gitpod.v1.OrganizationRole role = 1 [json_name = "role"];</code>
+     * @return The enum numeric value on the wire for role.
+     */
+    @java.lang.Override public int getRoleValue() {
+      return role_;
+    }
+    /**
+     * <pre>
+     * role is the role that is restricted
+     * </pre>
+     *
+     * <code>.gitpod.v1.OrganizationRole role = 1 [json_name = "role"];</code>
+     * @return The role.
+     */
+    @java.lang.Override public io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole getRole() {
+      io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole result = io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole.forNumber(role_);
+      return result == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole.UNRECOGNIZED : result;
+    }
+
+    public static final int PERMISSIONS_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private java.util.List<java.lang.Integer> permissions_;
+    private static final com.google.protobuf.Internal.ListAdapter.Converter<
+        java.lang.Integer, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission> permissions_converter_ =
+            new com.google.protobuf.Internal.ListAdapter.Converter<
+                java.lang.Integer, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission>() {
+              public io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission convert(java.lang.Integer from) {
+                io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission result = io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission.forNumber(from);
+                return result == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission.UNRECOGNIZED : result;
+              }
+            };
+    /**
+     * <pre>
+     * permissions are the permissions that are restricted
+     * </pre>
+     *
+     * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+     * @return A list containing the permissions.
+     */
+    @java.lang.Override
+    public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission> getPermissionsList() {
+      return new com.google.protobuf.Internal.ListAdapter<
+          java.lang.Integer, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission>(permissions_, permissions_converter_);
+    }
+    /**
+     * <pre>
+     * permissions are the permissions that are restricted
+     * </pre>
+     *
+     * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+     * @return The count of permissions.
+     */
+    @java.lang.Override
+    public int getPermissionsCount() {
+      return permissions_.size();
+    }
+    /**
+     * <pre>
+     * permissions are the permissions that are restricted
+     * </pre>
+     *
+     * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+     * @param index The index of the element to return.
+     * @return The permissions at the given index.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission getPermissions(int index) {
+      return permissions_converter_.convert(permissions_.get(index));
+    }
+    /**
+     * <pre>
+     * permissions are the permissions that are restricted
+     * </pre>
+     *
+     * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+     * @return A list containing the enum numeric values on the wire for permissions.
+     */
+    @java.lang.Override
+    public java.util.List<java.lang.Integer>
+    getPermissionsValueList() {
+      return permissions_;
+    }
+    /**
+     * <pre>
+     * permissions are the permissions that are restricted
+     * </pre>
+     *
+     * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+     * @param index The index of the value to return.
+     * @return The enum numeric value on the wire of permissions at the given index.
+     */
+    @java.lang.Override
+    public int getPermissionsValue(int index) {
+      return permissions_.get(index);
+    }
+    private int permissionsMemoizedSerializedSize;
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (role_ != io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole.ORGANIZATION_ROLE_UNSPECIFIED.getNumber()) {
+        output.writeEnum(1, role_);
+      }
+      if (getPermissionsList().size() > 0) {
+        output.writeUInt32NoTag(18);
+        output.writeUInt32NoTag(permissionsMemoizedSerializedSize);
+      }
+      for (int i = 0; i < permissions_.size(); i++) {
+        output.writeEnumNoTag(permissions_.get(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (role_ != io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole.ORGANIZATION_ROLE_UNSPECIFIED.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(1, role_);
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < permissions_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeEnumSizeNoTag(permissions_.get(i));
+        }
+        size += dataSize;
+        if (!getPermissionsList().isEmpty()) {  size += 1;
+          size += com.google.protobuf.CodedOutputStream
+            .computeUInt32SizeNoTag(dataSize);
+        }permissionsMemoizedSerializedSize = dataSize;
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry other = (io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry) obj;
+
+      if (role_ != other.role_) return false;
+      if (!permissions_.equals(other.permissions_)) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ROLE_FIELD_NUMBER;
+      hash = (53 * hash) + role_;
+      if (getPermissionsCount() > 0) {
+        hash = (37 * hash) + PERMISSIONS_FIELD_NUMBER;
+        hash = (53 * hash) + permissions_.hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.RoleRestrictionEntry}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.RoleRestrictionEntry)
+        io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_RoleRestrictionEntry_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_RoleRestrictionEntry_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.class, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        role_ = 0;
+        permissions_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_RoleRestrictionEntry_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry build() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry buildPartial() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry result = new io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry(this);
+        buildPartialRepeatedFields(result);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartialRepeatedFields(io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry result) {
+        if (((bitField0_ & 0x00000002) != 0)) {
+          permissions_ = java.util.Collections.unmodifiableList(permissions_);
+          bitField0_ = (bitField0_ & ~0x00000002);
+        }
+        result.permissions_ = permissions_;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.role_ = role_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry) {
+          return mergeFrom((io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry other) {
+        if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.getDefaultInstance()) return this;
+        if (other.role_ != 0) {
+          setRoleValue(other.getRoleValue());
+        }
+        if (!other.permissions_.isEmpty()) {
+          if (permissions_.isEmpty()) {
+            permissions_ = other.permissions_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+          } else {
+            ensurePermissionsIsMutable();
+            permissions_.addAll(other.permissions_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                role_ = input.readEnum();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 16: {
+                int tmpRaw = input.readEnum();
+                ensurePermissionsIsMutable();
+                permissions_.add(tmpRaw);
+                break;
+              } // case 16
+              case 18: {
+                int length = input.readRawVarint32();
+                int oldLimit = input.pushLimit(length);
+                while(input.getBytesUntilLimit() > 0) {
+                  int tmpRaw = input.readEnum();
+                  ensurePermissionsIsMutable();
+                  permissions_.add(tmpRaw);
+                }
+                input.popLimit(oldLimit);
+                break;
+              } // case 18
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private int role_ = 0;
+      /**
+       * <pre>
+       * role is the role that is restricted
+       * </pre>
+       *
+       * <code>.gitpod.v1.OrganizationRole role = 1 [json_name = "role"];</code>
+       * @return The enum numeric value on the wire for role.
+       */
+      @java.lang.Override public int getRoleValue() {
+        return role_;
+      }
+      /**
+       * <pre>
+       * role is the role that is restricted
+       * </pre>
+       *
+       * <code>.gitpod.v1.OrganizationRole role = 1 [json_name = "role"];</code>
+       * @param value The enum numeric value on the wire for role to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRoleValue(int value) {
+        role_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * role is the role that is restricted
+       * </pre>
+       *
+       * <code>.gitpod.v1.OrganizationRole role = 1 [json_name = "role"];</code>
+       * @return The role.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole getRole() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole result = io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole.forNumber(role_);
+        return result == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole.UNRECOGNIZED : result;
+      }
+      /**
+       * <pre>
+       * role is the role that is restricted
+       * </pre>
+       *
+       * <code>.gitpod.v1.OrganizationRole role = 1 [json_name = "role"];</code>
+       * @param value The role to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRole(io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationRole value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000001;
+        role_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * role is the role that is restricted
+       * </pre>
+       *
+       * <code>.gitpod.v1.OrganizationRole role = 1 [json_name = "role"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRole() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        role_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.util.List<java.lang.Integer> permissions_ =
+        java.util.Collections.emptyList();
+      private void ensurePermissionsIsMutable() {
+        if (!((bitField0_ & 0x00000002) != 0)) {
+          permissions_ = new java.util.ArrayList<java.lang.Integer>(permissions_);
+          bitField0_ |= 0x00000002;
+        }
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @return A list containing the permissions.
+       */
+      public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission> getPermissionsList() {
+        return new com.google.protobuf.Internal.ListAdapter<
+            java.lang.Integer, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission>(permissions_, permissions_converter_);
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @return The count of permissions.
+       */
+      public int getPermissionsCount() {
+        return permissions_.size();
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @param index The index of the element to return.
+       * @return The permissions at the given index.
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission getPermissions(int index) {
+        return permissions_converter_.convert(permissions_.get(index));
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @param index The index to set the value at.
+       * @param value The permissions to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPermissions(
+          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensurePermissionsIsMutable();
+        permissions_.set(index, value.getNumber());
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @param value The permissions to add.
+       * @return This builder for chaining.
+       */
+      public Builder addPermissions(io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensurePermissionsIsMutable();
+        permissions_.add(value.getNumber());
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @param values The permissions to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllPermissions(
+          java.lang.Iterable<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission> values) {
+        ensurePermissionsIsMutable();
+        for (io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationPermission value : values) {
+          permissions_.add(value.getNumber());
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPermissions() {
+        permissions_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @return A list containing the enum numeric values on the wire for permissions.
+       */
+      public java.util.List<java.lang.Integer>
+      getPermissionsValueList() {
+        return java.util.Collections.unmodifiableList(permissions_);
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @param index The index of the value to return.
+       * @return The enum numeric value on the wire of permissions at the given index.
+       */
+      public int getPermissionsValue(int index) {
+        return permissions_.get(index);
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @param index The index to set the value at.
+       * @param value The enum numeric value on the wire for permissions to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPermissionsValue(
+          int index, int value) {
+        ensurePermissionsIsMutable();
+        permissions_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @param value The enum numeric value on the wire for permissions to add.
+       * @return This builder for chaining.
+       */
+      public Builder addPermissionsValue(int value) {
+        ensurePermissionsIsMutable();
+        permissions_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * permissions are the permissions that are restricted
+       * </pre>
+       *
+       * <code>repeated .gitpod.v1.OrganizationPermission permissions = 2 [json_name = "permissions"];</code>
+       * @param values The enum numeric values on the wire for permissions to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllPermissionsValue(
+          java.lang.Iterable<java.lang.Integer> values) {
+        ensurePermissionsIsMutable();
+        for (int value : values) {
+          permissions_.add(value);
+        }
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.RoleRestrictionEntry)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.RoleRestrictionEntry)
+    private static final io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry();
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<RoleRestrictionEntry>
+        PARSER = new com.google.protobuf.AbstractParser<RoleRestrictionEntry>() {
+      @java.lang.Override
+      public RoleRestrictionEntry parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<RoleRestrictionEntry> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RoleRestrictionEntry> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface OrganizationSettingsOrBuilder extends
       // @@protoc_insertion_point(interface_extends:gitpod.v1.OrganizationSettings)
       com.google.protobuf.MessageOrBuilder {
@@ -2650,6 +3653,30 @@ java.lang.String defaultValue);
      * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
      */
     io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder();
+
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+     */
+    java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry>
+        getRoleRestrictionsList();
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+     */
+    io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getRoleRestrictions(int index);
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+     */
+    int getRoleRestrictionsCount();
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+     */
+    java.util.List<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
+        getRoleRestrictionsOrBuilderList();
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+     */
+    io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
+        int index);
   }
   /**
    * Protobuf type {@code gitpod.v1.OrganizationSettings}
@@ -2679,6 +3706,7 @@ java.lang.String defaultValue);
       restrictedEditorNames_ =
           com.google.protobuf.LazyStringArrayList.emptyList();
       defaultRole_ = "";
+      roleRestrictions_ = java.util.Collections.emptyList();
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -2975,6 +4003,47 @@ java.lang.String defaultValue) {
       return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
     }
 
+    public static final int ROLE_RESTRICTIONS_FIELD_NUMBER = 8;
+    @SuppressWarnings("serial")
+    private java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> roleRestrictions_;
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+     */
+    @java.lang.Override
+    public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> getRoleRestrictionsList() {
+      return roleRestrictions_;
+    }
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+     */
+    @java.lang.Override
+    public java.util.List<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
+        getRoleRestrictionsOrBuilderList() {
+      return roleRestrictions_;
+    }
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+     */
+    @java.lang.Override
+    public int getRoleRestrictionsCount() {
+      return roleRestrictions_.size();
+    }
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getRoleRestrictions(int index) {
+      return roleRestrictions_.get(index);
+    }
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
+        int index) {
+      return roleRestrictions_.get(index);
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -3012,6 +4081,9 @@ java.lang.String defaultValue) {
       }
       if (((bitField0_ & 0x00000001) != 0)) {
         output.writeMessage(7, getTimeoutSettings());
+      }
+      for (int i = 0; i < roleRestrictions_.size(); i++) {
+        output.writeMessage(8, roleRestrictions_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -3062,6 +4134,10 @@ java.lang.String defaultValue) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(7, getTimeoutSettings());
       }
+      for (int i = 0; i < roleRestrictions_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(8, roleRestrictions_.get(i));
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -3094,6 +4170,8 @@ java.lang.String defaultValue) {
         if (!getTimeoutSettings()
             .equals(other.getTimeoutSettings())) return false;
       }
+      if (!getRoleRestrictionsList()
+          .equals(other.getRoleRestrictionsList())) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -3127,6 +4205,10 @@ java.lang.String defaultValue) {
       if (hasTimeoutSettings()) {
         hash = (37 * hash) + TIMEOUT_SETTINGS_FIELD_NUMBER;
         hash = (53 * hash) + getTimeoutSettings().hashCode();
+      }
+      if (getRoleRestrictionsCount() > 0) {
+        hash = (37 * hash) + ROLE_RESTRICTIONS_FIELD_NUMBER;
+        hash = (53 * hash) + getRoleRestrictionsList().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -3281,6 +4363,7 @@ java.lang.String defaultValue) {
         if (com.google.protobuf.GeneratedMessage
                 .alwaysUseFieldBuilders) {
           getTimeoutSettingsFieldBuilder();
+          getRoleRestrictionsFieldBuilder();
         }
       }
       @java.lang.Override
@@ -3300,6 +4383,13 @@ java.lang.String defaultValue) {
           timeoutSettingsBuilder_.dispose();
           timeoutSettingsBuilder_ = null;
         }
+        if (roleRestrictionsBuilder_ == null) {
+          roleRestrictions_ = java.util.Collections.emptyList();
+        } else {
+          roleRestrictions_ = null;
+          roleRestrictionsBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000080);
         return this;
       }
 
@@ -3326,9 +4416,22 @@ java.lang.String defaultValue) {
       @java.lang.Override
       public io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings buildPartial() {
         io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings result = new io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings(this);
+        buildPartialRepeatedFields(result);
         if (bitField0_ != 0) { buildPartial0(result); }
         onBuilt();
         return result;
+      }
+
+      private void buildPartialRepeatedFields(io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings result) {
+        if (roleRestrictionsBuilder_ == null) {
+          if (((bitField0_ & 0x00000080) != 0)) {
+            roleRestrictions_ = java.util.Collections.unmodifiableList(roleRestrictions_);
+            bitField0_ = (bitField0_ & ~0x00000080);
+          }
+          result.roleRestrictions_ = roleRestrictions_;
+        } else {
+          result.roleRestrictions_ = roleRestrictionsBuilder_.build();
+        }
       }
 
       private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings result) {
@@ -3415,6 +4518,32 @@ java.lang.String defaultValue) {
         if (other.hasTimeoutSettings()) {
           mergeTimeoutSettings(other.getTimeoutSettings());
         }
+        if (roleRestrictionsBuilder_ == null) {
+          if (!other.roleRestrictions_.isEmpty()) {
+            if (roleRestrictions_.isEmpty()) {
+              roleRestrictions_ = other.roleRestrictions_;
+              bitField0_ = (bitField0_ & ~0x00000080);
+            } else {
+              ensureRoleRestrictionsIsMutable();
+              roleRestrictions_.addAll(other.roleRestrictions_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.roleRestrictions_.isEmpty()) {
+            if (roleRestrictionsBuilder_.isEmpty()) {
+              roleRestrictionsBuilder_.dispose();
+              roleRestrictionsBuilder_ = null;
+              roleRestrictions_ = other.roleRestrictions_;
+              bitField0_ = (bitField0_ & ~0x00000080);
+              roleRestrictionsBuilder_ =
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getRoleRestrictionsFieldBuilder() : null;
+            } else {
+              roleRestrictionsBuilder_.addAllMessages(other.roleRestrictions_);
+            }
+          }
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
         return this;
@@ -3484,6 +4613,19 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000040;
                 break;
               } // case 58
+              case 66: {
+                io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry m =
+                    input.readMessage(
+                        io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.parser(),
+                        extensionRegistry);
+                if (roleRestrictionsBuilder_ == null) {
+                  ensureRoleRestrictionsIsMutable();
+                  roleRestrictions_.add(m);
+                } else {
+                  roleRestrictionsBuilder_.addMessage(m);
+                }
+                break;
+              } // case 66
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -4145,6 +5287,246 @@ java.lang.String defaultValue) {
           timeoutSettings_ = null;
         }
         return timeoutSettingsBuilder_;
+      }
+
+      private java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> roleRestrictions_ =
+        java.util.Collections.emptyList();
+      private void ensureRoleRestrictionsIsMutable() {
+        if (!((bitField0_ & 0x00000080) != 0)) {
+          roleRestrictions_ = new java.util.ArrayList<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry>(roleRestrictions_);
+          bitField0_ |= 0x00000080;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder> roleRestrictionsBuilder_;
+
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> getRoleRestrictionsList() {
+        if (roleRestrictionsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(roleRestrictions_);
+        } else {
+          return roleRestrictionsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public int getRoleRestrictionsCount() {
+        if (roleRestrictionsBuilder_ == null) {
+          return roleRestrictions_.size();
+        } else {
+          return roleRestrictionsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getRoleRestrictions(int index) {
+        if (roleRestrictionsBuilder_ == null) {
+          return roleRestrictions_.get(index);
+        } else {
+          return roleRestrictionsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder setRoleRestrictions(
+          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry value) {
+        if (roleRestrictionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.set(index, value);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder setRoleRestrictions(
+          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder builderForValue) {
+        if (roleRestrictionsBuilder_ == null) {
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder addRoleRestrictions(io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry value) {
+        if (roleRestrictionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.add(value);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder addRoleRestrictions(
+          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry value) {
+        if (roleRestrictionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.add(index, value);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder addRoleRestrictions(
+          io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder builderForValue) {
+        if (roleRestrictionsBuilder_ == null) {
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.add(builderForValue.build());
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder addRoleRestrictions(
+          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder builderForValue) {
+        if (roleRestrictionsBuilder_ == null) {
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder addAllRoleRestrictions(
+          java.lang.Iterable<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> values) {
+        if (roleRestrictionsBuilder_ == null) {
+          ensureRoleRestrictionsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, roleRestrictions_);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder clearRoleRestrictions() {
+        if (roleRestrictionsBuilder_ == null) {
+          roleRestrictions_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000080);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder removeRoleRestrictions(int index) {
+        if (roleRestrictionsBuilder_ == null) {
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.remove(index);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder getRoleRestrictionsBuilder(
+          int index) {
+        return getRoleRestrictionsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
+          int index) {
+        if (roleRestrictionsBuilder_ == null) {
+          return roleRestrictions_.get(index);  } else {
+          return roleRestrictionsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public java.util.List<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
+           getRoleRestrictionsOrBuilderList() {
+        if (roleRestrictionsBuilder_ != null) {
+          return roleRestrictionsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(roleRestrictions_);
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder addRoleRestrictionsBuilder() {
+        return getRoleRestrictionsFieldBuilder().addBuilder(
+            io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder addRoleRestrictionsBuilder(
+          int index) {
+        return getRoleRestrictionsFieldBuilder().addBuilder(
+            index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
+       */
+      public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder>
+           getRoleRestrictionsBuilderList() {
+        return getRoleRestrictionsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
+          getRoleRestrictionsFieldBuilder() {
+        if (roleRestrictionsBuilder_ == null) {
+          roleRestrictionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>(
+                  roleRestrictions_,
+                  ((bitField0_ & 0x00000080) != 0),
+                  getParentForChildren(),
+                  isClean());
+          roleRestrictions_ = null;
+        }
+        return roleRestrictionsBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:gitpod.v1.OrganizationSettings)
@@ -8382,6 +9764,49 @@ java.lang.String defaultValue);
      * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
      */
     io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder();
+
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+     */
+    java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry>
+        getRoleRestrictionsList();
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+     */
+    io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getRoleRestrictions(int index);
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+     */
+    int getRoleRestrictionsCount();
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+     */
+    java.util.List<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
+        getRoleRestrictionsOrBuilderList();
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+     */
+    io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
+        int index);
+
+    /**
+     * <pre>
+     * Specifies whether role_restrictions should be updated.
+     * </pre>
+     *
+     * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
+     * @return Whether the updateRoleRestrictions field is set.
+     */
+    boolean hasUpdateRoleRestrictions();
+    /**
+     * <pre>
+     * Specifies whether role_restrictions should be updated.
+     * </pre>
+     *
+     * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
+     * @return The updateRoleRestrictions.
+     */
+    boolean getUpdateRoleRestrictions();
   }
   /**
    * Protobuf type {@code gitpod.v1.UpdateOrganizationSettingsRequest}
@@ -8412,6 +9837,7 @@ java.lang.String defaultValue);
       restrictedEditorNames_ =
           com.google.protobuf.LazyStringArrayList.emptyList();
       defaultRole_ = "";
+      roleRestrictions_ = java.util.Collections.emptyList();
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -8941,6 +10367,74 @@ java.lang.String defaultValue) {
       return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
     }
 
+    public static final int ROLE_RESTRICTIONS_FIELD_NUMBER = 12;
+    @SuppressWarnings("serial")
+    private java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> roleRestrictions_;
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+     */
+    @java.lang.Override
+    public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> getRoleRestrictionsList() {
+      return roleRestrictions_;
+    }
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+     */
+    @java.lang.Override
+    public java.util.List<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
+        getRoleRestrictionsOrBuilderList() {
+      return roleRestrictions_;
+    }
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+     */
+    @java.lang.Override
+    public int getRoleRestrictionsCount() {
+      return roleRestrictions_.size();
+    }
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getRoleRestrictions(int index) {
+      return roleRestrictions_.get(index);
+    }
+    /**
+     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
+        int index) {
+      return roleRestrictions_.get(index);
+    }
+
+    public static final int UPDATE_ROLE_RESTRICTIONS_FIELD_NUMBER = 13;
+    private boolean updateRoleRestrictions_ = false;
+    /**
+     * <pre>
+     * Specifies whether role_restrictions should be updated.
+     * </pre>
+     *
+     * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
+     * @return Whether the updateRoleRestrictions field is set.
+     */
+    @java.lang.Override
+    public boolean hasUpdateRoleRestrictions() {
+      return ((bitField0_ & 0x00000040) != 0);
+    }
+    /**
+     * <pre>
+     * Specifies whether role_restrictions should be updated.
+     * </pre>
+     *
+     * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
+     * @return The updateRoleRestrictions.
+     */
+    @java.lang.Override
+    public boolean getUpdateRoleRestrictions() {
+      return updateRoleRestrictions_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -8987,6 +10481,12 @@ java.lang.String defaultValue) {
       }
       if (((bitField0_ & 0x00000020) != 0)) {
         output.writeMessage(11, getTimeoutSettings());
+      }
+      for (int i = 0; i < roleRestrictions_.size(); i++) {
+        output.writeMessage(12, roleRestrictions_.get(i));
+      }
+      if (((bitField0_ & 0x00000040) != 0)) {
+        output.writeBool(13, updateRoleRestrictions_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -9048,6 +10548,14 @@ java.lang.String defaultValue) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(11, getTimeoutSettings());
       }
+      for (int i = 0; i < roleRestrictions_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(12, roleRestrictions_.get(i));
+      }
+      if (((bitField0_ & 0x00000040) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(13, updateRoleRestrictions_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -9101,6 +10609,13 @@ java.lang.String defaultValue) {
         if (!getTimeoutSettings()
             .equals(other.getTimeoutSettings())) return false;
       }
+      if (!getRoleRestrictionsList()
+          .equals(other.getRoleRestrictionsList())) return false;
+      if (hasUpdateRoleRestrictions() != other.hasUpdateRoleRestrictions()) return false;
+      if (hasUpdateRoleRestrictions()) {
+        if (getUpdateRoleRestrictions()
+            != other.getUpdateRoleRestrictions()) return false;
+      }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -9152,6 +10667,15 @@ java.lang.String defaultValue) {
       if (hasTimeoutSettings()) {
         hash = (37 * hash) + TIMEOUT_SETTINGS_FIELD_NUMBER;
         hash = (53 * hash) + getTimeoutSettings().hashCode();
+      }
+      if (getRoleRestrictionsCount() > 0) {
+        hash = (37 * hash) + ROLE_RESTRICTIONS_FIELD_NUMBER;
+        hash = (53 * hash) + getRoleRestrictionsList().hashCode();
+      }
+      if (hasUpdateRoleRestrictions()) {
+        hash = (37 * hash) + UPDATE_ROLE_RESTRICTIONS_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getUpdateRoleRestrictions());
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -9306,6 +10830,7 @@ java.lang.String defaultValue) {
         if (com.google.protobuf.GeneratedMessage
                 .alwaysUseFieldBuilders) {
           getTimeoutSettingsFieldBuilder();
+          getRoleRestrictionsFieldBuilder();
         }
       }
       @java.lang.Override
@@ -9328,6 +10853,14 @@ java.lang.String defaultValue) {
           timeoutSettingsBuilder_.dispose();
           timeoutSettingsBuilder_ = null;
         }
+        if (roleRestrictionsBuilder_ == null) {
+          roleRestrictions_ = java.util.Collections.emptyList();
+        } else {
+          roleRestrictions_ = null;
+          roleRestrictionsBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000400);
+        updateRoleRestrictions_ = false;
         return this;
       }
 
@@ -9354,9 +10887,22 @@ java.lang.String defaultValue) {
       @java.lang.Override
       public io.gitpod.publicapi.v1.OrganizationOuterClass.UpdateOrganizationSettingsRequest buildPartial() {
         io.gitpod.publicapi.v1.OrganizationOuterClass.UpdateOrganizationSettingsRequest result = new io.gitpod.publicapi.v1.OrganizationOuterClass.UpdateOrganizationSettingsRequest(this);
+        buildPartialRepeatedFields(result);
         if (bitField0_ != 0) { buildPartial0(result); }
         onBuilt();
         return result;
+      }
+
+      private void buildPartialRepeatedFields(io.gitpod.publicapi.v1.OrganizationOuterClass.UpdateOrganizationSettingsRequest result) {
+        if (roleRestrictionsBuilder_ == null) {
+          if (((bitField0_ & 0x00000400) != 0)) {
+            roleRestrictions_ = java.util.Collections.unmodifiableList(roleRestrictions_);
+            bitField0_ = (bitField0_ & ~0x00000400);
+          }
+          result.roleRestrictions_ = roleRestrictions_;
+        } else {
+          result.roleRestrictions_ = roleRestrictionsBuilder_.build();
+        }
       }
 
       private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.UpdateOrganizationSettingsRequest result) {
@@ -9402,6 +10948,10 @@ java.lang.String defaultValue) {
               ? timeoutSettings_
               : timeoutSettingsBuilder_.build();
           to_bitField0_ |= 0x00000020;
+        }
+        if (((from_bitField0_ & 0x00000800) != 0)) {
+          result.updateRoleRestrictions_ = updateRoleRestrictions_;
+          to_bitField0_ |= 0x00000040;
         }
         result.bitField0_ |= to_bitField0_;
       }
@@ -9467,6 +11017,35 @@ java.lang.String defaultValue) {
         }
         if (other.hasTimeoutSettings()) {
           mergeTimeoutSettings(other.getTimeoutSettings());
+        }
+        if (roleRestrictionsBuilder_ == null) {
+          if (!other.roleRestrictions_.isEmpty()) {
+            if (roleRestrictions_.isEmpty()) {
+              roleRestrictions_ = other.roleRestrictions_;
+              bitField0_ = (bitField0_ & ~0x00000400);
+            } else {
+              ensureRoleRestrictionsIsMutable();
+              roleRestrictions_.addAll(other.roleRestrictions_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.roleRestrictions_.isEmpty()) {
+            if (roleRestrictionsBuilder_.isEmpty()) {
+              roleRestrictionsBuilder_.dispose();
+              roleRestrictionsBuilder_ = null;
+              roleRestrictions_ = other.roleRestrictions_;
+              bitField0_ = (bitField0_ & ~0x00000400);
+              roleRestrictionsBuilder_ =
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getRoleRestrictionsFieldBuilder() : null;
+            } else {
+              roleRestrictionsBuilder_.addAllMessages(other.roleRestrictions_);
+            }
+          }
+        }
+        if (other.hasUpdateRoleRestrictions()) {
+          setUpdateRoleRestrictions(other.getUpdateRoleRestrictions());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -9552,6 +11131,24 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000200;
                 break;
               } // case 90
+              case 98: {
+                io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry m =
+                    input.readMessage(
+                        io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.parser(),
+                        extensionRegistry);
+                if (roleRestrictionsBuilder_ == null) {
+                  ensureRoleRestrictionsIsMutable();
+                  roleRestrictions_.add(m);
+                } else {
+                  roleRestrictionsBuilder_.addMessage(m);
+                }
+                break;
+              } // case 98
+              case 104: {
+                updateRoleRestrictions_ = input.readBool();
+                bitField0_ |= 0x00000800;
+                break;
+              } // case 104
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -10675,6 +12272,302 @@ java.lang.String defaultValue) {
           timeoutSettings_ = null;
         }
         return timeoutSettingsBuilder_;
+      }
+
+      private java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> roleRestrictions_ =
+        java.util.Collections.emptyList();
+      private void ensureRoleRestrictionsIsMutable() {
+        if (!((bitField0_ & 0x00000400) != 0)) {
+          roleRestrictions_ = new java.util.ArrayList<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry>(roleRestrictions_);
+          bitField0_ |= 0x00000400;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder> roleRestrictionsBuilder_;
+
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> getRoleRestrictionsList() {
+        if (roleRestrictionsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(roleRestrictions_);
+        } else {
+          return roleRestrictionsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public int getRoleRestrictionsCount() {
+        if (roleRestrictionsBuilder_ == null) {
+          return roleRestrictions_.size();
+        } else {
+          return roleRestrictionsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getRoleRestrictions(int index) {
+        if (roleRestrictionsBuilder_ == null) {
+          return roleRestrictions_.get(index);
+        } else {
+          return roleRestrictionsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder setRoleRestrictions(
+          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry value) {
+        if (roleRestrictionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.set(index, value);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder setRoleRestrictions(
+          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder builderForValue) {
+        if (roleRestrictionsBuilder_ == null) {
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder addRoleRestrictions(io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry value) {
+        if (roleRestrictionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.add(value);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder addRoleRestrictions(
+          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry value) {
+        if (roleRestrictionsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.add(index, value);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder addRoleRestrictions(
+          io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder builderForValue) {
+        if (roleRestrictionsBuilder_ == null) {
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.add(builderForValue.build());
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder addRoleRestrictions(
+          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder builderForValue) {
+        if (roleRestrictionsBuilder_ == null) {
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder addAllRoleRestrictions(
+          java.lang.Iterable<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> values) {
+        if (roleRestrictionsBuilder_ == null) {
+          ensureRoleRestrictionsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, roleRestrictions_);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder clearRoleRestrictions() {
+        if (roleRestrictionsBuilder_ == null) {
+          roleRestrictions_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000400);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public Builder removeRoleRestrictions(int index) {
+        if (roleRestrictionsBuilder_ == null) {
+          ensureRoleRestrictionsIsMutable();
+          roleRestrictions_.remove(index);
+          onChanged();
+        } else {
+          roleRestrictionsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder getRoleRestrictionsBuilder(
+          int index) {
+        return getRoleRestrictionsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
+          int index) {
+        if (roleRestrictionsBuilder_ == null) {
+          return roleRestrictions_.get(index);  } else {
+          return roleRestrictionsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public java.util.List<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
+           getRoleRestrictionsOrBuilderList() {
+        if (roleRestrictionsBuilder_ != null) {
+          return roleRestrictionsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(roleRestrictions_);
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder addRoleRestrictionsBuilder() {
+        return getRoleRestrictionsFieldBuilder().addBuilder(
+            io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder addRoleRestrictionsBuilder(
+          int index) {
+        return getRoleRestrictionsFieldBuilder().addBuilder(
+            index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
+       */
+      public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder>
+           getRoleRestrictionsBuilderList() {
+        return getRoleRestrictionsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
+          getRoleRestrictionsFieldBuilder() {
+        if (roleRestrictionsBuilder_ == null) {
+          roleRestrictionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>(
+                  roleRestrictions_,
+                  ((bitField0_ & 0x00000400) != 0),
+                  getParentForChildren(),
+                  isClean());
+          roleRestrictions_ = null;
+        }
+        return roleRestrictionsBuilder_;
+      }
+
+      private boolean updateRoleRestrictions_ ;
+      /**
+       * <pre>
+       * Specifies whether role_restrictions should be updated.
+       * </pre>
+       *
+       * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
+       * @return Whether the updateRoleRestrictions field is set.
+       */
+      @java.lang.Override
+      public boolean hasUpdateRoleRestrictions() {
+        return ((bitField0_ & 0x00000800) != 0);
+      }
+      /**
+       * <pre>
+       * Specifies whether role_restrictions should be updated.
+       * </pre>
+       *
+       * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
+       * @return The updateRoleRestrictions.
+       */
+      @java.lang.Override
+      public boolean getUpdateRoleRestrictions() {
+        return updateRoleRestrictions_;
+      }
+      /**
+       * <pre>
+       * Specifies whether role_restrictions should be updated.
+       * </pre>
+       *
+       * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
+       * @param value The updateRoleRestrictions to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUpdateRoleRestrictions(boolean value) {
+
+        updateRoleRestrictions_ = value;
+        bitField0_ |= 0x00000800;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Specifies whether role_restrictions should be updated.
+       * </pre>
+       *
+       * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUpdateRoleRestrictions() {
+        bitField0_ = (bitField0_ & ~0x00000800);
+        updateRoleRestrictions_ = false;
+        onChanged();
+        return this;
       }
 
       // @@protoc_insertion_point(builder_scope:gitpod.v1.UpdateOrganizationSettingsRequest)
@@ -25560,6 +27453,11 @@ java.lang.String defaultValue) {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_OrganizationMember_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_RoleRestrictionEntry_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_RoleRestrictionEntry_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_v1_OrganizationSettings_descriptor;
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -25742,162 +27640,175 @@ java.lang.String defaultValue) {
       "estampR\013memberSince\022\035\n\navatar_url\030\004 \001(\tR" +
       "\tavatarUrl\022\033\n\tfull_name\030\005 \001(\tR\010fullName\022" +
       "\024\n\005email\030\006 \001(\tR\005email\0222\n\025owned_by_organi" +
-      "zation\030\007 \001(\010R\023ownedByOrganization\"\244\004\n\024Or" +
-      "ganizationSettings\022<\n\032workspace_sharing_" +
-      "disabled\030\001 \001(\010R\030workspaceSharingDisabled" +
-      "\0226\n\027default_workspace_image\030\002 \001(\tR\025defau" +
-      "ltWorkspaceImage\022:\n\031allowed_workspace_cl" +
-      "asses\030\003 \003(\tR\027allowedWorkspaceClasses\0226\n\027" +
-      "restricted_editor_names\030\004 \003(\tR\025restricte" +
-      "dEditorNames\022o\n\026pinned_editor_versions\030\005" +
-      " \003(\01329.gitpod.v1.OrganizationSettings.Pi" +
-      "nnedEditorVersionsEntryR\024pinnedEditorVer" +
-      "sions\022!\n\014default_role\030\006 \001(\tR\013defaultRole" +
-      "\022E\n\020timeout_settings\030\007 \001(\0132\032.gitpod.v1.T" +
-      "imeoutSettingsR\017timeoutSettings\032G\n\031Pinne" +
-      "dEditorVersionsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024" +
-      "\n\005value\030\002 \001(\tR\005value:\0028\001\"\220\001\n\'ListOrganiz" +
-      "ationWorkspaceClassesRequest\022<\n\npaginati" +
-      "on\030\001 \001(\0132\034.gitpod.v1.PaginationRequestR\n" +
-      "pagination\022\'\n\017organization_id\030\002 \001(\tR\016org" +
-      "anizationId\"\261\001\n(ListOrganizationWorkspac" +
-      "eClassesResponse\022=\n\npagination\030\001 \001(\0132\035.g" +
-      "itpod.v1.PaginationResponseR\npagination\022" +
-      "F\n\021workspace_classes\030\002 \003(\0132\031.gitpod.v1.W" +
-      "orkspaceClassR\020workspaceClasses\"f\n\031Updat" +
-      "eOrganizationRequest\022\'\n\017organization_id\030" +
-      "\001 \001(\tR\016organizationId\022\027\n\004name\030\002 \001(\tH\000R\004n" +
-      "ame\210\001\001B\007\n\005_name\"Y\n\032UpdateOrganizationRes" +
-      "ponse\022;\n\014organization\030\001 \001(\0132\027.gitpod.v1." +
-      "OrganizationR\014organization\"\252\001\n\017TimeoutSe" +
-      "ttings\022>\n\ninactivity\030\001 \001(\0132\031.google.prot" +
-      "obuf.DurationH\000R\ninactivity\210\001\001\0221\n\022deny_u" +
-      "ser_timeouts\030\002 \001(\010H\001R\020denyUserTimeouts\210\001" +
-      "\001B\r\n\013_inactivityB\025\n\023_deny_user_timeouts\"" +
-      "\263\007\n!UpdateOrganizationSettingsRequest\022\'\n" +
-      "\017organization_id\030\001 \001(\tR\016organizationId\022A" +
-      "\n\032workspace_sharing_disabled\030\003 \001(\010H\000R\030wo" +
-      "rkspaceSharingDisabled\210\001\001\022;\n\027default_wor" +
-      "kspace_image\030\004 \001(\tH\001R\025defaultWorkspaceIm" +
-      "age\210\001\001\022:\n\031allowed_workspace_classes\030\005 \003(" +
-      "\tR\027allowedWorkspaceClasses\0226\n\027restricted" +
-      "_editor_names\030\006 \003(\tR\025restrictedEditorNam" +
-      "es\022H\n\036update_restricted_editor_names\030\007 \001" +
-      "(\010H\002R\033updateRestrictedEditorNames\210\001\001\022|\n\026" +
-      "pinned_editor_versions\030\010 \003(\0132F.gitpod.v1" +
-      ".UpdateOrganizationSettingsRequest.Pinne" +
-      "dEditorVersionsEntryR\024pinnedEditorVersio" +
-      "ns\022F\n\035update_pinned_editor_versions\030\t \001(" +
-      "\010H\003R\032updatePinnedEditorVersions\210\001\001\022&\n\014de" +
-      "fault_role\030\n \001(\tH\004R\013defaultRole\210\001\001\022J\n\020ti" +
-      "meout_settings\030\013 \001(\0132\032.gitpod.v1.Timeout" +
-      "SettingsH\005R\017timeoutSettings\210\001\001\032G\n\031Pinned" +
-      "EditorVersionsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n" +
-      "\005value\030\002 \001(\tR\005value:\0028\001B\035\n\033_workspace_sh" +
-      "aring_disabledB\032\n\030_default_workspace_ima" +
-      "geB!\n\037_update_restricted_editor_namesB \n" +
-      "\036_update_pinned_editor_versionsB\017\n\r_defa" +
-      "ult_roleB\023\n\021_timeout_settings\"a\n\"UpdateO" +
-      "rganizationSettingsResponse\022;\n\010settings\030" +
-      "\001 \001(\0132\037.gitpod.v1.OrganizationSettingsR\010" +
-      "settings\"I\n\036GetOrganizationSettingsReque" +
-      "st\022\'\n\017organization_id\030\001 \001(\tR\016organizatio" +
-      "nId\"^\n\037GetOrganizationSettingsResponse\022;" +
-      "\n\010settings\030\001 \001(\0132\037.gitpod.v1.Organizatio" +
-      "nSettingsR\010settings\"/\n\031CreateOrganizatio" +
-      "nRequest\022\022\n\004name\030\001 \001(\tR\004name\"Y\n\032CreateOr" +
-      "ganizationResponse\022;\n\014organization\030\001 \001(\013" +
-      "2\027.gitpod.v1.OrganizationR\014organization\"" +
-      "A\n\026GetOrganizationRequest\022\'\n\017organizatio" +
-      "n_id\030\001 \001(\tR\016organizationId\"V\n\027GetOrganiz" +
-      "ationResponse\022;\n\014organization\030\001 \001(\0132\027.gi" +
-      "tpod.v1.OrganizationR\014organization\"\332\001\n\030L" +
-      "istOrganizationsRequest\022<\n\npagination\030\001 " +
-      "\001(\0132\034.gitpod.v1.PaginationRequestR\npagin" +
-      "ation\022?\n\005scope\030\002 \001(\0162).gitpod.v1.ListOrg" +
-      "anizationsRequest.ScopeR\005scope\"?\n\005Scope\022" +
-      "\025\n\021SCOPE_UNSPECIFIED\020\000\022\020\n\014SCOPE_MEMBER\020\001" +
-      "\022\r\n\tSCOPE_ALL\020\002\"\231\001\n\031ListOrganizationsRes" +
-      "ponse\022=\n\rorganizations\030\001 \003(\0132\027.gitpod.v1" +
-      ".OrganizationR\rorganizations\022=\n\npaginati" +
-      "on\030\002 \001(\0132\035.gitpod.v1.PaginationResponseR" +
-      "\npagination\"D\n\031DeleteOrganizationRequest" +
-      "\022\'\n\017organization_id\030\001 \001(\tR\016organizationI" +
-      "d\"\034\n\032DeleteOrganizationResponse\"K\n GetOr" +
-      "ganizationInvitationRequest\022\'\n\017organizat" +
-      "ion_id\030\001 \001(\tR\016organizationId\"H\n!GetOrgan" +
-      "izationInvitationResponse\022#\n\rinvitation_" +
-      "id\030\001 \001(\tR\014invitationId\">\n\027JoinOrganizati" +
-      "onRequest\022#\n\rinvitation_id\030\001 \001(\tR\014invita" +
-      "tionId\"C\n\030JoinOrganizationResponse\022\'\n\017or" +
-      "ganization_id\030\001 \001(\tR\016organizationId\"M\n\"R" +
-      "esetOrganizationInvitationRequest\022\'\n\017org" +
-      "anization_id\030\001 \001(\tR\016organizationId\"J\n#Re" +
-      "setOrganizationInvitationResponse\022#\n\rinv" +
-      "itation_id\030\001 \001(\tR\014invitationId\"\207\001\n\036ListO" +
-      "rganizationMembersRequest\022\'\n\017organizatio" +
-      "n_id\030\001 \001(\tR\016organizationId\022<\n\npagination" +
-      "\030\002 \001(\0132\034.gitpod.v1.PaginationRequestR\npa" +
-      "gination\"\231\001\n\037ListOrganizationMembersResp" +
-      "onse\0227\n\007members\030\001 \003(\0132\035.gitpod.v1.Organi" +
-      "zationMemberR\007members\022=\n\npagination\030\002 \001(" +
-      "\0132\035.gitpod.v1.PaginationResponseR\npagina" +
-      "tion\"\242\001\n\037UpdateOrganizationMemberRequest" +
-      "\022\'\n\017organization_id\030\001 \001(\tR\016organizationI" +
-      "d\022\027\n\007user_id\030\002 \001(\tR\006userId\0224\n\004role\030\003 \001(\016" +
-      "2\033.gitpod.v1.OrganizationRoleH\000R\004role\210\001\001" +
-      "B\007\n\005_role\"Y\n UpdateOrganizationMemberRes" +
-      "ponse\0225\n\006member\030\001 \001(\0132\035.gitpod.v1.Organi" +
-      "zationMemberR\006member\"c\n\037DeleteOrganizati" +
-      "onMemberRequest\022\'\n\017organization_id\030\001 \001(\t" +
-      "R\016organizationId\022\027\n\007user_id\030\002 \001(\tR\006userI" +
-      "d\"\"\n DeleteOrganizationMemberResponse*\224\001" +
-      "\n\020OrganizationRole\022!\n\035ORGANIZATION_ROLE_" +
-      "UNSPECIFIED\020\000\022\033\n\027ORGANIZATION_ROLE_OWNER" +
-      "\020\001\022\034\n\030ORGANIZATION_ROLE_MEMBER\020\002\022\"\n\036ORGA" +
-      "NIZATION_ROLE_COLLABORATOR\020\0032\276\014\n\023Organiz" +
-      "ationService\022c\n\022CreateOrganization\022$.git" +
-      "pod.v1.CreateOrganizationRequest\032%.gitpo" +
-      "d.v1.CreateOrganizationResponse\"\000\022Z\n\017Get" +
-      "Organization\022!.gitpod.v1.GetOrganization" +
-      "Request\032\".gitpod.v1.GetOrganizationRespo" +
-      "nse\"\000\022c\n\022UpdateOrganization\022$.gitpod.v1." +
-      "UpdateOrganizationRequest\032%.gitpod.v1.Up" +
-      "dateOrganizationResponse\"\000\022`\n\021ListOrgani" +
-      "zations\022#.gitpod.v1.ListOrganizationsReq" +
-      "uest\032$.gitpod.v1.ListOrganizationsRespon" +
-      "se\"\000\022c\n\022DeleteOrganization\022$.gitpod.v1.D" +
-      "eleteOrganizationRequest\032%.gitpod.v1.Del" +
-      "eteOrganizationResponse\"\000\022x\n\031GetOrganiza" +
-      "tionInvitation\022+.gitpod.v1.GetOrganizati" +
-      "onInvitationRequest\032,.gitpod.v1.GetOrgan" +
-      "izationInvitationResponse\"\000\022]\n\020JoinOrgan" +
-      "ization\022\".gitpod.v1.JoinOrganizationRequ" +
-      "est\032#.gitpod.v1.JoinOrganizationResponse" +
-      "\"\000\022~\n\033ResetOrganizationInvitation\022-.gitp" +
-      "od.v1.ResetOrganizationInvitationRequest" +
-      "\032..gitpod.v1.ResetOrganizationInvitation" +
-      "Response\"\000\022r\n\027ListOrganizationMembers\022)." +
-      "gitpod.v1.ListOrganizationMembersRequest" +
-      "\032*.gitpod.v1.ListOrganizationMembersResp" +
-      "onse\"\000\022u\n\030UpdateOrganizationMember\022*.git" +
-      "pod.v1.UpdateOrganizationMemberRequest\032+" +
-      ".gitpod.v1.UpdateOrganizationMemberRespo" +
-      "nse\"\000\022u\n\030DeleteOrganizationMember\022*.gitp" +
-      "od.v1.DeleteOrganizationMemberRequest\032+." +
-      "gitpod.v1.DeleteOrganizationMemberRespon" +
-      "se\"\000\022r\n\027GetOrganizationSettings\022).gitpod" +
-      ".v1.GetOrganizationSettingsRequest\032*.git" +
-      "pod.v1.GetOrganizationSettingsResponse\"\000" +
-      "\022{\n\032UpdateOrganizationSettings\022,.gitpod." +
-      "v1.UpdateOrganizationSettingsRequest\032-.g" +
-      "itpod.v1.UpdateOrganizationSettingsRespo" +
-      "nse\"\000\022\215\001\n ListOrganizationWorkspaceClass" +
-      "es\0222.gitpod.v1.ListOrganizationWorkspace" +
-      "ClassesRequest\0323.gitpod.v1.ListOrganizat" +
-      "ionWorkspaceClassesResponse\"\000BQ\n\026io.gitp" +
-      "od.publicapi.v1Z7github.com/gitpod-io/gi" +
-      "tpod/components/public-api/go/v1b\006proto3"
+      "zation\030\007 \001(\010R\023ownedByOrganization\"\214\001\n\024Ro" +
+      "leRestrictionEntry\022/\n\004role\030\001 \001(\0162\033.gitpo" +
+      "d.v1.OrganizationRoleR\004role\022C\n\013permissio" +
+      "ns\030\002 \003(\0162!.gitpod.v1.OrganizationPermiss" +
+      "ionR\013permissions\"\362\004\n\024OrganizationSetting" +
+      "s\022<\n\032workspace_sharing_disabled\030\001 \001(\010R\030w" +
+      "orkspaceSharingDisabled\0226\n\027default_works" +
+      "pace_image\030\002 \001(\tR\025defaultWorkspaceImage\022" +
+      ":\n\031allowed_workspace_classes\030\003 \003(\tR\027allo" +
+      "wedWorkspaceClasses\0226\n\027restricted_editor" +
+      "_names\030\004 \003(\tR\025restrictedEditorNames\022o\n\026p" +
+      "inned_editor_versions\030\005 \003(\01329.gitpod.v1." +
+      "OrganizationSettings.PinnedEditorVersion" +
+      "sEntryR\024pinnedEditorVersions\022!\n\014default_" +
+      "role\030\006 \001(\tR\013defaultRole\022E\n\020timeout_setti" +
+      "ngs\030\007 \001(\0132\032.gitpod.v1.TimeoutSettingsR\017t" +
+      "imeoutSettings\022L\n\021role_restrictions\030\010 \003(" +
+      "\0132\037.gitpod.v1.RoleRestrictionEntryR\020role" +
+      "Restrictions\032G\n\031PinnedEditorVersionsEntr" +
+      "y\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005valu" +
+      "e:\0028\001\"\220\001\n\'ListOrganizationWorkspaceClass" +
+      "esRequest\022<\n\npagination\030\001 \001(\0132\034.gitpod.v" +
+      "1.PaginationRequestR\npagination\022\'\n\017organ" +
+      "ization_id\030\002 \001(\tR\016organizationId\"\261\001\n(Lis" +
+      "tOrganizationWorkspaceClassesResponse\022=\n" +
+      "\npagination\030\001 \001(\0132\035.gitpod.v1.Pagination" +
+      "ResponseR\npagination\022F\n\021workspace_classe" +
+      "s\030\002 \003(\0132\031.gitpod.v1.WorkspaceClassR\020work" +
+      "spaceClasses\"f\n\031UpdateOrganizationReques" +
+      "t\022\'\n\017organization_id\030\001 \001(\tR\016organization" +
+      "Id\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001B\007\n\005_name\"Y\n\032" +
+      "UpdateOrganizationResponse\022;\n\014organizati" +
+      "on\030\001 \001(\0132\027.gitpod.v1.OrganizationR\014organ" +
+      "ization\"\252\001\n\017TimeoutSettings\022>\n\ninactivit" +
+      "y\030\001 \001(\0132\031.google.protobuf.DurationH\000R\nin" +
+      "activity\210\001\001\0221\n\022deny_user_timeouts\030\002 \001(\010H" +
+      "\001R\020denyUserTimeouts\210\001\001B\r\n\013_inactivityB\025\n" +
+      "\023_deny_user_timeouts\"\335\010\n!UpdateOrganizat" +
+      "ionSettingsRequest\022\'\n\017organization_id\030\001 " +
+      "\001(\tR\016organizationId\022A\n\032workspace_sharing" +
+      "_disabled\030\003 \001(\010H\000R\030workspaceSharingDisab" +
+      "led\210\001\001\022;\n\027default_workspace_image\030\004 \001(\tH" +
+      "\001R\025defaultWorkspaceImage\210\001\001\022:\n\031allowed_w" +
+      "orkspace_classes\030\005 \003(\tR\027allowedWorkspace" +
+      "Classes\0226\n\027restricted_editor_names\030\006 \003(\t" +
+      "R\025restrictedEditorNames\022H\n\036update_restri" +
+      "cted_editor_names\030\007 \001(\010H\002R\033updateRestric" +
+      "tedEditorNames\210\001\001\022|\n\026pinned_editor_versi" +
+      "ons\030\010 \003(\0132F.gitpod.v1.UpdateOrganization" +
+      "SettingsRequest.PinnedEditorVersionsEntr" +
+      "yR\024pinnedEditorVersions\022F\n\035update_pinned" +
+      "_editor_versions\030\t \001(\010H\003R\032updatePinnedEd" +
+      "itorVersions\210\001\001\022&\n\014default_role\030\n \001(\tH\004R" +
+      "\013defaultRole\210\001\001\022J\n\020timeout_settings\030\013 \001(" +
+      "\0132\032.gitpod.v1.TimeoutSettingsH\005R\017timeout" +
+      "Settings\210\001\001\022L\n\021role_restrictions\030\014 \003(\0132\037" +
+      ".gitpod.v1.RoleRestrictionEntryR\020roleRes" +
+      "trictions\022=\n\030update_role_restrictions\030\r " +
+      "\001(\010H\006R\026updateRoleRestrictions\210\001\001\032G\n\031Pinn" +
+      "edEditorVersionsEntry\022\020\n\003key\030\001 \001(\tR\003key\022" +
+      "\024\n\005value\030\002 \001(\tR\005value:\0028\001B\035\n\033_workspace_" +
+      "sharing_disabledB\032\n\030_default_workspace_i" +
+      "mageB!\n\037_update_restricted_editor_namesB" +
+      " \n\036_update_pinned_editor_versionsB\017\n\r_de" +
+      "fault_roleB\023\n\021_timeout_settingsB\033\n\031_upda" +
+      "te_role_restrictions\"a\n\"UpdateOrganizati" +
+      "onSettingsResponse\022;\n\010settings\030\001 \001(\0132\037.g" +
+      "itpod.v1.OrganizationSettingsR\010settings\"" +
+      "I\n\036GetOrganizationSettingsRequest\022\'\n\017org" +
+      "anization_id\030\001 \001(\tR\016organizationId\"^\n\037Ge" +
+      "tOrganizationSettingsResponse\022;\n\010setting" +
+      "s\030\001 \001(\0132\037.gitpod.v1.OrganizationSettings" +
+      "R\010settings\"/\n\031CreateOrganizationRequest\022" +
+      "\022\n\004name\030\001 \001(\tR\004name\"Y\n\032CreateOrganizatio" +
+      "nResponse\022;\n\014organization\030\001 \001(\0132\027.gitpod" +
+      ".v1.OrganizationR\014organization\"A\n\026GetOrg" +
+      "anizationRequest\022\'\n\017organization_id\030\001 \001(" +
+      "\tR\016organizationId\"V\n\027GetOrganizationResp" +
+      "onse\022;\n\014organization\030\001 \001(\0132\027.gitpod.v1.O" +
+      "rganizationR\014organization\"\332\001\n\030ListOrgani" +
+      "zationsRequest\022<\n\npagination\030\001 \001(\0132\034.git" +
+      "pod.v1.PaginationRequestR\npagination\022?\n\005" +
+      "scope\030\002 \001(\0162).gitpod.v1.ListOrganization" +
+      "sRequest.ScopeR\005scope\"?\n\005Scope\022\025\n\021SCOPE_" +
+      "UNSPECIFIED\020\000\022\020\n\014SCOPE_MEMBER\020\001\022\r\n\tSCOPE" +
+      "_ALL\020\002\"\231\001\n\031ListOrganizationsResponse\022=\n\r" +
+      "organizations\030\001 \003(\0132\027.gitpod.v1.Organiza" +
+      "tionR\rorganizations\022=\n\npagination\030\002 \001(\0132" +
+      "\035.gitpod.v1.PaginationResponseR\npaginati" +
+      "on\"D\n\031DeleteOrganizationRequest\022\'\n\017organ" +
+      "ization_id\030\001 \001(\tR\016organizationId\"\034\n\032Dele" +
+      "teOrganizationResponse\"K\n GetOrganizatio" +
+      "nInvitationRequest\022\'\n\017organization_id\030\001 " +
+      "\001(\tR\016organizationId\"H\n!GetOrganizationIn" +
+      "vitationResponse\022#\n\rinvitation_id\030\001 \001(\tR" +
+      "\014invitationId\">\n\027JoinOrganizationRequest" +
+      "\022#\n\rinvitation_id\030\001 \001(\tR\014invitationId\"C\n" +
+      "\030JoinOrganizationResponse\022\'\n\017organizatio" +
+      "n_id\030\001 \001(\tR\016organizationId\"M\n\"ResetOrgan" +
+      "izationInvitationRequest\022\'\n\017organization" +
+      "_id\030\001 \001(\tR\016organizationId\"J\n#ResetOrgani" +
+      "zationInvitationResponse\022#\n\rinvitation_i" +
+      "d\030\001 \001(\tR\014invitationId\"\207\001\n\036ListOrganizati" +
+      "onMembersRequest\022\'\n\017organization_id\030\001 \001(" +
+      "\tR\016organizationId\022<\n\npagination\030\002 \001(\0132\034." +
+      "gitpod.v1.PaginationRequestR\npagination\"" +
+      "\231\001\n\037ListOrganizationMembersResponse\0227\n\007m" +
+      "embers\030\001 \003(\0132\035.gitpod.v1.OrganizationMem" +
+      "berR\007members\022=\n\npagination\030\002 \001(\0132\035.gitpo" +
+      "d.v1.PaginationResponseR\npagination\"\242\001\n\037" +
+      "UpdateOrganizationMemberRequest\022\'\n\017organ" +
+      "ization_id\030\001 \001(\tR\016organizationId\022\027\n\007user" +
+      "_id\030\002 \001(\tR\006userId\0224\n\004role\030\003 \001(\0162\033.gitpod" +
+      ".v1.OrganizationRoleH\000R\004role\210\001\001B\007\n\005_role" +
+      "\"Y\n UpdateOrganizationMemberResponse\0225\n\006" +
+      "member\030\001 \001(\0132\035.gitpod.v1.OrganizationMem" +
+      "berR\006member\"c\n\037DeleteOrganizationMemberR" +
+      "equest\022\'\n\017organization_id\030\001 \001(\tR\016organiz" +
+      "ationId\022\027\n\007user_id\030\002 \001(\tR\006userId\"\"\n Dele" +
+      "teOrganizationMemberResponse*\224\001\n\020Organiz" +
+      "ationRole\022!\n\035ORGANIZATION_ROLE_UNSPECIFI" +
+      "ED\020\000\022\033\n\027ORGANIZATION_ROLE_OWNER\020\001\022\034\n\030ORG" +
+      "ANIZATION_ROLE_MEMBER\020\002\022\"\n\036ORGANIZATION_" +
+      "ROLE_COLLABORATOR\020\003*t\n\026OrganizationPermi" +
+      "ssion\022\'\n#ORGANIZATION_PERMISSION_UNSPECI" +
+      "FIED\020\000\0221\n-ORGANIZATION_PERMISSION_START_" +
+      "ARBITRARY_REPOS\020\0012\276\014\n\023OrganizationServic" +
+      "e\022c\n\022CreateOrganization\022$.gitpod.v1.Crea" +
+      "teOrganizationRequest\032%.gitpod.v1.Create" +
+      "OrganizationResponse\"\000\022Z\n\017GetOrganizatio" +
+      "n\022!.gitpod.v1.GetOrganizationRequest\032\".g" +
+      "itpod.v1.GetOrganizationResponse\"\000\022c\n\022Up" +
+      "dateOrganization\022$.gitpod.v1.UpdateOrgan" +
+      "izationRequest\032%.gitpod.v1.UpdateOrganiz" +
+      "ationResponse\"\000\022`\n\021ListOrganizations\022#.g" +
+      "itpod.v1.ListOrganizationsRequest\032$.gitp" +
+      "od.v1.ListOrganizationsResponse\"\000\022c\n\022Del" +
+      "eteOrganization\022$.gitpod.v1.DeleteOrgani" +
+      "zationRequest\032%.gitpod.v1.DeleteOrganiza" +
+      "tionResponse\"\000\022x\n\031GetOrganizationInvitat" +
+      "ion\022+.gitpod.v1.GetOrganizationInvitatio" +
+      "nRequest\032,.gitpod.v1.GetOrganizationInvi" +
+      "tationResponse\"\000\022]\n\020JoinOrganization\022\".g" +
+      "itpod.v1.JoinOrganizationRequest\032#.gitpo" +
+      "d.v1.JoinOrganizationResponse\"\000\022~\n\033Reset" +
+      "OrganizationInvitation\022-.gitpod.v1.Reset" +
+      "OrganizationInvitationRequest\032..gitpod.v" +
+      "1.ResetOrganizationInvitationResponse\"\000\022" +
+      "r\n\027ListOrganizationMembers\022).gitpod.v1.L" +
+      "istOrganizationMembersRequest\032*.gitpod.v" +
+      "1.ListOrganizationMembersResponse\"\000\022u\n\030U" +
+      "pdateOrganizationMember\022*.gitpod.v1.Upda" +
+      "teOrganizationMemberRequest\032+.gitpod.v1." +
+      "UpdateOrganizationMemberResponse\"\000\022u\n\030De" +
+      "leteOrganizationMember\022*.gitpod.v1.Delet" +
+      "eOrganizationMemberRequest\032+.gitpod.v1.D" +
+      "eleteOrganizationMemberResponse\"\000\022r\n\027Get" +
+      "OrganizationSettings\022).gitpod.v1.GetOrga" +
+      "nizationSettingsRequest\032*.gitpod.v1.GetO" +
+      "rganizationSettingsResponse\"\000\022{\n\032UpdateO" +
+      "rganizationSettings\022,.gitpod.v1.UpdateOr" +
+      "ganizationSettingsRequest\032-.gitpod.v1.Up" +
+      "dateOrganizationSettingsResponse\"\000\022\215\001\n L" +
+      "istOrganizationWorkspaceClasses\0222.gitpod" +
+      ".v1.ListOrganizationWorkspaceClassesRequ" +
+      "est\0323.gitpod.v1.ListOrganizationWorkspac" +
+      "eClassesResponse\"\000BQ\n\026io.gitpod.publicap" +
+      "i.v1Z7github.com/gitpod-io/gitpod/compon" +
+      "ents/public-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -25919,12 +27830,18 @@ java.lang.String defaultValue) {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_OrganizationMember_descriptor,
         new java.lang.String[] { "UserId", "Role", "MemberSince", "AvatarUrl", "FullName", "Email", "OwnedByOrganization", });
-    internal_static_gitpod_v1_OrganizationSettings_descriptor =
+    internal_static_gitpod_v1_RoleRestrictionEntry_descriptor =
       getDescriptor().getMessageTypes().get(2);
+    internal_static_gitpod_v1_RoleRestrictionEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_RoleRestrictionEntry_descriptor,
+        new java.lang.String[] { "Role", "Permissions", });
+    internal_static_gitpod_v1_OrganizationSettings_descriptor =
+      getDescriptor().getMessageTypes().get(3);
     internal_static_gitpod_v1_OrganizationSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_OrganizationSettings_descriptor,
-        new java.lang.String[] { "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "PinnedEditorVersions", "DefaultRole", "TimeoutSettings", });
+        new java.lang.String[] { "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "PinnedEditorVersions", "DefaultRole", "TimeoutSettings", "RoleRestrictions", });
     internal_static_gitpod_v1_OrganizationSettings_PinnedEditorVersionsEntry_descriptor =
       internal_static_gitpod_v1_OrganizationSettings_descriptor.getNestedTypes().get(0);
     internal_static_gitpod_v1_OrganizationSettings_PinnedEditorVersionsEntry_fieldAccessorTable = new
@@ -25932,41 +27849,41 @@ java.lang.String defaultValue) {
         internal_static_gitpod_v1_OrganizationSettings_PinnedEditorVersionsEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_gitpod_v1_ListOrganizationWorkspaceClassesRequest_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_gitpod_v1_ListOrganizationWorkspaceClassesRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListOrganizationWorkspaceClassesRequest_descriptor,
         new java.lang.String[] { "Pagination", "OrganizationId", });
     internal_static_gitpod_v1_ListOrganizationWorkspaceClassesResponse_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_gitpod_v1_ListOrganizationWorkspaceClassesResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListOrganizationWorkspaceClassesResponse_descriptor,
         new java.lang.String[] { "Pagination", "WorkspaceClasses", });
     internal_static_gitpod_v1_UpdateOrganizationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_gitpod_v1_UpdateOrganizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationRequest_descriptor,
         new java.lang.String[] { "OrganizationId", "Name", });
     internal_static_gitpod_v1_UpdateOrganizationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_gitpod_v1_UpdateOrganizationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationResponse_descriptor,
         new java.lang.String[] { "Organization", });
     internal_static_gitpod_v1_TimeoutSettings_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_gitpod_v1_TimeoutSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_TimeoutSettings_descriptor,
         new java.lang.String[] { "Inactivity", "DenyUserTimeouts", });
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor,
-        new java.lang.String[] { "OrganizationId", "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "UpdateRestrictedEditorNames", "PinnedEditorVersions", "UpdatePinnedEditorVersions", "DefaultRole", "TimeoutSettings", });
+        new java.lang.String[] { "OrganizationId", "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "UpdateRestrictedEditorNames", "PinnedEditorVersions", "UpdatePinnedEditorVersions", "DefaultRole", "TimeoutSettings", "RoleRestrictions", "UpdateRoleRestrictions", });
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_descriptor =
       internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor.getNestedTypes().get(0);
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_fieldAccessorTable = new
@@ -25974,139 +27891,139 @@ java.lang.String defaultValue) {
         internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_gitpod_v1_UpdateOrganizationSettingsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_gitpod_v1_UpdateOrganizationSettingsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationSettingsResponse_descriptor,
         new java.lang.String[] { "Settings", });
     internal_static_gitpod_v1_GetOrganizationSettingsRequest_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_gitpod_v1_GetOrganizationSettingsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationSettingsRequest_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_GetOrganizationSettingsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_gitpod_v1_GetOrganizationSettingsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationSettingsResponse_descriptor,
         new java.lang.String[] { "Settings", });
     internal_static_gitpod_v1_CreateOrganizationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_gitpod_v1_CreateOrganizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_CreateOrganizationRequest_descriptor,
         new java.lang.String[] { "Name", });
     internal_static_gitpod_v1_CreateOrganizationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(13);
+      getDescriptor().getMessageTypes().get(14);
     internal_static_gitpod_v1_CreateOrganizationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_CreateOrganizationResponse_descriptor,
         new java.lang.String[] { "Organization", });
     internal_static_gitpod_v1_GetOrganizationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(14);
+      getDescriptor().getMessageTypes().get(15);
     internal_static_gitpod_v1_GetOrganizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationRequest_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_GetOrganizationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(15);
+      getDescriptor().getMessageTypes().get(16);
     internal_static_gitpod_v1_GetOrganizationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationResponse_descriptor,
         new java.lang.String[] { "Organization", });
     internal_static_gitpod_v1_ListOrganizationsRequest_descriptor =
-      getDescriptor().getMessageTypes().get(16);
+      getDescriptor().getMessageTypes().get(17);
     internal_static_gitpod_v1_ListOrganizationsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListOrganizationsRequest_descriptor,
         new java.lang.String[] { "Pagination", "Scope", });
     internal_static_gitpod_v1_ListOrganizationsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(17);
+      getDescriptor().getMessageTypes().get(18);
     internal_static_gitpod_v1_ListOrganizationsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListOrganizationsResponse_descriptor,
         new java.lang.String[] { "Organizations", "Pagination", });
     internal_static_gitpod_v1_DeleteOrganizationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(18);
+      getDescriptor().getMessageTypes().get(19);
     internal_static_gitpod_v1_DeleteOrganizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteOrganizationRequest_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_DeleteOrganizationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(19);
+      getDescriptor().getMessageTypes().get(20);
     internal_static_gitpod_v1_DeleteOrganizationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteOrganizationResponse_descriptor,
         new java.lang.String[] { });
     internal_static_gitpod_v1_GetOrganizationInvitationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(20);
+      getDescriptor().getMessageTypes().get(21);
     internal_static_gitpod_v1_GetOrganizationInvitationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationInvitationRequest_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_GetOrganizationInvitationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(21);
+      getDescriptor().getMessageTypes().get(22);
     internal_static_gitpod_v1_GetOrganizationInvitationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_GetOrganizationInvitationResponse_descriptor,
         new java.lang.String[] { "InvitationId", });
     internal_static_gitpod_v1_JoinOrganizationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(22);
+      getDescriptor().getMessageTypes().get(23);
     internal_static_gitpod_v1_JoinOrganizationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_JoinOrganizationRequest_descriptor,
         new java.lang.String[] { "InvitationId", });
     internal_static_gitpod_v1_JoinOrganizationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(23);
+      getDescriptor().getMessageTypes().get(24);
     internal_static_gitpod_v1_JoinOrganizationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_JoinOrganizationResponse_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_ResetOrganizationInvitationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(24);
+      getDescriptor().getMessageTypes().get(25);
     internal_static_gitpod_v1_ResetOrganizationInvitationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ResetOrganizationInvitationRequest_descriptor,
         new java.lang.String[] { "OrganizationId", });
     internal_static_gitpod_v1_ResetOrganizationInvitationResponse_descriptor =
-      getDescriptor().getMessageTypes().get(25);
+      getDescriptor().getMessageTypes().get(26);
     internal_static_gitpod_v1_ResetOrganizationInvitationResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ResetOrganizationInvitationResponse_descriptor,
         new java.lang.String[] { "InvitationId", });
     internal_static_gitpod_v1_ListOrganizationMembersRequest_descriptor =
-      getDescriptor().getMessageTypes().get(26);
+      getDescriptor().getMessageTypes().get(27);
     internal_static_gitpod_v1_ListOrganizationMembersRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListOrganizationMembersRequest_descriptor,
         new java.lang.String[] { "OrganizationId", "Pagination", });
     internal_static_gitpod_v1_ListOrganizationMembersResponse_descriptor =
-      getDescriptor().getMessageTypes().get(27);
+      getDescriptor().getMessageTypes().get(28);
     internal_static_gitpod_v1_ListOrganizationMembersResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ListOrganizationMembersResponse_descriptor,
         new java.lang.String[] { "Members", "Pagination", });
     internal_static_gitpod_v1_UpdateOrganizationMemberRequest_descriptor =
-      getDescriptor().getMessageTypes().get(28);
+      getDescriptor().getMessageTypes().get(29);
     internal_static_gitpod_v1_UpdateOrganizationMemberRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationMemberRequest_descriptor,
         new java.lang.String[] { "OrganizationId", "UserId", "Role", });
     internal_static_gitpod_v1_UpdateOrganizationMemberResponse_descriptor =
-      getDescriptor().getMessageTypes().get(29);
+      getDescriptor().getMessageTypes().get(30);
     internal_static_gitpod_v1_UpdateOrganizationMemberResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationMemberResponse_descriptor,
         new java.lang.String[] { "Member", });
     internal_static_gitpod_v1_DeleteOrganizationMemberRequest_descriptor =
-      getDescriptor().getMessageTypes().get(30);
+      getDescriptor().getMessageTypes().get(31);
     internal_static_gitpod_v1_DeleteOrganizationMemberRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteOrganizationMemberRequest_descriptor,
         new java.lang.String[] { "OrganizationId", "UserId", });
     internal_static_gitpod_v1_DeleteOrganizationMemberResponse_descriptor =
-      getDescriptor().getMessageTypes().get(31);
+      getDescriptor().getMessageTypes().get(32);
     internal_static_gitpod_v1_DeleteOrganizationMemberResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteOrganizationMemberResponse_descriptor,

@@ -57,6 +57,8 @@ import { isGitpodIo } from "../utils";
 import { useListConfigurations } from "../data/configurations/configuration-queries";
 import { flattenPagedConfigurations } from "../data/git-providers/unified-repositories-search-query";
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { useMemberRole } from "../data/organizations/members-query";
+import { OrganizationPermission } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
 
@@ -107,6 +109,7 @@ export function CreateWorkspacePage() {
     const defaultWorkspaceClass = props.workspaceClass ?? computedDefaultClass;
     const showExamples = props.showExamples ?? false;
     const { data: orgSettings } = useOrgSettingsQuery();
+    const memberRole = useMemberRole();
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
     const [errorWsClass, setErrorWsClass] = useState<ReactNode | undefined>(undefined);
     const [errorIde, setErrorIde] = useState<ReactNode | undefined>(undefined);
@@ -556,6 +559,15 @@ export function CreateWorkspacePage() {
                                 selectedContextURL={contextURL}
                                 selectedConfigurationId={selectedProjectID}
                                 expanded={!contextURL}
+                                onlyConfigurations={
+                                    orgSettings?.roleRestrictions.some(
+                                        (roleRestriction) =>
+                                            roleRestriction.role === memberRole &&
+                                            roleRestriction.permissions.includes(
+                                                OrganizationPermission.START_ARBITRARY_REPOS,
+                                            ),
+                                    ) ?? false
+                                }
                                 disabled={createWorkspaceMutation.isStarting}
                                 showExamples={showExamples}
                             />
