@@ -294,7 +294,7 @@ const LoginButton: FC<LoginButtonProps> = ({ children, onClick }) => {
 
 const LeftPanel = () => {
     return (
-        <div className="w-full lg:w-1/3 bg-[surface-01] dark:bg-gray-800 flex flex-col justify-between p-4 lg:p-10 min-h-screen">
+        <div className="w-full lg:w-1/3 flex flex-col justify-between p-4 lg:p-10 lg:pb-2 min-h-screen">
             <div>
                 <div className="p-[1px] bg-gradient-to-b from-white to-[#ECE7E5] dark:from-gray-700 dark:to-gray-600 rounded-2xl justify-center items-center mb-8">
                     <div className="bg-[#F9F9F9B2] dark:bg-gray-800 w-full p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
@@ -376,15 +376,18 @@ const LeftPanel = () => {
                 </ul>
                 <LinkButton
                     variant="secondary"
-                    className="mt-8 text-pk-content-primary bg-pk-surface-primary dark:bg-gray-700 dark:text-white w-full shadow font-medium"
+                    className="mt-8 mb-2 text-pk-content-primary bg-pk-surface-primary dark:bg-gray-700 dark:text-white w-full shadow font-medium"
                     href="https://app.gitpod.io/login"
                     isExternalUrl={true}
                 >
                     Explore
                 </LinkButton>
             </div>
-            <div className="mt-4 flex h-6 w-full flex-row justify-center gap-2">
-                <img src={GitpodEngraved} alt="Gitpod Engraved" className="h-6 w-6 dark:filter-invert" />
+            <div className="justify-center items-center max-w-fit mx-auto flex flex-col">
+                <img src={GitpodEngraved} alt="Gitpod Engraved icon" className="h-6 w-6 dark:filter-invert" />
+                <div className="inline-flex max-w-fit mx-auto mt-1.5 items-center justify-center px-1 py-0.5 text-xs font-medium bg-transparent text-[#191A1A]/20 rounded border border-[#191A1A]/10 dark:filter-invert">
+                    early access
+                </div>
             </div>
         </div>
     );
