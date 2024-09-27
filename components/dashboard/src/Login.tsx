@@ -310,14 +310,16 @@ const LeftPanel = () => {
                 </div>
                 <div className="justify-center md:justify-start mb-6 md:mb-8">
                     <ProductLogo className="h-8 mb-4" />
-                    <h2 className="text-2xl font-medium mb-2 dark:text-white">Gitpod Flex</h2>
+                    <h2 className="text-2xl font-medium mb-2 dark:text-white inline-flex items-center gap-x-2">
+                        Gitpod Flex{" "}
+                        <span className="inline-block px-2 py-1 bg-[#EFFBEF] dark:bg-green-900 text-pk-content-primary dark:text-green-100 rounded-full text-xs font-medium border border-[#D6D6D6] dark:border-green-700">
+                            Early access
+                        </span>
+                    </h2>
                     <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
                         Automated, standardized
                         <br /> development environments.
                     </p>
-                    <span className="inline-block px-3 py-1 bg-[#EFFBEF] dark:bg-green-900 text-pk-content-primary dark:text-green-100 rounded-full text-sm font-medium border border-[#D6D6D6] dark:border-green-700">
-                        Early access
-                    </span>
                 </div>
 
                 <ul className="space-y-4">
