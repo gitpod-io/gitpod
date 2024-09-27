@@ -49,6 +49,25 @@ class TestAzureDevOpsContextParser {
         });
     }
 
+    @test public async testEmptyProjectWithoutGitSegment() {
+        const result = await this.parser.handle({}, this.user, "https://dev.azure.com/services-azure/empty-project");
+        expect(result).to.deep.include({
+            path: "",
+            isFile: false,
+            title: "empty-project/empty-project",
+            repository: {
+                host: "dev.azure.com",
+                owner: "services-azure/empty-project",
+                name: "empty-project",
+                cloneUrl: "https://services-azure@dev.azure.com/services-azure/empty-project/_git/empty-project",
+                description: "main",
+                webUrl: "https://dev.azure.com/services-azure/empty-project/_git/empty-project",
+                defaultBranch: "main",
+            },
+            revision: "",
+        });
+    }
+
     @test public async testDefault() {
         const result = await this.parser.handle(
             {},

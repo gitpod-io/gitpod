@@ -113,31 +113,35 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
         const pathname = url.pathname.replace(/^\//, "").replace(/\/$/, "");
         const segments = pathname.split("/").filter((e) => e !== "");
         const host = this.host;
-        // case when there is only one repository in the project
-        // https://dev.azure.com/services-azure/_git/project2
-        if (segments.length === 3 && segments[1] === "_git") {
-            const azOrganization = segments[0];
-            const azProject = segments[2];
-            const repo = azProject;
-            return {
-                host,
-                owner: `${azOrganization}/${azProject}`,
-                repoName: repo,
-                moreSegments: segments.slice(3),
-                searchParams: url.searchParams,
-            };
-        }
-        if (segments.length < 4 || segments[2] !== "_git") {
+        let azOrganization = "";
+        let azProject = "";
+        let repo = "";
+        let moreSegments: string[] = [];
+        if (segments.length === 2) {
+            // https://dev.azure.com/services-azure/empty-project
+            azOrganization = segments[0];
+            azProject = segments[1];
+            repo = azProject;
+        } else if (segments.length === 3 && segments[1] === "_git") {
+            // https://dev.azure.com/services-azure/_git/project2
+            azOrganization = segments[0];
+            azProject = segments[2];
+            repo = azProject;
+            moreSegments = segments.slice(3);
+        } else if (segments.length < 4 || segments[2] !== "_git") {
+            // https://dev.azure.com/services-azure/project2/_git/project2
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid Azure DevOps repository URL");
+        } else {
+            moreSegments = segments.slice(4);
+            azOrganization = segments[0];
+            azProject = segments[1];
+            repo = segments[3];
         }
-        const azOrganization = segments[0];
-        const azProject = segments[1];
-        const repo = segments[3];
         return {
             host,
             owner: `${azOrganization}/${azProject}`,
             repoName: repo,
-            moreSegments: segments.slice(4),
+            moreSegments,
             searchParams: url.searchParams,
         };
     }
