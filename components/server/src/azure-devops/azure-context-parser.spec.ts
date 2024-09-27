@@ -26,7 +26,7 @@ class TestAzureDevOpsContextParser {
         this.user = DevData.createTestUser();
     }
 
-    @test public async testEmptyProoject() {
+    @test public async testEmptyProject() {
         const result = await this.parser.handle(
             {},
             this.user,
