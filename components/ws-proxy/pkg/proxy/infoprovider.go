@@ -204,13 +204,13 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	r.store.Update(req.Name, wsinfo)
-	r.invalidConnectionContext(wsinfo)
+	r.invalidateConnectionContext(wsinfo)
 	log.WithField("workspace", req.Name).WithField("details", wsinfo).Debug("adding/updating workspace details")
 
 	return ctrl.Result{}, nil
 }
 
-func (r *CRDWorkspaceInfoProvider) invalidConnectionContext(ws *common.WorkspaceInfo) {
+func (r *CRDWorkspaceInfoProvider) invalidateConnectionContext(ws *common.WorkspaceInfo) {
 	connCtxs, err := r.contextStore.ByIndex(workspaceIndex, ws.WorkspaceID)
 	if err != nil {
 		return
