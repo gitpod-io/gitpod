@@ -24,6 +24,8 @@ import { userClient } from "./service/public-api";
 import { ProductLogo } from "./components/ProductLogo";
 import { useIsDataOps } from "./data/featureflag-query";
 import { isGitpodIo } from "./utils";
+import { LinkButton } from "@podkit/buttons/LinkButton";
+import GitpodEngraved from "./icons/gitpod-engraved.svg";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -121,104 +123,149 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
         [authorizeSuccessful],
     );
 
-    return (
-        <div id="login-container" className="z-50 flex w-screen h-screen">
-            <div id="login-section" className={"flex-grow flex w-full"}>
-                <div id="login-section-column" className={"flex-grow max-w-2xl flex flex-col h-100 mx-auto"}>
-                    {needsSetupCheckLoading ? (
-                        // empty filler container to keep the layout stable
-                        <div className="flex-grow" />
-                    ) : needsSetup ? (
-                        <SetupPending alwaysShowHeader />
-                    ) : (
-                        <div className="flex-grow h-100 flex flex-row items-center justify-center">
-                            <div className="rounded-xl px-10 py-10 mx-auto">
-                                <div className="mx-auto pb-8">
-                                    <ProductLogo className="h-14 mx-auto block" />
-                                </div>
-
-                                <div className="mx-auto text-center pb-8 space-y-2">
-                                    {isDataOps ? (
-                                        <Heading1>Log in to DataOps.live Develop</Heading1>
-                                    ) : providerFromContext ? (
-                                        <>
-                                            <Heading2>Open a cloud development environment</Heading2>
-                                            <Subheading>for the repository {repoPathname?.slice(1)}</Subheading>
-                                        </>
-                                    ) : (
-                                        <Heading1>Log in to Gitpod</Heading1>
-                                    )}
-                                </div>
-
-                                <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
-                                    {providerFromContext ? (
-                                        <LoginButton
-                                            key={"button" + providerFromContext.host}
-                                            onClick={() => openLogin(providerFromContext!.host)}
-                                        >
-                                            {iconForAuthProvider(providerFromContext.type)}
-                                            <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
-                                                Continue with {simplifyProviderName(providerFromContext.host)}
-                                            </span>
-                                        </LoginButton>
-                                    ) : (
-                                        authProviders.data?.map((ap) => (
-                                            <LoginButton key={"button" + ap.host} onClick={() => openLogin(ap.host)}>
-                                                {iconForAuthProvider(ap.type)}
-                                                <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
-                                                    Continue with {simplifyProviderName(ap.host)}
-                                                </span>
-                                            </LoginButton>
-                                        ))
-                                    )}
-                                    {isGitpodIo() && (
-                                        <div className="text-pk-content-tertiary py-3">
-                                            <span className="text-sm font-bold">Need SSO? </span>
-                                            <a
-                                                className="text-sm gp-link"
-                                                href="https://www.gitpod.io/docs/enterprise"
-                                                target="_blank"
-                                                rel="noreferrer"
-                                            >
-                                                Try Gitpod Enterprise
-                                            </a>
-                                        </div>
-                                    )}
-                                    <SSOLoginForm
-                                        onSuccess={authorizeSuccessful}
-                                        singleOrgMode={!!authProviders.data && authProviders.data.length === 0}
-                                    />
-                                </div>
-                                {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
-                            </div>
-                        </div>
-                    )}
-                    {/* If we have the login view showing, show this as well */}
-                    {!needsSetup && !needsSetupCheckLoading && (
-                        <div className="flex-none mx-auto text-center px-4 pb-4">
-                            <span className="text-gray-400 dark:text-gray-500 text-sm">
-                                By signing in, you agree to our{" "}
-                                <a
-                                    className="gp-link hover:text-gray-600"
-                                    target="gitpod-terms"
-                                    href="https://www.gitpod.io/terms/"
-                                >
-                                    terms of service
-                                </a>{" "}
-                                and{" "}
-                                <a
-                                    className="gp-link hover:text-gray-600"
-                                    target="gitpod-privacy"
-                                    href="https://www.gitpod.io/privacy/"
-                                >
-                                    privacy policy
-                                </a>
-                                .
-                            </span>
-                        </div>
-                    )}
-                </div>
+    const renderLoginContent = () => (
+        <div className="rounded-xl px-10 py-10 mx-auto w-full max-w-md">
+            <div className="mx-auto pb-8">
+                <ProductLogo className="h-14 mx-auto block" />
             </div>
+
+            <div className="mx-auto text-center pb-8 space-y-2">
+                {isDataOps ? (
+                    <Heading1>Log in to DataOps.live Develop</Heading1>
+                ) : providerFromContext ? (
+                    <>
+                        <Heading2>Open a cloud development environment</Heading2>
+                        <Subheading>for the repository {repoPathname?.slice(1)}</Subheading>
+                    </>
+                ) : (
+                    <Heading1>Log in to Gitpod</Heading1>
+                )}
+            </div>
+
+            <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
+                {providerFromContext ? (
+                    <LoginButton
+                        key={"button" + providerFromContext.host}
+                        onClick={() => openLogin(providerFromContext!.host)}
+                    >
+                        {iconForAuthProvider(providerFromContext.type)}
+                        <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
+                            Continue with {simplifyProviderName(providerFromContext.host)}
+                        </span>
+                    </LoginButton>
+                ) : (
+                    authProviders.data?.map((ap) => (
+                        <LoginButton key={"button" + ap.host} onClick={() => openLogin(ap.host)}>
+                            {iconForAuthProvider(ap.type)}
+                            <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
+                                Continue with {simplifyProviderName(ap.host)}
+                            </span>
+                        </LoginButton>
+                    ))
+                )}
+                <SSOLoginForm
+                    onSuccess={authorizeSuccessful}
+                    singleOrgMode={!!authProviders.data && authProviders.data.length === 0}
+                />
+            </div>
+            {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
+        </div>
+    );
+
+    return (
+        <div
+            id="login-container"
+            className={cn("z-50 flex flex-col-reverse lg:flex-row w-full min-h-screen", {
+                "bg-[#FDF1E7] dark:bg-[#23211e]": isGitpodIo(),
+            })}
+        >
+            {isGitpodIo() ? (
+                <>
+                    <LeftPanel />
+                    <div
+                        id="login-section"
+                        className="w-full lg:w-4/5 flex flex-col justify-center items-center bg-[#FDF1E7] dark:bg-[#23211e] p-2"
+                    >
+                        <div
+                            id="login-section-column"
+                            className="bg-white dark:bg-[#161616] flex-grow rounded-xl w-full flex flex-col h-100 mx-auto"
+                        >
+                            {needsSetupCheckLoading ? (
+                                <div className="flex-grow" />
+                            ) : needsSetup ? (
+                                <SetupPending alwaysShowHeader />
+                            ) : (
+                                <div className="flex-grow h-100 flex flex-col items-center justify-center">
+                                    {renderLoginContent()}
+                                    <p className="text-sm text-[#64645F] mt-6 mb-6 lg:mb-0 lg:mt-8 max-w-sm text-center font-semibold">
+                                        Gitpod Classic will be sunset by April 1, 2025 and superseded by Gitpod Flex
+                                    </p>
+                                </div>
+                            )}
+                            {!needsSetup && !needsSetupCheckLoading && (
+                                <div className="flex-none mx-auto text-center px-4 pb-4">
+                                    <span className="text-gray-400 dark:text-gray-500 text-sm">
+                                        By signing in, you agree to our{" "}
+                                        <a
+                                            className="gp-link hover:text-gray-600"
+                                            target="gitpod-terms"
+                                            href="https://www.gitpod.io/terms/"
+                                        >
+                                            terms of service
+                                        </a>{" "}
+                                        and{" "}
+                                        <a
+                                            className="gp-link hover:text-gray-600"
+                                            target="gitpod-privacy"
+                                            href="https://www.gitpod.io/privacy/"
+                                        >
+                                            privacy policy
+                                        </a>
+                                        .
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <div id="login-section" className="flex-grow flex w-full">
+                    <div id="login-section-column" className="flex-grow max-w-2xl flex flex-col h-100 mx-auto">
+                        {needsSetupCheckLoading ? (
+                            <div className="flex-grow" />
+                        ) : needsSetup ? (
+                            <SetupPending alwaysShowHeader />
+                        ) : (
+                            <div className="flex-grow h-100 flex flex-row items-center justify-center">
+                                {renderLoginContent()}
+                            </div>
+                        )}
+                        {!needsSetup && !needsSetupCheckLoading && (
+                            <div className="flex-none mx-auto text-center px-4 pb-4">
+                                <span className="text-gray-400 dark:text-gray-500 text-sm">
+                                    By signing in, you agree to our{" "}
+                                    <a
+                                        className="gp-link hover:text-gray-600"
+                                        target="gitpod-terms"
+                                        href="https://www.gitpod.io/terms/"
+                                    >
+                                        terms of service
+                                    </a>{" "}
+                                    and{" "}
+                                    <a
+                                        className="gp-link hover:text-gray-600"
+                                        target="gitpod-privacy"
+                                        href="https://www.gitpod.io/privacy/"
+                                    >
+                                        privacy policy
+                                    </a>
+                                    .
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -242,5 +289,101 @@ const LoginButton: FC<LoginButtonProps> = ({ children, onClick }) => {
         >
             {children}
         </Button>
+    );
+};
+
+const LeftPanel = () => {
+    return (
+        <div className="w-full lg:w-1/3 bg-[surface-01] dark:bg-gray-800 flex flex-col justify-between p-4 lg:p-10 min-h-screen">
+            <div>
+                <div className="p-[1px] bg-gradient-to-b from-white to-[#ECE7E5] dark:from-gray-700 dark:to-gray-600 rounded-2xl justify-center items-center mb-8">
+                    <div className="bg-[#F9F9F9B2] dark:bg-gray-800 w-full p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                        <h2 className="bg-white dark:bg-gray-700 inline-flex text-xs font-semibold mb-4 border-[0.5px] shadow border-divider dark:border-gray-600 px-2 py-1 rounded-lg">
+                            <span className="bg-gradient-to-l from-[#FFAE33] to-[#FF8A00] text-transparent bg-clip-text">
+                                Did you know?
+                            </span>
+                        </h2>
+                        <p className="text-pk-content-secondary dark:text-gray-300 mt-1">
+                            We launched a new version of Gitpod in early access.
+                        </p>
+                    </div>
+                </div>
+                <div className="justify-center md:justify-start mb-6 md:mb-8">
+                    <ProductLogo className="h-8 mb-4" />
+                    <h2 className="text-2xl font-medium mb-2 dark:text-white">Gitpod Flex</h2>
+                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
+                        Automated, standardized
+                        <br /> development environments.
+                    </p>
+                    <span className="inline-block px-3 py-1 bg-[#EFFBEF] dark:bg-green-900 text-pk-content-primary dark:text-green-100 rounded-full text-sm font-medium border border-[#D6D6D6] dark:border-green-700">
+                        Early access
+                    </span>
+                </div>
+
+                <ul className="space-y-4">
+                    {[
+                        {
+                            title: "Self-host in under 3 minutes",
+                            description:
+                                "All your source code, data, and intellectual property stays in your private network.",
+                        },
+                        {
+                            title: "Local environments to replace Docker Desktop",
+                            description: "Built-in Linux virtualization to run dev container without Docker Desktop",
+                        },
+                        {
+                            title: "Automate common development workflows",
+                            description:
+                                "Setup databases, provision infra, run scripts as one-click actions, configure code assistants, etc.",
+                        },
+                        {
+                            title: "Dev container support",
+                            description:
+                                "Eliminate the need to manually install tools, dependencies and editor extensions.",
+                        },
+                    ].map((feature, index) => (
+                        <li key={index} className="flex items-start">
+                            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mr-3 mt-1">
+                                <svg
+                                    width="22"
+                                    height="22"
+                                    viewBox="0 0 22 22"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        d="M11 20.5C16.2467 20.5 20.5 16.2467 20.5 11C20.5 5.75329 16.2467 1.5 11 1.5C5.75329 1.5 1.5 5.75329 1.5 11C1.5 16.2467 5.75329 20.5 11 20.5Z"
+                                        fill="#17C165"
+                                        stroke="#D5F6DB"
+                                        strokeWidth="3"
+                                    />
+                                    <path
+                                        d="M7 11.5L10 14L15 8"
+                                        stroke="white"
+                                        strokeWidth="2"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                            </div>
+                            <div>
+                                <span className="text-sm font-medium text-pk-content-primary">{feature.title}</span>
+                                <p className="text-sm text-pk-content-secondar mt-0.5">{feature.description}</p>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+                <LinkButton
+                    variant="secondary"
+                    className="mt-8 text-pk-content-primary bg-pk-surface-primary dark:bg-gray-700 dark:text-white w-full shadow font-medium"
+                    href="https://app.gitpod.io/login"
+                    isExternalUrl={true}
+                >
+                    Explore
+                </LinkButton>
+            </div>
+            <div className="mt-4 flex h-6 w-full flex-row justify-center gap-2">
+                <img src={GitpodEngraved} alt="Gitpod Engraved" className="h-6 w-6 dark:filter-invert" />
+            </div>
+        </div>
     );
 };
