@@ -26,12 +26,10 @@ interface WorkspaceClassesOptionsProps {
     roleRestrictions: RoleRestrictionEntry[];
     defaultClass?: string;
     className?: string;
-    emptyState?: React.ReactNode;
 }
 
 export const OrgMemberPermissionRestrictionsOptions = ({
     roleRestrictions,
-    emptyState,
     className,
 }: WorkspaceClassesOptionsProps) => {
     const rolesRestrictingArbitraryRepositories = roleRestrictions.filter((entry) =>
@@ -43,7 +41,7 @@ export const OrgMemberPermissionRestrictionsOptions = ({
     );
 
     if (rolesAllowedToOpenArbitraryRepositories.length === 0) {
-        return <>Nobody in the organization can open repositories that are not imported</>;
+        return <div>Nobody in the organization can open repositories that are not imported</div>;
     }
 
     return (
