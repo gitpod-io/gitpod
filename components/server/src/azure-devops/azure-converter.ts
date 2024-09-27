@@ -66,7 +66,7 @@ export function toCommit(d: GitCommitRef): CommitInfo | undefined {
     return {
         sha: d.commitId!,
         author: d.author?.name || "unknown",
-        authorAvatarUrl: "", // TODO: fetch avatar URL
+        authorAvatarUrl: d.author?.imageUrl ?? "",
         authorDate: d.author?.date?.toISOString(),
         commitMessage: d.comment || "missing commit message",
     };
