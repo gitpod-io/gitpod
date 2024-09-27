@@ -14,6 +14,8 @@ type UpdateAuthProviderArgs = {
         id: string;
         clientId: string;
         clientSecret: string;
+        authorizationUrl?: string;
+        tokenUrl?: string;
     };
 };
 export const useUpdateUserAuthProviderMutation = () => {
@@ -26,6 +28,8 @@ export const useUpdateUserAuthProviderMutation = () => {
                     authProviderId: provider.id,
                     clientId: provider.clientId,
                     clientSecret: provider.clientSecret,
+                    authorizationUrl: provider.authorizationUrl,
+                    tokenUrl: provider.tokenUrl,
                 }),
             );
             return response.authProvider!;

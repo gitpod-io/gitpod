@@ -82,6 +82,17 @@ export class RepoUrlTest {
             repo: "repoName",
         });
     }
+
+    @test public parseAzureScmUrl() {
+        const testUrl = RepoURL.parseRepoUrl(
+            "https://services-azure@dev.azure.com/services-azure/open-to-edit-project/_git/repo2.kai.klasen.git",
+        );
+        expect(testUrl).to.deep.include({
+            host: "dev.azure.com",
+            owner: "services-azure/open-to-edit-project",
+            repo: "repo2.kai.klasen",
+        });
+    }
 }
 
 module.exports = new RepoUrlTest();

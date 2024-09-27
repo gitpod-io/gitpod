@@ -1190,6 +1190,8 @@ export class PublicAPIConverter {
         return new OAuth2Config({
             clientId: ap.oauth?.clientId,
             clientSecret: ap.oauth?.clientSecret,
+            authorizationUrl: ap.oauth?.authorizationUrl,
+            tokenUrl: ap.oauth?.tokenUrl,
         });
     }
 
@@ -1203,6 +1205,8 @@ export class PublicAPIConverter {
                 return AuthProviderType.BITBUCKET;
             case "BitbucketServer":
                 return AuthProviderType.BITBUCKET_SERVER;
+            case "AzureDevOps":
+                return AuthProviderType.AZURE_DEVOPS;
             default:
                 return AuthProviderType.UNSPECIFIED; // not allowed
         }
@@ -1218,6 +1222,8 @@ export class PublicAPIConverter {
                 return "Bitbucket";
             case AuthProviderType.BITBUCKET_SERVER:
                 return "BitbucketServer";
+            case AuthProviderType.AZURE_DEVOPS:
+                return "AzureDevOps";
             default:
                 return ""; // not allowed
         }

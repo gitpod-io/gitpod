@@ -58,6 +58,10 @@ public final class Authprovider {
      * <code>AUTH_PROVIDER_TYPE_BITBUCKET_SERVER = 4;</code>
      */
     AUTH_PROVIDER_TYPE_BITBUCKET_SERVER(4),
+    /**
+     * <code>AUTH_PROVIDER_TYPE_AZURE_DEVOPS = 5;</code>
+     */
+    AUTH_PROVIDER_TYPE_AZURE_DEVOPS(5),
     UNRECOGNIZED(-1),
     ;
 
@@ -94,6 +98,10 @@ public final class Authprovider {
      * <code>AUTH_PROVIDER_TYPE_BITBUCKET_SERVER = 4;</code>
      */
     public static final int AUTH_PROVIDER_TYPE_BITBUCKET_SERVER_VALUE = 4;
+    /**
+     * <code>AUTH_PROVIDER_TYPE_AZURE_DEVOPS = 5;</code>
+     */
+    public static final int AUTH_PROVIDER_TYPE_AZURE_DEVOPS_VALUE = 5;
 
 
     public final int getNumber() {
@@ -125,6 +133,7 @@ public final class Authprovider {
         case 2: return AUTH_PROVIDER_TYPE_GITLAB;
         case 3: return AUTH_PROVIDER_TYPE_BITBUCKET;
         case 4: return AUTH_PROVIDER_TYPE_BITBUCKET_SERVER;
+        case 5: return AUTH_PROVIDER_TYPE_AZURE_DEVOPS;
         default: return null;
       }
     }
@@ -7112,6 +7121,40 @@ public final class Authprovider {
      */
     com.google.protobuf.ByteString
         getClientSecretBytes();
+
+    /**
+     * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+     * @return Whether the authorizationUrl field is set.
+     */
+    boolean hasAuthorizationUrl();
+    /**
+     * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+     * @return The authorizationUrl.
+     */
+    java.lang.String getAuthorizationUrl();
+    /**
+     * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+     * @return The bytes for authorizationUrl.
+     */
+    com.google.protobuf.ByteString
+        getAuthorizationUrlBytes();
+
+    /**
+     * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+     * @return Whether the tokenUrl field is set.
+     */
+    boolean hasTokenUrl();
+    /**
+     * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+     * @return The tokenUrl.
+     */
+    java.lang.String getTokenUrl();
+    /**
+     * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+     * @return The bytes for tokenUrl.
+     */
+    com.google.protobuf.ByteString
+        getTokenUrlBytes();
   }
   /**
    * Protobuf type {@code gitpod.v1.UpdateAuthProviderRequest}
@@ -7138,6 +7181,8 @@ public final class Authprovider {
       authProviderId_ = "";
       clientId_ = "";
       clientSecret_ = "";
+      authorizationUrl_ = "";
+      tokenUrl_ = "";
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -7287,6 +7332,100 @@ public final class Authprovider {
       }
     }
 
+    public static final int AUTHORIZATION_URL_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object authorizationUrl_ = "";
+    /**
+     * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+     * @return Whether the authorizationUrl field is set.
+     */
+    @java.lang.Override
+    public boolean hasAuthorizationUrl() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+     * @return The authorizationUrl.
+     */
+    @java.lang.Override
+    public java.lang.String getAuthorizationUrl() {
+      java.lang.Object ref = authorizationUrl_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        authorizationUrl_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+     * @return The bytes for authorizationUrl.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getAuthorizationUrlBytes() {
+      java.lang.Object ref = authorizationUrl_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        authorizationUrl_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TOKEN_URL_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object tokenUrl_ = "";
+    /**
+     * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+     * @return Whether the tokenUrl field is set.
+     */
+    @java.lang.Override
+    public boolean hasTokenUrl() {
+      return ((bitField0_ & 0x00000008) != 0);
+    }
+    /**
+     * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+     * @return The tokenUrl.
+     */
+    @java.lang.Override
+    public java.lang.String getTokenUrl() {
+      java.lang.Object ref = tokenUrl_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        tokenUrl_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+     * @return The bytes for tokenUrl.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTokenUrlBytes() {
+      java.lang.Object ref = tokenUrl_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        tokenUrl_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -7310,6 +7449,12 @@ public final class Authprovider {
       if (((bitField0_ & 0x00000002) != 0)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 3, clientSecret_);
       }
+      if (((bitField0_ & 0x00000004) != 0)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 4, authorizationUrl_);
+      }
+      if (((bitField0_ & 0x00000008) != 0)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 5, tokenUrl_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -7327,6 +7472,12 @@ public final class Authprovider {
       }
       if (((bitField0_ & 0x00000002) != 0)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(3, clientSecret_);
+      }
+      if (((bitField0_ & 0x00000004) != 0)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(4, authorizationUrl_);
+      }
+      if (((bitField0_ & 0x00000008) != 0)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(5, tokenUrl_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -7355,6 +7506,16 @@ public final class Authprovider {
         if (!getClientSecret()
             .equals(other.getClientSecret())) return false;
       }
+      if (hasAuthorizationUrl() != other.hasAuthorizationUrl()) return false;
+      if (hasAuthorizationUrl()) {
+        if (!getAuthorizationUrl()
+            .equals(other.getAuthorizationUrl())) return false;
+      }
+      if (hasTokenUrl() != other.hasTokenUrl()) return false;
+      if (hasTokenUrl()) {
+        if (!getTokenUrl()
+            .equals(other.getTokenUrl())) return false;
+      }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -7375,6 +7536,14 @@ public final class Authprovider {
       if (hasClientSecret()) {
         hash = (37 * hash) + CLIENT_SECRET_FIELD_NUMBER;
         hash = (53 * hash) + getClientSecret().hashCode();
+      }
+      if (hasAuthorizationUrl()) {
+        hash = (37 * hash) + AUTHORIZATION_URL_FIELD_NUMBER;
+        hash = (53 * hash) + getAuthorizationUrl().hashCode();
+      }
+      if (hasTokenUrl()) {
+        hash = (37 * hash) + TOKEN_URL_FIELD_NUMBER;
+        hash = (53 * hash) + getTokenUrl().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -7510,6 +7679,8 @@ public final class Authprovider {
         authProviderId_ = "";
         clientId_ = "";
         clientSecret_ = "";
+        authorizationUrl_ = "";
+        tokenUrl_ = "";
         return this;
       }
 
@@ -7555,6 +7726,14 @@ public final class Authprovider {
           result.clientSecret_ = clientSecret_;
           to_bitField0_ |= 0x00000002;
         }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.authorizationUrl_ = authorizationUrl_;
+          to_bitField0_ |= 0x00000004;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.tokenUrl_ = tokenUrl_;
+          to_bitField0_ |= 0x00000008;
+        }
         result.bitField0_ |= to_bitField0_;
       }
 
@@ -7583,6 +7762,16 @@ public final class Authprovider {
         if (other.hasClientSecret()) {
           clientSecret_ = other.clientSecret_;
           bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (other.hasAuthorizationUrl()) {
+          authorizationUrl_ = other.authorizationUrl_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (other.hasTokenUrl()) {
+          tokenUrl_ = other.tokenUrl_;
+          bitField0_ |= 0x00000010;
           onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
@@ -7626,6 +7815,16 @@ public final class Authprovider {
                 bitField0_ |= 0x00000004;
                 break;
               } // case 26
+              case 34: {
+                authorizationUrl_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 42: {
+                tokenUrl_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -7869,6 +8068,164 @@ public final class Authprovider {
         checkByteStringIsUtf8(value);
         clientSecret_ = value;
         bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object authorizationUrl_ = "";
+      /**
+       * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+       * @return Whether the authorizationUrl field is set.
+       */
+      public boolean hasAuthorizationUrl() {
+        return ((bitField0_ & 0x00000008) != 0);
+      }
+      /**
+       * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+       * @return The authorizationUrl.
+       */
+      public java.lang.String getAuthorizationUrl() {
+        java.lang.Object ref = authorizationUrl_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          authorizationUrl_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+       * @return The bytes for authorizationUrl.
+       */
+      public com.google.protobuf.ByteString
+          getAuthorizationUrlBytes() {
+        java.lang.Object ref = authorizationUrl_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          authorizationUrl_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+       * @param value The authorizationUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAuthorizationUrl(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        authorizationUrl_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAuthorizationUrl() {
+        authorizationUrl_ = getDefaultInstance().getAuthorizationUrl();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string authorization_url = 4 [json_name = "authorizationUrl"];</code>
+       * @param value The bytes for authorizationUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAuthorizationUrlBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        authorizationUrl_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object tokenUrl_ = "";
+      /**
+       * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+       * @return Whether the tokenUrl field is set.
+       */
+      public boolean hasTokenUrl() {
+        return ((bitField0_ & 0x00000010) != 0);
+      }
+      /**
+       * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+       * @return The tokenUrl.
+       */
+      public java.lang.String getTokenUrl() {
+        java.lang.Object ref = tokenUrl_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          tokenUrl_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+       * @return The bytes for tokenUrl.
+       */
+      public com.google.protobuf.ByteString
+          getTokenUrlBytes() {
+        java.lang.Object ref = tokenUrl_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          tokenUrl_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+       * @param value The tokenUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTokenUrl(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        tokenUrl_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTokenUrl() {
+        tokenUrl_ = getDefaultInstance().getTokenUrl();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string token_url = 5 [json_name = "tokenUrl"];</code>
+       * @param value The bytes for tokenUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTokenUrlBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        tokenUrl_ = value;
+        bitField0_ |= 0x00000010;
         onChanged();
         return this;
       }
@@ -12677,6 +13034,30 @@ public final class Authprovider {
      */
     com.google.protobuf.ByteString
         getClientSecretBytes();
+
+    /**
+     * <code>string authorization_url = 3 [json_name = "authorizationUrl"];</code>
+     * @return The authorizationUrl.
+     */
+    java.lang.String getAuthorizationUrl();
+    /**
+     * <code>string authorization_url = 3 [json_name = "authorizationUrl"];</code>
+     * @return The bytes for authorizationUrl.
+     */
+    com.google.protobuf.ByteString
+        getAuthorizationUrlBytes();
+
+    /**
+     * <code>string token_url = 4 [json_name = "tokenUrl"];</code>
+     * @return The tokenUrl.
+     */
+    java.lang.String getTokenUrl();
+    /**
+     * <code>string token_url = 4 [json_name = "tokenUrl"];</code>
+     * @return The bytes for tokenUrl.
+     */
+    com.google.protobuf.ByteString
+        getTokenUrlBytes();
   }
   /**
    * Protobuf type {@code gitpod.v1.OAuth2Config}
@@ -12702,6 +13083,8 @@ public final class Authprovider {
     private OAuth2Config() {
       clientId_ = "";
       clientSecret_ = "";
+      authorizationUrl_ = "";
+      tokenUrl_ = "";
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -12795,6 +13178,84 @@ public final class Authprovider {
       }
     }
 
+    public static final int AUTHORIZATION_URL_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object authorizationUrl_ = "";
+    /**
+     * <code>string authorization_url = 3 [json_name = "authorizationUrl"];</code>
+     * @return The authorizationUrl.
+     */
+    @java.lang.Override
+    public java.lang.String getAuthorizationUrl() {
+      java.lang.Object ref = authorizationUrl_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        authorizationUrl_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string authorization_url = 3 [json_name = "authorizationUrl"];</code>
+     * @return The bytes for authorizationUrl.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getAuthorizationUrlBytes() {
+      java.lang.Object ref = authorizationUrl_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        authorizationUrl_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TOKEN_URL_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object tokenUrl_ = "";
+    /**
+     * <code>string token_url = 4 [json_name = "tokenUrl"];</code>
+     * @return The tokenUrl.
+     */
+    @java.lang.Override
+    public java.lang.String getTokenUrl() {
+      java.lang.Object ref = tokenUrl_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        tokenUrl_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string token_url = 4 [json_name = "tokenUrl"];</code>
+     * @return The bytes for tokenUrl.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTokenUrlBytes() {
+      java.lang.Object ref = tokenUrl_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        tokenUrl_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -12815,6 +13276,12 @@ public final class Authprovider {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(clientSecret_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 2, clientSecret_);
       }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(authorizationUrl_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 3, authorizationUrl_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(tokenUrl_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 4, tokenUrl_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -12829,6 +13296,12 @@ public final class Authprovider {
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(clientSecret_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(2, clientSecret_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(authorizationUrl_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(3, authorizationUrl_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(tokenUrl_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(4, tokenUrl_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -12849,6 +13322,10 @@ public final class Authprovider {
           .equals(other.getClientId())) return false;
       if (!getClientSecret()
           .equals(other.getClientSecret())) return false;
+      if (!getAuthorizationUrl()
+          .equals(other.getAuthorizationUrl())) return false;
+      if (!getTokenUrl()
+          .equals(other.getTokenUrl())) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -12864,6 +13341,10 @@ public final class Authprovider {
       hash = (53 * hash) + getClientId().hashCode();
       hash = (37 * hash) + CLIENT_SECRET_FIELD_NUMBER;
       hash = (53 * hash) + getClientSecret().hashCode();
+      hash = (37 * hash) + AUTHORIZATION_URL_FIELD_NUMBER;
+      hash = (53 * hash) + getAuthorizationUrl().hashCode();
+      hash = (37 * hash) + TOKEN_URL_FIELD_NUMBER;
+      hash = (53 * hash) + getTokenUrl().hashCode();
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -12997,6 +13478,8 @@ public final class Authprovider {
         bitField0_ = 0;
         clientId_ = "";
         clientSecret_ = "";
+        authorizationUrl_ = "";
+        tokenUrl_ = "";
         return this;
       }
 
@@ -13036,6 +13519,12 @@ public final class Authprovider {
         if (((from_bitField0_ & 0x00000002) != 0)) {
           result.clientSecret_ = clientSecret_;
         }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.authorizationUrl_ = authorizationUrl_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.tokenUrl_ = tokenUrl_;
+        }
       }
 
       @java.lang.Override
@@ -13058,6 +13547,16 @@ public final class Authprovider {
         if (!other.getClientSecret().isEmpty()) {
           clientSecret_ = other.clientSecret_;
           bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getAuthorizationUrl().isEmpty()) {
+          authorizationUrl_ = other.authorizationUrl_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getTokenUrl().isEmpty()) {
+          tokenUrl_ = other.tokenUrl_;
+          bitField0_ |= 0x00000008;
           onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
@@ -13096,6 +13595,16 @@ public final class Authprovider {
                 bitField0_ |= 0x00000002;
                 break;
               } // case 18
+              case 26: {
+                authorizationUrl_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                tokenUrl_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -13253,6 +13762,150 @@ public final class Authprovider {
         checkByteStringIsUtf8(value);
         clientSecret_ = value;
         bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object authorizationUrl_ = "";
+      /**
+       * <code>string authorization_url = 3 [json_name = "authorizationUrl"];</code>
+       * @return The authorizationUrl.
+       */
+      public java.lang.String getAuthorizationUrl() {
+        java.lang.Object ref = authorizationUrl_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          authorizationUrl_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string authorization_url = 3 [json_name = "authorizationUrl"];</code>
+       * @return The bytes for authorizationUrl.
+       */
+      public com.google.protobuf.ByteString
+          getAuthorizationUrlBytes() {
+        java.lang.Object ref = authorizationUrl_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          authorizationUrl_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string authorization_url = 3 [json_name = "authorizationUrl"];</code>
+       * @param value The authorizationUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAuthorizationUrl(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        authorizationUrl_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string authorization_url = 3 [json_name = "authorizationUrl"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAuthorizationUrl() {
+        authorizationUrl_ = getDefaultInstance().getAuthorizationUrl();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string authorization_url = 3 [json_name = "authorizationUrl"];</code>
+       * @param value The bytes for authorizationUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAuthorizationUrlBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        authorizationUrl_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object tokenUrl_ = "";
+      /**
+       * <code>string token_url = 4 [json_name = "tokenUrl"];</code>
+       * @return The tokenUrl.
+       */
+      public java.lang.String getTokenUrl() {
+        java.lang.Object ref = tokenUrl_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          tokenUrl_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string token_url = 4 [json_name = "tokenUrl"];</code>
+       * @return The bytes for tokenUrl.
+       */
+      public com.google.protobuf.ByteString
+          getTokenUrlBytes() {
+        java.lang.Object ref = tokenUrl_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          tokenUrl_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string token_url = 4 [json_name = "tokenUrl"];</code>
+       * @param value The tokenUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTokenUrl(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        tokenUrl_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string token_url = 4 [json_name = "tokenUrl"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTokenUrl() {
+        tokenUrl_ = getDefaultInstance().getTokenUrl();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string token_url = 4 [json_name = "tokenUrl"];</code>
+       * @param value The bytes for tokenUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTokenUrlBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        tokenUrl_ = value;
+        bitField0_ |= 0x00000008;
         onChanged();
         return this;
       }
@@ -13422,12 +14075,15 @@ public final class Authprovider {
       "derDescriptionsResponse\022F\n\014descriptions\030" +
       "\001 \003(\0132\".gitpod.v1.AuthProviderDescriptio" +
       "nR\014descriptions\022=\n\npagination\030\002 \001(\0132\035.gi" +
-      "tpod.v1.PaginationResponseR\npagination\"\261" +
-      "\001\n\031UpdateAuthProviderRequest\022(\n\020auth_pro" +
+      "tpod.v1.PaginationResponseR\npagination\"\251" +
+      "\002\n\031UpdateAuthProviderRequest\022(\n\020auth_pro" +
       "vider_id\030\001 \001(\tR\016authProviderId\022 \n\tclient" +
       "_id\030\002 \001(\tH\000R\010clientId\210\001\001\022(\n\rclient_secre" +
-      "t\030\003 \001(\tH\001R\014clientSecret\210\001\001B\014\n\n_client_id" +
-      "B\020\n\016_client_secret\"Z\n\032UpdateAuthProvider" +
+      "t\030\003 \001(\tH\001R\014clientSecret\210\001\001\0220\n\021authorizat" +
+      "ion_url\030\004 \001(\tH\002R\020authorizationUrl\210\001\001\022 \n\t" +
+      "token_url\030\005 \001(\tH\003R\010tokenUrl\210\001\001B\014\n\n_clien" +
+      "t_idB\020\n\016_client_secretB\024\n\022_authorization" +
+      "_urlB\014\n\n_token_url\"Z\n\032UpdateAuthProvider" +
       "Response\022<\n\rauth_provider\030\001 \001(\0132\027.gitpod" +
       ".v1.AuthProviderR\014authProvider\"E\n\031Delete" +
       "AuthProviderRequest\022(\n\020auth_provider_id\030" +
@@ -13447,32 +14103,35 @@ public final class Authprovider {
       "login\030\n \001(\010R\013enableLogin\022\026\n\006scopes\030\013 \003(\t" +
       "R\006scopes\022<\n\roauth2_config\030\014 \001(\0132\027.gitpod" +
       ".v1.OAuth2ConfigR\014oauth2ConfigB\007\n\005owner\"" +
-      "P\n\014OAuth2Config\022\033\n\tclient_id\030\001 \001(\tR\010clie" +
-      "ntId\022#\n\rclient_secret\030\002 \001(\tR\014clientSecre" +
-      "t*\277\001\n\020AuthProviderType\022\"\n\036AUTH_PROVIDER_" +
-      "TYPE_UNSPECIFIED\020\000\022\035\n\031AUTH_PROVIDER_TYPE" +
-      "_GITHUB\020\001\022\035\n\031AUTH_PROVIDER_TYPE_GITLAB\020\002" +
-      "\022 \n\034AUTH_PROVIDER_TYPE_BITBUCKET\020\003\022\'\n#AU" +
-      "TH_PROVIDER_TYPE_BITBUCKET_SERVER\020\0042\206\005\n\023" +
-      "AuthProviderService\022c\n\022CreateAuthProvide" +
-      "r\022$.gitpod.v1.CreateAuthProviderRequest\032" +
-      "%.gitpod.v1.CreateAuthProviderResponse\"\000" +
-      "\022Z\n\017GetAuthProvider\022!.gitpod.v1.GetAuthP" +
-      "roviderRequest\032\".gitpod.v1.GetAuthProvid" +
-      "erResponse\"\000\022`\n\021ListAuthProviders\022#.gitp" +
-      "od.v1.ListAuthProvidersRequest\032$.gitpod." +
-      "v1.ListAuthProvidersResponse\"\000\022\201\001\n\034ListA" +
-      "uthProviderDescriptions\022..gitpod.v1.List" +
-      "AuthProviderDescriptionsRequest\032/.gitpod" +
-      ".v1.ListAuthProviderDescriptionsResponse" +
-      "\"\000\022c\n\022UpdateAuthProvider\022$.gitpod.v1.Upd" +
-      "ateAuthProviderRequest\032%.gitpod.v1.Updat" +
-      "eAuthProviderResponse\"\000\022c\n\022DeleteAuthPro" +
-      "vider\022$.gitpod.v1.DeleteAuthProviderRequ" +
-      "est\032%.gitpod.v1.DeleteAuthProviderRespon" +
-      "se\"\000BQ\n\026io.gitpod.publicapi.v1Z7github.c" +
-      "om/gitpod-io/gitpod/components/public-ap" +
-      "i/go/v1b\006proto3"
+      "\232\001\n\014OAuth2Config\022\033\n\tclient_id\030\001 \001(\tR\010cli" +
+      "entId\022#\n\rclient_secret\030\002 \001(\tR\014clientSecr" +
+      "et\022+\n\021authorization_url\030\003 \001(\tR\020authoriza" +
+      "tionUrl\022\033\n\ttoken_url\030\004 \001(\tR\010tokenUrl*\344\001\n" +
+      "\020AuthProviderType\022\"\n\036AUTH_PROVIDER_TYPE_" +
+      "UNSPECIFIED\020\000\022\035\n\031AUTH_PROVIDER_TYPE_GITH" +
+      "UB\020\001\022\035\n\031AUTH_PROVIDER_TYPE_GITLAB\020\002\022 \n\034A" +
+      "UTH_PROVIDER_TYPE_BITBUCKET\020\003\022\'\n#AUTH_PR" +
+      "OVIDER_TYPE_BITBUCKET_SERVER\020\004\022#\n\037AUTH_P" +
+      "ROVIDER_TYPE_AZURE_DEVOPS\020\0052\206\005\n\023AuthProv" +
+      "iderService\022c\n\022CreateAuthProvider\022$.gitp" +
+      "od.v1.CreateAuthProviderRequest\032%.gitpod" +
+      ".v1.CreateAuthProviderResponse\"\000\022Z\n\017GetA" +
+      "uthProvider\022!.gitpod.v1.GetAuthProviderR" +
+      "equest\032\".gitpod.v1.GetAuthProviderRespon" +
+      "se\"\000\022`\n\021ListAuthProviders\022#.gitpod.v1.Li" +
+      "stAuthProvidersRequest\032$.gitpod.v1.ListA" +
+      "uthProvidersResponse\"\000\022\201\001\n\034ListAuthProvi" +
+      "derDescriptions\022..gitpod.v1.ListAuthProv" +
+      "iderDescriptionsRequest\032/.gitpod.v1.List" +
+      "AuthProviderDescriptionsResponse\"\000\022c\n\022Up" +
+      "dateAuthProvider\022$.gitpod.v1.UpdateAuthP" +
+      "roviderRequest\032%.gitpod.v1.UpdateAuthPro" +
+      "viderResponse\"\000\022c\n\022DeleteAuthProvider\022$." +
+      "gitpod.v1.DeleteAuthProviderRequest\032%.gi" +
+      "tpod.v1.DeleteAuthProviderResponse\"\000BQ\n\026" +
+      "io.gitpod.publicapi.v1Z7github.com/gitpo" +
+      "d-io/gitpod/components/public-api/go/v1b" +
+      "\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -13532,7 +14191,7 @@ public final class Authprovider {
     internal_static_gitpod_v1_UpdateAuthProviderRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateAuthProviderRequest_descriptor,
-        new java.lang.String[] { "AuthProviderId", "ClientId", "ClientSecret", });
+        new java.lang.String[] { "AuthProviderId", "ClientId", "ClientSecret", "AuthorizationUrl", "TokenUrl", });
     internal_static_gitpod_v1_UpdateAuthProviderResponse_descriptor =
       getDescriptor().getMessageTypes().get(9);
     internal_static_gitpod_v1_UpdateAuthProviderResponse_fieldAccessorTable = new
@@ -13568,7 +14227,7 @@ public final class Authprovider {
     internal_static_gitpod_v1_OAuth2Config_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_OAuth2Config_descriptor,
-        new java.lang.String[] { "ClientId", "ClientSecret", });
+        new java.lang.String[] { "ClientId", "ClientSecret", "AuthorizationUrl", "TokenUrl", });
     descriptor.resolveAllFeaturesImmutable();
     io.gitpod.publicapi.v1.Pagination.getDescriptor();
   }

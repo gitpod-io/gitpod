@@ -318,6 +318,20 @@ export default function RepositoryFinder({
                 });
             }
 
+            if (searchString.length >= 3 && authProviders.data?.some((p) => p.type === AuthProviderType.AZURE_DEVOPS)) {
+                // ENT-780
+                result.push({
+                    id: "azure-devops",
+                    element: (
+                        <div className="text-sm text-pk-content-tertiary flex items-center">
+                            <Exclamation2 className="w-4 h-4 mr-2" />
+                            <span>Azure DevOps doesn't support repository searching.</span>
+                        </div>
+                    ),
+                    isSelectable: false,
+                });
+            }
+
             if (searchString.length < 3) {
                 // add an element that tells the user to type more
                 result.push({

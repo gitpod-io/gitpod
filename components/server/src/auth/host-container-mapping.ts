@@ -10,6 +10,7 @@ import { gitlabContainerModule } from "../gitlab/gitlab-container-module";
 import { genericAuthContainerModule } from "./oauth-container-module";
 import { bitbucketContainerModule } from "../bitbucket/bitbucket-container-module";
 import { bitbucketServerContainerModule } from "../bitbucket-server/bitbucket-server-container-module";
+import { azureDevOpsContainerModule } from "../azure-devops/azure-container-module";
 
 @injectable()
 export class HostContainerMapping {
@@ -25,6 +26,8 @@ export class HostContainerMapping {
                 return [bitbucketContainerModule];
             case "BitbucketServer":
                 return [bitbucketServerContainerModule];
+            case "AzureDevOps":
+                return [azureDevOpsContainerModule];
             default:
                 return undefined;
         }

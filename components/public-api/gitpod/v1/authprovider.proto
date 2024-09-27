@@ -82,6 +82,8 @@ message UpdateAuthProviderRequest {
   string auth_provider_id = 1;
   optional string client_id = 2;
   optional string client_secret = 3;
+  optional string authorization_url = 4;
+  optional string token_url = 5;
 }
 
 message UpdateAuthProviderResponse {
@@ -130,6 +132,8 @@ message AuthProvider {
 message OAuth2Config {
   string client_id = 1;
   string client_secret = 2;
+  string authorization_url = 3;
+  string token_url = 4;
 }
 
 enum AuthProviderType {
@@ -139,4 +143,5 @@ enum AuthProviderType {
   AUTH_PROVIDER_TYPE_GITLAB = 2;
   AUTH_PROVIDER_TYPE_BITBUCKET = 3;
   AUTH_PROVIDER_TYPE_BITBUCKET_SERVER = 4;
+  AUTH_PROVIDER_TYPE_AZURE_DEVOPS = 5;
 }
