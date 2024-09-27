@@ -30,6 +30,16 @@ export class AzureDevOpsAuthProvider extends GenericAuthProvider {
         };
     }
 
+    private mergeAzureScope(scope: string[]) {
+        // offline_access is required but will not respond as scopes
+        for (const s of AzureDevOpsOAuthScopes.APPEND_WHEN_FETCHING) {
+            if (!scope.includes(s)) {
+                scope.push(s);
+            }
+        }
+        return scope;
+    }
+
     /**
      * Augmented OAuthConfig for GitLab
      */
@@ -42,8 +52,7 @@ export class AzureDevOpsAuthProvider extends GenericAuthProvider {
             authorizationUrl: oauth.authorizationUrl || defaultUrls.authorizationUrl,
             tokenUrl: oauth.tokenUrl || defaultUrls.tokenUrl,
             settingsUrl: oauth.settingsUrl || defaultUrls.settingsUrl,
-            // offline_access is required but will not respond as scopes
-            scope: [...AzureDevOpsOAuthScopes.ALL, ...AzureDevOpsOAuthScopes.APPEND_WHEN_FETCHING].join(scopeSeparator),
+            scope: AzureDevOpsOAuthScopes.ALL.join(scopeSeparator),
             scopeSeparator,
         };
     }
@@ -55,7 +64,7 @@ export class AzureDevOpsAuthProvider extends GenericAuthProvider {
         state: string,
         scope?: string[],
     ) {
-        super.authorize(req, res, next, state, scope ? scope : AzureDevOpsOAuthScopes.DEFAULT);
+        super.authorize(req, res, next, state, this.mergeAzureScope(scope ? scope : AzureDevOpsOAuthScopes.DEFAULT));
     }
 
     protected get baseURL() {
