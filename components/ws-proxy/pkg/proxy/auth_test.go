@@ -36,8 +36,8 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 		testPort    = 8080
 	)
 	var (
-		ownerOnlyInfos = map[string]*common.WorkspaceInfo{
-			workspaceID: {
+		ownerOnlyInfos = []common.WorkspaceInfo{
+			{
 				WorkspaceID: workspaceID,
 				InstanceID:  instanceID,
 				Auth: &api.WorkspaceAuthentication{
@@ -47,8 +47,8 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 				Ports: []*api.PortSpec{{Port: testPort, Visibility: api.PortVisibility_PORT_VISIBILITY_PRIVATE}},
 			},
 		}
-		publicPortInfos = map[string]*common.WorkspaceInfo{
-			workspaceID: {
+		publicPortInfos = []common.WorkspaceInfo{
+			{
 				WorkspaceID: workspaceID,
 				InstanceID:  instanceID,
 				Auth: &api.WorkspaceAuthentication{
@@ -58,8 +58,8 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 				Ports: []*api.PortSpec{{Port: testPort, Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC}},
 			},
 		}
-		admitEveryoneInfos = map[string]*common.WorkspaceInfo{
-			workspaceID: {
+		admitEveryoneInfos = []common.WorkspaceInfo{
+			{
 				WorkspaceID: workspaceID,
 				InstanceID:  instanceID,
 				Auth:        &api.WorkspaceAuthentication{Admission: api.AdmissionLevel_ADMIT_EVERYONE},
@@ -68,7 +68,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 	)
 	tests := []struct {
 		Name        string
-		Infos       map[string]*common.WorkspaceInfo
+		Infos       []common.WorkspaceInfo
 		OwnerCookie string
 		WorkspaceID string
 		Port        string
@@ -225,7 +225,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			var res testResult
-			handler := WorkspaceAuthHandler(domain, &fixedInfoProvider{Infos: test.Infos})(http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			handler := WorkspaceAuthHandler(domain, &fakeWsInfoProvider{infos: test.Infos})(http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 				res.HandlerCalled = true
 				resp.WriteHeader(http.StatusOK)
 			}))

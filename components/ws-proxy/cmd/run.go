@@ -78,15 +78,13 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal(err, "unable to start manager")
 		}
 
-		var infoprov proxy.CompositeInfoProvider
-		crdInfoProv, err := proxy.NewCRDWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
+		infoprov, err := proxy.NewCRDWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
 		if err != nil {
 			log.WithError(err).Fatal("cannot create CRD-based info provider")
 		}
-		if err = crdInfoProv.SetupWithManager(mgr); err != nil {
+		if err = infoprov.SetupWithManager(mgr); err != nil {
 			log.WithError(err).Fatal(err, "unable to create CRD-based info provider", "controller", "Workspace")
 		}
-		infoprov = append(infoprov, crdInfoProv)
 
 		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 			log.WithError(err).Fatal("unable to set up health check")

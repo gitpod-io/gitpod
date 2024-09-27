@@ -177,28 +177,3 @@ func (r *CRDWorkspaceInfoProvider) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		Complete(r)
 }
-
-// CompositeInfoProvider checks each of its info providers and returns the first info found.
-type CompositeInfoProvider []common.WorkspaceInfoProvider
-
-func (c CompositeInfoProvider) WorkspaceInfo(workspaceID string) *common.WorkspaceInfo {
-	for _, ip := range c {
-		res := ip.WorkspaceInfo(workspaceID)
-		if res != nil {
-			return res
-		}
-	}
-	return nil
-}
-
-type fixedInfoProvider struct {
-	Infos map[string]*common.WorkspaceInfo
-}
-
-// WorkspaceInfo returns the workspace information of a workspace using it's workspace ID.
-func (fp *fixedInfoProvider) WorkspaceInfo(workspaceID string) *common.WorkspaceInfo {
-	if fp.Infos == nil {
-		return nil
-	}
-	return fp.Infos[workspaceID]
-}
