@@ -53,14 +53,12 @@ export const poll = async <T>(
 };
 
 export function isGitpodIo() {
-    return window.location.hostname === "gitpod.io";
-    // TODO(hw): Revert me before merging
-    // return (
-    //     window.location.hostname === "gitpod.io" ||
-    //     window.location.hostname === "gitpod-staging.com" ||
-    //     window.location.hostname.endsWith("gitpod-dev.com") ||
-    //     window.location.hostname.endsWith("gitpod-io-dev.com")
-    // );
+    return (
+        window.location.hostname === "gitpod.io" ||
+        window.location.hostname === "gitpod-staging.com" ||
+        window.location.hostname.endsWith("gitpod-dev.com") ||
+        window.location.hostname.endsWith("gitpod-io-dev.com")
+    );
 }
 
 function trimResource(resource: string): string {
