@@ -169,6 +169,7 @@ export class AzureDevOpsContextParser extends AbstractContextParser implements I
             try {
                 const branchName = normalizeBranchName(repository.defaultBranch);
                 const branch = toBranch(
+                    result.repository,
                     await this.azureDevOpsApi.getBranch(user, azOrganization, azProject, repo, branchName),
                 );
                 if (!branch) {

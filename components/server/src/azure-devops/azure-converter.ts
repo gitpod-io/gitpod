@@ -45,7 +45,7 @@ export function getOrgAndProject(orgAndProject: Repository["owner"]) {
     return [azOrg, azProject] as const;
 }
 
-export function toBranch(d: GitBranchStats): Branch | undefined {
+export function toBranch(repo: Repository, d: GitBranchStats): Branch | undefined {
     if (!d.commit) {
         return;
     }
@@ -53,8 +53,10 @@ export function toBranch(d: GitBranchStats): Branch | undefined {
     if (!commit) {
         return;
     }
+    const url = new URL(repo.cloneUrl);
+    url.searchParams.set("version", `GB${d.name}`);
     return {
-        htmlUrl: d.commit.url!,
+        htmlUrl: url.toString(),
         name: d.name!,
         commit,
     };

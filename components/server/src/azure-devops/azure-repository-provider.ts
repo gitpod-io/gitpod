@@ -27,8 +27,11 @@ export class AzureDevOpsRepositoryProvider implements RepositoryProvider {
 
     async getBranch(user: User, owner: string, repo: string, branch: string): Promise<Branch> {
         const [azOrg, azProject] = getOrgAndProject(owner);
-        const response = await this.azureDevOpsApi.getBranch(user, azOrg, azProject, repo, branch);
-        const item = toBranch(response);
+        const [repository, branchResp] = await Promise.all([
+            await this.getRepo(user, owner, repo),
+            await this.azureDevOpsApi.getBranch(user, azOrg, azProject, repo, branch),
+        ]);
+        const item = toBranch(repository, branchResp);
         if (!item) {
             // TODO(hw): [AZ]
             throw new Error("Failed to fetch commit.");
@@ -39,9 +42,12 @@ export class AzureDevOpsRepositoryProvider implements RepositoryProvider {
     async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
         const branches: Branch[] = [];
         const [azOrg, azProject] = getOrgAndProject(owner);
-        const response = await this.azureDevOpsApi.getBranches(user, azOrg, azProject, repo);
+        const [repository, response] = await Promise.all([
+            await this.getRepo(user, owner, repo),
+            await this.azureDevOpsApi.getBranches(user, azOrg, azProject, repo),
+        ]);
         for (const b of response) {
-            const item = toBranch(b);
+            const item = toBranch(repository, b);
             if (!item) {
                 continue;
             }
