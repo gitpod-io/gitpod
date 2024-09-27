@@ -44,7 +44,7 @@ export function useIsOwner(): boolean {
     return role === OrganizationRole.OWNER;
 }
 
-function useMemberRole(): OrganizationRole {
+export function useMemberRole(): OrganizationRole {
     const user = useCurrentUser();
     const members = useListOrganizationMembers();
     return useMemo(
