@@ -336,7 +336,7 @@ const LeftPanel = () => {
                         {
                             title: "Automate common development workflows",
                             description:
-                                "Setup databases, provision infra, run scripts as one-click actions, configure code assistants, etc.",
+                                "Seed databases, provision infra, runbooks as one-click actions, configure code assistants, etc. ",
                         },
                         {
                             title: "Dev container support",
