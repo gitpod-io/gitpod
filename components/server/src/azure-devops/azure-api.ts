@@ -10,7 +10,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 import { AuthProviderParams } from "../auth/auth-provider";
 import { AzureDevOpsTokenHelper } from "./azure-token-helper";
-import { WebApi, getPersonalAccessTokenHandler } from "azure-devops-node-api";
+import { WebApi, getHandlerFromToken } from "azure-devops-node-api";
 import { MaybeContent } from "../repohost";
 import { GitVersionDescriptor, GitVersionType } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { AzureDevOpsOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
@@ -34,7 +34,7 @@ export class AzureDevOpsApi {
         }
         return new WebApi(
             opts.serverUrl ?? `https://${this.config.host}/${opts.orgId}`,
-            getPersonalAccessTokenHandler(bearerToken),
+            getHandlerFromToken(bearerToken),
         );
     }
 
