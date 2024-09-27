@@ -124,7 +124,7 @@ export class AzureDevOpsApi {
             return content;
         } catch (err) {
             if (err instanceof AzureReadableStreamError) {
-                if (err.type === "not_found") {
+                if (err.statusCode === 404) {
                     return undefined;
                 }
                 throw err;
@@ -262,7 +262,7 @@ export class AzureDevOpsApi {
 }
 
 export class AzureReadableStreamError extends Error {
-    constructor(message: string, public type: "not_found" | "unknown" = "unknown") {
+    constructor(message: string, public statusCode?: number) {
         super(message);
     }
 
@@ -272,10 +272,10 @@ export class AzureReadableStreamError extends Error {
 
     static tryCreate(stream: NodeJS.ReadableStream): AzureReadableStreamError | undefined {
         if (AzureReadableStreamError.isIncomingMessage(stream)) {
-            return new AzureReadableStreamError(
-                `HTTP ${stream.statusCode} ${stream.statusMessage}`,
-                stream.statusCode === 404 ? "not_found" : "unknown",
-            );
+            if (stream.statusCode === 200) {
+                return;
+            }
+            return new AzureReadableStreamError(`HTTP ${stream.statusCode} ${stream.statusMessage}`, stream.statusCode);
         }
     }
 }

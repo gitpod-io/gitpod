@@ -25,7 +25,7 @@ export function toRepository(host: string, d: GitRepository, azOrgId?: string): 
         host,
         owner,
         name,
-        cloneUrl: d.remoteUrl!,
+        cloneUrl: d.webUrl!,
         description: branchName,
         webUrl: d.webUrl,
         defaultBranch: branchName,
