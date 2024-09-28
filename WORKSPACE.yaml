@@ -13,15 +13,15 @@ defaultArgs:
   codeWebExtensionCommit: 7ff72a2938a7a06cbdf3964590f7e9b7525958f3
   xtermCommit: 8f10c5febf0162a3c2309076302f770fbad38fde
   noVerifyJBPlugin: false
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2024.2.2.tar.gz"
-  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2024.2.2.tar.gz"
-  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2024.2.2.tar.gz"
-  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2024.2.1.tar.gz"
-  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2024.2.2.tar.gz"
-  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2024.2.2.tar.gz"
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2024.2.3.tar.gz"
+  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2024.2.3.tar.gz"
+  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2024.2.3.tar.gz"
+  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2024.2.3.tar.gz"
+  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2024.2.3.tar.gz"
+  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2024.2.3.tar.gz"
   riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2024.1.4.tar.gz"
   clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2024.2.2.tar.gz"
-  rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2024.2.1.tar.gz"
+  rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2024.2.2.tar.gz"
   jbBackendVersion: "latest"
   dockerVersion: "20.10.24"
   dockerComposeVersion: "2.27.0-gitpod.0"
