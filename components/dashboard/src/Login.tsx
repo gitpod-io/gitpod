@@ -382,10 +382,16 @@ const LeftPanel = () => {
             </div>
             <div className="justify-center items-center max-w-fit mx-auto flex flex-col">
                 <img src={GitpodEngraved} alt="Gitpod Engraved icon" className="h-6 w-6 dark:filter-invert" />
-                <div className="inline-flex max-w-fit mx-auto mt-1 items-center justify-center px-1 py-0.5 text-xs font-medium bg-transparent text-[#191A1A33] dark:filter-invert">
-                    <span className="bg-gradient-to-l from-[#191A1A33] to-[#191A1A33] text-transparent bg-clip-text">
-                        early access
-                    </span>
+                <div
+                    className="inline-flex max-w-fit mx-auto mt-1.5 items-center justify-center px-1 py-0.5 text-xs font-medium text-[#191A1A33] rounded border border-[#191A1A33] dark:filter-invert"
+                    style={{
+                        background:
+                            "linear-gradient(0deg, #F4F2F1, #F4F2F1), linear-gradient(223.9deg, rgba(255, 236, 214, 0.1) 0.83%, rgba(255, 138, 0, 0.1) 99.68%)",
+                        backgroundClip: "text",
+                        WebkitBackgroundClip: "text",
+                    }}
+                >
+                    early access
                 </div>
             </div>
         </div>
