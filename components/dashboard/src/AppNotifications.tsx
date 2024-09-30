@@ -20,7 +20,7 @@ import { useOrgBillingMode } from "./data/billing-mode/org-billing-mode-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
-const PRIVACY_POLICY_LAST_UPDATED = "2023-12-20";
+const PRIVACY_POLICY_LAST_UPDATED = "2024-09-30";
 
 interface Notification {
     id: string;
@@ -54,11 +54,11 @@ const UPDATED_PRIVACY_POLICY = (updateUser: (user: Partial<UserProtocol>) => Pro
         },
         message: (
             <span className="text-md">
-                We've updated our Privacy Policy. You can review it{" "}
-                <a className="gp-link" href="https://www.gitpod.io/privacy" target="_blank" rel="noreferrer">
-                    here
+                <b>Introducing Gitpod Flex:</b> self-host for free in 3 min, run locally using Gitpod Desktop and
+                streamline your workflows with Automations |{" "}
+                <a className="text-orange-500 font-bold" href="https://app.gitpod.io" target="_blank" rel="noreferrer">
+                    Try now
                 </a>
-                .
             </span>
         ),
     } as Notification;
