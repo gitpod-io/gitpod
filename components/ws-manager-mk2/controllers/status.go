@@ -124,8 +124,12 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	}
 
 	if failure != "" && !workspace.IsConditionTrue(workspacev1.WorkspaceConditionFailed) {
+		var nodeName string
+		if workspace.Status.Runtime != nil {
+			nodeName = workspace.Status.Runtime.NodeName
+		}
 		// workspaces can fail only once - once there is a failed condition set, stick with it
-		log.Info("workspace failed", "workspace", workspace.Name, "reason", failure)
+		log.Info("workspace failed", "workspace", workspace.Name, "node", nodeName, "reason", failure)
 		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionFailed(failure))
 		r.Recorder.Event(workspace, corev1.EventTypeWarning, "Failed", failure)
 	}
