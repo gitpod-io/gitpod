@@ -102,8 +102,8 @@ function AddPaymentMethodForm({ attributionId }: { attributionId: string }) {
         >
             <ModalBody>
                 <Alert type="message" className="mb-4">
-                    This card will be used for future charges. We`ll be placing a {currencySymbol}1.00 hold on it that
-                    we`ll immediately release in order to verify your payment method.
+                    This card will be used for future charges. We'll be placing a {currencySymbol}1.00 hold on it that
+                    we'll immediately release in order to verify your payment method.
                 </Alert>
                 <PaymentElement id="payment-element" />
                 <AddressElement id="address-element" options={{ mode: "billing", display: { name: "organization" } }} />
