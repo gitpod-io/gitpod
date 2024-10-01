@@ -94,9 +94,13 @@ const GITPOD_FLEX_INTRODUCTION = (updateUser: (user: Partial<UserProtocol>) => P
         },
         message: (
             <span className="text-md">
-                <b>Introducing Gitpod Flex:</b> self-host for free in 3 min, run locally using Gitpod Desktop and
-                streamline your workflows with Automations |{" "}
-                <a className="text-orange-500 font-bold" href="https://app.gitpod.io" target="_blank" rel="noreferrer">
+                <b>Introducing Gitpod Flex:</b> self-host for free in 3 min or run locally using Gitpod Desktop |{" "}
+                <a
+                    className="text-kumquat-ripe font-bold"
+                    href="https://app.gitpod.io"
+                    target="_blank"
+                    rel="noreferrer"
+                >
                     Try now
                 </a>
             </span>
