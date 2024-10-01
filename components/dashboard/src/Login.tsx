@@ -10,7 +10,7 @@ import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "./provider-utils";
 import exclamation from "./images/exclamation.svg";
-import { getURLHash, isGitpodIo, isTrustedUrlOrPath } from "./utils";
+import { getURLHash, isTrustedUrlOrPath } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
 import { SSOLoginForm } from "./login/SSOLoginForm";
@@ -45,6 +45,8 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     const [hostFromContext, setHostFromContext] = useState<string | undefined>();
     const [repoPathname, setRepoPathname] = useState<string | undefined>();
 
+    const enterprise = !!authProviders.data && authProviders.data.length === 0;
+
     useEffect(() => {
         if (urlHash.length > 0) {
             const url = new URL(urlHash);
@@ -60,17 +62,17 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
         <div
             id="login-container"
             className={cn("z-50 flex flex-col-reverse lg:flex-row w-full min-h-screen", {
-                "bg-[#FDF1E7] dark:bg-[#23211e]": isGitpodIo(),
+                "bg-[#FDF1E7] dark:bg-[#23211e]": !enterprise,
             })}
         >
-            {isGitpodIo() ? (
-                <PAYGLoginWrapper
+            {enterprise ? (
+                <EnterpriseLoginWrapper
                     onLoggedIn={onLoggedIn}
                     providerFromContext={providerFromContext}
                     repoPathname={repoPathname}
                 />
             ) : (
-                <EnterpriseLoginWrapper
+                <PAYGLoginWrapper
                     onLoggedIn={onLoggedIn}
                     providerFromContext={providerFromContext}
                     repoPathname={repoPathname}
@@ -322,7 +324,8 @@ const LeftPanel = () => {
                         },
                         {
                             title: "Local environments to replace Docker Desktop",
-                            description: "Built-in Linux virtualization to run Dev Container without Docker Desktop on MacOS",
+                            description:
+                                "Built-in Linux virtualization to run Dev Container without Docker Desktop on MacOS",
                         },
                         {
                             title: "Automate common development workflows",
