@@ -27,6 +27,7 @@ import { LinkButton } from "@podkit/buttons/LinkButton";
 import { IconGitpodEngraved } from "./icons/GitpodEngraved";
 import { IconEarlyAccess } from "./icons/IconEarlyAccess";
 import { useTheme } from "./theme-context";
+import { LoadingState } from "@podkit/loading/LoadingState";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -57,6 +58,10 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
     const providerFromContext =
         (hostFromContext && authProviders.data?.find((provider) => provider.host === hostFromContext)) || undefined;
+
+    if (authProviders.isLoading) {
+        return <LoadingState />;
+    }
 
     return (
         <div
@@ -325,7 +330,7 @@ const LeftPanel = () => {
                         {
                             title: "Local environments to replace Docker Desktop",
                             description:
-                                "Built-in Linux virtualization to run Dev Container without Docker Desktop on MacOS",
+                                "Built-in Linux virtualization to run Dev Container without Docker Desktop on macOS",
                         },
                         {
                             title: "Automate common development workflows",
