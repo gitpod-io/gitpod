@@ -132,27 +132,7 @@ const PAYGLoginWrapper: FC<LoginWrapperProps> = ({ providerFromContext, repoPath
                             </p>
                         </div>
                     }
-                    <div className="flex-none mx-auto text-center px-4 pb-4">
-                        <span className="text-gray-400 dark:text-gray-500 text-sm">
-                            By signing in, you agree to our{" "}
-                            <a
-                                className="gp-link hover:text-gray-600"
-                                target="gitpod-terms"
-                                href="https://www.gitpod.io/terms/"
-                            >
-                                terms of service
-                            </a>{" "}
-                            and{" "}
-                            <a
-                                className="gp-link hover:text-gray-600"
-                                target="gitpod-privacy"
-                                href="https://www.gitpod.io/privacy/"
-                            >
-                                privacy policy
-                            </a>
-                            .
-                        </span>
-                    </div>
+                    <TermsOfServiceAndPrivacyPolicy />
                 </div>
             </div>
         </>
@@ -179,29 +159,7 @@ const EnterpriseLoginWrapper: FC<LoginWrapperProps> = ({ providerFromContext, re
                         />
                     </div>
                 )}
-                {!needsSetup && !needsSetupCheckLoading && (
-                    <div className="flex-none mx-auto text-center px-4 pb-4">
-                        <span className="text-gray-400 dark:text-gray-500 text-sm">
-                            By signing in, you agree to our{" "}
-                            <a
-                                className="gp-link hover:text-gray-600"
-                                target="gitpod-terms"
-                                href="https://www.gitpod.io/terms/"
-                            >
-                                terms of service
-                            </a>{" "}
-                            and{" "}
-                            <a
-                                className="gp-link hover:text-gray-600"
-                                target="gitpod-privacy"
-                                href="https://www.gitpod.io/privacy/"
-                            >
-                                privacy policy
-                            </a>
-                            .
-                        </span>
-                    </div>
-                )}
+                {!needsSetup && !needsSetupCheckLoading && <TermsOfServiceAndPrivacyPolicy />}
             </div>
         </div>
     );
@@ -416,6 +374,28 @@ const GreenCheckIcon = () => {
                 />
                 <path d="M7 11.5L10 14L15 8" stroke="white" strokeWidth="2" strokeLinejoin="round" />
             </svg>
+        </div>
+    );
+};
+
+const TermsOfServiceAndPrivacyPolicy = () => {
+    return (
+        <div className="flex-none mx-auto text-center px-4 pb-4">
+            <span className="text-gray-400 dark:text-gray-500 text-sm">
+                By signing in, you agree to our{" "}
+                <a className="gp-link hover:text-gray-600" target="gitpod-terms" href="https://www.gitpod.io/terms/">
+                    terms of service
+                </a>{" "}
+                and{" "}
+                <a
+                    className="gp-link hover:text-gray-600"
+                    target="gitpod-privacy"
+                    href="https://www.gitpod.io/privacy/"
+                >
+                    privacy policy
+                </a>
+                .
+            </span>
         </div>
     );
 };
