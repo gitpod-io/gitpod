@@ -66,7 +66,7 @@ const infoMap: Record<AlertType, AlertInfo> = {
         bgCls: "bg-gray-100 dark:bg-gray-700",
         txtCls: "text-gray-500 dark:text-gray-300",
         icon: <InfoSvg className="w-4 h-4"></InfoSvg>,
-        iconColor: "text-gray-400",
+        iconColor: "text-gray-400 dark:text-gray-300",
     },
     message: {
         bgCls: "bg-blue-50 dark:bg-blue-800",

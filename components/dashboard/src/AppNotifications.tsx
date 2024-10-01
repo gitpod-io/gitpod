@@ -20,7 +20,7 @@ import { useOrgBillingMode } from "./data/billing-mode/org-billing-mode-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
-const PRIVACY_POLICY_LAST_UPDATED = "2024-09-30";
+const PRIVACY_POLICY_LAST_UPDATED = "2023-12-20";
 
 interface Notification {
     id: string;
@@ -48,6 +48,46 @@ const UPDATED_PRIVACY_POLICY = (updateUser: (user: Partial<UserProtocol>) => Pro
             } finally {
                 trackEvent("privacy_policy_update_accepted", {
                     path: window.location.pathname,
+                    success: dismissSuccess,
+                });
+            }
+        },
+        message: (
+            <span className="text-md">
+                We've updated our Privacy Policy. You can review it{" "}
+                <a className="gp-link" href="https://www.gitpod.io/privacy" target="_blank" rel="noreferrer">
+                    here
+                </a>
+                .
+            </span>
+        ),
+    } as Notification;
+};
+
+const GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY = "gitpod_flex_introduction";
+const GITPOD_FLEX_INTRODUCTION = (updateUser: (user: Partial<UserProtocol>) => Promise<User>) => {
+    return {
+        id: GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY,
+        type: "info",
+        preventDismiss: true,
+        onClose: async () => {
+            let dismissSuccess = false;
+            try {
+                const updatedUser = await updateUser({
+                    additionalData: {
+                        profile: {
+                            coachmarksDismissals: {
+                                [GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY]: new Date().toISOString(),
+                            },
+                        },
+                    },
+                });
+                dismissSuccess = !!updatedUser;
+            } catch (err) {
+                dismissSuccess = false;
+            } finally {
+                trackEvent("coachmark_dismissed", {
+                    name: "gitpod-flex-introduction",
                     success: dismissSuccess,
                 });
             }
@@ -114,6 +154,10 @@ export function AppNotifications() {
                     if (notification) {
                         notifications.push(notification);
                     }
+                }
+
+                if (isGitpodIo() && !user?.profile?.coachmarksDismissals[GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY]) {
+                    notifications.push(GITPOD_FLEX_INTRODUCTION((u: Partial<UserProtocol>) => mutateAsync(u)));
                 }
             }
 
