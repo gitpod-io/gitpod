@@ -330,7 +330,7 @@ const LeftPanel = () => {
                                 "Seed databases, provision infra, runbooks as one-click actions, configure code assistants, etc. ",
                         },
                         {
-                            title: "Dev container support",
+                            title: "Dev Container support",
                             description:
                                 "Eliminate the need to manually install tools, dependencies and editor extensions.",
                         },
