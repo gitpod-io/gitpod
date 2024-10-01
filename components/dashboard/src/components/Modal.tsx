@@ -182,10 +182,11 @@ export const ModalHeader: FC<ModalHeaderProps> = ({ children }) => {
 
 type ModalBodyProps = {
     children: ReactNode;
+    className?: string;
     hideDivider?: boolean;
 };
 
-export const ModalBody: FC<ModalBodyProps> = ({ children, hideDivider = false }) => {
+export const ModalBody: FC<ModalBodyProps> = ({ children, hideDivider = false, className }) => {
     return (
         // Allows the first tabbable element in the body to receive focus on mount
         <AutoFocusInside
@@ -194,6 +195,7 @@ export const ModalBody: FC<ModalBodyProps> = ({ children, hideDivider = false })
                 {
                     "border-t border-b mt-2 py-4": !hideDivider,
                 },
+                className,
             )}
         >
             {children}
