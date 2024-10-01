@@ -66,6 +66,7 @@ module.exports = {
                     tertiary: "rgb(var(--surface-tertiary) / <alpha-value>)",
                     labels: "rgb(var(--surface-labels) / <alpha-value>)",
                     invert: "rgb(var(--surface-invert) / <alpha-value>)",
+                    "01": "rgb(var(--surface-01) / <alpha-value>)",
                 },
                 "pk-border": {
                     light: "rgb(var(--border-light) / <alpha-value>)",
@@ -73,6 +74,9 @@ module.exports = {
                     strong: "rgb(var(--border-strong) / <alpha-value>)",
                     invert: "rgb(var(--border-invert) / <alpha-value>)",
                 },
+            },
+            boxShadow: {
+                engraving: "inset 0px 1px 1px rgba(0, 0, 0, 0.1)",
             },
             backgroundImage: {
                 "kumquat-gradient": "linear-gradient(137.41deg, #FFAD33 14.37%, #FF8A00 91.32%)",

@@ -48,6 +48,7 @@
         --surface-tertiary: var(--gray-100);
         --surface-labels: var(--gray-200);
         --surface-invert: var(--gray-850);
+        --surface-01: var(--dark-surface-01);
 
         /* Borders */
         --border-base: var(--gray-200);
@@ -73,6 +74,7 @@
         --surface-tertiary: var(--gray-750);
         --surface-labels: var(--gray-700);
         --surface-invert: var(--gray-50);
+        --surface-01: var(--gray-100);
 
         /* Borders */
         --border-base: var(--gray-700);
