@@ -322,7 +322,7 @@ const LeftPanel = () => {
                         },
                         {
                             title: "Local environments to replace Docker Desktop",
-                            description: "Built-in Linux virtualization to run dev container without Docker Desktop",
+                            description: "Built-in Linux virtualization to run Dev Container without Docker Desktop on MacOS",
                         },
                         {
                             title: "Automate common development workflows",
