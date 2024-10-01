@@ -64,6 +64,50 @@ const UPDATED_PRIVACY_POLICY = (updateUser: (user: Partial<UserProtocol>) => Pro
     } as Notification;
 };
 
+const GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY = "gitpod_flex_introduction";
+const GITPOD_FLEX_INTRODUCTION = (updateUser: (user: Partial<UserProtocol>) => Promise<User>) => {
+    return {
+        id: GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY,
+        type: "info",
+        preventDismiss: true,
+        onClose: async () => {
+            let dismissSuccess = false;
+            try {
+                const updatedUser = await updateUser({
+                    additionalData: {
+                        profile: {
+                            coachmarksDismissals: {
+                                [GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY]: new Date().toISOString(),
+                            },
+                        },
+                    },
+                });
+                dismissSuccess = !!updatedUser;
+            } catch (err) {
+                dismissSuccess = false;
+            } finally {
+                trackEvent("coachmark_dismissed", {
+                    name: "gitpod-flex-introduction",
+                    success: dismissSuccess,
+                });
+            }
+        },
+        message: (
+            <span className="text-md">
+                <b>Introducing Gitpod Flex:</b> self-host for free in 3 min or run locally using Gitpod Desktop |{" "}
+                <a
+                    className="text-kumquat-ripe font-bold"
+                    href="https://app.gitpod.io"
+                    target="_blank"
+                    rel="noreferrer"
+                >
+                    Try now
+                </a>
+            </span>
+        ),
+    } as Notification;
+};
+
 const INVALID_BILLING_ADDRESS = (stripePortalUrl: string | undefined) => {
     return {
         id: "invalid-billing-address",
@@ -114,6 +158,10 @@ export function AppNotifications() {
                     if (notification) {
                         notifications.push(notification);
                     }
+                }
+
+                if (isGitpodIo() && !user?.profile?.coachmarksDismissals[GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY]) {
+                    notifications.push(GITPOD_FLEX_INTRODUCTION((u: Partial<UserProtocol>) => mutateAsync(u)));
                 }
             }
 
