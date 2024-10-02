@@ -49,10 +49,14 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     const enterprise = !!authProviders.data && authProviders.data.length === 0;
 
     useEffect(() => {
-        if (urlHash.length > 0) {
-            const url = new URL(urlHash);
-            setHostFromContext(url.host);
-            setRepoPathname(url.pathname);
+        try {
+            if (urlHash.length > 0) {
+                const url = new URL(urlHash);
+                setHostFromContext(url.host);
+                setRepoPathname(url.pathname);
+            }
+        } catch (error) {
+            // hash is not a valid URL
         }
     }, [urlHash]);
 
