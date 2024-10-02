@@ -7,6 +7,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -289,6 +290,23 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		return ctrl.Result{}, nil
 	}
 	pod := &workspacePods.Items[0]
+
+	marker := slices.ContainsFunc(workspace.Spec.UserEnvVars, func(e corev1.EnvVar) bool {
+		return e.Name == "GITPOD_WORKSPACE_CONTEXT_URL" && strings.Contains(e.Value, "geropl")
+	})
+	if workspace.Status.PodRecreated == 0 && marker && (workspace.Status.Phase == workspacev1.WorkspacePhasePending || workspace.Status.Phase == workspacev1.WorkspacePhaseCreating) {
+		patch := client.MergeFrom(pod.DeepCopy())
+		pod.Status.Phase = corev1.PodFailed
+		pod.Status.Reason = "NodeAffinity"
+		pod.Status.Message = "Pod was rejected"
+
+		log.WithValues("ws", workspace.Name).Info("REJECTING POD FOR TESTING")
+		err = r.Client.Status().Patch(ctx, pod, patch)
+		if err != nil {
+			log.WithValues("ws", workspace.Name).Error(err, "REJECTING POD FOR TESTING: error while patching workspace pod")
+		}
+		return ctrl.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
+	}
 
 	switch {
 	// if there is a pod, and it's failed, delete it
