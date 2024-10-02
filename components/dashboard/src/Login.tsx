@@ -295,7 +295,7 @@ const LeftPanel = () => {
     const { isDark } = useTheme();
 
     return (
-        <div className="w-full lg:w-1/3 flex flex-col justify-between p-4 lg:p-10 lg:pb-2 min-h-screen">
+        <div className="w-full lg:w-1/3 lg:max-w-lg flex flex-col justify-between p-4 lg:p-10 lg:pb-2 min-h-screen">
             <div>
                 <div className="p-[1px] bg-gradient-to-b from-white to-[#ECE7E5] dark:from-gray-700 dark:to-gray-600 rounded-2xl justify-center items-center mb-8">
                     <div className="bg-[#F9F9F9B2] dark:bg-gray-800 w-full p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
@@ -352,14 +352,16 @@ const LeftPanel = () => {
                         </li>
                     ))}
                 </ul>
-                <LinkButton
-                    variant="secondary"
-                    className="mt-8 mb-2 text-pk-content-primary bg-pk-surface-primary dark:bg-gray-700 dark:text-white w-full shadow font-medium"
-                    href="https://app.gitpod.io/login"
-                    isExternalUrl={true}
-                >
-                    Explore
-                </LinkButton>
+                <div className="flex w-full justify-center items-center mt-8 mb-2">
+                    <LinkButton
+                        variant="secondary"
+                        className="text-pk-content-primary bg-pk-surface-primary dark:bg-gray-700 dark:text-white w-full shadow font-medium"
+                        href="https://app.gitpod.io/login"
+                        isExternalUrl={true}
+                    >
+                        Explore
+                    </LinkButton>
+                </div>
             </div>
             <div className="justify-center items-center max-w-fit mx-auto flex flex-col pt-4">
                 <IconGitpodEngraved variant={isDark ? "dark" : "light"} className="shadow-engraving block h-6 w-6" />
