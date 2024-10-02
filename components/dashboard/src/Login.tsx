@@ -37,6 +37,26 @@ export function hasLoggedInBefore() {
     return GitpodCookie.isPresent(document.cookie);
 }
 
+const SEGMENT_SEPARATOR = "/";
+const getContextUrlFromHash = (input: string): URL | undefined => {
+    if (typeof URL.canParse !== "function") {
+        return undefined;
+    }
+    if (URL.canParse(input)) {
+        return new URL(input);
+    }
+
+    const chunks = input.split(SEGMENT_SEPARATOR);
+    for (const chunk of chunks) {
+        input = input.replace(`${chunk}${SEGMENT_SEPARATOR}`, "");
+        if (URL.canParse(input)) {
+            return new URL(input);
+        }
+    }
+
+    return undefined;
+};
+
 type LoginProps = {
     onLoggedIn?: () => void;
 };
@@ -56,7 +76,12 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                 setRepoPathname(url.pathname);
             }
         } catch (error) {
-            // hash is not a valid URL
+            // hash is not a valid URL, try to extract the context URL when there are parts like env vars or other prefixes
+            const contextUrl = getContextUrlFromHash(urlHash);
+            if (contextUrl) {
+                setHostFromContext(contextUrl.host);
+                setRepoPathname(contextUrl.pathname);
+            }
         }
     }, [urlHash]);
 
