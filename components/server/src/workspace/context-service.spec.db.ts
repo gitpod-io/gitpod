@@ -198,7 +198,6 @@ describe("ContextService", async () => {
             project = await projectService.createProject(
                 {
                     name: "my-project",
-                    slug: "my-project",
                     teamId: org.id,
                     cloneUrl: "https://github.com/gitpod-io/empty",
                     appInstallationId: "noid",

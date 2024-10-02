@@ -1286,6 +1286,10 @@ export interface Repository {
      * Optional date when the repository was last pushed to.
      */
     pushedAt?: string;
+    /**
+     * Optional display name (e.g. for Bitbucket)
+     */
+    displayName?: string;
 }
 
 export interface RepositoryInfo {
