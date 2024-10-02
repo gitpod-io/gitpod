@@ -543,6 +543,8 @@ spec:
                 type: string
               podStarts:
                 type: integer
+              podRecreated:
+                type: integer
               runtime:
                 properties:
                   hostIP:

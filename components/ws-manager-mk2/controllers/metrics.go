@@ -30,6 +30,7 @@ const (
 	workspaceStartFailuresTotal   string = "workspace_starts_failure_total"
 	workspaceFailuresTotal        string = "workspace_failure_total"
 	workspaceStopsTotal           string = "workspace_stops_total"
+	workspaceRecreationsTotal     string = "workspace_recreations_total"
 	workspaceBackupsTotal         string = "workspace_backups_total"
 	workspaceBackupFailuresTotal  string = "workspace_backups_failure_total"
 	workspaceRestoresTotal        string = "workspace_restores_total"
@@ -57,6 +58,7 @@ type controllerMetrics struct {
 	totalStartsFailureCounterVec *prometheus.CounterVec
 	totalFailuresCounterVec      *prometheus.CounterVec
 	totalStopsCounterVec         *prometheus.CounterVec
+	totalRecreationsCounterVec   *prometheus.CounterVec
 
 	totalBackupCounterVec         *prometheus.CounterVec
 	totalBackupFailureCounterVec  *prometheus.CounterVec
@@ -120,6 +122,12 @@ func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
 			Name:      workspaceStopsTotal,
 			Help:      "total number of workspaces stopped",
 		}, []string{"reason", "type", "class"}),
+		totalRecreationsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      workspaceRecreationsTotal,
+			Help:      "total number of workspace recreations",
+		}, []string{"type", "class", "attempt"}),
 
 		totalBackupCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
@@ -233,6 +241,14 @@ func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1
 	m.totalStopsCounterVec.WithLabelValues(reason, tpe, class).Inc()
 }
 
+func (m *controllerMetrics) countWorkspaceRecreations(log *logr.Logger, ws *workspacev1.Workspace) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+	attempt := fmt.Sprint(ws.Status.PodRecreated)
+
+	m.totalRecreationsCounterVec.WithLabelValues(tpe, class, attempt).Inc()
+}
+
 func (m *controllerMetrics) countTotalBackups(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
@@ -291,6 +307,7 @@ type metricState struct {
 	recordedContentReady    bool
 	recordedBackupFailed    bool
 	recordedBackupCompleted bool
+	recordedRecreations     int
 }
 
 func newMetricState(ws *workspacev1.Workspace) metricState {
@@ -306,6 +323,7 @@ func newMetricState(ws *workspacev1.Workspace) metricState {
 		recordedContentReady:    ws.IsConditionTrue(workspacev1.WorkspaceConditionContentReady),
 		recordedBackupFailed:    ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupFailure),
 		recordedBackupCompleted: ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete),
+		recordedRecreations:     ws.Status.PodRecreated,
 	}
 }
 

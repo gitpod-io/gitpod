@@ -170,9 +170,10 @@ func (ps PortSpec) Equal(other PortSpec) bool {
 
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
-	PodStarts  int    `json:"podStarts"`
-	URL        string `json:"url,omitempty" scrub:"redact"`
-	OwnerToken string `json:"ownerToken,omitempty" scrub:"redact"`
+	PodStarts    int    `json:"podStarts"`
+	PodRecreated int    `json:"podRecreated"`
+	URL          string `json:"url,omitempty" scrub:"redact"`
+	OwnerToken   string `json:"ownerToken,omitempty" scrub:"redact"`
 
 	// +kubebuilder:default=Unknown
 	Phase WorkspacePhase `json:"phase,omitempty"`
@@ -263,6 +264,9 @@ const (
 	// WorkspaceContainerRunning is true if the workspace container is running.
 	// Used to determine if a backup can be taken, only once the container is stopped.
 	WorkspaceConditionContainerRunning WorkspaceCondition = "WorkspaceContainerRunning"
+
+	// WorkspaceConditionPodRejected is true if we detected that the pod was rejected by the node
+	WorkspaceConditionPodRejected WorkspaceCondition = "PodRejected"
 )
 
 func NewWorkspaceConditionDeployed() metav1.Condition {
@@ -287,6 +291,15 @@ func NewWorkspaceConditionFailed(message string) metav1.Condition {
 		Type:               string(WorkspaceConditionFailed),
 		LastTransitionTime: metav1.Now(),
 		Status:             metav1.ConditionTrue,
+		Message:            message,
+	}
+}
+
+func NewWorkspaceConditionPodRejected(message string, status metav1.ConditionStatus) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionPodRejected),
+		LastTransitionTime: metav1.Now(),
+		Status:             status,
 		Message:            message,
 	}
 }
