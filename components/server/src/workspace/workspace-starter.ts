@@ -1344,7 +1344,10 @@ export class WorkspaceStarter {
                     `workspace image build failed: ${message}`,
                     { looksLikeUserError: true },
                 );
-                err = new StartInstanceError("imageBuildFailedUser", err);
+                err = new StartInstanceError(
+                    "imageBuildFailedUser",
+                    `workspace image build failed: ${message}. For further logs, try executing \`gp validate\` inside of a workspace`,
+                );
                 // Don't report this as "failed" to our metrics as it would trigger an alert
             } else {
                 log.error(
