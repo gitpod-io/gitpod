@@ -20,7 +20,7 @@ import { useOrgBillingMode } from "./data/billing-mode/org-billing-mode-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
-const PRIVACY_POLICY_LAST_UPDATED = "2023-12-20";
+const PRIVACY_POLICY_LAST_UPDATED = "2024-10-01";
 
 interface Notification {
     id: string;
