@@ -188,7 +188,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                         <h3 className="text-lg font-semibold text-pk-content-primary">Documentation</h3>
                                         <div className="flex flex-col gap-1 w-fit">
                                             <a
-                                                href="https://www.gitpod.io/docs"
+                                                href="https://www.gitpod.io/docs/introduction"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
