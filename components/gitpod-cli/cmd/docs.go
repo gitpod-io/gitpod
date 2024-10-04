@@ -9,7 +9,7 @@ import (
 )
 
 // URL of the Gitpod documentation
-const DocsUrl = "https://www.gitpod.io/docs"
+const DocsUrl = "https://www.gitpod.io/docs/introduction"
 
 var docsCmd = &cobra.Command{
 	Use:   "docs",
