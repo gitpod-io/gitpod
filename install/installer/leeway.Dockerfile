@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/helm:latest@sha256:211560894ece2194825d52f791ee58144da58d03c56b8997541ee4c86ce09779
+FROM cgr.dev/chainguard/helm:latest@sha256:0c4931c9d89013576ee8a437f291596728cc21bef4894499065725be6c24f059
 
 COPY install-installer--app/installer install-installer--app/provenance-bundle.jsonl /app/
 
