@@ -524,8 +524,8 @@ export class WorkspaceService {
     /**
      * Sets the deletionEligibilityTime of the workspace, depending on the current state of the workspace and the configuration.
      *
-     * @param userId sets the
-     * @param workspaceId
+     * @param userId the user to act as
+     * @param workspaceId the workspace to update
      * @returns
      */
     async updateDeletionEligabilityTime(userId: string, workspaceId: string, activeNow = false): Promise<void> {
