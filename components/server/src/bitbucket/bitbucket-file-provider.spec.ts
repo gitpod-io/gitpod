@@ -75,7 +75,7 @@ class TestBitbucketFileProvider {
 This is the readme of the second branch.`);
     }
 
-    @test public async testGetLastChangeRevision() {
+    @test public async testGetLastChangeRevision_ok() {
         const result = await this.fileProvider.getLastChangeRevision(
             { owner: "gitpod", name: "integration-tests" } as Repository,
             "second-branch",
@@ -83,6 +83,22 @@ This is the readme of the second branch.`);
             "README.md",
         );
         expect(result).to.equal("5a24a0c8a7b42c2e6418593d788e17cb987bda25");
+    }
+
+    @test public async testGetLastChangeRevision_not_found() {
+        // it looks like expecting a promise to throw doesn't work, so we hack it with a try-catch
+        let didThrow = false;
+        try {
+            await this.fileProvider.getLastChangeRevision(
+                { owner: "gitpod", name: "integration-tests" } as Repository,
+                "da2119f51b0e744cb6b36399f8433b477a4174ef", // a pinned commit on master
+                this.user,
+                "gitpod.Dockerfile",
+            );
+        } catch (err) {
+            didThrow = true;
+        }
+        expect(didThrow).to.be.true;
     }
 }
 
