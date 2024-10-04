@@ -4,7 +4,7 @@
 
 
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:3fb2c86d005ec60f0335ff4b7678480da78014fa9e6432436a9bfd9886f71dea
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:28f57f6a9fb2478f3a3dd160794831bd0099ec92d0d7b81cd203fae67bcb5339
 
 RUN apk add --no-cache git bash ca-certificates
 COPY components-ee-agent-smith--app/agent-smith /app/
