@@ -58,15 +58,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { ContextService } from "../workspace/context-service";
 import { UserService } from "../user/user-service";
 import { ContextParser } from "../workspace/context-parser-service";
-import { workspaceIDRegex } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-
-const isWorkspaceId = (workspaceId?: string) => {
-    if (!workspaceId) {
-        return false;
-    }
-
-    return workspaceIDRegex.test(workspaceId);
-};
+import { matchesNewWorkspaceIdExactly as isWorkspaceId } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 
 @injectable()
 export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceInterface> {
