@@ -493,25 +493,24 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             throw new Error("cutOffDate must not be in the future, was: " + cutOffDate.toISOString());
         }
         const workspaceRepo = await this.getWorkspaceRepo();
-        const dbResults = await workspaceRepo.query(
-            `
-                SELECT ws.id AS id,
-                       ws.ownerId AS ownerId,
-                       ws.deletionEligibilityTime AS deletionEligibilityTime
-                    FROM d_b_workspace AS ws
-                    WHERE ws.deleted = 0
-                        AND ws.type = ?
-                        AND ws.softDeleted IS NULL
-                        AND ws.softDeletedTime = ''
-                        AND ws.pinned = 0
-                        AND ws.deletionEligibilityTime != ''
-                        AND ws.deletionEligibilityTime < ?
-                    LIMIT ?;
-            `,
-            [type, cutOffDate.toISOString(), limit],
-        );
+        const qb = workspaceRepo
+            .createQueryBuilder("ws")
+            .select(["ws.id", "ws.ownerId", "ws.deletionEligibilityTime"])
+            .where("ws.deleted = :deleted", { deleted: 0 })
+            .andWhere("ws.type = :type", { type })
+            .andWhere("ws.softDeleted IS NULL")
+            .andWhere("ws.softDeletedTime = ''")
+            .andWhere("ws.pinned = :pinned", { pinned: 0 })
+            .andWhere("ws.deletionEligibilityTime != ''")
+            .andWhere("ws.deletionEligibilityTime < :cutOffDate", { cutOffDate: cutOffDate.toISOString() })
+            .limit(limit);
 
-        return dbResults as WorkspaceOwnerAndDeletionEligibility[];
+        const results: WorkspaceOwnerAndDeletionEligibility[] = await qb.getMany();
+        return results.filter((ws) => {
+            // we don't want to delete workspaces that have a running instance
+            const latestInstance = this.findRunningInstance(ws.id);
+            return latestInstance === undefined;
+        });
     }
 
     public async findWorkspacesForPurging(
