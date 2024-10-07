@@ -506,11 +506,17 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .limit(limit);
 
         const results: WorkspaceOwnerAndDeletionEligibility[] = await qb.getMany();
-        return results.filter(async (ws) => {
-            // we don't want to delete workspaces that have a running instance
-            const latestInstance = await this.findRunningInstance(ws.id);
-            return latestInstance === undefined;
-        });
+
+        // hack to have an async filter predicate
+        const filtered = await Promise.all(
+            results.map(async (ws) => {
+                // we don't want to delete workspaces that have a running instance
+                const latestInstance = await this.findRunningInstance(ws.id);
+                return { ws, keep: latestInstance === undefined };
+            }),
+        );
+
+        return filtered.filter((result) => result.keep).map((result) => result.ws);
     }
 
     public async findWorkspacesForPurging(
