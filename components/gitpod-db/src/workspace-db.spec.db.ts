@@ -254,7 +254,7 @@ class WorkspaceDBSpec {
     public async testPrebuildGarbageCollection() {
         const { pbws } = await this.createPrebuild(20, 15);
 
-        // mimick the behavior of the Garbage Collector
+        // mimic the behavior of the Garbage Collector
         const gcWorkspaces = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(), 10, "prebuild");
         expect(gcWorkspaces.length).to.equal(1);
 
@@ -768,6 +768,7 @@ class WorkspaceDBSpec {
             {
                 id: "1",
                 ownerId,
+                contentDeletedTime: d20180131,
             },
         ]);
     }
