@@ -81,5 +81,9 @@ export class ParseWorkspaceIdTest {
         const actual = matchesNewWorkspaceIdExactly("moccasin-ferret-15599b3");
         expect(actual).to.be.false;
     }
+    @test public matchesWorkspaceIdExactly_new_negative_empty() {
+        const actual = matchesNewWorkspaceIdExactly(undefined);
+        expect(actual).to.be.false;
+    }
 }
 module.exports = new ParseWorkspaceIdTest();
