@@ -200,7 +200,7 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedb
             },
             {
                 title: "Docs",
-                href: "https://www.gitpod.io/docs/",
+                href: "https://www.gitpod.io/docs/introduction",
                 target: "_blank",
                 rel: "noreferrer",
             },
