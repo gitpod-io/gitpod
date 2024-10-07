@@ -553,17 +553,25 @@ export class WorkspaceService {
                 return;
             }
             // workspaces with pending changes live twice as long
-            if (
-                (instance?.gitStatus?.totalUncommitedFiles || 0) > 0 ||
-                (instance?.gitStatus?.totalUnpushedCommits || 0) > 0 ||
-                (instance?.gitStatus?.totalUntrackedFiles || 0) > 0
-            ) {
+            const hasGitChanges =
+                instance?.gitStatus?.totalUncommitedFiles ||
+                0 > 0 ||
+                instance?.gitStatus?.totalUnpushedCommits ||
+                0 > 0 ||
+                instance?.gitStatus?.totalUntrackedFiles ||
+                0 > 0;
+            if (hasGitChanges) {
                 daysToLive = daysToLive * 2;
             }
             deletionEligibilityTime.setDate(deletionEligibilityTime.getDate() + daysToLive);
-            if (new Date() > deletionEligibilityTime) {
-                log.warn({ userId, workspaceId }, "Prevented setting deletion eligibility time in the past", {
+            if (
+                workspace.deletionEligibilityTime &&
+                workspace.deletionEligibilityTime > deletionEligibilityTime.toISOString()
+            ) {
+                log.warn({ userId, workspaceId }, "Prevented moving deletion eligibility time backwards", {
                     deletionEligibilityTime: deletionEligibilityTime.toISOString(),
+                    hasGitChanges,
+                    lastActive,
                 });
                 return;
             }
