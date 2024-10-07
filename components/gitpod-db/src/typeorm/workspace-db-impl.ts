@@ -488,14 +488,25 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         limit: number = 100,
         type: WorkspaceType = "regular",
     ): Promise<WorkspaceOwnerAndDeletionEligibility[]> {
-        // we do not allow to run this with a future date
         if (cutOffDate > new Date()) {
             throw new Error("cutOffDate must not be in the future, was: " + cutOffDate.toISOString());
         }
         const workspaceRepo = await this.getWorkspaceRepo();
         const qb = workspaceRepo
             .createQueryBuilder("ws")
-            .select(["ws.id", "ws.ownerId", "ws.deletionEligibilityTime"])
+            .leftJoinAndMapOne(
+                "ws.latestInstance",
+                DBWorkspaceInstance,
+                "wsi",
+                `wsi.id = (
+                SELECT i.id
+                FROM d_b_workspace_instance AS i
+                WHERE i.workspaceId = ws.id
+                ORDER BY i.creationTime DESC
+                LIMIT 1
+            )`,
+            )
+            .select(["ws.id", "ws.ownerId", "ws.deletionEligibilityTime", "wsi.id", "wsi.status"])
             .where("ws.deleted = :deleted", { deleted: 0 })
             .andWhere("ws.type = :type", { type })
             .andWhere("ws.softDeleted IS NULL")
@@ -503,20 +514,17 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .andWhere("ws.pinned = :pinned", { pinned: 0 })
             .andWhere("ws.deletionEligibilityTime != ''")
             .andWhere("ws.deletionEligibilityTime < :cutOffDate", { cutOffDate: cutOffDate.toISOString() })
+            // we don't want to delete workspaces that are active
+            .andWhere(
+                new Brackets((qb) => {
+                    qb.where("wsi.id IS NULL").orWhere("JSON_UNQUOTE(wsi.status->>'$.phase') = :stoppedStatus", {
+                        stoppedStatus: "stopped",
+                    });
+                }),
+            )
             .limit(limit);
 
-        const results: WorkspaceOwnerAndDeletionEligibility[] = await qb.getMany();
-
-        // hack to have an async filter predicate
-        const filtered = await Promise.all(
-            results.map(async (ws) => {
-                // we don't want to delete workspaces that have a running instance
-                const latestInstance = await this.findRunningInstance(ws.id);
-                return { ws, keep: latestInstance === undefined };
-            }),
-        );
-
-        return filtered.filter((result) => result.keep).map((result) => result.ws);
+        return qb.getMany();
     }
 
     public async findWorkspacesForPurging(
