@@ -27,7 +27,7 @@ import { PaginationToken, generatePaginationToken, parsePaginationToken } from "
 import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
-import { Project } from "@gitpod/gitpod-protocol";
+import { CommitContext, Project } from "@gitpod/gitpod-protocol";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { ContextService } from "../workspace/context-service";
 
@@ -76,18 +76,20 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "user not found");
         }
 
-        const cloneUrl = await this.contextService.parseContextUrlAsCloneUrl(installer, req.cloneUrl);
-        if (!cloneUrl) {
+        const context = await this.contextService.parseContextUrl(installer, req.cloneUrl);
+        if (!CommitContext.is(context)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "clone_url is not valid");
         }
+
+        // The dashboard, for example, does not provide an explicit name, so we infer it
+        const name = req.name || (context.repository.displayName ?? context.repository.name);
 
         const project = await this.projectService.createProject(
             {
                 teamId: req.organizationId,
-                name: req.name,
-                cloneUrl,
+                name,
+                cloneUrl: context.repository.cloneUrl,
                 appInstallationId: "",
-                slug: "",
             },
             installer,
         );

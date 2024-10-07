@@ -319,7 +319,6 @@ describe("ProjectsService", async () => {
         let project = await ps.createProject(
             {
                 name: partial.name!,
-                slug: "deprecated",
                 teamId: org.id,
                 cloneUrl: partial.cloneUrl!,
                 appInstallationId: "noid",

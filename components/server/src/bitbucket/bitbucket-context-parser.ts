@@ -328,6 +328,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             owner,
             private: !!repo.isPrivate,
             defaultBranch: repo.mainbranch ? repo.mainbranch.name : DEFAULT_BRANCH,
+            displayName: repo.name,
         };
         if (!!repo.parent && !!repo.parent.full_name) {
             const api = await this.api(user);
