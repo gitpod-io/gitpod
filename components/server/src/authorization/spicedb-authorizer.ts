@@ -105,6 +105,7 @@ export class SpiceDBAuthorizer {
                 const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
                 return { permitted, checkedAt: response.checkedAt?.token };
             } catch (err) {
+                // we should not consider users supplying invalid requests as internal server errors
                 if (isGrpcError(err) && err.code === grpc.status.INVALID_ARGUMENT) {
                     throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid request for permission check: ${err}`);
                 }
