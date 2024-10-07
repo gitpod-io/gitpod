@@ -506,9 +506,9 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .limit(limit);
 
         const results: WorkspaceOwnerAndDeletionEligibility[] = await qb.getMany();
-        return results.filter((ws) => {
+        return results.filter(async (ws) => {
             // we don't want to delete workspaces that have a running instance
-            const latestInstance = this.findRunningInstance(ws.id);
+            const latestInstance = await this.findRunningInstance(ws.id);
             return latestInstance === undefined;
         });
     }
