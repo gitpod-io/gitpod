@@ -85,7 +85,6 @@ export class ContextService {
 
     /**
      * parseContextUrl without snapshot and prebuild checking
-     * @deprecated
      */
     public async parseContextUrl(user: User, contextUrl: string): Promise<WorkspaceContext> {
         let normalizedContextUrl = "";

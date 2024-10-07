@@ -29,7 +29,7 @@ import { UserService } from "../user/user-service";
 import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 import { CommitContext, Project } from "@gitpod/gitpod-protocol";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
-import { ContextParser } from "../workspace/context-parser-service";
+import { ContextService } from "../workspace/context-service";
 
 function buildUpdateObject<T extends Record<string, any>>(obj: T): Partial<T> {
     const update: Partial<T> = {};
@@ -56,8 +56,8 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         private readonly apiConverter: PublicAPIConverter,
         @inject(UserService)
         private readonly userService: UserService,
-        @inject(ContextParser)
-        private readonly contextParser: ContextParser,
+        @inject(ContextService)
+        private readonly contextService: ContextService,
     ) {}
 
     async createConfiguration(
@@ -76,7 +76,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "user not found");
         }
 
-        const context = await this.contextParser.handle({}, installer, req.cloneUrl);
+        const context = await this.contextService.parseContextUrl(installer, req.cloneUrl);
         if (!CommitContext.is(context)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "clone_url is not valid");
         }
