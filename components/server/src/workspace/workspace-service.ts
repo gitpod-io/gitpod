@@ -248,7 +248,7 @@ export class WorkspaceService {
         const res = await this.db.find({
             limit: 20,
             ...options,
-            userId, // gpl: We probably want to removed this limitation in the future, butkeeping the old behavior for now due to focus on FGA
+            userId, // gpl: We probably want to removed this limitation in the future, but keeping the old behavior for now due to focus on FGA
             includeHeadless: false,
         });
 
