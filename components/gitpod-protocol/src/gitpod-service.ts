@@ -311,8 +311,6 @@ export interface GetDefaultWorkspaceImageResult {
 
 export interface CreateProjectParams {
     name: string;
-    /** @deprecated unused */
-    slug: string;
     cloneUrl: string;
     teamId: string;
     appInstallationId: string;

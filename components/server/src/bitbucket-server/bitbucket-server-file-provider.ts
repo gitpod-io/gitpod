@@ -35,7 +35,12 @@ export class BitbucketServerFileProvider implements FileProvider {
             repositorySlug: name,
             query: { limit: 1, path, shaOrRevision: revisionOrBranch },
         });
-        return result.values![0].id;
+        const lastCommit = result.values?.[0]?.id;
+        if (!lastCommit) {
+            throw new Error(`File ${path} does not exist in repository ${repository.owner}/${repository.name}`);
+        }
+
+        return lastCommit;
     }
 
     public async getFileContent(commit: Commit, user: User, path: string) {

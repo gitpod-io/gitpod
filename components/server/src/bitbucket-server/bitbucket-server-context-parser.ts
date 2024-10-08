@@ -285,7 +285,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
         defaultBranch: BitbucketServer.Branch,
     ): Repository {
         const owner = repo.project.owner ? repo.project.owner.slug : repo.project.key;
-        const name = repo.name;
+        const name = repo.slug;
         const cloneUrl = repo.links.clone.find((u) => u.name === "http")?.href!;
         const webUrl = repo.links?.self[0]?.href?.replace(/\/browse$/, "");
 
@@ -298,6 +298,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             repoKind,
             private: !repo.public,
             defaultBranch: defaultBranch.displayId || DEFAULT_BRANCH,
+            displayName: repo.name,
         };
 
         return result;

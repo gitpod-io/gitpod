@@ -121,7 +121,6 @@ describe("EnvVarService", async () => {
         project = await projectsService.createProject(
             {
                 name: "my-project",
-                slug: "my-project",
                 teamId: org.id,
                 cloneUrl: "https://github.com/gitpod-io/gitpod.git",
                 appInstallationId: "noid",

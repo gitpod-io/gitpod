@@ -224,7 +224,7 @@ export class ProjectsService {
     }
 
     async createProject(
-        { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
+        { name, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
         projectSettingsDefaults: ProjectSettings = { prebuilds: Project.PREBUILD_SETTINGS_DEFAULTS },
     ): Promise<Project> {
@@ -257,14 +257,14 @@ export class ProjectsService {
         if (!hostContext || !hostContext.services) {
             throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
-                "No GIT provider has been configured for the provided repository.",
+                "No Git provider has been configured for the provided repository.",
             );
         }
         const repoProvider = hostContext.services.repositoryProvider;
         if (!repoProvider) {
             throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
-                "No GIT provider has been configured for the provided repository.",
+                "No Git provider has been configured for the provided repository.",
             );
         }
         const canRead = await repoProvider.hasReadAccess(installer, parsedUrl.owner, parsedUrl.repo);

@@ -15,6 +15,7 @@ import { base64decode } from "@jmondi/oauth2-server";
 import { DecodedZedToken } from "@gitpod/spicedb-impl/lib/impl/v1/impl.pb";
 import { ctxTryGetCache, ctxTrySetCache } from "../util/request-context";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 
 async function tryThree<T>(errMessage: string, code: (attempt: number) => Promise<T>): Promise<T> {
     let attempt = 0;
@@ -104,6 +105,10 @@ export class SpiceDBAuthorizer {
                 const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
                 return { permitted, checkedAt: response.checkedAt?.token };
             } catch (err) {
+                // we should not consider users supplying invalid requests as internal server errors
+                if (isGrpcError(err) && err.code === grpc.status.INVALID_ARGUMENT) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid request for permission check: ${err}`);
+                }
                 error = err;
                 log.error("[spicedb] Failed to perform authorization check.", err, {
                     request: new TrustedValue(req),
