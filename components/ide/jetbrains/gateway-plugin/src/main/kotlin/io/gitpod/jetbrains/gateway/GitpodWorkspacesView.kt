@@ -294,7 +294,9 @@ class GitpodWorkspacesView(
                                         it.totalUncommitedFiles + it.totalUntrackedFiles + it.totalUnpushedCommits
                                     } ?: 0
                                     row {
-                                        info.workspace.context.ref.ifPresentOrElse({ label(it) }, { label("(detached)") })
+                                        info.workspace.context.ref.ifPresentOrElse(
+                                            { label(it) },
+                                            { label("(detached)") })
                                     }.rowComment(
                                         when {
                                             changes == 1 -> "<b>$changes Change</b>"
@@ -307,12 +309,12 @@ class GitpodWorkspacesView(
                                 button("Connect") {
                                     if (!canConnect) {
                                         val startUrl = URIBuilder()
-                                                .setScheme("https")
-                                                .setHost(gitpodHost)
-                                                .setPath("start")
-                                                .setFragment(info.workspace.id)
-                                                .build()
-                                                .toString()
+                                            .setScheme("https")
+                                            .setHost(gitpodHost)
+                                            .setPath("start")
+                                            .setFragment(info.workspace.id)
+                                            .build()
+                                            .toString()
                                         BrowserUtil.browse(startUrl)
                                     } else {
                                         GatewayUI.getInstance().connect(
