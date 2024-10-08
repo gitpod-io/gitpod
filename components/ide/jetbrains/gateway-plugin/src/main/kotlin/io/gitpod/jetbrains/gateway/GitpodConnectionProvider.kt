@@ -26,7 +26,6 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.application
 import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.await
 import com.intellij.util.io.delete
 import com.intellij.util.net.JdkProxyProvider
 import com.intellij.util.net.ssl.CertificateManager
@@ -42,8 +41,10 @@ import com.jetbrains.rd.util.ConcurrentHashMap
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
+import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.await
 import java.net.URI
 import java.net.URL
 import java.net.http.HttpClient
