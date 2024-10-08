@@ -20,7 +20,7 @@ import io.gitpod.jetbrains.auth.GitpodAuthService
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import org.eclipse.jetty.websocket.api.UpgradeException
-import java.net.URI
+import java.net.URL
 import java.nio.charset.StandardCharsets
 
 @Service
@@ -50,7 +50,7 @@ class GitpodConnectionService {
                     val originalClassLoader = Thread.currentThread().contextClassLoader
                     val connection = try {
                         val origin = "https://$gitpodHost/"
-                        val proxies = JdkProxyProvider.getInstance().proxySelector.select(URI(origin))
+                        val proxies = JdkProxyProvider.getInstance().proxySelector.select(URL(origin).toURI())
                         val sslContext = CertificateManager.getInstance().sslContext
 
                         // see https://intellij-support.jetbrains.com/hc/en-us/community/posts/360003146180/comments/360000376240

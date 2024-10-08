@@ -294,9 +294,7 @@ class GitpodWorkspacesView(
                                         it.totalUncommitedFiles + it.totalUntrackedFiles + it.totalUnpushedCommits
                                     } ?: 0
                                     row {
-                                        info.workspace.context.ref.ifPresentOrElse(
-                                            { label(it) },
-                                            { label("(detached)") })
+                                        info.workspace.context.ref.ifPresentOrElse({ label(it) }, { label("(detached)") })
                                     }.rowComment(
                                         when {
                                             changes == 1 -> "<b>$changes Change</b>"

@@ -10,7 +10,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.XmlSerializerUtil
-import java.net.URI
+import java.net.URL
 import java.util.*
 
 @State(
@@ -25,7 +25,7 @@ class GitpodSettingsState : PersistentStateComponent<GitpodSettingsState> {
                 return
             }
             val gitpodHost = try {
-                URI.create(value.trim()).host
+                URL(value.trim()).host
             } catch (t: Throwable) {
                 value.trim()
             }

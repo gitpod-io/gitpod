@@ -38,6 +38,7 @@ import com.jetbrains.gateway.api.GatewayConnectionProvider
 import com.jetbrains.gateway.ssh.SshHostTunnelConnector
 import com.jetbrains.gateway.thinClientLink.ThinClientHandle
 import com.jetbrains.rd.util.ConcurrentHashMap
+import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
@@ -45,7 +46,6 @@ import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import java.net.URI
 import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -264,7 +264,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         if (thinClientJob == null && update.status.phase == "running") {
                             thinClientJob = launch thinClientJob@{
                                 try {
-                                    val ideUrl = URI.create(resolvedIdeUrl).toURL()
+                                    val ideUrl = URL(resolvedIdeUrl)
                                     val ownerToken = client.server.getOwnerToken(update.workspaceId).await()
 
                                     var credentials = resolveCredentialsWithDirectSSH(
@@ -313,14 +313,10 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                             while (isActive) {
                                                 try {
                                                     delay(5000)
-                                                    val updatedJoinLinkResp =
-                                                        resolveJoinLink(ideUrl, ownerToken, connectParams)
+                                                    val updatedJoinLinkResp = resolveJoinLink(ideUrl, ownerToken, connectParams)
                                                     if (updatedJoinLinkResp != null && joinLinkResp != null && joinLinkResp!!.appPid > 0 && updatedJoinLinkResp.appPid > 0 && updatedJoinLinkResp.appPid != joinLinkResp!!.appPid) {
                                                         clientHandle.notifyReconnect()
-                                                        clientHandle.updateJoinLink(
-                                                            URI(updatedJoinLinkResp.joinLink),
-                                                            true
-                                                        )
+                                                        clientHandle.updateJoinLink(URI(updatedJoinLinkResp.joinLink), true)
                                                         joinLinkResp = updatedJoinLinkResp
                                                     }
                                                 } catch (t: Throwable) {
@@ -443,13 +439,13 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         }
 
         try {
-
-            val sshHostUrl = URI.create(
-                ideUrl.toString().replace(
-                    connectParams.resolvedWorkspaceId,
-                    "${connectParams.resolvedWorkspaceId}.ssh"
-                )
-            ).toURL()
+            val sshHostUrl =
+                    URL(
+                            ideUrl.toString().replace(
+                                    connectParams.resolvedWorkspaceId,
+                                    "${connectParams.resolvedWorkspaceId}.ssh"
+                            )
+                    )
             return resolveCredentials(
                 sshHostUrl.host,
                 22,
@@ -691,11 +687,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
 
     private data class SSHPublicKey(val type: String, val value: String)
 
-    private data class CreateSSHKeyPairResponse(
-        val privateKey: String,
-        val hostKey: SSHPublicKey?,
-        val userName: String?
-    )
+    private data class CreateSSHKeyPairResponse(val privateKey: String, val hostKey: SSHPublicKey?, val userName: String?)
 
     private data class JoinLinkResp(val appPid: Int, val joinLink: String)
 }
