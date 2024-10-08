@@ -13,7 +13,6 @@ import com.intellij.util.application
 import com.jetbrains.rd.platform.codeWithMe.portForwarding.*
 import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.threading.coroutines.launch
 import io.gitpod.supervisor.api.Status
 import io.gitpod.supervisor.api.Status.PortsStatus
 import io.gitpod.supervisor.api.StatusServiceGrpc
@@ -101,34 +100,34 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
     }
 
     private fun syncPortsListWithClient(response: Status.PortsStatusResponse) {
-        val ignoredPorts = ignoredPortsForNotificationService.getIgnoredPorts()
-        val portsList = response.portsList.filter { !ignoredPorts.contains(it.localPort) }
-        val portsNumbersFromPortsList = portsList.map { it.localPort }
-        val servedPorts = portsList.filter { it.served }
-        val exposedPorts = servedPorts.filter { it.exposed?.url?.isNotBlank() ?: false }
-        val portsNumbersFromNonServedPorts = portsList.filter { !it.served }.map { it.localPort }
-        val servedPortsToStartForwarding = servedPorts.filter {
-            perClientPortForwardingManager.getPorts(it.localPort).none { p -> p.labels.contains(FORWARDED_PORT_LABEL) }
-        }
-        val exposedPortsToStartExposingOnClient = exposedPorts.filter {
-            perClientPortForwardingManager.getPorts(it.localPort).none { p -> p.labels.contains(EXPOSED_PORT_LABEL) }
-        }
-        val forwardedPortsToStopForwarding = perClientPortForwardingManager.getPorts(FORWARDED_PORT_LABEL)
-                .map { it.hostPortNumber }
-                .filter { portsNumbersFromNonServedPorts.contains(it) || !portsNumbersFromPortsList.contains(it) }
-        val exposedPortsToStopExposingOnClient = perClientPortForwardingManager.getPorts(EXPOSED_PORT_LABEL)
-                .map { it.hostPortNumber }
-                .filter { portsNumbersFromNonServedPorts.contains(it) || !portsNumbersFromPortsList.contains(it) }
-
-        servedPortsToStartForwarding.forEach { startForwarding(it) }
-
-        exposedPortsToStartExposingOnClient.forEach { startExposingOnClient(it) }
-
-        forwardedPortsToStopForwarding.forEach { stopForwarding(it) }
-
-        exposedPortsToStopExposingOnClient.forEach { stopExposingOnClient(it) }
-
-        portsList.forEach { updatePortsPresentation(it) }
+//        val ignoredPorts = ignoredPortsForNotificationService.getIgnoredPorts()
+//        val portsList = response.portsList.filter { !ignoredPorts.contains(it.localPort) }
+//        val portsNumbersFromPortsList = portsList.map { it.localPort }
+//        val servedPorts = portsList.filter { it.served }
+//        val exposedPorts = servedPorts.filter { it.exposed?.url?.isNotBlank() ?: false }
+//        val portsNumbersFromNonServedPorts = portsList.filter { !it.served }.map { it.localPort }
+//        val servedPortsToStartForwarding = servedPorts.filter {
+//            perClientPortForwardingManager.getPorts(it.localPort).none { p -> p.labels.contains(FORWARDED_PORT_LABEL) }
+//        }
+//        val exposedPortsToStartExposingOnClient = exposedPorts.filter {
+//            perClientPortForwardingManager.getPorts(it.localPort).none { p -> p.labels.contains(EXPOSED_PORT_LABEL) }
+//        }
+//        val forwardedPortsToStopForwarding = perClientPortForwardingManager.getPorts(FORWARDED_PORT_LABEL)
+//                .map { it.hostPortNumber }
+//                .filter { portsNumbersFromNonServedPorts.contains(it) || !portsNumbersFromPortsList.contains(it) }
+//        val exposedPortsToStopExposingOnClient = perClientPortForwardingManager.getPorts(EXPOSED_PORT_LABEL)
+//                .map { it.hostPortNumber }
+//                .filter { portsNumbersFromNonServedPorts.contains(it) || !portsNumbersFromPortsList.contains(it) }
+//
+//        servedPortsToStartForwarding.forEach { startForwarding(it) }
+//
+//        exposedPortsToStartExposingOnClient.forEach { startExposingOnClient(it) }
+//
+//        forwardedPortsToStopForwarding.forEach { stopForwarding(it) }
+//
+//        exposedPortsToStopExposingOnClient.forEach { stopExposingOnClient(it) }
+//
+//        portsList.forEach { updatePortsPresentation(it) }
     }
 
     private fun startForwarding(portStatus: PortsStatus) {
