@@ -535,15 +535,12 @@ export class WorkspaceService {
 
             const workspace = await this.doGetWorkspace(userId, workspaceId);
             const instance = await this.db.findCurrentInstance(workspaceId);
-            let lastActive =
+            const lastActive =
                 instance?.stoppingTime || instance?.startedTime || instance?.creationTime || workspace?.creationTime;
-            if (activeNow) {
-                lastActive = new Date().toISOString();
-            }
-            if (!lastActive) {
+            if (!lastActive && !activeNow) {
                 return;
             }
-            const deletionEligibilityTime = new Date(lastActive);
+            const deletionEligibilityTime = activeNow ? new Date() : new Date(lastActive);
             if (workspace.type === "prebuild") {
                 // set to last active plus daysToLiveForPrebuilds as iso string
                 deletionEligibilityTime.setDate(deletionEligibilityTime.getDate() + daysToLiveForPrebuilds);
@@ -570,8 +567,14 @@ export class WorkspaceService {
             ) {
                 log.warn({ userId, workspaceId }, "Prevented moving deletion eligibility time backwards", {
                     deletionEligibilityTime: deletionEligibilityTime.toISOString(),
-                    hasGitChanges,
                     lastActive,
+                    hasGitChanges,
+                    timestamps: {
+                        instanceStoppingTime: instance?.stoppingTime,
+                        instanceStartedTime: instance?.startedTime,
+                        instanceCreationTime: instance?.creationTime,
+                        workspaceCreationtime: workspace.creationTime,
+                    },
                 });
                 return;
             }
