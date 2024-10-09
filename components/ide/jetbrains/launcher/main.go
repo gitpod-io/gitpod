@@ -808,9 +808,10 @@ func configureClientSideVMOptions(launchCtx *LaunchContext) error {
 	if launchCtx.alias != "pycharm" {
 		return nil
 	}
-	// ENT-849
-	// Add -Dide.browser.jcef.enabled=false for PyCharm
 	vmOptionsPath := launchCtx.clientVMOptionsFile
+	if err := os.MkdirAll(filepath.Dir(vmOptionsPath), 0755); err != nil {
+		return err
+	}
 	options, err := readVMOptions(vmOptionsPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -819,6 +820,8 @@ func configureClientSideVMOptions(launchCtx *LaunchContext) error {
 			return err
 		}
 	}
+	// ENT-849
+	// Add -Dide.browser.jcef.enabled=false for PyCharm
 	newOptions := deduplicateVMOption(options, []string{"-Dide.browser.jcef.enabled=false"}, func(l, r string) bool {
 		return l == r
 	})
