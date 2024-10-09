@@ -246,7 +246,7 @@ func serve(launchCtx *LaunchContext) {
 		options = deduplicateVMOption(options, debugOptions, func(l, r string) bool {
 			return strings.HasPrefix(l, debugAgentPrefix) && strings.HasPrefix(r, debugAgentPrefix)
 		})
-		err = writeVMOptions(launchCtx.vmOptionsFile, options)
+		err = writeVMOptions(launchCtx.vmOptionsFile, options, 0)
 		if err != nil {
 			log.WithError(err).Error("failed to configure debug agent")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -801,7 +801,7 @@ func configureVMOptions(config *gitpod.GitpodConfig, alias string, vmOptionsPath
 		return err
 	}
 	newOptions := updateVMOptions(config, alias, options)
-	return writeVMOptions(vmOptionsPath, newOptions)
+	return writeVMOptions(vmOptionsPath, newOptions, 0)
 }
 
 func configureClientSideVMOptions(launchCtx *LaunchContext) error {
@@ -809,7 +809,7 @@ func configureClientSideVMOptions(launchCtx *LaunchContext) error {
 		return nil
 	}
 	vmOptionsPath := launchCtx.clientVMOptionsFile
-	if err := os.MkdirAll(filepath.Dir(vmOptionsPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(vmOptionsPath), os.ModePerm); err != nil {
 		return err
 	}
 	options, err := readVMOptions(vmOptionsPath)
@@ -825,7 +825,7 @@ func configureClientSideVMOptions(launchCtx *LaunchContext) error {
 	newOptions := deduplicateVMOption(options, []string{"-Dide.browser.jcef.enabled=false"}, func(l, r string) bool {
 		return l == r
 	})
-	return writeVMOptions(vmOptionsPath, newOptions)
+	return writeVMOptions(vmOptionsPath, newOptions, 0o644)
 }
 
 func readVMOptions(vmOptionsPath string) ([]string, error) {
@@ -836,10 +836,10 @@ func readVMOptions(vmOptionsPath string) ([]string, error) {
 	return strings.Fields(string(content)), nil
 }
 
-func writeVMOptions(vmOptionsPath string, vmoptions []string) error {
+func writeVMOptions(vmOptionsPath string, vmoptions []string, perm os.FileMode) error {
 	// vmoptions file should end with a newline
 	content := strings.Join(vmoptions, "\n") + "\n"
-	return os.WriteFile(vmOptionsPath, []byte(content), 0)
+	return os.WriteFile(vmOptionsPath, []byte(content), perm)
 }
 
 // deduplicateVMOption append new VMOptions onto old VMOptions and remove any duplicated leftmost options
