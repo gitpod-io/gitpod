@@ -1552,16 +1552,18 @@ export class WorkspaceStarter {
         sysEnvvars.push(orgIdEnv);
 
         const client = getExperimentsClientForBackend();
-        const [isSetJavaXmx, isSetJavaProcessorCount] = await Promise.all([
+        const [isSetJavaXmx, isSetJavaProcessorCount, disableJetBrainsPortExpose] = await Promise.all([
             client
                 .getValueAsync("supervisor_set_java_xmx", false, { user })
                 .then((v) => newEnvVar("GITPOD_IS_SET_JAVA_XMX", String(v))),
             client
                 .getValueAsync("supervisor_set_java_processor_count", false, { user })
                 .then((v) => newEnvVar("GITPOD_IS_SET_JAVA_PROCESSOR_COUNT", String(v))),
+            client.getValueAsync("disable_jetbrains_local_port_expose", false, { user }).then((v) => newEnvVar("GITPOD_DISABLE_JETBRAINS_LOCAL_PORT_EXPOSE", String(v)))
         ]);
         sysEnvvars.push(isSetJavaXmx);
         sysEnvvars.push(isSetJavaProcessorCount);
+        sysEnvvars.push(disableJetBrainsPortExpose);
         const spec = new StartWorkspaceSpec();
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
