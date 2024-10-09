@@ -66,6 +66,7 @@ type LaunchContext struct {
 	wsInfo         *supervisor.WorkspaceInfoResponse
 
 	vmOptionsFile          string
+	clientVMOptionsFile    string
 	platformPropertiesFile string
 	projectDir             string
 	configDir              string
@@ -542,6 +543,11 @@ func launch(launchCtx *LaunchContext) {
 	if err != nil {
 		log.WithError(err).Error("failed to parse .gitpod.yml")
 	}
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.WithError(err).Error("failed to get user home dir")
+		userHomeDir = "~"
+	}
 
 	// configure vmoptions
 	idePrefix := launchCtx.alias
@@ -550,9 +556,15 @@ func launch(launchCtx *LaunchContext) {
 	}
 	// [idea64|goland64|pycharm64|phpstorm64].vmoptions
 	launchCtx.vmOptionsFile = fmt.Sprintf(launchCtx.backendDir+"/bin/%s64.vmoptions", idePrefix)
+	// ~/.config/JetBrains/<name_version>/[idea64|goland64|pycharm64|phpstorm64].vmoptions
+	launchCtx.clientVMOptionsFile = fmt.Sprintf("%s/.config/JetBrains/%s/%s64.vmoptions", userHomeDir, launchCtx.info.DataDirectoryName, idePrefix)
+
 	err = configureVMOptions(gitpodConfig, launchCtx.alias, launchCtx.vmOptionsFile)
 	if err != nil {
 		log.WithError(err).Error("failed to configure vmoptions")
+	}
+	if err := configureClientSideVMOptions(launchCtx); err != nil {
+		log.WithError(err).Error("failed to configure client side vmoptions")
 	}
 
 	var riderSolutionFile string
@@ -792,6 +804,27 @@ func configureVMOptions(config *gitpod.GitpodConfig, alias string, vmOptionsPath
 	return writeVMOptions(vmOptionsPath, newOptions)
 }
 
+func configureClientSideVMOptions(launchCtx *LaunchContext) error {
+	if launchCtx.alias != "pycharm" {
+		return nil
+	}
+	// ENT-849
+	// Add -Dide.browser.jcef.enabled=false for PyCharm
+	vmOptionsPath := launchCtx.clientVMOptionsFile
+	options, err := readVMOptions(vmOptionsPath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			options = []string{}
+		} else {
+			return err
+		}
+	}
+	newOptions := deduplicateVMOption(options, []string{"-Dide.browser.jcef.enabled=false"}, func(l, r string) bool {
+		return l == r
+	})
+	return writeVMOptions(vmOptionsPath, newOptions)
+}
+
 func readVMOptions(vmOptionsPath string) ([]string, error) {
 	content, err := os.ReadFile(vmOptionsPath)
 	if err != nil {
@@ -902,9 +935,10 @@ func updateVMOptions(
 	}
 */
 type ProductInfo struct {
-	BuildNumber string `json:"buildNumber"`
-	Version     string `json:"version"`
-	ProductCode string `json:"productCode"`
+	BuildNumber       string `json:"buildNumber"`
+	Version           string `json:"version"`
+	ProductCode       string `json:"productCode"`
+	DataDirectoryName string `json:"dataDirectoryName"`
 }
 
 func resolveProductInfo(backendDir string) (*ProductInfo, error) {
