@@ -566,15 +566,16 @@ export class WorkspaceService {
                 workspace.deletionEligibilityTime > deletionEligibilityTime.toISOString()
             ) {
                 log.warn({ userId, workspaceId }, "Prevented moving deletion eligibility time backwards", {
-                    deletionEligibilityTime: deletionEligibilityTime.toISOString(),
-                    lastActive,
                     hasGitChanges,
-                    timestamps: {
+                    timestamps: new TrustedValue({
+                        wouldBeDeletionEligibilityTime: deletionEligibilityTime.toISOString(),
+                        currentDeletionEligibilityTime: workspace.deletionEligibilityTime,
                         instanceStoppingTime: instance?.stoppingTime,
                         instanceStartedTime: instance?.startedTime,
                         instanceCreationTime: instance?.creationTime,
-                        workspaceCreationtime: workspace.creationTime,
-                    },
+                        workspaceCreationTime: workspace.creationTime,
+                        lastActive,
+                    }),
                 });
                 return;
             }
