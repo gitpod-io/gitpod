@@ -11,6 +11,7 @@ import { useMemo } from "react";
 import { useListConfigurations } from "../configurations/configuration-queries";
 import type { UseInfiniteQueryResult } from "@tanstack/react-query";
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { parseUrl } from "../../utils";
 
 export const flattenPagedConfigurations = (
     data: UseInfiniteQueryResult<{ configurations: Configuration[] }>["data"],
@@ -125,17 +126,62 @@ export function deduplicateAndFilterRepositories(
     }
 
     if (results.length === 0) {
-        try {
-            // If the searchString is a URL, and it's not present in the proposed results, "artificially" add it here.
-            new URL(searchString);
+        // If the searchString is a URL, and it's not present in the proposed results, "artificially" add it here.
+        if (isValidGitUrl(searchString)) {
+            console.log("It's valid man");
             results.push(
                 new SuggestedRepository({
                     url: searchString,
                 }),
             );
-        } catch {}
+        }
+
+        console.log("Valid after man");
     }
 
     // Limit what we show to 200 results
     return results.slice(0, 200);
 }
+
+const ALLOWED_GIT_PROTOCOLS = ["ssh:", "git:", "http:", "https:"];
+/**
+ * An opionated git URL validator
+ *
+ * Assumptions:
+ * - Git hosts are not themselves TLDs (like .com) or reserved names like `localhost`
+ * - Git clone URLs can operate over ssh://, git:// and http(s)://
+ * - Git clone URLs (both SSH and HTTP ones) must have a nonempty path
+ */
+export const isValidGitUrl = (input: string): boolean => {
+    const url = parseUrl(input);
+    if (!url) {
+        // SSH URLs with no protocol, such as git@github.com:gitpod-io/gitpod.git
+        const sshMatch = input.match(/^\w+@([^:]+):(.+)$/);
+        if (!sshMatch) return false;
+
+        const [, host, path] = sshMatch;
+
+        // Check if the path is not empty
+        if (!path || path.trim().length === 0) return false;
+
+        if (path.includes(":")) return false;
+
+        return isHostValid(host);
+    }
+
+    if (!url) return false;
+
+    if (!ALLOWED_GIT_PROTOCOLS.includes(url.protocol)) return false;
+    if (url.pathname.length <= 1) return false; // make sure we have some path
+
+    return isHostValid(url.host);
+};
+
+const isHostValid = (input?: string): boolean => {
+    if (!input) return false;
+
+    const hostSegments = input.split(".");
+    if (hostSegments.length < 2 || hostSegments.some((chunk) => chunk === "")) return false; // check that there are no consecutive periods as well as no leading or trailing ones
+
+    return true;
+};
