@@ -105,6 +105,7 @@ test("should perform weak validation for git URLs", () => {
     expect(isValidGitUrl("git@a.b:")).toEqual(false);
     expect(isValidGitUrl("blib@a.b:")).toEqual(false);
     expect(isValidGitUrl("blib@a.b:22:")).toEqual(false);
+    expect(isValidGitUrl("blib@a.b:g/g")).toEqual(true);
 
     // some "from the wild" cases
     expect(isValidGitUrl("https://github.com/gitpod-io/gitpod/pull/20281")).toEqual(true);
