@@ -1559,7 +1559,7 @@ export class WorkspaceStarter {
             client
                 .getValueAsync("supervisor_set_java_processor_count", false, { user })
                 .then((v) => newEnvVar("GITPOD_IS_SET_JAVA_PROCESSOR_COUNT", String(v))),
-            client.getValueAsync("disable_jetbrains_local_port_expose", false, { user }).then((v) => newEnvVar("GITPOD_DISABLE_JETBRAINS_LOCAL_PORT_EXPOSE", String(v)))
+            client.getValueAsync("disable_jetbrains_local_port_forwarding", false, { user }).then((v) => newEnvVar("GITPOD_DISABLE_JETBRAINS_LOCAL_PORT_FORWARDING", String(v)))
         ]);
         sysEnvvars.push(isSetJavaXmx);
         sysEnvvars.push(isSetJavaProcessorCount);

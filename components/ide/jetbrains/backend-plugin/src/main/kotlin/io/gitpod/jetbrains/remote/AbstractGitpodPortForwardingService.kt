@@ -99,13 +99,13 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
         return completableFuture
     }
 
-    private fun isPortExposingDisabled(): Boolean {
-        return System.getenv("GITPOD_DISABLE_JETBRAINS_LOCAL_PORT_EXPOSE")?.toBoolean() ?: false
+    private fun isLocalPortForwardingDisabled(): Boolean {
+        return System.getenv("GITPOD_DISABLE_JETBRAINS_LOCAL_PORT_FORWARDING")?.toBoolean() ?: false
     }
 
     private fun syncPortsListWithClient(response: Status.PortsStatusResponse) {
-        if (isPortExposingDisabled()) {
-            thisLogger().warn("gitpod: Port exposing is disabled.")
+        if (isLocalPortForwardingDisabled()) {
+            thisLogger().warn("gitpod: Local port forwarding is disabled.")
             return
         }
         val ignoredPorts = ignoredPortsForNotificationService.getIgnoredPorts()
