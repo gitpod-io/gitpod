@@ -297,7 +297,11 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                     )
                                     clientHandle.clientClosed.advise(connectionLifetime) {
                                         application.invokeLater {
-                                            connectionLifetime.terminate()
+                                            GlobalScope.launch {
+                                                // Delay for 5 seconds to wait the thinClient actually close
+                                                delay(5000)
+                                                connectionLifetime.terminate()
+                                            }
                                         }
                                     }
                                     clientHandle.onClientPresenceChanged.advise(connectionLifetime) {
