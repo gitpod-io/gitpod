@@ -5,6 +5,8 @@
 -->
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceInterface="io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory"
+                            serviceImplementation="io.gitpod.jetbrains.gateway.stable.StableGitpodConnectionHandleFactory"/>
     </extensions>
     <extensions defaultExtensionNs="com.jetbrains">
     </extensions>

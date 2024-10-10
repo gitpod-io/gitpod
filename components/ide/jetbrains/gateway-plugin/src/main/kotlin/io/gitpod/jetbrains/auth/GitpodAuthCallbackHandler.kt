@@ -25,7 +25,7 @@ internal class GitpodAuthCallbackHandler : RestService() {
         request: FullHttpRequest,
         context: ChannelHandlerContext
     ): String? {
-        service.handleServerCallback(urlDecoder.path(), urlDecoder.parameters())
+        service.handleOAuthServerCallback(urlDecoder.path(), urlDecoder.parameters())
         sendResponse(
             request,
             context,

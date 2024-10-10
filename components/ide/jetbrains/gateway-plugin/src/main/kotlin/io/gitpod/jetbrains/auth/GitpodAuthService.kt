@@ -19,7 +19,6 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.util.Base64
 import com.intellij.util.EventDispatcher
 import com.intellij.util.Url
 import com.intellij.util.Urls.encodeParameters
@@ -138,7 +137,7 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
 
                 val jwt = with(jacksonMapper) {
                     propertyNamingStrategy = PropertyNamingStrategies.LowerCaseStrategy()
-                    readValue(Base64.decode(responseData.accessToken.split('.')[1]), JsonWebToken::class.java)
+                    readValue(Base64.getDecoder().decode(responseData.accessToken.split('.')[1]), JsonWebToken::class.java)
                 }
                 SimpleCredentials(jwt.jti)
             }
@@ -178,7 +177,7 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
 
         suspend fun authorize(gitpodHost: String): String {
             val accessToken = instance.authorize(gitpodHost).await().accessToken
-            setAccessToken(gitpodHost, accessToken!!)
+            setAccessToken(gitpodHost, accessToken)
             return accessToken
         }
 

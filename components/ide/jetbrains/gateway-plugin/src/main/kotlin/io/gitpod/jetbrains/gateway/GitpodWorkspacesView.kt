@@ -307,12 +307,12 @@ class GitpodWorkspacesView(
                                 button("Connect") {
                                     if (!canConnect) {
                                         val startUrl = URIBuilder()
-                                                .setScheme("https")
-                                                .setHost(gitpodHost)
-                                                .setPath("start")
-                                                .setFragment(info.workspace.id)
-                                                .build()
-                                                .toString()
+                                            .setScheme("https")
+                                            .setHost(gitpodHost)
+                                            .setPath("start")
+                                            .setFragment(info.workspace.id)
+                                            .build()
+                                            .toString()
                                         BrowserUtil.browse(startUrl)
                                     } else {
                                         GatewayUI.getInstance().connect(
