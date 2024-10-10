@@ -16,12 +16,14 @@ import { trackEvent } from "../Analytics";
 import bitbucketButton from "../images/browser-extension/bitbucket.webp";
 import githubButton from "../images/browser-extension/github.webp";
 import gitlabButton from "../images/browser-extension/gitlab.webp";
+import azuredevopsButton from "../images/browser-extension/azure-devops.webp";
 import uniq from "lodash/uniq";
 
 const browserExtensionImages = {
     Bitbucket: bitbucketButton,
     GitHub: githubButton,
     GitLab: gitlabButton,
+    "Azure DevOps": azuredevopsButton,
 } as const;
 
 type BrowserOption = {
@@ -29,7 +31,7 @@ type BrowserOption = {
     aliases?: string[];
     url: string;
 };
-type UnifiedAuthProvider = "Bitbucket" | "GitLab" | "GitHub";
+type UnifiedAuthProvider = "Bitbucket" | "GitLab" | "GitHub" | "Azure DevOps";
 
 const installationOptions: BrowserOption[] = [
     {
@@ -54,6 +56,8 @@ const unifyProviderType = (type: AuthProviderType): UnifiedAuthProvider | undefi
             return "GitHub";
         case AuthProviderType.GITLAB:
             return "GitLab";
+        case AuthProviderType.AZURE_DEVOPS:
+            return "Azure DevOps";
         default:
             return undefined;
     }
