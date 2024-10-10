@@ -214,7 +214,7 @@ export class ReplayableEventEmitter<EventTypes extends EventMap> extends EventEm
     }
 }
 
-function parseUrl(url: string): URL | null {
+export function parseUrl(url: string): URL | null {
     try {
         return new URL(url);
     } catch (_) {
