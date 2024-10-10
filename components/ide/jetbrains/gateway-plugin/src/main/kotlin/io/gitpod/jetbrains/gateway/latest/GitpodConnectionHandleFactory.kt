@@ -12,13 +12,13 @@ import com.jetbrains.gateway.thinClientLink.ThinClientHandle
 import com.jetbrains.rd.util.lifetime.Lifetime
 import io.gitpod.jetbrains.gateway.GitpodConnectionProvider.ConnectParams
 import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandle
+import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
 import java.net.URI
 import javax.swing.JComponent
 
 @Suppress("UnstableApiUsage")
-@Service
-class LatestGitpodConnectionHandleFactory {
-    fun createGitpodConnectionHandle(
+class LatestGitpodConnectionHandleFactory: GitpodConnectionHandleFactory {
+    override fun createGitpodConnectionHandle(
         lifetime: Lifetime,
         component: JComponent,
         params: ConnectParams
@@ -26,7 +26,7 @@ class LatestGitpodConnectionHandleFactory {
         return GitpodConnectionHandle(lifetime, component, params)
     }
 
-    suspend fun connect(lifetime: Lifetime, connector: HostTunnelConnector, tcpJoinLink: URI): ThinClientHandle {
+    override suspend fun connect(lifetime: Lifetime, connector: HostTunnelConnector, tcpJoinLink: URI): ThinClientHandle {
         return ClientOverSshTunnelConnector(
             lifetime,
             connector

@@ -17,7 +17,6 @@ import java.net.URI
 import javax.swing.JComponent
 
 @Suppress("UnstableApiUsage")
-@Service
 class StableGitpodConnectionHandleFactory: GitpodConnectionHandleFactory {
     override fun createGitpodConnectionHandle(
         lifetime: Lifetime,
