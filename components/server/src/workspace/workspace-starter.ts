@@ -843,7 +843,7 @@ export class WorkspaceStarter {
 
     /**
      * failInstanceStart properly fails a workspace instance if something goes wrong before the instance ever reaches
-     * workspace manager. In this case we need to make sure we also fulfil the tasks of the bridge (e.g. for prebulds).
+     * workspace manager. In this case we need to make sure we also fulfil the tasks of the bridge (e.g. for prebuilds).
      */
     private async failInstanceStart(ctx: TraceContext, err: any, workspace: Workspace, instance: WorkspaceInstance) {
         if (ctxIsAborted()) {

@@ -468,6 +468,11 @@ func (c WorkspaceConfig) isDebugWorkspace() bool {
 	return c.DebugWorkspaceType != api.DebugWorkspaceType_noDebug
 }
 
+// isImageBuild returns true if the workspace is an image build.
+func (c WorkspaceConfig) isImageBuild() bool {
+	return os.Getenv("BOB_DOCKERFILE_PATH") != ""
+}
+
 var contentSources = map[api.ContentSource]csapi.WorkspaceInitSource{
 	api.ContentSource_from_other:    csapi.WorkspaceInitFromOther,
 	api.ContentSource_from_backup:   csapi.WorkspaceInitFromBackup,
