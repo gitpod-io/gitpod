@@ -1601,9 +1601,9 @@ func stopWhenTasksAreDone(wg *sync.WaitGroup, cfg *Config, shutdown chan Shutdow
 	if success.Failed() {
 		var msg []byte
 		if cfg.isImageBuild() {
-			msg = []byte("image build failed with " + string(success) + ". For further logs, try executing `gp validate` inside of a workspace")
+			msg = []byte("image build failed (" + string(success) + "). This is likely due to a misconfiguration in your Dockerfile. Debug this using `gp validate` (visit https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration) to learn more")
 		} else {
-			msg = []byte("headless task failed: " + string(success) + ". I have no idea if this is an image build or not 🤷‍♂️")
+			msg = []byte("headless task failed: " + string(success))
 		}
 		// we signal task failure via kubernetes termination log
 		err := os.WriteFile("/dev/termination-log", msg, 0o644)

@@ -296,7 +296,7 @@ export const PrebuildDetailPage: FC = () => {
                                 <div className="py-4 px-6 flex flex-col gap-1">
                                     <PrebuildStatus prebuild={prebuild} />
                                     {prebuild?.status?.message && (
-                                        <div className="text-pk-content-secondary truncate">
+                                        <div className="text-pk-content-secondary line-clamp-2">
                                             {prebuild?.status.message}
                                         </div>
                                     )}
