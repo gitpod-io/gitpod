@@ -1717,7 +1717,7 @@ export class WorkspaceStarter {
             "resource:" +
                 ScopedResourceGuard.marshalResourceScope({
                     kind: "envVar",
-                    subjectID: "*/*",
+                    subjectID: "*/**",
                     operations: ["update"],
                 }),
         );
