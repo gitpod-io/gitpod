@@ -313,8 +313,13 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                     clientHandle.clientClosed.advise(connectionLifetime) {
                                         // Been canceled by user
                                         if (!canceledByGitpod) {
-                                            application.invokeLater {
-                                                connectionLifetime.terminate()
+                                            connectionLifetime.launch {
+                                                // Delay for 5 seconds to see if thinClient could be terminated in time
+                                                // Then we don't see error dialog from Gateway
+                                                delay(5000)
+                                                application.invokeLater {
+                                                    connectionLifetime.terminate()
+                                                }
                                             }
                                             return@advise
                                         }
