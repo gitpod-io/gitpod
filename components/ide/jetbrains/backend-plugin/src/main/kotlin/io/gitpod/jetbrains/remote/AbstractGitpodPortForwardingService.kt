@@ -40,6 +40,10 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
     private fun start() {
         if (application.isHeadlessEnvironment) return
 
+        if (isLocalPortForwardingDisabled()) {
+            thisLogger().warn("gitpod: Local port forwarding is disabled.")
+        }
+
         observePortsListWhileProjectIsOpen()
     }
 
@@ -104,10 +108,6 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
     }
 
     private fun syncPortsListWithClient(response: Status.PortsStatusResponse) {
-        if (isLocalPortForwardingDisabled()) {
-            thisLogger().warn("gitpod: Local port forwarding is disabled.")
-            return
-        }
         val ignoredPorts = ignoredPortsForNotificationService.getIgnoredPorts()
         val portsList = response.portsList.filter { !ignoredPorts.contains(it.localPort) }
         val portsNumbersFromPortsList = portsList.map { it.localPort }
@@ -139,6 +139,9 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
     }
 
     private fun startForwarding(portStatus: PortsStatus) {
+        if (isLocalPortForwardingDisabled()) {
+            return
+        }
         try {
             perClientPortForwardingManager.forwardPort(
                 portStatus.localPort,
