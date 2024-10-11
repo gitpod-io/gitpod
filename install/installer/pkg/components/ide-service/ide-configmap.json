@@ -840,6 +840,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.2.2",
+            "image": "{{.Repository}}/ide/rustrover:commit-7b8a3d952bf6f1b409d5137da6a0f1b446a14b08",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-b429e9373ca7d89c16cba2caa494c4671572f759",
+              "{{.Repository}}/ide/jb-launcher:commit-7b8a3d952bf6f1b409d5137da6a0f1b446a14b08"
+            ]
+          },
+          {
             "version": "2024.2.1",
             "image": "{{.Repository}}/ide/rustrover:commit-2aba460a50c43e830b015a6ff4e52e6491a3ed36",
             "imageLayers": [
