@@ -16,7 +16,7 @@ import org.jetbrains.io.response
 import java.nio.charset.StandardCharsets
 
 internal class GitpodAuthCallbackHandler : RestService() {
-    private val service = GitpodAuthService.instance
+    private val service = GitpodAuthService.instance.get()
 
     override fun getServiceName(): String = service.name
 
