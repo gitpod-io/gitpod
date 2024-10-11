@@ -1,6 +1,22 @@
 # Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
+FROM gitpod/openvscode-server-linux-build-agent:centos7-devtoolset8-x64 as dependencies_builder
+
+ENV TRIGGER_REBUILD 1
+
+ARG CODE_COMMIT
+
+RUN mkdir /gp-code \
+    && cd /gp-code \
+    && git init \
+    && git remote add origin https://github.com/gitpod-io/openvscode-server \
+    && git fetch origin $CODE_COMMIT --depth=1 \
+    && git reset --hard FETCH_HEAD
+WORKDIR /gp-code/remote
+
+RUN npm ci
+
 FROM gitpod/openvscode-server-linux-build-agent:focal-x64 as code_builder
 
 ENV TRIGGER_REBUILD 1
@@ -9,6 +25,7 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
 ENV VSCODE_ARCH=x64
 ENV NPM_REGISTRY=https://registry.npmjs.org
+ENV NODE_VERSION=20
 
 ARG CODE_COMMIT
 ARG CODE_QUALITY
@@ -17,12 +34,7 @@ ARG CODE_VERSION
 RUN sudo mkdir -m 0755 -p /etc/apt/keyrings
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 
-RUN if dpkg --compare-versions "$CODE_VERSION" "ge" "1.90"; then \
-      NODE_VERSION=20; \
-    else \
-      NODE_VERSION=18; \
-    fi && \
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_VERSION.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_VERSION.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && apt-get install -y nodejs
 
 RUN mkdir /gp-code \
@@ -41,13 +53,14 @@ RUN apt-get install -y pkg-config dbus xvfb libgtk-3-0 libxkbfile-dev libkrb5-de
     # Start dbus session
     && mkdir -p /var/run/dbus
 
-# Disable v8 cache used by yarn v1.x, refs https://github.com/nodejs/node/issues/51555
-ENV DISABLE_V8_COMPILE_CACHE=1
-
-# ENV npm_config_arch=x64
+ENV npm_config_arch=x64
 RUN mkdir -p .build \
     && npm config set registry "$NPM_REGISTRY" \
     && npm ci
+
+# copy remote dependencies build in dependencies_builder image
+RUN rm -rf remote/node_modules/
+COPY --from=dependencies_builder /gp-code/remote/node_modules/ /gp-code/remote/node_modules/
 
 # check that the provided codeVersion is the correct one for the given codeCommit
 RUN commitVersion=$(cat package.json | jq -r .version) \

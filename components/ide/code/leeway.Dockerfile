@@ -9,6 +9,7 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
 ENV VSCODE_ARCH=x64
 ENV NPM_REGISTRY=https://registry.npmjs.org
+ENV NODE_VERSION=20
 
 ARG CODE_COMMIT
 ARG CODE_QUALITY
@@ -17,12 +18,7 @@ ARG CODE_VERSION
 RUN sudo mkdir -m 0755 -p /etc/apt/keyrings
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 
-RUN if dpkg --compare-versions "$CODE_VERSION" "ge" "1.90"; then \
-      NODE_VERSION=20; \
-    else \
-      NODE_VERSION=18; \
-    fi && \
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_VERSION.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_VERSION.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && apt-get install -y nodejs
 
 RUN mkdir /gp-code \
@@ -40,9 +36,6 @@ RUN apt-get install -y pkg-config dbus xvfb libgtk-3-0 libxkbfile-dev libkrb5-de
     && service xvfb start \
     # Start dbus session
     && mkdir -p /var/run/dbus
-
-# Disable v8 cache used by yarn v1.x, refs https://github.com/nodejs/node/issues/51555
-ENV DISABLE_V8_COMPILE_CACHE=1
 
 # ENV npm_config_arch=x64
 RUN mkdir -p .build \
