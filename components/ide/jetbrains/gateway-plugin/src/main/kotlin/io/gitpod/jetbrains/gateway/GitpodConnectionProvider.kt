@@ -46,6 +46,7 @@ import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
+import java.awt.Component
 import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -70,6 +71,17 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
 
     private val jacksonMapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
+
+    private fun showTimedOutDialogDialog(workspaceId: String, detail: String?) {
+        val title = "Workspace Timed Out"
+        val message = "Your workspace $workspaceId has timed out${if (detail.isNullOrBlank()) "" else " : $detail"}."
+        val okButton = Messages.getOkButton()
+        val options = arrayOf(okButton)
+        val defaultIndex = 0
+        val icon = Messages.getInformationIcon()
+        Messages.showDialog(message, title, options, defaultIndex, icon)
+    }
 
     override suspend fun connect(
         parameters: Map<String, String>,
@@ -188,6 +200,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             var thinClientJob: Job? = null
 
             var lastUpdate: WorkspaceInstance? = null
+            var canceledByGitpod = false
             try {
                 for (update in updates) {
                     try {
@@ -255,8 +268,8 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                 statusMessage.text = ""
                             }
                         }
-
                         if (update.status.phase == "stopping" || update.status.phase == "stopped") {
+                            canceledByGitpod = true
                             thinClientJob?.cancel()
                             thinClient?.close()
                         }
@@ -295,11 +308,34 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                         SshHostTunnelConnector(credentials),
                                         URI(joinLinkResp.joinLink)
                                     )
+                                    var triggeredClientClosed = false
                                     clientHandle.clientClosed.advise(connectionLifetime) {
-                                        application.invokeLater {
-                                            GlobalScope.launch {
-                                                // Delay for 5 seconds to wait the thinClient actually close
-                                                delay(5000)
+                                        // Been canceled by user
+                                        if (!canceledByGitpod) {
+                                            application.invokeLater {
+                                                connectionLifetime.terminate()
+                                            }
+                                            return@advise
+                                        }
+                                        if (triggeredClientClosed) {
+                                            return@advise
+                                        }
+                                        triggeredClientClosed = true
+                                        // Wait until workspace is stopped
+                                        suspend fun waitUntilStopped(): Boolean {
+                                            while (lastUpdate.status.phase != "stopped") {
+                                                delay(1000)
+                                            }
+                                            return true
+                                        }
+                                        // Check if it's timed out, if so, show timed out dialog
+                                        GlobalScope.launch {
+                                            val isInStoppedPhase = waitUntilStopped()
+                                            val isTimedOut = isInStoppedPhase && phaseMessage.text == "Timed Out"
+                                            application.invokeLater {
+                                                if (isTimedOut) {
+                                                    showTimedOutDialogDialog(connectParams.resolvedWorkspaceId, lastUpdate.status.conditions.timeout)
+                                                }
                                                 connectionLifetime.terminate()
                                             }
                                         }
