@@ -41,6 +41,7 @@ import com.jetbrains.rd.util.ConcurrentHashMap
 import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.threading.coroutines.launch
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
 import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
 import io.gitpod.jetbrains.icons.GitpodIcons
@@ -329,7 +330,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                             return true
                                         }
                                         // Check if it's timed out, if so, show timed out dialog
-                                        GlobalScope.launch {
+                                        connectionLifetime.launch {
                                             val isInStoppedPhase = waitUntilStopped()
                                             val isTimedOut = isInStoppedPhase && phaseMessage.text == "Timed Out"
                                             application.invokeLater {
