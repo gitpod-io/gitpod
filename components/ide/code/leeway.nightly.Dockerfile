@@ -17,7 +17,7 @@ WORKDIR /gp-code/remote
 
 RUN npm ci
 
-FROM gitpod/openvscode-server-linux-build-agent:focal-x64 as code_builder
+FROM ubuntu:22.04 as code_builder
 
 ENV TRIGGER_REBUILD 1
 
@@ -30,6 +30,48 @@ ENV NODE_VERSION=20
 ARG CODE_COMMIT
 ARG CODE_QUALITY
 ARG CODE_VERSION
+
+# Latest stable git
+RUN apt-get update && apt-get install -y software-properties-common
+RUN add-apt-repository ppa:git-core/ppa -y
+
+RUN apt-get update && apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    file \
+    git \
+    gnome-keyring \
+    iproute2 \
+    libfuse2 \
+    libgconf-2-4 \
+    libgdk-pixbuf2.0-0 \
+    libgl1 \
+    libgtk-3.0 \
+    libsecret-1-dev \
+    libssl-dev \
+    libx11-dev \
+    libx11-xcb-dev \
+    libxkbfile-dev \
+    locales \
+    lsb-release \
+    lsof \
+    python-dbus \
+    python3-pip \
+    sudo \
+    wget \
+    xvfb \
+    tzdata \
+    unzip \
+    jq
+
+# Set python3 as default
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+RUN python --version
+
+# Check compiler toolchain
+RUN gcc --version
+RUN g++ --version
 
 RUN sudo mkdir -m 0755 -p /etc/apt/keyrings
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
