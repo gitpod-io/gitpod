@@ -56,7 +56,6 @@ RUN apt-get update && apt-get install -y \
     locales \
     lsb-release \
     lsof \
-    python-dbus \
     python3-pip \
     sudo \
     wget \
