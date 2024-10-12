@@ -19,6 +19,8 @@ RUN npm ci
 
 FROM ubuntu:22.04 as code_builder
 
+ARG DEBIAN_FRONTEND=noninteractive
+
 ENV TRIGGER_REBUILD 1
 
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
