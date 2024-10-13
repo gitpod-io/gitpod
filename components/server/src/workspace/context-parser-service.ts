@@ -11,6 +11,7 @@ import { IPrefixContextParser, IContextParser } from "./context-parser";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ConfigProvider } from "./config-provider";
 import { InvalidGitpodYMLError } from "@gitpod/public-api-common/lib/public-api-errors";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class ContextParser {
@@ -83,7 +84,10 @@ export class ContextParser {
                 }
             }
             if (!result) {
-                throw new Error(`Couldn't parse context '${nonPrefixedContextURL}'.`);
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    `Couldn't parse context '${nonPrefixedContextURL}'.`,
+                );
             }
 
             // TODO: Make the parsers return the context with normalizedContextURL set
