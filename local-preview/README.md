@@ -14,9 +14,14 @@ k3d cluster create -c ./local-preview/k3d.yaml
 ## install prereqs
 
 ```bash
+gcloud auth login
+gcloud auth application-default login
+
 TF_VAR_preview_name=local leeway run dev/preview:create-preview
 cd ./local-preview/
 ./setup.sh
+
+nvm install v18.18.2 && npm install -g yarn
 ```
 
 
