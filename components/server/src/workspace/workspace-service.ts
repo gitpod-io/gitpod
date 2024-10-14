@@ -565,18 +565,22 @@ export class WorkspaceService {
                 workspace.deletionEligibilityTime &&
                 workspace.deletionEligibilityTime > deletionEligibilityTime.toISOString()
             ) {
-                log.warn({ userId, workspaceId }, "Prevented moving deletion eligibility time backwards", {
-                    hasGitChanges,
-                    timestamps: new TrustedValue({
-                        wouldBeDeletionEligibilityTime: deletionEligibilityTime.toISOString(),
-                        currentDeletionEligibilityTime: workspace.deletionEligibilityTime,
-                        instanceStoppingTime: instance?.stoppingTime,
-                        instanceStartedTime: instance?.startedTime,
-                        instanceCreationTime: instance?.creationTime,
-                        workspaceCreationTime: workspace.creationTime,
-                        lastActive,
-                    }),
-                });
+                log.warn(
+                    { userId, workspaceId, instanceId: instance?.id },
+                    "Prevented moving deletion eligibility time backwards",
+                    {
+                        hasGitChanges,
+                        timestamps: new TrustedValue({
+                            wouldBeDeletionEligibilityTime: deletionEligibilityTime.toISOString(),
+                            currentDeletionEligibilityTime: workspace.deletionEligibilityTime,
+                            instanceStoppingTime: instance?.stoppingTime,
+                            instanceStartedTime: instance?.startedTime,
+                            instanceCreationTime: instance?.creationTime,
+                            workspaceCreationTime: workspace.creationTime,
+                            lastActive,
+                        }),
+                    },
+                );
                 return;
             }
             await this.db.updatePartial(workspaceId, {
