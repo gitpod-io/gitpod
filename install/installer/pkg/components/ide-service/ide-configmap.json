@@ -8,7 +8,7 @@
         "type": "browser",
         "logo": "{{.IdeLogoBase}}/vscode.svg",
         "label": "Browser",
-        "image": "{{.Repository}}/ide/code:commit-8161361bd80fc71a1fb6eaa95b7a802bb652d6be",
+        "image": "{{.Repository}}/ide/code:commit-d721abf44f1c006dc73f16e9baeb73f5c9794dec",
         "latestImage": "{{.ResolvedCodeBrowserImageLatest}}",
         "imageLayers": [
           "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
