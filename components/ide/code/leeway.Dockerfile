@@ -1,7 +1,25 @@
-# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
-FROM gitpod/openvscode-server-linux-build-agent:focal-x64 as code_builder
+FROM gitpod/openvscode-server-linux-build-agent:centos7-devtoolset8-x64 as dependencies_builder
+
+ENV TRIGGER_REBUILD 1
+
+ARG CODE_COMMIT
+
+RUN mkdir /gp-code \
+    && cd /gp-code \
+    && git init \
+    && git remote add origin https://github.com/gitpod-io/openvscode-server \
+    && git fetch origin $CODE_COMMIT --depth=1 \
+    && git reset --hard FETCH_HEAD
+WORKDIR /gp-code/remote
+
+RUN npm ci
+
+FROM ubuntu:22.04 as code_builder
+
+ARG DEBIAN_FRONTEND=noninteractive
 
 ENV TRIGGER_REBUILD 1
 
@@ -14,6 +32,47 @@ ENV NODE_VERSION=20
 ARG CODE_COMMIT
 ARG CODE_QUALITY
 ARG CODE_VERSION
+
+# Latest stable git
+RUN apt-get update && apt-get install -y software-properties-common
+RUN add-apt-repository ppa:git-core/ppa -y
+
+RUN apt-get update && apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    file \
+    git \
+    gnome-keyring \
+    iproute2 \
+    libfuse2 \
+    libgconf-2-4 \
+    libgdk-pixbuf2.0-0 \
+    libgl1 \
+    libgtk-3.0 \
+    libsecret-1-dev \
+    libssl-dev \
+    libx11-dev \
+    libx11-xcb-dev \
+    libxkbfile-dev \
+    locales \
+    lsb-release \
+    lsof \
+    python3-pip \
+    sudo \
+    wget \
+    xvfb \
+    tzdata \
+    unzip \
+    jq
+
+# Set python3 as default
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+RUN python --version
+
+# Check compiler toolchain
+RUN gcc --version
+RUN g++ --version
 
 RUN sudo mkdir -m 0755 -p /etc/apt/keyrings
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
@@ -37,10 +96,14 @@ RUN apt-get install -y pkg-config dbus xvfb libgtk-3-0 libxkbfile-dev libkrb5-de
     # Start dbus session
     && mkdir -p /var/run/dbus
 
-# ENV npm_config_arch=x64
+ENV npm_config_arch=x64
 RUN mkdir -p .build \
     && npm config set registry "$NPM_REGISTRY" \
     && npm ci
+
+# copy remote dependencies build in dependencies_builder image
+RUN rm -rf remote/node_modules/
+COPY --from=dependencies_builder /gp-code/remote/node_modules/ /gp-code/remote/node_modules/
 
 # check that the provided codeVersion is the correct one for the given codeCommit
 RUN commitVersion=$(cat package.json | jq -r .version) \

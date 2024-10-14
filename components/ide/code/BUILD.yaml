@@ -25,7 +25,7 @@ packages:
       - codeQuality
       - codeVersion
     config:
-      dockerfile: leeway.nightly.Dockerfile
+      dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.codeImage
       buildArgs:
