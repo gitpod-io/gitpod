@@ -36,6 +36,7 @@ import {
     PrebuildWithWorkspace,
     PrebuildWithWorkspaceAndInstances,
     PrebuiltUpdatableAndWorkspace,
+    WorkspaceAndOwner,
     WorkspaceDB,
     WorkspaceOwnerAndContentDeletedTime,
     WorkspaceOwnerAndDeletionEligibility,
@@ -492,39 +493,25 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             throw new Error("cutOffDate must not be in the future, was: " + cutOffDate.toISOString());
         }
         const workspaceRepo = await this.getWorkspaceRepo();
-        const qb = workspaceRepo
-            .createQueryBuilder("ws")
-            .leftJoinAndMapOne(
-                "ws.latestInstance",
-                DBWorkspaceInstance,
-                "wsi",
-                `wsi.id = (
-                SELECT i.id
-                FROM d_b_workspace_instance AS i
-                WHERE i.workspaceId = ws.id
-                ORDER BY i.creationTime DESC
-                LIMIT 1
-            )`,
-            )
-            .select(["ws.id", "ws.ownerId", "ws.deletionEligibilityTime", "wsi.id", "wsi.status"])
-            .where("ws.deleted = :deleted", { deleted: 0 })
-            .andWhere("ws.type = :type", { type })
-            .andWhere("ws.softDeleted IS NULL")
-            .andWhere("ws.softDeletedTime = ''")
-            .andWhere("ws.pinned = :pinned", { pinned: 0 })
-            .andWhere("ws.deletionEligibilityTime != ''")
-            .andWhere("ws.deletionEligibilityTime < :cutOffDate", { cutOffDate: cutOffDate.toISOString() })
-            // we don't want to delete workspaces that are active
-            .andWhere(
-                new Brackets((qb) => {
-                    qb.where("wsi.id IS NULL").orWhere("JSON_UNQUOTE(wsi.status->>'$.phase') = :stoppedStatus", {
-                        stoppedStatus: "stopped",
-                    });
-                }),
-            )
-            .limit(limit);
+        const dbResults = await workspaceRepo.query(
+            `
+                SELECT ws.id AS id,
+                       ws.ownerId AS ownerId,
+                       ws.deletionEligibilityTime AS deletionEligibilityTime
+                    FROM d_b_workspace AS ws
+                    WHERE ws.deleted = 0
+                        AND ws.type = ?
+                        AND ws.softDeleted IS NULL
+                        AND ws.softDeletedTime = ''
+                        AND ws.pinned = 0
+                        AND ws.deletionEligibilityTime != ''
+                        AND ws.deletionEligibilityTime < ?
+                    LIMIT ?;
+            `,
+            [type, cutOffDate.toISOString(), limit],
+        );
 
-        return qb.getMany();
+        return dbResults as WorkspaceAndOwner[];
     }
 
     public async findWorkspacesForPurging(
