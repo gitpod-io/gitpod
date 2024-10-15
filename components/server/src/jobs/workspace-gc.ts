@@ -29,7 +29,7 @@ import { StorageClient } from "../storage/storage-client";
  *    - find _any_ workspace "softDeleted" for long enough -> move to "contentDeleted"
  *    - find _any_ workspace "contentDeleted" for long enough -> move to "purged"
  *  - prebuilds are special in that:
- *    - the GC has a dedicated sub-task to move workspace of type "prebuid" from "to delete" (with a different threshold) -> to "contentDeleted" directly
+ *    - the GC has a dedicated sub-task to move workspace of type "prebuild" from "to delete" (with a different threshold) -> to "contentDeleted" directly
  *    - the "purging" takes care of all Prebuild-related sub-resources, too
  */
 @injectable()
@@ -54,6 +54,11 @@ export class WorkspaceGarbageCollector implements Job {
             log.info("workspace-gc: Garbage collection disabled.");
             return;
         }
+
+        log.info("workspace-gc: job started", {
+            workspaceMinAgeDays: this.config.workspaceGarbageCollection.minAgeDays,
+            prebuildMinAgeDays: this.config.workspaceGarbageCollection.minAgePrebuildDays,
+        });
 
         // Move eligible "regular" workspace -> softDeleted
         try {
@@ -115,6 +120,10 @@ export class WorkspaceGarbageCollector implements Job {
                         err,
                     );
                 }
+
+                log.info({ workspaceId: ws.id }, `workspace-gc: soft deleted a workspace`, {
+                    deletionEligibilityTime: ws.deletionEligibilityTime,
+                });
             }
             const afterDelete = new Date();
 
@@ -187,6 +196,9 @@ export class WorkspaceGarbageCollector implements Job {
                 } catch (err) {
                     log.error({ workspaceId: ws.id }, "workspace-gc: failed to purge workspace", err);
                 }
+                log.info({ workspaceId: ws.id }, `workspace-gc: hard deleted a workspace`, {
+                    contentDeletedTime: ws.contentDeletedTime,
+                });
             }
             const afterDelete = new Date();
 

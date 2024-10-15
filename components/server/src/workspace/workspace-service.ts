@@ -223,8 +223,8 @@ export class WorkspaceService {
             );
             throw err;
         }
-        this.asyncUpdateDeletionEligabilityTime(user.id, workspace.id);
-        this.asyncUpdateDeletionEligabilityTimeForUsedPrebuild(user.id, workspace);
+        this.asyncUpdateDeletionEligibilityTime(user.id, workspace.id, true);
+        this.asyncUpdateDeletionEligibilityTimeForUsedPrebuild(user.id, workspace);
         if (project && workspace.type === "regular") {
             this.asyncHandleUpdatePrebuildTriggerStrategy({ ctx, project, workspace, user });
             this.asyncStartPrebuild({ ctx, project, workspace, user });
@@ -375,7 +375,7 @@ export class WorkspaceService {
             return;
         }
         await this.workspaceStarter.stopWorkspaceInstance({}, instance.id, instance.region, reason, policy);
-        this.asyncUpdateDeletionEligabilityTime(userId, workspaceId);
+        this.asyncUpdateDeletionEligibilityTime(userId, workspaceId, true);
     }
 
     public async stopRunningWorkspacesForUser(
@@ -396,13 +396,13 @@ export class WorkspaceService {
                     reason,
                     policy,
                 );
-                this.asyncUpdateDeletionEligabilityTime(userId, info.workspace.id);
+                this.asyncUpdateDeletionEligibilityTime(userId, info.workspace.id, false);
             }),
         );
         return infos.map((instance) => instance.workspace);
     }
 
-    private asyncUpdateDeletionEligabilityTimeForUsedPrebuild(userId: string, workspace: Workspace): void {
+    private asyncUpdateDeletionEligibilityTimeForUsedPrebuild(userId: string, workspace: Workspace): void {
         (async () => {
             if (WithPrebuild.is(workspace.context) && workspace.context.prebuildWorkspaceId) {
                 // mark the prebuild active
@@ -410,7 +410,7 @@ export class WorkspaceService {
                     workspace.context.prebuildWorkspaceId,
                 );
                 if (prebuiltWorkspace?.buildWorkspaceId) {
-                    await this.updateDeletionEligabilityTime(userId, prebuiltWorkspace?.buildWorkspaceId, true);
+                    await this.updateDeletionEligibilityTime(userId, prebuiltWorkspace?.buildWorkspaceId, true);
                 }
             }
         })().catch((err) =>
@@ -515,8 +515,8 @@ export class WorkspaceService {
         );
     }
 
-    private asyncUpdateDeletionEligabilityTime(userId: string, workspaceId: string): void {
-        this.updateDeletionEligabilityTime(userId, workspaceId).catch((err) =>
+    private asyncUpdateDeletionEligibilityTime(userId: string, workspaceId: string, activeNow?: boolean): void {
+        this.updateDeletionEligibilityTime(userId, workspaceId, activeNow).catch((err) =>
             log.error({ userId, workspaceId }, "Failed to update deletion eligibility time", err),
         );
     }
@@ -524,26 +524,23 @@ export class WorkspaceService {
     /**
      * Sets the deletionEligibilityTime of the workspace, depending on the current state of the workspace and the configuration.
      *
-     * @param userId sets the
-     * @param workspaceId
+     * @param userId the user to act as
+     * @param workspaceId the workspace to update
      * @returns
      */
-    async updateDeletionEligabilityTime(userId: string, workspaceId: string, activeNow = false): Promise<void> {
+    async updateDeletionEligibilityTime(userId: string, workspaceId: string, activeNow = false): Promise<void> {
         try {
             let daysToLive = this.config.workspaceGarbageCollection?.minAgeDays || 14;
             const daysToLiveForPrebuilds = this.config.workspaceGarbageCollection?.minAgePrebuildDays || 7;
 
             const workspace = await this.doGetWorkspace(userId, workspaceId);
             const instance = await this.db.findCurrentInstance(workspaceId);
-            let lastActive =
+            const lastActive =
                 instance?.stoppingTime || instance?.startedTime || instance?.creationTime || workspace?.creationTime;
-            if (activeNow) {
-                lastActive = new Date().toISOString();
-            }
-            if (!lastActive) {
+            if (!lastActive && !activeNow) {
                 return;
             }
-            const deletionEligibilityTime = new Date(lastActive);
+            const deletionEligibilityTime = activeNow ? new Date() : new Date(lastActive);
             if (workspace.type === "prebuild") {
                 // set to last active plus daysToLiveForPrebuilds as iso string
                 deletionEligibilityTime.setDate(deletionEligibilityTime.getDate() + daysToLiveForPrebuilds);
@@ -553,14 +550,39 @@ export class WorkspaceService {
                 return;
             }
             // workspaces with pending changes live twice as long
-            if (
-                (instance?.gitStatus?.totalUncommitedFiles || 0) > 0 ||
-                (instance?.gitStatus?.totalUnpushedCommits || 0) > 0 ||
-                (instance?.gitStatus?.totalUntrackedFiles || 0) > 0
-            ) {
+            const hasGitChanges =
+                instance?.gitStatus?.totalUncommitedFiles ||
+                0 > 0 ||
+                instance?.gitStatus?.totalUnpushedCommits ||
+                0 > 0 ||
+                instance?.gitStatus?.totalUntrackedFiles ||
+                0 > 0;
+            if (hasGitChanges) {
                 daysToLive = daysToLive * 2;
             }
             deletionEligibilityTime.setDate(deletionEligibilityTime.getDate() + daysToLive);
+            if (
+                workspace.deletionEligibilityTime &&
+                workspace.deletionEligibilityTime > deletionEligibilityTime.toISOString()
+            ) {
+                log.warn(
+                    { userId, workspaceId, instanceId: instance?.id },
+                    "Prevented moving deletion eligibility time backwards",
+                    {
+                        hasGitChanges,
+                        timestamps: new TrustedValue({
+                            wouldBeDeletionEligibilityTime: deletionEligibilityTime.toISOString(),
+                            currentDeletionEligibilityTime: workspace.deletionEligibilityTime,
+                            instanceStoppingTime: instance?.stoppingTime,
+                            instanceStartedTime: instance?.startedTime,
+                            instanceCreationTime: instance?.creationTime,
+                            workspaceCreationTime: workspace.creationTime,
+                            lastActive,
+                        }),
+                    },
+                );
+                return;
+            }
             await this.db.updatePartial(workspaceId, {
                 deletionEligibilityTime: deletionEligibilityTime.toISOString(),
             });
@@ -819,7 +841,7 @@ export class WorkspaceService {
 
         // at this point we're about to actually start a new workspace
         const result = await this.workspaceStarter.startWorkspace(ctx, workspace, user, await projectPromise, options);
-        this.asyncUpdateDeletionEligabilityTime(user.id, workspaceId);
+        this.asyncUpdateDeletionEligibilityTime(user.id, workspaceId, true);
         return result;
     }
 
@@ -928,7 +950,7 @@ export class WorkspaceService {
 
         const workspace = await this.doGetWorkspace(userId, workspaceId);
         instance = await this.db.updateInstancePartial(instance.id, { gitStatus });
-        await this.updateDeletionEligabilityTime(userId, workspaceId);
+        await this.updateDeletionEligibilityTime(userId, workspaceId, true);
         await this.publisher.publishInstanceUpdate({
             instanceID: instance.id,
             ownerID: workspace.ownerId,
