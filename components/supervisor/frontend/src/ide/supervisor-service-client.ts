@@ -81,6 +81,10 @@ export class SupervisorServiceClient {
 
         // track whenever a) we are done, or b) we try to connect (again)
         const trackCheckReady = (p: { aborted?: boolean }, err?: any): void => {
+            if (!this.serviceClient.isCheckReadyRetryEnabled()) {
+                return;
+            }
+
             const props: Record<string, string> = {
                 component: "supervisor-frontend",
                 instanceId: this.serviceClient.latestInfo?.instanceId ?? "",

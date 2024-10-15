@@ -84,11 +84,14 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
 
     const setActiveElement = useCallback(
         (element: string) => {
+            if (!filteredOptions.find((el) => element === el.id)?.isSelectable) {
+                return;
+            }
             setSelectedElementTemp(element);
             const el = document.getElementById(element);
             el?.scrollIntoView({ block: "nearest" });
         },
-        [setSelectedElementTemp],
+        [filteredOptions],
     );
 
     const handleOpenChange = useCallback(

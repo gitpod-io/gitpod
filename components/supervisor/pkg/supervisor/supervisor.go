@@ -465,7 +465,7 @@ func Run(options ...RunOption) {
 
 	if cfg.isHeadless() {
 		wg.Add(1)
-		go stopWhenTasksAreDone(ctx, &wg, shutdown, tasksSuccessChan)
+		go stopWhenTasksAreDone(&wg, cfg, shutdown, tasksSuccessChan)
 	} else if !opts.RunGP {
 		wg.Add(1)
 		go portMgmt.Run(ctx, &wg)
@@ -1593,15 +1593,20 @@ func tunnelOverSSH(ctx context.Context, tunneled *ports.TunneledPortsService, ne
 	<-ctx.Done()
 }
 
-func stopWhenTasksAreDone(ctx context.Context, wg *sync.WaitGroup, shutdown chan ShutdownReason, successChan <-chan taskSuccess) {
+func stopWhenTasksAreDone(wg *sync.WaitGroup, cfg *Config, shutdown chan ShutdownReason, successChan <-chan taskSuccess) {
 	defer wg.Done()
 	defer close(shutdown)
 
 	success := <-successChan
 	if success.Failed() {
+		var msg []byte
+		if cfg.isImageBuild() {
+			msg = []byte("image build failed (" + string(success) + "). This is likely due to a misconfiguration in your Dockerfile. Debug this using `gp validate` (visit https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration) to learn more")
+		} else {
+			msg = []byte("headless task failed: " + string(success))
+		}
 		// we signal task failure via kubernetes termination log
-		msg := []byte("headless task failed: " + string(success))
-		err := ioutil.WriteFile("/dev/termination-log", msg, 0o644)
+		err := os.WriteFile("/dev/termination-log", msg, 0o644)
 		if err != nil {
 			log.WithError(err).Error("err while writing termination log")
 		}
