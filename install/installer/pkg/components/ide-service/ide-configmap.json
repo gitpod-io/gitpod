@@ -8,7 +8,7 @@
         "type": "browser",
         "logo": "{{.IdeLogoBase}}/vscode.svg",
         "label": "Browser",
-        "image": "{{.Repository}}/ide/code:commit-d721abf44f1c006dc73f16e9baeb73f5c9794dec",
+        "image": "{{.Repository}}/ide/code:commit-9d19ad52aa2093809c3c7133cc8d378c5406dce5",
         "latestImage": "{{.ResolvedCodeBrowserImageLatest}}",
         "imageLayers": [
           "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
@@ -20,6 +20,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "1.94.1",
+            "image": "{{.Repository}}/ide/code:commit-d721abf44f1c006dc73f16e9baeb73f5c9794dec",
+            "imageLayers": [
+              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/code-codehelper:commit-93f81feb1576d690040be79d1eff44d670be740d"
+            ]
+          },
           {
             "version": "1.93.1",
             "image": "{{.Repository}}/ide/code:commit-b816fc0f01d6b1d4dde5fcf6e08ff556c38dda5f",
