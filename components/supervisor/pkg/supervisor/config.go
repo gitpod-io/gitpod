@@ -309,6 +309,9 @@ type WorkspaceConfig struct {
 	// GitpodHeadless controls whether the workspace is running headless
 	GitpodHeadless string `env:"GITPOD_HEADLESS"`
 
+	// BobDockerfilePath is the path to the Dockerfile image builder will attempt to build
+	BobDockerfilePath string `env:"BOB_DOCKERFILE_PATH"`
+
 	// DebugEnabled controls whether the supervisor debugging facilities (pprof, grpc tracing) should be enabled
 	DebugEnable bool `env:"SUPERVISOR_DEBUG_ENABLE"`
 
@@ -470,7 +473,7 @@ func (c WorkspaceConfig) isDebugWorkspace() bool {
 
 // isImageBuild returns true if the workspace is an image build.
 func (c WorkspaceConfig) isImageBuild() bool {
-	return os.Getenv("BOB_DOCKERFILE_PATH") != ""
+	return c.BobDockerfilePath != ""
 }
 
 var contentSources = map[api.ContentSource]csapi.WorkspaceInitSource{
