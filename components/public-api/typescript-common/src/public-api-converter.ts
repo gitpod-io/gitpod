@@ -413,8 +413,8 @@ export class PublicAPIConverter {
         status.phase.name = this.toPhase(arg);
         status.instanceId = arg.id;
         status.conditions = new WorkspaceStatus_WorkspaceConditions({
-            failed: arg.status.conditions.failed,
-            timeout: arg.status.conditions.timeout,
+            failed: arg.status.conditions?.failed,
+            timeout: arg.status.conditions?.timeout,
         });
         status.gitStatus = this.toGitStatus(arg, status.gitStatus);
 
