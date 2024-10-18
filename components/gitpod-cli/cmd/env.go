@@ -149,7 +149,7 @@ func connectToServer(ctx context.Context, options *connectToServerOptions) (*con
 	operations := "create/get/update/delete"
 	if options != nil && options.setEnvScope == envScopeUser {
 		// Updating user env vars requires a different token with a special scope
-		repositoryPattern = "*/*"
+		repositoryPattern = "*/**"
 		operations = "update"
 	}
 
@@ -230,7 +230,7 @@ func setEnvs(ctx context.Context, setEnvScope envScope, args []string) error {
 				if ferr, ok := err.(*jsonrpc2.Error); ok && ferr.Code == http.StatusForbidden && setEnvScope == envScopeUser {
 					return fmt.Errorf(""+
 						"Can't automatically create env var `%s` for security reasons.\n"+
-						"Please create the var manually under %s/user/variables using Name=%s, Scope=*/*, Value=foobar", v.Name, result.gitpodHost, v.Name)
+						"Please create the var manually under %s/user/variables using Name=%s, Scope=*/**, Value=foobar", v.Name, result.gitpodHost, v.Name)
 				}
 				return err
 			}
