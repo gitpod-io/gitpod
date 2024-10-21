@@ -69,6 +69,7 @@ jobs:
               - [ ] test `gp open` and `gp preview`
               - [ ] test open in VS Code Desktop, check `gp open` and `gp preview` in task/user terminals
               - [ ] telemetry data like `vscode_extension_gallery` is collected in [Segment](https://app.segment.com/gitpod/sources/staging_trusted/debugger)
+              - [ ] test using `ubuntu 18` is working well, [example repo](https://github.com/jeanp413/test-gp-prebuild/tree/jp/damaged-aardwolf)
 
             ### Preview status
             gitpod:summary
