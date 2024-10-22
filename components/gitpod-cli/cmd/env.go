@@ -34,8 +34,9 @@ var scope = string(envScopeRepo)
 type envScope string
 
 var (
-	envScopeRepo envScope = "repo"
-	envScopeUser envScope = "user"
+	envScopeRepo       envScope = "repo"
+	envScopeUser       envScope = "user"
+	envScopeLegacyUser envScope = "legacy-user"
 )
 
 func envScopeFromString(s string) envScope {
@@ -149,6 +150,11 @@ func connectToServer(ctx context.Context, options *connectToServerOptions) (*con
 	operations := "create/get/update/delete"
 	if options != nil && options.setEnvScope == envScopeUser {
 		// Updating user env vars requires a different token with a special scope
+		repositoryPattern = "*/**"
+		operations = "update"
+	}
+	if options != nil && options.setEnvScope == envScopeLegacyUser {
+		// Updating user env vars requires a different token with a special scope
 		repositoryPattern = "*/*"
 		operations = "update"
 	}
@@ -228,11 +234,25 @@ func setEnvs(ctx context.Context, setEnvScope envScope, args []string) error {
 			err = result.client.SetEnvVar(ctx, v)
 			if err != nil {
 				if ferr, ok := err.(*jsonrpc2.Error); ok && ferr.Code == http.StatusForbidden && setEnvScope == envScopeUser {
-					return fmt.Errorf(""+
-						"Can't automatically create env var `%s` for security reasons.\n"+
-						"Please create the var manually under %s/user/variables using Name=%s, Scope=*/*, Value=foobar", v.Name, result.gitpodHost, v.Name)
+					// If we tried updating an env var with */** and it doesn't exist, it may exist with the */* scope
+					options.setEnvScope = envScopeLegacyUser
+					result, err := connectToServer(ctx, &options)
+					if err != nil {
+						return err
+					}
+					defer result.client.Close()
+
+					v.RepositoryPattern = "*/*"
+					err = result.client.SetEnvVar(ctx, v)
+					if ferr, ok := err.(*jsonrpc2.Error); ok && ferr.Code == http.StatusForbidden {
+						fmt.Println(ferr.Message, ferr.Data)
+						return fmt.Errorf(""+
+							"Can't automatically create env var `%s` for security reasons.\n"+
+							"Please create the var manually under %s/user/variables using Name=%s, Scope=*/**, Value=foobar", v.Name, result.gitpodHost, v.Name)
+					}
+				} else {
+					return err
 				}
-				return err
 			}
 			printVar(v.Name, v.Value, exportEnvs)
 			return nil
