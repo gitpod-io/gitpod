@@ -17,9 +17,10 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.CachedSingletonsRegistry
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.util.Base64
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.EventDispatcher
 import com.intellij.util.Url
 import com.intellij.util.Urls.encodeParameters
@@ -36,6 +37,7 @@ import java.net.http.HttpResponse
 import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.function.Supplier
 import kotlin.math.absoluteValue
 
 @Service
@@ -138,7 +140,7 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
 
                 val jwt = with(jacksonMapper) {
                     propertyNamingStrategy = PropertyNamingStrategies.LowerCaseStrategy()
-                    readValue(Base64.decode(responseData.accessToken.split('.')[1]), JsonWebToken::class.java)
+                    readValue(Base64.getDecoder().decode(responseData.accessToken.split('.')[1]), JsonWebToken::class.java)
                 }
                 SimpleCredentials(jwt.jti)
             }
@@ -149,7 +151,8 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
     }
 
     companion object {
-        val instance: GitpodAuthService = service()
+        @Suppress("UnstableApiUsage")
+        val instance: Supplier<GitpodAuthService> = CachedSingletonsRegistry.lazy { service() }
 
         private const val SERVICE_NAME = "gitpod/oauth"
         private const val CLIENT_ID = "jetbrains-gateway-gitpod-plugin"
@@ -177,8 +180,8 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
         }
 
         suspend fun authorize(gitpodHost: String): String {
-            val accessToken = instance.authorize(gitpodHost).await().accessToken
-            setAccessToken(gitpodHost, accessToken!!)
+            val accessToken = instance.get().authorize(gitpodHost).await().accessToken
+            setAccessToken(gitpodHost, accessToken)
             return accessToken
         }
 

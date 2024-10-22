@@ -700,7 +700,7 @@ describe("WorkspaceService", async () => {
             workspaceImage: "",
         });
 
-        await svc.updateDeletionEligabilityTime(owner.id, ws.id);
+        await svc.updateDeletionEligibilityTime(owner.id, ws.id);
 
         const workspace = await svc.getWorkspace(owner.id, ws.id);
         expect(workspace).to.not.be.undefined;
@@ -734,7 +734,7 @@ describe("WorkspaceService", async () => {
             workspaceImage: "",
         });
 
-        await svc.updateDeletionEligabilityTime(owner.id, ws.id);
+        await svc.updateDeletionEligibilityTime(owner.id, ws.id);
 
         const workspace = await svc.getWorkspace(owner.id, ws.id);
         expect(workspace).to.not.be.undefined;
@@ -770,7 +770,7 @@ describe("WorkspaceService", async () => {
             workspaceImage: "",
         });
 
-        await svc.updateDeletionEligabilityTime(owner.id, ws.id);
+        await svc.updateDeletionEligibilityTime(owner.id, ws.id);
 
         const workspace = await svc.getWorkspace(owner.id, ws.id);
         expect(workspace).to.not.be.undefined;

@@ -17,7 +17,7 @@
 </div>
 
 
-[Gitpod](https://www.gitpod.io)’s developer platform provides on-demand, pre-configured environments that automatically integrate into any tool, library, or dependency required for creating software. Gitpod workspaces are the fastest and most secure way to ship software and are as easy as adding a .gitpod.yml file to the root of any repository.
+[Gitpod](https://www.gitpod.io)’s developer platform provides on-demand, pre-configured environments that automatically integrate into any tool, library, or dependency required for creating software. Gitpod workspaces are the fastest and most secure way to ship software and are as easy as adding a `.gitpod.yml` file to the root of any repository.
 
 📄 [Read Cloud Development Environment white paper](https://www.gitpod.io/whitepaper/cde)
 

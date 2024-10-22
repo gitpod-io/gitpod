@@ -38,6 +38,8 @@ import {
     PrebuiltUpdatableAndWorkspace,
     WorkspaceAndOwner,
     WorkspaceDB,
+    WorkspaceOwnerAndContentDeletedTime,
+    WorkspaceOwnerAndDeletionEligibility,
     WorkspaceOwnerAndSoftDeleted,
     WorkspacePortsAuthData,
 } from "../workspace-db";
@@ -486,8 +488,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         cutOffDate: Date = new Date(),
         limit: number = 100,
         type: WorkspaceType = "regular",
-    ): Promise<WorkspaceAndOwner[]> {
-        // we do not allow to run this with a future date
+    ): Promise<WorkspaceOwnerAndDeletionEligibility[]> {
         if (cutOffDate > new Date()) {
             throw new Error("cutOffDate must not be in the future, was: " + cutOffDate.toISOString());
         }
@@ -495,7 +496,8 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         const dbResults = await workspaceRepo.query(
             `
                 SELECT ws.id AS id,
-                       ws.ownerId AS ownerId
+                       ws.ownerId AS ownerId,
+                       ws.deletionEligibilityTime AS deletionEligibilityTime
                     FROM d_b_workspace AS ws
                     WHERE ws.deleted = 0
                         AND ws.type = ?
@@ -516,12 +518,12 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         minContentDeletionTimeInDays: number,
         limit: number,
         now: Date,
-    ): Promise<WorkspaceAndOwner[]> {
+    ): Promise<WorkspaceOwnerAndContentDeletedTime[]> {
         const minPurgeTime = daysBefore(now.toISOString(), minContentDeletionTimeInDays);
         const repo = await this.getWorkspaceRepo();
         const qb = repo
             .createQueryBuilder("ws")
-            .select(["ws.id", "ws.ownerId"])
+            .select(["ws.id", "ws.ownerId", "ws.contentDeletedTime"])
             .where(`ws.contentDeletedTime != ''`)
             .andWhere(`ws.contentDeletedTime < :minPurgeTime`, { minPurgeTime })
             .andWhere(`ws.deleted = 0`)

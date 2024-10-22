@@ -7,8 +7,8 @@ defaultArgs:
   publishToNPM: true
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: dbe6cce70f2466a5f716a17d4fccdf198ca6287f
-  codeVersion: 1.93.1
+  codeCommit: df9057e10ad761c6a8378b72b37554c1458256e3
+  codeVersion: 1.94.2
   codeQuality: stable
   codeWebExtensionCommit: 7ff72a2938a7a06cbdf3964590f7e9b7525958f3
   xtermCommit: 8f10c5febf0162a3c2309076302f770fbad38fde
@@ -21,7 +21,7 @@ defaultArgs:
   webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2024.2.3.tar.gz"
   riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2024.1.4.tar.gz"
   clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2024.2.2.tar.gz"
-  rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2024.2.2.tar.gz"
+  rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2024.2.3.tar.gz"
   jbBackendVersion: "latest"
   dockerVersion: "20.10.24"
   dockerComposeVersion: "2.27.0-gitpod.0"

@@ -5,7 +5,7 @@
  */
 
 import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
-import { deduplicateAndFilterRepositories } from "./unified-repositories-search-query";
+import { deduplicateAndFilterRepositories, isValidGitUrl } from "./unified-repositories-search-query";
 
 function repo(name: string, project?: string): SuggestedRepository {
     return new SuggestedRepository({
@@ -94,4 +94,28 @@ test("it should return all repositories without duplicates when excludeProjects 
     expect(deduplicated.length).toEqual(2);
     expect(deduplicated[0].repoName).toEqual("foo");
     expect(deduplicated[1].repoName).toEqual("bar");
+});
+
+test("should perform weak validation for git URLs", () => {
+    expect(isValidGitUrl("a:")).toEqual(false);
+    expect(isValidGitUrl("a:b")).toEqual(false);
+    expect(isValidGitUrl("https://b")).toEqual(false);
+    expect(isValidGitUrl("https://b/repo.git")).toEqual(false);
+    expect(isValidGitUrl("https://b.com/repo.git")).toEqual(true);
+    expect(isValidGitUrl("git@a.b:")).toEqual(false);
+    expect(isValidGitUrl("blib@a.b:")).toEqual(false);
+    expect(isValidGitUrl("blib@a.b:22:")).toEqual(false);
+    expect(isValidGitUrl("blib@a.b:g/g")).toEqual(true);
+
+    // some "from the wild" cases
+    expect(isValidGitUrl("https://github.com/gitpod-io/gitpod/pull/20281")).toEqual(true);
+    expect(isValidGitUrl("https://gitlab.com/filiptronicek/gitpod.git")).toEqual(true);
+    expect(isValidGitUrl("git@github.com:gitpod-io/gitpod.git")).toEqual(true);
+    expect(isValidGitUrl("git@gitlab.com:filiptronicek/gitpod.git")).toEqual(true);
+    expect(isValidGitUrl("ssh://login@server.com:12345/~/repository.git")).toBe(true);
+    expect(isValidGitUrl("https://bitbucket.gitpod-dev.com/scm/~geropl/test-user-repo.git")).toBe(true);
+    expect(isValidGitUrl("git://gitlab.com/gitpod/spring-petclinic")).toBe(true);
+    expect(isValidGitUrl("git@ssh.dev.azure.com:v3/services-azure/open-to-edit-project2/open-to-edit-project2")).toBe(
+        true,
+    );
 });

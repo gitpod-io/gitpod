@@ -490,7 +490,7 @@ export class WorkspaceStarter {
             client = await this.clientProvider.get(instanceRegion);
         } catch (err) {
             log.error({ instanceId }, "cannot stop workspace instance", err);
-            // we want to stop a workspace but the region doesn't exist. So we can assume it doesn't run anyymore and there will never be updates coming to bridge.
+            // we want to stop a workspace but the region doesn't exist. So we can assume it doesn't run anymore and there will never be updates coming to bridge.
             // let's mark this workspace as stopped if it is not already stopped.
             const workspace = await this.workspaceDb.trace(ctx).findByInstanceId(instanceId);
             const instance = await this.workspaceDb.trace(ctx).findInstanceById(instanceId);
@@ -843,7 +843,7 @@ export class WorkspaceStarter {
 
     /**
      * failInstanceStart properly fails a workspace instance if something goes wrong before the instance ever reaches
-     * workspace manager. In this case we need to make sure we also fulfil the tasks of the bridge (e.g. for prebulds).
+     * workspace manager. In this case we need to make sure we also fulfil the tasks of the bridge (e.g. for prebuilds).
      */
     private async failInstanceStart(ctx: TraceContext, err: any, workspace: Workspace, instance: WorkspaceInstance) {
         if (ctxIsAborted()) {
@@ -1344,7 +1344,10 @@ export class WorkspaceStarter {
                     `workspace image build failed: ${message}`,
                     { looksLikeUserError: true },
                 );
-                err = new StartInstanceError("imageBuildFailedUser", err);
+                err = new StartInstanceError(
+                    "imageBuildFailedUser",
+                    `workspace image build failed: ${message}. For further logs, try executing \`gp validate\` inside of a workspace`,
+                );
                 // Don't report this as "failed" to our metrics as it would trigger an alert
             } else {
                 log.error(
@@ -1552,16 +1555,20 @@ export class WorkspaceStarter {
         sysEnvvars.push(orgIdEnv);
 
         const client = getExperimentsClientForBackend();
-        const [isSetJavaXmx, isSetJavaProcessorCount] = await Promise.all([
+        const [isSetJavaXmx, isSetJavaProcessorCount, disableJetBrainsLocalPortForwarding] = await Promise.all([
             client
                 .getValueAsync("supervisor_set_java_xmx", false, { user })
                 .then((v) => newEnvVar("GITPOD_IS_SET_JAVA_XMX", String(v))),
             client
                 .getValueAsync("supervisor_set_java_processor_count", false, { user })
                 .then((v) => newEnvVar("GITPOD_IS_SET_JAVA_PROCESSOR_COUNT", String(v))),
+            client
+                .getValueAsync("disable_jetbrains_local_port_forwarding", false, { user })
+                .then((v) => newEnvVar("GITPOD_DISABLE_JETBRAINS_LOCAL_PORT_FORWARDING", String(v))),
         ]);
         sysEnvvars.push(isSetJavaXmx);
         sysEnvvars.push(isSetJavaProcessorCount);
+        sysEnvvars.push(disableJetBrainsLocalPortForwarding);
         const spec = new StartWorkspaceSpec();
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);

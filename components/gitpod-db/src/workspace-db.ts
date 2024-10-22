@@ -64,6 +64,8 @@ export interface PrebuildWithWorkspaceAndInstances {
 
 export type WorkspaceAndOwner = Pick<Workspace, "id" | "ownerId">;
 export type WorkspaceOwnerAndSoftDeleted = Pick<Workspace, "id" | "ownerId" | "softDeleted">;
+export type WorkspaceOwnerAndDeletionEligibility = Pick<Workspace, "id" | "ownerId" | "deletionEligibilityTime">;
+export type WorkspaceOwnerAndContentDeletedTime = Pick<Workspace, "id" | "ownerId" | "contentDeletedTime">;
 
 export const WorkspaceDB = Symbol("WorkspaceDB");
 export interface WorkspaceDB {
@@ -102,7 +104,7 @@ export interface WorkspaceDB {
         cutOffDate?: Date,
         limit?: number,
         type?: WorkspaceType,
-    ): Promise<WorkspaceAndOwner[]>;
+    ): Promise<WorkspaceOwnerAndDeletionEligibility[]>;
     findWorkspacesForContentDeletion(
         minSoftDeletedTimeInDays: number,
         limit: number,
@@ -111,7 +113,7 @@ export interface WorkspaceDB {
         minContentDeletionTimeInDays: number,
         limit: number,
         now: Date,
-    ): Promise<WorkspaceAndOwner[]>;
+    ): Promise<WorkspaceOwnerAndContentDeletedTime[]>;
     findAllWorkspaces(
         offset: number,
         limit: number,
