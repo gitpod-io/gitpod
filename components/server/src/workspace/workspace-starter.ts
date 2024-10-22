@@ -1721,6 +1721,15 @@ export class WorkspaceStarter {
                     operations: ["update"],
                 }),
         );
+        // For updating environment variables created with */* instead of */**, we fall back to updating those
+        scopes.push(
+            "resource:" +
+                ScopedResourceGuard.marshalResourceScope({
+                    kind: "envVar",
+                    subjectID: "*/*",
+                    operations: ["update"],
+                }),
+        );
         return scopes;
     }
 
