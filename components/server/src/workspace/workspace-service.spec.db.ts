@@ -681,13 +681,15 @@ describe("WorkspaceService", async () => {
         const svc = container.get(WorkspaceService);
         const db = container.get<WorkspaceDB>(WorkspaceDB);
         const today = new Date();
-        const daysAgo = (days: number) => new Date(today.getTime() - 1000 * 60 * 60 * 24 * days);
+        const daysAgo = (days: number, from = today) => new Date(from.getTime() - 1000 * 60 * 60 * 24 * days);
 
         const ws = await createTestWorkspace(svc, org, owner, project);
-        await db.storeInstance({
+        await svc.updateDeletionEligibilityTime(owner.id, ws.id, true);
+        const instance = await db.storeInstance({
             id: v4(),
             workspaceId: ws.id,
-            creationTime: daysAgo(7).toISOString(),
+            // tomorrow, because as of #20271 deletion eligibility times can't go backwards and those are set when creating a ws
+            creationTime: daysAgo(-1).toISOString(),
             status: {
                 conditions: {},
                 phase: "stopped",
@@ -705,17 +707,19 @@ describe("WorkspaceService", async () => {
         const workspace = await svc.getWorkspace(owner.id, ws.id);
         expect(workspace).to.not.be.undefined;
         expect(workspace.workspace.deletionEligibilityTime).to.not.be.undefined;
-        expect(workspace.workspace.deletionEligibilityTime).to.eq(daysAgo(7 - 14).toISOString());
+        expect(workspace.workspace.deletionEligibilityTime).to.eq(
+            daysAgo(-14, new Date(instance.creationTime)).toISOString(),
+        );
     });
 
     it("should update the deletion eligibility time of a workspace with git changes", async () => {
         const svc = container.get(WorkspaceService);
         const db = container.get<WorkspaceDB>(WorkspaceDB);
         const today = new Date();
-        const daysAgo = (days: number) => new Date(today.getTime() - 1000 * 60 * 60 * 24 * days);
+        const daysAgo = (days: number, from = today) => new Date(from.getTime() - 1000 * 60 * 60 * 24 * days);
 
         const ws = await createTestWorkspace(svc, org, owner, project);
-        await db.storeInstance({
+        const instance = await db.storeInstance({
             id: v4(),
             workspaceId: ws.id,
             creationTime: daysAgo(7).toISOString(),
@@ -739,7 +743,9 @@ describe("WorkspaceService", async () => {
         const workspace = await svc.getWorkspace(owner.id, ws.id);
         expect(workspace).to.not.be.undefined;
         expect(workspace.workspace.deletionEligibilityTime).to.not.be.undefined;
-        expect(workspace.workspace.deletionEligibilityTime).to.eq(daysAgo(7 - 14 * 2).toISOString());
+        expect(workspace.workspace.deletionEligibilityTime).to.eq(
+            daysAgo(-14 * 2, new Date(instance.creationTime)).toISOString(),
+        );
     });
 
     it("should update the deletion eligibility time of a prebuild", async () => {
