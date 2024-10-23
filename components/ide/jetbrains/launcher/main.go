@@ -351,7 +351,7 @@ func isBackendPluginReady(ctx context.Context, backendPort string, shouldWaitBac
 	}
 	log.WithField("backendPort", backendPort).Debug("wait backend plugin to be ready")
 	// Use op=metrics so that we don't need to rebuild old backend-plugin
-	url, err := url.Parse("http://localhost:" + backendPort + "/api/gitpod/cli?op=metrics")
+	url, err := url.Parse("http://127.0.0.1:" + backendPort + "/api/gitpod/cli?op=metrics")
 	if err != nil {
 		return err
 	}
