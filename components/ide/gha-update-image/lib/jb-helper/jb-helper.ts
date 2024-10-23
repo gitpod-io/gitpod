@@ -35,6 +35,12 @@ export interface TargetInfo {
      * @example eap,rc,release
      */
     productType: string;
+    /**
+     * Examples value for different type:
+     * - build 243.18137.22
+     * - version 2024.3
+     * - build-snapshot 243.18137-EAP-CANDIDATE-SNAPSHOT
+     */
     usePlatformVersionType: "build" | "version" | "build-snapshot";
     gradlePropertiesPath: string;
     gradlePropertiesTemplate: string;

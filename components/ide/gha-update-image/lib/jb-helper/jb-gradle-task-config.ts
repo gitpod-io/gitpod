@@ -5,6 +5,9 @@ import { parseArgs } from "util";
 
 export type TaskInfo = TargetInfo & { id: number; taskName: string };
 
+// Official doc https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html#target-versions-installers:~:text=The%20listing%20of%20all%20present%20installers%20can%20be%20resolved%20with%20updates%20XML%20files%20for%20JetBrains%20IDEs%20and%20Android%20Studio%20as%20well%20as%20by%20executing%20the%20printProductsReleases%20task.
+// But use https://data.services.jetbrains.com/products/releases?code=GW&type=eap,rc,release&platform=linux seems better
+
 export const latestBackendPluginGradleTarget: TaskInfo = {
     id: 1,
     taskName: "Latest Backend Plugin",
@@ -24,7 +27,7 @@ pluginUntilBuild={{pluginUntilBuild}}
 # Plugin Verifier integration -> https://github.com/JetBrains/gradle-intellij-plugin#plugin-verifier-dsl
 # See https://jb.gg/intellij-platform-builds-list for available build versions.
 pluginVerifierIdeVersions={{pluginVerifierIdeVersions}}
-# Version from "com.jetbrains.intellij.idea" which can be found at https://www.jetbrains.com/intellij-repository/snapshots
+# Version from "com.jetbrains.intellij.idea" which can be found at https://www.jetbrains.com/updates/updates.xml or exec \`./gradlew printProductsReleases\`
 platformVersion={{platformVersion}}
 `,
 };
@@ -35,7 +38,7 @@ export const latestGatewayPluginGradleTarget: TaskInfo = {
     productId: "gateway",
     productCode: "GW",
     productType: "eap,rc,release",
-    usePlatformVersionType: "version",
+    usePlatformVersionType: "build",
     gradlePropertiesPath: path.resolve(
         pathToProjectRoot,
         "components/ide/jetbrains/gateway-plugin/gradle-latest.properties",
@@ -48,7 +51,7 @@ pluginUntilBuild={{pluginUntilBuild}}
 # Plugin Verifier integration -> https://github.com/JetBrains/gradle-intellij-plugin#plugin-verifier-dsl
 # See https://jb.gg/intellij-platform-builds-list for available build versions.
 pluginVerifierIdeVersions={{pluginVerifierIdeVersions}}
-# Version from "com.jetbrains.gateway" which can be found at https://www.jetbrains.com/intellij-repository/snapshots
+# Version from "com.jetbrains.gateway" which can be found at https://www.jetbrains.com/updates/updates.xml or exec \`./gradlew printProductsReleases\`
 platformVersion={{platformVersion}}
 `,
 };
@@ -72,7 +75,7 @@ pluginUntilBuild={{pluginUntilBuild}}
 # Plugin Verifier integration -> https://github.com/JetBrains/gradle-intellij-plugin#plugin-verifier-dsl
 # See https://jb.gg/intellij-platform-builds-list for available build versions.
 pluginVerifierIdeVersions={{pluginVerifierIdeVersions}}
-# Version from "com.jetbrains.gateway" which can be found at https://www.jetbrains.com/updates/updates.xml
+# Version from "com.jetbrains.gateway" which can be found at https://www.jetbrains.com/updates/updates.xml or exec \`./gradlew printProductsReleases\`
 platformVersion={{platformVersion}}
 `,
 };
