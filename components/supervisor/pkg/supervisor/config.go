@@ -393,6 +393,12 @@ func (c WorkspaceConfig) Validate() error {
 }
 
 func (c Config) GetDesktopIDE() *IDEConfig {
+	testAA := func() bool {
+		return true
+	}
+	if testAA() {
+		return nil
+	}
 	if len(c.DesktopIDEs) == 0 {
 		return nil
 	}

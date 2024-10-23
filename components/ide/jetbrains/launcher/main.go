@@ -297,6 +297,7 @@ func serve(launchCtx *LaunchContext) {
 		}
 		fmt.Fprint(w, jsonLink)
 	})
+	var lastErr error
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		if launchCtx.preferToolbox {
 			response := make(map[string]string)
@@ -319,6 +320,10 @@ func serve(launchCtx *LaunchContext) {
 			backendPort = defaultBackendPort
 		}
 		if err := isBackendPluginReady(r.Context(), backendPort, launchCtx.shouldWaitBackendPlugin); err != nil {
+			if lastErr == nil || err.Error() != lastErr.Error() {
+				log.WithError(err).Error("failed to check if backend plugin is ready")
+				lastErr = err
+			}
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}

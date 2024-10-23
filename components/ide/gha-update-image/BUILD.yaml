@@ -7,7 +7,7 @@ scripts:
       cf_patch=$(kubectl get cm ide-config -o=json | jq '.data."config.json"' |jq -r)
       for ide in "${ide_list[@]}"; do
         for prop in "${prop_list[@]}"; do
-          cf_patch=$(echo "$cf_patch" | jq ".ideOptions.options.$ide.$prop = \"eu.gcr.io/gitpod-dev-artifact/build/ide/$ide:latest\"")
+          cf_patch=$(echo "$cf_patch" | jq ".ideOptions.options.$ide.$prop = \"public.ecr.aws/b4b1c2l9/application/ide/intellij:latest\"")
         done
       done
       cf_patch=$(echo "$cf_patch" |jq tostring)
