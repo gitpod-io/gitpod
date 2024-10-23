@@ -79,6 +79,9 @@ var initCmd = &cobra.Command{
 		supervisorDone := make(chan struct{})
 		handledByReaper := make(chan int)
 		handleSupervisorExit := func(exitCode int) {
+			if exitCode == 0 {
+				return
+			}
 			logs := extractFailureFromRun()
 			if shared.IsExpectedShutdown(exitCode) {
 				log.Fatal(logs)
