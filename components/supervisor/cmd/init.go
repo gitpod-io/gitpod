@@ -77,6 +77,7 @@ var initCmd = &cobra.Command{
 		}
 
 		supervisorDone := make(chan struct{})
+		handledByReaper := make(chan int)
 		handleSupervisorExit := func(exitCode int) {
 			logs := extractFailureFromRun()
 			if shared.IsExpectedShutdown(exitCode) {
@@ -89,7 +90,19 @@ var initCmd = &cobra.Command{
 			defer close(supervisorDone)
 
 			err := runCommand.Wait()
-			if err != nil && !(strings.Contains(err.Error(), "signal: ") || strings.Contains(err.Error(), "no child processes")) {
+			if err == nil {
+				return
+			}
+			// exited by reaper
+			if strings.Contains(err.Error(), "no child processes") {
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+				defer cancel()
+				select {
+				case <-ctx.Done(): // timeout
+				case exitCode := <-handledByReaper:
+					handleSupervisorExit(exitCode)
+				}
+			} else if !(strings.Contains(err.Error(), "signal: ")) {
 				if eerr, ok := err.(*exec.ExitError); ok && eerr.ExitCode() != 0 {
 					handleSupervisorExit(eerr.ExitCode())
 				}
@@ -107,7 +120,7 @@ var initCmd = &cobra.Command{
 					return
 				}
 				exitCode := wstatus.ExitStatus()
-				handleSupervisorExit(exitCode)
+				handledByReaper <- exitCode
 			},
 		})
 
