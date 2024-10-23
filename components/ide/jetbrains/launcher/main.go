@@ -432,7 +432,7 @@ func resolveGatewayLink(backendPort string, wsInfo *supervisor.WorkspaceInfoResp
 
 func resolveJsonLink(backendPort string) (string, error) {
 	var (
-		hostStatusUrl = "http://localhost:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod"
+		hostStatusUrl = "http://127.0.0.1:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod"
 		client        = http.Client{Timeout: 1 * time.Second}
 	)
 	resp, err := client.Get(hostStatusUrl)
@@ -460,7 +460,7 @@ func resolveJsonLink(backendPort string) (string, error) {
 
 func resolveJsonLink2(launchCtx *LaunchContext, backendPort string) (*JoinLinkResponse, error) {
 	var (
-		hostStatusUrl = "http://localhost:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod"
+		hostStatusUrl = "http://127.0.0.1:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod"
 		client        = http.Client{Timeout: 1 * time.Second}
 	)
 	resp, err := client.Get(hostStatusUrl)
@@ -492,7 +492,7 @@ func resolveJsonLink2(launchCtx *LaunchContext, backendPort string) (*JoinLinkRe
 
 func terminateIDE(backendPort string) error {
 	var (
-		hostStatusUrl = "http://localhost:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod&exit=true"
+		hostStatusUrl = "http://127.0.0.1:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod&exit=true"
 		client        = http.Client{Timeout: 10 * time.Second}
 	)
 	resp, err := client.Get(hostStatusUrl)
