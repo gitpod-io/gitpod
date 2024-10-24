@@ -22,8 +22,8 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/process"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/shared"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
+	reaper "github.com/gitpod-io/go-reaper"
 	"github.com/prometheus/procfs"
-	reaper "github.com/ramr/go-reaper"
 	"github.com/spf13/cobra"
 )
 
@@ -77,25 +77,55 @@ var initCmd = &cobra.Command{
 		}
 
 		supervisorDone := make(chan struct{})
+		handledByReaper := make(chan int)
+		handleSupervisorExit := func(exitCode int) {
+			if exitCode == 0 {
+				return
+			}
+			logs := extractFailureFromRun()
+			if shared.IsExpectedShutdown(exitCode) {
+				log.Fatal(logs)
+			} else {
+				log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
+			}
+		}
 		go func() {
 			defer close(supervisorDone)
 
 			err := runCommand.Wait()
-			if err != nil && !(strings.Contains(err.Error(), "signal: ") || strings.Contains(err.Error(), "no child processes")) {
+			if err == nil {
+				return
+			}
+			// exited by reaper
+			if strings.Contains(err.Error(), "no child processes") {
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+				defer cancel()
+				select {
+				case <-ctx.Done(): // timeout
+				case exitCode := <-handledByReaper:
+					handleSupervisorExit(exitCode)
+				}
+			} else if !(strings.Contains(err.Error(), "signal: ")) {
 				if eerr, ok := err.(*exec.ExitError); ok && eerr.ExitCode() != 0 {
-					logs := extractFailureFromRun()
-					if shared.IsExpectedShutdown(eerr.ExitCode()) {
-						log.Fatal(logs)
-					} else {
-						log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
-					}
+					handleSupervisorExit(eerr.ExitCode())
 				}
 				log.WithError(err).Error("supervisor run error")
 				return
 			}
 		}()
 		// start the reaper to clean up zombie processes
-		reaper.Reap()
+		reaper.Start(reaper.Config{
+			Pid:              -1,
+			Options:          0,
+			DisablePid1Check: false,
+			OnReap: func(pid int, wstatus syscall.WaitStatus) {
+				if pid != runCommand.Process.Pid {
+					return
+				}
+				exitCode := wstatus.ExitStatus()
+				handledByReaper <- exitCode
+			},
+		})
 
 		select {
 		case <-supervisorDone:
