@@ -297,6 +297,7 @@ func serve(launchCtx *LaunchContext) {
 		}
 		fmt.Fprint(w, jsonLink)
 	})
+	var lastErr error
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		if launchCtx.preferToolbox {
 			response := make(map[string]string)
@@ -319,6 +320,10 @@ func serve(launchCtx *LaunchContext) {
 			backendPort = defaultBackendPort
 		}
 		if err := isBackendPluginReady(r.Context(), backendPort, launchCtx.shouldWaitBackendPlugin); err != nil {
+			if lastErr == nil || err.Error() != lastErr.Error() {
+				log.WithError(err).Error("failed to check if backend plugin is ready")
+				lastErr = err
+			}
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
@@ -351,7 +356,7 @@ func isBackendPluginReady(ctx context.Context, backendPort string, shouldWaitBac
 	}
 	log.WithField("backendPort", backendPort).Debug("wait backend plugin to be ready")
 	// Use op=metrics so that we don't need to rebuild old backend-plugin
-	url, err := url.Parse("http://localhost:" + backendPort + "/api/gitpod/cli?op=metrics")
+	url, err := url.Parse("http://127.0.0.1:" + backendPort + "/api/gitpod/cli?op=metrics")
 	if err != nil {
 		return err
 	}
@@ -432,7 +437,7 @@ func resolveGatewayLink(backendPort string, wsInfo *supervisor.WorkspaceInfoResp
 
 func resolveJsonLink(backendPort string) (string, error) {
 	var (
-		hostStatusUrl = "http://localhost:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod"
+		hostStatusUrl = "http://127.0.0.1:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod"
 		client        = http.Client{Timeout: 1 * time.Second}
 	)
 	resp, err := client.Get(hostStatusUrl)
@@ -460,7 +465,7 @@ func resolveJsonLink(backendPort string) (string, error) {
 
 func resolveJsonLink2(launchCtx *LaunchContext, backendPort string) (*JoinLinkResponse, error) {
 	var (
-		hostStatusUrl = "http://localhost:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod"
+		hostStatusUrl = "http://127.0.0.1:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod"
 		client        = http.Client{Timeout: 1 * time.Second}
 	)
 	resp, err := client.Get(hostStatusUrl)
@@ -492,7 +497,7 @@ func resolveJsonLink2(launchCtx *LaunchContext, backendPort string) (*JoinLinkRe
 
 func terminateIDE(backendPort string) error {
 	var (
-		hostStatusUrl = "http://localhost:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod&exit=true"
+		hostStatusUrl = "http://127.0.0.1:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod&exit=true"
 		client        = http.Client{Timeout: 10 * time.Second}
 	)
 	resp, err := client.Get(hostStatusUrl)

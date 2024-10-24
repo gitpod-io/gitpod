@@ -34,7 +34,7 @@ object ControllerStatusService {
         retry(3) {
             val port = BuiltInServerManager.getInstance().waitForStart().port
             val httpRequest = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:$port/codeWithMe/unattendedHostStatus?token=$cwmToken"))
+                .uri(URI.create("http://127.0.0.1:$port/codeWithMe/unattendedHostStatus?token=$cwmToken"))
                 .header("Content-Type", "application/json")
                 .GET()
                 .build()
