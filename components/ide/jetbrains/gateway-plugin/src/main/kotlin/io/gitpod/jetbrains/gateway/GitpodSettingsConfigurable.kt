@@ -31,6 +31,11 @@ class GitpodSettingsConfigurable : BoundConfigurable("Gitpod") {
                     .comment("Helpful if you are behind a firewall/proxy that blocks SSH or " +
                             "have complicated SSH setup (bastions, proxy jumps, etc.)")
             }
+            row {
+                checkBox("Additional heartbeat")
+                    .bindSelected(state::additionalHeartbeat)
+                    .comment("Additional heartbeat when connection is connected, helps to keep the workspace alive more reliably")
+            }
 
         }
     }

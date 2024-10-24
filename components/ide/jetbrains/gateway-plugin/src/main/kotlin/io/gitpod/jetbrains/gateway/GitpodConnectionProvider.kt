@@ -47,7 +47,6 @@ import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import java.awt.Component
 import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -58,6 +57,7 @@ import javax.swing.JLabel
 import kotlin.coroutines.coroutineContext
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.writeText
+import kotlin.random.Random.Default.nextInt
 
 @Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 class GitpodConnectionProvider : GatewayConnectionProvider {
@@ -202,6 +202,27 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
 
             var lastUpdate: WorkspaceInstance? = null
             var canceledByGitpod = false
+
+            if (settings.additionalHeartbeat) {
+                thisLogger().info("gitpod: additional heartbeat enabled for ${connectParams.resolvedWorkspaceId}")
+                connectionLifetime.launch {
+                    while (isActive) {
+                        val delaySeconds = 30 + nextInt(5, 15)
+                        try {
+                            if (lastUpdate?.status?.phase == "running") {
+                                client.sendHeartbeat(connectParams.actualWorkspaceId)
+                            }
+                        } catch (t: Throwable) {
+                            thisLogger().error(
+                                "gitpod: failed to send additional heartbeat for ${connectParams.resolvedWorkspaceId}",
+                                t
+                            )
+                        }
+                        delay(delaySeconds * 1000L)
+                    }
+                }
+            }
+
             try {
                 for (update in updates) {
                     try {
