@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useHistory } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import { useQueryParams } from "../../hooks/use-query-params";
 import { PrebuildListEmptyState } from "./PrebuildListEmptyState";
 import { PrebuildListErrorState } from "./PrebuildListErrorState";
@@ -175,21 +175,33 @@ export const PrebuildsList = ({ initialFilter, organizationId, hideOrgSpecificCo
             {isLoading && <LoadingState />}
 
             {showTable && (
-                <PrebuildsTable
-                    prebuilds={prebuilds}
-                    // we check isPreviousData too so we don't show spinner if it's a background refresh
-                    isSearching={isFetching && isPreviousData}
-                    isFetchingNextPage={isFetchingNextPage}
-                    hasNextPage={!!hasNextPage}
-                    filter={filter}
-                    sort={sort}
-                    hasMoreThanOnePage={hasMoreThanOnePage}
-                    hideOrgSpecificControls={!!hideOrgSpecificControls}
-                    onLoadNextPage={() => fetchNextPage()}
-                    onFilterChange={handleFilterChange}
-                    onSort={handleSort}
-                    onTriggerPrebuild={() => setShowRunPrebuildModal(true)}
-                />
+                <>
+                    <PrebuildsTable
+                        prebuilds={prebuilds}
+                        // we check isPreviousData too so we don't show spinner if it's a background refresh
+                        isSearching={isFetching && isPreviousData}
+                        isFetchingNextPage={isFetchingNextPage}
+                        hasNextPage={!!hasNextPage}
+                        filter={filter}
+                        sort={sort}
+                        hasMoreThanOnePage={hasMoreThanOnePage}
+                        hideOrgSpecificControls={!!hideOrgSpecificControls}
+                        onLoadNextPage={() => fetchNextPage()}
+                        onFilterChange={handleFilterChange}
+                        onSort={handleSort}
+                        onTriggerPrebuild={() => setShowRunPrebuildModal(true)}
+                    />
+                    <div className="flex justify-center mt-4">
+                        <span className="text-pk-content-secondary text-xs max-w-md text-center">
+                            Looking for older prebuilds? Prebuilds are garbage-collected if no workspace is started from
+                            them within seven days. To view records of older prebuilds, please refer to the{" "}
+                            <Link to={"/usage"} className="gp-link">
+                                usage report
+                            </Link>
+                            .
+                        </span>
+                    </div>
+                </>
             )}
 
             {showRunPrebuildModal && (
