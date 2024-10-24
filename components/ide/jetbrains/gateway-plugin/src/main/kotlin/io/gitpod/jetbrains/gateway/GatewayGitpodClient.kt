@@ -11,6 +11,7 @@ import com.jetbrains.rd.util.concurrentMapOf
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import io.gitpod.gitpodprotocol.api.GitpodClient
+import io.gitpod.gitpodprotocol.api.entities.SendHeartBeatOptions
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInfo
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
 import kotlinx.coroutines.*
@@ -113,6 +114,10 @@ class GatewayGitpodClient(
             }
         }
         return listener
+    }
+
+    suspend fun sendHeartbeat(workspaceId: String) {
+        server.sendHeartBeat(SendHeartBeatOptions(workspaceId)).await()
     }
 
     private suspend fun removeListener(workspaceId: String, listener: Channel<WorkspaceInstance>) {

@@ -6,11 +6,13 @@ package io.gitpod.jetbrains.gateway
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.CompositeDisposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.remoteDev.util.onTerminationOrNow
@@ -106,10 +108,12 @@ class GitpodWorkspacesView(
                 }
             }.visibleIf(loggedIn.not())
 
+            val pluginVersion = PluginManagerCore.getPlugin(PluginId.getId("io.gitpod.jetbrains.gateway"))?.version
+            val pluginVersionLabel = if (pluginVersion?.contains("-local") == true) " (${pluginVersion})" else ""
             rowsRange {
                 row {
                     icon(GitpodIcons.Logo).gap(RightGap.SMALL)
-                    label("Gitpod").applyToComponent {
+                    label("Gitpod${pluginVersionLabel}").applyToComponent {
                         this.font = JBFont.h3().asBold()
                     }
                     label("").resizableColumn().align(AlignX.FILL)
