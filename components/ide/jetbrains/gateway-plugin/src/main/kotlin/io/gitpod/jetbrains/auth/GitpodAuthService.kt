@@ -162,7 +162,7 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
             "function:getOwnerToken",
             "function:getWorkspace",
             "function:getWorkspaces",
-            "function:sendHeartbeat",
+            "function:sendHeartBeat",
             "function:listenForWorkspaceInstanceUpdates",
             "resource:default"
         )
