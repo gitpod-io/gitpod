@@ -224,6 +224,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionPodRejected(fmt.Sprintf("Pod reached maximum recreations %d, failing", workspace.Status.PodRecreated), metav1.ConditionFalse))
 				return ctrl.Result{Requeue: true}, nil // requeue so we end up in the "Stopped" case below
 			}
+			log.WithValues("PodStarts", workspace.Status.PodStarts, "PodRecreated", workspace.Status.PodRecreated, "Phase", workspace.Status.Phase).Info("trigger pod recreation")
 
 			// Must persist the modification pod starts, and ensure we retry on conflict.
 			// If we fail to persist this value, it's possible that the Pod gets recreated endlessly

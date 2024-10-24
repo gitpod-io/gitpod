@@ -227,6 +227,25 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceStop")
 	defer tracing.FinishSpan(span, &err)
 
+	if ws.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected) {
+		// in this case we are not interested in any backups, but instead are concerned with completely wiping all state that might be dangling somewhere
+		log.Info("handling workspace stop - wiping mode")
+		err = wsc.operations.DeleteWorkspace(ctx, ws.Name)
+		if err != nil {
+			wsc.emitEvent(ws, "Wiping", fmt.Errorf("failed to wipe workspace: %w", err))
+			return ctrl.Result{}, fmt.Errorf("failed to wipe workspace: %w", err)
+		}
+
+		return ctrl.Result{}, nil
+	}
+
+	// regular case
+	return wsc.doWorkspaceContentBackup(ctx, span, ws, req)
+}
+
+func (wsc *WorkspaceController) doWorkspaceContentBackup(ctx context.Context, span opentracing.Span, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
+	log := log.FromContext(ctx)
+
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil || c.Status == metav1.ConditionFalse {
 		return ctrl.Result{}, fmt.Errorf("workspace content was never ready")
 	}
