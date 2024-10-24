@@ -132,16 +132,17 @@ export const PrebuildsTable: FC<Props> = ({
                         <Subheading className="max-w-md">No results found. Try adjusting your search terms.</Subheading>
                     </div>
                 )}
-
-                <div className="mt-4 mb-8 flex flex-row justify-center">
-                    {hasNextPage ? (
-                        <LoadingButton variant="secondary" onClick={onLoadNextPage} loading={isFetchingNextPage}>
-                            Load more
-                        </LoadingButton>
-                    ) : (
-                        hasMoreThanOnePage && <TextMuted>All prebuilds are loaded</TextMuted>
-                    )}
-                </div>
+                {prebuilds.length > 1 && (
+                    <div className="mt-4 mb-8 flex flex-row justify-center">
+                        {hasNextPage ? (
+                            <LoadingButton variant="secondary" onClick={onLoadNextPage} loading={isFetchingNextPage}>
+                                Load more
+                            </LoadingButton>
+                        ) : (
+                            hasMoreThanOnePage && <TextMuted>All prebuilds are loaded</TextMuted>
+                        )}
+                    </div>
+                )}
             </div>
         </>
     );
