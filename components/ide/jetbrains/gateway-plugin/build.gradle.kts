@@ -195,7 +195,7 @@ tasks.register("installPlugin") {
 
         // Example for macOS ~/Library/Application Support/JetBrains/JetBrainsGateway2024.3/plugins
         //
-        // JB_GATEWAY_PLUGINS_DIR=/Users/hwen/Library/Application\ Support/JetBrains/JetBrainsGateway2024.3/plugins
+        // JB_GATEWAY_PLUGINS_DIR=/Users/hwen/Library/Application Support/JetBrains/JetBrainsGateway2024.3/plugins
         val gatewayPluginsDir = System.getenv("JB_GATEWAY_PLUGINS_DIR")
         if (gatewayPluginsDir.isNullOrEmpty()) {
             throw GradleException("Found no JB_GATEWAY_PLUGINS_DIR environment variable")
