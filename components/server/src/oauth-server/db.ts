@@ -84,7 +84,7 @@ const jetBrainsGateway: OAuthClient = {
         { name: "function:getGitpodTokenScopes" },
         { name: "function:getIDEOptions" },
         { name: "function:getOwnerToken" },
-        { name: "function:sendHeartbeat" },
+        { name: "function:sendHeartBeat" },
         { name: "function:getWorkspace" },
         { name: "function:getWorkspaces" },
         { name: "function:listenForWorkspaceInstanceUpdates" },
