@@ -171,7 +171,7 @@ const AWS_REINVENT_NOTIFICATION = (updateUser: (user: Partial<UserProtocol>) => 
     return GENERAL_NOTIFICATION(
         "aws_reinvent_2024",
         <span className="text-md">
-            <b>AWS re:Invent:</b> Book a demo during re:Invent or join our exclusive dinner for Engineering Executives |{" "}
+            <b>See you at re:Invent!</b> Book a demo with us, and join our developer productivity leaders roundtable (limited tickets) |{" "}
             <a
                 className="text-kumquat-ripe font-bold"
                 href="https://www.gitpod.io/aws-reinvent-24"
