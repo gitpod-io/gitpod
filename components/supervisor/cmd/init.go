@@ -22,8 +22,8 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/process"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/shared"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
-	reaper "github.com/gitpod-io/go-reaper"
 	"github.com/prometheus/procfs"
+	reaper "github.com/ramr/go-reaper"
 	"github.com/spf13/cobra"
 )
 
@@ -114,18 +114,22 @@ var initCmd = &cobra.Command{
 			}
 		}()
 		// start the reaper to clean up zombie processes
+		reaperChan := make(chan reaper.Status, 10)
 		reaper.Start(reaper.Config{
 			Pid:              -1,
 			Options:          0,
 			DisablePid1Check: false,
-			OnReap: func(pid int, wstatus syscall.WaitStatus) {
-				if pid != runCommand.Process.Pid {
-					return
-				}
-				exitCode := wstatus.ExitStatus()
-				handledByReaper <- exitCode
-			},
+			StatusChannel:    reaperChan,
 		})
+		go func() {
+			for status := range reaperChan {
+				if status.Pid != runCommand.Process.Pid {
+					continue
+				}
+				exitCode := status.WaitStatus.ExitStatus()
+				handledByReaper <- exitCode
+			}
+		}()
 
 		select {
 		case <-supervisorDone:
