@@ -341,5 +341,5 @@ ENV PRE_COMMIT_HOME=/workspace/.pre-commit
 
 # Setting the environment variable here so that it will be accessible to all tasks and
 # terminal sessions in Gitpod workspaces.
-ENV PREVIEW_ENV_DEV_SA_KEY_PATH=
+ENV PREVIEW_ENV_DEV_SA_KEY_PATH=/root/.config/gcloud/sa.json
 ENV GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES=1

@@ -8,7 +8,7 @@ const getIDToken = async () => {
             const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
 
             const controlPlaneApiEndpoint = config.controlPlaneApiEndpoint;
-            const workspaceToken = config.workspaceToken;
+            const environmentToken = config.environmentToken;
 
             const url = new URL(controlPlaneApiEndpoint);
             const client = http2.connect(url.origin);
@@ -16,7 +16,7 @@ const getIDToken = async () => {
             const req = client.request({
                 ":method": "POST",
                 "content-type": "application/json",
-                authorization: `Bearer ${workspaceToken}`,
+                authorization: `Bearer ${environmentToken}`,
                 ":path": `${url.pathname}/gitpod.v1.IdentityService/GetIDToken`,
             });
 
