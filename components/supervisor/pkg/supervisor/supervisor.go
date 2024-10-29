@@ -1007,7 +1007,7 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 
 			ideWasReady, _ := ideReady.Get()
 			if !ideWasReady {
-				log.WithField("ide", ide.String()).WithError(err).Fatal("IDE failed to start")
+				log.WithField("ide", ide.String()).WithError(err).Fatal("IDE failed before becoming ready")
 				return
 			}
 		}
