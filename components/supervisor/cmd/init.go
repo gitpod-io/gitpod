@@ -77,59 +77,25 @@ var initCmd = &cobra.Command{
 		}
 
 		supervisorDone := make(chan struct{})
-		handledByReaper := make(chan int)
-		handleSupervisorExit := func(exitCode int) {
-			if exitCode == 0 {
-				return
-			}
-			logs := extractFailureFromRun()
-			if shared.IsExpectedShutdown(exitCode) {
-				log.Fatal(logs)
-			} else {
-				log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
-			}
-		}
 		go func() {
 			defer close(supervisorDone)
 
 			err := runCommand.Wait()
-			if err == nil {
-				return
-			}
-			// exited by reaper
-			if strings.Contains(err.Error(), "no child processes") {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-				defer cancel()
-				select {
-				case <-ctx.Done(): // timeout
-				case exitCode := <-handledByReaper:
-					handleSupervisorExit(exitCode)
-				}
-			} else if !(strings.Contains(err.Error(), "signal: ")) {
+			if err != nil && !(strings.Contains(err.Error(), "signal: ") || strings.Contains(err.Error(), "no child processes")) {
 				if eerr, ok := err.(*exec.ExitError); ok && eerr.ExitCode() != 0 {
-					handleSupervisorExit(eerr.ExitCode())
+					logs := extractFailureFromRun()
+					if shared.IsExpectedShutdown(eerr.ExitCode()) {
+						log.Fatal(logs)
+					} else {
+						log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
+					}
 				}
 				log.WithError(err).Error("supervisor run error")
 				return
 			}
 		}()
 		// start the reaper to clean up zombie processes
-		reaperChan := make(chan reaper.Status, 10)
-		reaper.Start(reaper.Config{
-			Pid:              -1,
-			Options:          0,
-			DisablePid1Check: false,
-			StatusChannel:    reaperChan,
-		})
-		go func() {
-			for status := range reaperChan {
-				if status.Pid != runCommand.Process.Pid {
-					continue
-				}
-				exitCode := status.WaitStatus.ExitStatus()
-				handledByReaper <- exitCode
-			}
-		}()
+		reaper.Reap()
 
 		select {
 		case <-supervisorDone:
