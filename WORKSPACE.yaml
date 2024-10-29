@@ -11,7 +11,7 @@ defaultArgs:
   codeVersion: 1.94.2
   codeQuality: stable
   codeWebExtensionCommit: 7ff72a2938a7a06cbdf3964590f7e9b7525958f3
-  xtermCommit: 8f10c5febf0162a3c2309076302f770fbad38fde
+  xtermCommit: d547d4ff4590b66c3ea24342fc62e3afcf6b77bc
   noVerifyJBPlugin: false
   intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2024.2.3.tar.gz"
   golandDownloadUrl: "https://download.jetbrains.com/go/goland-2024.2.3.tar.gz"
