@@ -119,6 +119,8 @@ github.com/gin-contrib/sse v0.1.0/go.mod h1:RHrZQHXnP2xjPF+u1gW/2HnVO7nvIa9PG3Gm
 github.com/gin-gonic/gin v1.6.3/go.mod h1:75u5sXoLsGZoRN5Sgbi1eraJ4GU3++wFwWzhwvtwp4M=
 github.com/gin-gonic/gin v1.7.4 h1:QmUZXrvJ9qZ3GfWvQ+2wnW/1ePrTEJqPKMYEU3lD/DM=
 github.com/gin-gonic/gin v1.7.4/go.mod h1:jD2toBW3GZUr5UMcdrwQA10I7RuaFOl/SGeDjXkfUtY=
+github.com/gitpod-io/go-reaper v0.0.0-20241024192051-78d04cc2e25f h1:jC8c/ONG+vsaxY6y17rM+Du7JN/faYfSBiMCFIi2NoA=
+github.com/gitpod-io/go-reaper v0.0.0-20241024192051-78d04cc2e25f/go.mod h1:WJlnZLfag2J4+z28ZjM0CxgVqjYVYF8pnspnleDwrcA=
 github.com/go-kit/kit v0.9.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
 github.com/go-kit/log v0.2.1 h1:MRVx0/zhvdseW+Gza6N9rVzU/IVzaeE1SFI4raAhmBU=
 github.com/go-kit/log v0.2.1/go.mod h1:NwTd00d/i8cPZ3xOwwiv2PO5MOcx78fFErGNcVmBjv0=
@@ -319,8 +321,8 @@ github.com/prometheus/procfs v0.10.1 h1:kYK1Va/YMlutzCGazswoHKo//tZVlFpKYh+Pymzi
 github.com/prometheus/procfs v0.10.1/go.mod h1:nwNm2aOCAYw8uTR/9bWRREkZFxAUcWzPHWJq+XBB/FM=
 github.com/prometheus/pushgateway v1.5.1 h1:F+meNVGklhdkJTrpt5l3pXLc86m6IG3+ZF3VfeOwubE=
 github.com/prometheus/pushgateway v1.5.1/go.mod h1:BcYcT8no4mdtnZxqpkXH3EMT0/Jf2nKgSlwu6GHirU4=
-github.com/ramr/go-reaper v0.2.1 h1:zww+wlQOvTjBZuk1920R/e0GFEb6O7+B0WQLV6dM924=
-github.com/ramr/go-reaper v0.2.1/go.mod h1:AVypdzrcCXjSc/JYnlXl8TsB+z84WyFzxWE8Jh0MOJc=
+github.com/ramr/go-reaper v0.2.2 h1:oQrw3LPL+TiEVb57+UZUHzW7k98N7Rv67TRuCRufLog=
+github.com/ramr/go-reaper v0.2.2/go.mod h1:AVypdzrcCXjSc/JYnlXl8TsB+z84WyFzxWE8Jh0MOJc=
 github.com/rogpeppe/go-internal v1.11.0 h1:cWPaGQEPrBb5/AsnsZesgZZ9yb1OQ+GOISoDNXVBh4M=
 github.com/rogpeppe/go-internal v1.11.0/go.mod h1:ddIwULY96R17DhadqLgMfk9H9tvdUzkipdSkR5nkCZA=
 github.com/rs/cors v1.8.2 h1:KCooALfAYGs415Cwu5ABvv9n9509fSiG5SQJn/AQo4U=
