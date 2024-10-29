@@ -489,6 +489,13 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 	masks = append(masks, procDefaultReadonlyPaths...)
 	cleanupMaskedMount(wbs.Session.OWI(), nodeStaging, masks)
 
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "disable-ipv6")
+	}, nsi.EnterNetNS(true), nsi.EnterMountNSPid(1))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot disable IPv6")
+	}
+
 	return &api.MountProcResponse{}, nil
 }
 
