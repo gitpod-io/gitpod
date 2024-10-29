@@ -403,6 +403,13 @@ func main() {
 				},
 			},
 			{
+				Name:  "disable-ipv6",
+				Usage: "disable IPv6",
+				Action: func(c *cli.Context) error {
+					return os.WriteFile("/proc/sys/net/ipv6/conf/all/disable_ipv6", []byte("1"), 0644)
+				},
+			},
+			{
 				Name:  "dump-network-info",
 				Usage: "dump network info",
 				Flags: []cli.Flag{
