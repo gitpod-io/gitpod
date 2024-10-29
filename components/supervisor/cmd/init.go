@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -78,6 +79,8 @@ var initCmd = &cobra.Command{
 
 		supervisorDone := make(chan struct{})
 		handledByReaper := make(chan int)
+		// supervisor is expected to be killed when receiving signals
+		ignoreUnexpectedExitCode := atomic.Bool{}
 		handleSupervisorExit := func(exitCode int) {
 			if exitCode == 0 {
 				return
@@ -86,6 +89,9 @@ var initCmd = &cobra.Command{
 			if shared.IsExpectedShutdown(exitCode) {
 				log.Fatal(logs)
 			} else {
+				if ignoreUnexpectedExitCode.Load() && logs != "" {
+					return
+				}
 				log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
 			}
 		}
@@ -136,6 +142,7 @@ var initCmd = &cobra.Command{
 			// supervisor has ended - we're all done here
 			return
 		case <-sigInput:
+			ignoreUnexpectedExitCode.Store(true)
 			// we received a terminating signal - pass on to supervisor and wait for it to finish
 			ctx, cancel := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
 			defer cancel()
