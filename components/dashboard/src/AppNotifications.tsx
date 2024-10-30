@@ -167,11 +167,12 @@ const GENERAL_NOTIFICATION = (
     } as Notification;
 };
 
-const AWS_REINVENT_NOTIFICATION = (updateUser: (user: Partial<UserProtocol>) => Promise<User>) => {
+/* const AWS_REINVENT_NOTIFICATION = (updateUser: (user: Partial<UserProtocol>) => Promise<User>) => {
     return GENERAL_NOTIFICATION(
         "aws_reinvent_2024",
         <span className="text-md">
-            <b>See you at re:Invent!</b> Book a demo with us, and join our developer productivity leaders roundtable (limited tickets) |{" "}
+            <b>See you at re:Invent!</b> Book a demo with us, and join our developer productivity leaders roundtable
+            (limited tickets) |{" "}
             <a
                 className="text-kumquat-ripe font-bold"
                 href="https://www.gitpod.io/aws-reinvent-24"
@@ -183,6 +184,25 @@ const AWS_REINVENT_NOTIFICATION = (updateUser: (user: Partial<UserProtocol>) => 
         </span>,
         updateUser,
         "aws_reinvent_notification",
+    );
+}; */
+
+const FLEX_WEBINAR_NOTIFICATION = (updateUser: (user: Partial<UserProtocol>) => Promise<User>) => {
+    return GENERAL_NOTIFICATION(
+        "flex_webinar_2024",
+        <span className="text-md">
+            <b>Upcoming webinar:</b> Gitpod Flex - Deploy your self-hosted CDE in 3 minutes |{" "}
+            <a
+                className="text-kumquat-ripe font-bold"
+                href="https://www.gitpod.io/webinars/gitpod-flex-demo"
+                target="_blank"
+                rel="noreferrer"
+            >
+                Register now
+            </a>
+        </span>,
+        updateUser,
+        "flex_webinar_notification",
     );
 };
 
@@ -219,8 +239,12 @@ export function AppNotifications() {
                     notifications.push(GITPOD_FLEX_INTRODUCTION((u: Partial<UserProtocol>) => mutateAsync(u)));
                 }
 
-                if (isGitpodIo() && !user?.profile?.coachmarksDismissals["aws_reinvent_2024"]) {
-                    notifications.push(AWS_REINVENT_NOTIFICATION((u: Partial<UserProtocol>) => mutateAsync(u)));
+                // if (isGitpodIo() && !user?.profile?.coachmarksDismissals["aws_reinvent_2024"]) {
+                //     notifications.push(AWS_REINVENT_NOTIFICATION((u: Partial<UserProtocol>) => mutateAsync(u)));
+                // }
+
+                if (isGitpodIo() && !user?.profile?.coachmarksDismissals["flex_webinar_2024"]) {
+                    notifications.push(FLEX_WEBINAR_NOTIFICATION((u: Partial<UserProtocol>) => mutateAsync(u)));
                 }
             }
 
