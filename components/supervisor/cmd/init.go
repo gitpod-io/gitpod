@@ -89,7 +89,7 @@ var initCmd = &cobra.Command{
 			if shared.IsExpectedShutdown(exitCode) {
 				log.Fatal(logs)
 			} else {
-				if ignoreUnexpectedExitCode.Load() && logs != "" {
+				if ignoreUnexpectedExitCode.Load() {
 					return
 				}
 				log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
