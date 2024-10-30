@@ -40,7 +40,7 @@ type ServedPortsObserver interface {
 }
 
 const (
-	maxSubscriptions = 10
+	maxSubscriptions = 100
 
 	fnNetTCP  = "/proc/net/tcp"
 	fnNetTCP6 = "/proc/net/tcp6"
