@@ -16,6 +16,7 @@ require (
 	github.com/gitpod-io/gitpod/ide-metrics-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/go-reaper v0.0.0-20241024192051-78d04cc2e25f
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
@@ -29,7 +30,7 @@ require (
 	github.com/prometheus/common v0.42.0
 	github.com/prometheus/procfs v0.10.1
 	github.com/prometheus/pushgateway v1.5.1
-	github.com/ramr/go-reaper v0.2.1
+	github.com/ramr/go-reaper v0.2.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.4.0
