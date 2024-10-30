@@ -298,13 +298,6 @@ func serve(launchCtx *LaunchContext) {
 		fmt.Fprint(w, jsonLink)
 	})
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		test := func() bool {
-			return true
-		}
-		if test() {
-			http.Error(w, "test not ready", http.StatusServiceUnavailable)
-			return
-		}
 		if launchCtx.preferToolbox {
 			response := make(map[string]string)
 			toolboxLink, err := resolveToolboxLink(launchCtx.wsInfo)
