@@ -210,21 +210,25 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                 connectionLifetime.launch {
                     while (isActive) {
                         val delaySeconds = 30 + nextInt(5, 15)
-                        try {
-                            val ideUrlStr = lastUpdate?.ideUrl
-                            val ideUrl = if (ideUrlStr.isNullOrBlank()) {
-                                null
-                            } else {
-                                URL(ideUrlStr.replace(connectParams.actualWorkspaceId, connectParams.resolvedWorkspaceId))
+                        if (thinClientJob?.isActive == true) {
+                            try {
+                                val ideUrlStr = lastUpdate?.ideUrl
+                                val ideUrl = if (ideUrlStr.isNullOrBlank()) {
+                                    null
+                                } else {
+                                    URL(ideUrlStr.replace(connectParams.actualWorkspaceId, connectParams.resolvedWorkspaceId))
+                                }
+                                if (lastUpdate?.status?.phase == "running" && ideUrl != null) {
+                                    sendHeartBeatThroughSupervisor(ideUrl, ownerToken, connectParams)
+                                }
+                            } catch (t: Throwable) {
+                                thisLogger().error(
+                                    "gitpod: failed to send additional heartbeat for ${connectParams.resolvedWorkspaceId}",
+                                    t
+                                )
                             }
-                            if (lastUpdate?.status?.phase == "running" && ideUrl != null) {
-                                sendHeartBeatThroughSupervisor(ideUrl, ownerToken, connectParams)
-                            }
-                        } catch (t: Throwable) {
-                            thisLogger().error(
-                                "gitpod: failed to send additional heartbeat for ${connectParams.resolvedWorkspaceId}",
-                                t
-                            )
+                        } else {
+                            thisLogger().debug("gitpod: thinClient is not active, skipping additional heartbeat for ${connectParams.resolvedWorkspaceId}")
                         }
                         delay(delaySeconds * 1000L)
                     }
@@ -585,7 +589,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             thisLogger().error("gitpod: sendHeartbeat ${connectParams.actualWorkspaceId} failed: ${resp.statusCode}, body: ${resp.body}")
             return
         }
-        thisLogger().info("gitpod: =========sendHeartbeat succeed")
+        thisLogger().debug("gitpod: sendHeartbeat succeed for ${connectParams.actualWorkspaceId}")
     }
 
     private fun resolveCredentials(
