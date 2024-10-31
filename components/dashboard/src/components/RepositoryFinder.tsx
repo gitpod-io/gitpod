@@ -255,10 +255,19 @@ export default function RepositoryFinder({
         }
     };
 
+    const filteredPredefinedRepos = useMemo(() => {
+        return PREDEFINED_REPOS.filter((repo) => {
+            const url = new URL(repo.url);
+            const isMatchingAuthProviderAvailable =
+                authProviders.data?.some((provider) => provider.host === url.host) ?? false;
+            return isMatchingAuthProviderAvailable;
+        });
+    }, [authProviders.data]);
+
     const getElements = useCallback(
         (searchString: string): ComboboxElement[] => {
             if (isShowingExamples && !onlyConfigurations) {
-                return PREDEFINED_REPOS.map((repo) => ({
+                return filteredPredefinedRepos.map((repo) => ({
                     id: repo.url,
                     element: <PredefinedRepositoryOption repo={repo} />,
                     isSelectable: true,
@@ -276,7 +285,7 @@ export default function RepositoryFinder({
 
             if (!onlyConfigurations) {
                 // Add predefined repos to end of the list.
-                PREDEFINED_REPOS.forEach((repo) => {
+                filteredPredefinedRepos.forEach((repo) => {
                     if (
                         repo.url.toLowerCase().includes(searchString.toLowerCase()) ||
                         repo.repoName.toLowerCase().includes(searchString.toLowerCase())
@@ -347,7 +356,7 @@ export default function RepositoryFinder({
 
             return result;
         },
-        [repos, hasMore, authProviders.data, onlyConfigurations, isShowingExamples],
+        [isShowingExamples, onlyConfigurations, repos, hasMore, authProviders.data, filteredPredefinedRepos],
     );
 
     return (
