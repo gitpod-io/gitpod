@@ -125,16 +125,16 @@ RUN nameShort=$(jq --raw-output '.nameShort' product.json) && \
     mv product.json.tmp product.json && \
     jq '{quality,nameLong,nameShort}' product.json
 
-RUN npm run gulp compile-build \
-    && npm run gulp extensions-ci \
-    && npm run gulp minify-vscode-reh \
-    && npm run gulp vscode-web-min-ci \
-    && npm run gulp vscode-reh-linux-x64-min-ci
+RUN npm run gulp compile-build
+RUN npm run gulp extensions-ci
+RUN npm run gulp minify-vscode-reh
+RUN npm run gulp vscode-web-min-ci
+RUN npm run gulp vscode-reh-linux-x64-min-ci
 
 # config for first layer needed by blobserve
 # this custom urls will be then replaced by blobserve.
 # Check pkg/blobserve/blobserve.go, `inlineVars` method
-RUN cp /vscode-web/out/vs/gitpod/browser/workbench/workbench.esm.html /vscode-web/index.html \
+RUN cp /vscode-web/out/vs/gitpod/browser/workbench/workbench.html /vscode-web/index.html \
 && cp /vscode-web/out/vs/gitpod/browser/workbench/callback.html /vscode-web/callback.html \
 && sed -i -e "s/{{VERSION}}/$CODE_QUALITY-$CODE_COMMIT/g" /vscode-web/index.html
 
