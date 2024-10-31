@@ -732,7 +732,8 @@ func (is *InfoService) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfo
 
 // ControlService implements the supervisor control service.
 type ControlService struct {
-	portsManager *ports.Manager
+	portsManager  *ports.Manager
+	gitpodService serverapi.APIInterface
 
 	privateKey string
 	publicKey  string
@@ -872,6 +873,11 @@ func (c *ControlService) CreateDebugEnv(ctx context.Context, req *api.CreateDebu
 	return &api.CreateDebugEnvResponse{
 		Envs: envs,
 	}, nil
+}
+
+func (c *ControlService) SendHeartBeat(ctx context.Context, req *api.SendHeartBeatRequest) (*api.SendHeartBeatResponse, error) {
+	err := c.gitpodService.SendHeartbeat(ctx)
+	return &api.SendHeartBeatResponse{}, err
 }
 
 // ContentState signals the workspace content state.
