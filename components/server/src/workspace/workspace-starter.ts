@@ -402,6 +402,7 @@ export class WorkspaceStarter {
                             workspace.projectId,
                             workspace.type,
                             workspace.context,
+                            workspace.config,
                         );
 
                         await this.actuallyStartWorkspace(ctx, instance, workspace, user, envVars);

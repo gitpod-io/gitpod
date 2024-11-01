@@ -13,6 +13,7 @@ import {
     UserEnvVar,
     UserEnvVarValue,
     WithEnvvarsContext,
+    WorkspaceConfig,
     WorkspaceContext,
     WorkspaceType,
 } from "@gitpod/gitpod-protocol";
@@ -231,6 +232,7 @@ export class EnvVarService {
         projectId: string | undefined,
         wsType: WorkspaceType,
         wsContext: WorkspaceContext,
+        wsConfig?: WorkspaceConfig,
     ): Promise<ResolvedEnvVars> {
         await this.auth.checkPermissionOnUser(requestorId, "read_env_var", requestorId);
         if (projectId) {
@@ -249,7 +251,7 @@ export class EnvVarService {
             : [];
 
         if (wsType === "prebuild") {
-            // prebuild does not have access to user env vars and cannot be started via prewfix URL
+            // prebuild does not have access to user env vars and cannot be started via prefix URL
             const withValues = await this.projectDB.getProjectEnvironmentVariableValues(projectEnvVars);
             merge(withValues);
             return {
@@ -265,7 +267,16 @@ export class EnvVarService {
             merge(UserEnvVar.filter(userEnvVars, wsContext.repository.owner, wsContext.repository.name));
         }
 
-        // 2. then from the project
+        // 2. then from the .gitpod.yml
+        if (wsConfig?.env) {
+            const configEnvVars = Object.entries(wsConfig.env as Record<string, string>).map(([name, value]) => ({
+                name,
+                value,
+            }));
+            merge(configEnvVars);
+        }
+
+        // 3. then from the project
         if (projectEnvVars.length) {
             // Instead of using an access guard for Project environment variables, we let Project owners decide whether
             // a variable should be:
@@ -276,7 +287,7 @@ export class EnvVarService {
             merge(withValues);
         }
 
-        // 3. then parsed from the context URL
+        // 4. then parsed from the context URL
         if (WithEnvvarsContext.is(wsContext)) {
             merge(wsContext.envvars);
         }
