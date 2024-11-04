@@ -704,15 +704,21 @@ func makeHostnameLocal(ring2root string) error {
 	newLines := []string{}
 	for _, line := range lines {
 		fields := strings.Fields(line)
-		if len(fields) != 2 {
+		if len(fields) < 1 {
 			newLines = append(newLines, line)
 			continue
 		}
-		if len(net.ParseIP(fields[0])) != net.IPv4len {
+		if strings.HasPrefix(fields[0], "#") {
+			newLines = append(newLines, line)
+		}
+		ip := net.ParseIP(fields[0]).To4()
+		if len(ip) != net.IPv4len {
 			continue
 		}
 		if fields[1] == hostname {
 			newLines = append(newLines, "127.0.0.1 "+hostname)
+		} else {
+			newLines = append(newLines, line)
 		}
 	}
 	return os.WriteFile(path, []byte(strings.Join(newLines, "\n")), stat.Mode())
