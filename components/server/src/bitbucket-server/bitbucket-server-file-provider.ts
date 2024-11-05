@@ -24,20 +24,28 @@ export class BitbucketServerFileProvider implements FileProvider {
         path: string,
     ): Promise<string> {
         const { owner, name, repoKind } = repository;
-
         if (!repoKind) {
             throw new Error("Repo kind is missing.");
         }
+        const notFoundError = new Error(
+            `File ${path} does not exist in repository ${repository.owner}/${repository.name}`,
+        );
 
-        const result = await this.api.getCommits(user, {
+        const fileExists =
+            (await this.getFileContent({ repository, revision: revisionOrBranch }, user, path)) !== undefined;
+        if (!fileExists) {
+            throw notFoundError;
+        }
+
+        const commits = await this.api.getCommits(user, {
             owner,
             repoKind,
             repositorySlug: name,
             query: { limit: 1, path, shaOrRevision: revisionOrBranch },
         });
-        const lastCommit = result.values?.[0]?.id;
+        const lastCommit = commits.values?.[0]?.id;
         if (!lastCommit) {
-            throw new Error(`File ${path} does not exist in repository ${repository.owner}/${repository.name}`);
+            throw notFoundError;
         }
 
         return lastCommit;
