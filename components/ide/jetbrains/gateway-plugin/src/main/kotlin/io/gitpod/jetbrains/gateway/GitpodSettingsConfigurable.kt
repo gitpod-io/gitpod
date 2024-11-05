@@ -32,9 +32,9 @@ class GitpodSettingsConfigurable : BoundConfigurable("Gitpod") {
                             "have complicated SSH setup (bastions, proxy jumps, etc.)")
             }
             row {
-                checkBox("Additional heartbeat")
+                checkBox("Persistent connection heartbeats")
                     .bindSelected(state::additionalHeartbeat)
-                    .comment("Additional heartbeat when connection is connected, helps to keep the workspace alive more reliably")
+                    .comment("Keep workspaces running as long as the IDE connection remains active.")
             }
 
         }
