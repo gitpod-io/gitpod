@@ -12,7 +12,7 @@
         "latestImage": "{{.ResolvedCodeBrowserImageLatest}}",
         "imageLayers": [
           "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
-          "{{.Repository}}/ide/code-codehelper:commit-93f81feb1576d690040be79d1eff44d670be740d"
+          "{{.Repository}}/ide/code-codehelper:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f"
         ],
         "latestImageLayers": [
           "{{.CodeWebExtensionImage}}",
