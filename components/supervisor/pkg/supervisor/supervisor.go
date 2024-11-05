@@ -389,7 +389,7 @@ func Run(options ...RunOption) {
 		RegistrableTokenService{Service: tokenService},
 		notificationService,
 		NewInfoService(cfg, cstate, gitpodService),
-		&ControlService{portsManager: portMgmt},
+		&ControlService{portsManager: portMgmt, gitpodService: gitpodService},
 		&portService{portsManager: portMgmt},
 		&taskService{
 			wg:              taskServiceWg,

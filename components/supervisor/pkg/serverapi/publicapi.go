@@ -33,6 +33,7 @@ type APIInterface interface {
 	OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error)
 	UpdateGitStatus(ctx context.Context, status *gitpod.WorkspaceInstanceRepoStatus) (err error)
 	WorkspaceUpdates(ctx context.Context) (<-chan *gitpod.WorkspaceInstance, error)
+	SendHeartbeat(ctx context.Context) (err error)
 
 	// Metrics
 	RegisterMetrics(registry *prometheus.Registry) error
@@ -69,6 +70,29 @@ type Service struct {
 	apiMetrics *ClientMetrics
 }
 
+// SendHeartbeat implements APIInterface.
+func (s *Service) SendHeartbeat(ctx context.Context) (err error) {
+	if s == nil {
+		return errNotConnected
+	}
+	startTime := time.Now()
+	defer func() {
+		s.apiMetrics.ProcessMetrics("SendHeartbeat", err, startTime)
+	}()
+
+	workspaceID := s.cfg.WorkspaceID
+	service := v1.NewIDEClientServiceClient(s.publicAPIConn)
+
+	payload := &v1.SendHeartbeatRequest{
+		WorkspaceId: workspaceID,
+	}
+	_, err = service.SendHeartbeat(ctx, payload)
+	if err != nil {
+		log.WithField("method", "SendHeartbeat").WithError(err).Error("failed to call PublicAPI")
+	}
+	return err
+}
+
 var _ APIInterface = (*Service)(nil)
 
 func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.TokenServiceServer) *Service {
@@ -80,6 +104,7 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 			"function:openPort",
 			"function:trackEvent",
 			"function:getWorkspace",
+			"function:sendHeartBeat",
 		},
 	})
 	if err != nil {

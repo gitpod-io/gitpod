@@ -47,7 +47,6 @@ import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import java.awt.Component
 import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -58,6 +57,7 @@ import javax.swing.JLabel
 import kotlin.coroutines.coroutineContext
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.writeText
+import kotlin.random.Random.Default.nextInt
 
 @Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 class GitpodConnectionProvider : GatewayConnectionProvider {
@@ -202,6 +202,39 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
 
             var lastUpdate: WorkspaceInstance? = null
             var canceledByGitpod = false
+
+            val ownerToken = client.server.getOwnerToken(connectParams.actualWorkspaceId).await()
+
+            if (settings.additionalHeartbeat) {
+                thisLogger().info("gitpod: additional heartbeat enabled for ${connectParams.resolvedWorkspaceId}")
+                connectionLifetime.launch {
+                    while (isActive) {
+                        val delaySeconds = 30 + nextInt(5, 15)
+                        if (thinClientJob?.isActive == true) {
+                            try {
+                                val ideUrlStr = lastUpdate?.ideUrl
+                                val ideUrl = if (ideUrlStr.isNullOrBlank()) {
+                                    null
+                                } else {
+                                    URL(ideUrlStr.replace(connectParams.actualWorkspaceId, connectParams.resolvedWorkspaceId))
+                                }
+                                if (lastUpdate?.status?.phase == "running" && ideUrl != null) {
+                                    sendHeartBeatThroughSupervisor(ideUrl, ownerToken, connectParams)
+                                }
+                            } catch (t: Throwable) {
+                                thisLogger().error(
+                                    "gitpod: failed to send additional heartbeat for ${connectParams.resolvedWorkspaceId}",
+                                    t
+                                )
+                            }
+                        } else {
+                            thisLogger().debug("gitpod: thinClient is not active, skipping additional heartbeat for ${connectParams.resolvedWorkspaceId}")
+                        }
+                        delay(delaySeconds * 1000L)
+                    }
+                }
+            }
+
             try {
                 for (update in updates) {
                     try {
@@ -518,7 +551,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         if (!connectParams.backendPort.isNullOrBlank()) {
             resolveJoinLinkUrl += "?backendPort=${connectParams.backendPort}"
         }
-        var rawResp = fetchWS(resolveJoinLinkUrl, connectParams, ownerToken)
+        var rawResp = retryFetchWS(resolveJoinLinkUrl, connectParams, ownerToken)
         if (rawResp != null) {
             return with(jacksonMapper) {
                 propertyNamingStrategy = PropertyNamingStrategies.LowerCamelCaseStrategy()
@@ -531,11 +564,32 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         if (!connectParams.backendPort.isNullOrBlank()) {
             resolveJoinLinkUrl += "?backendPort=${connectParams.backendPort}"
         }
-        rawResp = fetchWS(resolveJoinLinkUrl, connectParams, ownerToken)
+        rawResp = retryFetchWS(resolveJoinLinkUrl, connectParams, ownerToken)
         if (rawResp != null) {
             return JoinLinkResp(-1, rawResp)
         }
         return null
+    }
+
+    private var sendHeartBeatThroughSupervisorLogOnce = false
+    private suspend fun sendHeartBeatThroughSupervisor(
+        ideUrl: URL,
+        ownerToken: String,
+        connectParams: ConnectParams
+    ) {
+        val resp = fetchWS("https://${ideUrl.host}/_supervisor/v1/send_heartbeat", ownerToken, 2000L)
+        if (resp.statusCode != 200) {
+            if (!resp.body.isNullOrBlank() && resp.body.contains("not implemented")) {
+                if (!sendHeartBeatThroughSupervisorLogOnce) {
+                    thisLogger().warn("gitpod: sendHeartbeat ${connectParams.actualWorkspaceId} failed: method is not implemented in supervisor")
+                    sendHeartBeatThroughSupervisorLogOnce = true
+                }
+                return
+            }
+            thisLogger().error("gitpod: sendHeartbeat ${connectParams.actualWorkspaceId} failed: ${resp.statusCode}, body: ${resp.body}")
+            return
+        }
+        thisLogger().debug("gitpod: sendHeartbeat succeed for ${connectParams.actualWorkspaceId}")
     }
 
     private fun resolveCredentials(
@@ -589,7 +643,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         ownerToken: String
     ): CreateSSHKeyPairResponse? {
         val value =
-            fetchWS("https://${ideUrl.host}/_supervisor/v1/ssh_keys/create", connectParams, ownerToken)
+            retryFetchWS("https://${ideUrl.host}/_supervisor/v1/ssh_keys/create", connectParams, ownerToken)
         if (value.isNullOrBlank()) {
             return null
         }
@@ -604,7 +658,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         connectParams: ConnectParams
     ): List<SSHHostKey>? {
         val hostKeysValue =
-            fetchWS("https://${ideUrl.host}/_ssh/host_keys", connectParams, null)
+            retryFetchWS("https://${ideUrl.host}/_ssh/host_keys", connectParams, null)
         if (hostKeysValue.isNullOrBlank()) {
             return null
         }
@@ -671,10 +725,42 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         return acceptHostKey
     }
 
+    data class HttpResponseData(val statusCode: Int, val body: String?) {
+        fun statusCode() = statusCode
+        fun body() = body
+    }
+
     private suspend fun fetchWS(
         endpointUrl: String,
-        connectParams: ConnectParams,
         ownerToken: String?,
+        timeoutMillis: Long,
+    ): HttpResponseData {
+        var httpRequestBuilder = HttpRequest.newBuilder()
+            .uri(URI.create(endpointUrl))
+            .GET()
+            .timeout(Duration.ofMillis(timeoutMillis))
+        if (!ownerToken.isNullOrBlank()) {
+            httpRequestBuilder = httpRequestBuilder.header("x-gitpod-owner-token", ownerToken)
+        }
+        val httpRequest = httpRequestBuilder.build()
+        val responseFuture =
+            httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString())
+
+        try {
+            val response = responseFuture.await()
+            return HttpResponseData(response.statusCode(), response.body())
+        } catch (e: Exception) {
+            if (responseFuture.isCancelled) {
+                throw CancellationException()
+            }
+            throw e
+        }
+    }
+
+    private suspend fun retryFetchWS(
+        endpointUrl: String,
+        connectParams: ConnectParams,
+        ownerToken: String?
     ): String? {
         val maxRequestTimeout = 30 * 1000L
         val timeoutDelayGrowFactor = 1.5
@@ -682,16 +768,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         while (true) {
             coroutineContext.job.ensureActive()
             try {
-                var httpRequestBuilder = HttpRequest.newBuilder()
-                    .uri(URI.create(endpointUrl))
-                    .GET()
-                    .timeout(Duration.ofMillis(requestTimeout))
-                if (!ownerToken.isNullOrBlank()) {
-                    httpRequestBuilder = httpRequestBuilder.header("x-gitpod-owner-token", ownerToken)
-                }
-                val httpRequest = httpRequestBuilder.build()
-                val response =
-                    httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString()).await()
+                val response = fetchWS(endpointUrl, ownerToken, requestTimeout)
                 if (response.statusCode() == 200) {
                     return response.body()
                 }

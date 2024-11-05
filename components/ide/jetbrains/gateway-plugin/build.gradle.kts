@@ -3,6 +3,7 @@
 // See License.AGPL.txt in the project root for license information.
 
 import io.gitlab.arturbosch.detekt.Detekt
+import org.jetbrains.changelog.date
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -35,6 +36,8 @@ var pluginVersion = properties("pluginVersion")
 if (environmentName.isNotBlank()) {
     pluginVersion += "-$environmentName"
 }
+
+pluginVersion = pluginVersion.replace("{{LOCAL_VERSION}}", date("MMddhhmm") + "-local")
 
 project(":") {
     kotlin {
@@ -173,6 +176,49 @@ tasks {
         } else {
             print("building $pluginVersion...")
             dependsOn("buildPlugin")
+        }
+    }
+}
+
+tasks.register("installPlugin") {
+    group = "gitpod"
+
+    println("Building plugin $pluginVersion")
+
+    dependsOn("buildPlugin")
+
+    doLast {
+        val pluginTargetPath = "distributions/jetbrains-gateway-gitpod-plugin.zip"
+        val pluginFile = layout.buildDirectory.file(pluginTargetPath).orNull?.asFile ?: {
+            throw GradleException("Plugin file not found at $pluginTargetPath")
+        }
+
+        // Example for macOS ~/Library/Application Support/JetBrains/JetBrainsGateway2024.3/plugins
+        //
+        // JB_GATEWAY_PLUGINS_DIR=/Users/hwen/Library/Application Support/JetBrains/JetBrainsGateway2024.3/plugins
+        // JB_GATEWAY_IDEA_LOG_FILE=/Users/hwen/Library/Logs/JetBrains/JetBrainsGateway2024.3/idea.log
+        val gatewayPluginsDir = System.getenv("JB_GATEWAY_PLUGINS_DIR")
+        val gatewayIDEALogFile = System.getenv("JB_GATEWAY_IDEA_LOG_FILE")
+
+        if (gatewayPluginsDir.isNullOrEmpty()) {
+            throw GradleException("Found no JB_GATEWAY_PLUGINS_DIR environment variable")
+        }
+        println("Copying plugin from $pluginFile to $gatewayPluginsDir")
+
+        copy {
+            from(zipTree(pluginFile))
+            into(file(gatewayPluginsDir))
+        }
+
+        println("Plugin successfully copied to $gatewayPluginsDir")
+
+        exec {
+            commandLine("sh", "-c", "pkill -f 'Gateway' || true")
+        }
+        if (!gatewayIDEALogFile.isNullOrEmpty()) {
+            exec {
+                commandLine("sh", "-c", "echo '' > $gatewayIDEALogFile")
+            }
         }
     }
 }

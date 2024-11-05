@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -32,6 +32,8 @@ type ControlServiceClient interface {
 	CreateSSHKeyPair(ctx context.Context, in *CreateSSHKeyPairRequest, opts ...grpc.CallOption) (*CreateSSHKeyPairResponse, error)
 	// CreateDebugEnv creates a debug workspace envs
 	CreateDebugEnv(ctx context.Context, in *CreateDebugEnvRequest, opts ...grpc.CallOption) (*CreateDebugEnvResponse, error)
+	// SendHeartBeat sends a heartbeat to server to keep the workspace alive
+	SendHeartBeat(ctx context.Context, in *SendHeartBeatRequest, opts ...grpc.CallOption) (*SendHeartBeatResponse, error)
 }
 
 type controlServiceClient struct {
@@ -69,6 +71,15 @@ func (c *controlServiceClient) CreateDebugEnv(ctx context.Context, in *CreateDeb
 	return out, nil
 }
 
+func (c *controlServiceClient) SendHeartBeat(ctx context.Context, in *SendHeartBeatRequest, opts ...grpc.CallOption) (*SendHeartBeatResponse, error) {
+	out := new(SendHeartBeatResponse)
+	err := c.cc.Invoke(ctx, "/supervisor.ControlService/SendHeartBeat", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ControlServiceServer is the server API for ControlService service.
 // All implementations must embed UnimplementedControlServiceServer
 // for forward compatibility
@@ -79,6 +90,8 @@ type ControlServiceServer interface {
 	CreateSSHKeyPair(context.Context, *CreateSSHKeyPairRequest) (*CreateSSHKeyPairResponse, error)
 	// CreateDebugEnv creates a debug workspace envs
 	CreateDebugEnv(context.Context, *CreateDebugEnvRequest) (*CreateDebugEnvResponse, error)
+	// SendHeartBeat sends a heartbeat to server to keep the workspace alive
+	SendHeartBeat(context.Context, *SendHeartBeatRequest) (*SendHeartBeatResponse, error)
 	mustEmbedUnimplementedControlServiceServer()
 }
 
@@ -94,6 +107,9 @@ func (UnimplementedControlServiceServer) CreateSSHKeyPair(context.Context, *Crea
 }
 func (UnimplementedControlServiceServer) CreateDebugEnv(context.Context, *CreateDebugEnvRequest) (*CreateDebugEnvResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateDebugEnv not implemented")
+}
+func (UnimplementedControlServiceServer) SendHeartBeat(context.Context, *SendHeartBeatRequest) (*SendHeartBeatResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendHeartBeat not implemented")
 }
 func (UnimplementedControlServiceServer) mustEmbedUnimplementedControlServiceServer() {}
 
@@ -162,6 +178,24 @@ func _ControlService_CreateDebugEnv_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ControlService_SendHeartBeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendHeartBeatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControlServiceServer).SendHeartBeat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/supervisor.ControlService/SendHeartBeat",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControlServiceServer).SendHeartBeat(ctx, req.(*SendHeartBeatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ControlService_ServiceDesc is the grpc.ServiceDesc for ControlService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -180,6 +214,10 @@ var ControlService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateDebugEnv",
 			Handler:    _ControlService_CreateDebugEnv_Handler,
+		},
+		{
+			MethodName: "SendHeartBeat",
+			Handler:    _ControlService_SendHeartBeat_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
