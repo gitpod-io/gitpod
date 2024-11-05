@@ -311,7 +311,7 @@ describe("EnvVarService", async () => {
         const workspaceConfig: WorkspaceConfig = {
             env: {
                 foobar: "yes please",
-                [fooAnyUserEnvVar.name]: "overridden",
+                [fooAnyUserEnvVar.name]: "overridden_by_user_var",
             },
         };
 
@@ -336,7 +336,7 @@ describe("EnvVarService", async () => {
             })),
         );
         expect(envVars.workspace).to.have.deep.members([
-            { name: fooAnyUserEnvVar.name, value: "overridden" },
+            fooAnyUserEnvVar,
             barUserCommitEnvVar,
             bazProjectEnvVar,
             { name: "foobar", value: "yes please" },

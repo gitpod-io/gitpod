@@ -260,20 +260,20 @@ export class EnvVarService {
             };
         }
 
-        // 1. first merge user envs
-        if (CommitContext.is(wsContext)) {
-            // this is a commit context, thus we can filter the env vars
-            const userEnvVars = await this.userDB.getEnvVars(requestorId);
-            merge(UserEnvVar.filter(userEnvVars, wsContext.repository.owner, wsContext.repository.name));
-        }
-
-        // 2. then from the .gitpod.yml
+        // 1. first merge the `env` in the .gitpod.yml
         if (wsConfig?.env) {
             const configEnvVars = Object.entries(wsConfig.env as Record<string, string>).map(([name, value]) => ({
                 name,
                 value,
             }));
             merge(configEnvVars);
+        }
+
+        // 2. then user envs
+        if (CommitContext.is(wsContext)) {
+            // this is a commit context, thus we can filter the env vars
+            const userEnvVars = await this.userDB.getEnvVars(requestorId);
+            merge(UserEnvVar.filter(userEnvVars, wsContext.repository.owner, wsContext.repository.name));
         }
 
         // 3. then from the project
