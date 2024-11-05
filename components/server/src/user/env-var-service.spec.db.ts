@@ -13,6 +13,7 @@ import {
     User,
     UserEnvVarValue,
     WithEnvvarsContext,
+    WorkspaceConfig,
 } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import * as chai from "chai";
@@ -43,36 +44,36 @@ const fooAnyUserEnvVar = {
     name: "foo",
     value: "any",
     repositoryPattern: "gitpod/*",
-};
+} as const;
 
 const barUserCommitEnvVar = {
     name: "bar",
     value: "commit",
     repositoryPattern: "gitpod/gitpod-io",
-};
+} as const;
 
 const barUserAnotherCommitEnvVar = {
     name: "bar",
     value: "commit",
     repositoryPattern: "gitpod/openvscode-server",
-};
+} as const;
 
 const barProjectCensoredEnvVar = {
     name: "bar",
     censored: true,
     value: "project1",
-};
+} as const;
 
 const bazProjectEnvVar = {
     name: "baz",
     censored: false,
     value: "project2",
-};
+} as const;
 
 const barContextEnvVar = {
     name: "bar",
     value: "context",
-};
+} as const;
 
 const contextEnvVars = {
     envvars: [barContextEnvVar],
@@ -299,7 +300,7 @@ describe("EnvVarService", async () => {
         });
     });
 
-    it("should resolve env variables regular projext", async () => {
+    it("should resolve env variables regular project", async () => {
         await es.addUserEnvVar(member.id, member.id, fooAnyUserEnvVar);
         await es.addUserEnvVar(member.id, member.id, barUserCommitEnvVar);
         await es.addUserEnvVar(member.id, member.id, barUserAnotherCommitEnvVar);
@@ -307,7 +308,14 @@ describe("EnvVarService", async () => {
         await es.addProjectEnvVar(owner.id, project.id, barProjectCensoredEnvVar);
         await es.addProjectEnvVar(owner.id, project.id, bazProjectEnvVar);
 
-        const envVars = await es.resolveEnvVariables(member.id, project.id, "regular", commitContext);
+        const workspaceConfig: WorkspaceConfig = {
+            env: {
+                foobar: "yes please",
+                [fooAnyUserEnvVar.name]: "overridden_by_user_var",
+            },
+        };
+
+        const envVars = await es.resolveEnvVariables(member.id, project.id, "regular", commitContext, workspaceConfig);
         envVars.project.forEach((e) => {
             delete (e as any).id;
             delete (e as any).projectId;
@@ -327,10 +335,15 @@ describe("EnvVarService", async () => {
                 censored: e.censored,
             })),
         );
-        expect(envVars.workspace).to.have.deep.members([fooAnyUserEnvVar, barUserCommitEnvVar, bazProjectEnvVar]);
+        expect(envVars.workspace).to.have.deep.members([
+            fooAnyUserEnvVar,
+            barUserCommitEnvVar,
+            bazProjectEnvVar,
+            { name: "foobar", value: "yes please" },
+        ]);
     });
 
-    it("should resolve env variables prebuild with projext ", async () => {
+    it("should resolve env variables prebuild with project", async () => {
         await es.addUserEnvVar(member.id, member.id, fooAnyUserEnvVar);
         await es.addUserEnvVar(member.id, member.id, barUserCommitEnvVar);
         await es.addUserEnvVar(member.id, member.id, barUserAnotherCommitEnvVar);

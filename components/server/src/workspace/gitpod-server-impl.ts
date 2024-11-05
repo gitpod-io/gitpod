@@ -1226,6 +1226,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             workspace.projectId,
             workspace.type,
             workspace.context,
+            workspace.config,
         );
 
         const result: EnvVarWithValue[] = [];
