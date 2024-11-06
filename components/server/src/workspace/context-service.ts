@@ -29,7 +29,7 @@ export class ContextService {
     constructor(
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
         @inject(ContextParser) private contextParser: ContextParser,
-        @inject(IncrementalWorkspaceService) private readonly incrementalPrebuildsService: IncrementalWorkspaceService,
+        @inject(IncrementalWorkspaceService) private readonly incrementalWorkspaceService: IncrementalWorkspaceService,
         @inject(ConfigProvider) private readonly configProvider: ConfigProvider,
 
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
@@ -57,14 +57,15 @@ export class ContextService {
             }
         } else {
             const configPromise = this.configProvider.fetchConfig({}, user, context, organizationId);
-            const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
+            const history = await this.incrementalWorkspaceService.getCommitHistoryForContext(context, user);
             const { config } = await configPromise;
-            prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
+            prebuiltWorkspace = await this.incrementalWorkspaceService.findBaseForIncrementalWorkspace(
                 context,
                 config,
                 history,
                 user,
                 projectId,
+                false,
             );
         }
         if (!prebuiltWorkspace?.projectId) {

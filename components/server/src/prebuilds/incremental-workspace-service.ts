@@ -66,7 +66,7 @@ export class IncrementalWorkspaceService {
         return history;
     }
 
-    public async findGoodBaseForIncrementalBuild(
+    public async findBaseForIncrementalWorkspace(
         context: CommitContext,
         config: WorkspaceConfig,
         history: WithCommitHistory,

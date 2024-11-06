@@ -407,7 +407,7 @@ export class PrebuildManager {
                         commitHistory: repoHist.commitHistory.slice(0, prebuildInterval),
                     })),
                 };
-                const prebuild = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
+                const prebuild = await this.incrementalPrebuildsService.findBaseForIncrementalWorkspace(
                     context,
                     config,
                     history,
@@ -416,6 +416,7 @@ export class PrebuildManager {
                     true,
                 );
                 if (prebuild) {
+                    // TODO(gpl): Why not "done: prebuild.state === "available""?
                     return { prebuildId: prebuild.id, wsid: prebuild.buildWorkspaceId, done: true };
                 }
             }
