@@ -68,14 +68,18 @@ jobs:
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
-      - name: Slack Notification
+      - name: Mock Slack Notification
         if: ${{ (success() && steps.find-target.outputs.buildNumber && steps.leeway-build.outputs.leewayUsingCache == 'false') || failure() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
-          SLACK_COLOR: ${{ job.status }}
-          SLACK_TITLE: Upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}
-          SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
+        run: |
+          echo "hey, you need to find out problems if you saw this message"
+      # - name: Slack Notification
+      #   if: ${{ (success() && steps.find-target.outputs.buildNumber && steps.leeway-build.outputs.leewayUsingCache == 'false') || failure() }}
+      #   uses: rtCamp/action-slack-notify@v2
+      #   env:
+      #     SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
+      #     SLACK_COLOR: ${{ job.status }}
+      #     SLACK_TITLE: Upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}
+      #     SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
 
   delete-runner:
     if: always()
