@@ -4,7 +4,7 @@
 # See License.AGPL.txt in the project root for license information.
 
 # This script is used to test JetBrains prebuild warmup indexing (search warmup-indexing.sh in codebase)
-# It will get the last indexing json file (scan type FULL_ON_PROJECT_OPEN)
+# It will get the last indexing json file (scan reason `On project open`)
 # and check if the scheduled indexing count is greater than a specified threshold
 #
 # `exit 0` means JetBrains IDEs no need to indexing again
@@ -19,7 +19,7 @@ JsonFiles=$(find "$ProjectIndexingFolder" -type f -name "*.json")
 
 FilteredJsonFiles=()
 for jsonFile in $JsonFiles; do
-    if jq -e '.projectIndexingActivityHistory.times.scanningType == "FULL_ON_PROJECT_OPEN"' "$jsonFile" > /dev/null; then
+    if jq -e '.projectIndexingActivityHistory.times.scanningReason == "On project open"' "$jsonFile" > /dev/null; then
         FilteredJsonFiles+=("$jsonFile")
     fi
 done
