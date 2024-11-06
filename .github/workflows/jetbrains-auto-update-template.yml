@@ -59,7 +59,7 @@ jobs:
           leewayUsingCache=$(leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${{ steps.find-target.outputs.buildNumber }} components/ide/jetbrains/image:${{ steps.find-target.outputs.image }}-latest -DjbBackendVersion=${{ steps.find-target.outputs.jbBackendVersion }} --dry-run --dump-plan - 2>&1 >/dev/null | jq -r .[0]==null)
           echo "leewayUsingCache=$leewayUsingCache" >> $GITHUB_OUTPUT
 
-          if [[ "$leewayUsingCache" != "true" ]]; then
+          if [ "$leewayUsingCache" != "true" ]; then
             echo "Upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}" >> $GITHUB_STEP_SUMMARY
             leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${{ steps.find-target.outputs.buildNumber }} components/ide/jetbrains/image:${{ steps.find-target.outputs.image }}-latest -DjbBackendVersion=${{ steps.find-target.outputs.jbBackendVersion }}
           else
