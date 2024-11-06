@@ -207,6 +207,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.2.3",
+            "image": "{{.Repository}}/ide/intellij:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f",
+              "{{.Repository}}/ide/jb-launcher:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f"
+            ]
+          },
+          {
             "version": "2024.2.2",
             "image": "{{.Repository}}/ide/intellij:commit-2aba460a50c43e830b015a6ff4e52e6491a3ed36",
             "imageLayers": [
@@ -394,6 +402,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.2.3",
+            "image": "{{.Repository}}/ide/pycharm:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f",
+              "{{.Repository}}/ide/jb-launcher:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f"
+            ]
+          },
+          {
             "version": "2024.2.2",
             "image": "{{.Repository}}/ide/pycharm:commit-2aba460a50c43e830b015a6ff4e52e6491a3ed36",
             "imageLayers": [
@@ -479,6 +495,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.2.3",
+            "image": "{{.Repository}}/ide/phpstorm:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f",
+              "{{.Repository}}/ide/jb-launcher:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f"
+            ]
+          },
+          {
             "version": "2024.2.1",
             "image": "{{.Repository}}/ide/phpstorm:commit-2aba460a50c43e830b015a6ff4e52e6491a3ed36",
             "imageLayers": [
@@ -555,6 +579,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.2.3",
+            "image": "{{.Repository}}/ide/rubymine:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f",
+              "{{.Repository}}/ide/jb-launcher:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f"
+            ]
+          },
           {
             "version": "2024.2.2",
             "image": "{{.Repository}}/ide/rubymine:commit-2aba460a50c43e830b015a6ff4e52e6491a3ed36",
@@ -640,6 +672,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.2.3",
+            "image": "{{.Repository}}/ide/webstorm:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f",
+              "{{.Repository}}/ide/jb-launcher:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f"
+            ]
+          },
           {
             "version": "2024.2.2",
             "image": "{{.Repository}}/ide/webstorm:commit-2aba460a50c43e830b015a6ff4e52e6491a3ed36",
@@ -787,6 +827,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.2.2",
+            "image": "{{.Repository}}/ide/clion:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f",
+              "{{.Repository}}/ide/jb-launcher:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f"
+            ]
+          },
+          {
             "version": "2024.2.1",
             "image": "{{.Repository}}/ide/clion:commit-d54058956db3274084249bdbc4f508ab111b8c51",
             "imageLayers": [
@@ -855,6 +903,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.2.3",
+            "image": "{{.Repository}}/ide/rustrover:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f",
+              "{{.Repository}}/ide/jb-launcher:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f"
+            ]
+          },
           {
             "version": "2024.2.2",
             "image": "{{.Repository}}/ide/rustrover:commit-4498ab2cf154605be427392b8bddf25dede91f8a",
