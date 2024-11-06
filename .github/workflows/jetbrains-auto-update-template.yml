@@ -49,19 +49,29 @@ jobs:
             cat /tmp/__gh_output.txt >> $GITHUB_OUTPUT
           fi
       - name: Leeway build
+        id: leeway-build
         if: ${{ steps.find-target.outputs.buildNumber }}
         env:
           LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: "8388608"
           LEEWAY_REMOTE_CACHE_BUCKET: ${{ github.ref == 'refs/heads/main' && 'leeway-cache-main-c514a01' || 'leeway-cache-dev-3ac8ef5' }}
         run: |
+          echo "May upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}"
           imageRepoBase=${{ github.ref == 'refs/heads/main' && 'eu.gcr.io/gitpod-core-dev/build' || 'eu.gcr.io/gitpod-dev-artifact/build' }}
-          echo "Upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}" >> $GITHUB_STEP_SUMMARY
-          leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${{ steps.find-target.outputs.buildNumber }} components/ide/jetbrains/image:${{ steps.find-target.outputs.image }}-latest -DjbBackendVersion=${{ steps.find-target.outputs.jbBackendVersion }}
+          output=$(leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${{ steps.find-target.outputs.buildNumber }} components/ide/jetbrains/image:${{ steps.find-target.outputs.image }}-latest -DjbBackendVersion=${{ steps.find-target.outputs.jbBackendVersion }} --dry-run)
+          if echo "$output" | grep -q "🔧[[:space:]]*build"; then
+            echo "leewayUsingCache=false" >> $GITHUB_OUTPUT
+            echo "Needs to build"
+            echo "Upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}" >> $GITHUB_STEP_SUMMARY
+            leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${{ steps.find-target.outputs.buildNumber }} components/ide/jetbrains/image:${{ steps.find-target.outputs.image }}-latest -DjbBackendVersion=${{ steps.find-target.outputs.jbBackendVersion }}
+          else
+            echo "leewayUsingCache=true" >> $GITHUB_OUTPUT
+            echo "No need to build"
+          fi
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
       - name: Slack Notification
-        if: ${{ (success() && steps.find-target.outputs.buildNumber) || failure() }}
+        if: ${{ (success() && steps.find-target.outputs.buildNumber && steps.leeway-build.outputs.leewayUsingCache == 'false') || failure() }}
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
