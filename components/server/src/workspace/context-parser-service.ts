@@ -132,7 +132,6 @@ export class ContextParser {
         try {
             // Note: we only care about repo related stuff in this function.
             // Fields like `config.image` will not be exposed, so we don't pass organizationId here
-            let config = await this.configProvider.fetchConfig({ span }, user, context);
             let mainRepoContext: WorkspaceContext | undefined;
             if (config.config.mainConfiguration) {
                 mainRepoContext = await this.internalHandleWithoutPrefix(
@@ -194,6 +193,9 @@ export class ContextParser {
             if (ExternalImageConfigFile.is(config.config.image)) {
                 if (config.config.image.externalSource.revision === ImageFileRevisionMissing) {
                     context.warnings.push("The Dockerfile specified in the .gitpod.yml file was not found.");
+
+                    // we let the image builder try cloning the context's revision
+                    config.config.image.externalSource.revision = context.revision;
                 }
             }
 
