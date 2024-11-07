@@ -32,11 +32,11 @@ export class GithubFileProvider implements FileProvider {
         const notFoundError = new Error(
             `File ${path} does not exist in repository ${repository.owner}/${repository.name}`,
         );
-        const fileExists =
-            (await this.getFileContent({ repository, revision: revisionOrBranch }, user, path)) !== undefined;
-        if (!fileExists) {
-            throw notFoundError;
-        }
+        // const fileExists =
+        //     (await this.getFileContent({ repository, revision: revisionOrBranch }, user, path)) !== undefined;
+        // if (!fileExists) {
+        //     throw notFoundError;
+        // }
 
         const commits = (
             await this.githubApi.run(user, (gh) =>

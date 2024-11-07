@@ -1601,7 +1601,12 @@ func stopWhenTasksAreDone(wg *sync.WaitGroup, cfg *Config, shutdown chan Shutdow
 	if success.Failed() {
 		var msg []byte
 		if cfg.isImageBuild() {
-			msg = []byte("image build failed (" + string(success) + "). This is likely due to a misconfiguration in your Dockerfile. Debug this using `gp validate` (visit https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration) to learn more")
+			logFromFile, err := os.ReadFile("/workspace/.gitpod/bob.log")
+			if err != nil {
+				msg = []byte("err while reading bob.log" + err.Error())
+			} else {
+				msg = []byte("image build failed: " + string(logFromFile) + ". Debug this using `gp validate` (visit https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration) to learn more")
+			}
 		} else {
 			msg = []byte("headless task failed: " + string(success))
 		}
