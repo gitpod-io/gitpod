@@ -132,6 +132,7 @@ export class ContextParser {
         try {
             // Note: we only care about repo related stuff in this function.
             // Fields like `config.image` will not be exposed, so we don't pass organizationId here
+            let config = await this.configProvider.fetchConfig({ span }, user, context);
             let mainRepoContext: WorkspaceContext | undefined;
             if (config.config.mainConfiguration) {
                 mainRepoContext = await this.internalHandleWithoutPrefix(
