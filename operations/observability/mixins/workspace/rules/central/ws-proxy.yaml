@@ -31,7 +31,18 @@ spec:
         annotations:
           runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceDeploymentReplicaMismatch.md
           summary: Desired number of replicas for ws-proxy are not available in cluster {{ $labels.cluster }}
-          description: The mismatch is {{ printf "%.2f" $value }}
+          description: 'Desired number of replicas for ws-proxy are not available in cluster {{ $labels.cluster }}: {{ printf "%.2f" $value }} are missing'
         expr: |
           kube_deployment_spec_replicas{deployment="ws-proxy", cluster!~"ephemeral.*"} != kube_deployment_status_replicas_available{deployment="ws-proxy", cluster!~"ephemeral.*"}
         for: 3m
+      - alert: GitpodWsProxyMk2ReplicaUnavailable
+        labels:
+          # TODO(gpl): warning for now, to set it up and fine-tune it
+          severity: warning
+        annotations:
+          runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceDeploymentReplicaMismatch.md
+          summary: ws-proxy replicas are unavailable in cluster {{ $labels.cluster }}
+          description: 'ws-proxy pods are unavailable in cluster {{ $labels.cluster }}: {{ printf "%.2f" $value }}'
+        expr: |
+          kube_deployment_status_replicas_unavailable{deployment="ws-proxy", cluster!~"ephemeral.*"} > 0
+        for: 10m
