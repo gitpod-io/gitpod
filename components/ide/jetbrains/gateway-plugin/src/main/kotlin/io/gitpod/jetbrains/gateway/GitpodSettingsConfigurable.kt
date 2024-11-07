@@ -34,7 +34,7 @@ class GitpodSettingsConfigurable : BoundConfigurable("Gitpod") {
             row {
                 checkBox("Persistent connection heartbeats")
                     .bindSelected(state::additionalHeartbeat)
-                    .comment("Keep workspaces running as long as the IDE connection remains active.")
+                    .comment("Keep workspaces running as long as the IDE connection remains active")
             }
 
         }
