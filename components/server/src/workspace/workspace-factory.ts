@@ -332,6 +332,9 @@ export class WorkspaceFactory {
             if (WorkspaceImageSourceDocker.is(imageSource) && imageSource.dockerFileHash === ImageFileRevisionMissing) {
                 // we let the workspace create here and let it fail to build the image
                 imageSource.dockerFileHash = context.revision;
+                if (imageSource.dockerFileSource) {
+                    imageSource.dockerFileSource.revision = context.revision;
+                }
             }
 
             let projectId: string | undefined;

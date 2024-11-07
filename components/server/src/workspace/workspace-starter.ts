@@ -280,8 +280,12 @@ export class WorkspaceStarter {
                     WorkspaceImageSourceDocker.is(imageSource) &&
                     imageSource.dockerFileHash === ImageFileRevisionMissing
                 ) {
+                    const revision = (workspace.context as CommitContext).revision;
                     // we let the workspace create here and let it fail to build the image
-                    imageSource.dockerFileHash = (workspace.context as CommitContext).revision;
+                    imageSource.dockerFileHash = revision;
+                    if (imageSource.dockerFileSource) {
+                        imageSource.dockerFileSource.revision = revision;
+                    }
                 }
                 log.debug("Found workspace without imageSource, generated one", { imageSource });
 
