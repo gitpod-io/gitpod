@@ -18919,6 +18919,47 @@ java.lang.String defaultValue);
      */
     com.google.protobuf.ByteString
         getOriginalContextUrlBytes();
+
+    /**
+     * <pre>
+     * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+     * </pre>
+     *
+     * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+     * @return A list containing the warnings.
+     */
+    java.util.List<java.lang.String>
+        getWarningsList();
+    /**
+     * <pre>
+     * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+     * </pre>
+     *
+     * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+     * @return The count of warnings.
+     */
+    int getWarningsCount();
+    /**
+     * <pre>
+     * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+     * </pre>
+     *
+     * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+     * @param index The index of the element to return.
+     * @return The warnings at the given index.
+     */
+    java.lang.String getWarnings(int index);
+    /**
+     * <pre>
+     * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+     * </pre>
+     *
+     * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the warnings at the given index.
+     */
+    com.google.protobuf.ByteString
+        getWarningsBytes(int index);
   }
   /**
    * <pre>
@@ -18952,6 +18993,8 @@ java.lang.String defaultValue);
       configurationId_ = "";
       name_ = "";
       originalContextUrl_ = "";
+      warnings_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -19332,6 +19375,59 @@ java.lang.String defaultValue) {
       }
     }
 
+    public static final int WARNINGS_FIELD_NUMBER = 8;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.LazyStringArrayList warnings_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    /**
+     * <pre>
+     * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+     * </pre>
+     *
+     * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+     * @return A list containing the warnings.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getWarningsList() {
+      return warnings_;
+    }
+    /**
+     * <pre>
+     * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+     * </pre>
+     *
+     * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+     * @return The count of warnings.
+     */
+    public int getWarningsCount() {
+      return warnings_.size();
+    }
+    /**
+     * <pre>
+     * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+     * </pre>
+     *
+     * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+     * @param index The index of the element to return.
+     * @return The warnings at the given index.
+     */
+    public java.lang.String getWarnings(int index) {
+      return warnings_.get(index);
+    }
+    /**
+     * <pre>
+     * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+     * </pre>
+     *
+     * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the warnings at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getWarningsBytes(int index) {
+      return warnings_.getByteString(index);
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -19369,6 +19465,9 @@ java.lang.String defaultValue) {
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(originalContextUrl_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 7, originalContextUrl_);
+      }
+      for (int i = 0; i < warnings_.size(); i++) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 8, warnings_.getRaw(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -19408,6 +19507,14 @@ java.lang.String defaultValue) {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(originalContextUrl_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(7, originalContextUrl_);
       }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < warnings_.size(); i++) {
+          dataSize += computeStringSizeNoTag(warnings_.getRaw(i));
+        }
+        size += dataSize;
+        size += 1 * getWarningsList().size();
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -19437,6 +19544,8 @@ java.lang.String defaultValue) {
           != other.getPinned()) return false;
       if (!getOriginalContextUrl()
           .equals(other.getOriginalContextUrl())) return false;
+      if (!getWarningsList()
+          .equals(other.getWarningsList())) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -19465,6 +19574,10 @@ java.lang.String defaultValue) {
           getPinned());
       hash = (37 * hash) + ORIGINAL_CONTEXT_URL_FIELD_NUMBER;
       hash = (53 * hash) + getOriginalContextUrl().hashCode();
+      if (getWarningsCount() > 0) {
+        hash = (37 * hash) + WARNINGS_FIELD_NUMBER;
+        hash = (53 * hash) + getWarningsList().hashCode();
+      }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -19630,6 +19743,8 @@ java.lang.String defaultValue) {
         name_ = "";
         pinned_ = false;
         originalContextUrl_ = "";
+        warnings_ =
+            com.google.protobuf.LazyStringArrayList.emptyList();
         return this;
       }
 
@@ -19685,6 +19800,10 @@ java.lang.String defaultValue) {
         if (((from_bitField0_ & 0x00000040) != 0)) {
           result.originalContextUrl_ = originalContextUrl_;
         }
+        if (((from_bitField0_ & 0x00000080) != 0)) {
+          warnings_.makeImmutable();
+          result.warnings_ = warnings_;
+        }
       }
 
       @java.lang.Override
@@ -19728,6 +19847,16 @@ java.lang.String defaultValue) {
         if (!other.getOriginalContextUrl().isEmpty()) {
           originalContextUrl_ = other.originalContextUrl_;
           bitField0_ |= 0x00000040;
+          onChanged();
+        }
+        if (!other.warnings_.isEmpty()) {
+          if (warnings_.isEmpty()) {
+            warnings_ = other.warnings_;
+            bitField0_ |= 0x00000080;
+          } else {
+            ensureWarningsIsMutable();
+            warnings_.addAll(other.warnings_);
+          }
           onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
@@ -19795,6 +19924,12 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000040;
                 break;
               } // case 58
+              case 66: {
+                java.lang.String s = input.readStringRequireUtf8();
+                ensureWarningsIsMutable();
+                warnings_.add(s);
+                break;
+              } // case 66
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -20484,6 +20619,153 @@ java.lang.String defaultValue) {
         checkByteStringIsUtf8(value);
         originalContextUrl_ = value;
         bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.LazyStringArrayList warnings_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
+      private void ensureWarningsIsMutable() {
+        if (!warnings_.isModifiable()) {
+          warnings_ = new com.google.protobuf.LazyStringArrayList(warnings_);
+        }
+        bitField0_ |= 0x00000080;
+      }
+      /**
+       * <pre>
+       * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+       * </pre>
+       *
+       * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+       * @return A list containing the warnings.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getWarningsList() {
+        warnings_.makeImmutable();
+        return warnings_;
+      }
+      /**
+       * <pre>
+       * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+       * </pre>
+       *
+       * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+       * @return The count of warnings.
+       */
+      public int getWarningsCount() {
+        return warnings_.size();
+      }
+      /**
+       * <pre>
+       * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+       * </pre>
+       *
+       * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+       * @param index The index of the element to return.
+       * @return The warnings at the given index.
+       */
+      public java.lang.String getWarnings(int index) {
+        return warnings_.get(index);
+      }
+      /**
+       * <pre>
+       * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+       * </pre>
+       *
+       * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the warnings at the given index.
+       */
+      public com.google.protobuf.ByteString
+          getWarningsBytes(int index) {
+        return warnings_.getByteString(index);
+      }
+      /**
+       * <pre>
+       * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+       * </pre>
+       *
+       * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+       * @param index The index to set the value at.
+       * @param value The warnings to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWarnings(
+          int index, java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureWarningsIsMutable();
+        warnings_.set(index, value);
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+       * </pre>
+       *
+       * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+       * @param value The warnings to add.
+       * @return This builder for chaining.
+       */
+      public Builder addWarnings(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureWarningsIsMutable();
+        warnings_.add(value);
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+       * </pre>
+       *
+       * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+       * @param values The warnings to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllWarnings(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureWarningsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, warnings_);
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+       * </pre>
+       *
+       * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearWarnings() {
+        warnings_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000080);;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+       * </pre>
+       *
+       * <code>repeated string warnings = 8 [json_name = "warnings"];</code>
+       * @param value The bytes of the warnings to add.
+       * @return This builder for chaining.
+       */
+      public Builder addWarningsBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        ensureWarningsIsMutable();
+        warnings_.add(value);
+        bitField0_ |= 0x00000080;
         onChanged();
         return this;
       }
@@ -26679,7 +26961,7 @@ java.lang.String defaultValue) {
      *
      * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
      * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-     *     See gitpod/v1/workspace.proto;l=466
+     *     See gitpod/v1/workspace.proto;l=469
      * @return The instanceId.
      */
     @java.lang.Deprecated java.lang.String getInstanceId();
@@ -26691,7 +26973,7 @@ java.lang.String defaultValue) {
      *
      * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
      * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-     *     See gitpod/v1/workspace.proto;l=466
+     *     See gitpod/v1/workspace.proto;l=469
      * @return The bytes for instanceId.
      */
     @java.lang.Deprecated com.google.protobuf.ByteString
@@ -28774,7 +29056,7 @@ java.lang.String defaultValue) {
      *
      * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
      * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-     *     See gitpod/v1/workspace.proto;l=466
+     *     See gitpod/v1/workspace.proto;l=469
      * @return The instanceId.
      */
     @java.lang.Override
@@ -28798,7 +29080,7 @@ java.lang.String defaultValue) {
      *
      * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
      * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-     *     See gitpod/v1/workspace.proto;l=466
+     *     See gitpod/v1/workspace.proto;l=469
      * @return The bytes for instanceId.
      */
     @java.lang.Override
@@ -30138,7 +30420,7 @@ java.lang.String defaultValue) {
        *
        * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
        * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-       *     See gitpod/v1/workspace.proto;l=466
+       *     See gitpod/v1/workspace.proto;l=469
        * @return The instanceId.
        */
       @java.lang.Deprecated public java.lang.String getInstanceId() {
@@ -30161,7 +30443,7 @@ java.lang.String defaultValue) {
        *
        * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
        * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-       *     See gitpod/v1/workspace.proto;l=466
+       *     See gitpod/v1/workspace.proto;l=469
        * @return The bytes for instanceId.
        */
       @java.lang.Deprecated public com.google.protobuf.ByteString
@@ -30185,7 +30467,7 @@ java.lang.String defaultValue) {
        *
        * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
        * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-       *     See gitpod/v1/workspace.proto;l=466
+       *     See gitpod/v1/workspace.proto;l=469
        * @param value The instanceId to set.
        * @return This builder for chaining.
        */
@@ -30205,7 +30487,7 @@ java.lang.String defaultValue) {
        *
        * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
        * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-       *     See gitpod/v1/workspace.proto;l=466
+       *     See gitpod/v1/workspace.proto;l=469
        * @return This builder for chaining.
        */
       @java.lang.Deprecated public Builder clearInstanceId() {
@@ -30222,7 +30504,7 @@ java.lang.String defaultValue) {
        *
        * <code>string instance_id = 7 [json_name = "instanceId", deprecated = true];</code>
        * @deprecated gitpod.v1.WorkspaceStatus.instance_id is deprecated.
-       *     See gitpod/v1/workspace.proto;l=466
+       *     See gitpod/v1/workspace.proto;l=469
        * @param value The bytes for instanceId to set.
        * @return This builder for chaining.
        */
@@ -44749,7 +45031,7 @@ java.lang.String defaultValue) {
      *
      * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
      * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-     *     See gitpod/v1/workspace.proto;l=790
+     *     See gitpod/v1/workspace.proto;l=793
      * @return Whether the gitStatus field is set.
      */
     @java.lang.Deprecated boolean hasGitStatus();
@@ -44761,7 +45043,7 @@ java.lang.String defaultValue) {
      *
      * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
      * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-     *     See gitpod/v1/workspace.proto;l=790
+     *     See gitpod/v1/workspace.proto;l=793
      * @return The gitStatus.
      */
     @java.lang.Deprecated io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceGitStatus getGitStatus();
@@ -47713,7 +47995,7 @@ java.lang.String defaultValue) {
      *
      * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
      * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-     *     See gitpod/v1/workspace.proto;l=790
+     *     See gitpod/v1/workspace.proto;l=793
      * @return Whether the gitStatus field is set.
      */
     @java.lang.Override
@@ -47728,7 +48010,7 @@ java.lang.String defaultValue) {
      *
      * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
      * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-     *     See gitpod/v1/workspace.proto;l=790
+     *     See gitpod/v1/workspace.proto;l=793
      * @return The gitStatus.
      */
     @java.lang.Override
@@ -48608,7 +48890,7 @@ java.lang.String defaultValue) {
        *
        * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
        * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-       *     See gitpod/v1/workspace.proto;l=790
+       *     See gitpod/v1/workspace.proto;l=793
        * @return Whether the gitStatus field is set.
        */
       @java.lang.Deprecated public boolean hasGitStatus() {
@@ -48622,7 +48904,7 @@ java.lang.String defaultValue) {
        *
        * <code>optional .gitpod.v1.WorkspaceGitStatus git_status = 4 [json_name = "gitStatus", deprecated = true];</code>
        * @deprecated gitpod.v1.UpdateWorkspaceRequest.git_status is deprecated.
-       *     See gitpod/v1/workspace.proto;l=790
+       *     See gitpod/v1/workspace.proto;l=793
        * @return The gitStatus.
        */
       @java.lang.Deprecated public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceGitStatus getGitStatus() {
@@ -60373,257 +60655,257 @@ java.lang.String defaultValue) {
       "v1.WorkspaceMetadataR\010metadata\022,\n\004spec\030\003" +
       " \001(\0132\030.gitpod.v1.WorkspaceSpecR\004spec\0222\n\006" +
       "status\030\004 \001(\0132\032.gitpod.v1.WorkspaceStatus" +
-      "R\006status\"\361\002\n\021WorkspaceMetadata\022\031\n\010owner_" +
+      "R\006status\"\215\003\n\021WorkspaceMetadata\022\031\n\010owner_" +
       "id\030\001 \001(\tR\007ownerId\022\'\n\017organization_id\030\002 \001" +
       "(\tR\016organizationId\022)\n\020configuration_id\030\003" +
       " \001(\tR\017configurationId\022O\n\013annotations\030\004 \003" +
       "(\0132-.gitpod.v1.WorkspaceMetadata.Annotat" +
       "ionsEntryR\013annotations\022\022\n\004name\030\005 \001(\tR\004na" +
       "me\022\026\n\006pinned\030\006 \001(\010R\006pinned\0220\n\024original_c" +
-      "ontext_url\030\007 \001(\tR\022originalContextUrl\032>\n\020" +
-      "AnnotationsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005va" +
-      "lue\030\002 \001(\tR\005value:\0028\001\"\273\010\n\rWorkspaceSpec\022A" +
-      "\n\013initializer\030\001 \001(\0132\037.gitpod.v1.Workspac" +
-      "eInitializerR\013initializer\022:\n\004type\030\002 \001(\0162" +
-      "&.gitpod.v1.WorkspaceSpec.WorkspaceTypeR" +
-      "\004type\022.\n\005ports\030\003 \003(\0132\030.gitpod.v1.Workspa" +
-      "cePortR\005ports\022S\n\025environment_variables\030\004" +
-      " \003(\0132\036.gitpod.v1.EnvironmentVariableR\024en" +
-      "vironmentVariables\0222\n\003git\030\005 \001(\0132 .gitpod" +
-      ".v1.WorkspaceSpec.GitSpecR\003git\022:\n\007timeou" +
-      "t\030\006 \001(\0132 .gitpod.v1.WorkspaceSpec.Timeou" +
-      "tR\007timeout\0227\n\tadmission\030\007 \001(\0162\031.gitpod.v" +
-      "1.AdmissionLevelR\tadmission\022\024\n\005class\030\010 \001" +
-      "(\tR\005class\022&\n\017ssh_public_keys\030\t \003(\tR\rsshP" +
-      "ublicKeys\0225\n\026subassembly_references\030\n \003(" +
-      "\tR\025subassemblyReferences\022H\n\022last_user_ac" +
-      "tivity\030\013 \001(\0132\032.google.protobuf.Timestamp" +
-      "R\020lastUserActivity\022\027\n\007log_url\030\014 \001(\tR\006log" +
-      "Url\0222\n\006editor\030\r \001(\0132\032.gitpod.v1.EditorRe" +
-      "ferenceR\006editor\032\311\001\n\007Timeout\0229\n\ninactivit" +
-      "y\030\001 \001(\0132\031.google.protobuf.DurationR\ninac" +
-      "tivity\022=\n\014disconnected\030\002 \001(\0132\031.google.pr" +
-      "otobuf.DurationR\014disconnected\022D\n\020maximum" +
-      "_lifetime\030\003 \001(\0132\031.google.protobuf.Durati" +
-      "onR\017maximumLifetime\032;\n\007GitSpec\022\032\n\010userna" +
-      "me\030\001 \001(\tR\010username\022\024\n\005email\030\002 \001(\tR\005email" +
-      "\"h\n\rWorkspaceType\022\036\n\032WORKSPACE_TYPE_UNSP" +
-      "ECIFIED\020\000\022\032\n\026WORKSPACE_TYPE_REGULAR\020\001\022\033\n" +
-      "\027WORKSPACE_TYPE_PREBUILD\020\002\"\346\006\n\017Workspace" +
-      "Status\022%\n\016status_version\030\001 \001(\004R\rstatusVe" +
-      "rsion\022/\n\005phase\030\002 \001(\0132\031.gitpod.v1.Workspa" +
-      "cePhaseR\005phase\022#\n\rworkspace_url\030\003 \001(\tR\014w" +
-      "orkspaceUrl\022N\n\nconditions\030\004 \001(\0132..gitpod" +
-      ".v1.WorkspaceStatus.WorkspaceConditionsR" +
-      "\nconditions\022R\n\017prebuild_result\030\005 \001(\0132).g" +
-      "itpod.v1.WorkspaceStatus.PrebuildResultR" +
-      "\016prebuildResult\022<\n\ngit_status\030\006 \001(\0132\035.gi" +
-      "tpod.v1.WorkspaceGitStatusR\tgitStatus\022#\n" +
-      "\013instance_id\030\007 \001(\tB\002\030\001R\ninstanceId\032\373\002\n\023W" +
-      "orkspaceConditions\022\026\n\006failed\030\001 \001(\tR\006fail" +
-      "ed\022`\n\rfailed_reason\030\002 \001(\0162;.gitpod.v1.Wo" +
-      "rkspaceStatus.WorkspaceConditions.Failed" +
-      "ReasonR\014failedReason\022\030\n\007timeout\030\003 \001(\tR\007t" +
-      "imeout\"\317\001\n\014FailedReason\022\035\n\031FAILED_REASON" +
-      "_UNSPECIFIED\020\000\022/\n+FAILED_REASON_CONTENT_" +
-      "INITIALIZATION_FAILED\020\001\022\037\n\033FAILED_REASON" +
-      "_BACKUP_FAILED\020\002\022$\n FAILED_REASON_IMAGE_" +
-      "PULL_FAILURE\020\003\022(\n$FAILED_REASON_UNEXPECT" +
-      "ED_TERMINATION\020\004\032Q\n\016PrebuildResult\022\032\n\010sn" +
-      "apshot\030\001 \001(\tR\010snapshot\022#\n\rerror_message\030" +
-      "\002 \001(\tR\014errorMessage\"\372\001\n\rWorkspacePort\022\022\n" +
-      "\004port\030\001 \001(\004R\004port\0227\n\tadmission\030\002 \001(\0162\031.g" +
-      "itpod.v1.AdmissionLevelR\tadmission\022\020\n\003ur" +
-      "l\030\003 \001(\tR\003url\022=\n\010protocol\030\004 \001(\0162!.gitpod." +
-      "v1.WorkspacePort.ProtocolR\010protocol\"K\n\010P" +
-      "rotocol\022\030\n\024PROTOCOL_UNSPECIFIED\020\000\022\021\n\rPRO" +
-      "TOCOL_HTTP\020\001\022\022\n\016PROTOCOL_HTTPS\020\002\"\215\003\n\022Wor" +
-      "kspaceGitStatus\022\033\n\tclone_url\030\001 \001(\tR\010clon" +
-      "eUrl\022\026\n\006branch\030\002 \001(\tR\006branch\022#\n\rlatest_c" +
-      "ommit\030\003 \001(\tR\014latestCommit\022)\n\020uncommited_" +
-      "files\030\004 \003(\tR\017uncommitedFiles\0224\n\026total_un" +
-      "commited_files\030\005 \001(\005R\024totalUncommitedFil" +
-      "es\022\'\n\017untracked_files\030\006 \003(\tR\016untrackedFi" +
-      "les\0222\n\025total_untracked_files\030\007 \001(\005R\023tota" +
-      "lUntrackedFiles\022)\n\020unpushed_commits\030\010 \003(" +
-      "\tR\017unpushedCommits\0224\n\026total_unpushed_com" +
-      "mits\030\t \001(\005R\024totalUnpushedCommits\"\201\003\n\016Wor" +
-      "kspacePhase\0223\n\004name\030\001 \001(\0162\037.gitpod.v1.Wo" +
-      "rkspacePhase.PhaseR\004name\022L\n\024last_transit" +
-      "ion_time\030\002 \001(\0132\032.google.protobuf.Timesta" +
-      "mpR\022lastTransitionTime\"\353\001\n\005Phase\022\025\n\021PHAS" +
-      "E_UNSPECIFIED\020\000\022\023\n\017PHASE_PREPARING\020\001\022\024\n\020" +
-      "PHASE_IMAGEBUILD\020\002\022\021\n\rPHASE_PENDING\020\003\022\022\n" +
-      "\016PHASE_CREATING\020\004\022\026\n\022PHASE_INITIALIZING\020" +
-      "\005\022\021\n\rPHASE_RUNNING\020\006\022\025\n\021PHASE_INTERRUPTE" +
-      "D\020\007\022\020\n\014PHASE_PAUSED\020\010\022\022\n\016PHASE_STOPPING\020" +
-      "\t\022\021\n\rPHASE_STOPPED\020\n\"\320\002\n\024WorkspaceInitia" +
-      "lizer\022:\n\005specs\030\001 \003(\0132$.gitpod.v1.Workspa" +
-      "ceInitializer.SpecR\005specs\032\373\001\n\004Spec\022-\n\003gi" +
-      "t\030\001 \001(\0132\031.gitpod.v1.GitInitializerH\000R\003gi" +
-      "t\022<\n\010snapshot\030\002 \001(\0132\036.gitpod.v1.Snapshot" +
-      "InitializerH\000R\010snapshot\022<\n\010prebuild\030\003 \001(" +
-      "\0132\036.gitpod.v1.PrebuildInitializerH\000R\010pre" +
-      "build\022@\n\010download\030\004 \001(\0132\".gitpod.v1.File" +
-      "DownloadInitializerH\000R\010downloadB\006\n\004spec\"" +
-      "\275\007\n\016GitInitializer\022\035\n\nremote_uri\030\001 \001(\tR\t" +
-      "remoteUri\022.\n\023upstream_remote_uri\030\002 \001(\tR\021" +
-      "upstreamRemoteUri\022J\n\013target_mode\030\003 \001(\0162)" +
-      ".gitpod.v1.GitInitializer.CloneTargetMod" +
-      "eR\ntargetMode\022!\n\014clone_target\030\004 \001(\tR\013clo" +
-      "neTarget\022+\n\021checkout_location\030\005 \001(\tR\020che" +
-      "ckoutLocation\022;\n\006config\030\006 \001(\0132#.gitpod.v" +
-      "1.GitInitializer.GitConfigR\006config\032\323\002\n\tG" +
-      "itConfig\022Z\n\rcustom_config\030\001 \003(\01325.gitpod" +
-      ".v1.GitInitializer.GitConfig.CustomConfi" +
-      "gEntryR\014customConfig\022L\n\016authentication\030\002" +
-      " \001(\0162$.gitpod.v1.GitInitializer.AuthMeth" +
-      "odR\016authentication\022\033\n\tauth_user\030\003 \001(\tR\010a" +
-      "uthUser\022#\n\rauth_password\030\004 \001(\tR\014authPass" +
-      "word\022\031\n\010auth_ots\030\005 \001(\tR\007authOts\032?\n\021Custo" +
-      "mConfigEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030" +
-      "\002 \001(\tR\005value:\0028\001\"\305\001\n\017CloneTargetMode\022!\n\035" +
-      "CLONE_TARGET_MODE_UNSPECIFIED\020\000\022!\n\035CLONE" +
-      "_TARGET_MODE_REMOTE_HEAD\020\001\022#\n\037CLONE_TARG" +
-      "ET_MODE_REMOTE_COMMIT\020\002\022#\n\037CLONE_TARGET_" +
-      "MODE_REMOTE_BRANCH\020\003\022\"\n\036CLONE_TARGET_MOD" +
-      "E_LOCAL_BRANCH\020\004\"e\n\nAuthMethod\022\033\n\027AUTH_M" +
-      "ETHOD_UNSPECIFIED\020\000\022\032\n\026AUTH_METHOD_BASIC" +
-      "_AUTH\020\001\022\036\n\032AUTH_METHOD_BASIC_AUTH_OTS\020\002\"" +
-      "6\n\023SnapshotInitializer\022\037\n\013snapshot_id\030\001 " +
-      "\001(\tR\nsnapshotId\"6\n\023PrebuildInitializer\022\037" +
-      "\n\013prebuild_id\030\001 \001(\tR\nprebuildId\"\330\001\n\027File" +
-      "DownloadInitializer\022A\n\005files\030\001 \003(\0132+.git" +
-      "pod.v1.FileDownloadInitializer.FileInfoR" +
-      "\005files\022\'\n\017target_location\030\002 \001(\tR\016targetL" +
-      "ocation\032Q\n\010FileInfo\022\020\n\003url\030\001 \001(\tR\003url\022\033\n" +
-      "\tfile_path\030\002 \001(\tR\010filePath\022\026\n\006digest\030\003 \001" +
-      "(\tR\006digest\"\347\002\n\tGitStatus\022\026\n\006branch\030\001 \001(\t" +
-      "R\006branch\022#\n\rlatest_commit\030\002 \001(\tR\014latestC" +
-      "ommit\022)\n\020uncommited_files\030\003 \003(\tR\017uncommi" +
-      "tedFiles\0224\n\026total_uncommited_files\030\006 \001(\003" +
-      "R\024totalUncommitedFiles\022\'\n\017untracked_file" +
-      "s\030\004 \003(\tR\016untrackedFiles\0222\n\025total_untrack" +
-      "ed_files\030\007 \001(\003R\023totalUntrackedFiles\022)\n\020u" +
-      "npushed_commits\030\005 \003(\tR\017unpushedCommits\0224" +
-      "\n\026total_unpushed_commits\030\010 \001(\003R\024totalUnp" +
-      "ushedCommits\"\326\006\n\026UpdateWorkspaceRequest\022" +
-      "!\n\014workspace_id\030\001 \001(\tR\013workspaceId\022Z\n\010me" +
-      "tadata\030\002 \001(\01329.gitpod.v1.UpdateWorkspace" +
-      "Request.UpdateWorkspaceMetadataH\000R\010metad" +
-      "ata\210\001\001\022N\n\004spec\030\003 \001(\01325.gitpod.v1.UpdateW" +
-      "orkspaceRequest.UpdateWorkspaceSpecH\001R\004s" +
-      "pec\210\001\001\022E\n\ngit_status\030\004 \001(\0132\035.gitpod.v1.W" +
-      "orkspaceGitStatusB\002\030\001H\002R\tgitStatus\210\001\001\032c\n" +
-      "\027UpdateWorkspaceMetadata\022\027\n\004name\030\001 \001(\tH\000" +
-      "R\004name\210\001\001\022\033\n\006pinned\030\002 \001(\010H\001R\006pinned\210\001\001B\007" +
-      "\n\005_nameB\t\n\007_pinned\032\263\001\n\rUpdateTimeout\022>\n\n" +
-      "inactivity\030\001 \001(\0132\031.google.protobuf.Durat" +
-      "ionH\000R\ninactivity\210\001\001\022B\n\014disconnected\030\002 \001" +
-      "(\0132\031.google.protobuf.DurationH\001R\014disconn" +
-      "ected\210\001\001B\r\n\013_inactivityB\017\n\r_disconnected" +
-      "\032\345\001\n\023UpdateWorkspaceSpec\022N\n\007timeout\030\001 \001(" +
-      "\0132/.gitpod.v1.UpdateWorkspaceRequest.Upd" +
-      "ateTimeoutH\000R\007timeout\210\001\001\022<\n\tadmission\030\002 " +
-      "\001(\0162\031.gitpod.v1.AdmissionLevelH\001R\tadmiss" +
-      "ion\210\001\001\022&\n\017ssh_public_keys\030\003 \003(\tR\rsshPubl" +
-      "icKeysB\n\n\010_timeoutB\014\n\n_admissionB\013\n\t_met" +
-      "adataB\007\n\005_specB\r\n\013_git_status\"M\n\027UpdateW" +
-      "orkspaceResponse\0222\n\tworkspace\030\001 \001(\0132\024.gi" +
-      "tpod.v1.WorkspaceR\tworkspace\"9\n\024StopWork" +
-      "spaceRequest\022!\n\014workspace_id\030\001 \001(\tR\013work" +
-      "spaceId\"\027\n\025StopWorkspaceResponse\";\n\026Dele" +
-      "teWorkspaceRequest\022!\n\014workspace_id\030\001 \001(\t" +
-      "R\013workspaceId\"\031\n\027DeleteWorkspaceResponse" +
-      "\"[\n\033ListWorkspaceClassesRequest\022<\n\npagin" +
-      "ation\030\001 \001(\0132\034.gitpod.v1.PaginationReques" +
-      "tR\npagination\"\245\001\n\034ListWorkspaceClassesRe" +
-      "sponse\022=\n\npagination\030\001 \001(\0132\035.gitpod.v1.P" +
-      "aginationResponseR\npagination\022F\n\021workspa" +
-      "ce_classes\030\002 \003(\0132\031.gitpod.v1.WorkspaceCl" +
-      "assR\020workspaceClasses\"d\n\026ParseContextURL" +
-      "Request\022\037\n\013context_url\030\001 \001(\tR\ncontextUrl" +
-      "\022)\n\020configuration_id\030\002 \001(\tR\017configuratio" +
-      "nId\"\201\001\n\027ParseContextURLResponse\0228\n\010metad" +
-      "ata\030\001 \001(\0132\034.gitpod.v1.WorkspaceMetadataR" +
-      "\010metadata\022,\n\004spec\030\002 \001(\0132\030.gitpod.v1.Work" +
-      "spaceSpecR\004spec\"\204\001\n\016WorkspaceClass\022\016\n\002id" +
-      "\030\001 \001(\tR\002id\022!\n\014display_name\030\002 \001(\tR\013displa" +
-      "yName\022 \n\013description\030\003 \001(\tR\013description\022" +
-      "\035\n\nis_default\030\004 \001(\010R\tisDefault\"C\n\036Create" +
-      "WorkspaceSnapshotRequest\022!\n\014workspace_id" +
-      "\030\001 \001(\tR\013workspaceId\"[\n\037CreateWorkspaceSn" +
-      "apshotResponse\0228\n\010snapshot\030\001 \001(\0132\034.gitpo" +
-      "d.v1.WorkspaceSnapshotR\010snapshot\"B\n\037Wait" +
-      "ForWorkspaceSnapshotRequest\022\037\n\013snapshot_" +
-      "id\030\001 \001(\tR\nsnapshotId\"\"\n WaitForWorkspace" +
-      "SnapshotResponse\"\207\001\n\021WorkspaceSnapshot\022\016" +
-      "\n\002id\030\001 \001(\tR\002id\022!\n\014workspace_id\030\002 \001(\tR\013wo" +
-      "rkspaceId\022?\n\rcreation_time\030\003 \001(\0132\032.googl" +
-      "e.protobuf.TimestampR\014creationTime\"\227\003\n\020W" +
-      "orkspaceSession\022\016\n\002id\030\001 \001(\tR\002id\0222\n\tworks" +
-      "pace\030\002 \001(\0132\024.gitpod.v1.WorkspaceR\tworksp" +
-      "ace\022?\n\rcreation_time\030\003 \001(\0132\032.google.prot" +
-      "obuf.TimestampR\014creationTime\022?\n\rdeployed" +
-      "_time\030\004 \001(\0132\032.google.protobuf.TimestampR" +
-      "\014deployedTime\022=\n\014started_time\030\005 \001(\0132\032.go" +
-      "ogle.protobuf.TimestampR\013startedTime\022?\n\r" +
-      "stopping_time\030\006 \001(\0132\032.google.protobuf.Ti" +
-      "mestampR\014stoppingTime\022=\n\014stopped_time\030\007 " +
-      "\001(\0132\032.google.protobuf.TimestampR\013stopped" +
-      "Time*o\n\016AdmissionLevel\022\037\n\033ADMISSION_LEVE" +
-      "L_UNSPECIFIED\020\000\022\036\n\032ADMISSION_LEVEL_OWNER" +
-      "_ONLY\020\001\022\034\n\030ADMISSION_LEVEL_EVERYONE\020\0022\323\016" +
-      "\n\020WorkspaceService\022Q\n\014GetWorkspace\022\036.git" +
-      "pod.v1.GetWorkspaceRequest\032\037.gitpod.v1.G" +
-      "etWorkspaceResponse\"\000\022k\n\024WatchWorkspaceS" +
-      "tatus\022&.gitpod.v1.WatchWorkspaceStatusRe" +
-      "quest\032\'.gitpod.v1.WatchWorkspaceStatusRe" +
-      "sponse\"\0000\001\022W\n\016ListWorkspaces\022 .gitpod.v1" +
-      ".ListWorkspacesRequest\032!.gitpod.v1.ListW" +
-      "orkspacesResponse\"\000\022l\n\025ListWorkspaceSess" +
-      "ions\022\'.gitpod.v1.ListWorkspaceSessionsRe" +
-      "quest\032(.gitpod.v1.ListWorkspaceSessionsR" +
-      "esponse\"\000\022r\n\027CreateAndStartWorkspace\022).g" +
-      "itpod.v1.CreateAndStartWorkspaceRequest\032" +
-      "*.gitpod.v1.CreateAndStartWorkspaceRespo" +
-      "nse\"\000\022W\n\016StartWorkspace\022 .gitpod.v1.Star" +
-      "tWorkspaceRequest\032!.gitpod.v1.StartWorks" +
-      "paceResponse\"\000\022Z\n\017UpdateWorkspace\022!.gitp" +
-      "od.v1.UpdateWorkspaceRequest\032\".gitpod.v1" +
-      ".UpdateWorkspaceResponse\"\000\022T\n\rStopWorksp" +
-      "ace\022\037.gitpod.v1.StopWorkspaceRequest\032 .g" +
-      "itpod.v1.StopWorkspaceResponse\"\000\022Z\n\017Dele" +
-      "teWorkspace\022!.gitpod.v1.DeleteWorkspaceR" +
-      "equest\032\".gitpod.v1.DeleteWorkspaceRespon" +
-      "se\"\000\022i\n\024ListWorkspaceClasses\022&.gitpod.v1" +
-      ".ListWorkspaceClassesRequest\032\'.gitpod.v1" +
-      ".ListWorkspaceClassesResponse\"\000\022Z\n\017Parse" +
-      "ContextURL\022!.gitpod.v1.ParseContextURLRe" +
-      "quest\032\".gitpod.v1.ParseContextURLRespons" +
-      "e\"\000\022u\n\030GetWorkspaceDefaultImage\022*.gitpod" +
-      ".v1.GetWorkspaceDefaultImageRequest\032+.gi" +
-      "tpod.v1.GetWorkspaceDefaultImageResponse" +
-      "\"\000\022T\n\rSendHeartBeat\022\037.gitpod.v1.SendHear" +
-      "tBeatRequest\032 .gitpod.v1.SendHeartBeatRe" +
-      "sponse\"\000\022o\n\026GetWorkspaceOwnerToken\022(.git" +
-      "pod.v1.GetWorkspaceOwnerTokenRequest\032).g" +
-      "itpod.v1.GetWorkspaceOwnerTokenResponse\"" +
-      "\000\022\204\001\n\035GetWorkspaceEditorCredentials\022/.gi" +
-      "tpod.v1.GetWorkspaceEditorCredentialsReq" +
-      "uest\0320.gitpod.v1.GetWorkspaceEditorCrede" +
-      "ntialsResponse\"\000\022r\n\027CreateWorkspaceSnaps" +
-      "hot\022).gitpod.v1.CreateWorkspaceSnapshotR" +
-      "equest\032*.gitpod.v1.CreateWorkspaceSnapsh" +
-      "otResponse\"\000\022u\n\030WaitForWorkspaceSnapshot" +
-      "\022*.gitpod.v1.WaitForWorkspaceSnapshotReq" +
-      "uest\032+.gitpod.v1.WaitForWorkspaceSnapsho" +
-      "tResponse\"\000\022f\n\023UpdateWorkspacePort\022%.git" +
-      "pod.v1.UpdateWorkspacePortRequest\032&.gitp" +
-      "od.v1.UpdateWorkspacePortResponse\"\000BQ\n\026i" +
-      "o.gitpod.publicapi.v1Z7github.com/gitpod" +
-      "-io/gitpod/components/public-api/go/v1b\006" +
-      "proto3"
+      "ontext_url\030\007 \001(\tR\022originalContextUrl\022\032\n\010" +
+      "warnings\030\010 \003(\tR\010warnings\032>\n\020AnnotationsE" +
+      "ntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005v" +
+      "alue:\0028\001\"\273\010\n\rWorkspaceSpec\022A\n\013initialize" +
+      "r\030\001 \001(\0132\037.gitpod.v1.WorkspaceInitializer" +
+      "R\013initializer\022:\n\004type\030\002 \001(\0162&.gitpod.v1." +
+      "WorkspaceSpec.WorkspaceTypeR\004type\022.\n\005por" +
+      "ts\030\003 \003(\0132\030.gitpod.v1.WorkspacePortR\005port" +
+      "s\022S\n\025environment_variables\030\004 \003(\0132\036.gitpo" +
+      "d.v1.EnvironmentVariableR\024environmentVar" +
+      "iables\0222\n\003git\030\005 \001(\0132 .gitpod.v1.Workspac" +
+      "eSpec.GitSpecR\003git\022:\n\007timeout\030\006 \001(\0132 .gi" +
+      "tpod.v1.WorkspaceSpec.TimeoutR\007timeout\0227" +
+      "\n\tadmission\030\007 \001(\0162\031.gitpod.v1.AdmissionL" +
+      "evelR\tadmission\022\024\n\005class\030\010 \001(\tR\005class\022&\n" +
+      "\017ssh_public_keys\030\t \003(\tR\rsshPublicKeys\0225\n" +
+      "\026subassembly_references\030\n \003(\tR\025subassemb" +
+      "lyReferences\022H\n\022last_user_activity\030\013 \001(\013" +
+      "2\032.google.protobuf.TimestampR\020lastUserAc" +
+      "tivity\022\027\n\007log_url\030\014 \001(\tR\006logUrl\0222\n\006edito" +
+      "r\030\r \001(\0132\032.gitpod.v1.EditorReferenceR\006edi" +
+      "tor\032\311\001\n\007Timeout\0229\n\ninactivity\030\001 \001(\0132\031.go" +
+      "ogle.protobuf.DurationR\ninactivity\022=\n\014di" +
+      "sconnected\030\002 \001(\0132\031.google.protobuf.Durat" +
+      "ionR\014disconnected\022D\n\020maximum_lifetime\030\003 " +
+      "\001(\0132\031.google.protobuf.DurationR\017maximumL" +
+      "ifetime\032;\n\007GitSpec\022\032\n\010username\030\001 \001(\tR\010us" +
+      "ername\022\024\n\005email\030\002 \001(\tR\005email\"h\n\rWorkspac" +
+      "eType\022\036\n\032WORKSPACE_TYPE_UNSPECIFIED\020\000\022\032\n" +
+      "\026WORKSPACE_TYPE_REGULAR\020\001\022\033\n\027WORKSPACE_T" +
+      "YPE_PREBUILD\020\002\"\346\006\n\017WorkspaceStatus\022%\n\016st" +
+      "atus_version\030\001 \001(\004R\rstatusVersion\022/\n\005pha" +
+      "se\030\002 \001(\0132\031.gitpod.v1.WorkspacePhaseR\005pha" +
+      "se\022#\n\rworkspace_url\030\003 \001(\tR\014workspaceUrl\022" +
+      "N\n\nconditions\030\004 \001(\0132..gitpod.v1.Workspac" +
+      "eStatus.WorkspaceConditionsR\nconditions\022" +
+      "R\n\017prebuild_result\030\005 \001(\0132).gitpod.v1.Wor" +
+      "kspaceStatus.PrebuildResultR\016prebuildRes" +
+      "ult\022<\n\ngit_status\030\006 \001(\0132\035.gitpod.v1.Work" +
+      "spaceGitStatusR\tgitStatus\022#\n\013instance_id" +
+      "\030\007 \001(\tB\002\030\001R\ninstanceId\032\373\002\n\023WorkspaceCond" +
+      "itions\022\026\n\006failed\030\001 \001(\tR\006failed\022`\n\rfailed" +
+      "_reason\030\002 \001(\0162;.gitpod.v1.WorkspaceStatu" +
+      "s.WorkspaceConditions.FailedReasonR\014fail" +
+      "edReason\022\030\n\007timeout\030\003 \001(\tR\007timeout\"\317\001\n\014F" +
+      "ailedReason\022\035\n\031FAILED_REASON_UNSPECIFIED" +
+      "\020\000\022/\n+FAILED_REASON_CONTENT_INITIALIZATI" +
+      "ON_FAILED\020\001\022\037\n\033FAILED_REASON_BACKUP_FAIL" +
+      "ED\020\002\022$\n FAILED_REASON_IMAGE_PULL_FAILURE" +
+      "\020\003\022(\n$FAILED_REASON_UNEXPECTED_TERMINATI" +
+      "ON\020\004\032Q\n\016PrebuildResult\022\032\n\010snapshot\030\001 \001(\t" +
+      "R\010snapshot\022#\n\rerror_message\030\002 \001(\tR\014error" +
+      "Message\"\372\001\n\rWorkspacePort\022\022\n\004port\030\001 \001(\004R" +
+      "\004port\0227\n\tadmission\030\002 \001(\0162\031.gitpod.v1.Adm" +
+      "issionLevelR\tadmission\022\020\n\003url\030\003 \001(\tR\003url" +
+      "\022=\n\010protocol\030\004 \001(\0162!.gitpod.v1.Workspace" +
+      "Port.ProtocolR\010protocol\"K\n\010Protocol\022\030\n\024P" +
+      "ROTOCOL_UNSPECIFIED\020\000\022\021\n\rPROTOCOL_HTTP\020\001" +
+      "\022\022\n\016PROTOCOL_HTTPS\020\002\"\215\003\n\022WorkspaceGitSta" +
+      "tus\022\033\n\tclone_url\030\001 \001(\tR\010cloneUrl\022\026\n\006bran" +
+      "ch\030\002 \001(\tR\006branch\022#\n\rlatest_commit\030\003 \001(\tR" +
+      "\014latestCommit\022)\n\020uncommited_files\030\004 \003(\tR" +
+      "\017uncommitedFiles\0224\n\026total_uncommited_fil" +
+      "es\030\005 \001(\005R\024totalUncommitedFiles\022\'\n\017untrac" +
+      "ked_files\030\006 \003(\tR\016untrackedFiles\0222\n\025total" +
+      "_untracked_files\030\007 \001(\005R\023totalUntrackedFi" +
+      "les\022)\n\020unpushed_commits\030\010 \003(\tR\017unpushedC" +
+      "ommits\0224\n\026total_unpushed_commits\030\t \001(\005R\024" +
+      "totalUnpushedCommits\"\201\003\n\016WorkspacePhase\022" +
+      "3\n\004name\030\001 \001(\0162\037.gitpod.v1.WorkspacePhase" +
+      ".PhaseR\004name\022L\n\024last_transition_time\030\002 \001" +
+      "(\0132\032.google.protobuf.TimestampR\022lastTran" +
+      "sitionTime\"\353\001\n\005Phase\022\025\n\021PHASE_UNSPECIFIE" +
+      "D\020\000\022\023\n\017PHASE_PREPARING\020\001\022\024\n\020PHASE_IMAGEB" +
+      "UILD\020\002\022\021\n\rPHASE_PENDING\020\003\022\022\n\016PHASE_CREAT" +
+      "ING\020\004\022\026\n\022PHASE_INITIALIZING\020\005\022\021\n\rPHASE_R" +
+      "UNNING\020\006\022\025\n\021PHASE_INTERRUPTED\020\007\022\020\n\014PHASE" +
+      "_PAUSED\020\010\022\022\n\016PHASE_STOPPING\020\t\022\021\n\rPHASE_S" +
+      "TOPPED\020\n\"\320\002\n\024WorkspaceInitializer\022:\n\005spe" +
+      "cs\030\001 \003(\0132$.gitpod.v1.WorkspaceInitialize" +
+      "r.SpecR\005specs\032\373\001\n\004Spec\022-\n\003git\030\001 \001(\0132\031.gi" +
+      "tpod.v1.GitInitializerH\000R\003git\022<\n\010snapsho" +
+      "t\030\002 \001(\0132\036.gitpod.v1.SnapshotInitializerH" +
+      "\000R\010snapshot\022<\n\010prebuild\030\003 \001(\0132\036.gitpod.v" +
+      "1.PrebuildInitializerH\000R\010prebuild\022@\n\010dow" +
+      "nload\030\004 \001(\0132\".gitpod.v1.FileDownloadInit" +
+      "ializerH\000R\010downloadB\006\n\004spec\"\275\007\n\016GitIniti" +
+      "alizer\022\035\n\nremote_uri\030\001 \001(\tR\tremoteUri\022.\n" +
+      "\023upstream_remote_uri\030\002 \001(\tR\021upstreamRemo" +
+      "teUri\022J\n\013target_mode\030\003 \001(\0162).gitpod.v1.G" +
+      "itInitializer.CloneTargetModeR\ntargetMod" +
+      "e\022!\n\014clone_target\030\004 \001(\tR\013cloneTarget\022+\n\021" +
+      "checkout_location\030\005 \001(\tR\020checkoutLocatio" +
+      "n\022;\n\006config\030\006 \001(\0132#.gitpod.v1.GitInitial" +
+      "izer.GitConfigR\006config\032\323\002\n\tGitConfig\022Z\n\r" +
+      "custom_config\030\001 \003(\01325.gitpod.v1.GitIniti" +
+      "alizer.GitConfig.CustomConfigEntryR\014cust" +
+      "omConfig\022L\n\016authentication\030\002 \001(\0162$.gitpo" +
+      "d.v1.GitInitializer.AuthMethodR\016authenti" +
+      "cation\022\033\n\tauth_user\030\003 \001(\tR\010authUser\022#\n\ra" +
+      "uth_password\030\004 \001(\tR\014authPassword\022\031\n\010auth" +
+      "_ots\030\005 \001(\tR\007authOts\032?\n\021CustomConfigEntry" +
+      "\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005value" +
+      ":\0028\001\"\305\001\n\017CloneTargetMode\022!\n\035CLONE_TARGET" +
+      "_MODE_UNSPECIFIED\020\000\022!\n\035CLONE_TARGET_MODE" +
+      "_REMOTE_HEAD\020\001\022#\n\037CLONE_TARGET_MODE_REMO" +
+      "TE_COMMIT\020\002\022#\n\037CLONE_TARGET_MODE_REMOTE_" +
+      "BRANCH\020\003\022\"\n\036CLONE_TARGET_MODE_LOCAL_BRAN" +
+      "CH\020\004\"e\n\nAuthMethod\022\033\n\027AUTH_METHOD_UNSPEC" +
+      "IFIED\020\000\022\032\n\026AUTH_METHOD_BASIC_AUTH\020\001\022\036\n\032A" +
+      "UTH_METHOD_BASIC_AUTH_OTS\020\002\"6\n\023SnapshotI" +
+      "nitializer\022\037\n\013snapshot_id\030\001 \001(\tR\nsnapsho" +
+      "tId\"6\n\023PrebuildInitializer\022\037\n\013prebuild_i" +
+      "d\030\001 \001(\tR\nprebuildId\"\330\001\n\027FileDownloadInit" +
+      "ializer\022A\n\005files\030\001 \003(\0132+.gitpod.v1.FileD" +
+      "ownloadInitializer.FileInfoR\005files\022\'\n\017ta" +
+      "rget_location\030\002 \001(\tR\016targetLocation\032Q\n\010F" +
+      "ileInfo\022\020\n\003url\030\001 \001(\tR\003url\022\033\n\tfile_path\030\002" +
+      " \001(\tR\010filePath\022\026\n\006digest\030\003 \001(\tR\006digest\"\347" +
+      "\002\n\tGitStatus\022\026\n\006branch\030\001 \001(\tR\006branch\022#\n\r" +
+      "latest_commit\030\002 \001(\tR\014latestCommit\022)\n\020unc" +
+      "ommited_files\030\003 \003(\tR\017uncommitedFiles\0224\n\026" +
+      "total_uncommited_files\030\006 \001(\003R\024totalUncom" +
+      "mitedFiles\022\'\n\017untracked_files\030\004 \003(\tR\016unt" +
+      "rackedFiles\0222\n\025total_untracked_files\030\007 \001" +
+      "(\003R\023totalUntrackedFiles\022)\n\020unpushed_comm" +
+      "its\030\005 \003(\tR\017unpushedCommits\0224\n\026total_unpu" +
+      "shed_commits\030\010 \001(\003R\024totalUnpushedCommits" +
+      "\"\326\006\n\026UpdateWorkspaceRequest\022!\n\014workspace" +
+      "_id\030\001 \001(\tR\013workspaceId\022Z\n\010metadata\030\002 \001(\013" +
+      "29.gitpod.v1.UpdateWorkspaceRequest.Upda" +
+      "teWorkspaceMetadataH\000R\010metadata\210\001\001\022N\n\004sp" +
+      "ec\030\003 \001(\01325.gitpod.v1.UpdateWorkspaceRequ" +
+      "est.UpdateWorkspaceSpecH\001R\004spec\210\001\001\022E\n\ngi" +
+      "t_status\030\004 \001(\0132\035.gitpod.v1.WorkspaceGitS" +
+      "tatusB\002\030\001H\002R\tgitStatus\210\001\001\032c\n\027UpdateWorks" +
+      "paceMetadata\022\027\n\004name\030\001 \001(\tH\000R\004name\210\001\001\022\033\n" +
+      "\006pinned\030\002 \001(\010H\001R\006pinned\210\001\001B\007\n\005_nameB\t\n\007_" +
+      "pinned\032\263\001\n\rUpdateTimeout\022>\n\ninactivity\030\001" +
+      " \001(\0132\031.google.protobuf.DurationH\000R\ninact" +
+      "ivity\210\001\001\022B\n\014disconnected\030\002 \001(\0132\031.google." +
+      "protobuf.DurationH\001R\014disconnected\210\001\001B\r\n\013" +
+      "_inactivityB\017\n\r_disconnected\032\345\001\n\023UpdateW" +
+      "orkspaceSpec\022N\n\007timeout\030\001 \001(\0132/.gitpod.v" +
+      "1.UpdateWorkspaceRequest.UpdateTimeoutH\000" +
+      "R\007timeout\210\001\001\022<\n\tadmission\030\002 \001(\0162\031.gitpod" +
+      ".v1.AdmissionLevelH\001R\tadmission\210\001\001\022&\n\017ss" +
+      "h_public_keys\030\003 \003(\tR\rsshPublicKeysB\n\n\010_t" +
+      "imeoutB\014\n\n_admissionB\013\n\t_metadataB\007\n\005_sp" +
+      "ecB\r\n\013_git_status\"M\n\027UpdateWorkspaceResp" +
+      "onse\0222\n\tworkspace\030\001 \001(\0132\024.gitpod.v1.Work" +
+      "spaceR\tworkspace\"9\n\024StopWorkspaceRequest" +
+      "\022!\n\014workspace_id\030\001 \001(\tR\013workspaceId\"\027\n\025S" +
+      "topWorkspaceResponse\";\n\026DeleteWorkspaceR" +
+      "equest\022!\n\014workspace_id\030\001 \001(\tR\013workspaceI" +
+      "d\"\031\n\027DeleteWorkspaceResponse\"[\n\033ListWork" +
+      "spaceClassesRequest\022<\n\npagination\030\001 \001(\0132" +
+      "\034.gitpod.v1.PaginationRequestR\npaginatio" +
+      "n\"\245\001\n\034ListWorkspaceClassesResponse\022=\n\npa" +
+      "gination\030\001 \001(\0132\035.gitpod.v1.PaginationRes" +
+      "ponseR\npagination\022F\n\021workspace_classes\030\002" +
+      " \003(\0132\031.gitpod.v1.WorkspaceClassR\020workspa" +
+      "ceClasses\"d\n\026ParseContextURLRequest\022\037\n\013c" +
+      "ontext_url\030\001 \001(\tR\ncontextUrl\022)\n\020configur" +
+      "ation_id\030\002 \001(\tR\017configurationId\"\201\001\n\027Pars" +
+      "eContextURLResponse\0228\n\010metadata\030\001 \001(\0132\034." +
+      "gitpod.v1.WorkspaceMetadataR\010metadata\022,\n" +
+      "\004spec\030\002 \001(\0132\030.gitpod.v1.WorkspaceSpecR\004s" +
+      "pec\"\204\001\n\016WorkspaceClass\022\016\n\002id\030\001 \001(\tR\002id\022!" +
+      "\n\014display_name\030\002 \001(\tR\013displayName\022 \n\013des" +
+      "cription\030\003 \001(\tR\013description\022\035\n\nis_defaul" +
+      "t\030\004 \001(\010R\tisDefault\"C\n\036CreateWorkspaceSna" +
+      "pshotRequest\022!\n\014workspace_id\030\001 \001(\tR\013work" +
+      "spaceId\"[\n\037CreateWorkspaceSnapshotRespon" +
+      "se\0228\n\010snapshot\030\001 \001(\0132\034.gitpod.v1.Workspa" +
+      "ceSnapshotR\010snapshot\"B\n\037WaitForWorkspace" +
+      "SnapshotRequest\022\037\n\013snapshot_id\030\001 \001(\tR\nsn" +
+      "apshotId\"\"\n WaitForWorkspaceSnapshotResp" +
+      "onse\"\207\001\n\021WorkspaceSnapshot\022\016\n\002id\030\001 \001(\tR\002" +
+      "id\022!\n\014workspace_id\030\002 \001(\tR\013workspaceId\022?\n" +
+      "\rcreation_time\030\003 \001(\0132\032.google.protobuf.T" +
+      "imestampR\014creationTime\"\227\003\n\020WorkspaceSess" +
+      "ion\022\016\n\002id\030\001 \001(\tR\002id\0222\n\tworkspace\030\002 \001(\0132\024" +
+      ".gitpod.v1.WorkspaceR\tworkspace\022?\n\rcreat" +
+      "ion_time\030\003 \001(\0132\032.google.protobuf.Timesta" +
+      "mpR\014creationTime\022?\n\rdeployed_time\030\004 \001(\0132" +
+      "\032.google.protobuf.TimestampR\014deployedTim" +
+      "e\022=\n\014started_time\030\005 \001(\0132\032.google.protobu" +
+      "f.TimestampR\013startedTime\022?\n\rstopping_tim" +
+      "e\030\006 \001(\0132\032.google.protobuf.TimestampR\014sto" +
+      "ppingTime\022=\n\014stopped_time\030\007 \001(\0132\032.google" +
+      ".protobuf.TimestampR\013stoppedTime*o\n\016Admi" +
+      "ssionLevel\022\037\n\033ADMISSION_LEVEL_UNSPECIFIE" +
+      "D\020\000\022\036\n\032ADMISSION_LEVEL_OWNER_ONLY\020\001\022\034\n\030A" +
+      "DMISSION_LEVEL_EVERYONE\020\0022\323\016\n\020WorkspaceS" +
+      "ervice\022Q\n\014GetWorkspace\022\036.gitpod.v1.GetWo" +
+      "rkspaceRequest\032\037.gitpod.v1.GetWorkspaceR" +
+      "esponse\"\000\022k\n\024WatchWorkspaceStatus\022&.gitp" +
+      "od.v1.WatchWorkspaceStatusRequest\032\'.gitp" +
+      "od.v1.WatchWorkspaceStatusResponse\"\0000\001\022W" +
+      "\n\016ListWorkspaces\022 .gitpod.v1.ListWorkspa" +
+      "cesRequest\032!.gitpod.v1.ListWorkspacesRes" +
+      "ponse\"\000\022l\n\025ListWorkspaceSessions\022\'.gitpo" +
+      "d.v1.ListWorkspaceSessionsRequest\032(.gitp" +
+      "od.v1.ListWorkspaceSessionsResponse\"\000\022r\n" +
+      "\027CreateAndStartWorkspace\022).gitpod.v1.Cre" +
+      "ateAndStartWorkspaceRequest\032*.gitpod.v1." +
+      "CreateAndStartWorkspaceResponse\"\000\022W\n\016Sta" +
+      "rtWorkspace\022 .gitpod.v1.StartWorkspaceRe" +
+      "quest\032!.gitpod.v1.StartWorkspaceResponse" +
+      "\"\000\022Z\n\017UpdateWorkspace\022!.gitpod.v1.Update" +
+      "WorkspaceRequest\032\".gitpod.v1.UpdateWorks" +
+      "paceResponse\"\000\022T\n\rStopWorkspace\022\037.gitpod" +
+      ".v1.StopWorkspaceRequest\032 .gitpod.v1.Sto" +
+      "pWorkspaceResponse\"\000\022Z\n\017DeleteWorkspace\022" +
+      "!.gitpod.v1.DeleteWorkspaceRequest\032\".git" +
+      "pod.v1.DeleteWorkspaceResponse\"\000\022i\n\024List" +
+      "WorkspaceClasses\022&.gitpod.v1.ListWorkspa" +
+      "ceClassesRequest\032\'.gitpod.v1.ListWorkspa" +
+      "ceClassesResponse\"\000\022Z\n\017ParseContextURL\022!" +
+      ".gitpod.v1.ParseContextURLRequest\032\".gitp" +
+      "od.v1.ParseContextURLResponse\"\000\022u\n\030GetWo" +
+      "rkspaceDefaultImage\022*.gitpod.v1.GetWorks" +
+      "paceDefaultImageRequest\032+.gitpod.v1.GetW" +
+      "orkspaceDefaultImageResponse\"\000\022T\n\rSendHe" +
+      "artBeat\022\037.gitpod.v1.SendHeartBeatRequest" +
+      "\032 .gitpod.v1.SendHeartBeatResponse\"\000\022o\n\026" +
+      "GetWorkspaceOwnerToken\022(.gitpod.v1.GetWo" +
+      "rkspaceOwnerTokenRequest\032).gitpod.v1.Get" +
+      "WorkspaceOwnerTokenResponse\"\000\022\204\001\n\035GetWor" +
+      "kspaceEditorCredentials\022/.gitpod.v1.GetW" +
+      "orkspaceEditorCredentialsRequest\0320.gitpo" +
+      "d.v1.GetWorkspaceEditorCredentialsRespon" +
+      "se\"\000\022r\n\027CreateWorkspaceSnapshot\022).gitpod" +
+      ".v1.CreateWorkspaceSnapshotRequest\032*.git" +
+      "pod.v1.CreateWorkspaceSnapshotResponse\"\000" +
+      "\022u\n\030WaitForWorkspaceSnapshot\022*.gitpod.v1" +
+      ".WaitForWorkspaceSnapshotRequest\032+.gitpo" +
+      "d.v1.WaitForWorkspaceSnapshotResponse\"\000\022" +
+      "f\n\023UpdateWorkspacePort\022%.gitpod.v1.Updat" +
+      "eWorkspacePortRequest\032&.gitpod.v1.Update" +
+      "WorkspacePortResponse\"\000BQ\n\026io.gitpod.pub" +
+      "licapi.v1Z7github.com/gitpod-io/gitpod/c" +
+      "omponents/public-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -60783,7 +61065,7 @@ java.lang.String defaultValue) {
     internal_static_gitpod_v1_WorkspaceMetadata_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceMetadata_descriptor,
-        new java.lang.String[] { "OwnerId", "OrganizationId", "ConfigurationId", "Annotations", "Name", "Pinned", "OriginalContextUrl", });
+        new java.lang.String[] { "OwnerId", "OrganizationId", "ConfigurationId", "Annotations", "Name", "Pinned", "OriginalContextUrl", "Warnings", });
     internal_static_gitpod_v1_WorkspaceMetadata_AnnotationsEntry_descriptor =
       internal_static_gitpod_v1_WorkspaceMetadata_descriptor.getNestedTypes().get(0);
     internal_static_gitpod_v1_WorkspaceMetadata_AnnotationsEntry_fieldAccessorTable = new

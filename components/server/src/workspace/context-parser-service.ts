@@ -4,7 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceContext, User, CommitContext, GitCheckoutInfo, PullRequestContext } from "@gitpod/gitpod-protocol";
+import {
+    WorkspaceContext,
+    User,
+    CommitContext,
+    GitCheckoutInfo,
+    PullRequestContext,
+    ExternalImageConfigFile,
+} from "@gitpod/gitpod-protocol";
 import { injectable, multiInject, inject } from "inversify";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { IPrefixContextParser, IContextParser } from "./context-parser";
@@ -179,6 +186,16 @@ export class ContextParser {
             }
             context.checkoutLocation = config.config.checkoutLocation || context.repository.name;
             context.upstreamRemoteURI = this.buildUpstreamCloneUrl(context);
+            if (!context.warnings) {
+                context.warnings = [];
+            }
+
+            if (ExternalImageConfigFile.is(config.config.image)) {
+                if (config.config.image.externalSource.revision === "") {
+                    context.warnings.push("The Dockerfile specified in the .gitpod.yml file was not found.");
+                }
+            }
+
             return context;
         } finally {
             span.finish();

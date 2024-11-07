@@ -360,7 +360,12 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         }
         const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
         const context = await this.contextService.parseContextUrl(user, req.contextUrl);
-        return this.apiConverter.toParseContextURLResponse({}, context);
+        return this.apiConverter.toParseContextURLResponse(
+            {
+                warnings: context.warnings,
+            },
+            context,
+        );
     }
 
     async stopWorkspace(req: StopWorkspaceRequest): Promise<StopWorkspaceResponse> {
