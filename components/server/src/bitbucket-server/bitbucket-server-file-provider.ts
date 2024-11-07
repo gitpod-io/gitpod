@@ -6,7 +6,7 @@
 
 import { Commit, Repository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
-import { FileProvider, MaybeContent } from "../repohost/file-provider";
+import { FileProvider, MaybeContent, RevisionNotFoundError } from "../repohost/file-provider";
 import { BitbucketServerApi } from "./bitbucket-server-api";
 
 @injectable()
@@ -27,7 +27,7 @@ export class BitbucketServerFileProvider implements FileProvider {
         if (!repoKind) {
             throw new Error("Repo kind is missing.");
         }
-        const notFoundError = new Error(
+        const notFoundError = new RevisionNotFoundError(
             `File ${path} does not exist in repository ${repository.owner}/${repository.name}`,
         );
 

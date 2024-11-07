@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 
-import { FileProvider, MaybeContent } from "../repohost/file-provider";
+import { FileProvider, MaybeContent, RevisionNotFoundError } from "../repohost/file-provider";
 import { Commit, User, Repository } from "@gitpod/gitpod-protocol";
 import { GitLabApi, GitLab } from "./api";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -29,7 +29,7 @@ export class GitlabFileProvider implements FileProvider {
         user: User,
         path: string,
     ): Promise<string> {
-        const notFoundError = new Error(
+        const notFoundError = new RevisionNotFoundError(
             `File ${path} does not exist in repository ${repository.owner}/${repository.name}`,
         );
 

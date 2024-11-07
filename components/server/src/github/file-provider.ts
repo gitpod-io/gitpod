@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 
-import { FileProvider, MaybeContent } from "../repohost/file-provider";
+import { FileProvider, MaybeContent, RevisionNotFoundError } from "../repohost/file-provider";
 import { Commit, User, Repository } from "@gitpod/gitpod-protocol";
 import { GitHubRestApi } from "./api";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -29,14 +29,14 @@ export class GithubFileProvider implements FileProvider {
         user: User,
         path: string,
     ): Promise<string> {
-        const notFoundError = new Error(
+        const notFoundError = new RevisionNotFoundError(
             `File ${path} does not exist in repository ${repository.owner}/${repository.name}`,
         );
-        // const fileExists =
-        //     (await this.getFileContent({ repository, revision: revisionOrBranch }, user, path)) !== undefined;
-        // if (!fileExists) {
-        //     throw notFoundError;
-        // }
+        const fileExists =
+            (await this.getFileContent({ repository, revision: revisionOrBranch }, user, path)) !== undefined;
+        if (!fileExists) {
+            throw notFoundError;
+        }
 
         const commits = (
             await this.githubApi.run(user, (gh) =>

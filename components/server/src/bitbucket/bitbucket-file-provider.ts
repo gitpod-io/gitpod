@@ -7,7 +7,7 @@
 import { Commit, Repository, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
-import { FileProvider, MaybeContent } from "../repohost/file-provider";
+import { FileProvider, MaybeContent, RevisionNotFoundError } from "../repohost/file-provider";
 import { BitbucketApiFactory } from "./bitbucket-api-factory";
 
 @injectable()
@@ -48,7 +48,9 @@ export class BitbucketFileProvider implements FileProvider {
             return lastCommit;
         } catch (err) {
             if (err.status && err.status === 404) {
-                throw new Error(`File ${path} does not exist in repository ${repository.owner}/${repository.name}`);
+                throw new RevisionNotFoundError(
+                    `File ${path} does not exist in repository ${repository.owner}/${repository.name}`,
+                );
             }
 
             log.error({ userId: user.id }, err);
