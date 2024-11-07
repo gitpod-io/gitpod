@@ -14,6 +14,7 @@ export class RevisionNotFoundError extends Error {
         this.name = "RevisionNotFoundError";
     }
 }
+export const ImageFileRevisionMissing = "ImageFileRevisionMissing";
 
 export const FileProvider = Symbol("FileProvider");
 export interface FileProvider {

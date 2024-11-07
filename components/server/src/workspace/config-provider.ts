@@ -33,7 +33,7 @@ import { Config } from "../config";
 import { EntitlementService } from "../billing/entitlement-service";
 import { TeamDB } from "@gitpod/gitpod-db/lib";
 import { InvalidGitpodYMLError } from "@gitpod/public-api-common/lib/public-api-errors";
-import { RevisionNotFoundError } from "../repohost";
+import { ImageFileRevisionMissing, RevisionNotFoundError } from "../repohost";
 
 const POD_PATH_WORKSPACE_BASE = "/workspace";
 
@@ -263,7 +263,7 @@ export class ConfigProvider {
                 .getLastChangeRevision(repository, revisionOrTagOrBranch, user, dockerFilePath)
                 .catch((e) => {
                     if (e instanceof RevisionNotFoundError) {
-                        return "";
+                        return ImageFileRevisionMissing;
                     }
                     throw e;
                 });

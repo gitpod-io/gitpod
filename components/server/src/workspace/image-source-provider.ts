@@ -19,7 +19,7 @@ import {
     AdditionalContentContext,
 } from "@gitpod/gitpod-protocol";
 import { createHash } from "crypto";
-import { RevisionNotFoundError } from "../repohost";
+import { ImageFileRevisionMissing, RevisionNotFoundError } from "../repohost";
 
 @injectable()
 export class ImageSourceProvider {
@@ -48,7 +48,7 @@ export class ImageSourceProvider {
                     .getLastChangeRevision(repository, imgcfg.externalSource.revision, user, imgcfg.file)
                     .catch((e) => {
                         if (e instanceof RevisionNotFoundError) {
-                            return "";
+                            return ImageFileRevisionMissing;
                         }
                         throw e;
                     });
@@ -79,7 +79,7 @@ export class ImageSourceProvider {
                     .getLastChangeRevision(context.repository, context.revision, user, imgcfg.file)
                     .catch((e) => {
                         if (e instanceof RevisionNotFoundError) {
-                            return "";
+                            return ImageFileRevisionMissing;
                         }
                         throw e;
                     });

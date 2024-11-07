@@ -19,6 +19,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ConfigProvider } from "./config-provider";
 import { InvalidGitpodYMLError } from "@gitpod/public-api-common/lib/public-api-errors";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ImageFileRevisionMissing } from "../repohost";
 
 @injectable()
 export class ContextParser {
@@ -191,7 +192,7 @@ export class ContextParser {
             }
 
             if (ExternalImageConfigFile.is(config.config.image)) {
-                if (config.config.image.externalSource.revision === "") {
+                if (config.config.image.externalSource.revision === ImageFileRevisionMissing) {
                     context.warnings.push("The Dockerfile specified in the .gitpod.yml file was not found.");
                 }
             }
