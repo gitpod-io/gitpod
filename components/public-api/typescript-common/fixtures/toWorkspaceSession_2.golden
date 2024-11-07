@@ -10,7 +10,8 @@
                 "annotations": {},
                 "name": "svenefftinge/2048-in-terminal - master",
                 "pinned": false,
-                "originalContextUrl": "https://github.com/svenefftinge/2048-in-terminal"
+                "originalContextUrl": "https://github.com/svenefftinge/2048-in-terminal",
+                "warnings": []
             },
             "spec": {
                 "initializer": {
