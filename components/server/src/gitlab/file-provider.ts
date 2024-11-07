@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 
-import { FileProvider, MaybeContent } from "../repohost/file-provider";
+import { FileProvider, MaybeContent, RevisionNotFoundError } from "../repohost/file-provider";
 import { Commit, User, Repository } from "@gitpod/gitpod-protocol";
 import { GitLabApi, GitLab } from "./api";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -29,19 +29,28 @@ export class GitlabFileProvider implements FileProvider {
         user: User,
         path: string,
     ): Promise<string> {
-        const result = await this.gitlabApi.run<GitLab.Commit[]>(user, async (g) => {
+        const notFoundError = new RevisionNotFoundError(
+            `File ${path} does not exist in repository ${repository.owner}/${repository.name}`,
+        );
+
+        const fileExists =
+            (await this.getFileContent({ repository, revision: revisionOrBranch }, user, path)) !== undefined;
+        if (!fileExists) {
+            throw notFoundError;
+        }
+
+        const commitsResult = await this.gitlabApi.run<GitLab.Commit[]>(user, async (g) => {
             return g.Commits.all(`${repository.owner}/${repository.name}`, { path, refName: revisionOrBranch });
         });
-
-        if (GitLab.ApiError.is(result)) {
-            throw result;
+        if (GitLab.ApiError.is(commitsResult)) {
+            throw commitsResult;
         }
 
-        const lastCommit = result[0];
-
+        const lastCommit = commitsResult[0];
         if (!lastCommit) {
-            throw new Error(`File ${path} does not exist in repository ${repository.owner}/${repository.name}`);
+            throw notFoundError;
         }
+
         return lastCommit.id;
     }
 

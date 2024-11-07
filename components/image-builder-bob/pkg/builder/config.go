@@ -29,6 +29,8 @@ type Config struct {
 	localCacheImport   string
 }
 
+var DockerfilePathNotExists = xerrors.Errorf("BOB_DOCKERFILE_PATH does not exist or isn't a file")
+
 // GetConfigFromEnv extracts configuration from environment variables
 func GetConfigFromEnv() (*Config, error) {
 	cfg := &Config{
@@ -63,7 +65,7 @@ func GetConfigFromEnv() (*Config, error) {
 			return nil, xerrors.Errorf("BOB_DOCKERFILE_PATH must begin with /workspace")
 		}
 		if stat, err := os.Stat(cfg.Dockerfile); err != nil || stat.IsDir() {
-			return nil, xerrors.Errorf("BOB_DOCKERFILE_PATH does not exist or isn't a file")
+			return nil, DockerfilePathNotExists
 		}
 	}
 

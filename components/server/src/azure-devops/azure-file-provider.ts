@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 
-import { FileProvider, MaybeContent } from "../repohost/file-provider";
+import { FileProvider, MaybeContent, RevisionNotFoundError } from "../repohost/file-provider";
 import { Commit, User, Repository } from "@gitpod/gitpod-protocol";
 import { AzureDevOpsApi } from "./azure-api";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -34,6 +34,15 @@ export class AzureDevOpsFileProvider implements FileProvider {
     ): Promise<string> {
         const [azOrgId, azProject] = getOrgAndProject(repository.owner);
         const repoName = repository.name;
+        const notFoundError = new RevisionNotFoundError(
+            `File ${path} does not exist in repository ${repository.owner}/${repository.name}`,
+        );
+        const fileExists =
+            (await this.getFileContent({ repository, revision: revisionOrBranch }, user, path)) !== undefined;
+        if (!fileExists) {
+            throw notFoundError;
+        }
+
         const results = await Promise.allSettled([
             this.azureDevOpsApi.getCommits(user, azOrgId, azProject, repoName, {
                 filterCommit: {
@@ -71,7 +80,7 @@ export class AzureDevOpsFileProvider implements FileProvider {
             }
         }
         // TODO(hw): [AZ] proper handle error
-        throw new Error(`File ${path} does not exist in repository ${repository.owner}/${repository.name}`);
+        throw notFoundError;
     }
 
     public async getFileContent(commit: Commit, user: User, path: string): Promise<MaybeContent> {

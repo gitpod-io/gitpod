@@ -552,6 +552,11 @@ export function CreateWorkspacePage() {
                                 <span className="text-sm">{warningIde}</span>
                             </Alert>
                         )}
+                        {workspaceContext.data?.data.metadata?.warnings.map((warning) => (
+                            <Alert type="warning" key={warning}>
+                                <span className="text-sm">{warning}</span>
+                            </Alert>
+                        )) ?? []}
 
                         <InputField>
                             <RepositoryFinder

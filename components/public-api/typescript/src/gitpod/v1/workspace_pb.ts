@@ -1259,6 +1259,13 @@ export class WorkspaceMetadata extends Message<WorkspaceMetadata> {
    */
   originalContextUrl = "";
 
+  /**
+   * warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+   *
+   * @generated from field: repeated string warnings = 8;
+   */
+  warnings: string[] = [];
+
   constructor(data?: PartialMessage<WorkspaceMetadata>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1274,6 +1281,7 @@ export class WorkspaceMetadata extends Message<WorkspaceMetadata> {
     { no: 5, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "pinned", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 7, name: "original_context_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "warnings", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceMetadata {

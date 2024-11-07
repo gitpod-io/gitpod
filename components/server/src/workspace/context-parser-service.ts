@@ -4,7 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceContext, User, CommitContext, GitCheckoutInfo, PullRequestContext } from "@gitpod/gitpod-protocol";
+import {
+    WorkspaceContext,
+    User,
+    CommitContext,
+    GitCheckoutInfo,
+    PullRequestContext,
+    ExternalImageConfigFile,
+} from "@gitpod/gitpod-protocol";
 import { injectable, multiInject, inject } from "inversify";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { IPrefixContextParser, IContextParser } from "./context-parser";
@@ -12,6 +19,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ConfigProvider } from "./config-provider";
 import { InvalidGitpodYMLError } from "@gitpod/public-api-common/lib/public-api-errors";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ImageFileRevisionMissing } from "../repohost";
 
 @injectable()
 export class ContextParser {
@@ -179,6 +187,19 @@ export class ContextParser {
             }
             context.checkoutLocation = config.config.checkoutLocation || context.repository.name;
             context.upstreamRemoteURI = this.buildUpstreamCloneUrl(context);
+            if (!context.warnings) {
+                context.warnings = [];
+            }
+
+            if (ExternalImageConfigFile.is(config.config.image)) {
+                if (config.config.image.externalSource.revision === ImageFileRevisionMissing) {
+                    context.warnings.push("The Dockerfile specified in the .gitpod.yml file was not found.");
+
+                    // we let the image builder try cloning the context's revision
+                    config.config.image.externalSource.revision = context.revision;
+                }
+            }
+
             return context;
         } finally {
             span.finish();

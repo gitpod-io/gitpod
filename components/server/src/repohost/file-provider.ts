@@ -8,6 +8,14 @@ import { User, Repository, Commit } from "@gitpod/gitpod-protocol";
 
 export type MaybeContent = string | undefined;
 
+export class RevisionNotFoundError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "RevisionNotFoundError";
+    }
+}
+export const ImageFileRevisionMissing = "ImageFileRevisionMissing";
+
 export const FileProvider = Symbol("FileProvider");
 export interface FileProvider {
     getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent>;

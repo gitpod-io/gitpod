@@ -19,6 +19,7 @@ import {
     AdditionalContentContext,
 } from "@gitpod/gitpod-protocol";
 import { createHash } from "crypto";
+import { ImageFileRevisionMissing, RevisionNotFoundError } from "../repohost";
 
 @injectable()
 export class ImageSourceProvider {
@@ -43,12 +44,14 @@ export class ImageSourceProvider {
                 if (!hostContext || !hostContext.services) {
                     throw new Error(`Cannot fetch workspace image source for host: ${repository.host}`);
                 }
-                const lastDockerFileSha = await hostContext.services.fileProvider.getLastChangeRevision(
-                    repository,
-                    imgcfg.externalSource.revision,
-                    user,
-                    imgcfg.file,
-                );
+                const lastDockerFileSha = await hostContext.services.fileProvider
+                    .getLastChangeRevision(repository, imgcfg.externalSource.revision, user, imgcfg.file)
+                    .catch((e) => {
+                        if (e instanceof RevisionNotFoundError) {
+                            return ImageFileRevisionMissing;
+                        }
+                        throw e;
+                    });
                 result = <WorkspaceImageSourceDocker>{
                     dockerFilePath: imgcfg.file,
                     dockerFileSource: imgcfg.externalSource,
@@ -72,12 +75,14 @@ export class ImageSourceProvider {
                 if (!hostContext || !hostContext.services) {
                     throw new Error(`Cannot fetch workspace image source for host: ${context.repository.host}`);
                 }
-                const lastDockerFileSha = await hostContext.services.fileProvider.getLastChangeRevision(
-                    context.repository,
-                    context.revision,
-                    user,
-                    imgcfg.file,
-                );
+                const lastDockerFileSha = await hostContext.services.fileProvider
+                    .getLastChangeRevision(context.repository, context.revision, user, imgcfg.file)
+                    .catch((e) => {
+                        if (e instanceof RevisionNotFoundError) {
+                            return ImageFileRevisionMissing;
+                        }
+                        throw e;
+                    });
                 result = <WorkspaceImageSourceDocker>{
                     dockerFilePath: imgcfg.file,
                     dockerFileSource: context,

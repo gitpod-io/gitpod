@@ -316,6 +316,9 @@ message WorkspaceMetadata {
   // original_context_url is the normalized URL from which the workspace was
   // created
   string original_context_url = 7;
+
+  // warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
+  repeated string warnings = 8;
 }
 
 // WorkspaceSpec specifies the configuration of a workspace for a workspace

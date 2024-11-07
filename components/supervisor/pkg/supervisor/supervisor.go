@@ -1599,14 +1599,21 @@ func stopWhenTasksAreDone(wg *sync.WaitGroup, cfg *Config, shutdown chan Shutdow
 
 	success := <-successChan
 	if success.Failed() {
-		var msg []byte
+		var msg string
 		if cfg.isImageBuild() {
-			msg = []byte("image build failed (" + string(success) + "). This is likely due to a misconfiguration in your Dockerfile. Debug this using `gp validate` (visit https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration) to learn more")
+			logFromFile, err := os.ReadFile("/workspace/.gitpod/bob.log")
+			debugMsg := "Debug this using `gp validate` (visit https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration) to learn more"
+			if err != nil {
+				log.WithError(err).Error("err while reading bob.log")
+				msg = fmt.Sprintf("image build failed: %s. %s", string(success), debugMsg)
+			} else {
+				msg = fmt.Sprintf("image build failed: %s. %s", string(logFromFile), debugMsg)
+			}
 		} else {
-			msg = []byte("headless task failed: " + string(success))
+			msg = fmt.Sprintf("headless task failed: %s", string(success))
 		}
 		// we signal task failure via kubernetes termination log
-		err := os.WriteFile("/dev/termination-log", msg, 0o644)
+		err := os.WriteFile("/dev/termination-log", []byte(msg), 0o644)
 		if err != nil {
 			log.WithError(err).Error("err while writing termination log")
 		}

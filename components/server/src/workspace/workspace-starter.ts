@@ -140,6 +140,7 @@ import { IDESettingsVersion } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { getFeatureFlagEnableExperimentalJBTB } from "../util/featureflags";
 import { OrganizationService } from "../orgs/organization-service";
 import { ProjectsService } from "../projects/projects-service";
+import { ImageFileRevisionMissing } from "../repohost";
 
 export interface StartWorkspaceOptions extends Omit<GitpodServer.StartWorkspaceOptions, "ideSettings"> {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -275,6 +276,17 @@ export class WorkspaceStarter {
                     workspace.context as CommitContext,
                     workspace.config,
                 );
+                if (
+                    WorkspaceImageSourceDocker.is(imageSource) &&
+                    imageSource.dockerFileHash === ImageFileRevisionMissing
+                ) {
+                    const revision = (workspace.context as CommitContext).revision;
+                    // we let the workspace create here and let it fail to build the image
+                    imageSource.dockerFileHash = revision;
+                    if (imageSource.dockerFileSource) {
+                        imageSource.dockerFileSource.revision = revision;
+                    }
+                }
                 log.debug("Found workspace without imageSource, generated one", { imageSource });
 
                 workspace.imageSource = imageSource;
