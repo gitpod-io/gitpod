@@ -538,6 +538,14 @@ export class WorkspaceService {
             const lastActive =
                 instance?.stoppingTime || instance?.startedTime || instance?.creationTime || workspace?.creationTime;
             if (!lastActive && !activeNow) {
+                log.warn(
+                    { userId, workspaceId },
+                    "[updateDeletionEligibilityTime] No last active time found, skipping update of deletion eligibility time",
+                    {
+                        workspace,
+                        instance,
+                    },
+                );
                 return;
             }
             const deletionEligibilityTime = activeNow ? new Date() : new Date(lastActive);
@@ -567,7 +575,7 @@ export class WorkspaceService {
             ) {
                 log.warn(
                     { userId, workspaceId, instanceId: instance?.id },
-                    "Prevented moving deletion eligibility time backwards",
+                    "[updateDeletionEligibilityTime] Prevented moving deletion eligibility time backwards",
                     {
                         hasGitChanges,
                         timestamps: new TrustedValue({
@@ -587,7 +595,11 @@ export class WorkspaceService {
                 deletionEligibilityTime: deletionEligibilityTime.toISOString(),
             });
         } catch (error) {
-            log.error({ userId, workspaceId }, "Failed to update deletion eligibility time", error);
+            log.error(
+                { userId, workspaceId },
+                "[updateDeletionEligibilityTime] Failed to update deletion eligibility time",
+                error,
+            );
         }
     }
 
