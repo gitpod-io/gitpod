@@ -866,7 +866,7 @@ export class WorkspaceService {
             result = await this.entitlementService.mayStartWorkspace(user, organizationId, runningInstances);
             TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
         } catch (err) {
-            log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
+            log.error({ userId: user.id }, "EntitlementService.mayStartWorkspace error", err);
             TraceContext.setError(ctx, err);
             return; // we don't want to block workspace starts because of internal errors
         }
