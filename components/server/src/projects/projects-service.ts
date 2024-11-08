@@ -62,8 +62,14 @@ export class ProjectsService {
         @inject(InstallationService) private readonly installationService: InstallationService,
     ) {}
 
-    async getProject(userId: string, projectId: string): Promise<Project> {
-        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
+    /**
+     * Returns a project by its ID.
+     * @param skipPermissionCheck useful either when the caller already checked permissions or when we need to do something purely server-side (e.g. looking up a project when starting a workspace by a collaborator)
+     */
+    async getProject(userId: string, projectId: string, skipPermissionCheck?: boolean): Promise<Project> {
+        if (!skipPermissionCheck) {
+            await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
+        }
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
@@ -132,11 +138,18 @@ export class ProjectsService {
         return filteredProjects;
     }
 
-    async findProjectsByCloneUrl(userId: string, cloneUrl: string, organizationId?: string): Promise<Project[]> {
+    async findProjectsByCloneUrl(
+        userId: string,
+        cloneUrl: string,
+        organizationId?: string,
+        skipPermissionCheck?: boolean,
+    ): Promise<Project[]> {
         const projects = await this.projectDB.findProjectsByCloneUrl(cloneUrl, organizationId);
         const result: Project[] = [];
         for (const project of projects) {
-            if (await this.auth.hasPermissionOnProject(userId, "read_info", project.id)) {
+            const hasPermission =
+                skipPermissionCheck || (await this.auth.hasPermissionOnProject(userId, "read_info", project.id));
+            if (hasPermission) {
                 result.push(project);
             }
         }

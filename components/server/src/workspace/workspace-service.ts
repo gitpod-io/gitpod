@@ -819,7 +819,7 @@ export class WorkspaceService {
         }
 
         const projectPromise = workspace.projectId
-            ? ApplicationError.notFoundToUndefined(this.projectsService.getProject(user.id, workspace.projectId))
+            ? ApplicationError.notFoundToUndefined(this.projectsService.getProject(user.id, workspace.projectId, true))
             : Promise.resolve(undefined);
 
         await mayStartPromise;
