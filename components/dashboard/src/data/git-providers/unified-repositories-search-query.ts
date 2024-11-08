@@ -128,15 +128,12 @@ export function deduplicateAndFilterRepositories(
     if (results.length === 0) {
         // If the searchString is a URL, and it's not present in the proposed results, "artificially" add it here.
         if (isValidGitUrl(searchString)) {
-            console.log("It's valid man");
             results.push(
                 new SuggestedRepository({
                     url: searchString,
                 }),
             );
         }
-
-        console.log("Valid after man");
     }
 
     // Limit what we show to 200 results
