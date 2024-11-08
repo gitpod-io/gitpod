@@ -142,7 +142,7 @@ export function deduplicateAndFilterRepositories(
 
 const ALLOWED_GIT_PROTOCOLS = ["ssh:", "git:", "http:", "https:"];
 /**
- * An opionated git URL validator
+ * An opinionated git URL validator
  *
  * Assumptions:
  * - Git hosts are not themselves TLDs (like .com) or reserved names like `localhost`
