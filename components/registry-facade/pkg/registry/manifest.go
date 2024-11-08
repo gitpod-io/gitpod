@@ -192,6 +192,8 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 				return err
 			}
 			manifest.Layers = append(manifest.Layers, addonLayer...)
+			cfg.Config.Labels = make(map[string]string)
+			cfg.Config.Labels["test"] = "we can write workspace image ref and size here"
 
 			// place config in store
 			rawCfg, err := json.Marshal(cfg)

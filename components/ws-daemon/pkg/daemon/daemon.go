@@ -214,7 +214,7 @@ func NewDaemon(config Config) (*Daemon, error) {
 	}
 
 	wsctrl, err := controller.NewWorkspaceController(
-		mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), nodename, config.Runtime.SecretsNamespace, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps, wrappedReg)
+		mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), nodename, config.Runtime.SecretsNamespace, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps, wrappedReg, containerRuntime)
 	if err != nil {
 		return nil, err
 	}

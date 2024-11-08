@@ -8,6 +8,8 @@ import (
 	"context"
 
 	"golang.org/x/xerrors"
+
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
 // Runtime abstracts over the different container runtimes out there w.r.t. to the features we need from those runtimes
@@ -47,6 +49,8 @@ type Runtime interface {
 
 	// IsContainerdReady returns is the status of containerd.
 	IsContainerdReady(ctx context.Context) (bool, error)
+
+	GetContainerImageInfo(ctx context.Context, id ID) (*workspacev1.WorkspaceImageInfo, error)
 }
 
 var (

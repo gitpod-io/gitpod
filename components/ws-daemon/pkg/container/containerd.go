@@ -28,6 +28,7 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
 const (
@@ -92,6 +93,7 @@ type containerInfo struct {
 	UpperDir    string
 	CGroupPath  string
 	PID         uint32
+	ImageRef    string
 }
 
 // start listening to containerd
@@ -276,6 +278,7 @@ func (s *Containerd) handleNewContainer(c containers.Container) {
 		info.ID = c.ID
 		info.SnapshotKey = c.SnapshotKey
 		info.Snapshotter = c.Snapshotter
+		info.ImageRef = c.Image
 
 		s.cntIdx[c.ID] = info
 		log.WithField("podname", podName).WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).WithField("ID", c.ID).Debug("found workspace container - updating label cache")
@@ -478,6 +481,35 @@ func (s *Containerd) ContainerPID(ctx context.Context, id ID) (pid uint64, err e
 	}
 
 	return uint64(info.PID), nil
+}
+
+func (s *Containerd) GetContainerImageInfo(ctx context.Context, id ID) (*workspacev1.WorkspaceImageInfo, error) {
+	info, ok := s.cntIdx[string(id)]
+	if !ok {
+		return nil, ErrNotFound
+	}
+
+	image, err := s.Client.GetImage(ctx, info.ImageRef)
+	if err != nil {
+		return nil, err
+	}
+	size, err := image.Size(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	wsImageInfo := &workspacev1.WorkspaceImageInfo{
+		TotalSize: size,
+	}
+
+	sp, err := image.Spec(ctx)
+	if err != nil {
+		log.WithError(err).Error("cannot get image spec")
+	} else {
+		log.WithField("labels", log.TrustedValueWrap{Value: sp.Config.Labels}).Info("image spec ---------- ")
+	}
+
+	return wsImageInfo, nil
 }
 
 func (s *Containerd) IsContainerdReady(ctx context.Context) (bool, error) {

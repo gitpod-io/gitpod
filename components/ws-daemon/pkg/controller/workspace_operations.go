@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -22,6 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -71,7 +73,7 @@ type WorkspaceOperations interface {
 	// Snapshot takes a snapshot of the workspace
 	Snapshot(ctx context.Context, instanceID, snapshotName string) (err error)
 	// Setup ensures that the workspace has been setup
-	SetupWorkspace(ctx context.Context, instanceID string) error
+	SetupWorkspace(ctx context.Context, instanceID string, imageInfo *workspacev1.WorkspaceImageInfo) error
 }
 
 type DefaultWorkspaceOperations struct {
@@ -211,12 +213,15 @@ func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID st
 	}
 }
 
-func (wso *DefaultWorkspaceOperations) SetupWorkspace(ctx context.Context, instanceID string) error {
-	_, err := wso.provider.GetAndConnect(ctx, instanceID)
+func (wso *DefaultWorkspaceOperations) SetupWorkspace(ctx context.Context, instanceID string, imageInfo *workspacev1.WorkspaceImageInfo) error {
+	ws, err := wso.provider.GetAndConnect(ctx, instanceID)
 	if err != nil {
 		return fmt.Errorf("cannot setup workspace %s: %w", instanceID, err)
 	}
-
+	err = wso.writeImageInfo(ctx, ws, imageInfo)
+	if err != nil {
+		glog.WithError(err).WithFields(ws.OWI()).Error("cannot write image info")
+	}
 	return nil
 }
 
@@ -510,6 +515,26 @@ func (wso *DefaultWorkspaceOperations) uploadWorkspaceContent(ctx context.Contex
 		return xerrors.Errorf("cannot upload workspace content: %w", err)
 	}
 
+	return nil
+}
+
+func (wso *DefaultWorkspaceOperations) writeImageInfo(_ context.Context, ws *session.Workspace, imageInfo *workspacev1.WorkspaceImageInfo) error {
+	if imageInfo == nil {
+		return nil
+	}
+
+	b, err := json.Marshal(imageInfo)
+	if err != nil {
+		return fmt.Errorf("cannot marshal image info: %w", err)
+	}
+	uid := (wsinit.GitpodUID + 100000 - 1)
+	gid := (wsinit.GitpodGID + 100000 - 1)
+	fp := filepath.Join(ws.Location, ".gitpod/image")
+	err = os.WriteFile(fp, b, 0644)
+	if err != nil {
+		return fmt.Errorf("cannot write image info: %w", err)
+	}
+	os.Chown(fp, uid, gid)
 	return nil
 }
 
