@@ -121,7 +121,7 @@ schema: |-
       permission read_env_var = viewer + editor + org->collaborator + org->owner + org->installation_admin
       permission write_env_var = editor + org->owner + org->installation_admin
 
-      permission read_prebuild = viewer + editor + org->owner + org->installation_admin
+      permission read_prebuild = viewer + editor + org->collaborator + org->owner + org->installation_admin
       permission write_prebuild = editor + org->owner
     }
 
