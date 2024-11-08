@@ -8,7 +8,8 @@
             "annotations": {},
             "name": "description",
             "pinned": true,
-            "originalContextUrl": "https://github.com/gitpod-io/contextURL"
+            "originalContextUrl": "https://github.com/gitpod-io/contextURL",
+            "warnings": []
         },
         "spec": {
             "initializer": {

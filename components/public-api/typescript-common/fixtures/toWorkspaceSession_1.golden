@@ -10,7 +10,8 @@
                 "annotations": {},
                 "name": "akosyakov/parcel-demo - master",
                 "pinned": false,
-                "originalContextUrl": "https://github.com/akosyakov/parcel-demo"
+                "originalContextUrl": "https://github.com/akosyakov/parcel-demo",
+                "warnings": []
             },
             "spec": {
                 "initializer": {
