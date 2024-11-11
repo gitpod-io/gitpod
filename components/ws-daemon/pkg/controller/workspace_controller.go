@@ -223,6 +223,8 @@ func (wsc *WorkspaceController) handleWorkspaceRunning(ctx context.Context, ws *
 
 	var imageInfo *workspacev1.WorkspaceImageInfo = nil
 	if ws.Status.ImageInfo == nil {
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
 		id, err := wsc.runtime.WaitForContainer(ctx, ws.Name)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to wait for container: %w", err)
