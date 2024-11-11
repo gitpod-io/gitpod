@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +21,8 @@ import (
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/images"
+	"github.com/containerd/platforms"
 	"github.com/containerd/typeurl/v2"
 	ocispecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opentracing/opentracing-go"
@@ -502,13 +505,18 @@ func (s *Containerd) GetContainerImageInfo(ctx context.Context, id ID) (*workspa
 		TotalSize: size,
 	}
 
-	sp, err := image.Spec(ctx)
+	// Fetch the manifest
+	manifest, err := images.Manifest(ctx, s.Client.ContentStore(), image.Target(), platforms.Default())
 	if err != nil {
-		log.WithError(err).Error("cannot get image spec")
-	} else {
-		log.WithField("labels", log.TrustedValueWrap{Value: sp.Config.Labels}).Info("image spec ---------- ")
+		log.WithError(err).WithField("image", info.ImageRef).Error("Failed to get manifest")
+		return wsImageInfo, nil
 	}
-
+	if manifest.Annotations != nil {
+		wsImageInfo.WorkspaceImageRef = manifest.Annotations["io.gitpod.workspace-image.ref"]
+		if size, err := strconv.Atoi(manifest.Annotations["io.gitpod.workspace-image.size"]); err == nil {
+			wsImageInfo.WorkspaceImageSize = int64(size)
+		}
+	}
 	return wsImageInfo, nil
 }
 

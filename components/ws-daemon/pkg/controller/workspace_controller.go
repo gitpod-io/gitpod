@@ -230,7 +230,6 @@ func (wsc *WorkspaceController) handleWorkspaceRunning(ctx context.Context, ws *
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to get container image info: %w", err)
 		}
-		glog.WithFields(ws.OWI()).WithField("workspace", req.NamespacedName).WithField("info", glog.TrustedValueWrap{Value: info}).WithField("phase", ws.Status.Phase).Info("handle workspace running ===============")
 
 		err = retry.RetryOnConflict(retryParams, func() error {
 			if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {

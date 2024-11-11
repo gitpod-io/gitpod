@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Gitpod GmbH. All rights reserved.
+# Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
@@ -520,20 +520,12 @@ spec:
                 type: object
               imageInfo:
                 properties:
-                  details:
-                    items:
-                      properties:
-                        ref:
-                          type: string
-                        size:
-                          format: int64
-                          type: integer
-                      required:
-                      - ref
-                      - size
-                      type: object
-                    type: array
                   totalSize:
+                    format: int64
+                    type: integer
+                  workspaceImageRef:
+                    type: string
+                  workspaceImageSize:
                     format: int64
                     type: integer
                 required:

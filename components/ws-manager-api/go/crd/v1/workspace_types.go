@@ -173,14 +173,10 @@ type WorkspaceImageInfo struct {
 	TotalSize int64 `json:"totalSize"`
 
 	// +kubebuilder:validation:Optional
-	Details []ImageInfo `json:"details"`
-}
+	WorkspaceImageSize int64 `json:"workspaceImageSize,omitempty"`
 
-type ImageInfo struct {
-	// +kubebuilder:validation:Required
-	Size int64 `json:"size"`
-	// +kubebuilder:validation:Required
-	Ref string `json:"ref"`
+	// +kubebuilder:validation:Optional
+	WorkspaceImageRef string `json:"workspaceImageRef,omitempty"`
 }
 
 // WorkspaceStatus defines the observed state of Workspace
