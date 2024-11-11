@@ -9,6 +9,11 @@ import blogBannerBg from "../images/blog-banner-bg.png";
 
 const banners = [
     {
+        type: "Watch recording",
+        title: "Beyond Kubernetes: A deep-dive into Gitpod Flex with our CTO",
+        link: "https://www.gitpod.io/events#watch-on-demand",
+    },
+    {
         type: "Blog Post",
         title: "Gitpod Enterprise:<br/> Self-hosted, not self-managed",
         link: "https://www.gitpod.io/blog/self-hosted-not-self-managed",
@@ -22,11 +27,6 @@ const banners = [
         type: "Gartner Report",
         title: `"By 2026, 60% of cloud workloads will be built and deployed using CDE's"`,
         link: "https://www.gitpod.io/blog/gartner-2023-cde-hypecycle",
-    },
-    {
-        type: "Webinar Series",
-        title: "The Platform Engineering maturity model",
-        link: "https://www.gitpod.io/events#platform-maturity-model-series",
     },
 ];
 
