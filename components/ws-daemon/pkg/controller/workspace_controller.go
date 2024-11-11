@@ -221,6 +221,7 @@ func (wsc *WorkspaceController) handleWorkspaceRunning(ctx context.Context, ws *
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceRunning")
 	defer tracing.FinishSpan(span, &err)
 
+	var imageInfo *workspacev1.WorkspaceImageInfo = nil
 	if ws.Status.ImageInfo == nil {
 		id, err := wsc.runtime.WaitForContainer(ctx, ws.Name)
 		if err != nil {
@@ -241,9 +242,9 @@ func (wsc *WorkspaceController) handleWorkspaceRunning(ctx context.Context, ws *
 		if err != nil {
 			glog.WithFields(ws.OWI()).WithField("workspace", req.NamespacedName).WithField("phase", ws.Status.Phase).Errorf("failed to update workspace with image info: %v", err)
 		}
-		wsc.operations.SetupWorkspace(ctx, ws.Name, info)
+		imageInfo = info
 	}
-	return ctrl.Result{}, wsc.operations.SetupWorkspace(ctx, ws.Name, nil)
+	return ctrl.Result{}, wsc.operations.SetupWorkspace(ctx, ws.Name, imageInfo)
 }
 
 func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
