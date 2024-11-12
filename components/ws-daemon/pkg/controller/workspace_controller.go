@@ -61,9 +61,10 @@ type WorkspaceController struct {
 	metrics                 *workspaceMetrics
 	secretNamespace         string
 	recorder                record.EventRecorder
+	runtime                 container.Runtime
 }
 
-func NewWorkspaceController(c client.Client, recorder record.EventRecorder, nodeName, secretNamespace string, maxConcurrentReconciles int, ops WorkspaceOperations, reg prometheus.Registerer) (*WorkspaceController, error) {
+func NewWorkspaceController(c client.Client, recorder record.EventRecorder, nodeName, secretNamespace string, maxConcurrentReconciles int, ops WorkspaceOperations, reg prometheus.Registerer, runtime container.Runtime) (*WorkspaceController, error) {
 	metrics := newWorkspaceMetrics()
 	reg.Register(metrics)
 
@@ -75,6 +76,7 @@ func NewWorkspaceController(c client.Client, recorder record.EventRecorder, node
 		metrics:                 metrics,
 		secretNamespace:         secretNamespace,
 		recorder:                recorder,
+		runtime:                 runtime,
 	}, nil
 }
 
@@ -219,7 +221,40 @@ func (wsc *WorkspaceController) handleWorkspaceRunning(ctx context.Context, ws *
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceRunning")
 	defer tracing.FinishSpan(span, &err)
 
-	return ctrl.Result{}, wsc.operations.SetupWorkspace(ctx, ws.Name)
+	var imageInfo *workspacev1.WorkspaceImageInfo = nil
+	if ws.Status.ImageInfo == nil {
+		getImageInfo := func() (*workspacev1.WorkspaceImageInfo, error) {
+			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+			id, err := wsc.runtime.WaitForContainer(ctx, ws.Name)
+			if err != nil {
+				return nil, fmt.Errorf("failed to wait for container: %w", err)
+			}
+			info, err := wsc.runtime.GetContainerImageInfo(ctx, id)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get container image info: %w", err)
+			}
+
+			err = retry.RetryOnConflict(retryParams, func() error {
+				if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {
+					return err
+				}
+				ws.Status.ImageInfo = info
+				return wsc.Status().Update(ctx, ws)
+			})
+			if err != nil {
+				return info, fmt.Errorf("failed to update workspace with image info: %w", err)
+			}
+			return info, nil
+		}
+		imageInfo, err = getImageInfo()
+		if err != nil {
+			glog.WithFields(ws.OWI()).WithField("workspace", req.NamespacedName).Errorf("failed to get image info: %v", err)
+		} else {
+			glog.WithFields(ws.OWI()).WithField("workspace", req.NamespacedName).WithField("imageInfo", glog.TrustedValueWrap{Value: imageInfo}).Info("updated image info")
+		}
+	}
+	return ctrl.Result{}, wsc.operations.SetupWorkspace(ctx, ws.Name, imageInfo)
 }
 
 func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {

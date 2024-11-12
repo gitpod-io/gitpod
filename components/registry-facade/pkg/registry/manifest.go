@@ -12,6 +12,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -185,6 +186,11 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 				return err
 			}
 
+			originImageSize := 0
+			for _, layer := range manifest.Layers {
+				originImageSize += int(layer.Size)
+			}
+
 			// modify config
 			addonLayer, err := mh.ConfigModifier(ctx, mh.Spec, cfg)
 			if err != nil {
@@ -192,6 +198,11 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 				return err
 			}
 			manifest.Layers = append(manifest.Layers, addonLayer...)
+			if manifest.Annotations == nil {
+				manifest.Annotations = make(map[string]string)
+			}
+			manifest.Annotations["io.gitpod.workspace-image.size"] = strconv.Itoa(originImageSize)
+			manifest.Annotations["io.gitpod.workspace-image.ref"] = mh.Spec.BaseRef
 
 			// place config in store
 			rawCfg, err := json.Marshal(cfg)

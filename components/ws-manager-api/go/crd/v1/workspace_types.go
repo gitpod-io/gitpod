@@ -168,6 +168,17 @@ func (ps PortSpec) Equal(other PortSpec) bool {
 	return true
 }
 
+type WorkspaceImageInfo struct {
+	// +kubebuilder:validation:Required
+	TotalSize int64 `json:"totalSize"`
+
+	// +kubebuilder:validation:Optional
+	WorkspaceImageSize int64 `json:"workspaceImageSize,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	WorkspaceImageRef string `json:"workspaceImageRef,omitempty"`
+}
+
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	PodStarts  int    `json:"podStarts"`
@@ -193,6 +204,9 @@ type WorkspaceStatus struct {
 	Storage StorageStatus `json:"storage,omitempty"`
 
 	LastActivity *metav1.Time `json:"lastActivity,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	ImageInfo *WorkspaceImageInfo `json:"imageInfo,omitempty"`
 }
 
 func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {
