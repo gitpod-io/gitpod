@@ -171,6 +171,10 @@ export class IncrementalWorkspaceService {
 
         // ensure the image source hasn't changed (skips older images)
         if (JSON.stringify(imageSource) !== JSON.stringify(candidateWorkspace.imageSource)) {
+            log.debug(`Skipping parent prebuild: Outdated image`, {
+                imageSource,
+                parentImageSource: candidateWorkspace.imageSource,
+            });
             return false;
         }
 

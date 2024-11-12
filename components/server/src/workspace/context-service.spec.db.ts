@@ -590,7 +590,7 @@ describe("ContextService", async () => {
 
         const prebuildForCommit1 = await prebuildManager.startPrebuild(
             {},
-            { user: owner, project, commitInfo: commit1, context: ctx1.context as CommitContext, forcePrebuild: true },
+            { user: owner, project, commitInfo: commit1, context: ctx1.context as CommitContext },
         );
         const prebuild2 = await workspaceDb.findPrebuildByID(prebuildForCommit1.prebuildId);
         await workspaceDb.storePrebuiltWorkspace({
