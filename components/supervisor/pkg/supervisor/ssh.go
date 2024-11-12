@@ -170,6 +170,9 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 	cmd.Env = s.envvars
 	cmd.ExtraFiles = []*os.File{socketFD}
 	cmd.Stderr = os.Stderr
+
+	cmd.SysProcAttr.AmbientCaps = grantCapSysPtrace(cmd.SysProcAttr.AmbientCaps)
+
 	if s.cfg.WorkspaceLogRateLimit > 0 {
 		limit := int64(s.cfg.WorkspaceLogRateLimit)
 		cmd.Stderr = dropwriter.Writer(cmd.Stderr, dropwriter.NewBucket(limit*1024*3, limit*1024))

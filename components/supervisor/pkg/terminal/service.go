@@ -48,9 +48,10 @@ type MuxTerminalService struct {
 	// if returns empty string then DefaultWorkdir is used
 	DefaultWorkdirProvider func() string
 
-	DefaultShell string
-	Env          []string
-	DefaultCreds *syscall.Credential
+	DefaultShell       string
+	Env                []string
+	DefaultCreds       *syscall.Credential
+	DefaultAmbientCaps []uintptr
 
 	api.UnimplementedTerminalServiceServer
 }
@@ -109,6 +110,14 @@ func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.Ope
 			Y:    uint16(req.Size.HeightPx),
 		}
 	}
+
+	if srv.DefaultAmbientCaps != nil {
+		if cmd.SysProcAttr == nil {
+			cmd.SysProcAttr = &syscall.SysProcAttr{}
+		}
+		cmd.SysProcAttr.AmbientCaps = srv.DefaultAmbientCaps
+	}
+
 	alias, err := srv.Mux.Start(cmd, options)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())

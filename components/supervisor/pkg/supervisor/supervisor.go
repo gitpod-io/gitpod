@@ -42,6 +42,7 @@ import (
 	"github.com/prometheus/common/route"
 	"github.com/soheilhy/cmux"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -355,6 +356,9 @@ func Run(options ...RunOption) {
 	termMuxSrv.DefaultCreds = &syscall.Credential{
 		Uid: gitpodUID,
 		Gid: gitpodGID,
+	}
+	if !cfg.isHeadless() {
+		termMuxSrv.DefaultAmbientCaps = grantCapSysPtrace(termMuxSrv.DefaultAmbientCaps)
 	}
 
 	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil, ideReady, desktopIdeReady)
@@ -1035,6 +1039,8 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 	// IDE and its children.
 	cmd.SysProcAttr.Setpgid = true
 	cmd.SysProcAttr.Pdeathsig = syscall.SIGKILL
+
+	cmd.SysProcAttr.AmbientCaps = grantCapSysPtrace(cmd.SysProcAttr.AmbientCaps)
 
 	// Here we must resist the temptation to "neaten up" the IDE output for headless builds.
 	// This would break the JSON parsing of the headless builds.
@@ -1977,4 +1983,10 @@ func waitForIde(parent context.Context, ideReady *ideReadyState, desktopIdeReady
 	case <-desktopIdeReady.Wait():
 	}
 	return true, ""
+}
+
+// We grant ptrace for IDE, terminal, ssh and their child process
+// It's make IDE attach more easier
+func grantCapSysPtrace(caps []uintptr) []uintptr {
+	return append(caps, unix.CAP_SYS_PTRACE)
 }
