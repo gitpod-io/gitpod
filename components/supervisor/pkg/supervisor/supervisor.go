@@ -358,7 +358,7 @@ func Run(options ...RunOption) {
 		Gid: gitpodGID,
 	}
 	if !cfg.isHeadless() {
-		termMuxSrv.DefaultAmbientCaps = append(termMuxSrv.DefaultAmbientCaps, unix.CAP_SYS_PTRACE)
+		termMuxSrv.DefaultAmbientCaps = grantCapSysPtrace(termMuxSrv.DefaultAmbientCaps)
 	}
 
 	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil, ideReady, desktopIdeReady)
@@ -1040,7 +1040,7 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 	cmd.SysProcAttr.Setpgid = true
 	cmd.SysProcAttr.Pdeathsig = syscall.SIGKILL
 
-	cmd.SysProcAttr.AmbientCaps = append(cmd.SysProcAttr.AmbientCaps, unix.CAP_SYS_PTRACE)
+	cmd.SysProcAttr.AmbientCaps = grantCapSysPtrace(cmd.SysProcAttr.AmbientCaps)
 
 	// Here we must resist the temptation to "neaten up" the IDE output for headless builds.
 	// This would break the JSON parsing of the headless builds.
@@ -1983,4 +1983,10 @@ func waitForIde(parent context.Context, ideReady *ideReadyState, desktopIdeReady
 	case <-desktopIdeReady.Wait():
 	}
 	return true, ""
+}
+
+// We grant ptrace for IDE, terminal, ssh and their child process
+// It's make IDE attach more easier
+func grantCapSysPtrace(caps []uintptr) []uintptr {
+	return append(caps, unix.CAP_SYS_PTRACE)
 }
