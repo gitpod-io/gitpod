@@ -45,6 +45,7 @@ export class IncrementalWorkspaceService {
             context.revision,
             maxDepth,
         );
+
         history.commitHistory.unshift(context.revision);
         if (context.additionalRepositoryCheckoutInfo && context.additionalRepositoryCheckoutInfo.length > 0) {
             const histories = context.additionalRepositoryCheckoutInfo.map(async (info) => {
@@ -83,8 +84,21 @@ export class IncrementalWorkspaceService {
         // Note: This query returns only not-garbage-collected prebuilds in order to reduce cardinality
         // (e.g., at the time of writing, the Gitpod repository has 16K+ prebuilds, but only ~300 not-garbage-collected)
         const recentPrebuilds = await this.workspaceDB.findPrebuildsWithWorkspace(projectId);
+
+        const sortedRecentPrebuilds = recentPrebuilds
+            .filter((prebuild) => {
+                return history.commitHistory?.includes(prebuild.prebuild.commit);
+            })
+            .sort((a, b) => {
+                // instead of the DB-returned creation time we use the commit history to sort the prebuilds
+                // this way we can return the correct prebuild even if the prebuild was first created for a later commit and then another one for an earlier commit
+                const aIdx = history.commitHistory?.indexOf(a.prebuild.commit) ?? -1;
+                const bIdx = history.commitHistory?.indexOf(b.prebuild.commit) ?? -1;
+
+                return aIdx - bIdx;
+            });
         const imageSource = await imageSourcePromise;
-        for (const recentPrebuild of recentPrebuilds) {
+        for (const recentPrebuild of sortedRecentPrebuilds) {
             if (
                 this.isGoodBaseforIncrementalBuild(
                     history,
@@ -98,6 +112,7 @@ export class IncrementalWorkspaceService {
                 return recentPrebuild.prebuild;
             }
         }
+
         return undefined;
     }
 
@@ -156,10 +171,6 @@ export class IncrementalWorkspaceService {
 
         // ensure the image source hasn't changed (skips older images)
         if (JSON.stringify(imageSource) !== JSON.stringify(candidateWorkspace.imageSource)) {
-            log.debug(`Skipping parent prebuild: Outdated image`, {
-                imageSource,
-                parentImageSource: candidateWorkspace.imageSource,
-            });
             return false;
         }
 

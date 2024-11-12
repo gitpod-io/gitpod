@@ -130,7 +130,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
             }
 
             // TODO(janx): To get more results than GitHub API's max page size (seems to be 100), pagination should be handled.
-            // These additional history properties may be helfpul:
+            // These additional history properties may be helpful:
             //     totalCount,
             //     pageInfo {
             //         haxNextPage,
