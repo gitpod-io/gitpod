@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -170,6 +171,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 	cmd.Env = s.envvars
 	cmd.ExtraFiles = []*os.File{socketFD}
 	cmd.Stderr = os.Stderr
+	cmd.SysProcAttr.AmbientCaps = append(cmd.SysProcAttr.AmbientCaps, unix.CAP_SYS_PTRACE)
 	if s.cfg.WorkspaceLogRateLimit > 0 {
 		limit := int64(s.cfg.WorkspaceLogRateLimit)
 		cmd.Stderr = dropwriter.Writer(cmd.Stderr, dropwriter.NewBucket(limit*1024*3, limit*1024))
