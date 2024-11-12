@@ -92,7 +92,7 @@ class MockRepositoryProvider implements RepositoryProvider {
         if (!b) {
             throw new Error("branch not found");
         }
-        b.commits.push(commit);
+        b.commits.unshift(commit);
     }
 
     async hasReadAccess(user: any, owner: string, repo: string): Promise<boolean> {
@@ -123,8 +123,8 @@ class MockRepositoryProvider implements RepositoryProvider {
         for (const b of this.branches.values()) {
             for (const [i, c] of b.commits.entries()) {
                 if (c.sha === ref) {
-                    // this commit, and everything before it
-                    return b.commits.slice(0, i).map((c) => c.sha);
+                    // everything before `ref`
+                    return b.commits.slice(i + 1).map((c) => c.sha);
                 }
             }
         }
@@ -150,14 +150,14 @@ function headu<T>(arr: T[] | undefined): T | undefined {
     if (!arr || arr.length === 0) {
         return undefined;
     }
-    return arr[arr.length - 1];
+    return arr[0];
 }
 
 function head<T>(arr: T[]): T {
     if (arr.length === 0) {
         throw new Error("empty array");
     }
-    return arr[arr.length - 1];
+    return arr[0];
 }
 
 const SNAPSHOT_BUCKET = "https://gitpod.io/none-bucket";
