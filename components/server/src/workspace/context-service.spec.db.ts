@@ -601,7 +601,6 @@ describe("ContextService", async () => {
         await workspaceDb.updateInstancePartial(wsAndI2!.instanceId, { status: { phase: "stopped" } });
 
         // after everything has settled, request context for both commits again
-
         ctx1 = await svc.parseContext(owner, `https://github.com/gitpod-io/empty/commit/${commit1.sha}`, {
             projectId: project.id,
             organizationId: org.id,
