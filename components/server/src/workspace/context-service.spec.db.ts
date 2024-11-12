@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TypeORM } from "@gitpod/gitpod-db/lib";
+import { TypeORM, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import {
     CommitContext,
@@ -17,6 +17,11 @@ import {
     StartPrebuildResult,
     SnapshotContext,
     PrebuiltWorkspaceContext,
+    Branch,
+    CommitInfo,
+    Repository,
+    RepositoryInfo,
+    WorkspaceConfig,
 } from "@gitpod/gitpod-protocol";
 import * as chai from "chai";
 import { Container } from "inversify";
@@ -36,6 +41,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { AuthProvider } from "../auth/auth-provider";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { SYSTEM_USER } from "../authorization/authorizer";
+import { RepositoryProvider } from "../repohost";
 
 const expect = chai.expect;
 
@@ -54,14 +60,111 @@ const gitpodEmptyContext = {
         private: false,
     },
     normalizedContextURL: "https://github.com/gitpod-io/empty",
-    revision: "asdf",
+    revision: "123456",
     title: "gitpod-io/empty - main",
 };
+
+// MockRepositoryProvider is a class implementing the RepositoryProvider interface, which allows to pass in commitHistory and commitInfo as needed
+
+type NamedBranch = Omit<Branch, "commit">;
+function toBranch(b: { branch: NamedBranch; commits: CommitInfo[] }): Branch {
+    return {
+        ...b.branch,
+        commit: {
+            sha: head(b.commits).sha,
+            author: head(b.commits).author,
+            commitMessage: head(b.commits).commitMessage,
+        },
+    };
+}
+class MockRepositoryProvider implements RepositoryProvider {
+    branches: Map<string, { branch: NamedBranch; commits: CommitInfo[] }> = new Map();
+
+    addBranch(branch: Omit<Branch, "commit">, commits: CommitInfo[]) {
+        this.branches.set(branch.name, {
+            branch,
+            commits,
+        });
+    }
+
+    pushCommit(branch: string, commit: CommitInfo) {
+        const b = this.branches.get(branch);
+        if (!b) {
+            throw new Error("branch not found");
+        }
+        b.commits.unshift(commit);
+    }
+
+    async hasReadAccess(user: any, owner: string, repo: string): Promise<boolean> {
+        return true;
+    }
+    async getBranch(user: User, owner: string, repo: string, branchName: string): Promise<Branch> {
+        const branch = this.branches.get(branchName);
+        if (!branch) {
+            throw new Error("branch not found");
+        }
+        return toBranch(branch);
+    }
+    async getRepo(user: User, owner: string, repo: string): Promise<Repository> {
+        return {
+            host: "github.com",
+            owner: "gitpod-io",
+            name: "empty",
+            cloneUrl: "https://github.com/gitpod-io/empty.git",
+            defaultBranch: "main",
+        };
+    }
+    async getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number): Promise<string[]> {
+        const branch = this.branches.get(ref);
+        if (branch) {
+            return branch.commits.map((c) => c.sha);
+        }
+
+        for (const b of this.branches.values()) {
+            for (const [i, c] of b.commits.entries()) {
+                if (c.sha === ref) {
+                    // everything before `ref`
+                    return b.commits.slice(i + 1).map((c) => c.sha);
+                }
+            }
+        }
+        throw new Error(`ref ${ref} not found`);
+    }
+    async getCommitInfo(user: User, owner: string, repo: string, ref: string): Promise<CommitInfo | undefined> {
+        return headu(this.branches.get(ref)?.commits);
+    }
+
+    async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
+        return Array.from(this.branches.values()).map((b) => toBranch(b));
+    }
+
+    async getUserRepos(user: User): Promise<RepositoryInfo[]> {
+        return [];
+    }
+    async searchRepos(user: User, searchString: string, limit: number): Promise<RepositoryInfo[]> {
+        return [];
+    }
+}
+
+function headu<T>(arr: T[] | undefined): T | undefined {
+    if (!arr || arr.length === 0) {
+        return undefined;
+    }
+    return arr[0];
+}
+
+function head<T>(arr: T[]): T {
+    if (arr.length === 0) {
+        throw new Error("empty array");
+    }
+    return arr[0];
+}
 
 const SNAPSHOT_BUCKET = "https://gitpod.io/none-bucket";
 
 describe("ContextService", async () => {
     let container: Container;
+    let mockRepositoryProvider: MockRepositoryProvider;
     let owner: User;
     let member: User;
     let stranger: User;
@@ -84,6 +187,17 @@ describe("ContextService", async () => {
                     },
                 };
             },
+            defaultConfig: async (organizationId?: string): Promise<WorkspaceConfig> => {
+                return {
+                    ports: [],
+                    tasks: [],
+                    image: "gitpod/workspace-base",
+                    ideCredentials: "some-credentials",
+                };
+            },
+            getDefaultImage: async (organizationId?: string): Promise<string> => {
+                return "gitpod/workspace-base";
+            },
         } as any as ConfigProvider);
 
         const bindContextParser = () => {
@@ -91,40 +205,98 @@ describe("ContextService", async () => {
                 normalizeContextURL: function (contextURL: string): string {
                     return contextURL + "normalizeContextURL";
                 },
-                handle: function (ctx: TraceContext, user: User, contextURL: string): Promise<WorkspaceContext> {
+                handle: async function (ctx: TraceContext, user: User, contextURL: string): Promise<WorkspaceContext> {
                     const url = contextURL.replace("normalizeContextURL", "");
-                    switch (url) {
-                        case "https://github.com/gitpod-io/empty":
-                            return gitpodEmptyContext as any;
-                        case `open-prebuild/${prebuild.prebuildId}/https://github.com/gitpod-io/empty/tree/main`:
-                            return {
-                                ...gitpodEmptyContext,
-                                openPrebuildID: prebuild.prebuildId,
-                            } as any;
-                        case `snapshot/${snapshot.id}`: {
+
+                    const cases = new Map<string, () => WorkspaceContext>();
+                    cases.set("https://github.com/gitpod-io/empty", () => {
+                        return gitpodEmptyContext as any;
+                    });
+
+                    if (prebuild) {
+                        cases.set(
+                            `open-prebuild/${prebuild.prebuildId}/https://github.com/gitpod-io/empty/tree/main`,
+                            () => {
+                                return {
+                                    ...gitpodEmptyContext,
+                                    openPrebuildID: prebuild.prebuildId,
+                                } as any;
+                            },
+                        );
+                    }
+                    if (snapshot) {
+                        cases.set(`snapshot/${snapshot.id}`, () => {
                             return {
                                 ...gitpodEmptyContext,
                                 snapshotId: snapshot.id,
                                 snapshotBucketId: SNAPSHOT_BUCKET,
                             } as any;
-                        }
-                        case `snapshot/${snapshot_stranger.id}`: {
+                        });
+                    }
+                    if (snapshot_stranger) {
+                        cases.set(`snapshot/${snapshot_stranger.id}`, () => {
                             return {
                                 ...gitpodEmptyContext,
                                 snapshotId: snapshot_stranger.id,
                                 snapshotBucketId: SNAPSHOT_BUCKET,
                             } as any;
-                        }
-                        default:
-                            return {
-                                ref: "master",
-                            } as any;
+                        });
                     }
+                    const c = cases.get(url);
+                    if (c) {
+                        return c();
+                    }
+
+                    async function createCommitContextForBranch(branchName: string): Promise<CommitContext> {
+                        const branch = await mockRepositoryProvider.getBranch(user, "gitpod-io", "empty", branchName);
+                        const r: CommitContext = {
+                            title: branch.commit.commitMessage,
+                            ref: branch.name,
+                            refType: "branch",
+                            revision: branch.commit.sha,
+                            repository: await mockRepositoryProvider.getRepo(user, "gitpod-io", "empty"),
+                            normalizedContextURL: branch.htmlUrl,
+                        };
+                        return r;
+                    }
+
+                    const branches = await mockRepositoryProvider.getBranches(user, "gitpod-io", "empty");
+                    for (const b of branches) {
+                        if (b.htmlUrl === url) {
+                            return createCommitContextForBranch(b.name);
+                        }
+                    }
+                    for (const [_, b] of mockRepositoryProvider.branches) {
+                        for (const commit of b.commits) {
+                            const commitContextUrl = `https://github.com/gitpod-io/empty/commit/${commit.sha}`;
+                            if (commitContextUrl === url) {
+                                const r: CommitContext = {
+                                    title: commit.commitMessage,
+                                    ref: commit.sha,
+                                    refType: "revision",
+                                    revision: commit.sha,
+                                    repository: await mockRepositoryProvider.getRepo(user, "gitpod-io", "empty"),
+                                    normalizedContextURL: commitContextUrl,
+                                };
+                                return r;
+                            }
+                        }
+                    }
+                    return createCommitContextForBranch(gitpodEmptyContext.repository.defaultBranch);
                 },
             } as any as ContextParser);
         };
 
         bindContextParser();
+
+        mockRepositoryProvider = new MockRepositoryProvider();
+        mockRepositoryProvider.addBranch({ name: "main", htmlUrl: "https://github.com/gitpod-io/empty/tree/main" }, [
+            {
+                sha: gitpodEmptyContext.revision,
+                author: "some-dude",
+                commitMessage: "some message",
+            },
+        ]);
 
         container.rebind(HostContextProvider).toConstantValue({
             get: () => {
@@ -138,30 +310,7 @@ describe("ContextService", async () => {
                         },
                     },
                     services: {
-                        repositoryProvider: {
-                            hasReadAccess: async (user: any, owner: string, repo: string) => {
-                                return true;
-                            },
-                            getBranch: () => {
-                                return {
-                                    url: "https://github.com/gitpod-io/empty.git",
-                                    name: "main",
-                                    htmlUrl: "https://github.com/gitpod-io/empty",
-                                    commit: {},
-                                };
-                            },
-                            getRepo: () => {
-                                return {
-                                    defaultBranch: "main",
-                                };
-                            },
-                            getCommitHistory: () => {
-                                return [];
-                            },
-                            getCommitInfo: () => {
-                                return undefined;
-                            },
-                        },
+                        repositoryProvider: mockRepositoryProvider,
                     },
                 };
             },
@@ -281,6 +430,115 @@ describe("ContextService", async () => {
         );
         expect(ctx.project?.id).to.equal(project.id);
         expect(PrebuiltWorkspaceContext.is(ctx.context)).to.equal(true);
+    });
+
+    it("should ignore unfinished prebuild", async () => {
+        // prepare test scenario: two prebuilds
+        const revision1 = "000000";
+        mockRepositoryProvider.addBranch(
+            { name: "branch-with-history", htmlUrl: "https://github.com/gitpod-io/empty/tree/branch-with-history" },
+            [
+                {
+                    sha: revision1,
+                    author: "some-dude",
+                    commitMessage: `commit ${revision1}`,
+                },
+            ],
+        );
+
+        // start two prebuilds: await 1st, fake 2nd to be building
+        const prebuildManager = container.get(PrebuildManager);
+        const workspaceDb: WorkspaceDB = container.get(WorkspaceDB);
+        const prebuild1Result = await prebuildManager.triggerPrebuild({}, owner, project.id, "branch-with-history");
+        const prebuild1 = await workspaceDb.findPrebuildByID(prebuild1Result.prebuildId);
+        await workspaceDb.storePrebuiltWorkspace({
+            ...prebuild1!,
+            state: "available",
+        });
+        const wsAndI = await workspaceDb.findWorkspaceAndInstance(prebuild1!.buildWorkspaceId);
+        await workspaceDb.updateInstancePartial(wsAndI!.instanceId, { status: { phase: "stopped" } });
+
+        mockRepositoryProvider.pushCommit("branch-with-history", {
+            sha: "111111",
+            author: "some-dude",
+            commitMessage: "commit 111111",
+        });
+        const prebuild2Result = await prebuildManager.triggerPrebuild({}, owner, project.id, "branch-with-history");
+        // fake prebuild2 to not be done, yet
+        const prebuild2 = await workspaceDb.findPrebuildByID(prebuild2Result.prebuildId);
+        await workspaceDb.storePrebuiltWorkspace({
+            ...prebuild2!,
+            state: "building",
+        });
+
+        // request a context for the branch (effectively 2nd commit)
+        const svc = container.get(ContextService);
+        const ctx = await svc.parseContext(owner, `https://github.com/gitpod-io/empty/tree/branch-with-history`, {
+            projectId: project.id,
+            organizationId: org.id,
+            forceDefaultConfig: false,
+        });
+        expect(ctx.project?.id).to.equal(project.id);
+        expect(PrebuiltWorkspaceContext.is(ctx.context)).to.equal(true);
+        expect((ctx.context as any as PrebuiltWorkspaceContext).prebuiltWorkspace.id).to.equal(
+            prebuild1Result.prebuildId,
+        );
+        expect((ctx.context as any as PrebuiltWorkspaceContext).prebuiltWorkspace.commit).to.equal(revision1);
+    });
+
+    it("should prefer perfect-match prebuild", async () => {
+        // prepare test scenario: two prebuilds
+        const revision1 = "000000";
+        mockRepositoryProvider.addBranch(
+            { name: "branch-with-history", htmlUrl: "https://github.com/gitpod-io/empty/tree/branch-with-history" },
+            [
+                {
+                    sha: revision1,
+                    author: "some-dude",
+                    commitMessage: `commit ${revision1}`,
+                },
+            ],
+        );
+
+        // trigger and "await" prebuilds for both commits.
+        const prebuildManager = container.get(PrebuildManager);
+        const workspaceDb: WorkspaceDB = container.get(WorkspaceDB);
+        const prebuild1Result = await prebuildManager.triggerPrebuild({}, owner, project.id, "branch-with-history");
+        const prebuild1 = await workspaceDb.findPrebuildByID(prebuild1Result.prebuildId);
+        await workspaceDb.storePrebuiltWorkspace({
+            ...prebuild1!,
+            state: "available",
+        });
+        const wsAndI1 = await workspaceDb.findWorkspaceAndInstance(prebuild1!.buildWorkspaceId);
+        await workspaceDb.updateInstancePartial(wsAndI1!.instanceId, { status: { phase: "stopped" } });
+
+        mockRepositoryProvider.pushCommit("branch-with-history", {
+            sha: "111111",
+            author: "some-dude",
+            commitMessage: "commit 111111",
+        });
+        const prebuild2Result = await prebuildManager.triggerPrebuild({}, owner, project.id, "branch-with-history");
+        const prebuild2 = await workspaceDb.findPrebuildByID(prebuild2Result.prebuildId);
+        await workspaceDb.storePrebuiltWorkspace({
+            ...prebuild2!,
+            state: "available",
+        });
+        const wsAndI2 = await workspaceDb.findWorkspaceAndInstance(prebuild2!.buildWorkspaceId);
+        await workspaceDb.updateInstancePartial(wsAndI2!.instanceId, { status: { phase: "stopped" } });
+
+        // request context for the _first_ commit
+        const svc = container.get(ContextService);
+        const ctx = await svc.parseContext(owner, `https://github.com/gitpod-io/empty/commit/000000`, {
+            projectId: project.id,
+            organizationId: org.id,
+            forceDefaultConfig: false,
+        });
+        expect(ctx.project?.id).to.equal(project.id);
+        expect(PrebuiltWorkspaceContext.is(ctx.context)).to.equal(true);
+        expect((ctx.context as any as PrebuiltWorkspaceContext).prebuiltWorkspace.id).to.equal(
+            prebuild1Result.prebuildId,
+        );
+        expect((ctx.context as any as PrebuiltWorkspaceContext).prebuiltWorkspace.commit).to.equal(revision1);
     });
 
     it("should parse snapshot context", async () => {

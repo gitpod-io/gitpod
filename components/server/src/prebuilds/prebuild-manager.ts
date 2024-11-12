@@ -381,7 +381,11 @@ export class PrebuildManager {
                         JSON.stringify(filterPrebuildTasks(config?.tasks));
                     // If there is an existing prebuild that isn't failed and it's based on the current config, we return it here instead of triggering a new prebuild.
                     if (isSameConfig) {
-                        return { prebuildId: existingPB.id, wsid: existingPB.buildWorkspaceId, done: true };
+                        return {
+                            prebuildId: existingPB.id,
+                            wsid: existingPB.buildWorkspaceId,
+                            done: existingPB.state === "available",
+                        };
                     }
                 }
             }
@@ -407,7 +411,7 @@ export class PrebuildManager {
                         commitHistory: repoHist.commitHistory.slice(0, prebuildInterval),
                     })),
                 };
-                const prebuild = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
+                const prebuild = await this.incrementalPrebuildsService.findBaseForIncrementalWorkspace(
                     context,
                     config,
                     history,
@@ -416,7 +420,11 @@ export class PrebuildManager {
                     true,
                 );
                 if (prebuild) {
-                    return { prebuildId: prebuild.id, wsid: prebuild.buildWorkspaceId, done: true };
+                    return {
+                        prebuildId: prebuild.id,
+                        wsid: prebuild.buildWorkspaceId,
+                        done: prebuild.state === "available",
+                    };
                 }
             }
 
