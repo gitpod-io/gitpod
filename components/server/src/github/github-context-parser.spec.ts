@@ -87,11 +87,12 @@ class TestGithubContextParser {
 
     static readonly BLO_BLA_ERROR_DATA = {
         host: "github.com",
-        lastUpdate: undefined,
+        lastUpdate: "",
         owner: "blo",
         repoName: "bla",
         userIsOwner: false,
         userScopes: ["user:email", "public_repo", "repo"],
+        errorMessage: "Could not resolve to a Repository with the name 'blo/bla'.",
     };
 
     protected getTestBranches(): BranchRef[] {
@@ -180,12 +181,12 @@ class TestGithubContextParser {
         const result = await this.parser.handle(
             {},
             this.user,
-            "https://github.com/eclipse-theia/theia/tree/master/LICENSE",
+            "https://github.com/eclipse-theia/theia/tree/master/LICENSE-EPL",
         );
         expect(result).to.deep.include({
             ref: "master",
             refType: "branch",
-            path: "LICENSE",
+            path: "LICENSE-EPL",
             isFile: true,
             repository: {
                 host: "github.com",

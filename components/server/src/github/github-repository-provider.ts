@@ -215,19 +215,20 @@ export class GithubRepositoryProvider implements RepositoryProvider {
               }`,
         );
 
-        let repos: RepositoryInfo[] = [];
-
+        const repos: RepositoryInfo[] = [];
         for (const type of ["contributedTo", "original", "forked"]) {
             const nodes = result.data.viewer[type]?.nodes;
             if (nodes) {
-                repos = nodes.map((n: any): RepositoryInfo => {
+                const reposInSection: RepositoryInfo[] = nodes.map((n: any) => {
                     return {
                         name: n.name,
                         url: n.url,
                     };
                 });
+                repos.push(...reposInSection);
             }
         }
+
         return repos;
     }
 

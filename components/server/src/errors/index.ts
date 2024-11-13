@@ -20,7 +20,7 @@ export namespace NotFoundError {
         repoName: string,
         errorMessage: string = "Repository not found.",
     ) {
-        const lastUpdate = (token && token.updateDate) || "";
+        const lastUpdate = (token && token.updateDate) ?? "";
         const userScopes = token ? [...token.scopes] : [];
 
         const userIsOwner = owner == user.name; // TODO: shouldn't this be a comparison with `identity.authName`?
