@@ -54,6 +54,9 @@
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService"
                             serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodIgnoredPortsForNotificationServiceImpl"
                             preload="true"/>
+
+        <externalSystemTaskNotificationListener
+                implementation="io.gitpod.jetbrains.remote.listeners.GradleSyncListener"/>
     </extensions>
 
     <actions>
