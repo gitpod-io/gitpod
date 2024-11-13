@@ -31,7 +31,7 @@ class TestBitbucketServerRepositoryProvider {
         verified: true,
         description: "",
         icon: "",
-        host: "bitbucket.gitpod-self-hosted.com",
+        host: "bitbucket.gitpod-dev.com",
         oauth: {
             callBackUrl: "",
             clientId: "not-used",
@@ -84,51 +84,72 @@ class TestBitbucketServerRepositoryProvider {
     }
 
     @test async test_getRepo_ok() {
-        const result = await this.service.getRepo(this.user, "JLDEC", "jldec-repo-march-30");
+        const result = await this.service.getRepo(this.user, "TES", "2k-repos-1076");
         expect(result).to.deep.include({
-            webUrl: "https://bitbucket.gitpod-self-hosted.com/projects/JLDEC/repos/jldec-repo-march-30",
-            cloneUrl: "https://bitbucket.gitpod-self-hosted.com/scm/jldec/jldec-repo-march-30.git",
+            webUrl: "https://bitbucket.gitpod-dev.com/projects/TES/repos/2k-repos-1076",
+            cloneUrl: "https://bitbucket.gitpod-dev.com/scm/tes/2k-repos-1076.git",
         });
     }
 
     @test async test_getBranch_ok() {
-        const result = await this.service.getBranch(this.user, "JLDEC", "jldec-repo-march-30", "main");
+        const result = await this.service.getBranch(this.user, "TES", "2k-repos-0", "frozen/master");
         expect(result).to.deep.include({
-            name: "main",
+            name: "frozen/master",
+            commit: {
+                author: "Admin",
+                authorAvatarUrl: "https://secure.gravatar.com/avatar/30cfcf1a839db721063f3c812558bf1e.jpg?s=64&d=mm",
+                authorDate: "2024-09-20T14:21:19.000Z",
+                commitMessage: "a test push",
+                sha: "fb6e71e9a26215a37fd940253e3f996224fbfb2a",
+            },
         });
     }
 
     @test async test_getBranches_ok() {
-        const result = await this.service.getBranches(this.user, "JLDEC", "jldec-repo-march-30");
+        const result = await this.service.getBranches(this.user, "TES", "2k-repos-0");
         expect(result.length).to.be.gte(1);
         expect(result[0]).to.deep.include({
-            name: "main",
+            name: "master",
         });
     }
 
     @test async test_getBranches_ok_2() {
-        try {
-            await this.service.getBranches(this.user, "mil", "gitpod-large-image");
-            expect.fail("this should not happen while 'mil/gitpod-large-image' has NO default branch configured.");
-        } catch (error) {
-            expect(error.message).to.include(
-                "refs/heads/master is set as the default branch, but this branch does not exist",
-            );
-        }
+        const response = await this.service.getBranches(this.user, "TES", "2k-repos-1076");
+        expect(response.length).to.eq(0);
+    }
+
+    @test async test_getCommitHistory_ok() {
+        const revision = "2781809c095c8cf53c60a524499a9a74649ab506";
+        const result = await this.service.getCommitHistory(this.user, "filip", "spring-petclinic", revision, 100);
+        // the unwritten rule is that the revision is not included in the result
+        // where needed, the caller can add it to the result artificially
+        // see for example getCommitHistoryForContext in src/prebuilds/incremental-workspace-service.ts
+        expect(result).to.not.deep.include(revision);
+        expect(result.length).to.equal(16);
     }
 
     @test async test_getCommitInfo_ok() {
-        const result = await this.service.getCommitInfo(this.user, "JLDEC", "jldec-repo-march-30", "test");
-        expect(result).to.deep.include({
-            author: "Alex Tugarev",
-        });
+        const result = await this.service.getCommitInfo(
+            this.user,
+            "TES",
+            "2k-repos-0",
+            "fb6e71e9a26215a37fd940253e3f996224fbfb2a",
+        );
+        expect(result).to.not.be.undefined;
+        expect(result?.author).to.equal("Admin");
+    }
+
+    @test async test_getCommitInfo_ok_2() {
+        const result = await this.service.getCommitInfo(this.user, "TES", "2k-repos-0", "frozen/master");
+        expect(result).to.not.be.undefined;
+        expect(result?.author).to.equal("Admin");
     }
 
     @test async test_getUserRepos_ok() {
         const result = await this.service.getUserRepos(this.user);
-        expect(result).to.contain({
-            url: "https://7990-alextugarev-bbs-6v0gqcpgvj7.ws-eu102.gitpod.io/scm/~alex.tugarev/user.repo.git",
-            name: "user.repo",
+        expect(result).to.deep.include({
+            url: "https://bitbucket.gitpod-dev.com/scm/tes/2k-repos-1076.git",
+            name: "2k-repos-1076",
         });
     }
 }
