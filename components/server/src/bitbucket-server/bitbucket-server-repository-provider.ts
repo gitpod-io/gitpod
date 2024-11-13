@@ -194,7 +194,7 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         });
 
         const commits = commitsResult.values || [];
-        return commits.map((c) => c.id);
+        return commits.map((c) => c.id).slice(1);
     }
 
     public async searchRepos(user: User, searchString: string, limit: number): Promise<RepositoryInfo[]> {
