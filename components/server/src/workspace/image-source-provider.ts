@@ -5,6 +5,8 @@
  */
 
 import { injectable, inject } from "inversify";
+import { createHash } from "crypto";
+import path from "path";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import {
@@ -18,7 +20,6 @@ import {
     User,
     AdditionalContentContext,
 } from "@gitpod/gitpod-protocol";
-import { createHash } from "crypto";
 import { ImageFileRevisionMissing, RevisionNotFoundError } from "../repohost";
 
 @injectable()
@@ -45,7 +46,12 @@ export class ImageSourceProvider {
                     throw new Error(`Cannot fetch workspace image source for host: ${repository.host}`);
                 }
                 const lastDockerFileSha = await hostContext.services.fileProvider
-                    .getLastChangeRevision(repository, imgcfg.externalSource.revision, user, imgcfg.file)
+                    .getLastChangeRevision(
+                        repository,
+                        imgcfg.externalSource.revision,
+                        user,
+                        path.normalize(imgcfg.file),
+                    )
                     .catch((e) => {
                         if (e instanceof RevisionNotFoundError) {
                             return ImageFileRevisionMissing;
@@ -76,7 +82,7 @@ export class ImageSourceProvider {
                     throw new Error(`Cannot fetch workspace image source for host: ${context.repository.host}`);
                 }
                 const lastDockerFileSha = await hostContext.services.fileProvider
-                    .getLastChangeRevision(context.repository, context.revision, user, imgcfg.file)
+                    .getLastChangeRevision(context.repository, context.revision, user, path.normalize(imgcfg.file))
                     .catch((e) => {
                         if (e instanceof RevisionNotFoundError) {
                             return ImageFileRevisionMissing;

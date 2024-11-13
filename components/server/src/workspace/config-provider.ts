@@ -260,7 +260,7 @@ export class ConfigProvider {
             }
             const repoHost = hostContext.services;
             const lastDockerFileSha = await repoHost.fileProvider
-                .getLastChangeRevision(repository, revisionOrTagOrBranch, user, dockerFilePath)
+                .getLastChangeRevision(repository, revisionOrTagOrBranch, user, path.normalize(dockerFilePath))
                 .catch((e) => {
                     if (e instanceof RevisionNotFoundError) {
                         return ImageFileRevisionMissing;
