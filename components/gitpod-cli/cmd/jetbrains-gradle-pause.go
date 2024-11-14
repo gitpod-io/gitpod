@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Note: This location is used on GradleSyncListener.kt
+// https://github.com/gitpod-io/gitpod/blob/5317b915e409968af72bd857aa69b3ebf10b6698/components/ide/jetbrains/backend-plugin/src/main/kotlin/io/gitpod/jetbrains/remote/listeners/GradleSyncListener.kt#L24
 const gradleSyncLockFile = "/tmp/gitpod-gradle.lock"
 
 var jetbrainsGradlePauseCmd = &cobra.Command{

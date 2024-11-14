@@ -21,6 +21,8 @@ class GradleSyncListener : ExternalSystemTaskNotificationListener {
         if (id.projectSystemId.toString() != "GRADLE" || id.type != ExternalSystemTaskType.RESOLVE_PROJECT) {
             return
         }
+        // Note: This file is written by the GP CLI
+        // https://github.com/gitpod-io/gitpod/blob/5317b915e409968af72bd857aa69b3ebf10b6698/components/gitpod-cli/cmd/jetbrains-gradle-pause.go#L1
         val lockFile = File("/tmp/gitpod-gradle.lock")
         if (!lockFile.exists()) {
             return
