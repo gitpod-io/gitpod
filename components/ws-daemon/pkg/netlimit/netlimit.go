@@ -6,6 +6,7 @@ package netlimit
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -130,7 +131,7 @@ func (c *ConnLimiter) limitWorkspace(ctx context.Context, ws *dispatch.Workspace
 
 	pid, err := disp.Runtime.ContainerPID(ctx, ws.ContainerID)
 	if err != nil {
-		if dispatch.IsCancelled(ctx) {
+		if errors.Is(err, context.Canceled) {
 			return nil
 		}
 		return fmt.Errorf("could not get pid for container %s of workspace %s", ws.ContainerID, ws.WorkspaceID)
@@ -144,7 +145,7 @@ func (c *ConnLimiter) limitWorkspace(ctx context.Context, ws *dispatch.Workspace
 		}
 	}, nsinsider.EnterMountNS(false), nsinsider.EnterNetNS(true))
 	if err != nil {
-		if dispatch.IsCancelled(ctx) {
+		if errors.Is(context.Cause(ctx), context.Canceled) {
 			return nil
 		}
 		log.WithError(err).WithFields(ws.OWI()).Error("cannot enable connection limiting")

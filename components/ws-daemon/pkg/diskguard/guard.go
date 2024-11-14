@@ -71,6 +71,7 @@ type Guard struct {
 // Start starts the disk guard
 func (g *Guard) Start() {
 	t := time.NewTicker(g.Interval)
+	defer t.Stop()
 	for {
 		bvail, err := getAvailableBytes(g.Path)
 		if err != nil {

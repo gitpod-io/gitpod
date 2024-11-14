@@ -176,6 +176,7 @@ func hookWipingTeardown() session.WorkspaceLivecycleHook {
 
 		if !ws.DoWipe {
 			// this is the "default" case for 99% of all workspaces
+			// TODO(gpl): We should probably make this the default for all workspaces - but not with this PR
 			return nil
 		}
 

@@ -110,6 +110,7 @@ func Nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 	_, _ = io.Copy(os.Stderr, &cmdErr)
 	log.FromBuffer(&cmdOut, log.WithFields(log.OWI("", "", instanceID)))
 	if err != nil {
+		// writing stderr to the error so clients can pattern match on specific errors
 		return fmt.Errorf("run nsinsider (%v) failed: %q \\ %q\n%v",
 			cmd.Args,
 			cmdOut.String(),

@@ -224,29 +224,23 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionPodRejected(fmt.Sprintf("Pod reached maximum recreations %d, failing", workspace.Status.PodRecreated), metav1.ConditionFalse))
 				return ctrl.Result{Requeue: true}, nil // requeue so we end up in the "Stopped" case below
 			}
-			log.WithValues("PodStarts", workspace.Status.PodStarts, "PodRecreated", workspace.Status.PodRecreated, "Phase", workspace.Status.Phase).Info("trigger pod recreation")
+			log = log.WithValues("PodStarts", workspace.Status.PodStarts, "PodRecreated", workspace.Status.PodRecreated, "Phase", workspace.Status.Phase)
 
 			// Make sure to wait for "recreationTimeout" before creating the pod again
 			if workspace.Status.PodDeletionTime == nil {
-				log.Info("want to wait for pod recreation timeout, but podDeletionTime not set (yet)")
+				log.Info("pod recreation: waiting for pod deletion time to be populated...")
 				return ctrl.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
 			}
 
 			recreationTimeout := r.podRecreationTimeout()
 			podDeletionTime := workspace.Status.PodDeletionTime.Time
 			waitTime := time.Until(podDeletionTime.Add(recreationTimeout))
+			log = log.WithValues("waitTime", waitTime.String(), "recreationTimeout", recreationTimeout.String(), "podDeletionTime", podDeletionTime.String())
 			if waitTime > 0 {
-				log.WithValues("waitTime", waitTime).Info("waiting for pod recreation timeout")
+				log.Info("pod recreation: waiting for timeout...")
 				return ctrl.Result{Requeue: true, RequeueAfter: waitTime}, nil
 			}
-			log.WithValues("waitedTime", waitTime.Abs().String()).Info("waited for pod recreation timeout")
-
-			// Must persist the modification pod starts, and ensure we retry on conflict.
-			// If we fail to persist this value, it's possible that the Pod gets recreated endlessly
-			// when the workspace stops, due to PodStarts still being 0 when the original Pod
-			// disappears.
-			// Use a Patch instead of an Update, to prevent conflicts.
-			patch := client.MergeFrom(workspace.DeepCopy())
+			log.Info("trigger pod recreation")
 
 			// Reset status
 			sc := workspace.Status.DeepCopy()
@@ -257,8 +251,8 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			workspace.Status.PodRecreated = sc.PodRecreated + 1
 			workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionPodRejected(fmt.Sprintf("Recreating pod... (%d retry)", workspace.Status.PodRecreated), metav1.ConditionFalse))
 
-			if err := r.Status().Patch(ctx, workspace, patch); err != nil {
-				log.Error(err, "Failed to patch workspace status-reset")
+			if err := r.Status().Update(ctx, workspace); err != nil {
+				log.Error(err, "Failed to update workspace status-reset")
 				return ctrl.Result{}, err
 			}
 

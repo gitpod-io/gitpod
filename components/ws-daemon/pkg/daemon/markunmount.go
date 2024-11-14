@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -127,7 +128,7 @@ func (c *MarkUnmountFallback) WorkspaceUpdated(ctx context.Context, ws *dispatch
 		}
 
 		err := unmountMark(ws.InstanceID)
-		if err != nil && !dispatch.IsCancelled(ctx) {
+		if err != nil && errors.Is(err, context.Canceled) {
 			log.WithFields(ws.OWI()).WithError(err).Error("cannot unmount mark mount from within ws-daemon")
 			c.activityCounter.WithLabelValues("false").Inc()
 		} else {

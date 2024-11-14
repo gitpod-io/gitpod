@@ -320,9 +320,6 @@ func (wso *DefaultWorkspaceOperations) WipeWorkspace(ctx context.Context, instan
 	wso.dispatch.DisposeWorkspace(ctx, instanceID)
 
 	// remove workspace daemon directory in the node
-	log.Debug("DELETING WORKSPACE DAEMON DIR")
-	defer log.Debug("DELETING WORKSPACE DAEMON DIR DONE")
-
 	removedChan := make(chan struct{}, 1)
 	go func() {
 		defer close(removedChan)
@@ -332,9 +329,11 @@ func (wso *DefaultWorkspaceOperations) WipeWorkspace(ctx context.Context, instan
 		}
 	}()
 
-	timeoutT := time.NewTicker(10 * time.Second)
+	// We never want the "RemoveAll" to block the workspace from being delete, so we'll resort to make this a best-effort approach, and time out after 10s.
+	timeout := time.NewTicker(10 * time.Second)
+	defer timeout.Stop()
 	select {
-	case <-timeoutT.C:
+	case <-timeout.C:
 	case <-removedChan:
 		log.Debug("successfully removed workspace daemon directory")
 	}

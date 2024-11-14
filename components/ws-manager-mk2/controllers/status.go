@@ -72,7 +72,6 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
 
-		log.WithValues("podDeletionTime", workspace.Status.PodDeletionTime).Info("PodDeletionTimeValue")
 		if workspace.Status.Phase == workspacev1.WorkspacePhaseStopped && workspace.Status.PodDeletionTime == nil {
 			// Set the timestamp when we first saw the pod as deleted.
 			// This is used for the delaying eventual pod restarts

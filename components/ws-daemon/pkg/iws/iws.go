@@ -961,9 +961,6 @@ func (wbs *InWorkspaceServiceServer) Teardown(ctx context.Context, req *api.Tear
 	owi := wbs.Session.OWI()
 	log := log.WithFields(owi)
 
-	log.Debug("TEARDOWN")
-	defer log.Debug("TEARDOWN DONE")
-
 	var (
 		success = true
 		err     error
@@ -981,8 +978,9 @@ func (wbs *InWorkspaceServiceServer) Teardown(ctx context.Context, req *api.Tear
 // WipingTeardown tears down every state we created using IWS
 func (wbs *InWorkspaceServiceServer) WipingTeardown(ctx context.Context, req *api.WipingTeardownRequest) (*api.WipingTeardownResponse, error) {
 	log := log.WithFields(wbs.Session.OWI())
-	log.WithField("doWipe", req.DoWipe).Debug("WIPING TEARDOWN")
-	defer log.WithField("doWipe", req.DoWipe).Debug("WIPING TEARDOWN DONE")
+	log.WithField("doWipe", req.DoWipe).Debug("iws.WipingTeardown")
+	defer log.WithField("doWipe", req.DoWipe).Debug("iws.WipingTeardown done")
+
 	if !req.DoWipe {
 		return &api.WipingTeardownResponse{Success: true}, nil
 	}

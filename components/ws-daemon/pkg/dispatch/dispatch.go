@@ -105,18 +105,14 @@ func GetFromContext(ctx context.Context) *Dispatch {
 	return ctx.Value(contextDispatch).(*Dispatch)
 }
 
-type dispacthHandlerWaitGroupKey struct{}
+type dispatchHandlerWaitGroupKey struct{}
 
 var (
-	contextDispatchWaitGroup = dispacthHandlerWaitGroupKey{}
+	contextDispatchWaitGroup = dispatchHandlerWaitGroupKey{}
 )
 
 func GetDispatchWaitGroup(ctx context.Context) *sync.WaitGroup {
 	return ctx.Value(contextDispatchWaitGroup).(*sync.WaitGroup)
-}
-
-func IsCancelled(ctx context.Context) bool {
-	return context.Cause(ctx) != nil
 }
 
 // Start starts the dispatch
@@ -195,8 +191,11 @@ func (d *Dispatch) DisposeWorkspace(ctx context.Context, instanceID string) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	log.WithField("instanceID", instanceID).Debug("WS DISPOSE")
-	defer log.WithField("instanceID", instanceID).Debug("WS DISPOSE DONE")
+	log.WithField("instanceID", instanceID).Debug("disposing workspace")
+	defer log.WithField("instanceID", instanceID).Debug("disposing workspace done")
+
+	// Make the runtome drop all state it might still have about this workspace
+	d.Runtime.DisposeContainer(ctx, instanceID)
 
 	// If we have that instanceID present, cancel it's context
 	state, present := d.ctxs[instanceID]
@@ -209,9 +208,6 @@ func (d *Dispatch) DisposeWorkspace(ctx context.Context, instanceID string) {
 
 	// ...and wait for all long-running/async processes/go-routines to finish
 	state.HandlerWaitGroup.Wait()
-
-	// Make the runtome drop all state it might still have about this workspace
-	d.Runtime.DisposeContainer(ctx, instanceID)
 
 	// Mark as disposed, so we do not handle any further updates for it (except deletion)
 	d.disposedCtxs[disposedKey(instanceID, state.Workspace.Pod)] = struct{}{}
@@ -237,10 +233,9 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 	}
 	disposedKey := disposedKey(workspaceInstanceID, newPod)
 	if _, alreadyDisposed := d.disposedCtxs[disposedKey]; alreadyDisposed {
-		log.WithField("disposedKey", disposedKey).Debug("DROPPING POD UPDATE FOR DISPOSED POD")
+		log.WithField("disposedKey", disposedKey).Debug("dropping pod update for disposed pod")
 		return
 	}
-	log.WithField("instanceID", workspaceInstanceID).Debugf("POD UPDATE: %s", workspaceInstanceID)
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -337,7 +332,6 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 			}
 		}()
 	}
-	log.WithField("instanceID", workspaceInstanceID).Debugf("POD UPDATE DONE: %s", workspaceInstanceID)
 }
 
 func (d *Dispatch) handlePodDeleted(pod *corev1.Pod) {
@@ -345,7 +339,8 @@ func (d *Dispatch) handlePodDeleted(pod *corev1.Pod) {
 	if !ok {
 		return
 	}
-	log.WithField("instanceID", instanceID).Debugf("POD DELETED: %s", instanceID)
+	log.WithField("instanceID", instanceID).Debug("pod deleted")
+	defer log.WithField("instanceID", instanceID).Debug("pod deleted done")
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -361,5 +356,4 @@ func (d *Dispatch) handlePodDeleted(pod *corev1.Pod) {
 
 	delete(d.ctxs, instanceID)
 
-	log.WithField("instanceID", instanceID).Debugf("POD DELETED DONE: %s", instanceID)
 }

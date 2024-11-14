@@ -437,8 +437,7 @@ func (s *Containerd) WaitForContainerStop(ctx context.Context, workspaceInstance
 func (s *Containerd) DisposeContainer(ctx context.Context, workspaceInstanceID string) {
 	log := log.WithContext(ctx)
 
-	log.Debug("CONTAINERD: DISPOSING CONTAINER")
-	defer log.Debug("CONTAINERD: DISPOSING CONTAINER DONE")
+	log.Debug("containerd: disposing container")
 
 	s.cond.L.Lock()
 	defer s.cond.L.Unlock()
@@ -446,8 +445,10 @@ func (s *Containerd) DisposeContainer(ctx context.Context, workspaceInstanceID s
 	info, ok := s.wsiIdx[workspaceInstanceID]
 	if !ok {
 		// seems we are already done here
+		log.Debug("containerd: disposing container skipped")
 		return
 	}
+	defer log.Debug("containerd: disposing container done")
 
 	if info.ID != "" {
 		err := s.Client.ContainerService().Delete(ctx, info.ID)

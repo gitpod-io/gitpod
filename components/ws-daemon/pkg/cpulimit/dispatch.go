@@ -181,7 +181,7 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 
 	cgroupPath, err := disp.Runtime.ContainerCGroupPath(ctx, ws.ContainerID)
 	if err != nil {
-		if dispatch.IsCancelled(ctx) {
+		if errors.Is(err, context.Canceled) {
 			return nil
 		}
 		return xerrors.Errorf("cannot start governer: %w", err)
