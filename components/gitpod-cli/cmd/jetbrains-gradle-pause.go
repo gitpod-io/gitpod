@@ -19,16 +19,16 @@ var jetbrainsGradlePauseCmd = &cobra.Command{
 
 This command is typically used to prevent concurrent Gradle syncs between:
 - Manual gradle initialization in Gitpod init tasks
-- JetBrains Gateway/IDEA's automatic Gradle sync on project open
+- JetBrains IDEs' (IDEA) automatic Gradle sync on project open
 
 Typical usage in your .gitpod.yml:
 
 tasks:
   - init: |
-      ide jetbrains gradle pause          # Prevent IDEA's gradle sync
+      gp jetbrains gradle pause          # Prevent JetBrains' gradle sync
 	  ...
       ./gradlew <init_service>            # Run your initialization tasks
-      ide jetbrains gradle resume         # Enable
+      gp jetbrains gradle resume         # Enable
     command: ./gradlew <dev_service>
 
 If you have two init tasks want to pause Gradle Sync:
@@ -36,10 +36,10 @@ If you have two init tasks want to pause Gradle Sync:
 tasks:
   - name: Task 1
     init: |
-      ide jetbrains gradle pause          # Prevent IDEA's gradle sync
+      gp jetbrains gradle pause          # Prevent JetBrains' gradle sync
       ./gradlew <init_service>
       gp sync-await gradle-init-1
-      ide jetbrains gradle resume         # Enable
+      gp jetbrains gradle resume         # Enable
   - name: Task 2
     init: |
       ./gradlew <init_service>
