@@ -54,7 +54,7 @@ export namespace DevData {
     export function createGitHubTestToken(): Token {
         if (!process.env.GITPOD_TEST_TOKEN_GITHUB) {
             console.error(
-                `GITPOD_TEST_TOKEN_GITHUB env var is not set\n\n\t export GITPOD_TEST_TOKEN_GITHUB='{"username": "gitpod-test", "token": $AZURE_TOKEN}'`,
+                `GITPOD_TEST_TOKEN_GITHUB env var is not set\n\n\t export GITPOD_TEST_TOKEN_GITHUB='{"username": "gitpod-test", "value": $GITHUB_TOKEN}'`,
             );
         }
         return {
