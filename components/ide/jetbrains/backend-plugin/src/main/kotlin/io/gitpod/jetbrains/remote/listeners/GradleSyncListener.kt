@@ -29,7 +29,7 @@ class GradleSyncListener : ExternalSystemTaskNotificationListener {
         val notification = Notification(
             "gitpod",
             "Gitpod: Pause gradle sync",
-            "Pausing Gradle Sync, execute <code style='color: orange;'>gp jetbrains gradle resume</code> to unblock all builtin Gradle Sync <br><br>Current Task ID: ${id.id}",
+            "Pausing Gradle Sync, execute <code style='color: orange;'>gp jetbrains gradle resume</code> to unblock all builtin Gradle Sync",
             NotificationType.INFORMATION
         )
         var isCancelled = false
