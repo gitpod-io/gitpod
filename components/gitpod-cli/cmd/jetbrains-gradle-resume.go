@@ -12,7 +12,7 @@ import (
 
 var jetbrainsGradleResumeCmd = &cobra.Command{
 	Use:   "resume",
-	Short: "Resume paused Gradle Sync in JetBrains IDEs",
+	Short: "Resume paused Gradle Sync",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := os.Remove(gradleSyncLockFile)
 		if err != nil && os.IsNotExist(err) {
