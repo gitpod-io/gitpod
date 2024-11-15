@@ -586,7 +586,7 @@ describe("ContextService", async () => {
             forceDefaultConfig: false,
         });
 
-        // trigger and "await" prebuilds for both commits in crazy order
+        // trigger and "await" prebuilds for all commits in crazy order
         const prebuildManager = container.get(PrebuildManager);
         const workspaceDb: WorkspaceDB = container.get(WorkspaceDB);
 
@@ -614,7 +614,6 @@ describe("ContextService", async () => {
         const prebuild1 = await runPrebuild(commit1, ctx1.context as CommitContext, "available");
         await runPrebuild(commit2, ctx2.context as CommitContext, "available");
 
-        // should point to commit1, as
         ctx1 = await svc.parseContext(owner, `https://github.com/gitpod-io/empty/commit/${commit1.sha}`, {
             projectId: project.id,
             organizationId: org.id,
