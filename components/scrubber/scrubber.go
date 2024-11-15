@@ -544,6 +544,9 @@ func (s *structScrubber) MapElem(m reflect.Value, k reflect.Value, v reflect.Val
 		v = v.Elem()
 		kind = v.Kind()
 	}
+	if k.Kind() == reflect.Interface {
+		k = k.Elem()
+	}
 	if kind == reflect.String {
 		m.SetMapIndex(k, reflect.ValueOf(s.Parent.KeyValue(k.String(), v.String())))
 	}
