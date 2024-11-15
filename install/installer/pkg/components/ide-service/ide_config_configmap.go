@@ -58,6 +58,7 @@ func GenerateIDEConfigmap(ctx *common.RenderContext) (*ide_config.IDEConfig, err
 		CodeWebExtensionImage          string
 
 		JetBrainsPluginImage            string
+		JetBrainsPluginImagePrevious    string
 		JetBrainsPluginLatestImage      string
 		JetBrainsPluginRiderImage       string
 		JetBrainsPluginLatestRiderImage string
@@ -66,6 +67,9 @@ func GenerateIDEConfigmap(ctx *common.RenderContext) (*ide_config.IDEConfig, err
 
 		WorkspaceVersions versions.Components
 	}
+
+	// {{.Repository}}/ide/jb-backend-plugin:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6
+	previousStableJetBrainsBackendPluginVersion := "commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6"
 
 	configTmpl := ConfigTemplate{
 		Repository:  ctx.Config.Repository,
@@ -76,6 +80,7 @@ func GenerateIDEConfigmap(ctx *common.RenderContext) (*ide_config.IDEConfig, err
 		CodeWebExtensionImage:          ctx.ImageName(ctx.Config.Repository, ide.CodeWebExtensionImage, ctx.VersionManifest.Components.Workspace.CodeWebExtensionImage.Version),
 
 		JetBrainsPluginImage:            ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginImage.Version),
+		JetBrainsPluginImagePrevious:    ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, previousStableJetBrainsBackendPluginVersion),
 		JetBrainsPluginLatestImage:      ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage.Version),
 		JetBrainsPluginRiderImage:       ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginRiderImage.Version),
 		JetBrainsPluginLatestRiderImage: ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestRiderImage.Version),
