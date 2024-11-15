@@ -20,6 +20,7 @@ import { PrebuildWithWorkspace, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ImageSourceProvider } from "../workspace/image-source-provider";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const MAX_HISTORY_DEPTH = 100;
 
@@ -81,21 +82,35 @@ export class IncrementalWorkspaceService {
             return;
         }
 
-        const imageSourcePromise = this.imageSourceProvider.getImageSource({}, user, context, config);
-
-        // Note: This query returns only not-garbage-collected prebuilds in order to reduce cardinality
-        // (e.g., at the time of writing, the Gitpod repository has 16K+ prebuilds, but only ~300 not-garbage-collected)
-        const recentPrebuilds = await this.workspaceDB.findPrebuildsWithWorkspace(projectId);
-        const imageSource = await imageSourcePromise;
+        const [recentPrebuilds, imageSource] = await Promise.allSettled([
+            // Note: This query returns only not-garbage-collected prebuilds in order to reduce cardinality
+            // (e.g., at the time of writing, the Gitpod repository has 16K+ prebuilds, but only ~300 not-garbage-collected)
+            this.workspaceDB.findPrebuildsWithWorkspace(projectId),
+            this.imageSourceProvider.getImageSource({}, user, context, config),
+        ]);
+        if (imageSource.status === "rejected") {
+            log.error("Image source promise was rejected", { reason: imageSource.reason, userId: user.id });
+            throw new ApplicationError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                "Something went wrong when looking up prebuilds",
+            );
+        }
+        if (recentPrebuilds.status === "rejected") {
+            log.error("Prebuild lookup promise was rejected", { reason: recentPrebuilds.reason, userId: user.id });
+            throw new ApplicationError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                "Something went wrong when looking up prebuilds",
+            );
+        }
 
         // traverse prebuilds by commit history instead of their creationTime, so that we don't match prebuilds created for older revisions but triggered later
         const candidates: { candidate: PrebuildWithWorkspace; index: number }[] = [];
-        for (const recentPrebuild of recentPrebuilds) {
+        for (const recentPrebuild of recentPrebuilds.value) {
             const { prebuild, workspace } = recentPrebuild;
             const { match, index } = this.isMatchForIncrementalBuild(
                 history,
                 config,
-                imageSource,
+                imageSource.value,
                 prebuild,
                 workspace,
                 includeUnfinishedPrebuilds,
