@@ -21,6 +21,7 @@ import { Config } from "../config";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ImageSourceProvider } from "../workspace/image-source-provider";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 const MAX_HISTORY_DEPTH = 100;
 
@@ -116,10 +117,12 @@ export class IncrementalWorkspaceService {
                 includeUnfinishedPrebuilds,
             );
             if (match === "exact") {
-                console.log("Found base for incremental build", {
-                    prebuild,
-                    workspace,
-                    exactMatch: true,
+                log.info("Found base for incremental build", {
+                    prebuildId: prebuild.id,
+                    match: new TrustedValue({
+                        exact: true,
+                        distanceFromContext: 0,
+                    }),
                 });
                 return prebuild;
             }
@@ -134,12 +137,17 @@ export class IncrementalWorkspaceService {
 
         // Sort by index ASC
         candidates.sort((a, b) => a.index - b.index);
-        const { prebuild, workspace } = candidates[0].candidate;
+        const {
+            candidate: { prebuild },
+            index,
+        } = candidates[0];
 
-        console.log("Found base for incremental build", {
-            prebuild,
-            workspace,
-            exactMatch: false,
+        log.info("Found base for incremental build", {
+            prebuildId: prebuild.id,
+            match: {
+                exact: true,
+                distanceFromContext: index,
+            },
         });
         return prebuild;
     }
@@ -185,11 +193,8 @@ export class IncrementalWorkspaceService {
         const candidateCtx = candidateWorkspace.context;
 
         // check for overlapping commit history
-        // TODO(gpl) Isn't "candidateCtx.revision" identical to "candidatePrebuild.commit"? If yes, we could do .indexOf once...
-        if (candidateCtx.revision !== candidatePrebuild.commit) {
-            log.warn("Prebuild matching: commits mismatch!", { candidateCtx, candidatePrebuild });
-        }
-        if (!history.commitHistory.some((sha) => sha === candidateCtx.revision)) {
+        const commitIndexInHistory = history.commitHistory.indexOf(candidateCtx.revision);
+        if (commitIndexInHistory === -1) {
             return { match: "none" };
         }
 
@@ -223,12 +228,11 @@ export class IncrementalWorkspaceService {
             return { match: "none" };
         }
 
-        const index = history.commitHistory.indexOf(candidatePrebuild.commit);
-        if (index === 0) {
-            return { match: "exact", index };
+        if (commitIndexInHistory === 0) {
+            return { match: "exact", index: commitIndexInHistory };
         }
 
-        return { match: "incremental", index };
+        return { match: "incremental", index: commitIndexInHistory };
     }
 
     /**
