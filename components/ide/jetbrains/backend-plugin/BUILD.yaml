@@ -151,6 +151,7 @@ packages:
       - NO_VERIFY_JB_PLUGIN=true
     config:
       commands:
+        - ["rm", "-rf", "src/main/kotlin/io/gitpod/jetbrains/remote/GitpodMetricControlProvider.kt"]
         - ["mv", "build.gradle-stable.kts", "build.gradle.kts"]
         - ["./build.sh", "${__git_commit}"]
   - name: plugin-latest-rider
@@ -182,6 +183,7 @@ packages:
       - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
+        - ["rm", "-rf", "src/main/kotlin/io/gitpod/jetbrains/remote/GitpodMetricControlProvider.kt"]
         # TODO(hw): remove after 2024.2.* is stable
         - ["mv", "build.gradle-latest.kts", "build.gradle.kts"]
         - - "bash"
