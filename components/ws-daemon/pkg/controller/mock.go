@@ -127,3 +127,17 @@ func (mr *MockWorkspaceOperationsMockRecorder) SnapshotIDs(arg0, arg1 interface{
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SnapshotIDs", reflect.TypeOf((*MockWorkspaceOperations)(nil).SnapshotIDs), arg0, arg1)
 }
+
+// WipeWorkspace mocks base method.
+func (m *MockWorkspaceOperations) WipeWorkspace(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WipeWorkspace", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WipeWorkspace indicates an expected call of WipeWorkspace.
+func (mr *MockWorkspaceOperationsMockRecorder) WipeWorkspace(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WipeWorkspace", reflect.TypeOf((*MockWorkspaceOperations)(nil).WipeWorkspace), arg0, arg1)
+}

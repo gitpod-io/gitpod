@@ -95,11 +95,12 @@ func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod, cgroupMount
 		}
 
 		iws := &InWorkspaceServiceServer{
-			Uidmapper:        uidmapper,
-			Session:          ws,
-			FSShift:          fsshift,
-			CGroupMountPoint: cgroupMountPoint,
-			WorkspaceCIDR:    workspaceCIDR,
+			Uidmapper:            uidmapper,
+			Session:              ws,
+			FSShift:              fsshift,
+			CGroupMountPoint:     cgroupMountPoint,
+			WorkspaceCIDR:        workspaceCIDR,
+			prepareForUserNSCond: sync.NewCond(&sync.Mutex{}),
 		}
 		err = iws.Start()
 		if err != nil {
@@ -146,6 +147,10 @@ type InWorkspaceServiceServer struct {
 	srv  *grpc.Server
 	sckt io.Closer
 
+	// prepareForUserNSCond allows to synchronize around the "PrepareForUserNS" method
+	// !!! ONLY USE FOR WipingTeardown() !!!
+	prepareForUserNSCond *sync.Cond
+
 	api.UnimplementedInWorkspaceServiceServer
 }
 
@@ -188,6 +193,9 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 		"/iws.InWorkspaceService/Teardown": ratelimit{
 			UseOnce: true,
 		},
+		"/iws.InWorkspaceService/WipingTeardown": ratelimit{
+			Limiter: rate.NewLimiter(rate.Every(2500*time.Millisecond), 4),
+		},
 		"/iws.InWorkspaceService/WorkspaceInfo": ratelimit{
 			Limiter: rate.NewLimiter(rate.Every(1500*time.Millisecond), 4),
 		},
@@ -212,6 +220,9 @@ func (wbs *InWorkspaceServiceServer) Stop() {
 
 // PrepareForUserNS mounts the workspace's shiftfs mark
 func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *api.PrepareForUserNSRequest) (*api.PrepareForUserNSResponse, error) {
+	wbs.prepareForUserNSCond.L.Lock()
+	defer wbs.prepareForUserNSCond.L.Unlock()
+
 	rt := wbs.Uidmapper.Runtime
 	if rt == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
@@ -945,9 +956,10 @@ func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *ap
 	return &api.EvacuateCGroupResponse{}, nil
 }
 
-// Teardown triggers the final liev backup and possibly shiftfs mark unmount
+// Teardown triggers the final live backup and possibly shiftfs mark unmount
 func (wbs *InWorkspaceServiceServer) Teardown(ctx context.Context, req *api.TeardownRequest) (*api.TeardownResponse, error) {
 	owi := wbs.Session.OWI()
+	log := log.WithFields(owi)
 
 	var (
 		success = true
@@ -956,11 +968,36 @@ func (wbs *InWorkspaceServiceServer) Teardown(ctx context.Context, req *api.Tear
 
 	err = wbs.unPrepareForUserNS()
 	if err != nil {
-		log.WithError(err).WithFields(owi).Error("mark FS unmount failed")
+		log.WithError(err).Error("mark FS unmount failed")
 		success = false
 	}
 
 	return &api.TeardownResponse{Success: success}, nil
+}
+
+// WipingTeardown tears down every state we created using IWS
+func (wbs *InWorkspaceServiceServer) WipingTeardown(ctx context.Context, req *api.WipingTeardownRequest) (*api.WipingTeardownResponse, error) {
+	log := log.WithFields(wbs.Session.OWI())
+	log.WithField("doWipe", req.DoWipe).Debug("iws.WipingTeardown")
+	defer log.WithField("doWipe", req.DoWipe).Debug("iws.WipingTeardown done")
+
+	if !req.DoWipe {
+		return &api.WipingTeardownResponse{Success: true}, nil
+	}
+
+	wbs.prepareForUserNSCond.L.Lock()
+	defer wbs.prepareForUserNSCond.L.Unlock()
+
+	// Sometimes the Teardown() call in ring0 is not executed successfully, and we leave the mark-mount dangling
+	// Here we just try to unmount it (again) best-effort-style. Testing shows it works reliably!
+	success := true
+	err := wbs.unPrepareForUserNS()
+	if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
+		log.WithError(err).Warnf("error trying to unmount mark")
+		success = false
+	}
+
+	return &api.WipingTeardownResponse{Success: success}, nil
 }
 
 func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {

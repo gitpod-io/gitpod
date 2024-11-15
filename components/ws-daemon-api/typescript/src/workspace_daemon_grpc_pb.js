@@ -186,6 +186,28 @@ function deserialize_iws_UmountProcResponse(buffer_arg) {
   return workspace_daemon_pb.UmountProcResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_iws_WipingTeardownRequest(arg) {
+  if (!(arg instanceof workspace_daemon_pb.WipingTeardownRequest)) {
+    throw new Error('Expected argument of type iws.WipingTeardownRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_WipingTeardownRequest(buffer_arg) {
+  return workspace_daemon_pb.WipingTeardownRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_WipingTeardownResponse(arg) {
+  if (!(arg instanceof workspace_daemon_pb.WipingTeardownResponse)) {
+    throw new Error('Expected argument of type iws.WipingTeardownResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_WipingTeardownResponse(buffer_arg) {
+  return workspace_daemon_pb.WipingTeardownResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_iws_WorkspaceInfoRequest(arg) {
   if (!(arg instanceof workspace_daemon_pb.WorkspaceInfoRequest)) {
     throw new Error('Expected argument of type iws.WorkspaceInfoRequest');
@@ -332,7 +354,7 @@ umountSysfs: {
     responseSerialize: serialize_iws_UmountProcResponse,
     responseDeserialize: deserialize_iws_UmountProcResponse,
   },
-  // UmountSysfs unmounts a masked sysfs from the container's rootfs.
+  // MountNfs mounts a nfs share into the container's rootfs.
 // The PID must be in the PID namespace of the workspace container.
 // The path is relative to the mount namespace of the PID.
 mountNfs: {
@@ -346,7 +368,7 @@ mountNfs: {
     responseSerialize: serialize_iws_MountNfsResponse,
     responseDeserialize: deserialize_iws_MountNfsResponse,
   },
-  // UmountSysfs unmounts a masked sysfs from the container's rootfs.
+  // UmountNfs unmounts a nfs share from the container's rootfs.
 // The PID must be in the PID namespace of the workspace container.
 // The path is relative to the mount namespace of the PID.
 umountNfs: {
@@ -372,6 +394,18 @@ teardown: {
     requestDeserialize: deserialize_iws_TeardownRequest,
     responseSerialize: serialize_iws_TeardownResponse,
     responseDeserialize: deserialize_iws_TeardownResponse,
+  },
+  // WipingTeardown undoes everything PrepareForUserNS does, especially unmounts shiftfs mounts
+wipingTeardown: {
+    path: '/iws.InWorkspaceService/WipingTeardown',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.WipingTeardownRequest,
+    responseType: workspace_daemon_pb.WipingTeardownResponse,
+    requestSerialize: serialize_iws_WipingTeardownRequest,
+    requestDeserialize: deserialize_iws_WipingTeardownRequest,
+    responseSerialize: serialize_iws_WipingTeardownResponse,
+    responseDeserialize: deserialize_iws_WipingTeardownResponse,
   },
   // Set up a pair of veths that interconnect the specified PID and the workspace container's network namespace.
 setupPairVeths: {

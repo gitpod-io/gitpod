@@ -9,17 +9,21 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"path/filepath"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
+	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // WorkspaceLifecycleHooks configures the lifecycle hooks for all workspaces
@@ -44,6 +48,7 @@ func WorkspaceLifecycleHooks(cfg Config, workspaceCIDR string, uidmapper *iws.Ui
 			hookInstallQuota(xfs, true),
 		},
 		session.WorkspaceDisposed: {
+			hookWipingTeardown(), // if ws.DoWipe == true: make sure we 100% tear down the workspace
 			iws.StopServingWorkspace,
 			hookRemoveQuota(xfs),
 		},
@@ -162,5 +167,35 @@ func hookRemoveQuota(xfs *quota.XFS) session.WorkspaceLivecycleHook {
 		}
 
 		return xfs.RemoveQuota(ws.XFSProjectID)
+	}
+}
+
+func hookWipingTeardown() session.WorkspaceLivecycleHook {
+	return func(ctx context.Context, ws *session.Workspace) error {
+		log := log.WithFields(ws.OWI())
+
+		if !ws.DoWipe {
+			// this is the "default" case for 99% of all workspaces
+			// TODO(gpl): We should probably make this the default for all workspaces - but not with this PR
+			return nil
+		}
+
+		socketFN := filepath.Join(ws.ServiceLocDaemon, "daemon.sock")
+		conn, err := grpc.DialContext(ctx, "unix://"+socketFN, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.WithError(err).Error("error connecting to IWS for WipingTeardown")
+			return nil
+		}
+		client := daemonapi.NewInWorkspaceServiceClient(conn)
+
+		res, err := client.WipingTeardown(ctx, &daemonapi.WipingTeardownRequest{
+			DoWipe: ws.DoWipe,
+		})
+		if err != nil {
+			return err
+		}
+		log.WithField("success", res.Success).Debug("wiping teardown done")
+
+		return nil
 	}
 }

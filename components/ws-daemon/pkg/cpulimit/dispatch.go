@@ -179,8 +179,11 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 		return xerrors.Errorf("no dispatch available")
 	}
 
-	cgroupPath, err := disp.Runtime.ContainerCGroupPath(context.Background(), ws.ContainerID)
+	cgroupPath, err := disp.Runtime.ContainerCGroupPath(ctx, ws.ContainerID)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return nil
+		}
 		return xerrors.Errorf("cannot start governer: %w", err)
 	}
 
@@ -194,7 +197,11 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 		OWI:         ws.OWI(),
 		Annotations: ws.Pod.Annotations,
 	}
+
+	dispatch.GetDispatchWaitGroup(ctx).Add(1)
 	go func() {
+		defer dispatch.GetDispatchWaitGroup(ctx).Done()
+
 		<-ctx.Done()
 
 		d.mu.Lock()

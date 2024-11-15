@@ -56,6 +56,10 @@ var workspacesListCmd = &cobra.Command{
 				pod = fmt.Sprintf("imagebuild-%s", w.GetId())
 			}
 
+			var nodeName string
+			if w.Runtime != nil {
+				nodeName = w.Runtime.NodeName
+			}
 			out = append(out, PrintWorkspace{
 				Owner:       w.GetMetadata().GetOwner(),
 				WorkspaceID: w.GetMetadata().GetMetaId(),
@@ -64,7 +68,7 @@ var workspacesListCmd = &cobra.Command{
 				Type:        w.GetSpec().GetType().String(),
 				Pod:         pod,
 				Active:      w.GetConditions().FirstUserActivity != nil,
-				Node:        w.Runtime.NodeName,
+				Node:        nodeName,
 			})
 		}
 

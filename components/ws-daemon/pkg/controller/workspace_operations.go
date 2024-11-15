@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	glog "github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -22,6 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/opentracing/opentracing-go"
@@ -68,6 +70,8 @@ type WorkspaceOperations interface {
 	BackupWorkspace(ctx context.Context, opts BackupOptions) (*csapi.GitStatus, error)
 	// DeleteWorkspace deletes the content of the workspace from disk
 	DeleteWorkspace(ctx context.Context, instanceID string) error
+	// WipeWorkspace deletes all references to the workspace. Does not fail if parts are already gone, or state is incosistent.
+	WipeWorkspace(ctx context.Context, instanceID string) error
 	// SnapshotIDs generates the name and url for a snapshot
 	SnapshotIDs(ctx context.Context, instanceID string) (snapshotUrl, snapshotName string, err error)
 	// Snapshot takes a snapshot of the workspace
@@ -81,6 +85,7 @@ type DefaultWorkspaceOperations struct {
 	provider               *WorkspaceProvider
 	backupWorkspaceLimiter chan struct{}
 	metrics                *Metrics
+	dispatch               *dispatch.Dispatch
 }
 
 var _ WorkspaceOperations = (*DefaultWorkspaceOperations)(nil)
@@ -106,7 +111,7 @@ type BackupOptions struct {
 	SkipBackupContent bool
 }
 
-func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, reg prometheus.Registerer) (WorkspaceOperations, error) {
+func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, reg prometheus.Registerer, dispatch *dispatch.Dispatch) (WorkspaceOperations, error) {
 	waitingTimeHist, waitingTimeoutCounter, err := registerConcurrentBackupMetrics(reg, "_mk2")
 	if err != nil {
 		return nil, err
@@ -121,6 +126,7 @@ func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, 
 		},
 		// we permit five concurrent backups at any given time, hence the five in the channel
 		backupWorkspaceLimiter: make(chan struct{}, 5),
+		dispatch:               dispatch,
 	}, nil
 }
 
@@ -184,6 +190,8 @@ func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, option
 	if err != nil {
 		return "cannot persist workspace", err
 	}
+
+	glog.WithFields(ws.OWI()).Debug("content init done")
 
 	return "", nil
 }
@@ -285,6 +293,52 @@ func (wso *DefaultWorkspaceOperations) DeleteWorkspace(ctx context.Context, inst
 		glog.WithError(err).WithFields(ws.OWI()).Error("cannot delete workspace daemon directory")
 		return err
 	}
+	wso.provider.Remove(ctx, instanceID)
+
+	return nil
+}
+
+func (wso *DefaultWorkspaceOperations) WipeWorkspace(ctx context.Context, instanceID string) error {
+	log := log.New().WithContext(ctx)
+
+	ws, err := wso.provider.GetAndConnect(ctx, instanceID)
+	if err != nil {
+		// we have to assume everything is fine, and this workspace has already been completely wiped
+		return nil
+	}
+	log = log.WithFields(ws.OWI())
+
+	// mark this session as being wiped
+	ws.DoWipe = true
+
+	if err = ws.Dispose(ctx, wso.provider.hooks[session.WorkspaceDisposed]); err != nil {
+		log.WithError(err).Error("cannot dispose session")
+		return err
+	}
+
+	// dispose all running "dispatch handlers", e.g. all code running on the "pod informer"-triggered part of ws-daemon
+	wso.dispatch.DisposeWorkspace(ctx, instanceID)
+
+	// remove workspace daemon directory in the node
+	removedChan := make(chan struct{}, 1)
+	go func() {
+		defer close(removedChan)
+
+		if err := os.RemoveAll(ws.ServiceLocDaemon); err != nil {
+			log.WithError(err).Warn("cannot delete workspace daemon directory, leaving it dangling...")
+		}
+	}()
+
+	// We never want the "RemoveAll" to block the workspace from being delete, so we'll resort to make this a best-effort approach, and time out after 10s.
+	timeout := time.NewTicker(10 * time.Second)
+	defer timeout.Stop()
+	select {
+	case <-timeout.C:
+	case <-removedChan:
+		log.Debug("successfully removed workspace daemon directory")
+	}
+
+	// remove the reference from the WorkspaceProvider, e.g. the "workspace controller" part of ws-daemon
 	wso.provider.Remove(ctx, instanceID)
 
 	return nil

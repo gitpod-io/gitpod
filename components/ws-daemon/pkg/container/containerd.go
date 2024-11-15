@@ -7,6 +7,7 @@ package container
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -431,6 +432,34 @@ func (s *Containerd) WaitForContainerStop(ctx context.Context, workspaceInstance
 		err = ctx.Err()
 		return
 	}
+}
+
+func (s *Containerd) DisposeContainer(ctx context.Context, workspaceInstanceID string) {
+	log := log.WithContext(ctx)
+
+	log.Debug("containerd: disposing container")
+
+	s.cond.L.Lock()
+	defer s.cond.L.Unlock()
+
+	info, ok := s.wsiIdx[workspaceInstanceID]
+	if !ok {
+		// seems we are already done here
+		log.Debug("containerd: disposing container skipped")
+		return
+	}
+	defer log.Debug("containerd: disposing container done")
+
+	if info.ID != "" {
+		err := s.Client.ContainerService().Delete(ctx, info.ID)
+		if err != nil && !errors.Is(err, errdefs.ErrNotFound) {
+			log.WithField("containerId", info.ID).WithError(err).Error("cannot delete containerd container")
+		}
+	}
+
+	delete(s.wsiIdx, info.InstanceID)
+	delete(s.podIdx, info.PodName)
+	delete(s.cntIdx, info.ID)
 }
 
 // ContainerExists finds out if a container with the given ID exists.
