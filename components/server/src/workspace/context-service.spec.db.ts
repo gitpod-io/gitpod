@@ -22,6 +22,8 @@ import {
     Repository,
     RepositoryInfo,
     WorkspaceConfig,
+    PrebuiltWorkspaceState,
+    PrebuiltWorkspace,
 } from "@gitpod/gitpod-protocol";
 import * as chai from "chai";
 import { Container } from "inversify";
@@ -130,6 +132,7 @@ class MockRepositoryProvider implements RepositoryProvider {
         }
         throw new Error(`ref ${ref} not found`);
     }
+
     async getCommitInfo(user: User, owner: string, repo: string, ref: string): Promise<CommitInfo | undefined> {
         return headu(this.branches.get(ref)?.commits);
     }
@@ -539,6 +542,117 @@ describe("ContextService", async () => {
             prebuild1Result.prebuildId,
         );
         expect((ctx.context as any as PrebuiltWorkspaceContext).prebuiltWorkspace.commit).to.equal(revision1);
+    });
+
+    it("should handle triggering prebuilds out of order with respect to commits", async () => {
+        const commit1 = {
+            sha: "69420",
+            author: "some-dude",
+            commitMessage: `commit 69420`,
+        };
+        const commit2 = {
+            sha: "69422",
+            author: "some-dude",
+            commitMessage: `commit 69422`,
+        };
+        const commit3 = {
+            sha: "69423",
+            author: "some-other-dude",
+            commitMessage: "commit 69423",
+        };
+        const branchName = "branch-2";
+        mockRepositoryProvider.addBranch(
+            { name: branchName, htmlUrl: `https://github.com/gitpod-io/empty/tree/${branchName}` },
+            [commit1],
+        );
+        mockRepositoryProvider.pushCommit(branchName, commit2);
+        mockRepositoryProvider.pushCommit(branchName, commit3);
+
+        // request context for both commits separately
+        const svc = container.get(ContextService);
+        let ctx1 = await svc.parseContext(owner, `https://github.com/gitpod-io/empty/commit/${commit1.sha}`, {
+            projectId: project.id,
+            organizationId: org.id,
+            forceDefaultConfig: false,
+        });
+        const ctx2 = await svc.parseContext(owner, `https://github.com/gitpod-io/empty/commit/${commit2.sha}`, {
+            projectId: project.id,
+            organizationId: org.id,
+            forceDefaultConfig: false,
+        });
+        let ctx3 = await svc.parseContext(owner, `https://github.com/gitpod-io/empty/commit/${commit3.sha}`, {
+            projectId: project.id,
+            organizationId: org.id,
+            forceDefaultConfig: false,
+        });
+
+        // trigger and "await" prebuilds for all commits in crazy order
+        const prebuildManager = container.get(PrebuildManager);
+        const workspaceDb: WorkspaceDB = container.get(WorkspaceDB);
+
+        async function runPrebuild(
+            commitInfo: CommitInfo,
+            context: CommitContext,
+            state: PrebuiltWorkspaceState,
+        ): Promise<PrebuiltWorkspace> {
+            const prebuildResult = await prebuildManager.startPrebuild(
+                {},
+                { user: owner, project, commitInfo, context },
+            );
+            const prebuild = await workspaceDb.findPrebuildByID(prebuildResult.prebuildId);
+            await workspaceDb.storePrebuiltWorkspace({
+                ...prebuild!,
+                state,
+            });
+            const wsAndI = await workspaceDb.findWorkspaceAndInstance(prebuild!.buildWorkspaceId);
+            await workspaceDb.updateInstancePartial(wsAndI!.instanceId, { status: { phase: "stopped" } });
+
+            return prebuild!;
+        }
+
+        const prebuild3 = await runPrebuild(commit3, ctx3.context as CommitContext, "available");
+        const prebuild1 = await runPrebuild(commit1, ctx1.context as CommitContext, "available");
+        await runPrebuild(commit2, ctx2.context as CommitContext, "available");
+
+        ctx1 = await svc.parseContext(owner, `https://github.com/gitpod-io/empty/commit/${commit1.sha}`, {
+            projectId: project.id,
+            organizationId: org.id,
+            forceDefaultConfig: false,
+        });
+        ctx3 = await svc.parseContext(owner, `https://github.com/gitpod-io/empty/commit/${commit3.sha}`, {
+            projectId: project.id,
+            organizationId: org.id,
+            forceDefaultConfig: false,
+        });
+        const ctxBranch = await svc.parseContext(owner, `https://github.com/gitpod-io/empty/tree/branch-2`, {
+            projectId: project.id,
+            organizationId: org.id,
+            forceDefaultConfig: false,
+        });
+
+        expect(ctx1.project?.id).to.equal(project.id);
+        expect(PrebuiltWorkspaceContext.is(ctx1.context)).to.equal(true);
+        expect((ctx1.context as any as PrebuiltWorkspaceContext).prebuiltWorkspace.id).to.equal(prebuild1.id);
+        expect(
+            (ctx1.context as any as PrebuiltWorkspaceContext).prebuiltWorkspace.commit,
+            "should point to commit1, ignoring others due to history",
+        ).to.equal(commit1.sha);
+
+        expect(ctx3.project?.id).to.equal(project.id);
+        expect(PrebuiltWorkspaceContext.is(ctx3.context)).to.equal(true);
+        expect((ctx3.context as any as PrebuiltWorkspaceContext).prebuiltWorkspace.id).to.equal(prebuild3.id);
+        expect(
+            (ctx3.context as any as PrebuiltWorkspaceContext).prebuiltWorkspace.commit,
+            "should point to commit3, ignoring more recent prebuilds (1 + 2)",
+        ).to.equal(commit3.sha);
+
+        expect(ctxBranch.project?.id).to.equal(project.id);
+        expect(PrebuiltWorkspaceContext.is(ctxBranch.context)).to.equal(true);
+        expect((ctxBranch.context as any as PrebuiltWorkspaceContext).prebuiltWorkspace.id).to.equal(prebuild3.id);
+        expect(
+            (ctxBranch.context as any as PrebuiltWorkspaceContext).prebuiltWorkspace.commit,
+            "should point to commit3, ingoring more the more recent incremental match prebuild2",
+        ).to.equal(commit3.sha);
     });
 
     it("should parse snapshot context", async () => {
