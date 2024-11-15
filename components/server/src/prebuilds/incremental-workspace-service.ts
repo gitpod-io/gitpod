@@ -16,18 +16,14 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PrebuiltWorkspaceState, WithCommitHistory } from "@gitpod/gitpod-protocol/lib/protocol";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { PrebuildWithWorkspace, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ImageSourceProvider } from "../workspace/image-source-provider";
 
 const MAX_HISTORY_DEPTH = 100;
 
-enum Match {
-    None = 0,
-    Loose = 1,
-    Exact = 2,
-}
+type IncrementalWorkspaceMatch = "none" | "incremental" | "exact";
 
 @injectable()
 export class IncrementalWorkspaceService {
@@ -93,30 +89,44 @@ export class IncrementalWorkspaceService {
         const imageSource = await imageSourcePromise;
 
         // traverse prebuilds by commit history instead of their creationTime, so that we don't match prebuilds created for older revisions but triggered later
-        for (const commit of history.commitHistory) {
-            const prebuildsForCommit = recentPrebuilds.filter(({ prebuild }) => prebuild.commit === commit);
-            for (const entry of prebuildsForCommit) {
-                const { prebuild, workspace } = entry;
-                const match = this.isMatchForIncrementalBuild(
-                    history,
-                    config,
-                    imageSource,
+        const candidates: { candidate: PrebuildWithWorkspace; index: number }[] = [];
+        for (const recentPrebuild of recentPrebuilds) {
+            const { prebuild, workspace } = recentPrebuild;
+            const { match, index } = this.isMatchForIncrementalBuild(
+                history,
+                config,
+                imageSource,
+                prebuild,
+                workspace,
+                includeUnfinishedPrebuilds,
+            );
+            if (match === "exact") {
+                console.log("Found base for incremental build", {
                     prebuild,
                     workspace,
-                    includeUnfinishedPrebuilds,
-                );
-                if (match > Match.None) {
-                    console.log("Found base for incremental build", {
-                        prebuild,
-                        workspace,
-                        exactMatch: match === Match.Exact,
-                    });
-                    return prebuild;
-                }
+                    exactMatch: true,
+                });
+                return prebuild;
+            }
+            if (match === "incremental") {
+                candidates.push({ candidate: recentPrebuild, index: index! });
             }
         }
 
-        return undefined;
+        if (candidates.length === 0) {
+            return undefined;
+        }
+
+        // Sort by index ASC
+        candidates.sort((a, b) => a.index - b.index);
+        const { prebuild, workspace } = candidates[0].candidate;
+
+        console.log("Found base for incremental build", {
+            prebuild,
+            workspace,
+            exactMatch: false,
+        });
+        return prebuild;
     }
 
     private isMatchForIncrementalBuild(
@@ -126,13 +136,13 @@ export class IncrementalWorkspaceService {
         candidatePrebuild: PrebuiltWorkspace,
         candidateWorkspace: Workspace,
         includeUnfinishedPrebuilds?: boolean,
-    ): Match {
+    ): { match: Omit<IncrementalWorkspaceMatch, "none">; index: number } | { match: "none"; index?: undefined } {
         // make typescript happy, we know that history.commitHistory is defined
         if (!history.commitHistory) {
-            return Match.None;
+            return { match: "none" };
         }
         if (!CommitContext.is(candidateWorkspace.context)) {
-            return Match.None;
+            return { match: "none" };
         }
 
         const acceptableStates: PrebuiltWorkspaceState[] = ["available"];
@@ -141,12 +151,12 @@ export class IncrementalWorkspaceService {
             acceptableStates.push("queued");
         }
         if (!acceptableStates.includes(candidatePrebuild.state)) {
-            return Match.None;
+            return { match: "none" };
         }
 
         // we are only considering full prebuilds (we are not building on top of incremental prebuilds)
         if (candidateWorkspace.basedOnPrebuildId) {
-            return Match.None;
+            return { match: "none" };
         }
 
         // check if the amount of additional repositories matches the candidate
@@ -154,22 +164,27 @@ export class IncrementalWorkspaceService {
             candidateWorkspace.context.additionalRepositoryCheckoutInfo?.length !==
             history.additionalRepositoryCommitHistories?.length
         ) {
-            return Match.None;
+            return { match: "none" };
         }
 
         const candidateCtx = candidateWorkspace.context;
 
         // check for overlapping commit history
-        if (!history.commitHistory.some((sha) => sha === candidateCtx.revision)) {
-            return Match.None;
+        // TODO(gpl) Isn't "candidateCtx.revision" identical to "candidatePrebuild.commit"? If yes, we could do .indexOf once...
+        if (candidateCtx.revision !== candidatePrebuild.commit) {
+            log.warn("Prebuild matching: commits mismatch!", { candidateCtx, candidatePrebuild });
         }
+        if (!history.commitHistory.some((sha) => sha === candidateCtx.revision)) {
+            return { match: "none" };
+        }
+
         // check for overlapping git history for each additional repo
         for (const subRepo of candidateWorkspace.context.additionalRepositoryCheckoutInfo ?? []) {
             const matchingRepo = history.additionalRepositoryCommitHistories?.find(
                 (repo) => repo.cloneUrl === subRepo.repository.cloneUrl,
             );
             if (!matchingRepo || !matchingRepo.commitHistory.some((sha) => sha === subRepo.revision)) {
-                return Match.None;
+                return { match: "none" };
             }
         }
 
@@ -179,7 +194,7 @@ export class IncrementalWorkspaceService {
                 imageSource,
                 parentImageSource: candidateWorkspace.imageSource,
             });
-            return Match.None;
+            return { match: "none" };
         }
 
         // ensure the tasks haven't changed
@@ -190,14 +205,15 @@ export class IncrementalWorkspaceService {
                 prebuildTasks,
                 parentPrebuildTasks,
             });
-            return Match.None;
+            return { match: "none" };
         }
 
-        if (candidatePrebuild.commit === history.commitHistory[0]) {
-            return Match.Exact;
+        const index = history.commitHistory.indexOf(candidatePrebuild.commit);
+        if (index === 0) {
+            return { match: "exact", index };
         }
 
-        return Match.Loose;
+        return { match: "incremental", index };
     }
 
     /**
