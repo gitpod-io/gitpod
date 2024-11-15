@@ -143,10 +143,14 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	if failure != "" && !workspace.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected) {
 		// Check: A situation where we want to retry?
 		if isPodRejected(pod) {
-			// This is a situation where we want to re-create the pod!
-			log.Info("workspace scheduling failed", "workspace", workspace.Name, "reason", failure)
-			workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionPodRejected(failure, metav1.ConditionTrue))
-			r.Recorder.Event(workspace, corev1.EventTypeWarning, "PodRejected", failure)
+			if !workspace.IsConditionTrue(workspacev1.WorkspaceConditionEverReady) {
+				// This is a situation where we want to re-create the pod!
+				log.Info("workspace got rejected", "workspace", workspace.Name, "reason", failure)
+				workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionPodRejected(failure, metav1.ConditionTrue))
+				r.Recorder.Event(workspace, corev1.EventTypeWarning, "PodRejected", failure)
+			} else {
+				log.Info("workspace got rejected, but we don't handle it, because EveryReady=true", "workspace", workspace.Name, "reason", failure)
+			}
 		}
 	}
 
