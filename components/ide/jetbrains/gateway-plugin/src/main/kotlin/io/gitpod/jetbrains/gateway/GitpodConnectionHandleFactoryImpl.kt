@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.gateway.stable
+package io.gitpod.jetbrains.gateway
 
 import com.intellij.openapi.components.Service
 import com.jetbrains.gateway.api.GatewayConnectionHandle
@@ -17,7 +17,7 @@ import java.net.URI
 import javax.swing.JComponent
 
 @Suppress("UnstableApiUsage")
-class StableGitpodConnectionHandleFactory: GitpodConnectionHandleFactory {
+class GitpodConnectionHandleFactoryImpl: GitpodConnectionHandleFactory {
     override fun createGitpodConnectionHandle(
         lifetime: Lifetime,
         component: JComponent,
@@ -30,6 +30,6 @@ class StableGitpodConnectionHandleFactory: GitpodConnectionHandleFactory {
         return ClientOverSshTunnelConnector(
             lifetime,
             connector
-        ).connect(tcpJoinLink)
+        ).connect(tcpJoinLink, null)
     }
 }

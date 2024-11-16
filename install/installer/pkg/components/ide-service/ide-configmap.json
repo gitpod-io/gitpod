@@ -215,6 +215,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.2.4",
+            "image": "{{.Repository}}/ide/intellij:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+              "{{.Repository}}/ide/jb-launcher:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6"
+            ]
+          },
+          {
             "version": "2024.2.3",
             "image": "{{.Repository}}/ide/intellij:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
             "imageLayers": [
@@ -316,6 +324,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.2.3",
+            "image": "{{.Repository}}/ide/goland:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+              "{{.Repository}}/ide/jb-launcher:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6"
+            ]
+          },
+          {
             "version": "2024.2.2",
             "image": "{{.Repository}}/ide/goland:commit-2aba460a50c43e830b015a6ff4e52e6491a3ed36",
             "imageLayers": [
@@ -410,6 +426,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.2.4",
+            "image": "{{.Repository}}/ide/pycharm:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+              "{{.Repository}}/ide/jb-launcher:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6"
+            ]
+          },
+          {
             "version": "2024.2.3",
             "image": "{{.Repository}}/ide/pycharm:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
             "imageLayers": [
@@ -503,6 +527,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.2.4",
+            "image": "{{.Repository}}/ide/phpstorm:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+              "{{.Repository}}/ide/jb-launcher:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6"
+            ]
+          },
+          {
             "version": "2024.2.3",
             "image": "{{.Repository}}/ide/phpstorm:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
             "imageLayers": [
@@ -587,6 +619,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.2.4",
+            "image": "{{.Repository}}/ide/rubymine:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+              "{{.Repository}}/ide/jb-launcher:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6"
+            ]
+          },
           {
             "version": "2024.2.3",
             "image": "{{.Repository}}/ide/rubymine:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
@@ -680,6 +720,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.2.4",
+            "image": "{{.Repository}}/ide/webstorm:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+              "{{.Repository}}/ide/jb-launcher:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6"
+            ]
+          },
           {
             "version": "2024.2.3",
             "image": "{{.Repository}}/ide/webstorm:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
@@ -822,10 +870,10 @@
         "logo": "{{.IdeLogoBase}}/clionLogo.svg",
         "image": "{{.Repository}}/ide/clion:{{.WorkspaceVersions.Workspace.DesktopIdeImages.CLionImage.Version}}",
         "latestImage": "{{.ResolvedJBImageLatest.CLion}}",
-        "pluginImage": "{{.JetBrainsPluginImage}}",
+        "pluginImage": "{{.JetBrainsPluginImagePrevious}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
-          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsPluginImagePrevious}}",
           "{{.JetBrainsLauncherImage}}"
         ],
         "latestImageLayers": [
@@ -899,10 +947,10 @@
         "logo": "{{.IdeLogoBase}}/rustroverLogo.svg",
         "image": "{{.Repository}}/ide/rustrover:{{.WorkspaceVersions.Workspace.DesktopIdeImages.RustRoverImage.Version}}",
         "latestImage": "{{.ResolvedJBImageLatest.RustRover}}",
-        "pluginImage": "{{.JetBrainsPluginImage}}",
+        "pluginImage": "{{.JetBrainsPluginImagePrevious}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
-          "{{.JetBrainsPluginImage}}",
+          "{{.JetBrainsPluginImagePrevious}}",
           "{{.JetBrainsLauncherImage}}"
         ],
         "latestImageLayers": [
