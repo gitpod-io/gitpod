@@ -126,7 +126,10 @@ USER gitpod
 				}
 			}
 
-			openCmd.RunE(cmd, []string{v.File})
+			err = openCmd.RunE(cmd, []string{v.File})
+			if err != nil {
+				return err
+			}
 		}
 		return openCmd.RunE(cmd, []string{".gitpod.yml"})
 	},
