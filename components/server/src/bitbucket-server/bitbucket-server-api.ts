@@ -322,7 +322,7 @@ export class BitbucketServerApi {
     }
 
     /**
-     * If `searchString` is provided, this tries to match projects and repositorys by name,
+     * If `searchString` is provided, this tries to match projects and repositories by name,
      *  otherwise it returns the first n repositories.
      *
      * Based on:
@@ -333,7 +333,7 @@ export class BitbucketServerApi {
         query: {
             permission?: "REPO_READ" | "REPO_WRITE" | "REPO_ADMIN";
             /**
-             * If projects and repositorys are matched by by name, otherwise it returns the first n repositories.
+             * If projects and repositories are matched by name, otherwise it returns the first n repositories.
              */
             searchString?: string;
             /**
@@ -402,6 +402,7 @@ export class BitbucketServerApi {
                     start = pageResult.nextPageStart;
                 }
             }
+
             return result;
         };
 
@@ -425,7 +426,7 @@ export class BitbucketServerApi {
 
             return Array.from(results.values());
         } else {
-            return await fetchRepos(baseParams);
+            return fetchRepos(baseParams);
         }
     }
 

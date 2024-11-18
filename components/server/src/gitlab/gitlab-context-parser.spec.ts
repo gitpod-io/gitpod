@@ -52,7 +52,8 @@ class TestGitlabContextParser {
     };
     static readonly BLO_BLA_ERROR_DATA = {
         host: "gitlab.com",
-        lastUpdate: undefined,
+        lastUpdate: "",
+        errorMessage: 'GitLab responded: "404 Project Not Found"',
         owner: "blo",
         repoName: "bla",
         userIsOwner: false,

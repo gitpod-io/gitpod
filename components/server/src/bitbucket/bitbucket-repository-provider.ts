@@ -187,7 +187,7 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
                     workspace: workspaceSlug,
                     // name includes searchString
                     q: `name ~ "${searchString}"`,
-                    // sort by most recently updatd first
+                    // sort by most recently updated first
                     sort: "-updated_on",
                     // limit to the first 10 results per workspace
                     pagelen: 10,

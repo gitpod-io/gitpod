@@ -262,10 +262,8 @@ export class GithubRepositoryProvider implements RepositoryProvider {
                 }
             }`;
 
-        let repos: RepositoryInfo[] = [];
-
         const result = await this.githubQueryApi.runQuery<SearchReposQueryResponse>(user, repoSearchQuery);
-        repos = result.data.search.edges.map((edge) => {
+        const repos: RepositoryInfo[] = result.data.search.edges.map((edge) => {
             return {
                 name: edge.node.name,
                 url: edge.node.url,
