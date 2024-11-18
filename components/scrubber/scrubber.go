@@ -221,16 +221,17 @@ func (s *scrubberImpl) getSanitisatiser(key string) Sanitisatiser {
 			return SanitiseRedact
 		}
 	}
-	for _, f := range s.LowerSanitiseHash {
-		if strings.Contains(lower, f) {
-			s.KeySanitiserCache.Add(lower, sanitiseHash)
-			return SanitiseHash
-		}
-	}
+	// Give sanitiseHashURLPathSegments precedence over sanitiseHash
 	for _, f := range s.LowerSanitiseHashURLPaths {
 		if strings.Contains(lower, f) {
 			s.KeySanitiserCache.Add(lower, sanitiseHashURLPathSegments)
 			return SanitiseHashURLPathSegments
+		}
+	}
+	for _, f := range s.LowerSanitiseHash {
+		if strings.Contains(lower, f) {
+			s.KeySanitiserCache.Add(lower, sanitiseHash)
+			return SanitiseHash
 		}
 	}
 
