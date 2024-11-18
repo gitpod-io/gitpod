@@ -80,7 +80,7 @@ class TestBitbucketServerApi {
 
     @test async test_currentUsername_ok() {
         const result = await this.api.currentUsername(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!);
-        expect(result).to.equal("alex");
+        expect(result).to.equal("admin-tester");
     }
 
     @test async test_getUserProfile_ok() {
