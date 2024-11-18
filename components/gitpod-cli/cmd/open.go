@@ -63,7 +63,6 @@ var openCmd = &cobra.Command{
 		c.Stdin = os.Stdin
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
-		time.Sleep(10 * time.Second)
 		err = c.Run()
 		if err != nil {
 			if ctx.Err() != nil {
