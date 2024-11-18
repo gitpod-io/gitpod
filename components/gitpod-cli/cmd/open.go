@@ -26,7 +26,7 @@ var openCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
 
-		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(cmd.Context(), 10*time.Second)
 		defer cancel()
 
 		client, err := supervisor.New(ctx)
@@ -57,12 +57,22 @@ var openCmd = &cobra.Command{
 
 		if wait {
 			pargs = append(pargs, "--wait")
+			ctx = cmd.Context()
 		}
-		c := exec.CommandContext(cmd.Context(), pcmd, append(pargs[1:], args...)...)
+		c := exec.CommandContext(ctx, pcmd, append(pargs[1:], args...)...)
 		c.Stdin = os.Stdin
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
-		return c.Run()
+		err = c.Run()
+		if err != nil {
+			if ctx.Err() != nil {
+				return xerrors.Errorf("editor failed to open in time: %w", ctx.Err())
+			}
+
+			return xerrors.Errorf("editor failed to open: %w", err)
+		}
+
+		return nil
 	},
 }
 
