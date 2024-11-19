@@ -168,11 +168,24 @@ func (ps PortSpec) Equal(other PortSpec) bool {
 	return true
 }
 
+type WorkspaceImageInfo struct {
+	// +kubebuilder:validation:Required
+	TotalSize int64 `json:"totalSize"`
+
+	// +kubebuilder:validation:Optional
+	WorkspaceImageSize int64 `json:"workspaceImageSize,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	WorkspaceImageRef string `json:"workspaceImageRef,omitempty"`
+}
+
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
-	PodStarts  int    `json:"podStarts"`
-	URL        string `json:"url,omitempty" scrub:"redact"`
-	OwnerToken string `json:"ownerToken,omitempty" scrub:"redact"`
+	PodStarts       int          `json:"podStarts"`
+	PodRecreated    int          `json:"podRecreated"`
+	PodDeletionTime *metav1.Time `json:"podDeletionTime,omitempty"`
+	URL             string       `json:"url,omitempty" scrub:"redact"`
+	OwnerToken      string       `json:"ownerToken,omitempty" scrub:"redact"`
 
 	// +kubebuilder:default=Unknown
 	Phase WorkspacePhase `json:"phase,omitempty"`
@@ -193,6 +206,9 @@ type WorkspaceStatus struct {
 	Storage StorageStatus `json:"storage,omitempty"`
 
 	LastActivity *metav1.Time `json:"lastActivity,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	ImageInfo *WorkspaceImageInfo `json:"imageInfo,omitempty"`
 }
 
 func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {
@@ -259,12 +275,16 @@ const (
 	VolumeAttached WorkspaceCondition = "VolumeAttached"
 	// VolumeMounted is true if the workspace's volume has been mounted on the node
 	VolumeMounted WorkspaceCondition = "VolumeMounted"
-	// ThroughputAdjusted is true if the throughput of the workspace volume has been adjusted
-	WorkspaceConditionThroughputAdjusted WorkspaceCondition = "ThroughputAdjusted"
 
 	// WorkspaceContainerRunning is true if the workspace container is running.
 	// Used to determine if a backup can be taken, only once the container is stopped.
 	WorkspaceConditionContainerRunning WorkspaceCondition = "WorkspaceContainerRunning"
+
+	// WorkspaceConditionPodRejected is true if we detected that the pod was rejected by the node
+	WorkspaceConditionPodRejected WorkspaceCondition = "PodRejected"
+
+	// WorkspaceConditionStateWiped is true once all state has successfully been wiped by ws-daemon. This is only set if PodRejected=true, and the rejected workspace has been deleted.
+	WorkspaceConditionStateWiped WorkspaceCondition = "StateWiped"
 )
 
 func NewWorkspaceConditionDeployed() metav1.Condition {
@@ -289,6 +309,24 @@ func NewWorkspaceConditionFailed(message string) metav1.Condition {
 		Type:               string(WorkspaceConditionFailed),
 		LastTransitionTime: metav1.Now(),
 		Status:             metav1.ConditionTrue,
+		Message:            message,
+	}
+}
+
+func NewWorkspaceConditionPodRejected(message string, status metav1.ConditionStatus) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionPodRejected),
+		LastTransitionTime: metav1.Now(),
+		Status:             status,
+		Message:            message,
+	}
+}
+
+func NewWorkspaceConditionStateWiped(message string, status metav1.ConditionStatus) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionStateWiped),
+		LastTransitionTime: metav1.Now(),
+		Status:             status,
 		Message:            message,
 	}
 }
@@ -393,14 +431,6 @@ func NewWorkspaceConditionNodeDisappeared() metav1.Condition {
 	}
 }
 
-func NewWorkspaceConditionThroughputAdjusted() metav1.Condition {
-	return metav1.Condition{
-		Type:               string(WorkspaceConditionThroughputAdjusted),
-		LastTransitionTime: metav1.Now(),
-		Status:             metav1.ConditionTrue,
-	}
-}
-
 func NewWorkspaceConditionContainerRunning(status metav1.ConditionStatus) metav1.Condition {
 	return metav1.Condition{
 		Type:               string(WorkspaceConditionContainerRunning),
@@ -493,6 +523,28 @@ func (w *Workspace) IsHeadless() bool {
 
 func (w *Workspace) IsConditionTrue(condition WorkspaceCondition) bool {
 	return wsk8s.ConditionPresentAndTrue(w.Status.Conditions, string(condition))
+}
+
+func (w *Workspace) IsConditionPresent(condition WorkspaceCondition) bool {
+	c := wsk8s.GetCondition(w.Status.Conditions, string(condition))
+	return c != nil
+}
+
+func (w *Workspace) GetConditionState(condition WorkspaceCondition) (state metav1.ConditionStatus, ok bool) {
+	cond := wsk8s.GetCondition(w.Status.Conditions, string(condition))
+	if cond == nil {
+		return "", false
+	}
+	return cond.Status, true
+}
+
+// UpsertConditionOnStatusChange calls SetCondition if the condition does not exist or it's status or message has changed.
+func (w *Workspace) UpsertConditionOnStatusChange(newCondition metav1.Condition) {
+	oldCondition := wsk8s.GetCondition(w.Status.Conditions, newCondition.Type)
+	if oldCondition != nil && oldCondition.Status == newCondition.Status && oldCondition.Message == newCondition.Message {
+		return
+	}
+	w.Status.SetCondition(newCondition)
 }
 
 // OWI produces the owner, workspace, instance log metadata from the information

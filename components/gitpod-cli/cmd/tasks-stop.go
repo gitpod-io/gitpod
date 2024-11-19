@@ -18,7 +18,8 @@ import (
 )
 
 var stopTaskCmdOpts struct {
-	All bool
+	All          bool
+	ForceSuccess bool
 }
 
 // stopTaskCmd represents the stop task command
@@ -113,7 +114,7 @@ var stopTaskCmd = &cobra.Command{
 		}
 
 		for _, terminalAlias := range terminalAliases {
-			_, err = client.Terminal.Shutdown(ctx, &api.ShutdownTerminalRequest{Alias: terminalAlias})
+			_, err = client.Terminal.Shutdown(ctx, &api.ShutdownTerminalRequest{Alias: terminalAlias, ForceSuccess: stopTaskCmdOpts.ForceSuccess})
 			if err != nil {
 				return xerrors.Errorf("cannot stop task: %w", err)
 			}
@@ -126,4 +127,5 @@ func init() {
 	tasksCmd.AddCommand(stopTaskCmd)
 
 	stopTaskCmd.Flags().BoolVarP(&stopTaskCmdOpts.All, "all", "a", false, "stop all tasks")
+	stopTaskCmd.Flags().BoolVarP(&stopTaskCmdOpts.ForceSuccess, "force-success", "f", false, "force the task to exit with status code 0")
 }

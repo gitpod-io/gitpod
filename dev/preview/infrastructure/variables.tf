@@ -5,7 +5,7 @@ variable "preview_name" {
 
 variable "kubeconfig_path" {
   type        = string
-  default     = "/home/gitpod/.kube/config"
+  default     = "$HOME/.kube/config"
   description = "The path to the kubernetes config"
 }
 
@@ -23,7 +23,7 @@ variable "vm_type" {
 variable "vm_image" {
   type        = string
   description = "The VM image"
-  default     = "gitpod-k3s-202402021944"
+  default     = "gitpod-k3s-202409020431"
 }
 
 variable "cert_issuer" {

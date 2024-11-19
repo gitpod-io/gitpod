@@ -8,7 +8,8 @@
             "annotations": {},
             "name": "gitpod-io/empty ",
             "pinned": false,
-            "originalContextUrl": "https://github.com/gitpod-io/empty"
+            "originalContextUrl": "https://github.com/gitpod-io/empty",
+            "warnings": []
         },
         "spec": {
             "initializer": {
@@ -39,6 +40,7 @@
                 "email": ""
             },
             "timeout": {
+                "inactivity": "3600s",
                 "disconnected": "3600s"
             },
             "admission": "ADMISSION_LEVEL_OWNER_ONLY",
@@ -48,7 +50,8 @@
             "logUrl": "",
             "editor": {
                 "name": "code",
-                "version": "stable"
+                "version": "stable",
+                "preferToolbox": false
             }
         },
         "status": {

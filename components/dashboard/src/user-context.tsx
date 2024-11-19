@@ -18,6 +18,17 @@ const UserContext = createContext<{
     setUser: () => null,
 });
 
+const refetchCookie = async () => {
+    await fetch("/api/auth/jwt-cookie", {
+        credentials: "include",
+    })
+        .then((resp) => resp.text())
+        .then((text) => console.log(`Completed JWT Cookie refresh: ${text}`))
+        .catch((err) => {
+            console.log("Failed to update jwt-cookie", err);
+        });
+};
+
 const UserContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User>();
 
@@ -43,19 +54,12 @@ const UserContextProvider: React.FC = ({ children }) => {
             const w = window as any;
             const _gp = w._gp || (w._gp = {});
 
-            const frequencyMs = 1000 * 60 * 60; // 1 hour
+            const frequencyMs = 1000 * 60 * 5; // 5 mins
             if (!_gp.jwttimer) {
                 // Store the timer on the window, to avoid queuing up multiple
-                _gp.jwtTimer = setInterval(() => {
-                    fetch("/api/auth/jwt-cookie", {
-                        credentials: "include",
-                    })
-                        .then((resp) => resp.text())
-                        .then((text) => console.log(`Completed JWT Cookie refresh: ${text}`))
-                        .catch((err) => {
-                            console.log("Failed to update jwt-cookie", err);
-                        });
-                }, frequencyMs);
+                _gp.jwtTimer = setInterval(refetchCookie, frequencyMs);
+
+                setTimeout(refetchCookie, 20_000);
             }
         },
         [user, client],

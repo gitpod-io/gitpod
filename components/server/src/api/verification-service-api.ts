@@ -15,12 +15,10 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/verification_pb";
 import { inject, injectable } from "inversify";
 import { VerificationService } from "../auth/verification-service";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { validate as uuidValidate } from "uuid";
-import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 @injectable()
 export class VerificationServiceAPI implements ServiceImpl<typeof VerificationServiceInterface> {
@@ -35,21 +33,7 @@ export class VerificationServiceAPI implements ServiceImpl<typeof VerificationSe
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "phoneNumber is required");
         }
 
-        const userId = ctxUserId();
-        const user = await this.userService.findUserById(userId, userId);
-
-        // Check if verify via call is enabled
-        const phoneVerificationByCall = await getExperimentsClientForBackend().getValueAsync(
-            "phoneVerificationByCall",
-            false,
-            {
-                user: {
-                    id: user.id,
-                    email: getPrimaryEmail(user),
-                },
-            },
-        );
-        const channel = phoneVerificationByCall ? "call" : "sms";
+        const channel = "call";
         const verificationId = await this.verificationService.sendVerificationToken(
             formatPhoneNumber(req.phoneNumber),
             channel,

@@ -26,6 +26,7 @@ class WorkspaceDBSpec {
     readonly timeWs = new Date(2018, 2, 16, 10, 0, 0).toISOString();
     readonly timeBefore = new Date(2018, 2, 16, 11, 5, 10).toISOString();
     readonly timeAfter = new Date(2019, 2, 16, 11, 5, 10).toISOString();
+    readonly timeAfter2 = new Date(2019, 2, 17, 4, 20, 10).toISOString();
     readonly userId = "12345";
     readonly projectAID = "projectA";
     readonly projectBID = "projectB";
@@ -92,6 +93,30 @@ class WorkspaceDBSpec {
         status: {
             version: 1,
             phase: "running",
+            conditions: {},
+        },
+        configuration: {
+            theiaVersion: "unknown",
+            ideImage: "unknown",
+        },
+        deleted: false,
+        usageAttributionId: undefined,
+    };
+    readonly wsi3: WorkspaceInstance = {
+        workspaceId: this.ws.id,
+        id: "12345",
+        ideUrl: "example.org",
+        region: "unknown",
+        workspaceClass: undefined,
+        workspaceImage: "abc.io/test/image:123",
+        creationTime: this.timeAfter2,
+        startedTime: undefined,
+        deployedTime: undefined,
+        stoppingTime: undefined,
+        stoppedTime: undefined,
+        status: {
+            version: 1,
+            phase: "stopped",
             conditions: {},
         },
         configuration: {
@@ -235,42 +260,50 @@ class WorkspaceDBSpec {
     }
 
     @test(timeout(10000))
-    public async testFindPrebuildsForGC_oldPrebuildNoUsage() {
-        await this.createPrebuild(2);
-        const dbResult = await this.db.findPrebuiltWorkspacesForGC(1, 10);
-        expect(dbResult.length).to.eq(1);
-        expect(dbResult[0].id).to.eq("12345");
-        expect(dbResult[0].ownerId).to.eq("1221423");
+    public async testFindEligibleWorkspacesForSoftDeletion_markedEligible_Prebuild() {
+        const { ws } = await this.createPrebuild(20, 15);
+        const dbResult = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(), 10, "prebuild");
+        expect(dbResult.length).to.equal(1);
+        expect(dbResult[0].id).to.eq(ws.id);
+        expect(dbResult[0].ownerId).to.eq(ws.ownerId);
     }
 
     @test(timeout(10000))
-    public async testFindPrebuildsForGC_newPrebuildNoUsage() {
-        await this.createPrebuild(0);
-        const dbResult = await this.db.findPrebuiltWorkspacesForGC(1, 10);
+    public async testFindEligibleWorkspacesForSoftDeletion_notMarkedEligible_Prebuild() {
+        await this.createPrebuild(20, -7);
+        const dbResult = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(), 10, "prebuild");
         expect(dbResult.length).to.eq(0);
     }
 
     @test(timeout(10000))
-    public async testFindPrebuildsForGC_oldPrebuildOldUsage() {
-        await this.createPrebuild(2, 2);
-        const dbResult = await this.db.findPrebuiltWorkspacesForGC(1, 10);
-        expect(dbResult.length).to.eq(1);
-        expect(dbResult[0].id).to.eq("12345");
-        expect(dbResult[0].ownerId).to.eq("1221423");
+    public async testPrebuildGarbageCollection() {
+        const { pbws } = await this.createPrebuild(20, 15);
+
+        // mimic the behavior of the Garbage Collector
+        const gcWorkspaces = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(), 10, "prebuild");
+        expect(gcWorkspaces.length).to.equal(1);
+
+        const now = new Date().toISOString();
+        await this.db.updatePartial(gcWorkspaces[0].id, {
+            contentDeletedTime: now,
+            softDeletedTime: now,
+            softDeleted: "gc",
+        });
+
+        // next cycle is empty
+        const nextGcCycle = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(), 10, "prebuild");
+        expect(nextGcCycle.length).to.equal(0);
+
+        // prebuild can't be discovered anymore because it's workspace has been GC'ed
+        const prebuild = await this.db.findPrebuildByID(pbws.id);
+        expect(prebuild).to.be.undefined;
     }
 
-    @test(timeout(10000))
-    public async testFindPrebuildsForGC_oldPrebuildNewUsage() {
-        await this.createPrebuild(12, 0);
-        const dbResult = await this.db.findPrebuiltWorkspacesForGC(1, 10);
-        expect(dbResult.length).to.eq(0);
-    }
-
-    protected async createPrebuild(createdDaysAgo: number, usageDaysAgo?: number) {
+    protected async createPrebuild(createdDaysAgo: number, deletionEligibilityTimeDaysAgo?: number) {
         const now = new Date();
         now.setDate(now.getDate() - createdDaysAgo);
         const creationTime = now.toISOString();
-        await this.db.store({
+        const ws = await this.db.store({
             id: "12345",
             creationTime,
             description: "something",
@@ -283,56 +316,48 @@ class WorkspaceDBSpec {
             config: {},
             type: "prebuild",
         });
-        await this.db.storePrebuiltWorkspace({
+        const pbws = await this.db.storePrebuiltWorkspace({
             id: "prebuild123",
             buildWorkspaceId: "12345",
             creationTime,
-            cloneURL: "",
+            cloneURL: "https://github.com/foo/bar",
             commit: "",
             state: "available",
             statusVersion: 0,
         });
-        if (usageDaysAgo !== undefined) {
-            const now = new Date();
-            now.setDate(now.getDate() - usageDaysAgo);
-            await this.db.store({
-                id: "usage-of-12345",
-                creationTime: now.toISOString(),
-                description: "something",
-                contextURL: "https://github.com/foo/bar",
-                ownerId: "1221423",
-                organizationId: "org123",
-                context: {
-                    title: "my title",
-                },
-                config: {},
-                basedOnPrebuildId: "prebuild123",
-                type: "regular",
-            });
+
+        if (deletionEligibilityTimeDaysAgo !== undefined) {
+            const deletionEligibilityTime = new Date();
+            deletionEligibilityTime.setDate(deletionEligibilityTime.getDate() - deletionEligibilityTimeDaysAgo);
+            await this.db.updatePartial(ws.id, { deletionEligibilityTime: deletionEligibilityTime.toISOString() });
         }
+
+        return { ws, pbws };
     }
 
     @test(timeout(10000))
-    public async testFindWorkspacesForGarbageCollection() {
-        await Promise.all([this.db.store(this.ws), this.db.storeInstance(this.wsi1), this.db.storeInstance(this.wsi2)]);
-        const dbResult = await this.db.findWorkspacesForGarbageCollection(14, 10);
+    public async testFindEligibleWorkspacesForSoftDeletion_markedEligible() {
+        this.ws.deletionEligibilityTime = this.timeWs;
+        await Promise.all([
+            this.db.store(this.ws),
+            this.db.storeInstance(this.wsi1),
+            this.db.storeInstance(this.wsi2),
+            this.db.storeInstance(this.wsi3),
+        ]);
+        const dbResult = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(this.timeAfter), 10);
         expect(dbResult[0].id).to.eq(this.ws.id);
         expect(dbResult[0].ownerId).to.eq(this.ws.ownerId);
     }
 
     @test(timeout(10000))
-    public async testFindWorkspacesForGarbageCollection_no_instance() {
-        await Promise.all([this.db.store(this.ws)]);
-        const dbResult = await this.db.findWorkspacesForGarbageCollection(14, 10);
-        expect(dbResult[0].id).to.eq(this.ws.id);
-        expect(dbResult[0].ownerId).to.eq(this.ws.ownerId);
-    }
-
-    @test(timeout(10000))
-    public async testFindWorkspacesForGarbageCollection_latelyUsed() {
-        this.wsi2.creationTime = new Date().toISOString();
-        await Promise.all([this.db.store(this.ws), this.db.storeInstance(this.wsi1), this.db.storeInstance(this.wsi2)]);
-        const dbResult = await this.db.findWorkspacesForGarbageCollection(14, 10);
+    public async testFindEligibleWorkspacesForSoftDeletion_notMarkedEligible() {
+        await Promise.all([
+            this.db.store(this.ws),
+            this.db.storeInstance(this.wsi1),
+            this.db.storeInstance(this.wsi2),
+            this.db.storeInstance(this.wsi3),
+        ]);
+        const dbResult = await this.db.findEligibleWorkspacesForSoftDeletion(new Date(this.timeAfter), 10);
         expect(dbResult.length).to.eq(0);
     }
 
@@ -778,6 +803,7 @@ class WorkspaceDBSpec {
             {
                 id: "1",
                 ownerId,
+                contentDeletedTime: d20180131,
             },
         ]);
     }

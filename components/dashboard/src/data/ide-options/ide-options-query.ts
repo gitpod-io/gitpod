@@ -11,8 +11,8 @@ import { DisableScope, Scope } from "../workspaces/workspace-classes-query";
 import { useOrgSettingsQuery } from "../organizations/org-settings-query";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useMemo } from "react";
-import { useCurrentOrg } from "../organizations/orgs-query";
 import { useConfiguration } from "../configurations/configuration-queries";
+import { useDeepCompareMemoize } from "use-deep-compare-effect";
 
 const DEFAULT_WS_EDITOR = "code";
 
@@ -66,16 +66,16 @@ interface FilterOptions {
     ignoreScope?: DisableScope[];
 }
 export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefined, options?: FilterOptions) => {
-    const organizationId = useCurrentOrg().data?.id;
     const { data: orgSettings, isLoading: isLoadingOrgSettings } = useOrgSettingsQuery();
     const { data: installationOptions, isLoading: isLoadingInstallationCls } = useIDEOptions();
-    const { data: configuration, isLoading: isLoadingConfiguration } = useConfiguration(configurationId ?? "");
-    let isLoading = isLoadingOrgSettings || isLoadingInstallationCls || isLoadingConfiguration;
-    if (!organizationId) {
-        // If there's no orgID set (i.e. User onboarding page), isLoadingOrgSettings will always be true
-        // So we will filter it out
-        isLoading = isLoadingInstallationCls || isLoadingConfiguration;
-    }
+    const { data: configuration, isLoading: isLoadingConfiguration } = useConfiguration(configurationId);
+    const isLoading = isLoadingOrgSettings || isLoadingInstallationCls || isLoadingConfiguration;
+    const depItems = [
+        installationOptions,
+        options?.ignoreScope,
+        orgSettings,
+        configuration?.workspaceSettings?.restrictedEditorNames,
+    ];
     const data = useMemo(() => {
         return getAllowedWorkspaceEditors(
             installationOptions,
@@ -83,13 +83,11 @@ export const useAllowedWorkspaceEditorsMemo = (configurationId: string | undefin
             configuration?.workspaceSettings?.restrictedEditorNames,
             options,
         );
+        // react useMemo is using `Object.is` to compare dependencies so array / object will make re-render re-call useMemo,
+        // see also https://react.dev/reference/react/useMemo#every-time-my-component-renders-the-calculation-in-usememo-re-runs
+        //
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        installationOptions,
-        options?.ignoreScope,
-        orgSettings,
-        configuration?.workspaceSettings?.restrictedEditorNames,
-    ]);
+    }, [useDeepCompareMemoize(depItems)]);
     return { ...data, isLoading, usingConfigurationId: configuration?.id };
 };
 

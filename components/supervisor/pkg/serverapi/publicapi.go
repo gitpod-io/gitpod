@@ -7,15 +7,14 @@ package serverapi
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	backoff "github.com/cenkalti/backoff/v4"
-	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -34,6 +33,7 @@ type APIInterface interface {
 	OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error)
 	UpdateGitStatus(ctx context.Context, status *gitpod.WorkspaceInstanceRepoStatus) (err error)
 	WorkspaceUpdates(ctx context.Context) (<-chan *gitpod.WorkspaceInstance, error)
+	SendHeartbeat(ctx context.Context) (err error)
 
 	// Metrics
 	RegisterMetrics(registry *prometheus.Registry) error
@@ -57,20 +57,11 @@ type ServiceConfig struct {
 }
 
 type Service struct {
-	cfg         *ServiceConfig
-	experiments experiments.Client
-
+	cfg   *ServiceConfig
 	token string
 
-	// gitpodService server API
-	gitpodService gitpod.APIInterface
 	// publicAPIConn public API publicAPIConn
 	publicAPIConn *grpc.ClientConn
-
-	// usingPublicAPI is using atomic type to avoid reconnect when configcat value change
-	usingPublicAPI atomic.Bool
-	// onUsingPublicAPI which will only used in instanceUpdate config change notify
-	onUsingPublicAPI chan struct{}
 
 	// subs is the subscribers of workspaceUpdates
 	subs     map[chan *gitpod.WorkspaceInstance]struct{}
@@ -79,9 +70,32 @@ type Service struct {
 	apiMetrics *ClientMetrics
 }
 
+// SendHeartbeat implements APIInterface.
+func (s *Service) SendHeartbeat(ctx context.Context) (err error) {
+	if s == nil {
+		return errNotConnected
+	}
+	startTime := time.Now()
+	defer func() {
+		s.apiMetrics.ProcessMetrics("SendHeartbeat", err, startTime)
+	}()
+
+	workspaceID := s.cfg.WorkspaceID
+	service := v1.NewIDEClientServiceClient(s.publicAPIConn)
+
+	payload := &v1.SendHeartbeatRequest{
+		WorkspaceId: workspaceID,
+	}
+	_, err = service.SendHeartbeat(ctx, payload)
+	if err != nil {
+		log.WithField("method", "SendHeartbeat").WithError(err).Error("failed to call PublicAPI")
+	}
+	return err
+}
+
 var _ APIInterface = (*Service)(nil)
 
-func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.TokenServiceServer, exps experiments.Client) *Service {
+func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.TokenServiceServer) *Service {
 	tknres, err := tknsrv.GetToken(context.Background(), &api.GetTokenRequest{
 		Kind: KindGitpod,
 		Host: cfg.Host,
@@ -90,46 +104,26 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 			"function:openPort",
 			"function:trackEvent",
 			"function:getWorkspace",
+			"function:sendHeartBeat",
 		},
 	})
 	if err != nil {
 		log.WithError(err).Error("cannot get token for Gitpod API")
 		return nil
 	}
-	// server api
-	gitpodService, err := gitpod.ConnectToServer(cfg.Endpoint, gitpod.ConnectToServerOpts{
-		Token: tknres.Token,
-		Log:   log.Log,
-		ExtraHeaders: map[string]string{
-			"User-Agent":              "gitpod/supervisor",
-			"X-Workspace-Instance-Id": cfg.InstanceID,
-			"X-Client-Version":        cfg.SupervisorVersion,
-		},
-	})
-	if err != nil {
-		log.WithError(err).Error("cannot connect to Gitpod API")
-		return nil
-	}
 
 	service := &Service{
-		token:            tknres.Token,
-		gitpodService:    gitpodService,
-		cfg:              cfg,
-		experiments:      exps,
-		apiMetrics:       NewClientMetrics(),
-		onUsingPublicAPI: make(chan struct{}),
-		subs:             make(map[chan *gitpod.WorkspaceInstance]struct{}),
+		token:      tknres.Token,
+		cfg:        cfg,
+		apiMetrics: NewClientMetrics(),
+		subs:       make(map[chan *gitpod.WorkspaceInstance]struct{}),
 	}
 
 	// public api
 	service.tryConnToPublicAPI(ctx)
 
-	service.usingPublicAPI.Store(experiments.SupervisorUsePublicAPI(ctx, service.experiments, experiments.Attributes{
-		UserID: cfg.OwnerID,
-	}))
 	// start to listen on real instance updates
 	go service.onWorkspaceUpdates(ctx)
-	go service.observeConfigcatValue(ctx)
 
 	return service
 }
@@ -163,51 +157,14 @@ func (s *Service) tryConnToPublicAPI(ctx context.Context) {
 	}
 }
 
-func (s *Service) observeConfigcatValue(ctx context.Context) {
-	ticker := time.NewTicker(time.Second * 10)
-	for {
-		select {
-		case <-ctx.Done():
-			ticker.Stop()
-			return
-		case <-ticker.C:
-			usePublicAPI := experiments.SupervisorUsePublicAPI(ctx, s.experiments, experiments.Attributes{
-				UserID: s.cfg.OwnerID,
-			})
-			if prev := s.usingPublicAPI.Swap(usePublicAPI); prev != usePublicAPI {
-				if usePublicAPI {
-					log.Info("switch to use PublicAPI")
-				} else {
-					log.Info("switch to use ServerAPI")
-				}
-				select {
-				case s.onUsingPublicAPI <- struct{}{}:
-				default:
-				}
-			}
-		}
-	}
-}
-
-func (s *Service) usePublicAPI(ctx context.Context) bool {
-	if s.publicAPIConn == nil {
-		return false
-	}
-	return s.usingPublicAPI.Load()
-}
-
 func (s *Service) GetToken(ctx context.Context, query *gitpod.GetTokenSearchOptions) (res *gitpod.Token, err error) {
 	if s == nil {
 		return nil, errNotConnected
 	}
 	startTime := time.Now()
-	usePublicApi := s.usePublicAPI(ctx)
 	defer func() {
-		s.apiMetrics.ProcessMetrics(usePublicApi, "GetToken", err, startTime)
+		s.apiMetrics.ProcessMetrics("GetToken", err, startTime)
 	}()
-	if !usePublicApi {
-		return s.gitpodService.GetToken(ctx, query)
-	}
 
 	service := v1.NewUserServiceClient(s.publicAPIConn)
 	resp, err := service.GetGitToken(ctx, &v1.GetGitTokenRequest{
@@ -233,20 +190,16 @@ func (s *Service) UpdateGitStatus(ctx context.Context, status *gitpod.WorkspaceI
 		return errNotConnected
 	}
 	startTime := time.Now()
-	usePublicApi := s.usePublicAPI(ctx)
 	defer func() {
-		s.apiMetrics.ProcessMetrics(usePublicApi, "UpdateGitStatus", err, startTime)
+		s.apiMetrics.ProcessMetrics("UpdateGitStatus", err, startTime)
 	}()
 	workspaceID := s.cfg.WorkspaceID
-	if !usePublicApi {
-		return s.gitpodService.UpdateGitStatus(ctx, workspaceID, status)
-	}
 	service := v1.NewIDEClientServiceClient(s.publicAPIConn)
 	payload := &v1.UpdateGitStatusRequest{
 		WorkspaceId: workspaceID,
 	}
 	if status != nil {
-		payload.Status = &v1.GitStatus{
+		payload.Status = capGitStatusLength(&v1.GitStatus{
 			Branch:               status.Branch,
 			LatestCommit:         status.LatestCommit,
 			TotalUncommitedFiles: int32(status.TotalUncommitedFiles),
@@ -255,7 +208,7 @@ func (s *Service) UpdateGitStatus(ctx context.Context, status *gitpod.WorkspaceI
 			UncommitedFiles:      status.UncommitedFiles,
 			UnpushedCommits:      status.UnpushedCommits,
 			UntrackedFiles:       status.UntrackedFiles,
-		}
+		})
 	}
 	_, err = service.UpdateGitStatus(ctx, payload)
 	return
@@ -266,14 +219,10 @@ func (s *Service) OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePo
 		return nil, errNotConnected
 	}
 	startTime := time.Now()
-	usePublicApi := s.usePublicAPI(ctx)
 	defer func() {
-		s.apiMetrics.ProcessMetrics(usePublicApi, "OpenPort", err, startTime)
+		s.apiMetrics.ProcessMetrics("OpenPort", err, startTime)
 	}()
 	workspaceID := s.cfg.WorkspaceID
-	if !usePublicApi {
-		return s.gitpodService.OpenPort(ctx, workspaceID, port)
-	}
 	service := v1.NewWorkspacesServiceClient(s.publicAPIConn)
 
 	payload := &v1.UpdatePortRequest{
@@ -305,17 +254,13 @@ func (s *Service) OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePo
 // onWorkspaceUpdates listen to server and public API workspaceUpdates and publish to subscribers once Service created.
 func (s *Service) onWorkspaceUpdates(ctx context.Context) {
 	errChan := make(chan error)
-	processUpdate := func(usePublicAPI bool) context.CancelFunc {
+	processUpdate := func() context.CancelFunc {
 		childCtx, cancel := context.WithCancel(ctx)
-		if usePublicAPI {
-			go s.publicAPIWorkspaceUpdate(childCtx, errChan)
-		} else {
-			go s.serverWorkspaceUpdate(childCtx, errChan)
-		}
+		go s.publicAPIWorkspaceUpdate(childCtx, errChan)
 		return cancel
 	}
 	go func() {
-		cancel := processUpdate(s.usePublicAPI(ctx))
+		cancel := processUpdate()
 		defer func() {
 			cancel()
 		}()
@@ -328,10 +273,7 @@ func (s *Service) onWorkspaceUpdates(ctx context.Context) {
 				return
 			case <-ticker.C:
 				cancel()
-				cancel = processUpdate(s.usePublicAPI(ctx))
-			case <-s.onUsingPublicAPI:
-				cancel()
-				cancel = processUpdate(s.usePublicAPI(ctx))
+				cancel = processUpdate()
 			case err := <-errChan:
 				if errors.Is(err, context.Canceled) || errors.Is(err, io.EOF) {
 					continue
@@ -343,7 +285,7 @@ func (s *Service) onWorkspaceUpdates(ctx context.Context) {
 				log.WithField("method", "WorkspaceUpdates").WithError(err).Error("failed to listen")
 				cancel()
 				time.Sleep(time.Second * 2)
-				cancel = processUpdate(s.usePublicAPI(ctx))
+				cancel = processUpdate()
 			}
 		}
 	}()
@@ -377,7 +319,7 @@ func (s *Service) publicAPIWorkspaceUpdate(ctx context.Context, errChan chan err
 		var err error
 		defer func() {
 			if err != nil {
-				s.apiMetrics.ProcessMetrics(true, "WorkspaceUpdates", err, startTime)
+				s.apiMetrics.ProcessMetrics("WorkspaceUpdates", err, startTime)
 			}
 		}()
 		service := v1.NewWorkspacesServiceClient(s.publicAPIConn)
@@ -400,7 +342,7 @@ func (s *Service) publicAPIWorkspaceUpdate(ctx context.Context, errChan chan err
 	}
 	startTime := time.Now()
 	defer func() {
-		s.apiMetrics.ProcessMetrics(true, "WorkspaceUpdates", err, startTime)
+		s.apiMetrics.ProcessMetrics("WorkspaceUpdates", err, startTime)
 	}()
 	var data *v1.StreamWorkspaceStatusResponse
 	for {
@@ -422,47 +364,6 @@ func (s *Service) publicAPIWorkspaceUpdate(ctx context.Context, errChan chan err
 		}
 		s.subMutex.Unlock()
 	}
-}
-
-func (s *Service) serverWorkspaceUpdate(ctx context.Context, errChan chan error) {
-	workspaceID := s.cfg.WorkspaceID
-	ch, err := backoff.RetryWithData(func() (<-chan *gitpod.WorkspaceInstance, error) {
-		startTime := time.Now()
-		ch, err := s.gitpodService.WorkspaceUpdates(ctx, workspaceID)
-		defer func() {
-			if err != nil {
-				s.apiMetrics.ProcessMetrics(false, "WorkspaceUpdates", err, startTime)
-			}
-		}()
-		if err != nil {
-			log.WithError(err).Info("backoff failed to listen to serverAPI WorkspaceUpdates, try again")
-		}
-		return ch, err
-	}, backoff.WithContext(ConnBackoff, ctx))
-	if err != nil {
-		// we don't care about ctx canceled
-		if ctx.Err() != nil {
-			return
-		}
-		log.WithField("method", "WorkspaceUpdates").WithError(err).Error("failed to call serverAPI")
-		errChan <- err
-		return
-	}
-	startTime := time.Now()
-	defer func() {
-		s.apiMetrics.ProcessMetrics(false, "WorkspaceUpdates", ctx.Err(), startTime)
-	}()
-	for update := range ch {
-		s.subMutex.Lock()
-		for sub := range s.subs {
-			sub <- update
-		}
-		s.subMutex.Unlock()
-	}
-	if ctx.Err() != nil {
-		return
-	}
-	errChan <- io.EOF
 }
 
 var ConnBackoff = &backoff.ExponentialBackOff{
@@ -514,4 +415,48 @@ func workspaceStatusToWorkspaceInstance(status *v1.WorkspaceStatus) *gitpod.Work
 		instance.Status.ExposedPorts = append(instance.Status.ExposedPorts, info)
 	}
 	return instance
+}
+
+const GIT_STATUS_API_LIMIT_BYTES = 4096
+
+func capGitStatusLength(s *v1.GitStatus) *v1.GitStatus {
+	const MARGIN = 200                                     // bytes (we account for differences in JSON formatting, as well JSON escape characters in the static part of the status)
+	const API_BUDGET = GIT_STATUS_API_LIMIT_BYTES - MARGIN // bytes
+
+	// calculate JSON length in bytes
+	bytes, err := json.Marshal(s)
+	if err != nil {
+		log.WithError(err).Warn("cannot marshal GitStatus to calculate byte length")
+		s.UncommitedFiles = nil
+		s.UnpushedCommits = nil
+		s.UntrackedFiles = nil
+		return s
+	}
+	if len(bytes) < API_BUDGET {
+		return s
+	}
+
+	// roughly estimate how many bytes we have left for the path arrays (containing long strings)
+	budget := API_BUDGET - len(s.Branch) - len(s.LatestCommit)
+	bytesUsed := 0
+	const PLACEHOLDER = "..."
+	capArrayAtByteLimit := func(arr []string) []string {
+		result := make([]string, 0, len(arr))
+		for _, s := range arr {
+			bytesRequired := len(s) + 4 // 4 bytes for the JSON encoding
+			if bytesUsed+bytesRequired+len(PLACEHOLDER) > budget {
+				result = append(result, PLACEHOLDER)
+				bytesUsed += len(PLACEHOLDER) + 4
+				break
+			}
+			result = append(result, s)
+			bytesUsed += bytesRequired
+		}
+		return result
+	}
+	s.UncommitedFiles = capArrayAtByteLimit(s.UncommitedFiles)
+	s.UnpushedCommits = capArrayAtByteLimit(s.UnpushedCommits)
+	s.UntrackedFiles = capArrayAtByteLimit(s.UntrackedFiles)
+
+	return s
 }

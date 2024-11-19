@@ -37,6 +37,7 @@ import { UserService } from "./user-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -213,6 +214,14 @@ export class UserController {
                 res.cookie(cookie.name, cookie.value, cookie.opts);
                 reportJWTCookieIssued();
 
+                // If returnTo was passed and it's safe, redirect to it
+                const returnTo = this.getSafeReturnToParam(req);
+                if (returnTo) {
+                    log.info(`Redirecting after OTS login ${returnTo}`);
+                    res.redirect(returnTo);
+                    return;
+                }
+
                 res.sendStatus(200);
             }),
         );
@@ -269,7 +278,7 @@ export class UserController {
             }
 
             // clear cookies
-            this.sessionHandler.clearSessionCookie(res, this.config);
+            this.sessionHandler.clearSessionCookie(res);
 
             // then redirect
             log.info(logContext, "(Logout) Redirecting...", { redirectToUrl, ...logPayload });
@@ -618,7 +627,7 @@ export class UserController {
             return returnToURL;
         }
 
-        log.debug("The redirect URL does not match", { query: req.query });
+        log.debug("The redirect URL does not match", { query: new TrustedValue(req.query).value });
         return;
     }
 

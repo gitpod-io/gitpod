@@ -1,0 +1,145 @@
+{
+  "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-ff38b98b7dde4929159bcaeec68d178898dc2139",
+  "ideOptions": {
+    "options": {
+      "code": {
+        "orderKey": "00",
+        "allowPin": true,
+        "title": "VS Code",
+        "type": "browser",
+        "logo": "https://ide.gitpod.io/image/ide-logo/vscode.svg",
+        "label": "Browser",
+        "resolveImageDigest": true,
+        "imageVersion": "1.90.1",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9",
+        "imageLayers": [
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
+        ],
+        "versions": [
+          {
+            "version": "1.90.1",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+            "imageLayers": []
+          }
+        ]
+      },
+      "code-desktop": {
+        "orderKey": "02",
+        "allowPin": true,
+        "title": "VS Code",
+        "type": "desktop",
+        "logo": "https://ide.gitpod.io/image/ide-logo/vscode.svg",
+        "imageVersion": "1.89.1",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:commit-c2b7421628ed5a5fb618817a4fd1549684659c2d",
+        "imageLayers": [
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
+        ]
+      },
+      "goland": {
+        "orderKey": "05",
+        "allowPin": true,
+        "title": "GoLand",
+        "type": "desktop",
+        "resolveImageDigest": true,
+        "logo": "https://ide.gitpod.io/image/ide-logo/golandLogo.svg",
+        "imageVersion": "1.90.1",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+        "imageLayers": [
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
+        ],
+        "versions": [
+          {
+            "version": "1.89.1",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
+            "imageLayers": [
+              "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
+              "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
+            ]
+          }
+        ]
+      },
+      "intellij": {
+        "orderKey": "04",
+        "allowPin": true,
+        "title": "IntelliJ IDEA",
+        "type": "desktop",
+        "logo": "https://ide.gitpod.io/image/ide-logo/intellijIdeaLogo.svg",
+        "imageVersion": "1.90.1",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+        "imageLayers": [
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
+        ]
+      },
+      "phpstorm": {
+        "orderKey": "07",
+        "allowPin": true,
+        "title": "PhpStorm",
+        "type": "desktop",
+        "logo": "https://ide.gitpod.io/image/ide-logo/phpstormLogo.svg",
+        "imageVersion": "1.90.1",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+        "imageLayers": [
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
+        ]
+      },
+      "pycharm": {
+        "orderKey": "06",
+        "allowPin": false,
+        "title": "PyCharm",
+        "type": "desktop",
+        "logo": "https://ide.gitpod.io/image/ide-logo/pycharmLogo.svg",
+        "imageVersion": "1.90.1",
+        "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+        "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+        "imageLayers": [
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
+          "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
+        ]
+      }
+    },
+    "defaultIde": "code",
+    "defaultDesktopIde": "code-desktop",
+    "clients": {
+      "jetbrains-gateway": {
+        "defaultDesktopIDE": "intellij",
+        "desktopIDEs": [
+          "intellij",
+          "goland",
+          "pycharm",
+          "phpstorm"
+        ],
+        "installationSteps": [
+          "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
+        ]
+      },
+      "vscode": {
+        "defaultDesktopIDE": "code-desktop",
+        "desktopIDEs": [
+          "code-desktop"
+        ],
+        "installationSteps": [
+          "If you don't see an open dialog in your browser, make sure you have \u003ca target='_blank' class='gp-link' href='https://code.visualstudio.com/download'\u003eVS Code\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
+        ]
+      },
+      "vscode-insiders": {
+        "defaultDesktopIDE": "code-desktop",
+        "desktopIDEs": [
+          "code-desktop"
+        ],
+        "installationSteps": [
+          "If you don't see an open dialog in your browser, make sure you have \u003ca target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'\u003eVS Code Insiders\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
+        ]
+      }
+    }
+  }
+}

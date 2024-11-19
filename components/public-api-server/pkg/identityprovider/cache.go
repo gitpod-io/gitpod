@@ -97,6 +97,7 @@ func (imc *InMemoryCache) PublicKeys(ctx context.Context) ([]byte, error) {
 			Key:       key.Key,
 			KeyID:     key.ID,
 			Algorithm: string(jose.RS256),
+			Use:       "sig",
 		})
 	}
 
@@ -197,6 +198,7 @@ func serializePublicKeyAsJSONWebKey(keyID string, key *rsa.PublicKey) ([]byte, e
 		Key:       key,
 		KeyID:     keyID,
 		Algorithm: string(jose.RS256),
+		Use:       "sig",
 	}
 	return json.Marshal(publicKey)
 }

@@ -10,6 +10,7 @@ export interface StartWorkspaceOptions {
     workspaceClass?: string;
     ideSettings?: IDESettings;
     autostart?: boolean;
+    showExamples?: boolean;
 }
 export namespace StartWorkspaceOptions {
     // The workspace class to use for the workspace. If not specified, the default workspace class is used.
@@ -20,6 +21,9 @@ export namespace StartWorkspaceOptions {
 
     // whether the workspace should automatically start
     export const AUTOSTART = "autostart";
+
+    // whether to show example repositories
+    export const SHOW_EXAMPLES = "showExamples";
 
     export function parseSearchParams(search: string): StartWorkspaceOptions {
         const params = new URLSearchParams(search);
@@ -45,6 +49,11 @@ export namespace StartWorkspaceOptions {
         if (params.get(StartWorkspaceOptions.AUTOSTART)) {
             options.autostart = params.get(StartWorkspaceOptions.AUTOSTART) === "true";
         }
+
+        if (params.get(StartWorkspaceOptions.SHOW_EXAMPLES)) {
+            options.showExamples = params.get(StartWorkspaceOptions.SHOW_EXAMPLES) === "true";
+        }
+
         return options;
     }
 
@@ -60,6 +69,9 @@ export namespace StartWorkspaceOptions {
         }
         if (options.autostart) {
             params.set(StartWorkspaceOptions.AUTOSTART, "true");
+        }
+        if (options.showExamples) {
+            params.set(StartWorkspaceOptions.SHOW_EXAMPLES, "true");
         }
         return params.toString();
     }

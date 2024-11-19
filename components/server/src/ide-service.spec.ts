@@ -7,6 +7,7 @@
 import { User } from "@gitpod/gitpod-protocol";
 import * as chai from "chai";
 import { IDEService } from "./ide-service";
+import { IDESettingsVersion } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 const expect = chai.expect;
 
 describe("ide-service", function () {
@@ -24,7 +25,7 @@ describe("ide-service", function () {
             expect(result).to.undefined;
         });
 
-        it("with settingVersion 2.0 should be undefined", function () {
+        it("with settingVersion 2.0 should be latest", function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -32,6 +33,48 @@ describe("ide-service", function () {
                 additionalData: {
                     ideSettings: {
                         settingVersion: "2.0",
+                        defaultIde: "code-latest",
+                        useDesktopIde: false,
+                    },
+                },
+            };
+            const result = ideService.migrateSettings(user);
+            expect(result).to.deep.equal({
+                settingVersion: IDESettingsVersion,
+                defaultIde: "code",
+                useLatestVersion: true,
+            });
+        });
+
+        it("with settingVersion 2.0 should be latest and remove intellij-previous", function () {
+            const user: User = {
+                id: "string",
+                creationDate: "string",
+                identities: [],
+                additionalData: {
+                    ideSettings: {
+                        settingVersion: "2.0",
+                        defaultIde: "intellij-previous",
+                        useDesktopIde: false,
+                    },
+                },
+            };
+            const result = ideService.migrateSettings(user);
+            expect(result).to.deep.equal({
+                settingVersion: IDESettingsVersion,
+                defaultIde: "code",
+                useLatestVersion: false,
+            });
+        });
+
+        it("with settingVersion latest should be undefined", function () {
+            const user: User = {
+                id: "string",
+                creationDate: "string",
+                identities: [],
+                additionalData: {
+                    ideSettings: {
+                        settingVersion: IDESettingsVersion,
                         defaultIde: "code-latest",
                         useDesktopIde: false,
                     },

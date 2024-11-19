@@ -1,5 +1,6 @@
 name: JB Stable IDEs Update
 on:
+    workflow_call:
     workflow_dispatch:
     schedule:
         # At 11:00 on every day-of-week from Monday through Friday.
@@ -10,21 +11,30 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - name: Install dependencies
+              run: |
+                curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.1/oci-tool_0.2.1_linux_amd64.tar.gz | tar xz -C /usr/local/bin
+                chmod +x /usr/local/bin/oci-tool
+                cd ./components/ide/gha-update-image
+                yarn
+                npm i -g bun
             - name: Check for updates
               run: |
-                  cd ./components/ide/jetbrains/image/gha-update-image
-                  yarn install
-                  node index.js
-                  git diff
+                cd ./components/ide/gha-update-image
+                bun run index-jb.ts
+                git diff
 
             - name: Detect file changes
               id: changes
               run: |
-                echo "::set-output name=gradle-stable::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep backend-plugin/gradle-stable.properties$ | xargs)"
-                echo "::set-output name=workspaceYaml::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep WORKSPACE.yaml$ | xargs)"
+                if [ $(git status --porcelain | wc -l) -gt 0 ]; then
+                  echo "dirty=true" >> $GITHUB_OUTPUT
+                else
+                  echo "dirty=false" >> $GITHUB_OUTPUT
+                fi
             - name: Create Pull Request
-              if: ${{steps.changes.outputs.gradle-stable || steps.changes.outputs.workspaceYaml}}
-              uses: peter-evans/create-pull-request@v4
+              if: ${{steps.changes.outputs.dirty}}
+              uses: peter-evans/create-pull-request@v6
               with:
                   title: "[JetBrains] Update IDE images to new build version"
                   body: |
@@ -35,7 +45,6 @@ jobs:
 
                       Merge if:
                       - [ ] Tests are green, if something breaks then add tests for regressions.
-                      - [ ] Warmup is working properly using IntelliJ and spring-petclinic project sample
 
                       <details>
                       <summary>if you want to test manually for some reasons</summary>
@@ -47,6 +56,7 @@ jobs:
                       5. Verify that the workspace starts successfully
                       6. Verify that the IDE opens successfully
                       7. Verify that the version of the IDE corresponds to the one being updated in this PR
+                      8. Warmup is working properly using IntelliJ and spring-petclinic project sample
 
                       The following resources should help, in case something goes wrong (e.g. workspaces don't start):
 

@@ -12,17 +12,26 @@ import {
 import { RepositoryUnauthorizedError } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 
 export namespace NotFoundError {
-    export async function create(token: Token | undefined, user: User, host: string, owner: string, repoName: string) {
-        const lastUpdate = (token && token.updateDate) || "";
+    export async function create(
+        token: Token | undefined,
+        user: User,
+        host: string,
+        owner: string,
+        repoName: string,
+        errorMessage: string = "Repository not found.",
+    ) {
+        const lastUpdate = (token && token.updateDate) ?? "";
         const userScopes = token ? [...token.scopes] : [];
 
         const userIsOwner = owner == user.name; // TODO: shouldn't this be a comparison with `identity.authName`?
         return new RepositoryNotFoundError({
             host,
             owner,
+            repoName,
             userIsOwner,
             userScopes,
             lastUpdate,
+            errorMessage,
         });
     }
     export function is(error: any): error is RepositoryNotFoundError {

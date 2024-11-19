@@ -74,19 +74,6 @@ function waitUntilAllPodsAreReady {
   fi
 }
 
-function readWerftSecret {
-    local name
-    local key
-    name="$1"
-    key="$2"
-    kubectl \
-        --kubeconfig "${DEV_KUBE_PATH}" \
-        --context "${DEV_KUBE_CONTEXT}" \
-        --namespace werft \
-    get secret "${name}" -o jsonpath="{.data.${key}}" \
-  | base64 -d
-}
-
 function diff-apply {
   local context=$1
   shift

@@ -83,7 +83,7 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 	go func() {
 		term.waitErr = cmd.Wait()
 		close(term.waitDone)
-		_ = m.CloseTerminal(context.Background(), alias)
+		_ = m.CloseTerminal(context.Background(), alias, false)
 	}()
 
 	return alias, nil
@@ -117,11 +117,11 @@ func (m *Mux) Close(ctx context.Context) {
 }
 
 // CloseTerminal closes a terminal and ends the process that runs in it.
-func (m *Mux) CloseTerminal(ctx context.Context, alias string) error {
+func (m *Mux) CloseTerminal(ctx context.Context, alias string, forceSuccess bool) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	return m.doClose(ctx, alias)
+	return m.doClose(ctx, alias, forceSuccess)
 }
 
 // doClose closes a terminal and ends the process that runs in it.
@@ -129,7 +129,7 @@ func (m *Mux) CloseTerminal(ctx context.Context, alias string) error {
 // to stop. If it still runs after that time, it receives SIGKILL.
 //
 // Callers are expected to hold mu.
-func (m *Mux) doClose(ctx context.Context, alias string) error {
+func (m *Mux) doClose(ctx context.Context, alias string, forceSuccess bool) error {
 	term, ok := m.terms[alias]
 	if !ok {
 		return ErrNotFound
@@ -137,6 +137,10 @@ func (m *Mux) doClose(ctx context.Context, alias string) error {
 
 	log := log.WithField("alias", alias)
 	log.Info("closing terminal")
+
+	if forceSuccess {
+		term.ForceSuccess = true
+	}
 
 	err := term.Close(ctx)
 	if err != nil {
@@ -315,6 +319,9 @@ type Term struct {
 	defaultTitle string
 	title        string
 
+	// ForceSuccess overrides the process' exit code to 0
+	ForceSuccess bool
+
 	Stdout *multiWriter
 
 	waitErr  error
@@ -484,8 +491,8 @@ func (l *multiWriterListener) CloseWithError(err error) error {
 		if err != nil {
 			l.closeErr = err
 		}
-		close(l.closeChan)
 		l.closed = true
+		close(l.closeChan)
 
 		// actual cleanup happens in a go routine started by Listen()
 	})
@@ -561,17 +568,19 @@ func (mw *multiWriter) ListenWithOptions(options TermListenOptions) io.ReadClose
 	go func() {
 		// listener cleanup on close
 		<-closeChan
+
 		if res.closeErr != nil {
 			log.WithError(res.closeErr).Error("terminal listener droped out")
 			w.CloseWithError(res.closeErr)
 		} else {
 			w.Close()
 		}
-		close(cchan)
 
 		mw.mu.Lock()
+		defer mw.mu.Unlock()
+		close(cchan)
+
 		delete(mw.listener, res)
-		mw.mu.Unlock()
 	}()
 
 	mw.listener[res] = struct{}{}

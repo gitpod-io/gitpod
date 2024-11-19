@@ -38,9 +38,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 },
             }),
         } as any as ConfigProvider);
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         userSvc = container.get<UserService>(UserService);
         orgSvc = container.get<OrganizationService>(OrganizationService);
         workspaceSvc = container.get<WorkspaceService>(WorkspaceService);

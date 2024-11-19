@@ -43,6 +43,11 @@ export enum AuthProviderType {
    * @generated from enum value: AUTH_PROVIDER_TYPE_BITBUCKET_SERVER = 4;
    */
   BITBUCKET_SERVER = 4,
+
+  /**
+   * @generated from enum value: AUTH_PROVIDER_TYPE_AZURE_DEVOPS = 5;
+   */
+  AZURE_DEVOPS = 5,
 }
 // Retrieve enum metadata with: proto3.getEnumType(AuthProviderType)
 proto3.util.setEnumType(AuthProviderType, "gitpod.v1.AuthProviderType", [
@@ -51,6 +56,7 @@ proto3.util.setEnumType(AuthProviderType, "gitpod.v1.AuthProviderType", [
   { no: 2, name: "AUTH_PROVIDER_TYPE_GITLAB" },
   { no: 3, name: "AUTH_PROVIDER_TYPE_BITBUCKET" },
   { no: 4, name: "AUTH_PROVIDER_TYPE_BITBUCKET_SERVER" },
+  { no: 5, name: "AUTH_PROVIDER_TYPE_AZURE_DEVOPS" },
 ]);
 
 /**
@@ -449,6 +455,16 @@ export class UpdateAuthProviderRequest extends Message<UpdateAuthProviderRequest
    */
   clientSecret?: string;
 
+  /**
+   * @generated from field: optional string authorization_url = 4;
+   */
+  authorizationUrl?: string;
+
+  /**
+   * @generated from field: optional string token_url = 5;
+   */
+  tokenUrl?: string;
+
   constructor(data?: PartialMessage<UpdateAuthProviderRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -460,6 +476,8 @@ export class UpdateAuthProviderRequest extends Message<UpdateAuthProviderRequest
     { no: 1, name: "auth_provider_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "client_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 3, name: "client_secret", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 4, name: "authorization_url", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 5, name: "token_url", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateAuthProviderRequest {
@@ -769,6 +787,16 @@ export class OAuth2Config extends Message<OAuth2Config> {
    */
   clientSecret = "";
 
+  /**
+   * @generated from field: string authorization_url = 3;
+   */
+  authorizationUrl = "";
+
+  /**
+   * @generated from field: string token_url = 4;
+   */
+  tokenUrl = "";
+
   constructor(data?: PartialMessage<OAuth2Config>) {
     super();
     proto3.util.initPartial(data, this);
@@ -779,6 +807,8 @@ export class OAuth2Config extends Message<OAuth2Config> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "client_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "client_secret", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "authorization_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "token_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OAuth2Config {

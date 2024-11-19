@@ -49,9 +49,10 @@ func TestAPIs(t *testing.T) {
 }
 
 var (
-	ctx       context.Context
-	cancel    context.CancelFunc
-	wsMetrics *controllerMetrics
+	ctx                context.Context
+	cancel             context.CancelFunc
+	wsMetrics          *controllerMetrics
+	RegisterSubscriber func(func(*workspacev1.Workspace))
 )
 
 var _ = BeforeSuite(func() {
@@ -116,6 +117,15 @@ var _ = BeforeSuite(func() {
 	Expect(timeoutReconciler.SetupWithManager(k8sManager)).To(Succeed())
 
 	ctx, cancel = context.WithCancel(context.Background())
+	subscriberReconciler, err := NewSubscriberReconciler(k8sManager.GetClient(), &conf)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(subscriberReconciler.SetupWithManager(ctx, k8sManager)).To(Succeed())
+	RegisterSubscriber = func(onReconcile func(*workspacev1.Workspace)) {
+		subscriberReconciler.OnReconcile = func(ctx context.Context, ws *workspacev1.Workspace) {
+			onReconcile(ws)
+		}
+	}
+
 	_ = createNamespace(secretsNamespace)
 
 	go func() {
@@ -149,7 +159,9 @@ func newTestConfig() config.Configuration {
 				Name: "default",
 			},
 		},
-		WorkspaceURLTemplate: "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
+		WorkspaceURLTemplate:    "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
+		PodRecreationMaxRetries: 3,
+		PodRecreationBackoff:    util.Duration(500 * time.Millisecond),
 	}
 }
 

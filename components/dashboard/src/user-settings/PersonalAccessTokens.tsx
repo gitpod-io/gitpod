@@ -6,7 +6,7 @@
 
 import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
 import { useCallback, useEffect, useState } from "react";
-import { Redirect, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { personalAccessTokensService } from "../service/public-api";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { settingsPathPersonalAccessTokenCreate, settingsPathPersonalAccessTokenEdit } from "./settings.routes";
@@ -21,17 +21,10 @@ import TokenEntry from "./TokenEntry";
 import ShowTokenModal from "./ShowTokenModal";
 import Pagination from "../Pagination/Pagination";
 import { Heading2, Subheading } from "../components/typography/headings";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { Button } from "@podkit/buttons/Button";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 
 export default function PersonalAccessTokens() {
-    const enablePersonalAccessTokens = useFeatureFlag("personalAccessTokensEnabled");
-
-    if (!enablePersonalAccessTokens) {
-        return <Redirect to="/" />;
-    }
-
     return (
         <div>
             <PageWithSettingsSubMenu>
@@ -169,14 +162,7 @@ function ListAccessTokensView() {
         <>
             <div className="flex items-center sm:justify-between mb-4">
                 <div>
-                    <Heading2>
-                        Access Tokens{" "}
-                        <PillLabel type="warn" className="font-semibold self-center py-0.5 px-1.5">
-                            <a href="https://www.gitpod.io/docs/references/gitpod-releases">
-                                <span className="text-xs">BETA</span>
-                            </a>
-                        </PillLabel>
-                    </Heading2>
+                    <Heading2 className="flex gap-4 items-center">Access Tokens</Heading2>
                     <Subheading>
                         Create or regenerate access tokens.{" "}
                         <a
@@ -186,15 +172,6 @@ function ListAccessTokensView() {
                             rel="noreferrer"
                         >
                             Learn more
-                        </a>
-                        &nbsp;&middot;&nbsp;
-                        <a
-                            className="gp-link"
-                            href="https://github.com/gitpod-io/gitpod/issues/15433"
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            Send feedback
                         </a>
                     </Subheading>
                 </div>

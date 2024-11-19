@@ -9,7 +9,7 @@ import { inject, injectable } from "inversify";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { UnauthorizedError } from "../errors";
 import { TokenProvider } from "../user/token-provider";
-import { BitbucketServerOAuthScopes } from "./bitbucket-server-oauth-scopes";
+import { BitbucketServerOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class BitbucketServerTokenHelper {

@@ -143,7 +143,7 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
     ): Promise<string[]> {
         const api = await this.apiFactory.create(user);
         // TODO(janx): To get more results than Bitbucket API's max pagelen (seems to be 100), pagination should be handled.
-        // The additional property 'page' may be helfpul.
+        // The additional property 'page' may be helpful.
         const result = await api.repositories.listCommitsAt({
             workspace: owner,
             repo_slug: repo,

@@ -15,6 +15,7 @@ import {
 } from "../prometheus-metrics";
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 @injectable()
 export class StripeService {
@@ -31,14 +32,14 @@ export class StripeService {
             if (!this.config.stripeSecrets?.secretKey) {
                 throw new Error("Stripe is not properly configured");
             }
-            this._stripe = new Stripe(this.config.stripeSecrets.secretKey, { apiVersion: "2020-08-27" });
+            this._stripe = new Stripe(this.config.stripeSecrets.secretKey, { apiVersion: "2024-04-10" });
         }
         return this._stripe;
     }
 
     async findCustomerByAttributionId(attributionId: string): Promise<string | undefined> {
         try {
-            const resp = await this.billingService.getStripeCustomer({ attributionId: attributionId });
+            const resp = await this.billingService.getStripeCustomer({ attributionId });
             return resp.customer?.id;
         } catch (e) {
             if (e.code === grpc.status.NOT_FOUND) {
@@ -85,6 +86,23 @@ export class StripeService {
             });
         }
         return result.data[0]?.id;
+    }
+
+    /**
+     * Cancels every subscription belonging to an `attributionId`
+     * @see https://docs.stripe.com/api/subscriptions/list & https://docs.stripe.com/api/subscriptions/cancel
+     */
+    async cancelCustomerSubscriptions(attributionId: AttributionId): Promise<void> {
+        await reportStripeOutcome("subscriptions_cancel", async () => {
+            const stripe = this.getStripe();
+
+            const customer = await this.findCustomerByAttributionId(AttributionId.render(attributionId));
+            const activeSubscriptions = await stripe.subscriptions.list({ customer });
+
+            for (const subscription of activeSubscriptions.data) {
+                await stripe.subscriptions.cancel(subscription.id);
+            }
+        });
     }
 
     async getPriceInformation(attributionId: string): Promise<string> {

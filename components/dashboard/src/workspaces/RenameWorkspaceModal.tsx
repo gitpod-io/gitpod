@@ -11,31 +11,42 @@ import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { useUpdateWorkspaceMutation } from "../data/workspaces/update-workspace-mutation";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
+export const NAME_PREFIX = "named:";
+export function toWorkspaceName(name: string): string {
+    // unsetting the name
+    if (name.trim().length === 0) {
+        return "no-name";
+    }
+    return `${NAME_PREFIX}${name}`;
+}
+
+export function fromWorkspaceName(workspace?: Workspace): string | undefined {
+    if (workspace?.metadata?.name?.startsWith(NAME_PREFIX)) {
+        return workspace.metadata.name.slice(NAME_PREFIX.length);
+    }
+    return undefined;
+}
+
 type Props = {
     workspace: Workspace;
     onClose(): void;
 };
 export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onClose }) => {
     const [errorMessage, setErrorMessage] = useState("");
-    const [name, setName] = useState(workspace.metadata?.name || "");
+    const [name, setName] = useState(fromWorkspaceName(workspace) || "");
     const updateWorkspace = useUpdateWorkspaceMutation();
 
     const updateWorkspaceDescription = useCallback(async () => {
         try {
-            if (name.length === 0) {
-                setErrorMessage("Description cannot not be empty.");
-                return;
-            }
-
             if (name.length > 250) {
-                setErrorMessage("Description is too long for readability.");
+                setErrorMessage("Name is too long for readability.");
                 return;
             }
 
             setErrorMessage("");
 
             // Using mutateAsync here so we can close the modal after it completes successfully
-            await updateWorkspace.mutateAsync({ workspaceId: workspace.id, metadata: { name } });
+            await updateWorkspace.mutateAsync({ workspaceId: workspace.id, metadata: { name: toWorkspaceName(name) } });
 
             // Close the modal
             onClose();
@@ -46,7 +57,7 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
 
     return (
         <Modal visible onClose={onClose} onSubmit={updateWorkspaceDescription}>
-            <ModalHeader>Rename Workspace Description</ModalHeader>
+            <ModalHeader>Rename Workspace</ModalHeader>
             <ModalBody>
                 {errorMessage.length > 0 ? (
                     <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{errorMessage}</div>
@@ -60,7 +71,7 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                     onChange={(e) => setName(e.target.value)}
                 />
                 <div className="mt-1">
-                    <p className="text-gray-500">Change the description to make it easier to go back to a workspace.</p>
+                    <p className="text-gray-500">Change the name to better identify the workspace.</p>
                     <p className="text-gray-500">Workspace URLs and endpoints will remain the same.</p>
                 </div>
             </ModalBody>
@@ -69,7 +80,7 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                     Cancel
                 </Button>
                 <LoadingButton type="submit" loading={updateWorkspace.isLoading}>
-                    Update Description
+                    Update Name
                 </LoadingButton>
             </ModalFooter>
         </Modal>

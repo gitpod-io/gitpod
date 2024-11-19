@@ -1432,7 +1432,8 @@ proto.contentservice.GitInitializer.toObject = function(includeInstance, msg) {
     targetMode: jspb.Message.getFieldWithDefault(msg, 3, 0),
     cloneTaget: jspb.Message.getFieldWithDefault(msg, 4, ""),
     checkoutLocation: jspb.Message.getFieldWithDefault(msg, 5, ""),
-    config: (f = msg.getConfig()) && proto.contentservice.GitConfig.toObject(includeInstance, f)
+    config: (f = msg.getConfig()) && proto.contentservice.GitConfig.toObject(includeInstance, f),
+    fullClone: jspb.Message.getBooleanFieldWithDefault(msg, 7, false)
   };
 
   if (includeInstance) {
@@ -1493,6 +1494,10 @@ proto.contentservice.GitInitializer.deserializeBinaryFromReader = function(msg, 
       var value = new proto.contentservice.GitConfig;
       reader.readMessage(value,proto.contentservice.GitConfig.deserializeBinaryFromReader);
       msg.setConfig(value);
+      break;
+    case 7:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setFullClone(value);
       break;
     default:
       reader.skipField();
@@ -1564,6 +1569,13 @@ proto.contentservice.GitInitializer.serializeBinaryToWriter = function(message, 
       6,
       f,
       proto.contentservice.GitConfig.serializeBinaryToWriter
+    );
+  }
+  f = message.getFullClone();
+  if (f) {
+    writer.writeBool(
+      7,
+      f
     );
   }
 };
@@ -1693,6 +1705,24 @@ proto.contentservice.GitInitializer.prototype.clearConfig = function() {
  */
 proto.contentservice.GitInitializer.prototype.hasConfig = function() {
   return jspb.Message.getField(this, 6) != null;
+};
+
+
+/**
+ * optional bool full_clone = 7;
+ * @return {boolean}
+ */
+proto.contentservice.GitInitializer.prototype.getFullClone = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 7, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.contentservice.GitInitializer} returns this
+ */
+proto.contentservice.GitInitializer.prototype.setFullClone = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 7, value);
 };
 
 

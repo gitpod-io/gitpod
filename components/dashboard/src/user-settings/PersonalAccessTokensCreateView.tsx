@@ -6,7 +6,7 @@
 
 import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
 import { useEffect, useMemo, useState } from "react";
-import { Redirect, useHistory, useParams } from "react-router";
+import { useHistory, useParams } from "react-router";
 import Alert from "../components/Alert";
 import DateSelector from "../components/DateSelector";
 import { SpinnerOverlayLoader } from "../components/Loader";
@@ -24,7 +24,7 @@ import ShowTokenModal from "./ShowTokenModal";
 import { Timestamp } from "@bufbuild/protobuf";
 import arrowDown from "../images/sort-arrow.svg";
 import { Heading2, Subheading } from "../components/typography/headings";
-import { useFeatureFlag, useIsDataOps } from "../data/featureflag-query";
+import { useIsDataOps } from "../data/featureflag-query";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 import { Button } from "@podkit/buttons/Button";
 import { TextInputField } from "../components/forms/TextInputField";
@@ -39,8 +39,6 @@ interface EditPATData {
 const personalAccessTokenNameRegex = /^[a-zA-Z0-9-_ ]{3,63}$/;
 
 function PersonalAccessTokenCreateView() {
-    const enablePersonalAccessTokens = useFeatureFlag("personalAccessTokensEnabled");
-
     const params = useParams<{ tokenId?: string }>();
     const history = useHistory<TokenInfo>();
 
@@ -153,10 +151,6 @@ function PersonalAccessTokenCreateView() {
             setErrorMsg(e.message);
         }
     };
-
-    if (!enablePersonalAccessTokens) {
-        return <Redirect to="/" />;
-    }
 
     return (
         <div>

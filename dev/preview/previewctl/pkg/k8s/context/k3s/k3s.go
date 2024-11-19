@@ -9,6 +9,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -81,9 +83,21 @@ func New(ctx context.Context, opts ConfigLoaderOpts) (*ConfigLoader, error) {
 	return config, nil
 }
 
+func (k *ConfigLoader) installVMSSHKeys() error {
+	path := filepath.Join(os.Getenv("LEEWAY_WORKSPACE_ROOT"), "dev/preview/ssh-vm.sh")
+	cmd := exec.Command(path, "-c", "echo success", "-v", k.opts.PreviewName)
+	cmd.Env = os.Environ()
+	return cmd.Run()
+}
+
 func (k *ConfigLoader) Load(ctx context.Context) (*api.Config, error) {
 	if k.client == nil {
-		err := k.connectToHost(ctx, fmt.Sprintf("%s.preview.gitpod-dev.com", k.opts.PreviewName), "2222")
+		err := k.installVMSSHKeys()
+		if err != nil {
+			k.logger.Error(err)
+			return nil, err
+		}
+		err = k.connectToHost(ctx, fmt.Sprintf("%s.preview.gitpod-dev.com", k.opts.PreviewName), "2222")
 		if err != nil {
 			k.logger.Error(err)
 			return nil, err

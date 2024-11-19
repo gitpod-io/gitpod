@@ -309,6 +309,13 @@ export class CreateBlockedRepositoryRequest extends Message<CreateBlockedReposit
    */
   blockUser = false;
 
+  /**
+   * block_free_usage indicates if a free tier user may not start a workspace on that repository URL
+   *
+   * @generated from field: bool block_free_usage = 3;
+   */
+  blockFreeUsage = false;
+
   constructor(data?: PartialMessage<CreateBlockedRepositoryRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -319,6 +326,7 @@ export class CreateBlockedRepositoryRequest extends Message<CreateBlockedReposit
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "url_regexp", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "block_user", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "block_free_usage", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateBlockedRepositoryRequest {
@@ -651,6 +659,13 @@ export class BlockedRepository extends Message<BlockedRepository> {
    */
   updateTime?: Timestamp;
 
+  /**
+   * block_free_usage indicates if a free tier user may not start a workspace on that repository URL
+   *
+   * @generated from field: bool block_free_usage = 6;
+   */
+  blockFreeUsage = false;
+
   constructor(data?: PartialMessage<BlockedRepository>) {
     super();
     proto3.util.initPartial(data, this);
@@ -664,6 +679,7 @@ export class BlockedRepository extends Message<BlockedRepository> {
     { no: 3, name: "block_user", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 4, name: "creation_time", kind: "message", T: Timestamp },
     { no: 5, name: "update_time", kind: "message", T: Timestamp },
+    { no: 6, name: "block_free_usage", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BlockedRepository {

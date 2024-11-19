@@ -8,6 +8,7 @@ export interface BlockedRepository {
     id: number;
     urlRegexp: string;
     blockUser: boolean;
+    blockFreeUsage: boolean;
     createdAt: string;
     updatedAt: string;
 }

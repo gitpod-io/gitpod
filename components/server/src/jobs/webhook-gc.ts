@@ -19,13 +19,15 @@ export class WebhookEventGarbageCollector implements Job {
     public name = "webhook-gc";
     public frequencyMs = 4 * 60 * 1000; // every 4 minutes
 
-    public async run(): Promise<void> {
+    public async run(): Promise<number | undefined> {
         const span = opentracing.globalTracer().startSpan("collectObsoleteWebhookEvents");
         log.debug("webhook-event-gc: start collecting...");
 
         try {
             await this.db.deleteOldEvents(10 /* days */, 600 /* limit per run */);
             log.debug("webhook-event-gc: done collecting.");
+
+            return undefined;
         } catch (err) {
             TraceContext.setError({ span }, err);
             log.error("webhook-event-gc: error collecting webhook events: ", err);

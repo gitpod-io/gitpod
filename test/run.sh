@@ -81,7 +81,7 @@ if [ "${REPORT}" != "" ]; then
 fi
 args+=( "-kubeconfig=${KUBECONFIG:-/home/gitpod/.kube/config}" )
 args+=( "-namespace=${NAMESPACE:-default}" )
-args+=( "-timeout=60m" )
+args+=( "-timeout=120m" )
 
 if [[ "${GITPOD_REPO_ROOT:-}" != "" ]]; then
   echo "Running in Gitpod workspace. Fetching USER_NAME and USER_TOKEN"
@@ -146,7 +146,7 @@ else
 
     cd "${TEST_PATH}"
     set +e
-    go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}.xml" -iocopy
+    go test -parallel=3 -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}.xml" -iocopy
     RC=${PIPESTATUS[0]}
     set -e
     cd -

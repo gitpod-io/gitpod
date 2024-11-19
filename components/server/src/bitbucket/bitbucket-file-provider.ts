@@ -7,7 +7,7 @@
 import { Commit, Repository, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
-import { FileProvider, MaybeContent } from "../repohost/file-provider";
+import { FileProvider, MaybeContent, RevisionNotFoundError } from "../repohost/file-provider";
 import { BitbucketApiFactory } from "./bitbucket-api-factory";
 
 @injectable()
@@ -31,16 +31,28 @@ export class BitbucketFileProvider implements FileProvider {
         try {
             const api = await this.apiFactory.create(user);
             const fileMetaData = (
-                await api.repositories.readSrc({
+                await api.repositories.listFileHistory({
                     workspace: repository.owner,
                     repo_slug: repository.name,
                     commit: revisionOrBranch,
+                    pagelen: 1,
+                    renames: "false",
                     path,
-                    format: "meta",
                 })
             ).data;
-            return (fileMetaData as any).commit.hash;
+            const lastCommit = fileMetaData.values?.[0].commit?.hash;
+            if (!lastCommit) {
+                throw new Error(`No commits found for ${path} in repository ${repository.owner}/${repository.name}`);
+            }
+
+            return lastCommit;
         } catch (err) {
+            if (err.status && err.status === 404) {
+                throw new RevisionNotFoundError(
+                    `File ${path} does not exist in repository ${repository.owner}/${repository.name}`,
+                );
+            }
+
             log.error({ userId: user.id }, err);
             throw new Error(`Could not fetch ${path} of repository ${repository.owner}/${repository.name}: ${err}`);
         }
@@ -51,13 +63,14 @@ export class BitbucketFileProvider implements FileProvider {
             return undefined;
         }
 
+        const { repository, revision } = commit;
         try {
             const api = await this.apiFactory.create(user);
             const contents = (
                 await api.repositories.readSrc({
-                    workspace: commit.repository.owner,
-                    repo_slug: commit.repository.name,
-                    commit: commit.revision,
+                    workspace: repository.owner,
+                    repo_slug: repository.name,
+                    commit: revision,
                     path,
                 })
             ).data;

@@ -24,7 +24,7 @@ import { useListOrganizationMembers, useOrganizationMembersInvalidator } from ".
 import { useInvitationId, useInviteInvalidator } from "../data/organizations/invite-query";
 import { Delayed } from "@podkit/loading/Delayed";
 import { Button } from "@podkit/buttons/Button";
-import { useIsDataOps } from "../data/featureflag-query";
+import { isGitpodIo } from "../utils";
 
 function getHumanReadable(role: OrganizationRole): string {
     return OrganizationRole[role].toLowerCase();
@@ -45,8 +45,6 @@ export default function MembersPage() {
     const [roleFilter, setRoleFilter] = useState<OrganizationRole | undefined>();
     const [memberToRemove, setMemberToRemove] = useState<OrganizationMember | undefined>(undefined);
     const inviteId = useInvitationId().data;
-
-    const isDataOps = useIsDataOps();
 
     const inviteUrl = useMemo(() => {
         if (!org.data) {
@@ -265,12 +263,23 @@ export default function MembersPage() {
                     <ModalBody>
                         <InputField
                             label="Invite URL"
-                            hint={`Use this URL to join this organization as a ${
-                                isDataOps ? "collaborator" : "member"
-                            }.`}
+                            hint={`Share this URL to allow others to join this organization.`}
                         >
                             <InputWithCopy value={inviteUrl} tip="Copy Invite URL" />
                         </InputField>
+                        {isGitpodIo() && (
+                            <div className="text-pk-content-tertiary mt-3">
+                                <span className="text-sm font-bold">Need SSO? </span>
+                                <a
+                                    className="text-sm gp-link"
+                                    href="https://www.gitpod.io/docs/enterprise"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    Try Gitpod Enterprise
+                                </a>
+                            </div>
+                        )}
                     </ModalBody>
                     <ModalFooter>
                         {!!inviteId && (

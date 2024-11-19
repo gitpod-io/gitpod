@@ -48,24 +48,26 @@ resource "acme_certificate" "zerossl" {
   }
 }
 
-resource "kubernetes_secret" "zerossl" {
-  provider = k8s.dev
-  count    = local.zerossl_enabled ? 1 : 0
+resource "google_secret_manager_secret" "zerossl" {
+  count     = local.zerossl_enabled ? 1 : 0
+  secret_id = "certificate-${var.preview_name}"
 
-  type = "kubernetes.io/tls"
-
-  metadata {
-    name      = "harvester-${var.preview_name}"
-    namespace = "certs"
-    annotations = {
-      "preview/owner" = var.preview_name
-    }
+  labels = {
+    label = "preview-certificate"
   }
 
-  data = {
-    "tls.crt" = "${lookup(acme_certificate.zerossl[0], "certificate_pem")}${lookup(acme_certificate.zerossl[0], "issuer_pem")}"
-    "tls.key" = "${lookup(acme_certificate.zerossl[0], "private_key_pem")}"
+  replication {
+    auto {}
   }
+}
+resource "google_secret_manager_secret_version" "zerossl" {
+  count  = local.zerossl_enabled ? 1 : 0
+  secret = google_secret_manager_secret.zerossl[0].id
+
+  secret_data = jsonencode({
+    "tls.crt" = base64encode("${lookup(acme_certificate.zerossl[0], "certificate_pem")}${lookup(acme_certificate.zerossl[0], "issuer_pem")}")
+    "tls.key" = base64encode("${lookup(acme_certificate.zerossl[0], "private_key_pem")}")
+  })
 
   depends_on = [
     acme_certificate.zerossl[0]

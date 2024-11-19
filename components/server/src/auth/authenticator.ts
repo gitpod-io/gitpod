@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamDB } from "@gitpod/gitpod-db/lib";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import express from "express";
@@ -219,6 +219,13 @@ export class Authenticator {
         if (!req.isAuthenticated() || !User.is(user)) {
             log.info(`User is not authenticated.`, { "authorize-flow": true });
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
+            return;
+        }
+        if (user.id === BUILTIN_INSTLLATION_ADMIN_USER_ID) {
+            log.info(`Authorization is not permitted for admin user.`);
+            res.redirect(
+                this.getSorryUrl(`Authorization is not permitted for admin user. Please login with a user account.`),
+            );
             return;
         }
         const returnTo: string | undefined = req.query.returnTo?.toString();

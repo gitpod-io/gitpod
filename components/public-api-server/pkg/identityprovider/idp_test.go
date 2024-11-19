@@ -146,6 +146,28 @@ func TestIDToken(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name:     "with custom claims",
+			Audience: []string{"some.audience.com"},
+			UserInfo: func() oidc.UserInfo {
+				userInfo := oidc.NewUserInfo()
+				userInfo.AppendClaims("scope", "foobar")
+				return userInfo
+			}(),
+			Expectation: Expectation{
+				Token: &jwt.Token{
+					Method: &jwt.SigningMethodRSA{Name: "RS256", Hash: crypto.SHA256},
+					Header: map[string]interface{}{"alg": string(jose.RS256)},
+					Claims: jwt.MapClaims{
+						"aud":   []any{string("some.audience.com")},
+						"azp":   string("some.audience.com"),
+						"iss":   string("https://api.gitpod.io/idp"),
+						"scope": "foobar",
+					},
+					Valid: true,
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

@@ -1,6 +1,5 @@
 {
     "Config": {
-        "gpRunImage": "",
         "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-ff38b98b7dde4929159bcaeec68d178898dc2139",
         "ideOptions": {
             "options": {

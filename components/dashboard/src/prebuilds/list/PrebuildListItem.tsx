@@ -11,11 +11,10 @@ import { LinkButton } from "@podkit/buttons/LinkButton";
 import { TableCell, TableRow } from "@podkit/tables/Table";
 import type { Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import dayjs from "dayjs";
-import { cn } from "@podkit/lib/cn";
 import { shortCommitMessage } from "../../projects/render-utils";
 import { Link } from "react-router-dom";
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { prebuildDisplayProps, prebuildStatusIconComponent } from "../../projects/prebuild-utils";
+import { PrebuildStatus } from "../../projects/prebuild-utils";
 
 /**
  * Formats a date. For today, it returns the time. For this year, it returns the month, day and time. Otherwise, it returns the full date (month, day, year).
@@ -38,9 +37,6 @@ type Props = {
 export const PrebuildListItem: FC<Props> = ({ prebuild }) => {
     const triggeredDate = useMemo(() => dayjs(prebuild.status?.startTime?.toDate()), [prebuild.status?.startTime]);
     const triggeredString = useMemo(() => formatDate(triggeredDate), [triggeredDate]);
-
-    const { className: iconColorClass, label } = prebuildDisplayProps(prebuild);
-    const PrebuildStatusIcon = prebuildStatusIconComponent(prebuild);
 
     return (
         <TableRow>
@@ -83,10 +79,7 @@ export const PrebuildListItem: FC<Props> = ({ prebuild }) => {
             </TableCell>
 
             <TableCell>
-                <div className="flex flex-row gap-1.5 items-center capitalize">
-                    <PrebuildStatusIcon className={cn("w-5 h-5", iconColorClass)} />
-                    <span className="text-sm text-pk-content-secondary">{label}</span>
-                </div>
+                <PrebuildStatus prebuild={prebuild} classname="size-5" />
             </TableCell>
 
             <TableCell>

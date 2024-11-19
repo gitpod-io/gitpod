@@ -477,7 +477,7 @@ export class MetricsReporter {
         }
         this.sendQueue = this.sendQueue.then(async () => {
             try {
-                const response = await fetch(request.url, request);
+                const response = await fetch(request.url, { ...request, priority: "low" });
                 if (!response.ok) {
                     this.options.log.error(
                         `metrics: endpoint responded with ${response.status} ${response.statusText}`,

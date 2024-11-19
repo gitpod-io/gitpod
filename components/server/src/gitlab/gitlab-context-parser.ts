@@ -17,7 +17,7 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { GitLabApi, GitLab } from "./api";
 import { UnauthorizedError, NotFoundError } from "../errors";
-import { GitLabScope } from "./scopes";
+import { GitLabOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 import { IContextParser, IssueContexts, AbstractContextParser, URLParts } from "../workspace/context-parser";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitLabTokenHelper } from "./gitlab-token-helper";
@@ -74,10 +74,10 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                 throw UnauthorizedError.create({
                     host: this.config.host,
                     providerType: "Gitlab",
-                    requiredScopes: GitLabScope.Requirements.DEFAULT,
+                    requiredScopes: GitLabOAuthScopes.Requirements.DEFAULT,
                     repoName: RepoURL.parseRepoUrl(contextUrl)?.repo,
                     providerIsConnected: !!token,
-                    isMissingScopes: containsScopes(token?.scopes, GitLabScope.Requirements.DEFAULT),
+                    isMissingScopes: containsScopes(token?.scopes, GitLabOAuthScopes.Requirements.DEFAULT),
                 });
             }
             throw error;
@@ -190,7 +190,14 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                 throw error;
             }
             // log.error({ userId: user.id }, error);
-            throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+            throw await NotFoundError.create(
+                await this.tokenHelper.getCurrentToken(user),
+                user,
+                host,
+                owner,
+                repoName,
+                error.message,
+            );
         }
     }
 
@@ -340,7 +347,14 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             return g.MergeRequests.show(`${owner}/${repoName}`, nr);
         });
         if (GitLab.ApiError.is(result)) {
-            throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+            throw await NotFoundError.create(
+                await this.tokenHelper.getCurrentToken(user),
+                user,
+                host,
+                owner,
+                repoName,
+                result.message,
+            );
         }
         const sourceProjectId = result.source_project_id;
         const targetProjectId = result.target_project_id;
@@ -428,7 +442,14 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             return g.Issues.show(nr, { projectId: `${owner}/${repoName}` });
         });
         if (GitLab.ApiError.is(result)) {
-            throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+            throw await NotFoundError.create(
+                await this.tokenHelper.getCurrentToken(user),
+                user,
+                host,
+                owner,
+                repoName,
+                result.message,
+            );
         }
         const context = await ctxPromise;
         return <IssueContext>{
@@ -450,7 +471,14 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
     ): Promise<NavigatorContext> {
         const repository = await this.fetchRepo(user, `${owner}/${repoName}`);
         if (GitLab.ApiError.is(repository)) {
-            throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+            throw await NotFoundError.create(
+                await this.tokenHelper.getCurrentToken(user),
+                user,
+                host,
+                owner,
+                repoName,
+                repository.message,
+            );
         }
         const commit = await this.fetchCommit(user, `${owner}/${repoName}`, sha);
         if (GitLab.ApiError.is(commit)) {

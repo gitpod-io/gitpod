@@ -9,7 +9,7 @@ import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import EventEmitter from "events";
 import * as queryString from "query-string";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useMemo } from "react";
 import { v4 } from "uuid";
 import Arrow from "../components/Arrow";
 import ContextMenu from "../components/ContextMenu";
@@ -20,7 +20,10 @@ import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
 import { workspaceClient } from "../service/public-api";
-import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
+import {
+    WatchWorkspaceStatusPriority,
+    watchWorkspaceStatusInOrder,
+} from "../data/workspaces/listen-to-workspace-ws-messages2";
 import { Button } from "@podkit/buttons/Button";
 import {
     GetWorkspaceRequest,
@@ -32,6 +35,7 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { PartialMessage } from "@bufbuild/protobuf";
 import { trackEvent } from "../Analytics";
+import { fromWorkspaceName } from "../workspaces/RenameWorkspaceModal";
 
 const sessionId = v4();
 
@@ -51,7 +55,7 @@ export function parseProps(workspaceId: string, search?: string): StartWorkspace
     const runsInIFrame = window.top !== window.self;
     return {
         workspaceId,
-        runsInIFrame: window.top !== window.self,
+        runsInIFrame,
         // Either:
         //  - not_found: we were sent back from a workspace cluster/IDE URL where we expected a workspace to be running but it wasn't because either:
         //    - this is a (very) old tab and the workspace already timed out
@@ -130,17 +134,28 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
 
         try {
-            const watchDispose = watchWorkspaceStatus(this.state.workspace?.id, (resp) => {
-                if (resp.workspaceId !== this.state.workspace?.id || !resp.status) {
-                    return;
-                }
-                this.onWorkspaceUpdate(
-                    new Workspace({
-                        ...this.state.workspace,
-                        status: resp.status,
-                    }),
-                );
-            });
+            const watchDispose = watchWorkspaceStatusInOrder(
+                this.props.workspaceId,
+                WatchWorkspaceStatusPriority.StartWorkspacePage,
+                async (resp) => {
+                    if (resp.workspaceId !== this.props.workspaceId || !resp.status) {
+                        return;
+                    }
+                    await this.onWorkspaceUpdate(
+                        new Workspace({
+                            ...this.state.workspace,
+                            // NOTE: this.state.workspace might be undefined here, leaving Workspace.id, Workspace.metadata and Workspace.spec undefined empty.
+                            // Thus we:
+                            //  - fill in ID
+                            //  - wait for fetchWorkspaceInfo to fill in metadata and spec in later render cycles
+                            id: resp.workspaceId,
+                            status: resp.status,
+                        }),
+                    );
+                    // wait for next frame
+                    await new Promise((resolve) => setTimeout(resolve, 0));
+                },
+            );
             this.toDispose.push(watchDispose);
             this.toDispose.push(
                 getGitpodService().registerClient({
@@ -218,7 +233,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 return;
             }
             // TODO: Remove this once we use `useStartWorkspaceMutation`
-            // Start listening too instance updates - and explicitly query state once to guarantee we get at least one update
+            // Start listening to instance updates - and explicitly query state once to guarantee we get at least one update
             // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
             this.fetchWorkspaceInfo(result.workspace?.status?.instanceId);
         } catch (error) {
@@ -312,8 +327,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         this.setState({ ideOptions });
     }
 
-    private async onWorkspaceUpdate(workspace: Workspace) {
-        if (!workspace.status?.instanceId) {
+    private async onWorkspaceUpdate(workspace?: Workspace) {
+        if (!workspace?.status?.instanceId || !workspace.id) {
             return;
         }
         // Here we filter out updates to instances we haven't started to avoid issues with updates coming in out-of-order
@@ -321,20 +336,20 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         // Only exception is when we do the switch from the "old" to the "new" one.
         const startedInstanceId = this.state?.startedInstanceId;
         if (startedInstanceId !== workspace.status.instanceId) {
-            // do we want to switch to "new" instance we just received an update for?
-            const switchToNewInstance =
-                this.state.workspace?.status?.phase?.name === WorkspacePhase_Phase.STOPPED &&
-                workspace.status?.phase?.name !== WorkspacePhase_Phase.STOPPED;
-            if (!switchToNewInstance) {
+            const latestInfo = await workspaceClient.getWorkspace({ workspaceId: workspace.id });
+            const latestInstanceId = latestInfo.workspace?.status?.instanceId;
+            if (workspace.status.instanceId !== latestInstanceId) {
                 return;
             }
+            // do we want to switch to "new" instance we just received an update for? Yes
             this.setState({
                 startedInstanceId: workspace.status.instanceId,
                 workspace,
             });
-
-            // now we're listening to a new instance, which might have been started with other IDEoptions
-            this.fetchIDEOptions();
+            if (startedInstanceId) {
+                // now we're listening to a new instance, which might have been started with other IDEoptions
+                this.fetchIDEOptions();
+            }
         }
 
         await this.ensureWorkspaceAuth(workspace.status.instanceId, false); // Don't block the workspace auth retrieval, as it's guaranteed to get a seconds chance later on!
@@ -553,7 +568,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 <div className="rounded-full w-3 h-3 text-sm bg-green-500">&nbsp;</div>
                                 <div>
                                     <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
-                                        {this.state.workspace.id}
+                                        {fromWorkspaceName(this.state.workspace) || this.state.workspace.id}
                                     </p>
                                     <a target="_parent" href={contextURL}>
                                         <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
@@ -658,7 +673,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                             <div className="rounded-full w-3 h-3 text-sm bg-kumquat-ripe">&nbsp;</div>
                             <div>
                                 <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
-                                    {this.state.workspace.id}
+                                    {fromWorkspaceName(this.state.workspace) || this.state.workspace.id}
                                 </p>
                                 <a target="_parent" href={contextURL}>
                                     <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
@@ -703,7 +718,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
                             <div>
                                 <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
-                                    {this.state.workspace.id}
+                                    {fromWorkspaceName(this.state.workspace) || this.state.workspace.id}
                                 </p>
                                 <a target="_parent" href={contextURL}>
                                     <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
@@ -712,7 +727,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 </a>
                             </div>
                         </div>
-                        <PendingChangesDropdown gitStatus={this.state.workspace.status.gitStatus} />
+                        <PendingChangesDropdown
+                            gitStatus={this.state.workspace.status.gitStatus}
+                            className="justify-center"
+                        />
                         <div className="mt-10 justify-center flex space-x-2">
                             <a target="_parent" href={gitpodHostUrl.asWorkspacePage().toString()}>
                                 <Button variant="secondary">Go to Dashboard</Button>
@@ -747,7 +765,7 @@ interface ImageBuildViewProps {
 }
 
 function ImageBuildView(props: ImageBuildViewProps) {
-    const [logsEmitter] = useState(new EventEmitter());
+    const logsEmitter = useMemo(() => new EventEmitter(), []);
 
     useEffect(() => {
         let registered = false;
@@ -778,10 +796,11 @@ function ImageBuildView(props: ImageBuildViewProps) {
                 info: WorkspaceImageBuild.StateInfo,
                 content?: WorkspaceImageBuild.LogContent,
             ) => {
-                if (!content) {
+                if (!content?.data) {
                     return;
                 }
-                logsEmitter.emit("logs", content.text);
+                const chunk = new Uint8Array(content.data);
+                logsEmitter.emit("logs", chunk);
             },
         });
 
@@ -794,7 +813,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
     return (
         <StartPage title="Building Image" phase={props.phase} workspaceId={props.workspaceId}>
             <Suspense fallback={<div />}>
-                <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
+                <WorkspaceLogs taskId="image-build" logsEmitter={logsEmitter} errorMessage={props.error?.message} />
             </Suspense>
             {!!props.onStartWithDefaultImage && (
                 <>
@@ -803,7 +822,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
                             💡 You can use the <code>gp validate</code> command to validate the workspace configuration
                             from the editor terminal. &nbsp;
                             <a
-                                href="https://www.gitpod.io/docs/configure/workspaces/workspace-image#trying-out-changes-to-your-dockerfile"
+                                href="https://www.gitpod.io/docs/configure/workspaces#validate-your-gitpod-configuration"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="gp-link"

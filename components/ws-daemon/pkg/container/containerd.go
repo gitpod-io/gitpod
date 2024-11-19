@@ -7,9 +7,11 @@ package container
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +22,8 @@ import (
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/images"
+	"github.com/containerd/platforms"
 	"github.com/containerd/typeurl/v2"
 	ocispecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opentracing/opentracing-go"
@@ -28,6 +32,7 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
 const (
@@ -38,7 +43,7 @@ const (
 )
 
 // NewContainerd creates a new containerd adapter
-func NewContainerd(cfg *ContainerdConfig, pathMapping PathMapping) (*Containerd, error) {
+func NewContainerd(cfg *ContainerdConfig, pathMapping PathMapping, registryFacadeHost string) (*Containerd, error) {
 	cc, err := containerd.New(cfg.SocketPath, containerd.WithDefaultNamespace(kubernetesNamespace))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot connect to containerd at %s: %w", cfg.SocketPath, err)
@@ -58,6 +63,8 @@ func NewContainerd(cfg *ContainerdConfig, pathMapping PathMapping) (*Containerd,
 		cntIdx: make(map[string]*containerInfo),
 		podIdx: make(map[string]*containerInfo),
 		wsiIdx: make(map[string]*containerInfo),
+
+		registryFacadeHost: registryFacadeHost,
 	}
 	go res.start()
 
@@ -73,6 +80,8 @@ type Containerd struct {
 	podIdx map[string]*containerInfo
 	wsiIdx map[string]*containerInfo
 	cntIdx map[string]*containerInfo
+
+	registryFacadeHost string
 }
 
 type containerInfo struct {
@@ -88,6 +97,7 @@ type containerInfo struct {
 	UpperDir    string
 	CGroupPath  string
 	PID         uint32
+	ImageRef    string
 }
 
 // start listening to containerd
@@ -272,6 +282,7 @@ func (s *Containerd) handleNewContainer(c containers.Container) {
 		info.ID = c.ID
 		info.SnapshotKey = c.SnapshotKey
 		info.Snapshotter = c.Snapshotter
+		info.ImageRef = c.Image
 
 		s.cntIdx[c.ID] = info
 		log.WithField("podname", podName).WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).WithField("ID", c.ID).Debug("found workspace container - updating label cache")
@@ -423,6 +434,34 @@ func (s *Containerd) WaitForContainerStop(ctx context.Context, workspaceInstance
 	}
 }
 
+func (s *Containerd) DisposeContainer(ctx context.Context, workspaceInstanceID string) {
+	log := log.WithContext(ctx)
+
+	log.Debug("containerd: disposing container")
+
+	s.cond.L.Lock()
+	defer s.cond.L.Unlock()
+
+	info, ok := s.wsiIdx[workspaceInstanceID]
+	if !ok {
+		// seems we are already done here
+		log.Debug("containerd: disposing container skipped")
+		return
+	}
+	defer log.Debug("containerd: disposing container done")
+
+	if info.ID != "" {
+		err := s.Client.ContainerService().Delete(ctx, info.ID)
+		if err != nil && !errors.Is(err, errdefs.ErrNotFound) {
+			log.WithField("containerId", info.ID).WithError(err).Error("cannot delete containerd container")
+		}
+	}
+
+	delete(s.wsiIdx, info.InstanceID)
+	delete(s.podIdx, info.PodName)
+	delete(s.cntIdx, info.ID)
+}
+
 // ContainerExists finds out if a container with the given ID exists.
 func (s *Containerd) ContainerExists(ctx context.Context, id ID) (exists bool, err error) {
 	_, err = s.Client.ContainerService().Get(ctx, string(id))
@@ -476,9 +515,65 @@ func (s *Containerd) ContainerPID(ctx context.Context, id ID) (pid uint64, err e
 	return uint64(info.PID), nil
 }
 
-// ContainerPID returns the PID of the container's namespace root process, e.g. the container shim.
+func (s *Containerd) GetContainerImageInfo(ctx context.Context, id ID) (*workspacev1.WorkspaceImageInfo, error) {
+	info, ok := s.cntIdx[string(id)]
+	if !ok {
+		return nil, ErrNotFound
+	}
+
+	image, err := s.Client.GetImage(ctx, info.ImageRef)
+	if err != nil {
+		return nil, err
+	}
+	size, err := image.Size(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	wsImageInfo := &workspacev1.WorkspaceImageInfo{
+		TotalSize: size,
+	}
+
+	// Fetch the manifest
+	manifest, err := images.Manifest(ctx, s.Client.ContentStore(), image.Target(), platforms.Default())
+	if err != nil {
+		log.WithError(err).WithField("image", info.ImageRef).Error("Failed to get manifest")
+		return wsImageInfo, nil
+	}
+	if manifest.Annotations != nil {
+		wsImageInfo.WorkspaceImageRef = manifest.Annotations["io.gitpod.workspace-image.ref"]
+		if size, err := strconv.Atoi(manifest.Annotations["io.gitpod.workspace-image.size"]); err == nil {
+			wsImageInfo.WorkspaceImageSize = int64(size)
+		}
+	}
+	return wsImageInfo, nil
+}
+
 func (s *Containerd) IsContainerdReady(ctx context.Context) (bool, error) {
-	return s.Client.IsServing(ctx)
+	if len(s.registryFacadeHost) == 0 {
+		return s.Client.IsServing(ctx)
+	}
+
+	// check registry facade can reach containerd and returns image not found.
+	isServing, err := s.Client.IsServing(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	if !isServing {
+		return false, nil
+	}
+
+	_, err = s.Client.GetImage(ctx, fmt.Sprintf("%v/not-a-valid-image:latest", s.registryFacadeHost))
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			return true, nil
+		}
+
+		return false, nil
+	}
+
+	return true, nil
 }
 
 var kubepodsQoSRegexp = regexp.MustCompile(`([^/]+)-([^/]+)-pod`)

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -1760,7 +1760,8 @@ proto.builder.BuildRequest.toObject = function(includeInstance, msg) {
     auth: (f = msg.getAuth()) && proto.builder.BuildRegistryAuth.toObject(includeInstance, f),
     forceRebuild: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
     triggeredBy: jspb.Message.getFieldWithDefault(msg, 4, ""),
-    supervisorRef: jspb.Message.getFieldWithDefault(msg, 5, "")
+    supervisorRef: jspb.Message.getFieldWithDefault(msg, 5, ""),
+    baseImageNameResolved: jspb.Message.getFieldWithDefault(msg, 6, "")
   };
 
   if (includeInstance) {
@@ -1818,6 +1819,10 @@ proto.builder.BuildRequest.deserializeBinaryFromReader = function(msg, reader) {
     case 5:
       var value = /** @type {string} */ (reader.readString());
       msg.setSupervisorRef(value);
+      break;
+    case 6:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setBaseImageNameResolved(value);
       break;
     default:
       reader.skipField();
@@ -1882,6 +1887,13 @@ proto.builder.BuildRequest.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       5,
+      f
+    );
+  }
+  f = message.getBaseImageNameResolved();
+  if (f.length > 0) {
+    writer.writeString(
+      6,
       f
     );
   }
@@ -2013,6 +2025,24 @@ proto.builder.BuildRequest.prototype.getSupervisorRef = function() {
  */
 proto.builder.BuildRequest.prototype.setSupervisorRef = function(value) {
   return jspb.Message.setProto3StringField(this, 5, value);
+};
+
+
+/**
+ * optional string base_image_name_resolved = 6;
+ * @return {string}
+ */
+proto.builder.BuildRequest.prototype.getBaseImageNameResolved = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.builder.BuildRequest} returns this
+ */
+proto.builder.BuildRequest.prototype.setBaseImageNameResolved = function(value) {
+  return jspb.Message.setProto3StringField(this, 6, value);
 };
 
 

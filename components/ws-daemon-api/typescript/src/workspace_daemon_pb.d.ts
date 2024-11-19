@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -245,6 +245,92 @@ export namespace UmountProcResponse {
     }
 }
 
+export class MountNfsRequest extends jspb.Message {
+    getSource(): string;
+    setSource(value: string): MountNfsRequest;
+    getTarget(): string;
+    setTarget(value: string): MountNfsRequest;
+    getArgs(): string;
+    setArgs(value: string): MountNfsRequest;
+    getPid(): number;
+    setPid(value: number): MountNfsRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): MountNfsRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: MountNfsRequest): MountNfsRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: MountNfsRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): MountNfsRequest;
+    static deserializeBinaryFromReader(message: MountNfsRequest, reader: jspb.BinaryReader): MountNfsRequest;
+}
+
+export namespace MountNfsRequest {
+    export type AsObject = {
+        source: string,
+        target: string,
+        args: string,
+        pid: number,
+    }
+}
+
+export class MountNfsResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): MountNfsResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: MountNfsResponse): MountNfsResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: MountNfsResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): MountNfsResponse;
+    static deserializeBinaryFromReader(message: MountNfsResponse, reader: jspb.BinaryReader): MountNfsResponse;
+}
+
+export namespace MountNfsResponse {
+    export type AsObject = {
+    }
+}
+
+export class UmountNfsRequest extends jspb.Message {
+    getTarget(): string;
+    setTarget(value: string): UmountNfsRequest;
+    getPid(): number;
+    setPid(value: number): UmountNfsRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UmountNfsRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: UmountNfsRequest): UmountNfsRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UmountNfsRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UmountNfsRequest;
+    static deserializeBinaryFromReader(message: UmountNfsRequest, reader: jspb.BinaryReader): UmountNfsRequest;
+}
+
+export namespace UmountNfsRequest {
+    export type AsObject = {
+        target: string,
+        pid: number,
+    }
+}
+
+export class UmountNfsResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UmountNfsResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: UmountNfsResponse): UmountNfsResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UmountNfsResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UmountNfsResponse;
+    static deserializeBinaryFromReader(message: UmountNfsResponse, reader: jspb.BinaryReader): UmountNfsResponse;
+}
+
+export namespace UmountNfsResponse {
+    export type AsObject = {
+    }
+}
+
 export class TeardownRequest extends jspb.Message {
 
     serializeBinary(): Uint8Array;
@@ -277,6 +363,46 @@ export class TeardownResponse extends jspb.Message {
 }
 
 export namespace TeardownResponse {
+    export type AsObject = {
+        success: boolean,
+    }
+}
+
+export class WipingTeardownRequest extends jspb.Message {
+    getDoWipe(): boolean;
+    setDoWipe(value: boolean): WipingTeardownRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WipingTeardownRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: WipingTeardownRequest): WipingTeardownRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WipingTeardownRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WipingTeardownRequest;
+    static deserializeBinaryFromReader(message: WipingTeardownRequest, reader: jspb.BinaryReader): WipingTeardownRequest;
+}
+
+export namespace WipingTeardownRequest {
+    export type AsObject = {
+        doWipe: boolean,
+    }
+}
+
+export class WipingTeardownResponse extends jspb.Message {
+    getSuccess(): boolean;
+    setSuccess(value: boolean): WipingTeardownResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WipingTeardownResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: WipingTeardownResponse): WipingTeardownResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WipingTeardownResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WipingTeardownResponse;
+    static deserializeBinaryFromReader(message: WipingTeardownResponse, reader: jspb.BinaryReader): WipingTeardownResponse;
+}
+
+export namespace WipingTeardownResponse {
     export type AsObject = {
         success: boolean,
     }

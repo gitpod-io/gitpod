@@ -7,10 +7,12 @@
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import {
     OrgMemberInfo,
-    OrgMemberRole,
     Organization,
     OrganizationSettings,
+    TeamMemberRole,
     TeamMembershipInvite,
+    WorkspaceTimeoutDuration,
+    OrgMemberRole,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -27,6 +29,10 @@ import { InstallationService } from "../auth/installation-service";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { runWithSubjectId } from "../util/request-context";
 import { IDEService } from "../ide-service";
+import { StripeService } from "../billing/stripe-service";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { UsageService } from "./usage-service";
+import { CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
 
 @injectable()
 export class OrganizationService {
@@ -39,6 +45,8 @@ export class OrganizationService {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(InstallationService) private readonly installationService: InstallationService,
         @inject(IDEService) private readonly ideService: IDEService,
+        @inject(StripeService) private readonly stripeService: StripeService,
+        @inject(UsageService) private readonly usageService: UsageService,
         @inject(DefaultWorkspaceImageValidator)
         private readonly validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator,
     ) {}
@@ -186,6 +194,11 @@ export class OrganizationService {
 
                 await db.deleteTeam(orgId);
 
+                const costCenter = await this.usageService.getCostCenter(userId, orgId);
+                if (costCenter.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+                    await this.stripeService.cancelCustomerSubscriptions(AttributionId.createFromOrganizationId(orgId));
+                }
+
                 await this.auth.removeAllRelationships(userId, "organization", orgId);
             });
             return this.analytics.track({
@@ -249,6 +262,11 @@ export class OrganizationService {
         if (await this.teamDB.hasActiveSSO(invite.teamId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
+        const user = await this.userDB.findUserById(userId);
+        if (!user) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `User ${userId} not found`);
+        }
+
         // set skipRoleUpdate=true to avoid member/owner click join link again cause role change
         await runWithSubjectId(SYSTEM_USER, () =>
             this.addOrUpdateMember(SYSTEM_USER_ID, invite.teamId, userId, invite.role, {
@@ -256,6 +274,20 @@ export class OrganizationService {
                 skipRoleUpdate: true,
             }),
         );
+
+        try {
+            // verify the new member if this org is a paying customer
+            if (
+                (await this.stripeService.findUncancelledSubscriptionByAttributionId(
+                    AttributionId.render({ kind: "team", teamId: invite.teamId }),
+                )) !== undefined
+            ) {
+                await this.userService.markUserAsVerified(user, undefined);
+            }
+        } catch (e) {
+            log.warn("Failed to verify new org member", e);
+        }
+
         this.analytics.track({
             userId: userId,
             event: "team_joined",
@@ -284,6 +316,7 @@ export class OrganizationService {
         txCtx?: TransactionalContext,
     ): Promise<void> {
         await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
+        const orgSettings = await this.getSettings(userId, orgId);
         let members: OrgMemberInfo[] = [];
         try {
             await this.teamDB.transaction(txCtx, async (teamDB, txCtx) => {
@@ -312,6 +345,8 @@ export class OrganizationService {
                     });
                     if (isDataOps) {
                         role = "collaborator";
+                    } else if (orgSettings.defaultRole) {
+                        role = orgSettings.defaultRole;
                     }
                 }
                 await teamDB.setTeamMemberRole(memberId, orgId, role);
@@ -456,6 +491,19 @@ export class OrganizationService {
                 await this.ideService.checkEditorsAllowed(userId, settings.restrictedEditorNames);
             }
         }
+
+        if (settings.defaultRole && !TeamMemberRole.isValid(settings.defaultRole)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid default role");
+        }
+
+        if (settings.timeoutSettings?.inactivity) {
+            try {
+                WorkspaceTimeoutDuration.validate(settings.timeoutSettings.inactivity);
+            } catch (error) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid inactivity timeout: ${error.message}`);
+            }
+        }
+
         return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
     }
 
@@ -476,6 +524,19 @@ export class OrganizationService {
         if (settings.restrictedEditorNames) {
             result.restrictedEditorNames = settings.restrictedEditorNames;
         }
+        if (settings.defaultRole) {
+            result.defaultRole = settings.defaultRole;
+        }
+        if (settings.timeoutSettings) {
+            result.timeoutSettings = {
+                denyUserTimeouts: settings.timeoutSettings?.denyUserTimeouts,
+                inactivity: settings.timeoutSettings?.inactivity,
+            };
+        }
+        if (settings.roleRestrictions) {
+            result.roleRestrictions = settings.roleRestrictions;
+        }
+
         return result;
     }
 

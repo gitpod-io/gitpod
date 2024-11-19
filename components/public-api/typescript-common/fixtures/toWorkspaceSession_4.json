@@ -1,0 +1,141 @@
+{
+  "workspace": {
+    "id": "sveneffting-2048intermi-5vb9hvqev88",
+    "creationTime": "2024-05-13T07:06:47.608Z",
+    "organizationId": "c750135b-ac40-4ae1-8ce5-7e6ebc2c9158",
+    "ownerId": "8d92f627-967d-445b-873c-02862cc6b5cf",
+    "contextURL": "https://github.com/svenefftinge/2048-in-terminal",
+    "description": "svenefftinge/2048-in-terminal - master",
+    "context": {
+      "isFile": false,
+      "path": "",
+      "title": "svenefftinge/2048-in-terminal - master",
+      "ref": "master",
+      "refType": "branch",
+      "revision": "aac9c200a79e37ebe216bb90c829d5ab2771f2ee",
+      "repository": {
+        "cloneUrl": "https://github.com/svenefftinge/2048-in-terminal.git",
+        "host": "github.com",
+        "defaultBranch": "master",
+        "name": "2048-in-terminal",
+        "owner": "svenefftinge",
+        "private": false,
+        "fork": {
+          "parent": {
+            "cloneUrl": "https://github.com/alewmoose/2048-in-terminal.git",
+            "host": "github.com",
+            "name": "2048-in-terminal",
+            "owner": "alewmoose",
+            "private": false
+          }
+        }
+      },
+      "normalizedContextURL": "https://github.com/svenefftinge/2048-in-terminal",
+      "checkoutLocation": "2048-in-terminal",
+      "upstreamRemoteURI": "https://github.com/alewmoose/2048-in-terminal.git"
+    },
+    "cloneUrl": "https://github.com/svenefftinge/2048-in-terminal.git",
+    "config": {
+      "tasks": [
+        {
+          "init": "if test -f \"prebuild.txt\"; then\n    touch incremental-prebuild2.txt\nfi\ntouch prebuild.txt\nmake\n"
+        },
+        {
+          "command": "echo \"hello there\""
+        }
+      ],
+      "_origin": "repo",
+      "image": "docker.io/gitpod/workspace-full:latest",
+      "vscode": {
+        "extensions": []
+      },
+      "ideCredentials": "ZWQ5MjgXb0vipB+o5cKrw1T4u9g0wsWmccKH9ECVqpo="
+    },
+    "imageSource": {
+      "baseImageResolved": "docker.io/gitpod/workspace-full:latest"
+    },
+    "imageNameResolved": "eu.gcr.io/gitpod-dev-artifact/image-build/workspace-images:725740d0aa86be829e53b4fc03fbe9d342c7f2930fbe0e5817c94c328ab1cfb3",
+    "baseImageNameResolved": "docker.io/gitpod/workspace-full@sha256:75793b98b968deaa59e0f0c8f5298c52c4f4dd959b78a1f02567d6338a11e472",
+    "shareable": false,
+    "type": "regular",
+    "softDeleted": null,
+    "deleted": false,
+    "pinned": false
+  },
+  "instance": {
+    "id": "36cd2611-fd7e-4462-832c-4122bd4ce6ef",
+    "workspaceId": "sveneffting-2048intermi-5vb9hvqev88",
+    "region": "dev",
+    "creationTime": "2024-05-13T07:14:11.048Z",
+    "startedTime": "2024-05-13T07:14:13.406Z",
+    "stoppingTime": "2024-05-13T07:14:45.263Z",
+    "stoppedTime": "2024-05-13T07:14:45.466Z",
+    "ideUrl": "https://sveneffting-2048intermi-5vb9hvqev88.ws-dev.se-workspad026375d1b.preview.gitpod-dev.com",
+    "workspaceImage": "eu.gcr.io/gitpod-dev-artifact/image-build/workspace-images:725740d0aa86be829e53b4fc03fbe9d342c7f2930fbe0e5817c94c328ab1cfb3",
+    "status": {
+      "phase": "stopped",
+      "nodeIp": "10.132.0.8",
+      "message": "",
+      "podName": "ws-36cd2611-fd7e-4462-832c-4122bd4ce6ef",
+      "timeout": "30m0s",
+      "version": 8159,
+      "nodeName": "preview-se-workspad026375d1b",
+      "conditions": {
+        "failed": "container workspace completed; containers of a workspace pod are not supposed to do that",
+        "timeout": "",
+        "deployed": true,
+        "pullingImages": false,
+        "stoppedByRequest": false,
+        "firstUserActivity": "2024-05-13T07:14:13.000Z",
+        "headlessTaskFailed": ""
+      },
+      "ownerToken": "ucXaF1oe6AWDbdS_MKK63soYCJ4g1htW",
+      "exposedPorts": []
+    },
+    "gitStatus": {
+      "branch": "master",
+      "latestCommit": "aac9c200a79e37ebe216bb90c829d5ab2771f2ee",
+      "untrackedFiles": [
+        "prebuild.txt"
+      ],
+      "totalUntrackedFiles": 1
+    },
+    "phasePersisted": "stopped",
+    "deleted": false,
+    "configuration": {
+      "ideImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8a412095311a2ee0460abca3a4461704c4533374",
+      "ideImageLayers": [
+        "eu.gcr.io/gitpod-dev-artifact/build/ide/gitpod-code-web:commit-4024b13559e71835e551d7fb5614acd1f9897fac",
+        "eu.gcr.io/gitpod-dev-artifact/build/ide/code-codehelper:commit-cd4e3b369fff78cfefb1d48749781b7d41d7da9e"
+      ],
+      "supervisorImage": "eu.gcr.io/gitpod-dev-artifact/build/supervisor:commit-24dbb321dafbd2329f9a2232fe47cc6d410af92c",
+      "ideConfig": {
+        "useLatest": false,
+        "ide": "code"
+      },
+      "ideSetup": {
+        "envvars": [
+          {
+            "name": "GITPOD_CONFIGCAT_ENABLED",
+            "value": "true"
+          },
+          {
+            "name": "GITPOD_IDE_ALIAS",
+            "value": "code"
+          }
+        ],
+        "tasks": []
+      },
+      "regionPreference": "",
+      "fromBackup": true,
+      "featureFlags": [
+        "workspace_connection_limiting",
+        "ssh_ca",
+        "workspace_class_limiting"
+      ]
+    },
+    "imageBuildInfo": null,
+    "workspaceClass": "g1-standard",
+    "usageAttributionId": "team:c750135b-ac40-4ae1-8ce5-7e6ebc2c9158"
+  }
+}

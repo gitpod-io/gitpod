@@ -50,15 +50,27 @@ jobs:
                     continue
                   fi
                   echo "Processing ${images2[i]} in file $file"
-                  updated_digest=$(crane digest "${images2[i]}")
-                  if [ "$updated_digest" != "${digests2[i]}" ] && [ -n "$updated_digest" ]; then
-                    echo "Digest ${digests2[i]} for image ${images2[i]} is different, new digest is $updated_digest, updating..."
-                    sed -i -e "s/${digests2[i]}/$updated_digest/g" "$file"
+                  updated_digest=$(crane digest "${images2[i]}" || true)
+                  if [ -n "$updated_digest" ]; then
+                      if [ "$updated_digest" != "${digests2[i]}" ]; then
+                          echo "Digest ${digests2[i]} for image ${images2[i]} is different, new digest is $updated_digest, updating..."
+                          sed -i -e "s/${digests2[i]}/$updated_digest/g" "$file"
+                      fi
+                  else
+                      echo "Failed to get digest for image ${images2[i]}, skipping..."
                   fi
                 done
             fi
           done < <(find "$(pwd)" -type f \( -name "*.yaml" -o -name "*.yml" -o -name "Dockerfile*" -o -name "leeway.Dockerfile" \) -print0)
 
+          # update for chainguard redis
+          redisImageDigest=$(crane digest cgr.dev/chainguard/redis:latest)
+          redisExporterDigest=$(crane digest cgr.dev/chainguard/prometheus-redis-exporter:latest)
+
+
+          sed -i -e "s/^\(\s*ImageDigest\s*=\s*\)\".*\"/\1\"$redisImageDigest\"/" install/installer/pkg/components/redis/constants.go
+          sed -i -e "s/^\(\s*ExporterImageDigest\s*=\s*\)\".*\"/\1\"$redisExporterDigest\"/" install/installer/pkg/components/redis/constants.go
+          go fmt install/installer/pkg/components/redis/constants.go
       - name: Check workspace
         id: create_pr
         shell: bash
@@ -77,9 +89,23 @@ jobs:
           body: |
             Update images digests using the latest version available for image/s
 
-            ```release-note
-            NONE
-            ```
+            ## How to test
+            - [ ] Start a workspace in the preview environment and verify that it functions properly.
+
+            ### Preview status
+            gitpod:summary
+
+            <details>
+            <summary>Preview Environment / Integration Tests</summary>
+
+            - [x] /werft with-preview
+            - [x] /werft with-gce-vm
+                  If enabled this will create the environment on GCE infra
+            - [x] /werft preemptible
+                  Saves cost. Untick this only if you're really sure you need a non-preemtible machine.
+            - [x] with-integration-tests=ssh
+                  Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`. If enabled, `with-preview` and `with-large-vm` will be enabled.
+            </details>
           labels: automated pr, kind/cleanup, release-note-none
           branch: update-digests
           delete-branch: true

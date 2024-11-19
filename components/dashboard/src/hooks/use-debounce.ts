@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import debounce from "lodash.debounce";
+import debounce from "lodash/debounce";
 
 type DebounceOptions = {
     leading?: boolean;

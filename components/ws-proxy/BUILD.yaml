@@ -14,6 +14,7 @@ packages:
       - components/registry-facade-api/go:lib
       - components/supervisor-api/go:lib
       - components/ws-manager-api/go:lib
+      - components/server/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -52,6 +53,7 @@ packages:
       - components/registry-facade-api/go:lib
       - components/supervisor-api/go:lib
       - components/ws-manager-api/go:lib
+      - components/server/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux

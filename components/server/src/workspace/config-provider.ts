@@ -33,6 +33,7 @@ import { Config } from "../config";
 import { EntitlementService } from "../billing/entitlement-service";
 import { TeamDB } from "@gitpod/gitpod-db/lib";
 import { InvalidGitpodYMLError } from "@gitpod/public-api-common/lib/public-api-errors";
+import { ImageFileRevisionMissing, RevisionNotFoundError } from "../repohost";
 
 const POD_PATH_WORKSPACE_BASE = "/workspace";
 
@@ -258,12 +259,14 @@ export class ConfigProvider {
                 throw new Error(`Cannot fetch workspace image source for host: ${host}`);
             }
             const repoHost = hostContext.services;
-            const lastDockerFileSha = await repoHost.fileProvider.getLastChangeRevision(
-                repository,
-                revisionOrTagOrBranch,
-                user,
-                dockerFilePath,
-            );
+            const lastDockerFileSha = await repoHost.fileProvider
+                .getLastChangeRevision(repository, revisionOrTagOrBranch, user, path.normalize(dockerFilePath))
+                .catch((e) => {
+                    if (e instanceof RevisionNotFoundError) {
+                        return ImageFileRevisionMissing;
+                    }
+                    throw e;
+                });
             return {
                 repository,
                 revision: lastDockerFileSha,

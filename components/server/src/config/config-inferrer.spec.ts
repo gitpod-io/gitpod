@@ -10,17 +10,38 @@ import { ConfigInferrer, Context } from "./config-inferrer";
 import { WorkspaceConfig } from "@gitpod/gitpod-protocol";
 
 function context(files: { [path: string]: string }): Context {
+    const cache = new Set<string>();
     return {
         excludeVsCodeConfig: false,
         config: {},
-        exists: async (path: string) => path.toString() in files,
-        read: async (path: string) => files[path.toString()],
+        exists: async (path: string) => {
+            // simulate cache miss
+            if (!cache.has(path)) {
+                await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+            cache.add(path);
+            return path.toString() in files;
+        },
+        read: async (path: string) => {
+            // simulate cache miss
+            if (!cache.has(path)) {
+                await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+            cache.add(path);
+            return files[path];
+        },
     };
 }
 
 async function expect(files: { [path: string]: string }, config: WorkspaceConfig): Promise<void> {
     const cf = new ConfigInferrer();
+    const before = Date.now();
     const result = await cf.getConfig(context(files));
+    chai.assert.isTrue(
+        Date.now() - before < 200,
+        "ConfigInferrer should not take longer than 200ms. Took: " + (Date.now() - before),
+    );
+
     chai.assert.equal(JSON.stringify(result, null, "  "), JSON.stringify(config, null, "  "));
 }
 

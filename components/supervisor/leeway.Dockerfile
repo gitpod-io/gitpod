@@ -30,6 +30,7 @@ COPY components-supervisor--app/supervisor \
 WORKDIR "/.supervisor/ssh"
 COPY components-supervisor-openssh--app/usr/sbin/sshd .
 COPY components-supervisor-openssh--app/usr/bin/ssh-keygen .
+COPY components-supervisor-openssh--app/usr/libexec/sshd-session .
 
 COPY --from=docker_cli_builder /gp-docker/docker/docker /.supervisor/gitpod-docker-cli
 

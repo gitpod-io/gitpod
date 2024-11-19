@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
@@ -91,6 +93,9 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		image, err = getDefaultWorkspaceImage(ctx, wsInfo)
 		if err != nil {
 			return err
+		}
+		if image == "" {
+			image = "gitpod/workspace-full:latest"
 		}
 		fmt.Println("Using default workspace image:", image)
 	case string:
@@ -235,7 +240,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	serverLog := logrus.NewEntry(logrus.New())
 	serverLog.Logger.SetLevel(logLevel)
 	setLoggerFormatter(serverLog.Logger)
-	workspaceEnvs, err := getWorkspaceEnvs(ctx, &connectToServerOptions{supervisorClient, wsInfo, serverLog})
+	workspaceEnvs, err := getWorkspaceEnvs(ctx, &connectToServerOptions{supervisorClient, wsInfo, serverLog, envScopeRepo})
 	if err != nil {
 		return err
 	}
@@ -561,59 +566,85 @@ func pipeTask(ctx context.Context, task *api.TaskStatus, supervisor *supervisor.
 	}
 }
 
+// TerminalReader is an interface for anything that can receive terminal data (this is abstracted for use in testing)
+type TerminalReader interface {
+	Recv() ([]byte, error)
+}
+
+type LinePrinter func(string)
+
+// processTerminalOutput reads from a TerminalReader, processes the output, and calls the provided LinePrinter for each complete line.
+// It handles UTF-8 decoding of characters split across chunks and control characters (\n \r \b).
+func processTerminalOutput(reader TerminalReader, printLine LinePrinter) error {
+	var buffer, line bytes.Buffer
+
+	flushLine := func() {
+		if line.Len() > 0 {
+			printLine(line.String())
+			line.Reset()
+		}
+	}
+
+	for {
+		data, err := reader.Recv()
+		if err != nil {
+			if err == io.EOF {
+				flushLine()
+				return nil
+			}
+			return err
+		}
+
+		buffer.Write(data)
+
+		for {
+			r, size := utf8.DecodeRune(buffer.Bytes())
+			if r == utf8.RuneError && size == 0 {
+				break // incomplete character at the end
+			}
+
+			char := buffer.Next(size)
+
+			switch r {
+			case '\r':
+				flushLine()
+			case '\n':
+				flushLine()
+			case '\b':
+				if line.Len() > 0 {
+					line.Truncate(line.Len() - 1)
+				}
+			default:
+				line.Write(char)
+			}
+		}
+	}
+}
+
 func listenTerminal(ctx context.Context, task *api.TaskStatus, supervisor *supervisor.SupervisorClient, runLog *logrus.Entry) error {
-	listen, err := supervisor.Terminal.Listen(ctx, &api.ListenTerminalRequest{
-		Alias: task.Terminal,
-	})
+	listen, err := supervisor.Terminal.Listen(ctx, &api.ListenTerminalRequest{Alias: task.Terminal})
 	if err != nil {
 		return err
 	}
 
-	pr, pw := io.Pipe()
-	defer pr.Close()
-	defer pw.Close()
-
-	scanner := bufio.NewScanner(pr)
-	const maxTokenSize = 1 * 1024 * 1024 // 1 MB
-	buf := make([]byte, maxTokenSize)
-	scanner.Buffer(buf, maxTokenSize)
-
-	go func() {
-		defer pw.Close()
-		for {
-			resp, err := listen.Recv()
-			if err != nil {
-				_ = pw.CloseWithError(err)
-				return
-			}
-
-			title := resp.GetTitle()
-			if title != "" {
-				task.Presentation.Name = title
-			}
-
-			exitCode := resp.GetExitCode()
-			if exitCode != 0 {
-				runLog.Infof("%s: exited with code %d", task.Presentation.Name, exitCode)
-			}
-
-			data := resp.GetData()
-			if len(data) > 0 {
-				_, err := pw.Write(data)
-				if err != nil {
-					_ = pw.CloseWithError(err)
-					return
-				}
-			}
-		}
-	}()
-
-	for scanner.Scan() {
-		line := scanner.Text()
+	terminalReader := &TerminalReaderAdapter{listen}
+	printLine := func(line string) {
 		runLog.Infof("%s: %s", task.Presentation.Name, line)
 	}
 
-	return scanner.Err()
+	return processTerminalOutput(terminalReader, printLine)
+}
+
+type TerminalReaderAdapter struct {
+	client api.TerminalService_ListenClient
+}
+
+func (t *TerminalReaderAdapter) Recv() ([]byte, error) {
+	resp, err := t.client.Recv()
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetData(), nil
 }
 
 var validateOpts struct {

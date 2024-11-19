@@ -46,9 +46,7 @@ describe("BearerAuth", () => {
 
     beforeEach(async () => {
         container = createTestContainer();
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         const oldConfig = container.get<Config>(Config);
         container.rebind(Config).toDynamicValue((ctx) => {
             return {

@@ -7,6 +7,7 @@ import "gitpod/v1/sorting.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+option java_package = "io.gitpod.publicapi.v1";
 
 message Configuration {
   string id = 1;
@@ -18,12 +19,26 @@ message Configuration {
   WorkspaceSettings workspace_settings = 7;
 }
 
+enum PrebuildTriggerStrategy {
+  // Default value. Implicitly applies to webhoook-based activation
+  PREBUILD_TRIGGER_STRATEGY_UNSPECIFIED = 0;
+  // Default value for newly enabled prebuilds.
+  PREBUILD_TRIGGER_STRATEGY_ACTIVITY_BASED = 1;
+}
+
 message PrebuildSettings {
   bool enabled = 1;
   string branch_matching_pattern = 2;
   BranchMatchingStrategy branch_strategy = 3;
   int32 prebuild_interval = 4;
   string workspace_class = 5;
+  PrebuildTriggerStrategy trigger_strategy = 6;
+  PrebuildCloneSettings clone_settings = 7;
+}
+
+message PrebuildCloneSettings {
+  // full_clone determines if the entire repository should be cloned, instead of with `--depth=1`
+  bool full_clone = 1;
 }
 
 enum BranchMatchingStrategy {
@@ -96,6 +111,8 @@ message UpdateConfigurationRequest {
     optional BranchMatchingStrategy branch_strategy = 3;
     optional int32 prebuild_interval = 4;
     optional string workspace_class = 5;
+    optional PrebuildTriggerStrategy trigger_strategy = 6;
+    optional PrebuildCloneSettings clone_settings = 7;
   }
   message WorkspaceSettings {
     optional string workspace_class = 1;

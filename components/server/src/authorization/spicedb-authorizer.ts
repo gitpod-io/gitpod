@@ -11,31 +11,47 @@ import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 import { incSpiceDBRequestsCheckTotal, observeSpicedbClientLatency, spicedbClientLatency } from "../prometheus-metrics";
 import { SpiceDBClientProvider } from "./spicedb";
 import * as grpc from "@grpc/grpc-js";
-import { isFgaChecksEnabled, isFgaWritesEnabled } from "./authorizer";
 import { base64decode } from "@jmondi/oauth2-server";
 import { DecodedZedToken } from "@gitpod/spicedb-impl/lib/impl/v1/impl.pb";
 import { ctxTryGetCache, ctxTrySetCache } from "../util/request-context";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 
 async function tryThree<T>(errMessage: string, code: (attempt: number) => Promise<T>): Promise<T> {
     let attempt = 0;
-    // we do sometimes see INTERNAL errors from SpiceDB, so we retry a few times
+    // we do sometimes see INTERNAL errors from SpiceDB, or grpc-js reports DEADLINE_EXCEEDED, so we retry a few times
     // last time we checked it was 15 times per day (check logs)
     while (attempt++ < 3) {
         try {
             return await code(attempt);
         } catch (err) {
-            if (err.code === grpc.status.INTERNAL && attempt < 3) {
+            if (
+                (err.code === grpc.status.INTERNAL ||
+                    err.code === grpc.status.DEADLINE_EXCEEDED ||
+                    err.code === grpc.status.UNAVAILABLE) &&
+                attempt < 3
+            ) {
+                let delay = 500 * attempt;
+                if (err.code === grpc.status.DEADLINE_EXCEEDED) {
+                    // we already waited for timeout, so let's try again immediately
+                    delay = 0;
+                }
+
                 log.warn(errMessage, err, {
                     attempt,
+                    delay,
+                    code: err.code,
                 });
-            } else {
-                log.error(errMessage, err, {
-                    attempt,
-                });
-                // we don't try again on other errors
-                throw err;
+                await new Promise((resolve) => setTimeout(resolve, delay));
+                continue;
             }
+
+            log.error(errMessage, err, {
+                attempt,
+                code: err.code,
+            });
+            // we don't try again on other errors
+            throw err;
         }
     }
     throw new Error("unreachable");
@@ -62,15 +78,11 @@ export class SpiceDBAuthorizer {
         return this.clientProvider.getClient();
     }
 
-    public async check(
-        req: v1.CheckPermissionRequest,
-        experimentsFields: { userId: string },
-        forceEnablement?: boolean,
-    ): Promise<boolean> {
+    public async check(req: v1.CheckPermissionRequest, experimentsFields: { userId: string }): Promise<boolean> {
         req.consistency = await this.tokenCache.consistency(req.resource);
         incSpiceDBRequestsCheckTotal(req.consistency?.requirement?.oneofKind || "undefined");
 
-        const result = await this.checkInternal(req, experimentsFields, forceEnablement);
+        const result = await this.checkInternal(req, experimentsFields);
         if (result.checkedAt) {
             await this.tokenCache.set([req.resource, result.checkedAt]);
         }
@@ -82,12 +94,7 @@ export class SpiceDBAuthorizer {
         experimentsFields: {
             userId: string;
         },
-        forceEnablement?: boolean,
     ): Promise<CheckResult> {
-        if (!(await isFgaWritesEnabled(experimentsFields.userId))) {
-            return { permitted: true };
-        }
-        const featureEnabled = !!forceEnablement || (await isFgaChecksEnabled(experimentsFields.userId));
         const result = (async () => {
             const timer = spicedbClientLatency.startTimer();
             let error: Error | undefined;
@@ -96,32 +103,21 @@ export class SpiceDBAuthorizer {
                     this.client.checkPermission(req, this.callOptions),
                 );
                 const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
-                if (!permitted && !featureEnabled) {
-                    log.info("[spicedb] Permission denied.", {
-                        response: new TrustedValue(response),
-                        request: new TrustedValue(req),
-                    });
-                    return { permitted: true, checkedAt: response.checkedAt?.token };
-                }
-
                 return { permitted, checkedAt: response.checkedAt?.token };
             } catch (err) {
+                // we should not consider users supplying invalid requests as internal server errors
+                if (isGrpcError(err) && err.code === grpc.status.INVALID_ARGUMENT) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid request for permission check: ${err}`);
+                }
                 error = err;
                 log.error("[spicedb] Failed to perform authorization check.", err, {
                     request: new TrustedValue(req),
                 });
-                if (!featureEnabled) {
-                    return { permitted: true };
-                }
                 throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to perform authorization check.");
             } finally {
                 observeSpicedbClientLatency("check", error, timer());
             }
         })();
-        // if the feature is not enabld, we don't await
-        if (!featureEnabled) {
-            return { permitted: true };
-        }
         return result;
     }
 

@@ -5,8 +5,9 @@
  */
 
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { PauseCircle, LucideProps, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { PauseCircle, LucideProps, Clock, CheckCircle2, XCircle, Loader2Icon } from "lucide-react";
 import type { ForwardRefExoticComponent } from "react";
+import { cn } from "@podkit/lib/cn";
 
 import StatusDone from "../icons/StatusDone.svg";
 import StatusFailed from "../icons/StatusFailed.svg";
@@ -14,8 +15,40 @@ import StatusCanceled from "../icons/StatusCanceled.svg";
 import StatusPaused from "../icons/StatusPaused.svg";
 import StatusRunning from "../icons/StatusRunning.svg";
 
-export const prebuildDisplayProps = (prebuild: Prebuild): { className: string; label: string } => {
-    switch (prebuild.status?.phase?.name) {
+export function PrebuildStatus(p: { prebuild: Prebuild | undefined; classname?: string }) {
+    const prebuild = p.prebuild;
+
+    const { className: iconColorClass, label } = prebuildDisplayProps(prebuild);
+    const PrebuildStatusIcon = prebuildStatusIconComponent(prebuild);
+    return (
+        <div className="flex flex-row gap-1.5 items-center capitalize">
+            <PrebuildStatusIcon className={cn(p.classname, iconColorClass)} />
+            <span>{label}</span>
+        </div>
+    );
+}
+
+export function PrebuildStatusOld(props: { prebuild: Prebuild | undefined }) {
+    const prebuild = props.prebuild;
+
+    return (
+        <div className="flex flex-col space-y-1 justify-center text-sm font-semibold">
+            <div>
+                <div className="flex space-x-1 items-center">
+                    {prebuildStatusIcon(prebuild)}
+                    {prebuildStatusLabel(prebuild)}
+                </div>
+            </div>
+            <div className="flex space-x-1 items-center text-gray-400">
+                <span className="text-left">{getPrebuildStatusDescription(prebuild)}</span>
+            </div>
+        </div>
+    );
+}
+
+const prebuildDisplayProps = (prebuild: Prebuild | undefined): { className: string; label: string } => {
+    switch (prebuild?.status?.phase?.name) {
+        case undefined: // Fall through
         case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
         case PrebuildPhase_Phase.QUEUED:
             return { className: "text-orange-500", label: "pending" };
@@ -37,13 +70,13 @@ export const prebuildDisplayProps = (prebuild: Prebuild): { className: string; l
     return { className: "", label: "" };
 };
 
-export const prebuildStatusLabel = (prebuild: Prebuild): JSX.Element => {
+export const prebuildStatusLabel = (prebuild: Prebuild | undefined): JSX.Element => {
     const { className, label } = prebuildDisplayProps(prebuild);
     return <span className={`font-medium ${className} uppercase`}>{label}</span>;
 };
 
-export const prebuildStatusIconComponent = (prebuild: Prebuild): ForwardRefExoticComponent<LucideProps> => {
-    switch (prebuild.status?.phase?.name) {
+const prebuildStatusIconComponent = (prebuild: Prebuild | undefined): ForwardRefExoticComponent<LucideProps> => {
+    switch (prebuild?.status?.phase?.name) {
         case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
         case PrebuildPhase_Phase.QUEUED:
             return PauseCircle;
@@ -64,6 +97,10 @@ export const prebuildStatusIconComponent = (prebuild: Prebuild): ForwardRefExoti
 };
 
 export const prebuildStatusIcon = (prebuild?: Prebuild) => {
+    if (!prebuild) {
+        return <Loader2Icon size={20} className="text-gray-500 animate-spin" />;
+    }
+
     switch (prebuild?.status?.phase?.name) {
         case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
         case PrebuildPhase_Phase.QUEUED:
@@ -84,8 +121,8 @@ export const prebuildStatusIcon = (prebuild?: Prebuild) => {
     }
 };
 
-export const getPrebuildStatusDescription = (prebuild: Prebuild): string => {
-    switch (prebuild.status?.phase?.name) {
+const getPrebuildStatusDescription = (prebuild: Prebuild | undefined): string => {
+    switch (prebuild?.status?.phase?.name) {
         case PrebuildPhase_Phase.QUEUED:
             return `Prebuild is queued and will be processed when there is execution capacity.`;
         case PrebuildPhase_Phase.BUILDING:

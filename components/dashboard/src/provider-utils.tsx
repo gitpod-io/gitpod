@@ -8,6 +8,7 @@ import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_
 import bitbucket from "./images/bitbucket.svg";
 import github from "./images/github.svg";
 import gitlab from "./images/gitlab.svg";
+import azuredevops from "./images/azuredevops.svg";
 import { gitpodHostUrl } from "./service/service";
 
 function iconForAuthProvider(type: string | AuthProviderType) {
@@ -24,6 +25,9 @@ function iconForAuthProvider(type: string | AuthProviderType) {
         case "BitbucketServer":
         case AuthProviderType.BITBUCKET_SERVER:
             return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} alt="" />;
+        case "AzureDevOps":
+        case AuthProviderType.AZURE_DEVOPS:
+            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={azuredevops} alt="" />;
         default:
             return <></>;
     }
@@ -39,6 +43,8 @@ export function toAuthProviderLabel(type: AuthProviderType) {
             return "Bitbucket Cloud";
         case AuthProviderType.BITBUCKET_SERVER:
             return "Bitbucket Server";
+        case AuthProviderType.AZURE_DEVOPS:
+            return "Azure DevOps";
         default:
             return "-";
     }
@@ -52,6 +58,8 @@ function simplifyProviderName(host: string) {
             return "GitLab";
         case "bitbucket.org":
             return "Bitbucket";
+        case "dev.azure.com":
+            return "Azure DevOps";
         default:
             return host;
     }

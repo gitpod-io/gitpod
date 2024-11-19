@@ -38,6 +38,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/jetbrains/launcher/pkg/constant"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
@@ -46,8 +47,6 @@ const defaultBackendPort = "63342"
 var (
 	// ServiceName is the name we use for tracing/logging.
 	ServiceName = "jetbrains-launcher"
-	// Version of this service - set during build.
-	Version = ""
 )
 
 type LaunchContext struct {
@@ -58,6 +57,7 @@ type LaunchContext struct {
 	label  string
 	warmup bool
 
+	preferToolbox  bool
 	qualifier      string
 	productDir     string
 	backendDir     string
@@ -74,6 +74,20 @@ type LaunchContext struct {
 	riderSolutionFile      string
 
 	env []string
+
+	// Custom fields
+
+	// shouldWaitBackendPlugin is controlled by env GITPOD_WAIT_IDE_BACKEND
+	shouldWaitBackendPlugin bool
+}
+
+func (c *LaunchContext) getCommonJoinLinkResponse(appPid int, joinLink string) *JoinLinkResponse {
+	return &JoinLinkResponse{
+		AppPid:      appPid,
+		JoinLink:    joinLink,
+		IDEVersion:  fmt.Sprintf("%s-%s", c.info.ProductCode, c.info.BuildNumber),
+		ProjectPath: c.projectContextDir,
+	}
 }
 
 // JB startup entrypoint
@@ -91,10 +105,15 @@ func main() {
 		return
 	}
 
-	log.Init(ServiceName, Version, true, false)
-	log.Info(ServiceName + ": " + Version)
+	// supervisor refer see https://github.com/gitpod-io/gitpod/blob/main/components/supervisor/pkg/supervisor/supervisor.go#L961
+	shouldWaitBackendPlugin := os.Getenv("GITPOD_WAIT_IDE_BACKEND") == "true"
+	debugEnabled := os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true"
+	preferToolbox := os.Getenv("GITPOD_PREFER_TOOLBOX") == "true"
+	log.Init(ServiceName, constant.Version, true, debugEnabled)
+	log.Info(ServiceName + ": " + constant.Version)
 	startTime := time.Now()
 
+	log.WithField("shouldWait", shouldWaitBackendPlugin).Info("should wait backend plugin")
 	var port string
 	var warmup bool
 
@@ -157,18 +176,29 @@ func main() {
 		alias:  alias,
 		label:  label,
 
-		qualifier:      qualifier,
-		productDir:     productDir,
-		backendDir:     backendDir,
-		info:           info,
-		backendVersion: backendVersion,
-		wsInfo:         wsInfo,
+		preferToolbox:           preferToolbox,
+		qualifier:               qualifier,
+		productDir:              productDir,
+		backendDir:              backendDir,
+		info:                    info,
+		backendVersion:          backendVersion,
+		wsInfo:                  wsInfo,
+		shouldWaitBackendPlugin: shouldWaitBackendPlugin,
 	}
 
 	if launchCtx.warmup {
 		launch(launchCtx)
 		return
 	}
+
+	if preferToolbox {
+		err = configureToolboxCliProperties(backendDir)
+		if err != nil {
+			log.WithError(err).Error("failed to write toolbox cli config file")
+			return
+		}
+	}
+
 	// we should start serving immediately and postpone launch
 	// in order to enable a JB Gateway to connect as soon as possible
 	go launch(launchCtx)
@@ -246,7 +276,7 @@ func serve(launchCtx *LaunchContext) {
 		if backendPort == "" {
 			backendPort = defaultBackendPort
 		}
-		jsonResp, err := resolveJsonLink2(backendPort)
+		jsonResp, err := resolveJsonLink2(launchCtx, backendPort)
 		if err != nil {
 			log.WithError(err).Error("cannot resolve join link")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
@@ -268,9 +298,29 @@ func serve(launchCtx *LaunchContext) {
 		fmt.Fprint(w, jsonLink)
 	})
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		if launchCtx.preferToolbox {
+			response := make(map[string]string)
+			toolboxLink, err := resolveToolboxLink(launchCtx.wsInfo)
+			if err != nil {
+				log.WithError(err).Error("cannot resolve toolbox link")
+				http.Error(w, err.Error(), http.StatusServiceUnavailable)
+				return
+			}
+			response["link"] = toolboxLink
+			response["label"] = launchCtx.label
+			response["clientID"] = "jetbrains-toolbox"
+			response["kind"] = launchCtx.alias
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(response)
+			return
+		}
 		backendPort := r.URL.Query().Get("backendPort")
 		if backendPort == "" {
 			backendPort = defaultBackendPort
+		}
+		if err := isBackendPluginReady(r.Context(), backendPort, launchCtx.shouldWaitBackendPlugin); err != nil {
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			return
 		}
 		gatewayLink, err := resolveGatewayLink(backendPort, launchCtx.wsInfo)
 		if err != nil {
@@ -293,6 +343,33 @@ func serve(launchCtx *LaunchContext) {
 	}
 }
 
+// isBackendPluginReady checks if the backend plugin is ready via backend plugin CLI GitpodCLIService.kt
+func isBackendPluginReady(ctx context.Context, backendPort string, shouldWaitBackendPlugin bool) error {
+	if !shouldWaitBackendPlugin {
+		log.Debug("will not wait plugin ready")
+		return nil
+	}
+	log.WithField("backendPort", backendPort).Debug("wait backend plugin to be ready")
+	// Use op=metrics so that we don't need to rebuild old backend-plugin
+	url, err := url.Parse("http://localhost:" + backendPort + "/api/gitpod/cli?op=metrics")
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("backend plugin is not ready: %d", resp.StatusCode)
+	}
+	return nil
+}
+
 func restart(r *http.Request) {
 	backendPort := r.URL.Query().Get("backendPort")
 	if backendPort == "" {
@@ -311,11 +388,32 @@ type Projects struct {
 }
 type Response struct {
 	AppPid   int        `json:"appPid"`
+	JoinLink string     `json:"joinLink"`
 	Projects []Projects `json:"projects"`
 }
 type JoinLinkResponse struct {
 	AppPid   int    `json:"appPid"`
 	JoinLink string `json:"joinLink"`
+
+	// IDEVersion is the ideVersionHint that required by Toolbox to `setAutoConnectOnEnvironmentReady`
+	IDEVersion string `json:"ideVersion"`
+	// ProjectPath is the projectPathHint that required by Toolbox to `setAutoConnectOnEnvironmentReady`
+	ProjectPath string `json:"projectPath"`
+}
+
+func resolveToolboxLink(wsInfo *supervisor.WorkspaceInfoResponse) (string, error) {
+	gitpodUrl, err := url.Parse(wsInfo.GitpodHost)
+	if err != nil {
+		return "", err
+	}
+	debugWorkspace := wsInfo.DebugWorkspaceType != supervisor.DebugWorkspaceType_noDebug
+	link := url.URL{
+		Scheme:   "jetbrains",
+		Host:     "gateway",
+		Path:     "io.gitpod.toolbox.gateway/open-in-toolbox",
+		RawQuery: fmt.Sprintf("host=%s&workspaceId=%s&debugWorkspace=%t", gitpodUrl.Hostname(), wsInfo.WorkspaceId, debugWorkspace),
+	}
+	return link.String(), nil
 }
 
 func resolveGatewayLink(backendPort string, wsInfo *supervisor.WorkspaceInfoResponse) (string, error) {
@@ -342,7 +440,7 @@ func resolveJsonLink(backendPort string) (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -354,13 +452,13 @@ func resolveJsonLink(backendPort string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(jsonResp.Projects) != 1 {
-		return "", xerrors.Errorf("project is not found")
+	if len(jsonResp.Projects) > 0 {
+		return jsonResp.Projects[0].JoinLink, nil
 	}
-	return jsonResp.Projects[0].JoinLink, nil
+	return jsonResp.JoinLink, nil
 }
 
-func resolveJsonLink2(backendPort string) (*JoinLinkResponse, error) {
+func resolveJsonLink2(launchCtx *LaunchContext, backendPort string) (*JoinLinkResponse, error) {
 	var (
 		hostStatusUrl = "http://localhost:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod"
 		client        = http.Client{Timeout: 1 * time.Second}
@@ -382,10 +480,14 @@ func resolveJsonLink2(backendPort string) (*JoinLinkResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(jsonResp.Projects) != 1 {
-		return nil, xerrors.Errorf("project is not found")
+	if len(jsonResp.Projects) > 0 {
+		return launchCtx.getCommonJoinLinkResponse(jsonResp.AppPid, jsonResp.Projects[0].JoinLink), nil
 	}
-	return &JoinLinkResponse{AppPid: jsonResp.AppPid, JoinLink: jsonResp.Projects[0].JoinLink}, nil
+	if len(jsonResp.JoinLink) > 0 {
+		return launchCtx.getCommonJoinLinkResponse(jsonResp.AppPid, jsonResp.JoinLink), nil
+	}
+	log.Error("failed to resolve JetBrains JoinLink")
+	return nil, xerrors.Errorf("failed to resolve JoinLink")
 }
 
 func terminateIDE(backendPort string) error {
@@ -508,6 +610,8 @@ func run(launchCtx *LaunchContext) {
 	var args []string
 	if launchCtx.warmup {
 		args = append(args, "warmup")
+	} else if launchCtx.preferToolbox {
+		args = append(args, "serverMode")
 	} else {
 		args = append(args, "run")
 	}
@@ -601,6 +705,7 @@ func resolveLaunchContextEnv() []string {
 	// instead put them into /ide-desktop/${alias}${qualifier}/backend/bin/idea64.vmoptions
 	// otherwise JB will complain to a user on each startup
 	// by default remote dev already set -Xmx2048m, see /ide-desktop/${alias}${qualifier}/backend/plugins/remote-dev-server/bin/launcher.sh
+	launchCtxEnv = append(launchCtxEnv, "INTELLIJ_ORIGINAL_ENV_JAVA_TOOL_OPTIONS="+os.Getenv("JAVA_TOOL_OPTIONS"))
 	launchCtxEnv = append(launchCtxEnv, "JAVA_TOOL_OPTIONS=")
 
 	// Force it to be disabled as we update platform properties file already
@@ -744,6 +849,14 @@ func updateVMOptions(
 	if alias == "intellij" {
 		gitpodVMOptions = append(gitpodVMOptions, "-Djdk.configure.existing=true")
 	}
+	// container relevant options
+	gitpodVMOptions = append(gitpodVMOptions, "-XX:+UseContainerSupport")
+	cpuCount := os.Getenv("GITPOD_CPU_COUNT")
+	parsedCPUCount, err := strconv.Atoi(cpuCount)
+	// if CPU count is set and is parseable as a positive number
+	if err == nil && parsedCPUCount > 0 && parsedCPUCount <= 16 {
+		gitpodVMOptions = append(gitpodVMOptions, "-XX:ActiveProcessorCount="+cpuCount)
+	}
 	vmoptions := deduplicateVMOption(ideaVMOptionsLines, gitpodVMOptions, filterFunc)
 
 	// user-defined vmoptions (EnvVar)
@@ -789,6 +902,7 @@ func updateVMOptions(
 	}
 */
 type ProductInfo struct {
+	BuildNumber string `json:"buildNumber"`
 	Version     string `json:"version"`
 	ProductCode string `json:"productCode"`
 }
@@ -1067,20 +1181,34 @@ func getProductConfig(config *gitpod.GitpodConfig, alias string) *gitpod.Jetbrai
 }
 
 func linkRemotePlugin(launchCtx *LaunchContext) error {
-	remotePluginDir := launchCtx.backendDir + "/plugins/gitpod-remote"
-	_, err := os.Stat(remotePluginDir)
-	if err == nil || !errors.Is(err, os.ErrNotExist) {
-		return nil
+	remotePluginsFolder := launchCtx.configDir + "/plugins"
+	if launchCtx.info.Version == "2022.3.3" {
+		remotePluginsFolder = launchCtx.backendDir + "/plugins"
+	}
+	remotePluginDir := remotePluginsFolder + "/gitpod-remote"
+	if err := os.MkdirAll(remotePluginsFolder, 0755); err != nil {
+		return err
 	}
 
 	// added for backwards compatibility, can be removed in the future
 	sourceDir := "/ide-desktop-plugins/gitpod-remote-" + os.Getenv("JETBRAINS_BACKEND_QUALIFIER")
-	_, err = os.Stat(sourceDir)
+	_, err := os.Stat(sourceDir)
 	if err == nil {
-		return os.Symlink(sourceDir, remotePluginDir)
+		return safeLink(sourceDir, remotePluginDir)
 	}
 
-	return os.Symlink("/ide-desktop-plugins/gitpod-remote", remotePluginDir)
+	return safeLink("/ide-desktop-plugins/gitpod-remote", remotePluginDir)
+}
+
+// safeLink creates a symlink from source to target, removing the old target if it exists
+func safeLink(source, target string) error {
+	if _, err := os.Lstat(target); err == nil {
+		// unlink the old symlink
+		if err2 := os.RemoveAll(target); err2 != nil {
+			log.WithError(err).Error("failed to unlink old symlink")
+		}
+	}
+	return os.Symlink(source, target)
 }
 
 // TODO(andreafalzetti): remove dir scanning once this is implemented https://youtrack.jetbrains.com/issue/GTW-2402/Rider-Open-Project-dialog-not-displaying-in-remote-dev
@@ -1121,4 +1249,42 @@ func resolveProjectContextDir(launchCtx *LaunchContext) string {
 	}
 
 	return launchCtx.projectDir
+}
+
+func configureToolboxCliProperties(backendDir string) error {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	toolboxCliPropertiesDir := fmt.Sprintf("%s/.local/share/JetBrains/Toolbox", userHomeDir)
+	_, err = os.Stat(toolboxCliPropertiesDir)
+	if !os.IsNotExist(err) {
+		return err
+	}
+	err = os.MkdirAll(toolboxCliPropertiesDir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	toolboxCliPropertiesFilePath := fmt.Sprintf("%s/environment.json", toolboxCliPropertiesDir)
+
+	debuggingToolbox := os.Getenv("GITPOD_TOOLBOX_DEBUGGING")
+	allowInstallation := strconv.FormatBool(strings.Contains(debuggingToolbox, "allowInstallation"))
+
+	// TODO(hw): restrict IDE installation
+	content := fmt.Sprintf(`{
+    "tools": {
+        "allowInstallation": %s,
+        "allowUpdate": false,
+        "allowUninstallation": %s,
+        "location": [
+            {
+                "path": "%s"
+            }
+        ]
+    }
+}`, allowInstallation, allowInstallation, backendDir)
+
+	return os.WriteFile(toolboxCliPropertiesFilePath, []byte(content), 0o644)
 }

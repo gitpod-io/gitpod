@@ -3,17 +3,4 @@ config:
     [OUTPUT]
         Name stackdriver
         Match *
-
-env:
-  - name: GOOGLE_SERVICE_CREDENTIALS
-    value: /gcp/credentials.json
-
-extraVolumes:
-  - name: fluent-bit-external
-    secret:
-      secretName: fluent-bit-external
-      defaultMode: 420
-
-extraVolumeMounts:
-  - name: fluent-bit-external
-    mountPath: /gcp
+        metadata_server http://169.254.169.254

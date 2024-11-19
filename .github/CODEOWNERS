@@ -3,105 +3,105 @@
 #
 /.github/CODEOWNERS @gitpod-io/engineering-leadership
 
-/components/blobserve @gitpod-io/team-experience
-/components/common-go @gitpod-io/engineering-staff-engineers
-/components/components/scrubber @gitpod-io/engineering-staff-engineers
-/components/content-service-api @gitpod-io/team-engine
-/components/content-service @gitpod-io/team-engine
-/components/dashboard @gitpod-io/team-experience
-/components/docker-up @gitpod-io/team-engine
-/components/ee/agent-smith @gitpod-io/team-engine
-/components/gitpod-cli @gitpod-io/team-experience
-/components/gitpod-db @gitpod-io/team-experience
-/components/gitpod-protocol @gitpod-io/team-experience
-/components/gitpod-protocol/java @gitpod-io/team-experience
-/components/gitpod-protocol/src/typings/globals.ts @gitpod-io/team-experience
-/components/ide @gitpod-io/team-experience
-/components/ide-metrics @gitpod-io/team-experience
-/components/ide-metrics-api @gitpod-io/team-experience
-/components/ide-service @gitpod-io/team-experience
-/components/ide-service-api @gitpod-io/team-experience
-/components/ide-proxy @gitpod-io/team-experience
-/components/image-builder-api @gitpod-io/team-engine
-/components/image-builder-bob @gitpod-io/team-engine
-/components/image-builder-mk3 @gitpod-io/team-engine
-/install @gitpod-io/team-engine
+/components/blobserve @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/common-go @gitpod-io/engineering-staff-engineers @gitpod-io/team-enterprise
+/components/components/scrubber @gitpod-io/engineering-staff-engineers @gitpod-io/team-enterprise
+/components/content-service-api @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/content-service @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/dashboard @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/docker-up @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/ee/agent-smith @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/gitpod-cli @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/gitpod-db @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/gitpod-protocol @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/gitpod-protocol/java @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/gitpod-protocol/src/typings/globals.ts @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/ide @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/ide-metrics @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/ide-metrics-api @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/ide-service @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/ide-service-api @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/ide-proxy @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/image-builder-api @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/image-builder-bob @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/image-builder-mk3 @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install @gitpod-io/team-engine @gitpod-io/team-enterprise
 # By default anything in in /install/installer is shared.
 /install/installer
-/install/installer/pkg/components/agent-smith @gitpod-io/team-engine
-/install/installer/pkg/components/blobserve @gitpod-io/team-experience
-/install/installer/pkg/components/components-ide @gitpod-io/team-experience
-/install/installer/pkg/components/components-webapp @gitpod-io/team-experience
-/install/installer/pkg/components/components-workspace @gitpod-io/team-engine
-/install/installer/pkg/components/content-service @gitpod-io/team-engine
-/install/installer/pkg/components/dashboard @gitpod-io/team-experience
-/install/installer/pkg/components/ide-metrics @gitpod-io/team-experience
-/install/installer/pkg/components/ide-service @gitpod-io/team-experience
-/install/installer/pkg/components/ide-proxy @gitpod-io/team-experience
-/install/installer/pkg/components/image-builder-mk3 @gitpod-io/team-engine
-/install/installer/pkg/components/image-builder-mk3-wsman @gitpod-io/team-engine
-/install/installer/pkg/components/openvsx-proxy @gitpod-io/team-experience
-/install/installer/pkg/components/proxy @gitpod-io/team-experience
-/install/installer/pkg/components/registry-facade @gitpod-io/team-engine
-/install/installer/pkg/components/spicedb @gitpod-io/team-experience
-/install/installer/pkg/components/public-api-server @gitpod-io/team-experience
-/install/installer/pkg/components/server @gitpod-io/team-experience
-/install/installer/pkg/components/server/ide @gitpod-io/team-experience
-/install/installer/pkg/components/usage @gitpod-io/team-experience
-/install/installer/pkg/components/usage-api @gitpod-io/team-experience
-/install/installer/pkg/components/workspace @gitpod-io/team-engine
-/install/installer/pkg/components/workspace/ide @gitpod-io/team-experience
-/install/installer/pkg/components/ws-daemon @gitpod-io/team-engine
-/install/installer/pkg/components/ws-manager-mk2 @gitpod-io/team-engine
-/install/installer/pkg/components/ws-manager-bridge @gitpod-io/team-experience
-/install/installer/pkg/components/ws-proxy @gitpod-io/team-engine
-/install/installer/pkg/config/versions @gitpod-io/team-experience
-/components/local-app-api @gitpod-io/team-experience
-/components/local-app @gitpod-io/team-experience
-/components/openvsx-proxy @gitpod-io/team-experience
-/components/proxy @gitpod-io/team-experience
-/components/public-api @gitpod-io/team-experience
+/install/installer/pkg/components/agent-smith @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install/installer/pkg/components/blobserve @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/components-ide @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/components-webapp @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/components-workspace @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install/installer/pkg/components/content-service @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install/installer/pkg/components/dashboard @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/ide-metrics @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/ide-service @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/ide-proxy @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/image-builder-mk3 @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install/installer/pkg/components/image-builder-mk3-wsman @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install/installer/pkg/components/openvsx-proxy @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/proxy @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/registry-facade @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install/installer/pkg/components/spicedb @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/public-api-server @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/server @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/server/ide @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/usage @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/usage-api @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/workspace @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install/installer/pkg/components/workspace/ide @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/ws-daemon @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install/installer/pkg/components/ws-manager-mk2 @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install/installer/pkg/components/ws-manager-bridge @gitpod-io/team-experience @gitpod-io/team-enterprise
+/install/installer/pkg/components/ws-proxy @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install/installer/pkg/config/versions @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/local-app-api @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/local-app @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/openvsx-proxy @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/proxy @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/public-api @gitpod-io/team-experience @gitpod-io/team-enterprise
 # Any team can make changes to the experimental package
-/components/public-api/gitpod/experimental @gitpod-io/team-experience
-/components/public-api-server @gitpod-io/team-experience
-/components/registry-facade-api @gitpod-io/team-engine
-/components/registry-facade @gitpod-io/team-engine
-/components/server @gitpod-io/team-experience
-/components/server/src/ide-service.* @gitpod-io/team-experience
-/components/service-waiter @gitpod-io/team-experience
-/components/supervisor-api/*.proto @gitpod-io/team-experience
-/components/supervisor @gitpod-io/team-experience
-/components/usage @gitpod-io/team-experience
-/components/usage-api @gitpod-io/team-experience
-/components/workspacekit @gitpod-io/team-engine
-/components/ws-daemon-api @gitpod-io/team-engine
-/components/ws-daemon @gitpod-io/team-engine
-/components/ws-manager-api @gitpod-io/team-engine
-/components/ws-manager-bridge-api @gitpod-io/team-experience
-/components/ws-manager-bridge @gitpod-io/team-experience
-/components/ws-manager-mk2 @gitpod-io/team-engine
-/components/ws-proxy @gitpod-io/team-engine
-/components/node-labeler @gitpod-io/team-engine
-/install/installer/pkg/components/node-labeler @gitpod-io/team-engine
-/dev/gpctl @gitpod-io/team-engine
-/dev/gpctl/api/ @gitpod-io/team-experience
-/dev/loadgen @gitpod-io/team-engine
+/components/public-api/gitpod/experimental @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/public-api-server @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/registry-facade-api @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/registry-facade @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/server @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/server/src/ide-service.* @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/service-waiter @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/supervisor-api/*.proto @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/supervisor @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/usage @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/usage-api @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/workspacekit @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/ws-daemon-api @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/ws-daemon @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/ws-manager-api @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/ws-manager-bridge-api @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/ws-manager-bridge @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/ws-manager-mk2 @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/ws-proxy @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/node-labeler @gitpod-io/team-engine @gitpod-io/team-enterprise
+/install/installer/pkg/components/node-labeler @gitpod-io/team-engine @gitpod-io/team-enterprise
+/dev/gpctl @gitpod-io/team-engine @gitpod-io/team-enterprise
+/dev/gpctl/api/ @gitpod-io/team-experience @gitpod-io/team-enterprise
+/dev/loadgen @gitpod-io/team-engine @gitpod-io/team-enterprise
 
 # Preview is shared between all teams.
 /dev/preview
 
 # Operations is shared between all teams
 /operations
-/operations/observability/mixins/IDE @gitpod-io/team-experience
-/operations/observability/mixins/meta @gitpod-io/team-experience
-/operations/observability/mixins/workspace @gitpod-io/team-engine
+/operations/observability/mixins/IDE @gitpod-io/team-experience @gitpod-io/team-enterprise
+/operations/observability/mixins/meta @gitpod-io/team-experience @gitpod-io/team-enterprise
+/operations/observability/mixins/workspace @gitpod-io/team-engine @gitpod-io/team-enterprise
 # a single review should be enough
 /operations/observability/mixins/cross-teams
 
-.github/workflows/ide-*.yml @gitpod-io/team-experience
-.github/workflows/jetbrains-*.yml @gitpod-io/team-experience
-.github/workflows/code-nightly.yml @gitpod-io/team-experience
-.github/workflows/workspace-*.yml @gitpod-io/team-engine
+.github/workflows/ide-*.yml @gitpod-io/team-experience @gitpod-io/team-enterprise
+.github/workflows/jetbrains-*.yml @gitpod-io/team-experience @gitpod-io/team-enterprise
+.github/workflows/code-nightly.yml @gitpod-io/team-experience @gitpod-io/team-enterprise
+.github/workflows/workspace-*.yml @gitpod-io/team-engine @gitpod-io/team-enterprise
 
 #
 # Automation
@@ -115,14 +115,14 @@
 
 #
 # Add so that teams assert we're not breaking each other's integration tests
-/test/pkg/agent @gitpod-io/team-engine
-/test/pkg/integration @gitpod-io/team-experience @gitpod-io/team-engine
-/test/pkg/report @gitpod-io/team-engine
-/test/tests/workspace @gitpod-io/team-engine
-/test/tests/smoke-test @gitpod-io/team-experience @gitpod-io/team-engine
-/test/tests/ide @gitpod-io/team-experience
-/test/tests/components/content-service @gitpod-io/team-engine
-/test/tests/components/database @gitpod-io/team-experience
-/test/tests/components/image-builder @gitpod-io/team-engine
-/test/tests/components/server @gitpod-io/team-experience
-/test/tests/components/ws-daemon @gitpod-io/team-engine
+/test/pkg/agent @gitpod-io/team-engine @gitpod-io/team-enterprise
+/test/pkg/integration @gitpod-io/team-experience @gitpod-io/team-engine @gitpod-io/team-enterprise
+/test/pkg/report @gitpod-io/team-engine @gitpod-io/team-enterprise
+/test/tests/workspace @gitpod-io/team-engine @gitpod-io/team-enterprise
+/test/tests/smoke-test @gitpod-io/team-experience @gitpod-io/team-engine @gitpod-io/team-enterprise
+/test/tests/ide @gitpod-io/team-experience @gitpod-io/team-enterprise
+/test/tests/components/content-service @gitpod-io/team-engine @gitpod-io/team-enterprise
+/test/tests/components/database @gitpod-io/team-experience @gitpod-io/team-enterprise
+/test/tests/components/image-builder @gitpod-io/team-engine @gitpod-io/team-enterprise
+/test/tests/components/server @gitpod-io/team-experience @gitpod-io/team-enterprise
+/test/tests/components/ws-daemon @gitpod-io/team-engine @gitpod-io/team-enterprise

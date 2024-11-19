@@ -8,23 +8,23 @@ import { injectable } from "inversify";
 import express from "express";
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { GitHubScope } from "./scopes";
 import { AuthUserSetup } from "../auth/auth-provider";
 import { Octokit } from "@octokit/rest";
 import { GitHubApiError } from "./api";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
 import { oauthUrls } from "./github-urls";
+import { GitHubOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class GitHubAuthProvider extends GenericAuthProvider {
     get info(): AuthProviderInfo {
         return {
             ...this.defaultInfo(),
-            scopes: GitHubScope.All,
+            scopes: GitHubOAuthScopes.ALL,
             requirements: {
-                default: GitHubScope.Requirements.DEFAULT,
-                publicRepo: GitHubScope.Requirements.PUBLIC_REPO,
-                privateRepo: GitHubScope.Requirements.PRIVATE_REPO,
+                default: GitHubOAuthScopes.Requirements.DEFAULT,
+                publicRepo: GitHubOAuthScopes.Requirements.PUBLIC_REPO,
+                privateRepo: GitHubOAuthScopes.Requirements.PRIVATE_REPO,
             },
         };
     }
@@ -40,7 +40,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
             ...oauth!,
             authorizationUrl: oauth.authorizationUrl || defaultUrls.authorizationUrl,
             tokenUrl: oauth.tokenUrl || defaultUrls.tokenUrl,
-            scope: GitHubScope.All.join(scopeSeparator),
+            scope: GitHubOAuthScopes.ALL.join(scopeSeparator),
             scopeSeparator,
         };
     }
@@ -52,7 +52,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
         state: string,
         scope?: string[],
     ) {
-        super.authorize(req, res, next, state, scope ? scope : GitHubScope.Requirements.DEFAULT);
+        super.authorize(req, res, next, state, scope ? scope : GitHubOAuthScopes.Requirements.DEFAULT);
     }
 
     /**

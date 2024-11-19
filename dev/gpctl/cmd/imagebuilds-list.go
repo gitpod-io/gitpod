@@ -27,6 +27,7 @@ var imagebuildsListCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot connect")
 		}
 		defer conn.Close()
+		log.Info("connected")
 
 		// build did start, print log until done
 		resp, err := client.ListBuilds(ctx, &builder.ListBuildsRequest{})

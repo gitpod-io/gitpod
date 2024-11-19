@@ -81,6 +81,22 @@ export namespace Transformer {
         };
     };
 
+    export const SIMPLE_JSON_CUSTOM = (
+        defaultValue: any,
+        replacer?: (this: any, key: string, value: any) => any,
+        reviver?: (this: any, key: string, value: any) => any,
+    ) => {
+        return <ValueTransformer>{
+            to(value: any): any {
+                return JSON.stringify(value || defaultValue, replacer);
+            },
+            from(value: any): any {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                return JSON.parse(value, reviver);
+            },
+        };
+    };
+
     export const encrypted = (encryptionServiceProvider: () => EncryptionService): ValueTransformer => {
         return {
             to(value: any): any {

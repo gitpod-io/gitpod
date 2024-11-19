@@ -272,7 +272,7 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					// launch the workspace from prebuild
 					// TODO: change to use server API to launch the workspace, so we could run the integration test as the user code flow
 					//       which is client -> server -> ws-manager rather than client -> ws-manager directly
-					ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+					ws, stopWsFunc, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 						req.Spec.FeatureFlags = test.FF
 						req.Spec.Initializer = &csapi.WorkspaceInitializer{
 							Spec: &csapi.WorkspaceInitializer_Prebuild{
@@ -301,7 +301,7 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 
 					t.Cleanup(func() {
 						// stop workspace in defer function to prevent we forget to stop the workspace
-						if err := stopWorkspace(t, cfg, stopWs); err != nil {
+						if err := stopWorkspace(t, cfg, stopWsFunc); err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
 					})
@@ -343,14 +343,14 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
 					defer sapi.Done(t)
 
-					// stop workspace without wait
-					_, err = stopWs(false, sapi)
+					// stop workspace and wait, we're about to restart it
+					_, err = stopWsFunc(true, sapi)
 					if err != nil {
 						t.Fatal(err)
 					}
 
 					// reopen the workspace and make sure the file foobar.txt exists
-					ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(t, ctx, sapi, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+					ws1, stopWs1Func, err := integration.LaunchWorkspaceDirectly(t, ctx, sapi, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 						req.ServicePrefix = ws.Req.ServicePrefix
 						req.Metadata.MetaId = ws.Req.Metadata.MetaId
 						req.Metadata.Owner = ws.Req.Metadata.Owner
@@ -372,7 +372,7 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 
 					t.Cleanup(func() {
 						// stop workspace in defer function to prevent we forget to stop the workspace
-						if err := stopWorkspace(t, cfg, stopWs1); err != nil {
+						if err := stopWorkspace(t, cfg, stopWs1Func); err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
 					})
@@ -593,7 +593,7 @@ func checkPrebuildLogExist(t *testing.T, cfg *envconf.Config, rsa *integration.R
 		Command: "bash",
 		Args: []string{
 			"-c",
-			fmt.Sprintf("grep %s *", prebuildLog),
+			fmt.Sprintf("grep -r %s *", prebuildLog),
 		},
 	}, &grepResp)
 	if err == nil && grepResp.ExitCode == 0 && strings.Trim(grepResp.Stdout, " \t\n") != "" {
@@ -603,7 +603,7 @@ func checkPrebuildLogExist(t *testing.T, cfg *envconf.Config, rsa *integration.R
 		return
 	}
 
-	t.Logf("cannot found the prebuild message %s in %s, err:%v, exitCode:%d, stdout:%s", prebuildLog, prebuildLogPath, err, grepResp.ExitCode, grepResp.Stdout)
+	t.Logf("cannot found the prebuild message %s in %s, err:%v, exitCode:%d, stdout:%s, stderr:%s", prebuildLog, prebuildLogPath, err, grepResp.ExitCode, grepResp.Stdout, grepResp.Stderr)
 
 	// somehow, the prebuild log message '🍊 This task ran as a workspace prebuild' does not exists
 	// we fall back to check the init task message within the /workspace/.gitpod/prebuild-log-* or not

@@ -8,8 +8,8 @@ import { User, Token } from "@gitpod/gitpod-protocol";
 import { UnauthorizedError } from "../errors";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { injectable, inject } from "inversify";
-import { GitLabScope } from "./scopes";
 import { TokenProvider } from "../user/token-provider";
+import { GitLabOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class GitLabTokenHelper {
@@ -37,12 +37,12 @@ export class GitLabTokenHelper {
             console.error(e);
         }
         if (requiredScopes.length === 0) {
-            requiredScopes = GitLabScope.Requirements.DEFAULT;
+            requiredScopes = GitLabOAuthScopes.Requirements.DEFAULT;
         }
         throw UnauthorizedError.create({
             host,
             providerType: "GitLab",
-            requiredScopes: GitLabScope.Requirements.DEFAULT,
+            requiredScopes: GitLabOAuthScopes.Requirements.DEFAULT,
             providerIsConnected: false,
             isMissingScopes: true,
         });

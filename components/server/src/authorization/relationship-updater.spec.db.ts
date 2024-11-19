@@ -37,9 +37,7 @@ describe("RelationshipUpdater", async () => {
 
     beforeEach(async () => {
         container = createTestContainer();
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         BUILTIN_INSTLLATION_ADMIN_USER_ID;
         userDB = container.get<UserDB>(UserDB);
         orgDB = container.get<TeamDB>(TeamDB);
@@ -68,27 +66,6 @@ describe("RelationshipUpdater", async () => {
         await expected(rel.user(user.id).self.user(user.id));
         await notExpected(rel.installation.admin.user(user.id));
         await expected(rel.installation.member.user(user.id));
-    });
-
-    it("should update a simple user once it was feature-flag disabled", async () => {
-        let user = await userDB.newUser();
-
-        user = await migrator.migrate(user);
-        expect(user.fgaRelationshipsVersion).to.not.be.undefined;
-
-        Experiments.configureTestingClient({
-            centralizedPermissions: false,
-        });
-
-        user = await migrator.migrate(user);
-        expect(user.fgaRelationshipsVersion).to.be.undefined;
-
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
-
-        user = await migrator.migrate(user);
-        expect(user.fgaRelationshipsVersion).to.not.be.undefined;
     });
 
     it("should correctly update a simple user after it moves between org and installation level", async () => {

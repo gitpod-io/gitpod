@@ -21,7 +21,7 @@ export interface BlockedRepositoryDB {
 
     findBlockedRepositoryByURL(contextURL: string): Promise<BlockedRepository | undefined>;
 
-    createBlockedRepository(urlRegexp: string, blockUser: boolean): Promise<BlockedRepository>;
+    createBlockedRepository(urlRegexp: string, blockUser: boolean, blockFreeUsage: boolean): Promise<BlockedRepository>;
 
     deleteBlockedRepository(id: number): Promise<void>;
 }

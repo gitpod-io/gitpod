@@ -19,7 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s/context/k3s"
 )
 
-const TFStateBucket = "3f4745df-preview-tf-state"
+const TFStateBucket = "5d39183e-preview-tf-state"
 
 type Config struct {
 	branch string
@@ -121,10 +121,8 @@ func (c *Config) GetName() string {
 	return c.name
 }
 
-func InstallVMSSHKeys() error {
-	// TODO: https://github.com/gitpod-io/ops/issues/6524
-	path := filepath.Join(os.Getenv("LEEWAY_WORKSPACE_ROOT"), "dev/preview/util/install-vm-ssh-keys.sh")
-	return exec.Command("bash", path).Run()
+func GenerateSSHPrivateKey(path string) error {
+	return exec.Command("ssh-keygen", "-t", "ed25519", "-q", "-N", "", "-f", path).Run()
 }
 
 func SSHPreview(branch string) error {

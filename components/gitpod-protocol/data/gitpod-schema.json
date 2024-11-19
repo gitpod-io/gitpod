@@ -297,6 +297,10 @@
                 "clion": {
                     "$ref": "#/definitions/jetbrainsProduct",
                     "description": "Configure CLion integration"
+                },
+                "rustrover": {
+                    "$ref": "#/definitions/jetbrainsProduct",
+                    "description": "Configure RustRover integration"
                 }
             }
         },
@@ -322,6 +326,13 @@
                     "type": "number",
                     "description": "the hard limit acts as a ceiling for the soft limit. For more details please check https://man7.org/linux/man-pages/man2/getrlimit.2.html"
                 }
+            }
+        },
+        "env": {
+            "type": "object",
+            "description": "Environment variables to set on the workspace.",
+            "additionalProperties": {
+                "type": "string"
             }
         }
     },

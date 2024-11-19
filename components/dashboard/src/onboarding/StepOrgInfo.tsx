@@ -159,7 +159,6 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     return (
         <OnboardingStep
             title="Tell us more about you"
-            subtitle="Let us know what brought you here."
             error={updateUser.isError ? "There was a problem saving your answers" : ""}
             isValid={isValid}
             isSaving={updateUser.isLoading}
@@ -167,7 +166,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         >
             <SelectInputField
                 value={jobRole}
-                label="I work in..."
+                label="What best describes your role"
                 onChange={(val) => {
                     if (val !== "other") {
                         setJobRoleOther("");
@@ -188,7 +187,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                 <TextInputField value={jobRoleOther} onChange={setJobRoleOther} placeholder="Please share (optional)" />
             )}
 
-            <CheckboxListField label="I'm exploring Gitpod...">
+            <CheckboxListField label="You're exploring Gitpod for">
                 {explorationReasonsOptions.map((o) => (
                     <CheckboxInputField
                         key={o.value}
@@ -223,7 +222,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                 </SelectInputField>
             )}
 
-            <CheckboxListField label="I'm signing up for Gitpod for...">
+            <CheckboxListField label="I'm hoping to use Gitpod for" sublabel="Select all that apply">
                 {signupGoalsOptions.map((o) => (
                     <CheckboxInputField
                         key={o.value}

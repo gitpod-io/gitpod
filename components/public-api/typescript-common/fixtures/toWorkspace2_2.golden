@@ -8,7 +8,8 @@
             "annotations": {},
             "name": "gitpod-io/gitpod - main",
             "pinned": true,
-            "originalContextUrl": "https://github.com/gitpod-io/gitpod"
+            "originalContextUrl": "https://github.com/gitpod-io/gitpod",
+            "warnings": []
         },
         "spec": {
             "initializer": {
@@ -41,6 +42,7 @@
                 "email": ""
             },
             "timeout": {
+                "inactivity": "3722s",
                 "disconnected": "3722s"
             },
             "admission": "ADMISSION_LEVEL_EVERYONE",
@@ -50,7 +52,8 @@
             "logUrl": "",
             "editor": {
                 "name": "code",
-                "version": "stable"
+                "version": "stable",
+                "preferToolbox": false
             }
         },
         "status": {

@@ -26,7 +26,36 @@ packages:
       image:
         - ${imageRepoBase}/dev-utils:${version}
         - ${imageRepoBase}/dev-utils:commit-${__git_commit}
+  - name: "install"
+    type: "generic"
+    deps:
+      - dev/gpctl:app
+      - dev/kubecdl:app
+      - dev/gp-gcloud:app
+    config:
+      commands:
+        - [ "sh", "-c", "sudo mv dev-gpctl--app/gpctl /usr/local/bin/gpctl" ]
+        - [ "sh", "-c", "sudo mv dev-kubecdl--app/kubecdl /usr/local/bin/kubecdl" ]
+        - [ "sh", "-c", "sudo mv dev-gp-gcloud--app/gp-gcloud /usr/local/bin/gp-gcloud" ]
+
 scripts:
   - name: preview
     description: Build Gitpod, create a preview environment, and deploy to it
     script: ./preview/workflow/preview/preview.sh
+  - name: prepare
+    description: Prepare the repository for development
+    script: |
+      leeway run dev:prepare-go dev:prepare-ts
+  - name: prepare-go
+    description: Prepare go packages
+    script: |
+      ./components/gitpod-protocol/go/scripts/generate-config.sh
+      leeway exec --filter-type go -v -- go mod verify
+  - name: prepare-ts
+    description: Prepare typescript packages
+    script: |
+      yarn --network-timeout 100000 && yarn build
+  - name: install-dev-utils
+    description: Install dev-utils
+    script: |
+      leeway build dev:install --dont-test --cache=remote-pull

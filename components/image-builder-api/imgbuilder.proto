@@ -67,6 +67,7 @@ message BuildRequest {
     bool force_rebuild = 3;
     string triggered_by = 4;
     string supervisor_ref = 5;
+    string base_image_name_resolved = 6;
 }
 
 message BuildRegistryAuth {

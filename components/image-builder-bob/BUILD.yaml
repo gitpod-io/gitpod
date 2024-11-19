@@ -40,11 +40,11 @@ packages:
   deps:
   - :app
   - :runc-facade
+  argdeps:
+  - imageRepoBase
   config:
     buildArgs:
       VERSION: ${version}
-    argdeps:
-        - imageRepoBase
     dockerfile: leeway.Dockerfile
     metadata:
       helm-component: imageBuilderMk3.builderImage

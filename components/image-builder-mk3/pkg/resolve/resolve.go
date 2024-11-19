@@ -8,14 +8,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/containerd/containerd/remotes"
 	dockerremote "github.com/containerd/containerd/remotes/docker"
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/opencontainers/go-digest"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -32,6 +32,14 @@ var (
 
 	// ErrNotFound is returned when we're not authorized to return the reference
 	ErrUnauthorized = xerrors.Errorf("not authorized")
+
+	// TooManyRequestsMatcher returns true if an error is a code 429 "Too Many Requests" error
+	TooManyRequestsMatcher = func(err error) bool {
+		if err == nil {
+			return false
+		}
+		return strings.Contains(err.Error(), "429 Too Many Requests")
+	}
 )
 
 // StandaloneRefResolver can resolve image references without a Docker daemon
@@ -69,31 +77,9 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 
 	// The ref may be what Docker calls a "familiar" name, e.g. ubuntu:latest instead of docker.io/library/ubuntu:latest.
 	// To make this a valid digested form we first need to normalize that familiar name.
-	pref, err := reference.ParseNormalizedNamed(ref)
+	pref, err := reference.ParseDockerRef(ref)
 	if err != nil {
 		return "", xerrors.Errorf("cannt resolve image ref: %w", err)
-	}
-
-	// The reference is already in digest form we don't have to do anything
-	if cref, ok := pref.(reference.Canonical); ok {
-		// if reference contain tag, we should remove it to avoid tag and digest conflict
-		if _, ok := pref.(reference.Tagged); ok {
-			dref, err := reference.WithDigest(reference.TrimNamed(pref), cref.Digest())
-			if err != nil {
-				return "", err
-			}
-			ref = dref.String()
-		}
-		span.LogKV("result", ref)
-		return ref, nil
-	}
-
-	// Some users don't specify a tag, and Docker assumes "latest" - we follow the same convention
-	if _, ok := pref.(reference.Tagged); !ok {
-		pref, err = reference.WithTag(pref, "latest")
-		if err != nil {
-			return "", err
-		}
 	}
 
 	nref := pref.String()
@@ -119,7 +105,7 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 		return
 	}
 	defer in.Close()
-	buf, err := ioutil.ReadAll(in)
+	buf, err := io.ReadAll(in)
 	if err != nil {
 		return
 	}
@@ -174,6 +160,10 @@ type DockerRefResolverOption func(o *opts)
 
 // WithAuthentication sets a base64 encoded authentication for accessing a Docker registry
 func WithAuthentication(auth *auth.Authentication) DockerRefResolverOption {
+	if auth == nil {
+		log.Debug("WithAuthentication - auth was nil")
+	}
+
 	return func(o *opts) {
 		o.Auth = auth
 	}

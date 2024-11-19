@@ -10,7 +10,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
+import { Duration, Message, proto3, Timestamp } from "@bufbuild/protobuf";
 import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
 import { WorkspaceClass } from "./workspace_pb.js";
 
@@ -44,6 +44,28 @@ proto3.util.setEnumType(OrganizationRole, "gitpod.v1.OrganizationRole", [
   { no: 1, name: "ORGANIZATION_ROLE_OWNER" },
   { no: 2, name: "ORGANIZATION_ROLE_MEMBER" },
   { no: 3, name: "ORGANIZATION_ROLE_COLLABORATOR" },
+]);
+
+/**
+ * OrganizationPermissions define permissions that are restrictable using RoleRestrictions
+ *
+ * @generated from enum gitpod.v1.OrganizationPermission
+ */
+export enum OrganizationPermission {
+  /**
+   * @generated from enum value: ORGANIZATION_PERMISSION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: ORGANIZATION_PERMISSION_START_ARBITRARY_REPOS = 1;
+   */
+  START_ARBITRARY_REPOS = 1,
+}
+// Retrieve enum metadata with: proto3.getEnumType(OrganizationPermission)
+proto3.util.setEnumType(OrganizationPermission, "gitpod.v1.OrganizationPermission", [
+  { no: 0, name: "ORGANIZATION_PERMISSION_UNSPECIFIED" },
+  { no: 1, name: "ORGANIZATION_PERMISSION_START_ARBITRARY_REPOS" },
 ]);
 
 /**
@@ -175,6 +197,53 @@ export class OrganizationMember extends Message<OrganizationMember> {
 }
 
 /**
+ * @generated from message gitpod.v1.RoleRestrictionEntry
+ */
+export class RoleRestrictionEntry extends Message<RoleRestrictionEntry> {
+  /**
+   * role is the role that is restricted
+   *
+   * @generated from field: gitpod.v1.OrganizationRole role = 1;
+   */
+  role = OrganizationRole.UNSPECIFIED;
+
+  /**
+   * permissions are the permissions that are restricted
+   *
+   * @generated from field: repeated gitpod.v1.OrganizationPermission permissions = 2;
+   */
+  permissions: OrganizationPermission[] = [];
+
+  constructor(data?: PartialMessage<RoleRestrictionEntry>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.RoleRestrictionEntry";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "role", kind: "enum", T: proto3.getEnumType(OrganizationRole) },
+    { no: 2, name: "permissions", kind: "enum", T: proto3.getEnumType(OrganizationPermission), repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RoleRestrictionEntry {
+    return new RoleRestrictionEntry().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RoleRestrictionEntry {
+    return new RoleRestrictionEntry().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RoleRestrictionEntry {
+    return new RoleRestrictionEntry().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RoleRestrictionEntry | PlainMessage<RoleRestrictionEntry> | undefined, b: RoleRestrictionEntry | PlainMessage<RoleRestrictionEntry> | undefined): boolean {
+    return proto3.util.equals(RoleRestrictionEntry, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.OrganizationSettings
  */
 export class OrganizationSettings extends Message<OrganizationSettings> {
@@ -203,6 +272,21 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
    */
   pinnedEditorVersions: { [key: string]: string } = {};
 
+  /**
+   * @generated from field: string default_role = 6;
+   */
+  defaultRole = "";
+
+  /**
+   * @generated from field: gitpod.v1.TimeoutSettings timeout_settings = 7;
+   */
+  timeoutSettings?: TimeoutSettings;
+
+  /**
+   * @generated from field: repeated gitpod.v1.RoleRestrictionEntry role_restrictions = 8;
+   */
+  roleRestrictions: RoleRestrictionEntry[] = [];
+
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -216,6 +300,9 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
     { no: 3, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 4, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 5, name: "pinned_editor_versions", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+    { no: 6, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "timeout_settings", kind: "message", T: TimeoutSettings },
+    { no: 8, name: "role_restrictions", kind: "message", T: RoleRestrictionEntry, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {
@@ -410,6 +497,53 @@ export class UpdateOrganizationResponse extends Message<UpdateOrganizationRespon
 }
 
 /**
+ * @generated from message gitpod.v1.TimeoutSettings
+ */
+export class TimeoutSettings extends Message<TimeoutSettings> {
+  /**
+   * inactivity is the duration of inactivity after which a workspace is stopped
+   *
+   * @generated from field: optional google.protobuf.Duration inactivity = 1;
+   */
+  inactivity?: Duration;
+
+  /**
+   * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+   *
+   * @generated from field: optional bool deny_user_timeouts = 2;
+   */
+  denyUserTimeouts?: boolean;
+
+  constructor(data?: PartialMessage<TimeoutSettings>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.TimeoutSettings";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "inactivity", kind: "message", T: Duration, opt: true },
+    { no: 2, name: "deny_user_timeouts", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TimeoutSettings {
+    return new TimeoutSettings().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TimeoutSettings {
+    return new TimeoutSettings().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TimeoutSettings {
+    return new TimeoutSettings().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: TimeoutSettings | PlainMessage<TimeoutSettings> | undefined, b: TimeoutSettings | PlainMessage<TimeoutSettings> | undefined): boolean {
+    return proto3.util.equals(TimeoutSettings, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.UpdateOrganizationSettingsRequest
  */
 export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizationSettingsRequest> {
@@ -433,17 +567,19 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   defaultWorkspaceImage?: string;
 
   /**
-   * allowed_workspace_classes are the IDs of classes, which can be used by workspaces in an organization.
-   * Pass an empty array to allow all workspace classes
+   * allowed_workspace_classes are the IDs of classes, which can be used by
+   * workspaces in an organization. Pass an empty array to allow all workspace
+   * classes
    *
    * @generated from field: repeated string allowed_workspace_classes = 5;
    */
   allowedWorkspaceClasses: string[] = [];
 
   /**
-   * restricted_editor_names updates the list of restricted editor names that are not allowed to be used by workspaces in an organization.
-   * If empty, all editors are allowed.
-   * Only updates if update_restricted_editor_names is true.
+   * restricted_editor_names updates the list of restricted editor names that
+   * are not allowed to be used by workspaces in an organization. If empty, all
+   * editors are allowed. Only updates if update_restricted_editor_names is
+   * true.
    *
    * @generated from field: repeated string restricted_editor_names = 6;
    */
@@ -457,7 +593,8 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   updateRestrictedEditorNames?: boolean;
 
   /**
-   * pinned_editor_versions updates the pinned version for the corresponding editor.
+   * pinned_editor_versions updates the pinned version for the corresponding
+   * editor.
    *
    * @generated from field: map<string, string> pinned_editor_versions = 8;
    */
@@ -469,6 +606,32 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
    * @generated from field: optional bool update_pinned_editor_versions = 9;
    */
   updatePinnedEditorVersions?: boolean;
+
+  /**
+   * default_role is the default role for new members in the organization.
+   *
+   * @generated from field: optional string default_role = 10;
+   */
+  defaultRole?: string;
+
+  /**
+   * timeout_settings are the settings for workspace timeouts
+   *
+   * @generated from field: optional gitpod.v1.TimeoutSettings timeout_settings = 11;
+   */
+  timeoutSettings?: TimeoutSettings;
+
+  /**
+   * @generated from field: repeated gitpod.v1.RoleRestrictionEntry role_restrictions = 12;
+   */
+  roleRestrictions: RoleRestrictionEntry[] = [];
+
+  /**
+   * Specifies whether role_restrictions should be updated.
+   *
+   * @generated from field: optional bool update_role_restrictions = 13;
+   */
+  updateRoleRestrictions?: boolean;
 
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
@@ -486,6 +649,10 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
     { no: 7, name: "update_restricted_editor_names", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 8, name: "pinned_editor_versions", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
     { no: 9, name: "update_pinned_editor_versions", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 10, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 11, name: "timeout_settings", kind: "message", T: TimeoutSettings, opt: true },
+    { no: 12, name: "role_restrictions", kind: "message", T: RoleRestrictionEntry, repeated: true },
+    { no: 13, name: "update_role_restrictions", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {

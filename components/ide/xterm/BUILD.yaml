@@ -1,0 +1,16 @@
+packages:
+  - name: docker
+    type: docker
+    argdeps:
+      - imageRepoBase
+      - xtermCommit
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.xtermWebImage
+      buildArgs:
+        XTERM_COMMIT: ${xtermCommit}
+        XTERM_VERSION: 1.0.0
+      image:
+        - ${imageRepoBase}/ide/xterm-web:${version}
+        - ${imageRepoBase}/ide/xterm-web:commit-${__git_commit}

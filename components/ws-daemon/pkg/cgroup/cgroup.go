@@ -6,6 +6,7 @@ package cgroup
 
 import (
 	"context"
+	"errors"
 
 	"github.com/gitpod-io/gitpod/common-go/cgroups"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -79,8 +80,11 @@ func (host *PluginHost) WorkspaceAdded(ctx context.Context, ws *dispatch.Workspa
 		return xerrors.Errorf("no dispatch available")
 	}
 
-	cgroupPath, err := disp.Runtime.ContainerCGroupPath(context.Background(), ws.ContainerID)
+	cgroupPath, err := disp.Runtime.ContainerCGroupPath(ctx, ws.ContainerID)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return nil
+		}
 		return xerrors.Errorf("cannot get cgroup path for container %s: %w", ws.ContainerID, err)
 	}
 
@@ -95,8 +99,11 @@ func (host *PluginHost) WorkspaceAdded(ctx context.Context, ws *dispatch.Workspa
 		if plg.Type() != host.CGroupVersion {
 			continue
 		}
+		dispatch.GetDispatchWaitGroup(ctx).Add(1)
 
 		go func(plg Plugin) {
+			defer dispatch.GetDispatchWaitGroup(ctx).Done()
+
 			err := plg.Apply(ctx, opts)
 			if err == context.Canceled || err == context.DeadlineExceeded {
 				err = nil

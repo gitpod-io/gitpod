@@ -6,9 +6,89 @@
 
 import "reflect-metadata";
 
-import { Timestamp, toPlainMessage, PartialMessage, Duration } from "@bufbuild/protobuf";
+import { Duration, PartialMessage, Timestamp, toPlainMessage } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
+import { GitpodServer } from "@gitpod/gitpod-protocol";
+import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
+import { ContextURL } from "@gitpod/gitpod-protocol/lib/context-url";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { RoleOrPermission as ProtocolRoleOrPermission } from "@gitpod/gitpod-protocol/lib/permission";
 import {
+    AuthProviderInfo,
+    AuthProviderEntry as AuthProviderProtocol,
+    CommitContext,
+    EmailDomainFilterEntry,
+    EnvVarWithValue,
+    IDESettings,
+    Identity as IdentityProtocol,
+    JetBrainsProductConfig,
+    NamedWorkspaceFeatureFlag,
+    PrebuiltWorkspaceState,
+    ProjectEnvVar,
+    Workspace as ProtocolWorkspace,
+    Snapshot,
+    SnapshotContext,
+    SuggestedRepository as SuggestedRepositoryProtocol,
+    Token,
+    UserEnvVarValue,
+    User as UserProtocol,
+    UserSSHPublicKeyValue,
+    WithEnvvarsContext,
+    WithPrebuild,
+    WorkspaceAutostartOption,
+    WorkspaceContext,
+    WorkspaceInfo,
+    WorkspaceSession as WorkspaceSessionProtocol,
+} from "@gitpod/gitpod-protocol/lib/protocol";
+import { AuditLog as AuditLogProtocol } from "@gitpod/gitpod-protocol/lib/audit-log";
+import {
+    OrgMemberInfo,
+    OrganizationSettings as OrganizationSettingsProtocol,
+    PartialProject,
+    PrebuildSettings as PrebuildSettingsProtocol,
+    PrebuildWithStatus,
+    Project,
+    ProjectSettings,
+    Organization as ProtocolOrganization,
+    OrgMemberPermission,
+    OrgMemberRole,
+} from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
+import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import {
+    ConfigurationIdeConfig,
+    PortProtocol,
+    WorkspaceInstance,
+    WorkspaceInstanceConditions,
+    WorkspaceInstancePhase,
+    WorkspaceInstancePort,
+} from "@gitpod/gitpod-protocol/lib/workspace-instance";
+import {
+    AuthProvider,
+    AuthProviderDescription,
+    AuthProviderType,
+    OAuth2Config,
+} from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { AuditLog } from "@gitpod/public-api/lib/gitpod/v1/auditlogs_pb";
+import {
+    BranchMatchingStrategy,
+    Configuration,
+    PrebuildTriggerStrategy,
+    PrebuildSettings,
+    WorkspaceSettings,
+    PrebuildCloneSettings,
+} from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
+import {
+    ConfigurationEnvironmentVariable,
+    EnvironmentVariable,
+    EnvironmentVariableAdmission,
+    UserEnvironmentVariable,
+} from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
+import {
+    CellDisabledError,
     FailedPreconditionDetails,
     ImageBuildLogsNotYetAvailableError,
     InvalidCostCenterError as InvalidCostCenterErrorData,
@@ -22,33 +102,38 @@ import {
     UserBlockedError,
 } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import {
-    AuthProvider,
-    AuthProviderDescription,
-    AuthProviderType,
-    OAuth2Config,
-} from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+    BlockedEmailDomain,
+    BlockedRepository,
+    OnboardingState,
+} from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
+import {
+    Organization,
+    OrganizationMember,
+    OrganizationPermission,
+    OrganizationRole,
+    OrganizationSettings,
+} from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import {
+    Prebuild,
+    ListOrganizationPrebuildsRequest_Filter_State as PrebuildFilterState,
+    PrebuildPhase,
+    PrebuildPhase_Phase,
+    PrebuildStatus,
+    TaskLog,
+} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Author, Commit, SCMToken, SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
+import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 import {
     Identity,
+    RoleOrPermission,
     SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption,
     User,
-    RoleOrPermission,
     User_EmailNotificationSettings,
     User_UserFeatureFlag,
     User_WorkspaceAutostartOption,
     User_WorkspaceTimeoutSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
-import {
-    BranchMatchingStrategy,
-    Configuration,
-    PrebuildSettings,
-    WorkspaceSettings,
-} from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import {
-    Organization,
-    OrganizationMember,
-    OrganizationRole,
-    OrganizationSettings,
-} from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import {
     AdmissionLevel,
     CreateAndStartWorkspaceRequest,
@@ -69,6 +154,7 @@ import {
     WorkspacePhase_Phase,
     WorkspacePort,
     WorkspacePort_Protocol,
+    WorkspaceSession,
     WorkspaceSnapshot,
     WorkspaceSpec,
     WorkspaceSpec_GitSpec,
@@ -77,84 +163,9 @@ import {
     WorkspaceStatus_PrebuildResult,
     WorkspaceStatus_WorkspaceConditions,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
-import {
-    BlockedEmailDomain,
-    BlockedRepository,
-    OnboardingState,
-} from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
-import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
-import {
-    ConfigurationEnvironmentVariable,
-    EnvironmentVariable,
-    EnvironmentVariableAdmission,
-    UserEnvironmentVariable,
-} from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
-import { SCMToken, SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
-import { ContextURL } from "@gitpod/gitpod-protocol/lib/context-url";
-import {
-    Prebuild,
-    PrebuildStatus,
-    PrebuildPhase,
-    PrebuildPhase_Phase,
-    ListOrganizationPrebuildsRequest_Filter_State as PrebuildFilterState,
-} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
-import {
-    User as UserProtocol,
-    Identity as IdentityProtocol,
-    AuthProviderEntry as AuthProviderProtocol,
-    AuthProviderInfo,
-    CommitContext,
-    EnvVarWithValue,
-    Workspace as ProtocolWorkspace,
-    WithEnvvarsContext,
-    WithPrebuild,
-    WorkspaceContext,
-    WorkspaceInfo,
-    UserEnvVarValue,
-    ProjectEnvVar,
-    PrebuiltWorkspaceState,
-    Token,
-    SuggestedRepository as SuggestedRepositoryProtocol,
-    UserSSHPublicKeyValue,
-    SnapshotContext,
-    EmailDomainFilterEntry,
-    NamedWorkspaceFeatureFlag,
-    WorkspaceAutostartOption,
-    IDESettings,
-    Snapshot,
-} from "@gitpod/gitpod-protocol/lib/protocol";
-import {
-    OrgMemberInfo,
-    OrgMemberRole,
-    OrganizationSettings as OrganizationSettingsProtocol,
-    PartialProject,
-    PrebuildSettings as PrebuildSettingsProtocol,
-    PrebuildWithStatus,
-    Project,
-    ProjectSettings,
-    Organization as ProtocolOrganization,
-} from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
-import {
-    ConfigurationIdeConfig,
-    PortProtocol,
-    WorkspaceInstance,
-    WorkspaceInstanceConditions,
-    WorkspaceInstancePhase,
-    WorkspaceInstancePort,
-} from "@gitpod/gitpod-protocol/lib/workspace-instance";
-import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
-import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
-import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
-import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
-import { RoleOrPermission as ProtocolRoleOrPermission } from "@gitpod/gitpod-protocol/lib/permission";
-import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
-import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
-import { GitpodServer } from "@gitpod/gitpod-protocol";
-import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { BigIntToJson } from "@gitpod/gitpod-protocol/lib/util/stringify";
 import { getPrebuildLogPath } from "./prebuild-utils";
+import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
 const URL = require("url").URL || window.URL;
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
@@ -167,6 +178,29 @@ export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configurati
  * - methods converting from gRPC to JSON-RPC is called `from*`
  */
 export class PublicAPIConverter {
+    toWorkspaceSession(arg: WorkspaceSessionProtocol): WorkspaceSession {
+        const workspace = this.toWorkspace({
+            workspace: arg.workspace,
+            latestInstance: arg.instance,
+        });
+        const result = new WorkspaceSession();
+        result.workspace = workspace;
+        result.creationTime = Timestamp.fromDate(new Date(arg.instance.creationTime));
+        if (arg.instance.startedTime) {
+            result.startedTime = Timestamp.fromDate(new Date(arg.instance.startedTime));
+        }
+        if (arg.instance.deployedTime) {
+            result.deployedTime = Timestamp.fromDate(new Date(arg.instance.deployedTime));
+        }
+        if (arg.instance.stoppingTime) {
+            result.stoppingTime = Timestamp.fromDate(new Date(arg.instance.stoppingTime));
+        }
+        if (arg.instance.stoppedTime) {
+            result.stoppedTime = Timestamp.fromDate(new Date(arg.instance.stoppedTime));
+        }
+        return result;
+    }
+
     toWorkspace(arg: WorkspaceInfo | WorkspaceInstance, current?: Workspace): Workspace {
         const workspace = current ?? new Workspace();
 
@@ -211,8 +245,7 @@ export class PublicAPIConverter {
         if (arg.status.timeout) {
             spec.timeout = new UpdateWorkspaceRequest_UpdateTimeout({
                 disconnected: this.toDuration(arg.status.timeout),
-                // TODO: inactivity
-                // TODO: maximum_lifetime
+                inactivity: this.toDuration(arg.status.timeout),
             });
         }
         if (arg.workspaceClass) {
@@ -345,7 +378,6 @@ export class PublicAPIConverter {
                     // errorMessage: "",
                 });
             }
-            // TODO: timeout
             status.phase.lastTransitionTime = Timestamp.fromDate(new Date(arg.workspace.creationTime));
             status.gitStatus = this.toGitStatus(arg.workspace);
             return status;
@@ -380,12 +412,10 @@ export class PublicAPIConverter {
 
         status.phase.name = this.toPhase(arg);
         status.instanceId = arg.id;
-        if (arg.status.message) {
-            status.conditions = new WorkspaceStatus_WorkspaceConditions({
-                failed: arg.status.message,
-            });
-            arg.status.conditions.failed;
-        }
+        status.conditions = new WorkspaceStatus_WorkspaceConditions({
+            failed: arg.status.conditions?.failed,
+            timeout: arg.status.conditions?.timeout,
+        });
         status.gitStatus = this.toGitStatus(arg, status.gitStatus);
 
         return status;
@@ -424,6 +454,7 @@ export class PublicAPIConverter {
         const result = new EditorReference();
         result.name = ideConfig.ide;
         result.version = ideConfig.useLatest ? "latest" : "stable";
+        result.preferToolbox = ideConfig.preferToolbox ?? false;
         return result;
     }
 
@@ -621,6 +652,22 @@ export class PublicAPIConverter {
             if (reason.code === ErrorCodes.INTERNAL_SERVER_ERROR) {
                 return new ConnectError(reason.message, Code.Internal, undefined, undefined, reason);
             }
+            if (reason.code === ErrorCodes.CELL_EXPIRED) {
+                return new ConnectError(
+                    reason.message,
+                    Code.FailedPrecondition,
+                    undefined,
+                    [
+                        new FailedPreconditionDetails({
+                            reason: {
+                                case: "cellIsDisabled",
+                                value: new CellDisabledError(),
+                            },
+                        }),
+                    ],
+                    reason,
+                );
+            }
             return new ConnectError(reason.message, Code.Unknown, undefined, undefined, reason);
         }
         return new ConnectError(`Oops! Something went wrong.`, Code.Internal, undefined, undefined, reason);
@@ -675,6 +722,8 @@ export class PublicAPIConverter {
                     return new ApplicationError(ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE, reason.rawMessage);
                 case "tooManyRunningWorkspaces":
                     return new ApplicationError(ErrorCodes.TOO_MANY_RUNNING_WORKSPACES, reason.rawMessage);
+                case "cellIsDisabled":
+                    return new ApplicationError(ErrorCodes.CELL_EXPIRED, reason.rawMessage);
             }
             return new ApplicationError(ErrorCodes.PRECONDITION_FAILED, reason.rawMessage);
         }
@@ -969,6 +1018,7 @@ export class PublicAPIConverter {
             result.branchStrategy = this.fromBranchMatchingStrategy(prebuilds.branchStrategy);
             result.prebuildInterval = prebuilds.prebuildInterval;
             result.workspaceClass = prebuilds.workspaceClass;
+            result.cloneSettings = this.fromPrebuildCloneSettings(prebuilds.cloneSettings);
         }
         return result;
     }
@@ -1018,6 +1068,17 @@ export class PublicAPIConverter {
             allowedWorkspaceClasses: settings.allowedWorkspaceClasses || [],
             pinnedEditorVersions: settings.pinnedEditorVersions || {},
             restrictedEditorNames: settings.restrictedEditorNames || [],
+            defaultRole: settings.defaultRole || undefined,
+            timeoutSettings: {
+                inactivity: settings.timeoutSettings?.inactivity
+                    ? this.toDuration(settings.timeoutSettings?.inactivity)
+                    : undefined,
+                denyUserTimeouts: settings.timeoutSettings?.denyUserTimeouts,
+            },
+            roleRestrictions: Object.entries(settings.roleRestrictions ?? {}).map(([role, permissions]) => ({
+                role: this.toOrgMemberRole(role as OrgMemberRole),
+                permissions: permissions.map((permission) => this.toOrganizationPermission(permission)),
+            })),
         });
     }
 
@@ -1041,6 +1102,8 @@ export class PublicAPIConverter {
             result.branchStrategy = this.toBranchMatchingStrategy(prebuilds.branchStrategy);
             result.prebuildInterval = prebuilds.prebuildInterval ?? 20;
             result.workspaceClass = prebuilds.workspaceClass ?? "";
+            result.triggerStrategy = this.toPrebuildTriggerStrategy(prebuilds.triggerStrategy);
+            result.cloneSettings = this.toPrebuildCloneSettings(prebuilds.cloneSettings);
         }
         return result;
     }
@@ -1055,6 +1118,29 @@ export class PublicAPIConverter {
                 return BranchMatchingStrategy.MATCHED_BRANCHES;
         }
         return BranchMatchingStrategy.DEFAULT_BRANCH;
+    }
+
+    toPrebuildTriggerStrategy(strategy?: PrebuildSettingsProtocol.TriggerStrategy): PrebuildTriggerStrategy {
+        switch (strategy) {
+            case "webhook-based":
+                return PrebuildTriggerStrategy.UNSPECIFIED;
+            case "activity-based":
+                return PrebuildTriggerStrategy.ACTIVITY_BASED;
+            default:
+                return PrebuildTriggerStrategy.UNSPECIFIED;
+        }
+    }
+
+    fromPrebuildCloneSettings(settings?: DeepPartial<PrebuildCloneSettings>): PrebuildSettingsProtocol.CloneSettings {
+        return {
+            fullClone: settings?.fullClone ?? false,
+        };
+    }
+
+    toPrebuildCloneSettings(settings?: PrebuildSettingsProtocol.CloneSettings): PrebuildCloneSettings {
+        return new PrebuildCloneSettings({
+            fullClone: settings?.fullClone ?? false,
+        });
     }
 
     toWorkspaceSettings(projectSettings: ProjectSettings | undefined): WorkspaceSettings {
@@ -1110,6 +1196,8 @@ export class PublicAPIConverter {
         return new OAuth2Config({
             clientId: ap.oauth?.clientId,
             clientSecret: ap.oauth?.clientSecret,
+            authorizationUrl: ap.oauth?.authorizationUrl,
+            tokenUrl: ap.oauth?.tokenUrl,
         });
     }
 
@@ -1123,6 +1211,8 @@ export class PublicAPIConverter {
                 return AuthProviderType.BITBUCKET;
             case "BitbucketServer":
                 return AuthProviderType.BITBUCKET_SERVER;
+            case "AzureDevOps":
+                return AuthProviderType.AZURE_DEVOPS;
             default:
                 return AuthProviderType.UNSPECIFIED; // not allowed
         }
@@ -1138,6 +1228,8 @@ export class PublicAPIConverter {
                 return "Bitbucket";
             case AuthProviderType.BITBUCKET_SERVER:
                 return "BitbucketServer";
+            case AuthProviderType.AZURE_DEVOPS:
+                return "AzureDevOps";
             default:
                 return ""; // not allowed
         }
@@ -1173,13 +1265,83 @@ export class PublicAPIConverter {
     }
 
     toPrebuildStatus(gitpodHost: string, prebuild: PrebuildWithStatus): PrebuildStatus {
+        const tasks: TaskLog[] = [];
+        let taskIndex = 0;
+        if (prebuild.workspace?.config?.tasks) {
+            for (let i = 0; i < prebuild.workspace.config.tasks.length; i++) {
+                taskIndex = i;
+                const task = prebuild.workspace.config.tasks[i];
+                tasks.push(
+                    new TaskLog({
+                        taskId: `${i}`,
+                        taskLabel: task.name || `Task [${i + 1}]`,
+                        taskJson: JSON.stringify(task),
+                        logUrl:
+                            // if it has a prebuild task it has logs
+                            task.before || task.init || task.prebuild
+                                ? new URL(getPrebuildLogPath(prebuild.info.id, `${i}`), gitpodHost).toString()
+                                : undefined,
+                    }),
+                );
+            }
+        }
+
+        const capitalize = (input: string) => {
+            return input.charAt(0).toUpperCase() + input.slice(1);
+        };
+
+        // This is a hack mimicking the supervisor behavior of adding dynamic IDE tasks https://github.com/gitpod-io/gitpod/blob/e7d79c355e2cd6ac34056ea52d7bdcda45975839/components/ide-service/pkg/server/server.go#L508-L540
+        if (prebuild.workspace.config.jetbrains) {
+            const jetbrainsIdes = Object.entries(prebuild.workspace.config.jetbrains).sort(([a], [b]) =>
+                a.localeCompare(b),
+            ) as [string, JetBrainsProductConfig][];
+            for (const [ide, ideConfig] of jetbrainsIdes) {
+                if (!ideConfig.prebuilds) {
+                    continue;
+                }
+
+                if (ideConfig.prebuilds.version !== "latest") {
+                    tasks.push(
+                        new TaskLog({
+                            taskId: `jb-warmup-${ide}-stable`,
+                            taskLabel: `JetBrains ${capitalize(ide)} warmup (stable)`,
+                            logUrl: new URL(
+                                getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
+                                gitpodHost,
+                            ).toString(),
+                        }),
+                    );
+                }
+                if (ideConfig.prebuilds.version !== "stable") {
+                    tasks.push(
+                        new TaskLog({
+                            taskId: `jb-warmup-${ide}-latest`,
+                            taskLabel: `JetBrains ${capitalize(ide)} warmup (latest)`,
+                            logUrl: new URL(
+                                getPrebuildLogPath(prebuild.info.id, `${++taskIndex}`),
+                                gitpodHost,
+                            ).toString(),
+                        }),
+                    );
+                }
+            }
+        }
+
+        let stopTime: Timestamp | undefined;
+        if (prebuild.instance?.stoppedTime) {
+            stopTime = Timestamp.fromDate(new Date(prebuild.instance.stoppedTime));
+        }
+
         return new PrebuildStatus({
             phase: new PrebuildPhase({
                 name: this.toPrebuildPhase(prebuild.status),
             }),
             startTime: Timestamp.fromDate(new Date(prebuild.info.startedAt)),
+            stopTime,
             message: prebuild.error,
             logUrl: new URL(getPrebuildLogPath(prebuild.info.id), gitpodHost).toString(),
+            taskLogs: tasks,
+            imageBuildLogUrl: new URL(getPrebuildLogPath(prebuild.workspace.id, "image-build"), gitpodHost).toString(),
         });
     }
 
@@ -1218,6 +1380,7 @@ export class PublicAPIConverter {
             id: repo.id,
             urlRegexp: repo.urlRegexp,
             blockUser: repo.blockUser,
+            blockFreeUsage: repo.blockFreeUsage,
             creationTime: Timestamp.fromDate(new Date(repo.createdAt)),
             updateTime: Timestamp.fromDate(new Date(repo.updatedAt)),
         });
@@ -1242,6 +1405,24 @@ export class PublicAPIConverter {
             idToken: t.idToken,
         });
     }
+
+    fromOrganizationPermission = (permission: OrganizationPermission): OrgMemberPermission => {
+        switch (permission) {
+            case OrganizationPermission.START_ARBITRARY_REPOS:
+                return "start_arbitrary_repositories";
+            default:
+                throw new Error(`unknown org member permission ${permission}`);
+        }
+    };
+
+    toOrganizationPermission = (permission: OrgMemberPermission): OrganizationPermission => {
+        switch (permission) {
+            case "start_arbitrary_repositories":
+                return OrganizationPermission.START_ARBITRARY_REPOS;
+            default:
+                throw new Error(`unknown org member permission ${permission}`);
+        }
+    };
 
     toSuggestedRepository(r: SuggestedRepositoryProtocol): SuggestedRepository {
         return new SuggestedRepository({
@@ -1433,6 +1614,7 @@ export class PublicAPIConverter {
         return new EditorReference({
             name: from.defaultIde,
             version: from.useLatestVersion ? "latest" : "stable",
+            preferToolbox: from.preferToolbox,
         });
     }
 
@@ -1443,6 +1625,7 @@ export class PublicAPIConverter {
         return {
             defaultIde: e.name,
             useLatestVersion: e.version === "latest",
+            preferToolbox: e.preferToolbox,
         };
     }
 
@@ -1482,6 +1665,17 @@ export class PublicAPIConverter {
     toOnboardingState(state: GitpodServer.OnboardingState): OnboardingState {
         return new OnboardingState({
             completed: state.isCompleted,
+        });
+    }
+
+    toAuditLog(input: AuditLogProtocol): AuditLog {
+        return new AuditLog({
+            id: input.id,
+            organizationId: input.organizationId,
+            actorId: input.actorId,
+            action: input.action,
+            timestamp: this.toTimestamp(input.timestamp),
+            args: JSON.stringify(input.args, BigIntToJson.replacer),
         });
     }
 }

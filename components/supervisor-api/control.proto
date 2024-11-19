@@ -28,6 +28,13 @@ service ControlService {
 
   // CreateDebugEnv creates a debug workspace envs
   rpc CreateDebugEnv(CreateDebugEnvRequest) returns (CreateDebugEnvResponse) {}
+
+  // SendHeartBeat sends a heartbeat to server to keep the workspace alive
+  rpc SendHeartBeat(SendHeartBeatRequest) returns (SendHeartBeatResponse) {
+    option (google.api.http) = {
+      get: "/v1/send_heartbeat"
+    };
+  }
 }
 
 message ExposePortRequest {
@@ -73,3 +80,7 @@ message CreateDebugEnvRequest {
 message CreateDebugEnvResponse {
   repeated string envs = 1;
 }
+
+message SendHeartBeatRequest {}
+
+message SendHeartBeatResponse {}

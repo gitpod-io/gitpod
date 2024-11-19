@@ -104,6 +104,12 @@ describe("PublicAPIConverter", () => {
             });
         });
 
+        it("toWorkspaceSession", async () => {
+            await startFixtureTest("../fixtures/toWorkspaceSession_*.json", async (input) =>
+                converter.toWorkspaceSession(input),
+            );
+        });
+
         it("toConfiguration", async () => {
             await startFixtureTest("../fixtures/toConfiguration_*.json", async (input) =>
                 converter.toConfiguration(input),
@@ -345,6 +351,8 @@ describe("PublicAPIConverter", () => {
                     lastUpdate: "2021-06-28T10:48:28Z",
                     owner: "akosyakov",
                     userIsOwner: true,
+                    repoName: "gitpod",
+                    errorMessage: "Repository not found.",
                     userScopes: ["repo"],
                 }),
             );

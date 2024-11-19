@@ -5,6 +5,7 @@
 package common
 
 import (
+	"context"
 	"time"
 
 	"github.com/gitpod-io/gitpod/ws-manager/api"
@@ -23,6 +24,8 @@ const (
 	WorkspacePathPrefixIdentifier = "workspacePathPrefix"
 
 	WorkspaceInfoIdentifier = "workspaceInfo"
+
+	ForeignContentIdentifier = "foreignContent"
 )
 
 // WorkspaceCoords represents the coordinates of a workspace (port).
@@ -33,12 +36,17 @@ type WorkspaceCoords struct {
 	Port string
 	// Debug workspace
 	Debug bool
+	// Foreign content
+	Foreign bool
 }
 
 // WorkspaceInfoProvider is an entity that is able to provide workspaces related information.
 type WorkspaceInfoProvider interface {
 	// WorkspaceInfo returns the workspace information of a workspace using it's workspace ID
 	WorkspaceInfo(workspaceID string) *WorkspaceInfo
+
+	AcquireContext(ctx context.Context, workspaceID, port string) (context.Context, string, error)
+	ReleaseContext(id string)
 }
 
 // WorkspaceInfo is all the infos ws-proxy needs to know about a workspace.

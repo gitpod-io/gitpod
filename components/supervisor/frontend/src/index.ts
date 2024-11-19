@@ -85,9 +85,9 @@ LoadingFrame.load().then(async (loading) => {
     window.gitpod.encrypt = frontendDashboardServiceClient.encrypt.bind(frontendDashboardServiceClient);
     window.gitpod.isEncryptedData = frontendDashboardServiceClient.isEncryptedData.bind(frontendDashboardServiceClient);
 
-    (async () => {
-        const supervisorServiceClient = SupervisorServiceClient.get();
+    const supervisorServiceClient = new SupervisorServiceClient(frontendDashboardServiceClient);
 
+    (async () => {
         let hideDesktopIde = false;
         const hideDesktopIdeEventListener = frontendDashboardServiceClient.onOpenBrowserIDE(() => {
             hideDesktopIdeEventListener.dispose();
@@ -271,7 +271,6 @@ LoadingFrame.load().then(async (loading) => {
                 });
             });
         }
-        const supervisorServiceClient = SupervisorServiceClient.get();
         if (debugWorkspace) {
             supervisorServiceClient.supervisorWillShutdown.then(() => {
                 window.open("", "_self")?.close();

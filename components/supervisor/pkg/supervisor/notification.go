@@ -79,8 +79,8 @@ func (srv *NotificationService) RegisterGRPC(s *grpc.Server) {
 }
 
 // RegisterREST registers a REST service.
-func (srv *NotificationService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterNotificationServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+func (srv *NotificationService) RegisterREST(ctx context.Context, mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // Notify sends a notification to the user.

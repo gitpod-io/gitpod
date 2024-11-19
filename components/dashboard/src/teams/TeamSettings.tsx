@@ -10,7 +10,6 @@ import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { InputWithCopy } from "../components/InputWithCopy";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
-import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { InputField } from "../components/forms/InputField";
 import { TextInputField } from "../components/forms/TextInputField";
 import { Heading2, Heading3, Subheading } from "../components/typography/headings";
@@ -28,29 +27,26 @@ import { OrgSettingsPage } from "./OrgSettingsPage";
 import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Button } from "@podkit/buttons/Button";
 import { useInstallationDefaultWorkspaceImageQuery } from "../data/installation/default-workspace-image-query";
-import { useAllowedWorkspaceClassesMemo } from "../data/workspaces/workspace-classes-query";
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
-import {
-    WorkspaceClassesModifyModal,
-    WorkspaceClassesModifyModalProps,
-    WorkspaceClassesOptions,
-} from "../components/WorkspaceClassesOptions";
-import { useMutation } from "@tanstack/react-query";
-import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
-import { IdeOptions, IdeOptionsModifyModal, IdeOptionsModifyModalProps } from "../components/IdeOptions";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
+import { useDocumentTitle } from "../hooks/use-document-title";
+import { PlainMessage } from "@bufbuild/protobuf";
+import { useToast } from "../components/toasts/Toasts";
 
 export default function TeamSettingsPage() {
+    useDocumentTitle("Organization Settings - General");
+    const { toast } = useToast();
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
     const isOwner = useIsOwner();
     const invalidateOrgs = useOrganizationsInvalidator();
+
     const [modal, setModal] = useState(false);
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
     const [teamName, setTeamName] = useState(org?.name || "");
     const [updated, setUpdated] = useState(false);
+
     const updateOrg = useUpdateOrgMutation();
-    const orgLevelEditorRestrictionEnabled = useFeatureFlag("org_level_editor_restriction_enabled");
 
     const close = () => setModal(false);
 
@@ -102,7 +98,7 @@ export default function TeamSettingsPage() {
     const [showImageEditModal, setShowImageEditModal] = useState(false);
 
     const handleUpdateTeamSettings = useCallback(
-        async (newSettings: Partial<OrganizationSettings>, options?: { throwMutateError?: boolean }) => {
+        async (newSettings: Partial<PlainMessage<OrganizationSettings>>, options?: { throwMutateError?: boolean }) => {
             if (!org?.id) {
                 throw new Error("no organization selected");
             }
@@ -114,23 +110,27 @@ export default function TeamSettingsPage() {
                     ...settings,
                     ...newSettings,
                 });
+                toast("Organization settings updated");
             } catch (error) {
                 if (options?.throwMutateError) {
                     throw error;
                 }
+                toast(`Failed to update organization settings: ${error.message}`);
                 console.error(error);
             }
         },
-        [updateTeamSettings, org?.id, isOwner, settings],
+        [updateTeamSettings, org?.id, isOwner, settings, toast],
     );
 
     return (
         <>
             <OrgSettingsPage>
-                <div className="space-y-4">
+                <div className="space-y-8">
                     <div>
-                        <Heading2>Organization Details</Heading2>
-                        <Subheading>Details of your organization within Gitpod.</Subheading>
+                        <Heading2>General</Heading2>
+                        <Subheading>
+                            Set the default role and workspace image, name or delete your organization.
+                        </Subheading>
                     </div>
                     <ConfigurationSettingsField>
                         {updateOrg.isError && (
@@ -173,22 +173,26 @@ export default function TeamSettingsPage() {
                     </ConfigurationSettingsField>
 
                     <ConfigurationSettingsField>
-                        <Heading3>Collaboration and sharing</Heading3>
-
-                        {updateTeamSettings.isError && (
-                            <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
-                                <span>Failed to update organization settings: </span>
-                                <span>{updateTeamSettings.error.message || "unknown error"}</span>
-                            </Alert>
-                        )}
-
-                        <CheckboxInputField
-                            label="Workspace Sharing"
-                            hint="Allow workspaces created within an Organization to share the workspace with any authenticated user."
-                            checked={!settings?.workspaceSharingDisabled}
-                            onChange={(checked) => handleUpdateTeamSettings({ workspaceSharingDisabled: !checked })}
+                        <Heading3>Default role for joiners</Heading3>
+                        <Subheading className="mb-4">Choose the initial role for new members.</Subheading>
+                        <Select
+                            value={`${settings?.defaultRole || "member"}`}
+                            onValueChange={(value) => handleUpdateTeamSettings({ defaultRole: value })}
                             disabled={isLoading || !isOwner}
-                        />
+                        >
+                            <SelectTrigger className="w-60">
+                                <SelectValue placeholder="Select a branch filter" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={`owner`}>
+                                    Owner - Can fully manage org and repository settings
+                                </SelectItem>
+                                <SelectItem value={`member`}>Member - Can view repository settings</SelectItem>
+                                <SelectItem value={`collaborator`}>
+                                    Collaborator - Can only create workspaces
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </ConfigurationSettingsField>
 
                     <ConfigurationSettingsField>
@@ -208,20 +212,6 @@ export default function TeamSettingsPage() {
                             settings={settings}
                             installationDefaultWorkspaceImage={installationDefaultImage}
                             onClose={() => setShowImageEditModal(false)}
-                        />
-                    )}
-
-                    <OrgWorkspaceClassesOptions
-                        isOwner={isOwner}
-                        settings={settings}
-                        handleUpdateTeamSettings={handleUpdateTeamSettings}
-                    />
-
-                    {orgLevelEditorRestrictionEnabled && (
-                        <EditorOptions
-                            isOwner={isOwner}
-                            settings={settings}
-                            handleUpdateTeamSettings={handleUpdateTeamSettings}
                         />
                     )}
 
@@ -423,164 +413,3 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
         </Modal>
     );
 }
-
-interface OrgWorkspaceClassesOptionsProps {
-    isOwner: boolean;
-    settings?: OrganizationSettings;
-    handleUpdateTeamSettings: (
-        newSettings: Partial<OrganizationSettings>,
-        options?: { throwMutateError?: boolean },
-    ) => Promise<void>;
-}
-const OrgWorkspaceClassesOptions = ({
-    isOwner,
-    settings,
-    handleUpdateTeamSettings,
-}: OrgWorkspaceClassesOptionsProps) => {
-    const [showModal, setShowModal] = useState(false);
-    const { data: allowedClassesInOrganization, isLoading: isLoadingClsInOrg } = useAllowedWorkspaceClassesMemo(
-        undefined,
-        {
-            filterOutDisabled: true,
-            ignoreScope: ["configuration"],
-        },
-    );
-    const { data: allowedClassesInInstallation, isLoading: isLoadingClsInInstall } = useAllowedWorkspaceClassesMemo(
-        undefined,
-        {
-            filterOutDisabled: true,
-            ignoreScope: ["organization", "configuration"],
-        },
-    );
-
-    const restrictedWorkspaceClasses = useMemo(() => {
-        const allowedList = settings?.allowedWorkspaceClasses ?? [];
-        if (allowedList.length === 0) {
-            return [];
-        }
-        return allowedClassesInInstallation.filter((cls) => !allowedList.includes(cls.id)).map((cls) => cls.id);
-    }, [settings?.allowedWorkspaceClasses, allowedClassesInInstallation]);
-
-    const updateMutation: WorkspaceClassesModifyModalProps["updateMutation"] = useMutation({
-        mutationFn: async ({ restrictedWorkspaceClasses }) => {
-            let allowedWorkspaceClasses = allowedClassesInInstallation.map((e) => e.id);
-            if (restrictedWorkspaceClasses.length > 0) {
-                allowedWorkspaceClasses = allowedWorkspaceClasses.filter(
-                    (e) => !restrictedWorkspaceClasses.includes(e),
-                );
-            }
-            const allAllowed = allowedClassesInInstallation.every((e) => allowedWorkspaceClasses.includes(e.id));
-            if (allAllowed) {
-                // empty means allow all classes
-                allowedWorkspaceClasses = [];
-            }
-            await handleUpdateTeamSettings({ allowedWorkspaceClasses }, { throwMutateError: true });
-        },
-    });
-
-    return (
-        <ConfigurationSettingsField>
-            <Heading3>Available workspace classes</Heading3>
-            <Subheading>
-                Limit the available workspace classes in your organization. Requires{" "}
-                <span className="font-medium">Owner</span> permissions to change.
-            </Subheading>
-
-            <WorkspaceClassesOptions
-                isLoading={isLoadingClsInOrg}
-                className="mt-4"
-                classes={allowedClassesInOrganization}
-            />
-
-            {isOwner && (
-                <Button className="mt-6" onClick={() => setShowModal(true)}>
-                    Manage Classes
-                </Button>
-            )}
-
-            {showModal && (
-                <WorkspaceClassesModifyModal
-                    isLoading={isLoadingClsInInstall}
-                    showSetDefaultButton={false}
-                    showSwitchTitle={false}
-                    restrictedWorkspaceClasses={restrictedWorkspaceClasses}
-                    allowedClasses={allowedClassesInInstallation}
-                    updateMutation={updateMutation}
-                    onClose={() => setShowModal(false)}
-                />
-            )}
-        </ConfigurationSettingsField>
-    );
-};
-
-interface EditorOptionsProps {
-    settings: OrganizationSettings | undefined;
-    isOwner: boolean;
-    handleUpdateTeamSettings: (
-        newSettings: Partial<OrganizationSettings>,
-        options?: { throwMutateError?: boolean },
-    ) => Promise<void>;
-}
-const EditorOptions = ({ isOwner, settings, handleUpdateTeamSettings }: EditorOptionsProps) => {
-    const [showModal, setShowModal] = useState(false);
-    const { data: installationOptions, isLoading: installationOptionsIsLoading } = useAllowedWorkspaceEditorsMemo(
-        undefined,
-        {
-            filterOutDisabled: true,
-            ignoreScope: ["organization", "configuration"],
-        },
-    );
-    const { data: orgOptions, isLoading: orgOptionsIsLoading } = useAllowedWorkspaceEditorsMemo(undefined, {
-        filterOutDisabled: true,
-        ignoreScope: ["configuration"],
-    });
-
-    const updateMutation: IdeOptionsModifyModalProps["updateMutation"] = useMutation({
-        mutationFn: async ({ restrictedEditors, pinnedEditorVersions }) => {
-            const updatedRestrictedEditors = [...restrictedEditors.keys()];
-            const updatedPinnedEditorVersions = Object.fromEntries(pinnedEditorVersions.entries());
-
-            await handleUpdateTeamSettings(
-                { restrictedEditorNames: updatedRestrictedEditors, pinnedEditorVersions: updatedPinnedEditorVersions },
-                { throwMutateError: true },
-            );
-        },
-    });
-
-    const restrictedEditors = new Set<string>(settings?.restrictedEditorNames || []);
-    const pinnedEditorVersions = new Map<string, string>(Object.entries(settings?.pinnedEditorVersions || {}));
-
-    return (
-        <ConfigurationSettingsField>
-            <Heading3>Available editors</Heading3>
-            <Subheading>
-                Limit the available editors in your organization. Requires <span className="font-medium">Owner</span>{" "}
-                permissions to change.
-            </Subheading>
-
-            <IdeOptions
-                isLoading={orgOptionsIsLoading}
-                className="mt-4"
-                ideOptions={orgOptions}
-                pinnedEditorVersions={pinnedEditorVersions}
-            />
-
-            {isOwner && (
-                <Button className="mt-6" onClick={() => setShowModal(true)}>
-                    Manage Editors
-                </Button>
-            )}
-
-            {showModal && (
-                <IdeOptionsModifyModal
-                    isLoading={installationOptionsIsLoading}
-                    ideOptions={installationOptions}
-                    restrictedEditors={restrictedEditors}
-                    pinnedEditorVersions={pinnedEditorVersions}
-                    updateMutation={updateMutation}
-                    onClose={() => setShowModal(false)}
-                />
-            )}
-        </ConfigurationSettingsField>
-    );
-};

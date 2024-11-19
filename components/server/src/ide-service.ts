@@ -5,7 +5,7 @@
  */
 
 import { IDESettings, User, Workspace } from "@gitpod/gitpod-protocol";
-import { IDEClient, IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { IDEClient, IDEOption, IDEOptions, IDESettingsVersion } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import * as IdeServiceApi from "@gitpod/ide-service-api/lib/ide.pb";
 import {
     IDEServiceClient,
@@ -67,12 +67,23 @@ export class IDEService {
         }
     }
 
+    async isIDEAvailable(ide: string, request: { user: { id: string; email?: string } }): Promise<boolean> {
+        if (!ide) {
+            return false;
+        }
+        const config = await this.getIDEConfig({ user: request.user });
+        return Object.keys(config.ideOptions.options).includes(ide);
+    }
+
     migrateSettings(user: User): IDESettings | undefined {
-        if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.0") {
+        if (
+            !user?.additionalData?.ideSettings ||
+            user.additionalData.ideSettings.settingVersion === IDESettingsVersion
+        ) {
             return undefined;
         }
         const newIDESettings: IDESettings = {
-            settingVersion: "2.0",
+            settingVersion: IDESettingsVersion,
         };
         const ideSettings = user.additionalData.ideSettings;
         if (ideSettings.useDesktopIde) {
@@ -90,6 +101,10 @@ export class IDEService {
             newIDESettings.defaultIde = "code";
             newIDESettings.useLatestVersion = useLatest;
         }
+
+        if (ideSettings.defaultIde && !this.isIDEAvailable(ideSettings.defaultIde, { user })) {
+            ideSettings.defaultIde = "code";
+        }
         return newIDESettings;
     }
 
@@ -100,6 +115,11 @@ export class IDEService {
     ): Promise<ResolveWorkspaceConfigResponse> {
         const workspaceType =
             workspace.type === "prebuild" ? IdeServiceApi.WorkspaceType.PREBUILD : IdeServiceApi.WorkspaceType.REGULAR;
+
+        // in case users have `auto-start` options set
+        if (userSelectedIdeSettings?.defaultIde && !this.isIDEAvailable(userSelectedIdeSettings.defaultIde, { user })) {
+            userSelectedIdeSettings.defaultIde = "code";
+        }
 
         const req: IdeServiceApi.ResolveWorkspaceConfigRequest = {
             type: workspaceType,

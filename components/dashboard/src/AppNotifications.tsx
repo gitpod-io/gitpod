@@ -20,7 +20,7 @@ import { useOrgBillingMode } from "./data/billing-mode/org-billing-mode-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
-const PRIVACY_POLICY_LAST_UPDATED = "2023-12-20";
+const PRIVACY_POLICY_LAST_UPDATED = "2024-10-01";
 
 interface Notification {
     id: string;
@@ -64,6 +64,50 @@ const UPDATED_PRIVACY_POLICY = (updateUser: (user: Partial<UserProtocol>) => Pro
     } as Notification;
 };
 
+const GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY = "gitpod_flex_introduction";
+const GITPOD_FLEX_INTRODUCTION = (updateUser: (user: Partial<UserProtocol>) => Promise<User>) => {
+    return {
+        id: GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY,
+        type: "info",
+        preventDismiss: true,
+        onClose: async () => {
+            let dismissSuccess = false;
+            try {
+                const updatedUser = await updateUser({
+                    additionalData: {
+                        profile: {
+                            coachmarksDismissals: {
+                                [GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY]: new Date().toISOString(),
+                            },
+                        },
+                    },
+                });
+                dismissSuccess = !!updatedUser;
+            } catch (err) {
+                dismissSuccess = false;
+            } finally {
+                trackEvent("coachmark_dismissed", {
+                    name: "gitpod-flex-introduction",
+                    success: dismissSuccess,
+                });
+            }
+        },
+        message: (
+            <span className="text-md">
+                <b>Introducing Gitpod Flex:</b> self-host for free in 3 min or run locally using Gitpod Desktop |{" "}
+                <a
+                    className="text-kumquat-ripe font-bold"
+                    href="https://app.gitpod.io"
+                    target="_blank"
+                    rel="noreferrer"
+                >
+                    Try now
+                </a>
+            </span>
+        ),
+    } as Notification;
+};
+
 const INVALID_BILLING_ADDRESS = (stripePortalUrl: string | undefined) => {
     return {
         id: "invalid-billing-address",
@@ -85,6 +129,61 @@ const INVALID_BILLING_ADDRESS = (stripePortalUrl: string | undefined) => {
             </span>
         ),
     } as Notification;
+};
+
+const GENERAL_NOTIFICATION = (
+    id: string,
+    message: JSX.Element,
+    updateUser: (user: Partial<UserProtocol>) => Promise<User>,
+    eventName: string = "general_notification",
+) => {
+    return {
+        id,
+        type: "info",
+        preventDismiss: true,
+        onClose: async () => {
+            let dismissSuccess = false;
+            try {
+                const updatedUser = await updateUser({
+                    additionalData: {
+                        profile: {
+                            coachmarksDismissals: {
+                                [id]: new Date().toISOString(),
+                            },
+                        },
+                    },
+                });
+                dismissSuccess = !!updatedUser;
+            } catch (err) {
+                dismissSuccess = false;
+            } finally {
+                trackEvent("coachmark_dismissed", {
+                    name: eventName,
+                    success: dismissSuccess,
+                });
+            }
+        },
+        message,
+    } as Notification;
+};
+
+const AWS_REINVENT_NOTIFICATION = (updateUser: (user: Partial<UserProtocol>) => Promise<User>) => {
+    return GENERAL_NOTIFICATION(
+        "aws_reinvent_2024",
+        <span className="text-md">
+            <b>See you at re:Invent!</b> Book a demo with us, and join our developer productivity leaders roundtable (limited tickets) |{" "}
+            <a
+                className="text-kumquat-ripe font-bold"
+                href="https://www.gitpod.io/aws-reinvent-24"
+                target="_blank"
+                rel="noreferrer"
+            >
+                Learn more
+            </a>
+        </span>,
+        updateUser,
+        "aws_reinvent_notification",
+    );
 };
 
 export function AppNotifications() {
@@ -114,6 +213,14 @@ export function AppNotifications() {
                     if (notification) {
                         notifications.push(notification);
                     }
+                }
+
+                if (isGitpodIo() && !user?.profile?.coachmarksDismissals[GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY]) {
+                    notifications.push(GITPOD_FLEX_INTRODUCTION((u: Partial<UserProtocol>) => mutateAsync(u)));
+                }
+
+                if (isGitpodIo() && !user?.profile?.coachmarksDismissals["aws_reinvent_2024"]) {
+                    notifications.push(AWS_REINVENT_NOTIFICATION((u: Partial<UserProtocol>) => mutateAsync(u)));
                 }
             }
 

@@ -5,10 +5,10 @@
 package io.gitpod.jetbrains.gateway
 
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.jetbrains.gateway.api.GatewayConnectorView
 import com.jetbrains.gateway.api.GatewayUI
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -24,13 +24,13 @@ class GitpodConnectorView(
             resizableRow()
             cell(workspaces.component)
                 .resizableColumn()
-                .horizontalAlign(HorizontalAlign.FILL)
-                .verticalAlign(VerticalAlign.FILL)
+                .align(AlignY.FILL)
+                .align(AlignX.FILL)
             cell()
         }
         row {
             panel {
-                verticalAlign(VerticalAlign.BOTTOM)
+                align(AlignY.BOTTOM)
                 separator(WelcomeScreenUIManager.getSeparatorColor())
                 indent {
                     row {

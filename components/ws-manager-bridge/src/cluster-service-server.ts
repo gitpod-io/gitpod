@@ -235,6 +235,46 @@ export class ClusterService implements IClusterServiceServer {
                         }
                     }
                 }
+                if (call.request.hasTls()) {
+                    const tls = req.tls;
+                    if (!tls?.ca || !tls?.crt || !tls?.key) {
+                        throw new GRPCError(grpc.status.INVALID_ARGUMENT, "missing required TLS config");
+                    }
+                    if (tls.ca === cluster.tls?.ca && tls.crt === cluster.tls?.crt && tls.key === cluster.tls?.key) {
+                        callback(null, new UpdateResponse());
+                        return;
+                    }
+
+                    const newCluster: WorkspaceCluster = {
+                        name: req.name,
+                        url: cluster.url,
+                        region: cluster.region,
+                        state: cluster.state,
+                        score: cluster.score,
+                        maxScore: 100,
+                        govern: cluster.govern,
+                        tls: tls,
+                        admissionConstraints: cluster.admissionConstraints,
+                    };
+
+                    // try to connect to validate the config. Throws an exception if it fails.
+                    await new Promise<DescribeClusterResponse>((resolve, reject) => {
+                        const c = this.clientProvider.createConnection(WorkspaceManagerClient, newCluster);
+                        c.describeCluster(new DescribeClusterRequest(), (err: any, resp: DescribeClusterResponse) => {
+                            if (err) {
+                                reject(
+                                    new GRPCError(
+                                        grpc.status.FAILED_PRECONDITION,
+                                        `cannot reach ${cluster.url}: ${err.message}`,
+                                    ),
+                                );
+                            } else {
+                                resolve(resp);
+                            }
+                        });
+                    });
+                    cluster.tls = tls;
+                }
                 await this.clusterDB.save(cluster);
                 log.info({}, "cluster updated", { cluster: req.name });
                 this.triggerReconcile("update", req.name);

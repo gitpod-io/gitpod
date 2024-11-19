@@ -5,6 +5,7 @@
 package supervisor
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -16,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -25,6 +27,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/serverapi"
@@ -42,7 +45,7 @@ type RegisterableGRPCService interface {
 // RegisterableRESTService can register REST services.
 type RegisterableRESTService interface {
 	// RegisterREST registers a REST service
-	RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error
+	RegisterREST(ctx context.Context, mux *runtime.ServeMux, grpcEndpoint string) error
 }
 
 type DesktopIDEStatus struct {
@@ -53,9 +56,14 @@ type DesktopIDEStatus struct {
 }
 
 type ideReadyState struct {
-	ready bool
-	info  *DesktopIDEStatus
-	cond  *sync.Cond
+	ready     bool
+	ideConfig *IDEConfig
+	info      *DesktopIDEStatus
+	cond      *sync.Cond
+}
+
+func newIDEReadyState(ideConfig *IDEConfig) *ideReadyState {
+	return &ideReadyState{cond: sync.NewCond(&sync.Mutex{}), ideConfig: ideConfig}
 }
 
 // Wait returns a channel that emits when IDE is ready.
@@ -109,8 +117,8 @@ func (s *statusService) RegisterGRPC(srv *grpc.Server) {
 	api.RegisterStatusServiceServer(srv, s)
 }
 
-func (s *statusService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterStatusServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+func (s *statusService) RegisterREST(ctx context.Context, mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterStatusServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 func (s *statusService) SupervisorStatus(ctx context.Context, req *api.SupervisorStatusRequest) (*api.SupervisorStatusResponse, error) {
@@ -304,8 +312,8 @@ func (s RegistrableTokenService) RegisterGRPC(srv *grpc.Server) {
 }
 
 // RegisterREST registers a REST service.
-func (s RegistrableTokenService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterTokenServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+func (s RegistrableTokenService) RegisterREST(ctx context.Context, mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterTokenServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // NewInMemoryTokenService produces a new InMemoryTokenService.
@@ -659,8 +667,8 @@ func (is *InfoService) RegisterGRPC(srv *grpc.Server) {
 }
 
 // RegisterREST registers the REST info service.
-func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterInfoServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+func (is *InfoService) RegisterREST(ctx context.Context, mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterInfoServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // WorkspaceInfo provides information about the workspace.
@@ -724,7 +732,8 @@ func (is *InfoService) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfo
 
 // ControlService implements the supervisor control service.
 type ControlService struct {
-	portsManager *ports.Manager
+	portsManager  *ports.Manager
+	gitpodService serverapi.APIInterface
 
 	privateKey string
 	publicKey  string
@@ -739,8 +748,8 @@ func (c *ControlService) RegisterGRPC(srv *grpc.Server) {
 }
 
 // RegisterREST registers the REST info service.
-func (is *ControlService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterControlServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+func (is *ControlService) RegisterREST(ctx context.Context, mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterControlServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // ExposePort exposes a port.
@@ -866,6 +875,11 @@ func (c *ControlService) CreateDebugEnv(ctx context.Context, req *api.CreateDebu
 	}, nil
 }
 
+func (c *ControlService) SendHeartBeat(ctx context.Context, req *api.SendHeartBeatRequest) (*api.SendHeartBeatResponse, error) {
+	err := c.gitpodService.SendHeartbeat(ctx)
+	return &api.SendHeartBeatResponse{}, err
+}
+
 // ContentState signals the workspace content state.
 type ContentState interface {
 	MarkContentReady(src csapi.WorkspaceInitSource)
@@ -922,8 +936,8 @@ func (s *portService) RegisterGRPC(srv *grpc.Server) {
 	api.RegisterPortServiceServer(srv, s)
 }
 
-func (s *portService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return api.RegisterPortServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+func (s *portService) RegisterREST(ctx context.Context, mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterPortServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // Tunnel opens a new tunnel.
@@ -1027,4 +1041,158 @@ func (s *portService) RetryAutoExpose(ctx context.Context, req *api.RetryAutoExp
 // ResourcesStatus provides workspace resources status information.
 func (s *statusService) ResourcesStatus(ctx context.Context, in *api.ResourcesStatuRequest) (*api.ResourcesStatusResponse, error) {
 	return s.topService.data, nil
+}
+
+type taskService struct {
+	tasksManager    *tasksManager
+	willShutdownCtx context.Context
+	wg              *sync.WaitGroup
+
+	api.UnimplementedTaskServiceServer
+}
+
+func (s *taskService) RegisterGRPC(srv *grpc.Server) {
+	api.RegisterTaskServiceServer(srv, s)
+}
+func (s *taskService) RegisterREST(ctx context.Context, mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterPortServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+}
+
+// ListenToOutput listens to the output of a task. It streams the output from the task's file and ends when the task's state changes to done.
+func (s *taskService) ListenToOutput(req *api.ListenToOutputRequest, srv api.TaskService_ListenToOutputServer) error {
+	s.wg.Add(1)
+	defer s.wg.Done()
+
+	taskStatus := s.tasksManager.getTaskStatus(req.TaskId)
+	if taskStatus == nil {
+		return status.Error(codes.NotFound, "task not found")
+	}
+
+	fileLocation := logs.PrebuildLogFileName(logs.TerminalStoreLocation, req.TaskId)
+	if _, err := os.Stat(fileLocation); os.IsNotExist(err) {
+		return status.Error(codes.Internal, "task file not found")
+	}
+
+	file, err := os.Open(fileLocation)
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	defer file.Close()
+
+	// Determine when the task is done
+	closedChannel := make(chan struct{})
+	closeClosedChannel := sync.OnceFunc(func() {
+		close(closedChannel)
+	})
+
+	sub := s.tasksManager.Subscribe()
+	if sub == nil {
+		log.Warn("potentially leaking subscription to tasks status: too many subscriptions")
+		return status.Error(codes.ResourceExhausted, "too many subscriptions")
+	}
+
+	go func() {
+		defer func() {
+			closeClosedChannel()
+			_ = sub.Close()
+		}()
+
+		if taskStatus.State == api.TaskState_closed {
+			return
+		}
+
+		for {
+			select {
+			case <-srv.Context().Done():
+				return
+			case updates := <-sub.Updates():
+				if updates == nil {
+					return
+				}
+				for _, update := range updates {
+					if update != nil && update.Id == req.TaskId && update.State == api.TaskState_closed {
+						return
+					}
+				}
+			}
+		}
+	}()
+
+	// Read taskStatus again to make sure we did not miss it closing
+	freshTaskStatus := s.tasksManager.getTaskStatus(req.TaskId)
+	if freshTaskStatus == nil || freshTaskStatus.State == api.TaskState_closed {
+		// The task was present, but has been closed already: We close the channel here to:
+		//  - read until we hit EOF,
+		//  - and stop right after
+		closeClosedChannel()
+	}
+
+	// Setup fs watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("Error creating the watcher: %s", err.Error()))
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(fileLocation)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("Error adding file to the watcher: %s", err.Error()))
+	}
+
+	// Do the actual reading
+	isClosed := false
+	buf := make([]byte, 4096)
+	reader := bufio.NewReader(file)
+	for {
+		continueReading := false
+		n, err := reader.Read(buf)
+		if n > 0 {
+			if err := srv.Send(&api.ListenToOutputResponse{Data: buf[:n]}); err != nil {
+				log.Printf("[prebuildlog]: error sending chunk: %s\n", err.Error())
+				return status.Error(codes.Internal, err.Error())
+			}
+
+			continueReading = true
+		} else if err == io.EOF {
+			if isClosed {
+				// We are done
+				log.Println("[prebuildlog]: closing because task state is done and we are done reading")
+				return nil
+			}
+		}
+		if err != nil && err != io.EOF {
+			return status.Error(codes.Internal, fmt.Sprintf("Error reading log file: %s", err.Error()))
+		}
+
+		if continueReading {
+			continue
+		}
+
+	SELECT:
+		select {
+		case <-srv.Context().Done():
+			log.Println("[prebuildlog]: closing because context done")
+			return nil
+		case <-s.willShutdownCtx.Done():
+			log.Println("[prebuildlog]: closing because willShutdownCtx fired")
+			return nil
+		case <-closedChannel:
+			isClosed = true
+			// The task got closed: Let's try to read one last time, to make sure we do not miss anything
+			continue
+		case event := <-watcher.Events:
+			if event.Op&fsnotify.Write != fsnotify.Write {
+				// Not relevant: select again
+				break SELECT
+			}
+			// File was written to, let's read it
+			continue
+
+		case err := <-watcher.Errors:
+			if err != nil {
+				log.Println("error:", err)
+				return status.Error(codes.Internal, fmt.Sprintf("Error watching log file: %s", err.Error()))
+			}
+		}
+	}
 }

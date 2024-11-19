@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { inResource, getURLHash } from "./utils";
+import { inResource, getURLHash, isTrustedUrlOrPath } from "./utils";
 
 test("inResource", () => {
     // Given root path is a part of resources specified
@@ -26,13 +26,27 @@ test("inResource", () => {
     expect(inResource("/admin/teams/someTeam/somePerson", ["/admin/teams"])).toBe(true);
 });
 
-test("urlHash", () => {
+test("urlHash and isTrustedUrlOrPath", () => {
     global.window = Object.create(window);
     Object.defineProperty(window, "location", {
         value: {
             hash: "#https://example.org/user/repo",
+            hostname: "example.org",
         },
     });
 
     expect(getURLHash()).toBe("https://example.org/user/repo");
+
+    const isTrustedUrlOrPathCases: { location: string; trusted: boolean }[] = [
+        { location: "https://example.org/user/repo", trusted: true },
+        { location: "https://example.org/user", trusted: true },
+        { location: "https://example2.org/user", trusted: false },
+        { location: "/api/hello", trusted: true },
+        { location: "/", trusted: true },
+        // eslint-disable-next-line no-script-url
+        { location: "javascript:alert(1)", trusted: false },
+    ];
+    isTrustedUrlOrPathCases.forEach(({ location, trusted }) => {
+        expect(isTrustedUrlOrPath(location)).toBe(trusted);
+    });
 });

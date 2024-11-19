@@ -8,10 +8,12 @@ import (
 	"context"
 	"net/url"
 	"sort"
+	"strconv"
 
 	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,6 +22,7 @@ import (
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
@@ -48,11 +51,19 @@ func getPortStr(urlStr string) string {
 	return portURL.Port()
 }
 
+type ConnectionContext struct {
+	WorkspaceID string
+	Port        string
+	UUID        string
+	CancelFunc  context.CancelCauseFunc
+}
+
 type CRDWorkspaceInfoProvider struct {
 	client.Client
 	Scheme *runtime.Scheme
 
-	store cache.ThreadSafeStore
+	store        cache.ThreadSafeStore
+	contextStore cache.ThreadSafeStore
 }
 
 // NewCRDWorkspaceInfoProvider creates a fresh WorkspaceInfoProvider.
@@ -67,12 +78,21 @@ func NewCRDWorkspaceInfoProvider(client client.Client, scheme *runtime.Scheme) (
 			return nil, xerrors.Errorf("object is not a WorkspaceInfo")
 		},
 	}
+	contextIndexers := cache.Indexers{
+		workspaceIndex: func(obj interface{}) ([]string, error) {
+			if connCtx, ok := obj.(*ConnectionContext); ok {
+				return []string{connCtx.WorkspaceID}, nil
+			}
+			return nil, xerrors.Errorf("object is not a ConnectionContext")
+		},
+	}
 
 	return &CRDWorkspaceInfoProvider{
 		Client: client,
 		Scheme: scheme,
 
-		store: cache.NewThreadSafeStore(indexers, cache.Indices{}),
+		store:        cache.NewThreadSafeStore(indexers, cache.Indices{}),
+		contextStore: cache.NewThreadSafeStore(contextIndexers, cache.Indices{}),
 	}, nil
 }
 
@@ -99,6 +119,28 @@ func (r *CRDWorkspaceInfoProvider) WorkspaceInfo(workspaceID string) *common.Wor
 	}
 
 	return nil
+}
+
+func (r *CRDWorkspaceInfoProvider) AcquireContext(ctx context.Context, workspaceID string, port string) (context.Context, string, error) {
+	ws := r.WorkspaceInfo(workspaceID)
+	if ws == nil {
+		return ctx, "", xerrors.Errorf("workspace %s not found", workspaceID)
+	}
+	id := string(uuid.NewUUID())
+	ctx, cancel := context.WithCancelCause(ctx)
+	connCtx := &ConnectionContext{
+		WorkspaceID: workspaceID,
+		Port:        port,
+		CancelFunc:  cancel,
+		UUID:        id,
+	}
+
+	r.contextStore.Add(id, connCtx)
+	return ctx, id, nil
+}
+
+func (r *CRDWorkspaceInfoProvider) ReleaseContext(id string) {
+	r.contextStore.Delete(id)
 }
 
 func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -162,9 +204,42 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	r.store.Update(req.Name, wsinfo)
+	r.invalidateConnectionContext(wsinfo)
 	log.WithField("workspace", req.Name).WithField("details", wsinfo).Debug("adding/updating workspace details")
 
 	return ctrl.Result{}, nil
+}
+
+func (r *CRDWorkspaceInfoProvider) invalidateConnectionContext(ws *common.WorkspaceInfo) {
+	connCtxs, err := r.contextStore.ByIndex(workspaceIndex, ws.WorkspaceID)
+	if err != nil {
+		return
+	}
+	if len(connCtxs) == 0 {
+		return
+	}
+
+	if ws.Auth != nil && ws.Auth.Admission == wsapi.AdmissionLevel_ADMIT_EVERYONE {
+		return
+	}
+	publicPorts := make(map[string]struct{})
+	for _, p := range ws.Ports {
+		if p.Visibility == api.PortVisibility_PORT_VISIBILITY_PUBLIC {
+			publicPorts[strconv.FormatUint(uint64(p.Port), 10)] = struct{}{}
+		}
+	}
+
+	for _, _connCtx := range connCtxs {
+		connCtx, ok := _connCtx.(*ConnectionContext)
+		if !ok {
+			continue
+		}
+		if _, ok := publicPorts[connCtx.Port]; ok {
+			continue
+		}
+		connCtx.CancelFunc(xerrors.Errorf("workspace %s is no longer public", ws.WorkspaceID))
+		r.contextStore.Delete(connCtx.UUID)
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -176,29 +251,4 @@ func (r *CRDWorkspaceInfoProvider) SetupWithManager(mgr ctrl.Manager) error {
 			&workspacev1.Workspace{},
 		).
 		Complete(r)
-}
-
-// CompositeInfoProvider checks each of its info providers and returns the first info found.
-type CompositeInfoProvider []common.WorkspaceInfoProvider
-
-func (c CompositeInfoProvider) WorkspaceInfo(workspaceID string) *common.WorkspaceInfo {
-	for _, ip := range c {
-		res := ip.WorkspaceInfo(workspaceID)
-		if res != nil {
-			return res
-		}
-	}
-	return nil
-}
-
-type fixedInfoProvider struct {
-	Infos map[string]*common.WorkspaceInfo
-}
-
-// WorkspaceInfo returns the workspace information of a workspace using it's workspace ID.
-func (fp *fixedInfoProvider) WorkspaceInfo(workspaceID string) *common.WorkspaceInfo {
-	if fp.Infos == nil {
-		return nil
-	}
-	return fp.Infos[workspaceID]
 }

@@ -37,7 +37,6 @@ describe("OrganizationService", async () => {
     beforeEach(async () => {
         container = createTestContainer();
         Experiments.configureTestingClient({
-            centralizedPermissions: true,
             dataops: true,
         });
         validateDefaultWorkspaceImage = undefined;
@@ -349,9 +348,25 @@ describe("OrganizationService", async () => {
         await assertUserRole(u2.id, "collaborator");
     });
 
+    it("should add as set defaultRole with flexibleRole", async () => {
+        Experiments.configureTestingClient({
+            dataops: false,
+        });
+        await assertUserRole(collaborator.id, "collaborator");
+        await os.updateSettings(adminId, org.id, { defaultRole: "owner" });
+        const u2 = await userService.createUser({
+            identity: {
+                authId: "github|1234",
+                authName: "github",
+                authProviderId: "github",
+            },
+        });
+        await os.addOrUpdateMember(owner.id, org.id, u2.id, "member", { flexibleRole: true });
+        await assertUserRole(u2.id, "owner");
+    });
+
     it("should join an org with different cell id", async () => {
         Experiments.configureTestingClient({
-            centralizedPermissions: true,
             dataops: false,
         });
         const u1 = await userService.createUser({
@@ -367,7 +382,6 @@ describe("OrganizationService", async () => {
         await assertUserRole(u1.id, "member");
 
         Experiments.configureTestingClient({
-            centralizedPermissions: true,
             dataops: true,
         });
         const u2 = await userService.createUser({

@@ -22,3 +22,16 @@ spec:
         summary: Proxy has excessive CPU usage.
         description: Proxy is consumming too much CPU. Please investigate.
         dashboard_url: https://grafana.gitpod.io/d/6581e46e4e5c7ba40a07646395ef7b23/kubernetes-compute-resources-pod?var-cluster={{ $labels.cluster }}&var-namespace=default
+  - name: proxy
+    rules:
+    - alert: ProxyBadGateway
+      # Reasoning: The highest peak of 502's for PAYG is 0.00007 in 5m, and this was not impactful for users.
+      expr: |
+        sum(increase(caddy_http_response_duration_seconds_count{code="502"}[5m])) / sum(increase(caddy_http_response_duration_seconds_count[5m])) > 0.001
+      labels:
+        severity: critical
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/ProxyBadGateway.md
+        summary: Caddy is having trouble serving requests for backends
+        description: The user experience is degraded, analyze logs to see which routes are impacted

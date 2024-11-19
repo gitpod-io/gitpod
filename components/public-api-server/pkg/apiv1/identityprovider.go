@@ -75,15 +75,6 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 		return nil, proxy.ConvertError(err)
 	}
 
-	var email string
-	for _, id := range user.Identities {
-		if id == nil || id.Deleted || id.PrimaryEmail == "" {
-			continue
-		}
-		email = id.PrimaryEmail
-		break
-	}
-
 	if workspace.Workspace == nil {
 		log.Extract(ctx).WithError(err).Error("Server did not return a workspace.")
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
@@ -93,11 +84,31 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 	userInfo.SetName(user.Name)
 	userInfo.AppendClaims("user_id", user.ID)
 	userInfo.AppendClaims("org_id", workspace.Workspace.OrganizationId)
-	userInfo.AppendClaims("context", workspace.Workspace.ContextURL)
+	userInfo.AppendClaims("context", getContext(workspace))
 	userInfo.AppendClaims("workspace_id", workspaceID)
 
+	if req.Msg.GetScope() != "" {
+		userInfo.AppendClaims("scope", req.Msg.GetScope())
+	}
+
+	if workspace.Workspace.Context != nil && workspace.Workspace.Context.Repository != nil && workspace.Workspace.Context.Repository.CloneURL != "" {
+		userInfo.AppendClaims("repository", workspace.Workspace.Context.Repository.CloneURL)
+	}
+
+	var email string
+	var emailVerified bool
+	if user.OrganizationId != "" {
+		emailVerified = true
+		email = user.GetSSOEmail()
+		if email == "" {
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("SSO email is empty"))
+		}
+	} else {
+		emailVerified = false
+		email = user.GetRandomEmail()
+	}
 	if email != "" {
-		userInfo.SetEmail(email, user.OrganizationId != "")
+		userInfo.SetEmail(email, emailVerified)
 		userInfo.AppendClaims("email", email)
 	}
 
@@ -120,7 +131,7 @@ func (srv *IdentityProviderService) getOIDCSubject(ctx context.Context, userInfo
 		UserID: user.ID,
 		TeamID: workspace.Workspace.OrganizationId,
 	})
-	subject := workspace.Workspace.ContextURL
+	subject := getContext(workspace)
 	if len(claimKeys) != 0 {
 		subArr := []string{}
 		for _, key := range claimKeys {
@@ -133,4 +144,13 @@ func (srv *IdentityProviderService) getOIDCSubject(ctx context.Context, userInfo
 		subject = strings.Join(subArr, ":")
 	}
 	return subject
+}
+
+func getContext(workspace *protocol.WorkspaceInfo) string {
+	context := "no-context"
+	if workspace.Workspace.Context != nil && workspace.Workspace.Context.NormalizedContextURL != "" {
+		// using Workspace.Context.NormalizedContextURL to not include prefixes (like "referrer:jetbrains-gateway", or other prefix contexts)
+		context = workspace.Workspace.Context.NormalizedContextURL
+	}
+	return context
 }

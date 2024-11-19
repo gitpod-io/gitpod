@@ -97,7 +97,7 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository, Trans
      * @param identity
      * @throws an error when there is more than one token
      */
-    findTokenForIdentity(identity: Identity): Promise<Token | undefined>;
+    findTokenEntryForIdentity(identity: Identity): Promise<TokenEntry | undefined>;
 
     /**
      *

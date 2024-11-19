@@ -14,6 +14,8 @@ type CreateAuthProviderArgs = {
         clientId: string;
         clientSecret: string;
         orgId: string;
+        authorizationUrl?: string;
+        tokenUrl?: string;
     };
 };
 export const useCreateOrgAuthProviderMutation = () => {
@@ -28,6 +30,8 @@ export const useCreateOrgAuthProviderMutation = () => {
                     oauth2Config: {
                         clientId: provider.clientId,
                         clientSecret: provider.clientSecret,
+                        authorizationUrl: provider.authorizationUrl,
+                        tokenUrl: provider.tokenUrl,
                     },
                     type: provider.type,
                 }),

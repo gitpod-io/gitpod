@@ -38,6 +38,8 @@ const (
 	ProcessCodeServer ProcessType = "vscode-server"
 	// ProcessCodeServerHelper refers to VS Code Desktop child process
 	ProcessCodeServerHelper ProcessType = "vscode-server-helper"
+	// ProcessJetBrainsIDE refers to JetBrains IDE process
+	ProcessJetBrainsIDE ProcessType = "jetbrains-ide"
 	// ProcessDefault referes to any process that is not one of the above
 	ProcessDefault ProcessType = "default"
 
@@ -125,6 +127,7 @@ func (c *ProcessPriorityV2) Apply(ctx context.Context, opts *PluginOptions) erro
 
 var (
 	vsCodeNodeRegex = regexp.MustCompile("/home/gitpod/.vscode-server/bin/.*/node")
+	jetBrainsRegex  = regexp.MustCompile("/ide-desktop/.*/backend/plugins/remote-dev-server/selfcontained/lib")
 )
 
 func determineProcessType(p *process.Process) ProcessType {
@@ -155,6 +158,10 @@ func determineProcessType(p *process.Process) ProcessType {
 
 	if strings.HasSuffix(cmd[0], "/ide/node") {
 		return ProcessWebIDEHelper
+	}
+
+	if jetBrainsRegex.MatchString(strings.Join(cmd, " ")) {
+		return ProcessJetBrainsIDE
 	}
 
 	return ProcessDefault

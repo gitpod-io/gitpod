@@ -25,10 +25,10 @@ export default function JoinTeamPage() {
                 if (!inviteId) {
                     throw new Error("This invite URL is incorrect.");
                 }
-                await organizationClient.joinOrganization({ invitationId: inviteId });
+                const response = await organizationClient.joinOrganization({ invitationId: inviteId });
                 orgInvalidator();
 
-                history.push(workspacesPathMain);
+                history.push(workspacesPathMain + `?org=${response.organizationId}`);
             } catch (error) {
                 console.error(error);
                 setJoinError(error);

@@ -172,6 +172,12 @@ func matchForeignHostHeader(wsHostSuffix string, headerProvider hostHeaderProvid
 
 		result = true
 
+		if m.Vars == nil {
+			m.Vars = make(map[string]string)
+		}
+
+		m.Vars[common.ForeignContentIdentifier] = "true"
+
 		var pathPrefix, workspaceID, workspacePort, debugWorkspace string
 		matches = pathPortRegex.FindStringSubmatch(req.URL.Path)
 		if len(matches) < 4 {
@@ -220,9 +226,10 @@ func matchForeignHostHeader(wsHostSuffix string, headerProvider hostHeaderProvid
 func getWorkspaceCoords(req *http.Request) common.WorkspaceCoords {
 	vars := mux.Vars(req)
 	return common.WorkspaceCoords{
-		ID:    vars[common.WorkspaceIDIdentifier],
-		Port:  vars[common.WorkspacePortIdentifier],
-		Debug: vars[common.DebugWorkspaceIdentifier] == "true",
+		ID:      vars[common.WorkspaceIDIdentifier],
+		Port:    vars[common.WorkspacePortIdentifier],
+		Debug:   vars[common.DebugWorkspaceIdentifier] == "true",
+		Foreign: vars[common.ForeignContentIdentifier] == "true",
 	}
 }
 

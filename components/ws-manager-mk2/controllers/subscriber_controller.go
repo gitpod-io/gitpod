@@ -61,6 +61,12 @@ func (r *SubscriberReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		workspace.Status.Conditions = []metav1.Condition{}
 	}
 
+	if workspace.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected) {
+		// In this situation, we are about to re-create the pod. We don't want clients to see all the "stopping, stopped, starting" chatter, so we hide it here.
+		// TODO(gpl) Is this a sane approach?
+		return ctrl.Result{}, nil
+	}
+
 	if r.OnReconcile != nil {
 		r.OnReconcile(ctx, &workspace)
 	}

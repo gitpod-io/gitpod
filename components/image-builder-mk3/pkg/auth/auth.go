@@ -21,9 +21,11 @@ import (
 	"github.com/distribution/reference"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/api/types/registry"
+	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/common-go/watch"
 	"github.com/gitpod-io/gitpod/image-builder/api"
 )
@@ -277,7 +279,11 @@ type Resolver struct {
 }
 
 // ResolveRequestAuth computes the allowed authentication for a build based on its request
-func (r Resolver) ResolveRequestAuth(auth *api.BuildRegistryAuth) (authFor AllowedAuthFor) {
+func (r Resolver) ResolveRequestAuth(ctx context.Context, auth *api.BuildRegistryAuth) (authFor AllowedAuthFor) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "ResolveRequestAuth")
+	var err error
+	defer tracing.FinishSpan(span, &err)
+
 	// by default we allow nothing
 	authFor = AllowedAuthForNone()
 	if auth == nil {

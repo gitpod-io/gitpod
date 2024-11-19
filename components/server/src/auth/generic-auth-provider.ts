@@ -177,14 +177,15 @@ export abstract class GenericAuthProvider implements AuthProvider {
         );
     }
 
-    async refreshToken(user: User) {
+    async refreshToken(user: User, requestedLifetimeDate: Date): Promise<Token> {
         log.info(`(${this.strategyName}) Token to be refreshed.`, { userId: user.id });
         const { authProviderId } = this;
         const identity = User.getIdentity(user, authProviderId);
         if (!identity) {
             throw new Error(`Cannot find an identity for ${authProviderId}`);
         }
-        const token = await this.userDb.findTokenForIdentity(identity);
+        const tokenEntry = await this.userDb.findTokenEntryForIdentity(identity);
+        const token = tokenEntry?.token;
         if (!token) {
             throw new Error(`Cannot find any current token for ${authProviderId}`);
         }
@@ -217,24 +218,34 @@ export abstract class GenericAuthProvider implements AuthProvider {
             const expiryDate = tokenExpiresInSeconds
                 ? new Date(now.getTime() + tokenExpiresInSeconds * 1000).toISOString()
                 : undefined;
+            const reservedUntilDate = requestedLifetimeDate.toISOString();
             const newToken: Token = {
                 value: access_token,
                 username: this.tokenUsername,
                 scopes: token.scopes,
                 updateDate,
                 expiryDate,
+                reservedUntilDate,
                 refreshToken: refresh_token,
             };
-            await this.userDb.storeSingleToken(identity, newToken);
+            const newTokenEntry = await this.userDb.storeSingleToken(identity, newToken);
             log.info(`(${this.strategyName}) Token refreshed and updated.`, {
                 userId: user.id,
                 updateDate,
                 expiryDate,
+                reservedUntilDate,
             });
+            return newTokenEntry.token;
         } catch (error) {
-            log.error(`(${this.strategyName}) Failed to refresh token!`, { error: new TrustedValue(error) });
+            log.error({ userId: user.id }, `(${this.strategyName}) Failed to refresh token!`, {
+                error: new TrustedValue(error),
+            });
             throw error;
         }
+    }
+
+    public requiresOpportunisticRefresh() {
+        return this.params.type === "BitbucketServer";
     }
 
     protected cachedAuthCallbackPath: string | undefined = undefined;
@@ -288,6 +299,14 @@ export abstract class GenericAuthProvider implements AuthProvider {
 
             reportLoginCompleted("failed", "git");
             response.redirect(this.getSorryUrl(`Auth flow state is missing.`));
+            return;
+        }
+
+        if (!this.loginCompletionHandler.isBaseDomain(request)) {
+            // For auth requests that are not targetting the base domain, we redirect to the base domain, so they come with our cookie.
+            log.info(`(${strategyName}) Auth request on subdomain, redirecting to base domain`, { clientInfo });
+            const target = new URL(request.url, this.config.hostUrl.url.toString()).toString();
+            response.redirect(target);
             return;
         }
 
@@ -425,6 +444,16 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     token: flowContext.token,
                     authUser: flowContext.authUser,
                     isBlocked: flowContext.isBlocked,
+                });
+
+                // Set all cookies used on website for visitor preferences for .gitpod.io domain if no preference exists yet
+                ["gp-analytical", "gp-necessary", "gp-targeting"].forEach((cookieName) => {
+                    if (!request.cookies[cookieName]) {
+                        response.cookie(cookieName, "true", {
+                            maxAge: 365 * 24 * 60 * 60 * 1000, //set to a year
+                            domain: "." + request.header("Host"),
+                        });
+                    }
                 });
 
                 await this.loginCompletionHandler.complete(request, response, {
@@ -587,7 +616,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
 
                 // we need to check current provider authorizations first...
                 try {
-                    await this.userAuthentication.asserNoTwinAccount(
+                    await this.userAuthentication.assertNoTwinAccount(
                         currentGitpodUser,
                         this.host,
                         this.authProviderId,

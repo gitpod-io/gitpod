@@ -12,7 +12,9 @@
         "scopes": [],
         "oauth2Config": {
             "clientId": "clientId123",
-            "clientSecret": "should not appear in result"
+            "clientSecret": "should not appear in result",
+            "authorizationUrl": "auth.service/authorize",
+            "tokenUrl": "auth.service/token"
         }
     },
     "err": ""

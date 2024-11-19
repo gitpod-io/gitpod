@@ -41,6 +41,7 @@ import {
 import { getGitpodService } from "./service";
 import { converter } from "./public-api";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { OrgMemberRole, RoleRestrictions } from "@gitpod/gitpod-protocol";
 
 export class JsonRpcOrganizationClient implements PromiseClient<typeof OrganizationService> {
     async createOrganization(
@@ -232,6 +233,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
             defaultWorkspaceImage: request?.defaultWorkspaceImage,
             allowedWorkspaceClasses: request?.allowedWorkspaceClasses,
             restrictedEditorNames: request?.restrictedEditorNames,
+            defaultRole: request?.defaultRole,
         };
         if (request.updatePinnedEditorVersions) {
             update.pinnedEditorVersions = request.pinnedEditorVersions;
@@ -249,7 +251,33 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
                 "updateRestrictedEditorNames is required to be true to update restrictedEditorNames",
             );
         }
-        await getGitpodService().server.updateOrgSettings(request.organizationId, update);
+        const roleRestrictions: RoleRestrictions = {};
+        if (request.updateRoleRestrictions) {
+            for (const roleRestriction of request?.roleRestrictions ?? []) {
+                if (!roleRestriction.role) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "role is required");
+                }
+                const role = converter.fromOrgMemberRole(roleRestriction.role);
+                const permissions = roleRestriction?.permissions?.map((p) => converter.fromOrganizationPermission(p));
+
+                roleRestrictions[role] = permissions;
+            }
+        } else if (request.roleRestrictions && Object.keys(request.roleRestrictions).length > 0) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "updateRoleRestrictions is required to be true to update roleRestrictions",
+            );
+        }
+
+        await getGitpodService().server.updateOrgSettings(request.organizationId, {
+            ...update,
+            defaultRole: request.defaultRole as OrgMemberRole,
+            timeoutSettings: {
+                inactivity: converter.toDurationString(request.timeoutSettings?.inactivity),
+                denyUserTimeouts: request.timeoutSettings?.denyUserTimeouts,
+            },
+            roleRestrictions,
+        });
         return new UpdateOrganizationSettingsResponse();
     }
 }

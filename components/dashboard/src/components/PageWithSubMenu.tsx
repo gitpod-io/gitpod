@@ -73,7 +73,7 @@ export const SubmenuItem: FC<SubmenuItemProps> = ({ title, link, icon }) => {
     if (isCurrent) {
         classes += " bg-gray-300 text-gray-800 dark:bg-gray-800 dark:text-gray-50";
     } else {
-        classes += " hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-400";
+        classes += " hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-pk-content-secondary";
     }
 
     return (

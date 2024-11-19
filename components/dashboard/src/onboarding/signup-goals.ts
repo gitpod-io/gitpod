@@ -8,10 +8,10 @@ export const SIGNUP_GOALS_OTHER = "other";
 
 export const getSignupGoalsOptions = () => {
     return [
-        { value: "efficiency-collab", label: "Dev efficiency & collaboration" },
         { value: "onboarding", label: "Faster onboarding" },
-        { value: "powerful-resources", label: "More powerful dev resources" },
-        { value: "security", label: "More secure dev process" },
+        { value: "efficiency-collab", label: "Improve developer efficiency and collaboration" },
+        { value: "powerful-resources", label: "More powerful development resources" },
+        { value: "security", label: "More secure development process" },
         { value: SIGNUP_GOALS_OTHER, label: "Other" },
     ];
 };

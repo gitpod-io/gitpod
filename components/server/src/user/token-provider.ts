@@ -12,6 +12,7 @@ export interface TokenProvider {
      * Returns a valid authentication token for the given host and user
      * @param user
      * @param host
+     * @param requestedLifetimeMins the time in minutes which a token has to be valid for to be considered as valid
      */
-    getTokenForHost(user: User | string, host: string): Promise<Token | undefined>;
+    getTokenForHost(user: User | string, host: string, requestedLifetimeMins?: number): Promise<Token | undefined>;
 }

@@ -4,21 +4,21 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { useHistory } from "react-router-dom";
-import { PageHeading } from "@podkit/layout/PageHeading";
-import { useDocumentTitle } from "../../hooks/use-document-title";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useHistory } from "react-router-dom";
 import { useQueryParams } from "../../hooks/use-query-params";
 import { PrebuildListEmptyState } from "./PrebuildListEmptyState";
 import { PrebuildListErrorState } from "./PrebuildListErrorState";
 import { PrebuildsTable } from "./PrebuildTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { useListOrganizationPrebuildsQuery } from "../../data/prebuilds/organization-prebuilds-query";
-import { ListOrganizationPrebuildsRequest_Filter_State } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { ListOrganizationPrebuildsRequest_Filter_State, Prebuild } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { validate } from "uuid";
 import type { TableSortOrder } from "@podkit/tables/SortableTable";
 import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 import { RunPrebuildModal } from "./RunPrebuildModal";
+import { isPrebuildDone, watchPrebuild } from "../../data/prebuilds/prebuild-queries";
+import { Disposable } from "@gitpod/gitpod-protocol";
 
 const STATUS_FILTER_VALUES = ["succeeded", "failed", "unfinished", undefined] as const; // undefined means any status
 export type StatusOption = typeof STATUS_FILTER_VALUES[number];
@@ -36,17 +36,27 @@ export type Sort = {
 
 const pageSize = 30;
 
-const PrebuildsListPage: FC = () => {
-    useDocumentTitle("Prebuilds");
-
+type Props = {
+    initialFilter?: Filter;
+    organizationId?: string;
+    /**
+     * If true, the configuration dropdown and the "Run Prebuild" button will be hidden.
+     */
+    hideOrgSpecificControls?: boolean;
+};
+export const PrebuildsList = ({ initialFilter, organizationId, hideOrgSpecificControls }: Props) => {
     const history = useHistory();
     const params = useQueryParams();
 
-    const [statusFilter, setPrebuildsFilter] = useState(parseStatus(params));
-    const [configurationFilter, setConfigurationFilter] = useState(parseConfigurationId(params));
+    const [statusFilter, setPrebuildsFilter] = useState(parseStatus(params) ?? initialFilter?.status);
+    const [configurationFilter, setConfigurationFilter] = useState(
+        parseConfigurationId(params) ?? initialFilter?.configurationId,
+    );
 
     const [sortBy, setSortBy] = useState(parseSortBy(params));
     const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
+
+    const [prebuilds, setPrebuilds] = useState<Prebuild[]>([]);
 
     const [showRunPrebuildModal, setShowRunPrebuildModal] = useState(false);
 
@@ -94,13 +104,13 @@ const PrebuildsListPage: FC = () => {
             params.set("prebuilds", statusFilter);
         }
 
-        if (configurationFilter) {
+        if (configurationFilter && configurationFilter !== initialFilter?.configurationId) {
             params.set("configurationId", configurationFilter);
         }
 
         params.toString();
         history.replace({ search: `?${params.toString()}` });
-    }, [history, statusFilter, configurationFilter]);
+    }, [history, statusFilter, configurationFilter, initialFilter?.configurationId]);
 
     const {
         data,
@@ -115,13 +125,42 @@ const PrebuildsListPage: FC = () => {
         error,
     } = useListOrganizationPrebuildsQuery({
         filter: apiFilter,
+        organizationId,
         sort: apiSort,
         pageSize,
     });
 
-    const prebuilds = useMemo(() => {
+    const prebuildsData = useMemo(() => {
         return data?.pages.map((page) => page.prebuilds).flat() ?? [];
     }, [data?.pages]);
+
+    useEffect(() => {
+        // Watch prebuilds that are not done yet, and update their status
+        const prebuilds = [...prebuildsData];
+        const listeners = prebuilds.map((prebuild) => {
+            if (isPrebuildDone(prebuild)) {
+                return Disposable.NULL;
+            }
+
+            return watchPrebuild(prebuild.id, (update) => {
+                const index = prebuilds.findIndex((p) => p.id === prebuild.id);
+                if (index === -1) {
+                    console.warn("Can't handle prebuild update");
+                    return false;
+                }
+
+                prebuilds.splice(index, 1, update);
+                setPrebuilds([...prebuilds]);
+
+                return isPrebuildDone(update);
+            });
+        });
+        setPrebuilds(prebuilds);
+
+        return () => {
+            listeners.forEach((l) => l?.dispose());
+        };
+    }, [prebuildsData, setPrebuilds]);
 
     const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;
 
@@ -133,12 +172,10 @@ const PrebuildsListPage: FC = () => {
 
     return (
         <>
-            <div className="app-container mb-8">
-                <PageHeading title="Prebuilds" subtitle="Review prebuilds of your added repositories." />
+            {isLoading && <LoadingState />}
 
-                {isLoading && <LoadingState />}
-
-                {showTable && (
+            {showTable && (
+                <>
                     <PrebuildsTable
                         prebuilds={prebuilds}
                         // we check isPreviousData too so we don't show spinner if it's a background refresh
@@ -148,28 +185,39 @@ const PrebuildsListPage: FC = () => {
                         filter={filter}
                         sort={sort}
                         hasMoreThanOnePage={hasMoreThanOnePage}
+                        hideOrgSpecificControls={!!hideOrgSpecificControls}
                         onLoadNextPage={() => fetchNextPage()}
                         onFilterChange={handleFilterChange}
                         onSort={handleSort}
                         onTriggerPrebuild={() => setShowRunPrebuildModal(true)}
                     />
-                )}
+                    <div className="flex justify-center mt-4">
+                        <span className="text-pk-content-secondary text-xs max-w-md text-center">
+                            Looking for older prebuilds? Prebuilds are garbage-collected if no workspace is started from
+                            them within seven days. To view records of older prebuilds, please refer to the{" "}
+                            <Link to={"/usage"} className="gp-link">
+                                usage report
+                            </Link>
+                            .
+                        </span>
+                    </div>
+                </>
+            )}
 
-                {showRunPrebuildModal && (
-                    <RunPrebuildModal
-                        onClose={() => setShowRunPrebuildModal(false)}
-                        onRun={() => {
-                            refetchPrebuilds();
-                        }}
-                        defaultRepositoryId={configurationFilter}
-                    />
-                )}
+            {showRunPrebuildModal && (
+                <RunPrebuildModal
+                    onClose={() => setShowRunPrebuildModal(false)}
+                    onRun={() => {
+                        refetchPrebuilds();
+                    }}
+                    defaultRepositoryId={configurationFilter}
+                />
+            )}
 
-                {!showTable && !isLoading && (
-                    <PrebuildListEmptyState onTriggerPrebuild={() => setShowRunPrebuildModal(true)} />
-                )}
-                {isError && <PrebuildListErrorState error={error} />}
-            </div>
+            {!showTable && !isLoading && (
+                <PrebuildListEmptyState onTriggerPrebuild={() => setShowRunPrebuildModal(true)} />
+            )}
+            {isError && <PrebuildListErrorState error={error} />}
         </>
     );
 };
@@ -225,5 +273,3 @@ const parseConfigurationId = (params: URLSearchParams): string | undefined => {
 
     return undefined;
 };
-
-export default PrebuildsListPage;

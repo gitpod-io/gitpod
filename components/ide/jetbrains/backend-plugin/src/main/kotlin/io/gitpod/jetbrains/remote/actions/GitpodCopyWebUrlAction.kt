@@ -13,7 +13,7 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.jetbrains.rd.platform.codeWithMe.portForwarding.PerClientPortForwardingManager
 import com.jetbrains.rd.platform.codeWithMe.portForwarding.PortConfiguration
 import com.jetbrains.rd.platform.codeWithMe.portForwarding.PortForwardingDataKeys
-import io.gitpod.jetbrains.remote.internal.GitpodPortForwardingServiceImpl
+import io.gitpod.jetbrains.remote.AbstractGitpodPortForwardingService
 import java.awt.datatransfer.StringSelection
 
 @Suppress("ComponentNotRegistered", "UnstableApiUsage")
@@ -21,7 +21,7 @@ class GitpodCopyWebUrlAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         e.dataContext.getData(PortForwardingDataKeys.SUGGESTION)?.getSuggestedHostPort()?.let { hostPort ->
             (service<PerClientPortForwardingManager>().getPorts(hostPort).firstOrNull {
-                it.labels.contains(GitpodPortForwardingServiceImpl.EXPOSED_PORT_LABEL)
+                it.labels.contains(AbstractGitpodPortForwardingService.EXPOSED_PORT_LABEL)
             }?.configuration as PortConfiguration.UrlExposure?)?.exposedUrl?.let {
                 CopyPasteManager.getInstance().setContents(StringSelection(it))
             }

@@ -12,15 +12,24 @@ import { InputFieldHint } from "./InputFieldHint";
 
 type CheckboxListFieldProps = {
     label?: string;
+    sublabel?: string;
     error?: ReactNode;
     className?: string;
     topMargin?: boolean;
 };
 
 // CheckboxListField is a wrapper for a list of related CheckboxInputField components.
-export const CheckboxListField: FC<CheckboxListFieldProps> = ({ label, error, className, topMargin, children }) => {
+export const CheckboxListField: FC<CheckboxListFieldProps> = ({
+    label,
+    sublabel,
+    error,
+    className,
+    topMargin,
+    children,
+}) => {
     return (
         <InputField label={label} className={className} error={error} topMargin={topMargin}>
+            {sublabel && <div className="text-sm text-gray-500 dark:text-gray-400">{sublabel}</div>}
             <div className="space-y-2 ml-2">{children}</div>
         </InputField>
     );

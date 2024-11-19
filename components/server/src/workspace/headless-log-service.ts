@@ -15,14 +15,14 @@ import {
     TaskState,
     TaskStatus,
 } from "@gitpod/supervisor-api-grpcweb/lib/status_pb";
-import { ResponseStream, TerminalServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service";
-import { ListenTerminalRequest, ListenTerminalResponse } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb";
+import { ResponseStream } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service";
+import { ListenToOutputRequest, ListenToOutputResponse } from "@gitpod/supervisor-api-grpcweb/lib/task_pb";
+import { TaskServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/task_pb_service";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import * as grpc from "@grpc/grpc-js";
 import { Config } from "../config";
 import * as browserHeaders from "browser-headers";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { TextDecoder } from "util";
 import { WebsocketTransport } from "../util/grpc-web-ws-transport";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import {
@@ -34,6 +34,7 @@ import {
 import { CachingHeadlessLogServiceClientProvider } from "../util/content-service-sugar";
 import { ctxIsAborted, ctxOnAbort } from "../util/request-context";
 import { PREBUILD_LOGS_PATH_PREFIX as PREBUILD_LOGS_PATH_PREFIX_common } from "@gitpod/public-api-common/lib/prebuild-utils";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export const HEADLESS_LOGS_PATH_PREFIX = "/headless-logs";
 export const HEADLESS_LOG_DOWNLOAD_PATH_PREFIX = "/headless-log-download";
@@ -89,12 +90,15 @@ export class HeadlessLogService {
             const aborted = new Deferred<boolean>();
             setTimeout(() => aborted.resolve(true), maxTimeoutSecs * 1000);
             const streamIds = await this.retryOnError(
-                () => this.supervisorListHeadlessLogs(logCtx, wsi.id, logEndpoint),
+                (cancel) => this.supervisorListHeadlessLogs(logCtx, wsi.id, logEndpoint, cancel),
                 "list headless log streams",
                 this.continueWhileRunning(wsi.id),
             );
             if (streamIds !== undefined) {
-                return streamIds;
+                return {
+                    ...streamIds,
+                    online: true,
+                };
             }
         }
 
@@ -132,6 +136,7 @@ export class HeadlessLogService {
         }
         return {
             streams,
+            online: false,
         };
     }
 
@@ -139,14 +144,20 @@ export class HeadlessLogService {
         logCtx: LogContext,
         instanceId: string,
         logEndpoint: HeadlessLogEndpoint,
+        cancel?: (retry: boolean) => void,
     ): Promise<HeadlessLogUrls | undefined> {
-        const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
+        const tasks = await this.supervisorListTasks(logCtx, logEndpoint, cancel);
         return this.renderTasksHeadlessLogUrls(logCtx, instanceId, tasks);
     }
 
-    protected async supervisorListTasks(logCtx: LogContext, logEndpoint: HeadlessLogEndpoint): Promise<TaskStatus[]> {
+    protected async supervisorListTasks(
+        logCtx: LogContext,
+        logEndpoint: HeadlessLogEndpoint,
+        cancel?: (retry: boolean) => void,
+    ): Promise<TaskStatus[]> {
         if (logEndpoint.url === "") {
             // if ideUrl is not yet set we're too early and we deem the workspace not ready yet: retry later!
+            cancel?.(false);
             throw new Error(`instance's ${logCtx.instanceId} has no ideUrl, yet`);
         }
 
@@ -182,11 +193,7 @@ export class HeadlessLogService {
                 // this might be the case when there is no terminal for this task, yet.
                 // if we find any such case, we deem the workspace not ready yet, and try to reconnect later,
                 // to be sure to get hold of all terminals created.
-                throw new Error(`instance's ${instanceId} task ${task.getId()} has no terminal yet`);
-            }
-            if (task.getState() === TaskState.CLOSED) {
-                // if a task has already been closed we can no longer access it's terminal, and have to skip it.
-                continue;
+                throw new Error(`instance's ${instanceId} task ${taskId} has no terminal yet`);
             }
             streams[taskId] = this.config.hostUrl
                 .with({
@@ -246,7 +253,7 @@ export class HeadlessLogService {
      * @param logCtx
      * @param logEndpoint
      * @param instanceId
-     * @param terminalID
+     * @param taskIdentifier
      * @param sink
      * @param doContinue
      * @param aborted
@@ -255,46 +262,63 @@ export class HeadlessLogService {
         logCtx: LogContext,
         logEndpoint: HeadlessLogEndpoint,
         instanceId: string,
-        terminalID: string,
-        sink: (chunk: string) => Promise<void>,
+        taskIdentifier: { terminalId: string } | { taskId: string },
+        sink: (chunk: Uint8Array) => Promise<void>,
     ): Promise<void> {
-        await this.streamWorkspaceLog(logCtx, logEndpoint, terminalID, sink, this.continueWhileRunning(instanceId));
+        await this.streamWorkspaceLog(logCtx, logEndpoint, taskIdentifier, sink, this.continueWhileRunning(instanceId));
     }
 
     /**
      * For now, simply stream the supervisor data
      * @param logCtx
      * @param logEndpoint
-     * @param terminalID
+     * @param taskIdentifier
      * @param sink
      * @param doContinue
      */
     protected async streamWorkspaceLog(
         logCtx: LogContext,
         logEndpoint: HeadlessLogEndpoint,
-        terminalID: string,
-        sink: (chunk: string) => Promise<void>,
+        taskIdentifier: { terminalId: string } | { taskId: string },
+        sink: (chunk: Uint8Array) => Promise<void>,
         doContinue: () => Promise<boolean>,
     ): Promise<void> {
-        const client = new TerminalServiceClient(toSupervisorURL(logEndpoint.url), {
+        const taskClient = new TaskServiceClient(toSupervisorURL(logEndpoint.url), {
             transport: WebsocketTransport(), // necessary because HTTPTransport causes caching issues
         });
-        const req = new ListenTerminalRequest();
-        req.setAlias(terminalID);
+
+        let taskId: string;
+        if ("terminalId" in taskIdentifier) {
+            const terminalId = taskIdentifier.terminalId;
+            const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
+            const taskIndex = tasks.findIndex((t) => t.getTerminal() === terminalId);
+            if (taskIndex < 0) {
+                log.warn(logCtx, "stream workspace logs: terminal not found", { terminalId, tasks });
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "terminal not found");
+            }
+            taskId = taskIndex.toString();
+        } else {
+            taskId = taskIdentifier.taskId;
+        }
+
+        const req = new ListenToOutputRequest();
+        req.setTaskId(taskId);
+
+        const authHeaders = HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint);
 
         let receivedDataYet = false;
-        let stream: ResponseStream<ListenTerminalResponse> | undefined = undefined;
+        let stream: ResponseStream<ListenToOutputResponse> | undefined = undefined;
         ctxOnAbort(() => stream?.cancel());
-        const doStream = (retry: (doRetry?: boolean) => void) =>
+        const doStream = (cancel: (retry: boolean) => void) =>
             new Promise<void>((resolve, reject) => {
                 // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
-                const decoder = new TextDecoder("utf-8");
-                stream = client.listen(req, HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint));
-                stream.on("data", (resp: ListenTerminalResponse) => {
+                const encoder = new TextEncoder();
+                stream = taskClient.listenToOutput(req, authHeaders);
+                stream.on("data", (resp: ListenToOutputResponse) => {
                     receivedDataYet = true;
 
                     const raw = resp.getData();
-                    const data: string = typeof raw === "string" ? raw : decoder.decode(raw);
+                    const data: Uint8Array = typeof raw === "string" ? encoder.encode(raw) : raw;
                     sink(data).catch((err) => {
                         stream?.cancel(); // If downstream reports an error: cancel connection to upstream
                         log.debug(logCtx, "stream cancelled", err);
@@ -314,7 +338,7 @@ export class HeadlessLogService {
                         return;
                     }
 
-                    retry(false);
+                    cancel(false);
                     reject(err);
                 });
             });
@@ -330,7 +354,7 @@ export class HeadlessLogService {
     async streamImageBuildLog(
         logCtx: LogContext,
         logEndpoint: HeadlessLogEndpoint,
-        sink: (chunk: string) => Promise<void>,
+        sink: (chunk: Uint8Array) => Promise<void>,
     ): Promise<void> {
         const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
         if (tasks.length === 0) {
@@ -339,7 +363,7 @@ export class HeadlessLogService {
 
         // we're just looking at the first stream; image builds just have one stream atm
         const task = tasks[0];
-        await this.streamWorkspaceLog(logCtx, logEndpoint, task.getTerminal(), sink, () => Promise.resolve(true));
+        await this.streamWorkspaceLog(logCtx, logEndpoint, { taskId: task.getId() }, sink, () => Promise.resolve(true));
     }
 
     /**
@@ -353,18 +377,18 @@ export class HeadlessLogService {
      * @returns
      */
     protected async retryOnError<T>(
-        op: (cancel: () => void) => Promise<T>,
+        op: (cancel: (retry: boolean) => void) => Promise<T>,
         description: string,
         doContinue: () => Promise<boolean>,
     ): Promise<T | undefined> {
         let retry = true;
-        const retryFunction = (doRetry: boolean = true) => {
+        const cancelFunction = (doRetry: boolean) => {
             retry = doRetry;
         };
 
         while (retry && !ctxIsAborted()) {
             try {
-                return await op(retryFunction);
+                return await op(cancelFunction);
             } catch (err) {
                 if (!retry) {
                     throw err;

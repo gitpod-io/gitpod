@@ -22,9 +22,15 @@ import { SYSTEM_USER_ID } from "../authorization/authorizer";
 import { StorageClient } from "../storage/storage-client";
 
 /**
- * The WorkspaceGarbageCollector has two tasks:
- *  - mark old, unused workspaces as 'softDeleted = "gc"' after a certain period (initially: 21)
- *  - actually delete softDeleted workspaces if they are older than a configured time (initially: 7)
+ * The WorkspaceGarbageCollector is responsible for moving workspaces (also affecting Prebuilds) through the following state machine:
+ *  - every action (create, start, stop, use as prebuild) updates the workspace.deletionEligibilityTime, which is set to some date into the future
+ *  - the GC has multiple sub-tasks to:
+ *    - find _regular_ workspaces "to delete" (with deletionEligibilityTime < now) -> move to "softDeleted"
+ *    - find _any_ workspace "softDeleted" for long enough -> move to "contentDeleted"
+ *    - find _any_ workspace "contentDeleted" for long enough -> move to "purged"
+ *  - prebuilds are special in that:
+ *    - the GC has a dedicated sub-task to move workspace of type "prebuild" from "to delete" (with a different threshold) -> to "contentDeleted" directly
+ *    - the "purging" takes care of all Prebuild-related sub-resources, too
  */
 @injectable()
 export class WorkspaceGarbageCollector implements Job {
@@ -43,64 +49,85 @@ export class WorkspaceGarbageCollector implements Job {
         this.frequencyMs = this.config.workspaceGarbageCollection.intervalSeconds * 1000;
     }
 
-    public async run(): Promise<void> {
+    public async run(): Promise<number | undefined> {
         if (this.config.workspaceGarbageCollection.disabled) {
             log.info("workspace-gc: Garbage collection disabled.");
             return;
         }
 
+        log.info("workspace-gc: job started", {
+            workspaceMinAgeDays: this.config.workspaceGarbageCollection.minAgeDays,
+            prebuildMinAgeDays: this.config.workspaceGarbageCollection.minAgePrebuildDays,
+        });
+
+        // Move eligible "regular" workspace -> softDeleted
         try {
-            await this.softDeleteOldWorkspaces();
+            await this.softDeleteEligibleWorkspaces();
         } catch (error) {
-            log.error("workspace-gc: error during garbage collection", error);
+            log.error("workspace-gc: error during eligible workspace deletion", error);
         }
+
+        // Move softDeleted workspaces -> contentDeleted
         try {
             await this.deleteWorkspaceContentAfterRetentionPeriod();
         } catch (error) {
             log.error("workspace-gc: error during content deletion", error);
         }
+
+        // Move eligible "prebuild" workspaces -> contentDeleted (jumping over softDeleted)
+        // At this point, Prebuilds are no longer visible nor usable.
+        try {
+            await this.deleteEligiblePrebuilds();
+        } catch (err) {
+            log.error("workspace-gc: error during eligible prebuild deletion", err);
+        }
+
+        // Move contentDeleted workspaces -> purged (calling workspaceService.hardDeleteWorkspace)
         try {
             await this.purgeWorkspacesAfterPurgeRetentionPeriod();
         } catch (err) {
             log.error("workspace-gc: error during hard deletion of workspaces", err);
         }
-        try {
-            await this.deleteOldPrebuilds();
-        } catch (err) {
-            log.error("workspace-gc: error during prebuild deletion", err);
-        }
+
+        return undefined;
     }
 
-    /**
-     * Marks old, unused workspaces as softDeleted
-     */
-    private async softDeleteOldWorkspaces() {
+    private async softDeleteEligibleWorkspaces() {
         if (Date.now() < this.config.workspaceGarbageCollection.startDate) {
             log.info("workspace-gc: garbage collection not yet active.");
             return;
         }
 
-        const span = opentracing.globalTracer().startSpan("softDeleteOldWorkspaces");
+        const span = opentracing.globalTracer().startSpan("softDeleteEligibleWorkspaces");
         try {
             const now = new Date();
             const workspaces = await this.workspaceDB
                 .trace({ span })
-                .findWorkspacesForGarbageCollection(
-                    this.config.workspaceGarbageCollection.minAgeDays,
+                .findEligibleWorkspacesForSoftDeletion(
+                    now,
                     this.config.workspaceGarbageCollection.chunkLimit,
+                    "regular",
                 );
             const afterSelect = new Date();
-            log.info(`workspace-gc: about to soft-delete ${workspaces.length} workspaces`);
+            log.info(`workspace-gc: about to soft-delete ${workspaces.length} eligible workspaces`);
             for (const ws of workspaces) {
                 try {
                     await this.workspaceService.deleteWorkspace(SYSTEM_USER_ID, ws.id, "gc");
                 } catch (err) {
-                    log.error({ workspaceId: ws.id }, "workspace-gc: error during workspace soft-deletion", err);
+                    log.error(
+                        { workspaceId: ws.id },
+                        "workspace-gc: error during eligible workspace soft-deletion",
+                        err,
+                    );
                 }
+
+                log.info({ workspaceId: ws.id }, `workspace-gc: soft deleted a workspace`, {
+                    deletionEligibilityTime: ws.deletionEligibilityTime,
+                });
             }
             const afterDelete = new Date();
 
-            log.info(`workspace-gc: successfully soft-deleted ${workspaces.length} workspaces`, {
+            log.info(`workspace-gc: successfully soft-deleted ${workspaces.length} eligible workspaces`, {
                 selectionTimeMs: afterSelect.getTime() - now.getTime(),
                 deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
             });
@@ -169,6 +196,9 @@ export class WorkspaceGarbageCollector implements Job {
                 } catch (err) {
                     log.error({ workspaceId: ws.id }, "workspace-gc: failed to purge workspace", err);
                 }
+                log.info({ workspaceId: ws.id }, `workspace-gc: hard deleted a workspace`, {
+                    contentDeletedTime: ws.contentDeletedTime,
+                });
             }
             const afterDelete = new Date();
 
@@ -185,28 +215,29 @@ export class WorkspaceGarbageCollector implements Job {
         }
     }
 
-    private async deleteOldPrebuilds() {
-        const span = opentracing.globalTracer().startSpan("deleteOldPrebuilds");
+    private async deleteEligiblePrebuilds() {
+        const span = opentracing.globalTracer().startSpan("deleteEligiblePrebuilds");
         try {
             const now = new Date();
             const workspaces = await this.workspaceDB
                 .trace({ span })
-                .findPrebuiltWorkspacesForGC(
-                    this.config.workspaceGarbageCollection.minAgePrebuildDays,
+                .findEligibleWorkspacesForSoftDeletion(
+                    now,
                     this.config.workspaceGarbageCollection.chunkLimit,
+                    "prebuild",
                 );
             const afterSelect = new Date();
-            log.info(`workspace-gc: about to delete ${workspaces.length} prebuilds`);
+            log.info(`workspace-gc: about to delete ${workspaces.length} eligible prebuilds`);
             for (const ws of workspaces) {
                 try {
                     await this.garbageCollectPrebuild({ span }, ws);
                 } catch (err) {
-                    log.error({ workspaceId: ws.id }, "workspace-gc: failed to delete prebuild", err);
+                    log.error({ workspaceId: ws.id }, "workspace-gc: failed to delete eligible prebuild", err);
                 }
             }
             const afterDelete = new Date();
 
-            log.info(`workspace-gc: successfully deleted ${workspaces.length} prebuilds`, {
+            log.info(`workspace-gc: successfully deleted ${workspaces.length} eligible prebuilds`, {
                 selectionTimeMs: afterSelect.getTime() - now.getTime(),
                 deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
             });

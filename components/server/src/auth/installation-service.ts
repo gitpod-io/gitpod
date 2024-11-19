@@ -41,10 +41,10 @@ export class InstallationService {
 
     public async adminCreateBlockedRepository(
         userId: string,
-        opts: Pick<BlockedRepository, "urlRegexp" | "blockUser">,
+        opts: Pick<BlockedRepository, "urlRegexp" | "blockUser" | "blockFreeUsage">,
     ): Promise<BlockedRepository> {
         await this.auth.checkPermissionOnInstallation(userId, "configure");
-        return this.blockedRepositoryDB.createBlockedRepository(opts.urlRegexp, opts.blockUser);
+        return this.blockedRepositoryDB.createBlockedRepository(opts.urlRegexp, opts.blockUser, opts.blockFreeUsage);
     }
 
     public async adminDeleteBlockedRepository(userId: string, blockedRepositoryId: number): Promise<void> {

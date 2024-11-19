@@ -40,9 +40,7 @@ describe("ScmService", async () => {
 
     beforeEach(async () => {
         container = createTestContainer();
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         service = container.get(ScmService);
         userService = container.get<UserService>(UserService);
         currentUser = await userService.createUser({

@@ -31,6 +31,12 @@ export class DBTokenEntry implements TokenEntry {
     })
     expiryDate?: string;
 
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    reservedUntilDate?: string;
+
     @Column()
     refreshable?: boolean;
 

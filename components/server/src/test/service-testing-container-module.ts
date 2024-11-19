@@ -34,13 +34,13 @@ import {
 } from "@gitpod/image-builder/lib";
 import { IWorkspaceManagerClient, StartWorkspaceResponse } from "@gitpod/ws-manager/lib";
 import { TokenProvider } from "../user/token-provider";
-import { GitHubScope } from "../github/scopes";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import * as crypto from "crypto";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Subject, SubjectId } from "../auth/subject-id";
 import { User } from "@gitpod/gitpod-protocol";
 import { runWithRequestContext } from "../util/request-context";
+import { GitHubOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 const signingKeyPair = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
 const validatingKeyPair1 = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
@@ -55,11 +55,11 @@ export const mockAuthConfig: AuthConfig = {
         issuer: "https://mp-server-d7650ec945.preview.gitpod-dev.com",
         lifetimeSeconds: 7 * 24 * 60 * 60,
         cookie: {
-            name: "_gitpod_dev_jwt_",
+            name: "__Host-_gitpod_dev_jwt_",
             secure: true,
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60,
-            sameSite: "strict",
+            sameSite: "lax",
         },
     },
 };
@@ -110,11 +110,6 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
                     },
                 },
                 services: {
-                    repositoryService: {
-                        installAutomatedPrebuilds: async (user: any, cloneUrl: string) => {
-                            webhooks.add(cloneUrl);
-                        },
-                    },
                     repositoryProvider: {
                         hasReadAccess: async (user: any, owner: string, repo: string) => {
                             return true;
@@ -131,7 +126,7 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
             }
             return {
                 value: "test",
-                scopes: [GitHubScope.EMAIL, GitHubScope.PUBLIC, GitHubScope.PRIVATE],
+                scopes: [GitHubOAuthScopes.EMAIL, GitHubOAuthScopes.PUBLIC, GitHubOAuthScopes.PRIVATE],
             };
         },
     });

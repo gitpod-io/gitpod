@@ -56,6 +56,7 @@ func BuildTarbal(ctx context.Context, src string, dst string, opts ...carchive.T
 		UIDMaps:     uidMaps,
 		GIDMaps:     gidMaps,
 		Compression: archive.Uncompressed,
+		CopyPass:    true,
 	})
 	if err != nil {
 		return

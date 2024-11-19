@@ -1,6 +1,7 @@
 data "google_dns_managed_zone" "preview-gitpod-dev" {
   provider = google
   name     = "preview-gitpod-dev-com"
+  project  = var.gcp_project_dns
 }
 
 locals {
@@ -11,6 +12,7 @@ locals {
 
 resource "google_dns_record_set" "root" {
   provider = google
+  project  = var.gcp_project_dns
 
   name = "${var.preview_name}.${data.google_dns_managed_zone.preview-gitpod-dev.dns_name}"
   type = "A"
@@ -22,6 +24,7 @@ resource "google_dns_record_set" "root" {
 
 resource "google_dns_record_set" "root-wc" {
   provider = google
+  project  = var.gcp_project_dns
 
   name = "*.${var.preview_name}.${data.google_dns_managed_zone.preview-gitpod-dev.dns_name}"
   type = "A"
@@ -33,6 +36,7 @@ resource "google_dns_record_set" "root-wc" {
 
 resource "google_dns_record_set" "root-wc-ws-dev" {
   provider = google
+  project  = var.gcp_project_dns
 
   name = "*.ws-dev.${var.preview_name}.${data.google_dns_managed_zone.preview-gitpod-dev.dns_name}"
   type = "A"
@@ -44,6 +48,7 @@ resource "google_dns_record_set" "root-wc-ws-dev" {
 
 resource "google_dns_record_set" "root-wc-ws-dev-ssh" {
   provider = google
+  project  = var.gcp_project_dns
 
   name = "*.ssh.ws-dev.${var.preview_name}.${data.google_dns_managed_zone.preview-gitpod-dev.dns_name}"
   type = "A"
@@ -55,6 +60,7 @@ resource "google_dns_record_set" "root-wc-ws-dev-ssh" {
 
 resource "google_dns_record_set" "root-wc-local-ssh-a" {
   provider = google
+  project  = var.gcp_project_dns
 
   name = "*.lssh.${var.preview_name}.${data.google_dns_managed_zone.preview-gitpod-dev.dns_name}"
   type = "A"
@@ -66,6 +72,7 @@ resource "google_dns_record_set" "root-wc-local-ssh-a" {
 
 resource "google_dns_record_set" "root-wc-local-ssh-aaaa" {
   provider = google
+  project  = var.gcp_project_dns
 
   name = "*.lssh.${var.preview_name}.${data.google_dns_managed_zone.preview-gitpod-dev.dns_name}"
   type = "AAAA"

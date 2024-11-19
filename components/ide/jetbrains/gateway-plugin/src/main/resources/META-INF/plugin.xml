@@ -26,6 +26,8 @@
         <applicationConfigurable parentId="tools" instance="io.gitpod.jetbrains.gateway.GitpodSettingsConfigurable"
                                  id="io.gitpod.jetbrains.gateway.GitpodSettingsConfigurable"
                                  displayName="Gitpod"/>
+        <applicationService serviceInterface="io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory"
+                            serviceImplementation="io.gitpod.jetbrains.gateway.GitpodConnectionHandleFactoryImpl"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.jetbrains">

@@ -63,6 +63,5 @@ func GetConfig(fn string) (*Config, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("config validation error: %w", err)
 	}
-
 	return &cfg, nil
 }

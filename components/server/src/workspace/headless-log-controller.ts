@@ -14,7 +14,7 @@ import {
     Workspace,
     WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import {
     CompositeResourceAccessGuard,
     OwnerResourceGuard,
@@ -41,12 +41,12 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { WorkspaceService } from "./workspace-service";
-import { ctxIsAborted, ctxTrySubjectId, runWithSubSignal, runWithSubjectId } from "../util/request-context";
+import { ctxIsAborted, ctxOnAbort, ctxTrySubjectId, runWithSubSignal, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { validate as uuidValidate } from "uuid";
 import { getPrebuildErrorMessage } from "@gitpod/public-api-common/lib/prebuild-utils";
-import { isFgaChecksEnabled } from "../authorization/authorizer";
+import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 
 @injectable()
 export class HeadlessLogController {
@@ -69,45 +69,15 @@ export class HeadlessLogController {
                 const user = req.user as User; // verified by authenticateAndAuthorize
                 await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
                     try {
-                        const instanceId = req.params.instanceId;
-                        const terminalId = req.params.terminalId;
+                        const { instanceId, terminalId } = req.params;
 
                         const logCtx = { userId: user.id, instanceId };
                         try {
-                            const head = {
-                                "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
-                                "Transfer-Encoding": "chunked",
-                                "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
-                            };
-                            res.writeHead(200, head);
-
-                            const queue = new Queue(); // Make sure we forward in the correct order
-                            const writeToResponse = async (chunk: string) =>
-                                queue.enqueue(
-                                    () =>
-                                        new Promise<void>(async (resolve, reject) => {
-                                            if (ctxIsAborted()) {
-                                                return;
-                                            }
-
-                                            const done = res.write(chunk, "utf-8", (err?: Error | null) => {
-                                                if (err) {
-                                                    reject(err); // propagate write error to upstream
-                                                    return;
-                                                }
-                                            });
-                                            // handle as per doc: https://nodejs.org/api/stream.html#stream_writable_write_chunk_encoding_callback
-                                            if (!done) {
-                                                res.once("drain", resolve);
-                                            } else {
-                                                setImmediate(resolve);
-                                            }
-                                        }),
-                                );
+                            const { writeToResponse, queue } = createStreamingResponseWriter(logCtx, res, terminalId);
                             await this.workspaceService.streamWorkspaceLogs(
                                 user.id,
                                 instanceId,
-                                terminalId,
+                                { terminalId },
                                 writeToResponse,
                                 async () => {
                                     const ws = await this.authorizeHeadlessLogAccess(span, user, instanceId, res);
@@ -117,11 +87,10 @@ export class HeadlessLogController {
                                 },
                             );
 
-                            // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
-                            // So we resort to this hand-written solution
-                            res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
+                            // Wait until we finished writing all chunks in our queue
+                            await queue.enqueue(() => Promise.resolve());
 
-                            res.end();
+                            await endStreamingResponse(res);
                         } catch (err) {
                             log.debug(logCtx, "error streaming headless logs", err);
 
@@ -193,7 +162,61 @@ export class HeadlessLogController {
         const router = express.Router();
 
         router.use(this.auth.restHandlerOptionally);
-        router.get("/:prebuildId", [
+        router.get("/:workspaceId/image-build", [
+            authenticateAndAuthorize,
+            asyncHandler(async (req: express.Request, res: express.Response) => {
+                const span = opentracing.globalTracer().startSpan(HEADLESS_LOGS_PATH_PREFIX);
+                const user = req.user as User;
+
+                await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
+                    const { workspaceId } = req.params;
+                    const subjectId = ctxTrySubjectId();
+                    if (!subjectId) {
+                        res.status(403).send("unauthorized");
+                        return;
+                    }
+                    const logCtx = { userId: user.id, workspaceId };
+
+                    const { writeToResponse, abortController, queue, info } = createStreamingResponseWriter(
+                        logCtx,
+                        res,
+                        "image-build",
+                    );
+
+                    try {
+                        await runWithSubSignal(abortController, async () => {
+                            await this.workspaceService.watchWorkspaceImageBuildLogs(
+                                user.id,
+                                workspaceId,
+                                writeToResponse,
+                            );
+                        });
+
+                        // Wait until we finished writing all chunks in our queue
+                        await queue.enqueue(() => Promise.resolve());
+                    } catch (e) {
+                        log.error(logCtx, "error streaming headless logs", e);
+                        TraceContext.setError({ span }, e);
+
+                        const encoder = new TextEncoder();
+                        const errMsg = encoder.encode(getPrebuildErrorMessage(e));
+                        await writeToResponse(errMsg).catch(() => {});
+                    } finally {
+                        if (!info.hasWritten) {
+                            res.write(
+                                getPrebuildErrorMessage(
+                                    new ApplicationError(ErrorCodes.NOT_FOUND, "No image build logs found"),
+                                ),
+                            );
+                        }
+
+                        span.finish();
+                        res.end();
+                    }
+                });
+            }),
+        ]);
+        router.get("/:prebuildId/:taskId?", [
             authenticateAndAuthorize,
             asyncHandler(async (req: express.Request, res: express.Response) => {
                 const span = opentracing.globalTracer().startSpan(PREBUILD_LOGS_PATH_PREFIX);
@@ -202,59 +225,51 @@ export class HeadlessLogController {
                 await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
                     // ensure fga migration
                     const subjectId = ctxTrySubjectId();
-                    if (!subjectId || !(await isFgaChecksEnabled(subjectId))) {
+                    if (!subjectId) {
                         res.status(403).send("unauthorized");
                         return;
                     }
 
-                    const prebuildId = req.params.prebuildId;
+                    const { prebuildId, taskId } = req.params;
                     if (!uuidValidate(prebuildId)) {
                         res.status(400).send("prebuildId is invalid");
                         return;
                     }
-                    const logCtx = { userId: user.id, prebuildId };
+                    const logCtx = { userId: user.id, prebuildId, taskId };
 
-                    const head = {
-                        "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
-                        "Transfer-Encoding": "chunked",
-                        "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
-                    };
-                    res.writeHead(200, head);
-
-                    const abortController = new AbortController();
-                    const queue = new Queue(); // Make sure we forward in the correct order
-                    const writeToResponse = async (chunk: string) =>
-                        queue.enqueue(
-                            () =>
-                                new Promise<void>((resolve) => {
-                                    if (ctxIsAborted()) {
-                                        return;
-                                    }
-                                    const done = res.write(chunk, "utf-8", (err?: Error | null) => {
-                                        if (err) {
-                                            // we don't reject in current promise to avoid floating error throws
-                                            abortController.abort("Failed to write chunk");
-                                            return;
-                                        }
-                                    });
-                                    if (!done) {
-                                        res.once("drain", resolve);
-                                    } else {
-                                        setImmediate(resolve);
-                                    }
-                                }),
-                        );
+                    const { writeToResponse, queue, abortController } = createStreamingResponseWriter(
+                        logCtx,
+                        res,
+                        taskId,
+                    );
                     try {
-                        await runWithSubSignal(abortController, async () => {
-                            await this.prebuildManager.watchPrebuildLogs(user.id, prebuildId, writeToResponse);
+                        const redirect = await runWithSubSignal(abortController, async () => {
+                            return await this.prebuildManager.watchPrebuildLogs(
+                                user.id,
+                                prebuildId,
+                                taskId,
+                                writeToResponse,
+                            );
                         });
+                        if (redirect) {
+                            res.redirect(302, redirect.taskUrl);
+                            return;
+                        }
+
+                        // Wait until we finished writing all chunks in our queue
+                        await queue.enqueue(() => Promise.resolve());
+
+                        await endStreamingResponse(res);
                     } catch (e) {
                         log.error(logCtx, "error streaming headless logs", e);
                         TraceContext.setError({ span }, e);
-                        await writeToResponse(getPrebuildErrorMessage(e)).catch(() => {});
+
+                        const encoder = new TextEncoder();
+                        const errMsg = encoder.encode(getPrebuildErrorMessage(e));
+                        await writeToResponse(errMsg).catch(() => {});
+                        res.end();
                     } finally {
                         span.finish();
-                        res.end();
                     }
                 });
             }),
@@ -310,6 +325,68 @@ export class HeadlessLogController {
 
         return { workspace, instance };
     }
+}
+
+function createStreamingResponseWriter(logCtx: LogContext, res: express.Response, taskId: string) {
+    const abortController = new AbortController();
+    const queue = new Queue(); // Make sure we forward in the correct order
+    const info = { hasWritten: false };
+    let firstChunk = true;
+    const writeToResponse = async (chunk: Uint8Array) =>
+        queue.enqueue(async () => {
+            if (ctxIsAborted()) {
+                return;
+            }
+            if (firstChunk) {
+                firstChunk = false;
+                const head = {
+                    "Content-Type": "application/octet-stream",
+                    "Transfer-Encoding": "chunked",
+                    "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
+                };
+                res.writeHead(200, head);
+            }
+
+            const chunkHandled = new Deferred<void>();
+            const done = res.write(chunk, "utf-8", (err?: Error | null) => {
+                if (err) {
+                    // we don't reject in current promise to avoid floating error throws
+                    abortController.abort("Failed to write chunk");
+                }
+                chunkHandled.resolve();
+            });
+
+            await new Promise((resolve) => {
+                if (!done) {
+                    res.once("drain", resolve);
+                } else {
+                    setImmediate(resolve);
+                }
+            });
+            await chunkHandled.promise;
+            info.hasWritten = true;
+        });
+    return { writeToResponse, queue, abortController, info };
+}
+
+async function endStreamingResponse(res: express.Response) {
+    // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
+    // So we resort to this hand-written solution
+    await new Promise((resolve) => {
+        res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`, resolve);
+    });
+
+    // TODO(gpl): Not sure why we can't call res.end() directly, but it does not work. This caddy issues looks very closely related, but not sure what to do about it: https://github.com/caddyserver/caddy/issues/4922
+    // We are _not_ calling res.end() directly here, but keep the connection open for 30s to give until the client has finished reading all parts.
+    // If we call it earlier, as a result the client reader is closed, before receiving all chunks, even if we make sure to have written all chunks.
+    const timeout = setTimeout(() => {
+        res.end();
+    }, 30000);
+    ctxOnAbort(() => {
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+    });
 }
 
 function authenticateAndAuthorize(req: express.Request, res: express.Response, next: express.NextFunction) {

@@ -30,6 +30,7 @@ const DATE_PARAM_FORMAT = "YYYY-MM-DD";
 interface UsageViewProps {
     attributionId: AttributionId;
 }
+
 export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
     const location = useLocation();
     const history = useHistory();
@@ -88,9 +89,25 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
 
     const usageEntries = usagePage.data?.usageEntriesList || [];
 
+    const readableSchedulerDuration = useMemo(() => {
+        const intervalMinutes = usagePage.data?.ledgerIntervalMinutes;
+        if (!intervalMinutes) {
+            return "";
+        }
+
+        return `${intervalMinutes} minute${intervalMinutes !== 1 ? "s" : "" }`;
+    }, [usagePage.data]);
+
     return (
         <>
-            <Header title="Usage" subtitle="Organization usage, updated every 15 minutes." />
+            <Header
+                title="Usage"
+                subtitle={
+                    "Organization usage" +
+                    (readableSchedulerDuration ? ", updated every " + readableSchedulerDuration : "") +
+                    "."
+                }
+            />
             <div className="app-container pt-5">
                 <div
                     className={classNames(

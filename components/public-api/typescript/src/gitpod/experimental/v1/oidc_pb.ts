@@ -385,6 +385,21 @@ export class OAuth2Config extends Message<OAuth2Config> {
    */
   userinfoKeys?: UserInfoKeys;
 
+  /**
+   * CEL expression to verify a profile.
+   * Optional.
+   *
+   * @generated from field: string cel_expression = 9;
+   */
+  celExpression = "";
+
+  /**
+   * Use PKCE for the OAuth2 flow.
+   *
+   * @generated from field: bool use_pkce = 10;
+   */
+  usePkce = false;
+
   constructor(data?: PartialMessage<OAuth2Config>) {
     super();
     proto3.util.initPartial(data, this);
@@ -400,6 +415,8 @@ export class OAuth2Config extends Message<OAuth2Config> {
     { no: 5, name: "scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 6, name: "userinfo_endpoint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "userinfo_keys", kind: "message", T: UserInfoKeys },
+    { no: 9, name: "cel_expression", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 10, name: "use_pkce", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OAuth2Config {

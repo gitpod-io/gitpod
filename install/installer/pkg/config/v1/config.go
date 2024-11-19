@@ -36,8 +36,11 @@ func (v version) Factory() interface{} {
 	}
 }
 
+var (
+	defaultRepositoryUrl = config.GitpodContainerRegistry
+)
+
 const (
-	defaultRepositoryUrl  = "eu.gcr.io/gitpod-core-dev/build"
 	defaultOpenVSXURL     = "https://open-vsx.org"
 	defaultMetadataRegion = "local"
 )

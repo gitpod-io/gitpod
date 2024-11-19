@@ -22,12 +22,14 @@ export class TokenGarbageCollector implements Job {
     public name = "token-gc";
     public frequencyMs = 5 * 60 * 1000; // every 5 minutes
 
-    public async run(): Promise<void> {
+    public async run(): Promise<number | undefined> {
         const span = opentracing.globalTracer().startSpan("collectExpiredTokenEntries");
         log.debug("token-gc: start collecting...");
         try {
             await this.userDb.deleteExpiredTokenEntries(new Date().toISOString());
             log.debug("token-gc: done collecting.");
+
+            return undefined;
         } catch (err) {
             TraceContext.setError({ span }, err);
             log.error("token-gc: error collecting expired tokens: ", err);

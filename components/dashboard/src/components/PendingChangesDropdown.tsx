@@ -7,8 +7,13 @@
 import ContextMenu, { ContextMenuEntry } from "./ContextMenu";
 import CaretDown from "../icons/CaretDown.svg";
 import { WorkspaceGitStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { cn } from "@podkit/lib/cn";
 
-export default function PendingChangesDropdown({ gitStatus }: { gitStatus?: WorkspaceGitStatus }) {
+type Props = {
+    gitStatus?: WorkspaceGitStatus;
+    className?: string;
+};
+export default function PendingChangesDropdown({ gitStatus, className }: Props) {
     const headingStyle = "text-gray-500 dark:text-gray-400 text-left";
     const itemStyle = "text-gray-400 dark:text-gray-500 text-left -mt-5";
     const menuEntries: ContextMenuEntry[] = [];
@@ -40,8 +45,11 @@ export default function PendingChangesDropdown({ gitStatus }: { gitStatus?: Work
         return <div className="text-sm text-gray-400 dark:text-gray-500">No Changes</div>;
     }
     return (
-        <ContextMenu menuEntries={menuEntries} customClasses="w-64 max-h-48 overflow-scroll mx-auto left-0 right-0">
-            <p className="flex justify-center text-gitpod-red">
+        <ContextMenu
+            menuEntries={menuEntries}
+            customClasses={"w-64 max-h-48 overflow-y-scroll overflow-x-clip mx-auto left-0 right-0"}
+        >
+            <p className={cn("flex items-center text-gitpod-red", className)}>
                 <span>
                     {totalChanges} Change{totalChanges === 1 ? "" : "s"}
                 </span>

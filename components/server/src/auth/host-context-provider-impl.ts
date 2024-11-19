@@ -12,9 +12,9 @@ import { AuthProviderService } from "./auth-provider-service";
 import { HostContextProvider, HostContextProviderFactory } from "./host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HostContainerMapping } from "./host-container-mapping";
-import { RepositoryService } from "../repohost/repo-service";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { RepositoryService } from "../repohost/repo-service";
 
 @injectable()
 export class HostContextProviderImpl implements HostContextProvider {

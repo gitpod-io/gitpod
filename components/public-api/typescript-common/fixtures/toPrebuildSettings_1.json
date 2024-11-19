@@ -3,5 +3,6 @@
   "branchMatchingPattern": "main",
   "branchStrategy": "default-branch",
   "prebuildInterval": 42,
-  "workspaceClass": "dev"
+  "workspaceClass": "dev",
+  "activationStrategy": "activity-based"
 }

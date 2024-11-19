@@ -26,7 +26,8 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         const avatarUrl = repository.owner.avatar_url;
         const webUrl = repository.html_url;
         const defaultBranch = repository.default_branch;
-        return { host, owner, name: repo, cloneUrl, description, avatarUrl, webUrl, defaultBranch };
+        const pushedAt = repository.pushed_at;
+        return { host, owner, name: repo, cloneUrl, description, avatarUrl, webUrl, defaultBranch, pushedAt };
     }
 
     async getBranch(user: User, owner: string, repo: string, branch: string): Promise<Branch> {
@@ -129,7 +130,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
             }
 
             // TODO(janx): To get more results than GitHub API's max page size (seems to be 100), pagination should be handled.
-            // These additional history properties may be helfpul:
+            // These additional history properties may be helpful:
             //     totalCount,
             //     pageInfo {
             //         haxNextPage,
@@ -214,19 +215,20 @@ export class GithubRepositoryProvider implements RepositoryProvider {
               }`,
         );
 
-        let repos: RepositoryInfo[] = [];
-
+        const repos: RepositoryInfo[] = [];
         for (const type of ["contributedTo", "original", "forked"]) {
             const nodes = result.data.viewer[type]?.nodes;
             if (nodes) {
-                repos = nodes.map((n: any): RepositoryInfo => {
+                const reposInSection: RepositoryInfo[] = nodes.map((n: any) => {
                     return {
                         name: n.name,
                         url: n.url,
                     };
                 });
+                repos.push(...reposInSection);
             }
         }
+
         return repos;
     }
 

@@ -84,10 +84,10 @@ export interface WorkspaceGarbageCollection {
     /** The minimal age of a workspace before it is marked as 'softDeleted' (= hidden for the user) */
     minAgeDays: number;
 
-    /** The minimal age of a prebuild (incl. workspace) before it's content is deleted (+ marked as 'softDeleted') */
+    /** The minimal age of a prebuild (incl. workspace) before its content is deleted (+ marked as 'softDeleted') */
     minAgePrebuildDays: number;
 
-    /** The minimal number of days a workspace has to stay in 'softDeleted' before it's content is deleted */
+    /** The minimal number of days a workspace has to stay in 'softDeleted' before its content is deleted */
     contentRetentionPeriodDays: number;
 
     /** The maximum amount of workspaces whose content is deleted in one go */

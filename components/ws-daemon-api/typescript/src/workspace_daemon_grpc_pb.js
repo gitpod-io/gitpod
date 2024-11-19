@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -30,6 +30,28 @@ function serialize_iws_EvacuateCGroupResponse(arg) {
 
 function deserialize_iws_EvacuateCGroupResponse(buffer_arg) {
   return workspace_daemon_pb.EvacuateCGroupResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_MountNfsRequest(arg) {
+  if (!(arg instanceof workspace_daemon_pb.MountNfsRequest)) {
+    throw new Error('Expected argument of type iws.MountNfsRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_MountNfsRequest(buffer_arg) {
+  return workspace_daemon_pb.MountNfsRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_MountNfsResponse(arg) {
+  if (!(arg instanceof workspace_daemon_pb.MountNfsResponse)) {
+    throw new Error('Expected argument of type iws.MountNfsResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_MountNfsResponse(buffer_arg) {
+  return workspace_daemon_pb.MountNfsResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_iws_MountProcRequest(arg) {
@@ -120,6 +142,28 @@ function deserialize_iws_TeardownResponse(buffer_arg) {
   return workspace_daemon_pb.TeardownResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_iws_UmountNfsRequest(arg) {
+  if (!(arg instanceof workspace_daemon_pb.UmountNfsRequest)) {
+    throw new Error('Expected argument of type iws.UmountNfsRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_UmountNfsRequest(buffer_arg) {
+  return workspace_daemon_pb.UmountNfsRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_UmountNfsResponse(arg) {
+  if (!(arg instanceof workspace_daemon_pb.UmountNfsResponse)) {
+    throw new Error('Expected argument of type iws.UmountNfsResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_UmountNfsResponse(buffer_arg) {
+  return workspace_daemon_pb.UmountNfsResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_iws_UmountProcRequest(arg) {
   if (!(arg instanceof workspace_daemon_pb.UmountProcRequest)) {
     throw new Error('Expected argument of type iws.UmountProcRequest');
@@ -140,6 +184,28 @@ function serialize_iws_UmountProcResponse(arg) {
 
 function deserialize_iws_UmountProcResponse(buffer_arg) {
   return workspace_daemon_pb.UmountProcResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_WipingTeardownRequest(arg) {
+  if (!(arg instanceof workspace_daemon_pb.WipingTeardownRequest)) {
+    throw new Error('Expected argument of type iws.WipingTeardownRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_WipingTeardownRequest(buffer_arg) {
+  return workspace_daemon_pb.WipingTeardownRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_WipingTeardownResponse(arg) {
+  if (!(arg instanceof workspace_daemon_pb.WipingTeardownResponse)) {
+    throw new Error('Expected argument of type iws.WipingTeardownResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_WipingTeardownResponse(buffer_arg) {
+  return workspace_daemon_pb.WipingTeardownResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_iws_WorkspaceInfoRequest(arg) {
@@ -288,6 +354,34 @@ umountSysfs: {
     responseSerialize: serialize_iws_UmountProcResponse,
     responseDeserialize: deserialize_iws_UmountProcResponse,
   },
+  // MountNfs mounts a nfs share into the container's rootfs.
+// The PID must be in the PID namespace of the workspace container.
+// The path is relative to the mount namespace of the PID.
+mountNfs: {
+    path: '/iws.InWorkspaceService/MountNfs',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.MountNfsRequest,
+    responseType: workspace_daemon_pb.MountNfsResponse,
+    requestSerialize: serialize_iws_MountNfsRequest,
+    requestDeserialize: deserialize_iws_MountNfsRequest,
+    responseSerialize: serialize_iws_MountNfsResponse,
+    responseDeserialize: deserialize_iws_MountNfsResponse,
+  },
+  // UmountNfs unmounts a nfs share from the container's rootfs.
+// The PID must be in the PID namespace of the workspace container.
+// The path is relative to the mount namespace of the PID.
+umountNfs: {
+    path: '/iws.InWorkspaceService/UmountNfs',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.UmountNfsRequest,
+    responseType: workspace_daemon_pb.UmountNfsResponse,
+    requestSerialize: serialize_iws_UmountNfsRequest,
+    requestDeserialize: deserialize_iws_UmountNfsRequest,
+    responseSerialize: serialize_iws_UmountNfsResponse,
+    responseDeserialize: deserialize_iws_UmountNfsResponse,
+  },
   // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 teardown: {
@@ -300,6 +394,18 @@ teardown: {
     requestDeserialize: deserialize_iws_TeardownRequest,
     responseSerialize: serialize_iws_TeardownResponse,
     responseDeserialize: deserialize_iws_TeardownResponse,
+  },
+  // WipingTeardown undoes everything PrepareForUserNS does, especially unmounts shiftfs mounts
+wipingTeardown: {
+    path: '/iws.InWorkspaceService/WipingTeardown',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.WipingTeardownRequest,
+    responseType: workspace_daemon_pb.WipingTeardownResponse,
+    requestSerialize: serialize_iws_WipingTeardownRequest,
+    requestDeserialize: deserialize_iws_WipingTeardownRequest,
+    responseSerialize: serialize_iws_WipingTeardownResponse,
+    responseDeserialize: deserialize_iws_WipingTeardownResponse,
   },
   // Set up a pair of veths that interconnect the specified PID and the workspace container's network namespace.
 setupPairVeths: {

@@ -5,7 +5,7 @@
  */
 
 import EventEmitter from "events";
-import React, { Suspense, useCallback, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
     DisposableCollection,
     WorkspaceImageBuild,
@@ -13,7 +13,7 @@ import {
     Disposable,
 } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
-import { PrebuildStatus } from "../projects/Prebuilds";
+import { PrebuildStatusOld } from "../projects/prebuild-utils";
 import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
 import { prebuildClient, watchPrebuild, workspaceClient } from "../service/public-api";
 import { GetWorkspaceRequest, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
@@ -37,7 +37,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
         | undefined
     >();
     const [error, setError] = useState<Error | undefined>();
-    const [logsEmitter] = useState(new EventEmitter());
+    const logsEmitter = useMemo(() => new EventEmitter(), []);
     const [prebuild, setPrebuild] = useState<Prebuild | undefined>();
 
     const handlePrebuildUpdate = useCallback(
@@ -100,10 +100,11 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                         info: WorkspaceImageBuild.StateInfo,
                         content?: WorkspaceImageBuild.LogContent,
                     ) => {
-                        if (!content) {
+                        if (!content?.data) {
                             return;
                         }
-                        logsEmitter.emit("logs", content.text);
+                        const uintArray = new Uint8Array(content.data);
+                        logsEmitter.emit("logs", uintArray);
                     },
                 }),
             );
@@ -173,11 +174,16 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
         <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col mb-8">
             <div className="h-96 flex">
                 <Suspense fallback={<div />}>
-                    <WorkspaceLogs classes="h-full w-full" logsEmitter={logsEmitter} errorMessage={error?.message} />
+                    <WorkspaceLogs
+                        taskId="undefined"
+                        classes="h-full w-full"
+                        logsEmitter={logsEmitter}
+                        errorMessage={error?.message}
+                    />
                 </Suspense>
             </div>
             <div className="w-full bottom-0 h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex flex-row items-center space-x-2">
-                {prebuild && <PrebuildStatus prebuild={prebuild} />}
+                {prebuild && <PrebuildStatusOld prebuild={prebuild} />}
                 <div className="flex-grow" />
                 {props.children}
             </div>
@@ -263,7 +269,7 @@ function watchHeadlessLogs(
             }
 
             const streamUrl = logSources.streams[streamIds[0]];
-            console.log("fetching from streamUrl: " + streamUrl);
+            console.debug("fetching from streamUrl: " + streamUrl);
             response = await fetch(streamUrl, {
                 method: "GET",
                 cache: "no-cache",

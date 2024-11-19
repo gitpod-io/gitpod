@@ -32,8 +32,16 @@ on:
         description: Build URL
         required: true
 jobs:
+  create-runner:
+    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@main
+    secrets:
+      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
   jetbrains-smoke-test-linux:
-    runs-on: ubuntu-latest
+    container:
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    needs: [create-runner]
     steps:
       - name: Generate Summary
         if: always()
@@ -44,25 +52,21 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: '1.19'
+          go-version: "1.19"
       - uses: actions/setup-java@v2
         with:
           distribution: zulu
           java-version: "11"
-          cache: 'gradle'
+          cache: "gradle"
       - name: Setup FFmpeg
         uses: FedericoCarboni/setup-ffmpeg@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Download build dependency
         run: |
-          cd /usr/local/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.7.3/leeway_0.7.3_Linux_x86_64.tar.gz | sudo tar xz
-          cd /usr/local && curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s v1.49.0
-          cd /usr/local/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | sudo tar xzv gokart
-
           sudo apt-get update
           sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1
-          wget https://raw.githubusercontent.com/gitpod-io/openvscode-server/main/build/azure-pipelines/linux/xvfb.init
+          sudo wget https://raw.githubusercontent.com/gitpod-io/openvscode-server/main/build/azure-pipelines/linux/xvfb.init
           sudo mv ./xvfb.init /etc/init.d/xvfb
           sudo chmod +x /etc/init.d/xvfb
           sudo update-rc.d xvfb defaults
@@ -71,6 +75,7 @@ jobs:
         env:
           TEST_USE_LATEST: ${{ inputs.use_latest }}
         run: |
+          export LEEWAY_WORKSPACE_ROOT=$(pwd)
           if [ $TEST_USE_LATEST = "false" ]; then
             leeway collect | grep components/ide/jetbrains/gateway-plugin:publish-stable > gateway.version
           else
@@ -86,9 +91,9 @@ jobs:
             ${{ runner.os }}-leeway-cache-
       - name: Smoke Test
         env:
-          DISPLAY: ':10'
-          LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: '8388608'
-          LEEWAY_REMOTE_CACHE_BUCKET: '${{ needs.configuration.outputs.leeway_cache_bucket }}'
+          DISPLAY: ":10"
+          LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: "8388608"
+          LEEWAY_REMOTE_CACHE_BUCKET: "${{ needs.configuration.outputs.leeway_cache_bucket }}"
           TEST_USE_LATEST: ${{ inputs.use_latest }}
         run: |
           export GATEWAY_LINK=$(jq -r '.inputs.secret_gateway_link' $GITHUB_EVENT_PATH)
@@ -114,8 +119,19 @@ jobs:
           cp -r dev/jetbrains-test/video dev/jetbrains-test/build/reports
       - name: Save report
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: video
           path: |
             dev/jetbrains-test/build/reports
+  delete-runner:
+    if: always()
+    needs:
+      - create-runner
+      - jetbrains-smoke-test-linux
+    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@main
+    secrets:
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+    with:
+      runner-label: ${{ needs.create-runner.outputs.label }}
+      machine-zone: ${{ needs.create-runner.outputs.machine-zone }}

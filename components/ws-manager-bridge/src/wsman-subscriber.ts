@@ -47,6 +47,7 @@ export class WsmanSubscriber implements Disposable {
                     // start subscription
                     const req = new SubscribeRequest();
                     this.sub = await client.subscribe({}, req);
+                    log.info("wsman subscription established", payload);
 
                     this.sub.on("data", (incoming: SubscribeResponse) => {
                         const status = incoming.getStatus();
@@ -77,6 +78,7 @@ export class WsmanSubscriber implements Disposable {
                         }
                     });
                     this.sub.on("end", function () {
+                        log.info("wsman subscription ended", payload);
                         resolve();
                     });
                     this.sub.on("error", function (e) {

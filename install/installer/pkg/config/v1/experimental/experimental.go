@@ -124,6 +124,11 @@ type WorkspaceConfig struct {
 	} `json:"contentService"`
 
 	EnableProtectedSecrets *bool `json:"enableProtectedSecrets"`
+
+	ImageBuilderMk3 struct {
+		BaseImageRepositoryName      string `json:"baseImageRepositoryName"`
+		WorkspaceImageRepositoryName string `json:"workspaceImageRepositoryName"`
+	} `json:"imageBuilderMk3"`
 }
 
 type WorkspaceClass struct {
@@ -269,6 +274,8 @@ type ServerConfig struct {
 
 	// @deprecated use containerRegistry.privateBaseImageAllowList instead
 	DefaultBaseImageRegistryWhiteList []string `json:"defaultBaseImageRegistryWhitelist"`
+
+	GoogleCloudProfilerEnabled bool `json:"gcpProfilerEnabled,omitempty"`
 }
 
 type ProxyConfig struct {

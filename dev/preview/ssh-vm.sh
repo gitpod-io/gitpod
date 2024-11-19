@@ -5,22 +5,21 @@
 
 set -euo pipefail
 
-THIS_DIR="$(dirname "$0")"
-
-PRIVATE_KEY=$HOME/.ssh/vm_id_rsa
-PUBLIC_KEY=$HOME/.ssh/vm_id_rsa.pub
+PRIVATE_KEY=$HOME/.ssh/vm_ed25519
+PUBLIC_KEY=$HOME/.ssh/vm_ed25519.pub
 PORT=2222
 USER="ubuntu"
 COMMAND=""
 BRANCH=""
 
-while getopts c:p:u:b: flag
+while getopts c:p:u:b:v: flag
 do
     case "${flag}" in
         c) COMMAND="${OPTARG}";;
         p) PORT="${OPTARG}";;
         u) USER="${OPTARG}";;
-        b) BRANCH="${2}";;
+        v) VM_NAME="${OPTARG}";;
+        b) BRANCH="${OPTARG}";;
         *) ;;
     esac
 done
@@ -33,32 +32,18 @@ if [ -z "${VM_NAME:-}" ]; then
   fi
 fi
 
-function log {
-    echo "[$(date)] $*"
-}
-
-function has-harvester-access {
-    kubectl --context=harvester auth can-i get secrets > /dev/null 2>&1 || false
-}
-
 function set-up-ssh {
     if [[ (! -f $PRIVATE_KEY) || (! -f $PUBLIC_KEY) ]]; then
-        echo Setting up ssh-keys
-        "$THIS_DIR"/util/install-vm-ssh-keys.sh
+        echo Generate ssh-keys
+        ssh-keygen -t ed25519 -q -N "" -f "$PRIVATE_KEY"
     fi
 }
 
-if ! has-harvester-access; then
-    echo Setting up kubeconfig
-    "$THIS_DIR"/util/download-and-merge-harvester-kubeconfig.sh
-fi
-
 set-up-ssh
-
-ssh "$USER@$VM_NAME.preview.gitpod-dev.com" \
-    -o UserKnownHostsFile=/dev/null \
-    -o StrictHostKeyChecking=no \
-    -o LogLevel=ERROR \
-    -i "$HOME/.ssh/vm_id_rsa" \
-    -p "$PORT" \
-    "$COMMAND"
+zone=$(gcloud compute instances list --project gitpod-dev-preview --format="value(zone)" preview-"$VM_NAME")
+gcloud compute ssh "$USER@preview-$VM_NAME" \
+    --project gitpod-dev-preview \
+    --ssh-key-file "$PRIVATE_KEY" \
+    --ssh-flag="-p $PORT" \
+    --zone="$zone" \
+    -- "$COMMAND"

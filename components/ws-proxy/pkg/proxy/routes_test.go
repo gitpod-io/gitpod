@@ -27,6 +27,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
+	server_lib "github.com/gitpod-io/gitpod/server/go/pkg/lib"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
@@ -180,9 +181,9 @@ func addHostHeader(r *http.Request) {
 	r.Header.Add(hostBasedHeader, r.Host)
 }
 
-func addOwnerToken(instanceID, token string) requestModifier {
+func addOwnerToken(domain, instanceID, token string) requestModifier {
 	return func(r *http.Request) {
-		setOwnerTokenCookie(r, instanceID, token)
+		setOwnerTokenCookie(r, domain, instanceID, token)
 	}
 }
 
@@ -216,6 +217,8 @@ func TestRoutes(t *testing.T) {
 		Port                *Target
 		DebugWorkspaceProxy *Target
 	}
+
+	domain := "test-domain.com"
 	tests := []struct {
 		Desc        string
 		Config      *Config
@@ -308,7 +311,7 @@ func TestRoutes(t *testing.T) {
 			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"?foobar", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Targets: &Targets{Workspace: &Target{Status: http.StatusOK}},
 			Expectation: Expectation{
@@ -326,7 +329,7 @@ func TestRoutes(t *testing.T) {
 			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"not-from-blobserve", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Targets: &Targets{Workspace: &Target{Status: http.StatusOK}, Blobserve: &Target{Status: http.StatusNotFound}},
 			Expectation: Expectation{
@@ -344,7 +347,7 @@ func TestRoutes(t *testing.T) {
 			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"not-from-failed-blobserve", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Targets: &Targets{Workspace: &Target{Status: http.StatusOK}, Blobserve: &Target{Status: http.StatusInternalServerError}},
 			Expectation: Expectation{
@@ -379,7 +382,7 @@ func TestRoutes(t *testing.T) {
 			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", "https://v--sr1o1nu24nqdf809l0u27jk5t7"+wsHostSuffix+"/28080-amaranth-smelt-9ba20cc1/test.html", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Targets: &Targets{
 				Port: &Target{
@@ -403,7 +406,7 @@ func TestRoutes(t *testing.T) {
 			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", "https://v--sr1o1nu24nqdf809l0u27jk5t7"+wsHostSuffix+"/debug-amaranth-smelt-9ba20cc1/test.html", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Targets: &Targets{
 				DebugWorkspace: &Target{
@@ -427,7 +430,7 @@ func TestRoutes(t *testing.T) {
 			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", "https://v--sr1o1nu24nqdf809l0u27jk5t7"+wsHostSuffix+"/28080-debug-amaranth-smelt-9ba20cc1/test.html", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Targets: &Targets{
 				DebugWorkspaceProxy: &Target{
@@ -447,11 +450,11 @@ func TestRoutes(t *testing.T) {
 			},
 		},
 		{
-			Desc:   "CORS preflight",
+			Desc:   "no CORS allow in workspace urls",
 			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"somewhere/in/the/ide", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 				addHeader("Origin", config.GitpodInstallation.HostName),
 				addHeader("Access-Control-Request-Method", "OPTIONS"),
 			),
@@ -459,12 +462,9 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Access-Control-Allow-Credentials": {"true"},
-					"Access-Control-Allow-Origin":      {"test-domain.com"},
-					"Access-Control-Expose-Headers":    {"Authorization"},
-					"Content-Length":                   {"37"},
-					"Content-Type":                     {"text/plain; charset=utf-8"},
-					"Vary":                             {"Accept-Encoding"},
+					"Content-Length": {"37"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "workspace hit: /somewhere/in/the/ide\n",
 			},
@@ -510,7 +510,7 @@ func TestRoutes(t *testing.T) {
 			Desc: "authenticated supervisor API (content status)",
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_supervisor/v1/status/content", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Expectation: Expectation{
 				Status: http.StatusOK,
@@ -525,7 +525,7 @@ func TestRoutes(t *testing.T) {
 			Desc: "non-existent authorized GET /",
 			Request: modifyRequest(httptest.NewRequest("GET", strings.ReplaceAll(workspaces[0].URL, "amaranth", "blabla"), nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Expectation: Expectation{
 				Status: http.StatusFound,
@@ -614,7 +614,7 @@ func TestRoutes(t *testing.T) {
 			Desc: "port GET 404",
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].Ports[0].Url+"this-does-not-exist", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Targets: &Targets{Port: &Target{
 				Handler: func(w http.ResponseWriter, r *http.Request, requestCount uint8) {
@@ -632,7 +632,7 @@ func TestRoutes(t *testing.T) {
 			Desc: "debug port GET 404",
 			Request: modifyRequest(httptest.NewRequest("GET", "https://28080-debug-amaranth-smelt-9ba20cc1.test-domain.com/this-does-not-exist", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Targets: &Targets{
 				DebugWorkspaceProxy: &Target{
@@ -652,7 +652,7 @@ func TestRoutes(t *testing.T) {
 			Desc: "port GET unexposed",
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].Ports[0].Url+"this-does-not-exist", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Targets:    &Targets{},
 			IgnoreBody: true,
@@ -665,7 +665,7 @@ func TestRoutes(t *testing.T) {
 			Desc: "port cookies",
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].Ports[0].Url+"this-does-not-exist", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 				addCookie(http.Cookie{Name: "foobar", Value: "baz"}),
 				addCookie(http.Cookie{Name: "another", Value: "cookie"}),
 			),
@@ -687,7 +687,7 @@ func TestRoutes(t *testing.T) {
 			Desc: "port GET 200 w/o X-Frame-Options header",
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].Ports[0].Url+"returns-200-with-frame-options-header", nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Targets: &Targets{
 				Port: &Target{
@@ -712,7 +712,7 @@ func TestRoutes(t *testing.T) {
 			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", debugWorkspaceURL, nil),
 				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addOwnerToken(domain, workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Targets: &Targets{DebugWorkspace: &Target{Status: http.StatusOK}},
 			Expectation: Expectation{
@@ -861,6 +861,12 @@ func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *common.Workspace
 	return nil
 }
 
+func (p *fakeWsInfoProvider) AcquireContext(ctx context.Context, workspaceID string, port string) (context.Context, string, error) {
+	return ctx, "", nil
+}
+func (p *fakeWsInfoProvider) ReleaseContext(id string) {
+}
+
 // WorkspaceCoords returns the workspace coords for a public port.
 func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *common.WorkspaceCoords {
 	for _, info := range p.infos {
@@ -978,12 +984,15 @@ func TestNoSSHGatewayRouter(t *testing.T) {
 
 func TestRemoveSensitiveCookies(t *testing.T) {
 	var (
-		domain            = "test-domain.com"
-		sessionCookie     = &http.Cookie{Domain: domain, Name: "_test_domain_com_", Value: "fobar"}
-		portAuthCookie    = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_port_auth_", Value: "some-token"}
-		ownerCookie       = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_owner_", Value: "some-other-token"}
-		miscCookie        = &http.Cookie{Domain: domain, Name: "some-other-cookie", Value: "I like cookies"}
-		invalidCookieName = &http.Cookie{Domain: domain, Name: "foobar[0]", Value: "violates RFC6266"}
+		domain                  = "test-domain.com"
+		sessionCookie           = &http.Cookie{Domain: domain, Name: "_test_domain_com_", Value: "fobar"}
+		sessionCookieJwt2       = &http.Cookie{Domain: domain, Name: "__Host-_test_domain_com_jwt2_", Value: "fobar"}
+		realGitpodSessionCookie = &http.Cookie{Domain: domain, Name: server_lib.CookieNameFromDomain(domain), Value: "fobar"}
+		portAuthCookie          = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_port_auth_", Value: "some-token"}
+		ownerCookie             = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_owner_", Value: "some-other-token"}
+		ownerCookieGen          = ownerTokenCookie(domain, "77f6b236_3456_4b88_8284_81ca543a9d65", "owner-token-gen")
+		miscCookie              = &http.Cookie{Domain: domain, Name: "some-other-cookie", Value: "I like cookies"}
+		invalidCookieName       = &http.Cookie{Domain: domain, Name: "foobar[0]", Value: "violates RFC6266"}
 	)
 
 	tests := []struct {
@@ -991,12 +1000,15 @@ func TestRemoveSensitiveCookies(t *testing.T) {
 		Input    []*http.Cookie
 		Expected []*http.Cookie
 	}{
-		{"no cookies", []*http.Cookie{}, []*http.Cookie{}},
-		{"session cookie", []*http.Cookie{sessionCookie, miscCookie}, []*http.Cookie{miscCookie}},
-		{"portAuth cookie", []*http.Cookie{portAuthCookie, miscCookie}, []*http.Cookie{miscCookie}},
-		{"owner cookie", []*http.Cookie{ownerCookie, miscCookie}, []*http.Cookie{miscCookie}},
-		{"misc cookie", []*http.Cookie{miscCookie}, []*http.Cookie{miscCookie}},
-		{"invalid cookie name", []*http.Cookie{invalidCookieName}, []*http.Cookie{invalidCookieName}},
+		{Name: "no cookies", Input: []*http.Cookie{}, Expected: []*http.Cookie{}},
+		{Name: "session cookie", Input: []*http.Cookie{sessionCookie, miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "session cookie ending on _jwt2_", Input: []*http.Cookie{sessionCookieJwt2, miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "real Gitpod session cookie", Input: []*http.Cookie{realGitpodSessionCookie, miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "portAuth cookie", Input: []*http.Cookie{portAuthCookie, miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "owner cookie", Input: []*http.Cookie{ownerCookie, miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "owner cookie generated", Input: []*http.Cookie{ownerCookieGen, miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "misc cookie", Input: []*http.Cookie{miscCookie}, Expected: []*http.Cookie{miscCookie}},
+		{Name: "invalid cookie name", Input: []*http.Cookie{invalidCookieName}, Expected: []*http.Cookie{invalidCookieName}},
 	}
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
@@ -1018,9 +1030,9 @@ func TestSensitiveCookieHandler(t *testing.T) {
 		Input    string
 		Expected string
 	}{
-		{"no cookies", "", ""},
-		{"valid cookie", miscCookie.String(), `some-other-cookie="I like cookies";Domain=test-domain.com`},
-		{"invalid cookie", `foobar[0]="violates RFC6266"`, `foobar[0]="violates RFC6266"`},
+		{Name: "no cookies", Input: "", Expected: ""},
+		{Name: "valid cookie", Input: miscCookie.String(), Expected: `some-other-cookie="I like cookies";Domain=test-domain.com`},
+		{Name: "invalid cookie", Input: `foobar[0]="violates RFC6266"`, Expected: `foobar[0]="violates RFC6266"`},
 	}
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {

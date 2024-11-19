@@ -42,6 +42,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Address: common.ClusterAddress(redis.Component, ctx.Namespace, redis.Port),
 		},
 		ServerAddress: common.ClusterAddress(common.ServerComponent, ctx.Namespace, common.ServerGRPCAPIPort),
+		GitpodHost:    "https://" + ctx.Config.Domain,
 	}
 
 	expWebAppConfig := common.ExperimentalWebappConfig(ctx)

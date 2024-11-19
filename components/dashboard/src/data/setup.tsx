@@ -15,7 +15,7 @@ import { QueryCache, QueryClient, QueryKey } from "@tanstack/react-query";
 import { Message } from "@bufbuild/protobuf";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { FunctionComponent } from "react";
-import debounce from "lodash.debounce";
+import debounce from "lodash/debounce";
 // Need to import all the protobuf classes we want to support for hydration
 import * as OrganizationClasses from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import * as WorkspaceClasses from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";

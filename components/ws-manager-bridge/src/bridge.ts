@@ -13,6 +13,7 @@ import {
     DisposableCollection,
     PortProtocol,
 } from "@gitpod/gitpod-protocol";
+import * as protocol from "@gitpod/gitpod-protocol";
 import {
     WorkspaceStatus,
     WorkspacePhase,
@@ -20,7 +21,9 @@ import {
     PortVisibility as WsManPortVisibility,
     PortProtocol as WsManPortProtocol,
     DescribeClusterRequest,
+    WorkspaceType,
 } from "@gitpod/ws-manager/lib";
+import { scrubber, TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -48,6 +51,17 @@ function toBool(b: WorkspaceConditionBool | undefined): boolean | undefined {
 
 export type WorkspaceClusterInfo = Pick<WorkspaceCluster, "name" | "url">;
 
+type UpdateQueue = {
+    instanceId: string;
+    lastStatus?: WorkspaceStatus;
+    queue: Queue;
+};
+namespace UpdateQueue {
+    export function create(instanceId: string): UpdateQueue {
+        return { instanceId, queue: new Queue() };
+    }
+}
+
 @injectable()
 export class WorkspaceManagerBridge implements Disposable {
     constructor(
@@ -62,7 +76,7 @@ export class WorkspaceManagerBridge implements Disposable {
     ) {}
 
     protected readonly disposables = new DisposableCollection();
-    protected readonly queues = new Map<string, Queue>();
+    protected readonly queues = new Map<string, UpdateQueue>();
 
     protected cluster: WorkspaceClusterInfo;
 
@@ -95,6 +109,7 @@ export class WorkspaceManagerBridge implements Disposable {
             controllerIntervalSeconds,
             this.config.controllerMaxDisconnectSeconds,
         );
+        this.disposables.push(this.workspaceInstanceController);
 
         const tim = setInterval(() => {
             this.updateWorkspaceClasses(cluster, clientProvider);
@@ -138,49 +153,47 @@ export class WorkspaceManagerBridge implements Disposable {
         this.disposables.push(subscriber);
 
         const onReconnect = (ctx: TraceContext, s: WorkspaceStatus[]) => {
-            s.forEach((sx) =>
-                this.serializeMessagesByInstanceId<WorkspaceStatus>(
-                    ctx,
-                    sx,
-                    (m) => m.getId(),
-                    (ctx, msg) => this.handleStatusUpdate(ctx, msg),
-                ),
-            );
+            log.info("ws-manager subscriber reconnected", logPayload);
+            s.forEach((sx) => this.queueMessagesByInstanceId(ctx, sx));
         };
         const onStatusUpdate = (ctx: TraceContext, s: WorkspaceStatus) => {
-            this.serializeMessagesByInstanceId<WorkspaceStatus>(
-                ctx,
-                s,
-                (msg) => msg.getId(),
-                (ctx, s) => this.handleStatusUpdate(ctx, s),
-            );
+            this.queueMessagesByInstanceId(ctx, s);
         };
         await subscriber.subscribe({ onReconnect, onStatusUpdate }, logPayload);
     }
 
-    protected serializeMessagesByInstanceId<M>(
-        ctx: TraceContext,
-        msg: M,
-        getInstanceId: (msg: M) => string,
-        handler: (ctx: TraceContext, msg: M) => Promise<void>,
-    ) {
-        const instanceId = getInstanceId(msg);
+    protected queueMessagesByInstanceId(ctx: TraceContext, status: WorkspaceStatus) {
+        const instanceId = status.getId();
         if (!instanceId) {
-            log.warn("Received invalid message, could not read instanceId!", { msg });
+            log.warn("Received invalid message, could not read instanceId!", { msg: status });
             return;
         }
 
         // We can't just handle the status update directly, but have to "serialize" it to ensure the updates stay in order.
         // If we did not do this, the async nature of our code would allow for one message to overtake the other.
-        const q = this.queues.get(instanceId) || new Queue();
-        q.enqueue(() => handler(ctx, msg)).catch((e) => log.error({ instanceId }, e));
-        this.queues.set(instanceId, q);
+        const updateQueue = this.queues.get(instanceId) || UpdateQueue.create(instanceId);
+        this.queues.set(instanceId, updateQueue);
+
+        updateQueue.queue.enqueue(async () => {
+            try {
+                await this.handleStatusUpdate(ctx, status, updateQueue.lastStatus);
+                updateQueue.lastStatus = status;
+            } catch (err) {
+                log.error({ instanceId }, err);
+                // if an error ocurrs, we want to be save, and better make sure we don't accidentally skip the next update
+                updateQueue.lastStatus = undefined;
+            }
+        });
     }
 
-    protected async handleStatusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus) {
+    protected async handleStatusUpdate(
+        ctx: TraceContext,
+        rawStatus: WorkspaceStatus,
+        lastStatusUpdate: WorkspaceStatus | undefined,
+    ) {
         const start = performance.now();
         const status = rawStatus.toObject();
-        log.info("Handling WorkspaceStatus update", filterStatus(status));
+        log.info("Handling WorkspaceStatus update", { status: new TrustedValue(filterStatus(status)) });
 
         if (!status.spec || !status.metadata || !status.conditions) {
             log.warn("Received invalid status update", status);
@@ -192,24 +205,38 @@ export class WorkspaceManagerBridge implements Disposable {
             workspaceId: status.metadata!.metaId!,
             userId: status.metadata!.owner!,
         };
+        const workspaceType = toWorkspaceType(status.spec.type);
 
+        let updateError: any | undefined;
+        let skipUpdate = false;
         try {
-            this.metrics.reportWorkspaceInstanceUpdateStarted(this.cluster.name, status.spec.type);
+            this.metrics.reportWorkspaceInstanceUpdateStarted(this.cluster.name, workspaceType);
+
+            // If the last status update is identical to the current one, we can skip the update.
+            skipUpdate = !!lastStatusUpdate && !hasRelevantDiff(rawStatus, lastStatusUpdate);
+            if (skipUpdate) {
+                log.info(logCtx, "Skipped WorkspaceInstance status update");
+                return;
+            }
+
             await this.statusUpdate(ctx, rawStatus);
+
+            log.info(logCtx, "Successfully completed WorkspaceInstance status update");
         } catch (e) {
+            updateError = e;
+
+            log.error(logCtx, "Failed to complete WorkspaceInstance status update", e);
+            throw e;
+        } finally {
             const durationMs = performance.now() - start;
             this.metrics.reportWorkspaceInstanceUpdateCompleted(
                 durationMs / 1000,
                 this.cluster.name,
-                status.spec.type,
-                e,
+                workspaceType,
+                skipUpdate,
+                updateError,
             );
-            log.error(logCtx, "Failed to complete WorkspaceInstance status update", e);
-            throw e;
         }
-        const durationMs = performance.now() - start;
-        this.metrics.reportWorkspaceInstanceUpdateCompleted(durationMs / 1000, this.cluster.name, status.spec.type);
-        log.info(logCtx, "Successfully completed WorkspaceInstance status update");
     }
 
     private async statusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus) {
@@ -289,6 +316,11 @@ export class WorkspaceManagerBridge implements Disposable {
             }
             instance.status.conditions.pullingImages = toBool(status.conditions.pullingImages!);
             instance.status.conditions.deployed = toBool(status.conditions.deployed);
+            if (!instance.deployedTime && instance.status.conditions.deployed) {
+                // This is the first time we see the workspace pod being deployed.
+                // Like all other timestamps, it's set when bridge observes it, not when it actually happened (which only ws-manager could decide).
+                instance.deployedTime = new Date().toISOString();
+            }
             instance.status.conditions.timeout = status.conditions.timeout;
             instance.status.conditions.firstUserActivity = mapFirstUserActivity(
                 rawStatus.getConditions()!.getFirstUserActivity(),
@@ -367,10 +399,10 @@ export class WorkspaceManagerBridge implements Disposable {
 
             span.setTag("after", JSON.stringify(instance));
 
+            await this.workspaceDB.trace(ctx).storeInstance(instance);
+
             // now notify all prebuild listeners about updates - and update DB if needed
             await this.prebuildUpdater.updatePrebuiltWorkspace({ span }, userId, status);
-
-            await this.workspaceDB.trace(ctx).storeInstance(instance);
 
             // cleanup
             // important: call this after the DB update
@@ -430,10 +462,35 @@ const mapPortProtocol = (protocol: WsManPortProtocol): PortProtocol => {
 export const filterStatus = (status: WorkspaceStatus.AsObject): Partial<WorkspaceStatus.AsObject> => {
     return {
         id: status.id,
-        metadata: status.metadata,
+        metadata: scrubber.scrub(status.metadata),
         phase: status.phase,
         message: status.message,
         conditions: status.conditions,
         runtime: status.runtime,
     };
 };
+
+export function hasRelevantDiff(_a: WorkspaceStatus, _b: WorkspaceStatus): boolean {
+    const a = _a.cloneMessage();
+    const b = _b.cloneMessage();
+
+    // Ignore these fields
+    a.setStatusVersion(0);
+    b.setStatusVersion(0);
+
+    const as = a.serializeBinary();
+    const bs = b.serializeBinary();
+    return !(as.length === bs.length && as.every((v, i) => v === bs[i]));
+}
+
+function toWorkspaceType(type: WorkspaceType): protocol.WorkspaceType {
+    switch (type) {
+        case WorkspaceType.REGULAR:
+            return "regular";
+        case WorkspaceType.IMAGEBUILD:
+            return "imagebuild";
+        case WorkspaceType.PREBUILD:
+            return "prebuild";
+    }
+    throw new Error("invalid WorkspaceType: " + type);
+}

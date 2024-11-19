@@ -16,8 +16,8 @@ import { useToast } from "./toasts/Toasts";
 import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "./Modal";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { useIDEVersionsQuery } from "../data/ide-options/ide-options-query";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { AllowedWorkspaceEditor } from "../data/ide-options/ide-options-query";
+import { isJetbrains } from "./SelectIDEComponent";
 
 interface IdeOptionsProps {
     ideOptions: AllowedWorkspaceEditor[] | undefined;
@@ -34,30 +34,40 @@ export const IdeOptions = (props: IdeOptionsProps) => {
     if ((!props.ideOptions || props.ideOptions.length === 0) && props.emptyState) {
         return <>{props.emptyState}</>;
     }
+
     return (
         <div className={cn("space-y-2", props.className)}>
             {props.ideOptions &&
-                props.ideOptions.map((ide) => (
-                    <div key={ide.id} className="flex gap-2 items-center">
-                        <img className="w-8 h-8 self-center" src={ide.logo} alt="" />
-                        <span>
-                            <span className="font-medium text-pk-content-primary">{ide.title}</span>
-                            {ide.imageVersion && (
-                                <>
-                                    <MiddleDot />
-                                    {props.pinnedEditorVersions.get(ide.id) && (
-                                        <PinIcon size={16} className="inline align-text-bottom" />
-                                    )}
-                                    <span className="text-pk-content-primary">
-                                        {props.pinnedEditorVersions.get(ide.id) || ide.imageVersion}
-                                    </span>
-                                </>
-                            )}
-                            <MiddleDot />
-                            <span className="text-pk-content-primary capitalize">{ide.type}</span>
-                        </span>
-                    </div>
-                ))}
+                props.ideOptions.map((ide) => {
+                    const type = !isJetbrains(ide.id) && ide.type;
+
+                    return (
+                        <div key={ide.id} className="flex gap-2 items-center">
+                            <img className="w-5 h-5 self-center" src={ide.logo} alt="" />
+                            <span>
+                                <span className="font-medium text-pk-content-primary">{ide.title}</span>
+                                {ide.imageVersion && (
+                                    <>
+                                        <MiddleDot />
+                                        {props.pinnedEditorVersions.get(ide.id) && (
+                                            <PinIcon size={16} className="inline align-text-bottom" />
+                                        )}
+                                        <span className="text-pk-content-primary">
+                                            {props.pinnedEditorVersions.get(ide.id) || ide.imageVersion}
+                                        </span>
+                                    </>
+                                )}
+
+                                {type && (
+                                    <>
+                                        <MiddleDot />
+                                        <span className="text-pk-content-primary capitalize">{type}</span>
+                                    </>
+                                )}
+                            </span>
+                        </div>
+                    );
+                })}
         </div>
     );
 };
@@ -83,13 +93,8 @@ export const IdeOptionsModifyModal = ({
     hidePinEditorInputs,
     ...props
 }: IdeOptionsModifyModalProps) => {
-    const orgLevelEditorVersionPinningEnabled = useFeatureFlag("org_level_editor_version_pinning_enabled");
-
     const ideOptionsArr = ideOptions;
-    const pinnableIdes = useMemo(
-        () => ideOptionsArr?.filter((i) => orgLevelEditorVersionPinningEnabled && !!i.pinnable),
-        [ideOptionsArr, orgLevelEditorVersionPinningEnabled],
-    );
+    const pinnableIdes = useMemo(() => ideOptionsArr?.filter((i) => !!i.pinnable), [ideOptionsArr]);
 
     const [restrictedEditors, setEditors] = useState(props.restrictedEditors);
     const [pinnedEditorVersions, setPinnedEditorVersions] = useState(props.pinnedEditorVersions);
@@ -105,8 +110,10 @@ export const IdeOptionsModifyModal = ({
         if (computedError) {
             return;
         }
+        const availableKeys = ideOptions?.map((e) => e.id) || [];
+        const editors = new Set([...restrictedEditors].filter((e) => availableKeys.includes(e)));
         updateMutation.mutate(
-            { restrictedEditors, pinnedEditorVersions },
+            { restrictedEditors: editors, pinnedEditorVersions },
             {
                 onSuccess: () => {
                     toast({ message: "Editor options updated" });
@@ -215,7 +222,7 @@ const IdeOptionSwitch = ({
     const contentColor = ideOption.isDisabledInScope ? "text-pk-content-disabled" : "text-pk-content-primary";
     const label = (
         <>
-            <img className="w-8 h-8 self-center mr-2" src={ideOption.logo} alt="" />
+            <img className="w-5 h-5 self-center mr-2" src={ideOption.logo} alt="" />
             <span className={cn("font-medium", contentColor)}>{ideOption.title}</span>
         </>
     );
@@ -234,6 +241,9 @@ const IdeOptionSwitch = ({
             ))}
         </select>
     );
+
+    // For JetBrains, we don't show the type because it is always Desktop and hence redundant
+    const type = !isJetbrains(ideOption.id) && ideOption.type;
     const description = (
         <div className={cn("inline-flex items-center", contentColor)}>
             {(ideOption.imageVersion || pinnedIdeVersion || versionSelector) && (
@@ -243,8 +253,12 @@ const IdeOptionSwitch = ({
                     {versionSelector || <span>{pinnedIdeVersion || ideOption.imageVersion}</span>}
                 </>
             )}
-            <MiddleDot />
-            <span className="capitalize">{ideOption.type}</span>
+            {type && (
+                <>
+                    <MiddleDot />
+                    <span className="capitalize">{type}</span>
+                </>
+            )}
         </div>
     );
 

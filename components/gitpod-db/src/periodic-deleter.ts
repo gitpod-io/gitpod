@@ -15,7 +15,7 @@ export class PeriodicDbDeleter {
     @inject(GitpodTableDescriptionProvider) protected readonly tableProvider: GitpodTableDescriptionProvider;
     @inject(TypeORM) protected readonly typeORM: TypeORM;
 
-    async runOnce() {
+    async runOnce(): Promise<number> {
         const tickID = new Date().toISOString();
         log.info("[PeriodicDbDeleter] Starting to collect deleted rows.", {
             periodicDeleterTickId: tickID,
@@ -52,6 +52,7 @@ export class PeriodicDbDeleter {
         log.info("[PeriodicDbDeleter] Finished deleting records.", {
             periodicDeleterTickId: tickID,
         });
+        return pendingDeletions.length;
     }
 
     protected async collectRowsToBeDeleted(table: TableDescription): Promise<{ table: string; deletions: string[] }> {

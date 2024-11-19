@@ -409,6 +409,19 @@ func ConfigcatEnv(ctx *RenderContext) []corev1.EnvVar {
 	}
 }
 
+func ConfigcatEnvOutOfCluster(ctx *RenderContext) []corev1.EnvVar {
+	return []corev1.EnvVar{
+		{
+			Name:  "CONFIGCAT_SDK_KEY",
+			Value: "gitpod",
+		},
+		{
+			Name:  "CONFIGCAT_BASE_URL",
+			Value: fmt.Sprintf("https://%s/configcat", ctx.Config.Domain),
+		},
+	}
+}
+
 func ConfigcatProxyEnv(ctx *RenderContext) []corev1.EnvVar {
 	var (
 		sdkKey        string
@@ -532,10 +545,6 @@ func componentWaiterContainer(ctx *RenderContext, component, labels, image strin
 		Args: []string{
 			"-v",
 			"component",
-			"--gitpod-host",
-			ctx.Config.Domain,
-			"--ide-metrics-host",
-			ClusterURL("http", IDEProxyComponent, ctx.Namespace, IDEProxyPort),
 			"--namespace",
 			ctx.Namespace,
 			"--component",

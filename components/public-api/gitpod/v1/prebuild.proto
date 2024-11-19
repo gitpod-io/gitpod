@@ -8,6 +8,7 @@ import "gitpod/v1/sorting.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+option java_package = "io.gitpod.publicapi.v1";
 
 service PrebuildService {
   rpc StartPrebuild(StartPrebuildRequest) returns (StartPrebuildResponse) {}
@@ -117,6 +118,16 @@ message PrebuildStatus {
   google.protobuf.Timestamp start_time = 2;
   // message is an optional human-readable message detailing the current phase
   string message = 3;
+  string log_url = 4;
+  repeated TaskLog task_logs = 5;
+  string image_build_log_url = 6;
+  google.protobuf.Timestamp stop_time = 7;
+}
+
+message TaskLog {
+  string task_id = 1;
+  string task_label = 2;
+  string task_json = 3;
   string log_url = 4;
 }
 

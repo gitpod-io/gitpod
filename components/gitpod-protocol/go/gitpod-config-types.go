@@ -50,6 +50,9 @@ type GitpodConfig struct {
 	// Configure the default action of certain signals is to cause a process to terminate and produce a core dump file, a file containing an image of the process's memory at the time of termination. Disabled by default.
 	CoreDump *CoreDump `yaml:"coreDump,omitempty" json:"coreDump,omitempty"`
 
+	// Environment variables to set on the workspace.
+	Env map[string]string `yaml:"env,omitempty" json:"env,omitempty"`
+
 	// Experimental network configuration in workspaces (deprecated). Enabled by default
 	ExperimentalNetwork bool `yaml:"experimentalNetwork,omitempty" json:"experimentalNetwork,omitempty"`
 
@@ -117,6 +120,9 @@ type Jetbrains struct {
 
 	// Configure RubyMine integration
 	Rubymine *JetbrainsProduct `yaml:"rubymine,omitempty" json:"rubymine,omitempty"`
+
+	// Configure RustRover integration
+	Rustrover *JetbrainsProduct `yaml:"rustrover,omitempty" json:"rustrover,omitempty"`
 
 	// Configure WebStorm integration
 	Webstorm *JetbrainsProduct `yaml:"webstorm,omitempty" json:"webstorm,omitempty"`

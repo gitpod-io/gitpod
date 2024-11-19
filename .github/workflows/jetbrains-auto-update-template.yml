@@ -1,3 +1,6 @@
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
 on:
   workflow_call:
     inputs:
@@ -20,41 +23,60 @@ jobs:
   update-jetbrains:
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go-122-gha.23879
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-test-new-preview-gha.24525
     needs: [ create-runner ]
     steps:
       - uses: actions/checkout@v2
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-      - name: Find IDE version to download
-        id: ide-version
+      - name: Install dependencies
         run: |
-          IDE_VERSIONS_JSON=$(bash ./components/ide/jetbrains/image/resolve-latest-ide-version.sh ${{ inputs.productCode }})
-          IDE_BUILD_VERSION=$(echo "$IDE_VERSIONS_JSON" | jq -r .IDE_BUILD_VERSION)
-          IDE_VERSION=$(echo "$IDE_VERSIONS_JSON" | jq -r .IDE_VERSION)
-          echo "IDE_BUILD_VERSION: $IDE_BUILD_VERSION"
-          echo "IDE_VERSION: $IDE_VERSION"
-          echo "::set-output name=ideBuildVersion::$IDE_BUILD_VERSION"
-          echo "::set-output name=ideVersion::$IDE_VERSION"
+          cd ./components/ide/gha-update-image/
+          yarn
+          npm i -g bun
+      - name: Find Nightly Target
+        id: find-target
+        run: |
+          cd ./components/ide/gha-update-image/
+          bun run index-jb-nightly.ts --task=1 --productCode=${{ inputs.productCode }}
+
+          if [ -f /tmp/__gh_output.txt ]
+          then
+            cat /tmp/__gh_output.txt >> $GITHUB_OUTPUT
+          fi
       - name: Leeway build
-        if: ${{ steps.ide-version.outputs.ideBuildVersion }}
+        id: leeway-build
+        if: ${{ steps.find-target.outputs.buildNumber }}
         env:
           LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: "8388608"
+          LEEWAY_REMOTE_CACHE_BUCKET: ${{ github.ref == 'refs/heads/main' && 'leeway-cache-main-c514a01' || 'leeway-cache-dev-3ac8ef5' }}
         run: |
-          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DbuildNumber=${{ steps.ide-version.outputs.ideBuildVersion }} components/ide/jetbrains/image:${{ inputs.productId }}-latest -DjbBackendVersion=${{ steps.ide-version.outputs.ideVersion }}
+          echo "May upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}"
+          imageRepoBase=${{ github.ref == 'refs/heads/main' && 'eu.gcr.io/gitpod-core-dev/build' || 'eu.gcr.io/gitpod-dev-artifact/build' }}
+          output=$(leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${{ steps.find-target.outputs.buildNumber }} components/ide/jetbrains/image:${{ steps.find-target.outputs.image }}-latest -DjbBackendVersion=${{ steps.find-target.outputs.jbBackendVersion }} --dry-run)
+          if echo "$output" | grep -q "🔧[[:space:]]*build"; then
+            echo "leewayUsingCache=false" >> $GITHUB_OUTPUT
+            echo "Needs to build"
+            echo "Upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}" >> $GITHUB_STEP_SUMMARY
+            leeway build -Dversion=latest -DimageRepoBase=$imageRepoBase -DbuildNumber=${{ steps.find-target.outputs.buildNumber }} components/ide/jetbrains/image:${{ steps.find-target.outputs.image }}-latest -DjbBackendVersion=${{ steps.find-target.outputs.jbBackendVersion }}
+          else
+            echo "leewayUsingCache=true" >> $GITHUB_OUTPUT
+            echo "No need to build"
+          fi
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
       - name: Slack Notification
-        if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
+        if: ${{ (success() && steps.find-target.outputs.buildNumber && steps.leeway-build.outputs.leewayUsingCache == 'false') || failure() }}
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
-          SLACK_TITLE: ${{ inputs.productId }}
+          SLACK_TITLE: Upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}
           SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
 
   delete-runner:

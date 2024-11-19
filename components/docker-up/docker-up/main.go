@@ -133,7 +133,11 @@ func runWithinNetns() (err error) {
 	// configure docker0 MTU (used as control plane, not related to containers)
 	args = append(args, fmt.Sprintf("--network-control-plane-mtu=%v", netIface.Attrs().MTU))
 
+	// cmp. ENT-324: Required to run dockerd >= 26.1 in a Gitpod workspace
+	os.Setenv("DOCKER_ALLOW_IPV6_ON_IPV4_INTERFACE", "1")
+
 	if listenFDs > 0 {
+
 		os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))
 		args = append(args, "-H", "fd://")
 

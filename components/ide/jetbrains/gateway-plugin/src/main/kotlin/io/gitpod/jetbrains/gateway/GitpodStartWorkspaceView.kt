@@ -10,7 +10,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.enteredTextSatisfies
 import com.intellij.util.EventDispatcher
@@ -67,7 +66,7 @@ class GitpodStartWorkspaceView(
             var hasContextUrlChangedFromUi = false
             val contextUrl = textField()
                 .resizableColumn()
-                .horizontalAlign(HorizontalAlign.FILL)
+                .align(AlignX.FILL)
                 .applyToComponent {
                     this.text = "https://github.com/gitpod-samples/spring-petclinic"
                 }
@@ -87,6 +86,7 @@ class GitpodStartWorkspaceView(
                                 "CLion" -> "https://github.com/gitpod-samples/template-cpp"
                                 "RubyMine" -> "https://github.com/gitpod-samples/template-ruby-on-rails-postgres"
                                 "PhpStorm" -> "https://github.com/gitpod-samples/template-php-laravel-mysql"
+                                "RustRover" -> "https://github.com/gitpod-samples/template-rust-cli"
                                 else -> "https://github.com/gitpod-io/empty"
                             }
                         }

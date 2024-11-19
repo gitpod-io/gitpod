@@ -31,7 +31,7 @@ class TestBitbucketServerFileProvider {
         verified: true,
         description: "",
         icon: "",
-        host: "bitbucket.gitpod-self-hosted.com",
+        host: "bitbucket.gitpod-dev.com",
         oauth: {
             callBackUrl: "",
             clientId: "not-used",
@@ -45,7 +45,7 @@ class TestBitbucketServerFileProvider {
     public before() {
         const container = new Container();
         container.load(
-            new ContainerModule((bind, unbind, isBound, rebind) => {
+            new ContainerModule((bind) => {
                 bind(BitbucketServerFileProvider).toSelf().inSingletonScope();
                 bind(BitbucketServerContextParser).toSelf().inSingletonScope();
                 bind(AuthProviderParams).toConstantValue(TestBitbucketServerFileProvider.AUTH_HOST_CONFIG);
@@ -93,13 +93,13 @@ class TestBitbucketServerFileProvider {
         const result = await this.service.getGitpodFileContent(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             {
-                revision: "master",
+                revision: "main",
                 repository: <Repository>{
-                    cloneUrl: "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123",
-                    webUrl: "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123",
-                    name: "repo123",
-                    repoKind: "projects",
-                    owner: "FOO",
+                    cloneUrl: "https://bitbucket.gitpod-dev.com/users/filip/repos/spring-petclinic",
+                    webUrl: "https://bitbucket.gitpod-dev.com/users/filip/repos/spring-petclinic",
+                    name: "spring-petclinic",
+                    repoKind: "users",
+                    owner: "filip",
                 },
             } as any,
             this.user,
@@ -111,19 +111,43 @@ class TestBitbucketServerFileProvider {
     @test async test_getLastChangeRevision_ok() {
         const result = await this.service.getLastChangeRevision(
             {
-                owner: "FOO",
-                name: "repo123",
-                repoKind: "projects",
-                revision: "foo",
-                host: "bitbucket.gitpod-self-hosted.com",
-                cloneUrl: "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123",
-                webUrl: "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123",
+                owner: "filip",
+                name: "spring-petclinic",
+                repoKind: "users",
+                revision: "ft/invalid-docker",
+                host: "bitbucket.gitpod-dev.com",
+                cloneUrl: "https://bitbucket.gitpod-dev.com/users/filip/repos/spring-petclinic",
+                webUrl: "https://bitbucket.gitpod-dev.com/users/filip/repos/spring-petclinic",
             } as Repository,
-            "foo",
+            "ft/invalid-docker",
             this.user,
-            "folder/sub/test.txt",
+            ".gitpod.yml",
         );
-        expect(result).to.equal("1384b6842d73b8705feaf45f3e8aa41f00529042");
+        expect(result).to.equal("7e38d77cc599682f543f71da36328307e35caa94");
+    }
+
+    @test async test_getLastChangeRevision_not_found() {
+        // it looks like expecting a promise to throw doesn't work, so we hack it with a try-catch
+        let didThrow = false;
+        try {
+            await this.service.getLastChangeRevision(
+                {
+                    owner: "filip",
+                    name: "spring-petclinic",
+                    repoKind: "users",
+                    revision: "ft/invalid-docker",
+                    host: "bitbucket.gitpod-dev.com",
+                    cloneUrl: "https://bitbucket.gitpod-dev.com/users/filip/repos/spring-petclinic",
+                    webUrl: "https://bitbucket.gitpod-dev.com/users/filip/repos/spring-petclinic",
+                } as Repository,
+                "ft/invalid-docker",
+                this.user,
+                "gitpod.Dockerfile",
+            );
+        } catch (err) {
+            didThrow = true;
+        }
+        expect(didThrow).to.be.true;
     }
 }
 

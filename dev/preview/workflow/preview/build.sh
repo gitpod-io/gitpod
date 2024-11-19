@@ -20,7 +20,6 @@ if [[ "${VERSION:-}" == "" ]]; then
 fi
 
 leeway build \
-    -DSEGMENT_IO_TOKEN="$(kubectl --context=dev -n werft get secret self-hosted -o jsonpath='{.data.segmentIOToken}' | base64 -d)" \
     -Dversion="${VERSION}" \
     --dont-test \
     dev/preview:deploy-dependencies

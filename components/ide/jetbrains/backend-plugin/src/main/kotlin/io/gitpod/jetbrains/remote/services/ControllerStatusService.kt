@@ -39,7 +39,7 @@ object ControllerStatusService {
                 .GET()
                 .build()
             val response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
-            if (response.statusCode() !== 200) {
+            if (response.statusCode() != 200) {
                 throw IOException("gitpod: failed to retrieve controller status: ${response.statusCode()}")
             }
             val status = with(jacksonMapper) {

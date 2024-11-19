@@ -25,6 +25,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
+  "id": 3,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -53,6 +54,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -66,6 +68,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -96,7 +99,8 @@
               }
             ]
           },
-          "unit": "opm"
+          "unit": "opm",
+          "unitScale": true
         },
         "overrides": []
       },
@@ -126,13 +130,13 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(grpc_server_started_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method)",
+          "expr": "sum(increase(grpc_server_started_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[5m])) by (grpc_service, grpc_method)",
           "legendFormat": "{{grpc_service}}.{{grpc_method}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Requests started [1m]",
+      "title": "Requests started [5m]",
       "type": "timeseries"
     },
     {
@@ -147,6 +151,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -160,6 +165,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -190,7 +196,8 @@
               }
             ]
           },
-          "unit": "opm"
+          "unit": "opm",
+          "unitScale": true
         },
         "overrides": []
       },
@@ -220,13 +227,13 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(grpc_server_handled_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method, grpc_code)",
+          "expr": "sum(increase(grpc_server_handled_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[5m])) by (grpc_service, grpc_method, grpc_code)",
           "legendFormat": "{{grpc_service}}.{{grpc_method}} - {{grpc_code}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Requests completed [1m]",
+      "title": "Requests completed [5m]",
       "type": "timeseries"
     },
     {
@@ -254,6 +261,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -267,6 +275,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -297,7 +306,8 @@
               }
             ]
           },
-          "unit": "opm"
+          "unit": "opm",
+          "unitScale": true
         },
         "overrides": []
       },
@@ -327,13 +337,13 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(grpc_server_handled_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_code!=\"OK\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method, grpc_code)",
+          "expr": "sum(increase(grpc_server_handled_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_code!=\"OK\", grpc_type=~\"$type\"}[5m])) by (grpc_service, grpc_method, grpc_code)",
           "legendFormat": "{{grpc_service}}.{{grpc_method}} - {{grpc_code}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Request errors [1m]",
+      "title": "Request errors [5m]",
       "type": "timeseries"
     },
     {
@@ -361,6 +371,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -374,6 +385,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -404,7 +416,8 @@
               }
             ]
           },
-          "unit": "s"
+          "unit": "s",
+          "unitScale": true
         },
         "overrides": []
       },
@@ -468,6 +481,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -481,6 +495,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -510,7 +525,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unitScale": true
         },
         "overrides": []
       },
@@ -540,13 +556,13 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(grpc_server_msg_received_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method)",
+          "expr": "sum(increase(grpc_server_msg_received_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[5m])) by (grpc_service, grpc_method)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Server messages received [1m]",
+      "title": "Server messages received [5m]",
       "type": "timeseries"
     },
     {
@@ -561,6 +577,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -574,6 +591,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -603,7 +621,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unitScale": true
         },
         "overrides": []
       },
@@ -633,18 +652,18 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(grpc_server_msg_sent_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method)",
+          "expr": "sum(increase(grpc_server_msg_sent_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[5m])) by (grpc_service, grpc_method)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Server messages sent [1m]",
+      "title": "Server messages sent [5m]",
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 37,
-  "style": "dark",
+  "refresh": "",
+  "schemaVersion": 39,
   "tags": [
     "grpc",
     "server"
@@ -655,7 +674,7 @@
         "current": {
           "selected": false,
           "text": "VictoriaMetrics",
-          "value": "VictoriaMetrics"
+          "value": "P4169E866C3094E38"
         },
         "hide": 0,
         "includeAll": false,

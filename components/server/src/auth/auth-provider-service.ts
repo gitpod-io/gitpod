@@ -14,11 +14,14 @@ import { oauthUrls as githubUrls } from "../github/github-urls";
 import { oauthUrls as gitlabUrls } from "../gitlab/gitlab-urls";
 import { oauthUrls as bbsUrls } from "../bitbucket-server/bitbucket-server-urls";
 import { oauthUrls as bbUrls } from "../bitbucket/bitbucket-urls";
+import { oauthUrls as azureUrls } from "../azure-devops/azure-urls";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import fetch from "node-fetch";
 import { Authorizer } from "../authorization/authorizer";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { getRequiredScopes, getScopesOfProvider } from "./auth-provider-scopes";
+import { getRequiredScopes, getScopesForAuthProviderType } from "@gitpod/public-api-common/lib/auth-providers";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
+import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 @injectable()
 export class AuthProviderService {
@@ -27,6 +30,7 @@ export class AuthProviderService {
         @inject(TeamDB) private readonly teamDB: TeamDB,
         @inject(Config) protected readonly config: Config,
         @inject(Authorizer) private readonly auth: Authorizer,
+        @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter,
     ) {}
 
     /**
@@ -106,8 +110,8 @@ export class AuthProviderService {
             hiddenOnDashboard: ap.hiddenOnDashboard,
             disallowLogin: ap.disallowLogin,
             description: ap.description,
-            scopes: getScopesOfProvider(ap),
-            requirements: getRequiredScopes(ap),
+            scopes: getScopesForAuthProviderType(ap.type),
+            requirements: getRequiredScopes(ap.type),
         };
     }
 
@@ -236,10 +240,19 @@ export class AuthProviderService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
         }
 
+        const isAzure = this.apiConverter.toAuthProviderType(existing.type) === AuthProviderType.AZURE_DEVOPS;
+        if (!isAzure) {
+            entry.authorizationUrl = undefined;
+            entry.tokenUrl = undefined;
+        }
+
         // Explicitly check if any update needs to be performed
         const changedId = entry.clientId && entry.clientId !== existing.oauth.clientId;
         const changedSecret = entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret;
-        const changed = changedId || changedSecret;
+        const azureChanged =
+            isAzure &&
+            (existing.oauth.authorizationUrl !== entry.authorizationUrl || existing.oauth.tokenUrl !== entry.tokenUrl);
+        const changed = changedId || changedSecret || azureChanged;
 
         if (!changed) {
             return existing;
@@ -250,6 +263,8 @@ export class AuthProviderService {
             ...existing.oauth,
             clientId: entry.clientId || existing.oauth?.clientId,
             clientSecret: entry.clientSecret || existing.oauth?.clientSecret, // FE may send empty ("") if not changed
+            authorizationUrl: entry.authorizationUrl || existing.oauth?.authorizationUrl,
+            tokenUrl: entry.tokenUrl || existing.oauth?.tokenUrl,
         };
         const authProvider: AuthProviderEntry = {
             ...existing,
@@ -298,9 +313,20 @@ export class AuthProviderService {
         if (!existing) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
         }
+
+        const isAzure = this.apiConverter.toAuthProviderType(existing.type) === AuthProviderType.AZURE_DEVOPS;
+        if (!isAzure) {
+            entry.authorizationUrl = undefined;
+            entry.tokenUrl = undefined;
+        }
+
+        const azureChanged =
+            isAzure &&
+            (existing.oauth.authorizationUrl !== entry.authorizationUrl || existing.oauth.tokenUrl !== entry.tokenUrl);
         const changed =
             entry.clientId !== existing.oauth.clientId ||
-            (entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret);
+            (entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret) ||
+            azureChanged;
 
         if (!changed) {
             return existing;
@@ -311,6 +337,8 @@ export class AuthProviderService {
             ...existing.oauth,
             clientId: entry.clientId || existing.oauth?.clientId,
             clientSecret: entry.clientSecret || existing.oauth?.clientSecret, // FE may send empty ("") if not changed
+            authorizationUrl: entry.authorizationUrl || existing.oauth.authorizationUrl,
+            tokenUrl: entry.tokenUrl || existing.oauth.tokenUrl,
         };
         const authProvider: AuthProviderEntry = {
             ...existing,
@@ -337,6 +365,17 @@ export class AuthProviderService {
                 break;
             case "Bitbucket":
                 urls = bbUrls(host);
+                break;
+            case "AzureDevOps":
+                // We don't support Azure DevOps for PAYG users yet because our auth flow is based on provider's host
+                if (this.config.hostUrl.url.host === "gitpod.io") {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unexpected service type.");
+                }
+                const { authorizationUrl, tokenUrl } = newEntry;
+                if (!authorizationUrl || !tokenUrl) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "authorizationUrl and tokenUrl are required.");
+                }
+                urls = azureUrls({ authorizationUrl, tokenUrl });
                 break;
         }
         if (!urls) {
@@ -416,7 +455,8 @@ export class AuthProviderService {
     async isHostReachable(host: string): Promise<boolean> {
         try {
             // Don't attempt to follow redirects, and manually check response status code
-            const resp = await fetch(`https://${host}`, { timeout: 2000, redirect: "manual" });
+            // set the timeout to a rather high number, because we're seeing Bitbuckets in the wild that have a response time of 10 seconds for unauthenticated users.
+            const resp = await fetch(`https://${host}`, { timeout: 15000, redirect: "manual" });
             return resp.status <= 399;
         } catch (error) {
             console.log(`Host is not reachable: ${host}`);

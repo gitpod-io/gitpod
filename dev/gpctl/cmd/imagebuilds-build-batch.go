@@ -19,14 +19,16 @@ import (
 )
 
 // imagebuildsBuildBatch represents the build command
+
 var imagebuildsBuildBatch = &cobra.Command{
 	Use:   "build-batch",
 	Short: "Builds workspace images from base-image refs read from STDIN",
 	Long: `Tip: re-build the workspace images of all workspaces started in the last 30 days.
-	mysql -N -B -u root -p -h 127.0.0.1 gitpod -e 'SELECT ws.baseImageNameResolved FROM d_b_workspace_instance wsi LEFT JOIN d_b_workspace ws ON ws.id = workspaceId WHERE wsi.creationTime > (NOW() - INTERVAL 30 DAY)' | \
+	mysql -N -B -u gitpod -p -h 127.0.0.1 gitpod -e 'SELECT ws.baseImageNameResolved FROM d_b_workspace_instance wsi LEFT JOIN d_b_workspace ws ON ws.id = workspaceId WHERE wsi.creationTime > (NOW() - INTERVAL 30 DAY)' | \
 	sort | \
 	uniq | \
 	gpctl imagebuilds build-batch
+
 `,
 	Args: cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -38,6 +40,7 @@ var imagebuildsBuildBatch = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("cannot connect")
 		}
+		log.Info("connected to image-builder")
 		defer conn.Close()
 
 		timeBetweenBuilds, _ := cmd.Flags().GetInt("time-between-builds")
@@ -83,6 +86,9 @@ func buildWorkspaceImage(wg *sync.WaitGroup, ctx context.Context, client builder
 				},
 			},
 		},
+		// TODO: this shouldn't be hard coded
+		SupervisorRef: "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276",
+		TriggeredBy:   "c0f5dbf1-8d50-4d2a-8cd9-fe563fa53c71",
 	})
 	if err != nil {
 		log.WithField("ref", ref).WithError(err).Warn("cannot build workspace image")
@@ -94,11 +100,14 @@ func buildWorkspaceImage(wg *sync.WaitGroup, ctx context.Context, client builder
 		log.WithField("ref", ref).WithError(err).Warn("cannot receive build response")
 		return
 	}
-	br.CloseSend()
+	err = br.CloseSend()
+	if err != nil {
+		log.WithField("ref", ref).WithError(err).Warn("close send error")
+	}
 
 	switch r.Status {
 	case builder.BuildStatus_done_failure, builder.BuildStatus_done_success:
-		log.WithField("ref", ref).Infof("build done: %s", builder.BuildStatus_name[int32(r.Status)])
+		log.WithField("ref", ref).Infof("build done: %s, message: %s", builder.BuildStatus_name[int32(r.Status)], r.GetMessage())
 	case builder.BuildStatus_unknown:
 		log.WithField("ref", ref).Error("build status unknown")
 	case builder.BuildStatus_running:

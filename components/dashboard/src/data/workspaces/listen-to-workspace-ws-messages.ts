@@ -10,11 +10,7 @@ import { useEffect } from "react";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { stream, workspaceClient } from "../../service/public-api";
-import {
-    WatchWorkspaceStatusRequest,
-    WatchWorkspaceStatusResponse,
-    Workspace,
-} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { WatchWorkspaceStatusResponse, Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 export const useListenToWorkspacesWSMessages = () => {
     const queryClient = useQueryClient();
@@ -51,11 +47,10 @@ export const useListenToWorkspacesWSMessages = () => {
     }, [organizationId, queryClient]);
 };
 
-export function watchWorkspaceStatus(
-    workspaceId: string | undefined,
-    cb: (response: WatchWorkspaceStatusResponse) => void,
-): Disposable {
-    return stream<WatchWorkspaceStatusRequest>(
+export type WatchWorkspaceStatusCallback = (response: WatchWorkspaceStatusResponse) => Promise<void> | void;
+
+export function watchWorkspaceStatus(workspaceId: string | undefined, cb: WatchWorkspaceStatusCallback): Disposable {
+    return stream<WatchWorkspaceStatusResponse>(
         (options) => workspaceClient.watchWorkspaceStatus({ workspaceId }, options),
         cb,
     );

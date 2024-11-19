@@ -14,10 +14,8 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"k8s.io/client-go/util/homedir"
 
-	kube "github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
 	"github.com/gitpod-io/gitpod/previewctl/pkg/preview"
 )
 
@@ -28,8 +26,6 @@ type installContextCmdOpts struct {
 	timeout            time.Duration
 	kubeConfigSavePath string
 	sshPrivateKeyPath  string
-
-	getCredentialsOpts *getCredentialsOpts
 }
 
 func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
@@ -37,9 +33,6 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 
 	opts := installContextCmdOpts{
 		logger: logger,
-		getCredentialsOpts: &getCredentialsOpts{
-			logger: logger,
-		},
 	}
 
 	// Used to ensure that we only install contexts
@@ -56,7 +49,7 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 			return nil
 		}
 
-		p, err := preview.New(branch, logger, preview.WithServiceAccountPath(opts.getCredentialsOpts.serviceAccountPath))
+		p, err := preview.New(branch, logger)
 		if err != nil {
 			return err
 		}
@@ -84,22 +77,14 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 		Use:   "install-context",
 		Short: "Installs the kubectl context of a preview environment.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			configs, err := opts.getCredentialsOpts.getCredentials(ctx)
-			if err != nil {
-				return err
+			if _, err := os.Stat(opts.sshPrivateKeyPath); errors.Is(err, fs.ErrNotExist) {
+				err := preview.GenerateSSHPrivateKey(opts.sshPrivateKeyPath)
+				if err != nil {
+					return err
+				}
 			}
 
 			opts.kubeConfigSavePath = getKubeConfigPath()
-
-			err = kube.OutputContext(opts.kubeConfigSavePath, configs)
-			if err != nil {
-				return err
-			}
-
-			if _, err = os.Stat(opts.sshPrivateKeyPath); errors.Is(err, fs.ErrNotExist) {
-				return preview.InstallVMSSHKeys()
-			}
-
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -122,8 +107,7 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 
 	cmd.Flags().BoolVar(&opts.watch, "watch", false, "If watch is enabled, previewctl will keep trying to install the kube-context every 15 seconds, even when successful.")
 	cmd.Flags().DurationVarP(&opts.timeout, "timeout", "t", 10*time.Minute, "Timeout before considering the installation failed. It will retry installing the context until successful or the timeout is reached")
-	cmd.PersistentFlags().StringVar(&opts.sshPrivateKeyPath, "private-key-path", fmt.Sprintf("%s/.ssh/vm_id_rsa", homedir.HomeDir()), "path to the private key used to authenticate with the VM")
-	cmd.PersistentFlags().StringVar(&opts.getCredentialsOpts.serviceAccountPath, "gcp-service-account", viper.GetString("PREVIEW_ENV_DEV_SA_KEY_PATH"), "path to the GCP service account to use")
+	cmd.PersistentFlags().StringVar(&opts.sshPrivateKeyPath, "private-key-path", fmt.Sprintf("%s/.ssh/vm_ed25519", homedir.HomeDir()), "path to the private key used to authenticate with the VM")
 
 	return cmd
 }

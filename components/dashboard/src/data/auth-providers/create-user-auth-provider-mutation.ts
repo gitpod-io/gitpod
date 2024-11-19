@@ -14,6 +14,8 @@ type CreateAuthProviderArgs = {
         clientId: string;
         clientSecret: string;
         userId: string;
+        authorizationUrl?: string;
+        tokenUrl?: string;
     };
 };
 export const useCreateUserAuthProviderMutation = () => {
@@ -28,6 +30,8 @@ export const useCreateUserAuthProviderMutation = () => {
                     oauth2Config: {
                         clientId: provider.clientId,
                         clientSecret: provider.clientSecret,
+                        authorizationUrl: provider.authorizationUrl,
+                        tokenUrl: provider.tokenUrl,
                     },
                     type: provider.type,
                 }),

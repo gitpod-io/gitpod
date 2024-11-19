@@ -17,9 +17,16 @@ packages:
       - publishToJBMarketplace
     env:
       - DO_PUBLISH=${publishToJBMarketplace}
+      - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
-        - [ "./gradlew", "-PpluginVersion=0.0.1-${version}", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=stable", "-Dgradle.user.home=/workspace/.gradle-stable", "-Dplugin.verifier.home.dir=$HOME/.cache/pluginVerifier-stable", "buildFromLeeway" ]
+        - - bash
+          - "-c"
+          - >
+            echo java=21.0.3.fx-zulu > .sdkmanrc
+            && source "$SDKMAN_DIR/bin/sdkman-init.sh"
+            && sdk env install
+            && ./gradlew "-PpluginVersion=0.0.1-${version}" "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/" "-PenvironmentName=stable" "-Dgradle.user.home=/workspace/.gradle-stable" "-Dplugin.verifier.home.dir=$HOME/.cache/pluginVerifier-stable" "buildFromLeeway"
   - name: publish-latest
     type: generic
     deps:
@@ -38,6 +45,13 @@ packages:
       - publishToJBMarketplace
     env:
       - DO_PUBLISH=${publishToJBMarketplace}
+      - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
-        - [ "./gradlew", "-PpluginVersion=0.0.1-${version}", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=latest", "-Dgradle.user.home=/workspace/.gradle-latest", "-Dplugin.verifier.home.dir=$HOME/.cache/pluginVerifier-latest", "buildFromLeeway" ]
+        - - bash
+          - "-c"
+          - >
+            echo java=21.0.3.fx-zulu > .sdkmanrc
+            && source "$SDKMAN_DIR/bin/sdkman-init.sh"
+            && sdk env install
+            && ./gradlew "-PpluginVersion=0.0.1-${version}" "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/" "-PenvironmentName=latest" "-Dgradle.user.home=/workspace/.gradle-latest" "-Dplugin.verifier.home.dir=$HOME/.cache/pluginVerifier-latest" "buildFromLeeway"

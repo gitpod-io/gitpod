@@ -442,6 +442,8 @@ func dbOIDCClientConfigToAPI(config db.OIDCClientConfig, decryptor db.Decryptor)
 			ClientSecret:          "REDACTED",
 			AuthorizationEndpoint: decrypted.RedirectURL,
 			Scopes:                decrypted.Scopes,
+			CelExpression:         decrypted.CelExpression,
+			UsePkce:               decrypted.UsePKCE,
 		},
 		OidcConfig: &v1.OIDCConfig{
 			Issuer: config.Issuer,
@@ -468,10 +470,12 @@ func dbOIDCClientConfigsToAPI(configs []db.OIDCClientConfig, decryptor db.Decryp
 
 func toDbOIDCSpec(oauth2Config *v1.OAuth2Config) db.OIDCSpec {
 	return db.OIDCSpec{
-		ClientID:     oauth2Config.GetClientId(),
-		ClientSecret: oauth2Config.GetClientSecret(),
-		RedirectURL:  oauth2Config.GetAuthorizationEndpoint(),
-		Scopes:       append([]string{goidc.ScopeOpenID, "profile", "email"}, oauth2Config.GetScopes()...),
+		ClientID:      oauth2Config.GetClientId(),
+		ClientSecret:  oauth2Config.GetClientSecret(),
+		CelExpression: oauth2Config.GetCelExpression(),
+		UsePKCE:       oauth2Config.GetUsePkce(),
+		RedirectURL:   oauth2Config.GetAuthorizationEndpoint(),
+		Scopes:        append([]string{goidc.ScopeOpenID, "profile", "email"}, oauth2Config.GetScopes()...),
 	}
 }
 

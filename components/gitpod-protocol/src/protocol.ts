@@ -74,36 +74,6 @@ export namespace User {
     export function isOrganizationOwned(user: User) {
         return !!user.organizationId;
     }
-
-    export function migrationIDESettings(user: User) {
-        if (
-            !user?.additionalData?.ideSettings ||
-            Object.keys(user.additionalData.ideSettings).length === 0 ||
-            user.additionalData.ideSettings.settingVersion === "2.0"
-        ) {
-            return;
-        }
-        const newIDESettings: IDESettings = {
-            settingVersion: "2.0",
-        };
-        const ideSettings = user.additionalData.ideSettings;
-        if (ideSettings.useDesktopIde) {
-            if (ideSettings.defaultDesktopIde === "code-desktop") {
-                newIDESettings.defaultIde = "code-desktop";
-            } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
-                newIDESettings.defaultIde = "code-desktop";
-                newIDESettings.useLatestVersion = true;
-            } else {
-                newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
-                newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
-            }
-        } else {
-            const useLatest = ideSettings.defaultIde === "code-latest";
-            newIDESettings.defaultIde = "code";
-            newIDESettings.useLatestVersion = useLatest;
-        }
-        user.additionalData.ideSettings = newIDESettings;
-    }
 }
 
 export interface WorkspaceTimeoutSetting {
@@ -201,6 +171,7 @@ export type IDESettings = {
     settingVersion?: string;
     defaultIde?: string;
     useLatestVersion?: boolean;
+    preferToolbox?: boolean;
     // DEPRECATED: Use defaultIde after `settingVersion: 2.0`, no more specialify desktop or browser.
     useDesktopIde?: boolean;
     // DEPRECATED: Same with useDesktopIde.
@@ -593,7 +564,7 @@ export interface Identity {
     primaryEmail?: string;
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;
-    // The last time this entry was touched during a signin.
+    // The last time this entry was touched during a signin. It's only set for SSO identities.
     lastSigninTime?: string;
 
     // @deprecated as no longer in use since '19
@@ -618,6 +589,7 @@ export interface Token {
     scopes: string[];
     updateDate?: string;
     expiryDate?: string;
+    reservedUntilDate?: string;
     idToken?: string;
     refreshToken?: string;
     username?: string;
@@ -628,6 +600,7 @@ export interface TokenEntry {
     authId: string;
     token: Token;
     expiryDate?: string;
+    reservedUntilDate?: string;
     refreshable?: boolean;
 }
 
@@ -722,6 +695,12 @@ export interface Workspace {
      */
     contentDeletedTime?: string;
 
+    /**
+     * The time when the workspace is eligible for soft deletion. This is the time when the workspace
+     * is marked as softDeleted earliest.
+     */
+    deletionEligibilityTime?: string;
+
     type: WorkspaceType;
 
     basedOnPrebuildId?: string;
@@ -731,7 +710,7 @@ export interface Workspace {
 
 export type WorkspaceSoftDeletion = "user" | "gc";
 
-export type WorkspaceType = "regular" | "prebuild";
+export type WorkspaceType = "regular" | "prebuild" | "imagebuild";
 
 export namespace Workspace {
     export function getPullRequestNumber(ws: Workspace): number | undefined {
@@ -787,6 +766,7 @@ export interface JetBrainsConfig {
     webstorm?: JetBrainsProductConfig;
     rider?: JetBrainsProductConfig;
     clion?: JetBrainsProductConfig;
+    rustrover?: JetBrainsProductConfig;
 }
 export interface JetBrainsProductConfig {
     prebuilds?: JetBrainsPrebuilds;
@@ -821,6 +801,7 @@ export interface WorkspaceConfig {
     jetbrains?: JetBrainsConfig;
     coreDump?: CoreDumpConfig;
     ideCredentials?: string;
+    env?: { [env: string]: any };
 
     /** deprecated. Enabled by default **/
     experimentalNetwork?: boolean;
@@ -910,6 +891,8 @@ export interface PrebuiltWorkspace {
     snapshot?: string;
 }
 
+export type PrebuiltWorkspaceWithWorkspace = PrebuiltWorkspace & { workspace: Workspace };
+
 export namespace PrebuiltWorkspace {
     export function isDone(pws: PrebuiltWorkspace) {
         return (
@@ -992,9 +975,7 @@ export namespace WorkspaceImageBuild {
         maxSteps?: number;
     }
     export interface LogContent {
-        text: string;
-        upToLine?: number;
-        isDiff?: boolean;
+        data: number[]; // encode with "Array.from(UInt8Array)"", decode with "new UInt8Array(data)"
     }
     export type LogCallback = (info: StateInfo, content: LogContent | undefined) => void;
     export namespace LogLine {
@@ -1037,6 +1018,8 @@ export interface WorkspaceContext {
     normalizedContextURL?: string;
     forceCreateNewWorkspace?: boolean;
     forceImageBuild?: boolean;
+    // The context can have non-blocking warnings that should be displayed to the user.
+    warnings?: string[];
 }
 
 export namespace WorkspaceContext {
@@ -1302,6 +1285,14 @@ export interface Repository {
         // The direct parent of this fork
         parent: Repository;
     };
+    /**
+     * Optional date when the repository was last pushed to.
+     */
+    pushedAt?: string;
+    /**
+     * Optional display name (e.g. for Bitbucket)
+     */
+    displayName?: string;
 }
 
 export interface RepositoryInfo {
@@ -1336,6 +1327,10 @@ export namespace WorkspaceInstancePortsChangedEvent {
     }
 }
 
+export interface WorkspaceSession {
+    workspace: Workspace;
+    instance: WorkspaceInstance;
+}
 export interface WorkspaceInfo {
     workspace: Workspace;
     latestInstance?: WorkspaceInstance;
@@ -1416,16 +1411,30 @@ export interface OAuth2Config {
 }
 
 export namespace AuthProviderEntry {
-    export type Type = "GitHub" | "GitLab" | string;
+    export type Type = "GitHub" | "GitLab" | "Bitbucket" | "BitbucketServer" | "AzureDevOps" | string;
     export type Status = "pending" | "verified";
+
+    /**
+     * Some auth providers require additional configuration like Azure DevOps.
+     */
+    export interface OAuth2CustomConfig {
+        /**
+         * The URL to the authorize endpoint of the provider.
+         */
+        authorizationUrl?: string;
+        /**
+         * The URL to the oauth token endpoint of the provider.
+         */
+        tokenUrl?: string;
+    }
     export type NewEntry = Pick<AuthProviderEntry, "ownerId" | "host" | "type"> & {
         clientId?: string;
         clientSecret?: string;
-    };
+    } & OAuth2CustomConfig;
     export type UpdateEntry = Pick<AuthProviderEntry, "id" | "ownerId"> & {
         clientId?: string;
         clientSecret?: string;
-    };
+    } & OAuth2CustomConfig;
     export type NewOrgEntry = NewEntry & {
         organizationId: string;
     };
@@ -1433,8 +1442,8 @@ export namespace AuthProviderEntry {
         clientId?: string;
         clientSecret?: string;
         organizationId: string;
-    };
-    export type UpdateOAuth2Config = Pick<OAuth2Config, "clientId" | "clientSecret">;
+    } & OAuth2CustomConfig;
+    export type UpdateOAuth2Config = Pick<OAuth2Config, "clientId" | "clientSecret"> & OAuth2CustomConfig;
     export function redact(entry: AuthProviderEntry): AuthProviderEntry {
         return {
             ...entry,

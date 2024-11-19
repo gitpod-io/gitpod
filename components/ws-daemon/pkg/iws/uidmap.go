@@ -174,7 +174,6 @@ func (m *Uidmapper) findHostPID(containerPID, inContainerPID uint64) (uint64, er
 		seen[p] = struct{}{}
 
 		p = filepath.Join(m.Config.ProcLocation, p)
-
 		pid, nspid, err := readStatusFile(filepath.Join(p, "status"))
 		if err != nil {
 			log.WithField("file", filepath.Join(p, "status")).WithError(err).Error("findHostPID: cannot read PID file")
@@ -187,6 +186,54 @@ func (m *Uidmapper) findHostPID(containerPID, inContainerPID uint64) (uint64, er
 		}
 
 		taskfn := filepath.Join(p, "task")
+		tasks, err := os.ReadDir(taskfn)
+		if err != nil {
+			continue
+		}
+		for _, task := range tasks {
+			cldrn, err := os.ReadFile(filepath.Join(taskfn, task.Name(), "children"))
+			if err != nil {
+				continue
+			}
+			paths = append(paths, strings.Fields(string(cldrn))...)
+		}
+	}
+}
+
+func (m *Uidmapper) findSupervisorPID(containerPID uint64) (uint64, error) {
+	paths := []string{fmt.Sprint(containerPID)}
+	seen := make(map[string]struct{})
+
+	for {
+		if len(paths) == 0 {
+			return 0, xerrors.Errorf("cannot find supervisor PID for container %v", containerPID)
+		}
+
+		p := paths[0]
+		paths = paths[1:]
+
+		if _, ok := seen[p]; ok {
+			continue
+		}
+		seen[p] = struct{}{}
+
+		procPath := filepath.Join(m.Config.ProcLocation, p)
+		cmdline, err := os.ReadFile(filepath.Join(procPath, "cmdline"))
+		if err != nil {
+			log.WithField("file", filepath.Join(procPath, "cmdline")).WithError(err).Error("cannot read cmdline")
+			continue
+		}
+
+		if strings.HasPrefix(string(cmdline), "supervisor") {
+			pid, err := strconv.ParseUint(p, 10, 64)
+			if err != nil {
+				return 0, err
+			}
+
+			return pid, nil
+		}
+
+		taskfn := filepath.Join(procPath, "task")
 		tasks, err := os.ReadDir(taskfn)
 		if err != nil {
 			continue

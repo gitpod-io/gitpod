@@ -5,6 +5,7 @@ package usage.v1;
 option go_package = "github.com/gitpod-io/gitpod/usage-api/v1";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 
 service UsageService {
 
@@ -78,9 +79,14 @@ message ListUsageRequest {
 
 message ListUsageResponse {
     repeated Usage usage_entries = 1;
+
     PaginatedResponse pagination = 2;
+
     // the amount of credits the given account (attributionId) has used during the requested period
     double credits_used = 3;
+
+    // ledger interval
+    google.protobuf.Duration ledger_interval = 4;
 }
 
 message Usage {

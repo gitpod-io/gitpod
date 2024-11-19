@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	api "github.com/gitpod-io/gitpod/content-service/api"
+	v1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -84,17 +85,17 @@ func (mr *MockWorkspaceOperationsMockRecorder) InitWorkspace(arg0, arg1 interfac
 }
 
 // SetupWorkspace mocks base method.
-func (m *MockWorkspaceOperations) SetupWorkspace(arg0 context.Context, arg1 string) error {
+func (m *MockWorkspaceOperations) SetupWorkspace(arg0 context.Context, arg1 string, arg2 *v1.WorkspaceImageInfo) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetupWorkspace", arg0, arg1)
+	ret := m.ctrl.Call(m, "SetupWorkspace", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetupWorkspace indicates an expected call of SetupWorkspace.
-func (mr *MockWorkspaceOperationsMockRecorder) SetupWorkspace(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockWorkspaceOperationsMockRecorder) SetupWorkspace(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupWorkspace", reflect.TypeOf((*MockWorkspaceOperations)(nil).SetupWorkspace), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupWorkspace", reflect.TypeOf((*MockWorkspaceOperations)(nil).SetupWorkspace), arg0, arg1, arg2)
 }
 
 // Snapshot mocks base method.
@@ -125,4 +126,18 @@ func (m *MockWorkspaceOperations) SnapshotIDs(arg0 context.Context, arg1 string)
 func (mr *MockWorkspaceOperationsMockRecorder) SnapshotIDs(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SnapshotIDs", reflect.TypeOf((*MockWorkspaceOperations)(nil).SnapshotIDs), arg0, arg1)
+}
+
+// WipeWorkspace mocks base method.
+func (m *MockWorkspaceOperations) WipeWorkspace(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WipeWorkspace", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WipeWorkspace indicates an expected call of WipeWorkspace.
+func (mr *MockWorkspaceOperationsMockRecorder) WipeWorkspace(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WipeWorkspace", reflect.TypeOf((*MockWorkspaceOperations)(nil).WipeWorkspace), arg0, arg1)
 }

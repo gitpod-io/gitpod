@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
@@ -159,7 +159,7 @@ func (o *Orchestrator) ResolveBaseImage(ctx context.Context, req *protocol.Resol
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
 
-	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
+	reqauth := o.AuthResolver.ResolveRequestAuth(ctx, req.Auth)
 
 	refstr, err := o.getAbsoluteImageRef(ctx, req.Ref, reqauth)
 	if err != nil {
@@ -177,7 +177,7 @@ func (o *Orchestrator) ResolveWorkspaceImage(ctx context.Context, req *protocol.
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
 
-	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
+	reqauth := o.AuthResolver.ResolveRequestAuth(ctx, req.Auth)
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
 	if _, ok := status.FromError(err); err != nil && ok {
 		return nil, err
@@ -227,14 +227,64 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	}
 
 	// resolve build request authentication
-	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
+	reqauth := o.AuthResolver.ResolveRequestAuth(ctx, req.Auth)
+
+	log.WithField("forceRebuild", req.GetForceRebuild()).WithField("baseImageNameResolved", req.BaseImageNameResolved).Info("build request")
+
+	// resolve to ref to baseImageNameResolved (if it exists)
+	if req.BaseImageNameResolved != "" && !req.GetForceRebuild() {
+		if req.Auth != nil && req.Auth.GetSelective() != nil {
+			// allow access to baseImage repository so we can look it up later
+			req.Auth.GetSelective().AllowBaserep = true
+			reqauth = o.AuthResolver.ResolveRequestAuth(ctx, req.Auth)
+		}
+
+		wsrefstr, err := o.getWorkspaceImageRef(ctx, req.BaseImageNameResolved)
+		if err != nil {
+			return status.Errorf(codes.Internal, "cannot produce workspace image ref: %q", err)
+		}
+		wsrefAuth, err := reqauth.GetAuthFor(ctx, o.Auth, wsrefstr)
+		if err != nil {
+			return status.Errorf(codes.Internal, "cannot get workspace image authentication: %q", err)
+		}
+
+		// check if needs build -> early return
+		exists, err := o.checkImageExists(ctx, wsrefstr, wsrefAuth)
+		if err != nil {
+			return status.Errorf(codes.Internal, "cannot check if image is already built: %q", err)
+		}
+		if exists {
+			err = resp.Send(&protocol.BuildResponse{
+				Status:  protocol.BuildStatus_done_success,
+				Ref:     wsrefstr,
+				BaseRef: req.BaseImageNameResolved,
+			})
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		baseref, err := o.getAbsoluteImageRef(ctx, req.BaseImageNameResolved, reqauth)
+		if err == nil {
+			req.Source.From = &protocol.BuildSource_Ref{
+				Ref: &protocol.BuildSourceReference{
+					Ref: baseref,
+				},
+			}
+		}
+	}
+
+	log.Info("falling through to old way of building")
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
 	if _, ok := status.FromError(err); err != nil && ok {
+		log.WithError(err).Error("gRPC status error")
 		return err
 	}
 	if err != nil {
+		log.WithError(err).Error("cannot get base image ref")
 		return status.Errorf(codes.Internal, "cannot resolve base image: %s", err.Error())
 	}
+
 	wsrefstr, err := o.getWorkspaceImageRef(ctx, baseref)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot produce workspace image ref: %q", err)
@@ -250,18 +300,11 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		return status.Errorf(codes.Internal, "cannot check if image is already built: %q", err)
 	}
 	if exists && !req.GetForceRebuild() {
-		// If the workspace image exists, so should the baseimage if we've built it.
-		// If we didn't build it and the base image doesn't exist anymore, getWorkspaceImageRef will have failed to resolve the baseref.
-		baserefAbsolute, err := o.getAbsoluteImageRef(ctx, baseref, auth.AllowedAuthForAll())
-		if err != nil {
-			return err
-		}
-
 		// image has already been built - no need for us to start building
 		err = resp.Send(&protocol.BuildResponse{
 			Status:  protocol.BuildStatus_done_success,
 			Ref:     wsrefstr,
-			BaseRef: baserefAbsolute,
+			BaseRef: baseref,
 		})
 		if err != nil {
 			return err
@@ -559,6 +602,11 @@ func (o *Orchestrator) checkImageExists(ctx context.Context, ref string, authent
 
 // getAbsoluteImageRef returns the "digest" form of an image, i.e. contains no mutable image tags
 func (o *Orchestrator) getAbsoluteImageRef(ctx context.Context, ref string, allowedAuth auth.AllowedAuthFor) (res string, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "getAbsoluteImageRef")
+	defer tracing.FinishSpan(span, &err)
+	span.LogKV("ref", ref)
+
+	log.WithField("ref", ref).Debug("getAbsoluteImageRef")
 	auth, err := allowedAuth.GetAuthFor(ctx, o.Auth, ref)
 	if err != nil {
 		return "", status.Errorf(codes.InvalidArgument, "cannt resolve base image ref: %v", err)
@@ -569,7 +617,15 @@ func (o *Orchestrator) getAbsoluteImageRef(ctx context.Context, ref string, allo
 		return "", status.Error(codes.NotFound, "cannot resolve image")
 	}
 	if errors.Is(err, resolve.ErrUnauthorized) {
+		if auth == nil {
+			log.WithField("ref", ref).Warn("auth was nil")
+		} else if auth.Auth == "" && auth.Password == "" {
+			log.WithField("ref", ref).Warn("auth was empty")
+		}
 		return "", status.Error(codes.Unauthenticated, "cannot resolve image")
+	}
+	if resolve.TooManyRequestsMatcher(err) {
+		return "", status.Errorf(codes.Unavailable, "upstream registry responds with 'too many request': %v", err)
 	}
 	if err != nil {
 		return "", status.Errorf(codes.Internal, "cannot resolve image: %v", err)

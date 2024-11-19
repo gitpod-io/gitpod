@@ -352,23 +352,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
-		{
-			Name: "service_waiter_skip_components_result_total",
-			Help: "Total number of wait result of service_waiter/component service_waiter_skip_components flag",
-			Labels: []config.LabelAllowList{
-				{
-					Name: "value",
-					// possible values "true", "false"
-					AllowValues:  []string{"*"},
-					DefaultValue: "NONE",
-				},
-				{
-					Name:         "ok",
-					AllowValues:  []string{"true", "false"},
-					DefaultValue: "false",
-				},
-			},
-		},
 	}
 
 	histogramMetrics := []config.HistogramMetricsConfiguration{

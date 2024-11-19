@@ -33,7 +33,7 @@ export const BreadcrumbNav: FC<BreadcrumbPageNavProps> = ({ pageTitle, pageDescr
             {backLink && (
                 <LinkButton
                     variant={"ghost"}
-                    className="py-1 pl-0 pr-2 text-content-primary hover:bg-pk-surface-tertiary flex flex-row gap-1 items-center"
+                    className="py-1 pl-0 pr-1 text-content-primary hover:bg-pk-surface-tertiary flex flex-row gap-1 items-center"
                     href={backLink}
                 >
                     <ChevronLeft size={24} />
@@ -43,7 +43,7 @@ export const BreadcrumbNav: FC<BreadcrumbPageNavProps> = ({ pageTitle, pageDescr
                 </LinkButton>
             )}
             <MiddleDot className="font-bold" />
-            <p className="text-pk-content-primary text-lg">{pageDescription}</p>
+            <p className="text-pk-content-primary text-lg pl-1">{pageDescription}</p>
         </section>
     );
 };

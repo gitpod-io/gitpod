@@ -69,7 +69,7 @@ func GetStripeCustomerByAttributionID(ctx context.Context, conn *gorm.DB, attrib
 		First(&customer)
 	if err := tx.Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return StripeCustomer{}, fmt.Errorf("stripe customer with attribtuon ID %s does not exist: %w", attributionID, ErrorNotFound)
+			return StripeCustomer{}, fmt.Errorf("stripe customer with attribution ID %s does not exist: %w", attributionID, ErrorNotFound)
 		}
 
 		return StripeCustomer{}, fmt.Errorf("failed to lookup stripe customer with attribution ID %s", attributionID)

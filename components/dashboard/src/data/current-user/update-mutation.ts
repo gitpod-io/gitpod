@@ -11,6 +11,7 @@ import { getGitpodService } from "../../service/service";
 import { useCurrentUser } from "../../user-context";
 import { converter } from "../../service/public-api";
 import deepmerge from "deepmerge";
+import uniq from "lodash/uniq";
 
 type UpdateCurrentUserArgs = Partial<UserProtocol>;
 
@@ -31,6 +32,15 @@ export const useUpdateCurrentUserMutation = () => {
                     partialUser.additionalData || {},
                 ),
             };
+            // deepmerge will try append array, so once data is defined, ignore previous value
+            if (partialUser.additionalData?.profile?.explorationReasons) {
+                update.additionalData!.profile!.explorationReasons = uniq(
+                    partialUser.additionalData.profile.explorationReasons,
+                );
+            }
+            if (partialUser.additionalData?.profile?.signupGoals) {
+                update.additionalData!.profile!.signupGoals = uniq(partialUser.additionalData.profile.signupGoals);
+            }
             const user = await getGitpodService().server.updateLoggedInUser(update);
             return converter.toUser(user);
         },

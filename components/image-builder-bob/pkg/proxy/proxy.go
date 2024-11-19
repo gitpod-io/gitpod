@@ -7,6 +7,7 @@ package proxy
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -110,6 +111,14 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		repo  *Repo
 		alias string
 	)
+
+	// bypass for crane check
+	if r.URL.Path == "/v2/" {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("{}"))
+		return
+	}
+
 	for k, v := range proxy.Aliases {
 		// Docker api request
 		if strings.HasPrefix(r.URL.Path, "/v2/"+k+"/") {
@@ -221,7 +230,12 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 			return true, nil
 		}
 		if resp.StatusCode == http.StatusBadRequest {
-			log.WithField("URL", resp.Request.URL.String()).Warn("bad request")
+			bodyBytes, err := io.ReadAll(resp.Body)
+			if err != nil {
+				log.WithError(err).WithField("URL", resp.Request.URL.String()).Warn("failed to read response body")
+			}
+
+			log.WithField("URL", resp.Request.URL.String()).WithField("Body", string(bodyBytes)).Warn("bad request")
 			return true, nil
 		}
 

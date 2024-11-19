@@ -97,15 +97,15 @@ class GitpodManager : Disposable {
             // Heap usage at any time in the last 5 minutes:
             // max_over_time(gitpod_jb_backend_memory_used_bytes[5m:])/max_over_time(gitpod_jb_backend_memory_max_bytes[5m:])
             val allocatedGauge = Gauge.build()
-                    .name("gitpod_jb_backend_memory_max_bytes")
-                    .help("Total allocated memory of JB backend in bytes.")
-                    .labelNames("product", "qualifier")
-                    .register(registry)
+                .name("gitpod_jb_backend_memory_max_bytes")
+                .help("Total allocated memory of JB backend in bytes.")
+                .labelNames("product", "qualifier")
+                .register(registry)
             val usedGauge = Gauge.build()
-                    .name("gitpod_jb_backend_memory_used_bytes")
-                    .help("Used memory of JB backend in bytes.")
-                    .labelNames("product", "qualifier")
-                    .register(registry)
+                .name("gitpod_jb_backend_memory_used_bytes")
+                .help("Used memory of JB backend in bytes.")
+                .labelNames("product", "qualifier")
+                .register(registry)
 
             while (isActive) {
                 val totalMemory = Runtime.getRuntime().totalMemory()
@@ -141,6 +141,8 @@ class GitpodManager : Disposable {
                     httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
                 if (response.statusCode() == 200) {
                     val gatewayLink = response.body()
+                    // the output format should be constant (includes `Gitpod gateway link`)
+                    // which will be checked in integration test gateway_test.go
                     thisLogger().warn(
                         "\n\n\n*********************************************************\n\n" +
                                 "Gitpod gateway link: $gatewayLink" +

@@ -204,6 +204,9 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Operator: "Exists",
 			Effect:   "NoExecute",
 		},
+		{
+			Operator: "Exists",
+		},
 	}
 
 	podSpec := corev1.PodSpec{

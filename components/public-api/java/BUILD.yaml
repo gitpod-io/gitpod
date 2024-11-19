@@ -1,0 +1,14 @@
+packages:
+  - name: lib
+    type: generic
+    srcs:
+      - "**/*.java"
+      - "**/*.kt"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "gradle/wrapper/*"
+      - "gradlew"
+    config:
+      commands:
+        - ["./gradlew", "build"]

@@ -272,6 +272,43 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         if (req.updatePinnedEditorVersions) {
             update.pinnedEditorVersions = req.pinnedEditorVersions;
         }
+        if (typeof req.defaultRole === "string" && req.defaultRole !== "") {
+            switch (req.defaultRole) {
+                case "owner":
+                case "member":
+                case "collaborator":
+                    update.defaultRole = req.defaultRole;
+                    break;
+                default:
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invalid defaultRole");
+            }
+        }
+
+        if (typeof req.timeoutSettings?.denyUserTimeouts === "boolean") {
+            update.timeoutSettings = update.timeoutSettings || {};
+            update.timeoutSettings.denyUserTimeouts = req.timeoutSettings.denyUserTimeouts;
+        }
+        if (typeof req.timeoutSettings?.inactivity === "object") {
+            update.timeoutSettings = update.timeoutSettings || {};
+            update.timeoutSettings.inactivity = this.apiConverter.toDurationString(req.timeoutSettings.inactivity);
+        }
+
+        if (req.roleRestrictions.length > 0 && !req.updateRoleRestrictions) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "updateRoleRestrictions is required to be true when updating roleRestrictions",
+            );
+        }
+        if (req.updateRoleRestrictions) {
+            update.roleRestrictions = update.roleRestrictions ?? {};
+            for (const roleRestriction of req.roleRestrictions) {
+                const role = this.apiConverter.fromOrgMemberRole(roleRestriction.role);
+                const permissions = roleRestriction.permissions.map((p) =>
+                    this.apiConverter.fromOrganizationPermission(p),
+                );
+                update.roleRestrictions[role] = permissions;
+            }
+        }
 
         if (Object.keys(update).length === 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");

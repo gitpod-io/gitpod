@@ -9,6 +9,7 @@ import { ContextMenuEntry } from "../components/ContextMenu";
 import { Item, ItemFieldIcon, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { toAuthProviderLabel } from "../provider-utils";
+import { getScopeNameForScope } from "@gitpod/public-api-common/lib/auth-providers";
 
 interface AuthEntryItemParams {
     ap: AuthProviderDescription;
@@ -53,7 +54,7 @@ export const AuthEntryItem = (props: AuthEntryItemParams) => {
             </ItemField>
             <ItemField className="hidden xl:w-1/3 xl:flex xl:flex-col my-auto">
                 <span className="my-auto truncate text-gray-500 overflow-ellipsis dark:text-gray-400">
-                    {props.getPermissions(props.ap.id)?.join(", ") || "–"}
+                    {props.getPermissions(props.ap.id)?.map(getScopeNameForScope)?.join(", ") || "–"}
                 </span>
                 <span className="text-sm my-auto text-gray-400 dark:text-gray-500">Permissions</span>
             </ItemField>

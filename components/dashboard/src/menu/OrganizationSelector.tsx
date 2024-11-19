@@ -11,7 +11,7 @@ import { useCurrentUser } from "../user-context";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useLocation } from "react-router";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
-import { useFeatureFlag, useHasConfigurationsAndPrebuildsEnabled } from "../data/featureflag-query";
+import { useFeatureFlag } from "../data/featureflag-query";
 import { useIsOwner, useListOrganizationMembers, useHasRolePermission } from "../data/organizations/members-query";
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
@@ -25,11 +25,10 @@ export default function OrganizationSelector() {
     const hasMemberPermission = useHasRolePermission(OrganizationRole.MEMBER);
     const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
-    const configurationsAndPrebuilds = useHasConfigurationsAndPrebuildsEnabled();
-    const showPrebuildMenuItem = useFeatureFlag("showPrebuildsMenuItem");
+    const isDedicated = useFeatureFlag("enableDedicatedOnboardingFlow");
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
-    const canCreateOrgs = user && !isOrganizationOwned(user);
+    const canCreateOrgs = user && !isOrganizationOwned(user) && !isDedicated;
 
     const userFullName = user?.name || "...";
 
@@ -60,15 +59,13 @@ export default function OrganizationSelector() {
     if (currentOrg.data) {
         // collaborator can't access projects, members, usage and billing
         if (hasMemberPermission) {
-            if (configurationsAndPrebuilds && showPrebuildMenuItem) {
-                linkEntries.push({
-                    title: "Prebuilds",
-                    customContent: <LinkEntry>Prebuilds</LinkEntry>,
-                    active: false,
-                    separator: false,
-                    link: "/prebuilds",
-                });
-            }
+            linkEntries.push({
+                title: "Prebuilds",
+                customContent: <LinkEntry>Prebuilds</LinkEntry>,
+                active: false,
+                separator: false,
+                link: "/prebuilds",
+            });
             linkEntries.push({
                 title: "Members",
                 customContent: <LinkEntry>Members</LinkEntry>,
@@ -96,15 +93,13 @@ export default function OrganizationSelector() {
                 }
             }
 
-            if (configurationsAndPrebuilds) {
-                linkEntries.push({
-                    title: "Repository Settings",
-                    customContent: <LinkEntry>Repository Settings</LinkEntry>,
-                    active: false,
-                    separator: false,
-                    link: "/repositories",
-                });
-            }
+            linkEntries.push({
+                title: "Repository Settings",
+                customContent: <LinkEntry>Repository Settings</LinkEntry>,
+                active: false,
+                separator: false,
+                link: "/repositories",
+            });
 
             // Org settings is available for all members, but only owner can change them
             // collaborator can read org setting via API so that other feature like restrict org workspace classes could work

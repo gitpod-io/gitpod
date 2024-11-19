@@ -13,80 +13,122 @@ import { TokenProvider } from "./token-provider";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { RedisMutex } from "../redis/mutex";
-import { reportScmTokenRefreshRequest, scmTokenRefreshLatencyHistogram } from "../prometheus-metrics";
+import {
+    OpportunisticRefresh,
+    reportScmTokenRefreshRequest,
+    scmTokenRefreshLatencyHistogram,
+} from "../prometheus-metrics";
 
 @injectable()
 export class TokenService implements TokenProvider {
     static readonly GITPOD_AUTH_PROVIDER_ID = "Gitpod";
+    /**
+     * [mins]
+     *
+     * The default lifetime of a token if not specified otherwise.
+     * Atm we only specify a different lifetime on workspace starts (for the token we pass to "git clone" during content init).
+     * Also, this value is relevant for "opportunistic token refreshes" (enabled for Bitbucket only atm): It's the time we mark a token as "reserved" (= do not opportunistically refresh it).
+     */
+    static readonly DEFAULT_LIFETIME = 5;
 
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(RedisMutex) private readonly redisMutex: RedisMutex;
 
-    async getTokenForHost(user: User | string, host: string): Promise<Token | undefined> {
+    async getTokenForHost(
+        user: User | string,
+        host: string,
+        requestedLifetimeMins?: number,
+    ): Promise<Token | undefined> {
         const userId = User.is(user) ? user.id : user;
 
-        return this.doGetTokenForHost(userId, host);
+        return this.doGetTokenForHost(userId, host, requestedLifetimeMins);
     }
 
-    private async doGetTokenForHost(userId: string, host: string): Promise<Token | undefined> {
+    private async doGetTokenForHost(
+        userId: string,
+        host: string,
+        requestedLifetimeMins = TokenService.DEFAULT_LIFETIME,
+    ): Promise<Token | undefined> {
         const user = await this.userDB.findUserById(userId);
         if (!user) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${userId}) not found.`);
         }
         const identity = this.getIdentityForHost(user, host);
 
-        function isValid(t: Token): boolean {
-            if (!t.expiryDate) {
-                return true;
-            }
-
-            const aboutToExpireTime = new Date();
-            aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);
-            if (t.expiryDate >= aboutToExpireTime.toISOString()) {
-                return true;
-            }
-            return false;
+        function isValidUntil(t: Token, requestedLifetimeDate: Date): boolean {
+            return !t.expiryDate || t.expiryDate >= requestedLifetimeDate.toISOString();
         }
 
-        const doRefreshToken = async () => {
-            // Check: Current token so we can actually refresh?
-            const token = await this.userDB.findTokenForIdentity(identity);
-            if (!token) {
-                reportScmTokenRefreshRequest(host, "no_token");
-                return undefined;
+        const updateReservation = async (uid: string, token: Token, requestedLifetimeDate: Date): Promise<void> => {
+            if (
+                !token.reservedUntilDate ||
+                requestedLifetimeDate.getTime() > new Date(token.reservedUntilDate).getTime()
+            ) {
+                // If the requested lifetime is longer than the reserved lifetime, we extend the reservation
+                const reservedUntilDate = requestedLifetimeDate.toISOString();
+                await this.userDB.updateTokenEntry({
+                    uid,
+                    reservedUntilDate,
+                });
+                token.reservedUntilDate = reservedUntilDate;
             }
-
-            if (isValid(token)) {
-                reportScmTokenRefreshRequest(host, "still_valid");
-                return token;
-            }
-
-            // Can we refresh these kind of tokens?
-            const { authProvider } = this.hostContextProvider.get(host)!;
-            if (!authProvider.refreshToken) {
-                reportScmTokenRefreshRequest(host, "not_refreshable");
-                return undefined;
-            }
-
-            // Perform actual refresh
-            const stopTimer = scmTokenRefreshLatencyHistogram.startTimer({ host });
-            try {
-                await authProvider.refreshToken(user);
-            } finally {
-                stopTimer({ host });
-            }
-
-            const freshToken = await this.userDB.findTokenForIdentity(identity);
-            reportScmTokenRefreshRequest(host, "success");
-            return freshToken;
         };
 
+        const requestedLifetimeDate = nowPlusMins(requestedLifetimeMins);
+        let opportunisticRefresh: OpportunisticRefresh = "false";
         try {
             const refreshedToken = await this.redisMutex.using(
                 [`token-refresh-${host}-${userId}`],
                 3000, // After 3s without extension the lock is released
-                doRefreshToken,
+                async () => {
+                    // Check: Current token so we can actually refresh?
+                    const tokenEntry = await this.userDB.findTokenEntryForIdentity(identity);
+                    const token = tokenEntry?.token;
+                    if (!token) {
+                        reportScmTokenRefreshRequest(host, opportunisticRefresh, "no_token");
+                        return undefined;
+                    }
+
+                    const { authProvider } = this.hostContextProvider.get(host)!;
+                    if (isValidUntil(token, requestedLifetimeDate)) {
+                        const doOpportunisticRefresh =
+                            !!authProvider.requiresOpportunisticRefresh && authProvider.requiresOpportunisticRefresh();
+                        if (!doOpportunisticRefresh) {
+                            // No opportunistic refresh? Update reservation and we are done.
+                            await updateReservation(tokenEntry.uid, token, requestedLifetimeDate);
+                            reportScmTokenRefreshRequest(host, opportunisticRefresh, "still_valid");
+                            return token;
+                        }
+
+                        // Opportunistic, but token currently reserved? Done.
+                        const currentlyReserved =
+                            token.reservedUntilDate &&
+                            new Date(token.reservedUntilDate).getTime() > new Date().getTime();
+                        if (currentlyReserved) {
+                            await updateReservation(tokenEntry.uid, token, requestedLifetimeDate);
+                            reportScmTokenRefreshRequest(host, "reserved", "still_valid");
+                            return token;
+                        }
+                        opportunisticRefresh = "true";
+                    }
+                    // Not valid, or we need to refresh anyway
+
+                    if (!authProvider.refreshToken) {
+                        reportScmTokenRefreshRequest(host, opportunisticRefresh, "not_refreshable");
+                        return undefined;
+                    }
+
+                    // Perform actual refresh
+                    const stopTimer = scmTokenRefreshLatencyHistogram.startTimer({ host });
+                    try {
+                        const result = await authProvider.refreshToken(user, requestedLifetimeDate);
+                        reportScmTokenRefreshRequest(host, opportunisticRefresh, "success");
+                        return result;
+                    } finally {
+                        stopTimer({ host });
+                    }
+                },
                 { retryCount: 20, retryDelay: 500 }, // We wait at most 10s until we give up, and conclude that we can't refresh the token now.
             );
             return refreshedToken;
@@ -94,18 +136,19 @@ export class TokenService implements TokenProvider {
             if (RedisMutex.isLockedError(err)) {
                 // In this case we already timed-out. BUT there is a high chance we are waiting on somebody else, who might already done the work for us.
                 // So just checking again here
-                const token = await this.userDB.findTokenForIdentity(identity);
-                if (token && isValid(token)) {
+                const tokenEntry = await this.userDB.findTokenEntryForIdentity(identity);
+                const token = tokenEntry?.token;
+                if (token && isValidUntil(token, requestedLifetimeDate)) {
                     log.debug({ userId }, `Token refresh timed out, but still successful`, { host });
-                    reportScmTokenRefreshRequest(host, "success_after_timeout");
+                    reportScmTokenRefreshRequest(host, opportunisticRefresh, "success_after_timeout");
                     return token;
                 }
 
                 log.error({ userId }, `Failed to refresh token (timeout waiting on lock)`, err, { host });
-                reportScmTokenRefreshRequest(host, "timeout");
+                reportScmTokenRefreshRequest(host, opportunisticRefresh, "timeout");
                 throw new Error(`Failed to refresh token (timeout waiting on lock)`);
             }
-            reportScmTokenRefreshRequest(host, "error");
+            reportScmTokenRefreshRequest(host, opportunisticRefresh, "error");
             throw err;
         }
     }
@@ -155,4 +198,10 @@ export class TokenService implements TokenProvider {
         }
         return hostContext.authProvider.authProviderId;
     }
+}
+
+function nowPlusMins(mins: number): Date {
+    const now = new Date();
+    now.setTime(now.getTime() + mins * 60 * 1000);
+    return now;
 }

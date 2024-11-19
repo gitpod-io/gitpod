@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -2026,7 +2026,7 @@ proto.workspacemanagerbridge.ClusterStatus.prototype.setRegion = function(value)
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.workspacemanagerbridge.UpdateRequest.oneofGroups_ = [[2,3,4,5]];
+proto.workspacemanagerbridge.UpdateRequest.oneofGroups_ = [[2,3,4,5,7]];
 
 /**
  * @enum {number}
@@ -2036,7 +2036,8 @@ proto.workspacemanagerbridge.UpdateRequest.PropertyCase = {
   SCORE: 2,
   MAX_SCORE: 3,
   CORDONED: 4,
-  ADMISSION_CONSTRAINT: 5
+  ADMISSION_CONSTRAINT: 5,
+  TLS: 7
 };
 
 /**
@@ -2081,7 +2082,8 @@ proto.workspacemanagerbridge.UpdateRequest.toObject = function(includeInstance, 
     score: jspb.Message.getFieldWithDefault(msg, 2, 0),
     maxScore: jspb.Message.getFieldWithDefault(msg, 3, 0),
     cordoned: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
-    admissionConstraint: (f = msg.getAdmissionConstraint()) && proto.workspacemanagerbridge.ModifyAdmissionConstraint.toObject(includeInstance, f)
+    admissionConstraint: (f = msg.getAdmissionConstraint()) && proto.workspacemanagerbridge.ModifyAdmissionConstraint.toObject(includeInstance, f),
+    tls: (f = msg.getTls()) && proto.workspacemanagerbridge.TlsConfig.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -2138,6 +2140,11 @@ proto.workspacemanagerbridge.UpdateRequest.deserializeBinaryFromReader = functio
       var value = new proto.workspacemanagerbridge.ModifyAdmissionConstraint;
       reader.readMessage(value,proto.workspacemanagerbridge.ModifyAdmissionConstraint.deserializeBinaryFromReader);
       msg.setAdmissionConstraint(value);
+      break;
+    case 7:
+      var value = new proto.workspacemanagerbridge.TlsConfig;
+      reader.readMessage(value,proto.workspacemanagerbridge.TlsConfig.deserializeBinaryFromReader);
+      msg.setTls(value);
       break;
     default:
       reader.skipField();
@@ -2202,6 +2209,14 @@ proto.workspacemanagerbridge.UpdateRequest.serializeBinaryToWriter = function(me
       5,
       f,
       proto.workspacemanagerbridge.ModifyAdmissionConstraint.serializeBinaryToWriter
+    );
+  }
+  f = message.getTls();
+  if (f != null) {
+    writer.writeMessage(
+      7,
+      f,
+      proto.workspacemanagerbridge.TlsConfig.serializeBinaryToWriter
     );
   }
 };
@@ -2367,6 +2382,43 @@ proto.workspacemanagerbridge.UpdateRequest.prototype.clearAdmissionConstraint = 
  */
 proto.workspacemanagerbridge.UpdateRequest.prototype.hasAdmissionConstraint = function() {
   return jspb.Message.getField(this, 5) != null;
+};
+
+
+/**
+ * optional TlsConfig tls = 7;
+ * @return {?proto.workspacemanagerbridge.TlsConfig}
+ */
+proto.workspacemanagerbridge.UpdateRequest.prototype.getTls = function() {
+  return /** @type{?proto.workspacemanagerbridge.TlsConfig} */ (
+    jspb.Message.getWrapperField(this, proto.workspacemanagerbridge.TlsConfig, 7));
+};
+
+
+/**
+ * @param {?proto.workspacemanagerbridge.TlsConfig|undefined} value
+ * @return {!proto.workspacemanagerbridge.UpdateRequest} returns this
+*/
+proto.workspacemanagerbridge.UpdateRequest.prototype.setTls = function(value) {
+  return jspb.Message.setOneofWrapperField(this, 7, proto.workspacemanagerbridge.UpdateRequest.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.workspacemanagerbridge.UpdateRequest} returns this
+ */
+proto.workspacemanagerbridge.UpdateRequest.prototype.clearTls = function() {
+  return this.setTls(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.workspacemanagerbridge.UpdateRequest.prototype.hasTls = function() {
+  return jspb.Message.getField(this, 7) != null;
 };
 
 

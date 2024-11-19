@@ -18,6 +18,7 @@ import { createTestContainer, withTestCtx } from "../test/service-testing-contai
 import { OldProjectSettings, ProjectsService } from "./projects-service";
 import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { SYSTEM_USER } from "../authorization/authorizer";
+import { EnvVarService } from "../user/env-var-service";
 
 const expect = chai.expect;
 
@@ -31,9 +32,7 @@ describe("ProjectsService", async () => {
 
     beforeEach(async () => {
         container = createTestContainer();
-        Experiments.configureTestingClient({
-            centralizedPermissions: true,
-        });
+        Experiments.configureTestingClient({});
         const userDB = container.get<UserDB>(UserDB);
 
         // create the owner
@@ -99,11 +98,22 @@ describe("ProjectsService", async () => {
 
     it("should deleteProject", async () => {
         const ps = container.get(ProjectsService);
+        const evs = container.get(EnvVarService);
+        const pdb = container.get<ProjectDB>(ProjectDB);
         const project1 = await createTestProject(ps, org, owner);
+        await evs.addProjectEnvVar(member.id, project1.id, {
+            name: "key",
+            value: "value",
+            censored: false,
+        });
+
+        expect(await pdb.getProjectEnvironmentVariables(project1.id)).to.have.lengthOf(1);
 
         await ps.deleteProject(member.id, project1.id);
         let projects = await ps.getProjects(member.id, org.id);
         expect(projects.length).to.equal(0);
+        // have to use db directly to verify the env vars are really deleted, the env var service would throw with project not found.
+        expect(await pdb.getProjectEnvironmentVariables(project1.id)).to.have.lengthOf(0);
 
         const project2 = await createTestProject(ps, org, owner);
         await expectError(ErrorCodes.NOT_FOUND, () => ps.deleteProject(stranger.id, project2.id));
@@ -167,41 +177,6 @@ describe("ProjectsService", async () => {
                 },
             }),
         );
-    });
-
-    describe("enablePrebuild handling", async () => {
-        it("should install webhook on new projects", async () => {
-            const webhooks = container.get<Set<String>>("webhooks");
-            webhooks.clear();
-            const ps = container.get(ProjectsService);
-            const project = await createTestProject(ps, org, owner); // using new default settings
-            await ps.updateProject(owner, {
-                id: project.id,
-                settings: {
-                    prebuilds: { enable: true },
-                },
-            });
-            expect(webhooks).to.contain(project.cloneUrl);
-        });
-
-        it("should install webhook on pre-existing projects", async () => {
-            const webhooks = container.get<Set<String>>("webhooks");
-            webhooks.clear();
-            const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
-            const ps = container.get(ProjectsService);
-            const project = await createTestProject(ps, org, owner, {
-                name: "test-pro",
-                cloneUrl,
-                settings: {},
-            });
-            await ps.updateProject(owner, {
-                id: project.id,
-                settings: {
-                    prebuilds: { enable: true },
-                },
-            });
-            expect(webhooks).to.contain(project.cloneUrl);
-        });
     });
 
     it("should findProjects", async () => {
@@ -299,6 +274,7 @@ describe("ProjectsService", async () => {
                 workspaceClass: "ultra",
                 branchStrategy: "matched-branches",
                 branchMatchingPattern: "feature-*",
+                triggerStrategy: "activity-based",
             },
             workspaceClasses: {},
         });
@@ -343,7 +319,6 @@ describe("ProjectsService", async () => {
         let project = await ps.createProject(
             {
                 name: partial.name!,
-                slug: "deprecated",
                 teamId: org.id,
                 cloneUrl: partial.cloneUrl!,
                 appInstallationId: "noid",

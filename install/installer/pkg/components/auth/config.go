@@ -6,10 +6,10 @@ package auth
 
 import (
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	server_lib "github.com/gitpod-io/gitpod/server/go/pkg/lib"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -45,7 +45,7 @@ func GetConfig(ctx *common.RenderContext) ([]corev1.Volume, []corev1.VolumeMount
 			Issuer:          fmt.Sprintf("https://%s", ctx.Config.Domain),
 			Cookie: CookieConfig{
 				// Caution: changing these have security implications for the application. Make sure you understand what you're doing.
-				Name:     cookieNameFromDomain(ctx.Config.Domain),
+				Name:     server_lib.CookieNameFromDomain(ctx.Config.Domain),
 				MaxAge:   lifetime,
 				SameSite: "lax",
 				Secure:   true,
@@ -53,10 +53,4 @@ func GetConfig(ctx *common.RenderContext) ([]corev1.Volume, []corev1.VolumeMount
 			},
 		},
 	}
-}
-
-func cookieNameFromDomain(domain string) string {
-	// replace all non-word characters with underscores
-	derived := regexp.MustCompile(`[\W_]+`).ReplaceAllString(domain, "_")
-	return "_" + derived + "_jwt2_"
 }

@@ -89,7 +89,6 @@ func (wf *WorkspaceProvider) GetAndConnect(ctx context.Context, instanceID strin
 
 func (s *WorkspaceProvider) runLifecycleHooks(ctx context.Context, ws *session.Workspace, state session.WorkspaceState) error {
 	hooks := s.hooks[state]
-	log.WithFields(ws.OWI()).WithField("state", state).WithField("hooks", len(hooks)).Info("running lifecycle hooks")
 
 	for _, h := range hooks {
 		err := h(ctx, ws)

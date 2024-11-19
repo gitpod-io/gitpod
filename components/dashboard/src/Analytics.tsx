@@ -17,11 +17,13 @@ export type Event =
     | "feedback_submitted"
     | "workspace_class_changed"
     | "privacy_policy_update_accepted"
+    | "browser_extension_promotion_interaction"
     | "coachmark_dismissed"
     | "modal_dismiss"
     | "ide_configuration_changed"
     | "status_rendered"
-    | "error_rendered";
+    | "error_rendered"
+    | "video_clicked";
 type InternalEvent = Event | "path_changed" | "dashboard_clicked";
 
 export type EventProperties =
@@ -30,11 +32,13 @@ export type EventProperties =
     | TrackDotfileRepo
     | TrackFeedback
     | TrackPolicyUpdateClick
+    | TrackBrowserExtensionPromotionInteraction
     | TrackModalDismiss
     | TrackIDEConfigurationChanged
     | TrackWorkspaceClassChanged
     | TrackStatusRendered
-    | TrackErrorRendered;
+    | TrackErrorRendered
+    | TrackVideoClicked;
 type InternalEventProperties = EventProperties | TrackDashboardClick | TrackPathChanged;
 
 export interface TrackErrorRendered {
@@ -99,6 +103,15 @@ export interface TrackCoachmarkDismissed {
     success: boolean;
 }
 
+export interface TrackBrowserExtensionPromotionInteraction {
+    action: "chrome_navigation" | "firefox_navigation" | "manually_dismissed";
+}
+
+export interface TrackVideoClicked {
+    context: string;
+    path: string;
+}
+
 interface TrackDashboardClick {
     dnt?: boolean;
     path: string;
@@ -126,10 +139,15 @@ export function trackEvent(event: "feedback_submitted", properties: TrackFeedbac
 export function trackEvent(event: "workspace_class_changed", properties: TrackWorkspaceClassChanged): void;
 export function trackEvent(event: "privacy_policy_update_accepted", properties: TrackPolicyUpdateClick): void;
 export function trackEvent(event: "coachmark_dismissed", properties: TrackCoachmarkDismissed): void;
+export function trackEvent(
+    event: "browser_extension_promotion_interaction",
+    properties: TrackBrowserExtensionPromotionInteraction,
+): void;
 export function trackEvent(event: "modal_dismiss", properties: TrackModalDismiss): void;
 export function trackEvent(event: "ide_configuration_changed", properties: TrackIDEConfigurationChanged): void;
 export function trackEvent(event: "status_rendered", properties: TrackStatusRendered): void;
 export function trackEvent(event: "error_rendered", properties: TrackErrorRendered): void;
+export function trackEvent(event: "video_clicked", properties: TrackVideoClicked): void;
 export function trackEvent(event: Event, properties: EventProperties): void {
     trackEventInternal(event, properties);
 }
@@ -145,6 +163,13 @@ const trackEventInternal = (event: InternalEvent, properties: InternalEventPrope
 // Please use trackEvent instead of this function
 export function sendTrackEvent(message: RemoteTrackMessage): void {
     sendAnalytics("trackEvent", message);
+}
+
+export function trackVideoClick(context: string) {
+    trackEvent("video_clicked", {
+        context: context,
+        path: window.location.pathname,
+    });
 }
 
 export const trackButtonOrAnchor = (target: HTMLAnchorElement | HTMLButtonElement | HTMLDivElement) => {
@@ -163,7 +188,7 @@ export const trackButtonOrAnchor = (target: HTMLAnchorElement | HTMLButtonElemen
 
     let trackingMsg: TrackDashboardClick = {
         path: window.location.pathname,
-        label: target.textContent || undefined,
+        label: target.ariaLabel || target.textContent || undefined,
     };
 
     if (target instanceof HTMLButtonElement || target instanceof HTMLDivElement) {

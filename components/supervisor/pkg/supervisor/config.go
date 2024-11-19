@@ -8,12 +8,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
 
 	env "github.com/Netflix/go-env"
@@ -183,8 +184,12 @@ type IDEConfig struct {
 	} `json:"prebuild"`
 }
 
+func (c IDEConfig) GetUniqueKey() string {
+	return c.Name + "-" + c.Version
+}
+
 func (c IDEConfig) PrebuildTaskName() string {
-	return "ide-prebuild-" + c.Name
+	return "ide-prebuild-" + c.GetUniqueKey()
 }
 
 // Validate validates this configuration.
@@ -246,6 +251,14 @@ type WorkspaceConfig struct {
 	// DefaultWorkspaceImage is the default image of current workspace
 	DefaultWorkspaceImage string `env:"GITPOD_DEFAULT_WORKSPACE_IMAGE"`
 
+	// IsSetJavaXmx is a flag to indicate if the JAVA_XMX environment variable is set
+	// value retrieved from server with FeatureFlag
+	IsSetJavaXmx bool `env:"GITPOD_IS_SET_JAVA_XMX"`
+
+	// IsSetJavaProcessorCount is a flag to indicate if the JAVA_PROCESSOR_COUNT environment variable is set
+	// value retrieved from server with FeatureFlag
+	IsSetJavaProcessorCount bool `env:"GITPOD_IS_SET_JAVA_PROCESSOR_COUNT"`
+
 	// IDEPort is the port at which the IDE will need to run on. This is not an IDE config
 	// because Gitpod determines this port, not the IDE.
 	IDEPort int `env:"GITPOD_THEIA_PORT"`
@@ -295,6 +308,9 @@ type WorkspaceConfig struct {
 
 	// GitpodHeadless controls whether the workspace is running headless
 	GitpodHeadless string `env:"GITPOD_HEADLESS"`
+
+	// BobDockerfilePath is the path to the Dockerfile image builder will attempt to build
+	BobDockerfilePath string `env:"BOB_DOCKERFILE_PATH"`
 
 	// DebugEnabled controls whether the supervisor debugging facilities (pprof, grpc tracing) should be enabled
 	DebugEnable bool `env:"SUPERVISOR_DEBUG_ENABLE"`
@@ -455,6 +471,11 @@ func (c WorkspaceConfig) isDebugWorkspace() bool {
 	return c.DebugWorkspaceType != api.DebugWorkspaceType_noDebug
 }
 
+// isImageBuild returns true if the workspace is an image build.
+func (c WorkspaceConfig) isImageBuild() bool {
+	return c.BobDockerfilePath != ""
+}
+
 var contentSources = map[api.ContentSource]csapi.WorkspaceInitSource{
 	api.ContentSource_from_other:    csapi.WorkspaceInitFromOther,
 	api.ContentSource_from_backup:   csapi.WorkspaceInitFromBackup,
@@ -501,7 +522,7 @@ func (c Config) getGitpodTasks() (tasks []TaskConfig, err error) {
 				entrypoint = ideConfig.Entrypoint
 			}
 
-			init := fmt.Sprintf("echo 'Prebuilding %s (%s)'; ", ideConfig.DisplayName, ideConfig.Version)
+			init := fmt.Sprintf("echo 'Prebuilding %s (%s) (%s)'; ", ideConfig.DisplayName, ideConfig.Version, ideConfig.GetUniqueKey())
 			init += entrypoint
 			for _, arg := range ideConfig.Prebuild.Args {
 				init = init + " " + arg
@@ -586,10 +607,10 @@ func loadDesktopIDEs(static *StaticConfig) ([]*IDEConfig, error) {
 	}
 	if desktopIDE != nil {
 		desktopIDEs = append(desktopIDEs, desktopIDE)
-		uniqueDesktopIDEs[desktopIDE.Name] = struct{}{}
+		uniqueDesktopIDEs[desktopIDE.GetUniqueKey()] = struct{}{}
 	}
 
-	files, err := ioutil.ReadDir(static.DesktopIDERoot)
+	files, err := os.ReadDir(static.DesktopIDERoot)
 	if err != nil {
 		return nil, err
 	}
@@ -602,15 +623,19 @@ func loadDesktopIDEs(static *StaticConfig) ([]*IDEConfig, error) {
 			if err != nil {
 				return nil, err
 			}
-			_, alreadyPresent := uniqueDesktopIDEs[desktopIDE.Name]
+			_, alreadyPresent := uniqueDesktopIDEs[desktopIDE.GetUniqueKey()]
 			if alreadyPresent {
-				log.WithField("name", desktopIDE.Name).Warn("ignoring duplicate desktop IDE")
+				log.WithField("key", desktopIDE.GetUniqueKey()).Warn("ignoring duplicate desktop IDE")
 				continue
 			}
 			desktopIDEs = append(desktopIDEs, desktopIDE)
 			uniqueDesktopIDEs[desktopIDE.Name] = struct{}{}
 		}
 	}
+
+	slices.SortFunc(desktopIDEs, func(a, b *IDEConfig) int {
+		return strings.Compare(a.Name, b.Name)
+	})
 
 	return desktopIDEs, nil
 }

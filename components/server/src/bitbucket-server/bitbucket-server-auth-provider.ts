@@ -10,8 +10,8 @@ import express from "express";
 import { inject, injectable } from "inversify";
 import { AuthUserSetup } from "../auth/auth-provider";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
-import { BitbucketServerOAuthScopes } from "./bitbucket-server-oauth-scopes";
 import { BitbucketServerApi } from "./bitbucket-server-api";
+import { BitbucketServerOAuthScopes } from "@gitpod/public-api-common/lib/auth-providers";
 
 @injectable()
 export class BitbucketServerAuthProvider extends GenericAuthProvider {
@@ -63,7 +63,7 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
         try {
             const username = await this.api.currentUsername(accessToken);
             const userProfile = await this.api.getUserProfile(accessToken, username);
-            const avatarUrl = await this.api.getAvatarUrl(username);
+            const avatarUrl = this.api.getAvatarUrl(username);
             return <AuthUserSetup>{
                 authUser: {
                     // e.g. 105
@@ -74,7 +74,7 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
                     name: userProfile.displayName!,
                     avatarUrl,
                 },
-                currentScopes: BitbucketServerOAuthScopes.ALL,
+                currentScopes: BitbucketServerOAuthScopes.Requirements.DEFAULT,
             };
         } catch (error) {
             log.error(`(${this.strategyName}) Reading current user info failed`, error, { error });

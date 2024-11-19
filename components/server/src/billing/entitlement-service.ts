@@ -16,7 +16,6 @@ import { BillingTier } from "@gitpod/gitpod-protocol/lib/protocol";
 import { inject, injectable } from "inversify";
 import { BillingModes } from "./billing-mode";
 import { EntitlementServiceUBP } from "./entitlement-service-ubp";
-import { VerificationService } from "../auth/verification-service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export interface MayStartWorkspaceResult {
@@ -96,7 +95,6 @@ export class EntitlementServiceImpl implements EntitlementService {
     constructor(
         @inject(BillingModes) private readonly billingModes: BillingModes,
         @inject(EntitlementServiceUBP) private readonly ubp: EntitlementServiceUBP,
-        @inject(VerificationService) private readonly verificationService: VerificationService,
     ) {}
 
     async mayStartWorkspace(
@@ -105,12 +103,6 @@ export class EntitlementServiceImpl implements EntitlementService {
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
         try {
-            const verification = await this.verificationService.needsVerification(user);
-            if (verification) {
-                return {
-                    needsVerification: true,
-                };
-            }
             const billingMode = await this.billingModes.getBillingMode(user.id, organizationId);
             switch (billingMode.mode) {
                 case "none":
@@ -132,7 +124,6 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingMode(userId, organizationId);
             switch (billingMode.mode) {
                 case "none":
-                    // when payment is disabled users can do everything
                     return true;
                 case "usage-based":
                     return this.ubp.maySetTimeout(userId, organizationId);

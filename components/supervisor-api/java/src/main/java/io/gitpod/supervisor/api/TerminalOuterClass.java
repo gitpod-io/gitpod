@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -3434,6 +3434,12 @@ java.lang.String defaultValue);
      */
     com.google.protobuf.ByteString
         getAliasBytes();
+
+    /**
+     * <code>bool force_success = 2;</code>
+     * @return The forceSuccess.
+     */
+    boolean getForceSuccess();
   }
   /**
    * Protobuf type {@code supervisor.ShutdownTerminalRequest}
@@ -3485,6 +3491,11 @@ java.lang.String defaultValue);
               java.lang.String s = input.readStringRequireUtf8();
 
               alias_ = s;
+              break;
+            }
+            case 16: {
+
+              forceSuccess_ = input.readBool();
               break;
             }
             default: {
@@ -3559,6 +3570,17 @@ java.lang.String defaultValue);
       }
     }
 
+    public static final int FORCE_SUCCESS_FIELD_NUMBER = 2;
+    private boolean forceSuccess_;
+    /**
+     * <code>bool force_success = 2;</code>
+     * @return The forceSuccess.
+     */
+    @java.lang.Override
+    public boolean getForceSuccess() {
+      return forceSuccess_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -3576,6 +3598,9 @@ java.lang.String defaultValue);
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, alias_);
       }
+      if (forceSuccess_ != false) {
+        output.writeBool(2, forceSuccess_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -3587,6 +3612,10 @@ java.lang.String defaultValue);
       size = 0;
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, alias_);
+      }
+      if (forceSuccess_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(2, forceSuccess_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -3605,6 +3634,8 @@ java.lang.String defaultValue);
 
       if (!getAlias()
           .equals(other.getAlias())) return false;
+      if (getForceSuccess()
+          != other.getForceSuccess()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -3618,6 +3649,9 @@ java.lang.String defaultValue);
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + ALIAS_FIELD_NUMBER;
       hash = (53 * hash) + getAlias().hashCode();
+      hash = (37 * hash) + FORCE_SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getForceSuccess());
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -3753,6 +3787,8 @@ java.lang.String defaultValue);
         super.clear();
         alias_ = "";
 
+        forceSuccess_ = false;
+
         return this;
       }
 
@@ -3780,6 +3816,7 @@ java.lang.String defaultValue);
       public io.gitpod.supervisor.api.TerminalOuterClass.ShutdownTerminalRequest buildPartial() {
         io.gitpod.supervisor.api.TerminalOuterClass.ShutdownTerminalRequest result = new io.gitpod.supervisor.api.TerminalOuterClass.ShutdownTerminalRequest(this);
         result.alias_ = alias_;
+        result.forceSuccess_ = forceSuccess_;
         onBuilt();
         return result;
       }
@@ -3831,6 +3868,9 @@ java.lang.String defaultValue);
         if (!other.getAlias().isEmpty()) {
           alias_ = other.alias_;
           onChanged();
+        }
+        if (other.getForceSuccess() != false) {
+          setForceSuccess(other.getForceSuccess());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -3933,6 +3973,37 @@ java.lang.String defaultValue);
   checkByteStringIsUtf8(value);
 
         alias_ = value;
+        onChanged();
+        return this;
+      }
+
+      private boolean forceSuccess_ ;
+      /**
+       * <code>bool force_success = 2;</code>
+       * @return The forceSuccess.
+       */
+      @java.lang.Override
+      public boolean getForceSuccess() {
+        return forceSuccess_;
+      }
+      /**
+       * <code>bool force_success = 2;</code>
+       * @param value The forceSuccess to set.
+       * @return This builder for chaining.
+       */
+      public Builder setForceSuccess(boolean value) {
+
+        forceSuccess_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool force_success = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearForceSuccess() {
+
+        forceSuccess_ = false;
         onChanged();
         return this;
       }
@@ -15224,64 +15295,65 @@ java.lang.String defaultValue);
       "try\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"U\n\024O" +
       "penTerminalResponse\022&\n\010terminal\030\001 \001(\0132\024." +
       "supervisor.Terminal\022\025\n\rstarter_token\030\002 \001" +
-      "(\t\"(\n\027ShutdownTerminalRequest\022\r\n\005alias\030\001" +
-      " \001(\t\"\032\n\030ShutdownTerminalResponse\"\237\002\n\010Ter" +
-      "minal\022\r\n\005alias\030\001 \001(\t\022\017\n\007command\030\002 \003(\t\022\r\n" +
-      "\005title\030\003 \001(\t\022\013\n\003pid\030\004 \001(\003\022\027\n\017initial_wor" +
-      "kdir\030\005 \001(\t\022\027\n\017current_workdir\030\006 \001(\t\022:\n\013a" +
-      "nnotations\030\007 \003(\0132%.supervisor.Terminal.A" +
-      "nnotationsEntry\0225\n\014title_source\030\010 \001(\0162\037." +
-      "supervisor.TerminalTitleSource\0322\n\020Annota" +
-      "tionsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\002" +
-      "8\001\"#\n\022GetTerminalRequest\022\r\n\005alias\030\001 \001(\t\"" +
-      "\026\n\024ListTerminalsRequest\"@\n\025ListTerminals" +
-      "Response\022\'\n\tterminals\030\001 \003(\0132\024.supervisor" +
-      ".Terminal\"&\n\025ListenTerminalRequest\022\r\n\005al" +
-      "ias\030\001 \001(\t\"\217\001\n\026ListenTerminalResponse\022\016\n\004" +
-      "data\030\001 \001(\014H\000\022\023\n\texit_code\030\002 \001(\005H\000\022\017\n\005tit" +
-      "le\030\003 \001(\tH\000\0225\n\014title_source\030\004 \001(\0162\037.super" +
-      "visor.TerminalTitleSourceB\010\n\006output\"4\n\024W" +
-      "riteTerminalRequest\022\r\n\005alias\030\001 \001(\t\022\r\n\005st" +
-      "din\030\002 \001(\014\".\n\025WriteTerminalResponse\022\025\n\rby" +
-      "tes_written\030\001 \001(\r\"}\n\026SetTerminalSizeRequ" +
-      "est\022\r\n\005alias\030\001 \001(\t\022\017\n\005token\030\002 \001(\tH\000\022\017\n\005f" +
-      "orce\030\003 \001(\010H\000\022&\n\004size\030\004 \001(\0132\030.supervisor." +
-      "TerminalSizeB\n\n\010priority\"\031\n\027SetTerminalS" +
-      "izeResponse\"7\n\027SetTerminalTitleRequest\022\r" +
-      "\n\005alias\030\001 \001(\t\022\r\n\005title\030\002 \001(\t\"\032\n\030SetTermi" +
-      "nalTitleResponse\"\276\001\n UpdateTerminalAnnot" +
-      "ationsRequest\022\r\n\005alias\030\001 \001(\t\022J\n\007changed\030" +
-      "\002 \003(\01329.supervisor.UpdateTerminalAnnotat" +
-      "ionsRequest.ChangedEntry\022\017\n\007deleted\030\003 \003(" +
-      "\t\032.\n\014ChangedEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030" +
-      "\002 \001(\t:\0028\001\"#\n!UpdateTerminalAnnotationsRe" +
-      "sponse*+\n\023TerminalTitleSource\022\013\n\007process" +
-      "\020\000\022\007\n\003api\020\0012\260\007\n\017TerminalService\022K\n\004Open\022" +
-      "\037.supervisor.OpenTerminalRequest\032 .super" +
-      "visor.OpenTerminalResponse\"\000\022|\n\010Shutdown" +
-      "\022#.supervisor.ShutdownTerminalRequest\032$." +
-      "supervisor.ShutdownTerminalResponse\"%\202\323\344" +
-      "\223\002\037\022\035/v1/terminal/shutdown/{alias}\022]\n\003Ge" +
-      "t\022\036.supervisor.GetTerminalRequest\032\024.supe" +
-      "rvisor.Terminal\" \202\323\344\223\002\032\022\030/v1/terminal/ge" +
-      "t/{alias}\022f\n\004List\022 .supervisor.ListTermi" +
-      "nalsRequest\032!.supervisor.ListTerminalsRe" +
-      "sponse\"\031\202\323\344\223\002\023\022\021/v1/terminal/list\022v\n\006Lis" +
-      "ten\022!.supervisor.ListenTerminalRequest\032\"" +
-      ".supervisor.ListenTerminalResponse\"#\202\323\344\223" +
-      "\002\035\022\033/v1/terminal/listen/{alias}0\001\022p\n\005Wri" +
-      "te\022 .supervisor.WriteTerminalRequest\032!.s" +
-      "upervisor.WriteTerminalResponse\"\"\202\323\344\223\002\034\"" +
-      "\032/v1/terminal/write/{alias}\022T\n\007SetSize\022\"" +
-      ".supervisor.SetTerminalSizeRequest\032#.sup" +
-      "ervisor.SetTerminalSizeResponse\"\000\022W\n\010Set" +
-      "Title\022#.supervisor.SetTerminalTitleReque" +
-      "st\032$.supervisor.SetTerminalTitleResponse" +
-      "\"\000\022r\n\021UpdateAnnotations\022,.supervisor.Upd" +
-      "ateTerminalAnnotationsRequest\032-.supervis" +
-      "or.UpdateTerminalAnnotationsResponse\"\000BF" +
-      "\n\030io.gitpod.supervisor.apiZ*github.com/g" +
-      "itpod-io/gitpod/supervisor/apib\006proto3"
+      "(\t\"?\n\027ShutdownTerminalRequest\022\r\n\005alias\030\001" +
+      " \001(\t\022\025\n\rforce_success\030\002 \001(\010\"\032\n\030ShutdownT" +
+      "erminalResponse\"\237\002\n\010Terminal\022\r\n\005alias\030\001 " +
+      "\001(\t\022\017\n\007command\030\002 \003(\t\022\r\n\005title\030\003 \001(\t\022\013\n\003p" +
+      "id\030\004 \001(\003\022\027\n\017initial_workdir\030\005 \001(\t\022\027\n\017cur" +
+      "rent_workdir\030\006 \001(\t\022:\n\013annotations\030\007 \003(\0132" +
+      "%.supervisor.Terminal.AnnotationsEntry\0225" +
+      "\n\014title_source\030\010 \001(\0162\037.supervisor.Termin" +
+      "alTitleSource\0322\n\020AnnotationsEntry\022\013\n\003key" +
+      "\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"#\n\022GetTerminal" +
+      "Request\022\r\n\005alias\030\001 \001(\t\"\026\n\024ListTerminalsR" +
+      "equest\"@\n\025ListTerminalsResponse\022\'\n\ttermi" +
+      "nals\030\001 \003(\0132\024.supervisor.Terminal\"&\n\025List" +
+      "enTerminalRequest\022\r\n\005alias\030\001 \001(\t\"\217\001\n\026Lis" +
+      "tenTerminalResponse\022\016\n\004data\030\001 \001(\014H\000\022\023\n\te" +
+      "xit_code\030\002 \001(\005H\000\022\017\n\005title\030\003 \001(\tH\000\0225\n\014tit" +
+      "le_source\030\004 \001(\0162\037.supervisor.TerminalTit" +
+      "leSourceB\010\n\006output\"4\n\024WriteTerminalReque" +
+      "st\022\r\n\005alias\030\001 \001(\t\022\r\n\005stdin\030\002 \001(\014\".\n\025Writ" +
+      "eTerminalResponse\022\025\n\rbytes_written\030\001 \001(\r" +
+      "\"}\n\026SetTerminalSizeRequest\022\r\n\005alias\030\001 \001(" +
+      "\t\022\017\n\005token\030\002 \001(\tH\000\022\017\n\005force\030\003 \001(\010H\000\022&\n\004s" +
+      "ize\030\004 \001(\0132\030.supervisor.TerminalSizeB\n\n\010p" +
+      "riority\"\031\n\027SetTerminalSizeResponse\"7\n\027Se" +
+      "tTerminalTitleRequest\022\r\n\005alias\030\001 \001(\t\022\r\n\005" +
+      "title\030\002 \001(\t\"\032\n\030SetTerminalTitleResponse\"" +
+      "\276\001\n UpdateTerminalAnnotationsRequest\022\r\n\005" +
+      "alias\030\001 \001(\t\022J\n\007changed\030\002 \003(\01329.superviso" +
+      "r.UpdateTerminalAnnotationsRequest.Chang" +
+      "edEntry\022\017\n\007deleted\030\003 \003(\t\032.\n\014ChangedEntry" +
+      "\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"#\n!Upda" +
+      "teTerminalAnnotationsResponse*+\n\023Termina" +
+      "lTitleSource\022\013\n\007process\020\000\022\007\n\003api\020\0012\260\007\n\017T" +
+      "erminalService\022K\n\004Open\022\037.supervisor.Open" +
+      "TerminalRequest\032 .supervisor.OpenTermina" +
+      "lResponse\"\000\022|\n\010Shutdown\022#.supervisor.Shu" +
+      "tdownTerminalRequest\032$.supervisor.Shutdo" +
+      "wnTerminalResponse\"%\202\323\344\223\002\037\022\035/v1/terminal" +
+      "/shutdown/{alias}\022]\n\003Get\022\036.supervisor.Ge" +
+      "tTerminalRequest\032\024.supervisor.Terminal\" " +
+      "\202\323\344\223\002\032\022\030/v1/terminal/get/{alias}\022f\n\004List" +
+      "\022 .supervisor.ListTerminalsRequest\032!.sup" +
+      "ervisor.ListTerminalsResponse\"\031\202\323\344\223\002\023\022\021/" +
+      "v1/terminal/list\022v\n\006Listen\022!.supervisor." +
+      "ListenTerminalRequest\032\".supervisor.Liste" +
+      "nTerminalResponse\"#\202\323\344\223\002\035\022\033/v1/terminal/" +
+      "listen/{alias}0\001\022p\n\005Write\022 .supervisor.W" +
+      "riteTerminalRequest\032!.supervisor.WriteTe" +
+      "rminalResponse\"\"\202\323\344\223\002\034\"\032/v1/terminal/wri" +
+      "te/{alias}\022T\n\007SetSize\022\".supervisor.SetTe" +
+      "rminalSizeRequest\032#.supervisor.SetTermin" +
+      "alSizeResponse\"\000\022W\n\010SetTitle\022#.superviso" +
+      "r.SetTerminalTitleRequest\032$.supervisor.S" +
+      "etTerminalTitleResponse\"\000\022r\n\021UpdateAnnot" +
+      "ations\022,.supervisor.UpdateTerminalAnnota" +
+      "tionsRequest\032-.supervisor.UpdateTerminal" +
+      "AnnotationsResponse\"\000BF\n\030io.gitpod.super" +
+      "visor.apiZ*github.com/gitpod-io/gitpod/s" +
+      "upervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -15323,7 +15395,7 @@ java.lang.String defaultValue);
     internal_static_supervisor_ShutdownTerminalRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_ShutdownTerminalRequest_descriptor,
-        new java.lang.String[] { "Alias", });
+        new java.lang.String[] { "Alias", "ForceSuccess", });
     internal_static_supervisor_ShutdownTerminalResponse_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_supervisor_ShutdownTerminalResponse_fieldAccessorTable = new

@@ -14,11 +14,6 @@ variable "vm_type" {
   default = "n2d-standard-16"
 }
 
-variable "ssh_key" {
-  type        = string
-  description = "ssh public key used for access to the vm"
-}
-
 variable "dev_kube_context" {
   type        = string
   default     = "dev"
@@ -28,7 +23,7 @@ variable "dev_kube_context" {
 variable "vm_image" {
   type        = string
   description = "The VM image"
-  default     = "gitpod-k3s-202402021944"
+  default     = "gitpod-k3s-202409020431"
 }
 
 variable "cert_issuer" {

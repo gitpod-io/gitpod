@@ -13,10 +13,8 @@ import { ServiceContext } from "twilio/lib/rest/verify/v2/service";
 import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { UserService } from "../user/user-service";
-import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 interface VerificationEndpoint {
     sendToken(phoneNumber: string, channel: "sms" | "call"): Promise<string>;
@@ -131,17 +129,7 @@ export class VerificationService {
         if (user.creationDate < "2022-08-22") {
             return false;
         }
-        const isPhoneVerificationEnabled = await getExperimentsClientForBackend().getValueAsync(
-            "isPhoneVerificationEnabled",
-            false,
-            {
-                user: {
-                    id: user.id,
-                    email: getPrimaryEmail(user),
-                },
-            },
-        );
-        return isPhoneVerificationEnabled;
+        return true;
     }
 
     public async verifyOrgMembers(organizationId: string): Promise<void> {

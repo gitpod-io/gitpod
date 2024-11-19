@@ -8,7 +8,7 @@ import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
-import { FC, FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { FC, FunctionComponent, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import { useHistory, useLocation } from "react-router";
 import Alert from "../components/Alert";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
@@ -22,7 +22,6 @@ import { InputField } from "../components/forms/InputField";
 import { Heading1 } from "../components/typography/headings";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
-import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
 import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
 import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
@@ -35,6 +34,7 @@ import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { UserContext, useCurrentUser } from "../user-context";
 import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import { settingsPathIntegrations } from "../user-settings/settings.routes";
+import { BrowserExtensionBanner } from "./BrowserExtensionBanner";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import {
@@ -53,14 +53,21 @@ import { useAllowedWorkspaceClassesMemo } from "../data/workspaces/workspace-cla
 import Menu from "../menu/Menu";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
+import { isGitpodIo } from "../utils";
+import { useListConfigurations } from "../data/configurations/configuration-queries";
+import { flattenPagedConfigurations } from "../data/git-providers/unified-repositories-search-query";
+import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { useMemberRole } from "../data/organizations/members-query";
+import { OrganizationPermission } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
+
+export const StartWorkspaceKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl﹢"}Enter`;
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
     const currentOrg = useCurrentOrg().data;
-    const projects = useListAllProjectsQuery();
     const workspaces = useListWorkspacesQuery({ limit: 50 });
     const location = useLocation();
     const history = useHistory();
@@ -77,7 +84,9 @@ export function CreateWorkspacePage() {
         props.ideSettings?.useLatestVersion !== undefined
             ? props.ideSettings.useLatestVersion
             : user?.editorSettings?.version === "latest";
+    const defaultPreferToolbox = props.ideSettings?.preferToolbox ?? user?.editorSettings?.preferToolbox ?? false;
     const [useLatestIde, setUseLatestIde] = useState(defaultLatestIde);
+    const [preferToolbox, setPreferToolbox] = useState(defaultPreferToolbox);
     // Note: it has data fetching and UI rendering race between the updating of `selectedProjectId` and `selectedIde`
     // We have to stored the using repositoryId locally so that we can know selectedIde is updated because if which repo
     // so that it doesn't show ide error messages in middle state
@@ -98,10 +107,13 @@ export function CreateWorkspacePage() {
         isLoading: isLoadingWorkspaceClasses,
     } = useAllowedWorkspaceClassesMemo(selectedProjectID);
     const defaultWorkspaceClass = props.workspaceClass ?? computedDefaultClass;
+    const showExamples = props.showExamples ?? false;
     const { data: orgSettings } = useOrgSettingsQuery();
+    const memberRole = useMemberRole();
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
-    const [errorWsClass, setErrorWsClass] = useState<React.ReactNode | undefined>(undefined);
-    const [errorIde, setErrorIde] = useState<React.ReactNode | undefined>(undefined);
+    const [errorWsClass, setErrorWsClass] = useState<ReactNode | undefined>(undefined);
+    const [errorIde, setErrorIde] = useState<ReactNode | undefined>(undefined);
+    const [warningIde, setWarningIde] = useState<ReactNode | undefined>(undefined);
     const [contextURL, setContextURL] = useState<string | undefined>(
         StartWorkspaceOptions.parseContextUrl(location.hash),
     );
@@ -109,11 +121,29 @@ export function CreateWorkspacePage() {
     const workspaceContext = useWorkspaceContext(contextURL);
     const needsGitAuthorization = useNeedsGitAuthorization();
 
+    useEffect(() => {
+        setContextURL(StartWorkspaceOptions.parseContextUrl(location.hash));
+        setSelectedProjectID(undefined);
+        setNextLoadOption("searchParams");
+    }, [location.hash]);
+
+    const cloneURL = workspaceContext.data?.cloneUrl;
+
+    const paginatedConfigurations = useListConfigurations({
+        sortBy: "name",
+        sortOrder: "desc",
+        pageSize: 100,
+        searchTerm: cloneURL,
+    });
+    const configurations = useMemo<Configuration[]>(
+        () => flattenPagedConfigurations(paginatedConfigurations.data),
+        [paginatedConfigurations.data],
+    );
+
     const storeAutoStartOptions = useCallback(async () => {
         if (!workspaceContext.data || !user || !currentOrg) {
             return;
         }
-        const cloneURL = workspaceContext.data.cloneUrl;
         if (!cloneURL) {
             return;
         }
@@ -133,6 +163,7 @@ export function CreateWorkspacePage() {
                 editorSettings: new EditorReference({
                     name: selectedIde,
                     version: useLatestIde ? "latest" : "stable",
+                    preferToolbox: preferToolbox,
                 }),
             }),
         );
@@ -144,27 +175,37 @@ export function CreateWorkspacePage() {
             },
         });
         setUser(updatedUser);
-    }, [updateUser, currentOrg, selectedIde, selectedWsClass, setUser, useLatestIde, user, workspaceContext.data]);
+    }, [
+        workspaceContext.data,
+        user,
+        currentOrg,
+        cloneURL,
+        selectedWsClass,
+        selectedIde,
+        useLatestIde,
+        preferToolbox,
+        updateUser,
+        setUser,
+    ]);
 
-    // see if we have a matching project based on context url and project's repo url
-    const project = useMemo(() => {
-        if (!workspaceContext.data || !projects.data) {
+    // see if we have a matching configuration based on context url and configuration's repo url
+    const configuration = useMemo(() => {
+        if (!workspaceContext.data || configurations.length === 0) {
             return undefined;
         }
-        const cloneUrl = workspaceContext.data.cloneUrl;
-        if (!cloneUrl) {
+        if (!cloneURL) {
             return;
         }
-        // TODO: Account for multiple projects w/ the same cloneUrl
-        return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
-    }, [projects.data, workspaceContext.data]);
+        // TODO: Account for multiple configurations w/ the same cloneUrl
+        return configurations.find((p) => p.cloneUrl === cloneURL);
+    }, [workspaceContext.data, configurations, cloneURL]);
 
     // Handle the case where the context url in the hash matches a project and we don't have that project selected yet
     useEffect(() => {
-        if (project && !selectedProjectID) {
-            setSelectedProjectID(project.id);
+        if (configuration && !selectedProjectID) {
+            setSelectedProjectID(configuration.id);
         }
-    }, [project, selectedProjectID]);
+    }, [configuration, selectedProjectID]);
 
     // In addition to updating state, we want to update the url hash as well
     // This allows the contextURL to persist if user changes orgs, or copies/shares url
@@ -175,7 +216,7 @@ export function CreateWorkspacePage() {
             // TODO: consider storing SuggestedRepository as state vs. discrete props
             setContextURL(repo?.url);
             setSelectedProjectID(repo?.configurationId);
-            // TOOD: consider dropping this - it's a lossy conversion
+            // TODO: consider dropping this - it's a lossy conversion
             history.replace(`#${repo?.url}`);
             // reset load options
             setNextLoadOption("searchParams");
@@ -259,6 +300,7 @@ export function CreateWorkspacePage() {
                     contextUrlSource.editor = {
                         name: selectedIde,
                         version: useLatestIde ? "latest" : undefined,
+                        preferToolbox: preferToolbox,
                     };
                 }
                 opts.source = {
@@ -289,6 +331,7 @@ export function CreateWorkspacePage() {
             selectedWsClass,
             selectedIde,
             useLatestIde,
+            preferToolbox,
             createWorkspaceMutation,
             selectedProjectID,
             storeAutoStartOptions,
@@ -338,8 +381,15 @@ export function CreateWorkspacePage() {
         );
         if (rememberedOptions) {
             if (!selectedIdeIsDirty) {
+                if (
+                    rememberedOptions.editorSettings?.name &&
+                    !availableEditorOptions.includes(rememberedOptions.editorSettings.name)
+                ) {
+                    rememberedOptions.editorSettings.name = "code";
+                }
                 setSelectedIde(rememberedOptions.editorSettings?.name, false);
                 setUseLatestIde(rememberedOptions.editorSettings?.version === "latest");
+                setPreferToolbox(rememberedOptions.editorSettings?.preferToolbox || false);
             }
 
             if (!selectedWsClassIsDirty) {
@@ -356,9 +406,10 @@ export function CreateWorkspacePage() {
             if (!selectedIdeIsDirty) {
                 setSelectedIde(defaultIde, false);
                 setUseLatestIde(defaultLatestIde);
+                setPreferToolbox(defaultPreferToolbox);
             }
             if (!selectedWsClassIsDirty) {
-                const projectWsClass = project?.settings?.workspaceClasses?.regular;
+                const projectWsClass = configuration?.workspaceSettings?.workspaceClass;
                 const targetClass = projectWsClass || defaultWorkspaceClass;
                 if (allowedWorkspaceClasses.some((cls) => cls.id === targetClass && !cls.isDisabledInScope)) {
                     setSelectedWsClass(targetClass, false);
@@ -369,7 +420,7 @@ export function CreateWorkspacePage() {
         setNextLoadOption("allDone");
         // we only update the remembered options when the workspaceContext changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [workspaceContext.data, nextLoadOption, project, isLoadingWorkspaceClasses, allowedWorkspaceClasses]);
+    }, [workspaceContext.data, nextLoadOption, configuration, isLoadingWorkspaceClasses, allowedWorkspaceClasses]);
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
@@ -419,6 +470,21 @@ export function CreateWorkspacePage() {
 
         return false;
     }, [autostart, contextURL, errorIde, errorWsClass, workspaceContext.error, workspaceContext.isLoading]);
+
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                if (!continueButtonDisabled) {
+                    event.preventDefault();
+                    onClickCreate();
+                }
+            }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+        };
+    }, [continueButtonDisabled, onClickCreate]);
 
     if (SelectAccountPayload.is(selectAccountError)) {
         return (
@@ -481,6 +547,16 @@ export function CreateWorkspacePage() {
                                 }}
                             />
                         ) : null}
+                        {warningIde && (
+                            <Alert type="warning" className="my-4">
+                                <span className="text-sm">{warningIde}</span>
+                            </Alert>
+                        )}
+                        {workspaceContext.data?.data.metadata?.warnings.map((warning) => (
+                            <Alert type="warning" key={warning}>
+                                <span className="text-sm">{warning}</span>
+                            </Alert>
+                        )) ?? []}
 
                         <InputField>
                             <RepositoryFinder
@@ -488,7 +564,17 @@ export function CreateWorkspacePage() {
                                 selectedContextURL={contextURL}
                                 selectedConfigurationId={selectedProjectID}
                                 expanded={!contextURL}
+                                onlyConfigurations={
+                                    orgSettings?.roleRestrictions.some(
+                                        (roleRestriction) =>
+                                            roleRestriction.role === memberRole &&
+                                            roleRestriction.permissions.includes(
+                                                OrganizationPermission.START_ARBITRARY_REPOS,
+                                            ),
+                                    ) ?? false
+                                }
                                 disabled={createWorkspaceMutation.isStarting}
+                                showExamples={showExamples}
                             />
                         </InputField>
 
@@ -499,6 +585,7 @@ export function CreateWorkspacePage() {
                                     defaultIdeSource === selectedProjectID ? availableEditorOptions : undefined
                                 }
                                 setError={setErrorIde}
+                                setWarning={setWarningIde}
                                 selectedIdeOption={selectedIde}
                                 selectedConfigurationId={selectedProjectID}
                                 pinnedEditorVersions={
@@ -531,7 +618,9 @@ export function CreateWorkspacePage() {
                             loading={createWorkspaceMutation.isStarting || !!autostart}
                             disabled={continueButtonDisabled}
                         >
-                            {createWorkspaceMutation.isStarting ? "Opening Workspace ..." : "Continue"}
+                            {createWorkspaceMutation.isStarting
+                                ? "Opening Workspace ..."
+                                : `Continue (${StartWorkspaceKeyBinding})`}
                         </LoadingButton>
                     </div>
                     {existingWorkspaces.length > 0 && !createWorkspaceMutation.isStarting && (
@@ -552,6 +641,7 @@ export function CreateWorkspacePage() {
                     )}
                 </div>
             </div>
+            {!autostart && <BrowserExtensionBanner />}
         </div>
     );
 }
@@ -698,10 +788,13 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
         })
         .toString();
 
+    const errorMessage = error.data?.errorMessage || error.message;
+
     if (!userScopes.includes(missingScope)) {
         return (
             <RepositoryInputError
                 title="The repository may be private. Please authorize Gitpod to access private repositories."
+                message={errorMessage}
                 linkText="Grant access"
                 linkHref={authorizeURL}
             />
@@ -709,7 +802,7 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
     }
 
     if (userIsOwner) {
-        return <RepositoryInputError title="The repository was not found in your account." />;
+        return <RepositoryInputError title="The repository was not found in your account." message={errorMessage} />;
     }
 
     let updatedRecently = false;
@@ -726,8 +819,19 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
         return (
             <RepositoryInputError
                 title={`Permission to access private repositories has been granted. If you are a member of '${owner}', please try to request access for Gitpod.`}
+                message={errorMessage}
                 linkText="Request access"
                 linkHref={authorizeURL}
+            />
+        );
+    }
+    if (authProvider.id.toLocaleLowerCase() === "public-github" && isGitpodIo()) {
+        return (
+            <RepositoryInputError
+                title={`Although you appear to have the correct authorization credentials, the '${owner}' organization has enabled OAuth App access restrictions, meaning that data access to third-parties is limited. For more information on these restrictions, including how to enable this app, visit https://docs.github.com/articles/restricting-access-to-your-organization-s-data/.`}
+                message={errorMessage}
+                linkText="Check Organization Permissions"
+                linkHref={"https://github.com/settings/connections/applications/484069277e293e6d2a2a"}
             />
         );
     }
@@ -735,6 +839,7 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
     return (
         <RepositoryInputError
             title={`Your access token was updated recently. Please try again if the repository exists and Gitpod was approved for '${owner}'.`}
+            message={errorMessage}
             linkText="Authorize again"
             linkHref={authorizeURL}
         />
@@ -752,7 +857,7 @@ export function LimitReachedParallelWorkspacesModal() {
     );
 }
 
-export function LimitReachedModal(p: { children: React.ReactNode }) {
+export function LimitReachedModal(p: { children: ReactNode }) {
     const user = useCurrentUser();
     return (
         // TODO: Use title and buttons props

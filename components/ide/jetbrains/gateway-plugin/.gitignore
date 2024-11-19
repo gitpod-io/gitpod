@@ -3,3 +3,4 @@
 build
 bin
 gradle-local.properties
+.intellijPlatform

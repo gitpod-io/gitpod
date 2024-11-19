@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "long": "4.0.0",
-    "nice-grpc": "^2.0.0",
-    "ts-proto": "^1.153.0"
+    "nice-grpc": "^2.1.8",
+    "ts-proto": "^1.176.2"
   },
   "devDependencies": {
     "@types/long": "4.0.0",

@@ -86,7 +86,7 @@ import { GitLabApp } from "./prebuilds/gitlab-app";
 import { IncrementalWorkspaceService } from "./prebuilds/incremental-workspace-service";
 import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
-import { ProjectsService } from "./projects/projects-service";
+import { LazyPrebuildManager, ProjectsService } from "./projects/projects-service";
 import { RedisMutex } from "./redis/mutex";
 import { Server } from "./server";
 import { SessionHandler } from "./session-handler";
@@ -132,6 +132,9 @@ import { ScmService } from "./scm/scm-service";
 import { ContextService } from "./workspace/context-service";
 import { RateLimitter } from "./rate-limitter";
 import { AnalyticsController } from "./analytics-controller";
+import { InstallationAdminCleanup } from "./jobs/installation-admin-cleanup";
+import { AuditLogService } from "./audit/AuditLogService";
+import { AuditLogGarbageCollectorJob } from "./jobs/auditlog-gc";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -177,13 +180,21 @@ export const productionContainerModule = new ContainerModule(
 
         bind(ContextService).toSelf().inSingletonScope();
 
+        bind(AuditLogService).toSelf().inSingletonScope();
+
         bind(GitpodServerImpl).toSelf();
         bind(WebsocketConnectionManager)
             .toDynamicValue((ctx) => {
                 const serverFactory = () => ctx.container.get<GitpodServerImpl>(GitpodServerImpl);
                 const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
                 const config = ctx.container.get<Config>(Config);
-                return new WebsocketConnectionManager(serverFactory, hostContextProvider, config.rateLimiter);
+                const auditLogService = ctx.container.get<AuditLogService>(AuditLogService);
+                return new WebsocketConnectionManager(
+                    serverFactory,
+                    hostContextProvider,
+                    config.rateLimiter,
+                    auditLogService,
+                );
             })
             .inSingletonScope();
 
@@ -299,7 +310,7 @@ export const productionContainerModule = new ContainerModule(
                         "*": {
                             retryBaseDelayMs: 200,
                             retryMaxAttempts: 15,
-                        },
+                        } as any,
                     });
             })
             .inSingletonScope();
@@ -345,6 +356,12 @@ export const productionContainerModule = new ContainerModule(
         bind(SignInJWT).toSelf().inSingletonScope();
 
         bind(PrebuildManager).toSelf().inSingletonScope();
+        bind(LazyPrebuildManager).toFactory((ctx) => {
+            return () => {
+                const prebuildManager = ctx.container.get<PrebuildManager>(PrebuildManager);
+                return prebuildManager;
+            };
+        });
         bind(GithubApp).toSelf().inSingletonScope();
         bind(GithubAppRules).toSelf().inSingletonScope();
         bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
@@ -363,6 +380,7 @@ export const productionContainerModule = new ContainerModule(
         bind(BillingModes).toSelf().inSingletonScope();
 
         // Periodic jobs
+        bind(AuditLogGarbageCollectorJob).toSelf().inSingletonScope();
         bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
         bind(TokenGarbageCollector).toSelf().inSingletonScope();
         bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();
@@ -371,6 +389,7 @@ export const productionContainerModule = new ContainerModule(
         bind(SnapshotsJob).toSelf().inSingletonScope();
         bind(JobRunner).toSelf().inSingletonScope();
         bind(RelationshipUpdateJob).toSelf().inSingletonScope();
+        bind(InstallationAdminCleanup).toSelf().inSingletonScope();
 
         // Redis
         bind(Redis).toDynamicValue((ctx) => {

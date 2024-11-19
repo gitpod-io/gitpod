@@ -133,24 +133,20 @@ export function ProjectsSearch() {
         </div>
     );
 
-    function ProjectResultItem(p: { project: Project }) {
+    function ProjectResultItem({ project }: { project: Project }) {
         return (
-            <Link
-                key={"pr-" + p.project.name}
-                to={"/admin/projects/" + p.project.id}
-                data-analytics='{"button_type":"sidebar_menu"}'
-            >
+            <Link key={project.id} to={`/admin/projects/${project.id}`} data-analytics='{"button_type":"sidebar_menu"}'>
                 <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">
                     <div className="flex flex-col w-4/12 truncate">
-                        <div className="font-medium text-gray-800 dark:text-gray-100 truncate">{p.project.name}</div>
+                        <div className="font-medium text-gray-800 dark:text-gray-100 truncate">{project.name}</div>
                     </div>
                     <div className="flex flex-col w-6/12 truncate">
-                        <div className="text-gray-500 dark:text-gray-100 truncate">{p.project.cloneUrl}</div>
+                        <div className="text-gray-500 dark:text-gray-100 truncate">{project.cloneUrl}</div>
                     </div>
                     <div className="flex w-2/12 self-center">
-                        <Tooltip content={dayjs(p.project.creationTime).format("MMM D, YYYY")}>
+                        <Tooltip content={dayjs(project.creationTime).format("MMM D, YYYY")}>
                             <div className="text-sm w-full text-gray-400 truncate">
-                                {dayjs(p.project.creationTime).fromNow()}
+                                {dayjs(project.creationTime).fromNow()}
                             </div>
                         </Tooltip>
                     </div>

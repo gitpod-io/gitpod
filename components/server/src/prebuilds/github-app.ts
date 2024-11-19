@@ -289,6 +289,20 @@ export class GithubApp {
                     const user = await this.findProjectOwner(project, installationOwner);
                     const config = await this.prebuildManager.fetchConfig({ span }, user, context, project?.teamId);
 
+                    if (project.settings?.prebuilds?.triggerStrategy === "activity-based") {
+                        await this.projectService.updateProject(user, {
+                            id: project.id,
+                            settings: {
+                                ...project.settings,
+                                prebuilds: {
+                                    ...project.settings.prebuilds,
+                                    triggerStrategy: "webhook-based",
+                                },
+                            },
+                        });
+                        log.info(`Reverted configuration ${project.id} to webhook-based prebuilds`);
+                    }
+
                     await this.webhookEvents.updateEvent(event.id, {
                         authorizedUserId: user.id,
                         projectId: project.id,

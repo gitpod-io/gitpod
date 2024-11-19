@@ -15,6 +15,8 @@ export const defaultGRPCOptions = {
     "grpc-node.max_session_memory": 50,
     "grpc.max_reconnect_backoff_ms": 5000,
     "grpc.max_receive_message_length": 1024 * 1024 * 16,
+    // default is 30s, which is too long for us during rollouts (where service DNS entries are updated)
+    "grpc.dns_min_time_between_resolutions_ms": 2000,
 };
 
 export type GrpcMethodType = "unary" | "client_stream" | "server_stream" | "bidi_stream";

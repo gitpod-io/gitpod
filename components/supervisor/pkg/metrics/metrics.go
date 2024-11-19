@@ -7,6 +7,7 @@ package metrics
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/supervisor/pkg/shared"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -22,7 +23,7 @@ func NewMetrics() *SupervisorMetrics {
 		IDEReadyDurationTotal: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "supervisor_ide_ready_duration_total",
 			Help:    "the IDE startup time",
-			Buckets: []float64{0.1, 0.5, 1, 1.5, 2, 2.5, 5, 10},
+			Buckets: []float64{0.1, 0.5, 1, 1.5, 2, 2.5, 5, shared.IDEReadyDurationTotalMaxBucketSecond},
 		}, []string{"kind"}),
 		InitializerHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "supervisor_initializer_bytes_second",

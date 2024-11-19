@@ -69,9 +69,20 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return repo.find(conditions);
     }
 
-    public async findProjects(orgId: string): Promise<Project[]> {
+    public async findProjects(orgId: string, limit?: number): Promise<Project[]> {
         const repo = await this.getRepo();
-        return repo.find({ where: { teamId: orgId, markedDeleted: false }, order: { name: "ASC" } });
+
+        const queryBuilder = repo
+            .createQueryBuilder("project")
+            .where("project.teamId = :teamId", { teamId: orgId })
+            .orderBy("project.creationTime", "DESC")
+            .andWhere("project.markedDeleted = false");
+
+        if (limit) {
+            queryBuilder.take(limit);
+        }
+
+        return queryBuilder.getMany();
     }
 
     public async findProjectsBySearchTerm({
@@ -223,12 +234,7 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
 
     public async deleteProjectEnvironmentVariable(variableId: string): Promise<void> {
         const envVarRepo = await this.getProjectEnvVarRepo();
-        const envVarWithValue = await envVarRepo.findOne({ id: variableId, deleted: false });
-        if (!envVarWithValue) {
-            throw new Error("A environment variable with this name could not be found for this project");
-        }
-        envVarWithValue.deleted = true;
-        await envVarRepo.update({ id: envVarWithValue.id, projectId: envVarWithValue.projectId }, envVarWithValue);
+        await envVarRepo.delete({ id: variableId });
     }
 
     public async getProjectEnvironmentVariableValues(envVars: ProjectEnvVar[]): Promise<ProjectEnvVarWithValue[]> {

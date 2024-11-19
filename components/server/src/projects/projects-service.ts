@@ -5,7 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WebhookEventDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     Branch,
     PrebuildWithStatus,
@@ -13,6 +13,8 @@ import {
     FindPrebuildsParams,
     Project,
     User,
+    CommitContext,
+    WebhookEvent,
 } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
@@ -30,10 +32,17 @@ import { Authorizer, SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/author
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import deepmerge from "deepmerge";
-import { ScmService } from "../scm/scm-service";
 import { runWithSubjectId } from "../util/request-context";
 import { InstallationService } from "../auth/installation-service";
 import { IDEService } from "../ide-service";
+import type { PrebuildManager } from "../prebuilds/prebuild-manager";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { ContextParser } from "../workspace/context-parser-service";
+import { UnauthorizedError } from "../errors";
+
+// to resolve circular dependency issues
+export const LazyPrebuildManager = Symbol("LazyPrebuildManager");
+export type LazyPrebuildManager = () => PrebuildManager;
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
@@ -45,8 +54,10 @@ export class ProjectsService {
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(Authorizer) private readonly auth: Authorizer,
-        @inject(ScmService) private readonly scmService: ScmService,
         @inject(IDEService) private readonly ideService: IDEService,
+        @inject(LazyPrebuildManager) private readonly prebuildManager: LazyPrebuildManager,
+        @inject(ContextParser) private readonly contextParser: ContextParser,
+        @inject(WebhookEventDB) private readonly webhookEventDb: WebhookEventDB,
 
         @inject(InstallationService) private readonly installationService: InstallationService,
     ) {}
@@ -60,9 +71,9 @@ export class ProjectsService {
         return this.migratePrebuildSettingsOnDemand(project);
     }
 
-    async getProjects(userId: string, orgId: string): Promise<Project[]> {
+    async getProjects(userId: string, orgId: string, paginationOptions?: { limit?: number }): Promise<Project[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
-        const projects = await this.projectDB.findProjects(orgId);
+        const projects = await this.projectDB.findProjects(orgId, paginationOptions?.limit);
         const filteredProjects = await this.filterByReadAccess(userId, projects);
         return Promise.all(filteredProjects.map((p) => this.migratePrebuildSettingsOnDemand(p)));
     }
@@ -213,7 +224,7 @@ export class ProjectsService {
     }
 
     async createProject(
-        { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
+        { name, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
         projectSettingsDefaults: ProjectSettings = { prebuilds: Project.PREBUILD_SETTINGS_DEFAULTS },
     ): Promise<Project> {
@@ -246,14 +257,14 @@ export class ProjectsService {
         if (!hostContext || !hostContext.services) {
             throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
-                "No GIT provider has been configured for the provided repository.",
+                "No Git provider has been configured for the provided repository.",
             );
         }
         const repoProvider = hostContext.services.repositoryProvider;
         if (!repoProvider) {
             throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
-                "No GIT provider has been configured for the provided repository.",
+                "No Git provider has been configured for the provided repository.",
             );
         }
         const canRead = await repoProvider.hasReadAccess(installer, parsedUrl.owner, parsedUrl.repo);
@@ -320,6 +331,12 @@ export class ProjectsService {
                 orgId = project.teamId;
                 await db.markDeleted(projectId);
 
+                // delete env vars
+                const envVars = await db.getProjectEnvironmentVariables(projectId);
+                for (const envVar of envVars) {
+                    await db.deleteProjectEnvironmentVariable(envVar.id);
+                }
+
                 await this.auth.removeProjectFromOrg(userId, orgId, projectId);
             });
             this.analytics.track({
@@ -351,13 +368,8 @@ export class ProjectsService {
         const result: PrebuildWithStatus[] = [];
 
         if (prebuildId) {
-            const pbws = await this.workspaceDb.trace({}).findPrebuiltWorkspaceById(prebuildId);
-            const info = (await this.workspaceDb.trace({}).findPrebuildInfos([prebuildId]))[0];
-            if (info && pbws) {
-                const r: PrebuildWithStatus = { info, status: pbws.state };
-                if (pbws.error) {
-                    r.error = pbws.error;
-                }
+            const r = await this.prebuildManager().getPrebuild({}, userId, prebuildId);
+            if (r) {
                 result.push(r);
             }
         } else {
@@ -366,20 +378,15 @@ export class ProjectsService {
                 limit = 1;
             }
             const branch = params.branch;
-            const prebuilds = await this.workspaceDb
-                .trace({})
-                .findPrebuiltWorkspacesByProject(project.id, branch, limit);
-            const infos = await this.workspaceDb.trace({}).findPrebuildInfos([...prebuilds.map((p) => p.id)]);
-            result.push(
-                ...infos.map((info) => {
-                    const p = prebuilds.find((p) => p.id === info.id)!;
-                    const r: PrebuildWithStatus = { info, status: p.state };
-                    if (p.error) {
-                        r.error = p.error;
-                    }
-                    return r;
-                }),
+            const prebuilds = await this.prebuildManager().listPrebuilds(
+                {},
+                userId,
+                project.teamId,
+                { limit, offset: 0 },
+                { configuration: { id: project.id, branch } },
+                { field: "creationTime", order: "DESC" },
             );
+            result.push(...prebuilds);
         }
         return result;
     }
@@ -420,7 +427,13 @@ export class ProjectsService {
             partialProject.settings = deepmerge(toBeMerged, partialProject.settings);
             await this.checkProjectSettings(user.id, partialProject.settings);
         }
-        await this.handleEnablePrebuild(user, partialProject);
+        if (partialProject?.settings?.prebuilds?.enable) {
+            const enablePrebuildsPrev = !!existingProject.settings?.prebuilds?.enable;
+            if (!enablePrebuildsPrev) {
+                // new default
+                partialProject.settings.prebuilds.triggerStrategy = "activity-based";
+            }
+        }
         return this.projectDB.updateProject(partialProject);
     }
     private async checkProjectSettings(userId: string, settings?: PartialProject["settings"]) {
@@ -446,26 +459,6 @@ export class ProjectsService {
             const options = settings.restrictedEditorNames.filter((e) => !!e) as string[];
             await this.ideService.checkEditorsAllowed(userId, options);
             settings.restrictedEditorNames = options;
-        }
-    }
-
-    private async handleEnablePrebuild(user: User, partialProject: PartialProject): Promise<void> {
-        const enablePrebuildsNew = partialProject?.settings?.prebuilds?.enable;
-        if (typeof enablePrebuildsNew === "boolean") {
-            const project = await this.projectDB.findProjectById(partialProject.id);
-            if (!project) {
-                return;
-            }
-            const enablePrebuildsPrev = !!project.settings?.prebuilds?.enable;
-            const installWebhook = enablePrebuildsNew && !enablePrebuildsPrev;
-            const uninstallWebhook = !enablePrebuildsNew && enablePrebuildsPrev;
-            if (installWebhook) {
-                await this.scmService.installWebhookForPrebuilds(project, user);
-            }
-            if (uninstallWebhook) {
-                // TODO
-                // await this.scmService.uninstallWebhookForPrebuilds(project, user);
-            }
         }
     }
 
@@ -549,6 +542,62 @@ export class ProjectsService {
             });
             return project;
         }
+    }
+
+    /**
+     * getRecentWebhookEvent checks if the webhook integration is active for the given user and project by querying the webhook event database and seeing if for the latest commit on the repository there exists a webhook event. Additionally, if the necessary SCM permissions are given, the latest commit check is skipped and the most recent event is returned.
+     */
+    public async getRecentWebhookEvent(
+        ctx: TraceContext,
+        user: User,
+        project: Project,
+        maxAge?: number,
+    ): Promise<WebhookEvent | undefined> {
+        const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
+
+        // We fetch the most recent 50 events so to maximalize the propability
+        // of hitting a commit on the default branch and not just one on some
+        // separate feature branch.
+        const events = await this.webhookEventDb.findByCloneUrl(project.cloneUrl, 50);
+        const hostContext = this.hostContextProvider.get(context.repository.host);
+        const repoService = hostContext?.services?.repositoryService;
+        if (repoService) {
+            try {
+                const webhookEnabled = await repoService.isGitpodWebhookEnabled(user, project.cloneUrl);
+                return webhookEnabled
+                    ? events[0] ?? {
+                          commit: "n/a",
+                          creationTime: "",
+                          id: "initial_data",
+                          type: "initial_data",
+                          rawEvent: "{}",
+                          status: "processed",
+                      }
+                    : undefined;
+            } catch (error) {
+                if (!UnauthorizedError.is(error) && error.message !== "unsupported") {
+                    throw error;
+                }
+            }
+            1;
+        }
+
+        const matchingEvent = events.find((event) => {
+            if (maxAge && Date.now() - new Date(event.creationTime).getTime() > maxAge) {
+                return false;
+            }
+
+            // If we know when the source repository was last pushed to, we can figure out if we received the push event after that
+            if (context.repository.pushedAt && new Date(event.creationTime) >= new Date(context.repository.pushedAt)) {
+                return true;
+            }
+
+            // If we know the commit hash, we can check if latest commit in the event matches the one we know.
+            // We do this check second, because pushing to the non-default branch might throw this off.
+            return context.revision === event.commit;
+        });
+
+        return matchingEvent;
     }
 }
 

@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 
 	"github.com/bombsimon/logrusr/v4"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -125,11 +126,8 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme: scheme,
-		Metrics: metricsserver.Options{
-			// Disable the metrics server. We already expose metrics
-			BindAddress: "0",
-		},
+		Scheme:  scheme,
+		Metrics: metricsserver.Options{BindAddress: cfg.Prometheus.Addr},
 		Cache: cache.Options{
 			DefaultNamespaces: map[string]cache.Config{
 				cfg.Manager.Namespace:        {},
@@ -143,6 +141,17 @@ func main() {
 		LeaderElection:                true,
 		LeaderElectionID:              "ws-manager-mk2-leader.gitpod.io",
 		LeaderElectionReleaseOnCancel: true,
+		NewClient: func(config *rest.Config, options client.Options) (client.Client, error) {
+			config.QPS = 100
+			config.Burst = 150
+
+			c, err := client.New(config, options)
+			if err != nil {
+				return nil, err
+			}
+
+			return c, nil
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

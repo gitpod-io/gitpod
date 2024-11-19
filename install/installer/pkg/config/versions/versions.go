@@ -37,33 +37,39 @@ type Components struct {
 	ServiceWaiter     Versioned `json:"serviceWaiter"`
 	Usage             Versioned `json:"usage"`
 	Workspace         struct {
-		CodeImage        Versioned `json:"codeImage"`
-		CodeHelperImage  Versioned `json:"codeHelperImage"`
-		DockerUp         Versioned `json:"dockerUp"`
-		Supervisor       Versioned `json:"supervisor"`
-		Workspacekit     Versioned `json:"workspacekit"`
-		DesktopIdeImages struct {
-			CodeDesktopImage                  Versioned `json:"codeDesktop"`
-			CodeDesktopImageInsiders          Versioned `json:"codeDesktopInsiders"`
-			IntelliJImage                     Versioned `json:"intellij"`
-			IntelliJLatestImage               Versioned `json:"intellijLatest"`
-			GoLandImage                       Versioned `json:"goland"`
-			GoLandLatestImage                 Versioned `json:"golandLatest"`
-			PyCharmImage                      Versioned `json:"pycharm"`
-			PyCharmLatestImage                Versioned `json:"pycharmLatest"`
-			PhpStormImage                     Versioned `json:"phpstorm"`
-			PhpStormLatestImage               Versioned `json:"phpstormLatest"`
-			RubyMineImage                     Versioned `json:"rubymine"`
-			RubyMineLatestImage               Versioned `json:"rubymineLatest"`
-			WebStormImage                     Versioned `json:"webstorm"`
-			WebStormLatestImage               Versioned `json:"webstormLatest"`
-			RiderImage                        Versioned `json:"rider"`
-			RiderLatestImage                  Versioned `json:"riderLatest"`
-			CLionImage                        Versioned `json:"clion"`
-			CLionLatestImage                  Versioned `json:"clionLatest"`
-			JetBrainsBackendPluginImage       Versioned `json:"jbBackendPlugin"`
-			JetBrainsBackendPluginLatestImage Versioned `json:"jbBackendPluginLatest"`
-			JetBrainsLauncherImage            Versioned `json:"jbLauncher"`
+		CodeImage             Versioned `json:"codeImage"`
+		CodeHelperImage       Versioned `json:"codeHelperImage"`
+		CodeWebExtensionImage Versioned `json:"codeWebExtensionImage"`
+		XtermWebImage         Versioned `json:"xtermWebImage"`
+		DockerUp              Versioned `json:"dockerUp"`
+		Supervisor            Versioned `json:"supervisor"`
+		Workspacekit          Versioned `json:"workspacekit"`
+		DesktopIdeImages      struct {
+			CodeDesktopImage                       Versioned `json:"codeDesktop"`
+			CodeDesktopImageInsiders               Versioned `json:"codeDesktopInsiders"`
+			IntelliJImage                          Versioned `json:"intellij"`
+			IntelliJLatestImage                    Versioned `json:"intellijLatest"`
+			GoLandImage                            Versioned `json:"goland"`
+			GoLandLatestImage                      Versioned `json:"golandLatest"`
+			PyCharmImage                           Versioned `json:"pycharm"`
+			PyCharmLatestImage                     Versioned `json:"pycharmLatest"`
+			PhpStormImage                          Versioned `json:"phpstorm"`
+			PhpStormLatestImage                    Versioned `json:"phpstormLatest"`
+			RubyMineImage                          Versioned `json:"rubymine"`
+			RubyMineLatestImage                    Versioned `json:"rubymineLatest"`
+			WebStormImage                          Versioned `json:"webstorm"`
+			WebStormLatestImage                    Versioned `json:"webstormLatest"`
+			RiderImage                             Versioned `json:"rider"`
+			RiderLatestImage                       Versioned `json:"riderLatest"`
+			CLionImage                             Versioned `json:"clion"`
+			CLionLatestImage                       Versioned `json:"clionLatest"`
+			RustRoverImage                         Versioned `json:"rustrover"`
+			RustRoverLatestImage                   Versioned `json:"rustroverLatest"`
+			JetBrainsBackendPluginImage            Versioned `json:"jbBackendPlugin"`
+			JetBrainsBackendPluginLatestImage      Versioned `json:"jbBackendPluginLatest"`
+			JetBrainsBackendPluginRiderImage       Versioned `json:"jbBackendPluginRider"`
+			JetBrainsBackendPluginLatestRiderImage Versioned `json:"jbBackendPluginLatestRider"`
+			JetBrainsLauncherImage                 Versioned `json:"jbLauncher"`
 		} `json:"desktopIdeImages"`
 	} `json:"workspace"`
 	WSDaemon struct {

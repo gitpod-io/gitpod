@@ -36,24 +36,31 @@ resource "acme_certificate" "letsencrypt" {
   }
 }
 
-resource "kubernetes_secret" "letsencrypt" {
-  provider = k8s.dev
-  count    = local.letsencrypt_enabled ? 1 : 0
 
-  type = "kubernetes.io/tls"
+resource "google_secret_manager_secret" "letsencrypt" {
+  count = local.letsencrypt_enabled ? 1 : 0
 
-  metadata {
-    name      = "harvester-${var.preview_name}"
-    namespace = "certs"
-    annotations = {
-      "preview/owner" = var.preview_name
-    }
+  secret_id = "certificate-${var.preview_name}"
+
+  labels = {
+    label = "preview-certificate"
   }
 
-  data = {
-    "tls.crt" = "${lookup(acme_certificate.letsencrypt[0], "certificate_pem")}${lookup(acme_certificate.letsencrypt[0], "issuer_pem")}"
-    "tls.key" = "${lookup(acme_certificate.letsencrypt[0], "private_key_pem")}"
+  replication {
+    auto {}
   }
+}
+
+
+resource "google_secret_manager_secret_version" "letsencrypt" {
+  count = local.letsencrypt_enabled ? 1 : 0
+
+  secret = google_secret_manager_secret.letsencrypt[0].id
+
+  secret_data = jsonencode({
+    "tls.crt" = base64encode("${lookup(acme_certificate.letsencrypt[0], "certificate_pem")}${lookup(acme_certificate.letsencrypt[0], "issuer_pem")}")
+    "tls.key" = base64encode("${lookup(acme_certificate.letsencrypt[0], "private_key_pem")}")
+  })
 
   depends_on = [
     acme_certificate.letsencrypt[0]

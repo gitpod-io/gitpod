@@ -2,19 +2,23 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:9496b3fe80bcd98cf2af63b8cd904fce45554c6632093de0f5adf51a08c07d49 as compress
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:2148be123cd047f10c93e2bc88010d4abba1fc56a367d6287a251099ed5f006a as compress
 
-RUN apk add brotli gzip
+RUN apk add brotli gzip curl
 
 # Gitpod CLI and Local App
 COPY components-local-app--app-with-manifest/bin/* /bin/
 
 RUN for FILE in `ls /bin/gitpod-local-companion*`;do \
   gzip -v -f -9 -k "$FILE"; \
-done
+  done
+
+RUN mkdir -p static/code
+RUN curl -o static/code/marketplace.json "https://raw.githubusercontent.com/open-vsx/publish-extensions/e5c7f0ac781b430049c9f07fed10ee5c388b0097/extension-control/extensions.json"
 
 FROM caddy/caddy:2.7.6-alpine
 
 COPY conf/Caddyfile /etc/caddy/Caddyfile
 COPY static /www/
+COPY --from=compress /static /www
 COPY --from=compress /bin /www/static/bin

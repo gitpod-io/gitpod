@@ -8,7 +8,7 @@ import { ProjectDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Organization, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
-import { Authorizer, isFgaChecksEnabled, isFgaWritesEnabled } from "./authorizer";
+import { Authorizer } from "./authorizer";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { v1 } from "@authzed/authzed-node";
 import { fgaRelationsUpdateClientLatency } from "../prometheus-metrics";
@@ -38,28 +38,12 @@ export class RelationshipUpdater {
      * @returns
      */
     public async migrate(user: User, forceAwait: boolean = false): Promise<User> {
-        const isEnabled = await isFgaWritesEnabled(user.id);
-        if (!isEnabled) {
-            if (user.fgaRelationshipsVersion !== undefined) {
-                log.info({ userId: user.id }, `User has been removed from FGA.`);
-                // reset the fgaRelationshipsVersion to undefined, so the migration is triggered again when the feature is enabled
-                await this.setFgaRelationshipsVersion(user, undefined);
-            }
-            return user;
-        }
         if (await this.isMigrated(user)) {
             return user;
         }
-        const migrated = this.internalMigrate(user);
-        // if checks are not enabled, we don't want to wait for the migration to finish
-        if (!forceAwait && !(await isFgaChecksEnabled(user.id))) {
-            migrated.catch((err) => {
-                log.error({ userId: user.id }, "Error while migrating user", err);
-            });
-            return user;
-        }
+
         try {
-            return await migrated;
+            return await this.internalMigrate(user);
         } catch (error) {
             log.error({ userId: user.id }, "Error while migrating user", error);
             throw error;

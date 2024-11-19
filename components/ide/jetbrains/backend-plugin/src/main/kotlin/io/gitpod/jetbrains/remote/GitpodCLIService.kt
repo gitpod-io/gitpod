@@ -27,7 +27,10 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.prometheus.client.exporter.common.TextFormat
-import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
 import java.io.OutputStreamWriter
@@ -50,6 +53,9 @@ class GitpodCLIService : RestService() {
         /**
          * prod: curl http://localhost:63342/api/gitpod/cli?op=metrics
          * dev:  curl http://localhost:63343/api/gitpod/cli?op=metrics
+         *
+         * We will use this endpoint in JetBrains launcher to check if backend-plugin is ready.
+         * Please make sure this operation:metrics to respond 200
          */
         if (operation == "metrics") {
             val out = BufferExposingByteArrayOutputStream()
@@ -110,7 +116,9 @@ class GitpodCLIService : RestService() {
         GlobalScope.launch {
             getClientSessionAndProjectAsync().let { (session, project) ->
                 ClientId.withClientId(session.clientId) {
-                    action(project)
+                    runBlocking {
+                        action(project)
+                    }
                     sendOk(request, context)
                 }
             }

@@ -1,10 +1,10 @@
 terraform {
   backend "gcs" {
-    bucket = "3f4745df-preview-tf-state"
+    bucket = "5d39183e-preview-tf-state"
     prefix = "preview"
   }
 
-  required_version = ">= 1.2"
+  required_version = ">= 1.8"
   required_providers {
     k8s = {
       source  = "hashicorp/kubernetes"
@@ -12,7 +12,7 @@ terraform {
     }
     google = {
       source  = "hashicorp/google"
-      version = ">=4.40.0"
+      version = ">=5.25.0"
     }
     acme = {
       source  = "vancluever/acme"
@@ -28,8 +28,8 @@ provider "k8s" {
 }
 
 provider "google" {
-  project = "gitpod-core-dev"
-  region  = "us-central1"
+  project = "gitpod-dev-preview"
+  region  = "europe-west1"
 }
 
 provider "acme" {

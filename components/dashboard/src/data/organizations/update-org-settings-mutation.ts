@@ -11,15 +11,19 @@ import { organizationClient } from "../../service/public-api";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useOrgWorkspaceClassesQueryInvalidator } from "./org-workspace-classes-query";
+import { PlainMessage } from "@bufbuild/protobuf";
 
 type UpdateOrganizationSettingsArgs = Partial<
     Pick<
-        OrganizationSettings,
+        PlainMessage<OrganizationSettings>,
         | "workspaceSharingDisabled"
         | "defaultWorkspaceImage"
         | "allowedWorkspaceClasses"
         | "pinnedEditorVersions"
         | "restrictedEditorNames"
+        | "defaultRole"
+        | "timeoutSettings"
+        | "roleRestrictions"
     >
 >;
 
@@ -27,7 +31,7 @@ export const useUpdateOrgSettingsMutation = () => {
     const org = useCurrentOrg().data;
     const invalidateOrgSettings = useOrgSettingsQueryInvalidator();
     const invalidateWorkspaceClasses = useOrgWorkspaceClassesQueryInvalidator();
-    const teamId = org?.id || "";
+    const teamId = org?.id ?? "";
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
         mutationFn: async ({
@@ -36,6 +40,9 @@ export const useUpdateOrgSettingsMutation = () => {
             allowedWorkspaceClasses,
             pinnedEditorVersions,
             restrictedEditorNames,
+            defaultRole,
+            timeoutSettings,
+            roleRestrictions,
         }) => {
             const settings = await organizationClient.updateOrganizationSettings({
                 organizationId: teamId,
@@ -46,6 +53,10 @@ export const useUpdateOrgSettingsMutation = () => {
                 pinnedEditorVersions,
                 restrictedEditorNames,
                 updateRestrictedEditorNames: !!restrictedEditorNames,
+                defaultRole,
+                timeoutSettings,
+                roleRestrictions,
+                updateRoleRestrictions: !!roleRestrictions,
             });
             return settings.settings!;
         },

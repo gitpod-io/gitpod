@@ -695,22 +695,33 @@ func makeHostnameLocal(ring2root string) error {
 	if err != nil {
 		return err
 	}
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
 	bStr := string(b)
 	lines := strings.Split(bStr, "\n")
-	for i, line := range lines {
+	newLines := []string{}
+	for _, line := range lines {
 		fields := strings.Fields(line)
-		if len(fields) != 2 {
+		if len(fields) < 1 {
+			newLines = append(newLines, line)
+			continue
+		}
+		if strings.HasPrefix(fields[0], "#") {
+			newLines = append(newLines, line)
+		}
+		ip := net.ParseIP(fields[0]).To4()
+		if len(ip) != net.IPv4len {
 			continue
 		}
 		if fields[1] == hostname {
-			lines[i] = "127.0.0.1 " + hostname
+			newLines = append(newLines, "127.0.0.1 "+hostname)
+		} else {
+			newLines = append(newLines, line)
 		}
 	}
-	return ioutil.WriteFile(path, []byte(strings.Join(lines, "\n")), stat.Mode())
+	return os.WriteFile(path, []byte(strings.Join(newLines, "\n")), stat.Mode())
 }
 
 func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {

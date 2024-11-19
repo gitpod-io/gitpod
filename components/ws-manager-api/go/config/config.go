@@ -142,6 +142,11 @@ type Configuration struct {
 
 	// SSHGatewayCAPublicKey is a CA public key
 	SSHGatewayCAPublicKey string
+
+	// PodRecreationMaxRetries
+	PodRecreationMaxRetries int `json:"podRecreationMaxRetries,omitempty"`
+	// PodRecreationBackoff
+	PodRecreationBackoff util.Duration `json:"podRecreationBackoff,omitempty"`
 }
 
 type WorkspaceClass struct {

@@ -42,10 +42,13 @@ type WorkspaceServiceClient interface {
 	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest]) (*connect_go.ServerStreamForClient[v1.WatchWorkspaceStatusResponse], error)
 	// ListWorkspaces returns a list of workspaces that match the query.
 	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
+	// ListWorkspaceSessions returns a list of workspace sessions that match the
+	ListWorkspaceSessions(context.Context, *connect_go.Request[v1.ListWorkspaceSessionsRequest]) (*connect_go.Response[v1.ListWorkspaceSessionsResponse], error)
 	// CreateAndStartWorkspace creates a new workspace and starts it.
 	CreateAndStartWorkspace(context.Context, *connect_go.Request[v1.CreateAndStartWorkspaceRequest]) (*connect_go.Response[v1.CreateAndStartWorkspaceResponse], error)
 	// StartWorkspace starts an existing workspace.
-	// If the specified workspace is not in stopped phase, this will return the workspace as is.
+	// If the specified workspace is not in stopped phase, this will return the
+	// workspace as is.
 	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
 	// UpdateWorkspace updates the workspace.
 	UpdateWorkspace(context.Context, *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error)
@@ -57,8 +60,8 @@ type WorkspaceServiceClient interface {
 	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
 	// ListWorkspaceClasses enumerates all available workspace classes.
 	ListWorkspaceClasses(context.Context, *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error)
-	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
-	// Not implemented yet.
+	// ParseContextURL parses a context URL and returns the workspace metadata and
+	// spec. Not implemented yet.
 	ParseContextURL(context.Context, *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error)
 	// GetWorkspaceDefaultImage returns the default workspace image of specified
 	// workspace.
@@ -102,6 +105,11 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 		listWorkspaces: connect_go.NewClient[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse](
 			httpClient,
 			baseURL+"/gitpod.v1.WorkspaceService/ListWorkspaces",
+			opts...,
+		),
+		listWorkspaceSessions: connect_go.NewClient[v1.ListWorkspaceSessionsRequest, v1.ListWorkspaceSessionsResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/ListWorkspaceSessions",
 			opts...,
 		),
 		createAndStartWorkspace: connect_go.NewClient[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse](
@@ -182,6 +190,7 @@ type workspaceServiceClient struct {
 	getWorkspace                  *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
 	watchWorkspaceStatus          *connect_go.Client[v1.WatchWorkspaceStatusRequest, v1.WatchWorkspaceStatusResponse]
 	listWorkspaces                *connect_go.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
+	listWorkspaceSessions         *connect_go.Client[v1.ListWorkspaceSessionsRequest, v1.ListWorkspaceSessionsResponse]
 	createAndStartWorkspace       *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
 	startWorkspace                *connect_go.Client[v1.StartWorkspaceRequest, v1.StartWorkspaceResponse]
 	updateWorkspace               *connect_go.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
@@ -211,6 +220,11 @@ func (c *workspaceServiceClient) WatchWorkspaceStatus(ctx context.Context, req *
 // ListWorkspaces calls gitpod.v1.WorkspaceService.ListWorkspaces.
 func (c *workspaceServiceClient) ListWorkspaces(ctx context.Context, req *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error) {
 	return c.listWorkspaces.CallUnary(ctx, req)
+}
+
+// ListWorkspaceSessions calls gitpod.v1.WorkspaceService.ListWorkspaceSessions.
+func (c *workspaceServiceClient) ListWorkspaceSessions(ctx context.Context, req *connect_go.Request[v1.ListWorkspaceSessionsRequest]) (*connect_go.Response[v1.ListWorkspaceSessionsResponse], error) {
+	return c.listWorkspaceSessions.CallUnary(ctx, req)
 }
 
 // CreateAndStartWorkspace calls gitpod.v1.WorkspaceService.CreateAndStartWorkspace.
@@ -296,10 +310,13 @@ type WorkspaceServiceHandler interface {
 	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest], *connect_go.ServerStream[v1.WatchWorkspaceStatusResponse]) error
 	// ListWorkspaces returns a list of workspaces that match the query.
 	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
+	// ListWorkspaceSessions returns a list of workspace sessions that match the
+	ListWorkspaceSessions(context.Context, *connect_go.Request[v1.ListWorkspaceSessionsRequest]) (*connect_go.Response[v1.ListWorkspaceSessionsResponse], error)
 	// CreateAndStartWorkspace creates a new workspace and starts it.
 	CreateAndStartWorkspace(context.Context, *connect_go.Request[v1.CreateAndStartWorkspaceRequest]) (*connect_go.Response[v1.CreateAndStartWorkspaceResponse], error)
 	// StartWorkspace starts an existing workspace.
-	// If the specified workspace is not in stopped phase, this will return the workspace as is.
+	// If the specified workspace is not in stopped phase, this will return the
+	// workspace as is.
 	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
 	// UpdateWorkspace updates the workspace.
 	UpdateWorkspace(context.Context, *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error)
@@ -311,8 +328,8 @@ type WorkspaceServiceHandler interface {
 	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
 	// ListWorkspaceClasses enumerates all available workspace classes.
 	ListWorkspaceClasses(context.Context, *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error)
-	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
-	// Not implemented yet.
+	// ParseContextURL parses a context URL and returns the workspace metadata and
+	// spec. Not implemented yet.
 	ParseContextURL(context.Context, *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error)
 	// GetWorkspaceDefaultImage returns the default workspace image of specified
 	// workspace.
@@ -353,6 +370,11 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 	mux.Handle("/gitpod.v1.WorkspaceService/ListWorkspaces", connect_go.NewUnaryHandler(
 		"/gitpod.v1.WorkspaceService/ListWorkspaces",
 		svc.ListWorkspaces,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/ListWorkspaceSessions", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/ListWorkspaceSessions",
+		svc.ListWorkspaceSessions,
 		opts...,
 	))
 	mux.Handle("/gitpod.v1.WorkspaceService/CreateAndStartWorkspace", connect_go.NewUnaryHandler(
@@ -441,6 +463,10 @@ func (UnimplementedWorkspaceServiceHandler) WatchWorkspaceStatus(context.Context
 
 func (UnimplementedWorkspaceServiceHandler) ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.ListWorkspaces is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) ListWorkspaceSessions(context.Context, *connect_go.Request[v1.ListWorkspaceSessionsRequest]) (*connect_go.Response[v1.ListWorkspaceSessionsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.ListWorkspaceSessions is not implemented"))
 }
 
 func (UnimplementedWorkspaceServiceHandler) CreateAndStartWorkspace(context.Context, *connect_go.Request[v1.CreateAndStartWorkspaceRequest]) (*connect_go.Response[v1.CreateAndStartWorkspaceResponse], error) {

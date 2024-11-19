@@ -1,0 +1,28 @@
+// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package supervisor;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
+
+service TaskService {
+    // Listens to the output of a given task
+    rpc ListenToOutput(ListenToOutputRequest) returns (stream ListenToOutputResponse) {
+        option (google.api.http) = {
+            get: "/v1/task/listen/{task_id}/output"
+        };
+    }
+}
+
+message ListenToOutputRequest {
+    string task_id = 1;
+}
+message ListenToOutputResponse {
+    bytes data = 1;
+}

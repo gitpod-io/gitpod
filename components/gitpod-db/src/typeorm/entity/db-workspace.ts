@@ -91,6 +91,13 @@ export class DBWorkspace implements Workspace {
     type: WorkspaceType;
 
     @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    @Index("ind_deletionEligibilityTime")
+    deletionEligibilityTime?: string;
+
+    @Column({
         type: "varchar",
         default: "",
     })

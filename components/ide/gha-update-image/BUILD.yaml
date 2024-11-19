@@ -1,0 +1,37 @@
+scripts:
+  - name: jb-use-dev-latest
+    script: |
+      ide_list=("intellij" "goland" "pycharm" "phpstorm" "rubymine" "webstorm" "rider" "clion" "rustrover")
+      prop_list=("latestImage")
+
+      cf_patch=$(kubectl get cm ide-config -o=json | jq '.data."config.json"' |jq -r)
+      for ide in "${ide_list[@]}"; do
+        for prop in "${prop_list[@]}"; do
+          cf_patch=$(echo "$cf_patch" | jq ".ideOptions.options.$ide.$prop = \"eu.gcr.io/gitpod-dev-artifact/build/ide/$ide:latest\"")
+        done
+      done
+      cf_patch=$(echo "$cf_patch" |jq tostring)
+      cf_patch="{\"data\": {\"config.json\": $cf_patch}}"
+      # echo "$cf_patch"
+
+      kubectl patch cm ide-config --type=merge -p "$cf_patch"
+      kubectl rollout restart deployment ide-service
+      kubectl rollout restart deployment server
+  - name: code-use-dev-latest
+    script: |
+      ide_list=("code")
+      prop_list=("latestImage")
+
+      cf_patch=$(kubectl get cm ide-config -o=json | jq '.data."config.json"' |jq -r)
+      for ide in "${ide_list[@]}"; do
+        for prop in "${prop_list[@]}"; do
+          cf_patch=$(echo "$cf_patch" | jq ".ideOptions.options.$ide.$prop = \"eu.gcr.io/gitpod-dev-artifact/build/ide/code:nightly\"")
+        done
+      done
+      cf_patch=$(echo "$cf_patch" |jq tostring)
+      cf_patch="{\"data\": {\"config.json\": $cf_patch}}"
+      # echo "$cf_patch"
+
+      kubectl patch cm ide-config --type=merge -p "$cf_patch"
+      kubectl rollout restart deployment ide-service
+      kubectl rollout restart deployment server

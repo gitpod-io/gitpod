@@ -5,6 +5,7 @@ package gitpod.v1;
 import "google/protobuf/descriptor.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+option java_package = "io.gitpod.publicapi.v1";
 
 // details for PERMISSION_DENIED status code
 message PermissionDeniedDetails {
@@ -27,6 +28,7 @@ message FailedPreconditionDetails {
     RepositoryNotFoundError repository_not_found = 5;
     RepositoryUnauthorizedError repository_unauthorized = 6;
     ImageBuildLogsNotYetAvailableError image_build_logs_not_yet_available = 7;
+    CellDisabledError cell_is_disabled = 8;
   }
 }
 
@@ -48,6 +50,8 @@ message RepositoryNotFoundError {
   bool user_is_owner = 3;
   repeated string user_scopes = 4;
   string last_update = 5;
+  string repo_name = 6;
+  string error_message = 7;
 }
 
 message RepositoryUnauthorizedError {
@@ -60,6 +64,8 @@ message RepositoryUnauthorizedError {
 }
 
 message ImageBuildLogsNotYetAvailableError {}
+
+message CellDisabledError {}
 
 /*
 // details for INVALID_ARGUMENT status code

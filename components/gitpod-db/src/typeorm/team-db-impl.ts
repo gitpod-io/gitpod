@@ -367,6 +367,9 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
                 "allowedWorkspaceClasses",
                 "pinnedEditorVersions",
                 "restrictedEditorNames",
+                "defaultRole",
+                "timeoutSettings",
+                "roleRestrictions",
             ],
         });
     }
