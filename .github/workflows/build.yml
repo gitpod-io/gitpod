@@ -253,6 +253,7 @@ jobs:
           GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ: "${{ secrets.GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ }}"
           GITPOD_TEST_TOKEN_GITHUB: "${{ secrets.GITPOD_TEST_TOKEN_GITHUB }}"
           GITPOD_TEST_TOKEN_GITLAB: "${{ secrets.GITPOD_TEST_TOKEN_GITLAB }}"
+          GITPOD_TEST_TOKEN_AZURE_DEVOPS: "${{ secrets.GITPOD_TEST_TOKEN_AZURE_DEVOPS }}"
         run: |
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
