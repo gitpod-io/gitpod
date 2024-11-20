@@ -151,7 +151,7 @@ var ring0Cmd = &cobra.Command{
 
 				_ = cmd.Process.Signal(unix.SIGTERM)
 				time.Sleep(ring1ShutdownTimeout)
-				if cmd.Process == nil {
+				if cmd.Process == nil || cmd.ProcessState.Exited() {
 					return
 				}
 

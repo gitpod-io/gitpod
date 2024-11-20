@@ -9,6 +9,7 @@ import (
 
 	"golang.org/x/xerrors"
 
+	"github.com/containerd/containerd/api/types/task"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
@@ -54,6 +55,10 @@ type Runtime interface {
 
 	// DisposeContainer removes a stopped container, and everything we know about it
 	DisposeContainer(ctx context.Context, workspaceInstanceID string)
+
+	GetContainerTaskInfo(ctx context.Context, id ID) (*task.Process, error)
+
+	ForceKillContainerTask(ctx context.Context, id ID) error
 }
 
 var (

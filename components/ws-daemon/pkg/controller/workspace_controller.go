@@ -20,6 +20,7 @@ import (
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
@@ -349,9 +350,43 @@ func (wsc *WorkspaceController) doWorkspaceContentBackup(ctx context.Context, sp
 
 	if ws.IsConditionTrue(workspacev1.WorkspaceConditionContainerRunning) {
 		// Container is still running, we need to wait for it to stop.
-		// We should get an event when the condition changes, but requeue
-		// anyways to make sure we act on it in time.
-		return ctrl.Result{RequeueAfter: 500 * time.Millisecond}, nil
+		// We will wait for this situation for up to 5 minutes.
+		// If the container is still in a running state after that,
+		// there may be an issue with state synchronization.
+		// We should start backup anyway to avoid data loss.
+		if !(ws.Status.PodStoppingTime != nil && time.Since(ws.Status.PodStoppingTime.Time) > 5*time.Minute) {
+			// We should get an event when the condition changes, but requeue
+			// anyways to make sure we act on it in time.
+			return ctrl.Result{RequeueAfter: 500 * time.Millisecond}, nil
+		}
+
+		if !ws.IsConditionTrue(workspacev1.WorkspaceConditionForceKilledTask) {
+			err = wsc.forceKillContainerTask(ctx, ws)
+			if err != nil {
+				glog.WithFields(ws.OWI()).WithField("workspace", req.NamespacedName).Errorf("failed to force kill task: %v", err)
+			}
+			err = retry.RetryOnConflict(retryParams, func() error {
+				if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {
+					return err
+				}
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionForceKilledTask())
+				return wsc.Client.Status().Update(ctx, ws)
+			})
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to set force killed task condition: %w", err)
+			}
+			return ctrl.Result{Requeue: true, RequeueAfter: 2 * time.Second}, nil
+		}
+
+		if time.Since(wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionForceKilledTask)).LastTransitionTime.Time) < 2*time.Second {
+			return ctrl.Result{Requeue: true, RequeueAfter: 2 * time.Second}, nil
+		}
+
+		glog.WithFields(ws.OWI()).WithField("workspace", req.NamespacedName).Warn("workspace container is still running after 5 minutes of deletion, starting backup anyway")
+		err = wsc.dumpWorkspaceContainerInfo(ctx, ws)
+		if err != nil {
+			glog.WithFields(ws.OWI()).WithField("workspace", req.NamespacedName).Errorf("failed to dump container info: %v", err)
+		}
 	}
 
 	if wsc.latestWorkspace(ctx, ws) != nil {
@@ -440,6 +475,33 @@ func (wsc *WorkspaceController) doWorkspaceContentBackup(ctx context.Context, sp
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (wsc *WorkspaceController) dumpWorkspaceContainerInfo(ctx context.Context, ws *workspacev1.Workspace) error {
+	id, err := wsc.runtime.WaitForContainer(ctx, ws.Name)
+	if err != nil {
+		return fmt.Errorf("failed to wait for container: %w", err)
+	}
+	task, err := wsc.runtime.GetContainerTaskInfo(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to get container task info: %w", err)
+	}
+	glog.WithFields(ws.OWI()).WithFields(logrus.Fields{
+		"containerID": id,
+		"exitStatus":  task.ExitStatus,
+		"pid":         task.Pid,
+		"exitedAt":    task.ExitedAt.AsTime(),
+		"status":      task.Status.String(),
+	}).Info("container task info")
+	return nil
+}
+
+func (wsc *WorkspaceController) forceKillContainerTask(ctx context.Context, ws *workspacev1.Workspace) error {
+	id, err := wsc.runtime.WaitForContainer(ctx, ws.Name)
+	if err != nil {
+		return fmt.Errorf("failed to wait for container: %w", err)
+	}
+	return wsc.runtime.ForceKillContainerTask(ctx, id)
 }
 
 func (wsc *WorkspaceController) prepareInitializer(ctx context.Context, ws *workspacev1.Workspace) (*csapi.WorkspaceInitializer, error) {

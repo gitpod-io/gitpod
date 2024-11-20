@@ -181,11 +181,17 @@ type WorkspaceImageInfo struct {
 
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
-	PodStarts       int          `json:"podStarts"`
-	PodRecreated    int          `json:"podRecreated"`
+	PodStarts int `json:"podStarts"`
+
+	// +kubebuilder:validation:Optional
+	PodRecreated int `json:"podRecreated"`
+	// +kubebuilder:validation:Optional
 	PodDeletionTime *metav1.Time `json:"podDeletionTime,omitempty"`
-	URL             string       `json:"url,omitempty" scrub:"redact"`
-	OwnerToken      string       `json:"ownerToken,omitempty" scrub:"redact"`
+	// +kubebuilder:validation:Optional
+	PodStoppingTime *metav1.Time `json:"podStoppingTime,omitempty"`
+
+	URL        string `json:"url,omitempty" scrub:"redact"`
+	OwnerToken string `json:"ownerToken,omitempty" scrub:"redact"`
 
 	// +kubebuilder:default=Unknown
 	Phase WorkspacePhase `json:"phase,omitempty"`
@@ -285,6 +291,9 @@ const (
 
 	// WorkspaceConditionStateWiped is true once all state has successfully been wiped by ws-daemon. This is only set if PodRejected=true, and the rejected workspace has been deleted.
 	WorkspaceConditionStateWiped WorkspaceCondition = "StateWiped"
+
+	// WorkspaceConditionForceKilledTask is true if we send a SIGKILL to the task
+	WorkspaceConditionForceKilledTask WorkspaceCondition = "ForceKilledTask"
 )
 
 func NewWorkspaceConditionDeployed() metav1.Condition {
@@ -436,6 +445,14 @@ func NewWorkspaceConditionContainerRunning(status metav1.ConditionStatus) metav1
 		Type:               string(WorkspaceConditionContainerRunning),
 		LastTransitionTime: metav1.Now(),
 		Status:             status,
+	}
+}
+
+func NewWorkspaceConditionForceKilledTask() metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionForceKilledTask),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
 	}
 }
 
