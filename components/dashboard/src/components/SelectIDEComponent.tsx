@@ -192,7 +192,7 @@ const IdeOptionElementSelected = ({
             title={
                 <div>
                     {title}
-                    {!hideVersion && (
+                    {!hideVersion && version && (
                         <>
                             <MiddleDot className="text-pk-content-tertiary" />{" "}
                             <span className="font-normal">{version}</span>{" "}
