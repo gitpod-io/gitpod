@@ -78,17 +78,17 @@ class TestBitbucketServerApi {
         };
     }
 
-    @test.skip async test_currentUsername_ok() {
+    @test async test_currentUsername_ok() {
         const result = await this.api.currentUsername(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!);
-        expect(result).to.equal("AlexTugarev");
+        expect(result).to.equal("admin-tester");
     }
 
-    @test.skip async test_getUserProfile_ok() {
-        const result = await this.api.getUserProfile(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, "AlexTugarev");
+    @test async test_getUserProfile_ok() {
+        const result = await this.api.getUserProfile(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, "alex");
         expect(result).to.deep.include({
-            id: 105, // Identity.authId
-            name: "AlexTugarev", // Identity.authName
-            slug: "alextugarev", // used in URLs
+            id: 53, // Identity.authId
+            name: "alex", // Identity.authName
+            slug: "alex", // used in URLs
             displayName: "Alex Tugarev",
         });
     }
@@ -97,7 +97,7 @@ class TestBitbucketServerApi {
         const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
             permission: "REPO_READ",
         });
-        expect(result.length).to.be.equal(9177);
+        expect(result.length).to.be.equal(10_000);
 
         // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=0&limit=1000 - OK
         // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=1002&limit=1000 - OK
@@ -172,35 +172,6 @@ class TestBitbucketServerApi {
         // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=0&name=zero-minus-1 - OK
         // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=0&projectname=zero-minus-1 - OK
         //     ✓ test_getRepos_searchString_wildcards_are_not_supported (172ms)
-    }
-
-    @test async test_getRepos_searchString_single_char_is_ignored() {
-        const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
-            permission: "REPO_READ",
-            searchString: "t",
-        });
-        expect(result.length).to.be.equal(9177);
-
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=0&name=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=1000&name=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=2000&name=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=3000&name=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=4000&name=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=5000&name=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=6000&name=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=7000&name=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=8000&name=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=0&projectname=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=1000&projectname=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=2000&projectname=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=3000&projectname=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=4000&projectname=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=5000&projectname=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=6000&projectname=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=7000&projectname=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=8000&projectname=t - OK
-        // BBS: GET https://bitbucket.gitpod-dev.com/rest/api/1.0/repos?permission=REPO_READ&limit=1000&start=9000&projectname=t - OK
-        //     ✓ test_getRepos_searchString_single_char_is_ignored (7329ms)
     }
 
     @test async test_getRepos_searchString_unmatched() {

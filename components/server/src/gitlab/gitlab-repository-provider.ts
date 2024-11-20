@@ -144,6 +144,7 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         const result = await this.gitlab.run<GitLab.Project[]>(user, async (gitlab) => {
             return gitlab.Projects.all({
                 membership: true,
+                // note: GitLab returns an empty project set when there isn't an exact match and the search length is <3
                 search: searchString,
                 perPage: limit,
                 simple: true,

@@ -12,7 +12,7 @@ import { AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { DevData } from "../dev/dev-data";
 import { TokenProvider } from "../user/token-provider";
-import { BitbucketApiFactory } from "./bitbucket-api-factory";
+import { BasicAuthBitbucketApiFactory, BitbucketApiFactory } from "./bitbucket-api-factory";
 import { BitbucketRepositoryProvider } from "./bitbucket-repository-provider";
 import { BitbucketTokenHelper } from "./bitbucket-token-handler";
 const expect = chai.expect;
@@ -50,7 +50,7 @@ class TestBitbucketRepositoryProvider {
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => DevData.createBitbucketTestToken(),
                 });
-                bind(BitbucketApiFactory).toSelf().inSingletonScope();
+                bind(BitbucketApiFactory).to(BasicAuthBitbucketApiFactory).inSingletonScope();
                 bind(HostContextProvider).toConstantValue({
                     get: (hostname: string) => {
                         authProvider: {
