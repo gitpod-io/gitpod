@@ -56,6 +56,9 @@ service InWorkspaceService {
     // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
     rpc Teardown(TeardownRequest) returns (TeardownResponse) {}
 
+    // WipingTeardown undoes everything PrepareForUserNS does, especially unmounts shiftfs mounts
+    rpc WipingTeardown(WipingTeardownRequest) returns (WipingTeardownResponse) {}
+
     // Set up a pair of veths that interconnect the specified PID and the workspace container's network namespace.
     rpc SetupPairVeths(SetupPairVethsRequest) returns (SetupPairVethsResponse) {}
 
@@ -135,6 +138,13 @@ message TeardownRequest {
 }
 message TeardownResponse {
     bool success = 2;
+}
+
+message WipingTeardownRequest {
+    bool do_wipe = 1;
+}
+message WipingTeardownResponse {
+    bool success = 1;
 }
 
 message SetupPairVethsRequest {

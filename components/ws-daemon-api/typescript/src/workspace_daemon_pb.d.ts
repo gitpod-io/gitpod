@@ -368,6 +368,46 @@ export namespace TeardownResponse {
     }
 }
 
+export class WipingTeardownRequest extends jspb.Message {
+    getDoWipe(): boolean;
+    setDoWipe(value: boolean): WipingTeardownRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WipingTeardownRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: WipingTeardownRequest): WipingTeardownRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WipingTeardownRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WipingTeardownRequest;
+    static deserializeBinaryFromReader(message: WipingTeardownRequest, reader: jspb.BinaryReader): WipingTeardownRequest;
+}
+
+export namespace WipingTeardownRequest {
+    export type AsObject = {
+        doWipe: boolean,
+    }
+}
+
+export class WipingTeardownResponse extends jspb.Message {
+    getSuccess(): boolean;
+    setSuccess(value: boolean): WipingTeardownResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WipingTeardownResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: WipingTeardownResponse): WipingTeardownResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WipingTeardownResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WipingTeardownResponse;
+    static deserializeBinaryFromReader(message: WipingTeardownResponse, reader: jspb.BinaryReader): WipingTeardownResponse;
+}
+
+export namespace WipingTeardownResponse {
+    export type AsObject = {
+        success: boolean,
+    }
+}
+
 export class SetupPairVethsRequest extends jspb.Message {
     getPid(): number;
     setPid(value: number): SetupPairVethsRequest;

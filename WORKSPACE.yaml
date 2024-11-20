@@ -7,18 +7,18 @@ defaultArgs:
   publishToNPM: true
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: f456e472e911f666d32bd8738e38e9be5f486a3e
-  codeVersion: 1.95.0
+  codeCommit: f84b3d2b3d3c405cc4ade8deadfb8621066ec8ad
+  codeVersion: 1.95.3
   codeQuality: stable
   codeWebExtensionCommit: 7ff72a2938a7a06cbdf3964590f7e9b7525958f3
   xtermCommit: d547d4ff4590b66c3ea24342fc62e3afcf6b77bc
   noVerifyJBPlugin: false
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2024.2.4.tar.gz"
-  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2024.2.3.tar.gz"
-  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2024.2.4.tar.gz"
-  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2024.2.4.tar.gz"
-  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2024.2.4.tar.gz"
-  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2024.2.4.tar.gz"
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2024.3.tar.gz"
+  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2024.3.tar.gz"
+  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2024.3.tar.gz"
+  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2024.3.tar.gz"
+  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2024.3.tar.gz"
+  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2024.3.tar.gz"
   riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2024.1.4.tar.gz"
   clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2024.2.3.tar.gz"
   rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2024.2.5.tar.gz"

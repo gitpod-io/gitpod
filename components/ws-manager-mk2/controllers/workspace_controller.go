@@ -138,7 +138,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if !equality.Semantic.DeepDerivative(oldStatus, workspace.Status) {
-		log.Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus)
+		log.Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus, "pods", len(workspacePods.Items))
 	}
 
 	err = r.Status().Update(ctx, &workspace)
@@ -180,7 +180,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 	if len(workspacePods.Items) == 0 {
 		// if there isn't a workspace pod and we're not currently deleting this workspace,// create one.
 		switch {
-		case workspace.Status.PodStarts == 0:
+		case workspace.Status.PodStarts == 0 || workspace.Status.PodStarts-workspace.Status.PodRecreated < 1:
 			sctx, err := newStartWorkspaceContext(ctx, r.Config, workspace)
 			if err != nil {
 				log.Error(err, "unable to create startWorkspace context")
@@ -204,8 +204,6 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				log.Error(err, "unable to create Pod for Workspace", "pod", pod)
 				return ctrl.Result{Requeue: true}, err
 			} else {
-				// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
-				//			 need to be deleted and re-created
 				// Must increment and persist the pod starts, and ensure we retry on conflict.
 				// If we fail to persist this value, it's possible that the Pod gets recreated
 				// when the workspace stops, due to PodStarts still being 0 when the original Pod
@@ -220,6 +218,49 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 				r.Recorder.Event(workspace, corev1.EventTypeNormal, "Creating", "")
 			}
+
+		case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped && workspace.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected):
+			if workspace.Status.PodRecreated > r.Config.PodRecreationMaxRetries {
+				workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionPodRejected(fmt.Sprintf("Pod reached maximum recreations %d, failing", workspace.Status.PodRecreated), metav1.ConditionFalse))
+				return ctrl.Result{Requeue: true}, nil // requeue so we end up in the "Stopped" case below
+			}
+			log = log.WithValues("PodStarts", workspace.Status.PodStarts, "PodRecreated", workspace.Status.PodRecreated, "Phase", workspace.Status.Phase)
+
+			// Make sure to wait for "recreationTimeout" before creating the pod again
+			if workspace.Status.PodDeletionTime == nil {
+				log.Info("pod recreation: waiting for pod deletion time to be populated...")
+				return ctrl.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
+			}
+
+			recreationTimeout := r.podRecreationTimeout()
+			podDeletionTime := workspace.Status.PodDeletionTime.Time
+			waitTime := time.Until(podDeletionTime.Add(recreationTimeout))
+			log = log.WithValues("waitTime", waitTime.String(), "recreationTimeout", recreationTimeout.String(), "podDeletionTime", podDeletionTime.String())
+			if waitTime > 0 {
+				log.Info("pod recreation: waiting for timeout...")
+				return ctrl.Result{Requeue: true, RequeueAfter: waitTime}, nil
+			}
+			log.Info("trigger pod recreation")
+
+			// Reset status
+			sc := workspace.Status.DeepCopy()
+			workspace.Status = workspacev1.WorkspaceStatus{}
+			workspace.Status.Phase = workspacev1.WorkspacePhasePending
+			workspace.Status.OwnerToken = sc.OwnerToken
+			workspace.Status.PodStarts = sc.PodStarts
+			workspace.Status.PodRecreated = sc.PodRecreated + 1
+			workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionPodRejected(fmt.Sprintf("Recreating pod... (%d retry)", workspace.Status.PodRecreated), metav1.ConditionFalse))
+
+			if err := r.Status().Update(ctx, workspace); err != nil {
+				log.Error(err, "Failed to update workspace status-reset")
+				return ctrl.Result{}, err
+			}
+
+			// Reset metrics cache
+			r.metrics.forgetWorkspace(workspace)
+
+			r.Recorder.Event(workspace, corev1.EventTypeNormal, "Recreating", "")
+			return ctrl.Result{Requeue: true}, nil
 
 		case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
 			if err := r.deleteWorkspaceSecrets(ctx, workspace); err != nil {
@@ -325,6 +366,14 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 	return ctrl.Result{}, nil
 }
 
+func (r *WorkspaceReconciler) podRecreationTimeout() time.Duration {
+	recreationTimeout := 15 * time.Second // waiting less time creates issues with ws-daemon's pod-centric control loop ("Dispatch") if the workspace ends up on the same node again
+	if r.Config.PodRecreationBackoff != 0 {
+		recreationTimeout = time.Duration(r.Config.PodRecreationBackoff)
+	}
+	return recreationTimeout
+}
+
 func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *workspacev1.Workspace) {
 	log := log.FromContext(ctx)
 
@@ -378,6 +427,11 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 		lastState.recordedStartTime = true
 	}
 
+	if lastState.recordedRecreations < workspace.Status.PodRecreated {
+		r.metrics.countWorkspaceRecreations(&log, workspace)
+		lastState.recordedRecreations = workspace.Status.PodRecreated
+	}
+
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopped {
 		r.metrics.countWorkspaceStop(&log, workspace)
 
@@ -403,7 +457,9 @@ func isStartFailure(ws *workspacev1.Workspace) bool {
 	isAborted := ws.IsConditionTrue(workspacev1.WorkspaceConditionAborted)
 	// Also ignore workspaces that are requested to be stopped before they became ready.
 	isStoppedByRequest := ws.IsConditionTrue(workspacev1.WorkspaceConditionStoppedByRequest)
-	return !everReady && !isAborted && !isStoppedByRequest
+	// Also ignore pods that got rejected by the node
+	isPodRejected := ws.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected)
+	return !everReady && !isAborted && !isStoppedByRequest && !isPodRejected
 }
 
 func (r *WorkspaceReconciler) emitPhaseEvents(ctx context.Context, ws *workspacev1.Workspace, old *workspacev1.WorkspaceStatus) {

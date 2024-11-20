@@ -23,7 +23,7 @@ import {
     DescribeClusterRequest,
     WorkspaceType,
 } from "@gitpod/ws-manager/lib";
-import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
+import { scrubber, TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -193,7 +193,7 @@ export class WorkspaceManagerBridge implements Disposable {
     ) {
         const start = performance.now();
         const status = rawStatus.toObject();
-        log.info("Handling WorkspaceStatus update", filterStatus(status));
+        log.info("Handling WorkspaceStatus update", { status: new TrustedValue(filterStatus(status)) });
 
         if (!status.spec || !status.metadata || !status.conditions) {
             log.warn("Received invalid status update", status);
@@ -462,11 +462,11 @@ const mapPortProtocol = (protocol: WsManPortProtocol): PortProtocol => {
 export const filterStatus = (status: WorkspaceStatus.AsObject): Partial<WorkspaceStatus.AsObject> => {
     return {
         id: status.id,
-        metadata: status.metadata,
+        metadata: scrubber.scrub(status.metadata),
         phase: status.phase,
         message: status.message,
-        conditions: new TrustedValue(status.conditions).value,
-        runtime: new TrustedValue(status.runtime).value,
+        conditions: status.conditions,
+        runtime: status.runtime,
     };
 };
 

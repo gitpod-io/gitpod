@@ -16,12 +16,16 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PrebuiltWorkspaceState, WithCommitHistory } from "@gitpod/gitpod-protocol/lib/protocol";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { PrebuildWithWorkspace, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ImageSourceProvider } from "../workspace/image-source-provider";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 const MAX_HISTORY_DEPTH = 100;
+
+type IncrementalWorkspaceMatch = "none" | "incremental" | "exact";
 
 @injectable()
 export class IncrementalWorkspaceService {
@@ -45,6 +49,7 @@ export class IncrementalWorkspaceService {
             context.revision,
             maxDepth,
         );
+
         history.commitHistory.unshift(context.revision);
         if (context.additionalRepositoryCheckoutInfo && context.additionalRepositoryCheckoutInfo.length > 0) {
             const histories = context.additionalRepositoryCheckoutInfo.map(async (info) => {
@@ -78,42 +83,89 @@ export class IncrementalWorkspaceService {
             return;
         }
 
-        const imageSourcePromise = this.imageSourceProvider.getImageSource({}, user, context, config);
+        const [recentPrebuilds, imageSource] = await Promise.allSettled([
+            // Note: This query returns only not-garbage-collected prebuilds in order to reduce cardinality
+            // (e.g., at the time of writing, the Gitpod repository has 16K+ prebuilds, but only ~300 not-garbage-collected)
+            this.workspaceDB.findPrebuildsWithWorkspace(projectId),
+            this.imageSourceProvider.getImageSource({}, user, context, config),
+        ]);
+        if (imageSource.status === "rejected") {
+            log.error("Image source promise was rejected", { reason: imageSource.reason, userId: user.id });
+            throw new ApplicationError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                "Something went wrong when looking up prebuilds",
+            );
+        }
+        if (recentPrebuilds.status === "rejected") {
+            log.error("Prebuild lookup promise was rejected", { reason: recentPrebuilds.reason, userId: user.id });
+            throw new ApplicationError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                "Something went wrong when looking up prebuilds",
+            );
+        }
 
-        // Note: This query returns only not-garbage-collected prebuilds in order to reduce cardinality
-        // (e.g., at the time of writing, the Gitpod repository has 16K+ prebuilds, but only ~300 not-garbage-collected)
-        const recentPrebuilds = await this.workspaceDB.findPrebuildsWithWorkspace(projectId);
-        const imageSource = await imageSourcePromise;
-        for (const recentPrebuild of recentPrebuilds) {
-            if (
-                this.isGoodBaseforIncrementalBuild(
-                    history,
-                    config,
-                    imageSource,
-                    recentPrebuild.prebuild,
-                    recentPrebuild.workspace,
-                    includeUnfinishedPrebuilds,
-                )
-            ) {
-                return recentPrebuild.prebuild;
+        // traverse prebuilds by commit history instead of their creationTime, so that we don't match prebuilds created for older revisions but triggered later
+        const candidates: { candidate: PrebuildWithWorkspace; index: number }[] = [];
+        for (const recentPrebuild of recentPrebuilds.value) {
+            const { prebuild, workspace } = recentPrebuild;
+            const { match, index } = this.isMatchForIncrementalBuild(
+                history,
+                config,
+                imageSource.value,
+                prebuild,
+                workspace,
+                includeUnfinishedPrebuilds,
+            );
+            if (match === "exact") {
+                log.info("Found base for incremental build", {
+                    prebuildId: prebuild.id,
+                    match: new TrustedValue({
+                        exact: true,
+                        distanceFromContext: 0,
+                    }),
+                });
+                return prebuild;
+            }
+            if (match === "incremental") {
+                candidates.push({ candidate: recentPrebuild, index: index! });
             }
         }
-        return undefined;
+
+        if (candidates.length === 0) {
+            return undefined;
+        }
+
+        // Sort by index ASC
+        candidates.sort((a, b) => a.index - b.index);
+        const {
+            candidate: { prebuild },
+            index,
+        } = candidates[0];
+
+        log.info("Found base for incremental build", {
+            prebuildId: prebuild.id,
+            match: {
+                exact: true,
+                distanceFromContext: index,
+            },
+        });
+        return prebuild;
     }
 
-    private isGoodBaseforIncrementalBuild(
+    private isMatchForIncrementalBuild(
         history: WithCommitHistory,
         config: WorkspaceConfig,
         imageSource: WorkspaceImageSource,
         candidatePrebuild: PrebuiltWorkspace,
         candidateWorkspace: Workspace,
         includeUnfinishedPrebuilds?: boolean,
-    ): boolean {
-        if (!history.commitHistory || history.commitHistory.length === 0) {
-            return false;
+    ): { match: Omit<IncrementalWorkspaceMatch, "none">; index: number } | { match: "none"; index?: undefined } {
+        // make typescript happy, we know that history.commitHistory is defined
+        if (!history.commitHistory) {
+            return { match: "none" };
         }
         if (!CommitContext.is(candidateWorkspace.context)) {
-            return false;
+            return { match: "none" };
         }
 
         const acceptableStates: PrebuiltWorkspaceState[] = ["available"];
@@ -121,36 +173,38 @@ export class IncrementalWorkspaceService {
             acceptableStates.push("building");
             acceptableStates.push("queued");
         }
-
         if (!acceptableStates.includes(candidatePrebuild.state)) {
-            return false;
+            return { match: "none" };
         }
 
-        // we are only considering full prebuilds
-        if (!!candidateWorkspace.basedOnPrebuildId) {
-            return false;
+        // we are only considering full prebuilds (we are not building on top of incremental prebuilds)
+        if (candidateWorkspace.basedOnPrebuildId) {
+            return { match: "none" };
         }
 
+        // check if the amount of additional repositories matches the candidate
         if (
             candidateWorkspace.context.additionalRepositoryCheckoutInfo?.length !==
             history.additionalRepositoryCommitHistories?.length
         ) {
-            // different number of repos
-            return false;
+            return { match: "none" };
         }
 
         const candidateCtx = candidateWorkspace.context;
-        if (!history.commitHistory.some((sha) => sha === candidateCtx.revision)) {
-            return false;
+
+        // check for overlapping commit history
+        const commitIndexInHistory = history.commitHistory.indexOf(candidateCtx.revision);
+        if (commitIndexInHistory === -1) {
+            return { match: "none" };
         }
 
-        // check the commits are included in the commit history
-        for (const subRepo of candidateWorkspace.context.additionalRepositoryCheckoutInfo || []) {
-            const matchIngRepo = history.additionalRepositoryCommitHistories?.find(
+        // check for overlapping git history for each additional repo
+        for (const subRepo of candidateWorkspace.context.additionalRepositoryCheckoutInfo ?? []) {
+            const matchingRepo = history.additionalRepositoryCommitHistories?.find(
                 (repo) => repo.cloneUrl === subRepo.repository.cloneUrl,
             );
-            if (!matchIngRepo || !matchIngRepo.commitHistory.some((sha) => sha === subRepo.revision)) {
-                return false;
+            if (!matchingRepo || !matchingRepo.commitHistory.some((sha) => sha === subRepo.revision)) {
+                return { match: "none" };
             }
         }
 
@@ -160,29 +214,41 @@ export class IncrementalWorkspaceService {
                 imageSource,
                 parentImageSource: candidateWorkspace.imageSource,
             });
-            return false;
+            return { match: "none" };
         }
 
         // ensure the tasks haven't changed
-        const filterPrebuildTasks = (tasks: TaskConfig[] = []) =>
-            tasks
-                .map((task) =>
-                    Object.keys(task)
-                        .filter((key) => ["before", "init", "prebuild"].includes(key))
-                        // @ts-ignore
-                        .reduce((obj, key) => ({ ...obj, [key]: task[key] }), {}),
-                )
-                .filter((task) => Object.keys(task).length > 0);
-        const prebuildTasks = filterPrebuildTasks(config.tasks);
-        const parentPrebuildTasks = filterPrebuildTasks(candidateWorkspace.config.tasks);
+        const prebuildTasks = this.filterPrebuildTasks(config.tasks);
+        const parentPrebuildTasks = this.filterPrebuildTasks(candidateWorkspace.config.tasks);
         if (JSON.stringify(prebuildTasks) !== JSON.stringify(parentPrebuildTasks)) {
             log.debug(`Skipping parent prebuild: Outdated prebuild tasks`, {
                 prebuildTasks,
                 parentPrebuildTasks,
             });
-            return false;
+            return { match: "none" };
         }
 
-        return true;
+        if (commitIndexInHistory === 0) {
+            return { match: "exact", index: commitIndexInHistory };
+        }
+
+        return { match: "incremental", index: commitIndexInHistory };
+    }
+
+    /**
+     * Given an array of tasks returns only the those which are to run during prebuilds, additionally stripping everything besides the prebuild-related configuration from them
+     */
+    private filterPrebuildTasks(tasks: TaskConfig[] = []): Record<string, string>[] {
+        return tasks
+            .map((task) => {
+                const filteredTask: Record<string, any> = {};
+                for (const key of Object.keys(task)) {
+                    if (["before", "init", "prebuild"].includes(key)) {
+                        filteredTask[key] = task[key as keyof TaskConfig];
+                    }
+                }
+                return filteredTask;
+            })
+            .filter((task) => Object.keys(task).length > 0);
     }
 }

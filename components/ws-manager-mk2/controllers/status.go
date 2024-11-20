@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -37,6 +38,15 @@ const (
 	// headlessTaskFailedPrefix is the prefix of the pod termination message if a headless task failed (e.g. user error
 	// or aborted prebuild).
 	headlessTaskFailedPrefix = "headless task failed: "
+
+	// podRejectedReasonNodeAffinity is the value of pod.status.Reason in case the pod got rejected by kubelet because of a NodeAffinity mismatch
+	podRejectedReasonNodeAffinity = "NodeAffinity"
+
+	// podRejectedReasonOutOfCPU is the value of pod.status.Reason in case the pod got rejected by kubelet because of insufficient CPU available
+	podRejectedReasonOutOfCPU = "OutOfcpu"
+
+	// podRejectedReasonOutOfMemory is the value of pod.status.Reason in case the pod got rejected by kubelet because of insufficient memory available
+	podRejectedReasonOutOfMemory = "OutOfmemory"
 )
 
 func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods *corev1.PodList, cfg *config.Configuration) (err error) {
@@ -60,6 +70,13 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 
 		if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping && isDisposalFinished(workspace) {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
+		}
+
+		if workspace.Status.Phase == workspacev1.WorkspacePhaseStopped && workspace.Status.PodDeletionTime == nil {
+			// Set the timestamp when we first saw the pod as deleted.
+			// This is used for the delaying eventual pod restarts
+			podDeletionTime := metav1.NewTime(time.Now())
+			workspace.Status.PodDeletionTime = &podDeletionTime
 		}
 
 		workspace.UpsertConditionOnStatusChange(workspacev1.NewWorkspaceConditionContainerRunning(metav1.ConditionFalse))
@@ -121,6 +138,20 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	failure, phase := r.extractFailure(ctx, workspace, pod)
 	if phase != nil {
 		workspace.Status.Phase = *phase
+	}
+
+	if failure != "" && !workspace.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected) {
+		// Check: A situation where we want to retry?
+		if isPodRejected(pod) {
+			if !workspace.IsConditionTrue(workspacev1.WorkspaceConditionEverReady) {
+				// This is a situation where we want to re-create the pod!
+				log.Info("workspace got rejected", "workspace", workspace.Name, "reason", failure)
+				workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionPodRejected(failure, metav1.ConditionTrue))
+				r.Recorder.Event(workspace, corev1.EventTypeWarning, "PodRejected", failure)
+			} else {
+				log.Info("workspace got rejected, but we don't handle it, because EveryReady=true", "workspace", workspace.Name, "reason", failure)
+			}
+		}
 	}
 
 	if failure != "" && !workspace.IsConditionTrue(workspacev1.WorkspaceConditionFailed) {
@@ -272,6 +303,15 @@ func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspac
 }
 
 func isDisposalFinished(ws *workspacev1.Workspace) bool {
+	if ws.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected) {
+		if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionStateWiped)); c != nil {
+			// If the condition is set, we are done with the disposal
+			return true
+		}
+		// If the condition has not yet been set, we are not done, yet.
+		return false
+	}
+
 	return ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete) ||
 		ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupFailure) ||
 		ws.IsConditionTrue(workspacev1.WorkspaceConditionAborted) ||
@@ -307,6 +347,17 @@ func (r *WorkspaceReconciler) extractFailure(ctx context.Context, ws *workspacev
 			msg = "Backup failed for an unknown reason"
 		} else {
 			msg = fmt.Sprintf("Backup failed: %s", msg)
+		}
+		return msg, nil
+	}
+
+	// Check for state wiping failure.
+	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionStateWiped)); c != nil && c.Status == metav1.ConditionFalse {
+		msg := c.Message
+		if msg == "" {
+			msg = "Wiping workspace state failed for an unknown reason"
+		} else {
+			msg = fmt.Sprintf("Wiping workspace state failed: %s", msg)
 		}
 		return msg, nil
 	}
@@ -457,4 +508,9 @@ func isPodBeingDeleted(pod *corev1.Pod) bool {
 // isWorkspaceBeingDeleted returns true if the workspace resource is currently being deleted.
 func isWorkspaceBeingDeleted(ws *workspacev1.Workspace) bool {
 	return ws.ObjectMeta.DeletionTimestamp != nil
+}
+
+// isPodRejected returns true if the pod has been rejected by the kubelet
+func isPodRejected(pod *corev1.Pod) bool {
+	return pod.Status.Phase == corev1.PodFailed && (pod.Status.Reason == podRejectedReasonNodeAffinity || pod.Status.Reason == podRejectedReasonOutOfCPU || pod.Status.Reason == podRejectedReasonOutOfMemory) && strings.HasPrefix(pod.Status.Message, "Pod was rejected")
 }

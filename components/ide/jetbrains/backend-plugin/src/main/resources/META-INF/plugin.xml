@@ -54,6 +54,13 @@
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService"
                             serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodIgnoredPortsForNotificationServiceImpl"
                             preload="true"/>
+
+
+        <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodPortForwardingService"
+                            serviceImplementation="io.gitpod.jetbrains.remote.GitpodPortForwardingServiceImpl"
+                            client="controller" preload="true"/>
+        <gateway.customization.performance id="gitpodMetricsControl" order="before cpuControl"
+                                           implementation="io.gitpod.jetbrains.remote.GitpodMetricControlProvider"/>
     </extensions>
 
     <actions>

@@ -190,7 +190,7 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
             owner,
             repoKind,
             repositorySlug: repo,
-            query: { shaOrRevision: ref, limit: 1000 },
+            query: { shaOrRevision: ref, limit: 1000 }, // ft: why do we limit to 1000 and not maxDepth?
         });
 
         const commits = commitsResult.values || [];
