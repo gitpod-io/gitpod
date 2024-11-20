@@ -140,6 +140,7 @@ var initCmd = &cobra.Command{
 		select {
 		case <-supervisorDone:
 			// supervisor has ended - we're all done here
+			defer log.Info("supervisor has ended (supervisorDone)")
 			return
 		case <-sigInput:
 			ignoreUnexpectedExitCode.Store(true)
@@ -160,8 +161,10 @@ var initCmd = &cobra.Command{
 			select {
 			case <-ctx.Done():
 				// Time is up, but we give all the goroutines a bit more time to react to this.
-				time.Sleep(time.Millisecond * 500)
+				time.Sleep(time.Millisecond * 1000)
+				defer log.Info("supervisor has ended (ctx.Done)")
 			case <-terminationDone:
+				defer log.Info("supervisor has ended (terminationDone)")
 			}
 			slog.write("Finished shutting down all processes.")
 		}
@@ -229,10 +232,12 @@ type shutdownLoggerImpl struct {
 
 func (l *shutdownLoggerImpl) write(s string) {
 	if l.file != nil {
-		_, err := l.file.WriteString(fmt.Sprintf("[%s] %s \n", time.Since(l.startTime), s))
+		msg := fmt.Sprintf("[%s] %s \n", time.Since(l.startTime), s)
+		_, err := l.file.WriteString(msg)
 		if err != nil {
 			log.WithError(err).Error("couldn't write to log file")
 		}
+		log.Infof("slog: %s", msg)
 	} else {
 		log.Debug(s)
 	}
@@ -250,6 +255,7 @@ func (l *shutdownLoggerImpl) TerminateSync(ctx context.Context, pid int) {
 	if err != nil {
 		l.write(fmt.Sprintf("Couldn't obtain process information for PID %d.", pid))
 	} else if stat.State == "Z" {
+		l.write(fmt.Sprintf("Process %s with PID %d is a zombie, skipping termination.", stat.Comm, pid))
 		return
 	} else {
 		l.write(fmt.Sprintf("Terminating process %s with PID %d (state: %s, cmdlind: %s).", stat.Comm, pid, stat.State, fmt.Sprint(proc.CmdLine())))
