@@ -10,7 +10,7 @@ defaultArgs:
   codeCommit: f84b3d2b3d3c405cc4ade8deadfb8621066ec8ad
   codeVersion: 1.95.3
   codeQuality: stable
-  codeWebExtensionCommit: 7ff72a2938a7a06cbdf3964590f7e9b7525958f3
+  codeWebExtensionCommit: 3953e8160fffa97dd4a4509542b4bf7ff9b704cd
   xtermCommit: d547d4ff4590b66c3ea24342fc62e3afcf6b77bc
   noVerifyJBPlugin: false
   intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2024.3.tar.gz"

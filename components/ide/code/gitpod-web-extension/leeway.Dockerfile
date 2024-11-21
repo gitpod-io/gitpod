@@ -18,7 +18,8 @@ WORKDIR /gitpod-code-web
 RUN yarn --frozen-lockfile --network-timeout 180000
 
 # update package.json
-RUN setSegmentKey="setpath([\"segmentKey\"]; \"untrusted-dummy-key\")" && \
+RUN cd gitpod-web && \
+    setSegmentKey="setpath([\"segmentKey\"]; \"untrusted-dummy-key\")" && \
     jqCommands="${setSegmentKey}" && \
     cat package.json | jq "${jqCommands}" > package.json.tmp && \
     mv package.json.tmp package.json
