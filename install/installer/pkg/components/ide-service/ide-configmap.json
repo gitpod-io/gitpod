@@ -11,7 +11,7 @@
         "image": "{{.Repository}}/ide/code:commit-57bd1118530031dfb870a20fce56d96ad7aba7b2",
         "latestImage": "{{.ResolvedCodeBrowserImageLatest}}",
         "imageLayers": [
-          "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+          "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
           "{{.Repository}}/ide/code-codehelper:commit-f562a7e8b277199a11a34a94c94b564380cd7ff0"
         ],
         "latestImageLayers": [
@@ -24,7 +24,7 @@
             "version": "1.95.0",
             "image": "{{.Repository}}/ide/code:commit-e2f478d8c08620d9b90e0f896e6a609906414f6a",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-b6c243b14932a70b07d022077a41c0a1a8ab439f"
             ]
           },
@@ -32,7 +32,7 @@
             "version": "1.94.2",
             "image": "{{.Repository}}/ide/code:commit-9d19ad52aa2093809c3c7133cc8d378c5406dce5",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-93f81feb1576d690040be79d1eff44d670be740d"
             ]
           },
@@ -40,7 +40,7 @@
             "version": "1.94.1",
             "image": "{{.Repository}}/ide/code:commit-d721abf44f1c006dc73f16e9baeb73f5c9794dec",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-93f81feb1576d690040be79d1eff44d670be740d"
             ]
           },
@@ -48,7 +48,7 @@
             "version": "1.93.1",
             "image": "{{.Repository}}/ide/code:commit-b816fc0f01d6b1d4dde5fcf6e08ff556c38dda5f",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-93f81feb1576d690040be79d1eff44d670be740d"
             ]
           },
@@ -56,7 +56,7 @@
             "version": "1.93.0",
             "image": "{{.Repository}}/ide/code:commit-d652a27441a782cf88e8a835222d919d5f8df753",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-c489f17fc97b5ae34656a5961235d40550bf0d90"
             ]
           },
@@ -64,7 +64,7 @@
             "version": "1.92.1",
             "image": "{{.Repository}}/ide/code:commit-cee438b2e2c0990279824c4dde6f053ad2154715",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-a4c1a319cfb396a4c2ef933f6c02c8b8579f139f"
             ]
           },
@@ -72,7 +72,7 @@
             "version": "1.92.0",
             "image": "{{.Repository}}/ide/code:commit-f816a233cb7147933bb3236a37457dd6fe71cdd5",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-a4c1a319cfb396a4c2ef933f6c02c8b8579f139f"
             ]
           },
@@ -80,7 +80,7 @@
             "version": "1.91.1",
             "image": "{{.Repository}}/ide/code:commit-2a8ee81ca3ffbcd3809e7ab967ef3b90a40b8f3d",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-a4c1a319cfb396a4c2ef933f6c02c8b8579f139f"
             ]
           },
@@ -88,7 +88,7 @@
             "version": "1.91.0",
             "image": "{{.Repository}}/ide/code:commit-3f63730cb37d67feade0ac7805a14303e37ac773",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-db5af8934da425c36586705e5dc682d30b4c1da9"
             ]
           },
@@ -96,7 +96,7 @@
             "version": "1.90.2",
             "image": "{{.Repository}}/ide/code:commit-940f23420544f76a67ae3ed32e726c9f9c9c4b3d",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-db5af8934da425c36586705e5dc682d30b4c1da9"
             ]
           },
@@ -104,7 +104,7 @@
             "version": "1.90.1",
             "image": "{{.Repository}}/ide/code:commit-518f23b3b895cd544bd6b3dd383af95c350718cc",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-9d947b04ea167d7f41d5550a1684b52636bf72b8"
             ]
           },
@@ -112,7 +112,7 @@
             "version": "1.90.0",
             "image": "{{.Repository}}/ide/code:commit-ece9c809ac703118bd86cc0b69191db74dcd3df4",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-6dcbc99e49796023f14b1c0847f63f44a60bf2fb"
             ]
           },
@@ -120,7 +120,7 @@
             "version": "1.89.1",
             "image": "{{.Repository}}/ide/code:commit-cbfb5757ed873b574b20f13c3edac3b9a2caf731",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-304eda30826ad765c5a9e810a37af433016bb798"
             ]
           },
@@ -128,7 +128,7 @@
             "version": "1.89.0",
             "image": "{{.Repository}}/ide/code:commit-8a412095311a2ee0460abca3a4461704c4533374",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           },
@@ -136,7 +136,7 @@
             "version": "1.88.1",
             "image": "{{.Repository}}/ide/code:commit-2ca710524cf1d69bc014cbfd57865375a4f9a522",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           },
@@ -144,7 +144,7 @@
             "version": "1.88.0",
             "image": "{{.Repository}}/ide/code:commit-7721fe825201d4d8d53975f81de0b063d94383cc",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           },
@@ -152,7 +152,7 @@
             "version": "1.87.1",
             "image": "{{.Repository}}/ide/code:commit-aaa9aeb1a12870ab8c19ca8a928d76849bc24c84",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           },
@@ -160,7 +160,7 @@
             "version": "1.87.0",
             "image": "{{.Repository}}/ide/code:commit-82dc424633bdc7266b46302042dd98af201fa8f8",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           },
@@ -168,7 +168,7 @@
             "version": "1.86.2",
             "image": "{{.Repository}}/ide/code:commit-d86f6aa033943c9650d06339915e68063b0cf142",
             "imageLayers": [
-              "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+              "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
               "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
             ]
           }
@@ -182,7 +182,7 @@
         "label": "Browser",
         "image": "{{.Repository}}/ide/code:commit-cb1173f2a457633550a7fdc89af86d8d4da51876",
         "imageLayers": [
-          "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+          "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
           "{{.Repository}}/ide/code-codehelper:commit-4cb5b6b9c0e993f3964e978e387fb0e7c1c04276"
         ]
       },
