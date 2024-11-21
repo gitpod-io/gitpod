@@ -11,7 +11,7 @@
         "image": "{{.Repository}}/ide/code:commit-57bd1118530031dfb870a20fce56d96ad7aba7b2",
         "latestImage": "{{.ResolvedCodeBrowserImageLatest}}",
         "imageLayers": [
-          "{{.Repository}}/ide/gitpod-code-web:commit-1bc46bd2a58dbc9033313519453939d895f16fce",
+          "{{.Repository}}/ide/gitpod-code-web:commit-8876ebb367d34af3b2a234c1fd2d6c8ca21371d7",
           "{{.Repository}}/ide/code-codehelper:commit-f562a7e8b277199a11a34a94c94b564380cd7ff0"
         ],
         "latestImageLayers": [
