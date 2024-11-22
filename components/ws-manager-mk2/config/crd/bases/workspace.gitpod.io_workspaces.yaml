@@ -548,11 +548,14 @@ spec:
                 - Stopping
                 - Stopped
                 type: string
-              podStarts:
-                type: integer
+              podDeletionTime:
+                format: date-time
+                type: string
               podRecreated:
                 type: integer
-              podDeletionTime:
+              podStarts:
+                type: integer
+              podStoppingTime:
                 format: date-time
                 type: string
               runtime:

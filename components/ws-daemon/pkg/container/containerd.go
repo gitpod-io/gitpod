@@ -20,6 +20,7 @@ import (
 	"github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/api/services/tasks/v1"
 	"github.com/containerd/containerd/api/types"
+	"github.com/containerd/containerd/api/types/task"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
@@ -574,6 +575,28 @@ func (s *Containerd) IsContainerdReady(ctx context.Context) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (s *Containerd) GetContainerTaskInfo(ctx context.Context, id ID) (*task.Process, error) {
+	task, err := s.Client.TaskService().Get(ctx, &tasks.GetRequest{
+		ContainerID: string(id),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if task.Process == nil {
+		return nil, fmt.Errorf("task has no process")
+	}
+	return task.Process, nil
+}
+
+func (s *Containerd) ForceKillContainerTask(ctx context.Context, id ID) error {
+	_, err := s.Client.TaskService().Kill(ctx, &tasks.KillRequest{
+		ContainerID: string(id),
+		Signal:      9,
+		All:         true,
+	})
+	return err
 }
 
 var kubepodsQoSRegexp = regexp.MustCompile(`([^/]+)-([^/]+)-pod`)

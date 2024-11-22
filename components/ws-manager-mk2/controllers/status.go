@@ -59,6 +59,10 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	defer func() {
 		if oldPhase != workspace.Status.Phase {
 			log.Info("workspace phase updated", "oldPhase", oldPhase, "phase", workspace.Status.Phase)
+			if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping {
+				t := metav1.Now()
+				workspace.Status.PodStoppingTime = &t
+			}
 		}
 	}()
 
