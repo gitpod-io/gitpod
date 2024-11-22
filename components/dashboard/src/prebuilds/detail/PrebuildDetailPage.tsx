@@ -361,15 +361,13 @@ export const PrebuildDetailPage: FC = () => {
                                     >
                                         View Prebuild Settings
                                     </LinkButton>
-                                    <Button
+                                    <LinkButton
                                         disabled={prebuild?.status?.phase?.name !== PrebuildPhase_Phase.AVAILABLE}
-                                        onClick={() =>
-                                            (window.location.href = `/#open-prebuild/${prebuild?.id}/${prebuild?.contextUrl}`)
-                                        }
+                                        href={`/#open-prebuild/${prebuild?.id}/${prebuild?.contextUrl}`}
                                         variant="secondary"
                                     >
                                         Open Debug Workspace
-                                    </Button>
+                                    </LinkButton>
                                 </div>
                             </div>
                         </div>

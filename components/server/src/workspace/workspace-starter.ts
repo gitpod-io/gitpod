@@ -578,8 +578,8 @@ export class WorkspaceStarter {
             return;
         }
 
-        // implicit project (existing on the same clone URL)
-        const projects = await this.projectService.findProjectsByCloneUrl(user.id, contextURL, organizationId);
+        // implicit project (existing on the same clone URL). We skip the permission check so that collaborators are not stuck
+        const projects = await this.projectService.findProjectsByCloneUrl(user.id, contextURL, organizationId, true);
         if (projects.length === 0) {
             throw new ApplicationError(
                 ErrorCodes.PRECONDITION_FAILED,
@@ -1963,10 +1963,12 @@ export class WorkspaceStarter {
                 {},
             );
             if (isEnabledPrebuildFullClone) {
-                const project = await this.projectService.getProject(user.id, workspace.projectId).catch((err) => {
-                    log.error("failed to get project", err);
-                    return undefined;
-                });
+                const project = await this.projectService
+                    .getProject(user.id, workspace.projectId, true)
+                    .catch((err) => {
+                        log.error("failed to get project", err);
+                        return undefined;
+                    });
                 if (project && project.settings?.prebuilds?.cloneSettings?.fullClone) {
                     result.setFullClone(true);
                 }

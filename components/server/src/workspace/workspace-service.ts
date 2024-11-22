@@ -455,6 +455,7 @@ export class WorkspaceService {
                 forcePrebuild: false,
                 context,
                 trigger: "lastWorkspaceStart",
+                assumeProjectActive: true,
             });
             log.info(logCtx, "starting prebuild after workspace creation", {
                 projectId: project.id,
@@ -831,7 +832,7 @@ export class WorkspaceService {
         }
 
         const projectPromise = workspace.projectId
-            ? ApplicationError.notFoundToUndefined(this.projectsService.getProject(user.id, workspace.projectId))
+            ? ApplicationError.notFoundToUndefined(this.projectsService.getProject(user.id, workspace.projectId, true))
             : Promise.resolve(undefined);
 
         await mayStartPromise;
@@ -878,7 +879,7 @@ export class WorkspaceService {
             result = await this.entitlementService.mayStartWorkspace(user, organizationId, runningInstances);
             TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
         } catch (err) {
-            log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
+            log.error({ userId: user.id }, "EntitlementService.mayStartWorkspace error", err);
             TraceContext.setError(ctx, err);
             return; // we don't want to block workspace starts because of internal errors
         }

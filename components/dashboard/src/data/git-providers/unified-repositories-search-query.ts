@@ -128,15 +128,12 @@ export function deduplicateAndFilterRepositories(
     if (results.length === 0) {
         // If the searchString is a URL, and it's not present in the proposed results, "artificially" add it here.
         if (isValidGitUrl(searchString)) {
-            console.log("It's valid man");
             results.push(
                 new SuggestedRepository({
                     url: searchString,
                 }),
             );
         }
-
-        console.log("Valid after man");
     }
 
     // Limit what we show to 200 results
@@ -145,7 +142,7 @@ export function deduplicateAndFilterRepositories(
 
 const ALLOWED_GIT_PROTOCOLS = ["ssh:", "git:", "http:", "https:"];
 /**
- * An opionated git URL validator
+ * An opinionated git URL validator
  *
  * Assumptions:
  * - Git hosts are not themselves TLDs (like .com) or reserved names like `localhost`

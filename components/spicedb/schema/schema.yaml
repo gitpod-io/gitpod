@@ -92,6 +92,8 @@ schema: |-
       permission read_billing = member + owner + installation->admin
       permission write_billing = owner + installation->admin
 
+      // Note that there are two different read_prebuild permissions: this one, guarding primarily the listPrebuilds method in the API and then the other under projects, which is the actual permission used for checking if a user can use a prebuild for a repository.
+      // Today, the difference is that collaborators can't read prebuilds on an org but can on a repository (project).
       permission read_prebuild = member + owner + installation->admin
 
       permission create_workspace = member + collaborator
@@ -118,10 +120,10 @@ schema: |-
       permission write_info = editor + org->owner + org->installation_admin
       permission delete = editor + org->owner + org->installation_admin
 
-      permission read_env_var = viewer + editor + org->owner + org->installation_admin
+      permission read_env_var = viewer + editor + org->collaborator + org->owner + org->installation_admin
       permission write_env_var = editor + org->owner + org->installation_admin
 
-      permission read_prebuild = viewer + editor + org->owner + org->installation_admin
+      permission read_prebuild = viewer + editor + org->collaborator + org->owner + org->installation_admin
       permission write_prebuild = editor + org->owner
     }
 

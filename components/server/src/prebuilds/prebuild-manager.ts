@@ -49,6 +49,7 @@ export interface StartPrebuildParams {
     commitInfo?: CommitInfo;
     forcePrebuild?: boolean;
     trigger?: keyof ProjectUsage;
+    assumeProjectActive?: boolean;
 }
 
 export interface PrebuildFilter {
@@ -330,7 +331,15 @@ export class PrebuildManager {
 
     async startPrebuild(
         ctx: TraceContext,
-        { context, project, user, commitInfo, forcePrebuild, trigger = "lastWebhookReceived" }: StartPrebuildParams,
+        {
+            context,
+            project,
+            user,
+            commitInfo,
+            forcePrebuild,
+            trigger = "lastWebhookReceived",
+            assumeProjectActive,
+        }: StartPrebuildParams,
     ): Promise<StartPrebuildResult> {
         const span = TraceContext.startSpan("startPrebuild", ctx);
         const cloneURL = context.repository.cloneUrl;
@@ -469,7 +478,10 @@ export class PrebuildManager {
                     "Prebuild is rate limited. Please contact Gitpod if you believe this happened in error.";
                 await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
                 span.setTag("ratelimited", true);
-            } else if (await this.projectService.isProjectConsideredInactive(user.id, project.id)) {
+            } else if (
+                !assumeProjectActive &&
+                (await this.projectService.isProjectConsideredInactive(user.id, project.id))
+            ) {
                 prebuild.state = "aborted";
                 prebuild.error =
                     "Project is inactive. Please start a new workspace for this project to re-enable prebuilds.";
@@ -669,7 +681,7 @@ export class PrebuildManager {
         if (!prebuild || !organizationId) {
             throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "prebuild workspace not found");
         }
-        await this.auth.checkPermissionOnOrganization(userId, "read_prebuild", organizationId);
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", organizationId);
 
         const instance = await this.workspaceService.getCurrentInstance(userId, prebuild.workspace.id, {
             skipPermissionCheck: true,

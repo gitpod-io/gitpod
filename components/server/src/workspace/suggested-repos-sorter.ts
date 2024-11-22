@@ -20,7 +20,7 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
     // This allows us to consider the lastUse of a recently used project when sorting
     // as it will may have an entry for the project (no lastUse), and another for recent workspaces (w/ lastUse)
 
-    const projectURLs: string[] = [];
+    let projectURLs: string[] = [];
     let uniqueRepositories: SuggestedRepositoryWithSorting[] = [];
 
     for (const repo of repos) {
@@ -88,7 +88,7 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
     uniqueRepositories = uniqueRepositories.map((repo) => {
         if (repo.projectId && !repo.projectName) {
             delete repo.projectId;
-            delete projectURLs[projectURLs.indexOf(repo.url)];
+            projectURLs = projectURLs.filter((url) => url !== repo.url);
         }
 
         return repo;

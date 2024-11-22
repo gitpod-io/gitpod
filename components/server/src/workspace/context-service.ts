@@ -159,7 +159,9 @@ export class ContextService {
                 user.id,
                 context.repository.cloneUrl,
                 options?.organizationId,
+                true,
             );
+            // todo(ft): solve for this case with collaborators who can't select projects directly
             if (projects.length > 1) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Multiple projects found for clone URL.");
             }
