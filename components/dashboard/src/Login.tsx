@@ -23,11 +23,9 @@ import { cn } from "@podkit/lib/cn";
 import { userClient } from "./service/public-api";
 import { ProductLogo } from "./components/ProductLogo";
 import { useIsDataOps } from "./data/featureflag-query";
-import { LinkButton } from "@podkit/buttons/LinkButton";
-import { IconGitpodEngraved } from "./icons/GitpodEngraved";
-import { IconEarlyAccess } from "./icons/IconEarlyAccess";
-import { useTheme } from "./theme-context";
+import GitpodClassicCard from "./images/gitpod-classic-card.png";
 import { LoadingState } from "@podkit/loading/LoadingState";
+import { isGitpodIo } from "./utils";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -145,12 +143,11 @@ type LoginWrapperProps = LoginProps & {
 
 const PAYGLoginWrapper: FC<LoginWrapperProps> = ({ providerFromContext, repoPathname, onLoggedIn }) => {
     return (
-        <>
-            <LeftPanel />
+        <div className="flex flex-col md:flex-row w-full">
             <div
                 id="login-section"
                 // for some reason, min-h-dvh does not work, so we need tailwind's arbitrary values
-                className="w-full min-h-[100dvh] lg:w-4/5 flex flex-col justify-center items-center bg-[#FDF1E7] dark:bg-[#23211e] p-2"
+                className="w-full min-h-[100dvh] lg:w-2/3 flex flex-col justify-center items-center bg-[#FDF1E7] dark:bg-[#23211e] p-2"
             >
                 <div
                     id="login-section-column"
@@ -163,15 +160,13 @@ const PAYGLoginWrapper: FC<LoginWrapperProps> = ({ providerFromContext, repoPath
                                 onLoggedIn={onLoggedIn}
                                 repoPathname={repoPathname}
                             />
-                            <p className="text-sm text-[#64645F] mt-6 mb-6 lg:mb-0 lg:mt-8 max-w-sm text-center font-semibold">
-                                Gitpod Classic will be sunset by April 1, 2025 and superseded by Gitpod Flex
-                            </p>
                         </div>
                     }
                     <TermsOfServiceAndPrivacyPolicy />
                 </div>
             </div>
-        </>
+            <RightProductDescriptionPanel />
+        </div>
     );
 };
 
@@ -212,6 +207,7 @@ const LoginContent = ({
 }) => {
     const { setUser } = useContext(UserContext);
     const isDataOps = useIsDataOps();
+    const isGitpodIoUser = isGitpodIo();
 
     const authProviders = useAuthProviderDescriptions();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
@@ -271,7 +267,7 @@ const LoginContent = ({
     );
 
     return (
-        <div className="rounded-xl px-10 py-10 mx-auto w-full max-w-md">
+        <div className="rounded-xl px-10 py-10 mx-auto w-full max-w-lg">
             <div className="mx-auto pb-8">
                 <ProductLogo className="h-14 mx-auto block" />
             </div>
@@ -284,8 +280,13 @@ const LoginContent = ({
                         <Heading2>Open a cloud development environment</Heading2>
                         <Subheading>for the repository {repoPathname?.slice(1)}</Subheading>
                     </>
-                ) : (
+                ) : !isGitpodIoUser ? (
                     <Heading1>Log in to Gitpod</Heading1>
+                ) : (
+                    <>
+                        <Heading1>Log in to Gitpod Classic</Heading1>
+                        <Subheading>Hosted by us</Subheading>
+                    </>
                 )}
             </div>
 
@@ -320,99 +321,35 @@ const LoginContent = ({
     );
 };
 
-const LeftPanel = () => {
-    const { isDark } = useTheme();
-
+const RightProductDescriptionPanel = () => {
     return (
-        <div className="w-full lg:w-1/3 lg:max-w-lg flex flex-col justify-between p-4 lg:p-10 lg:pb-2 min-h-screen">
+        <div className="w-full lg:w-1/3 flex flex-col md:justify-center p-4 lg:p-10 lg:pb-2 md:min-h-screen">
             <div>
-                <div className="p-[1px] bg-gradient-to-b from-white to-[#ECE7E5] dark:from-gray-700 dark:to-gray-600 rounded-2xl justify-center items-center mb-8">
-                    <div className="bg-[#F9F9F9B2] dark:bg-gray-800 w-full p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
-                        <h2 className="bg-white dark:bg-gray-700 inline-flex text-xs font-semibold mb-4 border-[0.5px] shadow border-divider dark:border-gray-600 px-2 py-1 rounded-lg">
-                            <span className="bg-gradient-to-l from-[#FFAE33] to-[#FF8A00] text-transparent bg-clip-text">
-                                Did you know?
-                            </span>
-                        </h2>
-                        <p className="text-pk-content-secondary dark:text-gray-300 mt-1">
-                            We launched a new version of Gitpod in early access.
+                <div className="justify-center md:justify-start mb-6 md:mb-8">
+                    <h2 className="text-2xl font-medium mb-2 dark:text-white inline-flex items-center gap-x-2">
+                        Gitpod Classic
+                    </h2>
+                    <p className="text-pk-content-secondary mb-2">
+                        Automated, standardized development environments hosted by us in Gitpod’s infrastructure. Users
+                        who joined before October 1, 2024 on non-Enterprise plans are considered Gitpod Classic users.
+                    </p>
+                    <div className="border border-pk-border-base rounded-xl p-4 bg-pk-surface-secondary mt-5">
+                        <p className="text-gray-800 dark:text-gray-100">
+                            <b>Please note:</b> Gitpod Classic will discontinued in April 2025 and replaced by{" "}
+                            <a
+                                className="gp-link font-semibold"
+                                href="https://app.gitpod.io/login"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Gitpod Flex
+                            </a>
+                            .
                         </p>
                     </div>
                 </div>
-                <div className="justify-center md:justify-start mb-6 md:mb-8">
-                    <ProductLogo className="h-8 mb-4" />
-                    <h2 className="text-2xl font-medium mb-2 dark:text-white inline-flex items-center gap-x-2">
-                        Gitpod Flex
-                    </h2>
-                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
-                        Automated, standardized
-                        <br /> development environments.
-                    </p>
-                </div>
-
-                <ul className="space-y-4">
-                    {[
-                        {
-                            title: "Self-host in under 3 minutes",
-                            description:
-                                "All your source code, data, and intellectual property stays in your private network.",
-                        },
-                        {
-                            title: "Local environments to replace Docker Desktop",
-                            description:
-                                "Built-in Linux virtualization to run Dev Container without Docker Desktop on macOS",
-                        },
-                        {
-                            title: "Automate common development workflows",
-                            description:
-                                "Seed databases, provision infra, runbooks as one-click actions, configure code assistants, etc. ",
-                        },
-                        {
-                            title: "Dev Container support",
-                            description:
-                                "Eliminate the need to manually install tools, dependencies and editor extensions.",
-                        },
-                    ].map((feature, index) => (
-                        <li key={index} className="flex items-start">
-                            <GreenCheckIcon />
-                            <div>
-                                <span className="text-sm font-medium text-pk-content-primary">{feature.title}</span>
-                                <p className="text-sm text-pk-content-secondary mt-0.5">{feature.description}</p>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-                <div className="flex w-full justify-center items-center mt-8 mb-2">
-                    <LinkButton
-                        variant="secondary"
-                        className="text-pk-content-primary bg-pk-surface-primary dark:bg-gray-700 dark:text-white w-full shadow font-medium"
-                        href="https://app.gitpod.io/login"
-                        isExternalUrl={true}
-                    >
-                        Explore
-                    </LinkButton>
-                </div>
+                <img src={GitpodClassicCard} alt="Gitpod Classic" className="w-full" />
             </div>
-            <div className="justify-center items-center max-w-fit mx-auto flex flex-col pt-4">
-                <IconGitpodEngraved variant={isDark ? "dark" : "light"} className="shadow-engraving block h-6 w-6" />
-                <span className="py-1" />
-                <IconEarlyAccess className="dark:fill-pk-surface-01/30" variant={isDark ? "dark" : "light"} />
-            </div>
-        </div>
-    );
-};
-
-const GreenCheckIcon = () => {
-    return (
-        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mr-3 mt-1">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M11 20.5C16.2467 20.5 20.5 16.2467 20.5 11C20.5 5.75329 16.2467 1.5 11 1.5C5.75329 1.5 1.5 5.75329 1.5 11C1.5 16.2467 5.75329 20.5 11 20.5Z"
-                    fill="#17C165"
-                    stroke="#D5F6DB"
-                    strokeWidth="3"
-                />
-                <path d="M7 11.5L10 14L15 8" stroke="white" strokeWidth="2" strokeLinejoin="round" />
-            </svg>
         </div>
     );
 };
