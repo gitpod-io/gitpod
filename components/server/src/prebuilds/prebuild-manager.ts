@@ -49,7 +49,7 @@ export interface StartPrebuildParams {
     commitInfo?: CommitInfo;
     forcePrebuild?: boolean;
     trigger?: keyof ProjectUsage;
-    ignoreInactiveProject?: boolean;
+    assumeProjectActive?: boolean;
 }
 
 export interface PrebuildFilter {
@@ -338,7 +338,7 @@ export class PrebuildManager {
             commitInfo,
             forcePrebuild,
             trigger = "lastWebhookReceived",
-            ignoreInactiveProject,
+            assumeProjectActive,
         }: StartPrebuildParams,
     ): Promise<StartPrebuildResult> {
         const span = TraceContext.startSpan("startPrebuild", ctx);
@@ -471,7 +471,7 @@ export class PrebuildManager {
                 await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
                 span.setTag("ratelimited", true);
             } else if (
-                !ignoreInactiveProject &&
+                !assumeProjectActive &&
                 (await this.projectService.isProjectConsideredInactive(user.id, project.id))
             ) {
                 prebuild.state = "aborted";

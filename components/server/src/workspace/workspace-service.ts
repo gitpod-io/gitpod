@@ -455,7 +455,7 @@ export class WorkspaceService {
                 forcePrebuild: false,
                 context,
                 trigger: "lastWorkspaceStart",
-                ignoreInactiveProject: true,
+                assumeProjectActive: true,
             });
             log.info(logCtx, "starting prebuild after workspace creation", {
                 projectId: project.id,
