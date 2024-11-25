@@ -33,6 +33,7 @@ import { StripeService } from "../billing/stripe-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { UsageService } from "./usage-service";
 import { CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
+import { UserAuthentication } from "../user/user-authentication";
 
 @injectable()
 export class OrganizationService {
@@ -49,6 +50,7 @@ export class OrganizationService {
         @inject(UsageService) private readonly usageService: UsageService,
         @inject(DefaultWorkspaceImageValidator)
         private readonly validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator,
+        @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
     ) {}
 
     async listOrganizations(
@@ -145,6 +147,19 @@ export class OrganizationService {
     }
 
     async createOrganization(userId: string, name: string): Promise<Organization> {
+        // TODO(gpl): Should we use the authorization layer to make this decision?
+        const user = await this.userDB.findUserById(userId);
+        if (!user) {
+            throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, `User not authenticated. Please login.`);
+        }
+        const mayCreateOrganization = await this.userAuthentication.mayCreateOrJoinOrganization(user);
+        if (!mayCreateOrganization) {
+            throw new ApplicationError(
+                ErrorCodes.PERMISSION_DENIED,
+                "Organizational accounts are not allowed to create new organizations",
+            );
+        }
+
         let result: Organization;
         try {
             result = await this.teamDB.transaction(async (db) => {

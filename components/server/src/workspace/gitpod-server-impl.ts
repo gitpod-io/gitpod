@@ -1433,15 +1433,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // Note: this operation is per-user only, hence needs no resource guard
         const user = await this.checkAndBlockUser("createTeam");
-
-        const mayCreateOrganization = await this.userAuthentication.mayCreateOrJoinOrganization(user);
-        if (!mayCreateOrganization) {
-            throw new ApplicationError(
-                ErrorCodes.PERMISSION_DENIED,
-                "Organizational accounts are not allowed to create new organizations",
-            );
-        }
-
         const org = await this.organizationService.createOrganization(user.id, name);
         // create a cost center
         await this.usageService.getCostCenter(user.id, org.id);
