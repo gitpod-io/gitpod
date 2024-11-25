@@ -11834,6 +11834,1366 @@ public final class Installation {
 
   }
 
+  public interface GetInstallationConfigurationRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.GetInstallationConfigurationRequest)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.GetInstallationConfigurationRequest}
+   */
+  public static final class GetInstallationConfigurationRequest extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.GetInstallationConfigurationRequest)
+      GetInstallationConfigurationRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        GetInstallationConfigurationRequest.class.getName());
+    }
+    // Use GetInstallationConfigurationRequest.newBuilder() to construct.
+    private GetInstallationConfigurationRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private GetInstallationConfigurationRequest() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_GetInstallationConfigurationRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_GetInstallationConfigurationRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest.class, io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest other = (io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest) obj;
+
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.GetInstallationConfigurationRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.GetInstallationConfigurationRequest)
+        io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_GetInstallationConfigurationRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_GetInstallationConfigurationRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest.class, io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_GetInstallationConfigurationRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest build() {
+        io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest buildPartial() {
+        io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest result = new io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest) {
+          return mergeFrom((io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest other) {
+        if (other == io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.GetInstallationConfigurationRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.GetInstallationConfigurationRequest)
+    private static final io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest();
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<GetInstallationConfigurationRequest>
+        PARSER = new com.google.protobuf.AbstractParser<GetInstallationConfigurationRequest>() {
+      @java.lang.Override
+      public GetInstallationConfigurationRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<GetInstallationConfigurationRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GetInstallationConfigurationRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface GetInstallationConfigurationResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.GetInstallationConfigurationResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+     * @return Whether the configuration field is set.
+     */
+    boolean hasConfiguration();
+    /**
+     * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+     * @return The configuration.
+     */
+    io.gitpod.publicapi.v1.Installation.InstallationConfiguration getConfiguration();
+    /**
+     * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+     */
+    io.gitpod.publicapi.v1.Installation.InstallationConfigurationOrBuilder getConfigurationOrBuilder();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.GetInstallationConfigurationResponse}
+   */
+  public static final class GetInstallationConfigurationResponse extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.GetInstallationConfigurationResponse)
+      GetInstallationConfigurationResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        GetInstallationConfigurationResponse.class.getName());
+    }
+    // Use GetInstallationConfigurationResponse.newBuilder() to construct.
+    private GetInstallationConfigurationResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private GetInstallationConfigurationResponse() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_GetInstallationConfigurationResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_GetInstallationConfigurationResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse.class, io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int CONFIGURATION_FIELD_NUMBER = 1;
+    private io.gitpod.publicapi.v1.Installation.InstallationConfiguration configuration_;
+    /**
+     * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+     * @return Whether the configuration field is set.
+     */
+    @java.lang.Override
+    public boolean hasConfiguration() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+     * @return The configuration.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Installation.InstallationConfiguration getConfiguration() {
+      return configuration_ == null ? io.gitpod.publicapi.v1.Installation.InstallationConfiguration.getDefaultInstance() : configuration_;
+    }
+    /**
+     * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Installation.InstallationConfigurationOrBuilder getConfigurationOrBuilder() {
+      return configuration_ == null ? io.gitpod.publicapi.v1.Installation.InstallationConfiguration.getDefaultInstance() : configuration_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (((bitField0_ & 0x00000001) != 0)) {
+        output.writeMessage(1, getConfiguration());
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, getConfiguration());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse other = (io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse) obj;
+
+      if (hasConfiguration() != other.hasConfiguration()) return false;
+      if (hasConfiguration()) {
+        if (!getConfiguration()
+            .equals(other.getConfiguration())) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasConfiguration()) {
+        hash = (37 * hash) + CONFIGURATION_FIELD_NUMBER;
+        hash = (53 * hash) + getConfiguration().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.GetInstallationConfigurationResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.GetInstallationConfigurationResponse)
+        io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_GetInstallationConfigurationResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_GetInstallationConfigurationResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse.class, io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage
+                .alwaysUseFieldBuilders) {
+          getConfigurationFieldBuilder();
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        configuration_ = null;
+        if (configurationBuilder_ != null) {
+          configurationBuilder_.dispose();
+          configurationBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_GetInstallationConfigurationResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse build() {
+        io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse buildPartial() {
+        io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse result = new io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse result) {
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.configuration_ = configurationBuilder_ == null
+              ? configuration_
+              : configurationBuilder_.build();
+          to_bitField0_ |= 0x00000001;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse) {
+          return mergeFrom((io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse other) {
+        if (other == io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse.getDefaultInstance()) return this;
+        if (other.hasConfiguration()) {
+          mergeConfiguration(other.getConfiguration());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                input.readMessage(
+                    getConfigurationFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private io.gitpod.publicapi.v1.Installation.InstallationConfiguration configuration_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Installation.InstallationConfiguration, io.gitpod.publicapi.v1.Installation.InstallationConfiguration.Builder, io.gitpod.publicapi.v1.Installation.InstallationConfigurationOrBuilder> configurationBuilder_;
+      /**
+       * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+       * @return Whether the configuration field is set.
+       */
+      public boolean hasConfiguration() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+       * @return The configuration.
+       */
+      public io.gitpod.publicapi.v1.Installation.InstallationConfiguration getConfiguration() {
+        if (configurationBuilder_ == null) {
+          return configuration_ == null ? io.gitpod.publicapi.v1.Installation.InstallationConfiguration.getDefaultInstance() : configuration_;
+        } else {
+          return configurationBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+       */
+      public Builder setConfiguration(io.gitpod.publicapi.v1.Installation.InstallationConfiguration value) {
+        if (configurationBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          configuration_ = value;
+        } else {
+          configurationBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+       */
+      public Builder setConfiguration(
+          io.gitpod.publicapi.v1.Installation.InstallationConfiguration.Builder builderForValue) {
+        if (configurationBuilder_ == null) {
+          configuration_ = builderForValue.build();
+        } else {
+          configurationBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+       */
+      public Builder mergeConfiguration(io.gitpod.publicapi.v1.Installation.InstallationConfiguration value) {
+        if (configurationBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) != 0) &&
+            configuration_ != null &&
+            configuration_ != io.gitpod.publicapi.v1.Installation.InstallationConfiguration.getDefaultInstance()) {
+            getConfigurationBuilder().mergeFrom(value);
+          } else {
+            configuration_ = value;
+          }
+        } else {
+          configurationBuilder_.mergeFrom(value);
+        }
+        if (configuration_ != null) {
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+       */
+      public Builder clearConfiguration() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        configuration_ = null;
+        if (configurationBuilder_ != null) {
+          configurationBuilder_.dispose();
+          configurationBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+       */
+      public io.gitpod.publicapi.v1.Installation.InstallationConfiguration.Builder getConfigurationBuilder() {
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return getConfigurationFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+       */
+      public io.gitpod.publicapi.v1.Installation.InstallationConfigurationOrBuilder getConfigurationOrBuilder() {
+        if (configurationBuilder_ != null) {
+          return configurationBuilder_.getMessageOrBuilder();
+        } else {
+          return configuration_ == null ?
+              io.gitpod.publicapi.v1.Installation.InstallationConfiguration.getDefaultInstance() : configuration_;
+        }
+      }
+      /**
+       * <code>.gitpod.v1.InstallationConfiguration configuration = 1 [json_name = "configuration"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Installation.InstallationConfiguration, io.gitpod.publicapi.v1.Installation.InstallationConfiguration.Builder, io.gitpod.publicapi.v1.Installation.InstallationConfigurationOrBuilder>
+          getConfigurationFieldBuilder() {
+        if (configurationBuilder_ == null) {
+          configurationBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.Installation.InstallationConfiguration, io.gitpod.publicapi.v1.Installation.InstallationConfiguration.Builder, io.gitpod.publicapi.v1.Installation.InstallationConfigurationOrBuilder>(
+                  getConfiguration(),
+                  getParentForChildren(),
+                  isClean());
+          configuration_ = null;
+        }
+        return configurationBuilder_;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.GetInstallationConfigurationResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.GetInstallationConfigurationResponse)
+    private static final io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse();
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<GetInstallationConfigurationResponse>
+        PARSER = new com.google.protobuf.AbstractParser<GetInstallationConfigurationResponse>() {
+      @java.lang.Override
+      public GetInstallationConfigurationResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<GetInstallationConfigurationResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GetInstallationConfigurationResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface InstallationConfigurationOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.InstallationConfiguration)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bool is_dedicated_installation = 1 [json_name = "isDedicatedInstallation"];</code>
+     * @return The isDedicatedInstallation.
+     */
+    boolean getIsDedicatedInstallation();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.InstallationConfiguration}
+   */
+  public static final class InstallationConfiguration extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.InstallationConfiguration)
+      InstallationConfigurationOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        InstallationConfiguration.class.getName());
+    }
+    // Use InstallationConfiguration.newBuilder() to construct.
+    private InstallationConfiguration(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private InstallationConfiguration() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_InstallationConfiguration_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_InstallationConfiguration_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Installation.InstallationConfiguration.class, io.gitpod.publicapi.v1.Installation.InstallationConfiguration.Builder.class);
+    }
+
+    public static final int IS_DEDICATED_INSTALLATION_FIELD_NUMBER = 1;
+    private boolean isDedicatedInstallation_ = false;
+    /**
+     * <code>bool is_dedicated_installation = 1 [json_name = "isDedicatedInstallation"];</code>
+     * @return The isDedicatedInstallation.
+     */
+    @java.lang.Override
+    public boolean getIsDedicatedInstallation() {
+      return isDedicatedInstallation_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (isDedicatedInstallation_ != false) {
+        output.writeBool(1, isDedicatedInstallation_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (isDedicatedInstallation_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, isDedicatedInstallation_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Installation.InstallationConfiguration)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Installation.InstallationConfiguration other = (io.gitpod.publicapi.v1.Installation.InstallationConfiguration) obj;
+
+      if (getIsDedicatedInstallation()
+          != other.getIsDedicatedInstallation()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + IS_DEDICATED_INSTALLATION_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getIsDedicatedInstallation());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Installation.InstallationConfiguration prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.InstallationConfiguration}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.InstallationConfiguration)
+        io.gitpod.publicapi.v1.Installation.InstallationConfigurationOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_InstallationConfiguration_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_InstallationConfiguration_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Installation.InstallationConfiguration.class, io.gitpod.publicapi.v1.Installation.InstallationConfiguration.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Installation.InstallationConfiguration.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        isDedicatedInstallation_ = false;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Installation.internal_static_gitpod_v1_InstallationConfiguration_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Installation.InstallationConfiguration getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Installation.InstallationConfiguration.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Installation.InstallationConfiguration build() {
+        io.gitpod.publicapi.v1.Installation.InstallationConfiguration result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Installation.InstallationConfiguration buildPartial() {
+        io.gitpod.publicapi.v1.Installation.InstallationConfiguration result = new io.gitpod.publicapi.v1.Installation.InstallationConfiguration(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.Installation.InstallationConfiguration result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.isDedicatedInstallation_ = isDedicatedInstallation_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Installation.InstallationConfiguration) {
+          return mergeFrom((io.gitpod.publicapi.v1.Installation.InstallationConfiguration)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Installation.InstallationConfiguration other) {
+        if (other == io.gitpod.publicapi.v1.Installation.InstallationConfiguration.getDefaultInstance()) return this;
+        if (other.getIsDedicatedInstallation() != false) {
+          setIsDedicatedInstallation(other.getIsDedicatedInstallation());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                isDedicatedInstallation_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean isDedicatedInstallation_ ;
+      /**
+       * <code>bool is_dedicated_installation = 1 [json_name = "isDedicatedInstallation"];</code>
+       * @return The isDedicatedInstallation.
+       */
+      @java.lang.Override
+      public boolean getIsDedicatedInstallation() {
+        return isDedicatedInstallation_;
+      }
+      /**
+       * <code>bool is_dedicated_installation = 1 [json_name = "isDedicatedInstallation"];</code>
+       * @param value The isDedicatedInstallation to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIsDedicatedInstallation(boolean value) {
+
+        isDedicatedInstallation_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool is_dedicated_installation = 1 [json_name = "isDedicatedInstallation"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearIsDedicatedInstallation() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        isDedicatedInstallation_ = false;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.InstallationConfiguration)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.InstallationConfiguration)
+    private static final io.gitpod.publicapi.v1.Installation.InstallationConfiguration DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Installation.InstallationConfiguration();
+    }
+
+    public static io.gitpod.publicapi.v1.Installation.InstallationConfiguration getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<InstallationConfiguration>
+        PARSER = new com.google.protobuf.AbstractParser<InstallationConfiguration>() {
+      @java.lang.Override
+      public InstallationConfiguration parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<InstallationConfiguration> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<InstallationConfiguration> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Installation.InstallationConfiguration getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_v1_GetOnboardingStateRequest_descriptor;
   private static final
@@ -11919,6 +13279,21 @@ public final class Installation {
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_BlockedEmailDomain_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_GetInstallationConfigurationRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_GetInstallationConfigurationRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_GetInstallationConfigurationResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_GetInstallationConfigurationResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_InstallationConfiguration_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_InstallationConfiguration_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -11978,31 +13353,40 @@ public final class Installation {
       "Time\022(\n\020block_free_usage\030\006 \001(\010R\016blockFre" +
       "eUsage\"X\n\022BlockedEmailDomain\022\016\n\002id\030\001 \001(\t" +
       "R\002id\022\026\n\006domain\030\002 \001(\tR\006domain\022\032\n\010negative" +
-      "\030\003 \001(\010R\010negative2\335\006\n\023InstallationService" +
-      "\022\231\001\n$GetInstallationWorkspaceDefaultImag" +
-      "e\0226.gitpod.v1.GetInstallationWorkspaceDe" +
-      "faultImageRequest\0327.gitpod.v1.GetInstall" +
-      "ationWorkspaceDefaultImageResponse\"\000\022r\n\027" +
-      "ListBlockedRepositories\022).gitpod.v1.List" +
-      "BlockedRepositoriesRequest\032*.gitpod.v1.L" +
-      "istBlockedRepositoriesResponse\"\000\022r\n\027Crea" +
-      "teBlockedRepository\022).gitpod.v1.CreateBl" +
-      "ockedRepositoryRequest\032*.gitpod.v1.Creat" +
-      "eBlockedRepositoryResponse\"\000\022r\n\027DeleteBl" +
-      "ockedRepository\022).gitpod.v1.DeleteBlocke" +
-      "dRepositoryRequest\032*.gitpod.v1.DeleteBlo" +
-      "ckedRepositoryResponse\"\000\022r\n\027ListBlockedE" +
-      "mailDomains\022).gitpod.v1.ListBlockedEmail" +
-      "DomainsRequest\032*.gitpod.v1.ListBlockedEm" +
-      "ailDomainsResponse\"\000\022u\n\030CreateBlockedEma" +
-      "ilDomain\022*.gitpod.v1.CreateBlockedEmailD" +
-      "omainRequest\032+.gitpod.v1.CreateBlockedEm" +
-      "ailDomainResponse\"\000\022c\n\022GetOnboardingStat" +
-      "e\022$.gitpod.v1.GetOnboardingStateRequest\032" +
-      "%.gitpod.v1.GetOnboardingStateResponse\"\000" +
-      "BQ\n\026io.gitpod.publicapi.v1Z7github.com/g" +
-      "itpod-io/gitpod/components/public-api/go" +
-      "/v1b\006proto3"
+      "\030\003 \001(\010R\010negative\"%\n#GetInstallationConfi" +
+      "gurationRequest\"r\n$GetInstallationConfig" +
+      "urationResponse\022J\n\rconfiguration\030\001 \001(\0132$" +
+      ".gitpod.v1.InstallationConfigurationR\rco" +
+      "nfiguration\"W\n\031InstallationConfiguration" +
+      "\022:\n\031is_dedicated_installation\030\001 \001(\010R\027isD" +
+      "edicatedInstallation2\341\007\n\023InstallationSer" +
+      "vice\022\231\001\n$GetInstallationWorkspaceDefault" +
+      "Image\0226.gitpod.v1.GetInstallationWorkspa" +
+      "ceDefaultImageRequest\0327.gitpod.v1.GetIns" +
+      "tallationWorkspaceDefaultImageResponse\"\000" +
+      "\022r\n\027ListBlockedRepositories\022).gitpod.v1." +
+      "ListBlockedRepositoriesRequest\032*.gitpod." +
+      "v1.ListBlockedRepositoriesResponse\"\000\022r\n\027" +
+      "CreateBlockedRepository\022).gitpod.v1.Crea" +
+      "teBlockedRepositoryRequest\032*.gitpod.v1.C" +
+      "reateBlockedRepositoryResponse\"\000\022r\n\027Dele" +
+      "teBlockedRepository\022).gitpod.v1.DeleteBl" +
+      "ockedRepositoryRequest\032*.gitpod.v1.Delet" +
+      "eBlockedRepositoryResponse\"\000\022r\n\027ListBloc" +
+      "kedEmailDomains\022).gitpod.v1.ListBlockedE" +
+      "mailDomainsRequest\032*.gitpod.v1.ListBlock" +
+      "edEmailDomainsResponse\"\000\022u\n\030CreateBlocke" +
+      "dEmailDomain\022*.gitpod.v1.CreateBlockedEm" +
+      "ailDomainRequest\032+.gitpod.v1.CreateBlock" +
+      "edEmailDomainResponse\"\000\022c\n\022GetOnboarding" +
+      "State\022$.gitpod.v1.GetOnboardingStateRequ" +
+      "est\032%.gitpod.v1.GetOnboardingStateRespon" +
+      "se\"\000\022\201\001\n\034GetInstallationConfiguration\022.." +
+      "gitpod.v1.GetInstallationConfigurationRe" +
+      "quest\032/.gitpod.v1.GetInstallationConfigu" +
+      "rationResponse\"\000BQ\n\026io.gitpod.publicapi." +
+      "v1Z7github.com/gitpod-io/gitpod/componen" +
+      "ts/public-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -12113,6 +13497,24 @@ public final class Installation {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_BlockedEmailDomain_descriptor,
         new java.lang.String[] { "Id", "Domain", "Negative", });
+    internal_static_gitpod_v1_GetInstallationConfigurationRequest_descriptor =
+      getDescriptor().getMessageTypes().get(17);
+    internal_static_gitpod_v1_GetInstallationConfigurationRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_GetInstallationConfigurationRequest_descriptor,
+        new java.lang.String[] { });
+    internal_static_gitpod_v1_GetInstallationConfigurationResponse_descriptor =
+      getDescriptor().getMessageTypes().get(18);
+    internal_static_gitpod_v1_GetInstallationConfigurationResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_GetInstallationConfigurationResponse_descriptor,
+        new java.lang.String[] { "Configuration", });
+    internal_static_gitpod_v1_InstallationConfiguration_descriptor =
+      getDescriptor().getMessageTypes().get(19);
+    internal_static_gitpod_v1_InstallationConfiguration_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_InstallationConfiguration_descriptor,
+        new java.lang.String[] { "IsDedicatedInstallation", });
     descriptor.resolveAllFeaturesImmutable();
     io.gitpod.publicapi.v1.Pagination.getDescriptor();
     io.gitpod.publicapi.v1.Sorting.getDescriptor();

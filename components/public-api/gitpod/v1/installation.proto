@@ -31,6 +31,9 @@ service InstallationService {
 
   // GetOnboardingState returns the onboarding state of the installation.
   rpc GetOnboardingState(GetOnboardingStateRequest) returns (GetOnboardingStateResponse) {}
+
+  // GetInstallationConfiguration returns configuration of the installation.
+  rpc GetInstallationConfiguration(GetInstallationConfigurationRequest) returns (GetInstallationConfigurationResponse) {}
 }
 
 message GetOnboardingStateRequest {}
@@ -143,4 +146,12 @@ message BlockedEmailDomain {
   string domain = 2;
 
   bool negative = 3;
+}
+
+message GetInstallationConfigurationRequest {}
+message GetInstallationConfigurationResponse {
+  InstallationConfiguration configuration = 1;
+}
+message InstallationConfiguration {
+  bool is_dedicated_installation = 1;
 }

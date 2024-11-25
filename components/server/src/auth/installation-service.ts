@@ -4,7 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AdminGetListRequest, AdminGetListResult, EmailDomainFilterEntry, GitpodServer } from "@gitpod/gitpod-protocol";
+import {
+    AdminGetListRequest,
+    AdminGetListResult,
+    Configuration,
+    EmailDomainFilterEntry,
+    GitpodServer,
+} from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { EmailDomainFilterDB, TeamDB } from "@gitpod/gitpod-db/lib";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
@@ -120,6 +126,13 @@ export class InstallationService {
             isDefault: c.isDefault,
         }));
         return classes;
+    }
+
+    async getInstallationConfiguration(): Promise<Configuration> {
+        // everybody can read this configuration
+        return {
+            isDedicatedInstallation: this.config.isDedicatedInstallation,
+        };
     }
 }
 

@@ -39,6 +39,7 @@ import {
     WorkspaceContext,
     WorkspaceInfo,
     WorkspaceSession as WorkspaceSessionProtocol,
+    Configuration as GitpodServerInstallationConfiguration,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import { AuditLog as AuditLogProtocol } from "@gitpod/gitpod-protocol/lib/audit-log";
 import {
@@ -104,6 +105,7 @@ import {
 import {
     BlockedEmailDomain,
     BlockedRepository,
+    InstallationConfiguration,
     OnboardingState,
 } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import {
@@ -1665,6 +1667,12 @@ export class PublicAPIConverter {
     toOnboardingState(state: GitpodServer.OnboardingState): OnboardingState {
         return new OnboardingState({
             completed: state.isCompleted,
+        });
+    }
+
+    toInstallationConfiguration(config: GitpodServerInstallationConfiguration): InstallationConfiguration {
+        return new InstallationConfiguration({
+            isDedicatedInstallation: config.isDedicatedInstallation,
         });
     }
 
