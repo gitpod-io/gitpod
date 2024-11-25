@@ -42,7 +42,11 @@ message GetOnboardingStateResponse {
 }
 
 message OnboardingState {
+  // Whether at least one organization has completed the onboarding
   bool completed = 1;
+
+  // The total number of organizations
+  int32 organization_count_total = 2;
 }
 
 message GetInstallationWorkspaceDefaultImageRequest {}

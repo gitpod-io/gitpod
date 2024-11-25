@@ -1667,6 +1667,7 @@ export class PublicAPIConverter {
     toOnboardingState(state: GitpodServer.OnboardingState): OnboardingState {
         return new OnboardingState({
             completed: state.isCompleted,
+            organizationCountTotal: state.organizationCountTotal,
         });
     }
 

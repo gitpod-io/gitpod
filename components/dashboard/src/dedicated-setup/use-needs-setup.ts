@@ -32,7 +32,7 @@ export const useNeedsSetup = () => {
     };
 };
 
-const useOnboardingState = () => {
+export const useOnboardingState = () => {
     const { data: installationConfig } = useInstallationConfiguration();
 
     return useQuery(

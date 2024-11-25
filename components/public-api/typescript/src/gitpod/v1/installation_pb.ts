@@ -87,9 +87,18 @@ export class GetOnboardingStateResponse extends Message<GetOnboardingStateRespon
  */
 export class OnboardingState extends Message<OnboardingState> {
   /**
+   * Whether at least one organization has completed the onboarding
+   *
    * @generated from field: bool completed = 1;
    */
   completed = false;
+
+  /**
+   * The total number of organizations
+   *
+   * @generated from field: int32 organization_count_total = 2;
+   */
+  organizationCountTotal = 0;
 
   constructor(data?: PartialMessage<OnboardingState>) {
     super();
@@ -100,6 +109,7 @@ export class OnboardingState extends Message<OnboardingState> {
   static readonly typeName = "gitpod.v1.OnboardingState";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "completed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "organization_count_total", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OnboardingState {

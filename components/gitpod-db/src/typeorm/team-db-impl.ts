@@ -58,7 +58,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
 
     public async findTeams(
         offset: number,
-        limit: number,
+        limit: number | undefined,
         orderBy: keyof Team,
         orderDir: "DESC" | "ASC",
         searchTerm?: string,
@@ -70,7 +70,11 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
                 searchTerm: `%${searchTerm}%`,
             });
         }
-        queryBuilder = queryBuilder.andWhere("markedDeleted = 0").skip(offset).take(limit).orderBy(orderBy, orderDir);
+        queryBuilder = queryBuilder.andWhere("markedDeleted = 0").skip(offset);
+        if (limit) {
+            queryBuilder = queryBuilder.take(limit);
+        }
+        queryBuilder = queryBuilder.orderBy(orderBy, orderDir);
 
         const [rows, total] = await queryBuilder.getManyAndCount();
         return { total, rows };

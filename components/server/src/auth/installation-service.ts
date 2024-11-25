@@ -79,12 +79,11 @@ export class InstallationService {
         // Find useful details about the state of the Gitpod installation.
         const { rows } = await this.teamDB.findTeams(
             0 /* offset */,
-            1 /* limit */,
+            undefined /* limit */,
             "creationTime" /* order by */,
             "ASC",
             "" /* empty search term returns any */,
         );
-        const hasAnyOrg = rows.length > 0;
         let isCompleted = false;
         for (const row of rows) {
             isCompleted = await this.teamDB.hasActiveSSO(row.id);
@@ -94,7 +93,7 @@ export class InstallationService {
         }
         return {
             isCompleted,
-            hasAnyOrg,
+            organizationCountTotal: rows.length,
         };
     }
 
