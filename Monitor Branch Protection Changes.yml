@@ -174,7 +174,7 @@ jobs:
                 }
               }
 
-              // Always create a new state issue
+               // Always create a new state issue
               console.log('Creating new state issue...');
               const newIssue = await github.rest.issues.create({
                 owner: repo.owner,
@@ -185,6 +185,15 @@ jobs:
               });
               console.log(`Created new state issue #${newIssue.data.number}`);
 
+              // Lock the issue immediately
+              await github.rest.issues.lock({
+                owner: repo.owner,
+                repo: repo.repo,
+                issue_number: newIssue.data.number,
+                lock_reason: 'resolved'
+              });
+              console.log(`Locked issue #${newIssue.data.number}`);
+
               // Set outputs for notifications
               core.setOutput('changes_detected', changesDetected.toString());
               core.setOutput('change_description', changeDescription);
@@ -192,6 +201,65 @@ jobs:
             } catch (error) {
               console.log('Error details:', error);
               core.setFailed(`Error: ${error.message}`);
+            }
+
+      - name: Send Slack Notification - Branch Protection Event
+        if: github.event_name == 'branch_protection_rule'
+        uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.BRANCH_PROTECTION_SLACK_BOT_TOKEN }}
+        with:
+          channel-id: 'C081N38PHC5'
+          payload: |
+            {
+              "text": "⚠️ Branch Protection Change Event Detected in ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "⚠️ Branch Protection Change Event Detected",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Repository:* ${{ github.repository }}\n*Triggered by:* ${{ github.actor }}\n*Event Type:* ${{ github.event.action }}\n*Workflow Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "⚠️ *Monitoring Notice:* A branch protection change event was triggered. If no change notification follows, this could indicate a non-working script or potential malicious activity."
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Branch Settings",
+                        "emoji": true
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/settings/branches"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow Run",
+                        "emoji": true
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
             }
 
       - name: Send Slack Notification - Changes Detected
@@ -248,6 +316,8 @@ jobs:
       - name: Send Slack Notification - Error
         if: failure()
         uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.BRANCH_PROTECTION_SLACK_BOT_TOKEN }}
         with:
           channel-id: 'C081N38PHC5'
           payload: |
@@ -277,5 +347,3 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.BRANCH_PROTECTION_SLACK_BOT_TOKEN }}
