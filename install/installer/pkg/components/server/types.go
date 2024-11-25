@@ -39,9 +39,8 @@ type ConfigSerialized struct {
 	EnablePayment                     bool        `json:"enablePayment"`
 	LinkedInSecretsFile               string      `json:"linkedInSecretsFile"`
 	PATSigningKeyFile                 string      `json:"patSigningKeyFile"`
-	ShowSetupModal                    bool        `json:"showSetupModal"`
 	Auth                              auth.Config `json:"auth"`
-	IsSingleOrgInstallation           bool        `json:"isSingleOrgInstallation"`
+	IsDedicatedInstallation           bool        `json:"isDedicatedInstallation"`
 
 	WorkspaceHeartbeat         WorkspaceHeartbeat         `json:"workspaceHeartbeat"`
 	WorkspaceDefaults          WorkspaceDefaults          `json:"workspaceDefaults"`

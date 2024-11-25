@@ -517,9 +517,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getConfiguration(ctx: TraceContext): Promise<Configuration> {
         return {
-            garbageCollectionStartDate: this.config.workspaceGarbageCollection.startDate,
-            daysBeforeGarbageCollection: this.config.workspaceGarbageCollection.minAgeDays,
-            isSingleOrgInstallation: this.config.isSingleOrgInstallation,
+            isDedicatedInstallation: this.config.isDedicatedInstallation,
         };
     }
 
