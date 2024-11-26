@@ -870,10 +870,10 @@
         "logo": "{{.IdeLogoBase}}/clionLogo.svg",
         "image": "{{.Repository}}/ide/clion:{{.WorkspaceVersions.Workspace.DesktopIdeImages.CLionImage.Version}}",
         "latestImage": "{{.ResolvedJBImageLatest.CLion}}",
-        "pluginImage": "{{.JetBrainsPluginImagePrevious}}",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
-          "{{.JetBrainsPluginImagePrevious}}",
+          "{{.JetBrainsPluginImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
         "latestImageLayers": [
@@ -955,10 +955,10 @@
         "logo": "{{.IdeLogoBase}}/rustroverLogo.svg",
         "image": "{{.Repository}}/ide/rustrover:{{.WorkspaceVersions.Workspace.DesktopIdeImages.RustRoverImage.Version}}",
         "latestImage": "{{.ResolvedJBImageLatest.RustRover}}",
-        "pluginImage": "{{.JetBrainsPluginImagePrevious}}",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
-          "{{.JetBrainsPluginImagePrevious}}",
+          "{{.JetBrainsPluginImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
         "latestImageLayers": [

@@ -38,7 +38,7 @@ for (let ide in json.ideOptions.options) {
     }
 
     // TODO(hw): remove me
-    if (["intellij", "clion", "rustrover"].includes(ide)) {
+    if (["intellij"].includes(ide)) {
         json.ideOptions.options[ide].pluginImage = replaceImage2(json.ideOptions.options[ide].pluginImage);
         json.ideOptions.options[ide].imageLayers = json.ideOptions.options[ide].imageLayers.map(replaceImage2);
     }
