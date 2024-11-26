@@ -870,10 +870,10 @@
         "logo": "{{.IdeLogoBase}}/clionLogo.svg",
         "image": "{{.Repository}}/ide/clion:{{.WorkspaceVersions.Workspace.DesktopIdeImages.CLionImage.Version}}",
         "latestImage": "{{.ResolvedJBImageLatest.CLion}}",
-        "pluginImage": "{{.JetBrainsPluginImagePrevious}}",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
-          "{{.JetBrainsPluginImagePrevious}}",
+          "{{.JetBrainsPluginImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
         "latestImageLayers": [
@@ -882,6 +882,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.2.3",
+            "image": "{{.Repository}}/ide/clion:commit-08d82bcac5ec4e6a3a6376b664c765f233dfd827",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+              "{{.Repository}}/ide/jb-launcher:commit-08d82bcac5ec4e6a3a6376b664c765f233dfd827"
+            ]
+          },
           {
             "version": "2024.2.2",
             "image": "{{.Repository}}/ide/clion:commit-c0c9b747905872fcade355a5347e4de98711a0a0",
@@ -947,10 +955,10 @@
         "logo": "{{.IdeLogoBase}}/rustroverLogo.svg",
         "image": "{{.Repository}}/ide/rustrover:{{.WorkspaceVersions.Workspace.DesktopIdeImages.RustRoverImage.Version}}",
         "latestImage": "{{.ResolvedJBImageLatest.RustRover}}",
-        "pluginImage": "{{.JetBrainsPluginImagePrevious}}",
+        "pluginImage": "{{.JetBrainsPluginImage}}",
         "pluginLatestImage": "{{.JetBrainsPluginLatestImage}}",
         "imageLayers": [
-          "{{.JetBrainsPluginImagePrevious}}",
+          "{{.JetBrainsPluginImage}}",
           "{{.JetBrainsLauncherImage}}"
         ],
         "latestImageLayers": [
@@ -959,6 +967,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.2.5",
+            "image": "{{.Repository}}/ide/rustrover:commit-08d82bcac5ec4e6a3a6376b664c765f233dfd827",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+              "{{.Repository}}/ide/jb-launcher:commit-08d82bcac5ec4e6a3a6376b664c765f233dfd827"
+            ]
+          },
           {
             "version": "2024.2.4",
             "image": "{{.Repository}}/ide/rustrover:commit-97baff58c516062d23b11c3c5eeeffc2113834df",
