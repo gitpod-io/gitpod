@@ -24,7 +24,7 @@ defaultArgs:
   rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2024.3.tar.gz"
   jbBackendVersion: "latest"
   dockerVersion: "20.10.24"
-  dockerComposeVersion: "2.27.0-gitpod.0"
+  dockerComposeVersion: "2.30.3-gitpod.0"
 provenance:
   enabled: true
   slsa: true
