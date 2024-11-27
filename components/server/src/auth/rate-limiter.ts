@@ -14,7 +14,7 @@ type GitpodServerMethodType =
     | keyof Omit<GitpodServer, "dispose" | "setClient">
     | typeof accessCodeSyncStorage
     | typeof accessHeadlessLogs;
-type GroupKey = "default" | "startWorkspace" | "createWorkspace" | "phoneVerification" | "sendHeartBeat";
+type GroupKey = "default" | "startWorkspace" | "createWorkspace" | "phoneVerification" | "sendHeartBeat" | "getToken";
 type GroupsConfig = {
     [key: string]: {
         points: number;
@@ -57,7 +57,7 @@ const defaultFunctions: FunctionsConfig = {
     deleteOrgAuthProvider: { group: "default", points: 1 },
     getConfiguration: { group: "default", points: 1 },
     getGitpodTokenScopes: { group: "default", points: 1 },
-    getToken: { group: "default", points: 1 },
+    getToken: { group: "getToken", points: 1 },
     deleteAccount: { group: "default", points: 1 },
     getClientRegion: { group: "default", points: 1 },
     getWorkspaces: { group: "default", points: 1 },
@@ -204,6 +204,10 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
     // Be aware that some of our API calls are bound by rate-limits in downstream systems like ws-manager
     const defaultGroups: GroupsConfig = {
         default: {
+            points: 200, // 200 calls per user, per connection, per minute
+            durationsSec: 60,
+        },
+        getToken: {
             points: 200, // 200 calls per user, per connection, per minute
             durationsSec: 60,
         },
